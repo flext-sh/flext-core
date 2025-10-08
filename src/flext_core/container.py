@@ -215,15 +215,6 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                     FlextConstants.Container.TIMEOUT_SECONDS,
                 ),
             ),
-            "environment": str(
-                getattr(
-                    self._flext_config,
-                    "environment",
-                    FlextConstants.Config.DEFAULT_ENVIRONMENT,
-                ),
-            )
-            .strip()
-            .lower(),
         }
 
     def _sync_config_to_di(self) -> None:
@@ -308,7 +299,6 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         return {
             "max_workers": self._global_config["max_workers"],
             "timeout_seconds": self._global_config["timeout_seconds"],
-            "environment": self._global_config["environment"],
             "service_count": len(
                 set(self._services.keys()) | set(self._factories.keys())
             ),
@@ -997,7 +987,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """
         try:
             # Only allow specific configuration keys
-            allowed_keys = {"max_workers", "timeout_seconds", "environment"}
+            allowed_keys = {"max_workers", "timeout_seconds"}
             processed_config = {
                 key: value for key, value in config.items() if key in allowed_keys
             }
@@ -1239,13 +1229,21 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             result: FlextResult[object] = FlextResult[object].ok(service)
             for validator in validators:
                 if callable(validator):
-                    validation_result = validator(service)
-                    if validation_result.is_failure:
+                    # Call validator and check result type
+                    validator_result = validator(service)
+                    # Type assertion: validator should return FlextResult
+                    if not isinstance(validator_result, FlextResult):
                         return FlextResult[object].fail(
-                            f"Validation failed: {validation_result.error}"
+                            f"Validator must return FlextResult, got {type(validator_result)}"
+                        )
+                    # Cast to the expected type for better type inference
+                    validated_result = cast("FlextResult[object]", validator_result)
+                    if validated_result.is_failure:
+                        return FlextResult[object].fail(
+                            f"Validation failed: {validated_result.error}"
                         )
                     # Continue with validated service
-                    result = validation_result
+                    result = validated_result
 
             return result
 

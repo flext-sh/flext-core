@@ -171,9 +171,9 @@ class TestFlextResult:
         assert result.error == "Unknown error occurred"
 
         # Test None value in success
-        result = FlextResult[None].ok(None)
-        assert result.is_success
-        assert result.value is None
+        result_none = FlextResult[None].ok(None)
+        assert result_none.is_success
+        assert result_none.value is None
 
     def test_result_performance(self) -> None:
         """Test performance characteristics of FlextResult."""
@@ -740,7 +740,7 @@ class TestFlextResult:
         def success_func() -> int:
             return 42
 
-        success_result: FlextResult[int] = FlextResult.safe_call(success_func)
+        success_result: FlextResult[int] = FlextResult[int].safe_call(success_func)
         assert success_result.is_success
         assert success_result.value == 42
 
@@ -749,7 +749,7 @@ class TestFlextResult:
             error_message = "Something went wrong"
             raise ValueError(error_message)
 
-        failure_result: FlextResult[int] = FlextResult.safe_call(failing_func)
+        failure_result: FlextResult[int] = FlextResult[int].safe_call(failing_func)
         assert failure_result.is_failure
         assert failure_result.error is not None
         assert "Something went wrong" in failure_result.error
@@ -803,15 +803,15 @@ class TestFlextResult:
             return FlextResult[str].ok(f"Processed: {x}")
 
         # Valid value
-        valid_result: FlextResult[str] = FlextResult.ok(5).validate_and_execute(
-            validator, executor
+        valid_result: FlextResult[str] = (
+            FlextResult[int].ok(5).validate_and_execute(validator, executor)
         )
         assert valid_result.is_success
         assert valid_result.value == "Processed: 5"
 
         # Invalid value
-        invalid_result: FlextResult[str] = FlextResult.ok(-5).validate_and_execute(
-            validator, executor
+        invalid_result: FlextResult[str] = (
+            FlextResult[int].ok(-5).validate_and_execute(validator, executor)
         )
         assert invalid_result.is_failure
         assert invalid_result.error is not None
@@ -832,7 +832,7 @@ class TestFlextResult:
         operations: list[Callable[[int], FlextResult[int]]] = [add_one, double, to_int]
 
         # Successful pipeline
-        result = FlextResult.pipeline(5, *operations)
+        result = FlextResult[int].pipeline(5, *operations)
         assert result.is_success
         assert result.value == 12  # (5 + 1) * 2 = 12
 
@@ -843,7 +843,7 @@ class TestFlextResult:
             return FlextResult[int].fail("Pipeline failed")
 
         operations_with_failure = [add_one, failing_op, double]
-        result = FlextResult.pipeline(5, *operations_with_failure)
+        result = FlextResult[int].pipeline(5, *operations_with_failure)
         assert result.is_failure
         assert result.error is not None
         assert "Pipeline failed" in result.error
@@ -858,7 +858,7 @@ class TestFlextResult:
             FlextResult[int].ok(3),
         ]
 
-        collected = FlextResult.collect_all_errors(*results)
+        collected = FlextResult[int].collect_all_errors(*results)
         successes, errors = collected
         assert successes == [1, 2, 3]
         assert len(errors) == 2
@@ -881,13 +881,17 @@ class TestFlextResult:
         def cleanup(resource: str) -> None:
             resources_cleaned.append(resource)
 
-        result: FlextResult[int] = FlextResult.ok("dummy").with_resource(
-            create_resource,
-            operation,
-            cleanup,
+        result: FlextResult[int] = (
+            FlextResult[str]
+            .ok("42")
+            .with_resource(
+                create_resource,
+                operation,  # type: ignore[arg-type]
+                cleanup,
+            )
         )
         assert result.is_success
-        assert result.value == 18  # len("test_resource") + len("dummy")
+        assert result.value == 15  # len("test_resource") + len("42")
         assert len(resources_created) == 1
         assert len(resources_cleaned) == 1
         assert resources_created[0] == resources_cleaned[0]
@@ -963,7 +967,7 @@ class TestFlextResult:
             return FlextResult[None].ok(None)
 
         # Test all validations pass
-        result = FlextResult.validate_all(
+        result = FlextResult[None].validate_all(
             42,
             validate_positive,
             validate_even,
@@ -973,7 +977,7 @@ class TestFlextResult:
         assert result.value == 42
 
         # Test validation failure
-        result = FlextResult.validate_all(
+        result = FlextResult[int].validate_all(
             43,
             validate_positive,
             validate_even,
@@ -992,13 +996,15 @@ class TestFlextResult:
 
         # Test calling as instance method through chain
         initial = FlextResult[int].ok(10)
-        chained: FlextResult[int] = initial.flat_map(lambda x: FlextResult.ok(x * 2))
+        chained: FlextResult[int] = initial.flat_map(
+            lambda x: FlextResult[int].ok(x * 2)
+        )
         assert chained.is_success
         assert chained.value == 20
 
         # Verify the descriptor works for both contexts
         # Class context
-        class_result = FlextResult.sequence([
+        class_result = FlextResult[int].sequence([
             FlextResult[int].ok(1),
             FlextResult[int].ok(2),
             FlextResult[int].ok(3),
@@ -1289,9 +1295,7 @@ class TestFlextResultAdditionalCoverage:
         assert result.value == 50
 
         # One fails
-        result: FlextResult[int] = FlextResult.validate_all(
-            -5, is_positive, is_less_than_100
-        )
+        result = FlextResult.validate_all(-5, is_positive, is_less_than_100)
         assert result.is_failure
         assert "Must be positive" in str(result.error)
 
@@ -2363,7 +2367,7 @@ class TestMaybeInterop:
     def test_from_maybe_some(self) -> None:
         """Test creating result from Some."""
         maybe = Some("test_value")
-        result = FlextResult.from_maybe(maybe)
+        result: FlextResult[str] = FlextResult.from_maybe(maybe)
 
         assert result.is_success
         assert result.value == "test_value"

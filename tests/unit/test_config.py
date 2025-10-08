@@ -39,6 +39,26 @@ class TestFlextConfig:
         assert config.environment == "test"
         assert config.debug is True
 
+    def test_config_callable_interface(self) -> None:
+        """Test config callable interface for nested field access."""
+        config = FlextConfig(
+            app_name="test_app",
+            version="1.0.0",
+            environment="test",
+            debug=True,
+        )
+
+        # Test direct field access
+        assert config("app_name") == "test_app"
+        assert config("version") == "1.0.0"
+        assert config("debug") is True
+
+        # Test non-existent key
+        with pytest.raises(
+            KeyError, match=r"Configuration key 'nonexistent' not found"
+        ):
+            config("nonexistent")
+
     def test_config_from_dict(self) -> None:
         """Test config creation from dictionary."""
         config_data: dict[str, str | int | float | bool] = {
@@ -447,25 +467,6 @@ class TestFlextConfig:
         assert saved_data["version"] == "4.0.0"
         assert saved_data["environment"] == "development"
 
-    def test_config_environment_methods(self) -> None:
-        """Test environment checking methods."""
-        from flext_core import FlextConfig
-
-        # Test development environment
-        dev_config = FlextConfig(environment="development")
-        assert dev_config.is_development() is True
-        assert dev_config.is_production() is False
-
-        # Test production environment
-        prod_config = FlextConfig(environment="production")
-        assert prod_config.is_development() is False
-        assert prod_config.is_production() is True
-
-        # Test other environments
-        staging_config = FlextConfig(environment="staging")
-        assert staging_config.is_development() is False
-        assert staging_config.is_production() is False
-
     def test_config_debug_enabled(self) -> None:
         """Test debug enabled checking."""
         from flext_core import FlextConfig
@@ -497,3 +498,50 @@ class TestFlextConfig:
         # Test with trace enabled (returns DEBUG level)
         trace_config = FlextConfig(log_level="INFO", debug=True, trace=True)
         assert trace_config.effective_log_level == "DEBUG"
+
+    def test_global_instance_management(self) -> None:
+        """Test global instance management methods."""
+        # Save original global instance
+        original_instance = FlextConfig.get_global_instance()
+
+        try:
+            # Create a new instance
+            new_config = FlextConfig(app_name="test_instance", version="1.0.0")
+
+            # Set it as global
+            FlextConfig.set_global_instance(new_config)
+
+            # Verify it's the global instance
+            global_config = FlextConfig.get_global_instance()
+            assert global_config is new_config
+            assert global_config.app_name == "test_instance"
+
+            # Reset global instance
+            FlextConfig.reset_global_instance()
+
+            # Should create a new instance (not the same object)
+            reset_config = FlextConfig.get_global_instance()
+            assert reset_config is not new_config
+            assert reset_config.app_name == original_instance.app_name
+
+        finally:
+            # Restore original instance
+            if original_instance is not None:
+                FlextConfig.set_global_instance(original_instance)
+
+    def test_di_provider_integration(self) -> None:
+        """Test dependency injection provider integration."""
+        config = FlextConfig(app_name="di_test", version="1.0.0")
+
+        # Get DI provider
+        provider = config._get_or_create_di_provider()
+
+        # Verify it's a Configuration provider
+        from dependency_injector import providers
+
+        assert isinstance(provider, providers.Configuration)
+
+        # The provider is created successfully
+        # Note: The exact behavior of accessing config values may vary
+        # This test primarily verifies that the provider is created correctly
+        assert provider is not None

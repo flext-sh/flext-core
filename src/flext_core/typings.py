@@ -28,7 +28,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Callable
+from collections.abc import Awaitable, Callable
 from typing import (
     Literal,
     ParamSpec,
@@ -213,6 +213,18 @@ class FlextTypes:
     FloatList = list[float]
     BoolList = list[bool]
 
+    # Component types for normalization operations - backward compatibility
+    # Must be hashable for set operations, so we exclude generic object
+    ComponentType = (
+        Dict | List | set[object] | tuple[object, ...] | str | int | float | bool | None
+    )
+
+    # Sortable types for sorting operations - backward compatibility
+    SortableType = str | int | float
+
+    # Serializable types for serialization operations - backward compatibility
+    SerializableType = Dict | List | str | int | float | bool | None
+
     # Type variable references moved to module level below
 
     # Collection types for backward compatibility
@@ -225,22 +237,6 @@ class FlextTypes:
     type StringDict = dict[str, str]
     type IntDict = dict[str, int]
     type FloatDict = dict[str, float]
-
-    # Basic collection types (legacy names for compatibility)
-    type DictType = FlextTypes.Dict
-    type ListType = list[object]
-    type StringListType = list[str]
-    type IntListType = list[int]
-    type FloatListType = list[float]
-    type BoolListType = list[bool]
-
-    # Advanced collection types (legacy names for compatibility)
-    type NestedDictType = dict[str, DictType]
-    type StringDictType = dict[str, str]
-    type IntDictType = dict[str, int]
-    type FloatDictType = dict[str, float]
-    type BoolDict = dict[str, bool]
-    type OrderedDictType = FlextTypes.Dict  # Use dict for type annotation
 
     # Configuration types
     type ConfigValue = (
@@ -301,6 +297,16 @@ class FlextTypes:
         type Sequence = list[object]
         type Set = set[object]
         type Tuple = tuple[object, ...]
+
+        # Component types for normalization operations
+        # Must be hashable for set operations, so we exclude generic object
+        type ComponentType = Dict | List | Set | Tuple | str | int | float | bool | None
+
+        # Sortable types for sorting operations
+        type SortableType = str | int | float
+
+        # Serializable types for serialization operations
+        type SerializableType = Dict | List | str | int | float | bool | None
 
         # Enhanced async and concurrent types
         type AsyncDict = dict[str, Awaitable[object]]
@@ -439,8 +445,6 @@ class FlextTypes:
         type AsyncDict = dict[str, Awaitable[object]]
         type AsyncList = list[Awaitable[object]]
         type AsyncResult[T] = Awaitable[T]
-        type AsyncIteratorAlias[T] = AsyncIterator[T]
-        type AsyncGeneratorAlias[T] = AsyncGenerator[T]
 
         type ConcurrentDict[TConcurrent] = dict[str, TConcurrent]
         type ConcurrentList[TConcurrent] = list[TConcurrent]
@@ -693,14 +697,6 @@ class FlextTypes:
     class Config:
         """Configuration types."""
 
-        type Environment = Literal[
-            "development",
-            "staging",
-            "production",
-            "testing",
-            "test",
-            "local",
-        ]
         type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         type Serializer = Callable[
             [

@@ -168,7 +168,7 @@ class FlextProcessors(FlextMixins.Service):
         self._metrics: dict[str, int] = {}
         self._audit_log: list[FlextTypes.Dict] = []
         self._performance_metrics: FlextTypes.FloatDict = {}
-        self._circuit_breaker: FlextTypes.BoolDict = {}
+        self._circuit_breaker: dict[str, bool] = {}
         self._rate_limiter: dict[str, dict[str, int | float]] = {}
         self._cache: dict[str, tuple[object, float]] = {}
         self._lock = threading.Lock()  # Thread safety lock
@@ -177,12 +177,12 @@ class FlextProcessors(FlextMixins.Service):
         self._rate_limit: int = 0
         self._rate_limit_window: int = 0
         cache_ttl = self._processor_config.get(
-            "cache_ttl", FlextConstants.Defaults.CACHE_TTL
+            "cache_ttl", FlextConstants.Defaults.DEFAULT_CACHE_TTL
         )
         self._cache_ttl = (
             float(cache_ttl)
             if isinstance(cache_ttl, (int, float, str))
-            else float(FlextConstants.Defaults.CACHE_TTL)
+            else float(FlextConstants.Defaults.DEFAULT_CACHE_TTL)
         )
 
         circuit_threshold = self._processor_config.get(
@@ -300,8 +300,10 @@ class FlextProcessors(FlextMixins.Service):
             if callable(processor):
                 result = processor(processed_data)
                 if isinstance(result, FlextResult):
-                    if result.is_success:
-                        result_value: object = result.value
+                    # Cast to the expected return type for better type inference
+                    typed_result = cast("FlextResult[object]", result)
+                    if typed_result.is_success:
+                        result_value: object = typed_result.value
                         self._cache[cache_key] = (result_value, time.time())
                         self._metrics["successful_processes"] = (
                             self._metrics.get("successful_processes", 0) + 1
@@ -313,6 +315,8 @@ class FlextProcessors(FlextMixins.Service):
                             "data_hash": hash(str(data)),
                         })
                     else:
+                        # Cast to the expected return type for better type inference
+                        typed_result = cast("FlextResult[object]", result)
                         self._metrics["failed_processes"] = (
                             self._metrics.get("failed_processes", 0) + 1
                         )
@@ -320,17 +324,14 @@ class FlextProcessors(FlextMixins.Service):
                             "timestamp": time.time(),
                             "processor": name,
                             "status": "failure",
-                            "error": result.error,
+                            "error": typed_result.error,
                             "data_hash": hash(str(data)),
                         })
 
-                    typed_result: FlextResult[object] = cast(
-                        "FlextResult[object]", result
-                    )
-                    return typed_result
+                        return typed_result
 
                 # Wrap non-FlextResult in FlextResult
-                result_wrapped = FlextResult[object].ok(result)
+                result_wrapped = FlextResult[object].ok(cast("object", result))
                 self._cache[cache_key] = (result, time.time())
                 self._metrics["successful_processes"] = (
                     self._metrics.get("successful_processes", 0) + 1

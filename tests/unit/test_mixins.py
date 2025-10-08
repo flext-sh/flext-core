@@ -69,6 +69,10 @@ class TestFlextMixins:
         mixins = FlextMixins()
 
         class TestMixin:
+            def __call__(self, data: object) -> object:
+                """Make mixin callable for the mixin system."""
+                return data
+
             def test_method(self) -> str:
                 return "test_result"
 

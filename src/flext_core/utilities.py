@@ -12,11 +12,11 @@ handling and composability across ecosystem projects.
 from __future__ import annotations
 
 import contextvars
+import hashlib
 import inspect
 import json
-import math
+import logging
 import operator
-import os
 import pathlib
 import re
 import secrets
@@ -33,20 +33,9 @@ from typing import (
     get_type_hints,
 )
 
-try:
-    import orjson
-except ImportError:
-    orjson = None
-from pydantic import (
-    EmailStr,
-    HttpUrl,
-    TypeAdapter,
-    ValidationError as PydanticValidationError,
-)
-from pydantic.types import conint, constr
+import orjson
 
 from flext_core.constants import FlextConstants
-from flext_core.container import FlextContainer
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -56,980 +45,211 @@ from flext_core.typings import FlextTypes
 class FlextUtilities:
     """Comprehensive utility functions for FLEXT ecosystem operations."""
 
-    class Validation:
-        """Unified validation patterns using railway composition.
-
-        # REQUIRED ACTION:
-        # - Move ALL validation logic to FlextConfig.Validation for configuration validation
-        # - Move ALL validation logic to FlextModels.Validation for domain validation
-        # - Remove this entire Validation class from utilities.py
-        - Keep only transformation, processing, and reliability patterns in utilities
-
-        # SHOULD BE USED INSTEAD:
-        # - FlextConfig.Validation for configuration validation
-        # - FlextModels.Validation for domain model validation
-        # - FlextModels.Field validators for Pydantic model validation
-        """
-
-        @staticmethod
-        def validate_string_not_none(
-            value: str | None,
-            field_name: str = "string",
-        ) -> FlextResult[str]:
-            """Validate that string is not None.
-
-            # REQUIRED ACTION: Move to FlextModels.Validation.validate_string_not_none()
-            # SHOULD BE USED INSTEAD: FlextModels.Field(validator=validate_not_none)
-
-            Returns:
-                FlextResult[str]: Success with validated string or failure with error message
-
-            """
-            if value is None:
-                return FlextResult[str].fail(f"{field_name} cannot be None")
-            return FlextResult[str].ok(value)
-
-        @staticmethod
-        def validate_string_not_empty(
-            value: str,
-            field_name: str = "string",
-        ) -> FlextResult[str]:
-            """Validate that string is not empty after stripping.
-
-            # REQUIRED ACTION: Move to FlextModels.Validation.validate_string_not_empty()
-            # SHOULD BE USED INSTEAD: FlextModels.Field(validator=validate_not_empty)
-
-            Returns:
-                FlextResult[str]: Success with validated string or failure with error message
-
-            """
-            stripped = value.strip()
-            if not stripped:
-                return FlextResult[str].fail(
-                    f"{field_name} cannot be empty or whitespace only",
-                )
-            return FlextResult[str].ok(stripped)
-
-        @staticmethod
-        def validate_string_length(
-            value: str,
-            min_length: int = 1,
-            max_length: int | None = None,
-            field_name: str = "string",
-        ) -> FlextResult[str]:
-            """Validate string length constraints using Pydantic constr."""
-            try:
-                # Create constrained string type using Pydantic
-                if max_length is not None:
-                    constrained_str = constr(
-                        min_length=min_length, max_length=max_length
-                    )
-                else:
-                    constrained_str = constr(min_length=min_length)
-
-                # Validate using TypeAdapter
-                adapter = TypeAdapter(constrained_str)
-                validated = adapter.validate_python(value)
-                return FlextResult[str].ok(str(validated))
-            except (PydanticValidationError, ValueError) as e:
-                # Extract meaningful error message
-                length = len(value)
-                if length < min_length:
-                    return FlextResult[str].fail(
-                        f"{field_name} must be at least {min_length} characters, got {length}",
-                    )
-                if max_length is not None and length > max_length:
-                    return FlextResult[str].fail(
-                        f"{field_name} must be at most {max_length} characters, got {length}",
-                    )
-                return FlextResult[str].fail(f"{field_name} validation error: {e}")
-
-        @staticmethod
-        def validate_string_pattern(
-            value: str,
-            pattern: str | None,
-            field_name: str = "string",
-        ) -> FlextResult[str]:
-            """Validate string against regex pattern."""
-            if pattern is None:
-                return FlextResult[str].ok(value)
-
-            # First validate the pattern itself using FlextResult composition
-            pattern_validation = FlextUtilities.Validation.validate_regex_pattern(
-                pattern,
-            )
-            if pattern_validation.is_failure:
-                return FlextResult[str].fail(
-                    f"Invalid pattern for {field_name}: {pattern_validation.error}",
-                )
-
-            # Then validate the value against the validated pattern
-            compiled_pattern = pattern_validation.unwrap()
-            if not compiled_pattern.match(value):
-                return FlextResult[str].fail(
-                    f"{field_name} does not match required pattern",
-                )
-            return FlextResult[str].ok(value)
-
-        @staticmethod
-        def validate_regex_pattern(pattern: str) -> FlextResult[re.Pattern[str]]:
-            """Validate and compile a regex pattern using explicit FlextResult handling.
-
-            This replaces try/except patterns with explicit FlextResult error handling
-            following the CLAUDE.md architectural standards.
-
-            Args:
-                pattern: Regular expression pattern to validate and compile
-
-            Returns:
-                FlextResult containing compiled pattern or validation error
-
-            """
-            if not pattern:
-                return FlextResult[re.Pattern[str]].fail("Pattern cannot be empty")
-
-            # Type annotation guarantees pattern is str, isinstance check unnecessary
-
-            # Check for basic pattern validity before compilation
-            if len(pattern) > FlextConstants.Utilities.MAX_REGEX_PATTERN_LENGTH:
-                return FlextResult[re.Pattern[str]].fail(
-                    "Pattern too long (max 1000 characters)",
-                )
-
-            # Use explicit error checking instead of try/except
-            # Compile pattern and check for errors using direct validation
-            try:
-                compiled_pattern = re.compile(pattern)
-                return FlextResult[re.Pattern[str]].ok(compiled_pattern)
-            except re.error as e:
-                # This try/except is acceptable for interfacing with external libraries
-                # that don't provide non-exception APIs for validation
-                return FlextResult[re.Pattern[str]].fail(f"Invalid regex pattern: {e}")
-
-        @staticmethod
-        def validate_string(
-            value: str | None,
-            min_length: int = 1,
-            max_length: int | None = None,
-            pattern: str | None = None,
-            field_name: str = "string",
-        ) -> FlextResult[str]:
-            """Comprehensive string validation using railway composition."""
-            # Use explicit function calls instead of lambdas to avoid type inference issues
-            not_none_result = FlextUtilities.Validation.validate_string_not_none(
-                value,
-                field_name,
-            )
-            if not_none_result.is_failure:
-                return not_none_result
-
-            not_empty_result = FlextUtilities.Validation.validate_string_not_empty(
-                not_none_result.unwrap(),
-                field_name,
-            )
-            if not_empty_result.is_failure:
-                return not_empty_result
-
-            length_result = FlextUtilities.Validation.validate_string_length(
-                not_empty_result.unwrap(),
-                min_length,
-                max_length,
-                field_name,
-            )
-            if length_result.is_failure:
-                return length_result
-
-            if pattern:
-                return FlextUtilities.Validation.validate_string_pattern(
-                    length_result.unwrap(),
-                    pattern,
-                    field_name,
-                )
-            return FlextResult[str].ok(length_result.unwrap())
-
-        @staticmethod
-        def validate_email(email: str) -> FlextResult[str]:
-            """Validate email format using FlextRuntime foundation + Pydantic validation.
-
-            Delegates to FlextRuntime.is_valid_email() for initial validation (Layer 0.5),
-            then performs comprehensive Pydantic EmailStr validation (RFC 5322 compliant).
-
-            Validation layers:
-            1. FlextRuntime.is_valid_email() - Pattern-based type guard from Layer 0.5
-            2. Pydantic EmailStr - RFC 5322 compliance, normalization, length constraints
-
-            Args:
-                email: Email address string to validate
-
-            Returns:
-                FlextResult[str]: Validated email or error message
-
-            """
-            # Layer 0.5: Foundation validation using FlextRuntime type guard
-            if not FlextRuntime.is_valid_email(email):
-                return FlextResult[str].fail(
-                    "Invalid email format (failed foundation validation)"
-                )
-
-            # Layer 7: Comprehensive Pydantic validation
-            try:
-                email_adapter: TypeAdapter[EmailStr] = TypeAdapter(EmailStr)
-                validated: EmailStr = email_adapter.validate_python(email)
-                return FlextResult[str].ok(str(validated))
-            except ImportError:
-                # email-validator not installed, fall back to foundation validation
-                return FlextResult[str].ok(email)
-            except (PydanticValidationError, ValueError) as e:
-                return FlextResult[str].fail(f"Invalid email format: {e}")
-
-        @staticmethod
-        def validate_url(url: str) -> FlextResult[str]:
-            """Validate URL format using FlextRuntime foundation + Pydantic validation.
-
-            Delegates to FlextRuntime.is_valid_url() for initial validation (Layer 0.5),
-            then performs comprehensive Pydantic HttpUrl validation (RFC 3986 compliant).
-
-            Validation layers:
-            1. FlextRuntime.is_valid_url() - Pattern-based type guard from Layer 0.5
-            2. Pydantic HttpUrl - Protocol, host, port, path validation per RFC 3986
-
-            Args:
-                url: URL string to validate
-
-            Returns:
-                FlextResult[str]: Validated URL or error message
-
-            """
-            # Layer 0.5: Foundation validation using FlextRuntime type guard
-            if not FlextRuntime.is_valid_url(url):
-                return FlextResult[str].fail(
-                    "Invalid URL format (failed foundation validation)"
-                )
-
-            # Layer 7: Comprehensive Pydantic validation
-            try:
-                url_adapter = TypeAdapter(HttpUrl)
-                validated = url_adapter.validate_python(url)
-                return FlextResult[str].ok(str(validated))
-            except (PydanticValidationError, ValueError) as e:
-                return FlextResult[str].fail(f"Invalid URL format: {e}")
-
-        @staticmethod
-        def validate_port(port: int | str) -> FlextResult[int]:
-            """Validate network port number using Pydantic conint."""
-            try:
-                # Define port constraints (1-65535) using Pydantic
-                port_number = conint(ge=1, le=FlextConstants.Network.MAX_PORT)
-
-                # Validate using TypeAdapter (handles both int and str input)
-                adapter = TypeAdapter(port_number)
-                validated = adapter.validate_python(port)
-                return FlextResult[int].ok(int(validated))
-            except (PydanticValidationError, ValueError) as e:
-                # Provide meaningful error messages
-                if isinstance(port, str) and not port.isdigit():
-                    return FlextResult[int].fail(
-                        f"Port must be a valid integer, got {port}"
-                    )
-
-                try:
-                    port_int = int(port)
-                    if port_int < 1 or port_int > FlextConstants.Network.MAX_PORT:
-                        return FlextResult[int].fail(
-                            f"Port must be between 1 and {FlextConstants.Network.MAX_PORT}, got {port_int}",
-                        )
-                except (ValueError, TypeError):
-                    pass
-
-                return FlextResult[int].fail(f"Invalid port number: {e}")
-
-        @staticmethod
-        def validate_environment_value(
-            value: str,
-            allowed_environments: FlextTypes.StringList,
-        ) -> FlextResult[str]:
-            """Validate environment value against allowed list."""
-            string_result = FlextUtilities.Validation.validate_string(
-                value,
-                min_length=1,
-                field_name="environment",
-            )
-            if string_result.is_failure:
-                return string_result
-
-            env = string_result.unwrap()
-            if env in allowed_environments:
-                return FlextResult[str].ok(env)
-            return FlextResult[str].fail(
-                f"Environment must be one of {allowed_environments}, got '{env}'",
-            )
-
-        @staticmethod
-        def validate_log_level(level: str) -> FlextResult[str]:
-            """Validate log level value."""
-            allowed_levels = list(FlextConstants.Logging.VALID_LEVELS)
-            return FlextUtilities.Validation.validate_environment_value(
-                level.upper(),
-                allowed_levels,
-            )
-
-        @staticmethod
-        def validate_security_token(token: str) -> FlextResult[str]:
-            """Validate security token format and strength."""
-            return FlextUtilities.Validation.validate_string(
-                token,
-                min_length=FlextConstants.Security.MIN_PASSWORD_LENGTH,
-                field_name="security token",
-            )
-
-        @staticmethod
-        def validate_connection_string(conn_str: str) -> FlextResult[str]:
-            """Validate database connection string format."""
-            return FlextUtilities.Validation.validate_string(
-                conn_str,
-                min_length=10,
-                field_name="connection string",
-            )
-
-        @staticmethod
-        def validate_directory_path(path: str) -> FlextResult[str]:
-            """Validate directory path using FlextRuntime foundation + normalization.
-
-            Delegates to FlextRuntime.is_valid_path() for pattern validation (Layer 0.5),
-            then performs null byte checks and path normalization.
-
-            Validation layers:
-            1. FlextRuntime.is_valid_path() - Pattern-based type guard from Layer 0.5
-            2. Null byte check - Security validation
-            3. os.path.normpath - Path normalization
-
-            Args:
-                path: Directory path string to validate
-
-            Returns:
-                FlextResult[str]: Normalized path or error message
-
-            """
-            # Layer 0.5: Foundation validation using FlextRuntime type guard
-            if not FlextRuntime.is_valid_path(path):
-                return FlextResult[str].fail(
-                    "Invalid directory path format (failed foundation validation)"
-                )
-
-            # Layer 7: Additional security checks
-            if "\x00" in path:
-                return FlextResult[str].fail("directory path cannot contain null bytes")
-
-            string_result = FlextUtilities.Validation.validate_string(
-                path,
-                min_length=1,
-                field_name="directory path",
-            )
-            if string_result.is_failure:
-                return string_result
-
-            return FlextResult[str].ok(os.path.normpath(string_result.unwrap()))
-
-        @staticmethod
-        def validate_file_path(path: str) -> FlextResult[str]:
-            """Validate file path using FlextRuntime foundation + normalization.
-
-            Delegates to FlextRuntime.is_valid_path() for pattern validation (Layer 0.5),
-            then performs path normalization.
-
-            Validation layers:
-            1. FlextRuntime.is_valid_path() - Pattern-based type guard from Layer 0.5
-            2. os.path.normpath - Path normalization
-
-            Args:
-                path: File path string to validate
-
-            Returns:
-                FlextResult[str]: Normalized path or error message
-
-            """
-            # Layer 0.5: Foundation validation using FlextRuntime type guard
-            if not FlextRuntime.is_valid_path(path):
-                return FlextResult[str].fail(
-                    "Invalid file path format (failed foundation validation)"
-                )
-
-            string_result = FlextUtilities.Validation.validate_string(
-                path,
-                min_length=1,
-                field_name="file path",
-            )
-            if string_result.is_failure:
-                return string_result
-
-            return FlextResult[str].ok(os.path.normpath(string_result.unwrap()))
-
-        @staticmethod
-        def validate_existing_file_path(path: str) -> FlextResult[str]:
-            """Validate that file path exists on filesystem."""
-            file_path_result: FlextResult[str] = (
-                FlextUtilities.Validation.validate_file_path(path)
-            )
-            if file_path_result.is_failure:
-                return file_path_result
-
-            p = file_path_result.unwrap()
-            if pathlib.Path(p).is_file():
-                return FlextResult[str].ok(p)
-            return FlextResult[str].fail(f"file does not exist: {p}")
-
-        @staticmethod
-        def validate_timeout_seconds(timeout: float) -> FlextResult[float]:
-            """Validate timeout value in seconds using explicit FlextResult patterns."""
-            # First convert to float using explicit validation
-            float_conversion = FlextUtilities.Validation.convert_to_float(timeout)
-            if float_conversion.is_failure:
-                return FlextResult[float].fail(
-                    f"Timeout must be a valid number, got {timeout}: {float_conversion.error}",
-                )
-
-            timeout_float = float_conversion.unwrap()
-
-            # Then validate the timeout constraints
-            if timeout_float <= FlextConstants.Core.INITIAL_TIME:
-                return FlextResult[float].fail(
-                    f"Timeout must be positive, got {timeout_float}",
-                )
-            if timeout_float > FlextConstants.Utilities.MAX_TIMEOUT_SECONDS:
-                return FlextResult[float].fail(
-                    f"Timeout too large (max {FlextConstants.Utilities.MAX_TIMEOUT_SECONDS}s), got {timeout_float}",
-                )
-            return FlextResult[float].ok(timeout_float)
-
-        @staticmethod
-        def convert_to_float(value: float | str) -> FlextResult[float]:
-            """Convert value to float using explicit FlextResult handling.
-
-            This replaces try/except patterns with explicit validation following
-            the CLAUDE.md architectural standards.
-
-            Args:
-                value: Value to convert to float (float, int, or string)
-
-            Returns:
-                FlextResult containing converted float or conversion error
-
-            """
-            if isinstance(value, (float, int)):
-                return FlextResult[float].ok(float(value))
-
-            # value is str at this point due to type annotation
-            # Type checking already ensures this
-
-            # Validate string before conversion
-            cleaned_value = value.strip()
-            if not cleaned_value:
-                return FlextResult[float].fail("Cannot convert empty string to float")
-
-            # Check for obvious non-numeric patterns (basic validation)
-            if cleaned_value.lower() in {"inf", "+inf", "-inf", "nan"}:
-                return FlextResult[float].fail(
-                    f"Special float values not allowed: {value}",
-                )
-
-            # Use minimal try/except only for interfacing with built-in float()
-            # which doesn't provide non-exception validation API
-            try:
-                converted_float = float(cleaned_value)
-                # Check for infinity and NaN after conversion
-                if not math.isfinite(converted_float):
-                    return FlextResult[float].fail(
-                        f"Infinite or NaN values not allowed: {value}",
-                    )
-                return FlextResult[float].ok(converted_float)
-            except (ValueError, OverflowError) as e:
-                # This try/except is acceptable for interfacing with built-in functions
-                # that don't provide non-exception APIs for validation
-                return FlextResult[float].fail(
-                    f"Cannot convert '{value}' to float: {e}",
-                )
-
-        @staticmethod
-        def validate_retry_count(retries: int) -> FlextResult[int]:
-            """Validate retry count value."""
-            try:
-                if retries < FlextConstants.Core.ZERO:
-                    return FlextResult[int].fail(
-                        f"Retry count cannot be negative, got {retries}",
-                    )
-                if retries > FlextConstants.Reliability.MAX_RETRY_ATTEMPTS:
-                    return FlextResult[int].fail(
-                        f"Retry count too high (max {FlextConstants.Reliability.MAX_RETRY_ATTEMPTS}), got {retries}"
-                    )
-                return FlextResult[int].ok(retries)
-            except (ValueError, TypeError):
-                return FlextResult[int].fail(
-                    f"Retry count must be a valid integer, got {retries}",
-                )
-
-        @staticmethod
-        def validate_positive_integer(
-            value: int,
-            field_name: str = "value",
-        ) -> FlextResult[int]:
-            """Validate that value is a positive integer."""
-            try:
-                if value <= FlextConstants.Core.ZERO:
-                    return FlextResult[int].fail(
-                        f"{field_name} must be positive, got {value}",
-                    )
-                return FlextResult[int].ok(value)
-            except (ValueError, TypeError):
-                return FlextResult[int].fail(
-                    f"{field_name} must be a valid integer, got {value}",
-                )
-
-        @staticmethod
-        def validate_non_negative_integer(
-            value: int,
-            field_name: str = "value",
-        ) -> FlextResult[int]:
-            """Validate that value is a non-negative integer."""
-            try:
-                if value < FlextConstants.Core.ZERO:
-                    return FlextResult[int].fail(
-                        f"{field_name} cannot be negative, got {value}",
-                    )
-                return FlextResult[int].ok(value)
-            except (ValueError, TypeError):
-                return FlextResult[int].fail(
-                    f"{field_name} must be a valid integer, got {value}",
-                )
-
-        @staticmethod
-        def validate_host(host: str) -> FlextResult[str]:
-            """Validate host name or IP address."""
-            return FlextUtilities.Validation.validate_string(
-                host,
-                min_length=1,
-                field_name="host",
-            )
-
-        @staticmethod
-        def validate_http_status(status_code: int) -> FlextResult[int]:
-            """Validate HTTP status code range."""
-            try:
-                min_http_status = FlextConstants.Platform.MIN_HTTP_STATUS_RANGE
-                max_http_status = FlextConstants.Platform.MAX_HTTP_STATUS_RANGE
-                if not (min_http_status <= status_code <= max_http_status):
-                    return FlextResult[int].fail(
-                        f"HTTP status code must be between {min_http_status} and {max_http_status}, got {status_code}"
-                    )
-                return FlextResult[int].ok(status_code)
-            except (ValueError, TypeError):
-                return FlextResult[int].fail(
-                    f"HTTP status code must be a valid integer, got {status_code}",
-                )
-
-        @staticmethod
-        def is_non_empty_string(value: str) -> bool:
-            """Check if string is non-empty after stripping."""
-            return bool(value.strip())
-
-        @staticmethod
-        def validate_pipeline[TValidate](
-            value: TValidate,
-            validators: list[Callable[[TValidate], FlextResult[None]]],
-        ) -> FlextResult[TValidate]:
-            """Comprehensive validation pipeline using advanced railway patterns.
-
-            Args:
-                value: Value to validate
-                validators: List of validation functions to apply
-
-            Returns:
-                Original value if all validations pass, accumulated errors otherwise
-
-            """
-            return FlextResult.validate_all(value, *validators)
-
-        @staticmethod
-        def validate_with_context[TContext](
-            value: TContext,
-            context_name: str,
-            validator: Callable[[TContext], FlextResult[None]],
-        ) -> FlextResult[TContext]:
-            """Validate with enhanced error context using railway patterns.
-
-            Args:
-                value: Value to validate
-                context_name: Context name for error messages
-                validator: Validation function
-
-            Returns:
-                Value if validation passes, contextual error otherwise
-
-            """
-            validation_result: FlextResult[None] = validator(value)
-            if validation_result.is_failure:
-                return FlextResult[TContext].fail(
-                    f"{context_name}: {validation_result.error}",
-                )
-            return FlextResult[TContext].ok(value)
-
-        @staticmethod
-        def validate_email_address(email: str) -> FlextResult[str]:
-            """Enhanced email validation matching FlextModels.EmailAddress pattern."""
-            if not email:
-                return FlextResult[str].fail("Email cannot be empty")
-
-            # Basic format validation - must have @ and domain part
-            if "@" not in email:
-                return FlextResult[str].fail("Invalid email format: missing @")
-
-            parts = email.split("@", 1)
-            if (
-                len(parts) != FlextConstants.Validation.EMAIL_PARTS_COUNT
-                or not parts[0]
-                or not parts[1]
-            ):
-                return FlextResult[str].fail(f"Invalid email format: {email}")
-
-            domain = parts[1]
-            if "." not in domain:
-                return FlextResult[str].fail("Invalid email format: missing domain dot")
-
-            # Length validation using FlextConstants
-            if len(email) > FlextConstants.Validation.MAX_EMAIL_LENGTH:
-                return FlextResult[str].fail(
-                    f"Email too long (max {FlextConstants.Validation.MAX_EMAIL_LENGTH} chars)",
-                )
-
-            return FlextResult[str].ok(email.lower())
-
-        @staticmethod
-        def validate_hostname(hostname: str) -> FlextResult[str]:
-            """Validate hostname format matching FlextModels.Host pattern."""
-            # Trim whitespace first
-            hostname = hostname.strip()
-
-            # Check if empty after trimming
-            if not hostname:
-                return FlextResult[str].fail("Hostname cannot be empty")
-
-            # Basic hostname validation
-            if len(hostname) > FlextConstants.Validation.MAX_EMAIL_LENGTH:
-                return FlextResult[str].fail("Hostname too long")
-
-            if not all(c.isalnum() or c in ".-" for c in hostname):
-                return FlextResult[str].fail("Invalid hostname characters")
-
-            # Check for consecutive dots or dashes
-            if ".." in hostname or "--" in hostname:
-                return FlextResult[str].fail(
-                    "Invalid hostname format: consecutive dots or dashes",
-                )
-
-            # Check that hostname doesn't start or end with dot or dash
-            if hostname.startswith((".", "-")) or hostname.endswith((".", "-")):
-                return FlextResult[str].fail(
-                    "Invalid hostname format: cannot start or end with dot or dash",
-                )
-
-            return FlextResult[str].ok(hostname.lower())
-
-        @staticmethod
-        def validate_entity_id(entity_id: str) -> FlextResult[str]:
-            """Validate entity ID format matching FlextModels.EntityId pattern."""
-            # Trim whitespace first
-            entity_id = entity_id.strip()
-
-            # Check if empty after trimming
-            if not entity_id:
-                return FlextResult[str].fail("Entity ID cannot be empty")
-
-            # Check minimum length
-            if len(entity_id) < FlextConstants.Validation.MIN_NAME_LENGTH:
-                return FlextResult[str].fail(
-                    f"Entity ID too short (min {FlextConstants.Validation.MIN_NAME_LENGTH} chars)",
-                )
-
-            # Allow UUIDs, alphanumeric with dashes/underscores
-            if not re.match(r"^[a-zA-Z0-9_-]+$", entity_id):
-                return FlextResult[str].fail("Invalid entity ID format")
-
-            return FlextResult[str].ok(entity_id)
-
-        @staticmethod
-        def validate_phone_number(phone: str) -> FlextResult[str]:
-            """Validate phone number using FlextRuntime foundation + digit count check.
-
-            Delegates to FlextRuntime.is_valid_phone() for pattern validation (Layer 0.5),
-            then validates minimum digit requirements using FlextConstants.
-
-            Validation layers:
-            1. FlextRuntime.is_valid_phone() - Pattern-based type guard from Layer 0.5
-            2. MIN_PHONE_DIGITS check - Ensures minimum digit count per FlextConstants
-
-            Args:
-                phone: Phone number string to validate
-
-            Returns:
-                FlextResult[str]: Validated phone number or error message
-
-            """
-            if not phone:
-                return FlextResult[str].fail("Phone number cannot be empty")
-
-            # Layer 0.5: Foundation validation using FlextRuntime type guard
-            if not FlextRuntime.is_valid_phone(phone):
-                return FlextResult[str].fail(
-                    "Invalid phone number format (failed foundation validation)"
-                )
-
-            # Layer 7: Additional digit count validation using FlextConstants
-            digits_only = "".join(c for c in phone if c.isdigit())
-            if len(digits_only) < FlextConstants.Validation.MIN_PHONE_DIGITS:
-                return FlextResult[str].fail(
-                    f"Phone number must have at least {FlextConstants.Validation.MIN_PHONE_DIGITS} digits",
-                )
-
-            return FlextResult[str].ok(phone)
-
-        @staticmethod
-        def validate_name_length(name: str) -> FlextResult[str]:
-            """Validate name length using FlextConstants."""
-            if not name:
-                return FlextResult[str].fail("Name cannot be empty")
-
-            if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
-                return FlextResult[str].fail(
-                    f"Name too short (min {FlextConstants.Validation.MIN_NAME_LENGTH} chars)",
-                )
-
-            if len(name) > FlextConstants.Validation.MAX_NAME_LENGTH:
-                return FlextResult[str].fail(
-                    f"Name too long (max {FlextConstants.Validation.MAX_NAME_LENGTH} chars)",
-                )
-
-            return FlextResult[str].ok(name.strip())
-
-        @staticmethod
-        def validate_bcrypt_rounds(rounds: int) -> FlextResult[int]:
-            """Validate BCrypt rounds using FlextConstants."""
-            if rounds < FlextConstants.Security.MIN_BCRYPT_ROUNDS:
-                return FlextResult[int].fail(
-                    f"BCrypt rounds too low (min {FlextConstants.Security.MIN_BCRYPT_ROUNDS})",
-                )
-
-            if rounds > FlextConstants.Security.MAX_BCRYPT_ROUNDS:
-                return FlextResult[int].fail(
-                    f"BCrypt rounds too high (max {FlextConstants.Security.MAX_BCRYPT_ROUNDS})",
-                )
-
-            return FlextResult[int].ok(rounds)
-
-        @staticmethod
-        def validate_data(
-            data: FlextTypes.Dict,
-            required_fields: FlextTypes.StringList
-            | dict[str, type | tuple[type, ...]]
-            | None = None,
-        ) -> FlextResult[FlextTypes.Dict]:
-            """Validate dictionary data with optional required fields and type checking.
-
-            Args:
-                data: Dictionary to validate
-                required_fields: Optional list of field names or FlextTypes.Dict mapping fields to types
-
-            Returns:
-                FlextResult[FlextTypes.Dict]: Validated data or error
-
-            """
-            if required_fields:
-                if isinstance(required_fields, list):
-                    # Simple presence check
-                    missing_fields = [
-                        field for field in required_fields if field not in data
-                    ]
-                    if missing_fields:
-                        return FlextResult[FlextTypes.Dict].fail(
-                            f"Missing required fields: {', '.join(missing_fields)}"
-                        )
-                else:
-                    # Type validation
-                    for field, expected_type in required_fields.items():
-                        if field not in data:
-                            return FlextResult[FlextTypes.Dict].fail(
-                                f"Missing required field: {field}"
-                            )
-                        if not isinstance(data[field], expected_type):
-                            return FlextResult[FlextTypes.Dict].fail(
-                                f"Field '{field}' has incorrect type: expected {expected_type}, got {type(data[field])}"
-                            )
-
-            return FlextResult[FlextTypes.Dict].ok(data)
-
-        class Providers:
-            """Dependency injection providers for validation services.
-
-            Enables validation services to be registered and injected via DI container.
-            This follows Phase 2 enhancement pattern for making utilities injectable.
-            """
-
-            @staticmethod
-            def create_validation_service_provider() -> object:  # providers.Singleton
-                """Create singleton provider for validation service.
-
-                Returns:
-                    providers.Singleton: Singleton validation service provider
-
-                Example:
-                    >>> from flext_core import FlextUtilities
-                    >>> provider = FlextUtilities.Validation.Providers.create_validation_service_provider()
-                    >>> # Register in container
-                    >>> container.register("validation_service", provider)
-
-                """
-                providers_module = FlextRuntime.dependency_providers()
-
-                class ValidationService:
-                    """Injectable validation service using FlextUtilities patterns."""
-
-                    @staticmethod
-                    def validate_string(
-                        value: str | None,
-                        field_name: str = "string",
-                        min_length: int = 1,
-                        max_length: int | None = None,
-                        pattern: str | None = None,
-                    ) -> FlextResult[str]:
-                        """Validate string with composable railway pattern.
-
-                        Args:
-                            value: String to validate
-                            field_name: Field name for error messages
-                            min_length: Minimum length (default: 1)
-                            max_length: Maximum length (default: None)
-                            pattern: Optional regex pattern
-
-                        Returns:
-                            FlextResult[str]: Validated string or error
-
-                        """
-                        return (
-                            FlextUtilities.Validation.validate_string_not_none(
-                                value, field_name
-                            )
-                            .flat_map(
-                                lambda v: FlextUtilities.Validation.validate_string_not_empty(
-                                    v, field_name
-                                )
-                            )
-                            .flat_map(
-                                lambda v: FlextUtilities.Validation.validate_string_length(
-                                    v, min_length, max_length, field_name
-                                )
-                            )
-                            .flat_map(
-                                lambda v: FlextUtilities.Validation.validate_string_pattern(
-                                    v, pattern, field_name
-                                )
-                                if pattern
-                                else FlextResult[str].ok(v)
-                            )
-                        )
-
-                    @staticmethod
-                    def validate_email(
-                        value: str | None, field_name: str = "email"
-                    ) -> FlextResult[str]:
-                        """Validate email address.
-
-                        Args:
-                            value: Email to validate
-                            field_name: Field name for error messages
-
-                        Returns:
-                            FlextResult[str]: Validated email or error
-
-                        """
-                        # First validate not none
-                        if value is None:
-                            return FlextResult[str].fail(f"{field_name} cannot be None")
-                        return FlextUtilities.Validation.validate_email(value)
-
-                    @staticmethod
-                    def validate_url(
-                        value: str | None, field_name: str = "url"
-                    ) -> FlextResult[str]:
-                        """Validate URL.
-
-                        Args:
-                            value: URL to validate
-                            field_name: Field name for error messages
-
-                        Returns:
-                            FlextResult[str]: Validated URL or error
-
-                        """
-                        # First validate not none
-                        if value is None:
-                            return FlextResult[str].fail(f"{field_name} cannot be None")
-                        return FlextUtilities.Validation.validate_url(value)
-
-                return providers_module.Singleton(ValidationService)
-
-            @staticmethod
-            def register_in_container(container: FlextContainer) -> FlextResult[None]:
-                """Register validation service in DI container.
-
-                Args:
-                    container: DI container (FlextContainer or dependency_injector container)
-
-                Returns:
-                    FlextResult[None]: Success or failure
-
-                Example:
-                    >>> from flext_core import FlextContainer, FlextUtilities
-                    >>> container = FlextContainer.get_global()
-                    >>> result = (
-                    ...     FlextUtilities.Validation.Providers.register_in_container(
-                    ...         container
-                    ...     )
-                    ... )
-
-                """
-                try:
-                    validation_provider = FlextUtilities.Validation.Providers.create_validation_service_provider()
-
-                    # Register with FlextContainer
-                    if hasattr(container, "register"):
-                        result = container.register(
-                            "validation_service", validation_provider
-                        )
-                        if result.is_failure:
-                            return FlextResult[None].fail(
-                                f"Registration failed: {result.error}"
-                            )
-                        return FlextResult[None].ok(None)
-
-                    return FlextResult[None].fail(
-                        "Container does not support service registration"
-                    )
-
-                except Exception as e:
-                    return FlextResult[None].fail(
-                        f"Validation provider registration failed: {e}"
-                    )
-
     class Cache:
-        """Cache management utilities for FlextMixins and other components.
+        """Cache utility functions for data normalization and sorting."""
 
-        Extended with CQRS cache functionality for command/query result caching.
-        """
+        @staticmethod
+        def normalize_component(
+            component: object,
+        ) -> object:
+            """Normalize a component for consistent representation."""
+            if isinstance(component, dict):
+                component_dict = cast("FlextTypes.Dict", component)
+                return {
+                    str(k): FlextUtilities.Cache.normalize_component(v)
+                    for k, v in component_dict.items()
+                }
+            if isinstance(component, (list, tuple)):
+                sequence = cast("Sequence[object]", component)
+                return [
+                    FlextUtilities.Cache.normalize_component(item) for item in sequence
+                ]
+            if isinstance(component, set):
+                set_component = cast("set[object]", component)
+                return {
+                    FlextUtilities.Cache.normalize_component(item)
+                    for item in set_component
+                }
+            return component
+
+        @staticmethod
+        def sort_key(key: object) -> tuple[int, str]:
+            """Generate a sort key for consistent ordering."""
+            if isinstance(key, str):
+                return (0, key.lower())
+            if isinstance(key, (int, float)):
+                return (1, str(key))
+            return (2, str(key))
+
+        @staticmethod
+        def sort_dict_keys(data: object) -> object:
+            """Sort dictionary keys for consistent representation."""
+            if isinstance(data, dict):
+                data_dict = cast("FlextTypes.Dict", data)
+                return cast(
+                    "object",
+                    {
+                        k: FlextUtilities.Cache.sort_dict_keys(data_dict[k])
+                        for k in sorted(
+                            data_dict.keys(), key=FlextUtilities.Cache.sort_key
+                        )
+                    },
+                )
+            return data
 
         @staticmethod
         def clear_object_cache(obj: object) -> FlextResult[None]:
-            """Clear cache for object if it has cache-related attributes.
+            """Clear any caches on an object."""
+            try:
+                # Common cache attribute names to check and clear
+                cache_attributes = [
+                    "_cache",
+                    "__cache__",
+                    "cache",
+                    "_cached_data",
+                    "_memoized",
+                ]
+
+                cleared_count = 0
+                for attr_name in cache_attributes:
+                    if hasattr(obj, attr_name):
+                        cache_attr = getattr(obj, attr_name, None)
+                        if cache_attr is not None:
+                            # Clear FlextTypes.Dict-like caches
+                            if hasattr(cache_attr, "clear") and callable(
+                                cache_attr.clear,
+                            ):
+                                cache_attr.clear()
+                                cleared_count += 1
+                            # Reset to None for simple cached values
+                            else:
+                                setattr(obj, attr_name, None)
+                                cleared_count += 1
+
+                return FlextResult[None].ok(None)
+            except Exception as e:
+                return FlextResult[None].fail(f"Failed to clear caches: {e}")
+
+        @staticmethod
+        def has_cache_attributes(obj: object) -> bool:
+            """Check if object has any cache-related attributes."""
+            cache_attributes = [
+                "_cache",
+                "__cache__",
+                "cache",
+                "_cached_data",
+                "_memoized",
+            ]
+            return any(hasattr(obj, attr) for attr in cache_attributes)
+
+        @staticmethod
+        def generate_cache_key(*args: object, **kwargs: object) -> str:
+            """Generate a cache key from arguments."""
+            key_data = str(args) + str(sorted(kwargs.items()))
+            return hashlib.sha256(key_data.encode()).hexdigest()
+
+    @staticmethod
+    def generate_id() -> str:
+        """Generate a unique identifier."""
+        return str(uuid.uuid4())
+
+    class Validation:
+        """Unified validation patterns using railway composition."""
+
+        @staticmethod
+        def validate_string_not_none(value: object) -> FlextResult[None]:
+            """Validate that a string value is not None."""
+            if value is None:
+                return FlextResult[None].fail("Value cannot be None")
+            if not isinstance(value, str):
+                return FlextResult[None].fail("Value must be a string")
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_string_not_empty(value: str) -> FlextResult[None]:
+            """Validate that a string value is not empty."""
+            if not value:
+                return FlextResult[None].fail("String cannot be empty")
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_string_length(
+            value: str, min_length: int = 0, max_length: int | None = None
+        ) -> FlextResult[None]:
+            """Validate string length constraints."""
+            if len(value) < min_length:
+                return FlextResult[None].fail(f"String too short (min: {min_length})")
+            if max_length is not None and len(value) > max_length:
+                return FlextResult[None].fail(f"String too long (max: {max_length})")
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_string_pattern(
+            value: str, pattern: str | None
+        ) -> FlextResult[None]:
+            """Validate string against a regex pattern."""
+            if pattern is None:
+                return FlextResult[None].ok(None)
+
+            try:
+                if not re.match(pattern, value):
+                    return FlextResult[None].fail(
+                        f"String does not match pattern: {pattern}"
+                    )
+                return FlextResult[None].ok(None)
+            except re.error as e:
+                return FlextResult[None].fail(f"Invalid regex pattern: {e}")
+
+        @staticmethod
+        def validate_string(value: str) -> FlextResult[None]:
+            """Validate that value is a non-empty string."""
+            if not value.strip():
+                return FlextResult[None].fail(
+                    "String cannot be empty or whitespace-only"
+                )
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_email(value: str) -> FlextResult[None]:
+            """Validate email format."""
+            if "@" not in value or "." not in value:
+                return FlextResult[None].fail("Invalid email format")
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_positive_integer(value: object) -> FlextResult[None]:
+            """Validate that value is a positive integer."""
+            if not isinstance(value, int) or value <= 0:
+                return FlextResult[None].fail("Value must be a positive integer")
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_non_negative_integer(value: object) -> FlextResult[None]:
+            """Validate that value is a non-negative integer."""
+            if not isinstance(value, int) or value < 0:
+                return FlextResult[None].fail("Value must be a non-negative integer")
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def validate_directory_path(value: str) -> FlextResult[None]:
+            """Validate directory path exists."""
+            if not pathlib.Path(value).exists():
+                return FlextResult[None].fail(f"Directory does not exist: {value}")
+            if not pathlib.Path(value).is_dir():
+                return FlextResult[None].fail(f"Path is not a directory: {value}")
+            return FlextResult[None].ok(None)
+
+        @staticmethod
+        def is_non_empty_string(value: object) -> bool:
+            """Check if value is a non-empty string."""
+            return isinstance(value, str) and len(value.strip()) > 0
+
+        @staticmethod
+        def clear_all_caches(obj: object) -> FlextResult[None]:
+            """Clear all caches on an object to prevent memory leaks.
 
             Args:
-                obj: Object to clear cache for
+                obj: Object to clear caches on
 
             Returns:
                 FlextResult indicating success or failure
@@ -1062,9 +282,8 @@ class FlextUtilities:
                                 cleared_count += 1
 
                 return FlextResult[None].ok(None)
-
             except Exception as e:
-                return FlextResult[None].fail(f"Failed to clear cache: {e}")
+                return FlextResult[None].fail(f"Failed to clear caches: {e}")
 
         @staticmethod
         def has_cache_attributes(obj: object) -> bool:
@@ -1088,14 +307,15 @@ class FlextUtilities:
             return any(hasattr(obj, attr) for attr in cache_attributes)
 
         @staticmethod
-        def sort_key(value: object) -> str:
+        def sort_key(value: FlextTypes.SerializableType) -> str:
             """Return a deterministic string for ordering normalized cache components."""
-            if orjson is not None:
-                try:
-                    json_bytes = orjson.dumps(value, option=orjson.OPT_SORT_KEYS)
-                    return json_bytes.decode(FlextConstants.Utilities.DEFAULT_ENCODING)
-                except Exception:
-                    pass
+            try:
+                json_bytes = orjson.dumps(value, option=orjson.OPT_SORT_KEYS)
+                return json_bytes.decode(FlextConstants.Utilities.DEFAULT_ENCODING)
+            except Exception as e:
+                # Use proper logger instead of root logger
+                logger = logging.getLogger(__name__)
+                logger.debug("orjson dumps failed: %s", e)
             # Fallback to standard library json with sorted keys
             return json.dumps(value, sort_keys=True, default=str)
 
@@ -1152,8 +372,8 @@ class FlextUtilities:
                     FlextUtilities.Cache.normalize_component(item) for item in set_value
                 ]
 
-                # Sort by cache sort key
-                set_items.sort(key=FlextUtilities.Cache.sort_key)
+                # Sort by string representation for deterministic ordering
+                set_items.sort(key=str)
 
                 normalized_set = tuple(set_items)
                 return ("set", normalized_set)
@@ -1222,7 +442,7 @@ class FlextUtilities:
 
             except Exception:
                 # Fallback to string representation if anything fails
-                command_str_fallback = str(command) if command is not None else "None"
+                command_str_fallback = str(command) if command is not None else "None"  # type: ignore[arg-type]
                 command_str_fallback = command_str_fallback.encode(
                     "utf-8", errors="ignore"
                 ).decode("utf-8", errors="ignore")
@@ -1547,11 +767,6 @@ class FlextUtilities:
         """Type guard utilities for runtime type checking."""
 
         @staticmethod
-        def is_string_non_empty(value: object) -> bool:
-            """Check if value is a non-empty string (excluding whitespace-only strings)."""
-            return isinstance(value, str) and len(value.strip()) > 0
-
-        @staticmethod
         def is_dict_non_empty(value: object) -> bool:
             """Check if value is a non-empty dictionary."""
             return isinstance(value, dict) and len(cast("FlextTypes.Dict", value)) > 0
@@ -1778,105 +993,103 @@ class FlextUtilities:
             except TypeError:
                 return True
 
-    @staticmethod
-    def run_external_command(
-        cmd: FlextTypes.StringList,
-        *,
-        capture_output: bool = True,
-        check: bool = True,
-        env: FlextTypes.StringDict | None = None,
-        cwd: str | pathlib.Path | None = None,
-        timeout: float | None = None,
-        command_input: str | bytes | None = None,
-        text: bool | None = None,
-    ) -> FlextResult[subprocess.CompletedProcess[str]]:
-        """Execute external command with proper error handling using FlextResult pattern.
+        @staticmethod
+        def run_external_command(
+            cmd: FlextTypes.StringList,
+            *,
+            capture_output: bool = True,
+            check: bool = True,
+            env: FlextTypes.StringDict | None = None,
+            cwd: str | pathlib.Path | None = None,
+            timeout: float | None = None,
+            command_input: str | bytes | None = None,
+            text: bool | None = None,
+        ) -> FlextResult[subprocess.CompletedProcess[str]]:
+            """Execute external command with proper error handling using FlextResult pattern.
 
-        Args:
-            cmd: Command to execute as list of strings
-            capture_output: Whether to capture stdout/stderr
-            check: Whether to raise exception on non-zero exit code
-            env: Environment variables for the command
-            cwd: Working directory for the command
-            timeout: Command timeout in seconds
-            input: Input to send to the command
-            text: Whether to decode stdout/stderr as text (Python 3.7+)
+            Args:
+                cmd: Command to execute as list of strings
+                capture_output: Whether to capture stdout/stderr
+                check: Whether to raise exception on non-zero exit code
+                env: Environment variables dictionary for the command
+                cwd: Working directory for the command
+                timeout: Command timeout in seconds
+                input: Input to send to the command
+                text: Whether to decode stdout/stderr as text (Python 3.7+)
 
-        Returns:
-            FlextResult containing CompletedProcess on success or error details on failure
+            Returns:
+                FlextResult containing CompletedProcess on success or error details on failure
 
-        Example:
-            ```python
-            result = FlextUtilities.run_external_command(
-                ["python", "script.py"], capture_output=True, timeout=60.0
-            )
-            if result.is_success:
-                process = result.value
-                print(f"Exit code: {process.returncode}")
-                print(f"Output: {process.stdout}")
-            ```
+            Example:
+                ```python
+                result = FlextUtilities.run_external_command(
+                    ["python", "script.py"], capture_output=True, timeout=60.0
+                )
+                if result.is_success:
+                    process = result.value
+                    print(f"Exit code: {process.returncode}")
+                    print(f"Output: {process.stdout}")
+                ```
 
-        """
-        try:
-            # Validate command for security - ensure all parts are safe strings
-            # This prevents shell injection since we use list form, not shell=True
-            if not cmd or not all(part for part in cmd):
-                return FlextResult[subprocess.CompletedProcess[str]].fail(
-                    "Command must be a non-empty list of strings",
-                    error_code="INVALID_COMMAND",
+            """
+            try:
+                # Validate command for security - ensure all parts are safe strings
+                # This prevents shell injection since we use list form, not shell=True
+                if not cmd or not all(part for part in cmd):
+                    return FlextResult[subprocess.CompletedProcess[str]].fail(
+                        "Command must be a non-empty list of strings",
+                        error_code="INVALID_COMMAND",
+                    )
+
+                # Execute subprocess.run with explicit parameters to avoid overload issues
+                # S603: Command is validated above to ensure it's a safe list of strings
+                result = subprocess.run(  # nosec B603
+                    cmd,
+                    capture_output=capture_output,
+                    check=check,
+                    env=env,
+                    cwd=cwd,
+                    timeout=timeout,
+                    input=command_input,
+                    text=text if text is not None else True,
                 )
 
-            # Execute subprocess.run with explicit parameters to avoid overload issues
-            # S603: Command is validated above to ensure it's a safe list of strings
-            result = subprocess.run(  # nosec B603
-                cmd,
-                capture_output=capture_output,
-                check=check,
-                env=env,
-                cwd=cwd,
-                timeout=timeout,
-                input=command_input,
-                text=text if text is not None else True,
-            )
+                return FlextResult[subprocess.CompletedProcess[str]].ok(result)
 
-            return FlextResult[subprocess.CompletedProcess[str]].ok(result)
-
-        except subprocess.CalledProcessError as e:
-            return FlextResult[subprocess.CompletedProcess[str]].fail(
-                f"Command failed with exit code {e.returncode}",
-                error_code="COMMAND_FAILED",
-                error_data={
-                    "cmd": cmd,
-                    "returncode": e.returncode,
-                    "stdout": e.stdout,
-                    "stderr": e.stderr,
-                },
-            )
-        except subprocess.TimeoutExpired as e:
-            return FlextResult[subprocess.CompletedProcess[str]].fail(
-                f"Command timed out after {timeout} seconds",
-                error_code="COMMAND_TIMEOUT",
-                error_data={
-                    "cmd": cmd,
-                    "timeout": timeout,
-                    "stdout": e.stdout,
-                    "stderr": e.stderr,
-                },
-            )
-        except FileNotFoundError:
-            return FlextResult[subprocess.CompletedProcess[str]].fail(
-                f"Command not found: {cmd[0]}",
-                error_code="COMMAND_NOT_FOUND",
-                error_data={"cmd": cmd, "executable": cmd[0]},
-            )
-        except Exception as e:
-            return FlextResult[subprocess.CompletedProcess[str]].fail(
-                f"Unexpected error running command: {e!s}",
-                error_code="COMMAND_ERROR",
-                error_data={"cmd": cmd, "error": str(e)},
-            )
-
-    generate_id = Generators.generate_id
+            except subprocess.CalledProcessError as e:
+                return FlextResult[subprocess.CompletedProcess[str]].fail(
+                    f"Command failed with exit code {e.returncode}",
+                    error_code="COMMAND_FAILED",
+                    error_data={
+                        "cmd": cmd,
+                        "returncode": e.returncode,
+                        "stdout": e.stdout,
+                        "stderr": e.stderr,
+                    },
+                )
+            except subprocess.TimeoutExpired as e:
+                return FlextResult[subprocess.CompletedProcess[str]].fail(
+                    f"Command timed out after {timeout} seconds",
+                    error_code="COMMAND_TIMEOUT",
+                    error_data={
+                        "cmd": cmd,
+                        "timeout": timeout,
+                        "stdout": e.stdout,
+                        "stderr": e.stderr,
+                    },
+                )
+            except FileNotFoundError:
+                return FlextResult[subprocess.CompletedProcess[str]].fail(
+                    f"Command not found: {cmd[0]}",
+                    error_code="COMMAND_NOT_FOUND",
+                    error_data={"cmd": cmd, "executable": cmd[0]},
+                )
+            except Exception as e:
+                return FlextResult[subprocess.CompletedProcess[str]].fail(
+                    f"Unexpected error running command: {e!s}",
+                    error_code="COMMAND_ERROR",
+                    error_data={"cmd": cmd, "error": str(e)},
+                )
 
 
 __all__ = [

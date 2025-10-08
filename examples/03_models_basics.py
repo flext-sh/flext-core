@@ -24,16 +24,125 @@ from __future__ import annotations
 
 import json
 import warnings
+from copy import deepcopy
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import cast
+from typing import ClassVar, TypedDict, cast
 from uuid import uuid4
 
 from pydantic import Field
 
 from flext_core import FlextCore
 
-from .example_scenarios import ExampleScenarios, RealisticDataDict, RealisticOrderDict
+
+class OrderItemDict(TypedDict):
+    """TypedDict for order item data."""
+
+    product_id: str
+    name: str
+    price: str
+    quantity: int
+
+
+class RealisticOrderDict(TypedDict):
+    """TypedDict for realistic order data."""
+
+    customer_id: str
+    items: list[OrderItemDict]
+    order_id: str
+    total: str
+
+
+class RealisticDataDict(TypedDict):
+    """TypedDict for realistic data structure."""
+
+    order: RealisticOrderDict
+    api_response: FlextCore.Types.Dict
+    user_registration: FlextCore.Types.Dict
+
+
+class DemoScenarios:
+    """Inline scenario helpers for model demonstrations."""
+
+    _DATASET: ClassVar[dict] = {
+        "users": [
+            {
+                "id": 1,
+                "name": "Alice Example",
+                "email": "alice@example.com",
+                "age": 30,
+            },
+            {
+                "id": 2,
+                "name": "Bob Example",
+                "email": "bob@example.com",
+                "age": 28,
+            },
+        ],
+    }
+
+    _REALISTIC: ClassVar[RealisticDataDict] = {
+        "order": {
+            "customer_id": "cust-123",
+            "order_id": "order-456",
+            "total": "59.98",
+            "items": [
+                {
+                    "product_id": "prod-001",
+                    "name": "Widget",
+                    "price": "29.99",
+                    "quantity": 1,
+                },
+                {
+                    "product_id": "prod-002",
+                    "name": "Gadget",
+                    "price": "29.99",
+                    "quantity": 1,
+                },
+            ],
+        },
+        "api_response": {
+            "status": "ok",
+            "processed_at": "2025-01-01T00:00:00Z",
+        },
+        "user_registration": {
+            "user_id": "usr-789",
+            "plan": "standard",
+        },
+    }
+
+    _CONFIG: ClassVar[FlextCore.Types.Dict] = {
+        "database_url": "sqlite:///:memory:",
+        "api_timeout": 30,
+        "retry": 3,
+    }
+
+    _PAYLOAD: ClassVar[FlextCore.Types.Dict] = {
+        "event": "order_created",
+        "order_id": "order-456",
+        "metadata": {"source": "examples", "version": "1.0"},
+    }
+
+    _VALIDATION: ClassVar[FlextCore.Types.Dict] = {
+        "valid_emails": ["user@example.com", "contact@flext.dev"],
+        "invalid_emails": ["invalid", "missing-at"],
+    }
+
+    @staticmethod
+    def dataset() -> FlextCore.Types.Dict:
+        """Get a copy of the demo dataset."""
+        return deepcopy(DemoScenarios._DATASET)
+
+    @staticmethod
+    def realistic_data() -> RealisticDataDict:
+        """Get a copy of realistic demo data."""
+        return deepcopy(DemoScenarios._REALISTIC)
+
+    @staticmethod
+    def validation_data() -> FlextCore.Types.Dict:
+        """Get a copy of validation demo data."""
+        return deepcopy(DemoScenarios._VALIDATION)
+
 
 # ========== VALUE OBJECTS ==========
 
@@ -421,7 +530,7 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
         - self.metrics: FlextMetrics for observability
         """
         super().__init__()
-        self._scenarios: type[ExampleScenarios] = ExampleScenarios
+        self._scenarios = DemoScenarios
         self._dataset: FlextCore.Types.Dict = self._scenarios.dataset()
         self._realistic: RealisticDataDict = self._scenarios.realistic_data()
         self._validation: FlextCore.Types.Dict = self._scenarios.validation_data()

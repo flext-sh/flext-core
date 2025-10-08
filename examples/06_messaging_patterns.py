@@ -22,13 +22,88 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import warnings
+from copy import deepcopy
 from datetime import UTC, datetime, timedelta
-from typing import cast
+from typing import ClassVar, cast
 from uuid import uuid4
 
 from flext_core import FlextCore
 
-from .example_scenarios import ExampleScenarios
+
+class DemoScenarios:
+    """Inline scenario helpers for messaging demonstrations."""
+
+    _DATASET: ClassVar[dict] = {
+        "users": [
+            {
+                "id": 1,
+                "name": "Alice Example",
+                "email": "alice@example.com",
+                "age": 30,
+            },
+            {
+                "id": 2,
+                "name": "Bob Example",
+                "email": "bob@example.com",
+                "age": 28,
+            },
+        ],
+    }
+
+    _REALISTIC: ClassVar[FlextCore.Types.Dict] = {
+        "order": {
+            "order_id": "order-456",
+            "customer_id": "cust-123",
+            "items": [
+                {"product_id": "prod-001", "name": "Widget", "quantity": 1},
+                {"product_id": "prod-002", "name": "Gadget", "quantity": 2},
+            ],
+            "total": "89.97",
+        }
+    }
+
+    _PAYLOAD: ClassVar[FlextCore.Types.Dict] = {
+        "event": "order_submitted",
+        "order_id": "order-456",
+        "metadata": {"source": "examples", "version": "1.0"},
+    }
+
+    @staticmethod
+    def metadata(
+        *, source: str = "examples", tags: list[str] | None = None, **extra: object
+    ) -> FlextCore.Types.Dict:
+        """Create metadata dictionary for messaging examples."""
+        data: FlextCore.Types.Dict = {
+            "source": source,
+            "component": "flext_core",
+            "tags": tags or ["messaging", "demo"],
+        }
+        data.update(extra)
+        return data
+
+    @staticmethod
+    def user(**overrides: object) -> FlextCore.Types.Dict:
+        """Create user data dictionary for messaging examples."""
+        user = deepcopy(DemoScenarios._DATASET["users"][0])
+        user.update(overrides)
+        return user
+
+    @staticmethod
+    def users(count: int = 5) -> list[FlextCore.Types.Dict]:
+        """Create list of user data dictionaries for messaging examples."""
+        return [deepcopy(user) for user in DemoScenarios._DATASET["users"][:count]]
+
+    @staticmethod
+    def realistic_data() -> FlextCore.Types.Dict:
+        """Create realistic order data dictionary for messaging examples."""
+        return deepcopy(DemoScenarios._REALISTIC)
+
+    @staticmethod
+    def payload(**overrides: object) -> FlextCore.Types.Dict:
+        """Create event payload dictionary for messaging examples."""
+        payload = deepcopy(DemoScenarios._PAYLOAD)
+        payload.update(overrides)
+        return payload
 
 
 class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
@@ -61,7 +136,7 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         # Use self.logger from FlextMixins.Logging, not logger
         self._event_store: list[FlextCore.Models.DomainEvent] = []
         self._message_queue: list[FlextCore.Models.Payload[FlextCore.Types.Dict]] = []
-        self._scenarios = ExampleScenarios()
+        self._scenarios = DemoScenarios()
         self._metadata = self._scenarios.metadata(tags=["messaging", "demo"])
         # Filter out incompatible metadata fields for Payload models and ensure type compatibility
         self._safe_metadata: dict[str, str | int | float] = {

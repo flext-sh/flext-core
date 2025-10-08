@@ -11,7 +11,7 @@ making it safe to import from anywhere without circular dependency risks.
 
 **KEY FEATURES**:
 - Error codes for exception categorization (50+ codes)
-- Configuration defaults (timeouts, environments, network settings)
+- Configuration defaults (timeouts, network settings)
 - Validation patterns (email, URL, UUID, phone - used by runtime.py)
 - Logging constants (levels, formats)
 - Platform constants (HTTP, encodings, paths)
@@ -54,7 +54,7 @@ class FlextConstants:
 
     **PROVIDES**:
         - Error codes for exception categorization (50+ codes)
-        - Configuration defaults (timeout, environment, network)
+        - Configuration defaults (timeout, network)
         - Validation patterns (email, URL, UUID, phone) - consumed by runtime.py
         - Logging constants (levels, formats, defaults)
         - Platform constants (HTTP, encodings, paths)
@@ -80,7 +80,6 @@ class FlextConstants:
         # Example 2: Use configuration defaults
         timeout = FlextConstants.Config.DEFAULT_TIMEOUT
         max_workers = FlextConstants.Config.DEFAULT_MAX_WORKERS
-        environment = FlextConstants.Config.DEFAULT_ENVIRONMENT
 
         # Example 3: Apply validation limits
         if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
@@ -103,7 +102,7 @@ class FlextConstants:
 
     Attributes:
         CONSTANTS_VERSION (str): Constants module version.
-        PROJECT_PREFIX (str): Project prefix for environment vars.
+        PROJECT_PREFIX (str): Project prefix for configuration.
         PROJECT_NAME (str): Full project name string.
         Core: Core identifiers (NAME, VERSION, DEFAULT_VERSION).
         Network: Network defaults (ports, timeouts).
@@ -155,7 +154,7 @@ class FlextConstants:
     # Direct access support - backward compatible with deprecation warnings
     _deprecation_warnings_shown: ClassVar[set[str]] = set()
 
-    def __class_getitem__(cls, key: str) -> object:
+    def __getitem__(self, key: str) -> object:
         """Direct value access: FlextConstants['Errors.VALIDATION_ERROR'].
 
         Enables simplified constant access by string key path.
@@ -178,6 +177,21 @@ class FlextConstants:
         """
         # Parse nested key like "Errors.VALIDATION_ERROR"
         parts = key.split(".")
+        value: object = self
+
+        try:
+            for part in parts:
+                value = getattr(value, part)
+            return value
+        except AttributeError as e:
+            msg = f"Constant path '{key}' not found in FlextConstants"
+            raise AttributeError(msg) from e
+
+    @classmethod
+    def __class_getitem__(cls, key: str) -> object:
+        """Class-level access for type annotations."""
+        # Parse nested key like "Errors.VALIDATION_ERROR"
+        parts = key.split(".")
         value: object = cls
 
         try:
@@ -187,6 +201,13 @@ class FlextConstants:
         except AttributeError as e:
             msg = f"Constant path '{key}' not found in FlextConstants"
             raise AttributeError(msg) from e
+
+    class NonExistent:
+        """Non-existent constants for testing purposes."""
+
+        PATH: Final[str] = "nonexistent/path"
+        NONEXISTENT_CONSTANT: Final[str] = "nonexistent_constant"
+        NON_EXISTENT_CONSTANT: Final[str] = "non_existent_constant"
 
     class Core:
         """Core identifiers hardened for the 1.0.0 release cycle."""
@@ -219,6 +240,7 @@ class FlextConstants:
         )
         DEFAULT_CONNECTION_POOL_SIZE: Final[int] = 10  # Usage count: 1
         MAX_CONNECTION_POOL_SIZE: Final[int] = 100  # Usage count: 1
+        MAX_CONNECTIONS: Final[int] = 100  # Maximum HTTP connections
 
     class Validation:
         """Validation guardrails referenced in modernization docs.
@@ -268,6 +290,9 @@ class FlextConstants:
         MAX_AGE: Final[int] = 150  # Maximum valid age for persons
         MIN_AGE: Final[int] = 0  # Minimum valid age for persons
         PREVIEW_LENGTH: Final[int] = 50  # Maximum length for string previews/truncation
+        VALIDATION_TIMEOUT_MS: Final[int] = (
+            100  # Maximum validation time in milliseconds
+        )
         DISCOUNT_THRESHOLD: Final[int] = 100  # Minimum total for discount eligibility
         DISCOUNT_RATE: Final[float] = 0.05  # 5% discount rate
         SLOW_OPERATION_THRESHOLD: Final[float] = (
@@ -277,8 +302,6 @@ class FlextConstants:
         FILTER_THRESHOLD: Final[int] = 5  # General filter threshold for comparisons
         RETRY_COUNT_MIN: Final[int] = 2  # Minimum retry attempts
         RETRY_COUNT_MAX: Final[int] = 3  # Maximum retry attempts
-        WORKERS_TEST_COUNT: Final[int] = 8  # Test-specific worker count
-        TIMEOUT_TEST_SECONDS: Final[int] = 60  # Test-specific timeout
         MAX_WORKERS_LIMIT: Final[int] = (
             100  # Maximum reasonable worker count for validation
         )
@@ -371,6 +394,7 @@ class FlextConstants:
         CRITICAL_ERROR: Final[str] = (
             "CRITICAL_ERROR"  # Reserved for system failures  # Usage count: 1
         )
+        NONEXISTENT_ERROR: Final[str] = "NONEXISTENT_ERROR"
 
         # Error category literals for type safety
         class CategoryLiteral:
@@ -419,16 +443,6 @@ class FlextConstants:
             GRPC: Final[str] = "grpc"
             WEBSOCKET: Final[str] = "websocket"
             MESSAGE_QUEUE: Final[str] = "message_queue"
-
-        # Environment literals for type safety
-        class EnvironmentLiteral:
-            """Environment literals for type annotations."""
-
-            DEVELOPMENT: Final[str] = "development"
-            STAGING: Final[str] = "staging"
-            PRODUCTION: Final[str] = "production"
-            TEST: Final[str] = "test"
-            LOCAL: Final[str] = "local"
 
         # Log level literals for type safety
         class LogLevelLiteral:
@@ -525,11 +539,12 @@ class FlextConstants:
         TIMEOUT: Final[int] = 30  # Usage count: 18
         PAGE_SIZE: Final[int] = 100  # Usage count: 2
         TIMEOUT_SECONDS: Final[int] = 30  # Default timeout for operations
-        ENVIRONMENT: Final[str] = "development"  # Default environment  # Usage count: 2
 
         # Cache defaults
         CACHE_TTL: Final[int] = 300  # Cache time-to-live in seconds (5 minutes)
+        DEFAULT_CACHE_TTL: Final[int] = CACHE_TTL
         MAX_CACHE_SIZE: Final[int] = 100  # Maximum cache entries
+        DEFAULT_MAX_CACHE_SIZE: Final[int] = MAX_CACHE_SIZE
 
         # Message and operation defaults
         MAX_MESSAGE_LENGTH: Final[int] = 100  # Maximum message length for truncation
@@ -572,26 +587,16 @@ class FlextConstants:
     class Config:
         """Configuration defaults anchoring the unified lifecycle."""
 
-        ENVIRONMENTS: Final[list[str]] = [  # Usage count: 3
-            "development",
-            "staging",
-            "production",
-            "test",
-            "local",
-        ]
-        DEFAULT_ENVIRONMENT: Final[str] = "development"
-        DOTENV_FILES: Final[list[str]] = [
-            ".env",
-            ".env.local",
-            ".env.production",
-        ]  # Usage count: 0
-
         # Configuration validation constants (moved from FlextConfig.Constants)
         SEMANTIC_VERSION_MIN_PARTS: Final[int] = 3
-        MIN_PRODUCTION_WORKERS: Final[int] = 2
         HIGH_TIMEOUT_THRESHOLD: Final[int] = 120
         MIN_WORKERS_FOR_HIGH_TIMEOUT: Final[int] = 4
         MAX_WORKERS_THRESHOLD: Final[int] = 50
+
+        # Feature flags
+        DEFAULT_ENABLE_CACHING: Final[bool] = True
+        DEFAULT_ENABLE_METRICS: Final[bool] = False
+        DEFAULT_ENABLE_TRACING: Final[bool] = False
 
         # Configuration profile constants
         PROFILE_WEB_SERVICE: Final[str] = "web_service"
@@ -612,6 +617,22 @@ class FlextConstants:
 
         # Timeout defaults
         DEFAULT_TIMEOUT: Final[int] = 30  # Default timeout in seconds
+        MIN_DATE_LENGTH: Final[int] = 10  # Minimum date format length (YYYY-MM-DD)
+        MIN_TOKEN_EXPIRY_BUFFER: Final[int] = (
+            60  # Minimum token expiry buffer in seconds
+        )
+        MAX_FUNCTIONS_THRESHOLD: Final[int] = (
+            10  # Maximum functions before complexity increase
+        )
+        MAX_AST_DEPTH_THRESHOLD: Final[int] = (
+            5  # Maximum AST depth before complexity increase
+        )
+        MAX_LINE_COUNT_THRESHOLD: Final[int] = (
+            200  # Maximum lines before complexity increase
+        )
+        COMPLEXITY_SCORE_THRESHOLD: Final[float] = (
+            0.7  # Threshold for high complexity modules
+        )
 
         class ConfigSource(StrEnum):
             """Enumerate configuration origins supported by FlextConfig."""
@@ -798,24 +819,12 @@ class FlextConstants:
         DB_SCHEME_MONGODB: Final[str] = "mongodb://"
         DB_SCHEME_REDIS: Final[str] = "redis://"
 
-        # Environment variable names
-        ENV_PYTEST_CURRENT_TEST: Final[str] = "PYTEST_CURRENT_TEST"
-        ENV_LOG_LEVEL: Final[str] = "LOG_LEVEL"
-        ENV_DEBUG: Final[str] = "DEBUG"
-        ENV_ENVIRONMENT: Final[str] = "ENVIRONMENT"
-        ENV_DATABASE_URL: Final[str] = "DATABASE_URL"
-
         # Common directory names
         DIR_LOGS: Final[str] = "logs"
         DIR_DATA: Final[str] = "data"
         DIR_CONFIG: Final[str] = "config"
         DIR_TEMP: Final[str] = "temp"
         DIR_CACHE: Final[str] = "cache"
-
-        # Configuration delimiters
-        ENV_NESTED_DELIMITER: Final[str] = "__"
-        ENV_PREFIX: Final[str] = "FLEXT_"
-        ENV_FILE_DEFAULT: Final[str] = ".env"
 
         # Validation patterns for runtime type guards
         PATTERN_SECURITY_LEVEL: Final[str] = "^(low|standard|high|critical)$"
@@ -1045,8 +1054,6 @@ class FlextConstants:
         # Log level defaults
         DEFAULT_LEVEL: Final[str] = "INFO"
         DEFAULT_LEVEL_DEVELOPMENT: Final[str] = "DEBUG"
-        DEFAULT_LEVEL_PRODUCTION: Final[str] = "WARNING"
-        DEFAULT_LEVEL_TESTING: Final[str] = "INFO"
         VALID_LEVELS: Final[tuple[str, ...]] = (
             "DEBUG",
             "INFO",
@@ -1159,26 +1166,63 @@ class FlextConstants:
         MIN_BCRYPT_ROUNDS: Final[int] = 10  # Minimum acceptable rounds
         MAX_BCRYPT_ROUNDS: Final[int] = 15  # Maximum reasonable rounds
 
-        # Default JWT secret for development/testing
-        DEFAULT_JWT_SECRET: Final[str] = "default-jwt-secret-change-in-production"
+        # Default JWT secret
+        DEFAULT_JWT_SECRET: Final[str] = "default-jwt-secret-change-before-deployment"
 
-    class Environment:
-        """Environment enumerations used by configuration profiles."""
+        # JWT token defaults
+        JWT_DEFAULT_ALGORITHM: Final[str] = "HS256"
+        JWT_DEFAULT_EXPIRY_MINUTES: Final[int] = 30
+        JWT_MAX_EXPIRY_MINUTES: Final[int] = 1440  # 24 hours
+        JWT_ISSUER_CLAIM: Final[str] = "flext-auth"
+        JWT_AUDIENCE_CLAIM: Final[str] = "flext-users"
+        JWT_ALLOWED_ALGORITHMS: Final[tuple[str, ...]] = (
+            "HS256",
+            "HS384",
+            "HS512",
+            "RS256",
+            "RS384",
+            "RS512",
+        )
+        JWT_DEFAULT_TOKEN_TYPE: Final[str] = "Bearer"
+        JWT_DEFAULT_ACCESS_TOKEN_TYPE: Final[str] = "access"
+        JWT_API_TOKEN_TYPE: Final[str] = "api"
+        JWT_BASIC_TOKEN_TYPE: Final[str] = "bearer"
+        JWT_BEARER_PREFIX: Final[str] = "Bearer "
+        JWT_MIN_SECRET_KEY_LENGTH: Final[int] = 32
 
-        class ConfigEnvironment(StrEnum):
-            """Enumerate core deployment environments in docs."""
+        # Session management
+        SESSION_DEFAULT_EXPIRY_MINUTES: Final[int] = 120  # 2 hours
+        SESSION_MAX_EXPIRY_MINUTES: Final[int] = 1440  # 24 hours
+        SESSION_MAX_SESSIONS_PER_USER: Final[int] = 5
+        SESSION_CLEANUP_INTERVAL_MINUTES: Final[int] = 30
+        SESSION_EXTEND_MINUTES: Final[int] = 30
+        SESSION_MIN_TOKEN_LENGTH: Final[int] = 32
+        SESSION_DEFAULT_EXTEND_HOURS: Final[int] = 2
 
-            DEVELOPMENT = "development"  # Usage count: 1
-            STAGING = "staging"  # Usage count: 0
-            PRODUCTION = "production"  # Usage count: 1
-            TESTING = "test"  # Usage count: 0
+        # Authentication security
+        AUTH_MAX_LOGIN_ATTEMPTS: Final[int] = 5
+        AUTH_LOCKOUT_DURATION_MINUTES: Final[int] = 30
+        AUTH_MAX_REQUESTS_PER_MINUTE: Final[int] = 60
+        AUTH_MAX_REQUESTS_PER_HOUR: Final[int] = 1000
+        AUTH_RATE_LIMIT_MAX_ATTEMPTS: Final[int] = 5
+        AUTH_RATE_LIMIT_WINDOW_MINUTES: Final[int] = 15
 
-        class ValidationLevel(StrEnum):
-            """Validation strictness tiers adopted by tooling."""
+        # Credential validation
+        CREDENTIAL_USERNAME_MIN_LENGTH: Final[int] = 3
+        CREDENTIAL_USERNAME_MAX_LENGTH: Final[int] = 50
+        CREDENTIAL_PASSWORD_MIN_LENGTH: Final[int] = 8
+        CREDENTIAL_PASSWORD_MAX_LENGTH: Final[int] = 128
+        CREDENTIAL_PASSWORD_MIN_SCORE: Final[int] = 3
+        CREDENTIAL_MIN_BCRYPT_HASH_LENGTH: Final[int] = 60
+        CREDENTIAL_BCRYPT_ROUNDS: Final[int] = 12
+        CREDENTIAL_MIN_BCRYPT_ROUNDS: Final[int] = 10
+        CREDENTIAL_MAX_BCRYPT_ROUNDS: Final[int] = 15
 
-            STRICT = "strict"  # Usage count: 0
-            NORMAL = "normal"  # Usage count: 0
-            RELAXED = "relaxed"  # Usage count: 0
+        # Base64 encoding
+        BASE64_PADDING_SIZE: Final[int] = 4
+
+        # OIDC defaults
+        OIDC_DEFAULT_ID_TOKEN_SIGNING_ALGORITHM: Final[str] = "RS256"
 
     class Cqrs:
         """CQRS (Command Query Responsibility Segregation) constants."""
@@ -1565,6 +1609,8 @@ class FlextConstants:
         DEFAULT_PAGE_SIZE: Final[int] = 10  # Default page size
         MAX_PAGE_SIZE: Final[int] = 1000  # Maximum allowed page size
         MIN_PAGE_SIZE: Final[int] = 1  # Minimum page size
+        MIN_PAGE_NUMBER: Final[int] = 1  # Minimum page number
+        MAX_PAGE_NUMBER: Final[int] = 10000  # Maximum page number
 
     class Mixins:
         """Constants for FlextMixins operations.
@@ -1842,6 +1888,7 @@ class FlextConstants:
 
         DEFAULT_MAX_WORKERS: Final[int] = 4  # Default maximum worker threads
         DEFAULT_BATCH_SIZE: Final[int] = 1000  # Default batch size for processing
+        MAX_BATCH_SIZE: Final[int] = 10000  # Maximum batch size for validation
 
     class Paths:
         """File system paths for core operations."""

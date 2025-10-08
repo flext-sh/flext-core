@@ -20,11 +20,61 @@ from __future__ import annotations
 
 import time
 import warnings
-from typing import cast
+from copy import deepcopy
+from typing import ClassVar, cast
 
 from flext_core import FlextCore
 
-from .example_scenarios import ExampleScenarios
+
+class DemoScenarios:
+    """Inline scenario helpers for processing handler demonstrations."""
+
+    _DATASET: ClassVar[FlextCore.Types.Dict] = {
+        "users": [
+            {
+                "id": 1,
+                "name": "Alice Example",
+                "email": "alice@example.com",
+                "age": 30,
+            }
+        ],
+    }
+
+    _REALISTIC: ClassVar[FlextCore.Types.Dict] = {
+        "order": {
+            "order_id": "order-456",
+            "customer_id": "cust-123",
+            "items": [
+                {"product_id": "prod-001", "name": "Widget", "quantity": 1},
+            ],
+            "total": "29.99",
+        }
+    }
+
+    @staticmethod
+    def user(**overrides: object) -> FlextCore.Types.Dict:
+        """Create user data dictionary for processing examples."""
+        user = deepcopy(DemoScenarios._DATASET["users"][0])
+        user.update(overrides)
+        return user
+
+    @staticmethod
+    def realistic_data() -> FlextCore.Types.Dict:
+        """Create realistic order data dictionary for processing examples."""
+        return deepcopy(DemoScenarios._REALISTIC)
+
+    @staticmethod
+    def metadata(
+        *, source: str = "examples", tags: list[str] | None = None, **extra: object
+    ) -> FlextCore.Types.Dict:
+        """Create metadata dictionary for processing examples."""
+        data: FlextCore.Types.Dict = {
+            "source": source,
+            "component": "flext_core",
+            "tags": tags or ["processors", "demo"],
+        }
+        data.update(extra)
+        return data
 
 
 class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
@@ -55,7 +105,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         """
         super().__init__()
         # Use self.logger from FlextMixins.Logging, not logger
-        self._scenarios = ExampleScenarios()
+        self._scenarios = DemoScenarios()
         self._user = self._scenarios.user()
         self._order = self._scenarios.realistic_data()["order"]
         self._admin_user: dict[str, object] = {

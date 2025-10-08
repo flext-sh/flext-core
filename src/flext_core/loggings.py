@@ -193,6 +193,16 @@ class FlextLogger:
         except Exception as e:
             return FlextResult[None].fail(f"Failed to clear global context: {e}")
 
+    @classmethod
+    def get_global_context(cls) -> dict[str, object]:
+        """Get current global context."""
+        return dict(structlog.contextvars.get_contextvars())
+
+    @classmethod
+    def get_logger(cls) -> FlextLogger:
+        """Get a logger instance."""
+        return cls.create_module_logger("flext")
+
     # =========================================================================
     # FACTORY PATTERNS - DI-ready logger creation
     # =========================================================================
@@ -262,6 +272,8 @@ class FlextLogger:
             _force_new: Force creation of new instance (for testing)
 
         """
+        super().__init__()
+
         # Configure structlog if not already configured (NO config dependency)
         FlextLogger._configure_structlog_if_needed()
 
@@ -507,6 +519,7 @@ class PerformanceTracker:
             operation_name: Name of operation being tracked
 
         """
+        super().__init__()
         self.logger = logger
         self._operation_name = operation_name
         self._start_time: float = 0.0

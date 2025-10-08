@@ -16,7 +16,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextCore
+import os
+
+os.environ.setdefault("FLEXT_DEBUG", "false")
+os.environ.setdefault("FLEXT_TRACE", "false")
+
+from flext_core import FlextBase, FlextCore
 
 
 def demonstrate_single_import_pattern() -> None:
@@ -62,7 +67,7 @@ def demonstrate_single_import_pattern() -> None:
 
     # Logger
     logger = FlextCore.Logger(__name__)
-    logger.info("Single-import pattern demonstration")
+    logger.info("Single-import pattern demonstration")  # type: ignore[attr-defined]
     print(f"   ✅ FlextCore.Logger: {type(logger).__name__}")
 
     # Container
@@ -118,23 +123,18 @@ def demonstrate_single_import_pattern() -> None:
     # ========================================
     print("\n5. Validation Utilities:")
 
-    # String validation
-    str_validation: FlextCore.Result[str] = (
-        FlextCore.Utilities.Validation.validate_string_not_empty("test")
-    )
-    print(f"   ✅ String validation: {str_validation.is_success}")
+    # Cache management validation
+    test_obj = {"_cache": {"key": "value"}}
+    cache_result = FlextCore.Utilities.Validation.clear_all_caches(test_obj)
+    print(f"   ✅ Cache clearing: {cache_result.is_success}")
 
-    # Email validation
-    email_validation: FlextCore.Result[str] = (
-        FlextCore.Utilities.Validation.validate_email("user@example.com")
-    )
-    print(f"   ✅ Email validation: {email_validation.is_success}")
+    # ID generation utilities
+    correlation_id = FlextCore.Utilities.Generators.generate_correlation_id()
+    print(f"   ✅ Correlation ID: {correlation_id[:8]}...")
 
-    # Port validation
-    port_validation: FlextCore.Result[int] = (
-        FlextCore.Utilities.Validation.validate_port(8080)
-    )
-    print(f"   ✅ Port validation: {port_validation.is_success}")
+    # Short ID generation
+    short_id = FlextCore.Utilities.Generators.generate_short_id()
+    print(f"   ✅ Short ID: {short_id[:8]}...")
 
     # ========================================
     # 6. DOMAIN MODELS (DDD)
@@ -170,9 +170,42 @@ def demonstrate_single_import_pattern() -> None:
         print(f"      Field: {e.field}, Code: {e.error_code}")
 
     # ========================================
-    # 8. SERVICE INFRASTRUCTURE
+    # 8. EXTENDING FLEXT PATTERNS VIA FLEEXTBASE
     # ========================================
-    print("\n8. Service Infrastructure - Direct Component Access:")
+    print("\n8. Extending Patterns with FlextBase:")
+
+    class DemoBase(FlextBase):
+        """Demonstrate how domain libraries can extend FlextBase."""
+
+        class Constants(FlextBase.Constants):
+            class Demo:
+                FEATURE_FLAG_ENABLED: bool = True
+
+    domain_base = DemoBase(auto_register=False)
+    domain_base.bind_context(example="00_single_import")
+
+    # Fix: Access constants properly through the extended class
+    demo_feature = DemoBase.Constants.Demo.FEATURE_FLAG_ENABLED
+    domain_base.info(
+        "DemoBase initialised",
+        feature=demo_feature,
+    )
+    print("   ✅ FlextBase: domain extensions ready")
+    print(
+        "      Feature flag default:",
+        demo_feature,
+    )
+
+    totals = domain_base.run_operation("demo_total", sum, [1, 2, 3])
+    print(f"   🧮 run_operation helper: {totals.unwrap()}")
+
+    helper = domain_base.ok("domain ready")
+    print(f"   ✨ ok helper: {helper.unwrap()}")
+
+    # ========================================
+    # 9. SERVICE INFRASTRUCTURE
+    # ========================================
+    print("\n9. Service Infrastructure - Direct Component Access:")
 
     # Access infrastructure components directly via FlextCore
     config = FlextCore.Config()
@@ -189,6 +222,7 @@ def demonstrate_single_import_pattern() -> None:
     print("\n" + "=" * 60)
     print("✨ SINGLE-IMPORT PATTERN COMPLETE!")
     print("🎯 All framework functionality via: from flext_core import FlextCore")
+    print("🎯 Domain extension ready via: class MyBase(FlextBase)")
     print("=" * 60)
 
 

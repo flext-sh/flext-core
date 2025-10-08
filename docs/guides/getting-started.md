@@ -193,7 +193,7 @@ print(f"App: {config.app_name}")
 print(f"Debug: {config.debug}")
 
 # Create for specific environment
-config = AppConfig.create_for_environment("production", debug=False, max_connections=500)
+config = AppConfig()
 ```
 
 ### 6. Structured Logging (FlextLogger)

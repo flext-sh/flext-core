@@ -230,7 +230,7 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
    config = AppConfig()
 
    # Load for specific environment
-   config = AppConfig.create_for_environment("production")
+   config = AppConfig()
    ```
 
 2. **Structured Logging** (`FlextLogger`):

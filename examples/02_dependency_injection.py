@@ -25,12 +25,86 @@ from __future__ import annotations
 
 import time
 import warnings
+from copy import deepcopy
 from datetime import UTC, datetime
-from typing import Protocol, cast, runtime_checkable
+from typing import ClassVar, Protocol, cast, runtime_checkable
 
 from flext_core import FlextCore
 
-from .example_scenarios import ExampleScenarios
+
+class DemoScenarios:
+    """Inline scenario helpers for dependency injection demonstrations."""
+
+    _DATASET: ClassVar[dict] = {
+        "users": [
+            {
+                "id": 1,
+                "name": "Alice Example",
+                "email": "alice@example.com",
+                "age": 30,
+            },
+            {
+                "id": 2,
+                "name": "Bob Example",
+                "email": "bob@example.com",
+                "age": 28,
+            },
+        ],
+        "services": ["database", "cache", "email"],
+    }
+
+    _CONFIG: ClassVar[FlextCore.Types.Dict] = {
+        "database_url": "sqlite:///:memory:",
+        "api_timeout": 30,
+        "retry": 3,
+    }
+
+    _PROD_CONFIG: ClassVar[FlextCore.Types.Dict] = {
+        "database_url": "postgresql://prod-db/flext",
+        "api_timeout": 20,
+        "retry": 5,
+    }
+
+    _PAYLOAD: ClassVar[FlextCore.Types.Dict] = {
+        "event": "user_registered",
+        "user_id": "usr-123",
+        "metadata": {"source": "examples", "version": "1.0"},
+    }
+
+    @staticmethod
+    def dataset() -> FlextCore.Types.Dict:
+        """Get a copy of the demo dataset for dependency injection examples."""
+        return deepcopy(DemoScenarios._DATASET)
+
+    @staticmethod
+    def config(*, production: bool = False) -> FlextCore.Types.Dict:
+        """Get a copy of the demo configuration (production or development)."""
+        base = DemoScenarios._PROD_CONFIG if production else DemoScenarios._CONFIG
+        return deepcopy(base)
+
+    @staticmethod
+    def user(**overrides: object) -> FlextCore.Types.Dict:
+        """Get a demo user object with optional overrides."""
+        user = deepcopy(DemoScenarios._DATASET["users"][0])  # type: ignore[index]
+        user.update(overrides)
+        return user
+
+    @staticmethod
+    def service_batch(logger_name: str = "example_batch") -> FlextCore.Types.Dict:
+        """Get a demo service batch configuration."""
+        return {
+            "logger": FlextCore.Logger(logger_name),
+            "config": DemoScenarios.config(),
+            "metrics": {"requests": 0, "errors": 0},
+        }
+
+    @staticmethod
+    def payload(**overrides: object) -> FlextCore.Types.Dict:
+        """Get a demo payload with optional overrides."""
+        payload = deepcopy(DemoScenarios._PAYLOAD)
+        payload.update(overrides)
+        return payload
+
 
 # ========== SERVICE INTERFACES (PROTOCOLS) ==========
 
@@ -560,7 +634,7 @@ class ComprehensiveDIService(FlextCore.Service[User]):
         - self.metrics: FlextMetrics for observability
         """
         super().__init__()
-        self._scenarios = ExampleScenarios()
+        self._scenarios = DemoScenarios()
         self._dataset = self._scenarios.dataset()
         self._config_data = self._scenarios.config()
 

@@ -24,13 +24,82 @@ from __future__ import annotations
 
 import time
 import warnings
+from copy import deepcopy
 from datetime import UTC, datetime
-from typing import cast
+from typing import ClassVar, cast
 from uuid import uuid4
 
 from flext_core import FlextCore
 
-from .example_scenarios import ExampleScenarios
+
+class DemoScenarios:
+    """Inline scenario helpers for logging demonstrations."""
+
+    _DATASET: ClassVar[dict] = {
+        "users": [
+            {
+                "id": 1,
+                "name": "Alice Example",
+                "email": "alice@example.com",
+                "age": 30,
+            }
+        ],
+    }
+
+    _CONFIG: ClassVar[FlextCore.Types.Dict] = {
+        "database_url": "sqlite:///:memory:",
+        "api_timeout": 30,
+        "retry": 3,
+    }
+
+    _PROD_CONFIG: ClassVar[FlextCore.Types.Dict] = {
+        "database_url": "postgresql://prod-db/flext",
+        "api_timeout": 20,
+        "retry": 5,
+    }
+
+    _PAYLOAD: ClassVar[FlextCore.Types.Dict] = {
+        "event": "user_logged_in",
+        "user_id": "usr-123",
+        "metadata": {"source": "examples", "version": "1.0"},
+    }
+
+    @staticmethod
+    def config(
+        *, production: bool = False, **overrides: object
+    ) -> FlextCore.Types.Dict:
+        """Create configuration dictionary with optional production overrides."""
+        base = DemoScenarios._PROD_CONFIG if production else DemoScenarios._CONFIG
+        value = deepcopy(base)
+        value.update(overrides)
+        return value
+
+    @staticmethod
+    def metadata(
+        *, source: str = "examples", tags: list[str] | None = None, **extra: object
+    ) -> FlextCore.Types.Dict:
+        """Create metadata dictionary for logging examples."""
+        data: FlextCore.Types.Dict = {
+            "source": source,
+            "component": "flext_core",
+            "tags": tags or ["logging", "demo"],
+        }
+        data.update(extra)
+        return data
+
+    @staticmethod
+    def user(**overrides: object) -> FlextCore.Types.Dict:
+        """Get a demo user object with optional overrides."""
+        user = deepcopy(DemoScenarios._DATASET["users"][0])
+        user.update(overrides)
+        return user
+
+    @staticmethod
+    def payload(**overrides: object) -> FlextCore.Types.Dict:
+        """Get a demo payload object with optional overrides."""
+        payload = deepcopy(DemoScenarios._PAYLOAD)
+        payload.update(overrides)
+        return payload
 
 
 class ComprehensiveLoggingService(FlextCore.Service[FlextCore.Types.Dict]):
@@ -60,7 +129,7 @@ class ComprehensiveLoggingService(FlextCore.Service[FlextCore.Types.Dict]):
         - self.metrics: FlextMetrics for observability
         """
         super().__init__()
-        self._scenarios = ExampleScenarios()
+        self._scenarios = DemoScenarios()
         self._metadata = self._scenarios.metadata(tags=["logging", "demo"])
         self._user = self._scenarios.user()
         self._payload = self._scenarios.payload()
@@ -457,7 +526,7 @@ class ComprehensiveLoggingService(FlextCore.Service[FlextCore.Types.Dict]):
 
         # Add custom fields that persist
         logger.bind(
-            environment=self.config.environment,
+            log_level=self.config.log_level,
             version="1.0.0",
             instance_id=str(uuid4()),
         )
@@ -536,7 +605,7 @@ class ComprehensiveLoggingService(FlextCore.Service[FlextCore.Types.Dict]):
             """Step 2: Configure logger context."""
             logger.bind(
                 service="logging-demo",
-                environment=self.config.environment,
+                log_level=self.config.log_level,
             )
             return FlextCore.Result[FlextCore.Logger].ok(logger)
 

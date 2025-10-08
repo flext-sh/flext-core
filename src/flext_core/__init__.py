@@ -20,7 +20,7 @@ All major exports use the single-class-with-nested-namespaces pattern:
 
 🔧 FLEXT-CORE INTEGRATION
 All components integrate with the complete flext-core ecosystem:
-- FlextConfig: Pydantic 2.11+ BaseSettings with environment integration
+- FlextConfig: Pydantic 2.11+ BaseSettings
 - FlextResult: Railway pattern for monadic error handling
 - FlextLogger: Structured logging with context and correlation
 - FlextService: Service base class with dependency injection
@@ -38,7 +38,7 @@ USAGE EXAMPLES:
 # ✅ CORRECT - Complete flext-core integration
 from flext_core import (
     FlextResult,  # Railway pattern foundation
-    FlextConfig,  # Configuration with environment integration
+    FlextConfig,  # Configuration with centralized defaults
     FlextConstants,  # Centralized constants
     FlextModels,  # DDD base classes
     FlextTypes,  # Type system with 40+ TypeVars
@@ -56,7 +56,7 @@ OPTIMIZATION PRINCIPLES DEMONSTRATED:
 ✅ flext-core Integration: All components work together seamlessly
 ✅ Railway Pattern: Monadic error handling eliminates exceptions in business logic
 ✅ Type Safety: Complete type annotations with 40+ TypeVars
-✅ Configuration Integration: Environment-based configuration with validation
+✅ Configuration Integration: Centralized configuration with validation
 ✅ Dependency Injection: Global container with type-safe service registration
 ✅ Domain Library Foundation: Base for all 32+ ecosystem projects
 
@@ -77,6 +77,7 @@ from __future__ import annotations
 
 from flext_core.__version__ import __version__, __version_info__
 from flext_core.api import FlextCore
+from flext_core.base import FlextBase
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -99,6 +100,7 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 __all__ = [
+    "FlextBase",
     "FlextBus",
     "FlextConfig",
     "FlextConstants",
