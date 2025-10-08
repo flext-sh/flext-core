@@ -11,8 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
-import importlib.abc
-import importlib.machinery
 import importlib.util
 import inspect
 import sys
@@ -50,10 +48,10 @@ class TestFlextWildcardExports:
             pytest.fail("Failed to create module spec")
 
         # At this point, spec and spec.loader are guaranteed to be not None
-        # Type checker already knows the correct type
-        # Type checker already knows the correct type
+        assert spec is not None  # Help type checker
+        assert spec.loader is not None  # Help type checker
         module = importlib.util.module_from_spec(spec)
-        loader.exec_module(module)
+        spec.loader.exec_module(module)
 
         # Copy the exports to our test namespace
         for name in dir(module):
@@ -154,10 +152,10 @@ class TestFlextWildcardExports:
             pytest.fail("Failed to create module spec")
 
         # At this point, spec and spec.loader are guaranteed to be not None
-        # Type checker already knows the correct type
-        # Type checker already knows the correct type
+        assert spec is not None  # Help type checker
+        assert spec.loader is not None  # Help type checker
         module = importlib.util.module_from_spec(spec)
-        loader.exec_module(module)
+        spec.loader.exec_module(module)
 
         # Copy the exports to our test namespace
         for name in dir(module):
@@ -192,10 +190,10 @@ class TestFlextWildcardExports:
             pytest.fail("Failed to create module spec")
 
         # At this point, spec and spec.loader are guaranteed to be not None
-        # Type checker already knows the correct type
-        # Type checker already knows the correct type
+        assert spec is not None  # Help type checker
+        assert spec.loader is not None  # Help type checker
         module = importlib.util.module_from_spec(spec)
-        loader.exec_module(module)
+        spec.loader.exec_module(module)
 
         # Copy the exports to our test namespace
         for name in dir(module):
@@ -234,10 +232,10 @@ class TestFlextWildcardExports:
             pytest.fail("Failed to create module spec")
 
         # At this point, spec and spec.loader are guaranteed to be not None
-        # Type checker already knows the correct type
-        # Type checker already knows the correct type
+        assert spec is not None  # Help type checker
+        assert spec.loader is not None  # Help type checker
         module = importlib.util.module_from_spec(spec)
-        loader.exec_module(module)
+        spec.loader.exec_module(module)
 
         # Copy the exports to our test namespace
         for name in dir(module):
@@ -304,10 +302,10 @@ class TestFlextWildcardExports:
             pytest.fail("Failed to create module spec")
 
         # At this point, spec and spec.loader are guaranteed to be not None
-        # Type checker already knows the correct type
-        # Type checker already knows the correct type
+        assert spec is not None  # Help type checker
+        assert spec.loader is not None  # Help type checker
         module = importlib.util.module_from_spec(spec)
-        loader.exec_module(module)
+        spec.loader.exec_module(module)
 
         # Copy the exports to our test namespace
         for name in dir(module):

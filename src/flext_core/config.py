@@ -859,7 +859,7 @@ class FlextConfig(BaseSettings):
         # Update the provider with current Pydantic settings instance
         # The provider automatically reads values from the Pydantic settings
         settings_list: list[FlextConfig] = [config_instance]
-        di_provider.set_pydantic_settings(settings_list)  # type: ignore[attr-defined]
+        di_provider.set_pydantic_settings(settings_list)
 
     @classmethod
     def get_di_config_provider(cls) -> providers.Configuration:
@@ -892,7 +892,7 @@ class FlextConfig(BaseSettings):
         if instance is not None:
             # Apply Pydantic settings for DI provider
             settings_list: list[FlextConfig] = [instance]
-            provider.set_pydantic_settings(settings_list)  # type: ignore[attr-defined]
+            provider.set_pydantic_settings(settings_list)
 
         return provider
 

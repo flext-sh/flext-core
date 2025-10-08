@@ -956,13 +956,16 @@ class TestFlextRegistry:
         def valid_function(message: object) -> object:
             return f"valid_{message}"
 
-        mixed_map: dict[type[object], object] = {
-            type[TestMessageType]: [
-                valid_function,
-                failing_function,  # Should cause overall failure
-            ]
-        }
-        result_mixed = registry.register_function_map(mixed_map)  # type: ignore[arg-type]
+        mixed_map = cast(
+            "dict[type[object], object]",
+            {
+                type[TestMessageType]: [
+                    valid_function,
+                    failing_function,  # Should cause overall failure
+                ]
+            },
+        )
+        result_mixed = registry.register_function_map(mixed_map)  # type: ignore[bad-argument-type]
         # Registry handles mixed valid/invalid functions gracefully
         assert result_mixed.is_success
 
@@ -1068,14 +1071,8 @@ def test_registry_register_function_map_handler_creation_failure() -> None:
     def invalid_handler() -> None:  # Wrong signature
         pass
 
-    mapping: dict[
-        type[object],
-        tuple[
-            Callable[[object], object | FlextResult[object]],
-            object | FlextResult[object],
-        ],
-    ] = {TestMessage: (invalid_handler, {})}
-    result = registry.register_function_map(mapping)
+    mapping = cast("dict[type[object], object]", {TestMessage: (invalid_handler, {})})
+    result = registry.register_function_map(mapping)  # type: ignore[bad-argument-type]
     # Should handle error in creation
     assert isinstance(result, FlextResult)
 
@@ -1093,7 +1090,7 @@ def test_registry_register_function_map_registration_failure() -> None:
         return msg
 
     mapping = {TestMessage: (test_handler, {"invalid": "config"})}
-    result = registry.register_function_map(mapping)
+    result = registry.register_function_map(mapping)  # type: ignore[bad-argument-type]  # type: ignore[arg-type]
     assert isinstance(result, FlextResult)
 
 
@@ -1112,8 +1109,10 @@ def test_registry_register_function_map_exception_handling() -> None:
     def test_handler(msg: object) -> object:
         return msg
 
-    mapping = {ProblematicMessage(): (test_handler, {})}
-    result = registry.register_function_map(mapping)
+    mapping = cast(
+        "dict[type[object], object]", {ProblematicMessage(): (test_handler, {})}
+    )
+    result = registry.register_function_map(mapping)  # type: ignore[bad-argument-type]
     # Should handle exception and still return result
     assert isinstance(result, FlextResult)
 
@@ -1134,7 +1133,9 @@ def test_registry_resolve_binding_key_string_fallback() -> None:
     handler = StringTestHandler(config=config)
 
     # Use string as message_type to trigger string fallback (line 553)
-    key = registry._resolve_binding_key(handler, "StringMessageType")
+    key = registry._resolve_binding_key(
+        handler, cast("type[object]", "StringMessageType")
+    )
     assert isinstance(key, str)
     assert "string_test" in key
 
@@ -1148,6 +1149,8 @@ def test_registry_resolve_binding_key_from_entry_string_fallback() -> None:
         return msg
 
     # Use string as message_type to trigger string fallback (line 576)
-    key = registry._resolve_binding_key_from_entry((test_func, {}), "StringType")
+    key = registry._resolve_binding_key_from_entry(
+        (test_func, {}), cast("type[object]", "StringType")
+    )
     assert isinstance(key, str)
     assert "test_func" in key

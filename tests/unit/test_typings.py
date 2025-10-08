@@ -96,9 +96,10 @@ class TestTypeVars:
 
     def test_paramspec_defined(self) -> None:
         """Test ParamSpec is properly defined."""
-        # P is not exported at module level due to ParamSpec limitations
-        # Access through FlextTypes.P instead
-        assert FlextTypes.P is not None
+        # P is defined at module level as ParamSpec
+        from flext_core.typings import P
+
+        assert P is not None
 
 
 class TestRateLimiterState:

@@ -52,7 +52,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: FlextTypes.Dict) -> None:
+    def __init__(self, name: str, data: FlextTypes.Dict) -> None:  # pyright: ignore[reportMissingSuperCall]
         """Initialize mockscenario:."""
         self.name = name
         self.given: dict[str, str] = cast("dict[str, str]", data.get("given", {}))
@@ -65,7 +65,7 @@ class MockScenario:
 class GivenWhenThenBuilder:
     """Builder for Given-When-Then test scenarios."""
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str) -> None:  # pyright: ignore[reportMissingSuperCall]
         """Initialize givenwhenthenbuilder:."""
         self.name = name
         self._given: FlextTypes.Dict = {}
@@ -146,7 +146,7 @@ class GivenWhenThenBuilder:
 class FlextTestBuilder:
     """Builder for FLEXT test data with detailed metadata."""
 
-    def __init__(self) -> None:
+    def __init__(self) -> None:  # pyright: ignore[reportMissingSuperCall]
         """Initialize flexttestbuilder:."""
         self._data: FlextTypes.Dict = {}
         self._validation_rules: dict[str, object] = {}
@@ -228,7 +228,7 @@ class FlextTestBuilder:
 class ParameterizedTestBuilder:
     """Builder for parameterized test cases with success/failure scenarios."""
 
-    def __init__(self, test_name: str) -> None:
+    def __init__(self, test_name: str) -> None:  # pyright: ignore[reportMissingSuperCall]
         """Initialize parameterizedtestbuilder:."""
         self.test_name = test_name
         self._cases: list[FlextTypes.Dict] = []
@@ -313,7 +313,7 @@ class ParameterizedTestBuilder:
 class AssertionBuilder:
     """Builder for complex test assertions."""
 
-    def __init__(self, data: object) -> None:
+    def __init__(self, data: object) -> None:  # pyright: ignore[reportMissingSuperCall]
         """Initialize assertionbuilder:."""
         self.data = data
         self._assertions: list[Callable[[], None]] = []
@@ -344,16 +344,17 @@ class AssertionBuilder:
             # Check if item is in the data container
             if isinstance(self.data, (list, tuple, set, str)):
                 # Type-safe check for sequence types
-                if isinstance(self.data, (list, tuple, set)) or isinstance(item, str):
-                    assert item in self.data
+                if isinstance(self.data, (list, tuple, set)):
+                    container_data = cast("list[object]", self.data)
+                    assert item in container_data
                 else:
-                    msg = f"Cannot check if {item!r} is in string {self.data!r}"
-                    raise AssertionError(
-                        msg,
-                    )
+                    # self.data must be str since we checked isinstance(self.data, (list, tuple, set, str))
+                    str_data = cast("str", self.data)
+                    assert item in str_data
             elif isinstance(self.data, dict):
                 # For dict, check if item is a key
-                assert item in self.data
+                dict_data = cast("dict[object, object]", self.data)
+                assert item in dict_data
             else:
                 # For other types, check if the item is equal to the data
                 assert item == self.data
@@ -485,7 +486,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data = {"name": "John", "age": 30, "active": True}
+        test_data: FlextTypes.Dict = {"name": "John", "age": 30, "active": True}
 
         assertion_builder = (
             AssertionBuilder(test_data)
@@ -500,7 +501,7 @@ class TestAdvancedPatterns:
     @mark_test_pattern("mock_scenario")
     def test_mock_scenario_pattern(self) -> None:
         """Test mock scenario pattern."""
-        scenario_data = {
+        scenario_data: FlextTypes.Dict = {
             "given": {"user": "authenticated"},
             "when": {"action": "request_data"},
             "then": {"result": "success"},
@@ -589,7 +590,7 @@ class TestAdvancedPatterns:
             .assert_type(list)
             .assert_contains(3)
             .satisfies(
-                lambda x: len(x) == 5
+                lambda x: len(x) == 5  # type: ignore[arg-type]
                 if hasattr(x, "__len__") and isinstance(x, (list, tuple, str, dict))
                 else False,
                 "should have 5 elements",

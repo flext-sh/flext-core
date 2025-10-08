@@ -565,7 +565,7 @@ class ComprehensiveConfigService(FlextCore.Service[FlextCore.Types.Dict]):
         if result.is_success:
             config = result.unwrap()
             print(
-                "✅ Config validation pipeline success: "
+                f"✅ Config validation pipeline success: "
                 f"env={config.environment}, "
                 f"log={config.log_level}, "
                 f"workers={config.max_workers}"

@@ -33,7 +33,10 @@ from typing import (
     get_type_hints,
 )
 
-import orjson
+try:
+    import orjson
+except ImportError:
+    orjson = None
 from pydantic import (
     EmailStr,
     HttpUrl,
@@ -1087,12 +1090,14 @@ class FlextUtilities:
         @staticmethod
         def sort_key(value: object) -> str:
             """Return a deterministic string for ordering normalized cache components."""
-            try:
-                json_bytes = orjson.dumps(value, option=orjson.OPT_SORT_KEYS)
-                return json_bytes.decode(FlextConstants.Utilities.DEFAULT_ENCODING)
-            except Exception:
-                # Fallback to standard library json with sorted keys
-                return json.dumps(value, sort_keys=True, default=str)
+            if orjson is not None:
+                try:
+                    json_bytes = orjson.dumps(value, option=orjson.OPT_SORT_KEYS)
+                    return json_bytes.decode(FlextConstants.Utilities.DEFAULT_ENCODING)
+                except Exception:
+                    pass
+            # Fallback to standard library json with sorted keys
+            return json.dumps(value, sort_keys=True, default=str)
 
         @staticmethod
         def normalize_component(value: object) -> object:
@@ -1208,11 +1213,11 @@ class FlextUtilities:
                     dict_sorted_data = FlextUtilities.Cache.sort_dict_keys(
                         cast("FlextTypes.Dict", command),
                     )
-                    return f"{command_type.__name__}_{hash(str(dict_sorted_data))}"  # type: ignore[misc]
+                    return f"{command_type.__name__}_{hash(str(dict_sorted_data))}"
 
                 # For other objects, use string representation
                 command_str = str(command) if command is not None else "None"
-                command_hash = hash(command_str)  # type: ignore[misc]
+                command_hash = hash(command_str)
                 return f"{command_type.__name__}_{command_hash}"
 
             except Exception:
@@ -1222,11 +1227,11 @@ class FlextUtilities:
                     "utf-8", errors="ignore"
                 ).decode("utf-8", errors="ignore")
                 try:
-                    command_hash_fallback = hash(command_str_fallback)  # type: ignore[misc]
+                    command_hash_fallback = hash(command_str_fallback)
                     return f"{command_type.__name__}_{command_hash_fallback}"
                 except TypeError:
                     # If hash fails, use a deterministic fallback
-                    return f"{command_type.__name__}_{abs(hash(command_str_fallback.encode(FlextConstants.Utilities.DEFAULT_ENCODING)))}"  # type: ignore[misc]
+                    return f"{command_type.__name__}_{abs(hash(command_str_fallback.encode(FlextConstants.Utilities.DEFAULT_ENCODING)))}"
 
         @staticmethod
         def sort_dict_keys(obj: object) -> object:

@@ -476,12 +476,13 @@ class MessagingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                 if isinstance(roles_raw, list) and all(
                     isinstance(role, str) for role in roles_raw
                 ):
-                    roles = list(roles_raw)  # type: ignore[arg-type]
+                    roles = [role for role in roles_raw if isinstance(role, str)]
                 else:
                     roles = []
                 role_raw: object = event.data["role"]
                 if isinstance(role_raw, str):
-                    roles.append(role_raw)
+                    role_str: str = role_raw  # Type annotation for clarity
+                    roles.append(role_str)
                     user_state["roles"] = roles
 
         print("\n✅ Final user state:")

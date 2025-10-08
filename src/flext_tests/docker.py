@@ -25,7 +25,6 @@ import docker
 import pytest
 from docker import DockerClient
 from docker.errors import DockerException, NotFound
-from docker.models.containers import Container
 from rich.console import Console
 from rich.table import Table
 
@@ -832,18 +831,15 @@ class FlextTestDocker:
             container_name = name or f"flext-container-{hash(image)}"
             # Docker SDK: Pass parameters directly to preserve original types
             # Cast to Container to help Pyrefly resolve overload
-            container = cast(
-                "Container",
-                client.containers.run(
-                    image,
-                    name=container_name,
-                    detach=detach,
-                    remove=remove,
-                    ports=ports,
-                    environment=environment,
-                    volumes=volumes,
-                    command=command,
-                ),
+            container = client.containers.run(
+                image,
+                name=container_name,
+                detach=True,  # Always detach for container management
+                remove=remove,
+                ports=ports,
+                environment=environment,
+                volumes=volumes,
+                command=command,
             )
             return FlextResult[ContainerInfo].ok(
                 ContainerInfo(
@@ -1030,9 +1026,9 @@ class FlextTestDocker:
         tail_count = tail or self._DEFAULT_LOG_TAIL
         try:
             client = self.get_client()
-            # Docker SDK returns Container but docker-stubs types as Model - narrow type
+            # Docker SDK returns Container - get container for logs
             container = client.containers.get(container_name)
-            logs_bytes = container.logs(tail=tail_count)  # type: ignore[attr-defined]
+            logs_bytes = container.logs(tail=tail_count)
             return FlextResult[str].ok(logs_bytes.decode("utf-8", errors="ignore"))
         except NotFound:
             return FlextResult[str].fail(f"Container {container_name} not found")
@@ -1044,12 +1040,6 @@ class FlextTestDocker:
     def register_pytest_fixtures(cls, namespace: FlextTypes.Dict | None = None) -> None:
         """Register pytest fixtures that wrap FlextTestDocker operations."""
         if cls._pytest_registered:
-            return
-
-        if pytest is None:
-            get_logger().warning(
-                "pytest is not available; skipping FlextTestDocker fixture registration",
-            )
             return
 
         ns = namespace if namespace is not None else globals()
@@ -1073,13 +1063,7 @@ class FlextTestDocker:
 
             start_result = docker_control.start_container(container_name)
             if start_result.is_failure:
-                if pytest is not None:
-                    pytest.skip(f"Failed to start LDAP container: {start_result.error}")
-                else:
-                    msg = f"Failed to start LDAP container: {start_result.error}"
-                    raise RuntimeError(
-                        msg,
-                    )
+                pytest.skip(f"Failed to start LDAP container: {start_result.error}")
 
             yield container_name
 
@@ -2008,7 +1992,7 @@ class FlextTestDocker:
 # Cleanup decorators for test functions
 def with_clean_container(
     container_name: str,
-) -> Callable[[Callable[..., FlextTypes.T]], Callable[..., FlextTypes.T]]:
+) -> Callable[[Callable[..., object]], Callable[..., object]]:
     """Decorator to ensure a container is clean before and after a test.
 
     Args:
@@ -2022,9 +2006,9 @@ def with_clean_container(
 
     """
 
-    def decorator(func: Callable[..., FlextTypes.T]) -> Callable[..., FlextTypes.T]:
+    def decorator(func: Callable[..., object]) -> Callable[..., object]:
         @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> FlextTypes.T:
+        def wrapper(*args: object, **kwargs: object) -> object:
             # Get FlextTestDocker instance
             docker_manager = FlextTestDocker()
 
@@ -2055,7 +2039,7 @@ def with_clean_container(
 
 def mark_dirty_on_failure(
     container_name: str,
-) -> Callable[[Callable[..., FlextTypes.T]], Callable[..., FlextTypes.T]]:
+) -> Callable[[Callable[..., object]], Callable[..., object]]:
     """Decorator to mark a container dirty if a test fails.
 
     Args:
@@ -2069,9 +2053,9 @@ def mark_dirty_on_failure(
 
     """
 
-    def decorator(func: Callable[..., FlextTypes.T]) -> Callable[..., FlextTypes.T]:
+    def decorator(func: Callable[..., object]) -> Callable[..., object]:
         @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> FlextTypes.T:
+        def wrapper(*args: object, **kwargs: object) -> object:
             docker_manager = FlextTestDocker()
 
             try:
@@ -2091,7 +2075,7 @@ def mark_dirty_on_failure(
 
 
 def auto_cleanup_dirty_containers() -> Callable[
-    [Callable[..., FlextTypes.T]], Callable[..., FlextTypes.T]
+    [Callable[..., object]], Callable[..., object]
 ]:
     """Decorator to automatically clean up all dirty containers before a test.
 
@@ -2103,9 +2087,9 @@ def auto_cleanup_dirty_containers() -> Callable[
 
     """
 
-    def decorator(func: Callable[..., FlextTypes.T]) -> Callable[..., FlextTypes.T]:
+    def decorator(func: Callable[..., object]) -> Callable[..., object]:
         @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> FlextTypes.T:
+        def wrapper(*args: object, **kwargs: object) -> object:
             docker_manager = FlextTestDocker()
 
             # Clean up all dirty containers before test

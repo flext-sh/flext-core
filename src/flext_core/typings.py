@@ -31,12 +31,60 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Callable
 from typing import (
     Literal,
+    ParamSpec,
     TypedDict,
+    TypeVar,
 )
 
 # =============================================================================
 # FLEXT TYPES NAMESPACE - Centralized type system for the FLEXT ecosystem
 # =============================================================================
+
+# Core TypeVars for generic programming
+T = TypeVar("T")
+T_co = TypeVar("T_co", covariant=True)
+T_contra = TypeVar("T_contra", contravariant=True)
+
+# Additional TypeVars for ecosystem compatibility
+E = TypeVar("E")
+F = TypeVar("F")
+K = TypeVar("K")
+P = ParamSpec("P")
+R = TypeVar("R")
+U = TypeVar("U")
+V = TypeVar("V")
+W = TypeVar("W")
+
+# Covariant TypeVars
+T1_co = TypeVar("T1_co", covariant=True)
+T2_co = TypeVar("T2_co", covariant=True)
+T3_co = TypeVar("T3_co", covariant=True)
+TAggregate_co = TypeVar("TAggregate_co", covariant=True)
+TCacheValue_co = TypeVar("TCacheValue_co", covariant=True)
+TDomainEvent_co = TypeVar("TDomainEvent_co", covariant=True)
+TEntity_co = TypeVar("TEntity_co", covariant=True)
+TResult_co = TypeVar("TResult_co", covariant=True)
+TState_co = TypeVar("TState_co", covariant=True)
+TValue_co = TypeVar("TValue_co", covariant=True)
+TValueObject_co = TypeVar("TValueObject_co", covariant=True)
+
+# Contravariant TypeVars
+TCacheKey_contra = TypeVar("TCacheKey_contra", contravariant=True)
+TCommand_contra = TypeVar("TCommand_contra", contravariant=True)
+TConfigKey_contra = TypeVar("TConfigKey_contra", contravariant=True)
+TEvent_contra = TypeVar("TEvent_contra", contravariant=True)
+TInput_contra = TypeVar("TInput_contra", contravariant=True)
+TItem_contra = TypeVar("TItem_contra", contravariant=True)
+TQuery_contra = TypeVar("TQuery_contra", contravariant=True)
+TResult_contra = TypeVar("TResult_contra", contravariant=True)
+TUtil_contra = TypeVar("TUtil_contra", contravariant=True)
+
+# Domain-specific TypeVars
+Command = TypeVar("Command")
+Event = TypeVar("Event")
+Message = TypeVar("Message")
+Query = TypeVar("Query")
+ResultT = TypeVar("ResultT")
 
 
 class FlextTypes:
@@ -108,6 +156,53 @@ class FlextTypes:
         FlextProtocols: For protocol definitions and interface contracts.
         FlextUtilities: For type validation and transformation utilities.
     """
+
+    # Core TypeVars for backward compatibility
+    T = T
+    T_co = T_co
+    T_contra = T_contra
+
+    # ParamSpec for callable types - not assignable to class attributes
+
+    # Additional TypeVars
+    E = E
+    F = F
+    K = K
+    R = R
+    U = U
+    V = V
+    W = W
+
+    # Covariant TypeVars
+    T1_co = T1_co
+    T2_co = T2_co
+    T3_co = T3_co
+    TAggregate_co = TAggregate_co
+    TCacheValue_co = TCacheValue_co
+    TDomainEvent_co = TDomainEvent_co
+    TEntity_co = TEntity_co
+    TResult_co = TResult_co
+    TState_co = TState_co
+    TValue_co = TValue_co
+    TValueObject_co = TValueObject_co
+
+    # Contravariant TypeVars
+    TCacheKey_contra = TCacheKey_contra
+    TCommand_contra = TCommand_contra
+    TConfigKey_contra = TConfigKey_contra
+    TEvent_contra = TEvent_contra
+    TInput_contra = TInput_contra
+    TItem_contra = TItem_contra
+    TQuery_contra = TQuery_contra
+    TResult_contra = TResult_contra
+    TUtil_contra = TUtil_contra
+
+    # Domain-specific TypeVars
+    Command = Command
+    Event = Event
+    Message = Message
+    Query = Query
+    ResultT = ResultT
 
     # Basic collection types - Direct access for backward compatibility
     Dict = dict[str, object]
@@ -885,5 +980,41 @@ class FlextTypes:
 
 
 __all__: list[str] = [
+    "Command",
+    "E",
+    "Event",
+    "F",
     "FlextTypes",
+    "K",
+    "Message",
+    "P",  # ParamSpec for generic callable types
+    "Query",
+    "R",
+    "ResultT",
+    "T",
+    "T1_co",
+    "T2_co",
+    "T3_co",
+    "TAggregate_co",
+    "TCacheKey_contra",
+    "TCacheValue_co",
+    "TCommand_contra",
+    "TConfigKey_contra",
+    "TDomainEvent_co",
+    "TEntity_co",
+    "TEvent_contra",
+    "TInput_contra",
+    "TItem_contra",
+    "TQuery_contra",
+    "TResult_co",
+    "TResult_contra",
+    "TState_co",
+    "TUtil_contra",
+    "TValueObject_co",
+    "TValue_co",
+    "T_co",
+    "T_contra",
+    "U",
+    "V",
+    "W",
 ]
