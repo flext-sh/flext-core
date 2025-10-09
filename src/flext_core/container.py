@@ -584,7 +584,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     def _validate_service_type[T](
         self,
         service: object,
-        expected_type: type[T],
+        expected_type: type,
     ) -> FlextResult[T]:
         """Validate service type and return typed result.
 
@@ -596,7 +596,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             return FlextResult[T].fail(
                 f"Service type mismatch: expected {getattr(expected_type, '__name__', str(expected_type))}, got {getattr(type(service), '__name__', str(type(service)))}",
             )
-        return FlextResult[T].ok(service)
+        return FlextResult[T].ok(cast("T", service))
 
     # =========================================================================
     # BATCH OPERATIONS - Efficient bulk service management
@@ -1148,7 +1148,8 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             self.register(name, service)
             return FlextResult[T].ok(service)
 
-        return self.get_typed(name, expected_type).lash(try_recovery)
+        # Type ignore: MyPy incorrectly infers Never here, but try_recovery correctly returns FlextResult[T]
+        return self.get_typed(name, expected_type).lash(try_recovery)  # type: ignore[arg-type]
 
     def validate_and_get(
         self,
@@ -1194,10 +1195,8 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                             f"Validator must return FlextResult, got {type(validator_result_obj)}"
                         )
 
-                    # Type-safe: validator_result is now known to be FlextResult
-                    validator_result: FlextResult[object] = cast(
-                        "FlextResult[object]", validator_result_obj
-                    )
+                    # Type-safe: validator_result is now known to be FlextResult after isinstance check
+                    validator_result: FlextResult[object] = validator_result_obj
 
                     # Check if validation failed
                     if validator_result.is_failure:

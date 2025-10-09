@@ -760,7 +760,14 @@ class FlextTestDocker:
                 if container_obj.status == "running"
                 else ContainerStatus.STOPPED
             )
-            image_name: str = getattr(container_obj, "image", "unknown")
+            # Extract image name from Image object
+            container_image = getattr(container_obj, "image", None)
+            image_tags: FlextTypes.StringList = (
+                container_image.tags
+                if container_image and hasattr(container_image, "tags")
+                else []
+            )
+            image_name: str = image_tags[0] if image_tags else "unknown"
             return FlextResult[ContainerInfo].ok(
                 ContainerInfo(
                     name=name,

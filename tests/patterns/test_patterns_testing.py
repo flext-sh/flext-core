@@ -417,7 +417,7 @@ class TestPropertyBasedPatterns:
 
     @given(
         st.text(
-            alphabet=st.characters(blacklist_categories=("Cs",)),
+            alphabet=st.characters(blacklist_categories=("Cs",)),  # type: ignore[arg-type]
             min_size=1,
             max_size=100,
         )

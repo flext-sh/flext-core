@@ -900,7 +900,7 @@ class TestFlextMixinsNestedClasses:
         service = UserService()
 
         # Required field validation
-        result = service.validate_field("test", "username", required=True)
+        result: FlextResult[object] = service.validate_field("test", "username", required=True)
         assert result.is_success
 
         result = service.validate_field(None, "username", required=True)
@@ -911,7 +911,7 @@ class TestFlextMixinsNestedClasses:
             "short",
             "password",
             required=True,
-            validator=lambda x: len(x) >= 8,
+            validator=lambda x: len(x) >= 8,  # type: ignore[arg-type]
         )
         assert result.is_failure
 

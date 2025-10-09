@@ -413,11 +413,11 @@ class TestFlextConfig:
         """Test debug enabled checking."""
         # Test with debug=True
         debug_config = FlextConfig(debug=True)
-        assert debug_config.is_debug_enabled is True
+        assert debug_config.is_debug_enabled  # type: ignore[truthy-function]
 
         # Test with trace=True (requires debug=True)
         trace_config = FlextConfig(debug=True, trace=True)
-        assert trace_config.is_debug_enabled is True
+        assert trace_config.is_debug_enabled is True  # type: ignore[comparison-overlap]
 
         # Test with neither
         normal_config = FlextConfig(debug=False, trace=False)
@@ -427,15 +427,15 @@ class TestFlextConfig:
         """Test effective log level calculation."""
         # Test normal case
         config = FlextConfig(log_level="INFO")
-        assert config.effective_log_level == "INFO"
+        assert config.effective_log_level == "INFO"  # type: ignore[comparison-overlap]
 
         # Test with debug enabled (returns INFO level)
         debug_config = FlextConfig(log_level="INFO", debug=True)
-        assert debug_config.effective_log_level == "INFO"
+        assert debug_config.effective_log_level == "INFO"  # type: ignore[comparison-overlap]
 
         # Test with trace enabled (returns DEBUG level)
         trace_config = FlextConfig(log_level="INFO", debug=True, trace=True)
-        assert trace_config.effective_log_level == "DEBUG"
+        assert trace_config.effective_log_level == "DEBUG"  # type: ignore[comparison-overlap]
 
     def test_global_instance_management(self) -> None:
         """Test global instance management methods."""
@@ -683,8 +683,8 @@ class TestFlextConfig:
 
             # When debug=True, effective_log_level is "INFO" (debug mode overrides)
             assert config.log_level == "ERROR"
-            assert config.effective_log_level == "INFO"
-            assert config.is_debug_enabled is True
+            assert config.effective_log_level == "INFO"  # type: ignore[comparison-overlap]
+            assert config.is_debug_enabled is True  # type: ignore[comparison-overlap]
 
             # Test with debug=False
             os.environ["FLEXT_DEBUG"] = "false"

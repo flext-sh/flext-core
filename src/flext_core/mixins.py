@@ -535,10 +535,10 @@ class FlextMixins:
                 logger_key = f"logger:{logger_name}"
 
                 # Attempt to retrieve logger from container
-                logger_result = container.get_typed(logger_key, FlextLogger)
+                logger_result: FlextResult[FlextLogger] = container.get_typed(logger_key, FlextLogger)
 
                 if logger_result.is_success:
-                    logger = logger_result.unwrap()
+                    logger: FlextLogger = logger_result.unwrap()
                     # Cache the result
                     with cls._cache_lock:
                         cls._logger_cache[logger_name] = logger
