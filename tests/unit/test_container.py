@@ -209,7 +209,7 @@ class TestFlextContainer:
         container.register("test_service", service)
 
         # Get with correct type
-        result = container.get_typed("test_service", TestService)
+        result: FlextResult[object] = container.get_typed("test_service", TestService)
         assert result.is_success
         assert isinstance(result.value, TestService)
         assert result.value.value == "test"
@@ -222,7 +222,7 @@ class TestFlextContainer:
         container.register("test_service", service)
 
         # Get with wrong type
-        result = container.get_typed("test_service", dict)
+        result: FlextResult[object] = container.get_typed("test_service", dict)
         assert result.is_success  # Should succeed because dict is the correct type
 
         # Get with wrong type
@@ -260,7 +260,7 @@ class TestFlextContainer:
         container = FlextContainer()
 
         # Service doesn't exist and no factory provided
-        result = container.get_or_create("nonexistent")
+        result: FlextResult[object] = container.get_or_create("nonexistent")
         assert result.is_failure
         assert result.error is not None
         assert result.error is not None
@@ -795,12 +795,12 @@ class TestFlextContainer:
         # Create an object that raises exception when accessing __class__
         class ProblematicService:
             @property
-            def __class__(self) -> type[object]:
+            def __class__(self) -> type:
                 msg = "Class access failed"
                 raise RuntimeError(msg)
 
             @__class__.setter
-            def __class__(self, value: type[object]) -> None:
+            def __class__(self, value: type) -> None:
                 # Setter for __class__ property (required for property override)
                 pass
 
@@ -1192,9 +1192,9 @@ class TestFlextResultWrapping:
         assert result.is_failure
 
         # Nonexistent service
-        result = container.get("nonexistent")
-        assert isinstance(result, FlextResult)
-        assert result.is_failure
+        result2 = container.get("nonexistent")
+        assert isinstance(result2, FlextResult)
+        assert result2.is_failure
 
         # Unregister nonexistent
         result = container.unregister("nonexistent")

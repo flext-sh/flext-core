@@ -2271,7 +2271,7 @@ class TestMaybeInterop:
 
         assert isinstance(maybe, Some)
         sentinel = object()
-        value: str | object = maybe.value_or(sentinel)
+        value: str | object = maybe.value_or(sentinel)  # type: ignore[no-untyped-call]
         assert value == "test_value"
 
     def test_to_maybe_failure(self) -> None:
@@ -2284,7 +2284,7 @@ class TestMaybeInterop:
     def test_from_maybe_some(self) -> None:
         """Test creating result from Some."""
         maybe = Some("test_value")
-        result: FlextResult[str] = FlextResult.from_maybe(maybe)  # type: ignore[assignment]
+        result: FlextResult[str] = FlextResult.from_maybe(maybe)
 
         assert result.is_success
         assert result.value == "test_value"
@@ -2292,7 +2292,7 @@ class TestMaybeInterop:
     def test_from_maybe_nothing(self) -> None:
         """Test creating result from Nothing."""
         maybe = Nothing
-        result: FlextResult[object] = FlextResult.from_maybe(maybe)  # type: ignore[assignment]
+        result: FlextResult[object] = FlextResult.from_maybe(maybe)
 
         assert result.is_failure
         assert result.error == "No value in Maybe"
@@ -2301,7 +2301,7 @@ class TestMaybeInterop:
         """Test roundtrip conversion success -> maybe -> success."""
         original = FlextResult[int].ok(42)
         maybe = original.to_maybe()
-        recovered: FlextResult[int] = FlextResult.from_maybe(maybe)  # type: ignore[assignment]
+        recovered: FlextResult[int] = FlextResult.from_maybe(maybe)
 
         assert recovered.is_success
         assert recovered.value == 42
@@ -2310,7 +2310,7 @@ class TestMaybeInterop:
         """Test roundtrip conversion failure -> maybe -> failure."""
         original = FlextResult[int].fail("error")
         maybe = original.to_maybe()
-        recovered: FlextResult[int] = FlextResult.from_maybe(maybe)  # type: ignore[assignment]
+        recovered: FlextResult[int] = FlextResult.from_maybe(maybe)
 
         assert recovered.is_failure
 
@@ -2330,7 +2330,7 @@ class TestIOInterop:
         def to_upper(x: str) -> str:
             return x.upper()
 
-        mapped = io_container.map(to_upper)  # type: ignore[attr-defined]
+        mapped = io_container.map(to_upper)
         assert isinstance(mapped, IO)
 
     def test_to_io_failure_raises(self) -> None:
@@ -2357,7 +2357,7 @@ class TestIOInterop:
     def test_from_io_result_success(self) -> None:
         """Test creating result from IOSuccess."""
         io_success = IOSuccess(42)
-        result: FlextResult[int] = FlextResult.from_io_result(io_success)  # type: ignore[assignment]
+        result: FlextResult[int] = FlextResult.from_io_result(io_success)
 
         assert result.is_success
         assert result.value == 42
@@ -2365,7 +2365,7 @@ class TestIOInterop:
     def test_from_io_result_failure(self) -> None:
         """Test creating result from IOFailure."""
         io_failure = IOFailure("io_error")
-        result: FlextResult[object] = FlextResult.from_io_result(io_failure)  # type: ignore[assignment]
+        result: FlextResult[object] = FlextResult.from_io_result(io_failure)
 
         assert result.is_failure
         assert "io_error" in (result.error or "")
@@ -2374,7 +2374,7 @@ class TestIOInterop:
         """Test roundtrip conversion success -> IOResult -> success."""
         original = FlextResult[dict[str, object]].ok({"key": "value"})
         io_result = original.to_io_result()
-        recovered: FlextResult[dict[str, object]] = FlextResult.from_io_result(  # type: ignore[assignment]
+        recovered: FlextResult[dict[str, object]] = FlextResult.from_io_result(
             io_result
         )
 
@@ -2385,7 +2385,7 @@ class TestIOInterop:
         """Test roundtrip conversion failure -> IOResult -> failure."""
         original = FlextResult[int].fail("original_error")
         io_result = original.to_io_result()
-        recovered: FlextResult[int] = FlextResult.from_io_result(io_result)  # type: ignore[assignment]
+        recovered: FlextResult[int] = FlextResult.from_io_result(io_result)
 
         assert recovered.is_failure
         assert "original_error" in (recovered.error or "")
@@ -2559,13 +2559,13 @@ class TestIntegrationScenarios:
         maybe = original.to_maybe()
 
         # Convert back to Result
-        from_maybe: FlextResult[str] = FlextResult.from_maybe(maybe)  # type: ignore[assignment]
+        from_maybe: FlextResult[str] = FlextResult.from_maybe(maybe)
 
         # Convert to IOResult
         io_result = from_maybe.to_io_result()
 
         # Convert back to Result
-        final: FlextResult[str] = FlextResult.from_io_result(io_result)  # type: ignore[assignment]
+        final: FlextResult[str] = FlextResult.from_io_result(io_result)
 
         assert final.is_success
         assert final.value == "test"

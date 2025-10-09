@@ -776,13 +776,13 @@ class TestFlextRegistry:
 
         # Test plain function
         function_map1: dict[
-            type,
+            type[object],
             tuple[
                 Callable[[object], object | FlextResult[object]],
                 object | FlextResult[object],
             ],
         ] = {
-            type[TestMessageType]: (
+            TestMessageType: (
                 simple_function,
                 {"handler_name": "test_handler"},
             )
@@ -793,13 +793,13 @@ class TestFlextRegistry:
 
         # Test function with config tuple
         function_map2: dict[
-            type,
+            type[object],
             tuple[
                 Callable[[object], object | FlextResult[object]],
                 object | FlextResult[object],
             ],
         ] = {
-            type[TestMessageType]: (
+            TestMessageType: (
                 function_with_config,
                 config_dict,
             )
@@ -809,8 +809,8 @@ class TestFlextRegistry:
         assert result2.value.successful_registrations == 1
 
         # Test pre-built handler
-        function_map3: dict[type, FlextHandlers[object, object]] = {
-            type[TestMessageType]: prebuilt_handler
+        function_map3: dict[type[object], FlextHandlers[object, object]] = {
+            TestMessageType: prebuilt_handler
         }
         result3 = registry.register_function_map(function_map3)
         assert result3.is_success
@@ -880,12 +880,12 @@ class TestFlextRegistry:
             pass
 
         valid_map: dict[
-            type,
+            type[object],
             tuple[
                 Callable[[object], object | FlextResult[object]],
                 object | FlextResult[object],
             ],
-        ] = {type[ValidMessageType]: (test_function, FlextResult[object].ok("default"))}
+        ] = {ValidMessageType: (test_function, FlextResult[object].ok("default"))}
         result_valid_map = registry.register_function_map(valid_map)
         assert result_valid_map.is_success
 
@@ -938,13 +938,13 @@ class TestFlextRegistry:
             pass
 
         failing_map: dict[
-            type,
+            type[object],
             tuple[
                 Callable[[object], object | FlextResult[object]],
                 object | FlextResult[object],
             ],
         ] = {
-            type[TestMessageType]: (failing_function, {"handler_name": "test_handler"})
+            TestMessageType: (failing_function, {"handler_name": "test_handler"})
         }
         result_failing = registry.register_function_map(failing_map)
         # Registry handles function failures gracefully
@@ -957,8 +957,8 @@ class TestFlextRegistry:
             return f"valid_{message}"
 
         # Register valid function as a tuple (function, config)
-        mixed_map: dict[type, tuple[object, object]] = {
-            type[TestMessageType]: (valid_function, {"test": "config"}),
+        mixed_map: dict[type[object], tuple[object, object]] = {
+            TestMessageType: (valid_function, {"test": "config"}),
         }
         result_mixed = registry.register_function_map(mixed_map)
         # Registry handles mixed valid/invalid functions gracefully

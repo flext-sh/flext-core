@@ -152,7 +152,7 @@ class TestFlextModels:
         assert payload.id is not None  # ID from IdentifiableMixin
 
         # Test expiration functionality
-        assert payload.is_expired is False
+        assert payload.is_expired is False  # type: ignore[comparison-overlap]
 
     def test_models_pagination_creation(self) -> None:
         """Test pagination model creation."""

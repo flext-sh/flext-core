@@ -777,9 +777,9 @@ class FlextConstants:
         LDAP_DEFAULT_PORT: Final[int] = 389
         LDAPS_DEFAULT_PORT: Final[int] = 636
 
-        # LDAP search scope constants
+        # LDAP search scope constants (RFC 4511)
         LDAP_SCOPE_BASE: Final[str] = "base"
-        LDAP_SCOPE_LEVEL: Final[str] = "level"
+        LDAP_SCOPE_LEVEL: Final[str] = "onelevel"  # Fixed: RFC 4511 uses "onelevel", not "level"
         LDAP_SCOPE_SUBTREE: Final[str] = "subtree"
 
         # LDAP modify operation constants

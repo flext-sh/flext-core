@@ -109,7 +109,7 @@ class TestFlextBase:
         def add_operation(a: object, b: object) -> object:
             return int(str(a)) + int(str(b))
 
-        result = base.run_operation("add", add_operation, 2, 3)
+        result: FlextResult[object] = base.run_operation("add", add_operation, 2, 3)
         assert result.is_success
         assert result.unwrap() == 5
 
@@ -117,7 +117,7 @@ class TestFlextBase:
             msg = "boom"
             raise ValueError(msg)
 
-        failure = base.run_operation("explode", explode)
+        failure: FlextResult[object] = base.run_operation("explode", explode)
         assert failure.is_failure
         assert failure.error_code == FlextBase.Constants.Errors.UNKNOWN_ERROR
 
