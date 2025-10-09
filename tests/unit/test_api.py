@@ -45,6 +45,12 @@ class TestFlextImports:
         assert FlextCore is not None
         assert isinstance(FlextCore, type)
 
+    def test_flextcore_instantiation(self) -> None:
+        """Test FlextCore can be instantiated."""
+        core = FlextCore()
+        assert core is not None
+        assert isinstance(core, FlextCore)
+
     def test_flextcore_alias(self) -> None:
         """Test FlextCore alias works."""
         assert FlextCore is not None
@@ -177,9 +183,28 @@ class TestFlextFactoryMethods:
         assert logger is not None
         assert isinstance(logger, FlextLogger)
 
+    def test_create_logger_via_classmethod(self) -> None:
+        """Test creating logger via classmethod."""
+        logger = FlextCore.create_logger("test_module")
+        assert logger is not None
+        assert isinstance(logger, FlextLogger)
+
+    def test_create_config_via_classmethod(self) -> None:
+        """Test creating config via classmethod."""
+        config = FlextCore.create_config(debug=True)
+        assert config is not None
+        assert isinstance(config, FlextConfig)
+        assert config.debug is True
+
     def test_get_container(self) -> None:
         """Test getting global container."""
         container = FlextCore.Container.get_global()
+        assert container is not None
+        assert isinstance(container, FlextContainer)
+
+    def test_get_container_via_classmethod(self) -> None:
+        """Test getting container via classmethod."""
+        container = FlextCore.get_container()
         assert container is not None
         assert isinstance(container, FlextContainer)
 
