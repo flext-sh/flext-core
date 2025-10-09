@@ -40,7 +40,7 @@ from flext_core import (
 class DemoScenarios:
     """Inline scenario helpers for messaging demonstrations."""
 
-    _DATASET: ClassVar[dict] = {
+    _DATASET: ClassVar[dict[str, list[dict[str, object]]]] = {
         "users": [
             {
                 "id": 1,
@@ -91,14 +91,16 @@ class DemoScenarios:
     @staticmethod
     def user(**overrides: object) -> FlextTypes.Dict:
         """Create user data dictionary for messaging examples."""
-        user = deepcopy(DemoScenarios._DATASET["users"][0])
+        user: FlextTypes.Dict = deepcopy(DemoScenarios._DATASET["users"][0])
         user.update(overrides)
         return user
 
     @staticmethod
     def users(count: int = 5) -> list[FlextTypes.Dict]:
         """Create list of user data dictionaries for messaging examples."""
-        return [deepcopy(user) for user in DemoScenarios._DATASET["users"][:count]]
+        return [
+            deepcopy(user_data) for user_data in DemoScenarios._DATASET["users"][:count]
+        ]
 
     @staticmethod
     def realistic_data() -> FlextTypes.Dict:
@@ -558,15 +560,18 @@ class MessagingPatternsService(FlextService[FlextTypes.Dict]):
                 roles_raw = user_state.get("roles", [])
                 roles: FlextTypes.StringList
                 if isinstance(roles_raw, list) and all(
-                    isinstance(role, str) for role in roles_raw
+                    isinstance(item, str) for item in roles_raw
                 ):
-                    roles = [role for role in roles_raw if isinstance(role, str)]
+                    roles = []
+                    for role_item in roles_raw:
+                        if isinstance(role_item, str):
+                            roles.append(role_item)
                 else:
                     roles = []
                 role_raw: object = event.data["role"]
                 if isinstance(role_raw, str):
-                    role_str: str = role_raw  # Type annotation for clarity
-                    roles.append(role_str)
+                    role_value: str = role_raw  # Type annotation for clarity
+                    roles.append(role_value)
                     user_state["roles"] = roles
 
         print("\n✅ Final user state:")
@@ -736,9 +741,6 @@ class MessagingPatternsService(FlextService[FlextTypes.Dict]):
 
         account_id = str(uuid4())
         order_total = float(cast("str", self._order["total"]))
-        order_items = cast("list[object]", self._order["items"])
-        first_item = order_items[0]
-        second_item = order_items[0] if len(order_items) == 1 else order_items[1]
 
         events = [
             FlextModels.DomainEvent(
@@ -763,9 +765,7 @@ class MessagingPatternsService(FlextService[FlextTypes.Dict]):
                 aggregate_id=account_id,
                 event_type="MoneyWithdrawn",
                 data={
-                    "amount": float(
-                        cast("str", cast("dict[str, object]", first_item)["price"])
-                    ),
+                    "amount": 25.0,  # Cost for inventory purchase
                     "reason": "inventory_purchase",
                 },
                 metadata={
@@ -777,9 +777,7 @@ class MessagingPatternsService(FlextService[FlextTypes.Dict]):
                 aggregate_id=account_id,
                 event_type="MoneyDeposited",
                 data={
-                    "amount": float(
-                        cast("str", cast("dict[str, object]", second_item)["price"])
-                    ),
+                    "amount": 15.0,  # Additional revenue from upsell
                     "source": "upsell_revenue",
                 },
                 metadata={
@@ -865,23 +863,23 @@ class MessagingPatternsService(FlextService[FlextTypes.Dict]):
             )
 
         # Safe message parsing without try/except
-        result: FlextResult[FlextModels.Payload[FlextTypes.Dict]] = (
-            FlextResult.from_callable(
-                lambda: risky_message_parse({
-                    "message_type": "order",
-                    "data": self._order,
-                }),
-            )
+        result: FlextResult[FlextModels.Payload[FlextTypes.Dict]] = FlextResult[
+            FlextModels.Payload[FlextTypes.Dict]
+        ].from_callable(
+            lambda: risky_message_parse({
+                "message_type": "order",
+                "data": self._order,
+            }),
         )
         if result.is_success:
-            payload: FlextModels.Payload[FlextTypes.Dict] = result.unwrap()
+            payload = result.unwrap()
             print(f"✅ Message parsed: {payload.metadata.get('message_type')}")
 
         # Failed parsing captured as Result
-        failed: FlextResult[FlextModels.Payload[FlextTypes.Dict]] = (
-            FlextResult.from_callable(
-                lambda: risky_message_parse({}),
-            )
+        failed: FlextResult[FlextModels.Payload[FlextTypes.Dict]] = FlextResult[
+            FlextModels.Payload[FlextTypes.Dict]
+        ].from_callable(
+            lambda: risky_message_parse({}),
         )
         if failed.is_failure:
             print(f"❌ Parse failed: {failed.error}")

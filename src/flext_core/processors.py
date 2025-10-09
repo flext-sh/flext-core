@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import concurrent.futures
 import threading
 import time
 from collections.abc import Callable
@@ -446,19 +447,48 @@ class FlextProcessors(FlextMixins.Service):
         name: str,
         data_list: FlextTypes.List,
     ) -> FlextResult[FlextTypes.List]:
-        """Process data items in parallel.
+        """Process data items in parallel using ThreadPoolExecutor.
 
         Args:
             name: Processor name
             data_list: List of data items to process
 
         Returns:
-            FlextResult[FlextTypes.List]: List of processed results
+            FlextResult[FlextTypes.List]: List of processed results from parallel execution
 
         """
-        # ISSUE: Code doesn't do what it means to do - method name suggests parallel but just calls sequential batch processing
-        # For now, just process sequentially - can be enhanced with actual parallel processing
-        return self.process_batch(name, data_list)
+        # Validate processor exists before parallel execution
+        if name not in self._registry:
+            return FlextResult[FlextTypes.List].fail(f"Processor '{name}' not found")
+
+        # Use ThreadPoolExecutor for true parallel processing
+        max_workers = min(
+            len(data_list), 10
+        )  # Cap at 10 workers to avoid resource exhaustion
+        results: FlextTypes.List = []
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all tasks for parallel execution
+            futures = {
+                executor.submit(self.process, name, data): data for data in data_list
+            }
+
+            # Collect results as they complete
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    result = future.result()
+                    if result.is_failure:
+                        # Fail fast on first error
+                        return FlextResult[FlextTypes.List].fail(
+                            f"Parallel processing failed: {result.error}",
+                        )
+                    results.append(result.value)
+                except Exception as e:
+                    return FlextResult[FlextTypes.List].fail(
+                        f"Parallel processing error: {e}",
+                    )
+
+        return FlextResult[FlextTypes.List].ok(results)
 
     def get_processors(self, name: str) -> FlextTypes.List:
         """Get registered processors by name.
@@ -762,18 +792,49 @@ class FlextProcessors(FlextMixins.Service):
                 a FlextResult, possibly a failure on timeout.
 
             """
-            # timeout_seconds = getattr(  # Unused for now
-            #     config,
-            #     "timeout_seconds",
-            #     FlextProcessors.Config.get_default_timeout(),
-            # )
+            # Get timeout value from config or use default
+            timeout_seconds = getattr(
+                config,
+                "timeout_seconds",
+                FlextConstants.Defaults.OPERATION_TIMEOUT_SECONDS,
+            )
 
-            # Execute handler with timeout protection
-            try:
-                # For now, just execute without timeout since with_timeout is not implemented
-                return self.execute(config.handler_name, config.input_data)
-            except Exception as e:
-                return FlextResult[object].fail(f"Handler execution failed: {e}")
+            # Validate timeout bounds
+            if timeout_seconds < FlextConstants.Container.MIN_TIMEOUT_SECONDS:
+                return FlextResult[object].fail(
+                    f"Timeout {timeout_seconds} is below minimum {FlextConstants.Container.MIN_TIMEOUT_SECONDS}",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+
+            if timeout_seconds > FlextConstants.Container.MAX_TIMEOUT_SECONDS:
+                return FlextResult[object].fail(
+                    f"Timeout {timeout_seconds} exceeds maximum {FlextConstants.Container.MAX_TIMEOUT_SECONDS}",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+
+            # Execute handler with timeout protection using ThreadPoolExecutor
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(
+                    self.execute,
+                    config.handler_name,
+                    config.input_data,
+                )
+
+                try:
+                    # Wait for result with timeout - return directly
+                    return future.result(timeout=float(timeout_seconds))
+                except concurrent.futures.TimeoutError:
+                    # Cancel the future and return timeout error
+                    future.cancel()
+                    return FlextResult[object].fail(
+                        f"Handler '{config.handler_name}' execution timed out after {timeout_seconds} seconds",
+                        error_code=FlextConstants.Errors.TIMEOUT_ERROR,
+                    )
+                except Exception as e:
+                    return FlextResult[object].fail(
+                        f"Handler execution failed: {e}",
+                        error_code=FlextConstants.Errors.PROCESSING_ERROR,
+                    )
 
         def execute_with_fallback(
             self,

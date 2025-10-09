@@ -663,13 +663,13 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
             return FlextResult[dict[str, object]].ok(data)
 
         # Flow through context enrichment pipeline
-        context_data: dict[str, object] = {
+        pipeline_context_data: dict[str, object] = {
             "user_id": FlextCore.Context.Variables.Request.USER_ID.get(),
             "timestamp": time.time(),
         }
         pipeline_result = (
             FlextResult[dict[str, object]]
-            .ok(context_data)
+            .ok(pipeline_context_data)
             .flow_through(
                 validate_user_context,
                 enrich_with_correlation,

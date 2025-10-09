@@ -17,11 +17,13 @@ import time
 import traceback
 import types
 from collections.abc import Callable, Sequence
-from typing import Self
+from typing import Self, TypeVar
 
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
+
+T = TypeVar("T")
 
 structlog = FlextRuntime.structlog()
 
@@ -479,7 +481,7 @@ class FlextLogger:
 
     def log_result(
         self,
-        result: FlextResult[object],
+        result: FlextResult[T],
         *,
         operation: str | None = None,
         level: str = "info",

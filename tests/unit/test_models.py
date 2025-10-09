@@ -152,17 +152,17 @@ class TestFlextModels:
         assert payload.id is not None  # ID from IdentifiableMixin
 
         # Test expiration functionality
-        assert not payload.is_expired
+        assert payload.is_expired is False
 
     def test_models_pagination_creation(self) -> None:
         """Test pagination model creation."""
         pagination = FlextModels.Pagination(page=1, size=10)
         assert pagination.page == 1
         assert pagination.size == 10
-        assert pagination.offset == 0
+        assert (pagination.page - 1) * pagination.size == 0
 
         pagination2 = FlextModels.Pagination(page=3, size=10)
-        assert pagination2.offset == 20
+        assert (pagination2.page - 1) * pagination2.size == 20
 
     def test_models_value_object_validation(self) -> None:
         """Test value object validation."""

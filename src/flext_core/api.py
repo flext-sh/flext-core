@@ -20,6 +20,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 from flext_core.__version__ import __version__, __version_info__
 from flext_core.base import FlextBase
 from flext_core.container import FlextContainer
@@ -83,7 +85,7 @@ class FlextCore(FlextBase):
             >>> config = FlextCore.create_config(debug=True, log_level="DEBUG")
 
         """
-        return cls.Config(**overrides)
+        return cls.Config(**cast("Any", overrides))
 
     @classmethod
     def get_container(cls) -> FlextContainer:

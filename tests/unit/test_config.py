@@ -57,12 +57,16 @@ class TestFlextConfig:
 
     def test_config_from_dict(self) -> None:
         """Test config creation from dictionary."""
-        config_data: dict[str, str | int | float | bool] = {
+        config_data: dict[str, str | bool] = {
             "app_name": "dict_app",
             "version": "2.0.0",
             "debug": False,
         }
-        config = FlextConfig(**config_data)
+        config = FlextConfig(
+            app_name=str(config_data["app_name"]),
+            version=str(config_data["version"]),
+            debug=bool(config_data["debug"]),
+        )
         assert config.app_name == "dict_app"
         assert config.version == "2.0.0"
         assert config.debug is False
@@ -349,7 +353,7 @@ class TestFlextConfig:
     def test_config_from_file_valid_json(self, tmp_path: Path) -> None:
         """Test loading configuration from a valid JSON file."""
         # Create a test config file
-        config_data = {
+        config_data: dict[str, object] = {
             "app_name": "file_test_app",
             "version": "3.0.0",
             "debug": True,
@@ -460,8 +464,7 @@ class TestFlextConfig:
 
         finally:
             # Restore original instance
-            if original_instance is not None:
-                FlextConfig.set_global_instance(original_instance)
+            FlextConfig.set_global_instance(original_instance)
 
     def test_di_provider_integration(self) -> None:
         """Test dependency injection provider integration."""
@@ -532,9 +535,7 @@ class TestFlextConfig:
             # Create .env file with FLEXT_ prefix
             env_file = tmp_path / ".env"
             env_file.write_text(
-                "FLEXT_APP_NAME=from-dotenv\n"
-                "FLEXT_LOG_LEVEL=WARNING\n"
-                "FLEXT_DEBUG=true\n"
+                "FLEXT_APP_NAME=from-dotenv\nFLEXT_LOG_LEVEL=WARNING\nFLEXT_DEBUG=true\n"
             )
 
             # Create config - should load from .env

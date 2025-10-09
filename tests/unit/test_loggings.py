@@ -556,3 +556,325 @@ class TestFlextLogger:
         # Just test basic logging functionality
         result = logger.info("Test message")
         assert result.is_success
+
+
+class TestFlextLoggerAdvancedFeatures:
+    """Comprehensive test suite for FlextLogger advanced features."""
+
+    def test_bind_global_context_success(self) -> None:
+        """Test binding global context successfully."""
+        # Clear any existing context first
+        FlextLogger.clear_global_context()
+
+        result = FlextLogger.bind_global_context(
+            request_id="req-123", user_id="usr-456", correlation_id="cor-789"
+        )
+        assert result.is_success
+
+        # Verify context is bound
+        context = FlextLogger.get_global_context()
+        assert context.get("request_id") == "req-123"
+        assert context.get("user_id") == "usr-456"
+        assert context.get("correlation_id") == "cor-789"
+
+        # Clean up
+        FlextLogger.clear_global_context()
+
+    def test_unbind_global_context_success(self) -> None:
+        """Test unbinding specific keys from global context."""
+        # Setup
+        FlextLogger.clear_global_context()
+        FlextLogger.bind_global_context(key1="value1", key2="value2", key3="value3")
+
+        # Unbind specific keys
+        result = FlextLogger.unbind_global_context("key1", "key2")
+        assert result.is_success
+
+        # Verify only specified keys are unbound
+        context = FlextLogger.get_global_context()
+        assert "key1" not in context
+        assert "key2" not in context
+        assert context.get("key3") == "value3"
+
+        # Clean up
+        FlextLogger.clear_global_context()
+
+    def test_clear_global_context_success(self) -> None:
+        """Test clearing all global context."""
+        # Setup
+        FlextLogger.bind_global_context(key1="value1", key2="value2")
+
+        # Clear all context
+        result = FlextLogger.clear_global_context()
+        assert result.is_success
+
+        # Verify all context is cleared
+        context = FlextLogger.get_global_context()
+        assert len(context) == 0
+
+    def test_get_global_context_returns_dict(self) -> None:
+        """Test getting global context returns dictionary."""
+        FlextLogger.clear_global_context()
+        FlextLogger.bind_global_context(test_key="test_value")
+
+        context = FlextLogger.get_global_context()
+        assert isinstance(context, dict)
+        assert context.get("test_key") == "test_value"
+
+        FlextLogger.clear_global_context()
+
+    def test_create_service_logger_with_full_context(self) -> None:
+        """Test creating service logger with full context."""
+        logger = FlextLogger.create_service_logger(
+            "payment-service", version="2.1.0", correlation_id="cor-abc123"
+        )
+
+        assert logger.name == "payment-service"
+        result = logger.info("Service initialized")
+        assert result.is_success
+
+    def test_create_service_logger_with_minimal_context(self) -> None:
+        """Test creating service logger with minimal context."""
+        logger = FlextLogger.create_service_logger("minimal-service")
+
+        assert logger.name == "minimal-service"
+        result = logger.info("Minimal service logger created")
+        assert result.is_success
+
+    def test_create_module_logger_success(self) -> None:
+        """Test creating module logger."""
+        logger = FlextLogger.create_module_logger("test.module.path")
+
+        assert logger.name == "test.module.path"
+        result = logger.info("Module logger created")
+        assert result.is_success
+
+    def test_get_logger_returns_instance(self) -> None:
+        """Test get_logger class method returns FlextLogger instance."""
+        logger = FlextLogger.get_logger()
+
+        assert isinstance(logger, FlextLogger)
+        assert logger.name == "flext"
+        result = logger.info("Default logger obtained")
+        assert result.is_success
+
+    def test_bind_creates_bound_logger(self) -> None:
+        """Test bind() creates new logger with additional context."""
+        base_logger = FlextLogger("base_logger")
+
+        # Create bound logger with additional context
+        bound_logger = base_logger.bind(request_id="req-456", endpoint="/api/users")
+
+        # Bound logger should be different instance but same name
+        assert bound_logger is not base_logger
+        assert bound_logger.name == base_logger.name
+
+        # Bound logger should work correctly
+        result = bound_logger.info("Request processed")
+        assert result.is_success
+
+    def test_bind_multiple_times(self) -> None:
+        """Test binding context multiple times creates chained loggers."""
+        logger1 = FlextLogger("chained_logger")
+        logger2 = logger1.bind(level1="value1")
+        logger3 = logger2.bind(level2="value2")
+        logger4 = logger3.bind(level3="value3")
+
+        # All should be different instances
+        assert logger1 is not logger2 is not logger3 is not logger4
+
+        # All should have same name
+        assert logger1.name == logger2.name == logger3.name == logger4.name
+
+        # All should log successfully
+        assert logger4.info("Deeply bound logger").is_success
+
+    def test_track_performance_success(self) -> None:
+        """Test performance tracking with successful operation."""
+        logger = FlextLogger("perf_logger")
+
+        with logger.track_performance("database_query"):
+            time.sleep(0.01)  # Simulate operation
+
+        # Should complete without error
+
+    def test_track_performance_with_exception(self) -> None:
+        """Test performance tracking with exception."""
+        logger = FlextLogger("perf_logger")
+
+        def failing_operation() -> None:
+            with logger.track_performance("failing_operation"):
+                msg = "Intentional failure"
+                raise ValueError(msg)
+
+        with pytest.raises(ValueError):
+            failing_operation()
+
+    def test_track_performance_context_manager_enter_exit(self) -> None:
+        """Test performance tracker context manager methods."""
+        logger = FlextLogger("perf_logger")
+        tracker = logger.track_performance("test_operation")
+
+        # Test context manager by using with statement
+        with tracker:
+            assert tracker._start_time > 0
+
+    def test_log_result_success_case(self) -> None:
+        """Test logging successful FlextResult."""
+        logger = FlextLogger("result_logger")
+
+        success_result = FlextResult[str].ok("Operation completed")
+        log_result = logger.log_result(success_result, operation="user_validation")
+
+        assert log_result.is_success
+
+    def test_log_result_failure_case(self) -> None:
+        """Test logging failed FlextResult."""
+        logger = FlextLogger("result_logger")
+
+        failure_result = FlextResult[str].fail(
+            "Validation failed", error_code="VAL_001"
+        )
+        log_result = logger.log_result(failure_result, operation="user_validation")
+
+        assert log_result.is_success
+
+    def test_log_result_without_operation_name(self) -> None:
+        """Test logging result without operation name."""
+        logger = FlextLogger("result_logger")
+
+        result = FlextResult[str].ok("Success")
+        log_result = logger.log_result(result)
+
+        assert log_result.is_success
+
+    def test_log_result_with_custom_level(self) -> None:
+        """Test logging result with custom log level."""
+        logger = FlextLogger("result_logger")
+
+        result = FlextResult[str].ok("Success")
+        log_result = logger.log_result(result, level="debug")
+
+        assert log_result.is_success
+
+    def test_trace_logging(self) -> None:
+        """Test trace level logging."""
+        logger = FlextLogger("trace_logger")
+
+        result = logger.trace("Trace message with details", key="value")
+        assert result.is_success
+
+    def test_trace_logging_with_formatting(self) -> None:
+        """Test trace logging with string formatting."""
+        logger = FlextLogger("trace_logger")
+
+        result = logger.trace("Trace message: %s", "formatted_value")
+        assert result.is_success
+
+    def test_exception_logging_with_exc_info(self) -> None:
+        """Test exception logging with exc_info parameter."""
+        logger = FlextLogger("exception_logger")
+
+        try:
+            msg = "Test exception"
+            raise RuntimeError(msg)
+        except RuntimeError:
+            # exc_info=True is default for exception(), no need to specify
+            result = logger.exception("Error occurred")
+            assert result.is_success
+
+    def test_exception_logging_with_provided_exception(self) -> None:
+        """Test exception logging with provided exception object."""
+        logger = FlextLogger("exception_logger")
+
+        try:
+            msg = "Provided exception"
+            raise ValueError(msg)
+        except ValueError as e:
+            # Using exception() to log the exception properly
+            result = logger.exception("Error details", exception=e)
+            assert result.is_success
+
+    def test_exception_logging_with_additional_context(self) -> None:
+        """Test exception logging with additional context."""
+        logger = FlextLogger("exception_logger")
+
+        try:
+            msg = "Context exception"
+            raise KeyError(msg)
+        except KeyError as e:
+            result = logger.exception(
+                "Key error occurred",
+                exception=e,
+                user_id="usr-123",
+                operation="data_lookup",
+            )
+            assert result.is_success
+
+    def test_logger_name_property(self) -> None:
+        """Test logger name property accessor."""
+        logger = FlextLogger("property_test")
+        assert logger.name == "property_test"
+
+    def test_logger_with_all_initialization_params(self) -> None:
+        """Test logger initialization with all parameters."""
+        logger = FlextLogger(
+            "full_init",
+            _level="DEBUG",
+            _service_name="test-service",
+            _service_version="1.2.3",
+            _correlation_id="cor-xyz",
+            _force_new=True,
+        )
+
+        assert logger.name == "full_init"
+        result = logger.debug("Full initialization test")
+        assert result.is_success
+
+    def test_global_context_with_logging(self) -> None:
+        """Test that global context is included in log messages."""
+        FlextLogger.clear_global_context()
+        FlextLogger.bind_global_context(global_request_id="global-123")
+
+        logger = FlextLogger("context_test")
+        result = logger.info("Message with global context")
+
+        assert result.is_success
+        FlextLogger.clear_global_context()
+
+    def test_performance_tracker_with_very_short_operation(self) -> None:
+        """Test performance tracker with very short operation."""
+        logger = FlextLogger("perf_logger")
+
+        with logger.track_performance("instant_operation"):
+            pass  # Instant operation
+
+    def test_performance_tracker_with_long_operation(self) -> None:
+        """Test performance tracker with longer operation."""
+        logger = FlextLogger("perf_logger")
+
+        with logger.track_performance("long_operation"):
+            time.sleep(0.05)  # 50ms operation
+
+    def test_bound_logger_retains_base_context(self) -> None:
+        """Test that bound logger retains base logger context."""
+        base = FlextLogger.create_service_logger("api", version="1.0")
+        bound = base.bind(endpoint="/users")
+
+        # Both should log successfully
+        assert base.info("Base message").is_success
+        assert bound.info("Bound message").is_success
+
+    def test_multiple_loggers_independent(self) -> None:
+        """Test that multiple logger instances are independent."""
+        logger1 = FlextLogger("logger1")
+        logger2 = FlextLogger("logger2")
+
+        bound1 = logger1.bind(context1="value1")
+        bound2 = logger2.bind(context2="value2")
+
+        # All should log independently
+        assert logger1.info("Logger 1").is_success
+        assert logger2.info("Logger 2").is_success
+        assert bound1.info("Bound 1").is_success
+        assert bound2.info("Bound 2").is_success

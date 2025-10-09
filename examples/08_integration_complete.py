@@ -65,10 +65,25 @@ class RealisticDataDict(TypedDict):
     user_registration: FlextTypes.Dict
 
 
+class UserDict(TypedDict):
+    """Type definition for user data in integration examples."""
+
+    id: int
+    name: str
+    email: str
+    age: int
+
+
+class DemoDatasetDict(TypedDict):
+    """Type definition for demo dataset structure."""
+
+    users: list[UserDict]
+
+
 class DemoScenarios:
     """Inline scenario helpers for the integration example."""
 
-    _DATASET: ClassVar[dict] = {
+    _DATASET: ClassVar[DemoDatasetDict] = {
         "users": [
             {
                 "id": 1,
@@ -134,7 +149,7 @@ class DemoScenarios:
     }
 
     @staticmethod
-    def dataset() -> FlextTypes.Dict:
+    def dataset() -> DemoDatasetDict:
         """Get a copy of the demo dataset."""
         return deepcopy(DemoScenarios._DATASET)
 
@@ -174,12 +189,14 @@ class DemoScenarios:
     @staticmethod
     def user(**overrides: object) -> FlextTypes.Dict:
         """Create user data dictionary for integration examples."""
-        user = deepcopy(DemoScenarios._DATASET["users"][0])
-        user.update(overrides)
-        return user
+        user: UserDict = deepcopy(DemoScenarios._DATASET["users"][0])
+        # Apply overrides manually to avoid TypedDict.update overload issues
+        for key, value in overrides.items():
+            setattr(user, key, value)
+        return cast("FlextTypes.Dict", user)
 
     @staticmethod
-    def users(count: int = 5) -> list[FlextTypes.Dict]:
+    def users(count: int = 5) -> list[UserDict]:
         """Create list of user data dictionaries for integration examples."""
         return [deepcopy(user) for user in DemoScenarios._DATASET["users"][:count]]
 
@@ -838,7 +855,7 @@ class OrderValidationHandler:
         items_raw = request["items"]
         if not isinstance(items_raw, list):
             return FlextResult[FlextTypes.Dict].fail("Order items must be a list")
-        items: list[dict[str, object]] = items_raw
+        items: list[dict[str, object]] = cast("list[dict[str, object]]", items_raw)
         for item in items:
             item_dict: dict[str, object] = item
             if not item_dict.get("product_id"):
@@ -933,8 +950,8 @@ def demonstrate_new_flextresult_methods() -> None:
         return Order(customer_id=customer_id, items=[], domain_events=[])
 
     # Safe order creation without try/except
-    customer_id = cast("str", REDACTED_LDAP_BIND_PASSWORD_user["email"])
-    order_result = FlextResult.from_callable(
+    customer_id = REDACTED_LDAP_BIND_PASSWORD_user["email"]
+    order_result: FlextResult[Order] = FlextResult[Order].from_callable(
         lambda: risky_order_creation(
             customer_id,
             cast("list[dict[str, object]]", list(order_template.get("items", []))),
@@ -1190,15 +1207,16 @@ def demonstrate_complete_integration() -> None:
             if product_result.is_success:
                 products.append(product_result.unwrap())
 
+    items_list: list[dict[str, object]] = [
+        {
+            "product_id": item["product_id"],
+            "quantity": item.get("quantity", 1),
+        }
+        for item in scenario_order["items"]
+    ]
     order_request: FlextTypes.Dict = {
         "customer_id": scenario_order["customer_id"],
-        "items": [
-            {
-                "product_id": item["product_id"],
-                "quantity": item.get("quantity", 1),
-            }
-            for item in scenario_order["items"]
-        ],
+        "items": items_list,
         "payment_method": "credit_card",
     }
     order_dict: dict[str, object] = order_request
@@ -1206,15 +1224,19 @@ def demonstrate_complete_integration() -> None:
     if not isinstance(items_list_raw, list):
         print("Items is not a list")
     else:
-        items_list: list[dict[str, object]] = items_list_raw
-        if items_list:
-            first_item: dict[str, object] = items_list[0]
+        items_validated: list[dict[str, object]] = cast(
+            "list[dict[str, object]]", items_list_raw
+        )
+        if items_validated:
+            first_item: dict[str, object] = items_validated[0]
             first_product_id = first_item["product_id"]
 
     print(f"Customer: {order_dict['customer_id']}")
     items_raw = order_dict["items"]
     if isinstance(items_raw, list):
-        order_items: list[dict[str, object]] = items_raw
+        order_items: list[dict[str, object]] = cast(
+            "list[dict[str, object]]", items_raw
+        )
         print(f"Items: {len(order_items)} products")
     else:
         print("Items is not a list")
@@ -1243,7 +1265,9 @@ def demonstrate_complete_integration() -> None:
         and isinstance(items_raw, list)
         and isinstance(payment_method, str)
     ):
-        enriched_items: list[dict[str, object]] = items_raw
+        enriched_items: list[dict[str, object]] = cast(
+            "list[dict[str, object]]", items_raw
+        )
         result = order_service.process_operation({
             "operation": "create_and_submit",
             "customer_id": customer_id,
@@ -1301,7 +1325,9 @@ def demonstrate_complete_integration() -> None:
             and isinstance(items_raw, list)
             and isinstance(payment_method, str)
         ):
-            validation_items: list[dict[str, object]] = items_raw
+            validation_items: list[dict[str, object]] = cast(
+                "list[dict[str, object]]", items_raw
+            )
             result = order_service.process_operation({
                 "operation": "create_and_submit",
                 "customer_id": customer_id,
@@ -1332,11 +1358,7 @@ def demonstrate_complete_integration() -> None:
     items_list = [dict(item) for item in items_list_raw]
     item_template: dict[str, object] = items_list[0]
     template_price = item_template.get("price", Decimal("10.00"))
-    price_amount = (
-        template_price
-        if isinstance(template_price, Decimal)
-        else Decimal(str(template_price))
-    )
+    price_amount = Decimal(str(template_price))
     product = Product(
         id=str(item_template.get("product_id", "PROD-TEMPLATE")),
         name=str(item_template.get("name", "Template Product")),
@@ -1349,12 +1371,9 @@ def demonstrate_complete_integration() -> None:
 
     for event in simple_order.get_domain_events():
         # Domain events are FlextModels.DomainEvent objects
-        if isinstance(event, FlextModels.DomainEvent):
-            event_name = event.event_type
-            event_data = event.data
-            print(f"  📢 {event_name}: {event_data}")
-        else:
-            print(f"  📢 Unexpected event format: {event}")
+        event_name = event.event_type
+        event_data = event.data
+        print(f"  📢 {event_name}: {event_data}")
 
     # 8. Logging with correlation
     print("\n=== 8. Structured Logging ===")

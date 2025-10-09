@@ -418,6 +418,7 @@ class TestEnterprisePatterns:
 
             def __init__(self) -> None:
                 """Initialize builder."""
+                super().__init__()
                 self._config: FlextTypes.Dict = {}
 
             def with_database(self, host: str, port: int) -> ConfigurationBuilder:
@@ -474,6 +475,7 @@ class TestEnterprisePatterns:
 
             def __init__(self) -> None:
                 """Initialize repository."""
+                super().__init__()
                 self._data: FlextTypes.Dict = {}
                 self._query_count = 0
 
@@ -556,6 +558,7 @@ class TestEventDrivenPatterns:
 
             def __init__(self) -> None:
                 """Initialize handler."""
+                super().__init__()
                 self.processed_events: list[FlextModels.DomainEvent] = []
 
             def handle_user_created(self, event: UserCreatedEvent) -> FlextResult[None]:

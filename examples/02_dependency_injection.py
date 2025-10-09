@@ -44,7 +44,7 @@ from flext_core import (
 class DemoScenarios:
     """Inline scenario helpers for dependency injection demonstrations."""
 
-    _DATASET: ClassVar[dict] = {
+    _DATASET: ClassVar[FlextTypes.Dict] = {
         "users": [
             {
                 "id": 1,
@@ -94,7 +94,10 @@ class DemoScenarios:
     @staticmethod
     def user(**overrides: object) -> FlextTypes.Dict:
         """Get a demo user object with optional overrides."""
-        user = deepcopy(DemoScenarios._DATASET["users"][0])
+        dataset: dict[str, object] = DemoScenarios._DATASET
+        users_raw = dataset["users"]
+        users_list: list[dict[str, object]] = cast("list[dict[str, object]]", users_raw)
+        user = deepcopy(users_list[0])
         user.update(overrides)
         return user
 
@@ -685,11 +688,12 @@ class ComprehensiveDIService(FlextService[User]):
             )
 
         user_source = self._scenarios.user()
+        age_raw = user_source.get("age", 0)
         user = User(
             id=str(user_source["id"]),
             name=str(user_source["name"]),
             email=str(user_source["email"]),
-            age=int(cast("int", user_source.get("age", 0))),
+            age=int(age_raw) if isinstance(age_raw, (int, str)) else 0,
         )
 
         self._log_service_statistics()
@@ -827,8 +831,8 @@ class ComprehensiveDIService(FlextService[User]):
                     cached_dict = cast("FlextTypes.Dict", cached_data)
                     print(f"✅ Cache test: {cached_dict.get('email')}")
 
-            stats = getattr(cache, "get_stats", dict)()
-            stats_dict = cast("FlextTypes.Dict", stats)
+            stats = getattr(cache, "get_stats", dict)
+            stats_dict: FlextTypes.Dict = cast("FlextTypes.Dict", stats or {})
             print(
                 f"   Cache stats: {stats_dict.get('current_size', 0)} items, {stats_dict.get('hits', 0)} hits, {stats_dict.get('misses', 0)} misses"
             )
@@ -872,8 +876,10 @@ class ComprehensiveDIService(FlextService[User]):
                 db = db_result.unwrap()
                 db.connect()
 
-                users_list_result = self._dataset.get("users", [{}])
-                users_list = cast("FlextTypes.List", users_list_result)
+                users_list_result = self._dataset.get(
+                    "users", cast("list[dict[str, object]]", [{}])
+                )
+                users_list: FlextTypes.List = cast("FlextTypes.List", users_list_result)
                 user_id = str(
                     cast("FlextTypes.Dict", users_list[0]).get("id", "user_1")
                 )
@@ -1013,8 +1019,7 @@ class ComprehensiveDIService(FlextService[User]):
                 raise RuntimeError(msg)
             return db
 
-        db_result = FlextResult.from_callable(risky_db_connect)
-        db_result = cast("FlextResult[DatabaseService]", db_result)
+        db_result = FlextResult[DatabaseService].from_callable(risky_db_connect)
         if db_result.is_failure:
             print(f"✅ Caught connection error safely: {db_result.error}")
         else:
@@ -1024,8 +1029,7 @@ class ComprehensiveDIService(FlextService[User]):
         def safe_cache_init() -> CacheService:
             return CacheService(max_size=100, ttl_seconds=300)
 
-        cache_result = FlextResult.from_callable(safe_cache_init)
-        cache_result = cast("FlextResult[CacheService]", cache_result)
+        cache_result = FlextResult[CacheService].from_callable(safe_cache_init)
         if cache_result.is_success:
             cache = cache_result.unwrap()
             print(f"✅ Cache initialized: max_size={cache.max_size}")

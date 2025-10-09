@@ -26,7 +26,7 @@ import time
 import warnings
 from copy import deepcopy
 from datetime import UTC, datetime
-from typing import ClassVar, cast
+from typing import ClassVar
 from uuid import uuid4
 
 from flext_core import (
@@ -42,7 +42,7 @@ from flext_core import (
 class DemoScenarios:
     """Inline scenario helpers for logging demonstrations."""
 
-    _DATASET: ClassVar[dict] = {
+    _DATASET: ClassVar[dict[str, list[dict[str, object]]]] = {
         "users": [
             {
                 "id": 1,
@@ -95,7 +95,7 @@ class DemoScenarios:
     @staticmethod
     def user(**overrides: object) -> FlextTypes.Dict:
         """Get a demo user object with optional overrides."""
-        user = deepcopy(DemoScenarios._DATASET["users"][0])
+        user: FlextTypes.Dict = deepcopy(DemoScenarios._DATASET["users"][0])
         user.update(overrides)
         return user
 
@@ -591,8 +591,7 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
                 raise ValueError(msg)
             return f"Logger configured with level {self.config.log_level}"
 
-        validation_result = FlextResult.from_callable(validate_logger_config)
-        validation_result = cast("FlextResult[str]", validation_result)
+        validation_result = FlextResult[str].from_callable(validate_logger_config)
         if validation_result.is_success:
             print(f"✅ {validation_result.unwrap()}")
 

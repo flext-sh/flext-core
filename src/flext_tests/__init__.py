@@ -15,7 +15,6 @@ from flext_tests.utilities import FlextTestsUtilities
 
 __all__ = [
     "FlextTestDocker",
-    "FlextTestsDocker",
     "FlextTestsDomains",
     "FlextTestsMatchers",
     "FlextTestsUtilities",

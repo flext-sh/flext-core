@@ -237,6 +237,7 @@ class TestSerializationUtilities:
 
         class TestObj:
             def __init__(self) -> None:
+                super().__init__()
                 self.name = "test"
                 self.value = 42
 
@@ -268,6 +269,7 @@ class TestSerializationUtilities:
 
         class BrokenModel:
             def __init__(self) -> None:
+                super().__init__()
                 self.data = "test"
 
             def model_dump(self) -> dict[str, object]:
@@ -285,6 +287,7 @@ class TestSerializationUtilities:
 
         class BrokenDict:
             def __init__(self) -> None:
+                super().__init__()
                 self.data = "test"
 
             def dict(self) -> dict[str, object]:
@@ -302,6 +305,7 @@ class TestSerializationUtilities:
 
         class NonDictReturn:
             def __init__(self) -> None:
+                super().__init__()
                 self.data = "test"
 
             def dict(self) -> str:
@@ -318,6 +322,7 @@ class TestSerializationUtilities:
 
         class DictMethodWorking:
             def __init__(self) -> None:
+                super().__init__()
                 self.data = "test"
 
             def dict(self) -> dict[str, object]:
@@ -520,3 +525,313 @@ class TestRuntimeIntegrationWithConstants:
 
         # FlextRuntime should be able to access FlextConstants patterns
         assert FlextConstants.Platform.PATTERN_EMAIL is not None
+
+
+class TestContextIntegrationPatterns:
+    """Test FlextRuntime.Integration application-layer helpers (PHASE 2)."""
+
+    def test_track_service_resolution_success(self) -> None:
+        """Test Integration.track_service_resolution with successful resolution."""
+        # Setup: Configure structlog and context
+        FlextRuntime.configure_structlog()
+        from flext_core.context import FlextContext
+
+        # Set correlation ID for tracking
+        correlation_id = FlextContext.Utilities.ensure_correlation_id()
+
+        # Track successful service resolution
+        FlextRuntime.Integration.track_service_resolution("database", resolved=True)
+
+        # Verify correlation ID is still in context
+        current_correlation = FlextContext.Correlation.get_correlation_id()
+        assert current_correlation == correlation_id
+
+    def test_track_service_resolution_failure(self) -> None:
+        """Test track_service_resolution with failed resolution."""
+        FlextRuntime.configure_structlog()
+        from flext_core.context import FlextContext
+
+        # Set correlation ID
+        correlation_id = FlextContext.Utilities.ensure_correlation_id()
+
+        # Track failed service resolution
+        FlextRuntime.Integration.track_service_resolution(
+            "cache",
+            resolved=False,
+            error_message="Connection refused",
+        )
+
+        # Verify correlation ID persists
+        assert FlextContext.Correlation.get_correlation_id() == correlation_id
+
+    def test_track_service_resolution_without_correlation(self) -> None:
+        """Test track_service_resolution works without pre-existing correlation ID."""
+        FlextRuntime.configure_structlog()
+        import structlog
+
+        # Clear any existing correlation using structlog
+        structlog.contextvars.unbind_contextvars("correlation_id")
+
+        # Should not raise error even without correlation ID
+        FlextRuntime.Integration.track_service_resolution("logger", resolved=True)
+
+        # Correlation ID should still be None
+        from flext_core.context import FlextContext
+
+        assert FlextContext.Correlation.get_correlation_id() is None
+
+    def test_log_config_access_unmasked(self) -> None:
+        """Test log_config_access without masking."""
+        FlextRuntime.configure_structlog()
+        from flext_core.context import FlextContext
+
+        # Set correlation ID
+        correlation_id = FlextContext.Utilities.ensure_correlation_id()
+
+        # Log config access without masking
+        FlextRuntime.Integration.log_config_access(
+            "app_name", value="flext-core", masked=False
+        )
+
+        # Verify correlation ID persists
+        assert FlextContext.Correlation.get_correlation_id() == correlation_id
+
+    def test_log_config_access_masked(self) -> None:
+        """Test log_config_access with value masking for secrets."""
+        FlextRuntime.configure_structlog()
+        from flext_core.context import FlextContext
+
+        # Set correlation ID
+        correlation_id = FlextContext.Utilities.ensure_correlation_id()
+
+        # Log config access with masking (for secrets)
+        FlextRuntime.Integration.log_config_access(
+            "database_password",
+            value="super_secret_password",
+            masked=True,
+        )
+
+        # Verify correlation ID persists
+        assert FlextContext.Correlation.get_correlation_id() == correlation_id
+
+    def test_log_config_access_no_value(self) -> None:
+        """Test log_config_access without providing value."""
+        FlextRuntime.configure_structlog()
+
+        # Should not raise error without value
+        FlextRuntime.Integration.log_config_access("some_key", masked=False)
+
+    def test_attach_context_to_result_basic(self) -> None:
+        """Test attach_context_to_result basic usage."""
+        FlextRuntime.configure_structlog()
+        from flext_core import FlextResult
+        from flext_core.context import FlextContext
+
+        # Set correlation ID
+        FlextContext.Utilities.ensure_correlation_id()
+
+        # Create result and attach context
+        result = FlextResult[str].ok("test_data")
+        result_with_ctx = FlextRuntime.Integration.attach_context_to_result(
+            result,
+            attach_correlation=True,
+        )
+
+        # Currently returns result unchanged (future-proofing pattern)
+        assert result_with_ctx is result
+
+    def test_attach_context_to_result_with_service_name(self) -> None:
+        """Test attach_context_to_result with service name."""
+        FlextRuntime.configure_structlog()
+        from flext_core import FlextResult
+        from flext_core.context import FlextContext
+
+        # Set service context
+        FlextContext.Service.set_service_name("test-service")
+
+        # Create result and attach context
+        result = FlextResult[dict[str, object]].ok({"status": "success"})
+        result_with_ctx = FlextRuntime.Integration.attach_context_to_result(
+            result,
+            attach_correlation=True,
+            attach_service_name=True,
+        )
+
+        # Currently returns result unchanged (future-proofing pattern)
+        assert result_with_ctx is result
+
+    def test_attach_context_to_result_no_correlation(self) -> None:
+        """Test attach_context_to_result without correlation ID."""
+        FlextRuntime.configure_structlog()
+        import structlog
+
+        from flext_core import FlextResult
+
+        # Clear correlation using structlog
+        structlog.contextvars.unbind_contextvars("correlation_id")
+
+        # Create result
+        result = FlextResult[str].ok("test")
+
+        # Should not raise error without correlation
+        result_with_ctx = FlextRuntime.Integration.attach_context_to_result(
+            result,
+            attach_correlation=False,
+        )
+        assert result_with_ctx is result
+
+    def test_track_domain_event_with_aggregate(self) -> None:
+        """Test track_domain_event with aggregate ID."""
+        FlextRuntime.configure_structlog()
+        from flext_core.context import FlextContext
+
+        # Set correlation ID
+        correlation_id = FlextContext.Utilities.ensure_correlation_id()
+
+        # Track domain event with aggregate
+        FlextRuntime.Integration.track_domain_event(
+            "UserCreated",
+            aggregate_id="user-123",
+            event_data={"email": "test@example.com"},
+        )
+
+        # Verify correlation ID persists
+        assert FlextContext.Correlation.get_correlation_id() == correlation_id
+
+    def test_track_domain_event_without_aggregate(self) -> None:
+        """Test track_domain_event without aggregate ID."""
+        FlextRuntime.configure_structlog()
+        from flext_core.context import FlextContext
+
+        # Set correlation ID
+        correlation_id = FlextContext.Utilities.ensure_correlation_id()
+
+        # Track domain event without aggregate
+        FlextRuntime.Integration.track_domain_event(
+            "SystemInitialized",
+            event_data={"timestamp": "2025-01-01T00:00:00Z"},
+        )
+
+        # Verify correlation ID persists
+        assert FlextContext.Correlation.get_correlation_id() == correlation_id
+
+    def test_track_domain_event_minimal(self) -> None:
+        """Test track_domain_event with minimal arguments."""
+        FlextRuntime.configure_structlog()
+
+        # Should not raise error with just event name
+        FlextRuntime.Integration.track_domain_event("ConfigUpdated")
+
+    def test_setup_service_infrastructure_full(self) -> None:
+        """Test setup_service_infrastructure with all options."""
+        FlextRuntime.configure_structlog()
+        from flext_core.context import FlextContext
+
+        # Setup complete service infrastructure
+        FlextRuntime.Integration.setup_service_infrastructure(
+            service_name="test-service",
+            service_version="1.0.0",
+            enable_context_correlation=True,
+        )
+
+        # Verify service context is set
+        assert FlextContext.Service.get_service_name() == "test-service"
+        assert FlextContext.Service.get_service_version() == "1.0.0"
+
+        # Verify correlation ID was generated
+        correlation_id = FlextContext.Correlation.get_correlation_id()
+        assert correlation_id is not None
+
+    def test_setup_service_infrastructure_without_version(self) -> None:
+        """Test setup_service_infrastructure without version."""
+        FlextRuntime.configure_structlog()
+        from flext_core.context import FlextContext
+
+        # Setup without version
+        FlextRuntime.Integration.setup_service_infrastructure(
+            service_name="minimal-service",
+            enable_context_correlation=True,
+        )
+
+        # Verify service name is set
+        assert FlextContext.Service.get_service_name() == "minimal-service"
+
+        # Verify correlation ID was generated
+        assert FlextContext.Correlation.get_correlation_id() is not None
+
+    def test_setup_service_infrastructure_without_correlation(self) -> None:
+        """Test setup_service_infrastructure without correlation generation."""
+        FlextRuntime.configure_structlog()
+        import structlog
+
+        from flext_core.context import FlextContext
+
+        # Clear any existing correlation using structlog
+        structlog.contextvars.unbind_contextvars("correlation_id")
+
+        # Setup without correlation generation
+        FlextRuntime.Integration.setup_service_infrastructure(
+            service_name="no-correlation-service",
+            service_version="2.0.0",
+            enable_context_correlation=False,
+        )
+
+        # Verify service context is set
+        assert FlextContext.Service.get_service_name() == "no-correlation-service"
+
+        # Verify correlation ID was NOT generated
+        assert FlextContext.Correlation.get_correlation_id() is None
+
+    def test_integration_lazy_imports_prevent_circular_dependencies(self) -> None:
+        """Test that Integration nested class uses lazy imports correctly."""
+        # This test verifies the pattern works by importing FlextRuntime first
+        from flext_core.runtime import FlextRuntime
+
+        # FlextRuntime should be importable without triggering circular imports
+        assert FlextRuntime is not None
+
+        # The Integration nested class should exist
+        assert hasattr(FlextRuntime, "Integration")
+        assert FlextRuntime.Integration is not None
+
+        # The integration methods should exist on the nested class
+        assert hasattr(FlextRuntime.Integration, "track_service_resolution")
+        assert hasattr(FlextRuntime.Integration, "log_config_access")
+        assert hasattr(FlextRuntime.Integration, "attach_context_to_result")
+        assert hasattr(FlextRuntime.Integration, "track_domain_event")
+        assert hasattr(FlextRuntime.Integration, "setup_service_infrastructure")
+
+    def test_integration_keyword_only_arguments(self) -> None:
+        """Test that boolean arguments are keyword-only (Ruff FBT compliance)."""
+        FlextRuntime.configure_structlog()
+        from flext_core.context import FlextContext
+
+        # Set correlation for testing
+        FlextContext.Utilities.ensure_correlation_id()
+
+        # These should work with keyword arguments
+        FlextRuntime.Integration.track_service_resolution("test", resolved=True)
+        FlextRuntime.Integration.log_config_access("key", masked=False)
+        FlextRuntime.Integration.setup_service_infrastructure(
+            service_name="test",
+            enable_context_correlation=True,
+        )
+
+        # This test verifies keyword-only pattern at runtime
+
+    def test_integration_with_context_single_source_of_truth(self) -> None:
+        """Test that integration uses structlog contextvars as single source of truth."""
+        FlextRuntime.configure_structlog()
+        from flext_core.context import FlextContext
+
+        # Create correlation ID (stored in structlog contextvars)
+        original_correlation = FlextContext.Utilities.ensure_correlation_id()
+
+        # Use integration methods - they should all see the same context
+        FlextRuntime.Integration.track_service_resolution("service1", resolved=True)
+        FlextRuntime.Integration.log_config_access("config1", masked=False)
+        FlextRuntime.Integration.track_domain_event("Event1")
+
+        # Correlation ID should remain consistent (single source of truth)
+        final_correlation = FlextContext.Correlation.get_correlation_id()
+        assert final_correlation == original_correlation

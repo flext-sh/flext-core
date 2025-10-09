@@ -9,6 +9,7 @@ handling and composability across ecosystem projects.
 """
 
 # ruff: E402, S404
+# pyright: reportUnknownArgumentType=false
 from __future__ import annotations
 
 import contextvars
@@ -23,6 +24,7 @@ import secrets
 import string
 import subprocess  # nosec B404 - Required for shell command execution utilities
 import threading
+import time
 import uuid
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, is_dataclass
@@ -522,7 +524,9 @@ class FlextUtilities:
             return ("vars", normalized_vars)
 
         @staticmethod
-        def generate_cache_key(command: object, command_type: type[object]) -> str:
+        def generate_cache_key(
+            command: object | None, command_type: type[object]
+        ) -> str:
             """Generate a deterministic cache key for the command.
 
             Args:
@@ -621,12 +625,12 @@ class FlextUtilities:
             return isinstance(value, str) and bool(value.strip())
 
         @staticmethod
-        def is_dict_non_empty(value: object) -> bool:
+        def is_dict_non_empty(value: object | None) -> bool:
             """Check if value is a non-empty dictionary."""
             return isinstance(value, dict) and bool(value)
 
         @staticmethod
-        def is_list_non_empty(value: object) -> bool:
+        def is_list_non_empty(value: object | None) -> bool:
             """Check if value is a non-empty list."""
             return isinstance(value, list) and bool(value)
 
@@ -908,6 +912,70 @@ class FlextUtilities:
                 )
 
             return result_container[0]
+
+        @staticmethod
+        def retry[TResult](
+            operation: Callable[[], FlextResult[TResult]],
+            max_attempts: int | None = None,
+            delay_seconds: float | None = None,
+            backoff_multiplier: float | None = None,
+        ) -> FlextResult[TResult]:
+            """Execute operation with retry logic using railway patterns."""
+            max_attempts = max_attempts or FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
+            delay_seconds = (
+                delay_seconds or FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS
+            )
+            backoff_multiplier = (
+                backoff_multiplier or FlextConstants.Reliability.RETRY_BACKOFF_BASE
+            )
+
+            if max_attempts < FlextConstants.Reliability.RETRY_COUNT_MIN:
+                return FlextResult[TResult].fail(
+                    f"Max attempts must be at least {FlextConstants.Reliability.RETRY_COUNT_MIN}"
+                )
+
+            last_error: str | None = None
+
+            for attempt in range(max_attempts):
+                try:
+                    result = operation()
+                    if result.is_success:
+                        return result
+
+                    last_error = result.error or "Unknown error"
+
+                    # Don't delay on the last attempt
+                    if attempt == max_attempts - 1:
+                        break
+
+                    # Calculate delay with exponential backoff
+                    current_delay = delay_seconds * (backoff_multiplier**attempt)
+                    current_delay = min(
+                        current_delay, FlextConstants.Reliability.RETRY_BACKOFF_MAX
+                    )
+
+                    # Sleep before retry
+                    time.sleep(current_delay)
+
+                except Exception as e:
+                    last_error = str(e)
+
+                    # Don't delay on the last attempt
+                    if attempt == max_attempts - 1:
+                        break
+
+                    # Calculate delay with exponential backoff
+                    current_delay = delay_seconds * (backoff_multiplier**attempt)
+                    current_delay = min(
+                        current_delay, FlextConstants.Reliability.RETRY_BACKOFF_MAX
+                    )
+
+                    # Sleep before retry
+                    time.sleep(current_delay)
+
+            return FlextResult[TResult].fail(
+                f"Operation failed after {max_attempts} attempts: {last_error}"
+            )
 
     class TypeChecker:
         """Handler type checking utilities for FlextHandlers complexity reduction.

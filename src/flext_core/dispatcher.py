@@ -1,4 +1,3 @@
-# ruff: disable=E402
 """Dispatcher facade delivering the Phase 1 unified dispatcher charter.
 
 The façade wraps ``FlextBus`` so handler registration, context propagation, and
@@ -15,6 +14,8 @@ Refactored to eliminate SOLID violations by delegating to specialized components
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
+# ruff: disable=E402
+# pyright: basic
 
 from __future__ import annotations
 
@@ -27,7 +28,7 @@ from typing import cast, override
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
-from flext_core.context import FlextContext, _ContextVarToken
+from flext_core.context import FlextContext
 from flext_core.handlers import FlextHandlers
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
@@ -1119,9 +1120,6 @@ class FlextDispatcher(FlextMixins.Service):
             yield
             return
 
-        metadata_token: _ContextVarToken[FlextTypes.Dict | None] | None = None
-        correlation_token: _ContextVarToken[str | None] | None = None
-        parent_token: _ContextVarToken[str | None] | None = None
         metadata_var = FlextContext.Variables.Performance.OPERATION_METADATA
         correlation_var = FlextContext.Variables.Correlation.CORRELATION_ID
         parent_var = FlextContext.Variables.Correlation.PARENT_CORRELATION_ID
@@ -1131,15 +1129,14 @@ class FlextDispatcher(FlextMixins.Service):
 
         # Set new correlation ID if provided
         if correlation_id is not None:
-            correlation_token = correlation_var.set(correlation_id)
+            correlation_var.set(correlation_id)
             # Set parent correlation ID if there was a previous one
             if current_parent is not None and current_parent != correlation_id:
-                parent_token = parent_var.set(current_parent)
+                parent_var.set(current_parent)
 
-        try:
-            # Set metadata if provided
-            if metadata:
-                metadata_var.set(metadata)
+        # Set metadata if provided
+        if metadata:
+            metadata_var.set(metadata)
 
             # Use provided correlation ID or generate one if needed
             effective_correlation_id = correlation_id
@@ -1155,24 +1152,14 @@ class FlextDispatcher(FlextMixins.Service):
                     correlation_id=effective_correlation_id,
                 )
 
-            try:
-                yield
-            finally:
-                if metadata_token is not None:
-                    metadata_var.reset(metadata_token)
+            yield
 
-                if self.global_config.get("enable_logging"):
-                    self._log_with_context(
-                        "debug",
-                        "dispatch_context_exited",
-                        correlation_id=effective_correlation_id,
-                    )
-        finally:
-            # Restore context in reverse order
-            if parent_token is not None:
-                parent_var.reset(parent_token)
-            if correlation_token is not None:
-                correlation_var.reset(correlation_token)
+            if self.global_config.get("enable_logging"):
+                self._log_with_context(
+                    "debug",
+                    "dispatch_context_exited",
+                    correlation_id=effective_correlation_id,
+                )
 
     # ------------------------------------------------------------------
     # Factory methods

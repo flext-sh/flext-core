@@ -4,7 +4,7 @@ Tests real functionality of the centralized type system, ensuring all
 TypeVars, type aliases, and FlextTypes namespace work correctly.
 """
 
-from flext_core import FlextTypes
+from flext_core import FlextConstants, FlextTypes
 from flext_core.typings import (
     Command,
     E,
@@ -156,8 +156,8 @@ class TestFlextTypes:
 
     def test_flexttypes_config_types(self) -> None:
         """Test FlextTypes.Config types."""
-        # Test Environment literal
-        env: FlextTypes.Config.Environment = "development"
+        # Test Environment literal - access through constants
+        env = "development"
         assert env in {
             "development",
             "staging",
@@ -166,10 +166,13 @@ class TestFlextTypes:
             "test",
             "local",
         }
+        # Verify Environment enum exists
+        assert hasattr(FlextConstants.Config, "Environment")
+        assert FlextConstants.Config.Environment.DEVELOPMENT.value == "development"
 
         # Test LogLevel literal
-        level: FlextTypes.Config.LogLevel = "INFO"
-        assert level in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        level: FlextConstants.Config.LogLevel = FlextConstants.Config.LogLevel.INFO
+        assert level == "INFO"
 
     def test_flexttypes_output_types(self) -> None:
         """Test FlextTypes.Output types."""

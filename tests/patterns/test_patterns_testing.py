@@ -50,6 +50,7 @@ class MockScenario:
 
     def __init__(self, name: str, data: FlextTypes.Dict) -> None:
         """Initialize mock scenario with name and test data."""
+        super().__init__()
         self.name = name
         self.given = data.get("given", {})
         self.when = data.get("when", {})
@@ -63,6 +64,7 @@ class GivenWhenThenBuilder:
 
     def __init__(self, name: str) -> None:
         """Initialize Given-When-Then builder with test name."""
+        super().__init__()
         self.name = name
         self._given: FlextTypes.Dict = {}
         self._when: FlextTypes.Dict = {}
@@ -114,6 +116,7 @@ class FlextTestBuilder:
 
     def __init__(self) -> None:
         """Initialize test data builder with empty data."""
+        super().__init__()
         self._data: FlextTypes.Dict = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
@@ -158,6 +161,7 @@ class ParameterizedTestBuilder:
 
     def __init__(self, test_name: str) -> None:
         """Initialize parameterized test builder with test name."""
+        super().__init__()
         self.test_name = test_name
         self._cases: list[FlextTypes.Dict] = []
         self._success_cases: list[FlextTypes.Dict] = []
@@ -213,6 +217,7 @@ class AssertionBuilder:
 
     def __init__(self, data: object) -> None:
         """Initialize test assertion builder with data to test."""
+        super().__init__()
         self._data = data
         self._checks: list[tuple[str, object]] = []
 
@@ -248,6 +253,7 @@ class SuiteBuilder:
 
     def __init__(self, name: str) -> None:
         """Initialize test suite builder with suite name."""
+        super().__init__()
         self.name = name
         self._scenarios: FlextTypes.List = []
         self._setup_data: FlextTypes.Dict = {}
@@ -283,6 +289,7 @@ class FixtureBuilder:
 
     def __init__(self) -> None:
         """Initialize test fixture builder with empty fixtures."""
+        super().__init__()
         self._fixtures: FlextTypes.Dict = {}
         self._setups: FlextTypes.List = []
         self._teardowns: FlextTypes.List = []
@@ -725,13 +732,14 @@ class TestRealWorldScenarios:
 
             # Comprehensive assertions
             AssertionBuilder(result).is_not_none().satisfies(
-                lambda x: x["status"] == "success",
+                lambda x: cast("dict[str, object]", x)["status"] == "success",
                 "should be successful",
             ).satisfies(
-                lambda x: "correlation_id" in x,
+                lambda x: "correlation_id" in cast("dict[str, object]", x),
                 "should have correlation ID",
             ).satisfies(
-                lambda x: x["method"] in {"GET", "POST", "PUT", "DELETE", "PATCH"},
+                lambda x: cast("dict[str, object]", x)["method"]
+                in {"GET", "POST", "PUT", "DELETE", "PATCH"},
                 "should have valid HTTP method",
             ).assert_all()
 

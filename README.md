@@ -8,7 +8,7 @@
 
 **Foundation library** for the FLEXT ecosystem providing railway-oriented programming, dependency injection, domain-driven design patterns, and comprehensive type safety with Python 3.13+.
 
-> **✅ Status**: v0.9.9 Release Candidate · 75% test coverage · 1,163 passing tests · Zero QA violations · **Foundation for 32+ FLEXT projects**
+> **✅ Status**: v0.9.9 Release Candidate · 75% test coverage · 1,118 passing tests · Zero QA violations · **Foundation for 32+ FLEXT projects**
 
 ## 📚 Documentation
 

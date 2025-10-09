@@ -12,6 +12,7 @@ benefit from automatic container registration, context binding, and logging.
 """
 
 # ruff: noqa: D102, D107
+# pyright: basic
 
 from __future__ import annotations
 
@@ -101,7 +102,7 @@ class FlextBase:
 
     # Namespace aliases – inherit to enable domain-specific extension.
 
-    Result: type[FlextResult] = FlextResult  # Type alias for linter
+    Result: type[FlextResult[object]] = FlextResult  # Type alias for linter
 
     class Config(FlextConfig):
         """Pydantic settings namespace."""
@@ -329,7 +330,9 @@ class FlextBase:
             try:
                 outcome = operation(*args, **kwargs)
                 if isinstance(outcome, FlextResult):
+                    # Type check: outcome is already FlextResult[ResultType]
                     return outcome
+                # Type check: outcome is ResultType, wrap in FlextResult
                 return FlextResult[FlextBase.ResultType].ok(outcome)
             except Exception as exc:  # pragma: no cover - defensive logging path
                 self.error(

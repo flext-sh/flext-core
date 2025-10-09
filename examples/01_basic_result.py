@@ -663,10 +663,6 @@ class ComprehensiveResultService(FlextService[FlextTypes.Dict]):
                 resource_id="123",
             )
         except FlextCore.Exceptions.NotFoundError as e:
-            result = FlextResult[FlextTypes.Dict].fail(
-                e.message,
-                error_code=e.error_code,
-            )
             print(f"✅ NotFoundError: {e.error_code}")
             print(f"   Resource: {e.resource_type}, ID: {e.resource_id}")
 
@@ -689,18 +685,20 @@ class ComprehensiveResultService(FlextService[FlextTypes.Dict]):
         def safe_addition() -> int:
             return 5 + 10
 
-        result = FlextResult[int].from_callable(safe_addition)
-        print(f".from_callable(safe): {result.unwrap()}")
+        addition_result: FlextResult[int] = FlextResult[int].from_callable(
+            safe_addition
+        )
+        print(f".from_callable(safe): {addition_result.unwrap()}")
 
         # With custom error code
         def parse_int_string() -> int:
             return int("not a number")
 
-        result = FlextResult[int].from_callable(
+        parse_result: FlextResult[int] = FlextResult[int].from_callable(
             parse_int_string,
             error_code=FlextConstants.Errors.VALIDATION_ERROR,
         )
-        print(f".from_callable(with error_code): {result.error}")
+        print(f".from_callable(with error_code): {parse_result.error}")
 
     def demonstrate_flow_through(self) -> None:
         """Show pipeline composition with flow_through."""

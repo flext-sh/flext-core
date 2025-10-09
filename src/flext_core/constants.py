@@ -1021,6 +1021,13 @@ class FlextConstants:
         MAX_RETRY_ATTEMPTS: Final[int] = 3  # Usage count: 1
         DEFAULT_MAX_RETRIES: Final[int] = 3  # Usage count: 1 (referenced in models.py)
         DEFAULT_RETRY_DELAY_SECONDS: Final[int] = 1  # Default delay between retries
+        RETRY_BACKOFF_BASE: Final[float] = (
+            2.0  # Base multiplier for exponential backoff
+        )
+        RETRY_BACKOFF_MAX: Final[float] = (
+            60.0  # Maximum delay between retries in seconds
+        )
+        RETRY_COUNT_MIN: Final[int] = 1  # Minimum retry attempts allowed
         DEFAULT_BACKOFF_STRATEGY: Final[str] = (
             "exponential"  # Usage count: 1 (referenced in models.py)
         )

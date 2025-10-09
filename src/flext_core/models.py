@@ -33,7 +33,9 @@ Usage:
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
+# Expected: Complex model inheritance and mixins.
 # ruff: disable=PLC2701,E402
+# pyright: basic
 
 from __future__ import annotations
 
@@ -50,7 +52,6 @@ from decimal import Decimal
 from enum import StrEnum
 from pathlib import Path
 from typing import (
-    TYPE_CHECKING,
     Annotated,
     ClassVar,
     Self,
@@ -61,6 +62,7 @@ from urllib.parse import ParseResult, urlencode, urlparse
 
 import pydantic
 from dependency_injector import providers
+from dependency_injector.containers import DeclarativeContainer
 from pydantic import (
     ConfigDict,
     Field,
@@ -72,17 +74,13 @@ from pydantic import (
 )
 from pydantic.main import IncEx
 
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
+from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
-
-if TYPE_CHECKING:
-    from dependency_injector.containers import DeclarativeContainer
-
-    from flext_core.config import FlextConfig
-    from flext_core.loggings import FlextLogger
 
 
 class FlextModels:
@@ -242,10 +240,6 @@ class FlextModels:
     def _get_config() -> FlextConfig:
         """Lazy load configuration to avoid import cycles."""
         if FlextModels._config_cache is None:
-            # Lazy import to break circular dependency
-
-            from flext_core.config import FlextConfig
-
             # Store in class cache
             FlextModels._config_cache = FlextConfig()
         return FlextModels._config_cache
@@ -473,10 +467,7 @@ class FlextModels:
                 >>> mixin = TimeoutableMixin(timeout_seconds=timeout)
 
             """
-            # Use lazy-loaded config to avoid circular imports
-
-            from flext_core.config import FlextConfig
-
+            # Use config for timeout value
             config = FlextConfig()
 
             # Demonstrate FlextConfig("parameter") callable usage
@@ -537,10 +528,7 @@ class FlextModels:
                 >>> mixin = RetryableMixin(max_retry_attempts=max_retries)
 
             """
-            # Use lazy-loaded config to avoid circular imports
-
-            from flext_core.config import FlextConfig
-
+            # Use config for max retry attempts
             config = FlextConfig()
 
             # Demonstrate FlextConfig("parameter") callable usage
@@ -1009,8 +997,6 @@ class FlextModels:
             @classmethod
             def validate_merge_strategy(cls, v: str) -> str:
                 """Validate merge strategy is valid."""
-                from flext_core.constants import FlextConstants
-
                 valid_strategies = frozenset({
                     FlextConstants.Cqrs.MergeStrategyLiteral.REPLACE,
                     FlextConstants.Cqrs.MergeStrategyLiteral.UPDATE,
@@ -1050,10 +1036,8 @@ class FlextModels:
 
         @classmethod
         def _get_logger(cls) -> FlextLogger:
-            """Get or create the internal logger (lazy initialization to avoid circular imports)."""
+            """Get or create the internal logger (lazy initialization)."""
             if cls._internal_logger is None:
-                from flext_core.loggings import FlextLogger
-
                 cls._internal_logger = FlextLogger(__name__)
             return cls._internal_logger
 
@@ -1095,6 +1079,13 @@ class FlextModels:
                 # Removed occurred_at - auto-generated via TimestampableMixin
             )
             self.domain_events.append(domain_event)
+
+            # Integration: Track domain event via FlextRuntime
+            FlextRuntime.Integration.track_domain_event(
+                event_name=event_name,
+                aggregate_id=self.id,
+                event_data=data,
+            )
 
             # Log domain event addition via structlog
             self._get_logger().debug(
@@ -3651,8 +3642,6 @@ class FlextModels:
             if max_validation_time_ms is not None:
                 timeout_ms = max_validation_time_ms
             else:
-                from flext_core.config import FlextConfig
-
                 # Use global config instance for consistency
                 timeout_ms = FlextConfig.get_global_instance().validation_timeout_ms
             start_time = time_module.time()

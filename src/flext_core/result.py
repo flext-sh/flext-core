@@ -33,8 +33,10 @@ Usage:
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT.
 """
-
+# Expected: Internal IO monad implementation details.
+# pyright: reportPrivateUsage=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
 # ruff: disable=PLC0415
+
 from __future__ import annotations
 
 import types
@@ -1652,18 +1654,33 @@ class FlextResult[T_co]:
     ) -> FlextResult[T]:
         """Create FlextResult from returns.io.IOResult."""
         if isinstance(io_result, IOSuccess):
-            sentinel = object()
-            value_or_sentinel = io_result.value_or(sentinel)
-            if value_or_sentinel is not sentinel:
-                io_container = cast("IO[T]", value_or_sentinel)
-                value = io_container._inner_value
-                return cls.ok(value)
+            # Unwrap the IO value using the internal _inner_value
+            try:
+                success_obj = io_result._inner_value
+                # Unwrap the Success object to get the actual value
+                value = success_obj.unwrap()
+                # Create FlextResult properly using the constructor
+                return cls(data=value)
+            except AttributeError:
+                # If _inner_value access fails, we cannot safely unwrap the IO value
+                # This is an edge case that should not occur in normal usage
+                return cls(error="Failed to unwrap IO success value")
         if isinstance(io_result, IOFailure):
-            error_io_result = io_result.failure()
-            error_io_container = cast("IO[Exception]", error_io_result)
-            error_msg = str(error_io_container._inner_value)
-            return cls.fail(error_msg)
-        return cls.fail("Unknown IOResult type")
+            # Get the failure reason from the IO
+            try:
+                failure_obj = io_result._inner_value
+                # For failures, we need to get the failure value using .failure()
+                if hasattr(failure_obj, "failure"):
+                    # It's a Failure object, get the failure value
+                    error_value = failure_obj.failure()
+                    error_msg = str(error_value)
+                else:
+                    error_msg = str(failure_obj)
+                return cls(error=error_msg)
+            except AttributeError:
+                # Fallback: convert IO directly to string
+                return cls(error=str(io_result))
+        return cls(error="Unknown IOResult type")
 
 
 __all__: list[str] = [

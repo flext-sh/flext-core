@@ -524,14 +524,31 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                 if name in self._factories and name not in self._services:
                     self._services[name] = service
 
+                # Integration: Track successful service resolution
+                FlextRuntime.Integration.track_service_resolution(name, resolved=True)
+
                 return FlextResult[object].ok(service)
+
+            # Integration: Track service not found
+            FlextRuntime.Integration.track_service_resolution(
+                name, resolved=False, error_message=f"Service '{name}' not found"
+            )
 
             return FlextResult[object].fail(f"Service '{name}' not found")
         except Exception as e:
             # Preserve factory error messages for compatibility
-            if name in self._factories:
-                return FlextResult[object].fail(f"Factory '{name}' failed: {e}")
-            return FlextResult[object].fail(f"Service resolution failed: {e}")
+            error_msg = (
+                f"Factory '{name}' failed: {e}"
+                if name in self._factories
+                else f"Service resolution failed: {e}"
+            )
+
+            # Integration: Track resolution failure
+            FlextRuntime.Integration.track_service_resolution(
+                name, resolved=False, error_message=error_msg
+            )
+
+            return FlextResult[object].fail(error_msg)
 
     def _invoke_factory_and_cache(self, name: str) -> FlextResult[object]:
         """Invoke factory and cache result.
@@ -553,7 +570,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         except Exception as e:
             return FlextResult[object].fail(f"Factory '{name}' failed: {e}")
 
-    def get_typed[T](self, name: str, expected_type: type[T]) -> FlextResult[T]:
+    def get_typed[T](self, name: str, expected_type: type) -> FlextResult[T]:
         """Get service with type validation.
 
         Returns:
@@ -1168,20 +1185,30 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             result: FlextResult[object] = FlextResult[object].ok(service)
             for validator in validators:
                 if callable(validator):
-                    # Call validator and check result type
-                    validator_result = validator(service)
-                    # Type assertion: validator should return FlextResult
-                    if not isinstance(validator_result, FlextResult):
+                    # Call validator and check result
+                    validator_result_obj = validator(service)
+
+                    # Ensure validator returns FlextResult
+                    if not isinstance(validator_result_obj, FlextResult):
                         return FlextResult[object].fail(
-                            "Validator must return FlextResult"
+                            f"Validator must return FlextResult, got {type(validator_result_obj)}"
                         )
-                    validated_result: FlextResult[object] = validator_result
-                    if validated_result.is_failure:
+
+                    # Type-safe: validator_result is now known to be FlextResult
+                    validator_result: FlextResult[object] = cast(
+                        "FlextResult[object]", validator_result_obj
+                    )
+
+                    # Check if validation failed
+                    if validator_result.is_failure:
                         return FlextResult[object].fail(
-                            f"Validation failed: {validated_result.error}"
+                            f"Validation failed: {validator_result.error}"
                         )
                     # Continue with validated service
-                    result = validated_result
+                    result = validator_result
+                else:
+                    # If validator doesn't return FlextResult, assume it's a valid result
+                    result = FlextResult[object].ok(service)
 
             return result
 
@@ -1203,6 +1230,6 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         )
 
 
-__all__: FlextTypes.StringList = [
+__all__ = [
     "FlextContainer",
 ]

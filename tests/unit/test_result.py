@@ -98,15 +98,15 @@ class TestFlextResult:
 
     def test_result_unwrap_or(self) -> None:
         """Test unwrap_or operation."""
-        success_result = FlextResult[str].ok("success")
-        failure_result = FlextResult[str].fail("error")
+        success_result: FlextResult[str] = FlextResult[str].ok("success")
+        failure_result: FlextResult[str] = FlextResult[str].fail("error")
 
         assert success_result.unwrap_or("default") == "success"
         assert failure_result.unwrap_or("default") == "default"
 
     def test_result_expect(self) -> None:
         """Test expect operation."""
-        success_result = FlextResult[str].ok("success")
+        success_result: FlextResult[str] = FlextResult[str].ok("success")
 
         assert success_result.expect("Should not fail") == "success"
 
@@ -652,7 +652,7 @@ class TestFlextResult:
         def success_func() -> int:
             return 42
 
-        success_result: FlextResult[int] = FlextResult.from_exception(success_func)
+        success_result: FlextResult[int] = FlextResult[int].from_exception(success_func)
         assert success_result.is_success
         assert success_result.value == 42
 
@@ -661,7 +661,7 @@ class TestFlextResult:
             error_message = "Something went wrong"
             raise ValueError(error_message)
 
-        failure_result: FlextResult[int] = FlextResult.from_exception(failing_func)
+        failure_result: FlextResult[int] = FlextResult[int].from_exception(failing_func)
         assert failure_result.is_failure
         assert failure_result.error is not None
         assert "Something went wrong" in failure_result.error
@@ -1000,7 +1000,7 @@ class TestFlextResult:
     def test_result_repr_coverage(self) -> None:
         """Test __repr__ method for string representation."""
         # Success repr
-        success = FlextResult[int].ok(42)
+        success: FlextResult[int] = FlextResult[int].ok(42)
         repr_str = repr(success)
         assert "FlextResult" in repr_str
         assert "42" in repr_str
@@ -1014,7 +1014,7 @@ class TestFlextResult:
     def test_result_bool_conversion(self) -> None:
         """Test __bool__ method for truthiness."""
         # Success is truthy
-        success = FlextResult[int].ok(42)
+        success: FlextResult[int] = FlextResult[int].ok(42)
         assert bool(success) is True
         assert success  # Direct boolean context
 
@@ -1033,7 +1033,7 @@ class TestFlextResult:
     def test_result_iter_protocol(self) -> None:
         """Test __iter__ for unpacking and iteration."""
         # Success iteration returns (data, None)
-        success = FlextResult[int].ok(42)
+        success: FlextResult[int] = FlextResult[int].ok(42)
         values = list(success)
         assert len(values) == 2
         assert values[0] == 42
@@ -1053,7 +1053,7 @@ class TestFlextResult:
 
     def test_result_getitem_protocol(self) -> None:
         """Test __getitem__ for indexing."""
-        success = FlextResult[int].ok(42)
+        success: FlextResult[int] = FlextResult[int].ok(42)
 
         # Index 0 returns data
         assert success[0] == 42
@@ -1080,7 +1080,7 @@ class TestFlextResult:
             assert value is None
 
         # Test __exit__ is called properly
-        success = FlextResult[int].ok(42)
+        success: FlextResult[int] = FlextResult[int].ok(42)
         entered = False
         exited = False
 
@@ -1099,7 +1099,7 @@ class TestFlextResult:
 
     def test_result_or_operator_coverage(self) -> None:
         """Test __or__ operator with various scenarios."""
-        success = FlextResult[int].ok(42)
+        success: FlextResult[int] = FlextResult[int].ok(42)
         failure: FlextResult[int] = FlextResult[int].fail("error")
 
         # Success | default -> unwrapped value
@@ -1272,7 +1272,7 @@ class TestFlextResultAdditionalCoverage:
 
     def test_result_map_with_exception_handling(self) -> None:
         """Test map method exception paths (lines 691-700)."""
-        success: FlextResult[int] = FlextResult.ok(42)
+        success: FlextResult[int] = FlextResult[int].ok(42)
 
         # Map with function that raises exception
         def failing_transform(x: int) -> int:
@@ -1288,7 +1288,7 @@ class TestFlextResultAdditionalCoverage:
 
     def test_result_flat_map_with_exception_handling(self) -> None:
         """Test flat_map method exception paths (lines 725-734)."""
-        success: FlextResult[int] = FlextResult.ok(42)
+        success: FlextResult[int] = FlextResult[int].ok(42)
 
         # flat_map with function that raises exception
         def failing_bind(x: int) -> FlextResult[int]:
@@ -1335,7 +1335,9 @@ class TestFlextResultAdditionalCoverage:
         assert isinstance(hash1, int)
 
         # Hash with complex data
-        result_dict = FlextResult.ok({
+        result_dict: FlextResult[dict[str, object]] = FlextResult[
+            dict[str, object]
+        ].ok({
             "key": "value",
             "nested": {"a": 1},
         })
@@ -1343,7 +1345,7 @@ class TestFlextResultAdditionalCoverage:
         assert isinstance(hash2, int)
 
         # Hash with failure
-        failure: FlextResult[dict[str, object]] = FlextResult.fail(
+        failure: FlextResult[dict[str, object]] = FlextResult[dict[str, object]].fail(
             "error",
             error_code="ERR_001",
             error_data={"detail": "info"},
@@ -1360,8 +1362,8 @@ class TestFlextResultAdditionalCoverage:
         assert default_value == 999
 
         # unwrap_or on success
-        success = FlextResult.ok(42)
-        success_value: int = success.unwrap_or(999)
+        success: FlextResult[int] = FlextResult[int].ok(42)
+        success_value = success.unwrap_or(999)
         assert success_value == 42
 
     def test_result_unwrap_with_failure(self) -> None:
@@ -1385,25 +1387,27 @@ class TestFlextResultAdditionalCoverage:
         assert recovered_fail.value == 999
 
         # Recover on success does nothing
-        success = FlextResult.ok(42)
+        success: FlextResult[int] = FlextResult[int].ok(42)
         recovered_success: FlextResult[int] = success.recover(lambda err: 999)
         assert recovered_success.is_success
         assert recovered_success.value == 42
 
     def test_result_filter_with_predicate_failure(self) -> None:
         """Test filter when predicate fails (lines 1002-1003)."""
-        success = FlextResult.ok(42)
+        success: FlextResult[int] = FlextResult[int].ok(42)
 
         # Filter with failing predicate
         filtered_fail: FlextResult[int] = success.filter(
-            lambda x: x < 40, "Value too large"
+            lambda x: x < 40,
+            "Value too large",
         )
         assert filtered_fail.is_failure
         assert "Value too large" in str(filtered_fail.error)
 
         # Filter with passing predicate
         filtered_success: FlextResult[int] = success.filter(
-            lambda x: x > 40, "Value too small"
+            lambda x: x > 40,
+            "Value too small",
         )
         assert filtered_success.is_success
         assert filtered_success.value == 42
@@ -1417,7 +1421,7 @@ class TestFlextResultAdditionalCoverage:
             return 42
 
         # Run operation
-        result: FlextResult[int] = FlextResult.safe_call(operation)
+        result: FlextResult[int] = FlextResult[int].safe_call(operation)
         assert result.is_success
         assert result.value == 42
 
@@ -1427,15 +1431,18 @@ class TestFlextResultAdditionalCoverage:
             msg = "error"
             raise ValueError(msg)
 
-        result = FlextResult.safe_call(failing_operation)
-        assert result.is_failure
+        failure_result: FlextResult[int] = FlextResult[int].safe_call(failing_operation)
+        assert failure_result.is_failure
 
     def test_result_operator_rshift(self) -> None:
         """Test >> operator for composition (line 1260)."""
         result = FlextResult[int].ok(10)
 
         # Use >> for flat_map
-        chained = result >> (lambda x: FlextResult[int].ok(x * 2))
+        def double_func(x: int) -> FlextResult[int]:
+            return FlextResult[int].ok(x * 2)
+
+        chained: FlextResult[int] = result >> double_func
         assert chained.is_success
         assert chained.value == 20
 
@@ -1452,13 +1459,19 @@ class TestFlextResultAdditionalCoverage:
 
     def test_result_operator_mod(self) -> None:
         """Test % operator for filter (line 1292)."""
-        result = FlextResult[int].ok(10)
+        result: FlextResult[int] = FlextResult[int].ok(10)
 
         # Use % for filter
-        filtered = result % (lambda x: x > 5)
+        def greater_than_5(x: int) -> bool:
+            return x > 5
+
+        filtered: FlextResult[int] = result % greater_than_5
         assert filtered.is_success
 
-        filtered_fail = result % (lambda x: x > 15)
+        def greater_than_15(x: int) -> bool:
+            return x > 15
+
+        filtered_fail: FlextResult[int] = result % greater_than_15
         assert filtered_fail.is_failure
 
     def test_result_validate_all(self) -> None:
@@ -1483,7 +1496,7 @@ class TestFlextResultAdditionalCoverage:
         # Validate value - one fails
         result = FlextResult.validate_all(9, validate_positive, validate_even)
         assert result.is_failure
-        assert "Must be even" in result.error
+        assert result.error is not None and "Must be even" in str(result.error)
 
     def test_result_validate_and_execute(self) -> None:
         """Test validate_and_execute method (lines 1375)."""
@@ -1542,7 +1555,7 @@ class TestFlextResultAdditionalCoverage:
             return resource
 
         def use_resource(value: int, r: TestResource) -> FlextResult[str]:
-            return FlextResult.ok(f"used with {value}")
+            return FlextResult[str].ok(f"used with {value}")
 
         def cleanup(r: TestResource) -> None:
             r.close()
@@ -1564,7 +1577,7 @@ class TestFlextResultAdditionalCoverage:
     def test_result_is_flattenable_sequence(self) -> None:
         """Test _is_flattenable_sequence helper (lines 1935-1936)."""
         # This is an internal method, test through public API
-        results = [FlextResult.ok(1), FlextResult.ok(2)]
+        results = [FlextResult[int].ok(1), FlextResult[int].ok(2)]
 
         # sequence should handle list properly
         combined = FlextResult.sequence(results)
@@ -1724,7 +1737,7 @@ class TestFlextResultFinalCoverage:
             raise ValueError(msg)
 
         # Run test
-        result = FlextResult.safe_call(raises)
+        result: FlextResult[int] = FlextResult[int].safe_call(raises)
         assert result.is_failure
         assert "operation failed" in str(result.error)
 
@@ -1757,9 +1770,9 @@ class TestFlextResultFinalCoverage:
     def test_accumulate_errors_typed_helper(self) -> None:
         """Test _accumulate_errors_typed internal helper (lines 1699-1710)."""
         # This is tested through accumulate_errors public API
-        result1 = FlextResult.ok(1)
+        result1 = FlextResult[int].ok(1)
         result2 = FlextResult[int].fail("Error 2")
-        result3 = FlextResult.ok(3)
+        result3 = FlextResult[int].ok(3)
 
         # When some fail, accumulate returns failures
         accumulated = FlextResult.accumulate_errors(result1, result2, result3)
@@ -1778,10 +1791,14 @@ class TestFlextResultFinalCoverage:
         def cleanup(resource: str) -> None:
             pass
 
-        result = FlextResult.ok(42).with_resource(
-            resource_factory,
-            operation_raises,
-            cleanup,
+        result = (
+            FlextResult[int]
+            .ok(42)
+            .with_resource(
+                resource_factory,
+                operation_raises,
+                cleanup,
+            )
         )
 
         # Should catch exception and return failure
@@ -1821,9 +1838,9 @@ class TestFlextResultEdgeCases:
         """Test collect_all_errors with mixed success/failure."""
         # collect_all_errors takes variadic results, not a list
         # Returns tuple of (successes, errors)
-        result1 = FlextResult.ok(1)
+        result1 = FlextResult[int].ok(1)
         result2 = FlextResult[int].fail("Error 1")
-        result3 = FlextResult.ok(3)
+        result3 = FlextResult[int].ok(3)
         result4 = FlextResult[int].fail("Error 2")
 
         successes, errors = FlextResult.collect_all_errors(
@@ -1895,7 +1912,7 @@ class TestFlextResultFinalPush:
     def test_descriptor_class_access_path(self) -> None:
         """Test descriptor __get__ class access path (lines 76-78)."""
         # Access descriptor from class (not instance)
-        result_type = FlextResult
+        result_type = FlextResult[int]
         map_method = result_type.map
         assert callable(map_method)
 
@@ -2024,14 +2041,18 @@ class TestFlextResultFinalCoveragePush:
         def sync_func() -> int:
             return 42
 
-        result = FlextResult.safe_call(sync_func)
+        result: FlextResult[int] = FlextResult.safe_call(sync_func)
         assert result.is_success
         assert result.unwrap() == 42
 
     def test_mod_failure_path(self) -> None:
         """Test __mod__ when already failure (line 1299)."""
         result = FlextResult[int].fail("Already failed")
-        filtered = result % (lambda x: x > 0)
+
+        def is_positive(x: int) -> bool:
+            return x > 0
+
+        filtered = result % is_positive
 
         assert filtered.is_failure
         assert filtered.error == "Already failed"
@@ -2215,11 +2236,11 @@ class TestFlowThrough:
             return FlextResult[dict[str, object]].ok(data)
 
         def enrich_data(data: dict[str, object]) -> FlextResult[dict[str, object]]:
-            enriched = {**data, "enriched": True}
+            enriched: dict[str, object] = {**data, "enriched": True}
             return FlextResult[dict[str, object]].ok(enriched)
 
         def transform_data(data: dict[str, object]) -> FlextResult[dict[str, object]]:
-            transformed = {
+            transformed: dict[str, object] = {
                 **data,
                 "transformed": True,
             }
@@ -2250,7 +2271,7 @@ class TestMaybeInterop:
 
         assert isinstance(maybe, Some)
         sentinel = object()
-        value = maybe.value_or(sentinel)
+        value: str | object = maybe.value_or(sentinel)
         assert value == "test_value"
 
     def test_to_maybe_failure(self) -> None:
@@ -2263,7 +2284,7 @@ class TestMaybeInterop:
     def test_from_maybe_some(self) -> None:
         """Test creating result from Some."""
         maybe = Some("test_value")
-        result: FlextResult[str] = FlextResult.from_maybe(maybe)
+        result: FlextResult[str] = FlextResult.from_maybe(maybe)  # type: ignore[assignment]
 
         assert result.is_success
         assert result.value == "test_value"
@@ -2271,7 +2292,7 @@ class TestMaybeInterop:
     def test_from_maybe_nothing(self) -> None:
         """Test creating result from Nothing."""
         maybe = Nothing
-        result = FlextResult.from_maybe(maybe)
+        result: FlextResult[object] = FlextResult.from_maybe(maybe)  # type: ignore[assignment]
 
         assert result.is_failure
         assert result.error == "No value in Maybe"
@@ -2280,7 +2301,7 @@ class TestMaybeInterop:
         """Test roundtrip conversion success -> maybe -> success."""
         original = FlextResult[int].ok(42)
         maybe = original.to_maybe()
-        recovered = FlextResult.from_maybe(maybe)
+        recovered: FlextResult[int] = FlextResult.from_maybe(maybe)  # type: ignore[assignment]
 
         assert recovered.is_success
         assert recovered.value == 42
@@ -2289,7 +2310,7 @@ class TestMaybeInterop:
         """Test roundtrip conversion failure -> maybe -> failure."""
         original = FlextResult[int].fail("error")
         maybe = original.to_maybe()
-        recovered = FlextResult.from_maybe(maybe)
+        recovered: FlextResult[int] = FlextResult.from_maybe(maybe)  # type: ignore[assignment]
 
         assert recovered.is_failure
 
@@ -2305,7 +2326,11 @@ class TestIOInterop:
         assert isinstance(io_container, IO)
         # Note: returns.io.IO intentionally hides internal value
         # Test that we can map over it to verify it contains the value
-        mapped = io_container.map(lambda x: x.upper())
+
+        def to_upper(x: str) -> str:
+            return x.upper()
+
+        mapped = io_container.map(to_upper)  # type: ignore[attr-defined]
         assert isinstance(mapped, IO)
 
     def test_to_io_failure_raises(self) -> None:
@@ -2332,7 +2357,7 @@ class TestIOInterop:
     def test_from_io_result_success(self) -> None:
         """Test creating result from IOSuccess."""
         io_success = IOSuccess(42)
-        result = FlextResult.from_io_result(io_success)
+        result: FlextResult[int] = FlextResult.from_io_result(io_success)  # type: ignore[assignment]
 
         assert result.is_success
         assert result.value == 42
@@ -2340,7 +2365,7 @@ class TestIOInterop:
     def test_from_io_result_failure(self) -> None:
         """Test creating result from IOFailure."""
         io_failure = IOFailure("io_error")
-        result = FlextResult.from_io_result(io_failure)
+        result: FlextResult[object] = FlextResult.from_io_result(io_failure)  # type: ignore[assignment]
 
         assert result.is_failure
         assert "io_error" in (result.error or "")
@@ -2349,7 +2374,9 @@ class TestIOInterop:
         """Test roundtrip conversion success -> IOResult -> success."""
         original = FlextResult[dict[str, object]].ok({"key": "value"})
         io_result = original.to_io_result()
-        recovered = FlextResult.from_io_result(io_result)
+        recovered: FlextResult[dict[str, object]] = FlextResult.from_io_result(  # type: ignore[assignment]
+            io_result
+        )
 
         assert recovered.is_success
         assert recovered.value == {"key": "value"}
@@ -2358,7 +2385,7 @@ class TestIOInterop:
         """Test roundtrip conversion failure -> IOResult -> failure."""
         original = FlextResult[int].fail("original_error")
         io_result = original.to_io_result()
-        recovered = FlextResult.from_io_result(io_result)
+        recovered: FlextResult[int] = FlextResult.from_io_result(io_result)  # type: ignore[assignment]
 
         assert recovered.is_failure
         assert "original_error" in (recovered.error or "")
@@ -2532,13 +2559,13 @@ class TestIntegrationScenarios:
         maybe = original.to_maybe()
 
         # Convert back to Result
-        from_maybe = FlextResult.from_maybe(maybe)
+        from_maybe: FlextResult[str] = FlextResult.from_maybe(maybe)  # type: ignore[assignment]
 
         # Convert to IOResult
         io_result = from_maybe.to_io_result()
 
         # Convert back to Result
-        final = FlextResult.from_io_result(io_result)
+        final: FlextResult[str] = FlextResult.from_io_result(io_result)  # type: ignore[assignment]
 
         assert final.is_success
         assert final.value == "test"
@@ -2589,7 +2616,7 @@ class TestIntegrationScenarios:
             return FlextResult[dict[str, object]].ok(data)
 
         def enrich_data(data: dict[str, object]) -> FlextResult[dict[str, object]]:
-            enriched = {**data, "enriched": True}
+            enriched: dict[str, object] = {**data, "enriched": True}
             return FlextResult[dict[str, object]].ok(enriched)
 
         def error_fallback(

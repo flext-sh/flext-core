@@ -26,7 +26,14 @@ from dataclasses import dataclass
 from decimal import Decimal
 from uuid import uuid4
 
-from flext_core import FlextCore, FlextResult
+from flext_core import (
+    FlextConstants,
+    FlextCore,
+    FlextModels,
+    FlextResult,
+    FlextService,
+    FlextTypes,
+)
 
 
 @dataclass

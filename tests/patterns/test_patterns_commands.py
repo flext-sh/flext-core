@@ -783,7 +783,7 @@ class TestCommandPatternIntegration:
         bus.register_handler(update_handler)
 
         # Execute different command types
-        commands = [
+        commands: list[FlextModels.TimestampedModel] = [
             CreateUserCommand(
                 username="user1",
                 email="user1@example.com",
@@ -804,7 +804,8 @@ class TestCommandPatternIntegration:
 
         results: list[FlextResult[object]] = []
         for command in commands:
-            result = bus.execute(command)
+            cmd: FlextModels.TimestampedModel = command  # Type annotation for clarity
+            result = bus.execute(cmd)
             results.append(result)
 
         # Verify all commands executed successfully
