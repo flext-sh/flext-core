@@ -98,17 +98,17 @@ class TestFlextConstants:
 
     def test_config_source_enum(self) -> None:
         """Test config source enum."""
-        assert FlextConstants.Config.ConfigSource.FILE == "file"
-        assert FlextConstants.Config.ConfigSource.ENVIRONMENT == "env"
-        assert FlextConstants.Config.ConfigSource.CLI == "cli"
+        assert FlextConstants.Config.ConfigSource.FILE.value == "file"
+        assert FlextConstants.Config.ConfigSource.ENVIRONMENT.value == "env"
+        assert FlextConstants.Config.ConfigSource.CLI.value == "cli"
 
     def test_field_type_enum(self) -> None:
         """Test field type enum."""
-        assert FlextConstants.Enums.FieldType.STRING == "string"
-        assert FlextConstants.Enums.FieldType.INTEGER == "integer"
-        assert FlextConstants.Enums.FieldType.FLOAT == "float"
-        assert FlextConstants.Enums.FieldType.BOOLEAN == "boolean"
-        assert FlextConstants.Enums.FieldType.DATETIME == "datetime"
+        assert FlextConstants.Enums.FieldType.STRING.value == "string"
+        assert FlextConstants.Enums.FieldType.INTEGER.value == "integer"
+        assert FlextConstants.Enums.FieldType.FLOAT.value == "float"
+        assert FlextConstants.Enums.FieldType.BOOLEAN.value == "boolean"
+        assert FlextConstants.Enums.FieldType.DATETIME.value == "datetime"
 
     def test_platform_constants(self) -> None:
         """Test platform constants access."""

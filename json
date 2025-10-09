@@ -1,12 +1,24 @@
-ERROR Argument `() -> dict[str, str]` is not assignable to parameter `func` with type `() -> dict[str, object]` in function `flext_core.result.FlextResult.from_callable` [bad-argument-type]
-   --> examples/09_context_management.py:621:13
+ERROR Class `Correlation` has no class attribute `generate` [missing-attribute]
+   --> tests/unit/test_utilities.py:553:20
     |
-621 |             risky_context_operation
-    |             ^^^^^^^^^^^^^^^^^^^^^^^
+553 |         corr_id1 = FlextUtilities.Correlation.generate()
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
-ERROR Object of class `FlextConfig` has no attribute `enable_middleware` [missing-attribute]
-   --> examples/11_bus_messaging.py:708:45
+ERROR Class `Correlation` has no class attribute `generate` [missing-attribute]
+   --> tests/unit/test_utilities.py:554:20
     |
-708 |             print(f"   Middleware enabled: {bus.config.enable_middleware}")
-    |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+554 |         corr_id2 = FlextUtilities.Correlation.generate()
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+ERROR Expected argument `value` to be passed by name in function `flext_core.utilities.TypeConversions.to_bool` [unexpected-positional-argument]
+   --> tests/unit/test_utilities.py:590:61
+    |
+590 |             result = FlextUtilities.TypeConversions.to_bool("true")
+    |                                                             ^^^^^^
+    |
+ERROR Expected argument `value` to be passed by name in function `flext_core.utilities.TypeConversions.to_bool` [unexpected-positional-argument]
+   --> tests/unit/test_utilities.py:594:61
+    |
+594 |             result = FlextUtilities.TypeConversions.to_bool("false")
+    |                                                             ^^^^^^^
     |

@@ -26,6 +26,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
 
@@ -566,7 +567,6 @@ class FlextConfig(BaseSettings):
         }
 
     @computed_field
-    @property
     def batch_size(self) -> int:
         """Get batch size (alias for max_batch_size)."""
         return self.max_batch_size
@@ -600,6 +600,12 @@ class FlextConfig(BaseSettings):
         }
 
         if component not in component_configs:
+            # Integration: Track failed configuration access
+            FlextRuntime.Integration.log_config_access(
+                key=f"component.{component}",
+                value=None,
+                masked=False,
+            )
             return FlextResult[FlextTypes.Dict].fail(
                 f"Unknown component: {component}. Available: {list(component_configs.keys())}",
             )
@@ -607,6 +613,18 @@ class FlextConfig(BaseSettings):
         config_value = component_configs[component]
         if callable(config_value):
             config_value = config_value()
+
+        # Identify sensitive components that should be masked
+        sensitive_components = {"database", "security"}
+        is_sensitive = component in sensitive_components
+
+        # Integration: Track successful configuration access
+        FlextRuntime.Integration.log_config_access(
+            key=f"component.{component}",
+            value=config_value if not is_sensitive else "***MASKED***",
+            masked=is_sensitive,
+        )
+
         return FlextResult[FlextTypes.Dict].ok(config_value)
 
 

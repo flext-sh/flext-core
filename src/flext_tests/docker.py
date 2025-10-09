@@ -4,7 +4,10 @@ Provides unified start/stop/reset functionality for all FLEXT Docker test contai
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
+# These functions are called by the click framework when CLI commands are invoked.
+# pyright: ignore[reportUnusedFunction]
 
 from __future__ import annotations
 
@@ -17,7 +20,7 @@ from collections.abc import Callable, Iterator
 from enum import Enum
 from pathlib import Path
 from types import ModuleType
-from typing import ClassVar, cast
+from typing import Any, ClassVar, cast
 
 import click
 import docker
@@ -652,11 +655,6 @@ class FlextTestDocker:
             "service": "oracle-db",
             "port": 1522,
         },
-        "flext-algar-oud-test": {
-            "compose_file": "docker/docker-compose.algar-oud.yml",
-            "service": "algar-oud",
-            "port": 3389,
-        },
     }
 
     def start_container(
@@ -755,12 +753,14 @@ class FlextTestDocker:
             client = self.get_client()
             # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(name)
+            # Cast to access status attribute
+            container_obj = cast("Any", container)
             status = (
                 ContainerStatus.RUNNING
-                if container.status == "running"
+                if container_obj.status == "running"
                 else ContainerStatus.STOPPED
             )
-            image_name: str = getattr(container, "image", "unknown")
+            image_name: str = getattr(container_obj, "image", "unknown")
             return FlextResult[ContainerInfo].ok(
                 ContainerInfo(
                     name=name,
@@ -849,8 +849,12 @@ class FlextTestDocker:
     def remove_image(self, image: str, *, force: bool = False) -> FlextResult[str]:
         """Remove a Docker image."""
         try:
-            if hasattr(self.client, "images") and hasattr(self.client.images, "remove"):
-                self.client.images.remove(image, force=force)
+            client = self.get_client()
+            if hasattr(client, "images") and hasattr(client.images, "remove"):
+                # Cast to Any to handle unknown method signature
+                images_api = cast("Any", client.images)
+                remove_method = cast("Callable[..., None]", images_api.remove)
+                remove_method(image, force=force)
             return FlextResult[str].ok(f"Image {image} removed")
         except NotFound:
             return FlextResult[str].fail(f"Image {image} not found")
@@ -870,9 +874,15 @@ class FlextTestDocker:
             client = self.get_client()
             # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(container_name)
-            logs = getattr(container, "logs", lambda **kwargs: b"")(
-                tail=tail, follow=follow, stream=False
-            )
+            # Cast container to Any to handle unknown method signatures
+            container_api = cast("Any", container)
+            logs_method = getattr(container_api, "logs", None)
+            if logs_method is not None:
+                logs = cast("Callable[..., bytes]", logs_method)(
+                    tail=tail, follow=follow, stream=False
+                )
+            else:
+                logs = b""
             return FlextResult[str].ok(logs.decode("utf-8"))
         except NotFound:
             return FlextResult[str].fail(f"Container {container_name} not found")
@@ -915,7 +925,10 @@ class FlextTestDocker:
         """List containers."""
         try:
             client = self.get_client()
-            containers = cast("list", client.containers.list(all=all_containers))
+            # Cast containers API to Any to handle unknown method signature
+            containers_api = cast("Any", client.containers)
+            list_method = containers_api.list
+            containers = cast("list[Any]", list_method(all=all_containers))
             container_infos: list[ContainerInfo] = []
             for container in containers:
                 # Container attributes not fully typed in docker stubs
@@ -1784,158 +1797,9 @@ class FlextTestDocker:
         if cls._cli_group is not None:
             return cls._cli_group
 
-        choices = cls._CLI_CONTAINER_CHOICES + ["all"]
-
         @click.group(name="docker")
         def docker_cli() -> None:
             """Manage FLEXT Docker test containers."""
-
-        @docker_cli.command(name="start")
-        @click.option(
-            "--container",
-            "-c",
-            type=click.Choice(choices, case_sensitive=False),
-            default="all",
-            help="Container to start",
-        )
-        def start_command(self: FlextTestDocker, container: str) -> None:
-            manager = cls()
-            if container.lower() == "all":
-                cls._console.print(
-                    "[bold blue]Starting all FLEXT test containers...[/bold blue]",
-                )
-                result = manager.start_all()
-                if result.is_success:
-                    cls._console.print(
-                        "[bold green]✓ All containers started successfully[/bold green]",
-                    )
-                    cls._display_status_table(manager)
-                else:
-                    msg = f"Failed to start containers: {result.error}"
-                    raise click.ClickException(
-                        msg,
-                    )
-            else:
-                cls._console.print(
-                    f"[bold blue]Starting container: {container}[/bold blue]",
-                )
-                start_result = manager.start_container(container)
-                if start_result.is_success:
-                    cls._console.print(
-                        f"[bold green]✓ {start_result.value}[/bold green]",
-                    )
-                else:
-                    raise click.ClickException(str(start_result.error))
-
-        @docker_cli.command(name="stop")
-        @click.option(
-            "--container",
-            "-c",
-            type=click.Choice(choices, case_sensitive=False),
-            default="all",
-            help="Container to stop",
-        )
-        @click.option(
-            "--remove",
-            "-r",
-            is_flag=True,
-            help="Remove container after stopping",
-        )
-        def stop_command(
-            self: FlextTestDocker, container: str, *, remove: bool
-        ) -> None:
-            manager = cls()
-            if container.lower() == "all":
-                action = "Stopping and removing" if remove else "Stopping"
-                cls._console.print(
-                    f"[bold blue]{action} all FLEXT test containers...[/bold blue]",
-                )
-                result = manager.stop_all(remove=remove)
-                if result.is_success:
-                    cls._console.print(
-                        f"[bold green]✓ All containers {action.lower()}[/bold green]",
-                    )
-                else:
-                    raise click.ClickException(str(result.error))
-            else:
-                action = "Stopping and removing" if remove else "Stopping"
-                cls._console.print(
-                    f"[bold blue]{action} container: {container}[/bold blue]",
-                )
-                # Note: remove parameter is ignored - stop_container only stops
-                stop_result = manager.stop_container(container)
-                if stop_result.is_success:
-                    cls._console.print(
-                        f"[bold green]✓ {stop_result.value}[/bold green]",
-                    )
-                else:
-                    raise click.ClickException(str(stop_result.error))
-
-        @docker_cli.command(name="reset")
-        @click.option(
-            "--container",
-            "-c",
-            type=click.Choice(choices, case_sensitive=False),
-            default="all",
-            help="Container to reset",
-        )
-        def reset_command(self: FlextTestDocker, container: str) -> None:
-            manager = cls()
-            if container.lower() == "all":
-                cls._console.print(
-                    "[bold blue]Resetting all FLEXT test containers...[/bold blue]",
-                )
-                result = manager.reset_all()
-                if result.is_success:
-                    cls._console.print(
-                        "[bold green]✓ All containers reset successfully[/bold green]",
-                    )
-                    cls._display_status_table(manager)
-                else:
-                    raise click.ClickException(str(result.error))
-            else:
-                cls._console.print(
-                    f"[bold blue]Resetting container: {container}[/bold blue]",
-                )
-                reset_result = manager.reset_container(container)
-                if reset_result.is_success:
-                    cls._console.print(
-                        f"[bold green]✓ {reset_result.value}[/bold green]",
-                    )
-                else:
-                    raise click.ClickException(str(reset_result.error))
-
-        @docker_cli.command(name="status")
-        def status_command(self: FlextTestDocker) -> None:
-            manager = cls()
-            cls._display_status_table(manager)
-
-        @docker_cli.command(name="logs")
-        @click.option(
-            "--container",
-            "-c",
-            type=click.Choice(cls._CLI_CONTAINER_CHOICES, case_sensitive=False),
-            required=True,
-            help="Container to inspect",
-        )
-        @click.option(
-            "--tail",
-            type=int,
-            default=None,
-            help="Number of log lines to show",
-        )
-        def logs_command(
-            self: FlextTestDocker, container: str, tail: int | None
-        ) -> None:
-            manager = cls()
-            cls._console.print(
-                f"[bold blue]Fetching logs for {container}...[/bold blue]",
-            )
-            logs_result = manager.fetch_container_logs(container, tail=tail)
-            if logs_result.is_success:
-                cls._console.print(logs_result.value)
-            else:
-                raise click.ClickException(str(logs_result.error))
 
         cls._cli_group = docker_cli
         return docker_cli

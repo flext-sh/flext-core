@@ -409,6 +409,7 @@ class TestFlextUtilitiesComprehensive:
         # Create a simple object to test cache operations
         class TestObj:
             def __init__(self) -> None:
+                super().__init__()
                 self._cache: FlextTypes.Dict = {}
 
         test_obj = TestObj()
@@ -451,28 +452,28 @@ class TestFlextUtilitiesComprehensive:
 
     def test_additional_validation_operations(self) -> None:
         """Test additional validation operations not covered in other tests."""
-        # Test validate_email
-        result = FlextUtilities.Validation.validate_email("test@example.com")
-        assert result.is_success
-        assert result.unwrap() == "test@example.com"
+        # Test validate_email (returns FlextResult[str])
+        email_result = FlextUtilities.Validation.validate_email("test@example.com")
+        assert email_result.is_success
+        assert email_result.unwrap() == "test@example.com"
 
-        result = FlextUtilities.Validation.validate_email("invalid-email")
-        assert result.is_failure
+        email_fail_result = FlextUtilities.Validation.validate_email("invalid-email")
+        assert email_fail_result.is_failure
 
-        # Test validate_url
-        result = FlextUtilities.Validation.validate_url("https://example.com")
-        assert result.is_success
+        # Test validate_url (returns FlextResult[None])
+        url_result = FlextUtilities.Validation.validate_url("https://example.com")
+        assert url_result.is_success
 
-        result = FlextUtilities.Validation.validate_url("not-a-url")
-        assert result.is_failure
+        url_fail_result = FlextUtilities.Validation.validate_url("not-a-url")
+        assert url_fail_result.is_failure
 
-        # Test validate_port
-        result = FlextUtilities.Validation.validate_port(8080)
-        assert result.is_success
-        assert result.unwrap() == 8080
+        # Test validate_port (returns FlextResult[int])
+        port_result = FlextUtilities.Validation.validate_port(8080)
+        assert port_result.is_success
+        assert port_result.unwrap() == 8080
 
-        result = FlextUtilities.Validation.validate_port("invalid")
-        assert result.is_failure
+        port_fail_result = FlextUtilities.Validation.validate_port("invalid")
+        assert port_fail_result.is_failure
 
         # NOTE: validate_environment_value not implemented - skipping
         # # Test validate_environment_value
@@ -486,12 +487,12 @@ class TestFlextUtilitiesComprehensive:
         # )
         # assert result.is_failure
 
-        # Test validate_log_level
-        result = FlextUtilities.Validation.validate_log_level("INFO")
-        assert result.is_success
+        # Test validate_log_level (returns FlextResult[None])
+        log_level_result = FlextUtilities.Validation.validate_log_level("INFO")
+        assert log_level_result.is_success
 
-        result = FlextUtilities.Validation.validate_log_level("invalid")
-        assert result.is_failure
+        log_level_fail_result = FlextUtilities.Validation.validate_log_level("invalid")
+        assert log_level_fail_result.is_failure
 
         # NOTE: validate_security_token not implemented - skipping
         # # Test validate_security_token
@@ -505,15 +506,15 @@ class TestFlextUtilitiesComprehensive:
         # )
         # assert result.is_success
 
-        # Test validate_directory_path
+        # Test validate_directory_path (returns FlextResult[None])
         with tempfile.TemporaryDirectory() as temp_dir:
-            result = FlextUtilities.Validation.validate_directory_path(temp_dir)
-            assert result.is_success
+            dir_result = FlextUtilities.Validation.validate_directory_path(temp_dir)
+            assert dir_result.is_success
 
-        # Test validate_file_path
+        # Test validate_file_path (returns FlextResult[None])
         with tempfile.NamedTemporaryFile() as temp_file:
-            result = FlextUtilities.Validation.validate_file_path(temp_file.name)
-            assert result.is_success
+            file_result = FlextUtilities.Validation.validate_file_path(temp_file.name)
+            assert file_result.is_success
 
         # NOTE: validate_existing_file_path not implemented - skipping
         # # Test validate_existing_file_path
@@ -523,12 +524,12 @@ class TestFlextUtilitiesComprehensive:
         #     )
         #     assert result.is_success
 
-        # Test validate_timeout_seconds
-        result = FlextUtilities.Validation.validate_timeout_seconds(30.0)
-        assert result.is_success
+        # Test validate_timeout_seconds (returns FlextResult[None])
+        timeout_result = FlextUtilities.Validation.validate_timeout_seconds(30.0)
+        assert timeout_result.is_success
 
-        result = FlextUtilities.Validation.validate_timeout_seconds(-1.0)
-        assert result.is_failure
+        timeout_fail_result = FlextUtilities.Validation.validate_timeout_seconds(-1.0)
+        assert timeout_fail_result.is_failure
 
         # NOTE: convert_to_float not implemented - skipping
         # # Test convert_to_float
@@ -539,9 +540,118 @@ class TestFlextUtilitiesComprehensive:
         # result = FlextUtilities.Validation.convert_to_float("not_a_number")
         # assert result.is_failure
 
-        # Test validate_retry_count
-        result = FlextUtilities.Validation.validate_retry_count(3)
-        assert result.is_success
+        # Test validate_retry_count (returns FlextResult[None])
+        retry_result = FlextUtilities.Validation.validate_retry_count(3)
+        assert retry_result.is_success
 
-        result = FlextUtilities.Validation.validate_retry_count(-1)
-        assert result.is_failure
+        retry_fail_result = FlextUtilities.Validation.validate_retry_count(-1)
+        assert retry_fail_result.is_failure
+
+    def test_correlation_operations(self) -> None:
+        """Test correlation ID operations."""
+        # Test correlation ID generation
+        corr_id1 = FlextUtilities.Correlation.generate_correlation_id()
+        corr_id2 = FlextUtilities.Correlation.generate_correlation_id()
+        assert corr_id1 != corr_id2
+        assert len(corr_id1) > 0
+
+        # Test ISO timestamp generation
+        iso_ts = FlextUtilities.Correlation.generate_iso_timestamp()
+        assert "T" in iso_ts
+
+        # Test command ID generation
+        cmd_id = FlextUtilities.Correlation.generate_command_id()
+        assert len(cmd_id) > 0
+
+        # Test query ID generation
+        query_id = FlextUtilities.Correlation.generate_query_id()
+        assert len(query_id) > 0
+
+    def test_type_conversions_operations(self) -> None:
+        """Test type conversion operations."""
+        # Test string to int conversion (returns FlextResult[int])
+        int_result = FlextUtilities.TypeConversions.to_int("42")
+        assert int_result.is_success
+        assert int_result.unwrap() == 42
+
+        int_fail_result = FlextUtilities.TypeConversions.to_int("not_a_number")
+        assert int_fail_result.is_failure
+
+        int_none_result = FlextUtilities.TypeConversions.to_int(None)
+        assert int_none_result.is_failure
+
+        # Test string to bool conversion (returns FlextResult[bool], uses keyword argument)
+        bool_true_result = FlextUtilities.TypeConversions.to_bool(value="true")
+        assert bool_true_result.is_success
+        assert bool_true_result.unwrap() is True
+
+        bool_false_result = FlextUtilities.TypeConversions.to_bool(value="false")
+        assert bool_false_result.is_success
+        assert bool_false_result.unwrap() is False
+
+        bool_one_str_result = FlextUtilities.TypeConversions.to_bool(value="1")
+        assert bool_one_str_result.is_success
+        assert bool_one_str_result.unwrap() is True
+
+        bool_zero_str_result = FlextUtilities.TypeConversions.to_bool(value="0")
+        assert bool_zero_str_result.is_success
+        assert bool_zero_str_result.unwrap() is False
+
+        bool_true_bool_result = FlextUtilities.TypeConversions.to_bool(value=True)
+        assert bool_true_bool_result.is_success
+        assert bool_true_bool_result.unwrap() is True
+
+        bool_one_int_result = FlextUtilities.TypeConversions.to_bool(value=1)
+        assert bool_one_int_result.is_success
+        assert bool_one_int_result.unwrap() is True
+
+        bool_none_result = FlextUtilities.TypeConversions.to_bool(value=None)
+        assert bool_none_result.is_success
+        assert bool_none_result.unwrap() is False
+
+    def test_reliability_operations(self) -> None:
+        """Test reliability and retry operations."""
+        # Test retry logic (if method exists)
+        if hasattr(FlextUtilities.Reliability, "retry"):
+            call_count = 0
+
+            def failing_operation() -> FlextResult[str]:
+                nonlocal call_count
+                call_count += 1
+                if call_count < 3:
+                    return FlextResult[str].fail("Temporary failure")
+                return FlextResult[str].ok("Success after retries")
+
+            result: FlextResult[str] = FlextUtilities.Reliability.retry(
+                failing_operation,
+                max_attempts=3,
+                delay_seconds=0.01,
+            )
+            assert result.is_success
+            assert call_count == 3
+
+        # Test exponential backoff (if method exists)
+        # TODO: Implement exponential_backoff functionality in FlextUtilities.Reliability
+        # if hasattr(FlextUtilities.Reliability, "exponential_backoff"):
+        #     delays = FlextUtilities.Reliability.exponential_backoff(
+        #         base_delay=0.1,
+        #         max_attempts=3,
+        #     )
+        #     assert len(list(cast(Sequence[float], delays))) > 0
+
+        # Test circuit breaker (if method exists)
+        # TODO: Implement circuit_breaker functionality in FlextUtilities.Reliability
+        # if hasattr(FlextUtilities.Reliability, "circuit_breaker"):
+        #     breaker: object = FlextUtilities.Reliability.circuit_breaker(
+        #         failure_threshold=3,
+        #         timeout_seconds=1.0,
+        #     )
+        #     assert breaker is not None
+
+    def test_generate_id_function(self) -> None:
+        """Test standalone generate_id function."""
+        id1 = FlextUtilities.generate_id()
+        id2 = FlextUtilities.generate_id()
+        assert id1 != id2
+        assert len(id1) > 0
+        assert isinstance(id1, str)

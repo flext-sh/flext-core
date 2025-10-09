@@ -202,14 +202,6 @@ def demonstrate_single_import_pattern() -> None:
         demo_feature,
     )
 
-    # Use a proper operation function that returns FlextResult
-    def sum_operation(*args: object) -> FlextResult[int]:
-        numbers = args[0] if args else []
-        if isinstance(numbers, list):
-            result = sum(int(x) for x in numbers if isinstance(x, (int, float)))
-            return FlextResult[int].ok(result)
-        return FlextResult[int].fail("Invalid input")
-
     # Use the proper method for creating success results
     helper = FlextResult[int].ok(42)
     print(f"   ✨ ok helper: {helper.unwrap()}")

@@ -1,12 +1,22 @@
-ERROR Argument `() -> dict[str, str]` is not assignable to parameter `func` with type `() -> dict[str, object]` in function `flext_core.result.FlextResult.from_callable` [bad-argument-type]
-   --> examples/09_context_management.py:621:13
+ERROR No matching overload found for function `UserDict.update` [no-matching-overload]
+   --> examples/08_integration_complete.py:193:20
     |
-621 |             risky_context_operation
-    |             ^^^^^^^^^^^^^^^^^^^^^^^
+193 |         user.update(overrides)
+    |                    ^^^^^^^^^^^
     |
-ERROR Object of class `FlextConfig` has no attribute `enable_middleware` [missing-attribute]
-   --> examples/11_bus_messaging.py:708:45
+  Possible overloads:
+  (m: Partial[UserDict], /) -> None [closest match]
+  (m: Iterable[tuple[Literal['age'], int] | tuple[Literal['email'], str] | tuple[Literal['id'], int] | tuple[Literal['name'], str]], /) -> None
+  (*, id: int = ..., name: str = ..., email: str = ..., age: int = ...) -> None
+ERROR Returned type `TypedDict[UserDict]` is not assignable to declared return type `dict[str, object]` [bad-return]
+   --> examples/08_integration_complete.py:194:16
     |
-708 |             print(f"   Middleware enabled: {bus.config.enable_middleware}")
-    |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+194 |         return user
+    |                ^^^^
+    |
+ WARN Redundant cast: `str` is the same type as `str` [redundant-cast]
+   --> examples/08_integration_complete.py:951:23
+    |
+951 |     customer_id = cast("str", admin_user["email"])
+    |                       ----------------------------
     |

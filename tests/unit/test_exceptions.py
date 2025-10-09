@@ -20,7 +20,7 @@ class TestFlextExceptions:
         """Test BaseError initialization with basic message."""
         error = FlextExceptions.BaseError("Test error")
         assert error.message == "Test error"
-        assert error.error_code is None
+        assert error.error_code == "UNKNOWN_ERROR"  # Default error code
         assert error.correlation_id is None
         assert isinstance(error.metadata, dict)
         assert isinstance(error.timestamp, float)
@@ -68,9 +68,9 @@ class TestFlextExceptions:
             assert metadata["field"] == "email"
 
     def test_base_error_str_without_code(self) -> None:
-        """Test BaseError string representation without error code."""
+        """Test BaseError string representation with default error code."""
         error = FlextExceptions.BaseError("Test error")
-        assert str(error) == "Test error"
+        assert str(error) == "[UNKNOWN_ERROR] Test error"  # Default error code is shown
 
     def test_base_error_str_with_code(self) -> None:
         """Test BaseError string representation with error code."""
@@ -311,3 +311,272 @@ class TestFlextExceptions:
         )
         assert error.metadata["existing"] == "value"
         assert error.metadata["new_field"] == "new_value"
+
+
+class TestFlextExceptionsComprehensive:
+    """Comprehensive test suite for all FlextExceptions classes."""
+
+    def test_all_exception_instantiation(self) -> None:
+        """Test instantiation of all exception types."""
+        from flext_core import FlextExceptions
+
+        # Test BaseError
+        exc = FlextExceptions.BaseError("Base error message")
+        assert str(exc) == "[UNKNOWN_ERROR] Base error message"
+        assert exc.error_code == "UNKNOWN_ERROR"
+
+        # Test ConfigurationError
+        exc = FlextExceptions.ConfigurationError("Config error")
+        assert "Config error" in str(exc)
+
+        # Test ValidationError
+        exc = FlextExceptions.ValidationError("Validation failed")
+        assert "Validation failed" in str(exc)
+
+        # Test NotFoundError
+        exc = FlextExceptions.NotFoundError("Resource not found")
+        assert "Resource not found" in str(exc)
+
+        # Test ConflictError
+        exc = FlextExceptions.ConflictError("Resource conflict")
+        assert "Resource conflict" in str(exc)
+
+        # Test AuthenticationError
+        exc = FlextExceptions.AuthenticationError("Auth failed")
+        assert "Auth failed" in str(exc)
+
+        # Test AuthorizationError
+        exc = FlextExceptions.AuthorizationError("Unauthorized")
+        assert "Unauthorized" in str(exc)
+
+        # Test TimeoutError
+        exc = FlextExceptions.TimeoutError("Operation timed out")
+        assert "Operation timed out" in str(exc)
+
+        # Test ConnectionError
+        exc = FlextExceptions.ConnectionError("Connection failed")
+        assert "Connection failed" in str(exc)
+
+        # Test RateLimitError
+        exc = FlextExceptions.RateLimitError("Rate limit exceeded")
+        assert "Rate limit exceeded" in str(exc)
+
+        # Test CircuitBreakerError
+        exc = FlextExceptions.CircuitBreakerError("Circuit open")
+        assert "Circuit open" in str(exc)
+
+        # Test AttributeAccessError
+        exc = FlextExceptions.AttributeAccessError("Attribute error")
+        assert "Attribute error" in str(exc)
+
+        # Test OperationError
+        exc = FlextExceptions.OperationError("Operation failed")
+        assert "Operation failed" in str(exc)
+
+        # Test TypeError
+        exc = FlextExceptions.TypeError("Type mismatch")
+        assert "Type mismatch" in str(exc)
+
+    def test_exception_with_error_codes(self) -> None:
+        """Test exceptions with custom error codes."""
+        from flext_core import FlextExceptions
+
+        validation_exc = FlextExceptions.ValidationError(
+            "Validation error", error_code="VALIDATION_FAILED"
+        )
+        assert validation_exc.error_code == "VALIDATION_FAILED"
+
+        not_found_exc = FlextExceptions.NotFoundError(
+            "Not found", error_code="RESOURCE_NOT_FOUND"
+        )
+        assert not_found_exc.error_code == "RESOURCE_NOT_FOUND"
+
+        timeout_exc = FlextExceptions.TimeoutError(
+            "Timeout", error_code="TIMEOUT_EXCEEDED"
+        )
+        assert timeout_exc.error_code == "TIMEOUT_EXCEEDED"
+
+    def test_exception_with_metadata(self) -> None:
+        """Test exceptions with additional metadata."""
+        from flext_core import FlextExceptions
+
+        metadata: dict[str, object] = {"resource_id": "123", "user_id": "456"}
+        not_found_exc = FlextExceptions.NotFoundError(
+            "Resource not found", metadata=metadata
+        )
+        assert not_found_exc.metadata == metadata
+
+        validation_exc = FlextExceptions.ValidationError(
+            "Invalid", metadata={"field": "email"}
+        )
+        assert validation_exc.metadata["field"] == "email"
+
+    def test_exception_inheritance(self) -> None:
+        """Test exception class inheritance hierarchy."""
+        from flext_core import FlextExceptions
+
+        # All exceptions should inherit from BaseError
+        assert issubclass(FlextExceptions.ValidationError, FlextExceptions.BaseError)
+        assert issubclass(FlextExceptions.NotFoundError, FlextExceptions.BaseError)
+        assert issubclass(
+            FlextExceptions.AuthenticationError, FlextExceptions.BaseError
+        )
+        assert issubclass(FlextExceptions.TimeoutError, FlextExceptions.BaseError)
+
+        # And from Python Exception
+        assert issubclass(FlextExceptions.BaseError, Exception)
+
+    def test_exception_raising_and_catching(self) -> None:
+        """Test raising and catching exceptions."""
+        from flext_core import FlextExceptions
+
+        # Test ValidationError
+        error_msg = "Invalid input"
+        with pytest.raises(FlextExceptions.ValidationError, match=error_msg):
+            raise FlextExceptions.ValidationError(error_msg)
+
+        # Test NotFoundError
+        error_msg = "User not found"
+        with pytest.raises(FlextExceptions.NotFoundError, match=error_msg):
+            raise FlextExceptions.NotFoundError(error_msg)
+
+        # Test AuthenticationError
+        error_msg = "Invalid credentials"
+        with pytest.raises(FlextExceptions.AuthenticationError, match=error_msg):
+            raise FlextExceptions.AuthenticationError(error_msg)
+
+    def test_exception_context_propagation(self) -> None:
+        """Test exception context propagation."""
+        from flext_core import FlextExceptions
+
+        error_msg = "Config error"
+        operation_error_msg = "Operation failed"
+
+        # Test that OperationError properly chains from ConfigurationError
+        with pytest.raises(FlextExceptions.OperationError) as exc_info:
+            raise FlextExceptions.OperationError(
+                operation_error_msg
+            ) from FlextExceptions.ConfigurationError(error_msg)
+
+        assert exc_info.value.__cause__ is not None
+        assert isinstance(exc_info.value.__cause__, FlextExceptions.ConfigurationError)
+
+    def test_exception_with_various_data_types(self) -> None:
+        """Test exceptions with various metadata data types."""
+        from flext_core import FlextExceptions
+
+        # String metadata
+        exc = FlextExceptions.BaseError("Error", metadata={"msg": "test"})
+        assert exc.metadata["msg"] == "test"
+
+        # Numeric metadata
+        exc = FlextExceptions.BaseError("Error", metadata={"count": 42})
+        assert exc.metadata["count"] == 42
+
+        # List metadata
+        exc = FlextExceptions.BaseError("Error", metadata={"items": [1, 2, 3]})
+        assert exc.metadata["items"] == [1, 2, 3]
+
+        # Nested dict metadata
+        exc = FlextExceptions.BaseError("Error", metadata={"nested": {"key": "val"}})
+        nested_dict = exc.metadata["nested"]
+        assert isinstance(nested_dict, dict) and nested_dict["key"] == "val"
+
+    def test_all_exception_repr(self) -> None:
+        """Test repr() for all exception types."""
+        from flext_core import FlextExceptions
+
+        exceptions_to_test: list[FlextExceptions.BaseError] = [
+            FlextExceptions.BaseError("base"),
+            FlextExceptions.ValidationError("validation"),
+            FlextExceptions.NotFoundError("not_found"),
+            FlextExceptions.ConflictError("conflict"),
+            FlextExceptions.AuthenticationError("auth"),
+            FlextExceptions.AuthorizationError("authz"),
+            FlextExceptions.TimeoutError("timeout"),
+            FlextExceptions.ConnectionError("connection"),
+            FlextExceptions.RateLimitError("rate_limit"),
+            FlextExceptions.CircuitBreakerError("circuit"),
+            FlextExceptions.ConfigurationError("config"),
+            FlextExceptions.AttributeAccessError("attribute"),
+            FlextExceptions.OperationError("operation"),
+            FlextExceptions.TypeError("type"),
+        ]
+
+        for exc in exceptions_to_test:
+            repr_str = repr(exc)
+            assert repr_str is not None
+            assert len(repr_str) > 0
+
+    def test_exception_equality(self) -> None:
+        """Test exception equality comparison."""
+        from flext_core import FlextExceptions
+
+        exc1 = FlextExceptions.ValidationError("Error")
+        exc2 = FlextExceptions.ValidationError("Error")
+
+        # Exceptions are equal by type and message
+        assert type(exc1) is type(exc2)
+        assert str(exc1) == str(exc2)
+
+    def test_exception_serialization(self) -> None:
+        """Test exception serialization to dict."""
+        from flext_core import FlextExceptions
+
+        exc = FlextExceptions.ValidationError(
+            "Validation failed",
+            error_code="INVALID_INPUT",
+            metadata={"field": "email", "value": "invalid"},
+        )
+
+        # Test if exception has serialization method
+        if hasattr(exc, "to_dict"):
+            result = exc.to_dict()
+            assert isinstance(result, dict)
+            assert "error_code" in result or "message" in result
+
+    def test_all_exception_types_creation(self) -> None:
+        """Test creating all exception types with full parameters."""
+        from flext_core import FlextExceptions
+
+        test_cases: list[tuple[type[FlextExceptions.BaseError], str]] = [
+            (FlextExceptions.BaseError, "Base"),
+            (FlextExceptions.ValidationError, "Validation"),
+            (FlextExceptions.NotFoundError, "NotFound"),
+            (FlextExceptions.ConflictError, "Conflict"),
+            (FlextExceptions.AuthenticationError, "Authentication"),
+            (FlextExceptions.AuthorizationError, "Authorization"),
+            (FlextExceptions.TimeoutError, "Timeout"),
+            (FlextExceptions.ConnectionError, "Connection"),
+            (FlextExceptions.RateLimitError, "RateLimit"),
+            (FlextExceptions.CircuitBreakerError, "CircuitBreaker"),
+            (FlextExceptions.ConfigurationError, "Configuration"),
+            (FlextExceptions.AttributeAccessError, "AttributeAccess"),
+            (FlextExceptions.OperationError, "Operation"),
+            (FlextExceptions.TypeError, "Type"),
+        ]
+
+        for exc_class, name in test_cases:
+            # Test with just message
+            exc: FlextExceptions.BaseError = exc_class(f"{name} error")
+            assert f"{name} error" in str(exc)
+
+            # Test with error_code
+            exc = exc_class(f"{name} error", error_code=f"{name.upper()}_ERROR")
+            assert exc.error_code == f"{name.upper()}_ERROR"
+
+            # Test with metadata
+            exc = exc_class(f"{name} error", metadata={"test": "data"})
+            # Metadata should contain at least the passed data
+            assert "test" in exc.metadata
+            assert exc.metadata["test"] == "data"
+
+            # Test with all parameters
+            exc = exc_class(
+                f"{name} error",
+                error_code=f"{name.upper()}_CODE",
+                metadata={"key": "value"},
+            )
+            assert f"{name} error" in str(exc)
+            assert exc.error_code == f"{name.upper()}_CODE"
+            assert exc.metadata["key"] == "value"

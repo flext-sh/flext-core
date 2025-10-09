@@ -71,7 +71,7 @@ class RealisticDataDict(TypedDict):
 class DemoScenarios:
     """Inline scenario helpers for model demonstrations."""
 
-    _DATASET: ClassVar[dict] = {
+    _DATASET: ClassVar[FlextTypes.Dict] = {
         "users": [
             {
                 "id": 1,
@@ -969,8 +969,7 @@ class ComprehensiveModelsService(FlextService[Order]):
                 raise ValueError(msg)
             return email_result.unwrap()
 
-        email_result = FlextResult.from_callable(risky_email_creation)
-        email_result = cast("FlextResult[Email]", email_result)
+        email_result = FlextResult[Email].from_callable(risky_email_creation)
         if email_result.is_failure:
             print(f"✅ Caught email validation error safely: {email_result.error}")
 

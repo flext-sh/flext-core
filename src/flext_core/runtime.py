@@ -30,6 +30,7 @@ import json
 import logging
 import re
 import typing
+import uuid
 from collections.abc import Callable, Sequence
 from types import ModuleType
 from typing import TypeGuard, cast
@@ -469,6 +470,206 @@ class FlextRuntime:
         )
 
         cls._structlog_configured = True
+
+    # =========================================================================
+    # APPLICATION LAYER INTEGRATION (Using structlog directly - Layer 0.5)
+    # =========================================================================
+    # DESIGN: Integration uses structlog directly without importing from
+    # Infrastructure layer (FlextContext, FlextLogger), avoiding circular imports.
+    # USAGE: Opt-in helpers for APPLICATION/SERVICE layer only.
+    # =========================================================================
+
+    class Integration:
+        """Application-layer integration helpers using structlog directly (Layer 0.5).
+
+        **DESIGN**: These methods use structlog directly without importing from
+        higher layers (FlextContext, FlextLogger), avoiding all circular imports.
+
+        **USAGE**: Opt-in helpers for application/service layer to integrate
+        foundation components with context tracking.
+
+        **CORRECT USAGE** (Application Layer):
+            ```python
+            from flext_core import FlextContainer
+            from flext_core.runtime import FlextRuntime
+
+            container = FlextContainer.get_global()
+            result = container.get("database")
+
+            # Opt-in integration at application layer
+            FlextRuntime.Integration.track_service_resolution(
+                "database", resolved=result.is_success
+            )
+            ```
+
+        **NOTES**:
+            - Uses structlog directly (single source of truth for context)
+            - No imports from Infrastructure layer (context.py, loggings.py)
+            - Pure Layer 0.5 implementation
+        """
+
+        @staticmethod
+        def track_service_resolution(
+            service_name: str,
+            *,
+            resolved: bool = True,
+            error_message: str | None = None,
+        ) -> None:
+            """Track service resolution with context correlation.
+
+            Uses structlog directly to avoid circular imports.
+
+            Args:
+                service_name: Name of the service being resolved
+                resolved: Whether resolution was successful
+                error_message: Error message if resolution failed
+
+            """
+            # Get correlation_id directly from structlog (single source of truth)
+            context_vars = structlog.contextvars.get_contextvars()
+            correlation_id = context_vars.get("correlation_id")
+
+            # Use structlog directly (no FlextLogger wrapper needed)
+            logger = structlog.get_logger(__name__)
+
+            if resolved:
+                logger.info(
+                    "Service resolved",
+                    service_name=service_name,
+                    correlation_id=correlation_id,
+                )
+            else:
+                logger.error(
+                    "Service resolution failed",
+                    service_name=service_name,
+                    error=error_message,
+                    correlation_id=correlation_id,
+                )
+
+        @staticmethod
+        def log_config_access(
+            key: str,
+            value: object | None = None,
+            *,
+            masked: bool = False,
+        ) -> None:
+            """Log configuration access with context correlation.
+
+            Uses structlog directly to avoid circular imports.
+
+            Args:
+                key: Configuration key being accessed
+                value: Configuration value (will be masked if sensitive)
+                masked: Whether to mask the value in logs (for secrets)
+
+            """
+            # Get correlation_id directly from structlog
+            context_vars = structlog.contextvars.get_contextvars()
+            correlation_id = context_vars.get("correlation_id")
+
+            # Use structlog directly
+            logger = structlog.get_logger(__name__)
+            log_value = "***MASKED***" if masked else value
+
+            logger.debug(
+                "Configuration accessed",
+                config_key=key,
+                config_value=log_value,
+                correlation_id=correlation_id,
+            )
+
+        @staticmethod
+        def attach_context_to_result(
+            result: object,
+            *,
+            attach_correlation: bool = True,
+            attach_service_name: bool = False,
+        ) -> object:
+            """Attach context metadata to FlextResult (future-proofing).
+
+            Uses structlog directly to avoid circular imports.
+
+            Args:
+                result: FlextResult instance
+                attach_correlation: Whether to read correlation ID
+                attach_service_name: Whether to read service name
+
+            Returns:
+                Result (currently unchanged, context available via structlog)
+
+            """
+            # Read from structlog contextvars directly
+            context_vars = structlog.contextvars.get_contextvars()
+            _ = context_vars.get("correlation_id") if attach_correlation else None
+            _ = context_vars.get("service_name") if attach_service_name else None
+            return result
+
+        @staticmethod
+        def track_domain_event(
+            event_name: str,
+            aggregate_id: str | None = None,
+            event_data: dict[str, object] | None = None,
+        ) -> None:
+            """Track domain event with context correlation.
+
+            Uses structlog directly to avoid circular imports.
+
+            Args:
+                event_name: Name of the domain event
+                aggregate_id: ID of the aggregate root
+                event_data: Additional event data
+
+            """
+            # Get correlation_id directly from structlog
+            context_vars = structlog.contextvars.get_contextvars()
+            correlation_id = context_vars.get("correlation_id")
+
+            # Use structlog directly
+            logger = structlog.get_logger(__name__)
+
+            logger.info(
+                "Domain event emitted",
+                event_name=event_name,
+                aggregate_id=aggregate_id,
+                event_data=event_data,
+                correlation_id=correlation_id,
+            )
+
+        @staticmethod
+        def setup_service_infrastructure(
+            *,
+            service_name: str,
+            service_version: str | None = None,
+            enable_context_correlation: bool = True,
+        ) -> None:
+            """Setup complete service infrastructure.
+
+            Uses structlog directly to avoid circular imports.
+
+            Args:
+                service_name: Name of the service
+                service_version: Version of the service
+                enable_context_correlation: Whether to enable correlation
+
+            """
+            # Set service context directly in structlog contextvars
+            structlog.contextvars.bind_contextvars(service_name=service_name)
+            if service_version:
+                structlog.contextvars.bind_contextvars(service_version=service_version)
+
+            # Generate correlation ID if enabled
+            if enable_context_correlation:
+                correlation_id = f"flext-{uuid.uuid4().hex[:12]}"
+                structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
+
+            # Use structlog directly
+            logger = structlog.get_logger(__name__)
+            logger.info(
+                "Service infrastructure initialized",
+                service_name=service_name,
+                service_version=service_version,
+                correlation_enabled=enable_context_correlation,
+            )
 
 
 __all__ = ["FlextRuntime"]

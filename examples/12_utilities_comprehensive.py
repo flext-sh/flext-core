@@ -20,8 +20,9 @@ from __future__ import annotations
 
 import time
 import uuid
+from typing import cast
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextService, FlextTypes
 
 
 class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
@@ -254,8 +255,9 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
             return {"validated": True, **test_data}
 
         # Safe validation without try/except
-        validation_result: FlextResult[dict[str, object]] = FlextResult.from_callable(
-            risky_validation_operation
+        validation_result = cast(
+            "FlextResult[dict[str, object]]",
+            FlextResult.from_callable(risky_validation_operation),
         )
         if validation_result.is_success:
             validated_data = validation_result.unwrap()

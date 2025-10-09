@@ -172,12 +172,19 @@ class TestFlextContext:
         assert result.is_success
 
     def test_context_validation_failure(self) -> None:
-        """Test context validation failure."""
-        context = FlextContext()
-        context.set("", "empty_key")  # Invalid key
+        """Test context validation failure - empty key raises ValueError immediately."""
+        import pytest
 
+        context = FlextContext()
+
+        # Empty key should raise ValueError at set time
+        with pytest.raises(ValueError) as exc_info:
+            context.set("", "empty_key")  # Should raise ValueError
+        assert "must be a non-empty string" in str(exc_info.value)
+
+        # Validate should still pass since no invalid keys were actually set
         result = context.validate()
-        assert result.is_failure
+        assert result.is_success
 
     def test_context_thread_safety(self) -> None:
         """Test context thread safety."""

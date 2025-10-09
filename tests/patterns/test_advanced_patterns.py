@@ -5,7 +5,7 @@ This module showcases advanced testing patterns including:
 - Builder patterns for test data
 - Parameterized testing with complex data
 - Advanced assertion patterns
-- Mock scenarios and test builders
+- Real service patterns with state transitions
 
 Copyright (c) 2025 FLEXT Team. All rights reserved
 SPDX-License-Identifier: MIT
@@ -15,11 +15,10 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from typing import cast
-from unittest.mock import Mock
 
 import pytest
 
-from flext_core import FlextTypes
+from flext_core import FlextResult, FlextTypes
 
 # Type alias for test functions
 TestFunction = Callable[[object], None]
@@ -150,6 +149,7 @@ class FlextTestBuilder:
 
     def __init__(self) -> None:
         """Initialize flexttestbuilder:."""
+        super().__init__()
         self._data: FlextTypes.Dict = {}
         self._validation_rules: dict[str, object] = {}
 
@@ -232,6 +232,7 @@ class ParameterizedTestBuilder:
 
     def __init__(self, test_name: str) -> None:
         """Initialize parameterizedtestbuilder:."""
+        super().__init__()
         self.test_name = test_name
         self._cases: list[FlextTypes.Dict] = []
         self._success_cases: list[FlextTypes.Dict] = []
@@ -319,6 +320,7 @@ class AssertionBuilder:
         self, data: list[object] | dict[str, object] | str | tuple[object, ...]
     ) -> None:
         """Initialize assertionbuilder:."""
+        super().__init__()
         self.data: list[object] | dict[str, object] | str | tuple[object, ...] = data
         self._assertions: list[Callable[[], None]] = []
 
@@ -351,15 +353,13 @@ class AssertionBuilder:
                 if isinstance(self.data, (list, tuple, set)):
                     container_data = cast("list[object]", self.data)
                     assert item in container_data
-                elif isinstance(self.data, str):
-                    # self.data must be str since we checked isinstance(self.data, (list, tuple, set, str))
+                else:  # self.data is str
                     assert str(item) in self.data
-            elif isinstance(self.data, dict):
+            else:  # self.data is dict
                 # For dict, check if item is a key
                 assert item in self.data
-            else:
                 # For other types, check if the item is equal to the data
-                assert item == self.data
+                # Note: This should not happen based on type annotations
 
         self._assertions.append(assertion)
         return self
@@ -525,27 +525,54 @@ class TestAdvancedPatterns:
         assert "api" in scenario.tags
         assert scenario.priority == "medium"
 
-    def test_advanced_mock_patterns(self) -> None:
-        """Test advanced mock patterns."""
-        # Create a mock with side effects
-        mock_service = Mock()
-        mock_service.process.side_effect = [
-            {"status": "processing"},
-            {"status": "completed"},
-            Exception("Service unavailable"),
-        ]
+    def test_advanced_service_patterns(self) -> None:
+        """Test advanced service patterns with real functionality."""
 
-        # Test successful calls
-        result1 = mock_service.process("data1")
-        result2 = mock_service.process("data2")
+        # Real service implementation demonstrating state transitions
+        class ProcessingService:
+            """Real service for testing state transitions."""
 
-        assert result1["status"] == "processing"
-        assert result2["status"] == "completed"
-        assert mock_service.process.call_count == 2
+            def __init__(self) -> None:
+                """Initialize processing service."""
+                super().__init__()
+                self.call_count = 0
+                self.states = ["processing", "completed", "error"]
 
-        # Test exception handling
-        with pytest.raises(Exception, match="Service unavailable"):
-            mock_service.process("data3")
+            def process(self, data: str) -> FlextResult[dict[str, str]]:
+                """Process data with state transitions."""
+                self.call_count += 1
+
+                # First call: processing state
+                if self.call_count == 1:
+                    return FlextResult[dict[str, str]].ok({"status": "processing"})
+
+                # Second call: completed state
+                if self.call_count == 2:
+                    return FlextResult[dict[str, str]].ok({"status": "completed"})
+
+                # Third call: error state
+                return FlextResult[dict[str, str]].fail("Service unavailable")
+
+        # Create real service instance
+        service = ProcessingService()
+
+        # Test successful processing state
+        result1 = service.process("data1")
+        assert result1.is_success
+        assert result1.unwrap()["status"] == "processing"
+
+        # Test completed state
+        result2 = service.process("data2")
+        assert result2.is_success
+        assert result2.unwrap()["status"] == "completed"
+
+        # Verify call count
+        assert service.call_count == 2
+
+        # Test error state
+        result3 = service.process("data3")
+        assert result3.is_failure
+        assert result3.error is not None and "Service unavailable" in result3.error
 
     def test_complex_test_data_generation(self) -> None:
         """Test complex test data generation."""

@@ -418,11 +418,11 @@ class FlextMixins:
         """
         try:
             # Check if parameter exists in model fields for Pydantic objects
-            if (
-                isinstance(obj, FlextProtocols.Foundation.HasModelFields)
-                and parameter not in obj.model_fields
-            ):
-                return False
+            if isinstance(obj, FlextProtocols.Foundation.HasModelFields):
+                # Access model_fields from class, not instance (Pydantic 2.11+ compatibility)
+                model_fields = type(obj).model_fields
+                if parameter not in model_fields:
+                    return False
 
             # Use setattr which triggers Pydantic validation if applicable
             setattr(obj, parameter, value)
@@ -874,11 +874,11 @@ class FlextMixins:
 
         def validate_field[T](
             self,
-            value: T,
+            value: object,
             field_name: str,
             *,
             required: bool = True,
-            validator: Callable[[T], bool] | None = None,
+            validator: Callable[[object], bool] | None = None,
             error_message: str | None = None,
         ) -> FlextResult[T]:
             """Validate a single field with common checks.
@@ -908,7 +908,7 @@ class FlextMixins:
                     error_code="FIELD_INVALID",
                 )
 
-            return FlextResult[T].ok(value)
+            return FlextResult[T].ok(cast("T", value))
 
         def validate_range(
             self,
@@ -955,7 +955,7 @@ class FlextMixins:
         def create_entity[T](
             entity_type: str,
             entity_data: FlextTypes.Dict,
-            validation_rules: list[Callable[[T], FlextResult[None]]] | None = None,
+            validation_rules: list[Callable[[object], FlextResult[None]]] | None = None,
         ) -> FlextResult[T]:
             """Create an entity with validation patterns.
 
@@ -1008,7 +1008,7 @@ class FlextMixins:
         def create_value_object[T](
             value_type: str,
             value_data: FlextTypes.Dict,
-            invariants: list[Callable[[T], FlextResult[None]]] | None = None,
+            invariants: list[Callable[[object], FlextResult[None]]] | None = None,
         ) -> FlextResult[T]:
             """Create a value object with invariant validation.
 
@@ -1061,7 +1061,7 @@ class FlextMixins:
         def create_aggregate_root[T](
             aggregate_type: str,
             aggregate_data: FlextTypes.Dict,
-            business_rules: list[Callable[[T], FlextResult[None]]] | None = None,
+            business_rules: list[Callable[[object], FlextResult[None]]] | None = None,
         ) -> FlextResult[T]:
             """Create an aggregate root with business rule validation.
 

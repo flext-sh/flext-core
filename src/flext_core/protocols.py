@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Callable
+from pathlib import Path
 from typing import (
-    TYPE_CHECKING,
     Generic,
     Protocol,
     TypeVar,
@@ -17,6 +17,8 @@ from typing import (
     runtime_checkable,
 )
 
+from flext_core.models import FlextModels
+from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 # Local TypeVars for protocol definitions (avoiding import of instance TypeVars)
@@ -26,12 +28,6 @@ T_Service_co = TypeVar("T_Service_co", covariant=True)
 T_Repository_contra = TypeVar("T_Repository_contra", contravariant=True)
 TInput_Handler_contra = TypeVar("TInput_Handler_contra", contravariant=True)
 TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True)
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    from flext_core.models import FlextModels
-    from flext_core.result import FlextResult
 
 
 class FlextProtocols:

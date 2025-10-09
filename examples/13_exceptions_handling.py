@@ -26,7 +26,13 @@ import warnings
 from typing import cast
 from uuid import uuid4
 
-from flext_core import FlextCore, FlextResult
+from flext_core import (
+    FlextConstants,
+    FlextCore,
+    FlextResult,
+    FlextService,
+    FlextTypes,
+)
 
 # Constants
 DEMO_EXCEPTION_MSG = "Demo exception raised: %s"
@@ -757,8 +763,8 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
             return user_data
 
         # Safe execution without try/except
-        result: FlextResult[dict[str, object]] = FlextResult.from_callable(
-            risky_operation
+        result = cast(
+            "FlextResult[dict[str, object]]", FlextResult.from_callable(risky_operation)
         )
         if result.is_success:
             data = result.unwrap()

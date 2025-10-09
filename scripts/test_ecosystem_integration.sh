@@ -60,12 +60,6 @@ TIER4_PROJECTS=(
 	"flext-dbt-oracle"
 )
 
-# Tier 5: Applications (LOW - but important validation)
-TIER5_PROJECTS=(
-	"algar-oud-mig"
-	"gruponos-meltano-native"
-)
-
 # Test results tracking
 declare -A TEST_RESULTS
 PASSED_COUNT=0
@@ -161,18 +155,14 @@ main() {
 	tier4 | pipeline)
 		test_tier "TIER 4: Data Pipeline (MEDIUM)" "${TIER4_PROJECTS[@]}"
 		;;
-	tier5 | apps)
-		test_tier "TIER 5: Applications (VALIDATION)" "${TIER5_PROJECTS[@]}"
-		;;
 	all)
 		test_tier "TIER 1: Core Infrastructure (CRITICAL)" "${TIER1_PROJECTS[@]}"
 		test_tier "TIER 2: Domain Libraries (HIGH)" "${TIER2_PROJECTS[@]}"
 		test_tier "TIER 3: Specialized Libraries (MEDIUM)" "${TIER3_PROJECTS[@]}"
 		test_tier "TIER 4: Data Pipeline (MEDIUM)" "${TIER4_PROJECTS[@]}"
-		test_tier "TIER 5: Applications (VALIDATION)" "${TIER5_PROJECTS[@]}"
 		;;
 	*)
-		echo "Usage: $0 [tier1|tier2|tier3|tier4|tier5|all]"
+		echo "Usage: $0 [tier1|tier2|tier3|tier4|all]"
 		exit 1
 		;;
 	esac

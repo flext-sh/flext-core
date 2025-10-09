@@ -91,6 +91,7 @@ class TestMigrationScenario2:
         # Register a simple service
         class TestService:
             def __init__(self) -> None:
+                super().__init__()
                 self.name = "test"
 
         # Use correct API: register() for registration
@@ -394,6 +395,7 @@ class TestMigrationComplexity:
             """Representative 0.9.9 application."""
 
             def __init__(self) -> None:
+                super().__init__()
                 self.logger = FlextLogger(__name__)
                 self.container = FlextContainer.get_global()
 

@@ -994,7 +994,7 @@ class FlextBus(
 
         """
         # Create a simple event dict with name and data
-        event = {
+        event: FlextTypes.Dict = {
             "event_name": event_name,
             "data": data,
             "timestamp": getattr(self, "_get_timestamp", lambda: "now")(),

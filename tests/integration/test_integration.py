@@ -28,6 +28,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_core import (
@@ -209,7 +211,7 @@ class TestLibraryIntegration:
         assert factory_result.is_success is True
 
         # Act - Verify factory produced FlextResult
-        result = factory_result.value
+        result: FlextResult[str] = cast("FlextResult[str]", factory_result.value)
 
         # Assert - Result type and content validation
         assert isinstance(result, FlextResult)

@@ -26,6 +26,7 @@ from typing import Any, ParamSpec, TypeVar, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
+from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
@@ -696,6 +697,172 @@ class FlextDecorators:
         return decorator
 
     # Backward compatibility class methods (deprecated, use static methods directly)
+
+    @staticmethod
+    def with_correlation() -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Decorator to ensure correlation ID exists for operation tracking.
+
+        Automatically ensures a correlation ID is present in the context,
+        generating one if needed. Essential for distributed tracing and
+        request correlation across services.
+
+        Returns:
+            Decorated function with correlation ID management
+
+        Example:
+            ```python
+            from flext_core import FlextDecorators, FlextResult
+
+
+            class OrderService:
+                @FlextDecorators.with_correlation()
+                def process_order(self, order_id: str) -> FlextResult[dict]:
+                    # Correlation ID automatically ensured in context
+                    # All logs will include correlation_id
+                    return self._process(order_id)
+            ```
+
+        Note:
+            Uses FlextRuntime.Integration for context management via
+            structlog.contextvars (single source of truth).
+
+        """
+
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+            @wraps(func)
+            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+                # Ensure correlation ID exists
+                FlextContext.Utilities.ensure_correlation_id()
+
+                return func(*args, **kwargs)
+
+            return wrapper
+
+        return decorator
+
+    @staticmethod
+    def with_context(
+        **context_vars: str | int | bool | None,
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Decorator to manage context lifecycle for an operation.
+
+        Automatically binds context variables for the operation duration and
+        unbinds them after completion. Enables automatic context propagation
+        without manual bind/unbind calls.
+
+        Args:
+            **context_vars: Context variables to bind for operation duration
+
+        Returns:
+            Decorated function with automatic context management
+
+        Example:
+            ```python
+            from flext_core import FlextDecorators, FlextResult
+
+
+            class PaymentService:
+                @FlextDecorators.with_context(
+                    service_name="payment_service", service_version="1.0.0"
+                )
+                def process_payment(self, amount: float) -> FlextResult[str]:
+                    # service_name and service_version automatically in context
+                    # All logs will include these values
+                    return self._charge(amount)
+            ```
+
+        Note:
+            Context is automatically cleaned up after operation completes,
+            even if exception occurs.
+
+        """
+
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+            @wraps(func)
+            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+                try:
+                    # Bind context variables to global logging context
+                    FlextLogger.bind_global_context(**context_vars)
+
+                    return func(*args, **kwargs)
+
+                finally:
+                    # Unbind context variables
+                    for key in context_vars:
+                        FlextLogger.unbind_global_context(key)
+
+            return wrapper
+
+        return decorator
+
+    @staticmethod
+    def track_operation(
+        operation_name: str | None = None,
+        *,
+        track_correlation: bool = True,
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Decorator to track operation execution with FlextRuntime.Integration.
+
+        Combines correlation ID management and structured logging using
+        FlextRuntime.Integration pattern (Layer 0.5). Performance tracking
+        happens automatically via FlextRuntime.Integration.
+        No circular imports - uses structlog directly.
+
+        Args:
+            operation_name: Name for the operation (defaults to function name)
+            track_correlation: Ensure correlation ID exists (default: True)
+
+        Returns:
+            Decorated function with comprehensive operation tracking
+
+        Example:
+            ```python
+            from flext_core import FlextDecorators, FlextResult
+
+
+            class UserService:
+                @FlextDecorators.track_operation("create_user")
+                def create_user(self, user_data: dict) -> FlextResult[User]:
+                    # Automatic tracking:
+                    # - Correlation ID ensured
+                    # - Operation name bound to context
+                    # - Performance metrics via FlextRuntime.Integration
+                    # - All via structlog directly (no circular imports)
+                    return self._create(user_data)
+            ```
+
+        Note:
+            This decorator uses FlextRuntime.Integration which accesses
+            structlog directly (Layer 0.5), avoiding circular imports between
+            Foundation and Infrastructure layers.
+
+        """
+
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+            @wraps(func)
+            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+                op_name = operation_name or func.__name__
+
+                # Ensure correlation ID if requested
+                if track_correlation:
+                    FlextContext.Utilities.ensure_correlation_id()
+
+                # Bind operation name to context
+                FlextLogger.bind_global_context(operation=op_name)
+
+                try:
+                    # Call the actual function
+                    # Performance tracking via FlextRuntime.Integration happens automatically
+                    return func(*args, **kwargs)
+
+                finally:
+                    # Unbind operation context
+                    FlextLogger.unbind_global_context("operation")
+
+            return wrapper
+
+        return decorator
+
     @classmethod
     def get_inject(
         cls, **dependencies: str
@@ -770,6 +937,9 @@ railway = FlextDecorators.railway
 retry = FlextDecorators.retry
 timeout = FlextDecorators.timeout
 combined = FlextDecorators.combined
+with_correlation = FlextDecorators.with_correlation
+with_context = FlextDecorators.with_context
+track_operation = FlextDecorators.track_operation
 
 __all__ = [
     "FlextDecorators",
@@ -779,5 +949,8 @@ __all__ = [
     "railway",
     "retry",
     "timeout",
+    "track_operation",
     "track_performance",
+    "with_context",
+    "with_correlation",
 ]

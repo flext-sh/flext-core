@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextService
 
 # =============================================================================
 # EXAMPLE 1: Service with Context Enrichment

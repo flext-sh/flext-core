@@ -1080,9 +1080,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
         }
 
         handler_id = handler_input.get("handler_id", "")
-        if isinstance(handler_id, str) and FlextCore.Runtime.is_valid_identifier(
-            handler_id
-        ):
+        if FlextCore.Runtime.is_valid_identifier(handler_id):
             print(f"✅ Valid handler ID: {handler_id}")
 
         handler_type = handler_input.get("handler_type", "")

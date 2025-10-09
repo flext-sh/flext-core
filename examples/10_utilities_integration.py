@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextCore, FlextResult
+from flext_core import FlextContainer, FlextCore, FlextLogger, FlextResult, FlextTypes
 
 
 class MyService:
@@ -53,7 +53,7 @@ class MyService:
     def process_data(self, data: dict[str, object]) -> FlextResult[FlextTypes.Dict]:
         """Process data with configuration-driven validation."""
         # Use configuration-driven validation
-        if len(data) > self._config.batch_size:
+        if len(data) > self._config.max_batch_size:
             return FlextResult[FlextTypes.Dict].fail("Data batch too large")
 
         # Process with configuration-driven settings
@@ -440,7 +440,9 @@ def demonstrate_new_flextresult_methods() -> None:
     print(f"   Container has services: {hasattr(container, '_services')}")
 
     # Try again with successful result (lazy function NOT called)
-    container_success_result = FlextResult.ok(FlextContainer.get_global())
+    container_success_result = FlextResult[FlextContainer].ok(
+        FlextContainer.get_global()
+    )
     container_cached = container_success_result.value_or_call(
         create_expensive_container
     )

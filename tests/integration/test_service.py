@@ -39,6 +39,7 @@ class FunctionalExternalService:
 
     def __init__(self) -> None:
         """Initialize functional external service."""
+        super().__init__()
         self.call_count = 0
         self.processed_items: FlextTypes.List = []
         self.should_fail = False
@@ -75,6 +76,7 @@ class FunctionalUserService:
 
     def __init__(self) -> None:
         """Initialize functional user service."""
+        super().__init__()
         self.users: FlextTypes.NestedDict = {}
         self.call_count = 0
         self.should_fail = False
@@ -130,6 +132,7 @@ class FunctionalNotificationService:
 
     def __init__(self) -> None:
         """Initialize functional notification service."""
+        super().__init__()
         self.sent_notifications: FlextTypes.StringList = []
         self.call_count = 0
         self.should_fail = False
@@ -159,6 +162,7 @@ class FunctionalLifecycleService:
 
     def __init__(self) -> None:
         """Initialize functional lifecycle service."""
+        super().__init__()
         self.initialized = False
         self.config: FlextTypes.Dict | None = None
         self.shutdown_called = False
@@ -249,8 +253,7 @@ class TestServiceIntegrationPatterns:
 
         """
         # Arrange
-        if not isinstance(benchmark_data, dict):
-            pytest.skip("benchmark_data is not a dictionary")
+        # Type is already validated by parameter type annotation
         if "large_dataset" not in benchmark_data:
             pytest.skip("large_dataset not found in benchmark_data")
         large_dataset = benchmark_data["large_dataset"]
@@ -357,11 +360,20 @@ class TestServiceIntegrationPatterns:
         notification_service = FunctionalNotificationService()
 
         # Configure functional service behavior with real test data
-        if not isinstance(test_user_data, dict):
-            pytest.skip("test_user_data is not a dictionary")
-        test_user_dict = cast("FlextTypes.Dict", test_user_data)
-        user_id = str(test_user_dict["id"])
-        user_service.set_user_data(user_id, test_user_dict)
+        if isinstance(test_user_data, dict):
+            test_user_dict: FlextTypes.Dict = test_user_data
+            user_id = str(test_user_dict["id"])
+            user_service.set_user_data(user_id, test_user_dict)
+        else:
+            # Handle case where test_user_data is not a dict
+            user_id = "default_user"
+            default_user_data: FlextTypes.Dict = {
+                "id": user_id,
+                "email": f"user{user_id}@example.com",
+                "name": f"User {user_id}",
+                "active": True,
+            }
+            user_service.set_user_data(user_id, default_user_data)
 
         # Register services in container
         clean_container.register("user_service", user_service)
@@ -393,11 +405,9 @@ class TestServiceIntegrationPatterns:
                 return FlextResult[str].fail("User not found")
 
             # Send notification
-            if isinstance(user_result.value, dict):
-                return retrieved_notification_service.send(
-                    str(user_result.value["email"]),
-                )
-            return FlextResult[str].fail("User data is not a dictionary")
+            return retrieved_notification_service.send(
+                str(user_result.value["email"]),
+            )
 
         # Act - Execute workflow
         result = user_notification_workflow(user_id)
@@ -409,10 +419,14 @@ class TestServiceIntegrationPatterns:
         # Functional validation - check actual service calls
         assert user_service.call_count == 1
         assert notification_service.call_count == 1
-        if isinstance(test_user_data, dict):
-            assert (
-                str(test_user_data["email"]) in notification_service.sent_notifications
-            )
+
+        # Get email from the user data that was set
+        if isinstance(test_user_data, dict) and "email" in test_user_data:
+            expected_email = str(test_user_data["email"])
+        else:
+            expected_email = f"user{user_id}@example.com"
+
+        assert expected_email in notification_service.sent_notifications
 
     @pytest.mark.integration
     @pytest.mark.boundary

@@ -776,7 +776,7 @@ class TestFlextRegistry:
 
         # Test plain function
         function_map1: dict[
-            type[object],
+            type,
             tuple[
                 Callable[[object], object | FlextResult[object]],
                 object | FlextResult[object],
@@ -793,7 +793,7 @@ class TestFlextRegistry:
 
         # Test function with config tuple
         function_map2: dict[
-            type[object],
+            type,
             tuple[
                 Callable[[object], object | FlextResult[object]],
                 object | FlextResult[object],
@@ -809,7 +809,7 @@ class TestFlextRegistry:
         assert result2.value.successful_registrations == 1
 
         # Test pre-built handler
-        function_map3: dict[type[object], FlextHandlers[object, object]] = {
+        function_map3: dict[type, FlextHandlers[object, object]] = {
             type[TestMessageType]: prebuilt_handler
         }
         result3 = registry.register_function_map(function_map3)
@@ -880,7 +880,7 @@ class TestFlextRegistry:
             pass
 
         valid_map: dict[
-            type[object],
+            type,
             tuple[
                 Callable[[object], object | FlextResult[object]],
                 object | FlextResult[object],
@@ -938,7 +938,7 @@ class TestFlextRegistry:
             pass
 
         failing_map: dict[
-            type[object],
+            type,
             tuple[
                 Callable[[object], object | FlextResult[object]],
                 object | FlextResult[object],
@@ -957,7 +957,7 @@ class TestFlextRegistry:
             return f"valid_{message}"
 
         # Register valid function as a tuple (function, config)
-        mixed_map: dict[type[object], tuple[object, object]] = {
+        mixed_map: dict[type, tuple[object, object]] = {
             type[TestMessageType]: (valid_function, {"test": "config"}),
         }
         result_mixed = registry.register_function_map(mixed_map)
@@ -1012,8 +1012,6 @@ class TestFlextRegistry:
         # Verify the handler was registered with dispatcher
         # (The dispatcher should now be able to handle the registered message types)
         # Check that dispatcher has registered handlers for the message type
-        class TestMessageType:
-            pass
 
         # The dispatcher should be able to find handlers for registered message types
         # This tests that the registry properly integrated with the dispatcher
@@ -1024,9 +1022,6 @@ def test_registry_register_command_failure() -> None:
     """Test register_handler failure path (line 269)."""
     dispatcher = FlextDispatcher()
     registry = FlextRegistry(dispatcher=dispatcher)
-
-    class TestMessage:
-        pass
 
     # Register with None handler to trigger failure (line 269)
     result = registry.register_handler(None)

@@ -35,11 +35,10 @@ import time
 import uuid
 from typing import ClassVar, cast
 
-from flext_core.constants import FlextConstants
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
+import structlog
 
-structlog = FlextRuntime.structlog()
+from flext_core.constants import FlextConstants
+from flext_core.typings import FlextTypes
 
 
 class FlextExceptions:
@@ -90,7 +89,7 @@ class FlextExceptions:
             self,
             message: str,
             *,
-            error_code: str | None = None,
+            error_code: str | None = FlextConstants.Errors.UNKNOWN_ERROR,
             correlation_id: str | None = None,
             metadata: FlextTypes.Dict | None = None,
             auto_log: bool = False,
@@ -101,7 +100,7 @@ class FlextExceptions:
 
             Args:
                 message: Error message
-                error_code: Optional error code for categorization
+                error_code: Optional error code for categorization (defaults to UNKNOWN_ERROR)
                 correlation_id: Optional correlation ID
                 metadata: Optional additional metadata
                 auto_log: Whether to automatically log exception (default: False for backward compat)

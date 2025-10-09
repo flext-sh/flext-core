@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import warnings
 from copy import deepcopy
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core import (
     FlextConfig,
@@ -459,8 +459,8 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
                 raise ValueError(msg)
             return config
 
-        config_result: FlextResult[FlextConfig] = FlextResult.from_callable(
-            risky_config_load
+        config_result = cast(
+            "FlextResult[FlextConfig]", FlextResult.from_callable(risky_config_load)
         )
         if config_result.is_success:
             config = config_result.unwrap()
@@ -502,9 +502,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         if result.is_success:
             config = result.unwrap()
             print(
-                f"✅ Config validation pipeline success: "
-                f"log={config.log_level}, "
-                f"workers={config.max_workers}"
+                f"✅ Config validation pipeline success: log={config.log_level}, workers={config.max_workers}"
             )
 
     def demonstrate_lash(self) -> None:
@@ -523,8 +521,8 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
             .lash(recover_with_default)
         )
         if result.is_success:
-            self.config: FlextConfig = result.unwrap()
-            print("✅ Recovered with fallback config   ")
+            config = result.unwrap()
+            print(f"✅ Recovered with fallback config: log_level={config.log_level}")
 
     def demonstrate_alt(self) -> None:
         """Show fallback pattern for configuration sources."""

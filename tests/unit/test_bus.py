@@ -363,10 +363,41 @@ class TestFlextBusMissingCoverage:
         bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
 
         class TestQuery(FlextModels.Query):
-            data: str
+            data: str = Field(default="")
 
             def __init__(self, data: str, **kwargs: object) -> None:
-                super().__init__(data=data, query_id=f"test_query_{data}", **kwargs)
+                # Extract known parameters and pass the rest
+                filters_raw = kwargs.get("filters")
+                pagination_raw = kwargs.get("pagination")
+                query_type_raw = kwargs.get("query_type")
+
+                filters: dict[str, object] | None = (
+                    cast("dict[str, object]", filters_raw)
+                    if isinstance(filters_raw, dict)
+                    else None
+                )
+                pagination: dict[str, int] | None = (
+                    cast("dict[str, int]", pagination_raw)
+                    if isinstance(pagination_raw, dict)
+                    else None
+                )
+                query_type: str | None = (
+                    query_type_raw if isinstance(query_type_raw, str) else None
+                )
+
+                # Ensure proper types for filters and pagination
+                if filters is None:
+                    filters = {}
+                if pagination is None:
+                    pagination = {}
+                super().__init__(
+                    query_id=f"test_query_{data}",
+                    filters=filters or {},
+                    pagination=pagination or {},
+                    query_type=query_type,
+                )
+                # Store data separately since Query doesn't have data field
+                self.data = data
 
         class TestQueryHandler:
             def __init__(self) -> None:
@@ -637,10 +668,41 @@ class TestFlextBusMissingCoverage:
         bus = FlextBus(bus_config={"enable_caching": True})
 
         class TestQuery(FlextModels.Query):
-            data: str
+            data: str = Field(default="")
 
             def __init__(self, data: str, **kwargs: object) -> None:
-                super().__init__(data=data, query_id=f"query_{data}", **kwargs)
+                # Extract known parameters and pass the rest
+                filters_raw = kwargs.get("filters")
+                pagination_raw = kwargs.get("pagination")
+                query_type_raw = kwargs.get("query_type")
+
+                filters: dict[str, object] | None = (
+                    cast("dict[str, object]", filters_raw)
+                    if isinstance(filters_raw, dict)
+                    else None
+                )
+                pagination: dict[str, int] | None = (
+                    cast("dict[str, int]", pagination_raw)
+                    if isinstance(pagination_raw, dict)
+                    else None
+                )
+                query_type: str | None = (
+                    query_type_raw if isinstance(query_type_raw, str) else None
+                )
+
+                # Ensure proper types for filters and pagination
+                if filters is None:
+                    filters = {}
+                if pagination is None:
+                    pagination = {}
+                super().__init__(
+                    query_id=f"query_{data}",
+                    filters=filters or {},
+                    pagination=pagination or {},
+                    query_type=query_type,
+                )
+                # Store data separately since Query doesn't have data field
+                self.data = data
 
         class TestHandler:
             def handle(self, query: TestQuery) -> FlextResult[str]:
@@ -944,10 +1006,41 @@ class TestFlextBusMissingCoverage:
         bus = FlextBus(bus_config={"enable_caching": True})
 
         class TestQuery(FlextModels.Query):
-            data: str
+            data: str = Field(default="")
 
             def __init__(self, data: str, **kwargs: object) -> None:
-                super().__init__(data=data, query_id=f"query_{data}", **kwargs)
+                # Extract known parameters and pass the rest
+                filters_raw = kwargs.get("filters")
+                pagination_raw = kwargs.get("pagination")
+                query_type_raw = kwargs.get("query_type")
+
+                filters: dict[str, object] | None = (
+                    cast("dict[str, object]", filters_raw)
+                    if isinstance(filters_raw, dict)
+                    else None
+                )
+                pagination: dict[str, int] | None = (
+                    cast("dict[str, int]", pagination_raw)
+                    if isinstance(pagination_raw, dict)
+                    else None
+                )
+                query_type: str | None = (
+                    query_type_raw if isinstance(query_type_raw, str) else None
+                )
+
+                # Ensure proper types for filters and pagination
+                if filters is None:
+                    filters = {}
+                if pagination is None:
+                    pagination = {}
+                super().__init__(
+                    query_id=f"query_{data}",
+                    filters=filters or {},
+                    pagination=pagination or {},
+                    query_type=query_type,
+                )
+                # Store data separately since Query doesn't have data field
+                self.data = data
 
         class TestHandler:
             def handle(self, query: TestQuery) -> FlextResult[str]:
