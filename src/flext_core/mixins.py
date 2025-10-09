@@ -872,7 +872,7 @@ class FlextMixins:
 
             return composed
 
-        def validate_field[T](
+        def validate_field(
             self,
             value: object,
             field_name: str,
@@ -880,7 +880,7 @@ class FlextMixins:
             required: bool = True,
             validator: Callable[[object], bool] | None = None,
             error_message: str | None = None,
-        ) -> FlextResult[T]:
+        ) -> FlextResult[object]:
             """Validate a single field with common checks.
 
             Args:
@@ -896,19 +896,19 @@ class FlextMixins:
             """
             # Check required
             if required and value is None:
-                return FlextResult[T].fail(
+                return FlextResult[object].fail(
                     error_message or f"Field '{field_name}' is required",
                     error_code="FIELD_REQUIRED",
                 )
 
             # Apply custom validator if provided
             if validator is not None and not validator(value):
-                return FlextResult[T].fail(
+                return FlextResult[object].fail(
                     error_message or f"Field '{field_name}' validation failed",
                     error_code="FIELD_INVALID",
                 )
 
-            return FlextResult[T].ok(cast("T", value))
+            return FlextResult[object].ok(value)
 
         def validate_range(
             self,
@@ -952,11 +952,11 @@ class FlextMixins:
         """Advanced mixin patterns for enterprise applications."""
 
         @staticmethod
-        def create_entity[T](
+        def create_entity(
             entity_type: str,
             entity_data: FlextTypes.Dict,
             validation_rules: list[Callable[[object], FlextResult[None]]] | None = None,
-        ) -> FlextResult[T]:
+        ) -> FlextResult[object]:
             """Create an entity with validation patterns.
 
             Args:
@@ -980,14 +980,14 @@ class FlextMixins:
             try:
                 # In real implementation, would create entity instance
                 # entity = entity_type(**entity_data)
-                entity = cast("T", entity_data)  # Simplified for example
+                entity = entity_data  # Simplified for example
 
                 # Apply validation rules if provided
                 if validation_rules:
                     for rule in validation_rules:
                         result = rule(entity)
                         if result.is_failure:
-                            return FlextResult[T].fail(
+                            return FlextResult[object].fail(
                                 f"Entity validation failed: {result.error}",
                                 error_code="ENTITY_VALIDATION_FAILED",
                                 error_data={
@@ -996,20 +996,20 @@ class FlextMixins:
                                 },
                             )
 
-                return FlextResult[T].ok(entity)
+                return FlextResult[object].ok(entity)
             except Exception as e:
-                return FlextResult[T].fail(
+                return FlextResult[object].fail(
                     f"Entity creation failed: {e!s}",
                     error_code="ENTITY_CREATION_FAILED",
                     error_data={"entity_type": entity_type, "exception": str(e)},
                 )
 
         @staticmethod
-        def create_value_object[T](
+        def create_value_object(
             value_type: str,
             value_data: FlextTypes.Dict,
             invariants: list[Callable[[object], FlextResult[None]]] | None = None,
-        ) -> FlextResult[T]:
+        ) -> FlextResult[object]:
             """Create a value object with invariant validation.
 
             Args:
@@ -1033,14 +1033,14 @@ class FlextMixins:
             try:
                 # In real implementation, would create value object instance
                 # value_object = value_type(**value_data)
-                value_object = cast("T", value_data)  # Simplified for example
+                value_object = value_data  # Simplified for example
 
                 # Apply invariants if provided
                 if invariants:
                     for invariant in invariants:
                         result = invariant(value_object)
                         if result.is_failure:
-                            return FlextResult[T].fail(
+                            return FlextResult[object].fail(
                                 f"Value object invariant violation: {result.error}",
                                 error_code="VALUE_OBJECT_INVARIANT_VIOLATION",
                                 error_data={
@@ -1049,20 +1049,20 @@ class FlextMixins:
                                 },
                             )
 
-                return FlextResult[T].ok(value_object)
+                return FlextResult[object].ok(value_object)
             except Exception as e:
-                return FlextResult[T].fail(
+                return FlextResult[object].fail(
                     f"Value object creation failed: {e!s}",
                     error_code="VALUE_OBJECT_CREATION_FAILED",
                     error_data={"value_type": value_type, "exception": str(e)},
                 )
 
         @staticmethod
-        def create_aggregate_root[T](
+        def create_aggregate_root(
             aggregate_type: str,
             aggregate_data: FlextTypes.Dict,
             business_rules: list[Callable[[object], FlextResult[None]]] | None = None,
-        ) -> FlextResult[T]:
+        ) -> FlextResult[object]:
             """Create an aggregate root with business rule validation.
 
             Args:
@@ -1086,14 +1086,14 @@ class FlextMixins:
             try:
                 # In real implementation, would create aggregate root instance
                 # aggregate = aggregate_type(**aggregate_data)
-                aggregate = cast("T", aggregate_data)  # Simplified for example
+                aggregate = aggregate_data  # Simplified for example
 
                 # Apply business rules if provided
                 if business_rules:
                     for rule in business_rules:
                         result = rule(aggregate)
                         if result.is_failure:
-                            return FlextResult[T].fail(
+                            return FlextResult[object].fail(
                                 f"Aggregate business rule violation: {result.error}",
                                 error_code="AGGREGATE_BUSINESS_RULE_VIOLATION",
                                 error_data={
@@ -1102,9 +1102,9 @@ class FlextMixins:
                                 },
                             )
 
-                return FlextResult[T].ok(aggregate)
+                return FlextResult[object].ok(aggregate)
             except Exception as e:
-                return FlextResult[T].fail(
+                return FlextResult[object].fail(
                     f"Aggregate creation failed: {e!s}",
                     error_code="AGGREGATE_CREATION_FAILED",
                     error_data={"aggregate_type": aggregate_type, "exception": str(e)},
