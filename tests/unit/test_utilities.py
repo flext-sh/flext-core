@@ -655,3 +655,129 @@ class TestFlextUtilitiesComprehensive:
         assert id1 != id2
         assert len(id1) > 0
         assert isinstance(id1, str)
+
+    def test_serialization_to_json(self) -> None:
+        """Test FlextUtilities.Serialization.to_json static method."""
+        from flext_core import FlextModels
+
+        request = FlextModels.SerializationRequest(data={"key": "value"})
+        json_str = FlextUtilities.Serialization.to_json(request)
+        assert isinstance(json_str, str)
+        assert "key" in json_str
+        assert "value" in json_str
+
+    def test_serialization_to_dict(self) -> None:
+        """Test FlextUtilities.Serialization.to_dict static method."""
+        from flext_core import FlextModels
+
+        request = FlextModels.SerializationRequest(data={"key": "value"})
+        result_dict = FlextUtilities.Serialization.to_dict(request)
+        assert isinstance(result_dict, dict)
+
+    def test_timestamps_create_fields(self) -> None:
+        """Test FlextUtilities.Timestamps.create_fields static method."""
+        from flext_core import FlextModels
+
+        class TestObj:
+            created_at: object = None
+            updated_at: object = None
+
+        obj = TestObj()
+        config = FlextModels.TimestampConfig(obj=obj, use_utc=True)
+        FlextUtilities.Timestamps.create_fields(config)
+        assert obj.created_at is not None
+
+    def test_timestamps_update(self) -> None:
+        """Test FlextUtilities.Timestamps.update static method."""
+        from flext_core import FlextModels
+
+        class TestObj:
+            updated_at: object = None
+
+        obj = TestObj()
+        config = FlextModels.TimestampConfig(obj=obj, use_utc=True, auto_update=True)
+        FlextUtilities.Timestamps.update(config)
+        assert obj.updated_at is not None
+
+    def test_validation_initialize(self) -> None:
+        """Test FlextUtilities.Validation.initialize static method."""
+
+        class TestObj:
+            is_valid: bool = False
+
+        obj = TestObj()
+        FlextUtilities.Validation.initialize(obj, "is_valid")
+        assert obj.is_valid is True
+
+    def test_validation_initialize_state(self) -> None:
+        """Test FlextUtilities.Validation.initialize_state static method."""
+        from flext_core import FlextModels
+
+        class TestObj:
+            state: str = ""
+
+        obj = TestObj()
+        request = FlextModels.StateInitializationRequest(
+            data=obj,
+            state_key="state",
+            initial_value="initialized",
+            field_name="state",
+            state="initialized",
+        )
+        FlextUtilities.Validation.initialize_state(request)
+        assert obj.state == "initialized"
+
+    def test_cache_clear_object_cache(self) -> None:
+        """Test FlextUtilities.Cache.clear_object_cache static method."""
+
+        class TestObj:
+            pass
+
+        obj = TestObj()
+        # Should not crash
+        FlextUtilities.Cache.clear_object_cache(obj)
+
+    def test_generators_ensure_id(self) -> None:
+        """Test FlextUtilities.Generators.ensure_id static method."""
+
+        class TestObj:
+            id: str = ""
+
+        obj = TestObj()
+        FlextUtilities.Generators.ensure_id(obj)
+        assert obj.id  # Non-empty string is truthy
+
+    def test_configuration_get_parameter(self) -> None:
+        """Test FlextUtilities.Configuration.get_parameter static method."""
+        from flext_core import FlextConfig
+
+        config = FlextConfig.get_global_instance()
+        value = FlextUtilities.Configuration.get_parameter(config, "app_name")
+        assert value is not None
+
+    def test_configuration_set_parameter(self) -> None:
+        """Test FlextUtilities.Configuration.set_parameter static method."""
+        from flext_core import FlextConfig
+
+        config = FlextConfig.get_global_instance()
+        # Try to set a parameter
+        result = FlextUtilities.Configuration.set_parameter(
+            config, "test_param", "test_value"
+        )
+        assert isinstance(result, bool)
+
+    def test_configuration_get_singleton(self) -> None:
+        """Test FlextUtilities.Configuration.get_singleton static method."""
+        from flext_core import FlextConfig
+
+        value = FlextUtilities.Configuration.get_singleton(FlextConfig, "app_name")
+        assert value is not None
+
+    def test_configuration_set_singleton(self) -> None:
+        """Test FlextUtilities.Configuration.set_singleton static method."""
+        from flext_core import FlextConfig
+
+        result = FlextUtilities.Configuration.set_singleton(
+            FlextConfig, "test_param", "test_value"
+        )
+        assert isinstance(result, bool)

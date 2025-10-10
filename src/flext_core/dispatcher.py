@@ -37,7 +37,7 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
-class FlextDispatcher(FlextMixins.Service):
+class FlextDispatcher(FlextMixins):
     """Orchestrates CQRS execution while enforcing context observability.
 
     The dispatcher is the front door promoted across the ecosystem: all
@@ -45,13 +45,13 @@ class FlextDispatcher(FlextMixins.Service):
     align with the modernization plan so downstream packages can adopt
     a consistent runtime contract without bespoke buses.
 
-    **Inherited Infrastructure** (from FlextMixins.Service):
-        - container: FlextContainer (via FlextMixins.Container)
-        - context: object (via FlextMixins.Context)
-        - logger: FlextLogger (via FlextMixins.Logging) - per-dispatcher logger instance
+    **Inherited Infrastructure** (from FlextMixins):
+        - container: FlextContainer (via FlextMixins)
+        - context: object (via FlextMixins)
+        - logger: FlextLogger (via FlextMixins) - per-dispatcher logger instance
         - config: object (via FlextMixins.Configurable) - global config access
-        - _track_operation: context manager (via FlextMixins.Metrics)
-        - _enrich_context, _with_correlation_id, etc. (via FlextMixins.Service)
+        - _track_operation: context manager (via FlextMixins)
+        - _enrich_context, _with_correlation_id, etc. (via FlextMixins)
 
     **Function**: High-level message dispatch orchestration
         - Handler registration for command and query patterns

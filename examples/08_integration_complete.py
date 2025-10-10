@@ -412,7 +412,7 @@ class Order(FlextModels.AggregateRoot):
 
 
 class InventoryService(FlextService[FlextTypes.Dict]):
-    """Inventory management service with FlextMixins.Service infrastructure.
+    """Inventory management service with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
@@ -425,7 +425,7 @@ class InventoryService(FlextService[FlextTypes.Dict]):
     """
 
     def __init__(self) -> None:
-        """Initialize inventory service with inherited FlextMixins.Service infrastructure.
+        """Initialize inventory service with inherited FlextMixins infrastructure.
 
         Note: No manual logger initialization needed!
         All infrastructure is inherited from FlextService base class:
@@ -436,7 +436,7 @@ class InventoryService(FlextService[FlextTypes.Dict]):
         - self.metrics: FlextMetrics for observability
         """
         super().__init__()
-        # Use self.logger from FlextMixins.Logging, not logger
+        # Use self.logger from FlextMixins, not logger
         self._scenarios = DemoScenarios
         self._products: dict[str, Product] = {}
         self._initialize_products()
@@ -524,7 +524,7 @@ class InventoryService(FlextService[FlextTypes.Dict]):
 
 
 class PaymentService(FlextService[dict[str, object]]):
-    """Payment processing service with FlextMixins.Service infrastructure.
+    """Payment processing service with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
@@ -537,10 +537,10 @@ class PaymentService(FlextService[dict[str, object]]):
     """
 
     # Type annotations for inherited mixin properties
-    # logger: FlextLogger  # Provided by FlextMixins.Logging
+    # logger: FlextLogger  # Provided by FlextMixins
 
     def __init__(self) -> None:
-        """Initialize payment service with inherited FlextMixins.Service infrastructure.
+        """Initialize payment service with inherited FlextMixins infrastructure.
 
         Note: No manual logger initialization needed!
         All infrastructure is inherited from FlextService base class:
@@ -551,7 +551,7 @@ class PaymentService(FlextService[dict[str, object]]):
         - self.metrics: FlextMetrics for observability
         """
         super().__init__()
-        # Use self.logger from FlextMixins.Logging, not logger
+        # Use self.logger from FlextMixins, not logger
 
         # Demonstrate inherited logger (no manual instantiation needed!)
         self.logger.info(
@@ -616,7 +616,7 @@ class PaymentService(FlextService[dict[str, object]]):
 
 
 class OrderService(FlextService[FlextTypes.Dict]):
-    """Order processing service with FlextMixins.Service infrastructure - orchestrates the workflow.
+    """Order processing service with FlextMixins infrastructure - orchestrates the workflow.
 
     This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton for service dependencies)
@@ -630,7 +630,7 @@ class OrderService(FlextService[FlextTypes.Dict]):
     """
 
     def __init__(self) -> None:
-        """Initialize order service with inherited FlextMixins.Service infrastructure.
+        """Initialize order service with inherited FlextMixins infrastructure.
 
         Note: No manual logger initialization needed!
         All infrastructure is inherited from FlextService base class:

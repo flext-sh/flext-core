@@ -58,7 +58,7 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
-class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
+class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     """Handler base class for CQRS command and query implementations.
 
     FlextHandlers provides the foundation for implementing CQRS handlers
@@ -66,13 +66,13 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
     configuration management. Generic base supporting commands, queries,
     events, and sagas across all 32+ FLEXT projects.
 
-    **Inherited Infrastructure** (from FlextMixins.Service):
-        - container: FlextContainer (via FlextMixins.Container)
-        - context: object (via FlextMixins.Context)
-        - logger: FlextLogger (via FlextMixins.Logging) - per-handler logger instance
+    **Inherited Infrastructure** (from FlextMixins):
+        - container: FlextContainer (via FlextMixins)
+        - context: object (via FlextMixins)
+        - logger: FlextLogger (via FlextMixins) - per-handler logger instance
         - config: object (via FlextMixins.Configurable) - global config access
-        - _track_operation: context manager (via FlextMixins.Metrics)
-        - _enrich_context, _with_correlation_id, etc. (via FlextMixins.Service)
+        - _track_operation: context manager (via FlextMixins)
+        - _enrich_context, _with_correlation_id, etc. (via FlextMixins)
 
     Internal implementation note: Class uses _internal_logger for internal
     operations, while handlers access per-instance logger via inherited property.
@@ -500,7 +500,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
             self._accepted_message_types, message_type
         )
 
-    # NOTE: logger property inherited from FlextMixins.Logging
+    # NOTE: logger property inherited from FlextMixins
     # Provides per-class logger instance via lazy initialization
 
     @property

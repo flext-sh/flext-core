@@ -38,7 +38,7 @@ from flext_core import (
 
 
 class BusMessagingService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating ALL FlextCore.Bus patterns with FlextMixins.Service infrastructure.
+    """Service demonstrating ALL FlextCore.Bus patterns with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
@@ -58,7 +58,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins.Service infrastructure.
+        """Initialize with inherited FlextMixins infrastructure.
 
         Inherited properties (no manual instantiation needed):
         - self.logger: FlextLogger with service context (bus messaging operations)

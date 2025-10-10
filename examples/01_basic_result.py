@@ -202,7 +202,7 @@ class DemoScenarios:
 
 
 class ComprehensiveResultService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating ALL FlextResult patterns with FlextMixins.Service infrastructure.
+    """Service demonstrating ALL FlextResult patterns with FlextMixins infrastructure.
 
     This service now inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
@@ -216,7 +216,7 @@ class ComprehensiveResultService(FlextService[FlextTypes.Dict]):
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins.Service infrastructure.
+        """Initialize with inherited FlextMixins infrastructure.
 
         Note: No manual logger or container initialization needed!
         All infrastructure is inherited from FlextService base class:

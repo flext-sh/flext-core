@@ -2,11 +2,11 @@
 """10 - FLEXT Core Utilities Integration: Manual Component Setup Patterns.
 
 This comprehensive example demonstrates MANUAL integration patterns for flext-core
-components WITHOUT using FlextMixins.Service inheritance. This contrasts with
+components WITHOUT using FlextMixins inheritance. This contrasts with
 Examples 01-09 which demonstrate inherited infrastructure patterns.
 
 **IMPORTANT**: This example shows MANUAL setup for advanced integration scenarios.
-For standard service development, use FlextMixins.Service inheritance as shown
+For standard service development, use FlextMixins inheritance as shown
 in Examples 01-09 to get automatic infrastructure (logger, container, context, etc.).
 
 Key Integration Patterns Demonstrated:
@@ -224,29 +224,29 @@ class IntegratedService:
     """Complete service integration demonstrating MANUAL component setup.
 
     This service demonstrates MANUAL integration of all flext-core components
-    WITHOUT using FlextMixins.Service inheritance. This contrasts with the
+    WITHOUT using FlextMixins inheritance. This contrasts with the
     inherited infrastructure pattern shown in Examples 01-09.
 
     **IMPORTANT**: This manual setup is for advanced scenarios. For standard
-    service development, use FlextMixins.Service to get automatic infrastructure:
+    service development, use FlextMixins to get automatic infrastructure:
     - Inherited self.logger (no manual FlextLogger instantiation)
     - Inherited self.container (no manual FlextContainer.get_global())
     - Inherited self.context (automatic request/correlation tracking)
     - Inherited self.config (automatic FlextCore.Config with settings)
     - Inherited self.metrics (automatic observability)
 
-    See Examples 01-09 for the recommended FlextMixins.Service inheritance pattern.
+    See Examples 01-09 for the recommended FlextMixins inheritance pattern.
     """
 
     def __init__(self) -> None:
         """Initialize with MANUAL component setup.
 
         This demonstrates manual wiring of all components. Compare with
-        FlextMixins.Service inheritance which provides all these automatically
+        FlextMixins inheritance which provides all these automatically
         via inherited properties (see Examples 01-09).
         """
         super().__init__()
-        # MANUAL setup - compare with FlextMixins.Service automatic inheritance:
+        # MANUAL setup - compare with FlextMixins automatic inheritance:
         self._config = FlextCore.create_config()  # vs inherited self.config
         self._container = FlextContainer.get_global()  # vs inherited self.container
         self._bus = FlextCore.Bus()  # vs inherited self.bus

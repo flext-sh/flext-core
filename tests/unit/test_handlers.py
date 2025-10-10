@@ -267,15 +267,15 @@ class TestFlextHandlers:
         assert callable(handler.handle)
 
     def test_handlers_inheritance_chain(self) -> None:
-        """Test that handlers inherit from FlextMixins.Service."""
+        """Test that handlers inherit from FlextMixins."""
         config = FlextModels.Cqrs.Handler(
             handler_id="test_inheritance_handler",
             handler_name="Test Inheritance Handler",
         )
         handler = ConcreteTestHandler(config=config)
 
-        # Should inherit from FlextMixins.Service
-        assert isinstance(handler, FlextMixins.Service)
+        # Should inherit from FlextMixins
+        assert isinstance(handler, FlextMixins)
 
     def test_handlers_config_model_type(self) -> None:
         """Test that config model is properly typed."""

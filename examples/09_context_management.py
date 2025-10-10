@@ -29,7 +29,7 @@ from flext_core import FlextCore, FlextResult, FlextService, FlextTypes
 
 
 class ContextManagementService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating ALL FlextCore.Context patterns with FlextMixins.Service infrastructure.
+    """Service demonstrating ALL FlextCore.Context patterns with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
@@ -40,11 +40,11 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
 
     The focus is on demonstrating FlextCore.Context patterns: correlation tracking,
     context variables, service context, request context, and performance tracking,
-    while leveraging complete FlextMixins.Service infrastructure.
+    while leveraging complete FlextMixins infrastructure.
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins.Service infrastructure.
+        """Initialize with inherited FlextMixins infrastructure.
 
         Note: No manual logger initialization needed!
         All infrastructure is inherited from FlextService base class:

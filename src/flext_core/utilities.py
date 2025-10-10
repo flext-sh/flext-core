@@ -37,7 +37,10 @@ from typing import (
 
 import orjson
 
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
+from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -616,6 +619,36 @@ class FlextUtilities:
                 )
             return obj
 
+        @staticmethod
+        def initialize(obj: object, field_name: str) -> None:
+            """Initialize validation for object.
+
+            Simplified implementation that directly sets the validation flag.
+
+            Args:
+                obj: Object to set validation on (must support attribute assignment)
+                field_name: Name of the field to set validation flag
+
+            Note:
+                The object must support attribute assignment. If setattr() fails,
+                it indicates a programming error (e.g., using a frozen dataclass,
+                or an object with __slots__ that doesn't include the field).
+
+            """
+            setattr(obj, field_name, True)
+
+        @staticmethod
+        def initialize_state(request: FlextModels.StateInitializationRequest) -> None:
+            """Initialize state for object using StateInitializationRequest model.
+
+            Args:
+                request: StateInitializationRequest containing object and state settings
+
+            """
+            obj = request.data
+            if hasattr(obj, request.field_name):
+                setattr(obj, request.field_name, request.state)
+
     class TypeGuards:
         """Type guard utilities for runtime type checking."""
 
@@ -758,6 +791,20 @@ class FlextUtilities:
                 )
                 % 1000000
             )
+
+        @staticmethod
+        def ensure_id(obj: object) -> None:
+            """Ensure object has an ID using FlextUtilities and FlextConstants.
+
+            Args:
+                obj: Object to ensure ID for
+
+            """
+            if hasattr(obj, FlextConstants.Mixins.FIELD_ID):
+                id_value = getattr(obj, FlextConstants.Mixins.FIELD_ID, None)
+                if not id_value:
+                    new_id = FlextUtilities.Generators.generate_id()
+                    setattr(obj, FlextConstants.Mixins.FIELD_ID, new_id)
 
     class Correlation:
         """Distributed tracing and correlation ID management."""
@@ -1291,6 +1338,262 @@ class FlextUtilities:
                     error_code="COMMAND_ERROR",
                     error_data={"cmd": cmd, "error": str(e)},
                 )
+
+    class Serialization:
+        """JSON and dictionary serialization utilities."""
+
+        @staticmethod
+        def to_json(request: FlextModels.SerializationRequest) -> str:
+            """Convert object to JSON string using SerializationRequest model.
+
+            Simplified implementation leveraging Pydantic's model_dump when available,
+            with fallback to __dict__ serialization.
+
+            Args:
+                request: SerializationRequest containing object and serialization options
+
+            Returns:
+                JSON string representation of the object
+
+            """
+            obj = request.data
+
+            # Use Pydantic model_dump if available and requested
+            if request.use_model_dump and hasattr(obj, "model_dump"):
+                # Type narrow obj to have model_dump method
+                model_obj = cast("FlextProtocols.Foundation.HasModelFields", obj)
+                data: FlextTypes.Dict = model_obj.model_dump()
+                return json.dumps(
+                    data,
+                    indent=request.indent,
+                    sort_keys=request.sort_keys,
+                    ensure_ascii=request.ensure_ascii,
+                )
+
+            # Fallback to __dict__ for simple objects
+            if hasattr(obj, "__dict__"):
+                data = obj.__dict__
+                return json.dumps(
+                    data,
+                    indent=request.indent,
+                    sort_keys=request.sort_keys,
+                    ensure_ascii=request.ensure_ascii,
+                )
+
+            # Final fallback to string representation
+            return json.dumps(
+                str(obj),
+                indent=request.indent,
+                sort_keys=request.sort_keys,
+                ensure_ascii=request.ensure_ascii,
+            )
+
+        @staticmethod
+        def to_dict(request: FlextModels.SerializationRequest) -> FlextTypes.Dict:
+            """Convert object to dictionary using SerializationRequest model.
+
+            Args:
+                request: SerializationRequest containing object and serialization options
+
+            Returns:
+                Dictionary representation of the object
+
+            """
+            obj = request.data
+
+            # Use Pydantic model_dump if available and requested
+            if request.use_model_dump and hasattr(obj, "model_dump"):
+                # Type narrow obj to have model_dump method
+                model_obj = cast("FlextProtocols.Foundation.HasModelFields", obj)
+                return model_obj.model_dump()
+
+            # Use __dict__ if available
+            if hasattr(obj, "__dict__"):
+                return cast("FlextTypes.Dict", obj.__dict__)
+
+            # Fallback to type representation
+            return cast(
+                "FlextTypes.Dict",
+                {"type": type(obj).__name__, "value": str(obj)},
+            )
+
+    class Timestamps:
+        """Timestamp creation and management utilities."""
+
+        @staticmethod
+        def create_fields(config: FlextModels.TimestampConfig) -> None:
+            """Create timestamp fields for object using TimestampConfig model.
+
+            Args:
+                config: TimestampConfig containing object and timestamp settings
+
+            """
+            obj = config.obj
+            timezone = UTC if config.use_utc else None
+            current_time = datetime.now(timezone)
+
+            # Set created_at if not already set
+            created_field = config.field_names.get("created_at", "created_at")
+            if (
+                hasattr(obj, created_field)
+                and getattr(obj, created_field, None) is None
+            ):
+                setattr(obj, created_field, current_time)
+
+            # Set updated_at if auto_update is enabled
+            updated_field = config.field_names.get("updated_at", "updated_at")
+            if hasattr(obj, updated_field) and config.auto_update:
+                setattr(obj, updated_field, current_time)
+
+        @staticmethod
+        def update(config: FlextModels.TimestampConfig) -> None:
+            """Update timestamp for object using TimestampConfig model.
+
+            Args:
+                config: TimestampConfig containing object and timestamp settings
+
+            """
+            obj = config.obj
+
+            # Check global configuration using FlextConfig
+            global_config = FlextConfig.get_global_instance()
+            global_auto_update = getattr(global_config, "timestamp_auto_update", False)
+
+            # Update if auto_update is enabled locally or globally
+            auto_update_enabled = config.auto_update or global_auto_update
+
+            if auto_update_enabled:
+                timezone = UTC if config.use_utc else None
+                current_time = datetime.now(timezone)
+
+                updated_field = config.field_names.get("updated_at", "updated_at")
+                if hasattr(obj, updated_field):
+                    setattr(obj, updated_field, current_time)
+
+    class Configuration:
+        """Configuration parameter access and manipulation utilities."""
+
+        @staticmethod
+        def get_parameter(obj: object, parameter: str) -> object:
+            """Get parameter value from a Pydantic configuration object.
+
+            Simplified implementation using Pydantic's model_dump for safe access.
+
+            Args:
+                obj: The configuration object (must have model_dump method)
+                parameter: The parameter name to retrieve (must exist in model)
+
+            Returns:
+                The parameter value
+
+            Raises:
+                KeyError: If parameter is not defined in the model
+
+            """
+            # Check for Pydantic model with model_dump method
+            if isinstance(obj, FlextProtocols.Foundation.HasModelDump):
+                model_data: FlextTypes.Dict = obj.model_dump()
+                if parameter not in model_data:
+                    msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
+                    raise FlextExceptions.NotFoundError(msg, resource_id=parameter)
+                return model_data[parameter]
+
+            # Fallback for non-Pydantic objects - direct attribute access
+            if not hasattr(obj, parameter):
+                msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
+                raise FlextExceptions.NotFoundError(
+                    msg, resource_type=f"parameter '{parameter}'"
+                )
+            return getattr(obj, parameter)
+
+        @staticmethod
+        def set_parameter(obj: object, parameter: str, value: object) -> bool:
+            """Set parameter value on a Pydantic configuration object with validation.
+
+            Simplified implementation using direct attribute assignment with Pydantic validation.
+
+            Args:
+                obj: The configuration object (Pydantic BaseSettings instance)
+                parameter: The parameter name to set
+                value: The new value to set (will be validated by Pydantic)
+
+            Returns:
+                True if successful, False if validation failed or parameter doesn't exist
+
+            """
+            try:
+                # Check if parameter exists in model fields for Pydantic objects
+                if isinstance(obj, FlextProtocols.Foundation.HasModelFields):
+                    # Access model_fields from class, not instance (Pydantic 2.11+ compatibility)
+                    model_fields = type(obj).model_fields
+                    if parameter not in model_fields:
+                        return False
+
+                # Use setattr which triggers Pydantic validation if applicable
+                setattr(obj, parameter, value)
+                return True
+
+            except Exception:
+                # object validation error or attribute error returns False
+                return False
+
+        @staticmethod
+        def get_singleton(singleton_class: type, parameter: str) -> object:
+            """Get parameter from a singleton configuration instance.
+
+            Args:
+                singleton_class: The singleton class (e.g., FlextConfig)
+                parameter: The parameter name to retrieve
+
+            Returns:
+                The parameter value
+
+            Raises:
+                KeyError: If parameter is not defined in the model
+                AttributeError: If class doesn't have get_global_instance method
+
+            """
+            if hasattr(singleton_class, "get_global_instance"):
+                get_global_instance_method = getattr(
+                    singleton_class, "get_global_instance"
+                )
+                if callable(get_global_instance_method):
+                    instance = get_global_instance_method()
+                    return FlextUtilities.Configuration.get_parameter(
+                        instance, parameter
+                    )
+
+            msg = f"Class {singleton_class.__name__} does not have get_global_instance method"
+            raise FlextExceptions.ValidationError(msg)
+
+        @staticmethod
+        def set_singleton(
+            singleton_class: type,
+            parameter: str,
+            value: object,
+        ) -> bool:
+            """Set parameter on a singleton configuration instance with validation.
+
+            Args:
+                singleton_class: The singleton class (e.g., FlextConfig)
+                parameter: The parameter name to set
+                value: The new value to set (will be validated by Pydantic)
+
+            Returns:
+                True if successful, False if validation failed or parameter doesn't exist
+
+            """
+            if hasattr(singleton_class, "get_global_instance"):
+                get_global_instance_method = getattr(
+                    singleton_class, "get_global_instance"
+                )
+                if callable(get_global_instance_method):
+                    instance = get_global_instance_method()
+                    return FlextUtilities.Configuration.set_parameter(
+                        instance, parameter, value
+                    )
+
+            return False
 
 
 __all__ = [

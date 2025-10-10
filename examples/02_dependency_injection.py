@@ -617,7 +617,7 @@ class UserRepository(FlextService[User]):
 
 
 class ComprehensiveDIService(FlextService[User]):
-    """Service demonstrating ALL FlextContainer patterns with FlextMixins.Service infrastructure.
+    """Service demonstrating ALL FlextContainer patterns with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextContainer singleton for DI)
@@ -627,11 +627,11 @@ class ComprehensiveDIService(FlextService[User]):
     - Inherited metrics property (FlextMetrics for observability)
 
     The focus is on demonstrating FlextContainer DI patterns while leveraging
-    the complete FlextMixins.Service infrastructure for service orchestration.
+    the complete FlextMixins infrastructure for service orchestration.
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins.Service infrastructure.
+        """Initialize with inherited FlextMixins infrastructure.
 
         Note: No manual logger or container initialization needed!
         All infrastructure is inherited from FlextService base class:

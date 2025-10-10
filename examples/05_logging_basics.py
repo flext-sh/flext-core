@@ -108,7 +108,7 @@ class DemoScenarios:
 
 
 class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating ALL FlextLogger patterns with FlextMixins.Service infrastructure.
+    """Service demonstrating ALL FlextLogger patterns with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
@@ -118,12 +118,12 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
     - Inherited metrics property (FlextMetrics for observability)
 
     The focus is on demonstrating FlextLogger structured logging patterns
-    with FlextCore.Exceptions integration, while leveraging complete FlextMixins.Service
+    with FlextCore.Exceptions integration, while leveraging complete FlextMixins
     infrastructure for service orchestration.
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins.Service infrastructure.
+        """Initialize with inherited FlextMixins infrastructure.
 
         Note: No manual logger initialization needed!
         All infrastructure is inherited from FlextService base class:
@@ -154,7 +154,7 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
         """Execute all FlextLogger demonstrations and return summary.
 
         Demonstrates inherited logger property alongside other infrastructure
-        components from FlextMixins.Service. This is the PRIMARY demonstration
+        components from FlextMixins. This is the PRIMARY demonstration
         of structured logging across the FLEXT ecosystem.
         """
         self.logger.info("Starting comprehensive FlextLogger demonstration")

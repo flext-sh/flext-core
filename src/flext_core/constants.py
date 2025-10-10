@@ -2104,15 +2104,36 @@ class FlextConstants:
 
     # Project literals (from FlextTypes.Project)
     ProjectType = Literal[
-        "flext-core", "flext-api", "flext-ldap", "flext-ldif", "flext-cli",
-        "flext-auth", "flext-web", "flext-db-oracle", "flext-meltano",
-        "flext-observability", "flext-grpc", "flext-oracle-wms", "flext-oracle-oic",
-        "flext-target-ldap", "flext-target-ldif", "flext-target-oracle",
-        "flext-target-oracle-oic", "flext-target-oracle-wms",
-        "flext-tap-ldap", "flext-tap-ldif", "flext-tap-oracle",
-        "flext-tap-oracle-oic", "flext-tap-oracle-wms",
-        "flext-dbt-ldap", "flext-dbt-ldif", "flext-dbt-oracle", "flext-dbt-oracle-wms",
-        "client-a-oud-mig", "client-b-meltano-native", "flexcore"
+        "flext-core",
+        "flext-api",
+        "flext-ldap",
+        "flext-ldif",
+        "flext-cli",
+        "flext-auth",
+        "flext-web",
+        "flext-db-oracle",
+        "flext-meltano",
+        "flext-observability",
+        "flext-grpc",
+        "flext-oracle-wms",
+        "flext-oracle-oic",
+        "flext-target-ldap",
+        "flext-target-ldif",
+        "flext-target-oracle",
+        "flext-target-oracle-oic",
+        "flext-target-oracle-wms",
+        "flext-tap-ldap",
+        "flext-tap-ldif",
+        "flext-tap-oracle",
+        "flext-tap-oracle-oic",
+        "flext-tap-oracle-wms",
+        "flext-dbt-ldap",
+        "flext-dbt-ldif",
+        "flext-dbt-oracle",
+        "flext-dbt-oracle-wms",
+        "client-a-oud-mig",
+        "client-b-meltano-native",
+        "flexcore",
     ]
     ProjectStatus = Literal["active", "inactive", "deprecated", "archived"]
 
@@ -2135,7 +2156,6 @@ class FlextConstants:
     CqrsMode = Literal["command", "query", "event", "saga"]
 
     # Circuit breaker literals (from FlextTypes.CircuitBreaker)
-    CircuitBreakerState = Literal["closed", "open", "half_open"]
 
     # Workspace literals (from FlextTypes.Workspace)
     WorkspaceStatus = Literal[
