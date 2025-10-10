@@ -112,10 +112,11 @@ class TestFlextBase:
         """Helpers should simplify operation execution and tracking."""
         base = FlextBase()
 
-        def add_operation(a: object, b: object) -> object:
+        def add_operation(a: object, b: object) -> int:
             return int(str(a)) + int(str(b))
 
-        result: FlextResult[object] = base.run_operation("add", add_operation, 2, 3)
+        # PyRefly has difficulty matching concrete type `int` to TypeVar ResultType
+        result = base.run_operation("add", add_operation, 2, 3)
         assert result.is_success
         assert result.unwrap() == 5
 
@@ -123,7 +124,7 @@ class TestFlextBase:
             msg = "boom"
             raise ValueError(msg)
 
-        failure: FlextResult[object] = base.run_operation("explode", explode)
+        failure = base.run_operation("explode", explode)
         assert failure.is_failure
         assert failure.error_code == FlextBase.Constants.Errors.UNKNOWN_ERROR
 

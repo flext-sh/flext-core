@@ -432,9 +432,9 @@ class TestFlextConfigSingletonIntegration:
             # Note: When debug=True, effective_log_level is "INFO" (debug mode overrides)
             assert config_explicit.log_level == "ERROR"  # Configured level
             assert (
-                config_explicit.effective_log_level == "INFO"  # type: ignore[comparison-overlap]
+                config_explicit.effective_log_level == "INFO"
             )  # Debug mode forces INFO
-            assert config_explicit.is_debug_enabled is True  # type: ignore[comparison-overlap]
+            assert config_explicit.is_debug_enabled is True
             assert config_explicit.trace is False  # Trace mode disabled
 
             # Test with debug=False to verify log_level is respected

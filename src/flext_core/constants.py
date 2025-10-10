@@ -293,6 +293,9 @@ class FlextConstants:
         VALIDATION_TIMEOUT_MS: Final[int] = (
             100  # Maximum validation time in milliseconds
         )
+        MAX_UNCOMMITTED_EVENTS: Final[int] = (
+            100  # Maximum uncommitted domain events per aggregate
+        )
         DISCOUNT_THRESHOLD: Final[int] = 100  # Minimum total for discount eligibility
         DISCOUNT_RATE: Final[float] = 0.05  # 5% discount rate
         SLOW_OPERATION_THRESHOLD: Final[float] = (
@@ -368,6 +371,9 @@ class FlextConstants:
         COMMAND_BUS_ERROR: Final[str] = "COMMAND_BUS_ERROR"  # Reserved for FlextBus
         COMMAND_HANDLER_NOT_FOUND: Final[str] = (
             "COMMAND_HANDLER_NOT_FOUND"  # Reserved for dispatch
+        )
+        DOMAIN_EVENT_ERROR: Final[str] = (
+            "DOMAIN_EVENT_ERROR"  # Reserved for domain events
         )
 
         # Infrastructure errors (reserved for technical failures)
@@ -779,7 +785,9 @@ class FlextConstants:
 
         # LDAP search scope constants (RFC 4511)
         LDAP_SCOPE_BASE: Final[str] = "base"
-        LDAP_SCOPE_LEVEL: Final[str] = "onelevel"  # Fixed: RFC 4511 uses "onelevel", not "level"
+        LDAP_SCOPE_LEVEL: Final[str] = (
+            "onelevel"  # Fixed: RFC 4511 uses "onelevel", not "level"
+        )
         LDAP_SCOPE_SUBTREE: Final[str] = "subtree"
 
         # LDAP modify operation constants
@@ -2063,6 +2071,75 @@ class FlextConstants:
         "gzip",
         "bzip2",
         "lz4",
+    ]
+
+    # =========================================================================
+    # ADDITIONAL LITERAL TYPES (Migrated from FlextTypes - CRITICAL FIX)
+    # =========================================================================
+
+    # Error handling literals (from FlextTypes.ErrorHandling)
+    ErrorCategory = Literal[
+        "validation", "network", "database", "auth", "system", "unknown"
+    ]
+    ErrorSeverity = Literal["low", "medium", "high", "critical"]
+
+    # Service literals (from FlextTypes.Service)
+    ServiceType = Literal["instance", "factory", "singleton"]
+    ServiceLifecycleState = Literal[
+        "initializing", "ready", "running", "stopping", "stopped", "error"
+    ]
+    ServiceProtocol = Literal["http", "grpc", "websocket", "message_queue"]
+
+    # Context literals (from FlextTypes.Context)
+    ContextScope = Literal["global", "request", "session", "transaction"]
+    ContextExportFormat = Literal["json", "dict"]
+
+    # Logging literals (from FlextTypes.Logging)
+    LoggingLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
+    # Processing literals (from FlextTypes.Processing)
+    ProcessingOutputFormat = Literal["json", "yaml", "table", "csv", "text", "xml"]
+    ProcessingSerializationFormat = Literal["json", "yaml", "toml", "ini", "xml"]
+    ProcessingCompressionFormat = Literal["gzip", "bzip2", "xz", "lzma"]
+
+    # Project literals (from FlextTypes.Project)
+    ProjectType = Literal[
+        "flext-core", "flext-api", "flext-ldap", "flext-ldif", "flext-cli",
+        "flext-auth", "flext-web", "flext-db-oracle", "flext-meltano",
+        "flext-observability", "flext-grpc", "flext-oracle-wms", "flext-oracle-oic",
+        "flext-target-ldap", "flext-target-ldif", "flext-target-oracle",
+        "flext-target-oracle-oic", "flext-target-oracle-wms",
+        "flext-tap-ldap", "flext-tap-ldif", "flext-tap-oracle",
+        "flext-tap-oracle-oic", "flext-tap-oracle-wms",
+        "flext-dbt-ldap", "flext-dbt-ldif", "flext-dbt-oracle", "flext-dbt-oracle-wms",
+        "client-a-oud-mig", "client-b-meltano-native", "flexcore"
+    ]
+    ProjectStatus = Literal["active", "inactive", "deprecated", "archived"]
+
+    # Workflow literals (from FlextTypes.Workflow)
+    WorkflowProcessingStatus = Literal[
+        "pending", "queued", "running", "completed", "failed", "cancelled"
+    ]
+    WorkflowProcessingMode = Literal["batch", "stream", "parallel", "sequential"]
+    WorkflowValidationLevel = Literal["strict", "lenient", "standard"]
+    WorkflowProcessingPhase = Literal["prepare", "execute", "validate", "complete"]
+    WorkflowHandlerType = Literal["command", "query", "event", "processor"]
+    WorkflowStatus = Literal[
+        "created", "started", "running", "paused", "completed", "failed", "cancelled"
+    ]
+    WorkflowStepStatus = Literal[
+        "pending", "running", "completed", "failed", "skipped", "cancelled"
+    ]
+
+    # CQRS literals (from FlextTypes.Cqrs)
+    CqrsMode = Literal["command", "query", "event", "saga"]
+
+    # Circuit breaker literals (from FlextTypes.CircuitBreaker)
+    CircuitBreakerState = Literal["closed", "open", "half_open"]
+
+    # Workspace literals (from FlextTypes.Workspace)
+    WorkspaceStatus = Literal[
+        "active", "inactive", "maintenance", "deprecated", "archived"
     ]
 
 

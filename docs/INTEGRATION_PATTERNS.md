@@ -197,7 +197,7 @@ class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
     """Handler inherits FlextMixins.Service automatically."""
 
     def __init__(self):
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_name="CreateUserHandler",
             handler_type="command"
         )

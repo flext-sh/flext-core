@@ -793,7 +793,9 @@ class ComprehensiveDIService(FlextService[User]):
         else:
             print(f"❌ Failed to get database: {db_result.error}")
 
-        typed_result: FlextResult[DatabaseService] = self.container.get_typed("database", DatabaseService)
+        typed_result: FlextResult[DatabaseService] = self.container.get_typed(
+            "database", DatabaseService
+        )
         if typed_result.is_success:
             db_typed = typed_result.unwrap()
             print(f"✅ Got typed database: {type(db_typed).__name__}")
@@ -832,7 +834,12 @@ class ComprehensiveDIService(FlextService[User]):
                     print(f"✅ Cache test: {cached_dict.get('email')}")
 
             cache_stats_func: object = getattr(cache, "get_stats", None)
-            stats_dict: FlextTypes.Dict = cache_stats_func() if callable(cache_stats_func) else {}
+            stats_raw: object = cache_stats_func() if callable(cache_stats_func) else {}
+            stats_dict: dict[str, object] = (
+                cast("dict[str, object]", stats_raw)
+                if isinstance(stats_raw, dict)
+                else {}
+            )
             print(
                 f"   Cache stats: {stats_dict.get('current_size', 0)} items, {stats_dict.get('hits', 0)} hits, {stats_dict.get('misses', 0)} misses"
             )
@@ -871,7 +878,9 @@ class ComprehensiveDIService(FlextService[User]):
             repo = result.unwrap()
             print(f"✅ Auto-wired: {type(repo).__name__}")
 
-            db_result: FlextResult[DatabaseService] = self.container.get_typed("database", DatabaseService)
+            db_result: FlextResult[DatabaseService] = self.container.get_typed(
+                "database", DatabaseService
+            )
             if db_result.is_success:
                 db = db_result.unwrap()
                 db.connect()

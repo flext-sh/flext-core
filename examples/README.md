@@ -1,6 +1,6 @@
 # FLEXT-Core Examples - Complete API Demonstrations
 
-**Version**: 1.0.0 | **Coverage**: 100% of Public APIs | **Status**: Production Ready
+**Version**: 0.9.9 RC | **Coverage**: 100% of Public APIs | **Status**: Production Ready
 
 This directory contains comprehensive examples demonstrating ALL capabilities of the FLEXT-Core foundation library. Each example showcases complete API usage with best practices and deprecation warnings for anti-patterns.
 
@@ -215,9 +215,10 @@ pytest tests/test_examples.py -v
 
 These examples are compatible with:
 
-- **flext-core**: v0.9.9+ (preparing for 1.0.0 stable)
+- **flext-core**: v0.9.9 RC (preparing for 1.0.0 stable)
 - **Python**: 3.13+
 - **Pydantic**: v2.0+
+- **Test Coverage**: 80% (1,268 tests passing)
 
 ## 📝 Contributing
 
@@ -232,4 +233,4 @@ When adding new examples:
 
 ---
 
-_These examples represent the complete API surface and best practices of FLEXT Core v0.9.9, serving as both learning materials and integration tests for the foundation library preparing for its 1.0.0 stable release._
+_These examples represent the complete API surface and best practices of FLEXT Core v0.9.9 RC, serving as both learning materials and integration tests for the foundation library preparing for its 1.0.0 stable release. With 80% test coverage and 1,268 passing tests, the foundation is solid for the upcoming 1.0.0 release._

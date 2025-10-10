@@ -46,7 +46,7 @@ class TestFlextHandlers:
 
     def test_handlers_initialization(self) -> None:
         """Test handlers initialization."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_1",
             handler_name="Test Handler 1",
         )
@@ -56,7 +56,7 @@ class TestFlextHandlers:
 
     def test_handlers_with_custom_config(self) -> None:
         """Test handlers initialization with custom configuration."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_2",
             handler_name="Test Handler 2",
             handler_type="query",
@@ -68,7 +68,7 @@ class TestFlextHandlers:
 
     def test_handlers_handle_success(self) -> None:
         """Test successful handler execution."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_3",
             handler_name="Test Handler 3",
         )
@@ -80,7 +80,7 @@ class TestFlextHandlers:
 
     def test_handlers_handle_failure(self) -> None:
         """Test handler execution with failure."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_4",
             handler_name="Test Handler 4",
         )
@@ -93,7 +93,7 @@ class TestFlextHandlers:
 
     def test_handlers_config_access(self) -> None:
         """Test access to handler configuration."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_5",
             handler_name="Test Handler 5",
             handler_type="command",
@@ -108,7 +108,7 @@ class TestFlextHandlers:
 
     def test_handlers_execution_context(self) -> None:
         """Test handler execution context creation."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_6",
             handler_name="Test Handler 6",
         )
@@ -120,7 +120,7 @@ class TestFlextHandlers:
 
     def test_handlers_message_types(self) -> None:
         """Test accepted message types computation."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_7",
             handler_name="Test Handler 7",
         )
@@ -131,7 +131,7 @@ class TestFlextHandlers:
 
     def test_handlers_revalidation_setting(self) -> None:
         """Test revalidation setting extraction."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_8",
             handler_name="Test Handler 8",
         )
@@ -141,7 +141,7 @@ class TestFlextHandlers:
 
     def test_handlers_type_warning_tracking(self) -> None:
         """Test type warning emission tracking."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_9",
             handler_name="Test Handler 9",
         )
@@ -152,7 +152,7 @@ class TestFlextHandlers:
 
     def test_handlers_different_types(self) -> None:
         """Test handlers with different message and result types."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_10",
             handler_name="Test Handler 10",
         )
@@ -169,7 +169,7 @@ class TestFlextHandlers:
 
     def test_handlers_command_type(self) -> None:
         """Test handlers with command type."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_command_handler",
             handler_name="Test Command Handler",
             handler_type="command",
@@ -182,7 +182,7 @@ class TestFlextHandlers:
 
     def test_handlers_query_type(self) -> None:
         """Test handlers with query type."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_query_handler",
             handler_name="Test Query Handler",
             handler_type="query",
@@ -195,7 +195,7 @@ class TestFlextHandlers:
 
     def test_handlers_event_type(self) -> None:
         """Test handlers with event type."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_event_handler",
             handler_name="Test Event Handler",
             handler_type="event",
@@ -208,7 +208,7 @@ class TestFlextHandlers:
 
     def test_handlers_saga_type(self) -> None:
         """Test handlers with saga type."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_saga_handler",
             handler_name="Test Saga Handler",
             handler_type="saga",
@@ -221,7 +221,7 @@ class TestFlextHandlers:
 
     def test_handlers_with_metadata(self) -> None:
         """Test handlers with metadata configuration."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_with_metadata",
             handler_name="Test Handler With Metadata",
             metadata={"test_key": "test_value", "priority": 1},
@@ -234,7 +234,7 @@ class TestFlextHandlers:
 
     def test_handlers_with_timeout(self) -> None:
         """Test handlers with timeout configuration."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_with_timeout",
             handler_name="Test Handler With Timeout",
             command_timeout=60,
@@ -245,7 +245,7 @@ class TestFlextHandlers:
 
     def test_handlers_with_retry_config(self) -> None:
         """Test handlers with retry configuration."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_with_retry",
             handler_name="Test Handler With Retry",
             max_command_retries=3,
@@ -256,7 +256,7 @@ class TestFlextHandlers:
 
     def test_handlers_abstract_method_implementation(self) -> None:
         """Test that concrete handlers must implement handle method."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_abstract_handler",
             handler_name="Test Abstract Handler",
         )
@@ -268,7 +268,7 @@ class TestFlextHandlers:
 
     def test_handlers_inheritance_chain(self) -> None:
         """Test that handlers inherit from FlextMixins.Service."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_inheritance_handler",
             handler_name="Test Inheritance Handler",
         )
@@ -279,17 +279,17 @@ class TestFlextHandlers:
 
     def test_handlers_config_model_type(self) -> None:
         """Test that config model is properly typed."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_config_type_handler",
             handler_name="Test Config Type Handler",
         )
         handler = ConcreteTestHandler(config=config)
 
-        assert isinstance(handler._config_model, FlextModels.CqrsConfig.Handler)
+        assert isinstance(handler._config_model, FlextModels.Cqrs.Handler)
 
     def test_handlers_execution_context_type(self) -> None:
         """Test that execution context is properly typed."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_context_type_handler",
             handler_name="Test Context Type Handler",
         )
@@ -302,7 +302,7 @@ class TestFlextHandlers:
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
         """Test _run_pipeline with dict message having command_id."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_pipeline_dict_command_id",
             handler_name="Test Pipeline Dict Command ID",
             handler_type="command",
@@ -311,7 +311,7 @@ class TestFlextHandlers:
 
         # Create handler that accepts dict messages
         class DictHandler(FlextHandlers[dict[str, object], str]):
-            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+            def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
 
             def handle(self, message: dict[str, object]) -> FlextResult[str]:
@@ -328,7 +328,7 @@ class TestFlextHandlers:
 
     def test_handlers_run_pipeline_with_dict_message_message_id(self) -> None:
         """Test _run_pipeline with dict message having message_id."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_pipeline_dict_message_id",
             handler_name="Test Pipeline Dict Message ID",
             handler_type="command",
@@ -337,7 +337,7 @@ class TestFlextHandlers:
 
         # Create handler that accepts dict messages
         class DictHandler(FlextHandlers[dict[str, object], str]):
-            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+            def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
 
             def handle(self, message: dict[str, object]) -> FlextResult[str]:
@@ -354,7 +354,7 @@ class TestFlextHandlers:
 
     def test_handlers_run_pipeline_with_object_message_command_id(self) -> None:
         """Test _run_pipeline with object message having command_id attribute."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_pipeline_object_command_id",
             handler_name="Test Pipeline Object Command ID",
             handler_type="command",
@@ -363,7 +363,7 @@ class TestFlextHandlers:
 
         # Create handler that accepts object messages
         class ObjectHandler(FlextHandlers[object, str]):
-            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+            def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
 
             def handle(self, message: object) -> FlextResult[str]:
@@ -378,7 +378,7 @@ class TestFlextHandlers:
 
     def test_handlers_run_pipeline_with_object_message_message_id(self) -> None:
         """Test _run_pipeline with object message having message_id attribute."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_pipeline_object_message_id",
             handler_name="Test Pipeline Object Message ID",
             handler_type="command",
@@ -387,7 +387,7 @@ class TestFlextHandlers:
 
         # Create handler that accepts object messages
         class ObjectHandler(FlextHandlers[object, str]):
-            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+            def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
 
             def handle(self, message: object) -> FlextResult[str]:
@@ -402,7 +402,7 @@ class TestFlextHandlers:
 
     def test_handlers_run_pipeline_mode_validation_error(self) -> None:
         """Test _run_pipeline with mismatched operation and handler mode."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_pipeline_mode_error",
             handler_name="Test Pipeline Mode Error",
             handler_type="command",
@@ -421,7 +421,7 @@ class TestFlextHandlers:
 
     def test_handlers_run_pipeline_cannot_handle_message_type(self) -> None:
         """Test _run_pipeline when handler cannot handle message type."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_pipeline_cannot_handle",
             handler_name="Test Pipeline Cannot Handle",
             handler_type="command",
@@ -430,7 +430,7 @@ class TestFlextHandlers:
 
         # Create a handler that returns False for can_handle
         class RestrictiveHandler(FlextHandlers[str, str]):
-            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+            def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
 
             def can_handle(self, message_type: object) -> bool:
@@ -451,7 +451,7 @@ class TestFlextHandlers:
 
     def test_handlers_run_pipeline_validation_failure(self) -> None:
         """Test _run_pipeline when message validation fails."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_pipeline_validation_failure",
             handler_name="Test Pipeline Validation Failure",
             handler_type="command",
@@ -460,7 +460,7 @@ class TestFlextHandlers:
 
         # Create handler that fails validation
         class ValidationFailingHandler(FlextHandlers[str, str]):
-            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+            def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
 
             def validate_command(self, command: object) -> FlextResult[None]:
@@ -480,7 +480,7 @@ class TestFlextHandlers:
 
     def test_handlers_run_pipeline_handler_exception(self) -> None:
         """Test _run_pipeline when handler.handle() raises exception."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_pipeline_exception",
             handler_name="Test Pipeline Exception",
             handler_type="command",
@@ -489,7 +489,7 @@ class TestFlextHandlers:
 
         # Create handler that raises exception
         class ExceptionHandler(FlextHandlers[str, str]):
-            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+            def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
 
             def handle(self, message: str) -> FlextResult[str]:
@@ -507,7 +507,7 @@ class TestFlextHandlers:
 
     def test_handlers_run_pipeline_query_operation(self) -> None:
         """Test _run_pipeline with query operation."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_pipeline_query",
             handler_name="Test Pipeline Query",
             handler_type="query",
@@ -516,7 +516,7 @@ class TestFlextHandlers:
 
         # Create a query handler
         class QueryHandler(FlextHandlers[str, str]):
-            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+            def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
 
             def handle(self, message: str) -> FlextResult[str]:
@@ -530,7 +530,7 @@ class TestFlextHandlers:
 
     def test_handlers_run_pipeline_query_validation_failure(self) -> None:
         """Test _run_pipeline with query operation validation failure."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_pipeline_query_validation",
             handler_name="Test Pipeline Query Validation",
             handler_type="query",
@@ -539,7 +539,7 @@ class TestFlextHandlers:
 
         # Create query handler that fails validation
         class QueryValidationHandler(FlextHandlers[str, str]):
-            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+            def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
 
             def validate_query(self, query: object) -> FlextResult[None]:
@@ -704,14 +704,14 @@ class TestFlextHandlers:
         assert "Invalid handler config:" in str(exc_info.value)
 
     def test_handlers_from_callable_with_pydantic_config(self) -> None:
-        """Test from_callable with FlextModels.CqrsConfig.Handler object."""
+        """Test from_callable with FlextModels.Cqrs.Handler object."""
 
         def pydantic_config_handler(message: object) -> object:
             if isinstance(message, str):
                 return f"pydantic_config_{message}"
             return f"pydantic_config_{message!s}"
 
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="pydantic_id",
             handler_name="Pydantic Handler",
             handler_type="query",

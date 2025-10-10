@@ -151,7 +151,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         print("\n=== Basic Bus Usage ===")
 
         # Create bus with configuration
-        config = FlextModels.CqrsConfig.Bus(
+        config = FlextModels.Cqrs.Bus(
             enable_middleware=True,
             enable_metrics=True,
             execution_timeout=int(FlextConstants.Defaults.TIMEOUT),
@@ -630,7 +630,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         print("\n=== Error Handling ===")
 
         # Configure bus with error handling
-        config = FlextModels.CqrsConfig.Bus(
+        config = FlextModels.Cqrs.Bus(
             enable_middleware=True,
             enable_metrics=True,
             execution_timeout=1,
@@ -693,7 +693,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
 
         def risky_bus_registration() -> FlextCore.Bus:
             """Bus registration that might raise exceptions."""
-            bus_config = FlextModels.CqrsConfig.Bus(
+            bus_config = FlextModels.Cqrs.Bus(
                 enable_middleware=True,
                 enable_metrics=True,
                 execution_timeout=int(FlextConstants.Defaults.TIMEOUT),
@@ -820,21 +820,19 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         # 4. alt - Handler Alternatives
         print("\n=== 4. alt: Handler Alternatives ===")
 
-        def get_custom_bus_config() -> FlextResult[FlextModels.CqrsConfig.Bus]:
+        def get_custom_bus_config() -> FlextResult[FlextModels.Cqrs.Bus]:
             """Try to get custom bus configuration."""
-            return FlextResult[FlextModels.CqrsConfig.Bus].fail(
-                "Custom config not found"
-            )
+            return FlextResult[FlextModels.Cqrs.Bus].fail("Custom config not found")
 
-        def get_default_bus_config() -> FlextResult[FlextModels.CqrsConfig.Bus]:
+        def get_default_bus_config() -> FlextResult[FlextModels.Cqrs.Bus]:
             """Provide default bus configuration."""
-            config = FlextModels.CqrsConfig.Bus(
+            config = FlextModels.Cqrs.Bus(
                 enable_middleware=True,
                 enable_metrics=True,
                 execution_timeout=int(FlextConstants.Defaults.TIMEOUT),
                 max_cache_size=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
             )
-            return FlextResult[FlextModels.CqrsConfig.Bus].ok(config)
+            return FlextResult[FlextModels.Cqrs.Bus].ok(config)
 
         # Try custom config, fall back to default
         config_result = get_custom_bus_config().alt(get_default_bus_config())
@@ -852,7 +850,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         def create_expensive_bus() -> FlextCore.Bus:
             """Create and configure a new bus (expensive operation)."""
             print("   ⚙️  Creating new bus with full configuration...")
-            config = FlextModels.CqrsConfig.Bus(
+            config = FlextModels.Cqrs.Bus(
                 enable_middleware=True,
                 enable_metrics=True,
                 execution_timeout=int(FlextConstants.Defaults.TIMEOUT),

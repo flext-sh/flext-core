@@ -71,12 +71,6 @@ class FlextBase:
                 self._init_service(service_name)
 
         @property
-        def config(self) -> FlextConfig:
-            if self._config_override is not None:
-                return self._config_override
-            return super().config
-
-        @property
         def container(self) -> FlextContainer:
             if self._container_override is not None:
                 return self._container_override
@@ -190,12 +184,8 @@ class FlextBase:
         )
 
     # ------------------------------------------------------------------
-    # Core helpers – configuration, container, logging, runtime
+    # Core helpers – container, logging, runtime
     # ------------------------------------------------------------------
-
-    @property
-    def config(self) -> FlextConfig:
-        return self._service.config
 
     @property
     def container(self) -> FlextContainer:

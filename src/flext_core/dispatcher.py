@@ -262,7 +262,7 @@ class FlextDispatcher(FlextMixins.Service):
         # Initialize bus
         busglobal_config_raw = config.get("busglobal_config")
         busglobal_config_dict_final: FlextTypes.Dict | None
-        if isinstance(busglobal_config_raw, FlextModels.CqrsConfig.Bus):
+        if isinstance(busglobal_config_raw, FlextModels.Cqrs.Bus):
             busglobal_config_dict_final = busglobal_config_raw.model_dump()
         elif isinstance(busglobal_config_raw, dict):
             busglobal_config_dict_final = cast("FlextTypes.Dict", busglobal_config_raw)

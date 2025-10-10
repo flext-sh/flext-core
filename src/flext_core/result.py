@@ -41,10 +41,10 @@ from __future__ import annotations
 
 import types
 from collections.abc import Callable, Iterator, Sequence
-from typing import Self, cast, overload, override
+from typing import Never, Self, cast, overload, override
 
 from returns.io import IO, IOFailure, IOSuccess
-from returns.maybe import Nothing, Some
+from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success, safe
 
 from flext_core.constants import FlextConstants
@@ -535,6 +535,13 @@ class FlextResult[T_co]:
         """Transform the success payload using ``func`` while preserving errors.
 
         Delegates to returns.Result.map() for monadic operations.
+
+        Args:
+            func: Function to transform the success value
+
+        Returns:
+            New FlextResult with transformed value or original error
+
         """
         try:
             # Use returns.Result.map() for type-safe transformation
@@ -990,7 +997,7 @@ class FlextResult[T_co]:
     # MAYBE INTEROP - Convert between FlextResult and returns.maybe.Maybe
     # =========================================================================
 
-    def to_maybe(self) -> object:
+    def to_maybe(self) -> Some[T_co | None] | Maybe[Never]:
         """Convert FlextResult to returns.maybe.Maybe for optional value semantics.
 
         This enables interoperability with the returns library Maybe monad,
@@ -1027,7 +1034,7 @@ class FlextResult[T_co]:
             ```
 
         """
-        return Some(self._data) if self.is_success else Nothing
+        return Some[T_co | None](self._data) if self.is_success else Nothing
 
     @classmethod
     def from_maybe[T](cls: type[FlextResult[T]], maybe: object) -> FlextResult[T]:

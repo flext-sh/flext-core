@@ -102,7 +102,7 @@ class CreateUserCommandHandler(
 
     def __init__(self) -> None:
         """Initialize create user command handler."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="create_user_handler",
             handler_name="Create User Handler",
             handler_type="command",
@@ -148,7 +148,7 @@ class UpdateUserCommandHandler(
 
     def __init__(self) -> None:
         """Initialize update user command handler."""
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="update_user_handler",
             handler_name="Update User Handler",
             handler_type="command",
@@ -462,7 +462,7 @@ class TestFlextCommandHandler:
 
     def test_process_command_handling_failure(self) -> None:
         """Test processing when handler fails."""
-        config = FlextModels.CqrsConfig.Handler.create_handler_config(
+        config = FlextModels.Cqrs.Handler.create_handler_config(
             handler_type="command",
             default_name="FailingCommandHandler",
         )
@@ -865,7 +865,7 @@ class TestCommandPatternIntegration:
             raise AssertionError(msg)
 
         # Test 2: Handler that fails processing
-        config2 = FlextModels.CqrsConfig.Handler.create_handler_config(
+        config2 = FlextModels.Cqrs.Handler.create_handler_config(
             handler_type="command",
             default_name="FailingCommandHandler",
         )

@@ -1,11 +1,13 @@
 # FLEXT-Core Documentation
 
 Professional Documentation · Status: Production Ready · Version: 0.9.9
-Last Updated: 2025-10-05
+Last Updated: 2025-10-10
 
 This comprehensive documentation covers FLEXT-Core, the foundation library for the
 FLEXT ecosystem. It provides railway-oriented programming, dependency injection,
 domain-driven design patterns, and comprehensive type safety with Python 3.13+.
+
+> **✨ New in v0.9.9**: Enhanced 5-layer architecture (Layers 0, 0.5, 1, 2, 3, 4) with zero-dependency constants layer and runtime bridge. See [CLAUDE.md](../CLAUDE.md) for AI-assisted development workflow with Serena MCP integration.
 
 ## Documentation Structure
 

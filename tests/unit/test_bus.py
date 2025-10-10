@@ -477,11 +477,11 @@ class TestFlextBusMissingCoverage:
         assert cache.get("key2") is None
 
     def test_normalize_bus_config_with_bus_model(self) -> None:
-        """Test _normalize_bus_config with CqrsConfig.Bus instance (line 261)."""
+        """Test _normalize_bus_config with Cqrs.Bus instance (line 261)."""
         from flext_core import FlextModels
 
         # Create a Bus config model instance
-        bus_model = FlextModels.CqrsConfig.Bus(
+        bus_model = FlextModels.Cqrs.Bus(
             enable_middleware=True,
             enable_caching=False,
             max_cache_size=50,
@@ -1365,10 +1365,10 @@ class TestFlextBusMissingCoverage:
         config_model = bus._create_config_model(config)
         assert config_model.enable_caching is True
 
-        # Test configuration model creation from FlextModels.CqrsConfig.Bus
+        # Test configuration model creation from FlextModels.Cqrs.Bus
         from flext_core.models import FlextModels
 
-        bus_config_model = FlextModels.CqrsConfig.Bus(enable_caching=True)
+        bus_config_model = FlextModels.Cqrs.Bus(enable_caching=True)
         config_model2 = bus._create_config_model(bus_config_model)
         assert config_model2.enable_caching is True
 

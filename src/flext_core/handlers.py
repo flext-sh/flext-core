@@ -91,7 +91,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
         - Handler execution with validation pipeline
         - Type checking for message compatibility
         - Metrics collection for handler performance
-        - Configuration via FlextModels.CqrsConfig.Handler
+        - Configuration via FlextModels.Cqrs.Handler
         - Execution context tracking per handler
         - Message validation with FlextResult
         - Pydantic message revalidation support
@@ -104,7 +104,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
         - FlextMixins for reusable behavior patterns
         - ABC for abstract base class enforcement
         - FlextResult[T] for all operation results
-        - FlextModels.CqrsConfig.Handler for configuration
+        - FlextModels.Cqrs.Handler for configuration
         - FlextContext.HandlerExecutionContext for state
         - FlextUtilities.TypeChecker for type validation
         - FlextLogger for handler operation logging
@@ -121,7 +121,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
         # Example 1: Command handler implementation
         class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
             def __init__(self):
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_name="CreateUserHandler", handler_type="command"
                 )
                 super().__init__(config=config)
@@ -140,7 +140,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
         # Example 2: Query handler with caching
         class GetUserHandler(FlextHandlers[GetUserQuery, User]):
             def __init__(self):
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_name="GetUserHandler", handler_type="query"
                 )
                 super().__init__(config=config)
@@ -176,10 +176,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
         - [ ] Support handler result caching
 
     Args:
-        config: Handler configuration (CqrsConfig.Handler model).
+        config: Handler configuration (Cqrs.Handler model).
 
     Attributes:
-        _config_model (FlextModels.CqrsConfig.Handler): Configuration.
+        _config_model (FlextModels.Cqrs.Handler): Configuration.
         _execution_context: Handler execution context state.
         _accepted_message_types (set): Compatible message types.
         _revalidate_pydantic_messages (bool): Revalidation flag.
@@ -208,7 +208,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
 
         >>> class MyHandler(FlextHandlers[MyCommand, MyResult]):
         ...     def __init__(self):
-        ...         config = FlextModels.CqrsConfig.Handler(
+        ...         config = FlextModels.Cqrs.Handler(
         ...             handler_name="MyHandler", handler_type="command"
         ...         )
         ...         super().__init__(config=config)
@@ -437,7 +437,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
             )
 
     @override
-    def __init__(self, *, config: FlextModels.CqrsConfig.Handler) -> None:
+    def __init__(self, *, config: FlextModels.Cqrs.Handler) -> None:
         """Initialize handler with simplified single-config approach.
 
         Args:
@@ -457,7 +457,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
             handler_class=self.__class__.__name__,
         )
 
-        self._config_model: FlextModels.CqrsConfig.Handler = config
+        self._config_model: FlextModels.Cqrs.Handler = config
         self._execution_context = (
             FlextContext.HandlerExecutionContext.create_for_handler(
                 handler_name=config.handler_name,
@@ -535,11 +535,11 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
         return self._config_model.handler_mode
 
     @property
-    def handler_config(self) -> FlextModels.CqrsConfig.Handler:
+    def handler_config(self) -> FlextModels.Cqrs.Handler:
         """Get handler configuration.
 
         Returns:
-            FlextModels.CqrsConfig.Handler: Handler configuration
+            FlextModels.Cqrs.Handler: Handler configuration
 
         """
         return self._config_model
@@ -775,7 +775,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
         handler_name: str | None = None,
         handler_type: FlextConstants.HandlerModeSimple = "command",
         mode: str | None = None,
-        handler_config: FlextModels.CqrsConfig.Handler | FlextTypes.Dict | None = None,
+        handler_config: FlextModels.Cqrs.Handler | FlextTypes.Dict | None = None,
     ) -> FlextHandlers[object, object]:
         """Create a handler from a callable function.
 
@@ -826,7 +826,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
                     **handler_config,
                 }
                 try:
-                    config = FlextModels.CqrsConfig.Handler.model_validate(config_data)
+                    config = FlextModels.Cqrs.Handler.model_validate(config_data)
                 except Exception as e:
                     msg = f"Invalid handler config: {e}"
                     raise FlextExceptions.ValidationError(
@@ -837,7 +837,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
                 config = handler_config
         else:
             try:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id=f"{resolved_handler_name}_{id(callable_func)}",
                     handler_name=resolved_handler_name,
                     handler_type=effective_type,
@@ -852,7 +852,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins.Service, ABC):
 
         # Create a simple wrapper class
         class CallableHandler(FlextHandlers[object, object]):
-            def __init__(self, config: FlextModels.CqrsConfig.Handler) -> None:
+            def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
                 self.original_callable = callable_func
 

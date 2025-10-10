@@ -699,11 +699,8 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             return cast("FlextResult[T]", service_result)
 
         if factory is None:
-            return cast(
-                "FlextResult[T]",
-                FlextResult[object].fail(
-                    f"Service '{name}' not found and no factory provided",
-                ),
+            return FlextResult[T].fail(
+                f"Service '{name}' not found and no factory provided",
             )
 
         return self._create_from_factory(name, factory)
@@ -1185,19 +1182,17 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             result: FlextResult[object] = FlextResult[object].ok(service)
             for validator in validators:
                 if callable(validator):
-                    # Call validator and check result
-                    validator_result: FlextResult[object] = cast("FlextResult[object]", validator(service))
+                    # Call validator - returns FlextResult[object]
+                    validator_result: FlextResult[object] = validator(service)
 
                     # Check if validation failed
                     if validator_result.is_failure:
                         return FlextResult[object].fail(
                             f"Validation failed: {validator_result.error}"
                         )
+
                     # Continue with validated service
                     result = validator_result
-                else:
-                    # If validator doesn't return FlextResult, assume it's a valid result
-                    result = FlextResult[object].ok(service)
 
             return result
 

@@ -37,7 +37,7 @@ def create_test_handler(handler_id: str = "test_handler") -> ConcreteTestHandler
         handler = create_test_handler("my_handler")
 
         # New pattern - direct instantiation
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="my_handler",
             handler_name="Test Handler my_handler",
         )
@@ -45,7 +45,7 @@ def create_test_handler(handler_id: str = "test_handler") -> ConcreteTestHandler
 
     This helper remains for backward compatibility but will be removed.
     """
-    config = FlextModels.CqrsConfig.Handler(
+    config = FlextModels.Cqrs.Handler(
         handler_id=handler_id,
         handler_name=f"Test Handler {handler_id}",
     )
@@ -67,7 +67,7 @@ class TestFlextRegistry:
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_1",
             handler_name="Test Handler 1",
         )
@@ -92,7 +92,7 @@ class TestFlextRegistry:
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_1",
             handler_name="Test Handler 1",
         )
@@ -118,7 +118,7 @@ class TestFlextRegistry:
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_binding_handler",
             handler_name="Test Binding Handler",
         )
@@ -144,7 +144,7 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         handler = ConcreteTestHandler(
-            config=FlextModels.CqrsConfig.Handler(
+            config=FlextModels.Cqrs.Handler(
                 handler_id="test",
                 handler_name="Test",
             ),
@@ -195,7 +195,7 @@ class TestFlextRegistry:
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_1",
             handler_name="Test Handler 1",
         )
@@ -243,7 +243,7 @@ class TestFlextRegistry:
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_1",
             handler_name="Test Handler 1",
         )
@@ -259,7 +259,7 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         handler = ConcreteTestHandler(
-            config=FlextModels.CqrsConfig.Handler(
+            config=FlextModels.Cqrs.Handler(
                 handler_id="test",
                 handler_name="Test",
             ),
@@ -274,7 +274,7 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         handler = ConcreteTestHandler(
-            config=FlextModels.CqrsConfig.Handler(
+            config=FlextModels.Cqrs.Handler(
                 handler_id="test",
                 handler_name="Test",
             ),
@@ -289,7 +289,7 @@ class TestFlextRegistry:
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_1",
             handler_name="Test Handler 1",
         )
@@ -505,7 +505,7 @@ class TestFlextRegistry:
 
             def __init__(self) -> None:
                 # Minimal config for testing - this should fail bus validation due to missing handle method
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="bad_handler",
                     handler_name="BadHandler",
                     handler_type="command",
@@ -536,7 +536,7 @@ class TestFlextRegistry:
 
             def __init__(self) -> None:
                 # Minimal config for testing - this should fail bus validation due to missing handle method
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="failing_handler",
                     handler_name="FailingHandler",
                     handler_type="command",
@@ -695,7 +695,7 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Create test handlers and message types
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="binding_handler", handler_name="Binding Test Handler"
         )
 
@@ -723,7 +723,7 @@ class TestFlextRegistry:
                 return FlextResult[object].ok(f"another_{message}")
 
         another_handler = AnotherHandler(
-            config=FlextModels.CqrsConfig.Handler(
+            config=FlextModels.Cqrs.Handler(
                 handler_id="another_handler", handler_name="Another Handler"
             )
         )
@@ -760,7 +760,7 @@ class TestFlextRegistry:
         config_dict = {"handler_id": "func_config_handler"}
 
         # Test with pre-built handler
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="prebuilt_handler", handler_name="Pre-built Handler"
         )
 
@@ -895,7 +895,7 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Test with string message type
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="string_handler", handler_name="String Handler"
         )
 
@@ -943,9 +943,7 @@ class TestFlextRegistry:
                 Callable[[object], object | FlextResult[object]],
                 object | FlextResult[object],
             ],
-        ] = {
-            TestMessageType: (failing_function, {"handler_name": "test_handler"})
-        }
+        ] = {TestMessageType: (failing_function, {"handler_name": "test_handler"})}
         result_failing = registry.register_function_map(failing_map)
         # Registry handles function failures gracefully
         assert (
@@ -969,7 +967,7 @@ class TestFlextRegistry:
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="duplicate_handler", handler_name="Duplicate Handler"
         )
 
@@ -995,7 +993,7 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Create handler and register it
-        config = FlextModels.CqrsConfig.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_id="integration_handler", handler_name="Integration Handler"
         )
 
@@ -1119,7 +1117,7 @@ def test_registry_resolve_binding_key_string_fallback() -> None:
     dispatcher = FlextDispatcher()
     registry = FlextRegistry(dispatcher=dispatcher)
 
-    config = FlextModels.CqrsConfig.Handler(
+    config = FlextModels.Cqrs.Handler(
         handler_id="string_test", handler_name="String Test Handler"
     )
 

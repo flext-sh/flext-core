@@ -4,43 +4,102 @@ Comprehensive architecture guide for FLEXT-Core v0.9.9 - the foundation library 
 
 ## Overview
 
-FLEXT-Core follows **Clean Architecture** with clear separation of concerns across four distinct layers:
+FLEXT-Core follows **Clean Architecture** with clear separation of concerns across **five distinct layers** (enhanced v0.9.9 architecture with Layer 0 and Layer 0.5):
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Infrastructure Layer                      │
+│                  Layer 4: Infrastructure                     │
 │   (External concerns, I/O, frameworks)                      │
-│   FlextConfig, FlextLogger, FlextContext, FlextProtocols    │
+│   FlextConfig, FlextLogger, FlextContext                    │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                    Application Layer                         │
+│                  Layer 3: Application                        │
 │   (Use cases, orchestration)                                │
 │   FlextHandlers, FlextBus, FlextDispatcher                  │
-│   FlextRegistry, FlextProcessors                            │
+│   FlextRegistry, FlextProcessors, FlextDecorators           │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                      Domain Layer                            │
+│                  Layer 2: Domain                             │
 │   (Business logic, entities)                                │
 │   FlextModels, FlextService, FlextMixins, FlextUtilities    │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                    Foundation Layer                          │
-│   (Core primitives, no dependencies)                        │
+│                  Layer 1: Foundation                         │
+│   (Core primitives, minimal dependencies)                   │
 │   FlextResult, FlextContainer, FlextExceptions              │
-│   FlextConstants, FlextTypes                                │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│              Layer 0.5: Integration Bridge                   │
+│   (External library connectors, no Layer 1+ imports)        │
+│   FlextRuntime - structlog, dependency_injector access      │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│              Layer 0: Pure Constants                         │
+│   (Zero dependencies, pure Python)                          │
+│   FlextConstants, FlextTypes, FlextProtocols                │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Dependency Rule**: Dependencies flow inward only. Inner layers know nothing about outer layers.
+**Dependency Rule**: Dependencies flow downward only (higher → lower). Lower layers know nothing about higher layers. This **strict hierarchy prevents circular dependencies** across the entire ecosystem.
 
 ## Layer Details
 
-### Foundation Layer (Core Primitives)
+### Layer 0: Pure Constants (NEW in v0.9.9)
 
-**Purpose**: Provide fundamental building blocks with zero external dependencies.
+**Purpose**: Provide immutable constants and type definitions with **zero dependencies** (pure Python).
+
+**Modules**:
+
+| Module          | Coverage | Purpose                                        |
+| --------------- | -------- | ---------------------------------------------- |
+| `constants.py`  | 100%     | 50+ error codes, validation patterns, config defaults |
+| `typings.py`    | 100%     | Type system (50+ TypeVars, protocols, aliases) |
+| `protocols.py`  | 99%      | Runtime-checkable interfaces                   |
+
+**Key Features**:
+- ✅ **50+ Error Codes**: Categorized exception handling across ecosystem
+- ✅ **Validation Patterns**: Email, URL, UUID, phone number regex patterns
+- ✅ **Configuration Defaults**: Timeouts, network settings, logging levels
+- ✅ **Platform Constants**: HTTP status codes, encodings, file paths
+- ✅ **Complete Immutability**: All constants marked with `typing.Final`
+
+**Design Principles**:
+- Zero dependencies (not even internal flext_core imports)
+- All constants immutable
+- Foundation for entire ecosystem
+- Eliminates circular dependencies
+
+### Layer 0.5: Runtime Bridge (NEW in v0.9.9)
+
+**Purpose**: Expose external libraries while maintaining proper dependency hierarchy.
+
+**Modules**:
+
+| Module        | Coverage | Purpose                                        |
+| ------------- | -------- | ---------------------------------------------- |
+| `runtime.py`  | N/A      | External library integration (structlog, dependency_injector) |
+
+**Key Features**:
+- ✅ **Type Guards**: Email, URL, UUID validation using Layer 0 patterns
+- ✅ **Serialization**: JSON conversion with FLEXT defaults
+- ✅ **External Libraries**: Direct access to structlog, dependency_injector
+- ✅ **Structured Logging**: Pre-configured with FLEXT patterns
+- ✅ **No Layer 1+ Imports**: Prevents circular dependencies
+
+**Design Principles**:
+- Bridge between pure constants and foundation
+- No imports from Layer 1 or higher
+- External library integration point
+- Dependency hierarchy enforcement
+
+### Layer 1: Foundation (Core Primitives)
+
+**Purpose**: Provide fundamental building blocks with minimal dependencies (only Layers 0 and 0.5).
 
 **Modules**:
 
@@ -48,10 +107,7 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 | --------------- | -------- | ---------------------------------------------- |
 | `result.py`     | 95%      | Railway-oriented programming with Result monad |
 | `container.py`  | 99%      | Dependency injection singleton                 |
-| `typings.py`    | 100%     | Type system (50+ TypeVars, protocols, aliases) |
-| `constants.py`  | 100%     | Centralized constants and enumerations         |
 | `exceptions.py` | 62%      | Exception hierarchy with error codes           |
-| `version.py`    | 100%     | Version management                             |
 
 **Key Patterns**:
 
@@ -80,7 +136,7 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 - Type-safe operations
 - Zero runtime overhead
 
-### Domain Layer (Business Logic)
+### Layer 2: Domain (Business Logic)
 
 **Purpose**: Implement business rules and domain models independent of infrastructure.
 
@@ -138,7 +194,7 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 - Testable without infrastructure
 - Pydantic v2 validation
 
-### Application Layer (Use Cases)
+### Layer 3: Application (Use Cases)
 
 **Purpose**: Orchestrate business logic and coordinate between domain and infrastructure.
 
@@ -202,7 +258,7 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 - Infrastructure-agnostic
 - Composable pipelines
 
-### Infrastructure Layer (External Concerns)
+### Layer 4: Infrastructure (External Concerns)
 
 **Purpose**: Provide interfaces to external systems, frameworks, and I/O.
 
@@ -397,10 +453,12 @@ FlextContext
 
 | Metric              | Value | Target (1.0.0) |
 | ------------------- | ----- | -------------- |
-| **Test Coverage**   | 75%   | 79%+           |
-| **Total Tests**     | 1,163 | 1,500+         |
+| **Test Coverage**   | 80%   | 79%+           |
+| **Total Tests**     | 1,235 | 1,500+         |
+| **Passing Tests**   | 1,143 | 1,500+         |
+| **Failed Tests**    | 92    | 0              |
 | **Ruff Violations** | 0     | 0              |
-| **Type Errors**     | 0     | 0              |
+| **Type Errors**     | 1,743 | 0              |
 | **Modules**         | 20    | 20 (stable)    |
 | **Public Exports**  | 60+   | 60+ (locked)   |
 
@@ -408,10 +466,67 @@ FlextContext
 
 | Layer              | Coverage | Status              |
 | ------------------ | -------- | ------------------- |
-| **Foundation**     | 95%+     | ✅ Excellent        |
-| **Domain**         | 60-70%   | ⚠️ Need improvement |
-| **Application**    | 50-95%   | ⚠️ Mixed            |
-| **Infrastructure** | 70-90%   | ✅ Good             |
+| **Foundation**     | 92%      | ✅ Excellent        |
+| **Domain**         | 71%      | ✅ Good             |
+| **Application**    | 75%      | ✅ Good             |
+| **Infrastructure** | 79%      | ✅ Good             |
+
+## Phase 1 Context Enrichment (v0.9.9)
+
+**Status**: ✅ **COMPLETED** - Major architectural enhancement providing zero-boilerplate context management for distributed tracing and audit trails.
+
+### New FlextService Capabilities
+
+Automatic context enrichment for structured logging and distributed tracing:
+
+```python
+from flext_core import FlextService
+
+class PaymentService(FlextService[dict[str, object]]):
+    """Service with automatic context enrichment."""
+
+    def process_payment(self, payment_id: str, amount: float, user_id: str) -> FlextResult[dict]:
+        # Generate correlation ID for distributed tracing
+        correlation_id = self._with_correlation_id()
+
+        # Set user context for audit trail
+        self._with_user_context(user_id, payment_id=payment_id)
+
+        # Set operation context for tracking
+        self._with_operation_context("process_payment", amount=amount)
+
+        # All logs now include full context automatically
+        self.logger.info("Processing payment", payment_id=payment_id, amount=amount)
+
+        return FlextResult[dict].ok({"status": "completed", "correlation_id": correlation_id})
+```
+
+### Complete Automation Helper
+
+`FlextService.execute_with_context_enrichment()` provides full automation:
+
+```python
+class OrderService(FlextService[Order]):
+    def process_order(self, order_id: str, customer_id: str, correlation_id: str | None = None) -> FlextResult[Order]:
+        return self.execute_with_context_enrichment(
+            operation_name="process_order",
+            correlation_id=correlation_id,
+            user_id=customer_id,
+            order_id=order_id,
+        )
+        # Automatically handles: correlation ID, user context, operation tracking, logging, cleanup
+```
+
+### Architectural Benefits
+
+- ✅ **Zero Boilerplate** - No manual context setup required
+- ✅ **Distributed Tracing** - Automatic correlation ID generation
+- ✅ **Audit Trail** - User context automatically captured
+- ✅ **Ecosystem Ready** - Available to all 32+ dependent projects
+- ✅ **Performance Tracking** - Operation lifecycle monitoring
+- ✅ **Clean Architecture** - Maintains layer separation while providing cross-cutting concerns
+
+See `examples/automation_showcase.py` for complete working examples.
 
 ## Extension Points
 

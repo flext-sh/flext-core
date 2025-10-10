@@ -1,6 +1,8 @@
-# Domain Layer API Reference
+# Layer 2: Domain API Reference
 
-This section covers the domain layer classes that implement Domain-Driven Design (DDD) patterns including Entities, Value Objects, Aggregates, and Domain Services.
+This section covers **Layer 2** (Domain) classes that implement Domain-Driven Design (DDD) patterns including Entities, Value Objects, Aggregates, and Domain Services.
+
+> **Architecture**: Layer 2 depends only on Layer 1 (Foundation), Layer 0.5 (Runtime), and Layer 0 (Constants). See [Architecture Overview](../architecture/overview.md) for complete layer hierarchy.
 
 ## Domain Models
 
@@ -124,6 +126,77 @@ class OrderService(FlextService):
 - `add_domain_event(event)` - Add domain event for publishing
 - Business logic encapsulation for complex operations
 
+### Phase 1 Context Enrichment (v0.9.9)
+
+**Status**: ✅ **COMPLETED** - Major enhancement providing zero-boilerplate context management for distributed tracing and audit trails.
+
+#### Context Enrichment Methods
+
+FlextService now provides automatic context management methods:
+
+```python
+from flext_core import FlextService, FlextResult
+
+class PaymentService(FlextService[dict[str, object]]):
+    """Service with automatic context enrichment."""
+
+    def process_payment(self, payment_id: str, amount: float, user_id: str) -> FlextResult[dict]:
+        # Generate correlation ID for distributed tracing
+        correlation_id = self._with_correlation_id()
+
+        # Set user context for audit trail
+        self._with_user_context(user_id, payment_id=payment_id)
+
+        # Set operation context for tracking
+        self._with_operation_context("process_payment", amount=amount)
+
+        # All logs now include full context automatically
+        self.logger.info("Processing payment", payment_id=payment_id, amount=amount)
+
+        return FlextResult[dict].ok({"status": "completed", "correlation_id": correlation_id})
+```
+
+**Available Context Methods:**
+
+- `_with_correlation_id(correlation_id=None)` - Set/generate correlation ID for distributed tracing
+- `_with_user_context(user_id, **user_data)` - Set user context for audit trails
+- `_with_operation_context(operation_name, **data)` - Set operation context for tracking
+- `_enrich_context(**context_data)` - Add custom metadata to logs
+- `_clear_operation_context()` - Clean up operation context after completion
+
+#### Complete Automation Helper
+
+`execute_with_context_enrichment()` provides full automation:
+
+```python
+class OrderService(FlextService[Order]):
+    def process_order(self, order_id: str, customer_id: str, correlation_id: str | None = None) -> FlextResult[Order]:
+        """Process order with complete automation."""
+        return self.execute_with_context_enrichment(
+            operation_name="process_order",
+            correlation_id=correlation_id,
+            user_id=customer_id,
+            order_id=order_id,
+        )
+        # Automatically handles:
+        # - Correlation ID generation/setting
+        # - User context enrichment
+        # - Operation context tracking
+        # - Performance tracking
+        # - Operation logging (start/complete/error)
+        # - Context cleanup
+```
+
+#### Benefits
+
+- ✅ **Zero Boilerplate** - No manual context setup required
+- ✅ **Distributed Tracing** - Automatic correlation ID generation
+- ✅ **Audit Trail** - User context automatically captured
+- ✅ **Ecosystem Ready** - Available to all 32+ dependent projects
+- ✅ **Performance Tracking** - Operation lifecycle monitoring
+
+See `examples/automation_showcase.py` for complete working examples.
+
 ## Domain Events
 
 ### Event System
@@ -224,12 +297,12 @@ camel = FlextUtilities.String.to_camel_case("hello_world")  # "helloWorld"
 
 ## Quality Metrics
 
-| Module         | Coverage | Status       | Description                   |
-| -------------- | -------- | ------------ | ----------------------------- |
-| `models.py`    | 65%      | 🔄 Improving | DDD base classes and patterns |
-| `service.py`   | 92%      | ✅ Stable    | Domain service infrastructure |
-| `mixins.py`    | 57%      | 🔄 Improving | Reusable domain behaviors     |
-| `utilities.py` | 66%      | 🔄 Improving | Domain utility functions      |
+| Layer | Module         | Coverage | Status       | Description                   |
+| ----- | -------------- | -------- | ------------ | ----------------------------- |
+| **2** | `models.py`    | 64%      | 🔄 Improving | DDD base classes and patterns |
+| **2** | `service.py`   | 100%     | ✅ Stable    | Domain service infrastructure |
+| **2** | `mixins.py`    | 77%      | ✅ Good      | Reusable domain behaviors     |
+| **2** | `utilities.py` | 65%      | 🔄 Improving | Domain utility functions      |
 
 ## Usage Examples
 
