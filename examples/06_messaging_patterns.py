@@ -558,21 +558,18 @@ class MessagingPatternsService(FlextService[FlextTypes.Dict]):
                 user_state.update(event.data)
             elif event.event_type == "RoleGranted":
                 roles_raw = user_state.get("roles", [])
-                roles: FlextTypes.StringList
-                if isinstance(roles_raw, list) and all(
-                    isinstance(item, str) for item in roles_raw
-                ):
-                    roles = []
+                current_roles: FlextTypes.StringList = []
+                if isinstance(roles_raw, list):
+                    # Type check each item in the list using explicit filtering
+                    current_roles = []
                     for role_item in roles_raw:
                         if isinstance(role_item, str):
-                            roles.append(role_item)
-                else:
-                    roles = []
+                            current_roles.append(role_item)
                 role_raw: object = event.data["role"]
                 if isinstance(role_raw, str):
                     role_value: str = role_raw  # Type annotation for clarity
-                    roles.append(role_value)
-                    user_state["roles"] = roles
+                    current_roles.append(role_value)
+                    user_state["roles"] = current_roles
 
         print("\n✅ Final user state:")
         print(f"Username: {user_state.get('username')}")

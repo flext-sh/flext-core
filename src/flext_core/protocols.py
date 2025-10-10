@@ -897,40 +897,6 @@ class FlextProtocols:
         # Provides plugin ecosystem support for applications
 
         @runtime_checkable
-        class Plugin(Protocol):
-            """Plugin protocol with configuration.
-
-            Plugin lifecycle management with configuration and initialization
-            Supports complex plugin ecosystems with full lifecycle control
-            """
-
-            def configure(self, config: FlextTypes.Dict) -> object:
-                """Configure component with settings."""
-                ...
-
-            def get_config(self: object) -> FlextTypes.Dict:
-                """Get current configuration."""
-                ...
-
-            @abstractmethod
-            def initialize(
-                self,
-                context: FlextProtocols.Extensions.PluginContext,
-            ) -> object:
-                """Initialize plugin."""
-                ...
-
-            @abstractmethod
-            def shutdown(self: object) -> object:
-                """Shutdown plugin and cleanup."""
-                ...
-
-            @abstractmethod
-            def get_info(self: object) -> FlextTypes.Dict:
-                """Get plugin information."""
-                ...
-
-        @runtime_checkable
         class PluginContext(Protocol):
             """Plugin execution context."""
 
@@ -983,50 +949,6 @@ class FlextProtocols:
 
     class Commands:
         """CQRS Command and Query protocols for Flext CQRS components."""
-
-        @runtime_checkable
-        class CommandHandler[CommandT, ResultT](Protocol):
-            """Protocol for command handlers in CQRS pattern."""
-
-            def handle(self, command: CommandT) -> FlextResult[ResultT]:
-                """Handle a command and return a :class:`FlextResult` wrapper.
-
-                Args:
-                    command: The command to handle
-
-                Returns:
-                    FlextResult containing the command handling outcome
-
-                """
-                ...
-
-            def can_handle(self, command_type: type) -> bool:
-                """Check if this handler can process the given command type.
-
-                Args:
-                    command_type: The type of command to check
-
-                Returns:
-                    True if this handler can process the command type
-
-                """
-                ...
-
-        @runtime_checkable
-        class QueryHandler[QueryT, ResultT](Protocol):
-            """Protocol for query handlers in CQRS pattern."""
-
-            def handle(self, query: QueryT) -> FlextResult[ResultT]:
-                """Handle a query and return a :class:`FlextResult` wrapper.
-
-                Args:
-                    query: The query to handle
-
-                Returns:
-                    FlextResult containing the query handling outcome
-
-                """
-                ...
 
         @runtime_checkable
         class CommandBus(Protocol):

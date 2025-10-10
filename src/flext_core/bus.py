@@ -54,7 +54,7 @@ class FlextBus(
         - Enable middleware-based cross-cutting concerns
         - Context-aware telemetry with FlextLogger
         - Handler execution with FlextResult wrapping
-        - Configuration validation with FlextModels.CqrsConfig
+        - Configuration validation with FlextModels.Cqrs
         - Thread-safe handler registry
         - Normalize command/query keys for routing
         - Support middleware enable/disable per instance
@@ -63,7 +63,7 @@ class FlextBus(
     **Uses**: CQRS infrastructure with handler support
         - FlextHandlers for handler base class and execution
         - FlextResult[T] for all operation results
-        - FlextModels.CqrsConfig for bus configuration
+        - FlextModels.Cqrs for bus configuration
         - FlextLogger for operation logging and telemetry
         - FlextMixins for reusable behavior patterns
         - FlextConstants for CQRS defaults and error codes
@@ -129,10 +129,10 @@ class FlextBus(
 
 
     Args:
-        bus_config: Bus configuration dict or CqrsConfig.Bus model.
+        bus_config: Bus configuration dict or Cqrs.Bus model.
 
     Attributes:
-        _config_model (FlextModels.CqrsConfig.Bus): Bus config model.
+        _config_model (FlextModels.Cqrs.Bus): Bus config model.
         _handlers (dict): Registered command/query handlers.
         _middleware_configs (list): Middleware configurations.
         _middleware_instances (dict): Cached middleware instances.
@@ -239,7 +239,7 @@ class FlextBus(
 
     def __init__(
         self,
-        bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Dict | None = None,
+        bus_config: FlextModels.Cqrs.Bus | FlextTypes.Dict | None = None,
     ) -> None:
         """Initialize FlextBus with configuration and service infrastructure."""
         super().__init__()
@@ -281,21 +281,21 @@ class FlextBus(
 
     def _create_config_model(
         self,
-        bus_config: FlextModels.CqrsConfig.Bus | FlextTypes.Dict | None,
-    ) -> FlextModels.CqrsConfig.Bus:
+        bus_config: FlextModels.Cqrs.Bus | FlextTypes.Dict | None,
+    ) -> FlextModels.Cqrs.Bus:
         """Create configuration model from input."""
-        if isinstance(bus_config, FlextModels.CqrsConfig.Bus):
+        if isinstance(bus_config, FlextModels.Cqrs.Bus):
             return bus_config
         if isinstance(bus_config, dict):
             # Cast dict to proper types for Bus model
             config_dict = dict(
                 bus_config,
             )  # Create a new dict to avoid mutating the original
-            return FlextModels.CqrsConfig.Bus.model_validate(config_dict)
-        return FlextModels.CqrsConfig.Bus()
+            return FlextModels.Cqrs.Bus.model_validate(config_dict)
+        return FlextModels.Cqrs.Bus()
 
     @property
-    def bus_config(self) -> FlextModels.CqrsConfig.Bus:
+    def bus_config(self) -> FlextModels.Cqrs.Bus:
         """Access the bus configuration model."""
         return self._config_model
 

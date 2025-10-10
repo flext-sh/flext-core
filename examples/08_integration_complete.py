@@ -1221,6 +1221,7 @@ def demonstrate_complete_integration() -> None:
     }
     order_dict: dict[str, object] = order_request
     items_list_raw = order_dict["items"]
+    first_product_id: str = "default_product_id"  # Initialize with fallback
     if not isinstance(items_list_raw, list):
         print("Items is not a list")
     else:
@@ -1229,7 +1230,7 @@ def demonstrate_complete_integration() -> None:
         )
         if items_validated:
             first_item: dict[str, object] = items_validated[0]
-            first_product_id = first_item["product_id"]
+            first_product_id = str(first_item["product_id"])
 
     print(f"Customer: {order_dict['customer_id']}")
     items_raw = order_dict["items"]

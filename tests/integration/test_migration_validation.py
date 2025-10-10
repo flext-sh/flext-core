@@ -243,8 +243,8 @@ class TestNewFeatures:
         assert request.body == '{"name": "Alice"}'
 
         # Verify computed properties
-        assert request.is_secure  # type: ignore[truthy-function]  # HTTPS URL
-        assert request.has_body  # type: ignore[truthy-function]  # Body present
+        assert request.is_secure
+        assert request.has_body
 
         # Verify custom field
         assert request.custom_field == "test"
@@ -271,8 +271,8 @@ class TestNewFeatures:
         assert success_response.elapsed_time == 0.123
 
         # Verify computed properties
-        assert success_response.is_success  # type: ignore[truthy-function]
-        assert not success_response.is_client_error  # type: ignore[truthy-function]
+        assert success_response.is_success
+        assert not success_response.is_client_error
         assert not success_response.is_server_error
 
         # Verify custom field

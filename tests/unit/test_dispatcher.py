@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from typing import Literal, cast
 
-from flext_core import FlextDispatcher, FlextModels, FlextResult, FlextTypes
+from flext_core import FlextBus, FlextDispatcher, FlextModels, FlextResult, FlextTypes
 from flext_core.handlers import FlextHandlers
 
 
@@ -29,6 +29,18 @@ class TestFlextDispatcherCoverage:
         dispatcher_with_config = FlextDispatcher(config=config)
         assert dispatcher_with_config is not None
 
+    def test_dispatcher_properties(self) -> None:
+        """Test dispatcher property access."""
+        dispatcher = FlextDispatcher()
+
+        # Test dispatcher_config property
+        config = dispatcher.dispatcher_config
+        assert isinstance(config, dict)
+
+        # Test bus property
+        bus = dispatcher.bus
+        assert isinstance(bus, FlextBus)
+
     def test_dispatcher_handler_registration(self) -> None:
         """Test handler registration functionality."""
         dispatcher = FlextDispatcher()
@@ -36,7 +48,7 @@ class TestFlextDispatcherCoverage:
         # Create a simple handler with proper config
         class TestHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="test_handler",
                     handler_name="TestHandler",
                     handler_type="command",
@@ -60,7 +72,7 @@ class TestFlextDispatcherCoverage:
         # Create and register a handler with proper config
         class SimpleHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="simple_handler",
                     handler_name="SimpleHandler",
                     handler_type="command",
@@ -86,7 +98,7 @@ class TestFlextDispatcherCoverage:
         # Create a batch handler with proper config
         class BatchHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="batch_handler",
                     handler_name="BatchHandler",
                     handler_type="command",
@@ -118,7 +130,7 @@ class TestFlextDispatcherCoverage:
         # Create a failing handler with proper config
         class FailingHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="failing_handler",
                     handler_name="FailingHandler",
                     handler_type="command",
@@ -146,7 +158,7 @@ class TestFlextDispatcherCoverage:
         # Create an handler with proper config
         class Handler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="handler",
                     handler_name="Handler",
                     handler_type="command",
@@ -171,7 +183,7 @@ class TestFlextDispatcherCoverage:
         # Create a context-aware handler with proper config
         class ContextHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="context_handler",
                     handler_name="ContextHandler",
                     handler_type="command",
@@ -201,7 +213,7 @@ class TestFlextDispatcherCoverage:
         # Create a simple handler to generate metrics with proper config
         class MetricsHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="metrics_handler",
                     handler_name="MetricsHandler",
                     handler_type="command",
@@ -237,7 +249,7 @@ class TestFlextDispatcherCoverage:
         # Test with valid handler
         class ValidHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="valid_handler",
                     handler_name="ValidHandler",
                     handler_type="command",
@@ -261,6 +273,8 @@ class TestFlextDispatcherCoverage:
             {"enable_metrics": True},
             {"enable_audit": True},
             {"batch_size": 100},
+            {"execution_timeout": 60},  # Test execution_timeout config
+            {"timeout_seconds": 45},  # Test timeout_seconds config
         ]
 
         for config in configs:
@@ -275,7 +289,7 @@ class TestFlextDispatcherCoverage:
         # Create a handler for audit testing with proper config
         class AuditHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="audit_handler",
                     handler_name="AuditHandler",
                     handler_type="command",
@@ -304,7 +318,7 @@ class TestFlextDispatcherCoverage:
 
         class RetryHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="retry_handler",
                     handler_name="RetryHandler",
                     handler_type="command",
@@ -337,7 +351,7 @@ class TestFlextDispatcherCoverage:
         # Create a quick handler with proper config
         class QuickHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="quick_handler",
                     handler_name="QuickHandler",
                     handler_type="command",
@@ -367,7 +381,7 @@ class TestFlextDispatcherCoverage:
                 """Test handler for multiple handler registration."""
 
                 def __init__(self, handler_id: int) -> None:
-                    config = FlextModels.CqrsConfig.Handler(
+                    config = FlextModels.Cqrs.Handler(
                         handler_id=f"test_handler_{handler_id}",
                         handler_name=f"TestHandler{handler_id}",
                         handler_type="command",
@@ -398,7 +412,7 @@ class TestFlextDispatcherCoverage:
         # Create and register handlers with proper config
         class CleanupHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="cleanup_handler",
                     handler_name="CleanupHandler",
                     handler_type="command",
@@ -435,7 +449,7 @@ class TestFlextDispatcherCoverage:
         # Test with empty message type
         class EdgeHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="edge_handler",
                     handler_name="EdgeHandler",
                     handler_type="command",
@@ -462,7 +476,7 @@ class TestFlextDispatcherCoverage:
         # Create a performance handler with proper config
         class PerfHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="perf_handler",
                     handler_name="PerfHandler",
                     handler_type="command",
@@ -512,7 +526,7 @@ class TestFlextDispatcherCoverage:
         # Test class-based handlers with proper config
         class ComplexHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="complex_handler",
                     handler_name="ComplexHandler",
                     handler_type="command",
@@ -549,7 +563,7 @@ class TestFlextDispatcherCoverage:
         # Create a command handler
         class CreateUserCommand(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="create_user_command",
                     handler_name="CreateUserCommand",
                     handler_type="command",
@@ -573,7 +587,7 @@ class TestFlextDispatcherCoverage:
         # Create a query handler
         class GetUserQuery(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="get_user_query",
                     handler_name="GetUserQuery",
                     handler_type="query",
@@ -611,7 +625,7 @@ class TestFlextDispatcherCoverage:
         # Register a handler
         class TestHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="test_cleanup",
                     handler_name="TestCleanup",
                     handler_type="command",
@@ -652,7 +666,7 @@ class TestFlextDispatcherCoverage:
         # Create a request-aware handler
         class RequestHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="request_handler",
                     handler_name="RequestHandler",
                     handler_type="command",
@@ -688,6 +702,45 @@ class TestFlextDispatcherCoverage:
             # Method might have different signature
             pass
 
+    def test_dispatcher_register_handler_with_request_invalid_mode(self) -> None:
+        """Test register_handler_with_request with invalid handler mode."""
+        dispatcher = FlextDispatcher()
+
+        # Test with invalid handler mode
+        invalid_request: FlextTypes.Dict = {
+            "handler_mode": "invalid_mode",
+            "message_type": "test",
+            "handler": lambda x: x,
+        }
+
+        result = dispatcher.register_handler_with_request(invalid_request)
+        assert result.is_failure
+
+    def test_dispatcher_register_handler_with_request_no_handler(self) -> None:
+        """Test register_handler_with_request with no handler."""
+        dispatcher = FlextDispatcher()
+
+        # Test with no handler
+        invalid_request: FlextTypes.Dict = {
+            "handler_mode": "command",
+            "message_type": "test",
+        }
+
+        result = dispatcher.register_handler_with_request(invalid_request)
+        assert result.is_failure
+
+    def test_dispatcher_dispatch_with_request_invalid(self) -> None:
+        """Test dispatch_with_request with invalid request."""
+        dispatcher = FlextDispatcher()
+
+        # Test with no message
+        invalid_request: FlextTypes.Dict = {
+            "message_type": "test",
+        }
+
+        result = dispatcher.dispatch_with_request(invalid_request)
+        assert result.is_failure
+
     def test_dispatcher_advanced_scenarios(self) -> None:
         """Test advanced dispatcher scenarios with multiple handlers."""
         dispatcher = FlextDispatcher()
@@ -712,7 +765,7 @@ class TestFlextDispatcherCoverage:
                     handler_literal = cast(
                         "Literal['command', 'query', 'event', 'saga']", mode
                     )
-                    config = FlextModels.CqrsConfig.Handler(
+                    config = FlextModels.Cqrs.Handler(
                         handler_id=handler_id,
                         handler_name=f"Handler_{handler_id}",
                         handler_type=handler_literal,
@@ -763,7 +816,7 @@ class TestFlextDispatcherCoverage:
 
             class NoneHandler(FlextHandlers[object, object]):
                 def __init__(self) -> None:
-                    config = FlextModels.CqrsConfig.Handler(
+                    config = FlextModels.Cqrs.Handler(
                         handler_id="none_handler",
                         handler_name="NoneHandler",
                         handler_type="command",
@@ -792,7 +845,7 @@ class TestFlextDispatcherCoverage:
         # Create a concurrent-safe handler
         class ConcurrentHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="concurrent_handler",
                     handler_name="ConcurrentHandler",
                     handler_type="command",
@@ -825,7 +878,7 @@ class TestFlextDispatcherCoverage:
         # Create a metadata-aware handler
         class MetadataHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="metadata_handler",
                     handler_name="MetadataHandler",
                     handler_type="command",
@@ -862,7 +915,7 @@ class TestFlextDispatcherCoverage:
         # Create a handler that fails for specific inputs
         class BatchErrorHandler(FlextHandlers[object, object]):
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="batch_error_handler",
                     handler_name="BatchErrorHandler",
                     handler_type="command",

@@ -1033,10 +1033,6 @@ class FlextContext:
             cls._container = FlextContainer.get_global()
         return cls._container
 
-    # =========================================================================
-    # Static Methods - Context variables organized by functionality
-    # =========================================================================
-
     # ==========================================================================
     # Variables - Context Variables using structlog as Single Source of Truth
     # ==========================================================================

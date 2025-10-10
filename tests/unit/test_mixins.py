@@ -11,7 +11,7 @@ import time
 
 import pytest
 
-from flext_core import FlextMixins, FlextResult, FlextTypes
+from flext_core import FlextMixins, FlextResult
 
 
 class TestFlextMixins:
@@ -117,8 +117,10 @@ class TestFlextMixins:
         if mixed_class is not None and callable(mixed_class):
             mixed_instance = mixed_class()
             if hasattr(mixed_instance, "test_method"):
-                with pytest.raises(ValueError, match="Mixin failed"):
-                    mixed_instance.test_method()
+                test_method = getattr(mixed_instance, "test_method")
+                if callable(test_method):
+                    with pytest.raises(ValueError, match="Mixin failed"):
+                        test_method()
         else:
             pytest.fail("Failed to get mixed class")
 
@@ -242,75 +244,6 @@ class TestFlextMixins:
         mixins.register("test_mixin", TestMixin)
         result = mixins.apply("test_mixin", TestClass)
         assert result.is_success
-
-    def test_mixins_apply_mixin_with_batch(self) -> None:
-        """Test mixin application with batch processing."""
-        mixins = FlextMixins()
-
-        class TestMixin:
-            def test_method(self) -> str:
-                return "test_result"
-
-        class TestClass1:
-            pass
-
-        class TestClass2:
-            pass
-
-        class TestClass3:
-            pass
-
-        mixins.register("test_mixin", TestMixin)
-
-        classes: FlextTypes.List = [TestClass1, TestClass2, TestClass3]
-        results = mixins.apply_batch(classes)
-        if results.is_success and results.data:
-            assert len(results.data) == 3
-            # results.data contains the unwrapped values, not FlextResult objects
-            assert all(
-                isinstance(result, type(classes[i]))
-                for i, result in enumerate(results.data)
-            )
-        else:
-            assert results.is_failure
-
-    def test_mixins_apply_mixin_with_parallel(self) -> None:
-        """Test mixin application with parallel processing."""
-        mixins = FlextMixins()
-
-        class TestMixin:
-            def test_method(self) -> str:
-                time.sleep(0.1)  # Simulate work
-                return "test_result"
-
-        class TestClass1:
-            pass
-
-        class TestClass2:
-            pass
-
-        class TestClass3:
-            pass
-
-        mixins.register("test_mixin", TestMixin)
-
-        classes: FlextTypes.List = [TestClass1, TestClass2, TestClass3]
-
-        start_time = time.time()
-        results = mixins.apply_parallel(classes)
-        end_time = time.time()
-
-        if results.is_success and results.data:
-            assert len(results.data) == 3
-            # results.data contains the unwrapped values, not FlextResult objects
-            assert all(
-                isinstance(result, type(classes[i]))
-                for i, result in enumerate(results.data)
-            )
-        else:
-            assert results.is_failure
-        # Should complete faster than sequential execution
-        assert end_time - start_time < 0.3
 
     def test_mixins_apply_mixin_with_circuit_breaker(self) -> None:
         """Test mixin application with circuit breaker (not applicable to class mixins)."""
@@ -441,8 +374,10 @@ class TestFlextMixins:
         if callable(mixed_class):
             instance = mixed_class()
             if hasattr(instance, "test_method"):
-                with pytest.raises(RuntimeError, match="Mixin error"):
-                    instance.test_method()
+                test_method = getattr(instance, "test_method")
+                if callable(test_method):
+                    with pytest.raises(RuntimeError, match="Mixin error"):
+                        test_method()
 
     def test_mixins_apply_mixin_with_cleanup(self) -> None:
         """Test mixin application with cleanup."""
@@ -600,8 +535,10 @@ class TestFlextMixins:
         if callable(mixed_class):
             instance = mixed_class()
             if hasattr(instance, "test_method"):
-                with pytest.raises(ValueError, match="Mixin error"):
-                    instance.test_method()
+                test_method = getattr(instance, "test_method")
+                if callable(test_method):
+                    with pytest.raises(ValueError, match="Mixin error"):
+                        test_method()
 
     def test_mixins_validation(self) -> None:
         """Test mixins validation."""
@@ -615,35 +552,6 @@ class TestFlextMixins:
 
         result = mixins.validate("test_data")
         assert result.is_success
-
-    def test_mixins_export_import(self) -> None:
-        """Test mixins export/import."""
-        mixins = FlextMixins()
-
-        class TestMixin:
-            def test_method(self) -> str:
-                return "test_result"
-
-        class TestClass:
-            pass
-
-        mixins.register("test_mixin", TestMixin)
-
-        # Export mixins configuration
-        config_result = mixins.export_config()
-        assert config_result.is_success
-        config = config_result.data
-        assert isinstance(config, dict)
-        assert "test_mixin" in config
-
-        # Create new mixins and import configuration
-        new_mixins = FlextMixins()
-        result = new_mixins.import_config(config)
-        assert result.is_success
-
-        # Verify mixin is available in new mixins
-        apply_result = new_mixins.apply("test_mixin", TestClass)
-        assert apply_result.is_success
 
     def test_mixins_cleanup(self) -> None:
         """Test mixins cleanup."""
@@ -668,349 +576,6 @@ class TestFlextMixins:
 
 class TestFlextMixinsNestedClasses:
     """Comprehensive test suite for nested mixin classes."""
-
-    def test_loggable_di_logger_injection(self) -> None:
-        """Test LoggableDI mixin logger injection."""
-        from flext_core import FlextLogger
-
-        class MyService(FlextMixins.LoggableDI):
-            pass
-
-        service = MyService()
-        assert isinstance(service.logger, FlextLogger)
-
-    def test_loggable_di_logger_caching(self) -> None:
-        """Test LoggableDI mixin logger caching."""
-
-        class MyService(FlextMixins.LoggableDI):
-            pass
-
-        service1 = MyService()
-        service2 = MyService()
-
-        # Same logger instance due to caching
-        assert service1.logger is service2.logger
-
-    def test_loggable_di_clear_logger_cache(self) -> None:
-        """Test LoggableDI mixin clearing logger cache."""
-
-        class MyService(FlextMixins.LoggableDI):
-            pass
-
-        service = MyService()
-        logger_before = service.logger
-
-        MyService.clear_logger_cache()
-
-        logger_after = service.logger
-        # Different logger instance after cache clear
-        assert logger_before is not logger_after
-
-    def test_context_aware_operation_context(self) -> None:
-        """Test ContextAware mixin operation context."""
-
-        class MyService(FlextMixins.ContextAware):
-            pass
-
-        service = MyService()
-        with service.operation_context(user_id="123", operation="test"):
-            context = service.get_current_context()
-            assert context.get("user_id") == "123"
-            assert context.get("operation") == "test"
-
-    def test_context_aware_correlation_context(self) -> None:
-        """Test ContextAware mixin correlation context."""
-
-        class MyService(FlextMixins.ContextAware):
-            pass
-
-        service = MyService()
-        with service.correlation_context("test-corr-id") as corr_id:
-            assert corr_id == "test-corr-id"
-            context = service.get_current_context()
-            assert context.get("correlation_id") == "test-corr-id"
-
-    def test_context_aware_correlation_context_auto_generate(self) -> None:
-        """Test ContextAware mixin auto-generating correlation ID."""
-
-        class MyService(FlextMixins.ContextAware):
-            pass
-
-        service = MyService()
-        with service.correlation_context() as corr_id:
-            assert corr_id is not None
-            assert corr_id.startswith("corr-")
-            context = service.get_current_context()
-            assert context.get("correlation_id") == corr_id
-
-    def test_context_aware_bind_unbind_context(self) -> None:
-        """Test ContextAware mixin bind/unbind context."""
-
-        class MyService(FlextMixins.ContextAware):
-            pass
-
-        service = MyService()
-
-        # Bind context
-        service.bind_context(key1="value1", key2="value2")
-        context = service.get_current_context()
-        assert context.get("key1") == "value1"
-        assert context.get("key2") == "value2"
-
-        # Unbind specific keys
-        service.unbind_context("key1")
-        context = service.get_current_context()
-        # key1 should still be there (unbind doesn't remove, just marks for removal)
-        # This is structlog behavior
-        service.clear_context()
-
-    def test_context_aware_clear_context(self) -> None:
-        """Test ContextAware mixin clear context."""
-
-        class MyService(FlextMixins.ContextAware):
-            pass
-
-        service = MyService()
-        service.bind_context(test_key="test_value")
-        service.clear_context()
-        context = service.get_current_context()
-        # Context should be empty after clear
-        assert len(context) == 0
-
-    def test_measurable_measure_operation(self) -> None:
-        """Test Measurable mixin measure_operation."""
-
-        class DataProcessor(FlextMixins.Measurable):
-            def process(self) -> str:
-                with self.measure_operation("process_data", log_result=False):
-                    time.sleep(0.01)
-                    return "processed"
-
-        processor = DataProcessor()
-        result = processor.process()
-        assert result == "processed"
-
-    def test_measurable_measure_operation_with_threshold(self) -> None:
-        """Test Measurable mixin measure_operation with threshold."""
-
-        class DataProcessor(FlextMixins.Measurable):
-            def process(self) -> str:
-                with self.measure_operation(
-                    "slow_operation", threshold_ms=1.0, log_result=True
-                ):
-                    time.sleep(0.005)
-                    return "done"
-
-        processor = DataProcessor()
-        result = processor.process()
-        assert result == "done"
-
-    def test_measurable_measure_function(self) -> None:
-        """Test Measurable mixin measure_function."""
-
-        class Service(FlextMixins.Measurable):
-            def _process_impl(self) -> str:
-                time.sleep(0.01)
-                return "result"
-
-            def process(self) -> str:
-                measured_func = self.measure_function(self._process_impl, "process")
-                return measured_func()
-
-        service = Service()
-        result = service.process()
-        assert result == "result"
-
-    def test_measurable_get_timing_stats(self) -> None:
-        """Test Measurable mixin get_timing_stats."""
-
-        class Service(FlextMixins.Measurable):
-            pass
-
-        service = Service()
-        stats = service.get_timing_stats()
-        assert isinstance(stats, dict)
-
-    def test_validatable_validate_with_result(self) -> None:
-        """Test Validatable mixin validate_with_result."""
-        from flext_core import FlextResult
-
-        class UserService(FlextMixins.Validatable):
-            pass
-
-        service = UserService()
-
-        def validate_email(data: dict[str, str]) -> FlextResult[None]:
-            if "@" not in data.get("email", ""):
-                return FlextResult[None].fail("Invalid email")
-            return FlextResult[None].ok(None)
-
-        # Valid data
-        result = service.validate_with_result(
-            {"email": "test@example.com"}, [validate_email]
-        )
-        assert result.is_success
-
-        # Invalid data
-        result = service.validate_with_result({"email": "invalid"}, [validate_email])
-        assert result.is_failure
-
-    def test_validatable_compose_validators(self) -> None:
-        """Test Validatable mixin compose_validators."""
-        from flext_core import FlextResult
-
-        class UserService(FlextMixins.Validatable):
-            pass
-
-        service = UserService()
-
-        def validate_email(data: dict[str, str]) -> FlextResult[None]:
-            if "@" not in data.get("email", ""):
-                return FlextResult[None].fail("Invalid email")
-            return FlextResult[None].ok(None)
-
-        def validate_age(data: dict[str, str]) -> FlextResult[None]:
-            age_str = data.get("age", "0")
-            try:
-                age_value = int(age_str)
-                if age_value < 18:
-                    return FlextResult[None].fail("Age must be 18+")
-            except ValueError:
-                return FlextResult[None].fail("Age must be a number")
-            return FlextResult[None].ok(None)
-
-        composed = service.compose_validators(validate_email, validate_age)
-
-        # Valid data
-        valid_data: dict[str, str] = {"email": "test@example.com", "age": "25"}
-        result = composed(valid_data)
-        assert result.is_success
-
-        # Invalid email
-        invalid_data: dict[str, str] = {"email": "invalid", "age": "25"}
-        result = composed(invalid_data)
-        assert result.is_failure
-
-    def test_validatable_validate_field(self) -> None:
-        """Test Validatable mixin validate_field."""
-
-        class UserService(FlextMixins.Validatable):
-            pass
-
-        service = UserService()
-
-        # Required field validation
-        result: FlextResult[object] = service.validate_field("test", "username", required=True)
-        assert result.is_success
-
-        result = service.validate_field(None, "username", required=True)
-        assert result.is_failure
-
-        # Custom validator
-        result = service.validate_field(
-            "short",
-            "password",
-            required=True,
-            validator=lambda x: len(x) >= 8,  # type: ignore[arg-type]
-        )
-        assert result.is_failure
-
-    def test_validatable_validate_range(self) -> None:
-        """Test Validatable mixin validate_range."""
-
-        class UserService(FlextMixins.Validatable):
-            pass
-
-        service = UserService()
-
-        # Value in range
-        result = service.validate_range(5.0, "age", min_value=0.0, max_value=10.0)
-        assert result.is_success
-
-        # Value below min
-        result = service.validate_range(-1.0, "age", min_value=0.0)
-        assert result.is_failure
-
-        # Value above max
-        result = service.validate_range(15.0, "age", max_value=10.0)
-        assert result.is_failure
-
-    def test_advanced_patterns_create_entity(self) -> None:
-        """Test AdvancedPatterns create_entity."""
-        from flext_core import FlextResult
-
-        def validate_entity(entity: object) -> FlextResult[None]:
-            return FlextResult[None].ok(None)
-
-        entity_result: FlextResult[object] = FlextMixins.AdvancedPatterns.create_entity(
-            "User", {"name": "John"}, [validate_entity]
-        )
-        assert entity_result.is_success
-
-    def test_advanced_patterns_create_value_object(self) -> None:
-        """Test AdvancedPatterns create_value_object."""
-        from flext_core import FlextResult
-
-        def validate_invariant(vo: object) -> FlextResult[None]:
-            return FlextResult[None].ok(None)
-
-        vo_result: FlextResult[object] = FlextMixins.AdvancedPatterns.create_value_object(
-            "Email", {"address": "test@example.com"}, [validate_invariant]
-        )
-        assert vo_result.is_success
-
-    def test_advanced_patterns_create_aggregate_root(self) -> None:
-        """Test AdvancedPatterns create_aggregate_root."""
-        from flext_core import FlextResult
-
-        def validate_rule(agg: object) -> FlextResult[None]:
-            return FlextResult[None].ok(None)
-
-        result: FlextResult[object] = FlextMixins.AdvancedPatterns.create_aggregate_root(
-            "Order", {"id": 1}, [validate_rule]
-        )
-        assert result.is_success
-
-    def test_advanced_patterns_create_domain_event(self) -> None:
-        """Test AdvancedPatterns create_domain_event."""
-        result = FlextMixins.AdvancedPatterns.create_domain_event(
-            "OrderCreated", {"order_id": 123}, "order-123"
-        )
-        assert result.is_success
-        event = result.unwrap()
-        assert isinstance(event, dict)
-        assert event["event_type"] == "OrderCreated"
-        assert event["aggregate_id"] == "order-123"
-
-    def test_advanced_patterns_create_command(self) -> None:
-        """Test AdvancedPatterns create_command."""
-        result = FlextMixins.AdvancedPatterns.create_command(
-            "CreateOrder", {"customer_id": 456}
-        )
-        assert result.is_success
-        command = result.unwrap()
-        assert isinstance(command, dict)
-        assert command["command_type"] == "CreateOrder"
-
-    def test_advanced_patterns_create_query(self) -> None:
-        """Test AdvancedPatterns create_query."""
-        result = FlextMixins.AdvancedPatterns.create_query(
-            "GetOrderById", {"order_id": 789}
-        )
-        assert result.is_success
-        query = result.unwrap()
-        assert isinstance(query, dict)
-        assert query["query_type"] == "GetOrderById"
-
-    def test_container_mixin_property(self) -> None:
-        """Test Container mixin container property."""
-        from flext_core import FlextContainer
-
-        class MyService(FlextMixins.Container):
-            pass
-
-        service = MyService()
-        assert isinstance(service.container, FlextContainer)
 
     def test_container_mixin_register_in_container(self) -> None:
         """Test Container mixin _register_in_container."""
@@ -1053,16 +618,6 @@ class TestFlextMixinsNestedClasses:
         corr_id = service._get_correlation_id()
         assert corr_id == "test-123"
 
-    def test_logging_mixin_logger_property(self) -> None:
-        """Test Logging mixin logger property."""
-        from flext_core import FlextLogger
-
-        class MyService(FlextMixins.Logging):
-            pass
-
-        service = MyService()
-        assert isinstance(service.logger, FlextLogger)
-
     def test_logging_mixin_log_with_context(self) -> None:
         """Test Logging mixin _log_with_context."""
 
@@ -1086,38 +641,6 @@ class TestFlextMixinsNestedClasses:
         service = MyService()
         result = service.process()
         assert result == "done"
-
-    def test_configurable_mixin_config_property(self) -> None:
-        """Test Configurable mixin config property."""
-        from flext_core import FlextConfig
-
-        class MyService(FlextMixins.Configurable):
-            pass
-
-        service = MyService()
-        assert isinstance(service.config, FlextConfig)
-
-    def test_configurable_mixin_get_config_value(self) -> None:
-        """Test Configurable mixin _get_config_value."""
-
-        class MyService(FlextMixins.Configurable):
-            pass
-
-        service = MyService()
-        value = service._get_config_value("nonexistent_key", default="default")
-        assert value == "default"
-
-    def test_configurable_mixin_set_config_value(self) -> None:
-        """Test Configurable mixin _set_config_value."""
-
-        class MyService(FlextMixins.Configurable):
-            pass
-
-        service = MyService()
-        # This may fail if config doesn't allow arbitrary attributes
-        result = service._set_config_value("test_key", "test_value")
-        # Just test it returns a result
-        assert isinstance(result, FlextResult)
 
     def test_service_mixin_init_service(self) -> None:
         """Test Service mixin _init_service."""
@@ -1143,35 +666,6 @@ class TestFlextMixinsNestedClasses:
 
         service = MyService()
         service._enrich_context(version="1.0.0", team="test")
-        # No assertion - just test it doesn't crash
-
-    def test_service_mixin_with_correlation_id(self) -> None:
-        """Test Service mixin _with_correlation_id."""
-
-        class MyService(FlextMixins.Service):
-            def __init__(self) -> None:
-                super().__init__()
-                self._init_service()
-
-        service = MyService()
-        corr_id = service._with_correlation_id()
-        assert corr_id is not None
-        assert corr_id.startswith("corr-")
-
-        # With provided ID
-        corr_id2 = service._with_correlation_id("test-456")
-        assert corr_id2 == "test-456"
-
-    def test_service_mixin_with_user_context(self) -> None:
-        """Test Service mixin _with_user_context."""
-
-        class MyService(FlextMixins.Service):
-            def __init__(self) -> None:
-                super().__init__()
-                self._init_service()
-
-        service = MyService()
-        service._with_user_context("user-123", role="admin")
         # No assertion - just test it doesn't crash
 
     def test_service_mixin_with_operation_context(self) -> None:

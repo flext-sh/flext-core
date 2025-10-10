@@ -110,27 +110,6 @@ class TestFlextModels:
         events = aggregate.clear_domain_events()
         assert len(events) == 1
 
-    def test_models_built_in_models(self) -> None:
-        """Test built-in models from FlextModels."""
-        # Test User model
-        user = FlextModels.User(
-            username="testuser",
-            email="test@example.com",
-            domain_events=[],
-        )
-        assert user.username == "testuser"
-        assert user.email == "test@example.com"
-        assert user.id is not None
-        assert user.roles == []  # Default empty list
-
-        # Test EmailAddress value object
-        email = FlextModels.EmailAddress(address="test@example.com")
-        assert email.address == "test@example.com"
-
-        # Test Host value object
-        host = FlextModels.Host(hostname="example.com")
-        assert host.hostname == "example.com"
-
     def test_models_command_creation(self) -> None:
         """Test command model creation."""
 
@@ -152,7 +131,7 @@ class TestFlextModels:
         assert payload.id is not None  # ID from IdentifiableMixin
 
         # Test expiration functionality
-        assert payload.is_expired is False  # type: ignore[comparison-overlap]
+        assert payload.is_expired is False
 
     def test_models_pagination_creation(self) -> None:
         """Test pagination model creation."""

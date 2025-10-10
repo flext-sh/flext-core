@@ -133,7 +133,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 event_store: list[UserCreatedEvent],
             ) -> None:
                 # Create handler configuration
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="create_user_handler",
                     handler_name="Create User Handler",
                     handler_type="command",
@@ -190,7 +190,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             """Handler for updating existing users."""
 
             def __init__(self, user_store: dict[str, User]) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="update_user_handler",
                     handler_name="Update User Handler",
                     handler_type="command",
@@ -280,7 +280,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             """Handler for retrieving individual users."""
 
             def __init__(self, user_store: dict[str, User]) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="get_user_handler",
                     handler_name="Get User Handler",
                     handler_type="query",
@@ -311,7 +311,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             """Handler for listing users with pagination."""
 
             def __init__(self, user_store: dict[str, User]) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="list_users_handler",
                     handler_name="List Users Handler",
                     handler_type="query",
@@ -392,7 +392,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         print("\n1. Creating Handler from Callable:")
 
         # Create handler config for the callable
-        handler_config = FlextModels.CqrsConfig.Handler(
+        handler_config = FlextModels.Cqrs.Handler(
             handler_id="email_validator",
             handler_name="Email Validator",
             handler_type="command",
@@ -426,7 +426,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         # Lambda function handler
         print("\n2. Creating Handler from Lambda:")
 
-        lambda_config = FlextModels.CqrsConfig.Handler(
+        lambda_config = FlextModels.Cqrs.Handler(
             handler_id="string_processor",
             handler_name="String Processor",
             handler_type="command",
@@ -468,7 +468,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             """Handler demonstrating various error scenarios."""
 
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="validation_handler",
                     handler_name="Validation Handler",
                     handler_type="command",
@@ -584,7 +584,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             """First stage: Order validation."""
 
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="order_validation",
                     handler_name="Order Validation Handler",
                     handler_type="command",
@@ -618,7 +618,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             """Second stage: Order enrichment."""
 
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="order_enrichment",
                     handler_name="Order Enrichment Handler",
                     handler_type="command",
@@ -656,7 +656,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             """Final stage: Order persistence."""
 
             def __init__(self) -> None:
-                config = FlextModels.CqrsConfig.Handler(
+                config = FlextModels.Cqrs.Handler(
                     handler_id="order_persistence",
                     handler_name="Order Persistence Handler",
                     handler_type="command",
@@ -943,7 +943,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         print("\n✅ CORRECT WAY (config-based):")
         print("class NewHandler(FlextCore.Handlers[MessageT, ResultT]):")
         print("    def __init__(self):")
-        print("        config = FlextModels.CqrsConfig.Handler(...)")
+        print("        config = FlextModels.Cqrs.Handler(...)")
         print("        super().__init__(config=config)")
 
         # OLD: Exception-based error handling (DEPRECATED)

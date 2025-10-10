@@ -109,6 +109,7 @@ class TestLogOperationDecorator:
 
         class ServiceWithLogger:
             def __init__(self) -> None:
+                super().__init__()
                 self.logger = FlextLogger(__name__)
 
             @log_operation("process_data")
@@ -160,6 +161,7 @@ class TestTrackPerformanceDecorator:
 
         class ServiceWithLogger:
             def __init__(self) -> None:
+                super().__init__()
                 self.logger = FlextLogger(__name__)
 
             @track_performance("process")
@@ -318,6 +320,7 @@ class TestRetryDecorator:
 
         class ServiceWithLogger:
             def __init__(self) -> None:
+                super().__init__()
                 self.logger = FlextLogger(__name__)
                 self.attempts = 0
 

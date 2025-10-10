@@ -385,7 +385,7 @@ class TestPropertyBasedPatterns:
             email=st.emails(),
         )
     )
-    def test_user_profile_property_based(self, profile: FlextTypes.Dict) -> None:
+    def test_user_profile_property_based(self, profile: FlextTypes.StringDict) -> None:
         """Property-based test for user profiles."""
         # Verify required fields
         assert "id" in profile
@@ -417,7 +417,7 @@ class TestPropertyBasedPatterns:
 
     @given(
         st.text(
-            alphabet=st.characters(blacklist_categories=("Cs",)),  # type: ignore[arg-type]
+            alphabet=st.characters(blacklist_categories=("Cs",)),
             min_size=1,
             max_size=100,
         )
@@ -595,11 +595,19 @@ class TestAdvancedPatterns:
         """Demonstrate assertion builder pattern."""
         test_data = ["apple", "banana", "cherry"]
 
+        def check_all_strings(x: object) -> bool:
+            """Check if all items in a list are strings."""
+            if not isinstance(x, list):
+                return False
+            # Type-safe check for each item in the list
+            list_x = cast("list[object]", x)  # Type is now verified as list
+            return all(isinstance(item, str) for item in list_x)
+
         # Build complex assertions
         AssertionBuilder(test_data).is_not_none().has_length(3).contains(
             "banana",
         ).satisfies(
-            lambda x: all(isinstance(item, str) for item in x),
+            check_all_strings,
             "all items should be strings",
         ).assert_all()
 
@@ -730,16 +738,43 @@ class TestRealWorldScenarios:
             # Execute without external performance monitoring
             result = process_api_request(test_request)
 
+            def check_status_success(x: object) -> bool:
+                """Check if status is success."""
+                if not isinstance(x, dict):
+                    return False
+                # Type-safe dictionary access
+                return cast("dict[str, str]", x).get("status") == "success"
+
+            def check_correlation_id(x: object) -> bool:
+                """Check if correlation_id exists."""
+                if not isinstance(x, dict):
+                    return False
+                # Type-safe dictionary access
+                return "correlation_id" in x
+
+            def check_valid_method(x: object) -> bool:
+                """Check if method is valid HTTP method."""
+                if not isinstance(x, dict):
+                    return False
+                # Type-safe dictionary access
+                method = cast("dict[str, str]", x).get("method")
+                return isinstance(method, str) and method in {
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "DELETE",
+                    "PATCH",
+                }
+
             # Comprehensive assertions
             AssertionBuilder(result).is_not_none().satisfies(
-                lambda x: cast("dict[str, object]", x)["status"] == "success",
+                check_status_success,
                 "should be successful",
             ).satisfies(
-                lambda x: "correlation_id" in cast("dict[str, object]", x),
+                check_correlation_id,
                 "should have correlation ID",
             ).satisfies(
-                lambda x: cast("dict[str, object]", x)["method"]
-                in {"GET", "POST", "PUT", "DELETE", "PATCH"},
+                check_valid_method,
                 "should have valid HTTP method",
             ).assert_all()
 

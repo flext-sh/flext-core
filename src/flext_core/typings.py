@@ -36,6 +36,8 @@ from typing import (
     TypeVar,
 )
 
+from flext_core.constants import FlextConstants
+
 # =============================================================================
 # FLEXT TYPES NAMESPACE - Centralized type system for the FLEXT ecosystem
 # =============================================================================
@@ -492,10 +494,8 @@ class FlextTypes:
         """
 
         type ErrorType = Exception | BaseException
-        type ErrorCategory = Literal[
-            "validation", "network", "database", "auth", "system", "unknown"
-        ]
-        type ErrorSeverity = Literal["low", "medium", "high", "critical"]
+        type ErrorCategory = FlextConstants.ErrorCategory
+        type ErrorSeverity = FlextConstants.ErrorSeverity
         type ErrorReport = dict[str, Exception | str]
         type ErrorChain = list[Exception]
 
@@ -535,20 +535,18 @@ class FlextTypes:
         """
 
         type Dict = FlextTypes.Dict
-        type Type = Literal["instance", "factory", "singleton"]
+        type Type = FlextConstants.ServiceType
         type FactoryDict = dict[str, Callable[[], object]]
         type ServiceRegistry = FlextTypes.Dict
         type ServiceFactory = dict[str, Callable[[FlextTypes.Dict], object]]
 
         # Enhanced service lifecycle types
-        type LifecycleState = Literal[
-            "initializing", "ready", "running", "stopping", "stopped", "error"
-        ]
+        type LifecycleState = FlextConstants.ServiceLifecycleState
         type ServiceConfig = dict[str, object | FlextTypes.Dict]
 
         # Enhanced service communication types
         type ServiceEndpoint = str
-        type ServiceProtocol = Literal["http", "grpc", "websocket", "message_queue"]
+        type ServiceProtocol = FlextConstants.ServiceProtocol
         type ServiceContract = dict[str, ServiceEndpoint | ServiceProtocol]
 
         # Enhanced service monitoring types
@@ -588,7 +586,7 @@ class FlextTypes:
         """
 
         # Scope types (aligned with FlextConstants.Context scope literals)
-        type Scope = Literal["global", "request", "session", "transaction"]
+        type Scope = FlextConstants.ContextScope
 
         # Correlation ID type (aligned with FlextConstants.Context correlation config)
         type CorrelationId = str
@@ -602,7 +600,7 @@ class FlextTypes:
         type ContextTimestamp = int  # Milliseconds since epoch
 
         # Context export types (aligned with FlextConstants.Context export formats)
-        type ExportFormat = Literal["json", "dict"]
+        type ExportFormat = FlextConstants.ContextExportFormat
         type ExportedContext = dict[str, object] | str
 
         # Context depth and size types (aligned with FlextConstants.Context limits)
@@ -698,7 +696,7 @@ class FlextTypes:
     class Config:
         """Configuration types."""
 
-        type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        type LogLevel = FlextConstants.LoggingLevel
         type Serializer = Callable[
             [
                 dict[
@@ -774,9 +772,9 @@ class FlextTypes:
     class Output:
         """Generic output formatting types."""
 
-        type OutputFormat = Literal["json", "yaml", "table", "csv", "text", "xml"]
-        type SerializationFormat = Literal["json", "yaml", "toml", "ini", "xml"]
-        type CompressionFormat = Literal["gzip", "bzip2", "xz", "lzma"]
+        type OutputFormat = FlextConstants.ProcessingOutputFormat
+        type SerializationFormat = FlextConstants.ProcessingSerializationFormat
+        type CompressionFormat = FlextConstants.ProcessingCompressionFormat
 
     # =========================================================================
     # SERVICE ORCHESTRATION TYPES - Service orchestration patterns
@@ -795,18 +793,8 @@ class FlextTypes:
     class Project:
         """Project management types."""
 
-        type ProjectType = Literal[
-            "library",
-            "application",
-            "service",
-            "cli",
-            "web",
-            "api",
-            "PYTHON",
-            "GO",
-            "JAVASCRIPT",
-        ]
-        type ProjectStatus = Literal["active", "inactive", "deprecated", "archived"]
+        type ProjectType = FlextConstants.ProjectType
+        type ProjectStatus = FlextConstants.ProjectStatus
         type ProjectConfig = FlextTypes.Dict
 
     # =========================================================================
@@ -817,39 +805,16 @@ class FlextTypes:
         """Generic processing types for ecosystem patterns."""
 
         # Processing status types
-        type ProcessingStatus = Literal[
-            "pending",
-            "running",
-            "completed",
-            "failed",
-            "cancelled",
-        ]
-        type ProcessingMode = Literal["batch", "stream", "parallel", "sequential"]
-        type ValidationLevel = Literal["strict", "lenient", "standard"]
-        type ProcessingPhase = Literal["prepare", "execute", "validate", "complete"]
-        type HandlerType = Literal["command", "query", "event", "processor"]
-        type WorkflowStatus = Literal[
-            "pending",
-            "running",
-            "completed",
-            "failed",
-            "cancelled",
-        ]
+        type ProcessingStatus = FlextConstants.WorkflowProcessingStatus
+        type ProcessingMode = FlextConstants.WorkflowProcessingMode
+        type ValidationLevel = FlextConstants.WorkflowValidationLevel
+        type ProcessingPhase = FlextConstants.WorkflowProcessingPhase
+        type HandlerType = FlextConstants.WorkflowHandlerType
+        type WorkflowStatus = FlextConstants.WorkflowStatus
 
-        WorkspaceStatus = Literal[
-            "initializing",
-            "ready",
-            "error",
-            "maintenance",
-        ]
+        WorkspaceStatus = FlextConstants.WorkspaceStatus
 
-        type StepStatus = Literal[
-            "pending",
-            "running",
-            "completed",
-            "failed",
-            "skipped",
-        ]
+        type StepStatus = FlextConstants.WorkflowStepStatus
 
     # =========================================================================
     # HANDLERS TYPES - CQRS handler registries and pipelines (NEW)
@@ -880,7 +845,7 @@ class FlextTypes:
         """
 
         # Handler identification
-        type Mode = Literal["command", "query", "event", "saga"]
+        type Mode = FlextConstants.CqrsMode
 
         # Handler functions
         type HandlerFunc = Callable[
@@ -938,7 +903,7 @@ class FlextTypes:
         """
 
         # Circuit breaker types
-        type CircuitState = Literal["closed", "open", "half_open"]
+        type CircuitState = FlextConstants.CircuitBreakerState
         type CircuitStats = dict[
             str, bool | int | float | str | FlextTypes.FloatList | None
         ]
