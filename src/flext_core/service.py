@@ -24,7 +24,7 @@ from flext_core.typings import FlextTypes
 
 class FlextService[TDomainResult](
     FlextModels.ArbitraryTypesModel,
-    FlextMixins.Service,
+    FlextMixins,
     ABC,
 ):
     """Domain service base using railway patterns with Pydantic models.
@@ -33,10 +33,10 @@ class FlextService[TDomainResult](
         - Abstract execute() method for domain operations (Domain.Service protocol)
         - Business rule validation with FlextResult (Domain.Service protocol)
         - Configuration validation and management (Domain.Service protocol)
-        - Dependency injection via FlextMixins.Container
-        - Context propagation via FlextMixins.Context
-        - Structured logging via FlextMixins.Logging
-        - Performance tracking via FlextMixins.Metrics
+        - Dependency injection via FlextMixins
+        - Context propagation via FlextMixins
+        - Structured logging via FlextMixins
+        - Performance tracking via FlextMixins
         - Configuration access via FlextMixins.Configurable
         - Operation execution with timeout support (Domain.Service protocol)
         - Batch processing for multiple operations
@@ -179,12 +179,12 @@ class FlextService[TDomainResult](
 
     """
 
-    # Dependency injection attributes provided by FlextMixins.Service
-    # - container: FlextContainer (via FlextMixins.Container)
-    # - context: object (via FlextMixins.Context)
-    # - logger: FlextLogger (via FlextMixins.Logging)
+    # Dependency injection attributes provided by FlextMixins
+    # - container: FlextContainer (via FlextMixins)
+    # - context: object (via FlextMixins)
+    # - logger: FlextLogger (via FlextMixins)
     # - config: object (via FlextMixins.Configurable)
-    # - _track_operation: context manager (via FlextMixins.Metrics)
+    # - _track_operation: context manager (via FlextMixins)
 
     _bus: object | None = None  # FlextBus type to avoid circular import
 

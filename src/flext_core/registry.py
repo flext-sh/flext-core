@@ -27,20 +27,20 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
-class FlextRegistry(FlextMixins.Service):
+class FlextRegistry(FlextMixins):
     """Stateful helper that reports on handler adoption across packages.
 
     By wrapping ``FlextDispatcher`` it provides registration summaries
     and idempotency guarantees that feed ecosystem migration dashboards
     during the 1.0.0 rollout.
 
-    **Inherited Infrastructure** (from FlextMixins.Service):
-        - container: FlextContainer (via FlextMixins.Container)
-        - context: object (via FlextMixins.Context)
-        - logger: FlextLogger (via FlextMixins.Logging) - per-registry logger instance
+    **Inherited Infrastructure** (from FlextMixins):
+        - container: FlextContainer (via FlextMixins)
+        - context: object (via FlextMixins)
+        - logger: FlextLogger (via FlextMixins) - per-registry logger instance
         - config: object (via FlextMixins.Configurable) - global config access
-        - _track_operation: context manager (via FlextMixins.Metrics)
-        - _enrich_context, _with_correlation_id, etc. (via FlextMixins.Service)
+        - _track_operation: context manager (via FlextMixins)
+        - _enrich_context, _with_correlation_id, etc. (via FlextMixins)
 
     **Function**: Handler registration management and tracking
         - Handler registration with dispatcher integration

@@ -25,7 +25,7 @@ from flext_core.utilities import FlextUtilities
 class FlextBus(
     FlextProtocols.Commands.CommandBus,
     FlextProtocols.Commands.Middleware,
-    FlextMixins.Service,
+    FlextMixins,
 ):
     """Command/Query bus for CQRS pattern implementation.
 
@@ -35,13 +35,13 @@ class FlextBus(
     and comprehensive error handling. Foundation for all 32+ FLEXT
     projects implementing CQRS.
 
-    **Inherited Infrastructure** (from FlextMixins.Service):
-        - container: FlextContainer (via FlextMixins.Container)
-        - context: object (via FlextMixins.Context)
-        - logger: FlextLogger (via FlextMixins.Logging) - per-bus logger instance
+    **Inherited Infrastructure** (from FlextMixins):
+        - container: FlextContainer (via FlextMixins)
+        - context: object (via FlextMixins)
+        - logger: FlextLogger (via FlextMixins) - per-bus logger instance
         - config: object (via FlextMixins.Configurable) - global config access
-        - _track_operation: context manager (via FlextMixins.Metrics)
-        - _enrich_context, _with_correlation_id, etc. (via FlextMixins.Service)
+        - _track_operation: context manager (via FlextMixins)
+        - _enrich_context, _with_correlation_id, etc. (via FlextMixins)
 
     Internal implementation note: Instance uses logger from inherited mixin
     for all bus operations.

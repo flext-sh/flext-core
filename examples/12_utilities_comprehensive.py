@@ -26,7 +26,7 @@ from flext_core import FlextResult, FlextService, FlextTypes
 
 
 class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating essential FlextUtilities patterns with FlextMixins.Service infrastructure.
+    """Service demonstrating essential FlextUtilities patterns with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
@@ -45,7 +45,7 @@ class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins.Service infrastructure.
+        """Initialize with inherited FlextMixins infrastructure.
 
         Inherited properties (no manual instantiation needed):
         - self.logger: FlextLogger with service context (utilities operations)

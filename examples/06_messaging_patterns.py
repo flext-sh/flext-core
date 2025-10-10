@@ -116,7 +116,7 @@ class DemoScenarios:
 
 
 class MessagingPatternsService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating ALL messaging and event patterns with FlextMixins.Service infrastructure.
+    """Service demonstrating ALL messaging and event patterns with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
@@ -127,11 +127,11 @@ class MessagingPatternsService(FlextService[FlextTypes.Dict]):
 
     The focus is on demonstrating messaging patterns (Payloads, DomainEvents, CQRS)
     with structured logging, correlation tracking, and event sourcing patterns,
-    while leveraging complete FlextMixins.Service infrastructure for orchestration.
+    while leveraging complete FlextMixins infrastructure for orchestration.
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins.Service infrastructure.
+        """Initialize with inherited FlextMixins infrastructure.
 
         Note: No manual logger initialization needed!
         All infrastructure is inherited from FlextService base class:
@@ -142,7 +142,7 @@ class MessagingPatternsService(FlextService[FlextTypes.Dict]):
         - self.metrics: FlextMetrics for message observability
         """
         super().__init__()
-        # Use self.logger from FlextMixins.Logging, not logger
+        # Use self.logger from FlextMixins, not logger
         self._event_store: list[FlextModels.DomainEvent] = []
         self._message_queue: list[FlextModels.Payload[FlextTypes.Dict]] = []
         self._scenarios = DemoScenarios()

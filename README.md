@@ -227,7 +227,7 @@ json_data = FlextRuntime.serialize_to_json(data)
 
 ### **New Features**
 
-#### **1. Context Enrichment in FlextMixins.Service**
+#### **1. Context Enrichment in FlextMixins**
 
 Automatic context management for structured logging and distributed tracing:
 

@@ -85,7 +85,7 @@ class DemoScenarios:
 
 
 class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating ALL FlextCore.Processors patterns with FlextMixins.Service infrastructure.
+    """Service demonstrating ALL FlextCore.Processors patterns with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
@@ -96,11 +96,11 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
 
     The focus is on demonstrating FlextCore.Processors patterns (handlers, pipelines,
     strategies, registry) with structured logging and handler execution tracking,
-    while leveraging complete FlextMixins.Service infrastructure for orchestration.
+    while leveraging complete FlextMixins infrastructure for orchestration.
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins.Service infrastructure.
+        """Initialize with inherited FlextMixins infrastructure.
 
         Note: No manual logger initialization needed!
         All infrastructure is inherited from FlextService base class:
@@ -111,7 +111,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
         - self.metrics: FlextMetrics for handler observability
         """
         super().__init__()
-        # Use self.logger from FlextMixins.Logging, not logger
+        # Use self.logger from FlextMixins, not logger
         self._scenarios = DemoScenarios()
         self._user = self._scenarios.user()
         self._order: dict[str, object] = cast(

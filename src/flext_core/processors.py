@@ -25,20 +25,20 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
-class FlextProcessors(FlextMixins.Service):
+class FlextProcessors(FlextMixins):
     """Processing convenience namespace aligned with dispatcher workflows.
 
     Registries, pipelines, and handler helpers mirror ergonomics
     promoted in modernization plan so supporting packages can compose
     around ``FlextDispatcher`` without bespoke glue code.
 
-    **Inherited Infrastructure** (from FlextMixins.Service):
-        - container: FlextContainer (via FlextMixins.Container)
-        - context: object (via FlextMixins.Context)
-        - logger: FlextLogger (via FlextMixins.Logging) - per-processor logger instance
+    **Inherited Infrastructure** (from FlextMixins):
+        - container: FlextContainer (via FlextMixins)
+        - context: object (via FlextMixins)
+        - logger: FlextLogger (via FlextMixins) - per-processor logger instance
         - config: object (via FlextMixins.Configurable) - global config access
-        - _track_operation: context manager (via FlextMixins.Metrics)
-        - _enrich_context, _with_correlation_id, etc. (via FlextMixins.Service)
+        - _track_operation: context manager (via FlextMixins)
+        - _enrich_context, _with_correlation_id, etc. (via FlextMixins)
 
     **Function**: Processing utilities for dispatcher integration
         - Processor registration and discovery

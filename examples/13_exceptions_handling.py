@@ -39,7 +39,7 @@ DEMO_EXCEPTION_MSG = "Demo exception raised: %s"
 
 
 class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating ALL FlextCore.Exceptions patterns with FlextMixins.Service infrastructure.
+    """Service demonstrating ALL FlextCore.Exceptions patterns with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
@@ -61,7 +61,7 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins.Service infrastructure.
+        """Initialize with inherited FlextMixins infrastructure.
 
         Inherited properties (no manual instantiation needed):
         - self.logger: FlextLogger with service context (exception handling operations)

@@ -508,7 +508,7 @@ class Order(FlextModels.AggregateRoot):
 
 
 class ComprehensiveModelsService(FlextService[Order]):
-    """Service demonstrating ALL FlextModels patterns with FlextMixins.Service infrastructure.
+    """Service demonstrating ALL FlextModels patterns with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
@@ -518,11 +518,11 @@ class ComprehensiveModelsService(FlextService[Order]):
     - Inherited metrics property (FlextMetrics for observability)
 
     The focus is on demonstrating DDD patterns (Value Objects, Entities,
-    Aggregate Roots) while leveraging complete FlextMixins.Service infrastructure.
+    Aggregate Roots) while leveraging complete FlextMixins infrastructure.
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins.Service infrastructure.
+        """Initialize with inherited FlextMixins infrastructure.
 
         Note: No manual logger or container initialization needed!
         All infrastructure is inherited from FlextService base class:

@@ -11,7 +11,7 @@ examples and services, override any namespace class to extend behaviour, and
 benefit from automatic container registration, context binding, and logging.
 """
 
-# ruff: noqa: D102, D107
+# ruff: noqa: D102
 # pyright: basic
 
 from __future__ import annotations
@@ -42,57 +42,15 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
-class FlextBase:
-    """Convenience base exposing flext-core namespaces and infrastructure."""
+class FlextBase(FlextMixins):
+    """Convenience base exposing flext-core namespaces and infrastructure.
+
+    Inherits directly from FlextMixins to provide all service infrastructure
+    (container, logger, config, context, metrics) automatically.
+    """
 
     # Type variables for generic operations
     ResultType = TypeVar("ResultType")
-
-    class _ServiceAdapter(FlextMixins.Service):
-        """Internal helper leveraging FlextMixins.Service for automation."""
-
-        def __init__(
-            self,
-            *,
-            service_name: str,
-            config: FlextConfig | None,
-            container: FlextContainer | None,
-            logger: FlextLogger | None,
-            logger_name: str | None,
-            auto_register: bool,
-        ) -> None:
-            self._config_override = config
-            self._container_override = container
-            self._logger_override = logger
-            self._logger_name_override = logger_name
-            self._custom_logger: FlextLogger | None = None
-            super().__init__()
-            if auto_register:
-                self._init_service(service_name)
-
-        @property
-        def container(self) -> FlextContainer:
-            if self._container_override is not None:
-                return self._container_override
-            return super().container
-
-        @property
-        def logger(self) -> FlextLogger:
-            if self._logger_override is not None:
-                return self._logger_override
-            if self._custom_logger is None:
-                name = self._logger_name_override or self.__class__.__name__
-                self._custom_logger = FlextLogger(name)
-            return self._custom_logger
-
-        def log(self, level: str, message: str, **extra: object) -> None:
-            self._log_with_context(level, message, **extra)
-
-        def bind_context(self, **context: object) -> None:
-            self._enrich_context(**context)
-
-        def track(self, operation_name: str) -> AbstractContextManager[FlextTypes.Dict]:
-            return self._track_operation(operation_name)
 
     # Namespace aliases – inherit to enable domain-specific extension.
 
@@ -163,44 +121,31 @@ class FlextBase:
         self,
         *,
         service_name: str | None = None,
-        config: FlextConfig | None = None,
-        container: FlextContainer | None = None,
-        logger: FlextLogger | None = None,
         runtime: FlextRuntime | None = None,
-        logger_name: str | None = None,
         auto_register: bool = True,
     ) -> None:
+        """Initialize FlextBase with optional service registration.
+
+        Args:
+            service_name: Optional service name for registration
+            runtime: Optional runtime instance (defaults to FlextRuntime())
+            auto_register: Whether to auto-register in container (default: True)
+
+        """
         super().__init__()
         self._runtime = runtime or self.Runtime()
-        resolved_name = service_name or self.__class__.__name__
-        config_override = config or self.Config(debug=False, trace=False)
-        self._service = self._ServiceAdapter(
-            service_name=resolved_name,
-            config=config_override,
-            container=container,
-            logger=logger,
-            logger_name=logger_name,
-            auto_register=auto_register,
-        )
+
+        if auto_register:
+            resolved_name = service_name or self.__class__.__name__
+            self._init_service(resolved_name)
 
     # ------------------------------------------------------------------
-    # Core helpers – container, logging, runtime
+    # Core helpers – runtime
     # ------------------------------------------------------------------
-
-    @property
-    def container(self) -> FlextContainer:
-        return self._service.container
-
-    @property
-    def logger(self) -> FlextLogger:
-        return self._service.logger
-
-    @property
-    def context(self) -> FlextContext:
-        return self._service.context
 
     @property
     def runtime(self) -> FlextRuntime:
+        """Access FlextRuntime instance."""
         return self._runtime
 
     # ------------------------------------------------------------------
@@ -290,22 +235,28 @@ class FlextBase:
         )
 
     def log(self, level: str, message: str, **extra: object) -> None:
-        self._service.log(level, message, **extra)
+        """Log message with context (delegates to FlextMixins)."""
+        self._log_with_context(level, message, **extra)
 
     def info(self, message: str, **extra: object) -> None:
+        """Log info message."""
         self.log("info", message, **extra)
 
     def warning(self, message: str, **extra: object) -> None:
+        """Log warning message."""
         self.log("warning", message, **extra)
 
     def error(self, message: str, **extra: object) -> None:
+        """Log error message."""
         self.log("error", message, **extra)
 
     def bind_context(self, **context: object) -> None:
-        self._service.bind_context(**context)
+        """Bind context data (delegates to FlextMixins)."""
+        self._enrich_context(**context)
 
     def track(self, operation_name: str) -> AbstractContextManager[FlextTypes.Dict]:
-        return self._service.track(operation_name)
+        """Track operation metrics (delegates to FlextMixins)."""
+        return self._track_operation(operation_name)
 
     def run_operation(
         self,

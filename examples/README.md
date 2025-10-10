@@ -1,6 +1,6 @@
 # FLEXT-Core Examples - Complete API Demonstrations
 
-**Version**: 0.9.9 RC | **Coverage**: 100% of Public APIs | **Status**: Production Ready
+**Version**: 0.9.9 RC | **Coverage**: 100% of Public APIs | **Status**: Production Ready | **Phase 1**: Context Enrichment Completed
 
 This directory contains comprehensive examples demonstrating ALL capabilities of the FLEXT-Core foundation library. Each example showcases complete API usage with best practices and deprecation warnings for anti-patterns.
 
@@ -72,6 +72,15 @@ These examples show specialized patterns and processing:
 - **Integration**: Demonstrates how all components interact seamlessly
 - **Run**: `python examples/08_integration_complete.py`
 
+### Phase 1 Examples (09+)
+
+#### 15_automation_showcase.py - Phase 1 Context Enrichment
+
+- **Purpose**: Complete demonstration of Phase 1 context enrichment capabilities
+- **Concepts**: Zero-boilerplate context management, distributed tracing, audit trails
+- **Key Methods**: `_with_correlation_id()`, `_with_user_context()`, `_with_operation_context()`, `execute_with_context_enrichment()`
+- **Run**: `python examples/15_automation_showcase.py`
+
 ## 🚀 Running the Examples
 
 ### Prerequisites
@@ -107,6 +116,9 @@ python examples/07_processing_handlers.py
 
 # Complete integration
 python examples/08_integration_complete.py
+
+# Phase 1 context enrichment
+python examples/15_automation_showcase.py
 ```
 
 ### Running All Examples
@@ -138,8 +150,9 @@ done
 ### For Advanced Users
 
 1. Review **08_integration_complete.py** for architectural patterns
-2. Study the deprecation warnings in each example for anti-patterns
-3. Use these examples as templates for your own FLEXT applications
+2. Study **15_automation_showcase.py** for Phase 1 context enrichment patterns
+3. Study the deprecation warnings in each example for anti-patterns
+4. Use these examples as templates for your own FLEXT applications
 
 ## 🏆 Best Practices Demonstrated
 
@@ -218,7 +231,8 @@ These examples are compatible with:
 - **flext-core**: v0.9.9 RC (preparing for 1.0.0 stable)
 - **Python**: 3.13+
 - **Pydantic**: v2.0+
-- **Test Coverage**: 80% (1,268 tests passing)
+- **Test Coverage**: 80% (1,143 tests passing, 92 failures)
+- **Phase 1**: Context enrichment completed
 
 ## 📝 Contributing
 
@@ -233,4 +247,4 @@ When adding new examples:
 
 ---
 
-_These examples represent the complete API surface and best practices of FLEXT Core v0.9.9 RC, serving as both learning materials and integration tests for the foundation library preparing for its 1.0.0 stable release. With 80% test coverage and 1,268 passing tests, the foundation is solid for the upcoming 1.0.0 release._
+_These examples represent the complete API surface and best practices of FLEXT Core v0.9.9 RC, serving as both learning materials and integration tests for the foundation library preparing for its 1.0.0 stable release. With 80% test coverage, 1,143 passing tests, and Phase 1 context enrichment completed, the foundation is solid for the upcoming 1.0.0 release._

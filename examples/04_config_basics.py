@@ -68,7 +68,7 @@ class DemoScenarios:
 
 
 class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating ALL FlextConfig patterns with FlextMixins.Service infrastructure.
+    """Service demonstrating ALL FlextConfig patterns with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
@@ -78,12 +78,12 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
     - Inherited metrics property (FlextMetrics for observability)
 
     The focus is on demonstrating FlextConfig patterns (Pydantic 2.11+ Settings
-    with dependency_injector integration) while leveraging complete FlextMixins.Service
+    with dependency_injector integration) while leveraging complete FlextMixins
     infrastructure for service orchestration.
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins.Service infrastructure.
+        """Initialize with inherited FlextMixins infrastructure.
 
         Note: No manual logger or config initialization needed!
         All infrastructure is inherited from FlextService base class:
@@ -113,7 +113,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Execute all FlextConfig demonstrations and return summary.
 
         Demonstrates inherited config property alongside other infrastructure
-        components (logger, container, context, metrics) from FlextMixins.Service.
+        components (logger, container, context, metrics) from FlextMixins.
         """
         self.logger.info("Starting comprehensive FlextConfig demonstration")
 
