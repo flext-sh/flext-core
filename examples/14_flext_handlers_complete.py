@@ -980,7 +980,7 @@ class FlextHandlersService(FlextCore.Service[dict[str, str | bool]]):
 
 def main() -> None:
     """Main entry point demonstrating all FlextCore.Handlers capabilities."""
-    service = FlextCore.HandlersService()
+    service = FlextHandlersService()
 
     print("=" * 70)
     print("FLEXTHANDLERS COMPLETE API DEMONSTRATION")

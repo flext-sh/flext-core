@@ -15,6 +15,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextCore
+from flext_core.mixins import FlextMixins
 
 
 class ConcreteTestHandler(FlextCore.Handlers[str, str]):
@@ -266,8 +267,8 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
 
-        # Should inherit from FlextCore.Mixins
-        assert isinstance(handler, FlextCore.Mixins)
+        # Should inherit from FlextMixins
+        assert isinstance(handler, FlextMixins)
 
     def test_handlers_config_model_type(self) -> None:
         """Test that config model is properly typed."""

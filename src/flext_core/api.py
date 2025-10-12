@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from flext_core.__version__ import __version__, __version_info__
 from flext_core.base import FlextBase
+from flext_core.container import FlextContainer
 from flext_core.loggings import FlextLogger
 
 
@@ -77,7 +78,7 @@ class FlextCore(FlextBase):
         return FlextBase.Config(**kwargs)
 
     @classmethod
-    def get_container(cls) -> FlextBase.Container:
+    def get_container(cls) -> FlextContainer:
         """Get the global dependency injection container.
 
         Returns:

@@ -381,6 +381,24 @@ class FlextRuntime:
             origin = typing.get_origin(type_hint)
             if origin is not None:
                 return issubclass(origin, Sequence)
+
+            # Check if the type itself is a sequence subclass (for type aliases)
+            if isinstance(type_hint, type) and issubclass(type_hint, Sequence):
+                return True
+
+            # Check __name__ for type aliases like StringList
+            if hasattr(type_hint, "__name__"):
+                type_name = getattr(type_hint, "__name__", "")
+                # Common sequence type aliases
+                if type_name in {
+                    "StringList",
+                    "IntList",
+                    "FloatList",
+                    "BoolList",
+                    "List",
+                }:
+                    return True
+
             return False
         except Exception:  # pragma: no cover
             # Defensive: typing/issubclass failures are extremely rare

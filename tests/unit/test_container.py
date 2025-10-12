@@ -53,7 +53,7 @@ class TestFlextContainer:
         # Create service with dependency injection
         result = container.create_service(Service, "test_service")
         assert result.is_success
-        service = result.value
+        service = cast("Service", result.value)
         assert service is not None
         assert service.initialized
         assert service.dependency is dependency
@@ -78,7 +78,7 @@ class TestFlextContainer:
         # Auto-wire service (creates instance but doesn't register)
         result = container.auto_wire(Service)
         assert result.is_success
-        service = result.value
+        service = cast("Service", result.value)
         assert service is not None
         assert service.initialized
         assert service.dependency is dependency
@@ -113,7 +113,7 @@ class TestFlextContainer:
         # Auto-wire service with default parameter
         result = container.auto_wire(Service)
         assert result.is_success
-        service = result.value
+        service = cast("Service", result.value)
         assert service is not None
         assert service.initialized
         assert service.optional == "default"
@@ -253,7 +253,7 @@ class TestFlextContainer:
         assert value["created"] == "by_factory"
 
         # Service now exists, should return existing
-        result2: FlextCore.Result[FlextCore.Types.StringDict] = container.get_or_create(
+        result2: FlextCore.Result[object] = container.get_or_create(
             "test_service", factory
         )
         assert result2.is_success
@@ -420,9 +420,7 @@ class TestFlextContainer:
         """Test getting non-existent service with typing."""
         container = FlextCore.Container()
 
-        result: FlextCore.Result[FlextCore.Types.Dict] = container.get_typed(
-            "nonexistent", dict
-        )
+        result: FlextCore.Result[object] = container.get_typed("nonexistent", dict)
         assert result.is_failure
         assert result.error is not None
         assert result.error is not None
@@ -477,7 +475,7 @@ class TestFlextContainer:
 
         result = container.create_service(Service)
         assert result.is_success
-        service = result.value
+        service = cast("Service", result.value)
         assert service.initialized
         assert service.optional == "default"
 
@@ -574,7 +572,7 @@ class TestFlextContainer:
         global_container.register("typed_service", service)
 
         # Get with typing
-        result: FlextCore.Result[FlextCore.Types.Dict] = global_container.get_typed(
+        result: FlextCore.Result[object] = global_container.get_typed(
             "typed_service", dict
         )
         assert result.is_success

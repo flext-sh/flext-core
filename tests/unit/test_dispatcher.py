@@ -13,6 +13,7 @@ import logging
 from typing import Literal, cast
 
 from flext_core import FlextCore
+from flext_core.bus import FlextBus
 
 
 class TestFlextDispatcherCoverage:
@@ -36,9 +37,9 @@ class TestFlextDispatcherCoverage:
         config = dispatcher.dispatcher_config
         assert isinstance(config, dict)
 
-        # Test bus property - bus is FlextCore.Bus instance (base class)
+        # Test bus property - bus is FlextBus instance
         bus = dispatcher.bus
-        assert isinstance(bus, FlextCore.Bus)
+        assert isinstance(bus, FlextBus)
 
     def test_dispatcher_handler_registration(self) -> None:
         """Test handler registration functionality."""

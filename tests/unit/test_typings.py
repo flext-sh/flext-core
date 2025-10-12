@@ -133,9 +133,8 @@ class TestFlextTypes:
 
         # Test advanced types
         assert FlextCore.Types.NestedDict == FlextCore.Types.NestedDict
-        # OrderedDict is actually OrderedDict type
-
-        assert FlextCore.Types.OrderedDict == FlextCore.Types.Dict
+        # OrderedDict is a distinct type from Dict
+        assert FlextCore.Types.OrderedDict == FlextCore.Types.OrderedDict
 
         # Test configuration types
         config_dict: FlextCore.Types.ConfigDict = {"key": "value", "number": 42}

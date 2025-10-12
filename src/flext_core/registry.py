@@ -14,10 +14,11 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import (
+    Annotated,
     cast,
 )
 
-from pydantic import Field
+from pydantic import Field, computed_field
 
 from flext_core.constants import FlextConstants
 from flext_core.dispatcher import FlextDispatcher
@@ -60,25 +61,117 @@ class FlextRegistry(FlextMixins):
     """
 
     class Summary(FlextModels.Value):
-        """Aggregated outcome used for 1.0.0 handler adoption tracking using FlextModels.Value."""
+        """Aggregated outcome for batch handler registration tracking.
 
-        registered: list[FlextModels.RegistrationDetails] = Field(default_factory=list)
-        skipped: FlextTypes.StringList = Field(default_factory=list)
-        errors: FlextTypes.StringList = Field(default_factory=list)
+        Provides comprehensive summary of batch handler registration operations,
+        tracking successful, skipped, and failed registrations with detailed
+        metadata and computed success indicators.
 
+        This immutable value object is used by FlextRegistry to report the
+        results of batch handler registration operations, enabling idempotent
+        registration with full auditability.
+
+        Attributes:
+            registered: List of successfully registered handlers with details
+            skipped: List of handler identifiers that were skipped (already registered)
+            errors: List of error messages for failed registrations
+
+        Computed Properties:
+            is_success: True if no errors occurred during registration
+            successful_registrations: Count of successfully registered handlers
+            failed_registrations: Count of failed registration attempts
+
+        Examples:
+            >>> from pydantic import Field
+            >>> summary = FlextRegistry.Summary(
+            ...     registered=[
+            ...         FlextModels.RegistrationDetails(
+            ...             registration_id="reg-001",
+            ...             handler_mode="command",
+            ...             timestamp="2025-01-01T00:00:00Z",
+            ...             status="running"
+            ...         )
+            ...     ],
+            ...     skipped=["CreateUserCommand"],
+            ...     errors=[]
+            ... )
+            >>> summary.is_success
+            True
+            >>> summary.successful_registrations
+            1
+
+        """
+
+        registered: Annotated[
+            list[FlextModels.RegistrationDetails],
+            Field(
+                default_factory=list,
+                description="Successfully registered handlers with registration details",
+            ),
+        ] = Field(default_factory=list)
+        skipped: Annotated[
+            FlextTypes.StringList,
+            Field(
+                default_factory=list,
+                description="Handler identifiers that were skipped (already registered)",
+                examples=[["CreateUserCommand", "UpdateUserCommand"]],
+            ),
+        ] = Field(default_factory=list)
+        errors: Annotated[
+            FlextTypes.StringList,
+            Field(
+                default_factory=list,
+                description="Error messages for failed registrations",
+                examples=[["Handler validation failed", "Duplicate registration"]],
+            ),
+        ] = Field(default_factory=list)
+
+        @computed_field  # type: ignore[prop-decorator]
         @property
         def is_success(self) -> bool:
-            """Indicate whether the batch registration fully succeeded."""
+            """Indicate whether the batch registration fully succeeded.
+
+            Returns:
+                True if no errors occurred, False otherwise
+
+            Examples:
+                >>> summary = FlextRegistry.Summary(registered=[...], errors=[])
+                >>> summary.is_success
+                True
+
+            """
             return not self.errors
 
+        @computed_field  # type: ignore[prop-decorator]
         @property
         def successful_registrations(self) -> int:
-            """Number of successful registrations."""
+            """Number of successful registrations.
+
+            Returns:
+                Count of successfully registered handlers
+
+            Examples:
+                >>> summary = FlextRegistry.Summary(registered=[detail1, detail2])
+                >>> summary.successful_registrations
+                2
+
+            """
             return len(self.registered)
 
+        @computed_field  # type: ignore[prop-decorator]
         @property
         def failed_registrations(self) -> int:
-            """Number of failed registrations."""
+            """Number of failed registrations.
+
+            Returns:
+                Count of failed registration attempts
+
+            Examples:
+                >>> summary = FlextRegistry.Summary(errors=["error1", "error2"])
+                >>> summary.failed_registrations
+                2
+
+            """
             return len(self.errors)
 
     def __init__(self, dispatcher: FlextDispatcher) -> None:

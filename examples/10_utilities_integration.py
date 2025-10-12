@@ -31,6 +31,8 @@ from typing import cast
 
 from flext_core import FlextCore
 
+logger = FlextCore.Logger(__name__)
+
 
 class MyService:
     """Example service demonstrating FlextCore.Config integration."""
@@ -392,14 +394,14 @@ def demonstrate_new_flextresult_methods() -> None:
     # 4. alt - Utility Provider Alternatives
     print("\n=== 4. alt: Utility Provider Alternatives ===")
 
-    def get_custom_logger() -> FlextCore.Result[object]:
+    def get_custom_logger() -> FlextCore.Result[FlextCore.Logger]:
         """Try to get custom configured logger."""
-        return FlextCore.Result[object].fail("Custom logger not configured")
+        return FlextCore.Result[FlextCore.Logger].fail("Custom logger not configured")
 
-    def get_default_logger() -> FlextCore.Result[object]:
+    def get_default_logger() -> FlextCore.Result[FlextCore.Logger]:
         """Provide default logger as fallback."""
-        logger = FlextCore.create_logger("utilities_integration")
-        return FlextCore.Result[object].ok(logger)
+        logger = FlextCore.Logger("utilities_integration")
+        return FlextCore.Result[FlextCore.Logger].ok(logger)
 
     # Try custom, fall back to default
     logger_result = get_custom_logger().alt(get_default_logger())
@@ -431,7 +433,7 @@ def demonstrate_new_flextresult_methods() -> None:
 
     # Try again with successful result (lazy function NOT called)
     container_success_result = FlextCore.Result[FlextCore.Container].ok(
-        FlextCore.Container.get_global()
+        FlextCore.Container()
     )
     container_cached = container_success_result.value_or_call(
         create_expensive_container
