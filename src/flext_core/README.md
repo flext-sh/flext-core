@@ -21,34 +21,39 @@ This module provides the core infrastructure components used across the FLEXT ec
 The framework is organized into logical layers:
 
 ### Foundation Layer
+
 Core types and constants that have no dependencies on other framework modules.
 
 ### Domain Layer
+
 Business logic abstractions including entities, value objects, services, and domain events.
 
 ### Application Layer
+
 Use case coordination with CQRS patterns, command/query handlers, and application services.
 
 ### Infrastructure Layer
+
 External concerns including logging, configuration, dependency injection, and context management.
 
 ## Key Components
 
-| Component | Description |
-|-----------|-------------|
-| `FlextResult[T]` | Railway-oriented error handling with monadic operations |
-| `FlextContainer` | Dependency injection container with type-safe registration |
-| `FlextBus` | Command/query bus for CQRS message routing |
-| `FlextDispatcher` | High-level message dispatch orchestration |
-| `FlextContext` | Hierarchical context management for tracing |
-| `FlextLogger` | Structured logging with automatic context propagation |
-| `FlextConfig` | Configuration management with Pydantic validation |
-| `FlextService` | Base class for domain services |
-| `FlextModels` | DDD patterns (Entity, Value, AggregateRoot) |
+| Component         | Description                                                |
+| ----------------- | ---------------------------------------------------------- |
+| `FlextResult[T]`  | Railway-oriented error handling with monadic operations    |
+| `FlextContainer`  | Dependency injection container with type-safe registration |
+| `FlextBus`        | Command/query bus for CQRS message routing                 |
+| `FlextDispatcher` | High-level message dispatch orchestration                  |
+| `FlextContext`    | Hierarchical context management for tracing                |
+| `FlextLogger`     | Structured logging with automatic context propagation      |
+| `FlextConfig`     | Configuration management with Pydantic validation          |
+| `FlextService`    | Base class for domain services                             |
+| `FlextModels`     | DDD patterns (Entity, Value, AggregateRoot)                |
 
 ## Usage Examples
 
 ### Basic Setup
+
 ```python
 from flext_core import FlextCore, FlextResult
 
@@ -62,6 +67,7 @@ if result.is_success:
 ```
 
 ### Dependency Injection
+
 ```python
 from flext_core import FlextContainer
 
@@ -71,6 +77,7 @@ logger_result = container.get("logger")
 ```
 
 ### Domain Modeling
+
 ```python
 from flext_core.models import FlextModels
 
@@ -85,6 +92,7 @@ class User(FlextModels.Entity):
 ```
 
 ### CQRS Pattern
+
 ```python
 from flext_core import FlextDispatcher
 

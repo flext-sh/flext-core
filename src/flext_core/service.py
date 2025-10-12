@@ -189,6 +189,12 @@ class FlextService[TDomainResult](
                     f"Configuration validation failed: {config_result.error}"
                 )
 
+            # Validate keyword_arguments is a dict
+            if not isinstance(request.keyword_arguments, dict):
+                return FlextResult[TDomainResult].fail(
+                    f"Invalid keyword arguments: expected dict, got {type(request.keyword_arguments).__name__}"
+                )
+
             # Execute with retry logic if configured
             retry_config = request.retry_config or {}
 

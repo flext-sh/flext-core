@@ -82,6 +82,7 @@ json_data = FlextCore.Runtime.serialize_to_json(data)
 ```
 
 **Key Features**:
+
 - Email, URL, UUID validation
 - JSON serialization with FLEXT defaults
 - Direct access to structlog, dependency_injector
@@ -236,3 +237,4 @@ if service_result.is_success:
 ```
 
 This foundation layer provides the essential building blocks for robust, maintainable Python applications with type safety and clean error handling.
+````
