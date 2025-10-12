@@ -95,7 +95,9 @@ class TestFlextBase:
             return int(str(a)) + int(str(b))
 
         # PyRefly has difficulty matching concrete type `int` to TypeVar ResultType
-        result = base.run_operation("add", add_operation, 2, 3)
+        result = base.run_operation(
+            "add", cast("Callable[..., object]", add_operation), 2, 3
+        )
         assert result.is_success
         assert result.unwrap() == 5
 

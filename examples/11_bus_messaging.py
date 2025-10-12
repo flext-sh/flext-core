@@ -248,7 +248,7 @@ class BusMessagingService(FlextCore.Service[FlextCore.Types.Dict]):
             def __init__(self) -> None:
                 super().__init__()
                 self._orders: FlextCore.Types.NestedDict = {}
-                self.logger = FlextCore.create_logger(__name__)
+                self.logger = FlextCore.Logger(__name__)
 
             def handle_place_order(
                 self, cmd: PlaceOrderCommand
@@ -366,7 +366,7 @@ class BusMessagingService(FlextCore.Service[FlextCore.Types.Dict]):
 
             def __init__(self) -> None:
                 super().__init__()
-                self.logger = FlextCore.create_logger(__name__)
+                self.logger = FlextCore.Logger(__name__)
 
             def __call__(
                 self,

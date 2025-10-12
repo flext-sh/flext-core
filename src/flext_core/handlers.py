@@ -26,7 +26,6 @@ from typing import (
 from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
-from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
@@ -294,7 +293,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         self._config_model: FlextModels.Cqrs.Handler = config
         self._execution_context = (
-            FlextContext.HandlerExecutionContext.create_for_handler(
+            FlextModels.HandlerExecutionContext.create_for_handler(
                 handler_name=config.handler_name,
                 handler_mode=config.handler_type,
             )

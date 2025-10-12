@@ -77,7 +77,6 @@ __all__ = [
     "FlextProtocols",
     "FlextRegistry",
     "FlextResult",
-    "FlextResult",
     "FlextRuntime",
     "FlextService",
     "FlextTypes",

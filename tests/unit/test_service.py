@@ -11,7 +11,7 @@ import time
 import pytest
 from pydantic import Field, ValidationError
 
-from flext_core import FlextCore
+from flext_core import FlextCore, FlextMixins
 
 
 # Test Domain Service Implementations
@@ -543,8 +543,8 @@ class TestDomainServicesFixed:
         """Test service logging through mixins."""
         service = SampleUserService()
 
-        # Service inherits from FlextCore.Mixins which includes Logging mixin
-        assert isinstance(service, FlextCore.Mixins)
+        # Service inherits from FlextMixins which includes Logging mixin
+        assert isinstance(service, FlextMixins)
 
         FlextCore.Models.LogOperation(
             level="INFO",
@@ -627,7 +627,7 @@ class TestDomainServicesFixed:
         # Service extends FlextCore.Models foundation which is based on Pydantic BaseModel
         assert isinstance(service, FlextCore.Models.ArbitraryTypesModel)
         # Service inherits from FlextMixins (which provides all service infrastructure)
-        assert isinstance(service, FlextCore.Mixins)
+        assert isinstance(service, FlextMixins)
 
     def test_service_with_complex_types(self) -> None:
         """Test service with complex types."""

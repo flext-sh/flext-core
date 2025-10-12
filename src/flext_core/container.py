@@ -1082,10 +1082,10 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             for validator in validators:
                 if callable(validator):
                     # Call validator - returns FlextResult[object]
-                    validator_result = validator(service)
+                    validator_result = cast("FlextResult[object]", validator(service))
 
                     # Check if validation failed
-                    if validator_result.is_failure:
+                    if validator_result is not None and validator_result.is_failure:
                         return FlextResult[object].fail(
                             f"Validation failed: {validator_result.error}"
                         )

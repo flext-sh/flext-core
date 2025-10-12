@@ -36,6 +36,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    PrivateAttr,
     ValidationError,
     computed_field,
     field_serializer,
@@ -102,15 +103,42 @@ class FlextModels:
         Pydantic 2 features:
         - field_serializer for ISO 8601 timestamp serialization
         - Automatic timestamp management
+        - Annotated fields with rich metadata
         """
 
-        created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-        updated_at: datetime | None = None
+        created_at: Annotated[
+            datetime,
+            Field(
+                default_factory=lambda: datetime.now(UTC),
+                description="Timestamp when the model was created (UTC timezone)",
+                examples=[
+                    datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+                    datetime(2025, 10, 12, 15, 30, 0, tzinfo=UTC),
+                ],
+            ),
+        ]
+        updated_at: Annotated[
+            datetime | None,
+            Field(
+                default=None,
+                description="Timestamp when the model was last updated (UTC timezone)",
+                examples=[
+                    None,
+                    datetime(2025, 1, 2, 14, 30, 0, tzinfo=UTC),
+                ],
+            ),
+        ]
 
         @field_serializer("created_at", "updated_at", when_used="json")
         def serialize_timestamps(self, value: datetime | None) -> str | None:
             """Serialize timestamps to ISO 8601 format for JSON."""
             return value.isoformat() if value else None
+
+        @computed_field
+        @property
+        def is_modified(self) -> bool:
+            """Check if the model has been modified after creation."""
+            return self.updated_at is not None
 
         def update_timestamp(self) -> None:
             """Update the updated_at timestamp to current UTC time."""
@@ -121,12 +149,27 @@ class FlextModels:
 
         Provides `version` field and increment_version method for optimistic locking.
         Used by Entity and models requiring version tracking.
+
+        Pydantic 2.11 features:
+        - Annotated field with rich metadata
+        - Computed field for version state checks
         """
 
-        version: int = Field(
-            default=FlextConstants.Performance.DEFAULT_VERSION,
-            ge=FlextConstants.Performance.MIN_VERSION,
-        )
+        version: Annotated[
+            int,
+            Field(
+                default=FlextConstants.Performance.DEFAULT_VERSION,
+                ge=FlextConstants.Performance.MIN_VERSION,
+                description="Version number for optimistic locking - increments with each update",
+                examples=[1, 5, 42, 100],
+            ),
+        ]
+
+        @computed_field
+        @property
+        def is_initial_version(self) -> bool:
+            """Check if this is the initial version (version 1)."""
+            return self.version == FlextConstants.Performance.DEFAULT_VERSION
 
         def increment_version(self) -> None:
             """Increment the version number for optimistic locking."""
@@ -201,7 +244,6 @@ class FlextModels:
             frozen=True,
         )
 
-    # Base model classes from DDD patterns
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
         """Base class for models with timestamp fields.
 
@@ -594,23 +636,6 @@ class FlextModels:
             """Hash based on values for use in sets/FlextTypes.Dicts."""
             return hash(tuple(self.model_dump().items()))
 
-        @classmethod
-        def create(cls, *args: object, **kwargs: object) -> FlextResult[object]:
-            """Create value object instance with validation, returns FlextResult."""
-            try:
-                # Handle single argument case for simple value objects
-                if len(args) == 1 and not kwargs:
-                    # Get the first field name for single-field value objects
-                    field_names = list(cls.model_fields.keys())
-                    if len(field_names) == 1:
-                        kwargs[field_names[0]] = args[0]
-                        args = ()
-
-                instance = cls(*args, **kwargs)
-                return FlextResult[object].ok(instance)
-            except Exception as e:
-                return FlextResult[object].fail(str(e))
-
     class AggregateRoot(Entity):
         """Base class for aggregate roots - consistency boundaries."""
 
@@ -834,14 +859,12 @@ class FlextModels:
         data: FlextTypes.Dict = Field(default_factory=dict)
         context: FlextTypes.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
-            default_factory=lambda: __import__("flext_core.config")
-            .FlextConfig()
-            .timeout_seconds
+            default_factory=lambda: FlextConfig().timeout_seconds,
+            description="Operation timeout in seconds from FlextConfig",
         )
         retry_attempts: int = Field(
-            default_factory=lambda: __import__("flext_core.config")
-            .FlextConfig()
-            .max_retry_attempts
+            default_factory=lambda: FlextConfig().max_retry_attempts,
+            description="Maximum retry attempts from FlextConfig",
         )
         enable_validation: bool = True
 
@@ -900,19 +923,16 @@ class FlextModels:
         """Enhanced batch processing configuration."""
 
         batch_size: int = Field(
-            default_factory=lambda: __import__("flext_core.config")
-            .FlextConfig()
-            .max_batch_size
+            default_factory=lambda: FlextConfig().max_batch_size,
+            description="Batch size from FlextConfig",
         )
         max_workers: int = Field(
-            default_factory=lambda: __import__("flext_core.config")
-            .FlextConfig()
-            .max_workers
+            default_factory=lambda: FlextConfig().max_workers,
+            description="Maximum workers from FlextConfig",
         )
         timeout_per_item: int = Field(
-            default_factory=lambda: __import__("flext_core.config")
-            .FlextConfig()
-            .timeout_seconds
+            default_factory=lambda: FlextConfig().timeout_seconds,
+            description="Timeout per item from FlextConfig",
         )
         continue_on_error: bool = True
         data_items: Annotated[FlextTypes.List, Field(default_factory=list)]
@@ -969,15 +989,13 @@ class FlextModels:
         input_data: FlextTypes.Dict = Field(default_factory=dict)
         execution_context: FlextTypes.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
-            default_factory=lambda: __import__("flext_core.config")
-            .FlextConfig()
-            .timeout_seconds
+            default_factory=lambda: FlextConfig().timeout_seconds,
+            description="Timeout from FlextConfig",
         )
         retry_on_failure: bool = True
         max_retries: int = Field(
-            default_factory=lambda: __import__("flext_core.config")
-            .FlextConfig()
-            .max_retry_attempts
+            default_factory=lambda: FlextConfig().max_retry_attempts,
+            description="Max retries from FlextConfig",
         )
         fallback_handlers: FlextTypes.StringList = Field(default_factory=list)
 
@@ -1045,9 +1063,8 @@ class FlextModels:
         parameters: FlextTypes.Dict = Field(default_factory=dict)
         context: FlextTypes.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
-            default_factory=lambda: __import__("flext_core.config")
-            .FlextConfig()
-            .timeout_seconds
+            default_factory=lambda: FlextConfig().timeout_seconds,
+            description="Timeout from FlextConfig",
         )
         execution: bool = False
         enable_validation: bool = True
@@ -1083,14 +1100,12 @@ class FlextModels:
         parallel_execution: bool = False
         stop_on_error: bool = True
         batch_size: int = Field(
-            default_factory=lambda: __import__("flext_core.config")
-            .FlextConfig()
-            .batch_size
+            default_factory=lambda: FlextConfig().max_batch_size,
+            description="Batch size from FlextConfig",
         )
         timeout_per_operation: int = Field(
-            default_factory=lambda: __import__("flext_core.config")
-            .FlextConfig()
-            .timeout_seconds
+            default_factory=lambda: FlextConfig().timeout_seconds,
+            description="Timeout per operation from FlextConfig",
         )
 
         @field_validator("operations")
@@ -1191,9 +1206,8 @@ class FlextModels:
         arguments: FlextTypes.Dict = Field(default_factory=dict)
         keyword_arguments: FlextTypes.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
-            default_factory=lambda: __import__("flext_core.config")
-            .FlextConfig()
-            .timeout_seconds
+            default_factory=lambda: FlextConfig().timeout_seconds,
+            description="Timeout from FlextConfig",
         )
         retry_config: FlextTypes.Dict = Field(default_factory=dict)
 
@@ -1236,9 +1250,8 @@ class FlextModels:
         """Retry configuration with advanced validation."""
 
         max_attempts: int = Field(
-            default_factory=lambda: __import__("flext_core.config")
-            .FlextConfig()
-            .max_retry_attempts
+            default_factory=lambda: FlextConfig().max_retry_attempts,
+            description="Maximum retry attempts from FlextConfig",
         )
         initial_delay_seconds: float = Field(
             default=FlextConstants.Performance.DEFAULT_INITIAL_DELAY_SECONDS, gt=0
@@ -1499,21 +1512,949 @@ class FlextModels:
     # ============================================================================
 
     class RegistrationDetails(BaseModel):
-        """Registration details for handler registration tracking."""
+        """Registration details for handler registration tracking.
 
-        registration_id: str = Field(description="Unique registration identifier")
-        handler_mode: FlextConstants.HandlerModeSimple = Field(
-            default="command",
-            description="Handler mode",
+        Tracks metadata about handler registrations in the CQRS system,
+        including unique identification, timing, and status information.
+
+        This model is used by FlextRegistry to track which handlers have been
+        registered with the dispatcher and monitor their lifecycle.
+
+        Attributes:
+            registration_id: Unique identifier for this registration
+            handler_mode: Mode of handler (command, query, or event)
+            timestamp: ISO 8601 timestamp when registration occurred
+            status: Current status of the registration
+
+        Examples:
+            >>> details = FlextModels.RegistrationDetails(
+            ...     registration_id="reg-123",
+            ...     handler_mode="command",
+            ...     timestamp="2025-01-01T00:00:00Z",
+            ...     status="running"
+            ... )
+            >>> details.registration_id
+            'reg-123'
+
+        """
+
+        registration_id: Annotated[
+            str,
+            Field(
+                min_length=1,
+                description="Unique registration identifier",
+                examples=["reg-abc123", "handler-create-user-001"],
+            ),
+        ]
+        handler_mode: Annotated[
+            FlextConstants.HandlerModeSimple,
+            Field(
+                default="command",
+                description="Handler mode (command, query, or event)",
+                examples=["command", "query", "event"],
+            ),
+        ] = "command"
+        timestamp: Annotated[
+            str,
+            Field(
+                default_factory=lambda: FlextConstants.Cqrs.DEFAULT_TIMESTAMP,
+                description="ISO 8601 registration timestamp",
+                examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
+            ),
+        ] = Field(default_factory=lambda: FlextConstants.Cqrs.DEFAULT_TIMESTAMP)
+        status: Annotated[
+            FlextConstants.Status,
+            Field(
+                default="running",
+                description="Current registration status",
+                examples=["running", "stopped", "failed"],
+            ),
+        ] = "running"
+
+        @field_validator("registration_id")
+        @classmethod
+        def validate_registration_id(cls, v: str) -> str:
+            """Validate registration_id is not empty."""
+            if not v or not v.strip():
+                msg = "Registration ID must not be empty"
+                raise ValueError(msg)
+            return v.strip()
+
+        @field_validator("timestamp")
+        @classmethod
+        def validate_timestamp_format(cls, v: str) -> str:
+            """Validate timestamp is in ISO 8601 format.
+
+            Allows empty strings for backward compatibility with FlextConstants.Cqrs.DEFAULT_TIMESTAMP.
+            """
+            # Allow empty strings (backward compatibility with DEFAULT_TIMESTAMP)
+            if not v or not v.strip():
+                return v
+
+            from datetime import datetime
+
+            try:
+                # Handle both Z suffix and explicit timezone offset
+                timestamp_str = v.replace("Z", "+00:00") if v.endswith("Z") else v
+                datetime.fromisoformat(timestamp_str)
+            except ValueError as e:
+                msg = f"Timestamp must be in ISO 8601 format: {e}"
+                raise ValueError(msg) from e
+            return v
+
+    # ============================================================================
+    # END OF PHASE 8: CQRS CONFIGURATION MODELS
+    # ============================================================================
+
+    # ============================================================================
+    # PHASE 9: QUERY AND PAGINATION MODELS
+    # ============================================================================
+
+    class Pagination(BaseModel):
+        """Pagination model for query results with Pydantic 2 computed fields.
+
+        Provides pagination parameters for database queries and API responses,
+        with automatic offset calculation and validation of page boundaries.
+
+        The model uses Pydantic 2 computed fields to automatically derive
+        offset and limit from page and size parameters.
+
+        Attributes:
+            page: Current page number (1-based indexing)
+            size: Number of items per page (1-1000)
+
+        Computed Fields:
+            offset: Calculated starting position (0-based) = (page - 1) * size
+            limit: Items to fetch (same as size)
+
+        Examples:
+            >>> pagination = FlextModels.Pagination(page=2, size=20)
+            >>> pagination.page
+            2
+            >>> pagination.offset  # Computed: (2-1) * 20
+            20
+            >>> pagination.limit  # Computed: same as size
+            20
+
+        """
+
+        page: Annotated[
+            int,
+            Field(
+                default=FlextConstants.Pagination.DEFAULT_PAGE_NUMBER,
+                ge=1,
+                description="Page number (1-based indexing)",
+                examples=[1, 2, 10, 100],
+            ),
+        ] = FlextConstants.Pagination.DEFAULT_PAGE_NUMBER
+        size: Annotated[
+            int,
+            Field(
+                default=FlextConstants.Pagination.DEFAULT_PAGE_SIZE,
+                ge=1,
+                le=1000,
+                description="Number of items per page (max 1000)",
+                examples=[10, 20, 50, 100],
+            ),
+        ] = FlextConstants.Pagination.DEFAULT_PAGE_SIZE
+
+        @computed_field  # type: ignore[prop-decorator]
+        @property
+        def offset(self) -> int:
+            """Calculate offset from page and size.
+
+            Returns:
+                0-based starting position for database queries
+
+            Examples:
+                >>> FlextModels.Pagination(page=1, size=20).offset
+                0
+                >>> FlextModels.Pagination(page=3, size=20).offset
+                40
+
+            """
+            return (self.page - 1) * self.size
+
+        @computed_field  # type: ignore[prop-decorator]
+        @property
+        def limit(self) -> int:
+            """Get limit (same as size).
+
+            Returns:
+                Number of items to fetch
+
+            Examples:
+                >>> FlextModels.Pagination(page=1, size=20).limit
+                20
+
+            """
+            return self.size
+
+        def to_dict(self) -> FlextTypes.Dict:
+            """Convert pagination to dictionary.
+
+            Returns:
+                Dictionary with page, size, offset, and limit
+
+            Examples:
+                >>> pagination = FlextModels.Pagination(page=2, size=20)
+                >>> pagination.to_dict()
+                {'page': 2, 'size': 20, 'offset': 20, 'limit': 20}
+
+            """
+            return {
+                "page": self.page,
+                "size": self.size,
+                "offset": self.offset,
+                "limit": self.limit,
+            }
+
+    class Query(BaseModel):
+        """Query model for CQRS query operations.
+
+        Represents a read-only query operation in the CQRS pattern, supporting
+        filtering, pagination, and query tracking for data retrieval operations.
+
+        The model automatically converts dictionary pagination to Pagination
+        instances and generates unique query IDs for tracking.
+
+        Attributes:
+            filters: Dictionary of filter conditions (field: value pairs)
+            pagination: Pagination settings (Pagination object or dict)
+            query_id: Unique identifier for query tracking
+            query_type: Optional query classification/type
+
+        Examples:
+            >>> query = FlextModels.Query(
+            ...     filters={"status": "active", "age__gte": 18},
+            ...     pagination={"page": 2, "size": 50},
+            ...     query_type="user_search"
+            ... )
+            >>> query.filters["status"]
+            'active'
+            >>> isinstance(query.pagination, FlextModels.Pagination)
+            True
+
+        """
+
+        filters: Annotated[
+            FlextTypes.Dict,
+            Field(
+                default_factory=dict,
+                description="Query filter conditions as key-value pairs",
+                examples=[
+                    {"status": "active"},
+                    {"age__gte": 18, "country": "US"},
+                    {"created_at__gte": "2025-01-01"},
+                ],
+            ),
+        ] = Field(default_factory=dict)
+        pagination: Annotated[
+            FlextModels.Pagination | dict[str, int],
+            Field(
+                default_factory=dict,
+                description="Pagination settings (Pagination object or dict with page/size)",
+                examples=[
+                    {"page": 1, "size": 20},
+                    {"page": 5, "size": 100},
+                ],
+            ),
+        ] = Field(default_factory=dict)
+        query_id: Annotated[
+            str,
+            Field(
+                default_factory=lambda: str(uuid.uuid4()),
+                description="Unique query identifier for tracking",
+                examples=["550e8400-e29b-41d4-a716-446655440000", "query-abc123"],
+            ),
+        ] = Field(default_factory=lambda: str(uuid.uuid4()))
+        query_type: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Optional query type/classification",
+                examples=["user_search", "product_filter", "report_query"],
+            ),
+        ] = None
+
+        @field_validator("pagination", mode="before")
+        @classmethod
+        def validate_pagination(
+            cls, v: FlextModels.Pagination | dict[str, int | str] | None
+        ) -> FlextModels.Pagination:
+            """Convert pagination to Pagination instance."""
+            if isinstance(v, FlextModels.Pagination):
+                return v
+            if isinstance(v, dict):
+                # Extract page and size from dict with proper type casting
+                v_dict = cast("FlextTypes.Dict", v)
+                page_raw = v_dict.get("page", 1)
+                size_raw = v_dict.get("size", 20)
+
+                # Convert to int | str types
+                page: int | str = page_raw if isinstance(page_raw, (int, str)) else 1
+                size: int | str = size_raw if isinstance(size_raw, (int, str)) else 20
+
+                # Convert to int if string
+                if isinstance(page, str):
+                    try:
+                        page = int(page)
+                    except ValueError:
+                        page = 1
+                if isinstance(size, str):
+                    try:
+                        size = int(size)
+                    except ValueError:
+                        size = 20
+
+                return FlextModels.Pagination(
+                    page=page,
+                    size=size,
+                )
+            if v is None:
+                return FlextModels.Pagination()
+            # For any other type, return default pagination
+            return FlextModels.Pagination()
+
+        @classmethod
+        def validate_query(
+            cls, query_payload: FlextTypes.Dict
+        ) -> FlextResult[FlextModels.Query]:
+            """Validate and create Query from payload."""
+            try:
+                # Extract the required fields with proper typing
+                filters: object = query_payload.get("filters", {})
+                pagination_data = query_payload.get("pagination", {})
+                if isinstance(pagination_data, FlextModels.Pagination):
+                    pagination = pagination_data
+                elif isinstance(pagination_data, dict):
+                    pagination_dict = cast("FlextTypes.Dict", pagination_data)
+                    page_raw = pagination_dict.get("page", 1)
+                    size_raw = pagination_dict.get("size", 20)
+                    page: int = int(page_raw) if isinstance(page_raw, (int, str)) else 1
+                    size: int = (
+                        int(size_raw) if isinstance(size_raw, (int, str)) else 20
+                    )
+                    pagination = FlextModels.Pagination(
+                        page=page,
+                        size=size,
+                    )
+                else:
+                    pagination = FlextModels.Pagination()
+                query_id = str(query_payload.get("query_id", str(uuid.uuid4())))
+                query_type: object = query_payload.get("query_type")
+
+                if not isinstance(filters, dict):
+                    filters = {}
+                # Type casting for mypy - after validation, filters is guaranteed to be dict
+                filters_dict = cast("FlextTypes.Dict", filters)
+                # No need to validate pagination dict - Pydantic validator handles conversion
+
+                query = cls(
+                    filters=filters_dict,
+                    pagination=pagination,  # Pydantic will convert dict to Pagination
+                    query_id=query_id,
+                    query_type=str(query_type) if query_type is not None else None,
+                )
+                return FlextResult[FlextModels.Query].ok(query)
+            except Exception as e:
+                return FlextResult[FlextModels.Query].fail(
+                    f"Query validation failed: {e}"
+                )
+
+    # NOTE: HttpRequest and HttpResponse have been moved to flext-web since they're web-specific
+    # flext-api has its own HttpRequest and HttpResponse implementations
+
+    # =========================================================================
+    # CONTEXT MODELS - Context management data structures
+    # =========================================================================
+
+    class StructlogProxyToken(Value):
+        """Token for resetting structlog context variables.
+
+        Used by StructlogProxyContextVar to track previous values and enable
+        rollback to previous context state. Inherits from Value for immutability
+        and validation.
+
+        This is a lightweight immutable value object that stores the necessary
+        information to restore a context variable to its previous state.
+
+        Attributes:
+            key: The context variable key being tracked
+            previous_value: The value before the set operation (None if unset)
+
+        Examples:
+            >>> token = FlextModels.StructlogProxyToken(
+            ...     key="correlation_id",
+            ...     previous_value="abc-123"
+            ... )
+            >>> token.key
+            'correlation_id'
+            >>> token.previous_value
+            'abc-123'
+
+        """
+
+        key: Annotated[
+            str,
+            Field(
+                min_length=1,
+                description="Unique key for the context variable",
+                examples=["correlation_id", "service_name", "user_id"],
+            ),
+        ]
+        previous_value: Annotated[
+            object | None,
+            Field(
+                default=None,
+                description="Previous value before set operation",
+            ),
+        ] = None
+
+        @field_validator("key")
+        @classmethod
+        def validate_key_not_empty(cls, v: str) -> str:
+            """Validate that key is not empty or whitespace-only."""
+            if not v or not v.strip():
+                msg = "Key must not be empty or whitespace-only"
+                raise ValueError(msg)
+            return v.strip()
+
+    class StructlogProxyContextVar[T]:
+        """ContextVar-like proxy using structlog as backend (single source of truth).
+
+        ARCHITECTURAL NOTE: This proxy delegates ALL operations to structlog's
+        contextvar storage. This ensures FlextContext.Variables and FlextLogger
+        use THE SAME underlying storage, eliminating dual storage and sync issues.
+
+        Key Principles:
+            - Single Source of Truth: structlog's contextvar dict
+            - Zero Synchronization: No dual storage, no sync needed
+            - Thread Safety: structlog handles all thread safety
+            - Performance: Direct delegation, no overhead
+
+        Usage:
+            >>> var = FlextModels.StructlogProxyContextVar[str]("correlation_id", default=None)
+            >>> var.set("abc-123")
+            >>> var.get()  # Returns "abc-123"
+
+        """
+
+        def __init__(
+            self,
+            key: str,
+            default: T | None = None,
+        ) -> None:
+            """Initialize proxy context variable.
+
+            Args:
+                key: Unique key for this context variable
+                default: Default value when not set
+
+            """
+            self._key = key
+            self._default = default
+
+        def get(self) -> T | None:
+            """Get current value from structlog context.
+
+            Returns:
+                Current value or default if not set
+
+            """
+            # Get from structlog's contextvar dict (single source of truth)
+            import structlog.contextvars
+
+            current_context = structlog.contextvars.get_contextvars()
+            return current_context.get(self._key, self._default)
+
+        def set(self, value: T | None) -> FlextModels.StructlogProxyToken:
+            """Set value in structlog context.
+
+            Args:
+                value: Value to set in structlog's contextvar (can be None to clear)
+
+            Returns:
+                Token for potential reset
+
+            """
+            # Get current value before setting
+            import structlog.contextvars
+
+            current_value = self.get()
+
+            if value is not None:
+                structlog.contextvars.bind_contextvars(**{self._key: value})
+            else:
+                # Unbind if setting to None
+                structlog.contextvars.unbind_contextvars(self._key)
+
+            # Create token for reset functionality
+            return FlextModels.StructlogProxyToken(key=self._key, previous_value=current_value)
+
+        def reset(self, token: FlextModels.StructlogProxyToken) -> None:
+            """Reset to previous value using token.
+
+            Args:
+                token: Token from previous set() call
+
+            Note:
+                structlog.contextvars doesn't support token-based reset.
+                Use unbind_contextvars() or clear_contextvars() instead.
+
+            """
+            # Simplified implementation - structlog uses bind/unbind, not tokens
+            # In practice, context managers handle cleanup via bind/unbind
+            import structlog.contextvars
+
+            if token.previous_value is None:
+                structlog.contextvars.unbind_contextvars(token.key)
+            else:
+                structlog.contextvars.bind_contextvars(**{token.key: token.previous_value})
+
+    class Token(Value):
+        """Token for context variable reset operations.
+
+        Used by FlextContext to track context variable changes and enable
+        rollback to previous values.
+
+        This immutable value object stores the state needed to restore a
+        context variable to its previous value, enabling proper cleanup
+        in context managers and error handlers.
+
+        Attributes:
+            key: The context variable key being tracked
+            old_value: The value before the set operation (None if unset)
+
+        Examples:
+            >>> token = FlextModels.Token(
+            ...     key="user_id",
+            ...     old_value="user-123"
+            ... )
+            >>> token.key
+            'user_id'
+            >>> token.old_value
+            'user-123'
+
+        """
+
+        key: Annotated[
+            str,
+            Field(
+                min_length=1,
+                description="Unique key for the context variable",
+                examples=["user_id", "request_id", "session_id"],
+            ),
+        ]
+        old_value: Annotated[
+            object | None,
+            Field(
+                default=None,
+                description="Previous value before set operation",
+            ),
+        ]
+
+        @field_validator("key")
+        @classmethod
+        def validate_key_format(cls, v: str) -> str:
+            """Validate that key is not empty or whitespace-only."""
+            if not v or not v.strip():
+                msg = "Key must not be empty or whitespace-only"
+                raise ValueError(msg)
+            return v.strip()
+
+    class ContextData(Value):
+        """Lightweight container for initializing context state.
+
+        Used by FlextContext initialization to provide initial data and metadata.
+
+        This immutable value object encapsulates the initial state for a
+        FlextContext instance, separating actual context data from metadata
+        about the context itself.
+
+        Attributes:
+            data: Initial context data (key-value pairs)
+            metadata: Context metadata (creation time, source, etc.)
+
+        Examples:
+            >>> context_data = FlextModels.ContextData(
+            ...     data={"user_id": "123", "correlation_id": "abc-xyz"},
+            ...     metadata={"source": "api", "created_at": "2025-01-01T00:00:00Z"}
+            ... )
+            >>> context_data.data["user_id"]
+            '123'
+            >>> context_data.metadata["source"]
+            'api'
+
+        """
+
+        data: Annotated[
+            FlextTypes.Dict,
+            Field(
+                default_factory=dict,
+                description="Initial context data as key-value pairs",
+            ),
+        ] = Field(default_factory=dict)
+        metadata: Annotated[
+            FlextTypes.Dict,
+            Field(
+                default_factory=dict,
+                description="Context metadata (creation info, source, etc.)",
+            ),
+        ] = Field(default_factory=dict)
+
+        @field_validator("data", "metadata", mode="before")
+        @classmethod
+        def validate_dict_serializable(cls, v: object) -> FlextTypes.Dict:
+            """Validate that dict values are JSON-serializable.
+
+            Uses mode='before' to validate raw input before Pydantic processing.
+            Only allows basic JSON-serializable types: str, int, float, bool, list, dict, None.
+            """
+            if not isinstance(v, dict):
+                msg = f"Value must be a dictionary, got {type(v).__name__}"
+                raise TypeError(msg)
+
+            # Recursively check all values are JSON-serializable
+            def check_serializable(obj: object, path: str = "") -> None:
+                """Recursively check if object is JSON-serializable."""
+                if obj is None or isinstance(obj, (str, int, float, bool)):
+                    return
+                if isinstance(obj, dict):
+                    for key, val in obj.items():
+                        if not isinstance(key, str):
+                            msg = f"Dictionary keys must be strings at {path}.{key}"
+                            raise TypeError(msg)
+                        check_serializable(val, f"{path}.{key}")
+                elif isinstance(obj, list):
+                    for i, item in enumerate(obj):
+                        check_serializable(item, f"{path}[{i}]")
+                else:
+                    msg = f"Non-JSON-serializable type {type(obj).__name__} at {path}"
+                    raise TypeError(msg)
+
+            check_serializable(v)
+            return v
+
+    class ContextExport(Value):
+        """Typed snapshot returned by export_snapshot.
+
+        Provides a complete serializable snapshot of context state including
+        data, metadata, and statistics.
+
+        This immutable value object represents a complete export of a FlextContext
+        instance, suitable for persistence, transmission, or debugging. All fields
+        are JSON-serializable for easy cross-service communication.
+
+        Attributes:
+            data: All context data from all scopes
+            metadata: Context metadata (creation info, source, etc.)
+            statistics: Usage statistics (set/get/remove counts, etc.)
+
+        Examples:
+            >>> export = FlextModels.ContextExport(
+            ...     data={"user_id": "123", "correlation_id": "abc-xyz"},
+            ...     metadata={"source": "api", "version": "1.0"},
+            ...     statistics={"sets": 5, "gets": 10, "removes": 2}
+            ... )
+            >>> export.data["user_id"]
+            '123'
+            >>> export.statistics["sets"]
+            5
+
+        """
+
+        data: Annotated[
+            FlextTypes.Dict,
+            Field(
+                default_factory=dict,
+                description="All context data from all scopes",
+            ),
+        ] = Field(default_factory=dict)
+        metadata: Annotated[
+            FlextTypes.Dict,
+            Field(
+                default_factory=dict,
+                description="Context metadata (creation info, source, version)",
+            ),
+        ] = Field(default_factory=dict)
+        statistics: Annotated[
+            FlextTypes.Dict,
+            Field(
+                default_factory=dict,
+                description="Usage statistics (operation counts, timing info)",
+            ),
+        ] = Field(default_factory=dict)
+
+        @field_validator("data", "metadata", "statistics", mode="before")
+        @classmethod
+        def validate_dict_serializable(cls, v: object) -> FlextTypes.Dict:
+            """Validate that dict values are JSON-serializable.
+
+            Uses mode='before' to validate raw input before Pydantic processing.
+            Only allows basic JSON-serializable types: str, int, float, bool, list, dict, None.
+            """
+            if not isinstance(v, dict):
+                msg = f"Value must be a dictionary, got {type(v).__name__}"
+                raise TypeError(msg)
+
+            # Recursively check all values are JSON-serializable
+            def check_serializable(obj: object, path: str = "") -> None:
+                """Recursively check if object is JSON-serializable."""
+                if obj is None or isinstance(obj, (str, int, float, bool)):
+                    return
+                if isinstance(obj, dict):
+                    for key, val in obj.items():
+                        if not isinstance(key, str):
+                            msg = f"Dictionary keys must be strings at {path}.{key}"
+                            raise TypeError(msg)
+                        check_serializable(val, f"{path}.{key}")
+                elif isinstance(obj, list):
+                    for i, item in enumerate(obj):
+                        check_serializable(item, f"{path}[{i}]")
+                else:
+                    msg = f"Non-JSON-serializable type {type(obj).__name__} at {path}"
+                    raise TypeError(msg)
+
+            check_serializable(v)
+            return v
+
+        @computed_field
+        @property
+        def total_data_items(self) -> int:
+            """Compute total number of data items across all scopes."""
+            return len(self.data)
+
+        @computed_field
+        @property
+        def has_statistics(self) -> bool:
+            """Check if statistics are available."""
+            return bool(self.statistics)
+
+    class HandlerExecutionContext(BaseModel):
+        """Handler execution context for tracking handler performance and state.
+
+        Provides timing and metrics tracking for handler executions in the
+        FlextContext system. Uses Pydantic 2 PrivateAttr for internal state.
+
+        This mutable context object tracks handler execution performance,
+        including timing, metrics, and execution state. It is designed to be
+        created at the start of handler execution and updated throughout.
+
+        Attributes:
+            handler_name: Name of the handler being executed
+            handler_mode: Mode of execution (command, query, or event)
+
+        Examples:
+            >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
+            ...     handler_name="ProcessOrderCommand",
+            ...     handler_mode="command"
+            ... )
+            >>> context.start_execution()
+            >>> # ... handler executes ...
+            >>> elapsed_ms = context.get_execution_time_ms()
+            >>> context.set_metrics_state({"items_processed": 42})
+
+        """
+
+        model_config = ConfigDict(
+            extra="forbid",
+            frozen=False,
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            str_strip_whitespace=True,
+            use_enum_values=True,
         )
-        timestamp: str = Field(
-            default_factory=lambda: FlextConstants.Cqrs.DEFAULT_TIMESTAMP,
-            description="Registration timestamp",
-        )
-        status: FlextConstants.Status = Field(
-            default="running",
-            description="Registration status",
-        )
+
+        handler_name: Annotated[
+            str,
+            Field(
+                min_length=1,
+                description="Name of the handler being executed",
+                examples=["ProcessOrderCommand", "GetUserQuery", "OrderCreatedEvent"],
+            ),
+        ]
+        handler_mode: Annotated[
+            str,
+            Field(
+                min_length=1,
+                description="Mode of handler execution",
+                examples=["command", "query", "event"],
+            ),
+        ]
+        _start_time: float | None = PrivateAttr(default=None)
+        _metrics_state: FlextTypes.Dict | None = PrivateAttr(default=None)
+
+        @field_validator("handler_name", "handler_mode")
+        @classmethod
+        def validate_not_empty(cls, v: str) -> str:
+            """Validate that fields are not empty or whitespace-only."""
+            if not v or not v.strip():
+                msg = "Handler name and mode must not be empty"
+                raise ValueError(msg)
+            return v.strip()
+
+        @field_validator("handler_mode")
+        @classmethod
+        def validate_handler_mode(cls, v: str) -> str:
+            """Validate that handler mode is a recognized value."""
+            valid_modes = {"command", "query", "event", "operation"}
+            if v.lower() not in valid_modes:
+                msg = f"Handler mode must be one of {valid_modes}, got: {v}"
+                raise ValueError(msg)
+            return v.lower()
+
+        def start_execution(self) -> None:
+            """Start execution timing.
+
+            Records the current time as the start time for execution metrics.
+            Should be called at the beginning of handler execution.
+
+            Examples:
+                >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
+                ...     handler_name="MyHandler",
+                ...     handler_mode="command"
+                ... )
+                >>> context.start_execution()
+
+            """
+            self._start_time = time_module.time()
+
+        def get_execution_time_ms(self) -> float:
+            """Get execution time in milliseconds.
+
+            Returns:
+                Execution time in milliseconds, or 0.0 if not started
+
+            Examples:
+                >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
+                ...     handler_name="MyHandler",
+                ...     handler_mode="command"
+                ... )
+                >>> context.start_execution()
+                >>> # ... handler executes ...
+                >>> elapsed = context.get_execution_time_ms()
+                >>> isinstance(elapsed, float)
+                True
+
+            """
+            if self._start_time is None:
+                return 0.0
+
+            elapsed = time_module.time() - self._start_time
+            return round(elapsed * 1000, 2)
+
+        def get_metrics_state(self) -> FlextTypes.Dict:
+            """Get current metrics state.
+
+            Returns:
+                Dictionary containing metrics state (empty dict if not set)
+
+            Examples:
+                >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
+                ...     handler_name="MyHandler",
+                ...     handler_mode="command"
+                ... )
+                >>> metrics = context.get_metrics_state()
+                >>> isinstance(metrics, dict)
+                True
+
+            """
+            if self._metrics_state is None:
+                self._metrics_state = {}
+            return self._metrics_state
+
+        def set_metrics_state(self, state: FlextTypes.Dict) -> None:
+            """Set metrics state.
+
+            Args:
+                state: Metrics state to set (must be JSON-serializable)
+
+            Raises:
+                ValueError: If state is not JSON-serializable
+
+            Examples:
+                >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
+                ...     handler_name="MyHandler",
+                ...     handler_mode="command"
+                ... )
+                >>> context.set_metrics_state({"items_processed": 42, "errors": 0})
+
+            """
+            # Validate serializability
+            import json
+
+            try:
+                json.dumps(state, default=str)
+            except (TypeError, ValueError) as e:
+                msg = f"Metrics state must be JSON-serializable: {e}"
+                raise ValueError(msg) from e
+
+            self._metrics_state = state
+
+        def reset(self) -> None:
+            """Reset execution context.
+
+            Clears all timing and metrics state, preparing the context
+            for reuse or cleanup.
+
+            Examples:
+                >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
+                ...     handler_name="MyHandler",
+                ...     handler_mode="command"
+                ... )
+                >>> context.start_execution()
+                >>> context.reset()
+                >>> context.get_execution_time_ms()
+                0.0
+
+            """
+            self._start_time = None
+            self._metrics_state = None
+
+        @classmethod
+        def create_for_handler(
+            cls,
+            handler_name: str,
+            handler_mode: str,
+        ) -> Self:
+            """Create execution context for a handler.
+
+            Factory method for creating handler execution contexts with
+            validation of handler name and mode.
+
+            Args:
+                handler_name: Name of the handler
+                handler_mode: Mode of the handler (command/query/event)
+
+            Returns:
+                New HandlerExecutionContext instance
+
+            Examples:
+                >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
+                ...     handler_name="ProcessOrderCommand",
+                ...     handler_mode="command"
+                ... )
+                >>> context.handler_name
+                'ProcessOrderCommand'
+                >>> context.handler_mode
+                'command'
+
+            """
+            return cls(handler_name=handler_name, handler_mode=handler_mode)
+
+        @computed_field  # type: ignore[prop-decorator]
+        @property
+        def is_running(self) -> bool:
+            """Check if execution is currently running."""
+            return self._start_time is not None
+
+        @computed_field  # type: ignore[prop-decorator]
+        @property
+        def has_metrics(self) -> bool:
+            """Check if metrics have been recorded."""
+            return self._metrics_state is not None and bool(self._metrics_state)
 
     # ============================================================================
     # VALIDATION UTILITIES (moved from FlextUtilities to avoid circular imports)
@@ -2222,431 +3163,6 @@ class FlextModels:
             # Type-safe return for generic method using cast for proper type inference
             return cast("FlextResult[T]", FlextResult.ok(entity))
 
-    # ============================================================================
-    # END OF PHASE 8: CQRS CONFIGURATION MODELS
-    # ============================================================================
-
-    # ============================================================================
-    # PHASE 9: QUERY AND PAGINATION MODELS
-    # ============================================================================
-
-    class Pagination(BaseModel):
-        """Pagination model for query results with Pydantic 2 computed fields."""
-
-        page: int = Field(
-            default=FlextConstants.Pagination.DEFAULT_PAGE_NUMBER,
-            ge=1,
-            description="Page number (1-based)",
-        )
-        size: int = Field(
-            default=FlextConstants.Pagination.DEFAULT_PAGE_SIZE,
-            ge=1,
-            le=1000,
-            description="Page size",
-        )
-
-        @computed_field
-        def offset(self) -> int:
-            """Calculate offset from page and size - computed field."""
-            return (self.page - 1) * self.size
-
-        @computed_field
-        def limit(self) -> int:
-            """Get limit (same as size) - computed field."""
-            return self.size
-
-        def to_dict(self) -> FlextTypes.Dict:
-            """Convert pagination to dictionary."""
-            return {
-                "page": self.page,
-                "size": self.size,
-                "offset": self.offset,
-                "limit": self.limit,
-            }
-
-    class Query(BaseModel):
-        """Query model for CQRS query operations."""
-
-        filters: FlextTypes.Dict = Field(
-            default_factory=dict, description="Query filters"
-        )
-        pagination: FlextModels.Pagination | dict[str, int] = Field(
-            default_factory=dict,
-            description="Pagination settings",
-        )
-        query_id: str = Field(
-            default_factory=lambda: str(uuid.uuid4()), description="Unique query ID"
-        )
-        query_type: str | None = Field(default=None, description="Type of query")
-
-        @field_validator("pagination", mode="before")
-        @classmethod
-        def validate_pagination(
-            cls, v: FlextModels.Pagination | dict[str, int | str] | None
-        ) -> FlextModels.Pagination:
-            """Convert pagination to Pagination instance."""
-            if isinstance(v, FlextModels.Pagination):
-                return v
-            if isinstance(v, dict):
-                # Extract page and size from dict with proper type casting
-                v_dict = cast("FlextTypes.Dict", v)
-                page_raw = v_dict.get("page", 1)
-                size_raw = v_dict.get("size", 20)
-
-                # Convert to int | str types
-                page: int | str = page_raw if isinstance(page_raw, (int, str)) else 1
-                size: int | str = size_raw if isinstance(size_raw, (int, str)) else 20
-
-                # Convert to int if string
-                if isinstance(page, str):
-                    try:
-                        page = int(page)
-                    except ValueError:
-                        page = 1
-                if isinstance(size, str):
-                    try:
-                        size = int(size)
-                    except ValueError:
-                        size = 20
-
-                return FlextModels.Pagination(
-                    page=page,
-                    size=size,
-                )
-            if v is None:
-                return FlextModels.Pagination()
-            # For any other type, return default pagination
-            return FlextModels.Pagination()
-
-        @classmethod
-        def validate_query(
-            cls, query_payload: FlextTypes.Dict
-        ) -> FlextResult[FlextModels.Query]:
-            """Validate and create Query from payload."""
-            try:
-                # Extract the required fields with proper typing
-                filters: object = query_payload.get("filters", {})
-                pagination_data = query_payload.get("pagination", {})
-                if isinstance(pagination_data, FlextModels.Pagination):
-                    pagination = pagination_data
-                elif isinstance(pagination_data, dict):
-                    pagination_dict = cast("FlextTypes.Dict", pagination_data)
-                    page_raw = pagination_dict.get("page", 1)
-                    size_raw = pagination_dict.get("size", 20)
-                    page: int = int(page_raw) if isinstance(page_raw, (int, str)) else 1
-                    size: int = (
-                        int(size_raw) if isinstance(size_raw, (int, str)) else 20
-                    )
-                    pagination = FlextModels.Pagination(
-                        page=page,
-                        size=size,
-                    )
-                else:
-                    pagination = FlextModels.Pagination()
-                query_id = str(query_payload.get("query_id", str(uuid.uuid4())))
-                query_type: object = query_payload.get("query_type")
-
-                if not isinstance(filters, dict):
-                    filters = {}
-                # Type casting for mypy - after validation, filters is guaranteed to be dict
-                filters_dict = cast("FlextTypes.Dict", filters)
-                # No need to validate pagination dict - Pydantic validator handles conversion
-
-                query = cls(
-                    filters=filters_dict,
-                    pagination=pagination,  # Pydantic will convert dict to Pagination
-                    query_id=query_id,
-                    query_type=str(query_type) if query_type is not None else None,
-                )
-                return FlextResult[FlextModels.Query].ok(query)
-            except Exception as e:
-                return FlextResult[FlextModels.Query].fail(
-                    f"Query validation failed: {e}"
-                )
-
-    # ============================================================================
-    # HTTP PROTOCOL MODELS - Foundation for flext-api and flext-web
-    # ============================================================================
-
-    class HttpRequest(Command):
-        """Base HTTP request model - foundation for client and server.
-
-        Shared HTTP request primitive for flext-api (HTTP client) and flext-web (web server).
-        Provides common request validation, method checking, and URL validation.
-
-        USAGE: Foundation for HTTP client requests and web server request handling.
-        EXTENDS: FlextModels.Command (represents a request action/command)
-
-        Usage example:
-            from flext_core import FlextModels, FlextResult
-
-            # Create HTTP request
-            request = FlextModels.HttpRequest(
-                url="https://api.example.com/users",
-                method="GET",
-                headers={"Authorization": "Bearer token"},
-                timeout=30.0
-            )
-
-            # Validate method
-            if request.method in {"GET", "HEAD", "OPTIONS"}:
-                print("Safe HTTP method")
-
-            # Domain libraries extend this:
-            # flext-api: Adds client-specific fields (full_url, request_size)
-            # flext-web: Adds server-specific fields (request_id, client_ip, user_agent)
-        """
-
-        url: str = Field(description="Request URL")
-        method: str = Field(default="GET", description="HTTP method")
-        headers: dict[str, str] = Field(
-            default_factory=dict, description="Request headers"
-        )
-        body: str | FlextTypes.Dict | None = Field(
-            default=None, description="Request body"
-        )
-        timeout: float = Field(
-            default_factory=lambda: __import__("flext_core.config")
-            .FlextConfig()
-            .timeout_seconds,
-            ge=0.0,
-            le=300.0,
-            description="Request timeout in seconds",
-        )
-
-        @computed_field
-        def has_body(self) -> bool:
-            """Check if request has a body."""
-            return self.body is not None
-
-        @computed_field
-        def is_secure(self) -> bool:
-            """Check if request uses HTTPS."""
-            return self.url.startswith("https://")
-
-        @field_validator("method")
-        @classmethod
-        def validate_method(cls, v: str) -> str:
-            """Validate HTTP method using centralized constants."""
-            method_upper = v.upper()
-            valid_methods = {
-                "GET",
-                "POST",
-                "PUT",
-                "DELETE",
-                "PATCH",
-                "HEAD",
-                "OPTIONS",
-            }
-            if method_upper not in valid_methods:
-                error_msg = f"Invalid HTTP method: {v}. Valid methods: {valid_methods}"
-                raise FlextExceptions.ValidationError(
-                    error_msg,
-                    field="method",
-                    value=v,
-                )
-            return method_upper
-
-        @field_validator("url")
-        @classmethod
-        def validate_url(cls, v: str) -> str:
-            """Validate URL format using centralized validation."""
-            if not v or not v.strip():
-                error_msg = "URL cannot be empty"
-                raise FlextExceptions.ValidationError(
-                    error_msg,
-                    field="url",
-                    value=v,
-                )
-
-            # Allow relative URLs (starting with /)
-            if v.strip().startswith("/"):
-                return v.strip()
-
-            # Validate absolute URLs with Pydantic 2 direct validation
-            parsed = urlparse(v.strip())
-            if not parsed.scheme or not parsed.netloc:
-                error_msg = "URL must have scheme and domain"
-                raise FlextExceptions.ValidationError(error_msg, field="url", value=v)
-
-            if parsed.scheme not in {"http", "https"}:
-                error_msg = "URL must start with http:// or https://"
-                raise FlextExceptions.ValidationError(error_msg, field="url", value=v)
-
-            return v.strip()
-
-        @model_validator(mode="after")
-        def validate_request_consistency(self) -> Self:
-            """Cross-field validation for HTTP request consistency."""
-            # Methods without body should not have a body
-            methods_without_body = {
-                "GET",
-                "HEAD",
-                "DELETE",
-            }
-            if self.method in methods_without_body and self.body is not None:
-                error_msg = f"HTTP {self.method} requests should not have a body"
-                raise FlextExceptions.ValidationError(
-                    error_msg,
-                    field="body",
-                    metadata={
-                        "validation_details": f"Method {self.method} should not have body"
-                    },
-                )
-
-            # Methods with body should have Content-Type header
-            if self.method in {"POST", "PUT", "PATCH"} and self.body:
-                headers_lower = {k.lower(): v for k, v in self.headers.items()}
-                if "content-type" not in headers_lower:
-                    # Auto-add Content-Type based on body type
-                    if isinstance(self.body, dict):
-                        self.headers[FlextConstants.Http.CONTENT_TYPE_HEADER] = (
-                            FlextConstants.Http.ContentType.JSON
-                        )
-                    self.headers["Content-Type"] = "text/plain"
-
-            return self
-
-    class HttpResponse(Entity):
-        """Base HTTP response model - foundation for client and server.
-
-        Shared HTTP response primitive for flext-api (HTTP client) and flext-web (web server).
-        Provides common status code validation, success/error checking, and response metadata.
-
-        USAGE: Foundation for HTTP client responses and web server response handling.
-        EXTENDS: FlextModels.Entity (represents a response entity with ID and timestamps)
-
-        Usage example:
-            from flext_core import FlextModels, FlextConstants
-
-            # Create HTTP response
-            response = FlextModels.HttpResponse(
-                status_code=200,
-                headers={"Content-Type": "application/json"},
-                body={"result": "success"},
-                elapsed_time=0.123
-            )
-
-            # Check response status
-            if response.is_success:
-                print("Success response")
-            elif response.is_client_error:
-                print("Client error")
-
-            # Domain libraries extend this:
-            # flext-api: Adds client-specific fields (url, method, domain_events)
-            # flext-web: Adds server-specific fields (response_id, request_id, content_type)
-        """
-
-        status_code: int = Field(
-            ge=FlextConstants.Http.HTTP_STATUS_MIN,
-            le=FlextConstants.Http.HTTP_STATUS_MAX,
-            description="HTTP status code",
-        )
-        headers: dict[str, str] = Field(
-            default_factory=dict, description="Response headers"
-        )
-        body: str | FlextTypes.Dict | None = Field(
-            default=None, description="Response body"
-        )
-        elapsed_time: float | None = Field(
-            default=None, ge=0.0, description="Request/response elapsed time in seconds"
-        )
-
-        @computed_field
-        def is_success(self) -> bool:
-            """Check if response indicates success (2xx status codes)."""
-            return (
-                FlextConstants.Http.HTTP_SUCCESS_MIN
-                <= self.status_code
-                <= FlextConstants.Http.HTTP_SUCCESS_MAX
-            )
-
-        @computed_field
-        def is_client_error(self) -> bool:
-            """Check if response indicates client error (4xx status codes)."""
-            return (
-                FlextConstants.Http.HTTP_CLIENT_ERROR_MIN
-                <= self.status_code
-                <= FlextConstants.Http.HTTP_CLIENT_ERROR_MAX
-            )
-
-        @computed_field
-        def is_server_error(self) -> bool:
-            """Check if response indicates server error (5xx status codes)."""
-            return (
-                FlextConstants.Http.HTTP_SERVER_ERROR_MIN
-                <= self.status_code
-                <= FlextConstants.Http.HTTP_SERVER_ERROR_MAX
-            )
-
-        @computed_field
-        def is_redirect(self) -> bool:
-            """Check if response indicates redirect (3xx status codes)."""
-            return (
-                FlextConstants.Http.HTTP_REDIRECTION_MIN
-                <= self.status_code
-                <= FlextConstants.Http.HTTP_REDIRECTION_MAX
-            )
-
-        @computed_field
-        def is_informational(self) -> bool:
-            """Check if response is informational (1xx status codes)."""
-            return (
-                FlextConstants.Http.HTTP_INFORMATIONAL_MIN
-                <= self.status_code
-                <= FlextConstants.Http.HTTP_INFORMATIONAL_MAX
-            )
-
-        @field_validator("status_code")
-        @classmethod
-        def validate_status_code(cls, v: int) -> int:
-            """Validate HTTP status code using centralized constants."""
-            if not (
-                FlextConstants.Http.HTTP_STATUS_MIN
-                <= v
-                <= FlextConstants.Http.HTTP_STATUS_MAX
-            ):
-                error_msg = (
-                    f"Invalid HTTP status code: {v}. "
-                    f"Must be between {FlextConstants.Http.HTTP_STATUS_MIN} and "
-                    f"{FlextConstants.Http.HTTP_STATUS_MAX}"
-                )
-                raise FlextExceptions.ValidationError(
-                    error_msg,
-                    field="status_code",
-                    value=v,
-                )
-            return v
-
-        @model_validator(mode="after")
-        def validate_response_consistency(self) -> Self:
-            """Cross-field validation for HTTP response consistency."""
-            # 204 No Content should not have a body
-            if (
-                self.status_code == FlextConstants.Http.HTTP_NO_CONTENT
-                and self.body is not None
-            ):
-                error_msg = "HTTP 204 No Content responses should not have a body"
-                raise FlextExceptions.ValidationError(
-                    error_msg,
-                    field="body",
-                    metadata={
-                        "validation_details": "Status 204 No Content should not have body"
-                    },
-                )
-
-            # Validate elapsed time
-            if self.elapsed_time is not None and self.elapsed_time < 0:
-                error_msg = "Elapsed time cannot be negative"
-                raise FlextExceptions.ValidationError(
-                    error_msg,
-                    field="elapsed_time",
-                    value=self.elapsed_time,
-                )
-
-            return self
-
 
 __all__ = [
     "FlextModels",
@@ -2656,5 +3172,8 @@ __all__ = [
 FlextModels.Query.model_rebuild()
 FlextModels.Command.model_rebuild()
 FlextModels.DomainEvent.model_rebuild()
-FlextModels.HttpRequest.model_rebuild()
-FlextModels.HttpResponse.model_rebuild()
+FlextModels.StructlogProxyToken.model_rebuild()
+FlextModels.Token.model_rebuild()
+FlextModels.ContextData.model_rebuild()
+FlextModels.ContextExport.model_rebuild()
+FlextModels.HandlerExecutionContext.model_rebuild()
