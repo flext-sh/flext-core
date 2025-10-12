@@ -35,7 +35,7 @@ make install
 
 ```bash
 # Quick verification
-python -c "from flext_core import FlextResult; print('✅ FLEXT-Core ready')"
+python -c "from flext_core import FlextCore; print('✅ FLEXT-Core ready')"
 
 # Check version
 python -c "from flext_core import __version__; print(f'FLEXT-Core {__version__}')"
@@ -43,18 +43,18 @@ python -c "from flext_core import __version__; print(f'FLEXT-Core {__version__}'
 
 ## Core Concepts
 
-### 1. Railway Pattern (FlextResult)
+### 1. Railway Pattern (FlextCore.Result)
 
 Handle errors without exceptions using the Result monad:
 
 ```python
-from flext_core import FlextResult
+from flext_core import FlextCore
 
-def divide(a: int, b: int) -> FlextResult[float]:
+def divide(a: int, b: int) -> FlextCore.Result[float]:
     """Division with explicit error handling."""
     if b == 0:
-        return FlextResult[float].fail("Division by zero")
-    return FlextResult[float].ok(a / b)
+        return FlextCore.Result[float].fail("Division by zero")
+    return FlextCore.Result[float].ok(a / b)
 
 # Usage
 result = divide(10, 2)
@@ -73,18 +73,18 @@ result = (
 )
 ```
 
-### 2. Dependency Injection (FlextContainer)
+### 2. Dependency Injection (FlextCore.Container)
 
 Manage dependencies with the global singleton container:
 
 ```python
-from flext_core import FlextContainer, FlextLogger
+from flext_core import FlextCore
 
 # Get global container instance
-container = FlextContainer.get_global()
+container = FlextCore.Container.get_global()
 
 # Register services
-logger = FlextLogger(__name__)
+logger = FlextCore.Logger(__name__)
 container.register("logger", logger)
 
 # Retrieve services
@@ -94,15 +94,15 @@ if logger_result.is_success:
     retrieved_logger.info("Container working!")
 ```
 
-### 3. Domain Modeling (FlextModels)
+### 3. Domain Modeling (FlextCore.Models)
 
 Create domain entities with Pydantic v2 validation:
 
 ```python
-from flext_core import FlextModels
+from flext_core import FlextCore
 
 # Entity - has identity
-class User(FlextModels.Entity):
+class User(FlextCore.Models.Entity):
     """User entity with validation."""
     name: str
     email: str
@@ -116,7 +116,7 @@ class User(FlextModels.Entity):
             raise ValueError("Invalid email format")
 
 # Value Object - compared by value
-class Address(FlextModels.Value):
+class Address(FlextCore.Models.Value):
     """Address value object."""
     street: str
     city: str
@@ -129,38 +129,38 @@ address = Address(street="123 Main St", city="Springfield", zip_code="12345")
 print(f"User: {user.name} ({user.email})")
 ```
 
-### 4. Domain Services (FlextService)
+### 4. Domain Services (FlextCore.Service)
 
 Encapsulate business logic in domain services:
 
 ```python
-from flext_core import FlextService, FlextResult, FlextLogger
+from flext_core import FlextCore
 
-class UserService(FlextService):
+class UserService(FlextCore.Service):
     """User domain service."""
 
     def __init__(self) -> None:
         super().__init__()
-        self.logger = FlextLogger(__name__)
+        self.logger = FlextCore.Logger(__name__)
 
-    def create_user(self, name: str, email: str, age: int) -> FlextResult[User]:
+    def create_user(self, name: str, email: str, age: int) -> FlextCore.Result[User]:
         """Create user with validation."""
         self.logger.info("Creating user", extra={"name": name})
 
         # Validate
         if age < 18:
-            return FlextResult[User].fail("User must be 18 or older")
+            return FlextCore.Result[User].fail("User must be 18 or older")
 
         if "@" not in email:
-            return FlextResult[User].fail("Invalid email format")
+            return FlextCore.Result[User].fail("Invalid email format")
 
         # Create entity
         try:
             user = User(id=f"user_{name.lower()}", name=name, email=email, age=age)
             self.logger.info("User created", extra={"user_id": user.id})
-            return FlextResult[User].ok(user)
+            return FlextCore.Result[User].ok(user)
         except ValueError as e:
-            return FlextResult[User].fail(str(e))
+            return FlextCore.Result[User].fail(str(e))
 
 # Usage
 service = UserService()
@@ -173,15 +173,15 @@ else:
     print(f"❌ Error: {result.error}")
 ```
 
-### 5. Configuration (FlextConfig)
+### 5. Configuration (FlextCore.Config)
 
 Manage application configuration with multiple sources:
 
 ```python
-from flext_core import FlextConfig
+from flext_core import FlextCore
 
 # Define configuration schema
-class AppConfig(FlextConfig):
+class AppConfig(FlextCore.Config):
     """Application configuration."""
     app_name: str = "myapp"
     debug: bool = False
@@ -196,15 +196,15 @@ print(f"Debug: {config.debug}")
 config = AppConfig()
 ```
 
-### 6. Structured Logging (FlextLogger)
+### 6. Structured Logging (FlextCore.Logger)
 
 Use structured logging with context propagation:
 
 ```python
-from flext_core import FlextLogger
+from flext_core import FlextCore
 
 # Create logger
-logger = FlextLogger(__name__)
+logger = FlextCore.Logger(__name__)
 
 # Log with structured data
 logger.info("Application started")
@@ -222,16 +222,10 @@ if not result.is_success:
 Here's a complete example combining all concepts:
 
 ```python
-from flext_core import (
-    FlextContainer,
-    FlextLogger,
-    FlextModels,
-    FlextResult,
-    FlextService,
-)
+from flext_core import FlextCore
 
 # 1. Define domain model
-class Product(FlextModels.Entity):
+class Product(FlextCore.Models.Entity):
     """Product entity."""
     name: str
     price: float
@@ -245,21 +239,21 @@ class Product(FlextModels.Entity):
             raise ValueError("Quantity cannot be negative")
 
 # 2. Create domain service
-class ProductService(FlextService):
+class ProductService(FlextCore.Service):
     """Product management service."""
 
     def __init__(self) -> None:
         super().__init__()
-        self.logger = FlextLogger(__name__)
+        self.logger = FlextCore.Logger(__name__)
         self._products: dict[str, Product] = {}
 
-    def create_product(self, name: str, price: float, quantity: int) -> FlextResult[Product]:
+    def create_product(self, name: str, price: float, quantity: int) -> FlextCore.Result[Product]:
         """Create a new product."""
         self.logger.info("Creating product", extra={"name": name})
 
         # Validation
         if price <= 0:
-            return FlextResult[Product].fail("Price must be positive")
+            return FlextCore.Result[Product].fail("Price must be positive")
 
         # Create entity
         try:
@@ -271,19 +265,19 @@ class ProductService(FlextService):
             )
             self._products[product.id] = product
             self.logger.info("Product created", extra={"product_id": product.id})
-            return FlextResult[Product].ok(product)
+            return FlextCore.Result[Product].ok(product)
         except ValueError as e:
-            return FlextResult[Product].fail(str(e))
+            return FlextCore.Result[Product].fail(str(e))
 
-    def get_product(self, product_id: str) -> FlextResult[Product]:
+    def get_product(self, product_id: str) -> FlextCore.Result[Product]:
         """Get product by ID."""
         product = self._products.get(product_id)
         if product is None:
-            return FlextResult[Product].fail(f"Product not found: {product_id}")
-        return FlextResult[Product].ok(product)
+            return FlextCore.Result[Product].fail(f"Product not found: {product_id}")
+        return FlextCore.Result[Product].ok(product)
 
 # 3. Setup dependency injection
-container = FlextContainer.get_global()
+container = FlextCore.Container.get_global()
 product_service = ProductService()
 container.register("product_service", product_service)
 
@@ -345,7 +339,7 @@ pytest tests/unit/test_result.py -v
 ### Pattern 1: Validation with Railway
 
 ```python
-def validate_and_process(data: dict) -> FlextResult[FlextTypes.Dict]:
+def validate_and_process(data: dict) -> FlextCore.Result[FlextCore.Types.Dict]:
     """Validate and process data."""
     return (
         validate_schema(data)
@@ -358,36 +352,36 @@ def validate_and_process(data: dict) -> FlextResult[FlextTypes.Dict]:
 ### Pattern 2: Service with DI
 
 ```python
-class MyService(FlextService):
+class MyService(FlextCore.Service):
     def __init__(self) -> None:
         super().__init__()
-        self._container = FlextContainer.get_global()
+        self._container = FlextCore.Container.get_global()
         self._logger_result = self._container.get("logger")
 
-    def process(self, data: dict) -> FlextResult[FlextTypes.Dict]:
+    def process(self, data: dict) -> FlextCore.Result[FlextCore.Types.Dict]:
         if self._logger_result.is_success:
             self._logger_result.unwrap().info("Processing", extra=data)
         # Business logic here
-        return FlextResult[FlextTypes.Dict].ok(data)
+        return FlextCore.Result[FlextCore.Types.Dict].ok(data)
 ```
 
 ### Pattern 3: Domain Event
 
 ```python
-class Order(FlextModels.AggregateRoot):
+class Order(FlextCore.Models.AggregateRoot):
     """Order aggregate root."""
-    items: FlextTypes.StringList
+    items: FlextCore.Types.StringList
     total: float
 
-    def place_order(self) -> FlextResult[None]:
+    def place_order(self) -> FlextCore.Result[None]:
         """Place order and emit event."""
         if self.total <= 0:
-            return FlextResult[None].fail("Order total must be positive")
+            return FlextCore.Result[None].fail("Order total must be positive")
 
         # Emit domain event
         self.add_domain_event("OrderPlaced", {"order_id": self.id, "total": self.total})
 
-        return FlextResult[None].ok(None)
+        return FlextCore.Result[None].ok(None)
 ```
 
 ## Troubleshooting

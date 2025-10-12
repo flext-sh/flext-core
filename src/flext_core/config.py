@@ -1,11 +1,8 @@
-"""FLEXT Configuration System - Pydantic 2.11+ BaseSettings with dependency_injector.
+"""Configuration management with Pydantic validation and dependency injection.
 
-MANDATORY PATTERNS:
-- Pydantic 2.11+ BaseSettings with dependency_injector integration
-- ALL defaults from FlextConstants (ZERO module-level constants)
-- Centralized config classes with comprehensive validation logic
-- FlextResult for ALL operations (railway pattern)
-- Sync-only operations (temporary requirement)
+This module provides FlextConfig, a comprehensive configuration management
+system built on Pydantic BaseSettings with dependency injection integration,
+environment variable support, and validation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,10 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import json
 import threading
-from collections.abc import Callable
-from pathlib import Path
 from typing import ClassVar, Self, cast
 
 from dependency_injector import providers
@@ -26,40 +20,30 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
 
 
 class FlextConfig(BaseSettings):
-    """FLEXT Configuration - Pydantic 2.11+ BaseSettings with dependency_injector integration.
+    """Configuration management with Pydantic validation and dependency injection.
 
-    MANDATORY PATTERNS:
-    - Pydantic 2.11+ BaseSettings for validation
-    - dependency_injector integration for service injection
-    - ALL defaults from FlextConstants (ZERO module-level constants)
-    - Centralized configuration with comprehensive validation logic
-    - FlextResult for ALL operations (railway pattern)
-    - Sync-only operations (temporary requirement)
+    Provides comprehensive configuration management built on Pydantic BaseSettings
+    with dependency injection integration, environment variable support, and validation.
 
-    Core Features:
-    - Pydantic validation with FlextConstants defaults
+    Features:
+    - Pydantic 2.11+ BaseSettings for validation and environment support
     - Dependency injection provider integration
-    - Computed fields for derived configuration
-    - Railway pattern error handling
+    - Environment variable configuration with prefixes
+    - Configuration file support (JSON, YAML, TOML)
+    - Centralized configuration with comprehensive validation
+    - FlextResult-based error handling for all operations
+    - Computed fields for derived configuration values
+    - Thread-safe singleton pattern for global configuration
 
     Usage:
-        config = FlextConfig()
-        # All defaults from FlextConstants
-
-        # Direct access
-        level = config.log_level
-        timeout = config.timeout_seconds
-
-        # Callable access
-        level = config("log_level")
-
-        # DI integration
-        provider = FlextConfig.get_di_config_provider()
+        >>> from flext_core import FlextConfig
+        >>>
+        >>> config = FlextConfig()
+        >>> timeout = config.timeout_seconds
+        >>> config = FlextConfig(log_level="DEBUG", debug=True)
     """
 
     # Singleton pattern - per-class instances
@@ -89,12 +73,12 @@ class FlextConfig(BaseSettings):
 
     # Core application configuration - ALL defaults from FlextConstants
     app_name: str = Field(
-        default=f"{FlextConstants.Core.NAME} Application",
+        default=f"{FlextConstants.NAME} Application",
         description="Application name",
     )
 
     version: str = Field(
-        default=FlextConstants.Core.VERSION,
+        default=FlextConstants.VERSION,
         description="Application version",
     )
 
@@ -252,6 +236,47 @@ class FlextConfig(BaseSettings):
         description="Enable dispatcher logging",
     )
 
+    # Dispatcher reliability configuration
+    circuit_breaker_threshold: int = Field(
+        default=FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
+        ge=1,
+        le=100,
+        description="Circuit breaker failure threshold",
+    )
+
+    rate_limit_max_requests: int = Field(
+        default=FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+        ge=1,
+        le=10000,
+        description="Maximum requests per window for rate limiting",
+    )
+
+    rate_limit_window_seconds: float = Field(
+        default=FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+        ge=0.1,
+        le=3600.0,
+        description="Rate limit window size in seconds",
+    )
+
+    enable_timeout_executor: bool = Field(
+        default=False,
+        description="Enable timeout executor for operation timeouts",
+    )
+
+    executor_workers: int = Field(
+        default=FlextConstants.Container.MAX_WORKERS,
+        ge=1,
+        le=100,
+        description="Number of executor workers for timeout handling",
+    )
+
+    retry_delay: float = Field(
+        default=0.1,
+        ge=0.0,
+        le=60.0,
+        description="Delay between retries in seconds",
+    )
+
     # Feature flags
     enable_caching: bool = Field(
         default=FlextConstants.Config.DEFAULT_ENABLE_CACHING,
@@ -355,10 +380,6 @@ class FlextConfig(BaseSettings):
                         cls._di_config_provider.from_dict(config_dict)
         return cls._di_config_provider
 
-    def _get_or_create_di_provider(self) -> providers.Configuration:
-        """Get or create DI provider for this instance."""
-        return self.get_di_config_provider()
-
     @classmethod
     def get_global_instance(cls) -> Self:
         """Get or create global singleton instance."""
@@ -380,90 +401,6 @@ class FlextConfig(BaseSettings):
         """Reset global singleton instance."""
         with cls._lock:
             cls._instances.pop(cls, None)
-
-    # File operations with FlextResult
-    @classmethod
-    def from_file(cls, file_path: str | Path) -> FlextResult[FlextConfig]:
-        """Load configuration from JSON file."""
-        try:
-            path = Path(file_path)
-            if not path.exists():
-                return FlextResult[FlextConfig].fail(
-                    f"Configuration file not found: {file_path}",
-                )
-
-            if path.suffix.lower() == ".json":
-                with path.open("r", encoding="utf-8") as f:
-                    data = json.load(f)
-                config = cls.model_validate(data)
-                return FlextResult[FlextConfig].ok(config)
-
-            return FlextResult[FlextConfig].fail(
-                f"Unsupported file format: {path.suffix}",
-            )
-
-        except json.JSONDecodeError as e:
-            return FlextResult[FlextConfig].fail(
-                f"Invalid JSON in configuration file: {e}",
-            )
-        except Exception as e:
-            return FlextResult[FlextConfig].fail(f"Failed to load configuration: {e}")
-
-    def save_to_file(
-        self,
-        file_path: str | Path,
-        **kwargs: object,
-    ) -> FlextResult[None]:
-        """Save configuration to JSON file."""
-        try:
-            path = Path(file_path)
-            config_data = self.model_dump()
-
-            # Mask sensitive fields
-            if config_data.get("secret_key"):
-                config_data["secret_key"] = FlextConstants.Messages.REDACTED_SECRET
-            if config_data.get("api_key"):
-                config_data["api_key"] = FlextConstants.Messages.REDACTED_SECRET
-
-            indent_value = kwargs.get(
-                "indent",
-                FlextConstants.Mixins.DEFAULT_JSON_INDENT,
-            )
-            sort_keys_value = kwargs.get(
-                "sort_keys",
-                FlextConstants.Mixins.DEFAULT_SORT_KEYS,
-            )
-
-            # Type check and convert
-            indent: int | str | None = (
-                int(indent_value)
-                if isinstance(indent_value, (int, str))
-                else FlextConstants.Mixins.DEFAULT_JSON_INDENT
-            )
-            sort_keys: bool = (
-                bool(sort_keys_value)
-                if isinstance(sort_keys_value, bool)
-                else FlextConstants.Mixins.DEFAULT_SORT_KEYS
-            )
-
-            with path.open("w", encoding="utf-8") as f:
-                json.dump(config_data, f, indent=indent, sort_keys=sort_keys)
-
-            return FlextResult[None].ok(None)
-
-        except Exception as e:
-            return FlextResult[None].fail(f"Failed to save configuration: {e}")
-
-    # Infrastructure protocol implementations
-    def configure(self, config: FlextTypes.Dict) -> FlextResult[None]:
-        """Configure component with provided settings."""
-        try:
-            for key, value in config.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
-            return self.validate_runtime_requirements()
-        except Exception as e:
-            return FlextResult[None].fail(f"Configuration failed: {e}")
 
     def validate_runtime_requirements(self) -> FlextResult[None]:
         """Validate configuration meets runtime requirements."""
@@ -498,137 +435,6 @@ class FlextConfig(BaseSettings):
             return "INFO"
         return self.log_level
 
-    @computed_field
-    def cache_config(self) -> FlextTypes.Dict:
-        """Get cache configuration."""
-        return {
-            "ttl": self.cache_ttl,
-            "max_size": self.cache_max_size,
-            "enabled": self.cache_ttl > 0,
-        }
-
-    @computed_field
-    def security_config(self) -> FlextTypes.Dict:
-        """Get security configuration."""
-        return {
-            "secret_key_configured": self.secret_key is not None,
-            "api_key_configured": self.api_key is not None,
-        }
-
-    @computed_field
-    def database_config(self) -> FlextTypes.Dict:
-        """Get database configuration."""
-        return {
-            "url": self.database_url,
-            "pool_size": self.database_pool_size,
-            "connection_config": {
-                "min_size": FlextConstants.Performance.MIN_DB_POOL_SIZE,
-                "max_size": self.database_pool_size,
-                "timeout_seconds": self.timeout_seconds,
-                "retry_attempts": self.max_retry_attempts,
-            },
-        }
-
-    @computed_field
-    def logging_config(self) -> FlextTypes.Dict:
-        """Get logging configuration."""
-        return {
-            "level": self.effective_log_level,
-            "json_output": self.json_output,
-            "include_source": self.include_source,
-            "structured": self.structured_output,
-            "verbosity": self.log_verbosity,
-            "include_context": self.include_context,
-            "include_correlation_id": self.include_correlation_id,
-            "file": {
-                "path": self.log_file,
-                "max_size": self.log_file_max_size,
-                "backup_count": self.log_file_backup_count,
-            },
-            "console": {
-                "enabled": self.console_enabled,
-                "color_enabled": self.console_color_enabled,
-            },
-            "security": {
-                "mask_sensitive_data": self.mask_sensitive_data,
-            },
-        }
-
-    @computed_field
-    def metadata_config(self) -> FlextTypes.Dict:
-        """Get application metadata."""
-        return {
-            "app_name": self.app_name,
-            "version": self.version,
-            "debug_mode": self.debug,
-            "trace_mode": self.trace,
-            "effective_log_level": self.effective_log_level,
-            "is_debug_enabled": self.is_debug_enabled,
-        }
-
-    @computed_field
-    def batch_size(self) -> int:
-        """Get batch size (alias for max_batch_size)."""
-        return self.max_batch_size
-
-    def get_component_config(self, component: str) -> FlextResult[FlextTypes.Dict]:
-        """Get configuration for specific flext-core component."""
-        component_configs: dict[
-            str,
-            FlextTypes.Dict | Callable[[], FlextTypes.Dict],
-        ] = {
-            "container": {
-                "max_workers": self.max_workers,
-                "enable_metrics": self.enable_metrics,
-                "timeout": self.timeout_seconds,
-            },
-            "dispatcher": {
-                "auto_context": self.dispatcher_auto_context,
-                "timeout_seconds": self.dispatcher_timeout_seconds,
-                "enable_metrics": self.dispatcher_enable_metrics,
-                "enable_logging": self.dispatcher_enable_logging,
-            },
-            "logger": {
-                "level": self.effective_log_level,
-                "structured": self.structured_output,
-                "include_context": self.include_context,
-                "include_correlation_id": self.include_correlation_id,
-                "mask_sensitive_data": self.mask_sensitive_data,
-            },
-            "cache": self.cache_config,
-            "database": self.database_config,
-        }
-
-        if component not in component_configs:
-            # Integration: Track failed configuration access
-            FlextRuntime.Integration.log_config_access(
-                key=f"component.{component}",
-                value=None,
-                masked=False,
-            )
-            return FlextResult[FlextTypes.Dict].fail(
-                f"Unknown component: {component}. Available: {list(component_configs.keys())}",
-            )
-
-        config_value = component_configs[component]
-        if callable(config_value):
-            config_value = config_value()
-
-        # Identify sensitive components that should be masked
-        sensitive_components = {"database", "security"}
-        is_sensitive = component in sensitive_components
-
-        # Integration: Track successful configuration access
-        FlextRuntime.Integration.log_config_access(
-            key=f"component.{component}",
-            value=config_value if not is_sensitive else "***MASKED***",
-            masked=is_sensitive,
-        )
-
-        return FlextResult[FlextTypes.Dict].ok(config_value)
-
-
-FlextConfig.model_rebuild()
 
 __all__ = [
     "FlextConfig",

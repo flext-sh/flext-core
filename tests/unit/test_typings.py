@@ -1,10 +1,10 @@
 """Tests for flext_core.typings module - Type system validation.
 
 Tests real functionality of the centralized type system, ensuring all
-TypeVars, type aliases, and FlextTypes namespace work correctly.
+TypeVars, type aliases, and FlextCore.Types namespace work correctly.
 """
 
-from flext_core import FlextConstants, FlextTypes
+from flext_core import FlextCore
 from flext_core.typings import (
     Command,
     E,
@@ -108,7 +108,7 @@ class TestRateLimiterState:
     def test_ratelimiter_state_structure(self) -> None:
         """Test RateLimiterState has correct structure."""
         # Create an instance
-        state: FlextTypes.Reliability.RateLimiterState = {
+        state: FlextCore.Types.Reliability.RateLimiterState = {
             "requests": [1.0, 2.0, 3.0],
             "last_reset": 1234567890.0,
         }
@@ -119,43 +119,43 @@ class TestRateLimiterState:
 
 
 class TestFlextTypes:
-    """Test FlextTypes namespace and all sub-types."""
+    """Test FlextCore.Types namespace and all sub-types."""
 
     def test_flexttypes_core_types(self) -> None:
-        """Test FlextTypes types are accessible."""
+        """Test FlextCore.Types types are accessible."""
         # Test collection types
-        assert FlextTypes.Dict == FlextTypes.Dict
-        assert FlextTypes.List == FlextTypes.List
-        assert FlextTypes.StringList == FlextTypes.StringList
-        assert FlextTypes.IntList == FlextTypes.IntList
-        assert FlextTypes.FloatList == FlextTypes.FloatList
-        assert FlextTypes.BoolList == FlextTypes.BoolList
+        assert FlextCore.Types.Dict == FlextCore.Types.Dict
+        assert FlextCore.Types.List == FlextCore.Types.List
+        assert FlextCore.Types.StringList == FlextCore.Types.StringList
+        assert FlextCore.Types.IntList == FlextCore.Types.IntList
+        assert FlextCore.Types.FloatList == FlextCore.Types.FloatList
+        assert FlextCore.Types.BoolList == FlextCore.Types.BoolList
 
         # Test advanced types
-        assert FlextTypes.NestedDict == FlextTypes.NestedDict
+        assert FlextCore.Types.NestedDict == FlextCore.Types.NestedDict
         # OrderedDict is actually OrderedDict type
 
-        assert FlextTypes.OrderedDict == dict[str, object]
+        assert FlextCore.Types.OrderedDict == FlextCore.Types.Dict
 
         # Test configuration types
-        config_dict: FlextTypes.ConfigDict = {"key": "value", "number": 42}
+        config_dict: FlextCore.Types.ConfigDict = {"key": "value", "number": 42}
         assert isinstance(config_dict, dict)
 
         # Test JSON types
-        json_obj: FlextTypes.JsonValue = {"key": "value"}
+        json_obj: FlextCore.Types.JsonValue = {"key": "value"}
         assert isinstance(json_obj, dict)
 
     def test_flexttypes_service_types(self) -> None:
-        """Test FlextTypes.Service types."""
-        service_dict: FlextTypes.Service.Dict = {"service": "value"}
+        """Test FlextCore.Types.Service types."""
+        service_dict: FlextCore.Types.Service.Dict = {"service": "value"}
         assert isinstance(service_dict, dict)
 
         # Test Literal types
-        service_type: FlextTypes.Service.Type = "instance"
+        service_type: FlextCore.Types.Service.Type = "instance"
         assert service_type in {"instance", "factory"}
 
     def test_flexttypes_config_types(self) -> None:
-        """Test FlextTypes.Config types."""
+        """Test FlextCore.Types.Config types."""
         # Test Environment literal - access through constants
         env = "development"
         assert env in {
@@ -167,29 +167,31 @@ class TestFlextTypes:
             "local",
         }
         # Verify Environment enum exists
-        assert hasattr(FlextConstants.Config, "Environment")
-        assert FlextConstants.Config.Environment.DEVELOPMENT.value == "development"
+        assert hasattr(FlextCore.Constants.Config, "Environment")
+        assert FlextCore.Constants.Config.Environment.DEVELOPMENT.value == "development"
 
         # Test LogLevel literal
-        level: FlextConstants.Config.LogLevel = FlextConstants.Config.LogLevel.INFO
+        level: FlextCore.Constants.Config.LogLevel = (
+            FlextCore.Constants.Config.LogLevel.INFO
+        )
         assert level == "INFO"
 
     def test_flexttypes_output_types(self) -> None:
-        """Test FlextTypes.Output types."""
+        """Test FlextCore.Types.Output types."""
         # Test Literal types
-        fmt: FlextTypes.Output.OutputFormat = "json"
+        fmt: FlextCore.Types.Output.OutputFormat = "json"
         assert fmt in {"json", "yaml", "table", "csv", "text", "xml"}
 
-        ser_fmt: FlextTypes.Output.SerializationFormat = "json"
+        ser_fmt: FlextCore.Types.Output.SerializationFormat = "json"
         assert ser_fmt in {"json", "yaml", "toml", "ini", "xml"}
 
-        comp_fmt: FlextTypes.Output.CompressionFormat = "gzip"
+        comp_fmt: FlextCore.Types.Output.CompressionFormat = "gzip"
         assert comp_fmt in {"gzip", "bzip2", "xz", "lzma"}
 
     def test_flexttypes_project_types(self) -> None:
-        """Test FlextTypes.Project types."""
+        """Test FlextCore.Types.Project types."""
         # Test Literal types
-        proj_type: FlextTypes.Project.ProjectType = "library"
+        proj_type: FlextCore.Types.Project.ProjectType = "library"
         expected_types = [
             "library",
             "application",
@@ -203,28 +205,28 @@ class TestFlextTypes:
         ]
         assert proj_type in expected_types
 
-        status: FlextTypes.Project.ProjectStatus = "active"
+        status: FlextCore.Types.Project.ProjectStatus = "active"
         assert status in {"active", "inactive", "deprecated", "archived"}
 
     def test_flexttypes_processing_types(self) -> None:
-        """Test FlextTypes.Processing types."""
+        """Test FlextCore.Types.Processing types."""
         # Test all Literal types
-        status: FlextTypes.Processing.ProcessingStatus = "pending"
+        status: FlextCore.Types.Processing.ProcessingStatus = "pending"
         assert status in {"pending", "running", "completed", "failed", "cancelled"}
 
-        mode: FlextTypes.Processing.ProcessingMode = "batch"
+        mode: FlextCore.Types.Processing.ProcessingMode = "batch"
         assert mode in {"batch", "stream", "parallel", "sequential"}
 
-        level: FlextTypes.Processing.ValidationLevel = "strict"
+        level: FlextCore.Types.Processing.ValidationLevel = "strict"
         assert level in {"strict", "lenient", "standard"}
 
-        phase: FlextTypes.Processing.ProcessingPhase = "prepare"
+        phase: FlextCore.Types.Processing.ProcessingPhase = "prepare"
         assert phase in {"prepare", "execute", "validate", "complete"}
 
-        handler_type: FlextTypes.Processing.HandlerType = "command"
+        handler_type: FlextCore.Types.Processing.HandlerType = "command"
         assert handler_type in {"command", "query", "event", "processor"}
 
-        workflow_status: FlextTypes.Processing.WorkflowStatus = "pending"
+        workflow_status: FlextCore.Types.Processing.WorkflowStatus = "pending"
         assert workflow_status in {
             "pending",
             "running",
@@ -233,19 +235,16 @@ class TestFlextTypes:
             "cancelled",
         }
 
-        step_status: FlextTypes.Processing.StepStatus = "pending"
-        assert step_status in {"pending", "running", "completed", "failed", "skipped"}
-
     def test_flexttypes_convenience_aliases(self) -> None:
         """Test convenience aliases work."""
         # Test direct access aliases
-        assert FlextTypes.ConfigValue is not None
-        assert FlextTypes.JsonValue is not None
-        assert FlextTypes.ConfigDict is not None
-        assert FlextTypes.JsonDict is not None
-        assert FlextTypes.StringDict is not None
-        assert FlextTypes.StringDict is not None
-        assert FlextTypes.Dict is not None
+        assert FlextCore.Types.ConfigValue is not None
+        assert FlextCore.Types.JsonValue is not None
+        assert FlextCore.Types.ConfigDict is not None
+        assert FlextCore.Types.JsonDict is not None
+        assert FlextCore.Types.StringDict is not None
+        assert FlextCore.Types.StringDict is not None
+        assert FlextCore.Types.Dict is not None
 
 
 class TestImports:

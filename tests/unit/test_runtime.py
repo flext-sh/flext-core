@@ -1,6 +1,6 @@
-"""Comprehensive tests for FlextRuntime - Layer 0.5 Runtime Utilities.
+"""Comprehensive tests for FlextCore.Runtime - Layer 0.5 Runtime Utilities.
 
-Tests all functionality of FlextRuntime including type guards, serialization utilities,
+Tests all functionality of FlextCore.Runtime including type guards, serialization utilities,
 external library access, and structlog configuration.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -15,181 +15,180 @@ import structlog
 from dependency_injector import containers, providers
 from pydantic import BaseModel
 
-from flext_core import FlextConstants
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextCore
 
 
 class TestTypeGuards:
-    """Test FlextRuntime type guard utilities."""
+    """Test FlextCore.Runtime type guard utilities."""
 
     def test_is_valid_email_valid_cases(self) -> None:
         """Test is_valid_email with valid email addresses."""
-        assert FlextRuntime.is_valid_email("test@example.com")
-        assert FlextRuntime.is_valid_email("user.name+tag@example.co.uk")
-        assert FlextRuntime.is_valid_email("valid_email@domain.com")
-        assert FlextRuntime.is_valid_email("test.email@sub.domain.com")
+        assert FlextCore.Runtime.is_valid_email("test@example.com")
+        assert FlextCore.Runtime.is_valid_email("user.name+tag@example.co.uk")
+        assert FlextCore.Runtime.is_valid_email("valid_email@domain.com")
+        assert FlextCore.Runtime.is_valid_email("test.email@sub.domain.com")
 
     def test_is_valid_email_invalid_cases(self) -> None:
         """Test is_valid_email with invalid email addresses."""
-        assert not FlextRuntime.is_valid_email("invalid.email")
-        assert not FlextRuntime.is_valid_email("@example.com")
-        assert not FlextRuntime.is_valid_email("test@")
-        assert not FlextRuntime.is_valid_email("test @example.com")
-        assert not FlextRuntime.is_valid_email("")
+        assert not FlextCore.Runtime.is_valid_email("invalid.email")
+        assert not FlextCore.Runtime.is_valid_email("@example.com")
+        assert not FlextCore.Runtime.is_valid_email("test@")
+        assert not FlextCore.Runtime.is_valid_email("test @example.com")
+        assert not FlextCore.Runtime.is_valid_email("")
 
     def test_is_valid_email_non_string_types(self) -> None:
         """Test is_valid_email returns False for non-string types."""
-        assert not FlextRuntime.is_valid_email(123)
-        assert not FlextRuntime.is_valid_email(None)
-        assert not FlextRuntime.is_valid_email(["test@example.com"])
-        assert not FlextRuntime.is_valid_email({"email": "test@example.com"})
+        assert not FlextCore.Runtime.is_valid_email(123)
+        assert not FlextCore.Runtime.is_valid_email(None)
+        assert not FlextCore.Runtime.is_valid_email(["test@example.com"])
+        assert not FlextCore.Runtime.is_valid_email({"email": "test@example.com"})
 
     def test_is_valid_url_valid_cases(self) -> None:
         """Test is_valid_url with valid URLs."""
-        assert FlextRuntime.is_valid_url("https://github.com")
-        assert FlextRuntime.is_valid_url("http://localhost:8000")
-        assert FlextRuntime.is_valid_url("https://example.com/path?query=1")
-        assert FlextRuntime.is_valid_url("https://sub.domain.example.com")
+        assert FlextCore.Runtime.is_valid_url("https://github.com")
+        assert FlextCore.Runtime.is_valid_url("http://localhost:8000")
+        assert FlextCore.Runtime.is_valid_url("https://example.com/path?query=1")
+        assert FlextCore.Runtime.is_valid_url("https://sub.domain.example.com")
 
     def test_is_valid_url_invalid_cases(self) -> None:
         """Test is_valid_url with invalid URLs."""
-        assert not FlextRuntime.is_valid_url("not-a-url")
-        assert not FlextRuntime.is_valid_url("ftp://invalid.com")
-        assert not FlextRuntime.is_valid_url("just text")
-        assert not FlextRuntime.is_valid_url("")
+        assert not FlextCore.Runtime.is_valid_url("not-a-url")
+        assert not FlextCore.Runtime.is_valid_url("ftp://invalid.com")
+        assert not FlextCore.Runtime.is_valid_url("just text")
+        assert not FlextCore.Runtime.is_valid_url("")
 
     def test_is_valid_url_non_string_types(self) -> None:
         """Test is_valid_url returns False for non-string types."""
-        assert not FlextRuntime.is_valid_url(123)
-        assert not FlextRuntime.is_valid_url(None)
-        assert not FlextRuntime.is_valid_url(["https://github.com"])
+        assert not FlextCore.Runtime.is_valid_url(123)
+        assert not FlextCore.Runtime.is_valid_url(None)
+        assert not FlextCore.Runtime.is_valid_url(["https://github.com"])
 
     def test_is_valid_phone_valid_cases(self) -> None:
         """Test is_valid_phone with valid phone numbers."""
-        assert FlextRuntime.is_valid_phone("+5511987654321")
-        assert FlextRuntime.is_valid_phone("5511987654321")
-        assert FlextRuntime.is_valid_phone("+1234567890")
-        assert FlextRuntime.is_valid_phone("123456789012345")  # 15 digits max
+        assert FlextCore.Runtime.is_valid_phone("+5511987654321")
+        assert FlextCore.Runtime.is_valid_phone("5511987654321")
+        assert FlextCore.Runtime.is_valid_phone("+1234567890")
+        assert FlextCore.Runtime.is_valid_phone("123456789012345")  # 15 digits max
 
     def test_is_valid_phone_invalid_cases(self) -> None:
         """Test is_valid_phone with invalid phone numbers."""
-        assert not FlextRuntime.is_valid_phone("123")  # Too short
-        assert not FlextRuntime.is_valid_phone("abc1234567890")
-        assert not FlextRuntime.is_valid_phone("+abc123")
-        assert not FlextRuntime.is_valid_phone("")
+        assert not FlextCore.Runtime.is_valid_phone("123")  # Too short
+        assert not FlextCore.Runtime.is_valid_phone("abc1234567890")
+        assert not FlextCore.Runtime.is_valid_phone("+abc123")
+        assert not FlextCore.Runtime.is_valid_phone("")
 
     def test_is_valid_phone_non_string_types(self) -> None:
         """Test is_valid_phone returns False for non-string types."""
-        assert not FlextRuntime.is_valid_phone(5511987654321)
-        assert not FlextRuntime.is_valid_phone(None)
+        assert not FlextCore.Runtime.is_valid_phone(5511987654321)
+        assert not FlextCore.Runtime.is_valid_phone(None)
 
     def test_is_valid_uuid_valid_cases(self) -> None:
         """Test is_valid_uuid with valid UUIDs."""
-        assert FlextRuntime.is_valid_uuid("550e8400-e29b-41d4-a716-446655440000")
-        assert FlextRuntime.is_valid_uuid(
+        assert FlextCore.Runtime.is_valid_uuid("550e8400-e29b-41d4-a716-446655440000")
+        assert FlextCore.Runtime.is_valid_uuid(
             "550e8400e29b41d4a716446655440000"
         )  # Without hyphens
-        assert FlextRuntime.is_valid_uuid("123e4567-E89B-12D3-A456-426614174000")
-        assert FlextRuntime.is_valid_uuid("123e4567E89B12D3A456426614174000")
+        assert FlextCore.Runtime.is_valid_uuid("123e4567-E89B-12D3-A456-426614174000")
+        assert FlextCore.Runtime.is_valid_uuid("123e4567E89B12D3A456426614174000")
 
     def test_is_valid_uuid_invalid_cases(self) -> None:
         """Test is_valid_uuid with invalid UUIDs."""
-        assert not FlextRuntime.is_valid_uuid("invalid-uuid")
-        assert not FlextRuntime.is_valid_uuid("550e8400-e29b-41d4")  # Too short
-        assert not FlextRuntime.is_valid_uuid("not-a-uuid-at-all")
-        assert not FlextRuntime.is_valid_uuid("")
+        assert not FlextCore.Runtime.is_valid_uuid("invalid-uuid")
+        assert not FlextCore.Runtime.is_valid_uuid("550e8400-e29b-41d4")  # Too short
+        assert not FlextCore.Runtime.is_valid_uuid("not-a-uuid-at-all")
+        assert not FlextCore.Runtime.is_valid_uuid("")
 
     def test_is_valid_uuid_non_string_types(self) -> None:
         """Test is_valid_uuid returns False for non-string types."""
-        assert not FlextRuntime.is_valid_uuid(123)
-        assert not FlextRuntime.is_valid_uuid(None)
+        assert not FlextCore.Runtime.is_valid_uuid(123)
+        assert not FlextCore.Runtime.is_valid_uuid(None)
 
     def test_is_dict_like_valid_cases(self) -> None:
         """Test is_dict_like with dict-like objects."""
-        assert FlextRuntime.is_dict_like({})
-        assert FlextRuntime.is_dict_like({"key": "value"})
-        assert FlextRuntime.is_dict_like({"nested": {"dict": True}})
+        assert FlextCore.Runtime.is_dict_like({})
+        assert FlextCore.Runtime.is_dict_like({"key": "value"})
+        assert FlextCore.Runtime.is_dict_like({"nested": {"dict": True}})
 
     def test_is_dict_like_invalid_cases(self) -> None:
         """Test is_dict_like with non-dict objects."""
-        assert not FlextRuntime.is_dict_like([])
-        assert not FlextRuntime.is_dict_like("string")
-        assert not FlextRuntime.is_dict_like(123)
-        assert not FlextRuntime.is_dict_like(None)
+        assert not FlextCore.Runtime.is_dict_like([])
+        assert not FlextCore.Runtime.is_dict_like("string")
+        assert not FlextCore.Runtime.is_dict_like(123)
+        assert not FlextCore.Runtime.is_dict_like(None)
 
     def test_is_list_like_valid_cases(self) -> None:
         """Test is_list_like with list-like objects."""
-        assert FlextRuntime.is_list_like([])
-        assert FlextRuntime.is_list_like([1, 2, 3])
-        assert FlextRuntime.is_list_like(["a", "b", "c"])
+        assert FlextCore.Runtime.is_list_like([])
+        assert FlextCore.Runtime.is_list_like([1, 2, 3])
+        assert FlextCore.Runtime.is_list_like(["a", "b", "c"])
 
     def test_is_list_like_invalid_cases(self) -> None:
         """Test is_list_like with non-list objects."""
-        assert not FlextRuntime.is_list_like({})
-        assert not FlextRuntime.is_list_like("string")
-        assert not FlextRuntime.is_list_like(123)
-        assert not FlextRuntime.is_list_like(None)
+        assert not FlextCore.Runtime.is_list_like({})
+        assert not FlextCore.Runtime.is_list_like("string")
+        assert not FlextCore.Runtime.is_list_like(123)
+        assert not FlextCore.Runtime.is_list_like(None)
 
     def test_is_valid_json_valid_cases(self) -> None:
         """Test is_valid_json with valid JSON strings."""
-        assert FlextRuntime.is_valid_json('{"key": "value"}')
-        assert FlextRuntime.is_valid_json("[]")
-        assert FlextRuntime.is_valid_json("[1, 2, 3]")
-        assert FlextRuntime.is_valid_json('"string"')
-        assert FlextRuntime.is_valid_json("null")
+        assert FlextCore.Runtime.is_valid_json('{"key": "value"}')
+        assert FlextCore.Runtime.is_valid_json("[]")
+        assert FlextCore.Runtime.is_valid_json("[1, 2, 3]")
+        assert FlextCore.Runtime.is_valid_json('"string"')
+        assert FlextCore.Runtime.is_valid_json("null")
 
     def test_is_valid_json_invalid_cases(self) -> None:
         """Test is_valid_json with invalid JSON strings."""
-        assert not FlextRuntime.is_valid_json("not json")
-        assert not FlextRuntime.is_valid_json("{invalid}")
-        assert not FlextRuntime.is_valid_json("")
+        assert not FlextCore.Runtime.is_valid_json("not json")
+        assert not FlextCore.Runtime.is_valid_json("{invalid}")
+        assert not FlextCore.Runtime.is_valid_json("")
 
     def test_is_valid_json_non_string_types(self) -> None:
         """Test is_valid_json returns False for non-string types."""
-        assert not FlextRuntime.is_valid_json({"key": "value"})
-        assert not FlextRuntime.is_valid_json([1, 2, 3])
-        assert not FlextRuntime.is_valid_json(None)
+        assert not FlextCore.Runtime.is_valid_json({"key": "value"})
+        assert not FlextCore.Runtime.is_valid_json([1, 2, 3])
+        assert not FlextCore.Runtime.is_valid_json(None)
 
     def test_is_valid_path_valid_cases(self) -> None:
         """Test is_valid_path with valid file paths."""
-        assert FlextRuntime.is_valid_path("/home/user/file.txt")
-        assert FlextRuntime.is_valid_path("C:\\Users\\file.txt")
-        assert FlextRuntime.is_valid_path("relative/path/file.py")
-        assert FlextRuntime.is_valid_path("./local/file.txt")
+        assert FlextCore.Runtime.is_valid_path("/home/user/file.txt")
+        assert FlextCore.Runtime.is_valid_path("C:\\Users\\file.txt")
+        assert FlextCore.Runtime.is_valid_path("relative/path/file.py")
+        assert FlextCore.Runtime.is_valid_path("./local/file.txt")
 
     def test_is_valid_path_invalid_cases(self) -> None:
         """Test is_valid_path with invalid file paths."""
-        assert not FlextRuntime.is_valid_path("path/with<invalid>chars")
-        assert not FlextRuntime.is_valid_path('path/with"quotes')
-        assert not FlextRuntime.is_valid_path("path/with|pipe")
+        assert not FlextCore.Runtime.is_valid_path("path/with<invalid>chars")
+        assert not FlextCore.Runtime.is_valid_path('path/with"quotes')
+        assert not FlextCore.Runtime.is_valid_path("path/with|pipe")
 
     def test_is_valid_path_non_string_types(self) -> None:
         """Test is_valid_path returns False for non-string types."""
-        assert not FlextRuntime.is_valid_path(123)
-        assert not FlextRuntime.is_valid_path(None)
+        assert not FlextCore.Runtime.is_valid_path(123)
+        assert not FlextCore.Runtime.is_valid_path(None)
 
     def test_is_valid_identifier_valid_cases(self) -> None:
         """Test is_valid_identifier with valid Python identifiers."""
-        assert FlextRuntime.is_valid_identifier("variable")
-        assert FlextRuntime.is_valid_identifier("_private")
-        assert FlextRuntime.is_valid_identifier("ClassName")
-        assert FlextRuntime.is_valid_identifier("function_name")
+        assert FlextCore.Runtime.is_valid_identifier("variable")
+        assert FlextCore.Runtime.is_valid_identifier("_private")
+        assert FlextCore.Runtime.is_valid_identifier("ClassName")
+        assert FlextCore.Runtime.is_valid_identifier("function_name")
 
     def test_is_valid_identifier_invalid_cases(self) -> None:
         """Test is_valid_identifier with invalid Python identifiers."""
-        assert not FlextRuntime.is_valid_identifier("123invalid")
-        assert not FlextRuntime.is_valid_identifier("invalid-name")
-        assert not FlextRuntime.is_valid_identifier("invalid name")
-        assert not FlextRuntime.is_valid_identifier("")
+        assert not FlextCore.Runtime.is_valid_identifier("123invalid")
+        assert not FlextCore.Runtime.is_valid_identifier("invalid-name")
+        assert not FlextCore.Runtime.is_valid_identifier("invalid name")
+        assert not FlextCore.Runtime.is_valid_identifier("")
 
     def test_is_valid_identifier_non_string_types(self) -> None:
         """Test is_valid_identifier returns False for non-string types."""
-        assert not FlextRuntime.is_valid_identifier(123)
-        assert not FlextRuntime.is_valid_identifier(None)
+        assert not FlextCore.Runtime.is_valid_identifier(123)
+        assert not FlextCore.Runtime.is_valid_identifier(None)
 
 
 class TestSerializationUtilities:
-    """Test FlextRuntime serialization utilities."""
+    """Test FlextCore.Runtime serialization utilities."""
 
     def test_safe_get_attribute_exists(self) -> None:
         """Test safe_get_attribute with existing attribute."""
@@ -198,7 +197,7 @@ class TestSerializationUtilities:
             attr = "value"
 
         obj = TestObj()
-        assert FlextRuntime.safe_get_attribute(obj, "attr") == "value"
+        assert FlextCore.Runtime.safe_get_attribute(obj, "attr") == "value"
 
     def test_safe_get_attribute_missing_with_default(self) -> None:
         """Test safe_get_attribute with missing attribute returns default."""
@@ -207,7 +206,9 @@ class TestSerializationUtilities:
             pass
 
         obj = TestObj()
-        assert FlextRuntime.safe_get_attribute(obj, "missing", "default") == "default"
+        assert (
+            FlextCore.Runtime.safe_get_attribute(obj, "missing", "default") == "default"
+        )
 
     def test_safe_get_attribute_missing_without_default(self) -> None:
         """Test safe_get_attribute with missing attribute returns None."""
@@ -216,7 +217,7 @@ class TestSerializationUtilities:
             pass
 
         obj = TestObj()
-        assert FlextRuntime.safe_get_attribute(obj, "missing") is None
+        assert FlextCore.Runtime.safe_get_attribute(obj, "missing") is None
 
     def test_safe_serialize_to_dict_pydantic_model(self) -> None:
         """Test safe_serialize_to_dict with Pydantic model."""
@@ -226,7 +227,7 @@ class TestSerializationUtilities:
             value: int
 
         model = TestModel(name="test", value=42)
-        result = FlextRuntime.safe_serialize_to_dict(model)
+        result = FlextCore.Runtime.safe_serialize_to_dict(model)
 
         assert result is not None
         assert result["name"] == "test"
@@ -242,7 +243,7 @@ class TestSerializationUtilities:
                 self.value = 42
 
         obj = TestObj()
-        result = FlextRuntime.safe_serialize_to_dict(obj)
+        result = FlextCore.Runtime.safe_serialize_to_dict(obj)
 
         assert result is not None
         assert result["name"] == "test"
@@ -251,17 +252,17 @@ class TestSerializationUtilities:
     def test_safe_serialize_to_dict_already_dict(self) -> None:
         """Test safe_serialize_to_dict with already dict object."""
         original = {"key": "value"}
-        result = FlextRuntime.safe_serialize_to_dict(original)
+        result = FlextCore.Runtime.safe_serialize_to_dict(original)
 
         assert result is not None
         assert result["key"] == "value"
 
     def test_safe_serialize_to_dict_unsupported_type(self) -> None:
         """Test safe_serialize_to_dict with unsupported type returns None."""
-        result = FlextRuntime.safe_serialize_to_dict(123)
+        result = FlextCore.Runtime.safe_serialize_to_dict(123)
         assert result is None
 
-        result = FlextRuntime.safe_serialize_to_dict("string")
+        result = FlextCore.Runtime.safe_serialize_to_dict("string")
         assert result is None
 
     def test_safe_serialize_to_dict_model_dump_exception(self) -> None:
@@ -272,12 +273,12 @@ class TestSerializationUtilities:
                 super().__init__()
                 self.data = "test"
 
-            def model_dump(self) -> dict[str, object]:
+            def model_dump(self) -> FlextCore.Types.Dict:
                 msg = "Intentional error"
                 raise RuntimeError(msg)
 
         obj = BrokenModel()
-        result = FlextRuntime.safe_serialize_to_dict(obj)
+        result = FlextCore.Runtime.safe_serialize_to_dict(obj)
         # Should fall through to __dict__ strategy
         assert result is not None
         assert result.get("data") == "test"
@@ -290,12 +291,12 @@ class TestSerializationUtilities:
                 super().__init__()
                 self.data = "test"
 
-            def dict(self) -> dict[str, object]:
+            def dict(self) -> FlextCore.Types.Dict:
                 msg = "Intentional error"
                 raise RuntimeError(msg)
 
         obj = BrokenDict()
-        result = FlextRuntime.safe_serialize_to_dict(obj)
+        result = FlextCore.Runtime.safe_serialize_to_dict(obj)
         # Should fall through to __dict__ strategy
         assert result is not None
         assert result.get("data") == "test"
@@ -312,7 +313,7 @@ class TestSerializationUtilities:
                 return "not a dict"
 
         obj = NonDictReturn()
-        result = FlextRuntime.safe_serialize_to_dict(obj)
+        result = FlextCore.Runtime.safe_serialize_to_dict(obj)
         # Should fall through to __dict__ strategy
         assert result is not None
         assert result.get("data") == "test"
@@ -325,11 +326,11 @@ class TestSerializationUtilities:
                 super().__init__()
                 self.data = "test"
 
-            def dict(self) -> dict[str, object]:
+            def dict(self) -> FlextCore.Types.Dict:
                 return {"data": self.data, "method": "dict"}
 
         obj = DictMethodWorking()
-        result = FlextRuntime.safe_serialize_to_dict(obj)
+        result = FlextCore.Runtime.safe_serialize_to_dict(obj)
         # Should return result from dict() method
         assert result is not None
         assert result["data"] == "test"
@@ -337,302 +338,310 @@ class TestSerializationUtilities:
 
 
 class TestTypeIntrospection:
-    """Test FlextRuntime type introspection utilities."""
+    """Test FlextCore.Runtime type introspection utilities."""
 
     def test_is_optional_type_with_optional(self) -> None:
         """Test is_optional_type with Optional type."""
-        assert FlextRuntime.is_optional_type(str | None)
-        assert FlextRuntime.is_optional_type(int | None)
-        assert FlextRuntime.is_optional_type(list[str] | None)
+        assert FlextCore.Runtime.is_optional_type(str | None)
+        assert FlextCore.Runtime.is_optional_type(int | None)
+        assert FlextCore.Runtime.is_optional_type(FlextCore.Types.StringList | None)
 
     def test_is_optional_type_with_non_optional(self) -> None:
         """Test is_optional_type with non-Optional type."""
-        assert not FlextRuntime.is_optional_type(str)
-        assert not FlextRuntime.is_optional_type(int)
-        assert not FlextRuntime.is_optional_type(list[str])
+        assert not FlextCore.Runtime.is_optional_type(str)
+        assert not FlextCore.Runtime.is_optional_type(int)
+        assert not FlextCore.Runtime.is_optional_type(FlextCore.Types.StringList)
 
     def test_extract_generic_args_with_generic(self) -> None:
         """Test extract_generic_args with generic types."""
-        args = FlextRuntime.extract_generic_args(list[str])
+        args = FlextCore.Runtime.extract_generic_args(FlextCore.Types.StringList)
         assert args == (str,)
 
-        args = FlextRuntime.extract_generic_args(dict[str, int])
+        args = FlextCore.Runtime.extract_generic_args(dict[str, int])
         assert args == (str, int)
 
     def test_extract_generic_args_with_non_generic(self) -> None:
         """Test extract_generic_args with non-generic types."""
-        args = FlextRuntime.extract_generic_args(str)
+        args = FlextCore.Runtime.extract_generic_args(str)
         assert args == ()
 
-        args = FlextRuntime.extract_generic_args(int)
+        args = FlextCore.Runtime.extract_generic_args(int)
         assert args == ()
 
     def test_is_sequence_type_with_sequences(self) -> None:
         """Test is_sequence_type with sequence types."""
-        assert FlextRuntime.is_sequence_type(list[str])
-        assert FlextRuntime.is_sequence_type(tuple[int, ...])
+        assert FlextCore.Runtime.is_sequence_type(FlextCore.Types.StringList)
+        assert FlextCore.Runtime.is_sequence_type(tuple[int, ...])
 
     def test_is_sequence_type_with_non_sequences(self) -> None:
         """Test is_sequence_type with non-sequence types."""
-        assert not FlextRuntime.is_sequence_type(dict[str, int])
-        assert not FlextRuntime.is_sequence_type(str)
-        assert not FlextRuntime.is_sequence_type(int)
+        assert not FlextCore.Runtime.is_sequence_type(dict[str, int])
+        assert not FlextCore.Runtime.is_sequence_type(str)
+        assert not FlextCore.Runtime.is_sequence_type(int)
 
     def test_is_optional_type_with_exception(self) -> None:
         """Test is_optional_type with invalid input causing exception."""
         # Test with None - should not crash
-        assert not FlextRuntime.is_optional_type(None)
+        assert not FlextCore.Runtime.is_optional_type(None)
 
         # Test with invalid type hint
-        assert not FlextRuntime.is_optional_type("not a type")
+        assert not FlextCore.Runtime.is_optional_type("not a type")
 
     def test_extract_generic_args_with_exception(self) -> None:
         """Test extract_generic_args with invalid input causing exception."""
         # Test with None - should return empty tuple
-        args = FlextRuntime.extract_generic_args(None)
+        args = FlextCore.Runtime.extract_generic_args(None)
         assert args == ()
 
         # Test with invalid type hint
-        args = FlextRuntime.extract_generic_args("not a type")
+        args = FlextCore.Runtime.extract_generic_args("not a type")
         assert args == ()
 
     def test_is_sequence_type_with_exception(self) -> None:
         """Test is_sequence_type with invalid input causing exception."""
         # Test with None - should not crash
-        assert not FlextRuntime.is_sequence_type(None)
+        assert not FlextCore.Runtime.is_sequence_type(None)
 
         # Test with invalid type hint
-        assert not FlextRuntime.is_sequence_type("not a type")
+        assert not FlextCore.Runtime.is_sequence_type("not a type")
 
 
 class TestExternalLibraryAccess:
-    """Test FlextRuntime external library access methods."""
+    """Test FlextCore.Runtime external library access methods."""
 
     def test_structlog_returns_module(self) -> None:
         """Test structlog() returns the structlog module."""
-        module = FlextRuntime.structlog()
+        module = FlextCore.Runtime.structlog()
         assert module is structlog
         assert hasattr(module, "get_logger")
         assert hasattr(module, "configure")
 
     def test_dependency_providers_returns_module(self) -> None:
         """Test dependency_providers() returns providers module."""
-        module = FlextRuntime.dependency_providers()
+        module = FlextCore.Runtime.dependency_providers()
         assert module is providers
         assert hasattr(module, "Singleton")
         assert hasattr(module, "Factory")
 
     def test_dependency_containers_returns_module(self) -> None:
         """Test dependency_containers() returns containers module."""
-        module = FlextRuntime.dependency_containers()
+        module = FlextCore.Runtime.dependency_containers()
         assert module is containers
         assert hasattr(module, "DeclarativeContainer")
 
 
 class TestStructlogConfiguration:
-    """Test FlextRuntime structlog configuration."""
+    """Test FlextCore.Runtime structlog configuration."""
 
     def test_configure_structlog_defaults(self) -> None:
         """Test configure_structlog with default settings."""
         # Reset configuration flag for testing
-        FlextRuntime._structlog_configured = False
+        FlextCore.Runtime._structlog_configured = False
 
         # Configure with defaults
-        FlextRuntime.configure_structlog()
+        FlextCore.Runtime.configure_structlog()
 
         # Verify configuration was applied
-        assert FlextRuntime._structlog_configured is True
+        assert FlextCore.Runtime._structlog_configured is True
         assert structlog.is_configured()
 
     def test_configure_structlog_custom_log_level(self) -> None:
         """Test configure_structlog with custom log level."""
-        FlextRuntime._structlog_configured = False
-        FlextRuntime.configure_structlog(log_level=logging.DEBUG)
-        assert FlextRuntime._structlog_configured is True
+        FlextCore.Runtime._structlog_configured = False
+        FlextCore.Runtime.configure_structlog(log_level=logging.DEBUG)
+        assert FlextCore.Runtime._structlog_configured is True
 
     def test_configure_structlog_json_renderer(self) -> None:
         """Test configure_structlog with JSON renderer."""
-        FlextRuntime._structlog_configured = False
-        FlextRuntime.configure_structlog(console_renderer=False)
-        assert FlextRuntime._structlog_configured is True
+        FlextCore.Runtime._structlog_configured = False
+        FlextCore.Runtime.configure_structlog(console_renderer=False)
+        assert FlextCore.Runtime._structlog_configured is True
 
     def test_configure_structlog_with_additional_processors(self) -> None:
         """Test configure_structlog with additional processors."""
-        FlextRuntime._structlog_configured = False
+        FlextCore.Runtime._structlog_configured = False
 
         # Custom processor
         def custom_processor(
-            logger: object, method_name: str, event_dict: dict[str, object]
-        ) -> dict[str, object]:
+            logger: object, method_name: str, event_dict: FlextCore.Types.Dict
+        ) -> FlextCore.Types.Dict:
             event_dict["custom"] = True
             return event_dict
 
-        FlextRuntime.configure_structlog(additional_processors=[custom_processor])
-        assert FlextRuntime._structlog_configured is True
+        FlextCore.Runtime.configure_structlog(additional_processors=[custom_processor])
+        assert FlextCore.Runtime._structlog_configured is True
 
     def test_configure_structlog_json_renderer_explicit(self) -> None:
         """Test configure_structlog with JSON renderer explicitly set."""
-        FlextRuntime._structlog_configured = False
-        FlextRuntime.configure_structlog(
+        FlextCore.Runtime._structlog_configured = False
+        FlextCore.Runtime.configure_structlog(
             console_renderer=False, log_level=logging.WARNING
         )
-        assert FlextRuntime._structlog_configured is True
+        assert FlextCore.Runtime._structlog_configured is True
 
     def test_configure_structlog_idempotent(self) -> None:
         """Test configure_structlog is idempotent (can be called multiple times)."""
-        FlextRuntime._structlog_configured = False
-        FlextRuntime.configure_structlog()
+        FlextCore.Runtime._structlog_configured = False
+        FlextCore.Runtime.configure_structlog()
 
         # Call again - should not raise error
-        FlextRuntime.configure_structlog()
-        assert FlextRuntime._structlog_configured is True
+        FlextCore.Runtime.configure_structlog()
+        assert FlextCore.Runtime._structlog_configured is True
 
 
 class TestRuntimeIntegrationWithConstants:
-    """Test FlextRuntime integration with FlextConstants."""
+    """Test FlextCore.Runtime integration with FlextCore.Constants."""
 
     def test_type_guards_use_constants_patterns(self) -> None:
-        """Test that type guards use patterns from FlextConstants."""
+        """Test that type guards use patterns from FlextCore.Constants."""
         # Verify the patterns are accessible
-        assert hasattr(FlextConstants.Platform, "PATTERN_EMAIL")
-        assert hasattr(FlextConstants.Platform, "PATTERN_URL")
-        assert hasattr(FlextConstants.Platform, "PATTERN_PHONE_NUMBER")
-        assert hasattr(FlextConstants.Platform, "PATTERN_UUID")
-        assert hasattr(FlextConstants.Platform, "PATTERN_PATH")
+        assert hasattr(FlextCore.Constants.Platform, "PATTERN_EMAIL")
+        assert hasattr(FlextCore.Constants.Platform, "PATTERN_URL")
+        assert hasattr(FlextCore.Constants.Platform, "PATTERN_PHONE_NUMBER")
+        assert hasattr(FlextCore.Constants.Platform, "PATTERN_UUID")
+        assert hasattr(FlextCore.Constants.Platform, "PATTERN_PATH")
 
         # Verify type guards work with these patterns
         test_email = "test@example.com"
-        assert FlextRuntime.is_valid_email(test_email)
+        assert FlextCore.Runtime.is_valid_email(test_email)
 
     def test_runtime_has_no_circular_imports(self) -> None:
-        """Test that FlextRuntime can be imported without circular dependencies."""
+        """Test that FlextCore.Runtime can be imported without circular dependencies."""
         # This test passes if the import succeeds
-        from flext_core.runtime import FlextRuntime as RuntimeClass
+        from flext_core import FlextCore as RuntimeClass
 
         assert RuntimeClass is not None
-        assert RuntimeClass is FlextRuntime
+        assert RuntimeClass is FlextCore.Runtime
 
     def test_layer_hierarchy_respected(self) -> None:
         """Test that Layer 0.5 (runtime) imports from Layer 0 (constants) only."""
-        # FlextRuntime should import FlextConstants (Layer 0)
+        # FlextCore.Runtime should import FlextCore.Constants (Layer 0)
         # This test verifies the import chain is correct
-        from flext_core.constants import FlextConstants as ConstantsClass
-        from flext_core.runtime import FlextRuntime as RuntimeClass
+        from flext_core import FlextCore as ConstantsClass, FlextCore as RuntimeClass
 
         # Both should be importable
         assert ConstantsClass is not None
         assert RuntimeClass is not None
 
-        # FlextRuntime should be able to access FlextConstants patterns
-        assert FlextConstants.Platform.PATTERN_EMAIL is not None
+        # FlextCore.Runtime should be able to access FlextCore.Constants patterns
+        assert FlextCore.Constants.Platform.PATTERN_EMAIL is not None
 
 
 class TestContextIntegrationPatterns:
-    """Test FlextRuntime.Integration application-layer helpers (PHASE 2)."""
+    """Test FlextCore.Runtime.Integration application-layer helpers (PHASE 2)."""
 
     def test_track_service_resolution_success(self) -> None:
         """Test Integration.track_service_resolution with successful resolution."""
         # Setup: Configure structlog and context
-        FlextRuntime.configure_structlog()
-        from flext_core.context import FlextContext
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Set correlation ID for tracking
-        correlation_id = FlextContext.Utilities.ensure_correlation_id()
+        correlation_id = FlextCore.Context.Utilities.ensure_correlation_id()
 
         # Track successful service resolution
-        FlextRuntime.Integration.track_service_resolution("database", resolved=True)
+        FlextCore.Runtime.Integration.track_service_resolution(
+            "database", resolved=True
+        )
 
         # Verify correlation ID is still in context
-        current_correlation = FlextContext.Correlation.get_correlation_id()
+        current_correlation = FlextCore.Context.Correlation.get_correlation_id()
         assert current_correlation == correlation_id
 
     def test_track_service_resolution_failure(self) -> None:
         """Test track_service_resolution with failed resolution."""
-        FlextRuntime.configure_structlog()
-        from flext_core.context import FlextContext
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Set correlation ID
-        correlation_id = FlextContext.Utilities.ensure_correlation_id()
+        correlation_id = FlextCore.Context.Utilities.ensure_correlation_id()
 
         # Track failed service resolution
-        FlextRuntime.Integration.track_service_resolution(
+        FlextCore.Runtime.Integration.track_service_resolution(
             "cache",
             resolved=False,
             error_message="Connection refused",
         )
 
         # Verify correlation ID persists
-        assert FlextContext.Correlation.get_correlation_id() == correlation_id
+        assert FlextCore.Context.Correlation.get_correlation_id() == correlation_id
 
     def test_track_service_resolution_without_correlation(self) -> None:
         """Test track_service_resolution works without pre-existing correlation ID."""
-        FlextRuntime.configure_structlog()
         import structlog
+
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Clear any existing correlation using structlog
         structlog.contextvars.unbind_contextvars("correlation_id")
 
         # Should not raise error even without correlation ID
-        FlextRuntime.Integration.track_service_resolution("logger", resolved=True)
+        FlextCore.Runtime.Integration.track_service_resolution("logger", resolved=True)
 
         # Correlation ID should still be None
-        from flext_core.context import FlextContext
+        from flext_core import FlextCore
 
-        assert FlextContext.Correlation.get_correlation_id() is None
+        assert FlextCore.Context.Correlation.get_correlation_id() is None
 
     def test_log_config_access_unmasked(self) -> None:
         """Test log_config_access without masking."""
-        FlextRuntime.configure_structlog()
-        from flext_core.context import FlextContext
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Set correlation ID
-        correlation_id = FlextContext.Utilities.ensure_correlation_id()
+        correlation_id = FlextCore.Context.Utilities.ensure_correlation_id()
 
         # Log config access without masking
-        FlextRuntime.Integration.log_config_access(
+        FlextCore.Runtime.Integration.log_config_access(
             "app_name", value="flext-core", masked=False
         )
 
         # Verify correlation ID persists
-        assert FlextContext.Correlation.get_correlation_id() == correlation_id
+        assert FlextCore.Context.Correlation.get_correlation_id() == correlation_id
 
     def test_log_config_access_masked(self) -> None:
         """Test log_config_access with value masking for secrets."""
-        FlextRuntime.configure_structlog()
-        from flext_core.context import FlextContext
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Set correlation ID
-        correlation_id = FlextContext.Utilities.ensure_correlation_id()
+        correlation_id = FlextCore.Context.Utilities.ensure_correlation_id()
 
         # Log config access with masking (for secrets)
-        FlextRuntime.Integration.log_config_access(
+        FlextCore.Runtime.Integration.log_config_access(
             "database_password",
             value="super_secret_password",
             masked=True,
         )
 
         # Verify correlation ID persists
-        assert FlextContext.Correlation.get_correlation_id() == correlation_id
+        assert FlextCore.Context.Correlation.get_correlation_id() == correlation_id
 
     def test_log_config_access_no_value(self) -> None:
         """Test log_config_access without providing value."""
-        FlextRuntime.configure_structlog()
+        FlextCore.Runtime.configure_structlog()
 
         # Should not raise error without value
-        FlextRuntime.Integration.log_config_access("some_key", masked=False)
+        FlextCore.Runtime.Integration.log_config_access("some_key", masked=False)
 
     def test_attach_context_to_result_basic(self) -> None:
         """Test attach_context_to_result basic usage."""
-        FlextRuntime.configure_structlog()
-        from flext_core import FlextResult
-        from flext_core.context import FlextContext
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Set correlation ID
-        FlextContext.Utilities.ensure_correlation_id()
+        FlextCore.Context.Utilities.ensure_correlation_id()
 
         # Create result and attach context
-        result = FlextResult[str].ok("test_data")
-        result_with_ctx = FlextRuntime.Integration.attach_context_to_result(
+        result = FlextCore.Result[str].ok("test_data")
+        result_with_ctx = FlextCore.Runtime.Integration.attach_context_to_result(
             result,
             attach_correlation=True,
         )
@@ -642,16 +651,16 @@ class TestContextIntegrationPatterns:
 
     def test_attach_context_to_result_with_service_name(self) -> None:
         """Test attach_context_to_result with service name."""
-        FlextRuntime.configure_structlog()
-        from flext_core import FlextResult
-        from flext_core.context import FlextContext
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Set service context
-        FlextContext.Service.set_service_name("test-service")
+        FlextCore.Context.Service.set_service_name("test-service")
 
         # Create result and attach context
-        result = FlextResult[dict[str, object]].ok({"status": "success"})
-        result_with_ctx = FlextRuntime.Integration.attach_context_to_result(
+        result = FlextCore.Result[FlextCore.Types.Dict].ok({"status": "success"})
+        result_with_ctx = FlextCore.Runtime.Integration.attach_context_to_result(
             result,
             attach_correlation=True,
             attach_service_name=True,
@@ -662,19 +671,20 @@ class TestContextIntegrationPatterns:
 
     def test_attach_context_to_result_no_correlation(self) -> None:
         """Test attach_context_to_result without correlation ID."""
-        FlextRuntime.configure_structlog()
         import structlog
 
-        from flext_core import FlextResult
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Clear correlation using structlog
         structlog.contextvars.unbind_contextvars("correlation_id")
 
         # Create result
-        result = FlextResult[str].ok("test")
+        result = FlextCore.Result[str].ok("test")
 
         # Should not raise error without correlation
-        result_with_ctx = FlextRuntime.Integration.attach_context_to_result(
+        result_with_ctx = FlextCore.Runtime.Integration.attach_context_to_result(
             result,
             attach_correlation=False,
         )
@@ -682,137 +692,143 @@ class TestContextIntegrationPatterns:
 
     def test_track_domain_event_with_aggregate(self) -> None:
         """Test track_domain_event with aggregate ID."""
-        FlextRuntime.configure_structlog()
-        from flext_core.context import FlextContext
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Set correlation ID
-        correlation_id = FlextContext.Utilities.ensure_correlation_id()
+        correlation_id = FlextCore.Context.Utilities.ensure_correlation_id()
 
         # Track domain event with aggregate
-        FlextRuntime.Integration.track_domain_event(
+        FlextCore.Runtime.Integration.track_domain_event(
             "UserCreated",
             aggregate_id="user-123",
             event_data={"email": "test@example.com"},
         )
 
         # Verify correlation ID persists
-        assert FlextContext.Correlation.get_correlation_id() == correlation_id
+        assert FlextCore.Context.Correlation.get_correlation_id() == correlation_id
 
     def test_track_domain_event_without_aggregate(self) -> None:
         """Test track_domain_event without aggregate ID."""
-        FlextRuntime.configure_structlog()
-        from flext_core.context import FlextContext
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Set correlation ID
-        correlation_id = FlextContext.Utilities.ensure_correlation_id()
+        correlation_id = FlextCore.Context.Utilities.ensure_correlation_id()
 
         # Track domain event without aggregate
-        FlextRuntime.Integration.track_domain_event(
+        FlextCore.Runtime.Integration.track_domain_event(
             "SystemInitialized",
             event_data={"timestamp": "2025-01-01T00:00:00Z"},
         )
 
         # Verify correlation ID persists
-        assert FlextContext.Correlation.get_correlation_id() == correlation_id
+        assert FlextCore.Context.Correlation.get_correlation_id() == correlation_id
 
     def test_track_domain_event_minimal(self) -> None:
         """Test track_domain_event with minimal arguments."""
-        FlextRuntime.configure_structlog()
+        FlextCore.Runtime.configure_structlog()
 
         # Should not raise error with just event name
-        FlextRuntime.Integration.track_domain_event("ConfigUpdated")
+        FlextCore.Runtime.Integration.track_domain_event("ConfigUpdated")
 
     def test_setup_service_infrastructure_full(self) -> None:
         """Test setup_service_infrastructure with all options."""
-        FlextRuntime.configure_structlog()
-        from flext_core.context import FlextContext
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Setup complete service infrastructure
-        FlextRuntime.Integration.setup_service_infrastructure(
+        FlextCore.Runtime.Integration.setup_service_infrastructure(
             service_name="test-service",
             service_version="1.0.0",
             enable_context_correlation=True,
         )
 
         # Verify service context is set
-        assert FlextContext.Service.get_service_name() == "test-service"
-        assert FlextContext.Service.get_service_version() == "1.0.0"
+        assert FlextCore.Context.Service.get_service_name() == "test-service"
+        assert FlextCore.Context.Service.get_service_version() == "1.0.0"
 
         # Verify correlation ID was generated
-        correlation_id = FlextContext.Correlation.get_correlation_id()
+        correlation_id = FlextCore.Context.Correlation.get_correlation_id()
         assert correlation_id is not None
 
     def test_setup_service_infrastructure_without_version(self) -> None:
         """Test setup_service_infrastructure without version."""
-        FlextRuntime.configure_structlog()
-        from flext_core.context import FlextContext
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Setup without version
-        FlextRuntime.Integration.setup_service_infrastructure(
+        FlextCore.Runtime.Integration.setup_service_infrastructure(
             service_name="minimal-service",
             enable_context_correlation=True,
         )
 
         # Verify service name is set
-        assert FlextContext.Service.get_service_name() == "minimal-service"
+        assert FlextCore.Context.Service.get_service_name() == "minimal-service"
 
         # Verify correlation ID was generated
-        assert FlextContext.Correlation.get_correlation_id() is not None
+        assert FlextCore.Context.Correlation.get_correlation_id() is not None
 
     def test_setup_service_infrastructure_without_correlation(self) -> None:
         """Test setup_service_infrastructure without correlation generation."""
-        FlextRuntime.configure_structlog()
         import structlog
 
-        from flext_core.context import FlextContext
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Clear any existing correlation using structlog
         structlog.contextvars.unbind_contextvars("correlation_id")
 
         # Setup without correlation generation
-        FlextRuntime.Integration.setup_service_infrastructure(
+        FlextCore.Runtime.Integration.setup_service_infrastructure(
             service_name="no-correlation-service",
             service_version="2.0.0",
             enable_context_correlation=False,
         )
 
         # Verify service context is set
-        assert FlextContext.Service.get_service_name() == "no-correlation-service"
+        assert FlextCore.Context.Service.get_service_name() == "no-correlation-service"
 
         # Verify correlation ID was NOT generated
-        assert FlextContext.Correlation.get_correlation_id() is None
+        assert FlextCore.Context.Correlation.get_correlation_id() is None
 
     def test_integration_lazy_imports_prevent_circular_dependencies(self) -> None:
         """Test that Integration nested class uses lazy imports correctly."""
-        # This test verifies the pattern works by importing FlextRuntime first
-        from flext_core.runtime import FlextRuntime
+        # This test verifies the pattern works by importing FlextCore.Runtime first
+        from flext_core import FlextCore
 
-        # FlextRuntime should be importable without triggering circular imports
-        assert FlextRuntime is not None
+        # FlextCore.Runtime should be importable without triggering circular imports
+        assert FlextCore.Runtime is not None
 
         # The Integration nested class should exist
-        assert hasattr(FlextRuntime, "Integration")
-        assert FlextRuntime.Integration is not None
+        assert hasattr(FlextCore.Runtime, "Integration")
+        assert FlextCore.Runtime.Integration is not None
 
         # The integration methods should exist on the nested class
-        assert hasattr(FlextRuntime.Integration, "track_service_resolution")
-        assert hasattr(FlextRuntime.Integration, "log_config_access")
-        assert hasattr(FlextRuntime.Integration, "attach_context_to_result")
-        assert hasattr(FlextRuntime.Integration, "track_domain_event")
-        assert hasattr(FlextRuntime.Integration, "setup_service_infrastructure")
+        assert hasattr(FlextCore.Runtime.Integration, "track_service_resolution")
+        assert hasattr(FlextCore.Runtime.Integration, "log_config_access")
+        assert hasattr(FlextCore.Runtime.Integration, "attach_context_to_result")
+        assert hasattr(FlextCore.Runtime.Integration, "track_domain_event")
+        assert hasattr(FlextCore.Runtime.Integration, "setup_service_infrastructure")
 
     def test_integration_keyword_only_arguments(self) -> None:
         """Test that boolean arguments are keyword-only (Ruff FBT compliance)."""
-        FlextRuntime.configure_structlog()
-        from flext_core.context import FlextContext
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Set correlation for testing
-        FlextContext.Utilities.ensure_correlation_id()
+        FlextCore.Context.Utilities.ensure_correlation_id()
 
         # These should work with keyword arguments
-        FlextRuntime.Integration.track_service_resolution("test", resolved=True)
-        FlextRuntime.Integration.log_config_access("key", masked=False)
-        FlextRuntime.Integration.setup_service_infrastructure(
+        FlextCore.Runtime.Integration.track_service_resolution("test", resolved=True)
+        FlextCore.Runtime.Integration.log_config_access("key", masked=False)
+        FlextCore.Runtime.Integration.setup_service_infrastructure(
             service_name="test",
             enable_context_correlation=True,
         )
@@ -821,17 +837,20 @@ class TestContextIntegrationPatterns:
 
     def test_integration_with_context_single_source_of_truth(self) -> None:
         """Test that integration uses structlog contextvars as single source of truth."""
-        FlextRuntime.configure_structlog()
-        from flext_core.context import FlextContext
+        from flext_core import FlextCore
+
+        FlextCore.Runtime.configure_structlog()
 
         # Create correlation ID (stored in structlog contextvars)
-        original_correlation = FlextContext.Utilities.ensure_correlation_id()
+        original_correlation = FlextCore.Context.Utilities.ensure_correlation_id()
 
         # Use integration methods - they should all see the same context
-        FlextRuntime.Integration.track_service_resolution("service1", resolved=True)
-        FlextRuntime.Integration.log_config_access("config1", masked=False)
-        FlextRuntime.Integration.track_domain_event("Event1")
+        FlextCore.Runtime.Integration.track_service_resolution(
+            "service1", resolved=True
+        )
+        FlextCore.Runtime.Integration.log_config_access("config1", masked=False)
+        FlextCore.Runtime.Integration.track_domain_event("Event1")
 
         # Correlation ID should remain consistent (single source of truth)
-        final_correlation = FlextContext.Correlation.get_correlation_id()
+        final_correlation = FlextCore.Context.Correlation.get_correlation_id()
         assert final_correlation == original_correlation

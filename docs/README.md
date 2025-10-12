@@ -54,24 +54,24 @@ cd flext-core
 make setup
 
 # Verify installation
-python -c "from flext_core import FlextResult; print('✅ FLEXT-Core v0.9.9 ready')"
+python -c "from flext_core import FlextCore; print('✅ FLEXT-Core v0.9.9 ready')"
 ```
 
 ```python
-from flext_core import FlextResult, FlextContainer, FlextLogger, FlextModels
+from flext_core import FlextCore
 
 # Railway-oriented error handling
-result = FlextResult[str].ok("Success!")
+result = FlextCore.Result[str].ok("Success!")
 if result.is_success:
     value = result.unwrap()
 
 # Dependency injection
-container = FlextContainer.get_global()
-container.register("logger", FlextLogger(**name**))
+container = FlextCore.Container.get_global()
+container.register("logger", FlextCore.Logger(**name**))
 
 
 # Domain modeling with DDD patterns
-class User(FlextModels.Entity):
+class User(FlextCore.Models.Entity):
     name: str
     email: str
 ```
@@ -80,13 +80,13 @@ class User(FlextModels.Entity):
 
 ### 1. Railway-Oriented Programming
 
-FLEXT-Core uses the `FlextResult[T]` monad for error handling without exceptions:
+FLEXT-Core uses the `FlextCore.Result[T]` monad for error handling without exceptions:
 
 ```python
-def divide(a: float, b: float) -> FlextResult[float]:
+def divide(a: float, b: float) -> FlextCore.Result[float]:
     if b == 0:
-        return FlextResult[float].fail("Division by zero")
-    return FlextResult[float].ok(a / b)
+        return FlextCore.Result[float].fail("Division by zero")
+    return FlextCore.Result[float].ok(a / b)
 
 result = divide(10, 2)
 if result.is_success:
@@ -98,9 +98,9 @@ if result.is_success:
 Global container with type-safe service registration:
 
 ```python
-from flext_core import FlextContainer
+from flext_core import FlextCore
 
-container = FlextContainer.get_global()
+container = FlextCore.Container.get_global()
 container.register("database", DatabaseService())
 db = container.get("database")
 ```
@@ -112,14 +112,14 @@ Entity, Value Object, and Aggregate Root patterns:
 ```python
 from typing import List
 from decimal import Decimal
-from flext_core import FlextModels
+from flext_core import FlextCore
 
-class Order(FlextModels.Entity):
+class Order(FlextCore.Models.Entity):
     customer_id: str
     items: List[OrderItem]
     total: Decimal
 
-    def calculate_total(self) -> FlextResult[Decimal]:
+    def calculate_total(self) -> FlextCore.Result[Decimal]:
         # Business logic here
         pass
 ```

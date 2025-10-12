@@ -1,5 +1,9 @@
 # ruff: disable=E402
-"""Command bus for FLEXT-Core 1.0.0 CQRS flows.
+"""Command bus implementation for CQRS message routing.
+
+This module provides FlextBus, a command and query bus implementing
+the Command Query Responsibility Segregation (CQRS) pattern with
+middleware support, caching, and comprehensive error handling.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -27,160 +31,30 @@ class FlextBus(
     FlextProtocols.Commands.Middleware,
     FlextMixins,
 ):
-    """Command/Query bus for CQRS pattern implementation.
+    """Command and query bus for CQRS message routing.
 
-    FlextBus provides message dispatching for Command Query
-    Responsibility Segregation (CQRS) patterns. Routes commands and
-    queries to registered handlers with middleware support, caching,
-    and comprehensive error handling. Foundation for all 32+ FLEXT
-    projects implementing CQRS.
+    Provides message dispatching with middleware support, caching,
+    and comprehensive error handling. Routes commands and queries
+    to registered handlers with automatic validation and result wrapping.
 
-    **Inherited Infrastructure** (from FlextMixins):
-        - container: FlextContainer (via FlextMixins)
-        - context: object (via FlextMixins)
-        - logger: FlextLogger (via FlextMixins) - per-bus logger instance
-        - config: object (via FlextMixins.Configurable) - global config access
-        - _track_operation: context manager (via FlextMixins)
-        - _enrich_context, _with_correlation_id, etc. (via FlextMixins)
+    Features:
+    - Handler registration and discovery
+    - Middleware pipeline processing
+    - Result caching for query optimization
+    - Context-aware telemetry and logging
+    - Thread-safe handler registry
+    - Automatic FlextResult wrapping
 
-    Internal implementation note: Instance uses logger from inherited mixin
-    for all bus operations.
-
-    **Function**: Message bus with middleware pipeline for CQRS
-        - Register command and query handlers with validation
-        - Execute handlers with middleware chain processing
-        - Support result caching for query optimization
-        - Provide handler discovery and auto-registration
-        - Enable middleware-based cross-cutting concerns
-        - Context-aware telemetry with FlextLogger
-        - Handler execution with FlextResult wrapping
-        - Configuration validation with FlextModels.Cqrs
-        - Thread-safe handler registry
-        - Normalize command/query keys for routing
-        - Support middleware enable/disable per instance
-        - Handler metrics and execution counting
-
-    **Uses**: CQRS infrastructure with handler support
-        - FlextHandlers for handler base class and execution
-        - FlextResult[T] for all operation results
-        - FlextModels.Cqrs for bus configuration
-        - FlextLogger for operation logging and telemetry
-        - FlextMixins for reusable behavior patterns
-        - FlextConstants for CQRS defaults and error codes
-        - FlextUtilities for validation and processing
-        - FlextTypes for type definitions
-        - OrderedDict for handler registry ordering
-        - FlextBus._Cache for query result caching (nested class)
-        - inspect module for handler introspection
-
-    **How to use**: Command/query dispatch patterns
-        ```python
-        from flext_core import FlextBus, FlextResult, FlextModels
-
-        # Example 1: Create bus instance with configuration
-        bus = FlextBus(
-            bus_config={
-                "auto_context": True,
-                "timeout_seconds": FlextConstants.Defaults.OPERATION_TIMEOUT_SECONDS,
-                "enable_metrics": True,
-            }
-        )
-
-
-        # Example 2: Define and register command handler
-        class CreateUserHandler:
-            def handle(self, cmd: CreateUserCommand):
-                # Process command
-                user = User(name=cmd.name, email=cmd.email)
-                return FlextResult[User].ok(user)
-
-
-        bus.register_handler("CreateUser", CreateUserHandler())
-
-        # Example 3: Execute command with error handling
-        command = CreateUserCommand(name="Alice", email="alice@example.com")
-        result = bus.execute("CreateUser", command)
-        if result.is_success:
-            user = result.unwrap()
-            print(f"User created: {user.name}")
-
-
-        # Example 4: Add middleware for logging
-        def logging_middleware(message, next_handler):
-            logger.info(f"Executing: {type(message).__name__}")
-            result = next_handler(message)
-            logger.info(f"Completed: {result.is_success}")
-            return result
-
-
-        bus.add_middleware(logging_middleware)
-
-        # Example 5: Query with caching
-        query = GetUserQuery(user_id="user_123")
-        result = bus.execute("GetUser", query)  # Cached result
-
-        # Example 6: Handler auto-discovery
-        bus.auto_discover_handlers([
-            CreateUserHandler(),
-            GetUserHandler(),
-            UpdateUserHandler(),
-        ])
-        ```
-
-
-    Args:
-        bus_config: Bus configuration dict or Cqrs.Bus model.
-
-    Attributes:
-        _config_model (FlextModels.Cqrs.Bus): Bus config model.
-        _handlers (dict): Registered command/query handlers.
-        _middleware_configs (list): Middleware configurations.
-        _middleware_instances (dict): Cached middleware instances.
-        _execution_count (int): Total handler executions.
-        _auto_handlers (list): Auto-discovered handlers.
-        _cache (FlextBus._Cache): Query result cache (nested class).
-        logger (FlextLogger): Bus operation logger.
-
-    Returns:
-        FlextBus: Bus instance for CQRS message dispatching.
-
-    Raises:
-        ValueError: When handler registration validation fails.
-        KeyError: When handler not found for message type.
-
-    Note:
-        Inherits from FlextMixins for reusable behaviors. All
-        operations return FlextResult for railway pattern. Handlers
-        wrapped to ensure FlextResult output. Middleware executed
-        in registration order. Query results cached by default.
-
-    Warning:
-        Handler names must be unique in registry. Middleware order
-        matters - logging should be first. Cache can grow unbounded
-        without TTL. Auto-discovery requires handlers with metadata.
-
-    Example:
-        Complete CQRS workflow:
-
+    Usage:
+        >>> from flext_core import FlextBus
+        >>>
         >>> bus = FlextBus()
         >>> bus.register_handler("CreateUser", handler)
         >>> result = bus.execute("CreateUser", command)
-        >>> print(result.is_success)
-        True
-
-    See Also:
-        FlextHandlers: For handler base class patterns.
-        FlextDispatcher: For higher-level dispatch abstraction.
-        FlextModels: For Command/Query base classes.
-
     """
 
     class _Cache:
-        """Private cache manager for command/query result caching.
-
-        Nested class for bus-specific caching logic following SOLID principles.
-        This is an implementation detail of FlextBus, not a general utility.
-        """
+        """Private cache manager for command/query result caching."""
 
         def __init__(
             self, max_size: int = FlextConstants.Container.MAX_CACHE_SIZE
@@ -259,7 +133,7 @@ class FlextBus(
         # Middleware instances cache
         self._middleware_instances: FlextTypes.Dict = {}
         # Execution counter
-        self._execution_count: int = FlextConstants.Core.ZERO
+        self._execution_count: int = FlextConstants.ZERO
         # Auto-discovery handlers (single-arg registration)
         self._auto_handlers: FlextTypes.List = []
 
@@ -270,7 +144,7 @@ class FlextBus(
 
         # Timing
         self._created_at: float = time.time()
-        self._start_time: float = FlextConstants.Core.INITIAL_TIME
+        self._start_time: float = FlextConstants.INITIAL_TIME
 
         # Log initialization with context
         self._log_with_context(
@@ -447,7 +321,7 @@ class FlextBus(
         self._propagate_context(f"execute_{command_type.__name__}")
 
         # Track operation metrics
-        with self._track_operation(f"bus_execute_{command_type.__name__}") as _:
+        with self.track(f"bus_execute_{command_type.__name__}") as _:
             # Check if bus is enabled
             if not self._config_model.enable_middleware and (
                 self._middleware_configs or self._middleware_instances

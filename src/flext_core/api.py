@@ -1,18 +1,8 @@
-"""FlextCore - Unified facade for the complete flext-core ecosystem.
+"""Unified facade for the flext-core ecosystem.
 
-This thin facade exposes all flext-core components through a single import
-while inheriting the foundational behaviour from :class:`flext_core.base.FlextBase`.
-`FlextCore` keeps the long-standing public API intact and is the recommended
-entry point for examples, scripts, and dependent projects that expect the
-classic facade semantics (e.g. ``FlextCore.Result[T]``).
-
-The implementation now delegates namespace wiring to :class:`FlextBase`, which
-provides ready-to-extend nested classes for constants, models, protocols,
-handlers, utilities, and more. Subprojects can subclass :class:`FlextBase`
-directly when they need domain-specific extensions, while ``FlextCore``
-remains the curated façade for general consumption. ``FlextBase`` is therefore
-an extension point—not a replacement—for domain libraries that want to expand
-patterns without modifying the facade itself.
+This module provides FlextCore, a unified facade that exposes all flext-core
+components through a single import while inheriting foundational behavior
+from FlextBase.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -20,21 +10,28 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, cast
-
 from flext_core.__version__ import __version__, __version_info__
 from flext_core.base import FlextBase
-from flext_core.container import FlextContainer
+from flext_core.loggings import FlextLogger
 
 
 class FlextCore(FlextBase):
-    """Unified facade for complete flext-core ecosystem integration.
+    """Unified facade for the flext-core ecosystem.
 
-    This facade provides:
-    - All FlextBase functionality (railway pattern, DI, logging, context)
-    - Version information for package introspection
-    - Additional convenience factory methods for common patterns
-    - Streamlined API for reducing boilerplate in examples and services
+    Provides unified access to all flext-core components while inheriting
+    foundational behavior from FlextBase.
+
+    Features:
+    - Unified access to all flext-core components
+    - Version information and package metadata
+    - Convenience factory methods for common patterns
+    - Backward-compatible API for existing code
+    - Integration with global dependency container
+
+    Usage:
+        >>> from flext_core import FlextCore
+        >>>
+        >>> core = FlextCore()
     """
 
     # =================================================================
@@ -50,56 +47,44 @@ class FlextCore(FlextBase):
         super().__init__()
 
     # =================================================================
-    # CONVENIENCE FACTORY METHODS (v0.9.9+ Enhancement)
+    # FACTORY METHODS (v0.9.9+ Enhancement)
     # =================================================================
-    # Additional shortcuts for common patterns to reduce boilerplate
 
     @classmethod
-    def create_logger(cls, name: str | None = None) -> FlextBase.Logger:
-        """Create a configured logger instance.
+    def create_logger(cls, name: str) -> FlextLogger:
+        """Create a logger instance for the given name.
 
         Args:
-            name: Logger name (defaults to "flext-core")
+            name: Logger name (typically module __name__)
 
         Returns:
             FlextLogger: Configured logger instance
 
-        Example:
-            >>> logger = FlextCore.create_logger("my-service")
-            >>> logger.info("Service started")
-
         """
-        return cls.Logger(name or "flext-core")
+        return FlextBase.Logger.create_module_logger(name)
 
     @classmethod
-    def create_config(cls, **overrides: object) -> FlextBase.Config:
-        """Create configuration with optional overrides.
+    def create_config(cls, **kwargs: object) -> FlextBase.Config:
+        """Create a configuration instance with optional overrides.
 
         Args:
-            **overrides: Configuration field overrides
+            **kwargs: Configuration overrides
 
         Returns:
-            FlextConfig: Configuration instance
-
-        Example:
-            >>> config = FlextCore.create_config(debug=True, log_level="DEBUG")
+            FlextConfig: Configured instance
 
         """
-        return cls.Config(**cast("Any", overrides))
+        return FlextBase.Config(**kwargs)
 
     @classmethod
-    def get_container(cls) -> FlextContainer:
+    def get_container(cls) -> FlextBase.Container:
         """Get the global dependency injection container.
 
         Returns:
-            FlextContainer: Global container singleton
-
-        Example:
-            >>> container = FlextCore.get_container()
-            >>> container.register("logger", logger)
+            FlextContainer: Global container instance
 
         """
-        return cls.Container.get_global()
+        return FlextBase.Container.get_global()
 
 
 __all__ = [

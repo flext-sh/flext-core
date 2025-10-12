@@ -1,4 +1,4 @@
-"""Comprehensive tests for FlextProtocols - Protocol Definitions.
+"""Comprehensive tests for FlextCore.Protocols - Protocol Definitions.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,26 +6,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextProtocols
+from flext_core import FlextCore
 
 
 class TestFlextProtocols:
-    """Test suite for FlextProtocols protocol definitions."""
+    """Test suite for FlextCore.Protocols protocol definitions."""
 
     def test_protocols_initialization(self) -> None:
-        """Test FlextProtocols namespace access."""
-        assert FlextProtocols is not None
-        assert hasattr(FlextProtocols, "Foundation")
-        assert hasattr(FlextProtocols, "Domain")
-        assert hasattr(FlextProtocols, "Infrastructure")
-        assert hasattr(FlextProtocols, "Application")
-        assert hasattr(FlextProtocols, "Commands")
-        assert hasattr(FlextProtocols, "Extensions")
+        """Test FlextCore.Protocols namespace access."""
+        assert FlextCore.Protocols is not None
+        assert hasattr(FlextCore.Protocols, "Foundation")
+        assert hasattr(FlextCore.Protocols, "Domain")
+        assert hasattr(FlextCore.Protocols, "Infrastructure")
+        assert hasattr(FlextCore.Protocols, "Application")
+        assert hasattr(FlextCore.Protocols, "Commands")
+        assert hasattr(FlextCore.Protocols, "Extensions")
 
     # Foundation Protocols Tests
     def test_has_result_value_protocol(self) -> None:
         """Test HasResultValue protocol definition."""
-        protocol = FlextProtocols.Foundation.HasResultValue
+        protocol = FlextCore.Protocols.Foundation.HasResultValue
         assert protocol is not None
         # Check it's a Protocol
         # For runtime-checkable protocols, check for protocol attributes
@@ -52,7 +52,7 @@ class TestFlextProtocols:
 
     def test_has_timestamps_protocol(self) -> None:
         """Test HasTimestamps protocol definition."""
-        protocol = FlextProtocols.Foundation.HasTimestamps
+        protocol = FlextCore.Protocols.Foundation.HasTimestamps
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -75,7 +75,7 @@ class TestFlextProtocols:
 
     def test_has_model_fields_protocol(self) -> None:
         """Test HasModelFields protocol definition."""
-        protocol = FlextProtocols.Foundation.HasModelFields
+        protocol = FlextCore.Protocols.Foundation.HasModelFields
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -84,7 +84,7 @@ class TestFlextProtocols:
 
     def test_has_model_dump_protocol(self) -> None:
         """Test HasModelDump protocol definition."""
-        protocol = FlextProtocols.Foundation.HasModelDump
+        protocol = FlextCore.Protocols.Foundation.HasModelDump
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -93,7 +93,7 @@ class TestFlextProtocols:
 
     def test_has_handler_type_protocol(self) -> None:
         """Test HasHandlerType protocol definition."""
-        protocol = FlextProtocols.Foundation.HasHandlerType
+        protocol = FlextCore.Protocols.Foundation.HasHandlerType
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -103,7 +103,7 @@ class TestFlextProtocols:
     # Domain Protocols Tests
     def test_repository_protocol(self) -> None:
         """Test Repository protocol definition."""
-        protocol = FlextProtocols.Domain.Repository
+        protocol = FlextCore.Protocols.Domain.Repository
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -112,20 +112,24 @@ class TestFlextProtocols:
 
     def test_repository_implementation(self) -> None:
         """Test that a class can implement Repository protocol."""
-        from flext_core import FlextResult
+        from flext_core import FlextCore
 
         class UserRepository:
-            def find_by_id(self, entity_id: str) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok({
+            def find_by_id(
+                self, entity_id: str
+            ) -> FlextCore.Result[FlextCore.Types.Dict]:
+                return FlextCore.Result[FlextCore.Types.Dict].ok({
                     "id": entity_id,
                     "name": "Test",
                 })
 
-            def save(self, entity: dict[str, object]) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok(entity)
+            def save(
+                self, entity: FlextCore.Types.Dict
+            ) -> FlextCore.Result[FlextCore.Types.Dict]:
+                return FlextCore.Result[FlextCore.Types.Dict].ok(entity)
 
-            def delete(self, entity_id: str) -> FlextResult[None]:
-                return FlextResult[None].ok(None)
+            def delete(self, entity_id: str) -> FlextCore.Result[None]:
+                return FlextCore.Result[None].ok(None)
 
         repo = UserRepository()
         assert hasattr(repo, "find_by_id")
@@ -134,16 +138,18 @@ class TestFlextProtocols:
 
     def test_service_protocol(self) -> None:
         """Test Service protocol definition."""
-        protocol = FlextProtocols.Domain.Service
+        protocol = FlextCore.Protocols.Domain.Service
         assert protocol is not None
 
     def test_service_implementation(self) -> None:
         """Test that a class can implement Service protocol."""
-        from flext_core import FlextResult
+        from flext_core import FlextCore
 
         class UserService:
-            def execute(self, **kwargs: object) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok({"status": "success"})
+            def execute(
+                self, **kwargs: object
+            ) -> FlextCore.Result[FlextCore.Types.Dict]:
+                return FlextCore.Result[FlextCore.Types.Dict].ok({"status": "success"})
 
         service = UserService()
         assert hasattr(service, "execute")
@@ -153,7 +159,7 @@ class TestFlextProtocols:
     # Infrastructure Protocols Tests
     def test_configurable_protocol(self) -> None:
         """Test Configurable protocol definition."""
-        protocol = FlextProtocols.Infrastructure.Configurable
+        protocol = FlextCore.Protocols.Infrastructure.Configurable
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -162,7 +168,7 @@ class TestFlextProtocols:
 
     def test_connection_protocol(self) -> None:
         """Test Connection protocol definition."""
-        protocol = FlextProtocols.Infrastructure.Connection
+        protocol = FlextCore.Protocols.Infrastructure.Connection
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -171,14 +177,14 @@ class TestFlextProtocols:
 
     def test_connection_implementation(self) -> None:
         """Test that a class can implement Connection protocol."""
-        from flext_core import FlextResult
+        from flext_core import FlextCore
 
         class DatabaseConnection:
-            def connect(self) -> FlextResult[None]:
-                return FlextResult[None].ok(None)
+            def connect(self) -> FlextCore.Result[None]:
+                return FlextCore.Result[None].ok(None)
 
-            def disconnect(self) -> FlextResult[None]:
-                return FlextResult[None].ok(None)
+            def disconnect(self) -> FlextCore.Result[None]:
+                return FlextCore.Result[None].ok(None)
 
             def is_connected(self) -> bool:
                 return True
@@ -190,7 +196,7 @@ class TestFlextProtocols:
 
     def test_logger_protocol(self) -> None:
         """Test LoggerProtocol definition."""
-        protocol = FlextProtocols.Infrastructure.LoggerProtocol
+        protocol = FlextCore.Protocols.Infrastructure.LoggerProtocol
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -200,7 +206,7 @@ class TestFlextProtocols:
     # Application Protocols Tests
     def test_handler_protocol(self) -> None:
         """Test Handler protocol definition."""
-        protocol = FlextProtocols.Application.Handler
+        protocol = FlextCore.Protocols.Application.Handler
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -209,13 +215,13 @@ class TestFlextProtocols:
 
     def test_handler_implementation(self) -> None:
         """Test that a class can implement Handler protocol."""
-        from flext_core import FlextResult
+        from flext_core import FlextCore
 
         class CreateUserHandler:
             def handle(
-                self, command: dict[str, object]
-            ) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok({"user_id": "123"})
+                self, command: FlextCore.Types.Dict
+            ) -> FlextCore.Result[FlextCore.Types.Dict]:
+                return FlextCore.Result[FlextCore.Types.Dict].ok({"user_id": "123"})
 
         handler = CreateUserHandler()
         assert hasattr(handler, "handle")
@@ -224,17 +230,8 @@ class TestFlextProtocols:
 
     # Commands Protocols Tests
     def test_command_handler_protocol(self) -> None:
-        """Test CommandHandler protocol definition."""
-        protocol = FlextProtocols.Commands.CommandHandler
-        assert protocol is not None
-        # For runtime-checkable protocols, check for protocol attributes
-        assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
-        )
-
-    def test_query_handler_protocol(self) -> None:
-        """Test QueryHandler protocol definition."""
-        protocol = FlextProtocols.Commands.QueryHandler
+        """Test CommandBus protocol definition."""
+        protocol = FlextCore.Protocols.Commands.CommandBus
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -243,7 +240,7 @@ class TestFlextProtocols:
 
     def test_command_bus_protocol(self) -> None:
         """Test CommandBus protocol definition."""
-        protocol = FlextProtocols.Commands.CommandBus
+        protocol = FlextCore.Protocols.Commands.CommandBus
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -252,7 +249,7 @@ class TestFlextProtocols:
 
     def test_commands_middleware_protocol(self) -> None:
         """Test Commands Middleware protocol definition."""
-        protocol = FlextProtocols.Commands.Middleware
+        protocol = FlextCore.Protocols.Commands.Middleware
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -261,8 +258,8 @@ class TestFlextProtocols:
 
     # Extensions Protocols Tests
     def test_plugin_protocol(self) -> None:
-        """Test Plugin protocol definition."""
-        protocol = FlextProtocols.Extensions.Plugin
+        """Test PluginContext protocol definition."""
+        protocol = FlextCore.Protocols.Extensions.PluginContext
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -271,7 +268,7 @@ class TestFlextProtocols:
 
     def test_plugin_context_protocol(self) -> None:
         """Test PluginContext protocol definition."""
-        protocol = FlextProtocols.Extensions.PluginContext
+        protocol = FlextCore.Protocols.Extensions.PluginContext
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -280,7 +277,7 @@ class TestFlextProtocols:
 
     def test_observability_protocol(self) -> None:
         """Test Observability protocol definition."""
-        protocol = FlextProtocols.Extensions.Observability
+        protocol = FlextCore.Protocols.Extensions.Observability
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -289,7 +286,7 @@ class TestFlextProtocols:
 
     def test_extensions_middleware_protocol(self) -> None:
         """Test Extensions Middleware protocol definition."""
-        protocol = FlextProtocols.Extensions.Middleware
+        protocol = FlextCore.Protocols.Extensions.Middleware
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -299,12 +296,12 @@ class TestFlextProtocols:
     # Integration Tests
     def test_protocol_categories_independence(self) -> None:
         """Test that protocol categories are independent."""
-        foundation = FlextProtocols.Foundation
-        domain = FlextProtocols.Domain
-        infrastructure = FlextProtocols.Infrastructure
-        application = FlextProtocols.Application
-        commands = FlextProtocols.Commands
-        extensions = FlextProtocols.Extensions
+        foundation = FlextCore.Protocols.Foundation
+        domain = FlextCore.Protocols.Domain
+        infrastructure = FlextCore.Protocols.Infrastructure
+        application = FlextCore.Protocols.Application
+        commands = FlextCore.Protocols.Commands
+        extensions = FlextCore.Protocols.Extensions
 
         # All should be different objects
         # Protocol categories list
@@ -322,18 +319,20 @@ class TestFlextProtocols:
 
     def test_multiple_protocol_implementation(self) -> None:
         """Test that a class can implement multiple protocols."""
-        from flext_core import FlextResult
+        from flext_core import FlextCore
 
         class AdvancedService:
             """Service implementing multiple protocols."""
 
-            def execute(self, **kwargs: object) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok({})
+            def execute(
+                self, **kwargs: object
+            ) -> FlextCore.Result[FlextCore.Types.Dict]:
+                return FlextCore.Result[FlextCore.Types.Dict].ok({})
 
             def handle(
-                self, command: dict[str, object]
-            ) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok({})
+                self, command: FlextCore.Types.Dict
+            ) -> FlextCore.Result[FlextCore.Types.Dict]:
+                return FlextCore.Result[FlextCore.Types.Dict].ok({})
 
         service = AdvancedService()
         # Should implement both Service and Handler protocols
@@ -343,7 +342,7 @@ class TestFlextProtocols:
     def test_protocol_runtime_checkable(self) -> None:
         """Test that protocols support runtime checking."""
         # HasResultValue should be runtime checkable
-        # protocol = FlextProtocols.Foundation.HasResultValue  # Unused for now
+        # protocol = FlextCore.Protocols.Foundation.HasResultValue  # Unused for now
 
         class Container:
             @property
@@ -364,44 +363,40 @@ class TestFlextProtocols:
             "HasHandlerType",
         ]
         for proto_name in expected_protocols:
-            assert hasattr(FlextProtocols.Foundation, proto_name)
+            assert hasattr(FlextCore.Protocols.Foundation, proto_name)
 
     def test_all_domain_protocols_available(self) -> None:
         """Test that all domain protocols are accessible."""
         expected_protocols = ["Repository", "Service"]
         for proto_name in expected_protocols:
-            assert hasattr(FlextProtocols.Domain, proto_name)
+            assert hasattr(FlextCore.Protocols.Domain, proto_name)
 
     def test_all_infrastructure_protocols_available(self) -> None:
         """Test that all infrastructure protocols are accessible."""
         expected_protocols = ["Configurable", "Connection", "LoggerProtocol"]
         for proto_name in expected_protocols:
-            assert hasattr(FlextProtocols.Infrastructure, proto_name)
+            assert hasattr(FlextCore.Protocols.Infrastructure, proto_name)
 
     def test_all_application_protocols_available(self) -> None:
         """Test that all application protocols are accessible."""
         expected_protocols = ["Handler"]
         for proto_name in expected_protocols:
-            assert hasattr(FlextProtocols.Application, proto_name)
+            assert hasattr(FlextCore.Protocols.Application, proto_name)
 
     def test_all_commands_protocols_available(self) -> None:
         """Test that all commands protocols are accessible."""
         expected_protocols = [
-            "CommandHandler",
-            "QueryHandler",
             "CommandBus",
             "Middleware",
         ]
         for proto_name in expected_protocols:
-            assert hasattr(FlextProtocols.Commands, proto_name)
+            assert hasattr(FlextCore.Protocols.Commands, proto_name)
 
     def test_all_extensions_protocols_available(self) -> None:
         """Test that all extensions protocols are accessible."""
         expected_protocols = [
-            "Plugin",
             "PluginContext",
-            "Observability",
             "Middleware",
         ]
         for proto_name in expected_protocols:
-            assert hasattr(FlextProtocols.Extensions, proto_name)
+            assert hasattr(FlextCore.Protocols.Extensions, proto_name)

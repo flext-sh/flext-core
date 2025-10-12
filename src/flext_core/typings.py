@@ -4,24 +4,6 @@ This module provides the complete type system that ALL other flext_core modules 
 As Layer 0 (pure Python), it has ZERO dependencies on other flext_core modules,
 making it safe to import from anywhere without circular dependency risks.
 
-**ARCHITECTURE HIERARCHY**:
-- Layer 0: constants.py, typings.py (pure Python, no flext_core imports)
-- Layer 0.5: runtime.py (imports Layer 0, exposes external libraries)
-- Layer 1+: All other modules (import Layer 0 and 0.5)
-
-**KEY FEATURES**:
-- 80+ TypeVars for generic programming with proper variance
-- Core fundamental types (Dict, List, Headers) with Python 3.13+ patterns
-- Configuration types with modern union syntax (X | Y)
-- Message types for CQRS patterns with proper covariance
-- Handler types for command/query patterns with contravariance
-- Service and Protocol types for domain-driven design
-- Async types for coroutines and generators
-- Error handling types for railway pattern
-
-**DEPENDENCIES**: ZERO flext_core imports (pure Python stdlib only)
-**USED BY**: ALL flext_core modules and 32+ ecosystem projects
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -89,147 +71,56 @@ ResultT = TypeVar("ResultT")
 
 
 class FlextTypes:
-    """Centralized type system namespace for the FLEXT ecosystem (Layer 0).
+    """Centralized type system namespace for the FLEXT ecosystem.
 
-    FlextTypes provides the single source of truth for all type definitions
-    across the entire FLEXT ecosystem. As Layer 0, this module has ZERO
-    dependencies on other flext_core modules, making it safe to import
-    from anywhere without circular dependency risks.
+    Provides the single source of truth for all type definitions
+    across the entire FLEXT ecosystem with proper variance annotations
+    and modern Python 3.13+ syntax.
 
-    **ARCHITECTURE ROLE**: Layer 0 - Pure Python Foundation
-        - NO dependencies on other flext_core modules
-        - Imported by ALL higher-level modules (result, models, handlers, etc.)
-        - Foundation for 32+ dependent ecosystem projects
-        - Provides 80+ TypeVars with proper variance annotations
+    Includes:
+    - Core: Core fundamental types with Python 3.13+ enhancements
+    - Async: Modern async and concurrent patterns
+    - ErrorHandling: Enhanced error handling with recovery strategies
+    - Service: Comprehensive service layer types
+    - Headers: HTTP headers and metadata types
+    - Message: Message types for CQRS patterns
+    - Handler: Handler types for command/query processing
+    - Protocol: Protocol types for interfaces
+    - Plugin: Plugin types for extensibility
 
-    **PROVIDES**:
-        - Core fundamental types (Dict, List, Headers) with Python 3.13+ patterns
-        - Configuration types (ConfigValue, ConfigDict) with modern union syntax
-        - JSON types with Python 3.13+ syntax (X | Y instead of Union[X, Y])
-        - Message types for CQRS patterns with proper covariance
-        - Handler types for command/query handlers with contravariant inputs
-        - Service types for domain services with covariant outputs
-        - Protocol types for interface definitions
-        - Plugin types for extensibility patterns
-        - Error handling types for railway pattern (FlextResult)
-        - Async types for coroutines and generators
-
-    **PATTERN**: Namespace class with 80+ TypeVars as class attributes
-        - typing.TypeVar for generic type variables with variance
-        - typing.ParamSpec for parameter specifications
-        - typing.Literal for literal type hints
-        - collections.abc.Callable and Awaitable for callable types
-        - Pure Python stdlib only (no external dependencies)
-        - Python 3.13+ union syntax (X | Y) for modern type expressions
-        - Modern type aliases with type keyword
-        - Covariant and contravariant variance for type safety
-        - Generic type constraints for proper type relationships
-
-    **Attributes**:
-        Core: Core fundamental types for ecosystem with Python 3.13+ enhancements.
-        Async: Modern async and concurrent patterns for Python 3.13+.
-        ErrorHandling: Enhanced error handling with recovery strategies.
-        Service: Comprehensive service layer types with flext-core integration.
-        Headers: HTTP headers and metadata types.
-        Message: Message types for CQRS patterns.
-        Handler: Handler types for command/query processing.
-        Protocol: Protocol types for interfaces.
-        Plugin: Plugin types for extensibility.
-
-    **Note**:
-        All types use Python 3.13+ modern syntax with union operators (X | Y).
-        Type variables support covariance/contravariance for type safety.
-        Type aliases use modern type keyword syntax.
-        No wrappers or legacy patterns allowed.
-        Single source of truth for all ecosystem types.
-        40+ TypeVars exported for complete type safety coverage.
-
-    **Warning**:
-        Type changes may impact entire ecosystem.
-        Generic type variables must match usage patterns correctly.
-        Covariance/contravariance must be used appropriately for type safety.
-        Type aliases should not wrap existing types unnecessarily.
-
-    **See Also**:
-        FlextResult: For result type patterns and railway composition.
-        FlextModels: For domain model types and DDD patterns.
-        FlextHandlers: For handler type usage and CQRS patterns.
-        FlextProtocols: For protocol definitions and interface contracts.
-        FlextUtilities: For type validation and transformation utilities.
+    All types use modern Python 3.13+ union syntax (X | Y) and provide
+    80+ TypeVars with proper variance annotations for complete type safety.
     """
 
-    # Core TypeVars for backward compatibility
-    T = T
-    T_co = T_co
-    T_contra = T_contra
-
-    # ParamSpec for callable types - not assignable to class attributes
-
-    # Additional TypeVars
-    E = E
-    F = F
-    K = K
-    R = R
-    U = U
-    V = V
-    W = W
-
-    # Covariant TypeVars
-    T1_co = T1_co
-    T2_co = T2_co
-    T3_co = T3_co
-    TAggregate_co = TAggregate_co
-    TCacheValue_co = TCacheValue_co
-    TDomainEvent_co = TDomainEvent_co
-    TEntity_co = TEntity_co
-    TResult_co = TResult_co
-    TState_co = TState_co
-    TValue_co = TValue_co
-    TValueObject_co = TValueObject_co
-
-    # Contravariant TypeVars
-    TCacheKey_contra = TCacheKey_contra
-    TCommand_contra = TCommand_contra
-    TConfigKey_contra = TConfigKey_contra
-    TEvent_contra = TEvent_contra
-    TInput_contra = TInput_contra
-    TItem_contra = TItem_contra
-    TQuery_contra = TQuery_contra
-    TResult_contra = TResult_contra
-    TUtil_contra = TUtil_contra
-
-    # Domain-specific TypeVars
-    Command = Command
-    Event = Event
-    Message = Message
-    Query = Query
-    ResultT = ResultT
-
     # Basic collection types - Direct access for backward compatibility
-    Dict = dict[str, object]
-    List = list[object]
-    StringList = list[str]
+    type Dict = dict[str, object]
+    type List = list[object]
+    type StringList = list[str]
 
-    IntList = list[int]
-    FloatList = list[float]
-    BoolList = list[bool]
+    type IntList = list[int]
+    type FloatList = list[float]
+    type BoolList = list[bool]
 
     # Component types for normalization operations - backward compatibility
     # Must be hashable for set operations, so we exclude generic object
-    ComponentType = (
+    type ComponentType = (
         Dict | List | set[object] | tuple[object, ...] | str | int | float | bool | None
     )
 
     # Sortable types for sorting operations - backward compatibility
-    SortableType = str | int | float
+    type SortableType = str | int | float
 
     # Serializable types for serialization operations - backward compatibility
-    SerializableType = Dict | List | str | int | float | bool | None
+    type SerializableType = (
+        FlextTypes.Dict | FlextTypes.List | str | int | float | bool | None
+    )
 
     # Type variable references moved to module level below
 
     # Collection types for backward compatibility
-    OrderedDict = dict[str, object]  # Use dict for type annotation (modern Python 3.7+)
+    type OrderedDict = (
+        FlextTypes.Dict
+    )  # Use dict for type annotation (modern Python 3.7+)
 
     # Core types reference for backward compatibility
 
@@ -294,9 +185,9 @@ class FlextTypes:
         """
 
         type Dict = FlextTypes.Dict
-        type List = list[object]
+        type List = FlextTypes.List
         type Mapping = FlextTypes.Dict
-        type Sequence = list[object]
+        type Sequence = FlextTypes.List
         type Set = set[object]
         type Tuple = tuple[object, ...]
 
@@ -600,7 +491,7 @@ class FlextTypes:
 
         # Context export types (aligned with FlextConstants.Context export formats)
         type ExportFormat = FlextConstants.ContextExportFormat
-        type ExportedContext = dict[str, object] | str
+        type ExportedContext = FlextTypes.Dict | str
 
         # Context depth and size types (aligned with FlextConstants.Context limits)
         type ContextDepth = int
@@ -709,7 +600,7 @@ class FlextTypes:
         # Core-specific type aliases
         type ConfigData = dict[str, FlextTypes.ConfigValue]
         type ModuleConfig = dict[str, FlextTypes.Config.ConfigData]
-        type ServiceRegistry = dict[str, object]
+        type ServiceRegistry = FlextTypes.Dict
         type ComponentMap = dict[str, type | object]
 
     # =========================================================================
@@ -739,13 +630,12 @@ class FlextTypes:
         type BusinessRule = Rule
 
         # Complex validation patterns (NEW - high value)
-        type FieldName = str
         type FieldValidator[T] = Callable[
             [T], object
         ]  # Simplified to break circular import
         type FieldValidators[T] = list[FlextTypes.Validation.FieldValidator[T]]
         type FieldValidatorRegistry[T] = dict[
-            FlextTypes.Validation.FieldName, FlextTypes.Validation.FieldValidators[T]
+            str, FlextTypes.Validation.FieldValidators[T]
         ]
 
         type EntityValidator[T] = FlextTypes.Validation.FieldValidator[T]
@@ -940,7 +830,7 @@ class FlextTypes:
         type PerformanceMetrics = dict[str, dict[str, int | float]]
 
 
-__all__: list[str] = [
+__all__: FlextTypes.StringList = [
     "Command",
     "E",
     "Event",

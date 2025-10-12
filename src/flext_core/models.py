@@ -1,37 +1,15 @@
-"""Layer 8: Domain models aligned with the FLEXT 1.0.0 modernization charter.
+"""Domain models for domain-driven design patterns.
 
-This module provides the complete FlextModels namespace with Entity, Value,
-AggregateRoot, and all configuration models for the FLEXT ecosystem. Use
-FlextModels for all domain modeling and data validation.
+This module provides FlextModels, a comprehensive collection of base classes
+and utilities for implementing domain-driven design (DDD) patterns in the
+FLEXT ecosystem.
 
-Dependency Layer: 8 (Domain Foundation)
-Dependencies: FlextConstants, FlextTypes, FlextExceptions, FlextResult,
-              FlextConfig, FlextUtilities, FlextLoggings, FlextMixins
-Used by: All Flext application and infrastructure modules
-
-Entities, value objects, and aggregates mirror the design captured in
-``README.md`` and ``docs/architecture.md`` so downstream packages share a
-consistent DDD foundation during the rollout.
-
-Usage:
-    ```python
-    from flext_core.result import FlextResult
-    from flext_core.models import FlextModels
-
-
-    class User(FlextModels.Entity):
-        name: str
-        email: str
-
-        @override
-        def validate(self: object) -> FlextResult[None]:
-            if "@" not in self.email:
-                return FlextResult[None].fail("Invalid email")
-            return FlextResult[None].ok(None)
-    ```
+All models use Pydantic for validation and serialization, providing type-safe
+domain modeling with automatic validation and error handling.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 # Expected: Complex model inheritance and mixins.
 # ruff: disable=PLC2701,E402
@@ -69,156 +47,37 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
 
 class FlextModels:
-    """Domain-Driven Design patterns for FLEXT ecosystem modeling.
+    """Base classes and utilities for domain-driven design patterns.
 
-    FlextModels provides comprehensive DDD base classes for domain
-    modeling throughout the FLEXT ecosystem. Includes Entity, Value
-    Object, Aggregate Root patterns with built-in validation and
-    event sourcing support. Used across all 32+ dependent projects.
+    Provides comprehensive base classes for implementing DDD patterns
+    with Pydantic validation, event sourcing support, and CQRS integration.
 
-    **Function**: DDD pattern implementations with Pydantic 2
-        - Entity base with identity and lifecycle management
-        - Value Object base for immutable value types
-        - Aggregate Root for consistency boundaries
-        - Domain event management and event sourcing
-        - CQRS patterns (Command, Query, DomainEvent)
-        - Repository and specification patterns
-        - Saga pattern for distributed transactions
-        - Validation utilities with FlextResult integration
-        - Pagination support for queries
-        - Metadata and error detail models
-        - Configuration models with centralized defaults
-        - Request/Response models for APIs
+    Includes:
+    - Entity: Base class with identity and lifecycle management
+    - Value: Immutable value objects compared by value
+    - AggregateRoot: Consistency boundaries with invariant enforcement
+    - Command/Query: CQRS pattern base classes
+    - DomainEvent: Event sourcing support
+    - Validation: Utility functions for business rules
+    - Various mixins for common model behaviors
 
-    **Uses**: Pydantic 2 for validation and serialization
-        - BaseModel for all domain models with type safety
-        - Field validators for business rule enforcement
-        - model_config for Pydantic settings and behavior
-        - ConfigDict for model configuration
-        - computed_field for derived properties
-        - FlextResult[T] for operation results
-        - FlextConfig for configuration integration
-        - FlextLogger for domain event logging
-        - FlextConstants for validation limits
-        - FlextTypes for type definitions
-
-    **How to use**: Implement domain models with DDD patterns
-        ```python
-        from flext_core import FlextModels, FlextResult
-
-
-        # Example 1: Value Object (immutable, compared by value)
-        class Email(FlextModels.Value):
-            address: str
-
-            def validate(self) -> FlextResult[None]:
-                if "@" not in self.address:
-                    return FlextResult[None].fail("Invalid email")
-                return FlextResult[None].ok(None)
-
-
-        # Example 2: Entity (has identity and lifecycle)
-        class User(FlextModels.Entity):
-            name: str
-            email: Email
-            is_active: bool = False
-
-            def activate(self) -> FlextResult[None]:
-                if self.is_active:
-                    return FlextResult[None].fail("Already active")
-                self.is_active = True
-                self.add_domain_event("UserActivated", {"user_id": self.id})
-                return FlextResult[None].ok(None)
-
-
-        # Example 3: Aggregate Root (consistency boundary)
-        class Account(FlextModels.AggregateRoot):
-            owner: User
-            balance: Decimal
-
-            def withdraw(self, amount: Decimal) -> FlextResult[None]:
-                if amount > self.balance:
-                    return FlextResult[None].fail("Insufficient funds")
-                self.balance -= amount
-                self.add_domain_event("MoneyWithdrawn", {"amount": str(amount)})
-                return FlextResult[None].ok(None)
-
-
-        # Example 4: CQRS Command pattern
-        class CreateUserCommand(FlextModels.Command):
-            name: str
-            email: str
-
-
-        # Example 5: CQRS Query pattern with pagination
-        class GetUsersQuery(FlextModels.Query):
-            pagination: dict[str, object] = Field(default_factory=dict)
-
-
-        # Example 6: Domain Event for event sourcing
-        class UserCreatedEvent(FlextModels.DomainEvent):
-            user_id: str
-            timestamp: datetime
-        ```
-
-        - [ ] Add domain event versioning for evolution
-        - [ ] Implement event store patterns with snapshots
-        - [ ] Support aggregate snapshots for performance
-        - [ ] Add saga orchestration patterns
-        - [ ] Enhance validation DSL for complex rules
-        - [ ] Implement optimistic locking for concurrency
-        - [ ] Add domain event replay for debugging
-        - [ ] Support event sourcing with CQRS projection
-        - [ ] Implement specification pattern composition
-        - [ ] Add repository pattern with unit of work
-
-    Attributes:
-        Entity: Base class for entities with identity.
-        Value: Base class for immutable value objects.
-        AggregateRoot: Base class for aggregate roots.
-        Command: Base class for CQRS commands.
-        Query: Base class for CQRS queries.
-        DomainEvent: Base class for domain events.
-        Pagination: Pagination support for queries.
-        Validation: Validation utilities and helpers.
-        Config: Configuration models.
-        Metadata: Metadata and error detail models.
-
-    Note:
-        All models use Pydantic 2.11+ for validation. Entity
-        instances have identity (id field). Value objects are
-        immutable and compared by value. Aggregate roots manage
-        consistency boundaries. Use FlextResult for all operations.
-
-    Warning:
-        Value objects must be immutable - never modify after
-        creation. Aggregate roots enforce invariants - always
-        validate state changes. Domain events are immutable once
-        created. Never bypass validation in domain models.
-
-    Example:
-        Complete domain modeling with DDD patterns:
-
-        >>> class Money(FlextModels.Value):
-        ...     amount: Decimal
-        ...     currency: str
-        >>> class Account(FlextModels.AggregateRoot):
-        ...     balance: Money
-        >>> account = Account(balance=Money(amount=100, currency="USD"))
-        >>> print(account.balance.amount)
-        100
-
-    See Also:
-        FlextResult: For railway-oriented error handling.
-        FlextContainer: For dependency injection patterns.
-        FlextBus: For CQRS command/query dispatching.
-
+    Usage:
+        >>> from flext_core.models import FlextModels
+        >>> from flext_core.result import FlextResult
+        >>>
+        >>> class User(FlextModels.Entity):
+        ...     name: str
+        ...     email: str
+        ...
+        ...     def activate(self) -> FlextResult[None]:
+        ...         return FlextResult[None].ok(None)
     """
 
     # =========================================================================
@@ -1043,7 +902,7 @@ class FlextModels:
         batch_size: int = Field(
             default_factory=lambda: __import__("flext_core.config")
             .FlextConfig()
-            .batch_size
+            .max_batch_size
         )
         max_workers: int = Field(
             default_factory=lambda: __import__("flext_core.config")
@@ -1236,10 +1095,10 @@ class FlextModels:
 
         @field_validator("operations")
         @classmethod
-        def validate_operations(cls, v: list[object]) -> list[object]:
-            """Validate operations list[object]."""
+        def validate_operations(cls, v: FlextTypes.List) -> FlextTypes.List:
+            """Validate operations FlextTypes.List."""
             if not v:
-                msg = "Operations list[object] cannot be empty"
+                msg = "Operations FlextTypes.List cannot be empty"
                 raise FlextExceptions.ValidationError(
                     message=msg,
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -1269,7 +1128,7 @@ class FlextModels:
 
         @field_validator("metric_types")
         @classmethod
-        def validate_prefix(cls, v: list[object]) -> list[object]:
+        def validate_prefix(cls, v: FlextTypes.List) -> FlextTypes.List:
             """Validate metric types."""
             valid_types = {
                 "performance",
@@ -1316,7 +1175,7 @@ class FlextModels:
         @classmethod
         def validate_resource_limit(cls, v: int) -> int:
             """Validate resource limit is positive."""
-            if v <= FlextConstants.Core.ZERO:
+            if v <= FlextConstants.ZERO:
                 msg = "Resource limit must be positive"
                 raise FlextExceptions.ValidationError(
                     message=msg,
@@ -1328,7 +1187,7 @@ class FlextModels:
         """Operation execution request."""
 
         operation_name: str
-        operation_callable: object
+        operation_callable: Callable[..., object]
         arguments: FlextTypes.Dict = Field(default_factory=dict)
         keyword_arguments: FlextTypes.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
@@ -1508,7 +1367,7 @@ class FlextModels:
     # ============================================================================
 
     class Cqrs:
-        """CQRS configuration models for bus and handler setup."""
+        """CQRS pattern configuration models."""
 
         class Bus(BaseModel):
             """Bus configuration model for CQRS command bus."""
@@ -1661,7 +1520,7 @@ class FlextModels:
     # ============================================================================
 
     class Validation:
-        """Local validation utilities to avoid circular imports."""
+        """Validation utility functions."""
 
         @staticmethod
         def validate_email_address(email: str) -> FlextResult[str]:
@@ -2015,7 +1874,7 @@ class FlextModels:
                 return FlextResult[list[T]].ok(valid_models)
             # Accumulate all errors
             validated_models: list[T] = []
-            all_errors: list[str] = []
+            all_errors: FlextTypes.StringList = []
 
             for model in models:
                 validation_result = FlextResult.validate_all(model, *validators)
@@ -2099,7 +1958,7 @@ class FlextModels:
                 ```
 
             """
-            violations: list[str] = []
+            violations: FlextTypes.StringList = []
             for rule_name, validator in consistency_rules.items():
                 result = validator(aggregate)
                 if result.is_failure:
@@ -2268,7 +2127,9 @@ class FlextModels:
             return FlextResult[None].ok(None)
 
         @staticmethod
-        def validate_aggregate_consistency[T](aggregate: T) -> FlextResult[T]:
+        def validate_aggregate_consistency[T: FlextProtocols.Foundation.HasInvariants](
+            aggregate: T,
+        ) -> FlextResult[T]:
             """Validate aggregate consistency and business invariants.
 
             Ensures aggregates maintain consistency boundaries and invariants
@@ -2287,10 +2148,10 @@ class FlextModels:
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
-            # Check if aggregate has invariants method
-            if hasattr(aggregate, "check_invariants"):
+            # Check invariants if the aggregate supports them
+            if isinstance(aggregate, FlextProtocols.Foundation.HasInvariants):
                 try:
-                    aggregate.check_invariants()  # type: ignore[attr-defined]
+                    aggregate.check_invariants()
                 except Exception as e:
                     return FlextResult[T].fail(
                         f"Aggregate invariant violation: {e}",
@@ -2358,7 +2219,8 @@ class FlextModels:
                             error_code=FlextConstants.Errors.VALIDATION_ERROR,
                         )
 
-            return FlextResult[T].ok(entity)
+            # Type-safe return for generic method using cast for proper type inference
+            return cast("FlextResult[T]", FlextResult.ok(entity))
 
     # ============================================================================
     # END OF PHASE 8: CQRS CONFIGURATION MODELS
@@ -2427,7 +2289,7 @@ class FlextModels:
                 return v
             if isinstance(v, dict):
                 # Extract page and size from dict with proper type casting
-                v_dict = cast("dict[str, object]", v)
+                v_dict = cast("FlextTypes.Dict", v)
                 page_raw = v_dict.get("page", 1)
                 size_raw = v_dict.get("size", 20)
 
@@ -2468,7 +2330,7 @@ class FlextModels:
                 if isinstance(pagination_data, FlextModels.Pagination):
                     pagination = pagination_data
                 elif isinstance(pagination_data, dict):
-                    pagination_dict = cast("dict[str, object]", pagination_data)
+                    pagination_dict = cast("FlextTypes.Dict", pagination_data)
                     page_raw = pagination_dict.get("page", 1)
                     size_raw = pagination_dict.get("size", 20)
                     page: int = int(page_raw) if isinstance(page_raw, (int, str)) else 1
@@ -2487,7 +2349,7 @@ class FlextModels:
                 if not isinstance(filters, dict):
                     filters = {}
                 # Type casting for mypy - after validation, filters is guaranteed to be dict
-                filters_dict = cast("dict[str, object]", filters)
+                filters_dict = cast("FlextTypes.Dict", filters)
                 # No need to validate pagination dict - Pydantic validator handles conversion
 
                 query = cls(
@@ -2540,7 +2402,7 @@ class FlextModels:
         headers: dict[str, str] = Field(
             default_factory=dict, description="Request headers"
         )
-        body: str | dict[str, object] | None = Field(
+        body: str | FlextTypes.Dict | None = Field(
             default=None, description="Request body"
         )
         timeout: float = Field(
@@ -2684,7 +2546,7 @@ class FlextModels:
         headers: dict[str, str] = Field(
             default_factory=dict, description="Response headers"
         )
-        body: str | dict[str, object] | None = Field(
+        body: str | FlextTypes.Dict | None = Field(
             default=None, description="Response body"
         )
         elapsed_time: float | None = Field(
@@ -2789,3 +2651,10 @@ class FlextModels:
 __all__ = [
     "FlextModels",
 ]
+
+# Rebuild models for Pydantic v2 forward references
+FlextModels.Query.model_rebuild()
+FlextModels.Command.model_rebuild()
+FlextModels.DomainEvent.model_rebuild()
+FlextModels.HttpRequest.model_rebuild()
+FlextModels.HttpResponse.model_rebuild()

@@ -12,16 +12,16 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 
-from flext_core import FlextContainer, FlextExceptions, FlextLogger, FlextResult
-from flext_core.decorators import (
-    combined,
-    inject,
-    log_operation,
-    railway,
-    retry,
-    timeout,
-    track_performance,
-)
+from flext_core import FlextCore
+
+# Import decorators for convenience
+retry = FlextCore.Decorators.retry
+timeout = FlextCore.Decorators.timeout
+log_operation = FlextCore.Decorators.log_operation
+track_performance = FlextCore.Decorators.track_performance
+railway = FlextCore.Decorators.railway
+combined = FlextCore.Decorators.combined
+inject = FlextCore.Decorators.inject
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -33,14 +33,14 @@ class TestInjectDecorator:
     @pytest.fixture(autouse=True)
     def _clean_container(self) -> Iterator[None]:
         """Clean container before/after each test."""
-        container = FlextContainer.get_global()
+        container = FlextCore.Container.get_global()
         container.clear()
         yield
         container.clear()
 
     def test_inject_basic_dependency(self) -> None:
         """Test basic dependency injection."""
-        container = FlextContainer.get_global()
+        container = FlextCore.Container.get_global()
 
         # Register a service
         class TestService:
@@ -51,7 +51,7 @@ class TestInjectDecorator:
         container.register("test_service", service)
 
         # Use inject decorator
-        @inject(test_service="test_service")
+        @FlextCore.Decorators.inject(test_service="test_service")
         def process_data(data: str, *, test_service: TestService) -> str:
             return f"{data}_{test_service.get_value()}"
 
@@ -63,7 +63,7 @@ class TestInjectDecorator:
     def test_inject_missing_dependency(self) -> None:
         """Test inject with missing dependency."""
 
-        @inject(missing_service="missing_service")
+        @FlextCore.Decorators.inject(missing_service="missing_service")
         def process_data(*, missing_service: str = "default") -> str:
             return missing_service
 
@@ -73,7 +73,7 @@ class TestInjectDecorator:
 
     def test_inject_with_provided_kwarg(self) -> None:
         """Test inject doesn't override provided kwargs."""
-        container = FlextContainer.get_global()
+        container = FlextCore.Container.get_global()
 
         @dataclasses.dataclass
         class TestService:
@@ -81,7 +81,7 @@ class TestInjectDecorator:
 
         container.register("service", TestService("from_container"))
 
-        @inject(service="service")
+        @FlextCore.Decorators.inject(service="service")
         def process(*, service: TestService) -> str:
             return service.value
 
@@ -97,7 +97,7 @@ class TestLogOperationDecorator:
     def test_log_operation_basic(self) -> None:
         """Test basic operation logging."""
 
-        @log_operation("test_operation")
+        @FlextCore.Decorators.log_operation("test_operation")
         def simple_function() -> str:
             return "success"
 
@@ -110,9 +110,9 @@ class TestLogOperationDecorator:
         class ServiceWithLogger:
             def __init__(self) -> None:
                 super().__init__()
-                self.logger = FlextLogger(__name__)
+                self.logger = FlextCore.Logger(__name__)
 
-            @log_operation("process_data")
+            @FlextCore.Decorators.log_operation("process_data")
             def process(self, value: str) -> str:
                 return f"processed_{value}"
 
@@ -123,7 +123,7 @@ class TestLogOperationDecorator:
     def test_log_operation_with_exception(self) -> None:
         """Test log_operation logs exceptions."""
 
-        @log_operation("failing_operation")
+        @FlextCore.Decorators.log_operation("failing_operation")
         def failing_function() -> None:
             msg = "Test error"
             raise ValueError(msg)
@@ -134,7 +134,7 @@ class TestLogOperationDecorator:
     def test_log_operation_default_name(self) -> None:
         """Test log_operation uses function name as default."""
 
-        @log_operation()
+        @FlextCore.Decorators.log_operation()
         def my_function() -> str:
             return "result"
 
@@ -162,7 +162,7 @@ class TestTrackPerformanceDecorator:
         class ServiceWithLogger:
             def __init__(self) -> None:
                 super().__init__()
-                self.logger = FlextLogger(__name__)
+                self.logger = FlextCore.Logger(__name__)
 
             @track_performance("process")
             def process(self) -> str:
@@ -205,7 +205,7 @@ class TestRailwayDecorator:
             return "success"
 
         result = successful_operation()
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_success
         assert result.unwrap() == "success"
 
@@ -218,19 +218,19 @@ class TestRailwayDecorator:
             raise ValueError(msg)
 
         result = failing_operation()
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_failure
         assert "Operation failed" in (result.error or "")
 
     def test_railway_with_existing_result(self) -> None:
-        """Test railway returns existing FlextResult as-is."""
+        """Test railway returns existing FlextCore.Result as-is."""
 
         @railway()
-        def returns_result() -> FlextResult[str]:
-            return FlextResult[str].ok("already_wrapped")
+        def returns_result() -> FlextCore.Result[str]:
+            return FlextCore.Result[str].ok("already_wrapped")
 
         result = returns_result()
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_success
         assert result.unwrap() == "already_wrapped"
 
@@ -321,7 +321,7 @@ class TestRetryDecorator:
         class ServiceWithLogger:
             def __init__(self) -> None:
                 super().__init__()
-                self.logger = FlextLogger(__name__)
+                self.logger = FlextCore.Logger(__name__)
                 self.attempts = 0
 
             @retry(max_attempts=2, delay_seconds=0.001)
@@ -360,7 +360,7 @@ class TestTimeoutDecorator:
             time.sleep(0.01)
             return "should_not_reach"
 
-        with pytest.raises(FlextExceptions.TimeoutError):
+        with pytest.raises(FlextCore.Exceptions.TimeoutError):
             slow_operation()
 
     def test_timeout_with_exception_slow(self) -> None:
@@ -372,7 +372,7 @@ class TestTimeoutDecorator:
             msg = "Should timeout before this"
             raise ValueError(msg)
 
-        with pytest.raises(FlextExceptions.TimeoutError):
+        with pytest.raises(FlextCore.Exceptions.TimeoutError):
             slow_failing_operation()
 
     def test_timeout_with_exception_fast(self) -> None:
@@ -394,7 +394,7 @@ class TestTimeoutDecorator:
             time.sleep(0.01)
             return "late"
 
-        with pytest.raises(FlextExceptions.TimeoutError):
+        with pytest.raises(FlextCore.Exceptions.TimeoutError):
             slow_operation()
 
 
@@ -404,7 +404,7 @@ class TestCombinedDecorator:
     @pytest.fixture(autouse=True)
     def _clean_container(self) -> Iterator[None]:
         """Clean container before/after each test."""
-        container = FlextContainer.get_global()
+        container = FlextCore.Container.get_global()
         container.clear()
         yield
         container.clear()
@@ -421,7 +421,7 @@ class TestCombinedDecorator:
 
     def test_combined_with_injection(self) -> None:
         """Test combined with dependency injection."""
-        container = FlextContainer.get_global()
+        container = FlextCore.Container.get_global()
 
         class TestService:
             def get_value(self) -> str:
@@ -448,8 +448,8 @@ class TestCombinedDecorator:
             return "success"
 
         result = operation()
-        # Railway wraps in FlextResult
-        assert isinstance(result, FlextResult)
+        # Railway wraps in FlextCore.Result
+        assert isinstance(result, FlextCore.Result)
         assert result.is_success
 
     def test_combined_railway_with_exception(self) -> None:
@@ -461,7 +461,7 @@ class TestCombinedDecorator:
             raise ValueError(msg)
 
         result = failing_operation()
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_failure
 
     def test_combined_without_perf_tracking(self) -> None:
@@ -476,7 +476,7 @@ class TestCombinedDecorator:
 
     def test_combined_all_features(self) -> None:
         """Test combined with all features enabled."""
-        container = FlextContainer.get_global()
+        container = FlextCore.Container.get_global()
 
         class Repository:
             def save(self, data: str) -> str:
@@ -497,7 +497,7 @@ class TestCombinedDecorator:
         # Note: decorator may not work in test context, using manual injection
         repo_instance: Repository = cast("Repository", container.get("repo").unwrap())
         result = full_operation("test", repo=repo_instance)
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_success
         assert "saved_test" in result.unwrap()
 
@@ -507,7 +507,7 @@ class TestDecoratorEdgeCases:
 
     def test_inject_no_container_service(self) -> None:
         """Test inject handles missing container gracefully."""
-        container = FlextContainer.get_global()
+        container = FlextCore.Container.get_global()
         container.clear()
 
         @inject(nonexistent="nonexistent")
@@ -582,7 +582,7 @@ class TestDecoratorIntegration:
             return "stacked_result"
 
         result = stacked_operation()
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_success
 
     def test_retry_with_railway(self) -> None:
@@ -600,7 +600,7 @@ class TestDecoratorIntegration:
             return "success"
 
         result = flaky_with_railway()
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, FlextCore.Result)
         assert result.is_success
         assert attempts == 2
 

@@ -1,34 +1,12 @@
-"""Layer 13: Unified CQRS handler base promoted for the FLEXT 1.0.0 rollout.
+"""Base classes for CQRS command and query handlers.
 
-This module provides FlextHandlers base classes for implementing CQRS command
-and query handlers throughout the FLEXT ecosystem. Use FlextHandlers for all
-handler implementations in FLEXT applications.
-
-Dependency Layer: 13 (Application Services)
-Dependencies: FlextConstants, FlextTypes, FlextExceptions, FlextResult,
-              FlextConfig, FlextUtilities, FlextLoggings, FlextMixins,
-              FlextModels, FlextContainer, FlextProcessors
-Used by: FlextBus, FlextDispatcher, FlextRegistry, and ecosystem handler implementations
-
-Simplified and refactored to use extracted components for reduced complexity
-while maintaining all functionality. Uses FlextConfig, FlextUtilities,
-FlextContext for modular, reusable handler operations.
-
-Usage:
-    ```python
-    from flext_core.result import FlextResult
-    from flext_core.handlers import FlextHandlers
-
-
-    class UserCommandHandler(FlextHandlers[CreateUserCommand, User]):
-        @override
-        def handle(self, command: CreateUserCommand) -> FlextResult[User]:
-            # Implement command handling logic
-            return FlextResult[User].ok(created_user)
-    ```
+This module provides FlextHandlers, the base class for implementing
+Command Query Responsibility Segregation (CQRS) handlers throughout
+the FLEXT ecosystem.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 # ruff: disable=E402
 # pyright: basic
@@ -59,179 +37,36 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
-    """Handler base class for CQRS command and query implementations.
+    """Base class for CQRS command and query handlers.
 
-    FlextHandlers provides the foundation for implementing CQRS handlers
-    with validation, execution context, metrics collection, and
-    configuration management. Generic base supporting commands, queries,
-    events, and sagas across all 32+ FLEXT projects.
+    Provides the foundation for implementing CQRS handlers with validation,
+    execution context, metrics collection, and configuration management.
+    Supports commands, queries, events, and sagas with type safety.
 
-    **Inherited Infrastructure** (from FlextMixins):
-        - container: FlextContainer (via FlextMixins)
-        - context: object (via FlextMixins)
-        - logger: FlextLogger (via FlextMixins) - per-handler logger instance
-        - config: object (via FlextMixins.Configurable) - global config access
-        - _track_operation: context manager (via FlextMixins)
-        - _enrich_context, _with_correlation_id, etc. (via FlextMixins)
+    Features:
+    - Abstract base for command/query/event handlers
+    - Handler execution with validation pipeline
+    - Type checking for message compatibility
+    - Metrics collection for handler performance
+    - Configuration via handler models
+    - Execution context tracking per handler
+    - Message validation with FlextResult
+    - Logger integration for handler operations
 
-    Internal implementation note: Class uses _internal_logger for internal
-    operations, while handlers access per-instance logger via inherited property.
-
-    **PROTOCOL IMPLEMENTATION**: This handler implements FlextProtocols.Application.Handler,
-    establishing the foundation pattern for ALL command/query/event handlers across the
-    FLEXT ecosystem.
-
-    Implements FlextProtocols through structural subtyping:
-    - Application.Handler: handle, execute, validate, can_handle, __call__ methods
-    - Application.Handler properties: handler_name, mode
-    - CQRS validation: validate_command, validate_query methods
-
-    **Function**: Base class for CQRS handler implementations
-        - Abstract base for command/query/event handlers
-        - Handler execution with validation pipeline
-        - Type checking for message compatibility
-        - Metrics collection for handler performance
-        - Configuration via FlextModels.Cqrs.Handler
-        - Execution context tracking per handler
-        - Message validation with FlextResult
-        - Pydantic message revalidation support
-        - Logger integration for handler operations
-        - Support for handler_type (command/query/event/saga)
-        - Generic types for message and result type safety
-        - Integration with FlextContext for state
-
-    **Uses**: CQRS infrastructure and validation components
-        - FlextMixins for reusable behavior patterns
-        - ABC for abstract base class enforcement
-        - FlextResult[T] for all operation results
-        - FlextModels.Cqrs.Handler for configuration
-        - FlextContext.HandlerExecutionContext for state
-        - FlextUtilities.TypeChecker for type validation
-        - FlextLogger for handler operation logging
-        - FlextConstants for handler defaults
-        - FlextExceptions for structured errors
-        - Generic types MessageT_contra and ResultT
-        - inspect module for type introspection
-
-    **How to use**: Implement handlers by subclassing
-        ```python
-        from flext_core import FlextHandlers, FlextResult, FlextModels
-
-
-        # Example 1: Command handler implementation
-        class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
-            def __init__(self):
-                config = FlextModels.Cqrs.Handler(
-                    handler_name="CreateUserHandler", handler_type="command"
-                )
-                super().__init__(config=config)
-
-            def handle(self, command: CreateUserCommand) -> FlextResult[User]:
-                # Validate command
-                validation = self._validate_message(command)
-                if validation.is_failure:
-                    return FlextResult[User].fail(validation.error)
-
-                # Execute business logic
-                user = User(name=command.name, email=command.email)
-                return FlextResult[User].ok(user)
-
-
-        # Example 2: Query handler with caching
-        class GetUserHandler(FlextHandlers[GetUserQuery, User]):
-            def __init__(self):
-                config = FlextModels.Cqrs.Handler(
-                    handler_name="GetUserHandler", handler_type="query"
-                )
-                super().__init__(config=config)
-
-            def handle(self, query: GetUserQuery) -> FlextResult[User]:
-                # Query execution logic
-                user = database.get_user(query.user_id)
-                if not user:
-                    return FlextResult[User].fail("User not found")
-                return FlextResult[User].ok(user)
-
-
-        # Example 3: Check message compatibility
-        handler = CreateUserHandler()
-        can_handle = handler.can_handle(CreateUserCommand)
-        print(f"Can handle: {can_handle}")
-
-        # Example 4: Access handler metadata
-        handler_id = handler.handler_id
-        handler_mode = handler.handler_mode
-        logger = handler.logger
-        ```
-
-        - [ ] Add /handler support for concurrency
-        - [ ] Implement handler chaining for workflows
-        - [ ] Add enhanced validation with custom rules
-        - [ ] Support handler composition patterns
-        - [ ] Implement handler interceptors
-        - [ ] Add transaction support for handlers
-        - [ ] Support handler versioning
-        - [ ] Implement handler timeout configuration
-        - [ ] Add handler circuit breaker patterns
-        - [ ] Support handler result caching
-
-    Args:
-        config: Handler configuration (Cqrs.Handler model).
-
-    Attributes:
-        _config_model (FlextModels.Cqrs.Handler): Configuration.
-        _execution_context: Handler execution context state.
-        _accepted_message_types (set): Compatible message types.
-        _revalidate_pydantic_messages (bool): Revalidation flag.
-
-    Returns:
-        FlextHandlers: Abstract handler base for subclassing.
-
-    Raises:
-        NotImplementedError: When handle() not implemented.
-        ValueError: When message validation fails.
-
-    Note:
-        Abstract base class - must implement handle() method.
-        Generic types MessageT_contra and ResultT for type safety.
-        Inherits from FlextMixins for reusable behaviors. All
-        operations return FlextResult for railway pattern.
-
-    Warning:
-        Must call super().__init__(config=config) in subclasses.
-        handle() method must be implemented by subclasses.
-        Message type checking uses generic type parameters.
-        Configuration required at instantiation.
-
-    Example:
-        Complete handler implementation:
-
-        >>> class MyHandler(FlextHandlers[MyCommand, MyResult]):
-        ...     def __init__(self):
-        ...         config = FlextModels.Cqrs.Handler(
-        ...             handler_name="MyHandler", handler_type="command"
-        ...         )
-        ...         super().__init__(config=config)
-        ...
-        ...     def handle(self, cmd: MyCommand) -> FlextResult[MyResult]:
-        ...         return FlextResult[MyResult].ok(result)
-
-    See Also:
-        FlextBus: For handler registration and execution.
-        FlextModels: For Command/Query base classes.
-        FlextDispatcher: For higher-level dispatch patterns.
-
+    Usage:
+        >>> from flext_core.handlers import FlextHandlers
+        >>> from flext_core.result import FlextResult
+        >>>
+        >>> class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
+        ...     def handle(self, command: CreateUserCommand) -> FlextResult[User]:
+        ...         return FlextResult[User].ok(User(name=command.name))
     """
 
     # Class-level logger for internal operations (not for subclass use)
     _internal_logger: FlextLogger = FlextLogger(__name__)
 
     class _MessageValidator:
-        """Private message validation utilities for FlextHandlers.
-
-        Nested class for handler-specific validation logic following SOLID principles.
-        This is an implementation detail of FlextHandlers, not a general utility.
-        """
+        """Private message validation utilities for FlextHandlers."""
 
         _SERIALIZABLE_MESSAGE_EXPECTATION = (
             "dict, str, int, float, bool, dataclass, attrs class, or object exposing "
@@ -818,7 +653,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         if handler_config is not None:
             if isinstance(handler_config, dict):
                 # Merge defaults with provided dict (dict values override defaults)
-                config_data: dict[str, object] = {
+                config_data: FlextTypes.Dict = {
                     "handler_id": f"{resolved_handler_name}_{id(callable_func)}",
                     "handler_name": resolved_handler_name,
                     "handler_type": effective_type,
@@ -869,7 +704,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         return CallableHandler(config=config)
 
     class Metrics:
-        """Metrics logging coordination for handlers using structured logging."""
+        """Metrics logging utilities for handlers."""
 
         @staticmethod
         def log_handler_start(

@@ -1,20 +1,12 @@
-"""Automation decorators for reducing code bloat across FLEXT ecosystem.
+"""Automation decorators for infrastructure concerns.
 
-This module provides decorators that automatically handle:
-- Dependency injection (@inject)
-- Operation logging with context (@log_operation)
-- Performance tracking (@track_performance)
-- Railway pattern wrapping (@railway)
-- Retry logic with exponential backoff (@retry)
-- Operation timeout enforcement (@timeout)
-
-These decorators significantly reduce boilerplate code in services, handlers,
-and other components by automating infrastructure concerns. All decorators
-integrate foundation modules (FlextLogger, FlextConstants, FlextExceptions)
-for consistency across the ecosystem.
+This module provides FlextDecorators, a collection of decorators that
+automatically handle common infrastructure concerns to reduce boilerplate
+code in services, handlers, and other components.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -22,7 +14,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from functools import wraps
-from typing import Any, ParamSpec, TypeVar, cast
+from typing import Any, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
@@ -30,40 +22,34 @@ from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
-
-# Type variables for decorator signatures
-P = ParamSpec("P")
-T = TypeVar("T")
-R = TypeVar("R")
+from flext_core.typings import P, R, T
 
 
 class FlextDecorators:
-    """Unified class for FLEXT automation decorators.
+    """Automation decorators for infrastructure concerns.
 
-    Provides decorators that automatically handle infrastructure concerns:
-    - Dependency injection
-    - Operation logging with structured context
-    - Performance tracking and metrics
-    - Railway pattern wrapping
-    - Retry logic with exponential backoff
-    - Operation timeout enforcement
+    Provides decorators that automatically handle common infrastructure
+    concerns to reduce boilerplate code in services, handlers, and other
+    components.
 
-    All decorators integrate FlextLogger, FlextConstants, and FlextExceptions
-    for consistency across the FLEXT ecosystem.
+    Includes:
+    - @inject: Automatic dependency injection from FlextContainer
+    - @log_operation: Automatic operation logging with structured context
+    - @track_performance: Automatic performance tracking and metrics
+    - @railway: Automatic railway pattern wrapping with FlextResult
+    - @retry: Automatic retry logic with exponential backoff
+    - @timeout: Automatic operation timeout enforcement
+    - @combined: Multiple decorators applied together
 
-    Example:
-        ```python
-        from flext_core import FlextDecorators, FlextResult
-
-
-        class MyService:
-            @FlextDecorators.inject(repo=MyRepository)
-            @FlextDecorators.log_operation("process_data")
-            @FlextDecorators.track_performance()
-            def process_data(self, data: dict, *, repo) -> FlextResult[dict]:
-                return repo.save(data)
-        ```
-
+    Usage:
+        >>> from flext_core.decorators import FlextDecorators
+        >>>
+        >>> class MyService:
+        ...     @FlextDecorators.inject(repo=MyRepository)
+        ...     @FlextDecorators.log_operation("process_data")
+        ...     @FlextDecorators.track_performance()
+        ...     def process_data(self, data: dict, *, repo) -> dict:
+        ...         return repo.save(data)
     """
 
     @staticmethod
@@ -249,7 +235,7 @@ class FlextDecorators:
 
         Note:
             Performance metrics are logged to structured logging context and
-            can be used with _track_operation() for metrics collection.
+            can be used with track() for metrics collection.
 
         """
 
@@ -863,94 +849,7 @@ class FlextDecorators:
 
         return decorator
 
-    @classmethod
-    def get_inject(
-        cls, **dependencies: str
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Backward compatibility for inject decorator."""
-        return cls.inject(**dependencies)
-
-    @classmethod
-    def get_log_operation(
-        cls, operation_name: str | None = None
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Backward compatibility for log_operation decorator."""
-        return cls.log_operation(operation_name)
-
-    @classmethod
-    def get_track_performance(
-        cls, operation_name: str | None = None
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Backward compatibility for track_performance decorator."""
-        return cls.track_performance(operation_name)
-
-    @classmethod
-    def get_railway(
-        cls, error_code: str | None = None
-    ) -> Callable[[Callable[P, T]], Callable[P, FlextResult[T]]]:
-        """Backward compatibility for railway decorator."""
-        return cls.railway(error_code)
-
-    @classmethod
-    def get_retry(
-        cls,
-        max_attempts: int | None = None,
-        delay_seconds: float | None = None,
-        backoff_strategy: str | None = None,
-        error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Backward compatibility for retry decorator."""
-        return cls.retry(max_attempts, delay_seconds, backoff_strategy, error_code)
-
-    @classmethod
-    def get_timeout(
-        cls, timeout_seconds: float | None = None, error_code: str | None = None
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Backward compatibility for timeout decorator."""
-        return cls.timeout(timeout_seconds, error_code)
-
-    @classmethod
-    def get_combined(
-        cls,
-        *,
-        inject_deps: dict[str, str] | None = None,
-        operation_name: str | None = None,
-        track_perf: bool = True,
-        use_railway: bool = False,
-        error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Backward compatibility for combined decorator."""
-        return cls.combined(
-            inject_deps=inject_deps,
-            operation_name=operation_name,
-            track_perf=track_perf,
-            use_railway=use_railway,
-            error_code=error_code,
-        )
-
-
-# Backward compatibility exports - individual decorator functions
-inject = FlextDecorators.inject
-log_operation = FlextDecorators.log_operation
-track_performance = FlextDecorators.track_performance
-railway = FlextDecorators.railway
-retry = FlextDecorators.retry
-timeout = FlextDecorators.timeout
-combined = FlextDecorators.combined
-with_correlation = FlextDecorators.with_correlation
-with_context = FlextDecorators.with_context
-track_operation = FlextDecorators.track_operation
 
 __all__ = [
     "FlextDecorators",
-    "combined",
-    "inject",
-    "log_operation",
-    "railway",
-    "retry",
-    "timeout",
-    "track_operation",
-    "track_performance",
-    "with_context",
-    "with_correlation",
 ]

@@ -1,14 +1,18 @@
-"""Protocol definitions codifying the FLEXT-Core 1.0.0 contracts.
+"""Protocol definitions for interface contracts and type safety.
+
+This module provides FlextProtocols, a comprehensive collection of protocol
+definitions that establish interface contracts and enable type-safe
+implementations throughout the FLEXT ecosystem.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Callable
-from pathlib import Path
 from typing import (
     Generic,
     Protocol,
@@ -17,7 +21,6 @@ from typing import (
     runtime_checkable,
 )
 
-from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
@@ -31,135 +34,29 @@ TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True)
 
 
 class FlextProtocols:
-    """Grouped protocol interfaces underpinning modernization contracts.
+    """Protocol definitions for interface contracts and type safety.
 
-    They clarify the callable semantics, configuration hooks, and
-    extension points relied upon during the 1.0.0 rollout. Provides
-    type-safe protocol definitions for the entire FLEXT ecosystem.
+    Provides comprehensive protocol definitions that establish interface
+    contracts and enable type-safe implementations throughout the FLEXT ecosystem.
 
-    **Function**: Protocol interface definitions for type safety
-    "ExceptionProtocol",  # Protocol for exception types (breaks circular dependency)
-    "FlextProtocols",  # Main hierarchical protocol architecture with Config
-    "ResultProtocol",  # Protocol for result types (breaks circular dependency)
-        - Extension protocols for plugin architecture
-        - Protocol registration and validation system
-        - Circuit breaker and rate limiting for protocols
-        - Middleware support for protocol processing
-        - Performance metrics and audit logging
-        - Batch and parallel protocol validation
+    Includes:
+    - Foundation: Core protocols for validators, serialization, and basic interfaces
+    - Domain: Domain layer protocols for services and repositories
+    - Application: Application layer protocols for handlers and use cases
+    - Infrastructure: Infrastructure protocols for external systems and configuration
+    - Extensions: Extension protocols for plugins and middleware
 
-    **Uses**: Core FLEXT infrastructure for protocols
-        - FlextResult[T] for all operation results (lazy loaded)
-        - FlextTypes for type definitions and aliases
-        - FlextConfig for configuration management (lazy loaded)
-        - typing.Protocol for runtime-checkable protocols
-        - typing.Generic for generic protocol types
-        - abc.abstractmethod for abstract protocol methods
-        - time module for rate limiting and metrics
-        - datetime for timestamp operations
-        - pathlib for file operations
-        - collections.abc for callable protocols
+    All protocols use @runtime_checkable for isinstance checks and provide
+    type-safe interfaces for implementing components.
 
-    **How to use**: Protocol definition and validation
-        ```python
-        from flext_core import FlextProtocols, FlextResult
-
-
-        # Example 1: Use Foundation validator protocol
-        class EmailValidator(FlextProtocols.Foundation.Validator[str]):
-            def validate(self, data: str) -> object:
-                if "@" not in data:
-                    return FlextResult[None].fail("Invalid email")
-                return FlextResult[None].ok(None)
-
-
-        # Example 2: Use Domain service protocol
-        class UserService(FlextProtocols.Domain.Service):
-            def execute(self) -> FlextResult[object]:
-                return FlextResult[object].ok({"status": "success"})
-
-            def is_valid(self) -> bool:
-                return True
-
-
-        # Example 3: Use Application handler protocol
-        class CreateUserHandler(FlextProtocols.Application.Handler[dict, str]):
-            def handle(self, message: dict) -> FlextResult[str]:
-                return FlextResult[str].ok("user_created")
-
-
-        # Example 4: Register protocol for validation
-        protocols = FlextProtocols()
-        reg_result = protocols.register("user_service", UserService)
-        if reg_result.is_success:
-            # Validate implementation
-            validation = protocols.validate_implementation("user_service", UserService)
-
-
-        # Example 5: Use Infrastructure logger protocol
-        class CustomLogger(FlextProtocols.Infrastructure.LoggerProtocol):
-            def info(self, message: str, **kwargs: object) -> None:
-                print(f"INFO: {message}")
-
-
-        # Example 6: Use Extension plugin protocol
-        class CustomPlugin(FlextProtocols.Extensions.Plugin):
-            def initialize(self, context) -> object:
-                return FlextResult[None].ok(None)
-
-
-        # Example 7: Batch protocol validation
-        implementations = [UserService, CreateUserHandler]
-        batch_result = protocols.validate_batch("services", implementations)
-        ```
-
-        - [ ] Add distributed protocol validation across services
-        - [ ] Implement protocol versioning for evolution
-        - [ ] Support protocol composition and inheritance
-        - [ ] Add protocol discovery and introspection
-        - [ ] Implement protocol compatibility checking
-        - [ ] Support protocol migration tools
-        - [ ] Add protocol documentation generation
-        - [ ] Implement protocol testing framework
-        - [ ] Support protocol performance profiling
-        - [ ] Add protocol security validation
-
-    Attributes:
-        Foundation: Foundation layer protocol definitions.
-        Domain: Domain layer protocol definitions for DDD.
-        Application: Application layer protocol definitions.
-        Infrastructure: Infrastructure protocol definitions.
-        Extensions: Extension and plugin protocol definitions.
-        Commands: CQRS command and query protocol definitions.
-
-    Note:
-        All protocols use @runtime_checkable for isinstance checks.
-        Protocol registration enables validation and type checking.
-        Circuit breaker and rate limiting protect validation.
-        Middleware can transform protocol implementations.
-        Metrics and audit logs track protocol usage patterns.
-
-    Warning:
-        Protocol validation has rate limiting (10 per 60 seconds).
-        Circuit breaker opens after 5 consecutive failures.
-        Cache TTL defaults to 300 seconds for validation.
-        Batch validation fails if any implementation fails.
-
-    Example:
-        Complete protocol definition and validation workflow:
-
-        >>> protocols = FlextProtocols()
-        >>> protocols.register("validator", EmailValidator)
-        >>> result = protocols.validate_implementation("validator", EmailValidator)
-        >>> print(result.is_success)
-        True
-
-    See Also:
-        FlextHandlers: For handler implementation patterns.
-        FlextBus: For command/query bus implementation.
-        FlextConfig: For configuration management.
-        FlextResult: For result type definitions.
-
+    Usage:
+        >>> from flext_core.protocols import FlextProtocols
+        >>>
+        >>> class EmailValidator(FlextProtocols.Foundation.Validator[str]):
+        ...     def validate(self, data: str) -> object:
+        ...         if "@" not in data:
+        ...             return FlextResult.fail("Invalid email")
+        ...         return FlextResult.ok(None)
     """
 
     # =========================================================================
@@ -238,6 +135,23 @@ class FlextProtocols:
             """
 
             value: object
+
+        @runtime_checkable
+        class HasInvariants(Protocol):
+            """Protocol for objects that have business invariants to check.
+
+            Objects implementing this protocol can have their business invariants
+            validated through the check_invariants method.
+            """
+
+            def check_invariants(self) -> None:
+                """Check business invariants for the object.
+
+                Raises:
+                    FlextExceptions.ValidationError: If any invariant is violated
+
+                """
+                ...
 
         @runtime_checkable
         class HasResultValue(Protocol):
@@ -355,7 +269,7 @@ class FlextProtocols:
             def validate_with_result(
                 self,
                 data: object,
-                validators: list[object] | None = None,
+                validators: FlextTypes.List | None = None,
             ) -> object:
                 """Validate data using returns Result type.
 
@@ -423,18 +337,6 @@ class FlextProtocols:
             @property
             def log_level(self) -> str:
                 """Get logging level."""
-                ...
-
-            def configure(self, config: FlextTypes.Dict) -> object:
-                """Configure component with provided settings."""
-                ...
-
-            def validate_runtime_requirements(self) -> object:
-                """Validate configuration meets runtime requirements."""
-                ...
-
-            def save_to_file(self, file_path: str | Path, **kwargs: object) -> object:
-                """Save configuration to file."""
                 ...
 
         @runtime_checkable
@@ -567,6 +469,21 @@ class FlextProtocols:
             DEFAULT_PAGE_SIZE: int
 
         @runtime_checkable
+        class OperationExecutionRequestProtocol(Protocol):
+            """Protocol for operation execution request (breaks circular imports).
+
+            This protocol defines the interface for operation execution requests without
+            importing the concrete OperationExecutionRequest class, preventing circular dependencies.
+            """
+
+            operation_name: str
+            operation_callable: Callable[..., object]
+            arguments: FlextTypes.Dict
+            keyword_arguments: FlextTypes.Dict
+            timeout_seconds: int
+            retry_config: FlextTypes.Dict
+
+        @runtime_checkable
         class SerializationUtility(Protocol):
             """Protocol for serialization utility functions (breaks circular imports).
 
@@ -655,7 +572,8 @@ class FlextProtocols:
                 ...
 
             def execute_operation(
-                self, operation: FlextModels.OperationExecutionRequest
+                self,
+                operation: FlextProtocols.Foundation.OperationExecutionRequestProtocol,
             ) -> FlextResult[object]:
                 """Execute operation using OperationExecutionRequest model.
 

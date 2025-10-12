@@ -6,9 +6,9 @@ This section covers **Layers 0, 0.5, and 1** - the foundational architecture of 
 
 FLEXT-Core's foundation is built on three layers:
 
-- **Layer 0**: Pure Constants (FlextConstants, FlextTypes, FlextProtocols) - zero dependencies
-- **Layer 0.5**: Runtime Bridge (FlextRuntime) - external library integration
-- **Layer 1**: Foundation (FlextResult, FlextContainer, FlextExceptions) - core primitives
+- **Layer 0**: Pure Constants (FlextCore.Constants, FlextCore.Types, FlextCore.Protocols) - zero dependencies
+- **Layer 0.5**: Runtime Bridge (FlextCore.Runtime) - external library integration
+- **Layer 1**: Foundation (FlextCore.Result, FlextCore.Container, FlextCore.Exceptions) - core primitives
 
 See [Architecture Overview](../architecture/overview.md) for complete layer details.
 
@@ -16,49 +16,49 @@ See [Architecture Overview](../architecture/overview.md) for complete layer deta
 
 ## Layer 0: Pure Constants
 
-### FlextConstants - Centralized Constants
+### FlextCore.Constants - Centralized Constants
 
 Immutable constants and configurations with **zero dependencies** (pure Python).
 
 ```python
-from flext_core import FlextConstants
+from flext_core import FlextCore
 
 # Error codes (50+ codes)
-error_code = FlextConstants.Errors.VALIDATION_FAILED
+error_code = FlextCore.Constants.Errors.VALIDATION_FAILED
 
 # Configuration defaults
-timeout = FlextConstants.Config.DEFAULT_TIMEOUT
+timeout = FlextCore.Constants.Config.DEFAULT_TIMEOUT
 
 # Validation patterns
-email_pattern = FlextConstants.Validation.EMAIL_PATTERN
+email_pattern = FlextCore.Constants.Validation.EMAIL_PATTERN
 ```
 
-### FlextTypes - Type System
+### FlextCore.Types - Type System
 
 Comprehensive type system with 50+ TypeVars, protocols, and type aliases.
 
 ```python
-from flext_core import FlextTypes
+from flext_core import FlextCore
 
 # Common TypeVars
-T = FlextTypes.T  # Covariant type
-U = FlextTypes.U  # Invariant type
+T = FlextCore.Types.T  # Covariant type
+U = FlextCore.Types.U  # Invariant type
 
 # Domain types
-TCommand = FlextTypes.TCommand
-TQuery = FlextTypes.TQuery
-TEvent = FlextTypes.TEvent
+TCommand = FlextCore.Types.TCommand
+TQuery = FlextCore.Types.TQuery
+TEvent = FlextCore.Types.TEvent
 ```
 
-### FlextProtocols - Runtime Interfaces
+### FlextCore.Protocols - Runtime Interfaces
 
 Runtime-checkable protocol definitions for type safety.
 
 ```python
-from flext_core import FlextProtocols
+from flext_core import FlextCore
 
 # Check protocol compliance at runtime
-if isinstance(obj, FlextProtocols.Foundation.Configurable):
+if isinstance(obj, FlextCore.Protocols.Foundation.Configurable):
     result = obj.configure(config)
 ```
 
@@ -66,19 +66,19 @@ if isinstance(obj, FlextProtocols.Foundation.Configurable):
 
 ## Layer 0.5: Runtime Bridge
 
-### FlextRuntime - External Library Integration
+### FlextCore.Runtime - External Library Integration
 
 Bridge to external libraries (structlog, dependency_injector) with **no Layer 1+ imports**.
 
 ```python
-from flext_core import FlextRuntime
+from flext_core import FlextCore
 
 # Type guards using Layer 0 patterns
-if FlextRuntime.is_valid_email(email):
+if FlextCore.Runtime.is_valid_email(email):
     process_email(email)
 
 # Serialization utilities
-json_data = FlextRuntime.serialize_to_json(data)
+json_data = FlextCore.Runtime.serialize_to_json(data)
 ```
 
 **Key Features**:
@@ -91,28 +91,28 @@ json_data = FlextRuntime.serialize_to_json(data)
 
 ## Layer 1: Foundation (Core Primitives)
 
-### FlextResult[T] - Railway-Oriented Programming
+### FlextCore.Result[T] - Railway-Oriented Programming
 
-The `FlextResult[T]` class provides monadic error handling without exceptions, implementing the railway-oriented programming pattern.
+The `FlextCore.Result[T]` class provides monadic error handling without exceptions, implementing the railway-oriented programming pattern.
 
 ```python
-from flext_core import FlextResult
+from flext_core import FlextCore
 
 # Creating results
-success_result = FlextResult[str].ok("Success message")
-failure_result = FlextResult[str].fail("Error message")
+success_result = FlextCore.Result[str].ok("Success message")
+failure_result = FlextCore.Result[str].fail("Error message")
 
 # Type-safe operations
-result = FlextResult[int].ok(42)
+result = FlextCore.Result[int].ok(42)
 
 # Railway operations
-def divide(a: float, b: float) -> FlextResult[float]:
+def divide(a: float, b: float) -> FlextCore.Result[float]:
     if b == 0:
-        return FlextResult[float].fail("Division by zero")
-    return FlextResult[float].ok(a / b)
+        return FlextCore.Result[float].fail("Division by zero")
+    return FlextCore.Result[float].ok(a / b)
 
 # Monadic composition
-result = divide(10, 2).map(lambda x: x * 2)  # FlextResult[float].ok(10.0)
+result = divide(10, 2).map(lambda x: x * 2)  # FlextCore.Result[float].ok(10.0)
 ```
 
 **Key Methods:**
@@ -128,15 +128,15 @@ result = divide(10, 2).map(lambda x: x * 2)  # FlextResult[float].ok(10.0)
 - `flat_map(transform)` - Transform and flatten
 - `filter(predicate)` - Filter success values
 
-### FlextContainer - Dependency Injection
+### FlextCore.Container - Dependency Injection
 
 Global dependency injection container with type-safe service registration and resolution.
 
 ```python
-from flext_core import FlextContainer
+from flext_core import FlextCore
 
 # Get global container
-container = FlextContainer.get_global()
+container = FlextCore.Container.get_global()
 
 # Register services
 container.register("logger", LoggerService())
@@ -156,7 +156,7 @@ if logger_result.is_success:
 - `get(key)` - Resolve a service by key
 - `clear()` - Clear all registered services
 
-### FlextExceptions - Exception Hierarchy
+### FlextCore.Exceptions - Exception Hierarchy
 
 Comprehensive exception hierarchy with error codes and context.
 
@@ -190,18 +190,18 @@ class ValidationException(FlextException):
 ### Complete Railway-Oriented Example
 
 ```python
-from flext_core import FlextResult, FlextContainer, FlextLogger
+from flext_core import FlextCore
 
 class UserService:
     def __init__(self):
-        self.logger = FlextLogger(__name__)
+        self.logger = FlextCore.Logger(__name__)
 
-from flext_core import FlextResult, FlextContainer, FlextLogger
-# Note: FlextLogger is documented in the Logging section
+from flext_core import FlextCore
+# Note: FlextCore.Logger is documented in the Logging section
 
 class UserService:
     def __init__(self):
-        self.logger = FlextLogger(__name__)
+        self.logger = FlextCore.Logger(__name__)
 
         # Business logic
         user = User(id=f"user_{name.lower()}", name=name, email=email)
@@ -209,17 +209,17 @@ class UserService:
         # Logging
         self.logger.info(f"Created user: {user.name}")
 
-        return FlextResult[User].ok(user)
+        return FlextCore.Result[User].ok(user)
 
-    def _validate_input(self, name: str, email: str) -> FlextResult[None]:
+    def _validate_input(self, name: str, email: str) -> FlextCore.Result[None]:
         if not name:
-            return FlextResult[None].fail("Name is required")
+            return FlextCore.Result[None].fail("Name is required")
         if "@" not in email:
-            return FlextResult[None].fail("Invalid email format")
-        return FlextResult[None].ok(None)
+            return FlextCore.Result[None].fail("Invalid email format")
+        return FlextCore.Result[None].ok(None)
 
 # Dependency injection setup
-container = FlextContainer.get_global()
+container = FlextCore.Container.get_global()
 container.register("user_service", UserService())
 
 # Usage

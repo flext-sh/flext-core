@@ -107,12 +107,12 @@ SPDX-License-Identifier: MIT
 #
 #     # Core application configuration - ALL defaults from FlextConstants
 #     app_name: str = Field(
-#         default=f"{FlextConstants.Core.NAME} [Project] Application",
+#         default=f"{FlextConstants.NAME} [Project] Application",
 #         description="Application name",
 #     )
 #
 #     version: str = Field(
-#         default=FlextConstants.Core.VERSION,
+#         default=FlextConstants.VERSION,
 #         description="Application version",
 #     )
 #

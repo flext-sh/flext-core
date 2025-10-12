@@ -1,18 +1,12 @@
-"""Dispatcher facade delivering the Phase 1 unified dispatcher charter.
+"""High-level message dispatch orchestration with reliability patterns.
 
-The façade wraps ``FlextBus`` so handler registration, context propagation, and
-metadata-aware dispatch all match the expectations documented in ``README.md``
-and ``docs/architecture.md`` for the 1.0.0 modernization programme.
-
-Refactored to eliminate SOLID violations by delegating to specialized components:
-- Circuit breaker, rate limiting, audit, metrics → FlextProcessors
-- Timeout, retry, batch processing → FlextService patterns
-- Handler registration → FlextRegistry patterns
-- Context management → FlextContext
-- Logging → FlextLogger
+This module provides FlextDispatcher, a facade that orchestrates message
+dispatching with circuit breaker, rate limiting, retry logic, timeout
+enforcement, and comprehensive observability.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 # ruff: disable=E402
 # pyright: basic
@@ -26,7 +20,6 @@ from contextlib import contextmanager
 from typing import cast, override
 
 from flext_core.bus import FlextBus
-from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
 from flext_core.handlers import FlextHandlers
@@ -38,151 +31,43 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextDispatcher(FlextMixins):
-    """Orchestrates CQRS execution while enforcing context observability.
+    """High-level message dispatch orchestration with reliability patterns.
 
-    The dispatcher is the front door promoted across the ecosystem: all
-    handler registration flows, context scoping, and dispatch telemetry
-    align with the modernization plan so downstream packages can adopt
-    a consistent runtime contract without bespoke buses.
+    Provides message dispatching with circuit breaker, rate limiting,
+    retry logic, timeout enforcement, and comprehensive observability.
+    Wraps FlextBus and adds reliability and monitoring capabilities.
 
-    **Inherited Infrastructure** (from FlextMixins):
-        - container: FlextContainer (via FlextMixins)
-        - context: object (via FlextMixins)
-        - logger: FlextLogger (via FlextMixins) - per-dispatcher logger instance
-        - config: object (via FlextMixins.Configurable) - global config access
-        - _track_operation: context manager (via FlextMixins)
-        - _enrich_context, _with_correlation_id, etc. (via FlextMixins)
+    Features:
+    - Handler registration and discovery
+    - Circuit breaker pattern for fault tolerance
+    - Rate limiting for request throttling
+    - Retry logic with exponential backoff
+    - Timeout enforcement for operation boundaries
+    - Audit logging for compliance and debugging
+    - Performance metrics collection and reporting
+    - Batch processing for multiple messages
+    - Context propagation for distributed tracing
 
-    **Function**: High-level message dispatch orchestration
-        - Handler registration for command and query patterns
-        - Message dispatch with context propagation and tracing
-        - Circuit breaker pattern for fault tolerance
-        - Rate limiting for request throttling
-        - Retry logic with exponential backoff
-        - Timeout enforcement for operation boundaries
-        - Audit logging for compliance and debugging
-        - Performance metrics collection and reporting
-        - Batch processing for multiple messages
-        - Configuration import/export for persistence
-
-    **Uses**: Core FLEXT infrastructure for dispatch
-        - FlextBus for low-level command/query execution
-        - FlextProcessors for circuit breaker and rate limiting
-        - FlextContext for execution context management
-        - FlextLogger for structured logging
-        - FlextConfig for global configuration
-        - FlextHandlers for handler base class patterns
-        - FlextResult[T] for all operation results
-        - FlextUtilities for ID generation and validation
-        - FlextConstants for error codes and defaults
-        - FlextModels for domain models and metadata
-        - concurrent.futures for timeout enforcement
-        - contextvars for context propagation
-
-    **How to use**: Message dispatch and handler registration
-        ```python
-        from flext_core import FlextDispatcher, FlextResult
-
-        # Example 1: Create dispatcher with default config
-        dispatcher_result = FlextDispatcher.create_from_global_config()
-        if dispatcher_result.is_success:
-            dispatcher = dispatcher_result.unwrap()
-
-
-        # Example 2: Register handler with message type
-        class CreateUserCommand:
-            email: str
-
-
-        def create_user_handler(cmd: CreateUserCommand) -> str:
-            return f"User created: {cmd.email}"
-
-
-        reg_result = dispatcher.register_handler(
-            CreateUserCommand, create_user_handler, handler_mode="command"
-        )
-
-        # Example 3: Dispatch message with context metadata
-        command = CreateUserCommand(email="user@example.com")
-        result = dispatcher.dispatch(
-            command,
-            metadata={"user_id": "123", "request_id": "abc"},
-            correlation_id="req-123",
-        )
-
-        # Example 4: Dispatch with timeout override
-        result = dispatcher.dispatch(
-            command,
-            timeout_override=FlextConstants.Dispatcher.DEFAULT_TIMEOUT_SECONDS,  # Use standard timeout
-        )
-
-        # Example 5: Create dispatcher from global configuration
-        dispatcher_result = FlextDispatcher.create_from_global_config()
-        if dispatcher_result.is_success:
-            dispatcher = dispatcher_result.unwrap()
-            dispatcher.dispatch(command)
-        ```
-
-        - [ ] Add distributed tracing integration (OpenTelemetry)
-        - [ ] Implement priority queue for message ordering
-        - [ ] Support dispatch patterns with io
-        - [ ] Add circuit breaker auto-recovery with backoff
-        - [ ] Implement adaptive rate limiting based on metrics
-        - [ ] Support message routing and transformation
-        - [ ] Add saga pattern coordinator integration
-        - [ ] Implement dead letter queue for failed messages
-        - [ ] Support message replay for debugging
-        - [ ] Add health check endpoints for monitoring
-
-    Attributes:
-        config: Dispatcher configuration dictionary.
-        bus: Underlying FlextBus instance for execution.
-        processors: FlextProcessors for specialized processing.
-
-    Note:
-        All dispatch methods return FlextResult for consistency.
-        Circuit breaker and rate limiting are automatic.
-        Context metadata propagates to all handlers. Correlation
-        IDs enable distributed tracing across services.
-
-    Warning:
-        Circuit breaker threshold from FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD.
-        Rate limit from FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS per
-        FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS.
-        Timeout from FlextConstants.Defaults.TIMEOUT_SECONDS, override per message.
-        Batch processing may impact rate limiting calculations.
-
-    Example:
-        Complete dispatcher workflow with error handling:
-
-        >>> dispatcher = FlextDispatcher.create_from_global_config()
-        >>> dispatcher = dispatcher.unwrap()
-        >>> reg_result = dispatcher.register_handler(CreateUserCommand, handler)
+    Usage:
+        >>> from flext_core import FlextDispatcher
+        >>>
+        >>> dispatcher = FlextDispatcher()
+        >>> dispatcher.register_handler(CreateUserCommand, handler)
         >>> result = dispatcher.dispatch(command)
-        >>> print(result.is_success)
-        True
-
-    See Also:
-        FlextBus: For low-level command/query execution.
-        FlextProcessors: For circuit breaker and rate limiting.
-        FlextContext: For context management patterns.
-        FlextHandlers: For handler base class patterns.
-
     """
 
     @override
     def __init__(
         self,
         *,
-        config: FlextTypes.Dict | None = None,
         bus: FlextBus | None = None,
     ) -> None:
-        """Initialize dispatcher with Pydantic configuration model.
+        """Initialize dispatcher with configuration from FlextConfig singleton.
 
         Refactored to eliminate SOLID violations by delegating to specialized components.
+        Configuration is accessed via FlextMixins.config singleton.
 
         Args:
-            config: Optional dispatcher configuration model
             bus: Optional bus instance (created if not provided)
 
         """
@@ -191,149 +76,33 @@ class FlextDispatcher(FlextMixins):
         # Initialize service infrastructure (DI, Context, Logging, Metrics)
         self._init_service("flext_dispatcher")
 
-        # Use global config instance for consistency across the system
-        global_config = FlextConfig.get_global_instance()
-        self._global_config = global_config
+        # Initialize bus first
+        self._bus = bus or FlextBus()
 
-        if config is None:
-            busglobal_config: FlextTypes.Dict = {
-                "auto_context": global_config.dispatcher_auto_context,
-                "timeout_seconds": global_config.dispatcher_timeout_seconds,
-                "enable_metrics": global_config.dispatcher_enable_metrics,
-                "enable_logging": global_config.dispatcher_enable_logging,
-            }
-            busglobal_config["execution_timeout"] = busglobal_config.get(
-                "timeout_seconds",
-                FlextConstants.Defaults.TIMEOUT,
-            )
-
-            config_dict: FlextTypes.Dict = {
-                "auto_context": global_config.dispatcher_auto_context,
-                "timeout_seconds": global_config.dispatcher_timeout_seconds,
-                "enable_metrics": global_config.dispatcher_enable_metrics,
-                "enable_logging": global_config.dispatcher_enable_logging,
-                "max_retries": getattr(
-                    global_config,
-                    "dispatcher_max_retries",
-                    getattr(global_config, "max_retry_attempts", 3),
-                ),
-                "retry_delay": getattr(
-                    global_config,
-                    "dispatcher_retry_delay",
-                    getattr(global_config, "retry_delay_seconds", 0),
-                ),
-                "busglobal_config": busglobal_config,
-                "execution_timeout": busglobal_config.get("timeout_seconds"),
-            }
-        else:
-            config_dict = dict(config)
-            busglobal_config_raw = config_dict.get("busglobal_config")
-
-            if not isinstance(busglobal_config_raw, dict):
-                busglobal_config = {
-                    "auto_context": global_config.dispatcher_auto_context,
-                    "timeout_seconds": global_config.dispatcher_timeout_seconds,
-                    "enable_metrics": global_config.dispatcher_enable_metrics,
-                    "enable_logging": global_config.dispatcher_enable_logging,
-                }
-
-                if "execution_timeout" in config_dict:
-                    busglobal_config["execution_timeout"] = config_dict[
-                        "execution_timeout"
-                    ]
-                elif "timeout_seconds" in config_dict:
-                    busglobal_config["execution_timeout"] = config_dict[
-                        "timeout_seconds"
-                    ]
-
-                config_dict["busglobal_config"] = busglobal_config
-            else:
-                busglobal_config = cast("FlextTypes.Dict", busglobal_config_raw)
-
-            execution_timeout_value: object | None = busglobal_config.get(
-                "execution_timeout",
-            )
-            if execution_timeout_value is not None:
-                config_dict.setdefault("execution_timeout", execution_timeout_value)
-
-        self.global_config: FlextTypes.Dict = config_dict
-        config = config_dict
-
-        # Initialize bus
-        busglobal_config_raw = config.get("busglobal_config")
-        busglobal_config_dict_final: FlextTypes.Dict | None
-        if isinstance(busglobal_config_raw, FlextModels.Cqrs.Bus):
-            busglobal_config_dict_final = busglobal_config_raw.model_dump()
-        elif isinstance(busglobal_config_raw, dict):
-            busglobal_config_dict_final = cast("FlextTypes.Dict", busglobal_config_raw)
-        else:
-            busglobal_config_dict_final = None
-
-        self._bus = bus or FlextBus(bus_config=busglobal_config_dict_final)
+        # Enrich context with dispatcher metadata for observability
+        self._enrich_context(
+            service_type="dispatcher",
+            bus_type=type(self._bus).__name__,
+            circuit_breaker_enabled=True,
+            timeout_enforcement=True,
+            supports_async=True,
+        )
 
         # Circuit breaker state - failure counts per message type
         self._circuit_breaker_failures: dict[str, int] = {}
-        circuit_breaker_threshold_raw = config.get(
-            "circuit_breaker_threshold",
-            getattr(
-                global_config,
-                "circuit_breaker_threshold",
-                FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
-            ),
-        )
-        self._circuit_breaker_threshold = (
-            int(circuit_breaker_threshold_raw)
-            if isinstance(circuit_breaker_threshold_raw, (int, str))
-            else FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD
-        )
+        self._circuit_breaker_threshold = self.config.circuit_breaker_threshold
 
         # Rate limiting state - sliding window with count, window_start, block_until
         self._rate_limit_requests: dict[str, FlextTypes.FloatList] = {}
         self._rate_limit_state: dict[
             str, FlextTypes.Reliability.DispatcherRateLimiterState
         ] = {}
-        rate_limit_raw = config.get(
-            "rate_limit",
-            getattr(
-                global_config,
-                "rate_limit_max_requests",
-                FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
-            ),
-        )
-        self._rate_limit = (
-            int(rate_limit_raw)
-            if isinstance(rate_limit_raw, (int, str))
-            else FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS
-        )
-        rate_limit_window_raw = config.get(
-            "rate_limit_window",
-            getattr(
-                global_config,
-                "rate_limit_window_seconds",
-                FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
-            ),
-        )
-        self._rate_limit_window = (
-            float(rate_limit_window_raw)
-            if isinstance(rate_limit_window_raw, (int, float, str))
-            else float(FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS)
-        )
-        rate_limit_grace_raw = config.get(
-            "rate_limit_block_grace",
-            max(1.0, 0.5 * self._rate_limit_window),
-        )
-        self._rate_limit_block_grace = float(
-            rate_limit_grace_raw
-            if isinstance(rate_limit_grace_raw, (int, float, str))
-            else max(1.0, 0.5 * self._rate_limit_window),
-        )
+        self._rate_limit = self.config.rate_limit_max_requests
+        self._rate_limit_window = self.config.rate_limit_window_seconds
+        self._rate_limit_block_grace = max(1.0, 0.5 * self._rate_limit_window)
 
         # Timeout handling configuration
-        self._use_timeout_executor = bool(
-            config.get("enable_timeout_executor", False)
-            or ("timeout" in config)
-            or ("execution_timeout" in config),
-        )
+        self._use_timeout_executor = self.config.enable_timeout_executor
 
         # Thread pool for timeout handling (lazy initialization)
         self._executor_workers = self._resolve_executor_workers()
@@ -342,7 +111,7 @@ class FlextDispatcher(FlextMixins):
     @property
     def dispatcher_config(self) -> FlextTypes.Dict:
         """Access the dispatcher configuration."""
-        return self.global_config
+        return self.config.model_dump()
 
     @property
     def bus(self) -> FlextBus:
@@ -406,7 +175,7 @@ class FlextDispatcher(FlextMixins):
             "status": FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
         }
 
-        if self.global_config.get("enable_logging"):
+        if self.config.dispatcher_enable_logging:
             self._log_with_context(
                 "info",
                 "handler_registered",
@@ -664,9 +433,10 @@ class FlextDispatcher(FlextMixins):
 
         # Get timeout from request override or config
         timeout_override = request.get("timeout_override")
-        config_timeout = self.global_config.get("timeout_seconds")
         timeout_seconds = (
-            timeout_override if timeout_override is not None else config_timeout
+            timeout_override
+            if timeout_override is not None
+            else self.config.timeout_seconds
         )
 
         # Execute dispatch with context management and timeout enforcement
@@ -718,7 +488,7 @@ class FlextDispatcher(FlextMixins):
                     "timeout_seconds": timeout_seconds,
                 }
 
-                if self.global_config.get("enable_logging"):
+                if self.config.dispatcher_enable_logging:
                     self._log_with_context(
                         "debug",
                         "dispatch_succeeded",
@@ -740,7 +510,7 @@ class FlextDispatcher(FlextMixins):
                 "timeout_seconds": timeout_seconds,
             }
 
-            if self.global_config.get("enable_logging"):
+            if self.config.dispatcher_enable_logging:
                 self._log_with_context(
                     "error",
                     "dispatch_failed",
@@ -912,19 +682,8 @@ class FlextDispatcher(FlextMixins):
             FlextModels.Metadata(attributes=string_metadata)
 
         # Execute dispatch with retry logic using bus directly
-        max_retries_raw = self.global_config.get(
-            "max_retries",
-            FlextConstants.Reliability.DEFAULT_MAX_RETRIES,
-        )
-        max_retries: int = (
-            int(max_retries_raw)
-            if isinstance(max_retries_raw, (int, float))
-            else FlextConstants.Reliability.DEFAULT_MAX_RETRIES
-        )
-        retry_delay_raw = self.global_config.get("retry_delay", 0.1)
-        retry_delay: float = (
-            float(retry_delay_raw) if isinstance(retry_delay_raw, (int, float)) else 0.1
-        )
+        max_retries = self.config.max_retry_attempts
+        retry_delay = self.config.retry_delay
 
         # start_time = time.time()  # Unused for now
 
@@ -935,10 +694,7 @@ class FlextDispatcher(FlextMixins):
                 timeout_seconds = float(
                     cast(
                         "int | float",
-                        self.global_config.get(
-                            "timeout",
-                            FlextConstants.Defaults.TIMEOUT_SECONDS,
-                        ),
+                        self.config.timeout_seconds,
                     ),
                 )
                 if timeout_override:
@@ -1024,19 +780,7 @@ class FlextDispatcher(FlextMixins):
     # ------------------------------------------------------------------
     def _resolve_executor_workers(self) -> int:
         """Determine worker count for the shared dispatcher executor."""
-        workers_candidate = (
-            self.global_config.get("executor_workers")
-            or self.global_config.get("max_workers")
-            or FlextConstants.Container.DEFAULT_WORKERS
-        )
-        try:
-            if isinstance(workers_candidate, (int, str)):
-                workers = int(workers_candidate)
-            else:
-                workers = FlextConstants.Container.DEFAULT_WORKERS
-        except (TypeError, ValueError):
-            workers = FlextConstants.Container.DEFAULT_WORKERS
-        return max(workers, 1)
+        return max(self.config.executor_workers, 1)
 
     def _ensure_executor(self) -> concurrent.futures.ThreadPoolExecutor:
         """Create the shared executor on demand."""
@@ -1116,7 +860,7 @@ class FlextDispatcher(FlextMixins):
             correlation_id: Optional correlation ID for tracing
 
         """
-        if not self.global_config.get("auto_context"):
+        if not self.config.dispatcher_auto_context:
             yield
             return
 
@@ -1145,7 +889,7 @@ class FlextDispatcher(FlextMixins):
                     FlextContext.Correlation.generate_correlation_id()
                 )
 
-            if self.global_config.get("enable_logging"):
+            if self.config.dispatcher_enable_logging:
                 self._log_with_context(
                     "debug",
                     "dispatch_context_entered",
@@ -1154,7 +898,7 @@ class FlextDispatcher(FlextMixins):
 
             yield
 
-            if self.global_config.get("enable_logging"):
+            if self.config.dispatcher_enable_logging:
                 self._log_with_context(
                     "debug",
                     "dispatch_context_exited",
@@ -1187,7 +931,7 @@ class FlextDispatcher(FlextMixins):
     def dispatch_batch(
         self,
         message_type: str,
-        messages: list[object],
+        messages: FlextTypes.List,
     ) -> list[FlextResult[object]]:
         """Dispatch multiple messages in batch.
 

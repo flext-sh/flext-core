@@ -1,22 +1,8 @@
-"""Context and correlation utilities enabling the context-first pillar.
+"""Hierarchical context management for distributed tracing and correlation.
 
-ARCHITECTURAL INTEGRATION (v0.9.9+):
-    FlextContext.Variables uses structlog's contextvar as SINGLE SOURCE OF TRUTH.
-    All context operations delegate directly to structlog.contextvars via proxy
-    pattern, eliminating dual storage and ensuring FlextContext and FlextLogger
-    use THE SAME underlying storage.
-
-    Key Principles:
-        - Single Source of Truth: structlog's contextvar dict (ONLY storage)
-        - No Dual Storage: FlextContext.Variables → _StructlogProxyContextVar → structlog
-        - Direct Delegation: All .get()/.set() operations use structlog.contextvars
-        - Zero Synchronization: No sync needed, direct storage access
-        - FlextLogger Integration: Both use same structlog storage seamlessly
-
-The helpers correspond to the observability commitments in ``README.md`` and
-``docs/architecture.md`` for the FLEXT 1.0.0 release: correlation inheritance,
-request metadata, and latency tracking that integrate directly with
-``FlextDispatcher`` and ``FlextLogger``.
+This module provides FlextContext, a comprehensive context management system
+for request metadata, correlation IDs, performance tracking, and distributed
+tracing across the FLEXT ecosystem.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -164,146 +150,32 @@ class _StructlogProxyContextVar[T]:
 
 
 class FlextContext:
-    """Hierarchical context manager for request-, service-, and perf-scopes.
+    """Hierarchical context management for distributed tracing and correlation.
 
-    It is the single entry point referenced across the modernization plan:
-    all dispatcher, container, and logging surfaces depend on context vars
-    to propagate correlation IDs and structured metadata.
+    Provides comprehensive context management for request metadata, correlation
+    IDs, performance tracking, and distributed tracing across the FLEXT ecosystem.
 
-    **ARCHITECTURAL INTEGRATION** (v0.9.9+):
-        - FlextContext.Variables uses structlog's contextvar as SINGLE SOURCE OF TRUTH
-        - All context operations delegate to structlog.contextvars via proxy pattern
-        - Zero dual storage: FlextContext and FlextLogger use THE SAME storage
-        - Direct integration: _StructlogProxyContextVar → structlog → FlextLogger
+    Features:
+    - Hierarchical context scopes (global, request, session, transaction)
+    - Correlation ID management for distributed tracing
+    - Service identification context (name, version)
+    - Request context with user and operation metadata
+    - Performance tracking with timing operations
+    - Context serialization for cross-service propagation
+    - Thread-safe context variable management
+    - Context cloning and merging capabilities
+    - Automatic integration with FlextLogger
 
-    **Function**: Context management for distributed systems
-        - Correlation ID management for distributed tracing
-        - Service identification context (name, version)
-        - Request context with user and operation metadata
-        - Performance tracking with timing operations
-        - Scoped context storage (global, user, session)
-        - Thread-safe context variable management (via contextvars)
-        - Context serialization for cross-service propagation
-        - Hook system for context change notifications
-        - Context cloning and merging capabilities
-        - Statistics tracking for context operations
-        - Automatic delegation to FlextLogger for logging integration
-
-    **Uses**: Core infrastructure for context management
-        - contextvars for thread-safe context variables (inherently thread-safe)
-        - FlextLogger delegation for structlog integration (logging coordination)
-        - FlextTypes.Dict for type-safe dictionaries
-        - FlextResult[T] for operation results
-        - datetime for timestamp operations
-        - uuid for correlation ID generation
-        - json for context serialization
-        - contextmanager for context scope management
-        - collections.abc.Mapping for type checking
-        - contextlib for context helpers
-
-    **How to use**: Context management and propagation
-        ```python
-        from flext_core import FlextContext
-
-        # Example 1: Create context instance
-        context = FlextContext()
-        context.set("user_id", "123")
-        user_id = context.get("user_id")
-
-        # Example 2: Correlation ID management
-        with FlextContext.Correlation.new_correlation() as corr_id:
-            # Correlation ID is automatically propagated
-            print(f"Processing request {corr_id}")
-            # All operations within this scope share correlation
-
-        # Example 3: Service context
-        with FlextContext.Service.service_context("user-service", version="1.0.0"):
-            # Service name/version available to logging
-            pass
-
-        # Example 4: Request context with metadata
-        with FlextContext.Request.request_context(
-            user_id="user123", operation_name="create_user", request_id="req-abc"
-        ):
-            # Request metadata propagates automatically
-            pass
-
-        # Example 5: Timed performance tracking
-        with FlextContext.Performance.timed_operation("database_query") as metrics:
-            # Perform operation
-            pass
-            # metrics contains duration_seconds
-
-        # Example 6: Cross-service propagation
-        headers = FlextContext.Serialization.get_correlation_context()
-        # Send headers to downstream service
-        # Downstream service:
-        FlextContext.Serialization.set_from_context(headers)
-
-        # Example 7: Scoped storage
-        context = FlextContext()
-        context.set("key", "value", scope="user")
-        value = context.get("key", scope="user")
-
-        # Example 8: Delegation pattern demonstration (ARCHITECTURAL)
-        from flext_core import FlextContext, FlextLogger
-
-        # FlextContext sets values in global scope
-        context = FlextContext()
-        context.set("request_id", "req-123")  # Stored in Python contextvars
-
-        # DELEGATION: Global scope automatically propagated to FlextLogger
-        # FlextLogger now has access via structlog.contextvars
-        logger = FlextLogger(__name__)
-        logger.info("Processing request")  # Will include request_id in logs
-
-        # Separation demonstrated:
-        # - FlextContext manages general context (Python contextvars)
-        # - FlextLogger manages logging context (structlog contextvars)
-        # - Delegation keeps them synchronized for global scope only
-        ```
-
-    Attributes:
-        Variables: Context variable definitions by domain.
-        Correlation: Correlation ID management utilities.
-        Service: Service identification context helpers.
-        Request: Request-level context management.
-        Performance: Performance tracking and timing.
-        Serialization: Context serialization utilities.
-        Utilities: Context utility methods and helpers.
-        HandlerExecutionContext: Handler execution context.
-
-    Note:
-        All context variables are thread-safe using contextvars.
-        Correlation IDs automatically propagate through scopes.
-        Context can be serialized for cross-service communication.
-        Statistics track all context operations. Global context
-        uses singleton pattern with thread-safe access.
-
-    Warning:
-        Context must be cleared manually when no longer needed.
-        Context hooks may impact performance on high-frequency ops.
-        Suspended contexts do not respond to operations.
-        Context serialization does not include hooks/statistics.
-
-    Example:
-        Complete context workflow with correlation and timing:
-
+    Usage:
+        >>> from flext_core import FlextContext
+        >>>
         >>> context = FlextContext()
-        >>> with FlextContext.Correlation.new_correlation() as cid:
-        ...     with FlextContext.Performance.timed_operation() as m:
-        ...         context.set("processed", True)
-        ...         print(cid)
-        corr_12345678
-        >>> print(context.get("processed"))
-        True
-
-    See Also:
-        FlextLogger: For structured logging with context.
-        FlextDispatcher: For context-aware message dispatch.
-        FlextBus: For command/query execution with context.
-        FlextConfig: For configuration management.
-
+        >>> context.set("user_id", "123")
+        >>> user_id = context.get("user_id")
+        >>>
+        >>> # Correlation ID management
+        >>> with FlextContext.Correlation.new_correlation() as corr_id:
+        ...     print(f"Processing request {corr_id}")
     """
 
     # =============================================================================
@@ -319,15 +191,15 @@ class FlextContext:
     class _ContextData(FlextModels.Value):
         """Lightweight container for initializing context state using FlextModels.Value."""
 
-        data: dict[str, object] = Field(default_factory=dict)
-        metadata: dict[str, object] = Field(default_factory=dict)
+        data: FlextTypes.Dict = Field(default_factory=dict)
+        metadata: FlextTypes.Dict = Field(default_factory=dict)
 
     class _ContextExport(FlextModels.Value):
         """Typed snapshot returned by export_snapshot using FlextModels.Value."""
 
-        data: dict[str, object] = Field(default_factory=dict)
-        metadata: dict[str, object] = Field(default_factory=dict)
-        statistics: dict[str, object] = Field(default_factory=dict)
+        data: FlextTypes.Dict = Field(default_factory=dict)
+        metadata: FlextTypes.Dict = Field(default_factory=dict)
+        statistics: FlextTypes.Dict = Field(default_factory=dict)
 
     # =========================================================================
     # LIFECYCLE METHODS
@@ -356,9 +228,9 @@ class FlextContext:
             context_data = initial_data
 
         # Initialize metadata and hooks (not stored in contextvars)
-        self._metadata: dict[str, object] = context_data.metadata
+        self._metadata: FlextTypes.Dict = context_data.metadata
         self._hooks: FlextTypes.Context.HookRegistry = {}
-        self._statistics: dict[str, object] = {
+        self._statistics: FlextTypes.Dict = {
             "operations": {
                 "set": 0,
                 "get": 0,
@@ -376,9 +248,7 @@ class FlextContext:
         # Create instance-specific contextvars for isolation (required for clone())
         # Note: Each instance gets its own contextvars to prevent state sharing
         # Note: Using None default per B039 - mutable defaults cause issues
-        self._scope_vars: dict[
-            str, contextvars.ContextVar[dict[str, object] | None]
-        ] = {
+        self._scope_vars: dict[str, contextvars.ContextVar[FlextTypes.Dict | None]] = {
             FlextConstants.Context.SCOPE_GLOBAL: contextvars.ContextVar(
                 "flext_global_context",
                 default=None,
@@ -407,7 +277,7 @@ class FlextContext:
 
     def _get_or_create_scope_var(
         self, scope: str
-    ) -> contextvars.ContextVar[dict[str, object] | None]:
+    ) -> contextvars.ContextVar[FlextTypes.Dict | None]:
         """Get or create contextvar for scope.
 
         Args:
@@ -425,7 +295,7 @@ class FlextContext:
             )
         return self._scope_vars[scope]
 
-    def _set_in_contextvar(self, scope: str, data: dict[str, object]) -> None:
+    def _set_in_contextvar(self, scope: str, data: FlextTypes.Dict) -> None:
         """Set multiple values in contextvar scope.
 
         Args:
@@ -442,7 +312,7 @@ class FlextContext:
         if scope == FlextConstants.Context.SCOPE_GLOBAL:
             FlextLogger.bind_global_context(**data)
 
-    def _get_from_contextvar(self, scope: str) -> dict[str, object]:
+    def _get_from_contextvar(self, scope: str) -> FlextTypes.Dict:
         """Get all values from contextvar scope.
 
         Args:
@@ -832,11 +702,11 @@ class FlextContext:
 
         # Handle both old flat format and new scoped format
         if isinstance(data, dict):
-            data_values = cast("dict[str, object]", data).values()
+            data_values = cast("FlextTypes.Dict", data).values()
             if all(isinstance(v, dict) for v in data_values):
                 # New scoped format - restore all scopes
                 for scope_name, scope_data in cast(
-                    "dict[str, dict[str, object]]", data
+                    "dict[str, FlextTypes.Dict]", data
                 ).items():
                     context._set_in_contextvar(scope_name, scope_data)
             else:
@@ -1038,28 +908,10 @@ class FlextContext:
     # ==========================================================================
 
     class Variables:
-        """Context variables using structlog as single source of truth.
-
-        ARCHITECTURAL NOTE (v0.9.9+):
-            All context variables are now proxies that delegate to structlog's
-            contextvar storage via FlextLogger. This eliminates dual storage and
-            ensures FlextContext and FlextLogger use THE SAME underlying storage.
-
-            Old Architecture (REMOVED):
-                - FlextContext.Variables had separate contextvars.ContextVar instances
-                - FlextLogger used structlog.contextvars separately
-                - Synchronization was required (_StructlogContextVar)
-                - Risk of inconsistency and dual storage issues
-
-            New Architecture (CURRENT):
-                - FlextContext.Variables → _StructlogProxyContextVar → structlog
-                - FlextLogger → structlog.contextvars (same storage)
-                - Single source of truth: structlog's contextvar dict
-                - Zero synchronization needed (direct delegation)
-        """
+        """Context variables using structlog as single source of truth."""
 
         class Correlation:
-            """Correlation variables for distributed tracing (via structlog)."""
+            """Correlation variables for distributed tracing."""
 
             CORRELATION_ID: Final[_StructlogProxyContextVar[str]] = (
                 _StructlogProxyContextVar[str]("correlation_id", default=None)
@@ -1069,7 +921,7 @@ class FlextContext:
             )
 
         class Service:
-            """Service context variables for identification (via structlog)."""
+            """Service context variables for identification."""
 
             SERVICE_NAME: Final[_StructlogProxyContextVar[str]] = (
                 _StructlogProxyContextVar[str]("service_name", default=None)
@@ -1079,7 +931,7 @@ class FlextContext:
             )
 
         class Request:
-            """Request context variables for metadata (via structlog)."""
+            """Request context variables for metadata."""
 
             USER_ID: Final[_StructlogProxyContextVar[str]] = _StructlogProxyContextVar[
                 str
@@ -1092,7 +944,7 @@ class FlextContext:
             )
 
         class Performance:
-            """Performance context variables for timing (via structlog)."""
+            """Performance context variables for timing."""
 
             OPERATION_NAME: Final[_StructlogProxyContextVar[str]] = (
                 _StructlogProxyContextVar[str]("operation_name", default=None)
@@ -1113,7 +965,7 @@ class FlextContext:
     # =========================================================================
 
     class Correlation:
-        """Distributed tracing and correlation ID management."""
+        """Distributed tracing and correlation ID management utilities."""
 
         @staticmethod
         def get_correlation_id() -> str | None:
@@ -1230,7 +1082,7 @@ class FlextContext:
     # =========================================================================
 
     class Service:
-        """Service identification and lifecycle context management."""
+        """Service identification and lifecycle context management utilities."""
 
         @staticmethod
         def get_service_name() -> str | None:
@@ -1342,7 +1194,7 @@ class FlextContext:
     # =========================================================================
 
     class Request:
-        """Request-level context management for user and operation metadata."""
+        """Request-level context management for user and operation metadata utilities."""
 
         @staticmethod
         def get_user_id() -> str | None:
@@ -1441,7 +1293,7 @@ class FlextContext:
     # =========================================================================
 
     class Performance:
-        """Performance monitoring and timing context management for operations."""
+        """Performance monitoring and timing context management utilities."""
 
         @staticmethod
         def get_operation_start_time() -> datetime | None:
@@ -1534,7 +1386,7 @@ class FlextContext:
     # =========================================================================
 
     class Serialization:
-        """Context serialization and deserialization for cross-service communication."""
+        """Context serialization and deserialization utilities."""
 
         @staticmethod
         def get_full_context() -> FlextTypes.Dict:
@@ -1599,7 +1451,7 @@ class FlextContext:
     # =========================================================================
 
     class Utilities:
-        """Utility methods for context management and helper operations."""
+        """Context management utility methods."""
 
         @staticmethod
         def clear_context() -> None:
@@ -1667,11 +1519,7 @@ class FlextContext:
             )
 
     class HandlerExecutionContext:
-        """Handler execution context for FlextHandlers complexity reduction.
-
-        Extracts execution context management from FlextHandlers to simplify
-        handler execution and provide reusable context management patterns.
-        """
+        """Handler execution context utilities."""
 
         def __init__(self, handler_name: str, handler_mode: str) -> None:
             """Initialize handler execution context.

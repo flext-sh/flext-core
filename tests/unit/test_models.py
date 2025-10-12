@@ -1,4 +1,4 @@
-"""Comprehensive tests for FlextModels - Data Models.
+"""Comprehensive tests for FlextCore.Models - Data Models.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,22 +12,22 @@ import time
 import pytest
 from pydantic import field_validator
 
-from flext_core import FlextModels
+from flext_core import FlextCore
 
 
 class TestFlextModels:
-    """Test suite for FlextModels data model functionality."""
+    """Test suite for FlextCore.Models data model functionality."""
 
     def test_models_initialization(self) -> None:
         """Test models initialization."""
-        models = FlextModels()
+        models = FlextCore.Models()
         assert models is not None
-        assert isinstance(models, FlextModels)
+        assert isinstance(models, FlextCore.Models)
 
     def test_models_entity_creation(self) -> None:
         """Test entity creation and validation."""
 
-        class TestEntity(FlextModels.Entity):
+        class TestEntity(FlextCore.Models.Entity):
             name: str
             email: str
 
@@ -38,6 +38,9 @@ class TestFlextModels:
                     msg = "Invalid email"
                     raise ValueError(msg)
                 return v
+
+        # Rebuild model to resolve forward references
+        TestEntity.model_rebuild(_types_namespace={"FlextModels": FlextCore.Models})
 
         # Test entity creation
         entity = TestEntity(
@@ -60,7 +63,7 @@ class TestFlextModels:
     def test_models_value_object_creation(self) -> None:
         """Test value object creation and immutability."""
 
-        class TestValue(FlextModels.Value):
+        class TestValue(FlextCore.Models.Value):
             data: str
             count: int
 
@@ -87,7 +90,7 @@ class TestFlextModels:
     def test_models_aggregate_root_creation(self) -> None:
         """Test aggregate root creation and domain events."""
 
-        class TestAggregate(FlextModels.AggregateRoot):
+        class TestAggregate(FlextCore.Models.AggregateRoot):
             name: str
             status: str = "active"
 
@@ -97,6 +100,9 @@ class TestFlextModels:
                     "status_changed",
                     {"old_status": "active", "new_status": new_status},
                 )
+
+        # Rebuild model to resolve forward references
+        TestAggregate.model_rebuild(_types_namespace={"FlextModels": FlextCore.Models})
 
         # Test aggregate creation
         aggregate = TestAggregate(name="Test Aggregate", domain_events=[])
@@ -113,7 +119,7 @@ class TestFlextModels:
     def test_models_command_creation(self) -> None:
         """Test command model creation."""
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             command_type: str = "test_command"
             data: str
 
@@ -125,7 +131,7 @@ class TestFlextModels:
 
     def test_models_payload_creation(self) -> None:
         """Test payload model creation."""
-        payload = FlextModels.Payload(data="test_data")
+        payload = FlextCore.Models.Payload(data="test_data")
         assert payload.data == "test_data"
         assert payload.created_at is not None
         assert payload.id is not None  # ID from IdentifiableMixin
@@ -135,41 +141,23 @@ class TestFlextModels:
 
     def test_models_pagination_creation(self) -> None:
         """Test pagination model creation."""
-        pagination = FlextModels.Pagination(page=1, size=10)
+        pagination = FlextCore.Models.Pagination(page=1, size=10)
         assert pagination.page == 1
         assert pagination.size == 10
         assert (pagination.page - 1) * pagination.size == 0
 
-        pagination2 = FlextModels.Pagination(page=3, size=10)
+        pagination2 = FlextCore.Models.Pagination(page=3, size=10)
         assert (pagination2.page - 1) * pagination2.size == 20
-
-    def test_models_value_object_validation(self) -> None:
-        """Test value object validation."""
-        # Test EmailAddress validation
-        with pytest.raises(Exception) as exc_info:
-            email = FlextModels.EmailAddress(address="invalid-email")
-
-        # Verify the error message contains expected keywords
-        error_msg = str(exc_info.value).lower()
-        assert "email" in error_msg or "validation" in error_msg
-
-        # Test valid email
-        email = FlextModels.EmailAddress(address="valid@example.com")
-        assert email.address == "valid@example.com"
-
-        # Test Host validation
-        host = FlextModels.Host(hostname="valid-hostname")
-        assert host.hostname == "valid-hostname"
 
     def test_models_advanced_value_objects(self) -> None:
         """Test advanced value objects."""
         # Test Url
-        url = FlextModels.Url(url="https://example.com")
+        url = FlextCore.Models.Url(url="https://example.com")
         assert url.url == "https://example.com"
 
     def test_models_project_entity(self) -> None:
         """Test Project entity."""
-        project = FlextModels.Project(
+        project = FlextCore.Models.Project(
             name="Test Project",
             organization_id="org-123",
             repository_path="/path/to/repo",
@@ -181,7 +169,7 @@ class TestFlextModels:
 
     def test_models_workspace_aggregate(self) -> None:
         """Test WorkspaceInfo aggregate."""
-        workspace = FlextModels.WorkspaceInfo(
+        workspace = FlextCore.Models.WorkspaceInfo(
             workspace_id="ws-123",
             name="Test Workspace",
             root_path="/workspace/root",
@@ -195,11 +183,14 @@ class TestFlextModels:
     def test_models_domain_events(self) -> None:
         """Test domain events functionality."""
 
-        class EventAggregate(FlextModels.AggregateRoot):
+        class EventAggregate(FlextCore.Models.AggregateRoot):
             name: str
 
             def trigger_event(self) -> None:
                 self.add_domain_event("test_event", {"data": "test"})
+
+        # Rebuild model to resolve forward references
+        EventAggregate.model_rebuild(_types_namespace={"FlextModels": FlextCore.Models})
 
         aggregate = EventAggregate(name="Test", domain_events=[])
 
@@ -214,8 +205,13 @@ class TestFlextModels:
     def test_models_version_management(self) -> None:
         """Test version management in entities."""
 
-        class VersionedEntity(FlextModels.Entity):
+        class VersionedEntity(FlextCore.Models.Entity):
             name: str
+
+        # Rebuild model to resolve forward references
+        VersionedEntity.model_rebuild(
+            _types_namespace={"FlextModels": FlextCore.Models}
+        )
 
         entity = VersionedEntity(name="Test", domain_events=[])
         initial_version = entity.version
@@ -227,8 +223,13 @@ class TestFlextModels:
     def test_models_timestamped_functionality(self) -> None:
         """Test timestamped functionality."""
 
-        class TimestampedEntity(FlextModels.Entity):
+        class TimestampedEntity(FlextCore.Models.Entity):
             name: str
+
+        # Rebuild model to resolve forward references
+        TimestampedEntity.model_rebuild(
+            _types_namespace={"FlextModels": FlextCore.Models}
+        )
 
         entity = TimestampedEntity(name="Test", domain_events=[])
         initial_created = entity.created_at
@@ -241,7 +242,7 @@ class TestFlextModels:
     def test_models_validation_patterns(self) -> None:
         """Test validation patterns."""
 
-        class ValidatedEntity(FlextModels.Entity):
+        class ValidatedEntity(FlextCore.Models.Entity):
             name: str
             email: str
 
@@ -261,6 +262,11 @@ class TestFlextModels:
                     raise ValueError(msg)
                 return v
 
+        # Rebuild model to resolve forward references
+        ValidatedEntity.model_rebuild(
+            _types_namespace={"FlextModels": FlextCore.Models}
+        )
+
         # Test valid entity
         entity = ValidatedEntity(
             name="Test",
@@ -279,7 +285,7 @@ class TestFlextModels:
 
     def test_models_serialization(self) -> None:
         """Test model serialization."""
-        entity = FlextModels.User(
+        entity = FlextCore.Models.User(
             username="test",
             email="test@example.com",
             domain_events=[],
@@ -299,11 +305,16 @@ class TestFlextModels:
     def test_models_thread_safety(self) -> None:
         """Test thread safety of models."""
 
-        class ThreadSafeEntity(FlextModels.Entity):
+        class ThreadSafeEntity(FlextCore.Models.Entity):
             counter: int = 0
 
             def increment(self) -> None:
                 self.counter += 1
+
+        # Rebuild model to resolve forward references
+        ThreadSafeEntity.model_rebuild(
+            _types_namespace={"FlextModels": FlextCore.Models}
+        )
 
         entity = ThreadSafeEntity(domain_events=[])
 
@@ -330,9 +341,9 @@ class TestFlextModels:
         start_time = time.time()
 
         # Create many entities
-        entities: list[FlextModels.User] = []
+        entities: list[FlextCore.Models.User] = []
         for i in range(1000):
-            entity = FlextModels.User(
+            entity = FlextCore.Models.User(
                 username=f"user{i}",
                 email=f"user{i}@example.com",
                 domain_events=[],

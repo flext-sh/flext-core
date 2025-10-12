@@ -1,14 +1,12 @@
-"""Structured logging utilities enabling the context-first pillar for 1.0.0.
+"""Structured logging with context propagation and dependency injection.
 
-The module provides a thin wrapper around structlog with FLEXT-specific
-context management and configuration.
-
-Dependency Layer: 2 (Foundation Logging)
-Dependencies: structlog, result, typings
-Used by: All Flext modules requiring logging
+This module provides FlextLogger, a structured logging system built on
+FlextRuntime.structlog() with automatic context propagation, dependency injection support,
+and integration with the FLEXT ecosystem infrastructure.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -25,75 +23,41 @@ from flext_core.typings import FlextTypes
 
 T = TypeVar("T")
 
-structlog = FlextRuntime.structlog()
-
 # =============================================================================
-# FLEXT LOGGER - THIN WRAPPER AROUND STRUCTLOG
+# FLEXT LOGGER - THIN WRAPPER AROUND FlextRuntime.structlog()
 # =============================================================================
 
 
 class FlextLogger:
-    """Advanced structured logging with context management and dependency injection.
+    """Structured logging with context propagation and dependency injection.
 
-    **FLEXT-CORE ADVANCED PATTERNS**:
+    Provides structured logging built on FlextRuntime.structlog() with automatic context
+    propagation, dependency injection support, and integration with the
+    FLEXT ecosystem infrastructure.
 
-    🚀 STRUCTLOG ADVANCED FEATURES
-    - contextvars for automatic context propagation
-    - Advanced processor chains (callsite, tracebacks, timestamps)
-    - Bound logger factories with automatic context injection
-    - Performance tracking and correlation IDs
-    - Integration with FlextResult for automatic error logging
+    Features:
+    - Structured logging with automatic context propagation
+    - Context variable binding and unbinding
+    - Dependency injection integration
+    - Performance tracking with automatic timing
+    - FlextResult integration for operation logging
+    - Service-specific logger factories
+    - Module-specific logger creation
+    - Global context management
 
-    🔧 DEPENDENCY INJECTION READY
-    - Injectable via dependency_injector providers
-    - Singleton and Factory patterns supported
-    - Module-specific logger factories
-    - Automatic service context binding
-
-    **Function**: Enterprise-grade structured logging
-        - Direct structlog integration with advanced processors
-        - Automatic context propagation via contextvars
-        - FlextResult-wrapped logging methods
-        - Distributed tracing and correlation tracking
-        - Performance monitoring integration
-        - Clean Layer 2 dependency (no config imports)
-
-    **Uses**: Advanced foundation patterns
-        - structlog.contextvars for context propagation
-        - structlog.processors for advanced processing
-        - FlextResult for railway pattern error handling
-        - FlextTypes for type definitions
-        - dependency_injector providers (via FlextRuntime)
-
-    **Example**: Advanced usage patterns
-        ```python
-        from flext_core import FlextLogger
-
-        # Basic usage with automatic context
-        logger = FlextLogger(__name__)
-        logger.info("User logged in", user_id="123", action="login")
-
-        # Context binding for request tracking
-        FlextLogger.bind_global_context(request_id="req-456", correlation_id="cor-789")
-
-        # Create bound logger with additional context
-        request_logger = logger.bind(endpoint="/api/users", method="POST")
-        request_logger.info("Processing request")
-
-        # Factory pattern for module loggers
-        service_logger = FlextLogger.create_service_logger(
-            "user-service", version="1.0.0"
-        )
-
-        # Performance tracking
-        with logger.track_performance("database_query"):
-            # ... database operation
-            pass
-        ```
+    Usage:
+        >>> from flext_core import FlextLogger
+        >>>
+        >>> logger = FlextLogger(__name__)
+        >>> logger.info("User logged in", user_id="123", action="login")
+        >>>
+        >>> # Bind context globally
+        >>> FlextLogger.bind_global_context(request_id="req-456")
+        >>> logger.info("Processing request")  # Automatically includes request_id
     """
 
     # =========================================================================
-    # PRIVATE MEMBERS - Structlog configuration
+    # PRIVATE MEMBERS - FlextRuntime.structlog() configuration
     # =========================================================================
 
     _configured: bool = False
@@ -106,7 +70,7 @@ class FlextLogger:
         console_enabled: bool = True,
         additional_processors: Sequence[Callable[..., object]] | None = None,
     ) -> None:
-        """Configure structlog with advanced processor chain.
+        """Configure FlextRuntime.structlog() with advanced processor chain.
 
         Args:
             log_level: Logging level (e.g., logging.INFO, logging.DEBUG)
@@ -139,7 +103,7 @@ class FlextLogger:
 
     @classmethod
     def bind_global_context(cls, **context: object) -> FlextResult[None]:
-        """Bind context globally using structlog contextvars.
+        """Bind context globally using FlextRuntime.structlog() contextvars.
 
         Context is automatically included in all subsequent log messages
         within the current execution context (thread, async task, etc.).
@@ -159,7 +123,7 @@ class FlextLogger:
 
         """
         try:
-            structlog.contextvars.bind_contextvars(**context)
+            FlextRuntime.structlog().contextvars.bind_contextvars(**context)
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Failed to bind global context: {e}")
@@ -176,7 +140,7 @@ class FlextLogger:
 
         """
         try:
-            structlog.contextvars.unbind_contextvars(*keys)
+            FlextRuntime.structlog().contextvars.unbind_contextvars(*keys)
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Failed to unbind global context: {e}")
@@ -190,15 +154,15 @@ class FlextLogger:
 
         """
         try:
-            structlog.contextvars.clear_contextvars()
+            FlextRuntime.structlog().contextvars.clear_contextvars()
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Failed to clear global context: {e}")
 
     @classmethod
-    def get_global_context(cls) -> dict[str, object]:
+    def get_global_context(cls) -> FlextTypes.Dict:
         """Get current global context."""
-        return dict(structlog.contextvars.get_contextvars())
+        return dict(FlextRuntime.structlog().contextvars.get_contextvars())
 
     @classmethod
     def get_logger(cls) -> FlextLogger:
@@ -276,7 +240,7 @@ class FlextLogger:
         """
         super().__init__()
 
-        # Configure structlog if not already configured (NO config dependency)
+        # Configure FlextRuntime.structlog() if not already configured (NO config dependency)
         FlextLogger._configure_structlog_if_needed()
 
         # Store logger name for later use
@@ -292,7 +256,7 @@ class FlextLogger:
             context["correlation_id"] = _correlation_id
 
         # Create bound logger with initial context
-        self.logger = structlog.get_logger(name).bind(**context)
+        self.logger = FlextRuntime.structlog().get_logger(name).bind(**context)
 
     @property
     def name(self) -> str:
@@ -301,16 +265,16 @@ class FlextLogger:
 
     @classmethod
     def _create_bound_logger(cls, name: str, bound_logger: object) -> FlextLogger:
-        """Internal factory for creating logger with pre-bound structlog instance.
+        """Internal factory for creating logger with pre-bound FlextRuntime.structlog() instance.
 
         This factory method allows creating FlextLogger instances with an already
-        configured structlog BoundLogger, avoiding the need to access private
+        configured FlextRuntime.structlog() BoundLogger, avoiding the need to access private
         attributes directly.
 
         Args:
             name: Logger name
-            bound_logger: Pre-configured bound structlog logger (object type used
-                         as structlog.BoundLogger is not publicly exposed)
+            bound_logger: Pre-configured bound FlextRuntime.structlog() logger (object type used
+                         as FlextRuntime.structlog().BoundLogger is not publicly exposed)
 
         Returns:
             FlextLogger instance with bound logger
@@ -326,7 +290,7 @@ class FlextLogger:
         """Bind additional context to the logger.
 
         Creates a new FlextLogger instance with additional context bound to the
-        underlying structlog logger. The original logger remains unchanged.
+        underlying FlextRuntime.structlog() logger. The original logger remains unchanged.
 
         Args:
             **context: Context key-value pairs to bind
@@ -343,7 +307,7 @@ class FlextLogger:
         return FlextLogger._create_bound_logger(self.name, self.logger.bind(**context))
 
     # =============================================================================
-    # LOGGING METHODS - DELEGATE TO STRUCTLOG
+    # LOGGING METHODS - DELEGATE TO FlextRuntime.structlog()
     # =============================================================================
 
     def trace(self, message: str, *args: object, **kwargs: object) -> FlextResult[None]:
@@ -356,7 +320,7 @@ class FlextLogger:
 
             self.logger.debug(
                 formatted_message, **kwargs
-            )  # structlog doesn't have trace
+            )  # FlextRuntime.structlog() doesn't have trace
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Logging failed: {e}")
@@ -502,7 +466,7 @@ class FlextLogger:
 
         """
         try:
-            context: dict[str, object] = {}
+            context: FlextTypes.Dict = {}
             if operation:
                 context["operation"] = operation
 
@@ -525,7 +489,7 @@ class FlextLogger:
             return FlextResult[None].fail(f"Failed to log result: {e}")
 
     class PerformanceTracker:
-        """Context manager for performance tracking with automatic logging."""
+        """Context manager for performance tracking with automatic logging utilities."""
 
         def __init__(self, logger: FlextLogger, operation_name: str) -> None:
             """Initialize performance tracker.

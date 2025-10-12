@@ -4,33 +4,33 @@ This section covers the application layer classes that handle command/query proc
 
 ## Command and Query Responsibility Segregation (CQRS)
 
-### FlextBus - Message Bus
+### FlextCore.Bus - Message Bus
 
 Central message bus for handling commands, queries, and events with middleware support.
 
 ```python
-from flext_core import FlextBus, FlextResult
+from flext_core import FlextCore
 
 # Create bus instance
-bus = FlextBus()
+bus = FlextCore.Bus()
 
 # Register command handler
 @bus.command_handler
 class CreateUserHandler:
-    def handle(self, command: CreateUserCommand) -> FlextResult[User]:
+    def handle(self, command: CreateUserCommand) -> FlextCore.Result[User]:
         # Command processing logic
         user = User(id=command.user_id, name=command.name)
-        return FlextResult[User].ok(user)
+        return FlextCore.Result[User].ok(user)
 
 # Register query handler
 @bus.query_handler
 class GetUserHandler:
-    def handle(self, query: GetUserQuery) -> FlextResult[User]:
+    def handle(self, query: GetUserQuery) -> FlextCore.Result[User]:
         # Query processing logic
         user = self.user_repository.get_by_id(query.user_id)
         if not user:
-            return FlextResult[User].fail("User not found")
-        return FlextResult[User].ok(user)
+            return FlextCore.Result[User].fail("User not found")
+        return FlextCore.Result[User].ok(user)
 
 # Send command
 command = CreateUserCommand(user_id="user_123", name="Alice")
@@ -48,15 +48,15 @@ result = bus.send_query(query)
 - Type-safe message handling
 - Error propagation and context
 
-### FlextDispatcher - Unified Dispatcher
+### FlextCore.Dispatcher - Unified Dispatcher
 
 Unified facade for command and query dispatching with registry management.
 
 ```python
-from flext_core import FlextDispatcher
+from flext_core import FlextCore
 
 # Get dispatcher instance
-dispatcher = FlextDispatcher.get_global()
+dispatcher = FlextCore.Dispatcher.get_global()
 
 # Register handlers
 dispatcher.register_command(CreateUserCommand, CreateUserHandler)
@@ -74,15 +74,15 @@ result = dispatcher.dispatch_query(GetUserQuery(user_id="user_123"))
 - `register_command(command_type, handler)` - Register command handler
 - `register_query(query_type, handler)` - Register query handler
 
-### FlextHandlers - Handler Registry
+### FlextCore.Handlers - Handler Registry
 
 Registry system for managing command and query handlers.
 
 ```python
-from flext_core import FlextHandlers
+from flext_core import FlextCore
 
 # Create handlers registry
-handlers = FlextHandlers()
+handlers = FlextCore.Handlers()
 
 # Register handlers
 handlers.register(CreateUserCommand, CreateUserHandler)
@@ -96,42 +96,42 @@ if handler:
 
 ## Event Processing
 
-### FlextProcessors - Event Processing
+### FlextCore.Processors - Event Processing
 
 Orchestration layer for processing domain events and integration events.
 
 ```python
-from flext_core import FlextProcessors
+from flext_core import FlextCore
 
 # Create processor registry
-processors = FlextProcessors()
+processors = FlextCore.Processors()
 
 # Register event processor
 @processors.event_processor
 class UserEventProcessor:
-    async def process(self, event: UserCreatedEvent) -> FlextResult[None]:
+    async def process(self, event: UserCreatedEvent) -> FlextCore.Result[None]:
         # Send welcome email
         await self.email_service.send_welcome_email(event.email)
 
         # Update analytics
         await self.analytics.track_user_created(event.user_id)
 
-        return FlextResult[None].ok(None)
+        return FlextCore.Result[None].ok(None)
 
 # Process events
 events = [UserCreatedEvent(user_id="user_123", email="alice@example.com")]
 await processors.process_events(events)
 ```
 
-### FlextRegistry - Registry Management
+### FlextCore.Registry - Registry Management
 
 Central registry for handlers, processors, and other application components.
 
 ```python
-from flext_core import FlextRegistry
+from flext_core import FlextCore
 
 # Get global registry
-registry = FlextRegistry.get_global()
+registry = FlextCore.Registry.get_global()
 
 # Register components
 registry.register_handler("create_user", CreateUserHandler)
@@ -172,13 +172,13 @@ class ValidationMiddleware(Middleware):
     async def process(self, request, next_middleware):
         # Validate request
         if not self._is_valid_request(request):
-            return FlextResult.fail("Invalid request")
+            return FlextCore.Result.fail("Invalid request")
 
         # Continue processing
         return await next_middleware(request)
 
 # Configure bus with middleware
-bus = FlextBus()
+bus = FlextCore.Bus()
 bus.add_middleware(LoggingMiddleware())
 bus.add_middleware(ValidationMiddleware())
 ```
@@ -198,7 +198,7 @@ bus.add_middleware(ValidationMiddleware())
 ### Complete CQRS Implementation
 
 ```python
-from flext_core import FlextBus, FlextDispatcher, FlextResult
+from flext_core import FlextCore
 from abc import ABC, abstractmethod
 
 # Commands
@@ -231,7 +231,7 @@ class UserCreatedEvent:
         self.email = email
 
 # Setup application
-bus = FlextBus()
+bus = FlextCore.Bus()
 
 # Command Handlers
 @bus.command_handler
@@ -240,11 +240,11 @@ class CreateUserHandler:
         self.user_repository = user_repository
         self.email_service = email_service
 
-    def handle(self, command: CreateUserCommand) -> FlextResult[User]:
+    def handle(self, command: CreateUserCommand) -> FlextCore.Result[User]:
         # Check if user exists
         existing = self.user_repository.get_by_id(command.user_id)
         if existing:
-            return FlextResult[User].fail("User already exists")
+            return FlextCore.Result[User].fail("User already exists")
 
         # Create user
         user = User(
@@ -259,14 +259,14 @@ class CreateUserHandler:
         # Send welcome email
         self.email_service.send_welcome_email(user.email)
 
-        return FlextResult[User].ok(user)
+        return FlextCore.Result[User].ok(user)
 
 @bus.command_handler
 class UpdateUserHandler:
-    def handle(self, command: UpdateUserCommand) -> FlextResult[User]:
+    def handle(self, command: UpdateUserCommand) -> FlextCore.Result[User]:
         user = self.user_repository.get_by_id(command.user_id)
         if not user:
-            return FlextResult[User].fail("User not found")
+            return FlextCore.Result[User].fail("User not found")
 
         # Update fields
         if command.name:
@@ -277,7 +277,7 @@ class UpdateUserHandler:
         # Save updated user
         self.user_repository.save(user)
 
-        return FlextResult[User].ok(user)
+        return FlextCore.Result[User].ok(user)
 
 # Query Handlers
 @bus.query_handler
@@ -285,17 +285,17 @@ class GetUserHandler:
     def __init__(self, user_repository):
         self.user_repository = user_repository
 
-    def handle(self, query: GetUserQuery) -> FlextResult[User]:
+    def handle(self, query: GetUserQuery) -> FlextCore.Result[User]:
         user = self.user_repository.get_by_id(query.user_id)
         if not user:
-            return FlextResult[User].fail("User not found")
-        return FlextResult[User].ok(user)
+            return FlextCore.Result[User].fail("User not found")
+        return FlextCore.Result[User].ok(user)
 
 @bus.query_handler
 class ListUsersHandler:
-    def handle(self, query: ListUsersQuery) -> FlextResult[List[User]]:
+    def handle(self, query: ListUsersQuery) -> FlextCore.Result[List[User]]:
         users = self.user_repository.list(limit=query.limit, offset=query.offset)
-        return FlextResult[List[User]].ok(users)
+        return FlextCore.Result[List[User]].ok(users)
 
 # Usage examples
 async def main():
