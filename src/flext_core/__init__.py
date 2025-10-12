@@ -1,76 +1,35 @@
-"""Public export surface for FLEXT-Core 1.0.0 - Foundation of the FLEXT Ecosystem.
+"""FLEXT Core - Foundation framework for domain-driven applications.
 
-FLEXT-CORE OPTIMIZATION PATTERNS SHOWCASE
-==========================================
+This module provides the public API for flext-core, a comprehensive framework
+for building robust applications following domain-driven design and clean
+architecture principles.
 
-This module demonstrates the complete unified module optimization patterns
-implemented across the FLEXT ecosystem. All exports follow strict optimization
-principles including namespace class patterns, flext-core integration, and
-domain library architecture.
+The framework provides core abstractions for:
+- Railway-oriented error handling (FlextCore.Result)
+- Dependency injection (FlextContainer)
+- CQRS patterns (FlextBus, FlextDispatcher)
+- Domain modeling (FlextModels)
+- Structured logging (FlextLogger)
+- Configuration management (FlextConfig)
+- Context management (FlextContext)
+- Protocol definitions (FlextProtocols)
 
-KEY OPTIMIZATION PATTERNS DEMONSTRATED:
+For detailed documentation, see the README.md file in this directory.
 
-🚀 NAMESPACE CLASS PATTERN
-All major exports use the single-class-with-nested-namespaces pattern:
-- FlextConstants: Centralized constants with nested groups
-- FlextModels: DDD base classes (Entity, Value, AggregateRoot)
-- FlextTypes: Type system with 40+ TypeVars and modern Python 3.13+ patterns
-- FlextExceptions: Exception hierarchy with error codes
-- FlextProtocols: Interface definitions for domain contracts
-
-🔧 FLEXT-CORE INTEGRATION
-All components integrate with the complete flext-core ecosystem:
-- FlextConfig: Pydantic 2.11+ BaseSettings
-- FlextResult: Railway pattern for monadic error handling
-- FlextLogger: Structured logging with context and correlation
-- FlextService: Service base class with dependency injection
-- FlextContainer: Global DI container with type safety
-
-📚 DOMAIN LIBRARY ARCHITECTURE
-This module serves as the foundation for 32+ dependent projects:
-- Domain libraries (flext-*) extend these patterns
-- Enterprise tools consume domain libraries (no direct imports)
-- Zero tolerance for anti-patterns and architectural violations
-
-USAGE EXAMPLES:
-
-```python
-# ✅ CORRECT - Complete flext-core integration
-from flext_core import (
-    FlextResult,  # Railway pattern foundation
-    FlextConfig,  # Configuration with centralized defaults
-    FlextConstants,  # Centralized constants
-    FlextModels,  # DDD base classes
-    FlextTypes,  # Type system with 40+ TypeVars
-    FlextExceptions,  # Exception hierarchy
-    FlextProtocols,  # Interface definitions
-    FlextLogger,  # Structured logging
-    FlextService,  # Service base class
-    FlextContainer,  # Dependency injection
-
-
-OPTIMIZATION PRINCIPLES DEMONSTRATED:
-
-✅ Single Source of Truth: All types, constants, and utilities centralized
-✅ Namespace Class Pattern: Single class with nested namespaces for organization
-✅ flext-core Integration: All components work together seamlessly
-✅ Railway Pattern: Monadic error handling eliminates exceptions in business logic
-✅ Type Safety: Complete type annotations with 40+ TypeVars
-✅ Configuration Integration: Centralized configuration with validation
-✅ Dependency Injection: Global container with type-safe service registration
-✅ Domain Library Foundation: Base for all 32+ ecosystem projects
-
-ARCHITECTURAL GUARANTEES:
-
-🔒 ZERO BREAKING CHANGES: API compatibility maintained across versions
-🔒 QUALITY ASSURANCE: Zero linting errors, complete type safety
-🔒 ECOSYSTEM STABILITY: Foundation for 32+ dependent projects
-🔒 DOMAIN LIBRARY COMPLIANCE: Strict adherence to domain library principles
-
-See individual module documentation for detailed usage patterns and examples.
+Example:
+    >>> from flext_core import FlextCore.Result, FlextContainer
+    >>>
+    >>> # Railway-oriented error handling
+    >>> result = FlextCore.Result[str].ok("operation completed")
+    >>> if result.is_success:
+    ...     data = result.unwrap()
+    >>> # Dependency injection
+    >>> container = FlextContainer()
+    >>> container.register("logger", FlextLogger(__name__))
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -117,6 +76,7 @@ __all__ = [
     "FlextProcessors",
     "FlextProtocols",
     "FlextRegistry",
+    "FlextResult",
     "FlextResult",
     "FlextRuntime",
     "FlextService",

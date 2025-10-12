@@ -1,31 +1,12 @@
-"""Namespace class for FLEXT exception hierarchy.
+"""Structured exception hierarchy with error codes and correlation tracking.
 
-This module provides the FlextExceptions namespace class containing
-structured exception types with error codes and correlation tracking
-for the entire FLEXT ecosystem.
-
-Namespace Class Pattern:
-- FlextExceptions (namespace class)
-  - BaseError (base exception class)
-  - ValidationError (validation failures)
-  - ConfigurationError (configuration issues)
-  - ConnectionError (network/connection failures)
-  - TimeoutError (operation timeouts)
-  - AuthenticationError (auth failures)
-  - AuthorizationError (permission failures)
-  - NotFoundError (resource not found)
-  - ConflictError (resource conflicts)
-  - RateLimitError (rate limiting)
-  - CircuitBreakerError (circuit breaker open)
-
-All exceptions include:
-- Error codes for categorization
-- Correlation IDs for tracking
-- Structured metadata and context
-- Proper inheritance hierarchy
+This module provides FlextExceptions, a namespace class containing structured
+exception types with error codes, correlation IDs, and metadata for comprehensive
+error handling throughout the FLEXT ecosystem.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -42,26 +23,40 @@ from flext_core.typings import FlextTypes
 
 
 class FlextExceptions:
-    """Namespace class for FLEXT exception hierarchy.
+    """Structured exception hierarchy with error codes and correlation tracking.
 
-    Provides structured exception types with error codes, correlation tracking,
-    and consistent error handling across the entire FLEXT ecosystem.
+    Provides a comprehensive collection of structured exception types with
+    error codes, correlation IDs, and metadata for comprehensive error handling
+    throughout the FLEXT ecosystem.
+
+    Includes:
+    - BaseError: Base exception class with structured metadata
+    - ValidationError: Input validation failures
+    - ConfigurationError: Configuration-related errors
+    - ConnectionError: Network and connection failures
+    - TimeoutError: Operation timeout errors
+    - AuthenticationError: Authentication failures
+    - AuthorizationError: Permission and authorization failures
+    - NotFoundError: Resource not found errors
+    - ConflictError: Resource conflict errors
+    - RateLimitError: Rate limiting violations
+    - CircuitBreakerError: Circuit breaker open errors
+    - TypeError: Type-related errors
+    - OperationError: Operation-specific errors
+
+    All exceptions include:
+    - Structured error codes for categorization
+    - Correlation IDs for distributed tracing
+    - Metadata dictionaries for additional context
+    - Proper inheritance hierarchy for catch handling
 
     Usage:
-        ```python
-        from flext_core import FlextExceptions
-
-        # Raise structured exceptions
-        raise FlextExceptions.ValidationError(
-            "Invalid email format", error_code="VAL_EMAIL", field="email"
-        )
-
-        # Catch specific exception types
-        try:
-            validate_data(data)
-        except FlextExceptions.ConfigurationError as e:
-            logger.error(f"Config error: {e.error_code}")
-        ```
+        >>> from flext_core.exceptions import FlextExceptions
+        >>>
+        >>> try:
+        ...     validate_email("invalid-email")
+        ... except FlextExceptions.ValidationError as e:
+        ...     print(f"Validation failed: {e.error_code}")
     """
 
     class BaseError(Exception):
@@ -151,7 +146,7 @@ class FlextExceptions:
 
         def __str__(self) -> str:
             """String representation with error code and correlation ID."""
-            parts: list[str] = []
+            parts: FlextTypes.StringList = []
             if self.error_code:
                 parts.append(f"[{self.error_code}]")
             if self.correlation_id:
@@ -913,8 +908,8 @@ class FlextExceptions:
             attribute_name: str | None = cast(
                 "str | None", kwargs.get("attribute_name")
             )
-            attribute_context: dict[str, object] | None = cast(
-                "dict[str, object] | None", kwargs.get("attribute_context")
+            attribute_context: FlextTypes.Dict | None = cast(
+                "FlextTypes.Dict | None", kwargs.get("attribute_context")
             )
             correlation_id = cast("str | None", kwargs.get("correlation_id"))
             metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
@@ -955,11 +950,11 @@ class FlextExceptions:
 
         """
         total = sum(cls._exception_counts.values())
-        return FlextTypes.Dict({
+        return {
             "total_exceptions": total,
             "exception_counts": cls._exception_counts.copy(),
             "unique_exception_types": len(cls._exception_counts),
-        })
+        }
 
     @classmethod
     def clear_metrics(cls) -> None:

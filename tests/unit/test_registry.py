@@ -1,6 +1,6 @@
-"""Comprehensive tests for FlextRegistry - Service Registry.
+"""Comprehensive tests for FlextCore.Registry - Service Registry.
 
-Tests the actual FlextRegistry API with real functionality testing.
+Tests the actual FlextCore.Registry API with real functionality testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,22 +11,15 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import cast
 
-from flext_core import (
-    FlextDispatcher,
-    FlextHandlers,
-    FlextModels,
-    FlextRegistry,
-    FlextResult,
-    FlextTypes,
-)
+from flext_core import FlextCore
 
 
-class ConcreteTestHandler(FlextHandlers[object, object]):
-    """Concrete implementation of FlextHandlers for testing."""
+class ConcreteTestHandler(FlextCore.Handlers[object, object]):
+    """Concrete implementation of FlextCore.Handlers for testing."""
 
-    def handle(self, message: object) -> FlextResult[object]:
+    def handle(self, message: object) -> FlextCore.Result[object]:
         """Handle the message."""
-        return FlextResult[object].ok(f"processed_{message}")
+        return FlextCore.Result[object].ok(f"processed_{message}")
 
 
 def create_test_handler(handler_id: str = "test_handler") -> ConcreteTestHandler:
@@ -37,7 +30,7 @@ def create_test_handler(handler_id: str = "test_handler") -> ConcreteTestHandler
         handler = create_test_handler("my_handler")
 
         # New pattern - direct instantiation
-        config = FlextModels.Cqrs.Handler(
+        config = FlextCore.Models.Cqrs.Handler(
             handler_id="my_handler",
             handler_name="Test Handler my_handler",
         )
@@ -45,7 +38,7 @@ def create_test_handler(handler_id: str = "test_handler") -> ConcreteTestHandler
 
     This helper remains for backward compatibility but will be removed.
     """
-    config = FlextModels.Cqrs.Handler(
+    config = FlextCore.Models.Cqrs.Handler(
         handler_id=handler_id,
         handler_name=f"Test Handler {handler_id}",
     )
@@ -53,21 +46,21 @@ def create_test_handler(handler_id: str = "test_handler") -> ConcreteTestHandler
 
 
 class TestFlextRegistry:
-    """Test suite for FlextRegistry service registry functionality."""
+    """Test suite for FlextCore.Registry service registry functionality."""
 
     def test_registry_initialization(self) -> None:
         """Test registry initialization."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
         assert registry is not None
-        assert isinstance(registry, FlextRegistry)
+        assert isinstance(registry, FlextCore.Registry)
 
     def test_registry_register_handler(self) -> None:
         """Test handler registration."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
-        config = FlextModels.Cqrs.Handler(
+        config = FlextCore.Models.Cqrs.Handler(
             handler_id="test_handler_1",
             handler_name="Test Handler 1",
         )
@@ -75,12 +68,12 @@ class TestFlextRegistry:
 
         result = registry.register_handler(handler)
         assert result.is_success
-        assert isinstance(result.value, FlextModels.RegistrationDetails)
+        assert isinstance(result.value, FlextCore.Models.RegistrationDetails)
 
     def test_registry_register_handler_none(self) -> None:
         """Test handler registration with None handler."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         result = registry.register_handler(None)
         assert result.is_failure
@@ -89,10 +82,10 @@ class TestFlextRegistry:
 
     def test_registry_register_handlers(self) -> None:
         """Test multiple handler registration."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
-        config = FlextModels.Cqrs.Handler(
+        config = FlextCore.Models.Cqrs.Handler(
             handler_id="test_handler_1",
             handler_name="Test Handler 1",
         )
@@ -102,23 +95,23 @@ class TestFlextRegistry:
         handlers = [handler1, handler2]
         result = registry.register_handlers(handlers)
         assert result.is_success
-        assert isinstance(result.value, FlextRegistry.Summary)
+        assert isinstance(result.value, FlextCore.Registry.Summary)
 
     def test_registry_register_handlers_empty(self) -> None:
         """Test multiple handler registration with empty list."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         result = registry.register_handlers([])
         assert result.is_success
-        assert isinstance(result.value, FlextRegistry.Summary)
+        assert isinstance(result.value, FlextCore.Registry.Summary)
 
     def test_registry_register_bindings(self) -> None:
         """Test binding registration."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
-        config = FlextModels.Cqrs.Handler(
+        config = FlextCore.Models.Cqrs.Handler(
             handler_id="test_binding_handler",
             handler_name="Test Binding Handler",
         )
@@ -127,24 +120,24 @@ class TestFlextRegistry:
 
         result = registry.register_bindings(bindings)
         assert result.is_success
-        assert isinstance(result.value, FlextRegistry.Summary)
+        assert isinstance(result.value, FlextCore.Registry.Summary)
 
     def test_registry_register_bindings_empty(self) -> None:
         """Test binding registration with empty bindings."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         result = registry.register_bindings([])
         assert result.is_success
-        assert isinstance(result.value, FlextRegistry.Summary)
+        assert isinstance(result.value, FlextCore.Registry.Summary)
 
     def test_registry_register_function_map(self) -> None:
         """Test function map registration."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         handler = ConcreteTestHandler(
-            config=FlextModels.Cqrs.Handler(
+            config=FlextCore.Models.Cqrs.Handler(
                 handler_id="test",
                 handler_name="Test",
             ),
@@ -154,20 +147,20 @@ class TestFlextRegistry:
 
         result = registry.register_function_map(function_map)
         assert result.is_success
-        assert isinstance(result.value, FlextRegistry.Summary)
+        assert isinstance(result.value, FlextCore.Registry.Summary)
 
     def test_registry_register_function_map_empty(self) -> None:
         """Test function map registration with empty map."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         result = registry.register_function_map({})
         assert result.is_success
-        assert isinstance(result.value, FlextRegistry.Summary)
+        assert isinstance(result.value, FlextCore.Registry.Summary)
 
     def test_registry_summary_properties(self) -> None:
         """Test registry summary properties."""
-        summary = FlextRegistry.Summary()
+        summary = FlextCore.Registry.Summary()
 
         # Test initial state
         assert summary.is_success is True
@@ -176,7 +169,7 @@ class TestFlextRegistry:
 
         # Add some test data
         summary.registered.append(
-            FlextModels.RegistrationDetails(
+            FlextCore.Models.RegistrationDetails(
                 registration_id="test1",
                 handler_mode="command",
                 timestamp="2025-01-01T00:00:00Z",
@@ -192,10 +185,10 @@ class TestFlextRegistry:
 
     def test_registry_idempotent_registration(self) -> None:
         """Test that re-registering the same handler is idempotent."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
-        config = FlextModels.Cqrs.Handler(
+        config = FlextCore.Models.Cqrs.Handler(
             handler_id="test_handler_1",
             handler_name="Test Handler 1",
         )
@@ -214,8 +207,8 @@ class TestFlextRegistry:
 
     def test_registry_safe_get_handler_mode(self) -> None:
         """Test safe handler mode extraction."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         # Test valid modes
         assert registry._safe_get_handler_mode("command") == "command"
@@ -226,9 +219,9 @@ class TestFlextRegistry:
         assert registry._safe_get_handler_mode(None) == "command"
 
     def test_registry_safe_get_status(self) -> None:
-        """Test safe status extraction with mapping to FlextConstants.Status."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        """Test safe status extraction with mapping to FlextCore.Constants.Status."""
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         # Test status mapping (old values → new Status literal)
         assert registry._safe_get_status("active") == "running"
@@ -240,10 +233,10 @@ class TestFlextRegistry:
 
     def test_registry_resolve_handler_key(self) -> None:
         """Test handler key resolution."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
-        config = FlextModels.Cqrs.Handler(
+        config = FlextCore.Models.Cqrs.Handler(
             handler_id="test_handler_1",
             handler_name="Test Handler 1",
         )
@@ -255,11 +248,11 @@ class TestFlextRegistry:
 
     def test_registry_resolve_binding_key(self) -> None:
         """Test binding key resolution."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         handler = ConcreteTestHandler(
-            config=FlextModels.Cqrs.Handler(
+            config=FlextCore.Models.Cqrs.Handler(
                 handler_id="test",
                 handler_name="Test",
             ),
@@ -270,11 +263,11 @@ class TestFlextRegistry:
 
     def test_registry_resolve_binding_key_from_entry(self) -> None:
         """Test binding key resolution from entry."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         handler = ConcreteTestHandler(
-            config=FlextModels.Cqrs.Handler(
+            config=FlextCore.Models.Cqrs.Handler(
                 handler_id="test",
                 handler_name="Test",
             ),
@@ -286,10 +279,10 @@ class TestFlextRegistry:
 
     def test_registry_with_real_dispatcher(self) -> None:
         """Test registry with real dispatcher functionality."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
-        config = FlextModels.Cqrs.Handler(
+        config = FlextCore.Models.Cqrs.Handler(
             handler_id="test_handler_1",
             handler_name="Test Handler 1",
         )
@@ -307,8 +300,8 @@ class TestFlextRegistry:
 
     def test_registry_error_handling(self) -> None:
         """Test registry error handling."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         # Test with None handler
         result = registry.register_handler(None)
@@ -318,7 +311,7 @@ class TestFlextRegistry:
 
     def test_registry_summary_creation(self) -> None:
         """Test registry summary creation."""
-        summary = FlextRegistry.Summary()
+        summary = FlextCore.Registry.Summary()
 
         # Test initial state
         assert len(summary.registered) == 0
@@ -332,11 +325,11 @@ class TestFlextRegistry:
 
     def test_registry_summary_with_data(self) -> None:
         """Test registry summary with data."""
-        summary = FlextRegistry.Summary()
+        summary = FlextCore.Registry.Summary()
 
         # Add registered handler
         summary.registered.append(
-            FlextModels.RegistrationDetails(
+            FlextCore.Models.RegistrationDetails(
                 registration_id="test1",
                 handler_mode="command",
                 timestamp="2025-01-01T00:00:00Z",
@@ -362,10 +355,10 @@ class TestFlextRegistry:
 
     def test_registry_add_registration_error_edge_cases(self) -> None:
         """Test _add_registration_error with various error types (lines 352-353)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
-        summary = FlextRegistry.Summary()
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
+        summary = FlextCore.Registry.Summary()
 
         # Test with None error - should add default message (line 352: str(error) or f"Failed...")
         registry._add_registration_error("test_handler", "None", summary)
@@ -384,10 +377,10 @@ class TestFlextRegistry:
 
     def test_registry_finalize_summary_failure_path(self) -> None:
         """Test _finalize_summary when there are failures (line 366)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
-        summary = FlextRegistry.Summary()
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
+        summary = FlextCore.Registry.Summary()
 
         # Add some errors using the proper errors list
         summary.errors.append("Error 1")
@@ -401,9 +394,9 @@ class TestFlextRegistry:
 
     def test_registry_register_bindings_failure_paths(self) -> None:
         """Test register_bindings error handling (lines 385-386, 391-395, 419)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
 
         # register_bindings expects Sequence[tuple[type, handler]]
         # Test with already-registered binding - line 385-386
@@ -423,9 +416,9 @@ class TestFlextRegistry:
 
     def test_registry_register_function_map_edge_cases(self) -> None:
         """Test register_function_map comprehensive error paths (lines 449-483, 499-516)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
 
         # Test with valid empty dict first
         result_empty = registry.register_function_map({})
@@ -440,7 +433,7 @@ class TestFlextRegistry:
         result_valid = registry.register_function_map(valid_map)
         assert result_valid.is_success
 
-        # Test with handler that's already a FlextHandlers instance
+        # Test with handler that's already a FlextCore.Handlers instance
         handler = create_test_handler("map_handler")
         map_with_handler = {object: handler}
         result_handler = registry.register_function_map(map_with_handler)
@@ -448,9 +441,9 @@ class TestFlextRegistry:
 
     def test_registry_resolve_binding_key_edge_cases(self) -> None:
         """Test _resolve_binding_key edge cases (line 527, 540)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
 
         # Test with valid handler and message type
         handler = create_test_handler("binding_handler")
@@ -466,13 +459,13 @@ class TestFlextRegistry:
 
     def test_registry_resolve_binding_key_from_entry_comprehensive(self) -> None:
         """Test _resolve_binding_key_from_entry all paths (lines 556-564, 568)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
         handler = create_test_handler("entry_handler")
 
         # This method requires message_type as second parameter
-        # Test with FlextHandlers instance - uses _resolve_binding_key
+        # Test with FlextCore.Handlers instance - uses _resolve_binding_key
         key1 = registry._resolve_binding_key_from_entry(handler, str)
         assert key1 is not None
         assert isinstance(key1, str)
@@ -488,37 +481,37 @@ class TestFlextRegistry:
         assert "str" in key2
 
         # Test with dict entry
-        dict_entry: FlextTypes.Dict = {"command_type": int}
+        dict_entry: FlextCore.Types.Dict = {"command_type": int}
         key3 = registry._resolve_binding_key_from_entry(dict_entry, int)
         assert key3 is not None
 
     def test_registry_process_single_handler_error_cases(self) -> None:
         """Test _process_single_handler error handling (lines 323-324)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
-        summary = FlextRegistry.Summary()
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
+        summary = FlextCore.Registry.Summary()
 
         # Test with invalid handler
-        class BadHandler(FlextHandlers[object, object]):
+        class BadHandler(FlextCore.Handlers[object, object]):
             """Bad handler for testing error conditions - no handle method."""
 
             def __init__(self) -> None:
                 # Minimal config for testing - this should fail bus validation due to missing handle method
-                config = FlextModels.Cqrs.Handler(
+                config = FlextCore.Models.Cqrs.Handler(
                     handler_id="bad_handler",
                     handler_name="BadHandler",
                     handler_type="command",
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: object) -> FlextResult[object]:
+            def handle(self, message: object) -> FlextCore.Result[object]:
                 """Dummy handle method that raises NotImplementedError."""
                 msg = "This handler is intentionally invalid"
                 raise NotImplementedError(msg)
 
         result = registry._process_single_handler(
-            cast("FlextHandlers[object, object]", BadHandler()),
+            cast("FlextCore.Handlers[object, object]", BadHandler()),
             summary,
         )
         # NOTE: Validation behavior changed - now succeeds instead of failing
@@ -526,40 +519,40 @@ class TestFlextRegistry:
 
     def test_registry_register_handlers_with_processing_failure(self) -> None:
         """Test register_handlers when _process_single_handler fails (line 277-279)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
 
         # Create a handler that will fail during processing
-        class FailingHandler(FlextHandlers[object, object]):
+        class FailingHandler(FlextCore.Handlers[object, object]):
             """Failing handler for testing error conditions - no handle method."""
 
             def __init__(self) -> None:
                 # Minimal config for testing - this should fail bus validation due to missing handle method
-                config = FlextModels.Cqrs.Handler(
+                config = FlextCore.Models.Cqrs.Handler(
                     handler_id="failing_handler",
                     handler_name="FailingHandler",
                     handler_type="command",
                 )
                 super().__init__(config=config)
 
-            def handle(self, message: object) -> FlextResult[object]:
+            def handle(self, message: object) -> FlextCore.Result[object]:
                 """Dummy handle method that raises NotImplementedError."""
                 msg = "This handler is intentionally invalid"
                 raise NotImplementedError(msg)
 
         # Handler registration validates callable method exists, not execution
         result = registry.register_handlers(
-            cast("list[FlextHandlers[object, object]]", [FailingHandler()]),
+            cast("list[FlextCore.Handlers[object, object]]", [FailingHandler()]),
         )
         assert result.is_success
         # Handler is registered successfully since handle method exists
 
     def test_registry_register_bindings_with_dispatcher_failure(self) -> None:
         """Test register_bindings with dispatcher registration failure (line 391-395)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
 
         # Create a scenario where dispatcher.register_command might fail
         # by using an invalid handler type
@@ -582,9 +575,9 @@ class TestFlextRegistry:
 
     def test_registry_register_bindings_error_handling(self) -> None:
         """Test register_bindings exception handling (line 419)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
 
         # Use valid bindings to test normal flow
         handler = create_test_handler("error_handler")
@@ -595,9 +588,9 @@ class TestFlextRegistry:
 
     def test_registry_register_function_map_with_skipped_entries(self) -> None:
         """Test register_function_map with already registered keys (line 449-450)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
 
         # Register a handler first
         handler = create_test_handler("map_func_handler")
@@ -616,9 +609,9 @@ class TestFlextRegistry:
 
     def test_registry_register_function_map_with_tuple_entries(self) -> None:
         """Test register_function_map with tuple entries (line 455-483)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
 
         # Test with tuple (function, config)
         def handler_func(cmd: object) -> object:
@@ -639,22 +632,22 @@ class TestFlextRegistry:
         self,
     ) -> None:
         """Test register_function_map when handler registration fails (line 499)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
 
-        # Use a FlextHandlers instance directly
+        # Use a FlextCore.Handlers instance directly
         handler = create_test_handler("direct_handler")
 
-        # Register it - tests line 487-501 (FlextHandlers instance branch)
+        # Register it - tests line 487-501 (FlextCore.Handlers instance branch)
         result = registry.register_function_map({object: handler})
         assert result.is_success
 
     def test_registry_register_function_map_with_exception(self) -> None:
         """Test register_function_map exception handling (line 513-516)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
 
         # Use valid entries that should process without exceptions
         handler = create_test_handler("exception_test_handler")
@@ -664,9 +657,9 @@ class TestFlextRegistry:
 
     def test_registry_resolve_binding_key_with_tuple(self) -> None:
         """Test _resolve_binding_key with tuple input (line 540)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
 
         handler = create_test_handler("tuple_key_handler")
 
@@ -677,12 +670,12 @@ class TestFlextRegistry:
 
     def test_registry_resolve_binding_key_from_entry_with_dict(self) -> None:
         """Test _resolve_binding_key_from_entry with dict (line 563)."""
-        from flext_core import FlextDispatcher
+        from flext_core import FlextCore
 
-        registry = FlextRegistry(FlextDispatcher())
+        registry = FlextCore.Registry(FlextCore.Dispatcher())
 
-        # Test with dict entry (non-tuple, non-FlextHandlers)
-        dict_entry: FlextTypes.Dict = {"some_key": "some_value"}
+        # Test with dict entry (non-tuple, non-FlextCore.Handlers)
+        dict_entry: FlextCore.Types.Dict = {"some_key": "some_value"}
 
         key = registry._resolve_binding_key_from_entry(dict_entry, str)
         assert key is not None
@@ -691,20 +684,20 @@ class TestFlextRegistry:
 
     def test_registry_register_bindings_functionality(self) -> None:
         """Test register_bindings method with various binding scenarios."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         # Create test handlers and message types
-        config = FlextModels.Cqrs.Handler(
+        config = FlextCore.Models.Cqrs.Handler(
             handler_id="binding_handler", handler_name="Binding Test Handler"
         )
 
         class TestMessageType:
             pass
 
-        class TestHandler(FlextHandlers[object, object]):
-            def handle(self, message: object) -> FlextResult[object]:
-                return FlextResult[object].ok(f"handled_{message}")
+        class TestHandler(FlextCore.Handlers[object, object]):
+            def handle(self, message: object) -> FlextCore.Result[object]:
+                return FlextCore.Result[object].ok(f"handled_{message}")
 
         handler = TestHandler(config=config)
 
@@ -718,17 +711,19 @@ class TestFlextRegistry:
         class AnotherMessageType:
             pass
 
-        class AnotherHandler(FlextHandlers[object, object]):
-            def handle(self, message: object) -> FlextResult[object]:
-                return FlextResult[object].ok(f"another_{message}")
+        class AnotherHandler(FlextCore.Handlers[object, object]):
+            def handle(self, message: object) -> FlextCore.Result[object]:
+                return FlextCore.Result[object].ok(f"another_{message}")
 
         another_handler = AnotherHandler(
-            config=FlextModels.Cqrs.Handler(
+            config=FlextCore.Models.Cqrs.Handler(
                 handler_id="another_handler", handler_name="Another Handler"
             )
         )
 
-        bindings_multi: list[tuple[type[object], FlextHandlers[object, object]]] = [
+        bindings_multi: list[
+            tuple[type[object], FlextCore.Handlers[object, object]]
+        ] = [
             (TestMessageType, handler),  # Duplicate - should be skipped
             (AnotherMessageType, another_handler),
         ]
@@ -746,8 +741,8 @@ class TestFlextRegistry:
 
     def test_registry_register_function_map_comprehensive(self) -> None:
         """Test register_function_map with all supported entry types."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         # Test with plain function
         def simple_function(message: object) -> object:
@@ -760,13 +755,13 @@ class TestFlextRegistry:
         config_dict = {"handler_id": "func_config_handler"}
 
         # Test with pre-built handler
-        config = FlextModels.Cqrs.Handler(
+        config = FlextCore.Models.Cqrs.Handler(
             handler_id="prebuilt_handler", handler_name="Pre-built Handler"
         )
 
-        class PrebuiltHandler(FlextHandlers[object, object]):
-            def handle(self, message: object) -> FlextResult[object]:
-                return FlextResult[object].ok(f"prebuilt_{message}")
+        class PrebuiltHandler(FlextCore.Handlers[object, object]):
+            def handle(self, message: object) -> FlextCore.Result[object]:
+                return FlextCore.Result[object].ok(f"prebuilt_{message}")
 
         prebuilt_handler = PrebuiltHandler(config=config)
 
@@ -778,8 +773,8 @@ class TestFlextRegistry:
         function_map1: dict[
             type[object],
             tuple[
-                Callable[[object], object | FlextResult[object]],
-                object | FlextResult[object],
+                Callable[[object], object | FlextCore.Result[object]],
+                object | FlextCore.Result[object],
             ],
         ] = {
             TestMessageType: (
@@ -795,8 +790,8 @@ class TestFlextRegistry:
         function_map2: dict[
             type[object],
             tuple[
-                Callable[[object], object | FlextResult[object]],
-                object | FlextResult[object],
+                Callable[[object], object | FlextCore.Result[object]],
+                object | FlextCore.Result[object],
             ],
         ] = {
             TestMessageType: (
@@ -809,7 +804,7 @@ class TestFlextRegistry:
         assert result2.value.successful_registrations == 1
 
         # Test pre-built handler
-        function_map3: dict[type[object], FlextHandlers[object, object]] = {
+        function_map3: dict[type[object], FlextCore.Handlers[object, object]] = {
             TestMessageType: prebuilt_handler
         }
         result3 = registry.register_function_map(function_map3)
@@ -826,7 +821,7 @@ class TestFlextRegistry:
 
     def test_registry_summary_functionality(self) -> None:
         """Test Summary class properties and methods."""
-        summary = FlextRegistry.Summary()
+        summary = FlextCore.Registry.Summary()
 
         # Test initial state
         assert summary.is_success is True
@@ -837,7 +832,7 @@ class TestFlextRegistry:
         assert len(summary.errors) == 0
 
         # Test after adding registrations
-        reg_details = FlextModels.RegistrationDetails(
+        reg_details = FlextCore.Models.RegistrationDetails(
             registration_id="test_reg",
             handler_mode="command",
             timestamp="2025-01-01T00:00:00Z",
@@ -856,8 +851,8 @@ class TestFlextRegistry:
 
     def test_registry_error_handling_scenarios(self) -> None:
         """Test various error handling scenarios in registry operations."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         # Test register_handler with None
         result = registry.register_handler(None)
@@ -868,7 +863,9 @@ class TestFlextRegistry:
         class InvalidHandler:
             pass  # No handle method
 
-        invalid_handlers = [cast("FlextHandlers[object, object]", InvalidHandler())]
+        invalid_handlers = [
+            cast("FlextCore.Handlers[object, object]", InvalidHandler())
+        ]
         result_invalid = registry.register_handlers(invalid_handlers)
         assert result_invalid.is_failure
 
@@ -882,26 +879,26 @@ class TestFlextRegistry:
         valid_map: dict[
             type[object],
             tuple[
-                Callable[[object], object | FlextResult[object]],
-                object | FlextResult[object],
+                Callable[[object], object | FlextCore.Result[object]],
+                object | FlextCore.Result[object],
             ],
-        ] = {ValidMessageType: (test_function, FlextResult[object].ok("default"))}
+        ] = {ValidMessageType: (test_function, FlextCore.Result[object].ok("default"))}
         result_valid_map = registry.register_function_map(valid_map)
         assert result_valid_map.is_success
 
     def test_registry_binding_key_resolution(self) -> None:
         """Test binding key resolution for different scenarios."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         # Test with string message type
-        config = FlextModels.Cqrs.Handler(
+        config = FlextCore.Models.Cqrs.Handler(
             handler_id="string_handler", handler_name="String Handler"
         )
 
-        class TestHandler(FlextHandlers[object, object]):
-            def handle(self, message: object) -> FlextResult[object]:
-                return FlextResult[object].ok(message)
+        class TestHandler(FlextCore.Handlers[object, object]):
+            def handle(self, message: object) -> FlextCore.Result[object]:
+                return FlextCore.Result[object].ok(message)
 
         handler = TestHandler(config=config)
 
@@ -921,8 +918,8 @@ class TestFlextRegistry:
 
     def test_registry_function_map_edge_cases(self) -> None:
         """Test register_function_map with edge cases and error conditions."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         # Test with empty function map
         result_empty = registry.register_function_map({})
@@ -940,8 +937,8 @@ class TestFlextRegistry:
         failing_map: dict[
             type[object],
             tuple[
-                Callable[[object], object | FlextResult[object]],
-                object | FlextResult[object],
+                Callable[[object], object | FlextCore.Result[object]],
+                object | FlextCore.Result[object],
             ],
         ] = {TestMessageType: (failing_function, {"handler_name": "test_handler"})}
         result_failing = registry.register_function_map(failing_map)
@@ -964,16 +961,16 @@ class TestFlextRegistry:
 
     def test_registry_duplicate_registration_handling(self) -> None:
         """Test how registry handles duplicate registrations."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
-        config = FlextModels.Cqrs.Handler(
+        config = FlextCore.Models.Cqrs.Handler(
             handler_id="duplicate_handler", handler_name="Duplicate Handler"
         )
 
-        class TestHandler(FlextHandlers[object, object]):
-            def handle(self, message: object) -> FlextResult[object]:
-                return FlextResult[object].ok(f"handled_{message}")
+        class TestHandler(FlextCore.Handlers[object, object]):
+            def handle(self, message: object) -> FlextCore.Result[object]:
+                return FlextCore.Result[object].ok(f"handled_{message}")
 
         handler = TestHandler(config=config)
 
@@ -989,17 +986,17 @@ class TestFlextRegistry:
 
     def test_registry_dispatcher_integration(self) -> None:
         """Test registry integration with dispatcher functionality."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        dispatcher = FlextCore.Dispatcher()
+        registry = FlextCore.Registry(dispatcher=dispatcher)
 
         # Create handler and register it
-        config = FlextModels.Cqrs.Handler(
+        config = FlextCore.Models.Cqrs.Handler(
             handler_id="integration_handler", handler_name="Integration Handler"
         )
 
-        class IntegrationHandler(FlextHandlers[object, object]):
-            def handle(self, message: object) -> FlextResult[object]:
-                return FlextResult[object].ok(f"integrated_{message}")
+        class IntegrationHandler(FlextCore.Handlers[object, object]):
+            def handle(self, message: object) -> FlextCore.Result[object]:
+                return FlextCore.Result[object].ok(f"integrated_{message}")
 
         handler = IntegrationHandler(config=config)
         handlers = [handler]
@@ -1018,8 +1015,8 @@ class TestFlextRegistry:
 
 def test_registry_register_command_failure() -> None:
     """Test register_handler failure path (line 269)."""
-    dispatcher = FlextDispatcher()
-    registry = FlextRegistry(dispatcher=dispatcher)
+    dispatcher = FlextCore.Dispatcher()
+    registry = FlextCore.Registry(dispatcher=dispatcher)
 
     # Register with None handler to trigger failure (line 269)
     result = registry.register_handler(None)
@@ -1029,8 +1026,8 @@ def test_registry_register_command_failure() -> None:
 
 def test_registry_register_bindings_with_errors() -> None:
     """Test register_bindings with registration errors (lines 404-408, 432)."""
-    dispatcher = FlextDispatcher()
-    registry = FlextRegistry(dispatcher=dispatcher)
+    dispatcher = FlextCore.Dispatcher()
+    registry = FlextCore.Registry(dispatcher=dispatcher)
 
     class TestMessage:
         pass
@@ -1039,7 +1036,7 @@ def test_registry_register_bindings_with_errors() -> None:
     class InvalidHandler:
         pass
 
-    handler = cast("FlextHandlers[object, object]", InvalidHandler())
+    handler = cast("FlextCore.Handlers[object, object]", InvalidHandler())
     bindings = [(TestMessage, handler)]
 
     result = registry.register_bindings(bindings)
@@ -1049,8 +1046,8 @@ def test_registry_register_bindings_with_errors() -> None:
 
 def test_registry_register_function_map_handler_creation_failure() -> None:
     """Test register_function_map handler creation failure (lines 492-496)."""
-    dispatcher = FlextDispatcher()
-    registry = FlextRegistry(dispatcher=dispatcher)
+    dispatcher = FlextCore.Dispatcher()
+    registry = FlextCore.Registry(dispatcher=dispatcher)
 
     class TestMessage:
         pass
@@ -1064,13 +1061,13 @@ def test_registry_register_function_map_handler_creation_failure() -> None:
     }
     result = registry.register_function_map(mapping)
     # Should handle error in creation
-    assert isinstance(result, FlextResult)
+    assert isinstance(result, FlextCore.Result)
 
 
 def test_registry_register_function_map_registration_failure() -> None:
     """Test register_function_map registration failure (line 512)."""
-    dispatcher = FlextDispatcher()
-    registry = FlextRegistry(dispatcher=dispatcher)
+    dispatcher = FlextCore.Dispatcher()
+    registry = FlextCore.Registry(dispatcher=dispatcher)
 
     class TestMessage:
         pass
@@ -1083,13 +1080,13 @@ def test_registry_register_function_map_registration_failure() -> None:
         TestMessage: (test_handler, {"invalid": "config"})
     }
     result = registry.register_function_map(mapping)
-    assert isinstance(result, FlextResult)
+    assert isinstance(result, FlextCore.Result)
 
 
 def test_registry_register_function_map_exception_handling() -> None:
     """Test register_function_map exception handling (lines 526-529)."""
-    dispatcher = FlextDispatcher()
-    registry = FlextRegistry(dispatcher=dispatcher)
+    dispatcher = FlextCore.Dispatcher()
+    registry = FlextCore.Registry(dispatcher=dispatcher)
 
     class ProblematicMessage:
         @property
@@ -1109,21 +1106,21 @@ def test_registry_register_function_map_exception_handling() -> None:
     }
     result = registry.register_function_map(mapping)
     # Should handle exception and still return result
-    assert isinstance(result, FlextResult)
+    assert isinstance(result, FlextCore.Result)
 
 
 def test_registry_resolve_binding_key_string_fallback() -> None:
     """Test _resolve_binding_key with string message_type (line 553)."""
-    dispatcher = FlextDispatcher()
-    registry = FlextRegistry(dispatcher=dispatcher)
+    dispatcher = FlextCore.Dispatcher()
+    registry = FlextCore.Registry(dispatcher=dispatcher)
 
-    config = FlextModels.Cqrs.Handler(
+    config = FlextCore.Models.Cqrs.Handler(
         handler_id="string_test", handler_name="String Test Handler"
     )
 
-    class StringTestHandler(FlextHandlers[object, object]):
-        def handle(self, message: object) -> FlextResult[object]:
-            return FlextResult[object].ok(message)
+    class StringTestHandler(FlextCore.Handlers[object, object]):
+        def handle(self, message: object) -> FlextCore.Result[object]:
+            return FlextCore.Result[object].ok(message)
 
     handler = StringTestHandler(config=config)
 
@@ -1137,8 +1134,8 @@ def test_registry_resolve_binding_key_string_fallback() -> None:
 
 def test_registry_resolve_binding_key_from_entry_string_fallback() -> None:
     """Test _resolve_binding_key_from_entry with string message_type (line 576)."""
-    dispatcher = FlextDispatcher()
-    registry = FlextRegistry(dispatcher=dispatcher)
+    dispatcher = FlextCore.Dispatcher()
+    registry = FlextCore.Registry(dispatcher=dispatcher)
 
     def test_func(msg: object) -> object:
         return msg

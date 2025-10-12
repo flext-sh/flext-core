@@ -1,14 +1,14 @@
 # !/usr/bin/env python3
-"""03 - FlextModels Fundamentals: Complete Domain-Driven Design Patterns.
+"""03 - FlextCore.Models Fundamentals: Complete Domain-Driven Design Patterns.
 
-This example demonstrates the COMPLETE FlextModels API - the foundation
-for domain modeling across the entire FLEXT ecosystem. FlextModels provides
+This example demonstrates the COMPLETE FlextCore.Models API - the foundation
+for domain modeling across the entire FLEXT ecosystem. FlextCore.Models provides
 DDD patterns with Value Objects, Entities, and Aggregate Roots.
 
 Key Concepts Demonstrated:
-- Value Objects: FlextModels.Value for immutable value types
-- Entities: FlextModels.Entity with identity and lifecycle
-- Aggregate Roots: FlextModels.AggregateRoot for consistency boundaries
+- Value Objects: FlextCore.Models.Value for immutable value types
+- Entities: FlextCore.Models.Entity with identity and lifecycle
+- Aggregate Roots: FlextCore.Models.AggregateRoot for consistency boundaries
 - Domain Events: Event sourcing patterns (AggregateRoot only)
 - Business Rules: Invariant enforcement and validation
 - Model Serialization: to_dict(), from_dict(), model_dump()
@@ -32,14 +32,7 @@ from uuid import uuid4
 
 from pydantic import Field
 
-from flext_core import (
-    FlextConstants,
-    FlextCore,
-    FlextModels,
-    FlextResult,
-    FlextService,
-    FlextTypes,
-)
+from flext_core import FlextCore
 
 
 class OrderItemDict(TypedDict):
@@ -64,14 +57,14 @@ class RealisticDataDict(TypedDict):
     """TypedDict for realistic data structure."""
 
     order: RealisticOrderDict
-    api_response: FlextTypes.Dict
-    user_registration: FlextTypes.Dict
+    api_response: FlextCore.Types.Dict
+    user_registration: FlextCore.Types.Dict
 
 
 class DemoScenarios:
     """Inline scenario helpers for model demonstrations."""
 
-    _DATASET: ClassVar[FlextTypes.Dict] = {
+    _DATASET: ClassVar[FlextCore.Types.Dict] = {
         "users": [
             {
                 "id": 1,
@@ -118,25 +111,25 @@ class DemoScenarios:
         },
     }
 
-    _CONFIG: ClassVar[FlextTypes.Dict] = {
+    _CONFIG: ClassVar[FlextCore.Types.Dict] = {
         "database_url": "sqlite:///:memory:",
         "api_timeout": 30,
         "retry": 3,
     }
 
-    _PAYLOAD: ClassVar[FlextTypes.Dict] = {
+    _PAYLOAD: ClassVar[FlextCore.Types.Dict] = {
         "event": "order_created",
         "order_id": "order-456",
         "metadata": {"source": "examples", "version": "1.0"},
     }
 
-    _VALIDATION: ClassVar[FlextTypes.Dict] = {
+    _VALIDATION: ClassVar[FlextCore.Types.Dict] = {
         "valid_emails": ["user@example.com", "contact@flext.dev"],
         "invalid_emails": ["invalid", "missing-at"],
     }
 
     @staticmethod
-    def dataset() -> FlextTypes.Dict:
+    def dataset() -> FlextCore.Types.Dict:
         """Get a copy of the demo dataset."""
         return deepcopy(DemoScenarios._DATASET)
 
@@ -146,7 +139,7 @@ class DemoScenarios:
         return deepcopy(DemoScenarios._REALISTIC)
 
     @staticmethod
-    def validation_data() -> FlextTypes.Dict:
+    def validation_data() -> FlextCore.Types.Dict:
         """Get a copy of validation demo data."""
         return deepcopy(DemoScenarios._VALIDATION)
 
@@ -154,57 +147,59 @@ class DemoScenarios:
 # ========== VALUE OBJECTS ==========
 
 
-class Email(FlextModels.Value):
+class Email(FlextCore.Models.Value):
     """Email value object - immutable and compared by value."""
 
     address: str
 
-    def validate_email(self) -> FlextResult[bool]:
+    def validate_email(self) -> FlextCore.Result[bool]:
         """Business validation for email format."""
         if "@" not in self.address:
-            return FlextResult[bool].fail("Invalid email format")
+            return FlextCore.Result[bool].fail("Invalid email format")
         if self.address.lower() != self.address:
-            return FlextResult[bool].fail("Email must be lowercase")
-        return FlextResult[bool].ok(True)
+            return FlextCore.Result[bool].fail("Email must be lowercase")
+        return FlextCore.Result[bool].ok(True)
 
     @classmethod
-    def create_email(cls, *args: object, **kwargs: object) -> FlextResult[Email]:
+    def create_email(cls, *args: object, **kwargs: object) -> FlextCore.Result[Email]:
         """Factory method with validation."""
         address_raw = args[0] if args else kwargs.get("address", "")
         address = str(address_raw) if address_raw is not None else ""
         email = cls(address=address.lower().strip())
         validation = email.validate_email()
         if validation.is_failure:
-            return FlextResult[Email].fail(f"Email creation failed: {validation.error}")
-        return FlextResult[Email].ok(email)
+            return FlextCore.Result[Email].fail(
+                f"Email creation failed: {validation.error}"
+            )
+        return FlextCore.Result[Email].ok(email)
 
 
-class Money(FlextModels.Value):
+class Money(FlextCore.Models.Value):
     """Money value object with currency and amount."""
 
     amount: Decimal
     currency: str = "USD"
 
-    def add(self, other: Money) -> FlextResult[Money]:
+    def add(self, other: Money) -> FlextCore.Result[Money]:
         """Add money with currency check."""
         if self.currency != other.currency:
-            return FlextResult[Money].fail("Currency mismatch")
-        return FlextResult[Money].ok(
+            return FlextCore.Result[Money].fail("Currency mismatch")
+        return FlextCore.Result[Money].ok(
             Money(amount=self.amount + other.amount, currency=self.currency),
         )
 
-    def subtract(self, other: Money) -> FlextResult[Money]:
+    def subtract(self, other: Money) -> FlextCore.Result[Money]:
         """Subtract money with currency check."""
         if self.currency != other.currency:
-            return FlextResult[Money].fail("Currency mismatch")
+            return FlextCore.Result[Money].fail("Currency mismatch")
         if self.amount < other.amount:
-            return FlextResult[Money].fail("Insufficient funds")
-        return FlextResult[Money].ok(
+            return FlextCore.Result[Money].fail("Insufficient funds")
+        return FlextCore.Result[Money].ok(
             Money(amount=self.amount - other.amount, currency=self.currency),
         )
 
 
-class Address(FlextModels.Value):
+class Address(FlextCore.Models.Value):
     """Complex value object with multiple fields."""
 
     street: str
@@ -223,7 +218,7 @@ class Address(FlextModels.Value):
 # ========== ENTITIES ==========
 
 
-class Product(FlextModels.Entity):
+class Product(FlextCore.Models.Entity):
     """Product entity with identity and business logic."""
 
     name: str
@@ -232,39 +227,39 @@ class Product(FlextModels.Entity):
     stock: int = 0
     is_active: bool = True
 
-    def adjust_price(self, new_price: Money) -> FlextResult[bool]:
+    def adjust_price(self, new_price: Money) -> FlextCore.Result[bool]:
         """Adjust product price with validation."""
         if new_price.amount <= Decimal(0):
-            return FlextResult[bool].fail("Price must be positive")
+            return FlextCore.Result[bool].fail("Price must be positive")
 
         self.price = new_price
 
         # Note: Entity doesn't have domain events, only AggregateRoot does
 
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
-    def add_stock(self, quantity: int) -> FlextResult[bool]:
+    def add_stock(self, quantity: int) -> FlextCore.Result[bool]:
         """Add stock with validation."""
         if quantity <= 0:
-            return FlextResult[bool].fail("Quantity must be positive")
+            return FlextCore.Result[bool].fail("Quantity must be positive")
 
         self.stock += quantity
         # Note: Entity doesn't have domain events
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
-    def remove_stock(self, quantity: int) -> FlextResult[bool]:
+    def remove_stock(self, quantity: int) -> FlextCore.Result[bool]:
         """Remove stock with availability check."""
         if quantity <= 0:
-            return FlextResult[bool].fail("Quantity must be positive")
+            return FlextCore.Result[bool].fail("Quantity must be positive")
         if quantity > self.stock:
-            return FlextResult[bool].fail("Insufficient stock")
+            return FlextCore.Result[bool].fail("Insufficient stock")
 
         self.stock -= quantity
         # Note: Entity doesn't have domain events
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
 
-class Customer(FlextModels.Entity):
+class Customer(FlextCore.Models.Entity):
     """Customer entity with complex business rules."""
 
     name: str
@@ -281,40 +276,42 @@ class Customer(FlextModels.Entity):
         if not hasattr(self, "created_at"):
             self.created_at = datetime.now(UTC)
 
-    def can_purchase(self, amount: Money) -> FlextResult[bool]:
+    def can_purchase(self, amount: Money) -> FlextCore.Result[bool]:
         """Check if customer can make purchase."""
         # Check credit limit
         available_credit_result = self.credit_limit.subtract(self.current_balance)
         if available_credit_result.is_failure:
-            return FlextResult[bool].ok(False)
+            return FlextCore.Result[bool].ok(False)
 
         available_credit = available_credit_result.unwrap()
         if amount.amount > available_credit.amount:
-            return FlextResult[bool].fail("Exceeds credit limit")
+            return FlextCore.Result[bool].fail("Exceeds credit limit")
 
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
-    def make_purchase(self, amount: Money) -> FlextResult[bool]:
+    def make_purchase(self, amount: Money) -> FlextCore.Result[bool]:
         """Process a purchase."""
         can_purchase = self.can_purchase(amount)
         if can_purchase.is_failure or not can_purchase.unwrap():
-            return FlextResult[bool].fail("Cannot complete purchase")
+            return FlextCore.Result[bool].fail("Cannot complete purchase")
 
         # Update balance
         new_balance_result = self.current_balance.add(amount)
         if new_balance_result.is_failure:
-            return FlextResult[bool].fail(new_balance_result.error or "Unknown error")
+            return FlextCore.Result[bool].fail(
+                new_balance_result.error or "Unknown error"
+            )
 
         self.current_balance = new_balance_result.unwrap()
 
         # Note: Entity doesn't have domain events
 
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
-    def upgrade_to_vip(self) -> FlextResult[bool]:
+    def upgrade_to_vip(self) -> FlextCore.Result[bool]:
         """Upgrade customer to VIP status."""
         if self.is_vip:
-            return FlextResult[bool].fail("Already VIP")
+            return FlextCore.Result[bool].fail("Already VIP")
 
         self.is_vip = True
         # VIP gets higher credit limit
@@ -325,13 +322,13 @@ class Customer(FlextModels.Entity):
 
         # Note: Entity doesn't have domain events
 
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
 
 # ========== AGGREGATE ROOTS ==========
 
 
-class OrderLine(FlextModels.Value):
+class OrderLine(FlextCore.Models.Value):
     """Order line value object."""
 
     product_id: str
@@ -347,7 +344,7 @@ class OrderLine(FlextModels.Value):
         )
 
 
-class Order(FlextModels.AggregateRoot):
+class Order(FlextCore.Models.AggregateRoot):
     """Order aggregate root - maintains consistency boundary."""
 
     customer_id: str
@@ -367,17 +364,17 @@ class Order(FlextModels.AggregateRoot):
         if not hasattr(self, "total_amount"):
             self.total_amount = Money(amount=Decimal(0), currency="USD")
 
-    def add_line(self, product: Product, quantity: int) -> FlextResult[bool]:
+    def add_line(self, product: Product, quantity: int) -> FlextCore.Result[bool]:
         """Add order line with stock validation."""
         # Check if order is modifiable
         if self.status not in {"DRAFT", "PENDING"}:
-            return FlextResult[bool].fail(
+            return FlextCore.Result[bool].fail(
                 f"Cannot modify order in {self.status} status",
             )
 
         # Check stock availability
         if product.stock < quantity:
-            return FlextResult[bool].fail(f"Insufficient stock for {product.name}")
+            return FlextCore.Result[bool].fail(f"Insufficient stock for {product.name}")
 
         # Create order line
         line = OrderLine(
@@ -403,12 +400,12 @@ class Order(FlextModels.AggregateRoot):
             },
         )
 
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
-    def remove_line(self, product_id: str) -> FlextResult[bool]:
+    def remove_line(self, product_id: str) -> FlextCore.Result[bool]:
         """Remove order line."""
         if self.status not in {"DRAFT", "PENDING"}:
-            return FlextResult[bool].fail(
+            return FlextCore.Result[bool].fail(
                 f"Cannot modify order in {self.status} status",
             )
 
@@ -417,7 +414,7 @@ class Order(FlextModels.AggregateRoot):
         self.lines = [line for line in self.lines if line.product_id != product_id]
 
         if len(self.lines) == original_count:
-            return FlextResult[bool].fail("Product not found in order")
+            return FlextCore.Result[bool].fail("Product not found in order")
 
         # Recalculate total
         self._recalculate_total()
@@ -431,7 +428,7 @@ class Order(FlextModels.AggregateRoot):
             },
         )
 
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
     def _recalculate_total(self) -> None:
         """Recalculate order total (internal consistency)."""
@@ -441,13 +438,13 @@ class Order(FlextModels.AggregateRoot):
 
         self.total_amount = Money(amount=total, currency="USD")
 
-    def submit(self) -> FlextResult[bool]:
+    def submit(self) -> FlextCore.Result[bool]:
         """Submit order for processing."""
         if self.status != "DRAFT":
-            return FlextResult[bool].fail("Only draft orders can be submitted")
+            return FlextCore.Result[bool].fail("Only draft orders can be submitted")
 
         if not self.lines:
-            return FlextResult[bool].fail("Cannot submit empty order")
+            return FlextCore.Result[bool].fail("Cannot submit empty order")
 
         self.status = "PENDING"
 
@@ -462,12 +459,12 @@ class Order(FlextModels.AggregateRoot):
             },
         )
 
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
-    def ship(self) -> FlextResult[bool]:
+    def ship(self) -> FlextCore.Result[bool]:
         """Mark order as shipped."""
         if self.status != "PENDING":
-            return FlextResult[bool].fail("Only pending orders can be shipped")
+            return FlextCore.Result[bool].fail("Only pending orders can be shipped")
 
         self.status = "SHIPPED"
         self.shipped_at = datetime.now(UTC)
@@ -482,12 +479,12 @@ class Order(FlextModels.AggregateRoot):
             },
         )
 
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
-    def cancel(self, reason: str) -> FlextResult[bool]:
+    def cancel(self, reason: str) -> FlextCore.Result[bool]:
         """Cancel order with reason."""
         if self.status in {"SHIPPED", "DELIVERED", "CANCELLED"}:
-            return FlextResult[bool].fail(
+            return FlextCore.Result[bool].fail(
                 f"Cannot cancel order in {self.status} status",
             )
 
@@ -504,29 +501,29 @@ class Order(FlextModels.AggregateRoot):
             },
         )
 
-        return FlextResult[bool].ok(True)
+        return FlextCore.Result[bool].ok(True)
 
 
-class ComprehensiveModelsService(FlextService[Order]):
-    """Service demonstrating ALL FlextModels patterns with FlextMixins infrastructure.
+class ComprehensiveModelsService(FlextCore.Service[Order]):
+    """Service demonstrating ALL FlextCore.Models patterns with FlextCore.Mixins infrastructure.
 
-    This service inherits from FlextService to demonstrate:
+    This service inherits from FlextCore.Service to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
-    - Inherited logger property (FlextLogger with service context)
+    - Inherited logger property (FlextCore.Logger with service context)
     - Inherited context property (FlextCore.Context for request tracking)
     - Inherited config property (FlextCore.Config with settings)
     - Inherited metrics property (FlextMetrics for observability)
 
     The focus is on demonstrating DDD patterns (Value Objects, Entities,
-    Aggregate Roots) while leveraging complete FlextMixins infrastructure.
+    Aggregate Roots) while leveraging complete FlextCore.Mixins infrastructure.
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins infrastructure.
+        """Initialize with inherited FlextCore.Mixins infrastructure.
 
         Note: No manual logger or container initialization needed!
-        All infrastructure is inherited from FlextService base class:
-        - self.logger: FlextLogger with service context
+        All infrastructure is inherited from FlextCore.Service base class:
+        - self.logger: FlextCore.Logger with service context
         - self.container: FlextCore.Container global singleton
         - self.context: FlextCore.Context for request tracking
         - self.config: FlextCore.Config with application settings
@@ -534,31 +531,31 @@ class ComprehensiveModelsService(FlextService[Order]):
         """
         super().__init__()
         self._scenarios = DemoScenarios
-        self._dataset: FlextTypes.Dict = self._scenarios.dataset()
+        self._dataset: FlextCore.Types.Dict = self._scenarios.dataset()
         self._realistic: RealisticDataDict = self._scenarios.realistic_data()
-        self._validation: FlextTypes.Dict = self._scenarios.validation_data()
+        self._validation: FlextCore.Types.Dict = self._scenarios.validation_data()
 
         # Demonstrate inherited logger (no manual instantiation needed!)
         self.logger.info(
             "ComprehensiveModelsService initialized with inherited infrastructure",
             extra={
-                "dataset_keys": list[object](self._dataset.keys()),
-                "realistic_data_keys": list[object](self._realistic.keys()),
-                "service_type": "FlextModels DDD demonstration",
+                "dataset_keys": list(self._dataset.keys()),
+                "realistic_data_keys": list(self._realistic.keys()),
+                "service_type": "FlextCore.Models DDD demonstration",
             },
         )
 
-    def execute(self) -> FlextResult[Order]:
-        """Execute method required by FlextService.
+    def execute(self) -> FlextCore.Result[Order]:
+        """Execute method required by FlextCore.Service.
 
-        This method satisfies the FlextService abstract interface while
-        demonstrating FlextModels DDD patterns. Uses inherited infrastructure:
+        This method satisfies the FlextCore.Service abstract interface while
+        demonstrating FlextCore.Models DDD patterns. Uses inherited infrastructure:
         - self.logger for structured logging throughout execution
         - self.container for dependency resolution (if needed)
         - self.context for request tracking (if needed)
 
         Returns:
-            FlextResult containing Order aggregate root entity
+            FlextCore.Result containing Order aggregate root entity
 
         """
         # This is a demonstration service, execute creates a sample order
@@ -576,7 +573,7 @@ class ComprehensiveModelsService(FlextService[Order]):
             },
         )
 
-        return FlextResult[Order].ok(order)
+        return FlextCore.Result[Order].ok(order)
 
     # ========== VALUE OBJECTS DEMONSTRATION ==========
 
@@ -586,7 +583,7 @@ class ComprehensiveModelsService(FlextService[Order]):
 
         validation_data = self._validation
         sample_email = cast(
-            "str", cast("FlextTypes.List", validation_data["valid_emails"])[0]
+            "str", cast("FlextCore.Types.List", validation_data["valid_emails"])[0]
         )
         email_result = Email.create_email(sample_email)
         if email_result.is_success:
@@ -742,7 +739,7 @@ class ComprehensiveModelsService(FlextService[Order]):
         """Show how aggregates maintain business invariants."""
         print("\n=== Business Invariants ===")
 
-        users_list = cast("list[dict[str, object]]", self._dataset["users"])
+        users_list = cast("list[FlextCore.Types.Dict]", self._dataset["users"])
         user_data = users_list[0]
 
         address = Address(
@@ -805,10 +802,10 @@ class ComprehensiveModelsService(FlextService[Order]):
         )
 
         order_dict = order.model_dump()
-        print(f"Serialized keys: {list[object](order_dict.keys())}")
+        print(f"Serialized keys: {list(order_dict.keys())}")
 
         order_dict_minimal = order.model_dump(exclude={"lines", "domain_events"})
-        print(f"Minimal serialization: {list[object](order_dict_minimal.keys())}")
+        print(f"Minimal serialization: {list(order_dict_minimal.keys())}")
 
         new_order = Order(**order_dict)
         print(f"✅ Deserialized order: {new_order.order_number}")
@@ -819,7 +816,7 @@ class ComprehensiveModelsService(FlextService[Order]):
         """Show repository pattern integration."""
         print("\n=== Repository Pattern ===")
 
-        class OrderRepository(FlextService[bool]):
+        class OrderRepository(FlextCore.Service[bool]):
             """Repository for Order aggregates."""
 
             def __init__(self) -> None:
@@ -827,29 +824,31 @@ class ComprehensiveModelsService(FlextService[Order]):
                 super().__init__()
                 self._storage: dict[str, Order] = {}
 
-            def execute(self) -> FlextResult[bool]:
+            def execute(self) -> FlextCore.Result[bool]:
                 """Execute the repository service."""
-                return FlextResult[bool].ok(True)
+                return FlextCore.Result[bool].ok(True)
 
-            def save(self, order: Order) -> FlextResult[bool]:
+            def save(self, order: Order) -> FlextCore.Result[bool]:
                 """Save order aggregate."""
                 self._storage[order.id] = order
-                return FlextResult[bool].ok(True)
+                return FlextCore.Result[bool].ok(True)
 
-            def find_by_id(self, order_id: str) -> FlextResult[Order]:
+            def find_by_id(self, order_id: str) -> FlextCore.Result[Order]:
                 """Find order by ID."""
                 if order_id in self._storage:
-                    return FlextResult[Order].ok(self._storage[order_id])
-                return FlextResult[Order].fail(f"Order not found: {order_id}")
+                    return FlextCore.Result[Order].ok(self._storage[order_id])
+                return FlextCore.Result[Order].fail(f"Order not found: {order_id}")
 
-            def find_by_customer(self, customer_id: str) -> FlextResult[list[Order]]:
+            def find_by_customer(
+                self, customer_id: str
+            ) -> FlextCore.Result[list[Order]]:
                 """Find orders by customer."""
                 orders = [
                     order
                     for order in self._storage.values()
                     if order.customer_id == customer_id
                 ]
-                return FlextResult[list[Order]].ok(orders)
+                return FlextCore.Result[list[Order]].ok(orders)
 
         repo = OrderRepository()
 
@@ -905,7 +904,7 @@ class ComprehensiveModelsService(FlextService[Order]):
             print("✅ Valid JSON for model serialization")
 
         # Configuration defaults for domain limits
-        max_stock = FlextConstants.Utilities.DEFAULT_BATCH_SIZE
+        max_stock = FlextCore.Constants.Utilities.DEFAULT_BATCH_SIZE
         print(f"✅ Domain limit from FlextCore.Runtime: max_stock={max_stock}")
 
     def demonstrate_flext_exceptions_integration(self) -> None:
@@ -921,7 +920,7 @@ class ComprehensiveModelsService(FlextService[Order]):
                     error_msg,
                     field="address",
                     value=invalid_email,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
                 )
         except FlextCore.Exceptions.ValidationError as e:
             print(f"✅ ValidationError: {e.error_code} - {e.message}")
@@ -954,7 +953,7 @@ class ComprehensiveModelsService(FlextService[Order]):
 
     # ========== DEPRECATED PATTERNS ==========
 
-    # ========== NEW FlextResult METHODS (v0.9.9+) ==========
+    # ========== NEW FlextCore.Result METHODS (v0.9.9+) ==========
 
     def demonstrate_from_callable(self) -> None:
         """Show from_callable for safe value object/entity creation."""
@@ -969,7 +968,7 @@ class ComprehensiveModelsService(FlextService[Order]):
                 raise ValueError(msg)
             return email_result.unwrap()
 
-        email_result = FlextResult[Email].from_callable(risky_email_creation)
+        email_result = FlextCore.Result[Email].from_callable(risky_email_creation)
         if email_result.is_failure:
             print(f"✅ Caught email validation error safely: {email_result.error}")
 
@@ -984,7 +983,7 @@ class ComprehensiveModelsService(FlextService[Order]):
                 stock=10,
             )
 
-        product_result = FlextResult[Product].from_callable(create_product)
+        product_result = FlextCore.Result[Product].from_callable(create_product)
         if product_result.is_success:
             product: Product = product_result.unwrap()
             print(f"✅ Product created safely: {product.name}")
@@ -994,12 +993,14 @@ class ComprehensiveModelsService(FlextService[Order]):
         print("\n=== flow_through(): Domain Model Validation Pipeline ===")
 
         def create_customer(
-            data: dict[str, object],
-        ) -> FlextResult[Customer]:
+            data: FlextCore.Types.Dict,
+        ) -> FlextCore.Result[Customer]:
             """Step 1: Create customer."""
             email_result = Email.create_email(str(data.get("email", "")))
             if email_result.is_failure:
-                return FlextResult[Customer].fail(f"Email error: {email_result.error}")
+                return FlextCore.Result[Customer].fail(
+                    f"Email error: {email_result.error}"
+                )
 
             email = email_result.unwrap()
 
@@ -1019,31 +1020,31 @@ class ComprehensiveModelsService(FlextService[Order]):
                 credit_limit=Money(amount=Decimal(5000), currency="USD"),
                 current_balance=Money(amount=Decimal(0), currency="USD"),
             )
-            return FlextResult[Customer].ok(customer)
+            return FlextCore.Result[Customer].ok(customer)
 
-        def validate_credit(customer: Customer) -> FlextResult[Customer]:
+        def validate_credit(customer: Customer) -> FlextCore.Result[Customer]:
             """Step 2: Validate credit limit."""
             if customer.credit_limit.amount <= Decimal(0):
-                return FlextResult[Customer].fail("Invalid credit limit")
-            return FlextResult[Customer].ok(customer)
+                return FlextCore.Result[Customer].fail("Invalid credit limit")
+            return FlextCore.Result[Customer].ok(customer)
 
-        def assign_vip_status(customer: Customer) -> FlextResult[Customer]:
+        def assign_vip_status(customer: Customer) -> FlextCore.Result[Customer]:
             """Step 3: Check VIP eligibility."""
             if customer.credit_limit.amount >= Decimal(10000):
                 upgrade_result = customer.upgrade_to_vip()
                 if upgrade_result.is_success:
-                    return FlextResult[Customer].ok(customer)
-            return FlextResult[Customer].ok(customer)
+                    return FlextCore.Result[Customer].ok(customer)
+            return FlextCore.Result[Customer].ok(customer)
 
         # Pipeline: create → validate → assign VIP
         validation_data = self._validation
         sample_email = cast(
-            "str", cast("FlextTypes.List", validation_data["valid_emails"])[0]
+            "str", cast("FlextCore.Types.List", validation_data["valid_emails"])[0]
         )
-        users_list = cast("list[dict[str, object]]", self._dataset["users"])
+        users_list = cast("list[FlextCore.Types.Dict]", self._dataset["users"])
         user_data = users_list[0]
 
-        initial_data: dict[str, object] = {
+        initial_data: FlextCore.Types.Dict = {
             "email": sample_email,
             "name": str(user_data["name"]),
         }
@@ -1063,11 +1064,11 @@ class ComprehensiveModelsService(FlextService[Order]):
         """Show error recovery in aggregate operations."""
         print("\n=== lash(): Aggregate Error Recovery ===")
 
-        def try_create_order() -> FlextResult[Order]:
+        def try_create_order() -> FlextCore.Result[Order]:
             """Attempt to create order (might fail)."""
-            return FlextResult[Order].fail("Primary order creation failed")
+            return FlextCore.Result[Order].fail("Primary order creation failed")
 
-        def recover_with_draft(error: str) -> FlextResult[Order]:
+        def recover_with_draft(error: str) -> FlextCore.Result[Order]:
             """Recover by creating draft order."""
             print(f"  Recovering from: {error}")
             order = Order(
@@ -1076,7 +1077,7 @@ class ComprehensiveModelsService(FlextService[Order]):
                 order_number=f"DRAFT-{uuid4().hex[:8]}",
                 status="DRAFT",
             )
-            return FlextResult[Order].ok(order)
+            return FlextCore.Result[Order].ok(order)
 
         result = try_create_order().lash(recover_with_draft)
         if result.is_success:
@@ -1088,7 +1089,7 @@ class ComprehensiveModelsService(FlextService[Order]):
         print("\n=== alt(): Repository Fallback Pattern ===")
 
         # Primary repository (simulated failure)
-        primary = FlextResult[Order].fail("Primary database unavailable")
+        primary = FlextCore.Result[Order].fail("Primary database unavailable")
 
         # Fallback with cached order
         order_data = self._realistic["order"]
@@ -1097,7 +1098,7 @@ class ComprehensiveModelsService(FlextService[Order]):
             customer_id=str(order_data["customer_id"]),
             order_number=f"CACHE-{uuid4().hex[:8]}",
         )
-        fallback = FlextResult[Order].ok(fallback_order)
+        fallback = FlextCore.Result[Order].ok(fallback_order)
 
         result = primary.alt(fallback)
         if result.is_success:
@@ -1115,7 +1116,7 @@ class ComprehensiveModelsService(FlextService[Order]):
             customer_id=str(order_data["customer_id"]),
             order_number=str(order_data["order_id"])[:12],
         )
-        success = FlextResult[Order].ok(success_order)
+        success = FlextCore.Result[Order].ok(success_order)
 
         expensive_created = False
 
@@ -1138,7 +1139,7 @@ class ComprehensiveModelsService(FlextService[Order]):
 
         # Failure case - expensive_default IS called
         expensive_created = False
-        failure = FlextResult[Order].fail("Order not found")
+        failure = FlextCore.Result[Order].fail("Order not found")
         order = failure.value_or_call(expensive_default)
         print(
             f"✅ Failure recovered: {order.order_number}, expensive_created={expensive_created}"
@@ -1150,7 +1151,7 @@ class ComprehensiveModelsService(FlextService[Order]):
 
         # OLD: Mutable models (DEPRECATED)
         warnings.warn(
-            "Mutable domain models are DEPRECATED! Use FlextModels.Value for immutability.",
+            "Mutable domain models are DEPRECATED! Use FlextCore.Models.Value for immutability.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -1159,8 +1160,8 @@ class ComprehensiveModelsService(FlextService[Order]):
         print("    def __init__(self, amount):")
         print("        self.amount = amount  # Mutable!")
 
-        print("\n✅ CORRECT WAY (FlextModels.Value):")
-        print("class Price(FlextModels.Value):")
+        print("\n✅ CORRECT WAY (FlextCore.Models.Value):")
+        print("class Price(FlextCore.Models.Value):")
         print("    amount: Decimal  # Immutable value object")
 
         # OLD: Anemic domain models (DEPRECATED)
@@ -1176,13 +1177,13 @@ class ComprehensiveModelsService(FlextService[Order]):
         print("    total: float")
 
         print("\n✅ CORRECT WAY (rich domain model):")
-        print("class Order(FlextModels.AggregateRoot):")
-        print("    def submit(self) -> FlextResult[bool]:")
+        print("class Order(FlextCore.Models.AggregateRoot):")
+        print("    def submit(self) -> FlextCore.Result[bool]:")
         print("        # Business logic in the model")
 
         # OLD: Direct mutation (DEPRECATED)
         warnings.warn(
-            "Direct state mutation is DEPRECATED! Use methods that return FlextResult.",
+            "Direct state mutation is DEPRECATED! Use methods that return FlextCore.Result.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -1190,13 +1191,13 @@ class ComprehensiveModelsService(FlextService[Order]):
         print("order.status = 'SHIPPED'  # Direct mutation!")
 
         print("\n✅ CORRECT WAY (method with result):")
-        print("result = order.ship()  # Returns FlextResult")
+        print("result = order.ship()  # Returns FlextCore.Result")
         print("if result.is_success:")
         print("    # Handle success")
 
 
 def main() -> None:
-    """Main entry point demonstrating all FlextModels capabilities."""
+    """Main entry point demonstrating all FlextCore.Models capabilities."""
     service = ComprehensiveModelsService()
 
     print("=" * 60)
@@ -1222,7 +1223,7 @@ def main() -> None:
     service.demonstrate_flext_runtime_integration()
     service.demonstrate_flext_exceptions_integration()
 
-    # New FlextResult methods (v0.9.9+)
+    # New FlextCore.Result methods (v0.9.9+)
     service.demonstrate_from_callable()
     service.demonstrate_flow_through()
     service.demonstrate_lash()
@@ -1233,7 +1234,7 @@ def main() -> None:
     service.demonstrate_deprecated_patterns()
 
     print("\n" + "=" * 60)
-    print("✅ ALL FlextModels methods demonstrated!")
+    print("✅ ALL FlextCore.Models methods demonstrated!")
     print(
         "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call"
     )

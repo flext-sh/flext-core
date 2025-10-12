@@ -26,23 +26,15 @@ from dataclasses import dataclass
 from typing import cast
 from uuid import uuid4
 
-from flext_core import (
-    FlextConstants,
-    FlextCore,
-    FlextLogger,
-    FlextModels,
-    FlextResult,
-    FlextService,
-    FlextTypes,
-)
+from flext_core import FlextCore
 
 
-class BusMessagingService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating ALL FlextCore.Bus patterns with FlextMixins infrastructure.
+class BusMessagingService(FlextCore.Service[FlextCore.Types.Dict]):
+    """Service demonstrating ALL FlextCore.Bus patterns with FlextCore.Mixins infrastructure.
 
-    This service inherits from FlextService to demonstrate:
+    This service inherits from FlextCore.Service to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
-    - Inherited logger property (FlextLogger with service context - BUS MESSAGING FOCUS!)
+    - Inherited logger property (FlextCore.Logger with service context - BUS MESSAGING FOCUS!)
     - Inherited context property (FlextCore.Context for request/correlation tracking)
     - Inherited config property (FlextCore.Config with bus processing settings)
     - Inherited metrics property (FlextMetrics for bus observability)
@@ -58,10 +50,10 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins infrastructure.
+        """Initialize with inherited FlextCore.Mixins infrastructure.
 
         Inherited properties (no manual instantiation needed):
-        - self.logger: FlextLogger with service context (bus messaging operations)
+        - self.logger: FlextCore.Logger with service context (bus messaging operations)
         - self.container: FlextCore.Container singleton (for service dependencies)
         - self.context: FlextCore.Context (for correlation tracking)
         - self.config: FlextCore.Config (for bus configuration)
@@ -86,7 +78,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             },
         )
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Execute all FlextCore.Bus pattern demonstrations.
 
         Runs comprehensive bus messaging demonstrations:
@@ -96,11 +88,11 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         4. Handler discovery and management
         5. Auto handlers with automatic registration
         6. Error handling with bus-level error management
-        7. New FlextResult methods in bus context (v0.9.9+)
+        7. New FlextCore.Result methods in bus context (v0.9.9+)
         8. Deprecated patterns (for educational comparison)
 
         Returns:
-            FlextResult[FlextTypes.Dict]: Execution summary with demonstration results
+            FlextCore.Result[FlextCore.Types.Dict]: Execution summary with demonstration results
 
         """
         self.logger.info("Starting comprehensive FlextCore.Bus demonstration")
@@ -116,7 +108,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             self.demonstrate_new_flextresult_methods()
             self.demonstrate_deprecated_patterns()
 
-            summary: FlextTypes.Dict = {
+            summary: FlextCore.Types.Dict = {
                 "status": "completed",
                 "demonstrations": 8,
                 "patterns": [
@@ -137,12 +129,12 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
                 extra={"summary": summary},
             )
 
-            return FlextResult[FlextTypes.Dict].ok(summary)
+            return FlextCore.Result[FlextCore.Types.Dict].ok(summary)
 
         except Exception as e:
             error_msg = f"FlextCore.Bus demonstration failed: {e}"
             self.logger.exception(error_msg, extra={"error_type": type(e).__name__})
-            return FlextResult[FlextTypes.Dict].fail(error_msg)
+            return FlextCore.Result[FlextCore.Types.Dict].fail(error_msg)
 
     # ========== BASIC BUS USAGE ==========
 
@@ -151,11 +143,11 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         print("\n=== Basic Bus Usage ===")
 
         # Create bus with configuration
-        config = FlextModels.Cqrs.Bus(
+        config = FlextCore.Models.Cqrs.Bus(
             enable_middleware=True,
             enable_metrics=True,
-            execution_timeout=int(FlextConstants.Defaults.TIMEOUT),
-            max_cache_size=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
+            execution_timeout=int(FlextCore.Constants.Defaults.TIMEOUT),
+            max_cache_size=FlextCore.Constants.Performance.BatchProcessing.DEFAULT_SIZE,
         )
 
         bus = FlextCore.Bus(bus_config=config)
@@ -176,18 +168,18 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             user_id: str
 
         # Create handlers
-        def handle_create_user(cmd: CreateUserCommand) -> FlextResult[str]:
+        def handle_create_user(cmd: CreateUserCommand) -> FlextCore.Result[str]:
             """Handle user creation."""
             user_id = f"USER-{uuid4().hex[:8]}"
             print(f"  Creating user: {cmd.name} with ID {user_id}")
-            return FlextResult[str].ok(user_id)
+            return FlextCore.Result[str].ok(user_id)
 
         def handle_get_user(
             query: GetUserQuery,
-        ) -> FlextResult[FlextTypes.Dict]:
+        ) -> FlextCore.Result[FlextCore.Types.Dict]:
             """Handle user query."""
             print(f"  Getting user: {query.user_id}")
-            return FlextResult[FlextTypes.Dict].ok({
+            return FlextCore.Result[FlextCore.Types.Dict].ok({
                 "id": query.user_id,
                 "name": "John Doe",
                 "email": "john@example.com",
@@ -229,7 +221,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             """Command to place an order."""
 
             customer_id: str
-            items: list[FlextTypes.Dict]
+            items: list[FlextCore.Types.Dict]
             payment_method: str
 
         @dataclass
@@ -251,20 +243,22 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         class OrderCommandHandlers:
             """Handles order commands."""
 
-            logger: FlextLogger
+            logger: FlextCore.Logger
 
             def __init__(self) -> None:
                 super().__init__()
-                self._orders: FlextTypes.NestedDict = {}
+                self._orders: FlextCore.Types.NestedDict = {}
                 self.logger = FlextCore.create_logger(__name__)
 
-            def handle_place_order(self, cmd: PlaceOrderCommand) -> FlextResult[str]:
+            def handle_place_order(
+                self, cmd: PlaceOrderCommand
+            ) -> FlextCore.Result[str]:
                 """Place a new order."""
                 order_id = f"ORD-{uuid4().hex[:8]}"
 
                 # Validate
                 if not cmd.items:
-                    return FlextResult[str].fail("No items in order")
+                    return FlextCore.Result[str].fail("No items in order")
 
                 # Create order
                 self._orders[order_id] = {
@@ -277,16 +271,18 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
                 }
 
                 self.logger.info("Order placed: %s", order_id)
-                return FlextResult[str].ok(order_id)
+                return FlextCore.Result[str].ok(order_id)
 
-            def handle_cancel_order(self, cmd: CancelOrderCommand) -> FlextResult[None]:
+            def handle_cancel_order(
+                self, cmd: CancelOrderCommand
+            ) -> FlextCore.Result[None]:
                 """Cancel an order."""
                 if cmd.order_id not in self._orders:
-                    return FlextResult[None].fail("Order not found")
+                    return FlextCore.Result[None].fail("Order not found")
 
                 order = self._orders[cmd.order_id]
                 if order["status"] != "placed":
-                    return FlextResult[None].fail(
+                    return FlextCore.Result[None].fail(
                         f"Cannot cancel order in {order['status']} status",
                     )
 
@@ -295,16 +291,18 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
                 order["cancelled_at"] = time.time()
 
                 self.logger.info(f"Order cancelled: {cmd.order_id}")
-                return FlextResult[None].ok(None)
+                return FlextCore.Result[None].ok(None)
 
-            def handle_ship_order(self, cmd: ShipOrderCommand) -> FlextResult[None]:
+            def handle_ship_order(
+                self, cmd: ShipOrderCommand
+            ) -> FlextCore.Result[None]:
                 """Ship an order."""
                 if cmd.order_id not in self._orders:
-                    return FlextResult[None].fail("Order not found")
+                    return FlextCore.Result[None].fail("Order not found")
 
                 order = self._orders[cmd.order_id]
                 if order["status"] != "placed":
-                    return FlextResult[None].fail(
+                    return FlextCore.Result[None].fail(
                         f"Cannot ship order in {order['status']} status",
                     )
 
@@ -314,7 +312,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
                 order["shipped_at"] = time.time()
 
                 self.logger.info(f"Order shipped: {cmd.order_id}")
-                return FlextResult[None].ok(None)
+                return FlextCore.Result[None].ok(None)
 
         # Register command handlers
         handlers = OrderCommandHandlers()
@@ -364,7 +362,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         class LoggingMiddleware:
             """Logs all bus operations."""
 
-            logger: FlextLogger
+            logger: FlextCore.Logger
 
             def __init__(self) -> None:
                 super().__init__()
@@ -373,8 +371,8 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             def __call__(
                 self,
                 message: object,
-                next_handler: Callable[[object], FlextResult[object]],
-            ) -> FlextResult[object]:
+                next_handler: Callable[[object], FlextCore.Result[object]],
+            ) -> FlextCore.Result[object]:
                 """Log before and after."""
                 message_type = type(message).__name__
                 self.logger.info("Processing: %s", message_type)
@@ -397,8 +395,8 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             def __call__(
                 self,
                 message: object,
-                next_handler: Callable[[object], FlextResult[object]],
-            ) -> FlextResult[object]:
+                next_handler: Callable[[object], FlextCore.Result[object]],
+            ) -> FlextCore.Result[object]:
                 """Validate message."""
                 # Check for required attributes
                 if hasattr(message, "__dataclass_fields__"):
@@ -407,7 +405,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
                         value = getattr(message, field_name, None)
                         default_value = getattr(field_info, "default", None)
                         if value is None and default_value is None:
-                            return FlextResult[object].fail(
+                            return FlextCore.Result[object].fail(
                                 f"Field {field_name} is required",
                             )
 
@@ -419,13 +417,13 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
 
             def __init__(self) -> None:
                 super().__init__()
-                self._metrics: dict[str, FlextTypes.FloatList] = {}
+                self._metrics: dict[str, FlextCore.Types.FloatList] = {}
 
             def __call__(
                 self,
                 message: object,
-                next_handler: Callable[[object], FlextResult[object]],
-            ) -> FlextResult[object]:
+                next_handler: Callable[[object], FlextCore.Result[object]],
+            ) -> FlextCore.Result[object]:
                 """Track performance."""
                 message_type = type(message).__name__
 
@@ -443,9 +441,9 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
 
                 return result
 
-            def get_stats(self) -> dict[str, FlextTypes.FloatDict]:
+            def get_stats(self) -> dict[str, FlextCore.Types.FloatDict]:
                 """Get performance statistics."""
-                stats: dict[str, FlextTypes.FloatDict] = {}
+                stats: dict[str, FlextCore.Types.FloatDict] = {}
                 for msg_type, durations in self._metrics.items():
                     stats[msg_type] = {
                         "count": float(len(durations)),
@@ -472,11 +470,11 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
 
             value: str
 
-        def handle_test(cmd: TestCommand) -> FlextResult[str]:
+        def handle_test(cmd: TestCommand) -> FlextCore.Result[str]:
             """Handle test command."""
             # Simulate some work
             time.sleep(0.05)
-            return FlextResult[str].ok(f"Processed: {cmd.value}")
+            return FlextCore.Result[str].ok(f"Processed: {cmd.value}")
 
         bus.register_handler(TestCommand, handle_test)
 
@@ -515,14 +513,14 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         class Query1:
             id: str
 
-        def handle_command1(cmd: Command1) -> FlextResult[int]:
-            return FlextResult[int].ok(cmd.value * 2)
+        def handle_command1(cmd: Command1) -> FlextCore.Result[int]:
+            return FlextCore.Result[int].ok(cmd.value * 2)
 
-        def handle_command2(cmd: Command2) -> FlextResult[str]:
-            return FlextResult[str].ok(cmd.value.upper())
+        def handle_command2(cmd: Command2) -> FlextCore.Result[str]:
+            return FlextCore.Result[str].ok(cmd.value.upper())
 
-        def handle_query1(query: Query1) -> FlextResult[FlextTypes.Dict]:
-            return FlextResult[FlextTypes.Dict].ok({
+        def handle_query1(query: Query1) -> FlextCore.Result[FlextCore.Types.Dict]:
+            return FlextCore.Result[FlextCore.Types.Dict].ok({
                 "id": query.id,
                 "found": True,
             })
@@ -600,7 +598,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             keyword: str
             limit: int = 10
 
-        def search(keyword: str, limit: int = 10) -> FlextTypes.StringList:
+        def search(keyword: str, limit: int = 10) -> FlextCore.Types.StringList:
             """Perform search."""
             # Simulate search
             return [f"{keyword}-{i}" for i in range(limit)]
@@ -630,7 +628,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         print("\n=== Error Handling ===")
 
         # Configure bus with error handling
-        config = FlextModels.Cqrs.Bus(
+        config = FlextCore.Models.Cqrs.Bus(
             enable_middleware=True,
             enable_metrics=True,
             execution_timeout=1,
@@ -644,17 +642,17 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
 
             fail_type: str
 
-        def failing_handler(cmd: FailingCommand) -> FlextResult[None]:
+        def failing_handler(cmd: FailingCommand) -> FlextCore.Result[None]:
             """Handler that fails in different ways."""
             if cmd.fail_type == "validation":
-                return FlextResult[None].fail("Validation error")
+                return FlextCore.Result[None].fail("Validation error")
             if cmd.fail_type == "timeout":
                 time.sleep(2)  # Exceed timeout
-                return FlextResult[None].ok(None)
+                return FlextCore.Result[None].ok(None)
             if cmd.fail_type == "exception":
                 msg = "Unexpected error"
                 raise ValueError(msg)
-            return FlextResult[None].ok(None)
+            return FlextCore.Result[None].ok(None)
 
         bus.register_handler(FailingCommand, failing_handler)
 
@@ -674,7 +672,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
     # ========== DEPRECATED PATTERNS ==========
 
     def demonstrate_new_flextresult_methods(self) -> None:
-        """Demonstrate the 5 new FlextResult methods in bus messaging context.
+        """Demonstrate the 5 new FlextCore.Result methods in bus messaging context.
 
         Shows how the new v0.9.9+ methods work with bus messaging patterns:
         - from_callable: Safe bus operations
@@ -684,7 +682,7 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         - value_or_call: Lazy bus initialization
         """
         print("\n" + "=" * 60)
-        print("NEW FlextResult METHODS - BUS MESSAGING CONTEXT")
+        print("NEW FlextCore.Result METHODS - BUS MESSAGING CONTEXT")
         print("Demonstrating v0.9.9+ methods with FlextCore.Bus patterns")
         print("=" * 60)
 
@@ -693,10 +691,10 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
 
         def risky_bus_registration() -> FlextCore.Bus:
             """Bus registration that might raise exceptions."""
-            bus_config = FlextModels.Cqrs.Bus(
+            bus_config = FlextCore.Models.Cqrs.Bus(
                 enable_middleware=True,
                 enable_metrics=True,
-                execution_timeout=int(FlextConstants.Defaults.TIMEOUT),
+                execution_timeout=int(FlextCore.Constants.Defaults.TIMEOUT),
             )
             if not bus_config:
                 msg = "Bus configuration failed"
@@ -704,7 +702,9 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             return FlextCore.Bus(bus_config=bus_config)
 
         # Safe bus creation without try/except
-        bus_result = FlextResult[FlextCore.Bus].from_callable(risky_bus_registration)
+        bus_result = FlextCore.Result[FlextCore.Bus].from_callable(
+            risky_bus_registration
+        )
         if bus_result.is_success:
             bus = bus_result.unwrap()
             print(f"✅ Bus created safely: {type(bus).__name__}")
@@ -716,42 +716,46 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         print("\n=== 2. flow_through: Message Pipeline Composition ===")
 
         def validate_message_format(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            data: FlextCore.Types.Dict,
+        ) -> FlextCore.Result[FlextCore.Types.Dict]:
             """Validate message has required fields."""
             if not data.get("type"):
-                return FlextResult[dict[str, object]].fail("Message type required")
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                    "Message type required"
+                )
             if not data.get("payload"):
-                return FlextResult[dict[str, object]].fail("Message payload required")
-            return FlextResult[dict[str, object]].ok(data)
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                    "Message payload required"
+                )
+            return FlextCore.Result[FlextCore.Types.Dict].ok(data)
 
         def enrich_with_metadata(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            data: FlextCore.Types.Dict,
+        ) -> FlextCore.Result[FlextCore.Types.Dict]:
             """Add bus metadata to message."""
-            enriched: dict[str, object] = {
+            enriched: FlextCore.Types.Dict = {
                 **data,
                 "message_id": str(uuid4()),
                 "timestamp": time.time(),
                 "bus_version": "1.0",
             }
-            return FlextResult[dict[str, object]].ok(enriched)
+            return FlextCore.Result[FlextCore.Types.Dict].ok(enriched)
 
         def register_in_bus(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            data: FlextCore.Types.Dict,
+        ) -> FlextCore.Result[FlextCore.Types.Dict]:
             """Register message in bus tracking."""
             message_id = str(data.get("message_id", "unknown"))
-            enriched: dict[str, object] = {
+            enriched: FlextCore.Types.Dict = {
                 **data,
                 "registered": True,
                 "tracking_id": f"TRACK-{message_id[:8]}",
             }
-            return FlextResult[dict[str, object]].ok(enriched)
+            return FlextCore.Result[FlextCore.Types.Dict].ok(enriched)
 
         def validate_complete(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            data: FlextCore.Types.Dict,
+        ) -> FlextCore.Result[FlextCore.Types.Dict]:
             """Validate message is ready for bus."""
             required_fields = [
                 "type",
@@ -762,21 +766,21 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             ]
             missing = [f for f in required_fields if f not in data]
             if missing:
-                return FlextResult[dict[str, object]].fail(
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
                     f"Missing fields: {', '.join(missing)}"
                 )
-            return FlextResult[dict[str, object]].ok(data)
+            return FlextCore.Result[FlextCore.Types.Dict].ok(data)
 
         # Flow through complete bus message pipeline
-        message_data: dict[str, object] = cast(
-            "dict[str, object]",
+        message_data: FlextCore.Types.Dict = cast(
+            "FlextCore.Types.Dict",
             {
                 "type": "user.created",
                 "payload": {"user_id": "USER-001", "name": "Alice"},
             },
         )
         pipeline_result = (
-            FlextResult[dict[str, object]]
+            FlextCore.Result[FlextCore.Types.Dict]
             .ok(message_data)
             .flow_through(
                 validate_message_format,
@@ -799,15 +803,15 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         # 3. lash - Bus Fallback Recovery
         print("\n=== 3. lash: Bus Fallback Recovery ===")
 
-        def primary_handler() -> FlextResult[str]:
+        def primary_handler() -> FlextCore.Result[str]:
             """Primary handler that might fail."""
-            return FlextResult[str].fail("Primary handler unavailable")
+            return FlextCore.Result[str].fail("Primary handler unavailable")
 
-        def fallback_handler(error: str) -> FlextResult[str]:
+        def fallback_handler(error: str) -> FlextCore.Result[str]:
             """Fallback handler when primary fails."""
             print(f"   ⚠️  Primary failed: {error}, using fallback...")
             result_id = f"FALLBACK-{uuid4().hex[:8]}"
-            return FlextResult[str].ok(result_id)
+            return FlextCore.Result[str].ok(result_id)
 
         # Try primary handler, fall back on failure
         handler_result = primary_handler().lash(fallback_handler)
@@ -820,19 +824,21 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         # 4. alt - Handler Alternatives
         print("\n=== 4. alt: Handler Alternatives ===")
 
-        def get_custom_bus_config() -> FlextResult[FlextModels.Cqrs.Bus]:
+        def get_custom_bus_config() -> FlextCore.Result[FlextCore.Models.Cqrs.Bus]:
             """Try to get custom bus configuration."""
-            return FlextResult[FlextModels.Cqrs.Bus].fail("Custom config not found")
+            return FlextCore.Result[FlextCore.Models.Cqrs.Bus].fail(
+                "Custom config not found"
+            )
 
-        def get_default_bus_config() -> FlextResult[FlextModels.Cqrs.Bus]:
+        def get_default_bus_config() -> FlextCore.Result[FlextCore.Models.Cqrs.Bus]:
             """Provide default bus configuration."""
-            config = FlextModels.Cqrs.Bus(
+            config = FlextCore.Models.Cqrs.Bus(
                 enable_middleware=True,
                 enable_metrics=True,
-                execution_timeout=int(FlextConstants.Defaults.TIMEOUT),
-                max_cache_size=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
+                execution_timeout=int(FlextCore.Constants.Defaults.TIMEOUT),
+                max_cache_size=FlextCore.Constants.Performance.BatchProcessing.DEFAULT_SIZE,
             )
-            return FlextResult[FlextModels.Cqrs.Bus].ok(config)
+            return FlextCore.Result[FlextCore.Models.Cqrs.Bus].ok(config)
 
         # Try custom config, fall back to default
         config_result = get_custom_bus_config().alt(get_default_bus_config())
@@ -850,10 +856,10 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         def create_expensive_bus() -> FlextCore.Bus:
             """Create and configure a new bus (expensive operation)."""
             print("   ⚙️  Creating new bus with full configuration...")
-            config = FlextModels.Cqrs.Bus(
+            config = FlextCore.Models.Cqrs.Bus(
                 enable_middleware=True,
                 enable_metrics=True,
-                execution_timeout=int(FlextConstants.Defaults.TIMEOUT),
+                execution_timeout=int(FlextCore.Constants.Defaults.TIMEOUT),
                 max_cache_size=1000,
             )
             # Register some handlers (expensive setup)
@@ -861,20 +867,20 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             return FlextCore.Bus(bus_config=config)
 
         # Try to get existing bus, create new one if not available
-        bus_fail_result = FlextResult[FlextCore.Bus].fail("No existing bus")
+        bus_fail_result = FlextCore.Result[FlextCore.Bus].fail("No existing bus")
         bus = bus_fail_result.value_or_call(create_expensive_bus)
         print(f"✅ Bus acquired: {type(bus).__name__}")
         print(f"   Config enabled: {hasattr(bus, 'config')}")
 
         # Try again with successful result (lazy function NOT called)
         existing_bus = FlextCore.Bus()
-        bus_success_result = FlextResult[FlextCore.Bus].ok(existing_bus)
+        bus_success_result = FlextCore.Result[FlextCore.Bus].ok(existing_bus)
         bus_cached = bus_success_result.value_or_call(create_expensive_bus)
         print(f"✅ Existing bus used: {type(bus_cached).__name__}")
         print("   No expensive creation needed")
 
         print("\n" + "=" * 60)
-        print("✅ NEW FlextResult METHODS BUS MESSAGING DEMO COMPLETE!")
+        print("✅ NEW FlextCore.Result METHODS BUS MESSAGING DEMO COMPLETE!")
         print("All 5 methods demonstrated with FlextCore.Bus messaging context")
         print("=" * 60)
 
@@ -946,7 +952,7 @@ def main() -> None:
     service.demonstrate_auto_handlers()
     service.demonstrate_error_handling()
 
-    # New FlextResult methods (v0.9.9+)
+    # New FlextCore.Result methods (v0.9.9+)
     service.demonstrate_new_flextresult_methods()
 
     # Deprecation warnings

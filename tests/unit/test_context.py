@@ -1,4 +1,4 @@
-"""Comprehensive tests for FlextContext - Context Management.
+"""Comprehensive tests for FlextCore.Context - Context Management.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,29 +10,29 @@ import threading
 import time
 from typing import cast
 
-from flext_core import FlextContext, FlextTypes
+from flext_core import FlextCore
 
 
 class TestFlextContext:
-    """Test suite for FlextContext context management."""
+    """Test suite for FlextCore.Context context management."""
 
     def test_context_initialization(self) -> None:
         """Test context initialization."""
-        context = FlextContext()
+        context = FlextCore.Context()
         assert context is not None
-        assert isinstance(context, FlextContext)
+        assert isinstance(context, FlextCore.Context)
 
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
-        initial_data: FlextTypes.Dict = {"user_id": "123", "session_id": "abc"}
-        context = FlextContext(initial_data)
+        initial_data: FlextCore.Types.Dict = {"user_id": "123", "session_id": "abc"}
+        context = FlextCore.Context(initial_data)
         assert context is not None
         assert context.get("user_id") == "123"
         assert context.get("session_id") == "abc"
 
     def test_context_set_get_value(self) -> None:
         """Test context set/get value operations."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
         context.set("test_key", "test_value")
         value = context.get("test_key")
@@ -40,14 +40,14 @@ class TestFlextContext:
 
     def test_context_get_with_default(self) -> None:
         """Test context get with default value."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
         value = context.get("nonexistent_key", "default_value")
         assert value == "default_value"
 
     def test_context_has_value(self) -> None:
         """Test context has value check."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
         context.set("test_key", "test_value")
         assert context.has("test_key") is True
@@ -55,7 +55,7 @@ class TestFlextContext:
 
     def test_context_remove_value(self) -> None:
         """Test context remove value operation."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
         context.set("test_key", "test_value")
         assert context.has("test_key") is True
@@ -65,7 +65,7 @@ class TestFlextContext:
 
     def test_context_clear(self) -> None:
         """Test context clear operation."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
         context.set("key1", "value1")
         context.set("key2", "value2")
@@ -80,7 +80,7 @@ class TestFlextContext:
 
     def test_context_keys_values_items(self) -> None:
         """Test context keys, values, and items operations."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
         context.set("key1", "value1")
         context.set("key2", "value2")
@@ -99,9 +99,9 @@ class TestFlextContext:
 
     def test_context_nested_data(self) -> None:
         """Test context with nested data structures."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
-        nested_data: FlextTypes.Dict = {
+        nested_data: FlextCore.Types.Dict = {
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
@@ -116,11 +116,11 @@ class TestFlextContext:
 
     def test_context_merge(self) -> None:
         """Test context merging."""
-        context1 = FlextContext()
+        context1 = FlextCore.Context()
         context1.set("key1", "value1")
         context1.set("key2", "value1")
 
-        context2 = FlextContext()
+        context2 = FlextCore.Context()
         context2.set("key2", "value2")
         context2.set("key3", "value3")
 
@@ -131,7 +131,7 @@ class TestFlextContext:
 
     def test_context_clone(self) -> None:
         """Test context cloning."""
-        context = FlextContext()
+        context = FlextCore.Context()
         context.set("key1", "value1")
         context.set("key2", "value2")
 
@@ -145,7 +145,7 @@ class TestFlextContext:
 
     def test_context_serialization(self) -> None:
         """Test context serialization."""
-        context = FlextContext()
+        context = FlextCore.Context()
         context.set("string_key", "string_value")
         context.set("int_key", 42)
         context.set("bool_key", True)
@@ -158,14 +158,14 @@ class TestFlextContext:
         assert "string_value" in json_str
 
         # Test JSON deserialization
-        restored_context = FlextContext.from_json(json_str)
+        restored_context = FlextCore.Context.from_json(json_str)
         assert restored_context.get("string_key") == "string_value"
         assert restored_context.get("int_key") == 42
         assert restored_context.get("bool_key") is True
 
     def test_context_validation(self) -> None:
         """Test context validation."""
-        context = FlextContext()
+        context = FlextCore.Context()
         context.set("valid_key", "valid_value")
 
         result = context.validate()
@@ -175,7 +175,7 @@ class TestFlextContext:
         """Test context validation failure - empty key raises ValueError immediately."""
         import pytest
 
-        context = FlextContext()
+        context = FlextCore.Context()
 
         # Empty key should raise ValueError at set time
         with pytest.raises(ValueError) as exc_info:
@@ -188,8 +188,8 @@ class TestFlextContext:
 
     def test_context_thread_safety(self) -> None:
         """Test context thread safety."""
-        context = FlextContext()
-        results: list[str] = []
+        context = FlextCore.Context()
+        results: FlextCore.Types.StringList = []
 
         def set_value(thread_id: int) -> None:
             context.set(f"thread_{thread_id}", f"value_{thread_id}")
@@ -211,7 +211,7 @@ class TestFlextContext:
 
     def test_context_performance(self) -> None:
         """Test context performance."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
         start_time = time.time()
 
@@ -227,7 +227,7 @@ class TestFlextContext:
 
     def test_context_error_handling(self) -> None:
         """Test context error handling."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
         # Test invalid key
         try:
@@ -248,7 +248,7 @@ class TestFlextContext:
 
     def test_context_scoped_access(self) -> None:
         """Test context scoped access."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
         # Set values in different scopes
         context.set("global_key", "global_value")
@@ -268,7 +268,7 @@ class TestFlextContext:
 
     def test_context_lifecycle(self) -> None:
         """Test context lifecycle management."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
         # Test context creation
         assert context.is_active() is True
@@ -287,7 +287,7 @@ class TestFlextContext:
 
     def test_context_hooks(self) -> None:
         """Test context hooks."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
         hook_called = False
 
@@ -302,7 +302,7 @@ class TestFlextContext:
 
     def test_context_metadata(self) -> None:
         """Test context metadata."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
         # Set metadata
         context.set_metadata("created_at", "2025-01-01")
@@ -319,7 +319,7 @@ class TestFlextContext:
 
     def test_context_statistics(self) -> None:
         """Test context statistics."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
         context.set("key1", "value1")
         context.set("key2", "value2")
@@ -341,7 +341,7 @@ class TestFlextContext:
 
     def test_context_cleanup(self) -> None:
         """Test context cleanup."""
-        context = FlextContext()
+        context = FlextCore.Context()
 
         context.set("key1", "value1")
         context.set("key2", "value2")
@@ -356,7 +356,7 @@ class TestFlextContext:
 
     def test_context_export_import(self) -> None:
         """Test context export/import."""
-        context = FlextContext()
+        context = FlextCore.Context()
         context.set("key1", "value1")
         context.set("key2", "value2")
 
@@ -367,7 +367,7 @@ class TestFlextContext:
         assert "key2" in exported
 
         # Import context
-        new_context = FlextContext()
+        new_context = FlextCore.Context()
         new_context.import_data(exported)
 
         assert new_context.get("key1") == "value1"
@@ -379,13 +379,13 @@ class TestFlextContext:
         import threading
 
         context_lock = threading.RLock()
-        context_instance: FlextContext | None = None
+        context_instance: FlextCore.Context | None = None
 
-        def get_context() -> FlextContext:
+        def get_context() -> FlextCore.Context:
             nonlocal context_instance
             with context_lock:
                 if context_instance is None:
-                    context_instance = FlextContext()
+                    context_instance = FlextCore.Context()
                 return context_instance
 
         context1 = get_context()
@@ -399,13 +399,13 @@ class TestFlextContext:
         import threading
 
         context_lock = threading.RLock()
-        context_instance: FlextContext | None = None
+        context_instance: FlextCore.Context | None = None
 
-        def get_context() -> FlextContext:
+        def get_context() -> FlextCore.Context:
             nonlocal context_instance
             with context_lock:
                 if context_instance is None:
-                    context_instance = FlextContext()
+                    context_instance = FlextCore.Context()
                 return context_instance
 
         def reset_context() -> None:

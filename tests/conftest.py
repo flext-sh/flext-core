@@ -20,13 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import (
-    FlextConfig,
-    FlextContainer,
-    FlextLogger,
-    FlextResult,
-    FlextTypes,
-)
+from flext_core import FlextCore
 
 # Suppress pkg_resources deprecation warning from fs package
 warnings.filterwarnings(
@@ -37,16 +31,16 @@ warnings.filterwarnings(
 # Core Fixtures
 @pytest.fixture(autouse=True)
 def reset_container_singleton() -> Generator[None]:
-    """Reset FlextContainer singleton between tests for isolation.
+    """Reset FlextCore.Container singleton between tests for isolation.
 
     This autouse fixture ensures that every test starts with a clean
-    FlextContainer singleton state, preventing test contamination.
+    FlextCore.Container singleton state, preventing test contamination.
     """
     # Clear singleton before test
-    FlextContainer._global_instance = None
+    FlextCore.Container._global_instance = None
     yield
     # Clear singleton after test
-    FlextContainer._global_instance = None
+    FlextCore.Container._global_instance = None
 
 
 @pytest.fixture
@@ -61,28 +55,28 @@ def test_scenario() -> dict[str, str]:
 
 
 @pytest.fixture
-def clean_container() -> Generator[FlextContainer]:
-    """Provide isolated FlextContainer for dependency injection testing.
+def clean_container() -> Generator[FlextCore.Container]:
+    """Provide isolated FlextCore.Container for dependency injection testing.
 
     Enterprise-grade DI container fixture ensuring complete test isolation.
     Each test receives a fresh container with no service registrations.
 
     Yields:
-      FlextContainer instance with proper cleanup
+      FlextCore.Container instance with proper cleanup
 
     """
     # Clear any existing singleton state before test
-    FlextContainer._global_instance = None
-    container = FlextContainer()
+    FlextCore.Container._global_instance = None
+    container = FlextCore.Container()
     container.clear()  # Ensure it starts clean
     yield container
     # Cleanup: Clear the container and reset singleton after test
     container.clear()
-    FlextContainer._global_instance = None
+    FlextCore.Container._global_instance = None
 
 
 @pytest.fixture
-def sample_data() -> FlextTypes.Dict:
+def sample_data() -> FlextCore.Types.Dict:
     """Provide deterministic sample data for tests.
 
     Enterprise-grade test data factory providing consistent, typed sample data
@@ -106,7 +100,7 @@ def sample_data() -> FlextTypes.Dict:
 
 
 @pytest.fixture
-def test_user_data() -> FlextTypes.Dict | FlextTypes.StringList | None:
+def test_user_data() -> FlextCore.Types.Dict | FlextCore.Types.StringList | None:
     """Provide consistent user data for domain testing.
 
     User data factory aligned with shared domain patterns
@@ -161,24 +155,24 @@ def mock_external_service() -> object:
         def __init__(self) -> None:
             super().__init__()
             self.call_count = 0
-            self.processed_items: FlextTypes.List = []
+            self.processed_items: FlextCore.Types.List = []
             self._should_fail = False
             self._failure_message = ""
 
-        def process(self, data: object) -> FlextResult[str]:
+        def process(self, data: object) -> FlextCore.Result[str]:
             """Process data through mock external service.
 
             Returns:
-                FlextResult[str]: Success with processed data or failure with error message.
+                FlextCore.Result[str]: Success with processed data or failure with error message.
 
             """
             self.call_count += 1
             self.processed_items.append(data)
 
             if self._should_fail:
-                return FlextResult[str].fail(self._failure_message)
+                return FlextCore.Result[str].fail(self._failure_message)
 
-            return FlextResult[str].ok(f"processed_{data}")
+            return FlextCore.Result[str].ok(f"processed_{data}")
 
         def get_call_count(self) -> int:
             """Get number of times process was called.
@@ -204,9 +198,9 @@ def mock_external_service() -> object:
 
 @pytest.fixture
 def configured_container(
-    clean_container: FlextContainer,
+    clean_container: FlextCore.Container,
     mock_external_service: object,
-) -> FlextContainer:
+) -> FlextCore.Container:
     """Provide pre-configured container for integration testing.
 
     Container factory with common service registrations for testing
@@ -217,7 +211,7 @@ def configured_container(
       mock_external_service: External service for functional testing
 
     Returns:
-      FlextContainer with standard test services registered
+      FlextCore.Container with standard test services registered
 
     """
     clean_container.register("external_service", mock_external_service)
@@ -230,7 +224,7 @@ def configured_container(
 def error_context() -> dict[str, str | None]:
     """Provide structured error context for testing.
 
-    Error context factory for testing FlextResult error handling,
+    Error context factory for testing FlextCore.Result error handling,
     logging, and observability patterns.
 
     Returns:
@@ -250,7 +244,7 @@ def error_context() -> dict[str, str | None]:
 
 # Test Data Constants - Centralized test data and constants
 @pytest.fixture
-def test_constants() -> FlextTypes.Dict:
+def test_constants() -> FlextCore.Types.Dict:
     """Provide centralized test constants for all tests.
 
     Centralized constants used across multiple test files to ensure
@@ -310,7 +304,7 @@ def test_constants() -> FlextTypes.Dict:
 
 
 @pytest.fixture
-def test_contexts() -> FlextTypes.NestedDict:
+def test_contexts() -> FlextCore.Types.NestedDict:
     """Provide common test contexts for various scenarios.
 
     Pre-defined contexts for testing different scenarios like
@@ -361,7 +355,7 @@ def test_contexts() -> FlextTypes.NestedDict:
 
 
 @pytest.fixture
-def test_payloads() -> FlextTypes.NestedDict:
+def test_payloads() -> FlextCore.Types.NestedDict:
     """Provide common test payloads for different operations.
 
     Standardized payloads for testing commands, queries, events,
@@ -413,7 +407,7 @@ def test_payloads() -> FlextTypes.NestedDict:
 
 
 @pytest.fixture
-def test_error_scenarios() -> FlextTypes.NestedDict:
+def test_error_scenarios() -> FlextCore.Types.NestedDict:
     """Provide common error scenarios for testing.
 
     Pre-defined error scenarios for testing error handling,
@@ -470,7 +464,7 @@ def test_error_scenarios() -> FlextTypes.NestedDict:
 
 
 @pytest.fixture
-def performance_threshold() -> FlextTypes.FloatDict:
+def performance_threshold() -> FlextCore.Types.FloatDict:
     """Provide performance thresholds for testing.
 
     Performance threshold configuration for validating
@@ -481,7 +475,7 @@ def performance_threshold() -> FlextTypes.FloatDict:
 
     """
     return {
-        "result_creation": 0.001,  # 1ms for FlextResult creation
+        "result_creation": 0.001,  # 1ms for FlextCore.Result creation
         "container_registration": 0.005,  # 5ms for service registration
         "container_retrieval": 0.001,  # 1ms for service retrieval
         "validation": 0.01,  # 10ms for validation operations
@@ -490,7 +484,7 @@ def performance_threshold() -> FlextTypes.FloatDict:
 
 
 @pytest.fixture
-def benchmark_data() -> FlextTypes.Dict:
+def benchmark_data() -> FlextCore.Types.Dict:
     """Provide standardized data for performance testing.
 
     Benchmark data factory for testing performance characteristics
@@ -566,7 +560,7 @@ def benchmark_data() -> FlextTypes.Dict:
 #     try:
 #         # Individual components isolation - Flext facade was removed
 #         # Reset container singleton state if needed
-#         manager = FlextContainer.get_global().clear()()
+#         manager = FlextCore.Container.get_global().clear()()
 #         container = manager.get_or_create()
 #         container.clear()
 #     except Exception:
@@ -587,18 +581,18 @@ def logging_test_env() -> Generator[None]:
 
     try:
         # Clear both config and logger singleton states
-        FlextConfig.reset_global_instance()
+        FlextCore.Config.reset_global_instance()
 
         # Reset logger singleton state
-        FlextLogger._structlog_configured = False
+        FlextCore.Logger._structlog_configured = False
 
         # Set the expected log level for logging tests
         os.environ["FLEXT_LOG_LEVEL"] = "WARNING"
         yield
     finally:
         # Clear both singleton states again and restore original value
-        FlextConfig.reset_global_instance()
-        FlextLogger._structlog_configured = False
+        FlextCore.Config.reset_global_instance()
+        FlextCore.Logger._structlog_configured = False
 
         if original_log_level is not None:
             os.environ["FLEXT_LOG_LEVEL"] = original_log_level

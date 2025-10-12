@@ -30,11 +30,11 @@ from docker.errors import DockerException, NotFound
 from rich.console import Console
 from rich.table import Table
 
-from flext_core import FlextLogger, FlextModels, FlextResult, FlextTypes, FlextUtilities
+from flext_core import FlextCore
 
 pytest_module: ModuleType | None = pytest
 
-logger: FlextLogger = FlextLogger(__name__)
+logger: FlextCore.Logger = FlextCore.Logger(__name__)
 
 
 class ContainerStatus(Enum):
@@ -46,12 +46,12 @@ class ContainerStatus(Enum):
     ERROR = "error"
 
 
-class ContainerInfo(FlextModels.Value):
+class ContainerInfo(FlextCore.Models.Value):
     """Container information."""
 
     name: str
     status: ContainerStatus
-    ports: FlextTypes.StringDict
+    ports: FlextCore.Types.StringDict
     image: str
     container_id: str = ""
 
@@ -63,7 +63,7 @@ class FlextTestDocker:
     _cli_group: ClassVar[click.Group | None] = None
     _workspace_parser: ClassVar[argparse.ArgumentParser | None] = None
     _DEFAULT_LOG_TAIL: ClassVar[int] = 100
-    _CLI_CONTAINER_CHOICES: ClassVar[FlextTypes.StringList] = [
+    _CLI_CONTAINER_CHOICES: ClassVar[FlextCore.Types.StringList] = [
         "flext-shared-ldap",
         "flext-postgres",
         "flext-redis",
@@ -74,11 +74,11 @@ class FlextTestDocker:
     def __init__(self, workspace_root: Path | None = None) -> None:
         """Initialize Docker client with dirty state tracking."""
         self._client: DockerClient | None = None
-        self.logger: FlextLogger = FlextLogger(__name__)
+        self.logger: FlextCore.Logger = FlextCore.Logger(__name__)
         self.workspace_root = workspace_root or Path.cwd()
         self.client: DockerClient | None = None  # Will be set by _get_client()
         self._registered_services: set[str] = set()
-        self._service_dependencies: dict[str, FlextTypes.StringList] = {}
+        self._service_dependencies: dict[str, FlextCore.Types.StringList] = {}
 
         # Initialize nested managers
         self._container_manager = None
@@ -139,14 +139,14 @@ class FlextTestDocker:
         except Exception as e:
             self.logger.warning("Failed to save dirty state", extra={"error": str(e)})
 
-    def mark_container_dirty(self, container_name: str) -> FlextResult[None]:
+    def mark_container_dirty(self, container_name: str) -> FlextCore.Result[None]:
         """Mark a container as dirty, requiring recreation on next use.
 
         Args:
             container_name: Name of the container to mark dirty
 
         Returns:
-            FlextResult indicating success or failure
+            FlextCore.Result indicating success or failure
 
         """
         try:
@@ -156,18 +156,18 @@ class FlextTestDocker:
                 "Container marked as dirty",
                 extra={"container": container_name},
             )
-            return FlextResult[None].ok(None)
+            return FlextCore.Result[None].ok(None)
         except Exception as e:
-            return FlextResult[None].fail(f"Failed to mark container dirty: {e}")
+            return FlextCore.Result[None].fail(f"Failed to mark container dirty: {e}")
 
-    def mark_container_clean(self, container_name: str) -> FlextResult[None]:
+    def mark_container_clean(self, container_name: str) -> FlextCore.Result[None]:
         """Mark a container as clean after successful recreation.
 
         Args:
             container_name: Name of the container to mark clean
 
         Returns:
-            FlextResult indicating success or failure
+            FlextCore.Result indicating success or failure
 
         """
         try:
@@ -177,9 +177,9 @@ class FlextTestDocker:
                 "Container marked as clean",
                 extra={"container": container_name},
             )
-            return FlextResult[None].ok(None)
+            return FlextCore.Result[None].ok(None)
         except Exception as e:
-            return FlextResult[None].fail(f"Failed to mark container clean: {e}")
+            return FlextCore.Result[None].fail(f"Failed to mark container clean: {e}")
 
     def is_container_dirty(self, container_name: str) -> bool:
         """Check if a container is marked as dirty.
@@ -193,7 +193,7 @@ class FlextTestDocker:
         """
         return container_name in self._dirty_containers
 
-    def get_dirty_containers(self) -> FlextTypes.StringList:
+    def get_dirty_containers(self) -> FlextCore.Types.StringList:
         """Get list of all dirty containers.
 
         Returns:
@@ -202,14 +202,14 @@ class FlextTestDocker:
         """
         return list(self._dirty_containers)
 
-    def cleanup_dirty_containers(self) -> FlextResult[FlextTypes.StringDict]:
+    def cleanup_dirty_containers(self) -> FlextCore.Result[FlextCore.Types.StringDict]:
         """Clean up all dirty containers by recreating them with fresh volumes.
 
         Returns:
-            FlextResult with dict of container names to cleanup status
+            FlextCore.Result with dict of container names to cleanup status
 
         """
-        results: FlextTypes.StringDict = {}
+        results: FlextCore.Types.StringDict = {}
 
         for container_name in list(self._dirty_containers):
             self.logger.info(
@@ -278,37 +278,41 @@ class FlextTestDocker:
                 else:
                     results[container_name] = f"Restart failed: {start_result.error}"
 
-        return FlextResult[FlextTypes.StringDict].ok(results)
+        return FlextCore.Result[FlextCore.Types.StringDict].ok(results)
 
     # Essential methods that are being called by other files
-    def start_all(self) -> FlextResult[FlextTypes.StringDict]:
+    def start_all(self) -> FlextCore.Result[FlextCore.Types.StringDict]:
         """Start all containers."""
-        return FlextResult[FlextTypes.StringDict].ok({
+        return FlextCore.Result[FlextCore.Types.StringDict].ok({
             "message": "All containers started"
         })
 
-    def stop_all(self, *, remove: bool = False) -> FlextResult[FlextTypes.StringDict]:
+    def stop_all(
+        self, *, remove: bool = False
+    ) -> FlextCore.Result[FlextCore.Types.StringDict]:
         """Stop all containers."""
         _ = remove  # Parameter required by API but not used in stub implementation
-        return FlextResult[FlextTypes.StringDict].ok({
+        return FlextCore.Result[FlextCore.Types.StringDict].ok({
             "message": "All containers stopped"
         })
 
-    def reset_all(self) -> FlextResult[FlextTypes.StringDict]:
+    def reset_all(self) -> FlextCore.Result[FlextCore.Types.StringDict]:
         """Reset all containers."""
-        return FlextResult[FlextTypes.StringDict].ok({
+        return FlextCore.Result[FlextCore.Types.StringDict].ok({
             "message": "All containers reset"
         })
 
-    def reset_container(self, name: str) -> FlextResult[str]:
+    def reset_container(self, name: str) -> FlextCore.Result[str]:
         """Reset a specific container."""
-        return FlextResult[str].ok(f"Container {name} reset")
+        return FlextCore.Result[str].ok(f"Container {name} reset")
 
-    def get_all_status(self) -> FlextResult[dict[str, ContainerInfo]]:
+    def get_all_status(self) -> FlextCore.Result[dict[str, ContainerInfo]]:
         """Get status of all containers."""
-        return FlextResult[dict[str, ContainerInfo]].ok({})
+        return FlextCore.Result[dict[str, ContainerInfo]].ok({})
 
-    def get_container_status(self, container_name: str) -> FlextResult[ContainerInfo]:
+    def get_container_status(
+        self, container_name: str
+    ) -> FlextCore.Result[ContainerInfo]:
         """Get container status."""
         return self.get_container_info(container_name)
 
@@ -316,11 +320,11 @@ class FlextTestDocker:
         self,
         service_name: str,
         container_name: str,
-        ports: list[int] | None = None,
+        ports: FlextCore.Types.IntList | None = None,
         health_check_cmd: str | None = None,
-        depends_on: FlextTypes.StringList | None = None,
+        depends_on: FlextCore.Types.StringList | None = None,
         startup_timeout: int = 30,
-    ) -> FlextResult[FlextTypes.StringDict]:
+    ) -> FlextCore.Result[FlextCore.Types.StringDict]:
         """Register a service for testing."""
         self._registered_services.add(service_name)
 
@@ -336,7 +340,7 @@ class FlextTestDocker:
             health_check_cmd,
             startup_timeout,
         )  # Unused parameters
-        return FlextResult[FlextTypes.StringDict].ok({
+        return FlextCore.Result[FlextCore.Types.StringDict].ok({
             "service": service_name,
             "status": "registered",
         })
@@ -346,14 +350,14 @@ class FlextTestDocker:
         script_path: str,
         timeout: int = 30,
         **kwargs: object,
-    ) -> FlextResult[tuple[int, str, str]]:
+    ) -> FlextCore.Result[tuple[int, str, str]]:
         """Run shell script with compatibility checks."""
         try:
             # Extract capture_output from kwargs
             capture_output = kwargs.get("capture_output", False)
 
             # Run the command
-            result = FlextUtilities.TypeChecker.run_external_command(
+            result = FlextCore.Utilities.TypeChecker.run_external_command(
                 ["docker"] + shlex.split(script_path),
                 check=False,
                 capture_output=bool(capture_output),
@@ -367,66 +371,68 @@ class FlextTestDocker:
                 stdout = process.stdout if capture_output else ""
                 stderr = process.stderr if capture_output else ""
 
-                return FlextResult[tuple[int, str, str]].ok((
+                return FlextCore.Result[tuple[int, str, str]].ok((
                     process.returncode,
                     stdout,
                     stderr,
                 ))
-            return FlextResult[tuple[int, str, str]].fail(
+            return FlextCore.Result[tuple[int, str, str]].fail(
                 f"Command execution failed: {result.error}"
             )
 
         except subprocess.TimeoutExpired:
-            return FlextResult[tuple[int, str, str]].fail("Command timeout")
+            return FlextCore.Result[tuple[int, str, str]].fail("Command timeout")
         except Exception as e:
-            return FlextResult[tuple[int, str, str]].fail(f"Command failed: {e}")
+            return FlextCore.Result[tuple[int, str, str]].fail(f"Command failed: {e}")
 
-    def enable_auto_cleanup(self, *, enabled: bool = True) -> FlextResult[None]:
+    def enable_auto_cleanup(self, *, enabled: bool = True) -> FlextCore.Result[None]:
         """Enable or disable auto cleanup."""
         _ = enabled  # Unused parameter
-        return FlextResult[None].ok(None)
+        return FlextCore.Result[None].ok(None)
 
     def start_services_for_test(
         self,
-        required_services: FlextTypes.StringList | None = None,
+        required_services: FlextCore.Types.StringList | None = None,
         test_name: str | None = None,
-        service_names: FlextTypes.StringList | None = None,
-    ) -> FlextResult[FlextTypes.StringDict]:
+        service_names: FlextCore.Types.StringList | None = None,
+    ) -> FlextCore.Result[FlextCore.Types.StringDict]:
         """Start services for testing."""
         if service_names:
             # Check if all services are registered
             for service_name in service_names:
                 if service_name not in self._registered_services:
-                    return FlextResult[FlextTypes.StringDict].fail(
+                    return FlextCore.Result[FlextCore.Types.StringDict].fail(
                         f"Service '{service_name}' is not registered",
                     )
 
         _ = test_name  # Unused parameter
         _ = required_services  # Unused parameter
-        return FlextResult[FlextTypes.StringDict].ok({"status": "services_started"})
+        return FlextCore.Result[FlextCore.Types.StringDict].ok({
+            "status": "services_started"
+        })
 
-    def get_running_services(self) -> FlextResult[FlextTypes.StringList]:
+    def get_running_services(self) -> FlextCore.Result[FlextCore.Types.StringList]:
         """Get list of running services."""
-        return FlextResult[FlextTypes.StringList].ok([])
+        return FlextCore.Result[FlextCore.Types.StringList].ok([])
 
     def compose_up(
         self,
         compose_file: str,
         service: str | None = None,
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Start services using docker-compose."""
         _ = service  # Parameter required by API but not used in stub implementation
-        return FlextResult[str].ok(f"Compose stack started from {compose_file}")
+        return FlextCore.Result[str].ok(f"Compose stack started from {compose_file}")
 
-    def compose_down(self, compose_file: str) -> FlextResult[str]:
+    def compose_down(self, compose_file: str) -> FlextCore.Result[str]:
         """Stop services using docker-compose."""
-        return FlextResult[str].ok(f"Compose stack stopped from {compose_file}")
+        return FlextCore.Result[str].ok(f"Compose stack stopped from {compose_file}")
 
-    def compose_logs(self, compose_file: str) -> FlextResult[str]:
+    def compose_logs(self, compose_file: str) -> FlextCore.Result[str]:
         """Get compose logs."""
         # Parameter required by API but not used in stub implementation
         _ = compose_file
-        return FlextResult[str].ok("Compose logs retrieved")
+        return FlextCore.Result[str].ok("Compose logs retrieved")
 
     def build_image_advanced(
         self,
@@ -435,12 +441,12 @@ class FlextTestDocker:
         context_path: str | None = None,
         tag: str = "latest",
         dockerfile: str = "Dockerfile",
-        build_args: FlextTypes.StringDict | None = None,
+        build_args: FlextCore.Types.StringDict | None = None,
         *,  # Force keyword-only arguments for boolean parameters
         no_cache: bool = False,
         pull: bool = False,
         remove_intermediate: bool = True,
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Build Docker image with advanced options."""
         _ = (
             path,
@@ -452,54 +458,60 @@ class FlextTestDocker:
             dockerfile_path,
             context_path,
         )  # Parameters required by API but not used in stub implementation
-        return FlextResult[str].ok(f"Image {tag} built successfully")
+        return FlextCore.Result[str].ok(f"Image {tag} built successfully")
 
-    def cleanup_networks(self) -> FlextResult[FlextTypes.StringList]:
+    def cleanup_networks(self) -> FlextCore.Result[FlextCore.Types.StringList]:
         """Clean up unused networks."""
-        return FlextResult[FlextTypes.StringList].ok([])
+        return FlextCore.Result[FlextCore.Types.StringList].ok([])
 
-    def cleanup_volumes(self) -> FlextResult[dict[str, int | FlextTypes.StringList]]:
+    def cleanup_volumes(
+        self,
+    ) -> FlextCore.Result[dict[str, int | FlextCore.Types.StringList]]:
         """Clean up unused volumes."""
-        return FlextResult[dict[str, int | FlextTypes.StringList]].ok({
+        return FlextCore.Result[dict[str, int | FlextCore.Types.StringList]].ok({
             "removed": 0,
             "volumes": [],
         })
 
-    def cleanup_images(self) -> FlextResult[dict[str, int | FlextTypes.StringList]]:
+    def cleanup_images(
+        self,
+    ) -> FlextCore.Result[dict[str, int | FlextCore.Types.StringList]]:
         """Clean up unused images."""
-        return FlextResult[dict[str, int | FlextTypes.StringList]].ok({
+        return FlextCore.Result[dict[str, int | FlextCore.Types.StringList]].ok({
             "removed": 0,
             "images": [],
         })
 
-    def cleanup_all_test_containers(self) -> FlextResult[FlextTypes.StringDict]:
+    def cleanup_all_test_containers(
+        self,
+    ) -> FlextCore.Result[FlextCore.Types.StringDict]:
         """Clean up all test containers."""
-        return FlextResult[FlextTypes.StringDict].ok({
+        return FlextCore.Result[FlextCore.Types.StringDict].ok({
             "message": "All test containers cleaned up",
         })
 
     def stop_services_for_test(
         self, test_name: str
-    ) -> FlextResult[FlextTypes.StringDict]:
+    ) -> FlextCore.Result[FlextCore.Types.StringDict]:
         """Stop services for a specific test."""
-        return FlextResult[FlextTypes.StringDict].ok({
+        return FlextCore.Result[FlextCore.Types.StringDict].ok({
             "message": f"Services stopped for test {test_name}",
         })
 
     def auto_discover_services(
         self,
         compose_file_path: str | None = None,
-    ) -> FlextResult[FlextTypes.StringList]:
+    ) -> FlextCore.Result[FlextCore.Types.StringList]:
         """Auto-discover services."""
         try:
             if compose_file_path and compose_file_path.endswith(".yml"):
                 # Basic docker-compose parsing to extract service names and dependencies
-                services: FlextTypes.StringList = []
+                services: FlextCore.Types.StringList = []
                 with Path(compose_file_path).open("r", encoding="utf-8") as f:
                     content = f.read()
 
                     # Find service names and their dependencies
-                    lines: FlextTypes.StringList = content.split("\n")
+                    lines: FlextCore.Types.StringList = content.split("\n")
                     current_service: str | None = None
                     in_depends_on = False
 
@@ -554,84 +566,88 @@ class FlextTestDocker:
                             self._service_dependencies[service_name] = []
                             in_depends_on = False
 
-                return FlextResult[FlextTypes.StringList].ok(services)
-            return FlextResult[FlextTypes.StringList].ok([])
+                return FlextCore.Result[FlextCore.Types.StringList].ok(services)
+            return FlextCore.Result[FlextCore.Types.StringList].ok([])
         except Exception:
-            return FlextResult[FlextTypes.StringList].ok([])
+            return FlextCore.Result[FlextCore.Types.StringList].ok([])
 
     def get_service_health_status(
         self,
         service_name: str,
-    ) -> FlextResult[FlextTypes.StringDict]:
+    ) -> FlextCore.Result[FlextCore.Types.StringDict]:
         """Get service health status."""
         if service_name not in self._registered_services:
-            return FlextResult[FlextTypes.StringDict].fail(
+            return FlextCore.Result[FlextCore.Types.StringDict].fail(
                 f"Service '{service_name}' is not registered",
             )
-        return FlextResult[FlextTypes.StringDict].ok({
+        return FlextCore.Result[FlextCore.Types.StringDict].ok({
             "status": "healthy",
             "container_status": "running",
             "health_check": "passed",
         })
 
-    def create_network(self, name: str, *, driver: str = "bridge") -> FlextResult[str]:
+    def create_network(
+        self, name: str, *, driver: str = "bridge"
+    ) -> FlextCore.Result[str]:
         """Create a Docker network."""
-        return FlextResult[str].ok(f"Network {name} created with driver {driver}")
+        return FlextCore.Result[str].ok(f"Network {name} created with driver {driver}")
 
     def execute_container_command(
         self,
         container_name: str,
         command: str,
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Execute command in container."""
         _ = command  # Parameter required by API but not used in stub implementation
-        return FlextResult[str].ok(f"Command executed in {container_name}")
+        return FlextCore.Result[str].ok(f"Command executed in {container_name}")
 
     def exec_container_interactive(
         self,
         container_name: str,
         command: str,
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Execute interactive command in container."""
         _ = command  # Parameter required by API but not used in stub implementation
-        return FlextResult[str].ok(f"Interactive command executed in {container_name}")
+        return FlextCore.Result[str].ok(
+            f"Interactive command executed in {container_name}"
+        )
 
-    def list_volumes(self) -> FlextResult[FlextTypes.StringList]:
+    def list_volumes(self) -> FlextCore.Result[FlextCore.Types.StringList]:
         """List Docker volumes."""
-        return FlextResult[FlextTypes.StringList].ok([])
+        return FlextCore.Result[FlextCore.Types.StringList].ok([])
 
-    def get_service_dependency_graph(self) -> dict[str, FlextTypes.StringList]:
+    def get_service_dependency_graph(self) -> dict[str, FlextCore.Types.StringList]:
         """Get service dependency graph."""
         return self._service_dependencies.copy()
 
     def images_formatted(
         self,
         format_string: str = "{{.Repository}}:{{.Tag}}",
-    ) -> FlextResult[FlextTypes.StringList]:
+    ) -> FlextCore.Result[FlextCore.Types.StringList]:
         """Get formatted list of images."""
         # Parameter required by API but not used in stub implementation
         _ = format_string
-        return FlextResult[FlextTypes.StringList].ok(["test:latest"])
+        return FlextCore.Result[FlextCore.Types.StringList].ok(["test:latest"])
 
     def list_containers_formatted(
         self,
         *,
         show_all: bool = False,
         format_string: str = "{{.Names}} ({{.Status}})",
-    ) -> FlextResult[FlextTypes.StringList]:
+    ) -> FlextCore.Result[FlextCore.Types.StringList]:
         """Get formatted list of containers."""
         _ = (
             show_all,
             format_string,
         )  # Parameters required by API but not used in stub implementation
-        return FlextResult[FlextTypes.StringList].ok([
+        return FlextCore.Result[FlextCore.Types.StringList].ok([
             "test_container_1",
             "test_container_2",
         ])
 
-    def list_networks(self) -> FlextResult[FlextTypes.StringList]:
+    def list_networks(self) -> FlextCore.Result[FlextCore.Types.StringList]:
         """List Docker networks."""
-        return FlextResult[FlextTypes.StringList].ok([])
+        return FlextCore.Result[FlextCore.Types.StringList].ok([])
 
     # Class attributes that are expected
     SHARED_CONTAINERS: ClassVar[dict[str, dict[str, str | int]]] = {
@@ -661,8 +677,9 @@ class FlextTestDocker:
         self,
         name: str,
         image: str | None = None,
-        ports: dict[str, int | list[int] | tuple[str, int] | None] | None = None,
-    ) -> FlextResult[str]:
+        ports: dict[str, int | FlextCore.Types.IntList | tuple[str, int] | None]
+        | None = None,
+    ) -> FlextCore.Result[str]:
         """Start a Docker container."""
         try:
             client = self.get_client()
@@ -675,15 +692,15 @@ class FlextTestDocker:
                 detach=True,
                 remove=False,
             )
-            return FlextResult[str].ok(f"Container {name} started")
+            return FlextCore.Result[str].ok(f"Container {name} started")
         except DockerException as e:
             self.logger.exception("Failed to start container")
-            return FlextResult[str].fail(f"Failed to start container: {e}")
+            return FlextCore.Result[str].fail(f"Failed to start container: {e}")
 
     def stop_container(
         self,
         container_name: str,
-    ) -> FlextResult[dict[str, str | int | bool]]:
+    ) -> FlextCore.Result[dict[str, str | int | bool]]:
         """Stop a running container.
 
         Args:
@@ -694,7 +711,7 @@ class FlextTestDocker:
 
         """
         if container_name not in self._dirty_containers:
-            return FlextResult[dict[str, str | int | bool]].fail(
+            return FlextCore.Result[dict[str, str | int | bool]].fail(
                 "Container not running",
                 error_code="CONTAINER_NOT_RUNNING",
             )
@@ -705,7 +722,7 @@ class FlextTestDocker:
             # Ensure compose_file is str for Path operation
             compose_file_value = config["compose_file"]
             if not isinstance(compose_file_value, str):
-                return FlextResult[dict[str, str | int | bool]].fail(
+                return FlextCore.Result[dict[str, str | int | bool]].fail(
                     f"Invalid compose_file type: {type(compose_file_value)}",
                     error_code="INVALID_CONFIG",
                 )
@@ -736,18 +753,18 @@ class FlextTestDocker:
             # Restart container with compose
             restart_result = self.compose_up(compose_file, service)
             if restart_result.is_failure:
-                return FlextResult[dict[str, str | int | bool]].fail(
+                return FlextCore.Result[dict[str, str | int | bool]].fail(
                     f"Failed to restart container: {restart_result.error}",
                     error_code="RESTART_FAILED",
                 )
 
         self._dirty_containers.discard(container_name)
-        return FlextResult[dict[str, str | int | bool]].ok({
+        return FlextCore.Result[dict[str, str | int | bool]].ok({
             "container": container_name,
             "stopped": True,
         })
 
-    def get_container_info(self, name: str) -> FlextResult[ContainerInfo]:
+    def get_container_info(self, name: str) -> FlextCore.Result[ContainerInfo]:
         """Get container information."""
         try:
             client = self.get_client()
@@ -762,13 +779,13 @@ class FlextTestDocker:
             )
             # Extract image name from Image object
             container_image = getattr(container_obj, "image", None)
-            image_tags: FlextTypes.StringList = (
+            image_tags: FlextCore.Types.StringList = (
                 container_image.tags
                 if container_image and hasattr(container_image, "tags")
                 else []
             )
             image_name: str = image_tags[0] if image_tags else "unknown"
-            return FlextResult[ContainerInfo].ok(
+            return FlextCore.Result[ContainerInfo].ok(
                 ContainerInfo(
                     name=name,
                     status=status,
@@ -778,10 +795,12 @@ class FlextTestDocker:
                 ),
             )
         except NotFound:
-            return FlextResult[ContainerInfo].fail(f"Container {name} not found")
+            return FlextCore.Result[ContainerInfo].fail(f"Container {name} not found")
         except DockerException as e:
             self.logger.exception("Failed to get container info")
-            return FlextResult[ContainerInfo].fail(f"Failed to get container info: {e}")
+            return FlextCore.Result[ContainerInfo].fail(
+                f"Failed to get container info: {e}"
+            )
 
     def build_image(
         self,
@@ -789,26 +808,28 @@ class FlextTestDocker:
         *,
         tag: str,
         dockerfile: str = "Dockerfile",
-        build_args: FlextTypes.StringDict | None = None,
+        build_args: FlextCore.Types.StringDict | None = None,
         no_cache: bool = False,
         pull: bool = False,
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Build Docker image."""
         _ = path, dockerfile, build_args, no_cache, pull  # Unused parameters
-        return FlextResult[str].ok(f"Image {tag} built successfully")
+        return FlextCore.Result[str].ok(f"Image {tag} built successfully")
 
     def run_container(
         self,
         image: str,
         *,
         name: str | None = None,
-        ports: dict[str, int | list[int] | tuple[str, int]] | None = None,
-        environment: FlextTypes.StringDict | None = None,
-        volumes: dict[str, FlextTypes.StringDict] | FlextTypes.StringList | None = None,
+        ports: dict[str, int | FlextCore.Types.IntList | tuple[str, int]] | None = None,
+        environment: FlextCore.Types.StringDict | None = None,
+        volumes: dict[str, FlextCore.Types.StringDict]
+        | FlextCore.Types.StringList
+        | None = None,
         detach: bool = True,
         remove: bool = False,
         command: str | None = None,
-    ) -> FlextResult[ContainerInfo]:
+    ) -> FlextCore.Result[ContainerInfo]:
         """Run a Docker container."""
         try:
             client = self.get_client()
@@ -825,7 +846,7 @@ class FlextTestDocker:
                 volumes=volumes,
                 command=command,
             )
-            return FlextResult[ContainerInfo].ok(
+            return FlextCore.Result[ContainerInfo].ok(
                 ContainerInfo(
                     name=container_name,
                     status=ContainerStatus.RUNNING,
@@ -836,9 +857,11 @@ class FlextTestDocker:
             )
         except DockerException as e:
             self.logger.exception("Failed to run container")
-            return FlextResult[ContainerInfo].fail(f"Failed to run container: {e}")
+            return FlextCore.Result[ContainerInfo].fail(f"Failed to run container: {e}")
 
-    def remove_container(self, name: str, *, force: bool = False) -> FlextResult[str]:
+    def remove_container(
+        self, name: str, *, force: bool = False
+    ) -> FlextCore.Result[str]:
         """Remove a Docker container."""
         try:
             client = self.get_client()
@@ -846,14 +869,14 @@ class FlextTestDocker:
             container = client.containers.get(name)
             if hasattr(container, "remove"):
                 container.remove(force=force)
-            return FlextResult[str].ok(f"Container {name} removed")
+            return FlextCore.Result[str].ok(f"Container {name} removed")
         except NotFound:
-            return FlextResult[str].fail(f"Container {name} not found")
+            return FlextCore.Result[str].fail(f"Container {name} not found")
         except DockerException as e:
             self.logger.exception("Failed to remove container")
-            return FlextResult[str].fail(f"Failed to remove container: {e}")
+            return FlextCore.Result[str].fail(f"Failed to remove container: {e}")
 
-    def remove_image(self, image: str, *, force: bool = False) -> FlextResult[str]:
+    def remove_image(self, image: str, *, force: bool = False) -> FlextCore.Result[str]:
         """Remove a Docker image."""
         try:
             client = self.get_client()
@@ -862,12 +885,12 @@ class FlextTestDocker:
                 images_api = cast("Any", client.images)
                 remove_method = cast("Callable[..., None]", images_api.remove)
                 remove_method(image, force=force)
-            return FlextResult[str].ok(f"Image {image} removed")
+            return FlextCore.Result[str].ok(f"Image {image} removed")
         except NotFound:
-            return FlextResult[str].fail(f"Image {image} not found")
+            return FlextCore.Result[str].fail(f"Image {image} not found")
         except DockerException as e:
             self.logger.exception("Failed to remove image")
-            return FlextResult[str].fail(f"Failed to remove image: {e}")
+            return FlextCore.Result[str].fail(f"Failed to remove image: {e}")
 
     def container_logs_formatted(
         self,
@@ -875,7 +898,7 @@ class FlextTestDocker:
         tail: int = 100,
         *,
         follow: bool = False,
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Get formatted container logs."""
         try:
             client = self.get_client()
@@ -890,12 +913,12 @@ class FlextTestDocker:
                 )
             else:
                 logs = b""
-            return FlextResult[str].ok(logs.decode("utf-8"))
+            return FlextCore.Result[str].ok(logs.decode("utf-8"))
         except NotFound:
-            return FlextResult[str].fail(f"Container {container_name} not found")
+            return FlextCore.Result[str].fail(f"Container {container_name} not found")
         except DockerException as e:
             self.logger.exception("Failed to get container logs")
-            return FlextResult[str].fail(f"Failed to get container logs: {e}")
+            return FlextCore.Result[str].fail(f"Failed to get container logs: {e}")
 
     def execute_command_in_container(
         self,
@@ -903,7 +926,7 @@ class FlextTestDocker:
         command: str,
         *,
         user: str | None = None,
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Execute command in container."""
         try:
             client = self.get_client()
@@ -916,19 +939,21 @@ class FlextTestDocker:
                     command,
                     user=user if user is not None else "root",
                 )
-                return FlextResult[str].ok(result.output.decode("utf-8"))
-            return FlextResult[str].fail("exec_run method not available")
+                return FlextCore.Result[str].ok(result.output.decode("utf-8"))
+            return FlextCore.Result[str].fail("exec_run method not available")
         except NotFound:
-            return FlextResult[str].fail(f"Container {container_name} not found")
+            return FlextCore.Result[str].fail(f"Container {container_name} not found")
         except DockerException as e:
             self.logger.exception("Failed to execute command in container")
-            return FlextResult[str].fail(f"Failed to execute command in container: {e}")
+            return FlextCore.Result[str].fail(
+                f"Failed to execute command in container: {e}"
+            )
 
     def list_containers(
         self,
         *,
         all_containers: bool = False,
-    ) -> FlextResult[list[ContainerInfo]]:
+    ) -> FlextCore.Result[list[ContainerInfo]]:
         """List containers."""
         try:
             client = self.get_client()
@@ -946,7 +971,7 @@ class FlextTestDocker:
                     else ContainerStatus.STOPPED
                 )
                 container_image = getattr(container, "image", None)
-                image_tags: FlextTypes.StringList = (
+                image_tags: FlextCore.Types.StringList = (
                     container_image.tags
                     if container_image and hasattr(container_image, "tags")
                     else []
@@ -962,10 +987,10 @@ class FlextTestDocker:
                         container_id=getattr(container, "id", "unknown") or "unknown",
                     ),
                 )
-            return FlextResult[list[ContainerInfo]].ok(container_infos)
+            return FlextCore.Result[list[ContainerInfo]].ok(container_infos)
         except DockerException as e:
             self.logger.exception("Failed to list containers")
-            return FlextResult[list[ContainerInfo]].fail(
+            return FlextCore.Result[list[ContainerInfo]].fail(
                 f"Failed to list containers: {e}",
             )
 
@@ -989,13 +1014,13 @@ class FlextTestDocker:
         )
 
     @classmethod
-    def _display_status_table(cls, manager: FlextTestDocker) -> FlextResult[None]:
+    def _display_status_table(cls, manager: FlextTestDocker) -> FlextCore.Result[None]:
         """Render the container status table to the console."""
         status_result = manager.get_all_status()
         if status_result.is_failure:
             error_message = f"Failed to get status: {status_result.error}"
             cls._console.print(f"[bold red]{error_message}[/bold red]")
-            return FlextResult[None].fail(error_message)
+            return FlextCore.Result[None].fail(error_message)
 
         table = Table(title="FLEXT Docker Test Containers Status", show_header=True)
         table.add_column("Container", style="cyan", no_wrap=True)
@@ -1012,9 +1037,9 @@ class FlextTestDocker:
             )
 
         cls._console.print(table)
-        return FlextResult[None].ok(None)
+        return FlextCore.Result[None].ok(None)
 
-    def show_status_table(self) -> FlextResult[None]:
+    def show_status_table(self) -> FlextCore.Result[None]:
         """Public helper to render container status."""
         return self._display_status_table(self)
 
@@ -1023,7 +1048,7 @@ class FlextTestDocker:
         container_name: str,
         *,
         tail: int | None = None,
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Fetch logs for a specific container."""
         tail_count = tail or self._DEFAULT_LOG_TAIL
         try:
@@ -1032,15 +1057,17 @@ class FlextTestDocker:
             container = client.containers.get(container_name)
             logs_method = getattr(container, "logs", None)
             logs_bytes = logs_method(tail=tail_count) if logs_method else b""
-            return FlextResult[str].ok(logs_bytes.decode("utf-8", errors="ignore"))
+            return FlextCore.Result[str].ok(logs_bytes.decode("utf-8", errors="ignore"))
         except NotFound:
-            return FlextResult[str].fail(f"Container {container_name} not found")
+            return FlextCore.Result[str].fail(f"Container {container_name} not found")
         except DockerException as exc:
             self.logger.exception("Failed to fetch container logs")
-            return FlextResult[str].fail(f"Failed to fetch logs: {exc}")
+            return FlextCore.Result[str].fail(f"Failed to fetch logs: {exc}")
 
     @classmethod
-    def register_pytest_fixtures(cls, namespace: FlextTypes.Dict | None = None) -> None:
+    def register_pytest_fixtures(
+        cls, namespace: FlextCore.Types.Dict | None = None
+    ) -> None:
         """Register pytest fixtures that wrap FlextTestDocker operations."""
         if cls._pytest_registered:
             return
@@ -1160,7 +1187,7 @@ class FlextTestDocker:
         @pytest.fixture
         def all_containers_running(
             docker_control: FlextTestDocker,
-        ) -> Iterator[FlextTypes.StringDict]:
+        ) -> Iterator[FlextCore.Types.StringDict]:
             start_result = docker_control.start_all()
             if start_result.is_failure:
                 pytest.skip(f"Failed to start all containers: {start_result.error}")
@@ -1182,7 +1209,7 @@ class FlextTestDocker:
 
         cls._pytest_registered = True
 
-    def init_workspace(self, workspace_root: Path) -> FlextResult[str]:
+    def init_workspace(self, workspace_root: Path) -> FlextCore.Result[str]:
         """Initialize workspace configuration and auto-discover services."""
         try:
             self.workspace_root = workspace_root
@@ -1203,20 +1230,20 @@ class FlextTestDocker:
                             services,
                         )
 
-            return FlextResult[str].ok(
+            return FlextCore.Result[str].ok(
                 f"FlextTestDocker initialized for workspace: {workspace_root}",
             )
         except Exception as exc:
             self.logger.exception("Workspace initialization failed")
-            return FlextResult[str].fail(f"Workspace initialization failed: {exc}")
+            return FlextCore.Result[str].fail(f"Workspace initialization failed: {exc}")
 
     def build_workspace_projects(
         self,
-        projects: FlextTypes.StringList,
+        projects: FlextCore.Types.StringList,
         registry: str = "flext",
-    ) -> FlextResult[FlextTypes.StringDict]:
+    ) -> FlextCore.Result[FlextCore.Types.StringDict]:
         """Build Docker images for a set of workspace projects."""
-        results: FlextTypes.StringDict = {}
+        results: FlextCore.Types.StringDict = {}
 
         for project in projects:
             project_path = self.workspace_root / project
@@ -1252,14 +1279,14 @@ class FlextTestDocker:
             else:
                 results[project] = f"Build failed: {build_result.error}"
 
-        return FlextResult[FlextTypes.StringDict].ok(results)
+        return FlextCore.Result[FlextCore.Types.StringDict].ok(results)
 
     def build_single_image(
         self,
         name: str,
         dockerfile_path: str,
         context_path: str | None = None,
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Build a single Docker image."""
         context_root = context_path or str(Path(dockerfile_path).parent)
         build_result = self.build_image_advanced(
@@ -1269,22 +1296,26 @@ class FlextTestDocker:
         )
 
         if build_result.is_success:
-            return FlextResult[str].ok(f"Image built successfully: {name}")
-        return FlextResult[str].fail(f"Image build failed: {build_result.error}")
+            return FlextCore.Result[str].ok(f"Image built successfully: {name}")
+        return FlextCore.Result[str].fail(f"Image build failed: {build_result.error}")
 
     def start_compose_stack(
         self,
         compose_file: str,
         network_name: str | None = None,
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Start a Docker Compose stack."""
         discovery = self.auto_discover_services(compose_file)
         if discovery.is_failure:
-            return FlextResult[str].fail(f"Service discovery failed: {discovery.error}")
+            return FlextCore.Result[str].fail(
+                f"Service discovery failed: {discovery.error}"
+            )
 
         start_result = self.compose_up(compose_file)
         if start_result.is_failure:
-            return FlextResult[str].fail(f"Stack start failed: {start_result.error}")
+            return FlextCore.Result[str].fail(
+                f"Stack start failed: {start_result.error}"
+            )
 
         if network_name:
             network_result = self.create_network(network_name)
@@ -1296,54 +1327,58 @@ class FlextTestDocker:
                 )
 
         services = discovery.value
-        return FlextResult[str].ok(
+        return FlextCore.Result[str].ok(
             f"Stack started successfully with services: {services}",
         )
 
-    def stop_compose_stack(self, compose_file: str) -> FlextResult[str]:
+    def stop_compose_stack(self, compose_file: str) -> FlextCore.Result[str]:
         """Stop a Docker Compose stack."""
         stop_result = self.compose_down(compose_file)
         if stop_result.is_success:
-            return FlextResult[str].ok("Stack stopped successfully")
-        return FlextResult[str].fail(f"Stack stop failed: {stop_result.error}")
+            return FlextCore.Result[str].ok("Stack stopped successfully")
+        return FlextCore.Result[str].fail(f"Stack stop failed: {stop_result.error}")
 
-    def restart_compose_stack(self, compose_file: str) -> FlextResult[str]:
+    def restart_compose_stack(self, compose_file: str) -> FlextCore.Result[str]:
         """Restart a Docker Compose stack."""
         stop_result = self.stop_compose_stack(compose_file)
         if stop_result.is_failure:
-            return FlextResult[str].fail(f"Stack stop failed: {stop_result.error}")
+            return FlextCore.Result[str].fail(f"Stack stop failed: {stop_result.error}")
 
         start_result = self.start_compose_stack(compose_file)
         if start_result.is_failure:
-            return FlextResult[str].fail(f"Stack restart failed: {start_result.error}")
+            return FlextCore.Result[str].fail(
+                f"Stack restart failed: {start_result.error}"
+            )
 
-        return FlextResult[str].ok("Stack restarted successfully")
+        return FlextCore.Result[str].ok("Stack restarted successfully")
 
     def show_stack_logs(
         self,
         compose_file: str,
         *,
         follow: bool = False,
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Show logs for a Docker Compose stack."""
         _ = follow  # compatibility with previous signature
         logs_result = self.compose_logs(compose_file)
         if logs_result.is_success:
-            return FlextResult[str].ok("Logs displayed")
-        return FlextResult[str].fail(f"Failed to get logs: {logs_result.error}")
+            return FlextCore.Result[str].ok("Logs displayed")
+        return FlextCore.Result[str].fail(f"Failed to get logs: {logs_result.error}")
 
-    def show_stack_status(self, compose_file: str) -> FlextResult[FlextTypes.Dict]:
+    def show_stack_status(
+        self, compose_file: str
+    ) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Return status information for the Docker Compose stack."""
         _ = compose_file  # compose file not required for stub implementation
         status_result = self.get_all_status()
         if status_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
                 f"Status check failed: {status_result.error}",
             )
 
-        # Convert dict[str, ContainerInfo] to generic dict for FlextTypes.Dict compatibility
-        status_info: FlextTypes.Dict = cast(
-            "FlextTypes.Dict", status_result.value.copy()
+        # Convert dict[str, ContainerInfo] to generic dict for FlextCore.Types.Dict compatibility
+        status_info: FlextCore.Types.Dict = cast(
+            "FlextCore.Types.Dict", status_result.value.copy()
         )
         running_services = self.get_running_services()
         if running_services.is_success:
@@ -1351,27 +1386,31 @@ class FlextTestDocker:
         else:
             status_info["auto_managed_services"] = []
 
-        return FlextResult[FlextTypes.Dict].ok(status_info)
+        return FlextCore.Result[FlextCore.Types.Dict].ok(status_info)
 
-    def connect_to_service(self, service_name: str) -> FlextResult[str]:
+    def connect_to_service(self, service_name: str) -> FlextCore.Result[str]:
         """Open an interactive session with a service container."""
         connect_result = self.exec_container_interactive(
             container_name=service_name,
             command="/bin/bash",
         )
         if connect_result.is_success:
-            return FlextResult[str].ok(f"Connected to {service_name}")
-        return FlextResult[str].fail(f"Connection failed: {connect_result.error}")
+            return FlextCore.Result[str].ok(f"Connected to {service_name}")
+        return FlextCore.Result[str].fail(f"Connection failed: {connect_result.error}")
 
-    def execute_in_service(self, service_name: str, command: str) -> FlextResult[str]:
+    def execute_in_service(
+        self, service_name: str, command: str
+    ) -> FlextCore.Result[str]:
         """Execute a command inside a service container."""
         exec_result = self.execute_container_command(
             container_name=service_name,
             command=command,
         )
         if exec_result.is_success:
-            return FlextResult[str].ok("Command executed successfully")
-        return FlextResult[str].fail(f"Command execution failed: {exec_result.error}")
+            return FlextCore.Result[str].ok("Command executed successfully")
+        return FlextCore.Result[str].fail(
+            f"Command execution failed: {exec_result.error}"
+        )
 
     def cleanup_workspace(
         self,
@@ -1379,9 +1418,9 @@ class FlextTestDocker:
         remove_volumes: bool = False,
         remove_networks: bool = False,
         prune_system: bool = False,
-    ) -> FlextResult[str]:
+    ) -> FlextCore.Result[str]:
         """Clean up containers, networks, volumes, and images."""
-        operations: FlextTypes.StringList = []
+        operations: FlextCore.Types.StringList = []
 
         running_services = self.get_running_services()
         if running_services.is_success:
@@ -1426,21 +1465,21 @@ class FlextTestDocker:
                 operations.append(f"Image pruning failed: {images_result.error}")
 
         summary = "; ".join(operations) if operations else "No cleanup actions run"
-        return FlextResult[str].ok(f"Cleanup completed: {summary}")
+        return FlextCore.Result[str].ok(f"Cleanup completed: {summary}")
 
     def health_check_stack(
         self,
         compose_file: str,
         *,
         timeout: int = 30,
-    ) -> FlextResult[FlextTypes.StringDict]:
+    ) -> FlextCore.Result[FlextCore.Types.StringDict]:
         """Perform health checks for services in the compose stack."""
         _ = timeout  # Compatibility with previous signature
-        health: FlextTypes.StringDict = {}
+        health: FlextCore.Types.StringDict = {}
 
         discovery = self.auto_discover_services(compose_file)
         if discovery.is_failure:
-            return FlextResult[FlextTypes.StringDict].fail(
+            return FlextCore.Result[FlextCore.Types.StringDict].fail(
                 f"Service discovery failed: {discovery.error}",
             )
 
@@ -1453,13 +1492,13 @@ class FlextTestDocker:
             else:
                 health[service] = f"Health check failed: {health_result.error}"
 
-        return FlextResult[FlextTypes.StringDict].ok(health)
+        return FlextCore.Result[FlextCore.Types.StringDict].ok(health)
 
     def validate_workspace(
         self, workspace_root: Path
-    ) -> FlextResult[FlextTypes.StringDict]:
+    ) -> FlextCore.Result[FlextCore.Types.StringDict]:
         """Validate Docker operations within a workspace."""
-        results: FlextTypes.StringDict = {}
+        results: FlextCore.Types.StringDict = {}
 
         try:
             docker_manager = FlextTestDocker(workspace_root=workspace_root)
@@ -1493,7 +1532,7 @@ class FlextTestDocker:
         except Exception as exc:
             results["docker_connection"] = f"❌ Failed: {exc}"
 
-        return FlextResult[FlextTypes.StringDict].ok(results)
+        return FlextCore.Result[FlextCore.Types.StringDict].ok(results)
 
     @classmethod
     def _get_workspace_parser(cls) -> argparse.ArgumentParser:
@@ -1684,7 +1723,9 @@ class FlextTestDocker:
         return parser
 
     @classmethod
-    def run_workspace_command(cls, argv: FlextTypes.StringList | None = None) -> int:
+    def run_workspace_command(
+        cls, argv: FlextCore.Types.StringList | None = None
+    ) -> int:
         """Execute workspace manager commands using FlextTestDocker."""
         parser = cls._get_workspace_parser()
         args = parser.parse_args(argv)

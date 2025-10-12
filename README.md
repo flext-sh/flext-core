@@ -29,8 +29,8 @@ FLEXT-Core serves as the **architectural foundation** for the entire FLEXT enter
 
 ### **Core Responsibilities**
 
-1. **🏗️ Railway-Oriented Programming** - `FlextResult[T]` for comprehensive error handling
-2. **💉 Dependency Injection** - `FlextContainer` for clean, testable architectures
+1. **🏗️ Railway-Oriented Programming** - `FlextCore.Result[T]` for comprehensive error handling
+2. **💉 Dependency Injection** - `FlextCore.Container` for clean, testable architectures
 3. **🎯 Domain-Driven Design** - Rich entities, value objects, and domain services
 4. **🔒 Type Safety** - Python 3.13+ with comprehensive typing and Pydantic v2
 5. **📊 Configuration Management** - Environment-aware settings with validation
@@ -60,7 +60,7 @@ else:
     error = result.unwrap_failure()
 
 # Dependency injection (120+ services across ecosystem)
-container = FlextContainer()
+container = FlextCore.Container()
 container.register_singleton(DatabaseConnection, create_db_connection)
 
 # Domain-driven design (95+ entities across ecosystem)
@@ -101,14 +101,14 @@ src/flext_core/
 
 ### **Key Architectural Components**
 
-#### **FlextResult[T] - Railway Pattern**
+#### **FlextCore.Result[T] - Railway Pattern**
 
 ```python
 # Success path
-success_result = FlextResult.success(User(id="123", name="John"))
+success_result = FlextCore.Result.success(User(id="123", name="John"))
 
 # Failure path
-error_result = FlextResult.failure(ValidationError("Invalid input"))
+error_result = FlextCore.Result.failure(ValidationError("Invalid input"))
 
 # Railway operations
 final_result = (
@@ -119,10 +119,10 @@ final_result = (
 )
 ```
 
-#### **FlextContainer - Dependency Injection**
+#### **FlextCore.Container - Dependency Injection**
 
 ```python
-container = FlextContainer()
+container = FlextCore.Container()
 
 # Register services
 container.register_singleton(DatabaseConnection, create_db_connection)
@@ -133,10 +133,10 @@ db_connection = container.resolve(DatabaseConnection)
 user_service = container.resolve(UserService)
 ```
 
-#### **FlextBus - Event-Driven Architecture**
+#### **FlextCore.Bus - Event-Driven Architecture**
 
 ```python
-bus = FlextBus()
+bus = FlextCore.Bus()
 
 # Register handlers
 @bus.handler("user.created")
@@ -159,16 +159,16 @@ The new Layer 0 architecture provides a solid foundation with zero internal depe
 
 ```python
 # Layer 0: Pure Python foundation (no flext_core imports)
-from flext_core.constants import FlextConstants
+from flext_core import FlextCore
 
 # Error codes for exception categorization (50+ codes)
-error_code = FlextConstants.Errors.VALIDATION_FAILED
+error_code = FlextCore.Constants.Errors.VALIDATION_FAILED
 
 # Configuration defaults
-timeout = FlextConstants.Config.DEFAULT_TIMEOUT
+timeout = FlextCore.Constants.Config.DEFAULT_TIMEOUT
 
 # Validation patterns (used by runtime.py)
-email_pattern = FlextConstants.Validation.EMAIL_PATTERN
+email_pattern = FlextCore.Constants.Validation.EMAIL_PATTERN
 ```
 
 **Key Features**:
@@ -186,14 +186,14 @@ The runtime bridge exposes external libraries while maintaining proper dependenc
 
 ```python
 # Layer 0.5: External library connectors
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextCore
 
 # Type guards using Layer 0 patterns
-if FlextRuntime.is_valid_email(email):
+if FlextCore.Runtime.is_valid_email(email):
     process_email(email)
 
 # Serialization utilities
-json_data = FlextRuntime.serialize_to_json(data)
+json_data = FlextCore.Runtime.serialize_to_json(data)
 ```
 
 **Key Features**:
@@ -227,17 +227,17 @@ json_data = FlextRuntime.serialize_to_json(data)
 
 ### **New Features**
 
-#### **1. Context Enrichment in FlextMixins**
+#### **1. Context Enrichment in FlextCore.Mixins**
 
 Automatic context management for structured logging and distributed tracing:
 
 ```python
-from flext_core import FlextService, FlextResult
+from flext_core import FlextCore
 
-class PaymentService(FlextService[dict[str, object]]):
+class PaymentService(FlextCore.Service[FlextCore.Types.Dict]):
     """Service with automatic context enrichment."""
 
-    def process_payment(self, payment_id: str, amount: float, user_id: str) -> FlextResult[dict]:
+    def process_payment(self, payment_id: str, amount: float, user_id: str) -> FlextCore.Result[dict]:
         # Generate correlation ID for distributed tracing
         correlation_id = self._with_correlation_id()
 
@@ -255,7 +255,7 @@ class PaymentService(FlextService[dict[str, object]]):
         # Clean up context
         self._clear_operation_context()
 
-        return FlextResult[dict].ok({"status": "completed", "correlation_id": correlation_id})
+        return FlextCore.Result[dict].ok({"status": "completed", "correlation_id": correlation_id})
 ```
 
 **Available Methods**:
@@ -266,21 +266,21 @@ class PaymentService(FlextService[dict[str, object]]):
 - `_with_operation_context(operation_name, **data)` - Set operation tracking
 - `_clear_operation_context()` - Clean up context after operations
 
-#### **2. Automatic Context in FlextService & FlextHandlers**
+#### **2. Automatic Context in FlextCore.Service & FlextCore.Handlers**
 
-Both `FlextService` and `FlextHandlers` now automatically enrich context in `__init__`:
+Both `FlextCore.Service` and `FlextCore.Handlers` now automatically enrich context in `__init__`:
 
 ```python
-class UserService(FlextService[User]):
+class UserService(FlextCore.Service[User]):
     def __init__(self, **data: object) -> None:
         super().__init__(**data)
         # Context automatically includes:
         # - service_type: "UserService"
         # - service_module: "my_app.services.user"
 
-class CreateOrderHandler(FlextHandlers.CommandHandler[CreateOrderCommand, Order]):
+class CreateOrderHandler(FlextCore.Handlers.CommandHandler[CreateOrderCommand, Order]):
     def __init__(self, **data: object) -> None:
-        config = FlextModels.Cqrs.Handler(
+        config = FlextCore.Models.Cqrs.Handler(
             handler_name="CreateOrderHandler",
             handler_type="command",
         )
@@ -293,16 +293,16 @@ class CreateOrderHandler(FlextHandlers.CommandHandler[CreateOrderCommand, Order]
 
 #### **3. Helper Method for Complete Automation**
 
-`FlextService.execute_with_context_enrichment()` provides complete automation:
+`FlextCore.Service.execute_with_context_enrichment()` provides complete automation:
 
 ```python
-class OrderService(FlextService[Order]):
+class OrderService(FlextCore.Service[Order]):
     def process_order(
         self,
         order_id: str,
         customer_id: str,
         correlation_id: str | None = None,
-    ) -> FlextResult[Order]:
+    ) -> FlextCore.Result[Order]:
         """Process order with complete automation."""
         return self.execute_with_context_enrichment(
             operation_name="process_order",
@@ -369,7 +369,7 @@ FLEXT-Core serves as the **foundation for 32+ dependent packages** in the FLEXT 
 #### Phase 3: Performance & Optimization (Weeks 3-4)
 
 - Performance baseline establishment
-- Critical path optimization (FlextResult, FlextContainer)
+- Critical path optimization (FlextCore.Result, FlextCore.Container)
 - Memory usage profiling and optimization
 - Benchmark suite implementation
 
@@ -413,7 +413,7 @@ FLEXT-Core serves as the **foundation for 32+ dependent packages** in the FLEXT 
 #### Phase 3: Performance & Optimization (Weeks 3-4)
 
 - Performance baseline establishment
-- Critical path optimization (FlextResult, FlextContainer)
+- Critical path optimization (FlextCore.Result, FlextCore.Container)
 - Memory usage profiling and optimization
 - Benchmark suite implementation
 
@@ -435,12 +435,12 @@ FLEXT-Core serves as the **foundation for 32+ dependent packages** in the FLEXT 
 
 **What's Guaranteed in 1.x**:
 
-- ✅ **FlextResult[T]** - Railway pattern with dual `.value`/`.data` access
-- ✅ **FlextContainer** - Dependency injection singleton API
-- ✅ **FlextModels** - DDD patterns (Entity, Value, AggregateRoot)
-- ✅ **FlextLogger** - Structured logging interface
-- ✅ **FlextConfig** - Configuration management API
-- ✅ **FlextBus** - Messaging patterns
+- ✅ **FlextCore.Result[T]** - Railway pattern with dual `.value`/`.data` access
+- ✅ **FlextCore.Container** - Dependency injection singleton API
+- ✅ **FlextCore.Models** - DDD patterns (Entity, Value, AggregateRoot)
+- ✅ **FlextCore.Logger** - Structured logging interface
+- ✅ **FlextCore.Config** - Configuration management API
+- ✅ **FlextCore.Bus** - Messaging patterns
 - ✅ **HTTP Primitives** - Constants, request/response models (new in 0.9.9)
 
 **Semantic Versioning Promise**:
@@ -457,15 +457,15 @@ See [VERSIONING.md](VERSIONING.md) and [API_STABILITY.md](API_STABILITY.md) for 
 
 **Production-Ready Foundation**:
 
-- ✅ **FlextResult[T]** - Railway-oriented programming with dual `.value`/`.data` access for ABI stability
-- ✅ **FlextContainer** - Singleton dependency injection with typed service keys and lifecycle management
-- ✅ **FlextModels** - Domain-driven design with Entity/Value/AggregateRoot patterns (Pydantic v2)
-- ✅ **FlextLogger** - Structured logging with context propagation and correlation tracking
-- ✅ **FlextConfig** - Layered configuration with .env, TOML, and YAML support
-- ✅ **FlextBus** - Command/Query/Event bus with middleware pipeline and caching
-- ✅ **FlextContext** - Request/operation context with correlation IDs and metadata
-- ✅ **FlextDispatcher** - Unified command/query dispatcher with registry support
-- ✅ **FlextTypes** - Comprehensive type system with 50+ TypeVars and type aliases
+- ✅ **FlextCore.Result[T]** - Railway-oriented programming with dual `.value`/`.data` access for ABI stability
+- ✅ **FlextCore.Container** - Singleton dependency injection with typed service keys and lifecycle management
+- ✅ **FlextCore.Models** - Domain-driven design with Entity/Value/AggregateRoot patterns (Pydantic v2)
+- ✅ **FlextCore.Logger** - Structured logging with context propagation and correlation tracking
+- ✅ **FlextCore.Config** - Layered configuration with .env, TOML, and YAML support
+- ✅ **FlextCore.Bus** - Command/Query/Event bus with middleware pipeline and caching
+- ✅ **FlextCore.Context** - Request/operation context with correlation IDs and metadata
+- ✅ **FlextCore.Dispatcher** - Unified command/query dispatcher with registry support
+- ✅ **FlextCore.Types** - Comprehensive type system with 50+ TypeVars and type aliases
 
 **Quality Metrics**:
 
@@ -480,33 +480,33 @@ See [VERSIONING.md](VERSIONING.md) and [API_STABILITY.md](API_STABILITY.md) for 
 
 **Foundation Layer**:
 
-- `FlextResult[T]` - Monadic error handling with railway-oriented composition
-- `FlextContainer` - Dependency injection singleton with typed service resolution
-- `FlextExceptions` - Comprehensive exception hierarchy with error codes
-- `FlextConstants` - Centralized constants and enumerations
-- `FlextTypes` - Complete type system (TypeVars, Protocols, Aliases)
+- `FlextCore.Result[T]` - Monadic error handling with railway-oriented composition
+- `FlextCore.Container` - Dependency injection singleton with typed service resolution
+- `FlextCore.Exceptions` - Comprehensive exception hierarchy with error codes
+- `FlextCore.Constants` - Centralized constants and enumerations
+- `FlextCore.Types` - Complete type system (TypeVars, Protocols, Aliases)
 
 **Domain Layer**:
 
-- `FlextModels` - DDD patterns (Entity, Value, AggregateRoot)
-- `FlextService` - Domain service base with Pydantic Generic[T]
-- `FlextMixins` - Reusable behaviors (timestamps, serialization, validation)
-- `FlextUtilities` - Domain utilities (validation, conversion, type guards)
+- `FlextCore.Models` - DDD patterns (Entity, Value, AggregateRoot)
+- `FlextCore.Service` - Domain service base with Pydantic Generic[T]
+- `FlextCore.Mixins` - Reusable behaviors (timestamps, serialization, validation)
+- `FlextCore.Utilities` - Domain utilities (validation, conversion, type guards)
 
 **Application Layer**:
 
-- `FlextHandlers` - Handler registry and execution
-- `FlextBus` - Message bus with middleware pipeline
-- `FlextDispatcher` - Unified dispatcher façade
-- `FlextRegistry` - Handler registry management
+- `FlextCore.Handlers` - Handler registry and execution
+- `FlextCore.Bus` - Message bus with middleware pipeline
+- `FlextCore.Dispatcher` - Unified dispatcher façade
+- `FlextCore.Registry` - Handler registry management
 
 **Infrastructure Layer**:
 
-- `FlextConfig` - Configuration management with multiple sources
-- `FlextLogger` - Structured logging with context propagation
-- `FlextContext` - Request/operation context tracking
-- `FlextProcessors` - Message processing orchestration
-- `FlextProtocols` - Runtime-checkable interfaces
+- `FlextCore.Config` - Configuration management with multiple sources
+- `FlextCore.Logger` - Structured logging with context propagation
+- `FlextCore.Context` - Request/operation context tracking
+- `FlextCore.Processors` - Message processing orchestration
+- `FlextCore.Protocols` - Runtime-checkable interfaces
 
 ---
 
@@ -519,25 +519,19 @@ cd flext-core
 make setup
 
 # Verify installation
-python -c "from flext_core import FlextResult; print('✅ FLEXT-Core v0.9.9 ready')"
+python -c "from flext_core import FlextCore; print('✅ FLEXT-Core v0.9.9 ready')"
 ```
 
 ## Quick Start Example
 
 ```python
-from flext_core import (
-    FlextResult,
-    FlextContainer,
-    FlextLogger,
-    FlextModels,
-    FlextService,
-)
+from flext_core import FlextCore
 
 # 1. Railway Pattern - Error handling without exceptions
-def validate_email(email: str) -> FlextResult[str]:
+def validate_email(email: str) -> FlextCore.Result[str]:
     if "@" not in email:
-        return FlextResult[str].fail("Invalid email format")
-    return FlextResult[str].ok(email)
+        return FlextCore.Result[str].fail("Invalid email format")
+    return FlextCore.Result[str].ok(email)
 
 result = validate_email("user@example.com")
 if result.is_success:
@@ -545,8 +539,8 @@ if result.is_success:
     print(f"✅ Valid email: {email}")
 
 # 2. Dependency Injection - Global container
-container = FlextContainer.get_global()
-container.register("logger", FlextLogger(__name__))
+container = FlextCore.Container.get_global()
+container.register("logger", FlextCore.Logger(__name__))
 
 logger_result = container.get("logger")
 if logger_result.is_success:
@@ -554,7 +548,7 @@ if logger_result.is_success:
     logger.info("Application started")
 
 # 3. Domain Modeling - DDD patterns with Pydantic v2
-class User(FlextModels.Entity):
+class User(FlextCore.Models.Entity):
     """User entity with validation."""
     name: str
     email: str
@@ -569,20 +563,20 @@ user = User(id="user_123", name="Alice", email="alice@example.com", age=30)
 print(f"Created user: {user.name} with ID: {user.id}")
 
 # 4. Domain Service - Business logic encapsulation
-class UserService(FlextService):
+class UserService(FlextCore.Service):
     """User domain service."""
 
-    def create_user(self, name: str, email: str, age: int) -> FlextResult[User]:
+    def create_user(self, name: str, email: str, age: int) -> FlextCore.Result[User]:
         """Create a new user with validation."""
         email_result = validate_email(email)
         if email_result.is_failure:
-            return FlextResult[User].fail(f"Email validation failed: {email_result.error}")
+            return FlextCore.Result[User].fail(f"Email validation failed: {email_result.error}")
 
         try:
             user = User(id=f"user_{name.lower()}", name=name, email=email, age=age)
-            return FlextResult[User].ok(user)
+            return FlextCore.Result[User].ok(user)
         except ValueError as e:
-            return FlextResult[User].fail(str(e))
+            return FlextCore.Result[User].fail(str(e))
 
 service = UserService()
 user_result = service.create_user("Bob", "bob@example.com", 25)
@@ -730,7 +724,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    - Already achieved 75% baseline - only 4% more to target
    - Add functional tests for error paths and edge cases
 2. **API Stability**: Maintain backward compatibility
-   - Keep dual `.value`/`.data` access on FlextResult
+   - Keep dual `.value`/`.data` access on FlextCore.Result
    - Preserve container singleton pattern
    - No breaking changes to public API
 3. **Documentation**: Complete API reference
@@ -762,10 +756,10 @@ make test        # All tests must pass
 
 ### Guidelines
 
-- Use `FlextResult[T]` for all operations that can fail
-- Register services with `FlextContainer.get_global()`
-- Follow DDD patterns with `FlextModels.Entity/Value/AggregateRoot`
-- Use `FlextLogger` with context propagation
+- Use `FlextCore.Result[T]` for all operations that can fail
+- Register services with `FlextCore.Container.get_global()`
+- Follow DDD patterns with `FlextCore.Models.Entity/Value/AggregateRoot`
+- Use `FlextCore.Logger` with context propagation
 - Write tests using `flext_tests` infrastructure (no mocks)
 - Keep line length to 79 characters (PEP 8)
 - Use Python 3.13+ syntax and features

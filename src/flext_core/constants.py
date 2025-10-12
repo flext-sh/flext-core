@@ -1,29 +1,14 @@
-"""Layer 0: Foundation constants for the entire FLEXT ecosystem.
+"""Foundation constants for the FLEXT ecosystem.
 
-This module provides the foundational constants that ALL other flext_core modules depend on.
-As Layer 0 (pure Python), it has ZERO dependencies on other flext_core modules,
-making it safe to import from anywhere without circular dependency risks.
+This module provides centralized constants used throughout the flext-core framework
+and dependent applications. All constants are immutable and serve as the single
+source of truth for configuration defaults, validation limits, and system parameters.
 
-**ARCHITECTURE HIERARCHY**:
-- Layer 0: constants.py, typings.py (pure Python, no flext_core imports)
-- Layer 0.5: runtime.py (imports Layer 0, exposes external libraries)
-- Layer 1+: All other modules (import Layer 0 and 0.5)
-
-**KEY FEATURES**:
-- Error codes for exception categorization (50+ codes)
-- Configuration defaults (timeouts, network settings)
-- Validation patterns (email, URL, UUID, phone - used by runtime.py)
-- Logging constants (levels, formats)
-- Platform constants (HTTP, encodings, paths)
-- Message and display constants
-- Telemetry and metrics defaults
-- Complete immutability with typing.Final
-
-**DEPENDENCIES**: ZERO flext_core imports (pure Python stdlib only)
-**USED BY**: ALL flext_core modules and 32+ ecosystem projects
+All constants use typing.Final for immutability and are safe to import from any module.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -39,120 +24,36 @@ from flext_core.__version__ import __version__
 
 
 class FlextConstants:
-    """Ecosystem-wide constant definitions for FLEXT foundation (Layer 0).
+    """Centralized constants for the FLEXT ecosystem.
 
-    FlextConstants provides the single source of truth for all constants
-    across the entire FLEXT ecosystem. As Layer 0, this module has ZERO
-    dependencies on other flext_core modules, making it safe to import
-    from anywhere without circular dependency risks.
+    Provides immutable constants organized in namespaces for configuration,
+    validation, error handling, and system defaults. All constants use
+    typing.Final for immutability and serve as the single source of truth.
 
-    **ARCHITECTURE ROLE**: Layer 0 - Pure Python Foundation
-        - NO dependencies on other flext_core modules
-        - Imported by runtime.py (Layer 0.5) for validation patterns
-        - Imported by ALL higher-level modules (loggings, config, models, etc.)
-        - Foundation for 32+ dependent ecosystem projects
+    The class is organized into nested namespaces:
+    - Core: Basic identifiers and version information
+    - Network: Network-related defaults and limits
+    - Validation: Input validation limits and patterns
+    - Errors: Error codes for exception categorization
+    - Messages: User-facing message templates
+    - Config: Configuration defaults and limits
+    - Platform: Platform-specific constants (HTTP, database, file types)
+    - Logging: Logging configuration and levels
+    - Security: Security and authentication constants
 
-    **PROVIDES**:
-        - Error codes for exception categorization (50+ codes)
-        - Configuration defaults (timeout, network)
-        - Validation patterns (email, URL, UUID, phone) - consumed by runtime.py
-        - Logging constants (levels, formats, defaults)
-        - Platform constants (HTTP, encodings, paths)
-        - Message and display constants
-        - Telemetry and metrics defaults
-        - Complete immutability with typing.Final
-
-    **PATTERN**: Namespace class with nested classes for organization
-        - typing.Final for immutable constant definitions
-        - enum.StrEnum for string enumeration types
-        - typing.ClassVar for class-level constants
-        - Pure Python stdlib only (no external dependencies)
-        - Layer 0 foundation - imported by all other modules
-
-    **How to use**: Access constants via nested namespaces
-        ```python
-        from flext_core import FlextConstants
-
-        # Example 1: Access error codes for exception handling
-        error_code = FlextConstants.Errors.VALIDATION_ERROR
-        raise FlextException("Invalid input", error_code=error_code)
-
-        # Example 2: Use configuration defaults
-        timeout = FlextConstants.Config.DEFAULT_TIMEOUT
-        max_workers = FlextConstants.Config.DEFAULT_MAX_WORKERS
-
-        # Example 3: Apply validation limits
-        if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
-            return FlextResult[str].fail("Name too short")
-
-        # Example 4: Use network constants for validation
-        if not (
-            FlextConstants.Network.MIN_PORT <= port <= FlextConstants.Network.MAX_PORT
-        ):
-            return FlextResult[int].fail("Invalid port number")
-
-        # Example 5: Access logging constants
-        log_level = FlextConstants.Logging.DEFAULT_LEVEL
-        log_format = FlextConstants.Logging.DEFAULT_FORMAT
-
-        # Example 6: Use message constants for user feedback
-        success_msg = FlextConstants.Messages.OPERATION_SUCCESS
-        failure_msg = FlextConstants.Messages.OPERATION_FAILURE
-        ```
-
-    Attributes:
-        CONSTANTS_VERSION (str): Constants module version.
-        PROJECT_PREFIX (str): Project prefix for configuration.
-        PROJECT_NAME (str): Full project name string.
-        Core: Core identifiers (NAME, VERSION, DEFAULT_VERSION).
-        Network: Network defaults (ports, timeouts).
-        Validation: Validation limits (length, format rules).
-        Errors: Error codes for exception categorization.
-        Messages: User-facing message constants.
-        Config: Configuration defaults and limits.
-        Platform: Platform-specific constants (OS, paths).
-        Logging: Logging configuration constants.
-        Container: DI container defaults.
-        Processing: Processing pipeline constants.
-        Security: Security and encryption constants.
-
-    Note:
-        Layer 0 foundation with ZERO dependencies. All constants are
-        immutable using typing.Final. This is the single source of
-        truth for the entire FLEXT ecosystem. Constants guaranteed
-        stable throughout 1.x series. Import only FlextConstants,
-        never individual nested classes.
-
-    Warning:
-        Never modify constants at runtime - all are Final. Never
-        create local constant copies - always import from this
-        module. Constants must remain backward compatible across
-        1.x series. Breaking constant changes require major version.
-
-    Example:
-        Complete constant usage pattern:
-
+    Usage:
         >>> from flext_core import FlextConstants
         >>> error_code = FlextConstants.Errors.VALIDATION_ERROR
-        >>> print(error_code)
-        VALIDATION_ERROR
         >>> timeout = FlextConstants.Config.DEFAULT_TIMEOUT
-        >>> print(timeout)
-        30
-
-    See Also:
-        FlextExceptions: For error code usage in exceptions.
-        FlextConfig: For runtime configuration management.
-        FlextTypes: For type definitions and aliases.
-
     """
 
-    PROJECT_PREFIX = "FLEXT_CORE"
-    CONSTANTS_VERSION: Final[str] = __version__  # Hardcoded to match Core.VERSION
-    PROJECT_NAME: Final[str] = "flext-core"
+    """Core identifiers."""
+    NAME: Final[str] = "FLEXT"
+    VERSION: Final[str] = __version__
 
-    # Direct access support - backward compatible with deprecation warnings
-    _deprecation_warnings_shown: ClassVar[set[str]] = set()
+    # Semantic zero and initial values
+    ZERO: Final[int] = 0
+    INITIAL_TIME: Final[float] = 0.0
 
     def __getitem__(self, key: str) -> object:
         """Direct value access: FlextConstants['Errors.VALIDATION_ERROR'].
@@ -202,34 +103,8 @@ class FlextConstants:
             msg = f"Constant path '{key}' not found in FlextConstants"
             raise AttributeError(msg) from e
 
-    class NonExistent:
-        """Non-existent constants for testing purposes."""
-
-        PATH: Final[str] = "nonexistent/path"
-        NONEXISTENT_CONSTANT: Final[str] = "nonexistent_constant"
-        NON_EXISTENT_CONSTANT: Final[str] = "non_existent_constant"
-
-    class Core:
-        """Core identifiers hardened for the 1.0.0 release cycle."""
-
-        NAME: Final[str] = "FLEXT"  # Usage count: 1
-        VERSION: Final[str] = __version__
-        DEFAULT_VERSION: Final[str] = __version__
-
-        # Core-specific overrides
-        SYSTEM_NAME: Final[str] = "flext-core"
-        MAJOR_VERSION: Final[int] = 1
-        MINOR_VERSION: Final[int] = 0
-        PATCH_VERSION: Final[int] = 0
-
-        # Semantic zero and initial values
-        ZERO: Final[int] = 0  # Semantic zero for counters/initialization
-        INITIAL_TIME: Final[float] = (
-            0.0  # Initial timestamp value  # Initial timestamp value
-        )
-
     class Network:
-        """Network defaults shared across dispatcher-aligned services."""
+        """Network-related defaults and limits."""
 
         MIN_PORT: Final[int] = 1  # Usage count: 4
         MAX_PORT: Final[int] = 65535  # Usage count: 4
@@ -243,37 +118,7 @@ class FlextConstants:
         MAX_CONNECTIONS: Final[int] = 100  # Maximum HTTP connections
 
     class Validation:
-        """Validation guardrails referenced in modernization docs.
-
-        Usage example:
-            from flext_core import FlextConstants, FlextResult
-
-            def validate_user_name(name: str) -> FlextResult[str]:
-                if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
-                    return FlextResult[str].fail(
-                        f"Name must be at least {FlextConstants.Validation.MIN_NAME_LENGTH} characters"
-                    )
-                if len(name) > FlextConstants.Validation.MAX_NAME_LENGTH:
-                    return FlextResult[str].fail(
-                        f"Name cannot exceed {FlextConstants.Validation.MAX_NAME_LENGTH} characters"
-                    )
-                return FlextResult[str].ok(name)
-
-            def validate_email(email: str) -> FlextResult[str]:
-                if len(email) > FlextConstants.Validation.MAX_EMAIL_LENGTH:
-                    return FlextResult[str].fail("Email too long")
-                parts = email.split("@")
-                if len(parts) != FlextConstants.Validation.EMAIL_PARTS_COUNT:
-                    return FlextResult[str].fail("Invalid email format")
-                return FlextResult[str].ok(email)
-
-            def validate_percentage(value: float) -> FlextResult[float]:
-                if value < FlextConstants.Validation.MIN_PERCENTAGE:
-                    return FlextResult[float].fail("Percentage cannot be negative")
-                if value > FlextConstants.Validation.MAX_PERCENTAGE:
-                    return FlextResult[float].fail("Percentage cannot exceed 100")
-                return FlextResult[float].ok(value)
-        """
+        """Input validation limits and patterns."""
 
         MIN_NAME_LENGTH: Final[int] = 2  # Usage count: 1
         MAX_NAME_LENGTH: Final[int] = 100  # Usage count: 0
@@ -303,29 +148,13 @@ class FlextConstants:
         )
         RESOURCE_LIMIT_MIN: Final[int] = 50  # Minimum resource limit
         FILTER_THRESHOLD: Final[int] = 5  # General filter threshold for comparisons
-        RETRY_COUNT_MIN: Final[int] = 2  # Minimum retry attempts
         RETRY_COUNT_MAX: Final[int] = 3  # Maximum retry attempts
         MAX_WORKERS_LIMIT: Final[int] = (
             100  # Maximum reasonable worker count for validation
         )
 
     class Errors:
-        """Canonical error codes surfaced in telemetry narratives.
-
-        Error codes define the standard taxonomy for error classification
-        across the FLEXT ecosystem. Constants with 0 usage are part of the
-        stable 1.0.0 API contract and reserved for:
-        - Future flext-* library implementations
-        - Third-party ecosystem extensions
-        - Backward compatibility guarantees
-        - Public API stability requirements
-
-        Usage pattern:
-            raise FlextException(
-                message="Validation failed",
-                error_code=FlextConstants.Errors.VALIDATION_ERROR
-            )
-        """
+        """Error codes for exception categorization."""
 
         # Core error codes (actively used)
         VALIDATION_ERROR: Final[str] = "VALIDATION_ERROR"  # Usage count: 28
@@ -482,41 +311,7 @@ class FlextConstants:
             XML: Final[str] = "xml"
 
     class Messages:
-        """User-facing validation and failure messages.
-
-        Usage example:
-            from flext_core import FlextConstants, FlextResult, FlextException
-
-            def process_user_input(data: dict) -> FlextResult[FlextTypes.Dict]:
-                if not data:
-                    return FlextResult[FlextTypes.Dict].fail(
-                        FlextConstants.Messages.NULL_DATA,
-                        error_code="VALIDATION_ERROR"
-                    )
-
-                if "name" not in data or not data["name"]:
-                    return FlextResult[FlextTypes.Dict].fail(
-                        FlextConstants.Messages.VALUE_EMPTY,
-                        error_code="VALIDATION_ERROR"
-                    )
-
-                try:
-                    processed = transform_data(data)
-                    return FlextResult[FlextTypes.Dict].ok(processed)
-                except Exception as e:
-                    return FlextResult[FlextTypes.Dict].fail(
-                        FlextConstants.Messages.OPERATION_FAILED,
-                        error_code="OPERATION_ERROR"
-                    )
-
-            def validate_type(value: any, expected_type: type) -> FlextResult[None]:
-                if not isinstance(value, expected_type):
-                    return FlextResult[None].fail(
-                        FlextConstants.Messages.TYPE_MISMATCH,
-                        error_code="TYPE_ERROR"
-                    )
-                return FlextResult[None].ok(None)
-        """
+        """User-facing message templates."""
 
         TYPE_MISMATCH: Final[str] = "Type mismatch"  # Usage count: 2
         SERVICE_NAME_EMPTY: Final[str] = (
@@ -535,12 +330,12 @@ class FlextConstants:
         )
 
     class Entities:
-        """Entity validation prompts reused across services."""
+        """Entity-related constants."""
 
         ENTITY_ID_EMPTY: Final[str] = "Entity ID cannot be empty"  # Usage count: 0
 
     class Defaults:
-        """Baseline defaults called out in onboarding docs."""
+        """Default values for common operations."""
 
         TIMEOUT: Final[int] = 30  # Usage count: 18
         PAGE_SIZE: Final[int] = 100  # Usage count: 2
@@ -558,7 +353,7 @@ class FlextConstants:
         OPERATION_TIMEOUT_SECONDS: Final[int] = 30  # Default operation timeout
 
     class Limits:
-        """Upper bounds safeguarding payload and resource usage."""
+        """Upper bounds for resource usage and validation."""
 
         MAX_STRING_LENGTH: Final[int] = 1000  # Usage count: 0
         MAX_LIST_SIZE: Final[int] = 10000  # Usage count: 0
@@ -588,10 +383,14 @@ class FlextConstants:
         )
 
     class Patterns:
-        """Regex placeholders for downstream ecosystem adapters."""  # Usage count: 0
+        """Regex patterns for validation."""
+
+        PATTERN_MESSAGE_ID_UNKNOWN: Final[str] = "unknown"
+        PATTERN_MESSAGE_ROUTER: Final[str] = "message_router"
+        PATTERN_STATUS_PROCESSED: Final[str] = "processed"
 
     class Config:
-        """Configuration defaults anchoring the unified lifecycle."""
+        """Configuration defaults and limits."""
 
         # Configuration validation constants (moved from FlextConfig.Constants)
         SEMANTIC_VERSION_MIN_PARTS: Final[int] = 3
@@ -657,7 +456,7 @@ class FlextConstants:
             LOCAL = "local"
 
     class Enums:
-        """Shared enumerations referenced across the API surface."""
+        """Shared enumeration types."""
 
         class FieldType(StrEnum):
             """Normalized field types for configuration and model metadata."""
@@ -680,50 +479,7 @@ class FlextConstants:
             MAINTENANCE = "maintenance"
 
     class Platform:
-        """Platform defaults referenced by CLI and adapter packages.
-
-        Usage example:
-            from flext_core import FlextConstants, FlextResult
-
-            # HTTP client configuration
-            def build_api_url(path: str) -> str:
-                return (
-                    f"{FlextConstants.Platform.PROTOCOL_HTTPS}"
-                    f"{FlextConstants.Platform.DEFAULT_HOST}:"
-                    f"{FlextConstants.Platform.FLEXT_API_PORT}{path}"
-                )
-
-            # Database connection
-            def get_postgres_url(host: str, db_name: str) -> str:
-                port = FlextConstants.Platform.POSTGRES_DEFAULT_PORT
-                return f"{FlextConstants.Platform.DB_SCHEME_POSTGRESQL}{host}:{port}/{db_name}"
-
-            # HTTP headers
-            def create_request_headers(api_key: str) -> dict:
-                return {
-                    FlextConstants.Platform.HEADER_CONTENT_TYPE: FlextConstants.Platform.MIME_TYPE_JSON,
-                    FlextConstants.Platform.HEADER_API_KEY: api_key,
-                    FlextConstants.Platform.HEADER_USER_AGENT: "FLEXT/1.0.0"
-                }
-
-            # HTTP status validation
-            def is_success_status(status_code: int) -> bool:
-                return (
-                    FlextConstants.Platform.HTTP_STATUS_OK <= status_code < 300
-                )
-
-            # LDAP connection
-            def build_ldap_url(host: str, use_ssl: bool = False) -> str:
-                protocol = (
-                    FlextConstants.Platform.PROTOCOL_LDAPS if use_ssl
-                    else FlextConstants.Platform.PROTOCOL_LDAP
-                )
-                port = (
-                    FlextConstants.Platform.LDAPS_DEFAULT_PORT if use_ssl
-                    else FlextConstants.Platform.LDAP_DEFAULT_PORT
-                )
-                return f"{protocol}{host}:{port}"
-        """
+        """Platform-specific constants for HTTP, database, and file types."""
 
         # Environment variable prefix for configuration
         ENV_PREFIX: Final[str] = "FLEXT_"
@@ -905,12 +661,12 @@ class FlextConstants:
         MAX_HTTP_STATUS_RANGE: Final[int] = 599
 
     class Observability:
-        """Observability defaults consumed by FlextLogger."""
+        """Observability and logging constants."""
 
         DEFAULT_LOG_LEVEL: Final[str] = "INFO"  # Usage count: 0
 
     class Performance:
-        """Performance thresholds and operational limits for FLEXT services."""
+        """Performance thresholds and operational limits."""
 
         # Connection and timeout settings
         CONNECTION_TIMEOUT: Final[int] = 30  # seconds
@@ -1024,7 +780,7 @@ class FlextConstants:
         )  # 100MB  # 100MB  # 100MB
 
     class Reliability:
-        """Reliability thresholds backing retry guidance."""
+        """Reliability thresholds for retry and circuit breaker logic."""
 
         MAX_RETRY_ATTEMPTS: Final[int] = 3  # Usage count: 1
         DEFAULT_MAX_RETRIES: Final[int] = 3  # Usage count: 1 (referenced in models.py)
@@ -1065,11 +821,7 @@ class FlextConstants:
         )
 
     class Logging:
-        """Logging configuration constants for FlextLogger and FlextConfig.
-
-        Provides default values for logging configuration across the FLEXT ecosystem,
-        ensuring consistent logging behavior.
-        """
+        """Logging configuration constants."""
 
         # Log level constants
         DEBUG: Final[str] = "DEBUG"
@@ -1123,55 +875,7 @@ class FlextConstants:
         MASK_SENSITIVE_DATA: Final[bool] = True
 
     class Security:
-        """Security-related constants for authentication and authorization.
-
-        Usage example:
-            from flext_core import FlextConstants, FlextResult
-            from datetime import datetime, timedelta
-            import bcrypt
-
-            # JWT token generation with appropriate expiry
-            def create_access_token(user_id: str, short_lived: bool = False) -> dict:
-                expiry_minutes = (
-                    FlextConstants.Security.SHORT_JWT_EXPIRY_MINUTES if short_lived
-                    else FlextConstants.Security.DEFAULT_JWT_EXPIRY_MINUTES
-                )
-                return {
-                    "user_id": user_id,
-                    "exp": datetime.utcnow() + timedelta(minutes=expiry_minutes),
-                    "type": "access"
-                }
-
-            # Password validation
-            def validate_password(password: str) -> FlextResult[str]:
-                if len(password) < FlextConstants.Security.MIN_PASSWORD_LENGTH:
-                    return FlextResult[str].fail(
-                        f"Password must be at least {FlextConstants.Security.MIN_PASSWORD_LENGTH} characters"
-                    )
-                if len(password) > FlextConstants.Security.MAX_PASSWORD_LENGTH:
-                    return FlextResult[str].fail(
-                        f"Password cannot exceed {FlextConstants.Security.MAX_PASSWORD_LENGTH} characters"
-                    )
-                return FlextResult[str].ok(password)
-
-            # BCrypt password hashing
-            def hash_password(password: str) -> str:
-                rounds = FlextConstants.Security.DEFAULT_BCRYPT_ROUNDS
-                salt = bcrypt.gensalt(rounds=rounds)
-                return bcrypt.hashpw(password.encode(), salt).decode()
-
-            # Session management
-            def create_session(user_id: str, extended: bool = False) -> dict:
-                duration_hours = (
-                    FlextConstants.Security.MAX_SESSION_EXTENSION_HOURS if extended
-                    else FlextConstants.Security.DEFAULT_SESSION_HOURS
-                )
-                return {
-                    "user_id": user_id,
-                    "expires_at": datetime.utcnow() + timedelta(hours=duration_hours),
-                    "extended": extended
-                }
-        """
+        """Security and authentication constants."""
 
         # Security constants
         DEFAULT_ADMIN_PASSWORD: Final[str] = (
@@ -1249,7 +953,7 @@ class FlextConstants:
         OIDC_DEFAULT_ID_TOKEN_SIGNING_ALGORITHM: Final[str] = "RS256"
 
     class Cqrs:
-        """CQRS (Command Query Responsibility Segregation) constants."""
+        """CQRS pattern constants and configuration."""
 
         # Handler types - Using Literal for type safety
         DEFAULT_HANDLER_TYPE: Final = "command"
@@ -1423,7 +1127,7 @@ class FlextConstants:
             ACQUIRE: Final[str] = "acquire"
             RELEASE: Final[str] = "release"
             CHECK: Final[str] = "check"
-            LIST_OBJECTS: Final[str] = "list[object]"
+            LIST_OBJECTS: Final[str] = "FlextTypes.List"
 
             # Warning types
             WARN_NONE: Final[str] = "none"
@@ -1544,21 +1248,7 @@ class FlextConstants:
         SECOND_ARG_FAILED_MSG: Final[str] = "Second argument failed"
 
     class Context:
-        """Context management constants for FlextContext operations.
-
-        Centralized constants for context scope management, correlation IDs,
-        timeouts, and context depth limits. Used by FlextContext and related
-        context management utilities across the ecosystem.
-
-        Usage example:
-            from flext_core import FlextConstants, FlextContext
-
-            context = FlextContext()
-            context.set("user_id", "123", scope=FlextConstants.Context.SCOPE_GLOBAL)
-            context.set("request_id", "req-456", scope=FlextConstants.Context.SCOPE_REQUEST)
-
-            correlation_id = f"{FlextConstants.Context.CORRELATION_ID_PREFIX}{uuid.uuid4().hex[:8]}"
-        """
+        """Context management constants."""
 
         # Scope literals for context management
         SCOPE_GLOBAL: Final[str] = "global"  # Global scope across entire application
@@ -1589,11 +1279,7 @@ class FlextConstants:
         EXPORT_FORMAT_DICT: Final[str] = "dict"
 
     class Container:
-        """Constants for FlextContainer dependency injection.
-
-        Provides default values for container configuration including
-        worker threads, caching, and service lifecycle management.
-        """
+        """Dependency injection container constants."""
 
         # Worker thread configuration
         DEFAULT_WORKERS: Final[int] = 4  # Default thread pool size for async operations
@@ -1612,11 +1298,7 @@ class FlextConstants:
         MAX_CACHE_SIZE: Final[int] = 100
 
     class Dispatcher:
-        """Constants for FlextDispatcher operations.
-
-        USAGE: Centralized constants for dispatcher modes, defaults, and validation.
-        OPTIMIZATION: Eliminates magic strings and provides type-safe constants.
-        """
+        """Message dispatcher constants."""
 
         # Handler Modes
         HANDLER_MODE_COMMAND = "command"
@@ -1655,7 +1337,7 @@ class FlextConstants:
         )
 
     class Pagination:
-        """Pagination constants referenced by FlextModels.Pagination."""
+        """Pagination configuration constants."""
 
         DEFAULT_PAGE_NUMBER: Final[int] = 1  # Default starting page (1-based)
         DEFAULT_PAGE_SIZE: Final[int] = 10  # Default page size
@@ -1665,11 +1347,7 @@ class FlextConstants:
         MAX_PAGE_NUMBER: Final[int] = 10000  # Maximum page number
 
     class Mixins:
-        """Constants for FlextMixins operations.
-
-        USAGE: Centralized constants for mixin field names, states, and defaults.
-        OPTIMIZATION: Eliminates magic strings and provides type-safe constants.
-        """
+        """Constants for mixin operations."""
 
         # Field Names
         FIELD_ID = "id"
@@ -1776,32 +1454,7 @@ class FlextConstants:
         ERROR_INVALID_LOG_LEVEL = "Invalid log level"
 
     class Http:
-        """HTTP protocol constants for client and server operations.
-
-        Shared HTTP primitives for flext-api (client) and flext-web (server).
-        Eliminates duplication by providing single source of truth for HTTP constants.
-
-        USAGE: Foundation for HTTP client and server implementations.
-        OPTIMIZATION: Zero duplication - all HTTP constants centralized here.
-
-        Usage example:
-            from flext_core import FlextConstants
-
-            # Status code validation
-            if status_code in range(
-                FlextConstants.Http.HTTP_SUCCESS_MIN,
-                FlextConstants.Http.HTTP_SUCCESS_MAX + 1
-            ):
-                return "Success response"
-
-            # Method validation
-            if method in FlextConstants.Http.SAFE_METHODS:
-                return "Safe HTTP method"
-
-            # Port validation
-            if port == FlextConstants.Http.HTTPS_PORT:
-                return "Using HTTPS"
-        """
+        """HTTP protocol constants."""
 
         # HTTP Status Code Ranges
         HTTP_STATUS_MIN: Final[int] = 100
@@ -1861,20 +1514,6 @@ class FlextConstants:
         }
         METHODS_WITH_BODY: ClassVar[set[str]] = {"POST", "PUT", "PATCH"}
 
-        # HTTP Literals for type safety
-        class MethodLiteral:
-            """HTTP method literals for type annotations."""
-
-            GET: Final[str] = "GET"
-            POST: Final[str] = "POST"
-            PUT: Final[str] = "PUT"
-            DELETE: Final[str] = "DELETE"
-            PATCH: Final[str] = "PATCH"
-            HEAD: Final[str] = "HEAD"
-            OPTIONS: Final[str] = "OPTIONS"
-            TRACE: Final[str] = "TRACE"
-            CONNECT: Final[str] = "CONNECT"
-
         # HTTP Ports
         HTTP_PORT: Final[int] = 80
         HTTPS_PORT: Final[int] = 443
@@ -1907,65 +1546,26 @@ class FlextConstants:
         DEFAULT_ACCEPT: Final[str] = "application/json"
 
     class Web:
-        """Web application constants for client and server operations.
+        """Web application constants."""
 
-        Shared web primitives for flext-web and web-based integrations.
-        Provides timeout and configuration constants for web applications.
-        """
-
-        class Timeout:
-            """Web timeout configuration constants."""
-
-            DEFAULT_TIMEOUT: Final[int] = 30  # Default web request timeout in seconds
-            TOTAL_TIMEOUT: Final[int] = 300  # Maximum total timeout for web operations
-            CONNECT_TIMEOUT: Final[int] = 10  # Connection timeout for web requests
-            READ_TIMEOUT: Final[int] = 30  # Read timeout for web responses
+        DEFAULT_TIMEOUT: Final[int] = 30  # Default web request timeout in seconds
+        TOTAL_TIMEOUT: Final[int] = 300  # Maximum total timeout for web operations
+        CONNECT_TIMEOUT: Final[int] = 10  # Connection timeout for web requests
+        READ_TIMEOUT: Final[int] = 30  # Read timeout for web responses
 
     class Batch:
-        """Batch processing constants for data operations.
+        """Batch processing constants."""
 
-        Shared batch processing primitives for all flext modules requiring
-        batch operations. Provides size limits and configuration constants.
-        """
-
-        class Default:
-            """Default batch processing configuration constants."""
-
-            DEFAULT_SIZE: Final[int] = 1000  # Standard batch size for processing
-            SMALL_SIZE: Final[int] = 100  # Small batch size for limited operations
-            LARGE_SIZE: Final[int] = 10000  # Large batch size for bulk operations
+        DEFAULT_SIZE: Final[int] = 1000  # Standard batch size for processing
+        SMALL_SIZE: Final[int] = 100  # Small batch size for limited operations
+        LARGE_SIZE: Final[int] = 10000  # Large batch size for bulk operations
 
     class Processing:
-        """Processing pipeline constants for batch operations and workers."""
+        """Processing pipeline constants."""
 
         DEFAULT_MAX_WORKERS: Final[int] = 4  # Default maximum worker threads
         DEFAULT_BATCH_SIZE: Final[int] = 1000  # Default batch size for processing
         MAX_BATCH_SIZE: Final[int] = 10000  # Maximum batch size for validation
-
-    class Paths:
-        """File system paths for core operations."""
-
-        CONFIG_DIR: Final[str] = "config"
-        LOGS_DIR: Final[str] = "logs"
-        CACHE_DIR: Final[str] = "cache"
-        TEMP_DIR: Final[str] = "tmp"
-
-    # =================================================================
-    # TYPE ALIASES (Python 3.13+ Literal types from FlextConstants)
-    # =================================================================
-
-    # Bind type literals - reference nested class attributes correctly
-    BindType = Literal[
-        "temporary",
-        "permanent",
-    ]
-
-    # Merge strategy literals - reference nested class attributes correctly
-    MergeStrategy = Literal[
-        "replace",
-        "update",
-        "merge_deep",
-    ]
 
     # Status literals - reference nested class attributes correctly
     Status = Literal[
@@ -1974,51 +1574,6 @@ class FlextConstants:
         "completed",
         "failed",
         "compensating",
-    ]
-
-    # Health status literals - reference nested class attributes correctly
-    HealthStatus = Literal[
-        "healthy",
-        "degraded",
-        "unhealthy",
-    ]
-
-    # Token type literals - reference nested class attributes correctly
-    TokenType = Literal[
-        "bearer",
-        "api_key",
-        "jwt",
-    ]
-
-    # Notification status literals - reference nested class attributes correctly
-    NotificationStatus = Literal[
-        "pending",
-        "sent",
-        "failed",
-    ]
-
-    # Token status literals - reference nested class attributes correctly
-    TokenStatus = Literal[
-        "pending",
-        "running",
-        "completed",
-        "failed",
-    ]
-
-    # Batch status literals - reference nested class attributes correctly
-    BatchStatus = Literal[
-        "pending",
-        "processing",
-        "completed",
-        "failed",
-    ]
-
-    # Circuit breaker status literals - reference nested class attributes correctly
-    CircuitBreakerStatus = Literal[
-        "idle",
-        "running",
-        "completed",
-        "failed",
     ]
 
     # Circuit breaker state literals - reference nested class attributes correctly
@@ -2048,34 +1603,12 @@ class FlextConstants:
         "query",
     ]
 
-    Action = Literal[
-        "acquire",
-        "release",
-        "check",
-        "list[object]",
-    ]
-
-    WarningLevel = Literal[
-        "none",
-        "warn",
-        "error",
-    ]
-
-    Mode = Literal[
-        "validation",
-        "serialization",
-    ]
-
     Compression = Literal[
         "none",
         "gzip",
         "bzip2",
         "lz4",
     ]
-
-    # =========================================================================
-    # ADDITIONAL LITERAL TYPES (Migrated from FlextTypes - CRITICAL FIX)
-    # =========================================================================
 
     # Error handling literals (from FlextTypes.ErrorHandling)
     ErrorCategory = Literal[
@@ -2154,8 +1687,6 @@ class FlextConstants:
 
     # CQRS literals (from FlextTypes.Cqrs)
     CqrsMode = Literal["command", "query", "event", "saga"]
-
-    # Circuit breaker literals (from FlextTypes.CircuitBreaker)
 
     # Workspace literals (from FlextTypes.Workspace)
     WorkspaceStatus = Literal[

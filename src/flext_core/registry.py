@@ -1,11 +1,12 @@
-"""Dispatcher registration helpers aligned with the 1.0.0 modernization plan.
+"""Handler registration and discovery utilities.
 
-The registry implements the handler bootstrapping workflow called out in
-``README.md`` and ``docs/architecture.md`` so CLI and connector packages can
-standardise idempotent registrations during the unified dispatcher rollout.
+This module provides FlextRegistry, utilities for registering and managing
+command/query handlers with FlextDispatcher, including batch registration,
+idempotency guarantees, and registration tracking.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 # pyright: basic
 
@@ -28,130 +29,34 @@ from flext_core.typings import FlextTypes
 
 
 class FlextRegistry(FlextMixins):
-    """Stateful helper that reports on handler adoption across packages.
+    """Handler registration and discovery utilities.
 
-    By wrapping ``FlextDispatcher`` it provides registration summaries
-    and idempotency guarantees that feed ecosystem migration dashboards
-    during the 1.0.0 rollout.
+    Provides utilities for registering and managing command/query handlers
+    with FlextDispatcher, including batch registration, idempotency guarantees,
+    and registration tracking.
 
-    **Inherited Infrastructure** (from FlextMixins):
-        - container: FlextContainer (via FlextMixins)
-        - context: object (via FlextMixins)
-        - logger: FlextLogger (via FlextMixins) - per-registry logger instance
-        - config: object (via FlextMixins.Configurable) - global config access
-        - _track_operation: context manager (via FlextMixins)
-        - _enrich_context, _with_correlation_id, etc. (via FlextMixins)
+    Features:
+    - Handler registration with dispatcher integration
+    - Batch registration for multiple handlers
+    - Registration deduplication and idempotency
+    - Registration summary and statistics tracking
+    - Handler discovery and enumeration
+    - Registration status validation
+    - Handler unregistration and cleanup
+    - Registration error tracking and reporting
 
-    **Function**: Handler registration management and tracking
-        - Handler registration with dispatcher integration
-        - Batch registration for multiple handlers
-        - Registration deduplication and idempotency
-        - Registration summary and statistics tracking
-        - Handler discovery and enumeration
-        - Registration status validation
-        - Handler unregistration and cleanup
-        - Registration error tracking and reporting
-        - Handler configuration management
-        - Migration dashboard support for 1.0.0
-
-    **Uses**: Core FLEXT infrastructure for registry
-        - FlextDispatcher for handler registration
-        - FlextHandlers for handler base class
-        - FlextResult[T] for operation results
-        - FlextModels for registration details
-        - FlextConstants for handler modes and defaults
-        - collections.abc for type definitions
-        - dataclasses for Summary structure
-        - typing.Literal for type constraints
-        - Mapping and Sequence for collections
-
-    **How to use**: Handler registration and tracking
-        ```python
-        from flext_core import FlextRegistry, FlextDispatcher
-
-        # Example 1: Create registry with dispatcher
-        dispatcher = FlextDispatcher.create_from_global_config()
-        registry = FlextRegistry(dispatcher.unwrap())
-
-
-        # Example 2: Register single handler
-        class CreateUserHandler:
-            def handle(self, cmd):
-                return FlextResult[str].ok("created")
-
-
-        result = registry.register_handler(
-            message_type=CreateUserCommand,
-            handler=CreateUserHandler(),
-            handler_mode="command",
-        )
-
-        # Example 3: Batch register multiple handlers
-        handlers = [
-            (CreateUserCommand, CreateUserHandler()),
-            (UpdateUserCommand, UpdateUserHandler()),
-            (DeleteUserCommand, DeleteUserHandler()),
-        ]
-        summary = registry.register_batch(handlers)
-        print(f"Registered: {summary.successful_registrations}")
-
-        # Example 4: Get registration summary
-        summary = registry.get_summary()
-        print(f"Total handlers: {len(summary.registered)}")
-
-        # Example 5: Check if handler registered
-        is_registered = registry.is_handler_registered(CreateUserCommand)
-
-        # Example 6: Unregister handler
-        result = registry.unregister_handler(CreateUserCommand)
-
-        # Example 7: Get all registered handlers
-        handlers = registry.get_all_handlers()
-        for handler_type, handler_list in handlers.items():
-            print(f"{handler_type}: {len(handler_list)} handlers")
-        ```
-
-        - [ ] Add handler versioning and migration support
-        - [ ] Implement handler dependency resolution
-        - [ ] Support handler lifecycle hooks and callbacks
-        - [ ] Add handler health checks and validation
-        - [ ] Implement handler discovery from modules
-        - [ ] Support handler hot-reloading capabilities
-        - [ ] Add handler performance profiling
-        - [ ] Implement handler testing utilities
-        - [ ] Support handler documentation generation
-        - [ ] Add handler migration dashboard integration
-
-    Attributes:
-        Summary: Registration summary dataclass for tracking.
-
-    Note:
-        Registry wraps FlextDispatcher for registration.
-        Batch registration provides atomic-like semantics.
-        Registration deduplication prevents duplicates.
-        Summary provides migration dashboard insights.
-        All operations return FlextResult for consistency.
-
-    Warning:
-        Registry maintains state across registrations.
-        Batch registration stops on first error by default.
-        Unregistration does not validate handler existence.
-        Summary reset clears all tracking information.
-
-    Example:
-        Complete handler registration workflow:
-
+    Usage:
+        >>> from flext_core import FlextRegistry, FlextDispatcher
+        >>>
+        >>> dispatcher = FlextDispatcher()
         >>> registry = FlextRegistry(dispatcher)
-        >>> result = registry.register_handler(CreateUserCommand, handler, "command")
-        >>> print(result.is_success)
-        True
-
-    See Also:
-        FlextDispatcher: For message dispatch operations.
-        FlextHandlers: For handler base class patterns.
-        FlextModels: For registration detail models.
-        FlextResult: For result type definitions.
-
+        >>>
+        >>> # Register single handler
+        >>> result = registry.register_handler(CreateUserHandler())
+        >>>
+        >>> # Batch register multiple handlers
+        >>> handlers = [CreateUserHandler(), UpdateUserHandler()]
+        >>> summary = registry.register_handlers(handlers)
     """
 
     class Summary(FlextModels.Value):
@@ -182,6 +87,14 @@ class FlextRegistry(FlextMixins):
 
         # Initialize service infrastructure (DI, Context, Logging, Metrics)
         self._init_service("flext_registry")
+
+        # Enrich context with registry metadata for observability
+        self._enrich_context(
+            service_type="registry",
+            dispatcher_type=type(dispatcher).__name__,
+            supports_batch_registration=True,
+            idempotent_registration=True,
+        )
 
         self._dispatcher = dispatcher
         self._registered_keys: set[str] = set()

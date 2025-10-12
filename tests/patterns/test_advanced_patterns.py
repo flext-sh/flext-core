@@ -18,7 +18,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextCore
 
 # Type alias for test functions
 TestFunction = Callable[[object], None]
@@ -51,14 +51,16 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: FlextTypes.Dict) -> None:
+    def __init__(self, name: str, data: FlextCore.Types.Dict) -> None:
         """Initialize mockscenario:."""
         super().__init__()
         self.name = name
         self.given: dict[str, str] = cast("dict[str, str]", data.get("given", {}))
         self.when: dict[str, str] = cast("dict[str, str]", data.get("when", {}))
         self.then: dict[str, str] = cast("dict[str, str]", data.get("then", {}))
-        self.tags: list[str] = cast("list[str]", data.get("tags", []))
+        self.tags: FlextCore.Types.StringList = cast(
+            "FlextCore.Types.StringList", data.get("tags", [])
+        )
         self.priority: str = str(data.get("priority", "normal"))
 
 
@@ -69,10 +71,10 @@ class GivenWhenThenBuilder:
         """Initialize givenwhenthenbuilder:."""
         super().__init__()
         self.name = name
-        self._given: FlextTypes.Dict = {}
-        self._when: FlextTypes.Dict = {}
-        self._then: FlextTypes.Dict = {}
-        self._tags: FlextTypes.StringList = []
+        self._given: FlextCore.Types.Dict = {}
+        self._when: FlextCore.Types.Dict = {}
+        self._then: FlextCore.Types.Dict = {}
+        self._tags: FlextCore.Types.StringList = []
         self._priority = "normal"
 
     def given(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
@@ -150,8 +152,8 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize flexttestbuilder:."""
         super().__init__()
-        self._data: FlextTypes.Dict = {}
-        self._validation_rules: dict[str, object] = {}
+        self._data: FlextCore.Types.Dict = {}
+        self._validation_rules: FlextCore.Types.Dict = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """with_id method.
@@ -217,11 +219,11 @@ class FlextTestBuilder:
         self._validation_rules = kwargs
         return self
 
-    def build(self) -> FlextTypes.Dict:
+    def build(self) -> FlextCore.Types.Dict:
         """Build method.
 
         Returns:
-            FlextTypes.Dict: Copy of the built data.
+            FlextCore.Types.Dict: Copy of the built data.
 
         """
         return self._data.copy()
@@ -234,9 +236,9 @@ class ParameterizedTestBuilder:
         """Initialize parameterizedtestbuilder:."""
         super().__init__()
         self.test_name = test_name
-        self._cases: list[FlextTypes.Dict] = []
-        self._success_cases: list[FlextTypes.Dict] = []
-        self._failure_cases: list[FlextTypes.Dict] = []
+        self._cases: list[FlextCore.Types.Dict] = []
+        self._success_cases: list[FlextCore.Types.Dict] = []
+        self._failure_cases: list[FlextCore.Types.Dict] = []
 
     def add_case(self, **kwargs: object) -> ParameterizedTestBuilder:
         """add_case method.
@@ -250,7 +252,7 @@ class ParameterizedTestBuilder:
 
     def add_success_cases(
         self,
-        cases: list[FlextTypes.Dict],
+        cases: list[FlextCore.Types.Dict],
     ) -> ParameterizedTestBuilder:
         """add_success_cases method.
 
@@ -263,7 +265,7 @@ class ParameterizedTestBuilder:
 
     def add_failure_cases(
         self,
-        cases: list[FlextTypes.Dict],
+        cases: list[FlextCore.Types.Dict],
     ) -> ParameterizedTestBuilder:
         """add_failure_cases method.
 
@@ -274,11 +276,11 @@ class ParameterizedTestBuilder:
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[FlextTypes.Dict]:
+    def build(self) -> list[FlextCore.Types.Dict]:
         """Build method.
 
         Returns:
-            list[FlextTypes.Dict]: Copy of the test cases.
+            list[FlextCore.Types.Dict]: Copy of the test cases.
 
         """
         return self._cases.copy()
@@ -300,11 +302,11 @@ class ParameterizedTestBuilder:
         ]
         return success_params + failure_params
 
-    def build_test_ids(self) -> FlextTypes.StringList:
+    def build_test_ids(self) -> FlextCore.Types.StringList:
         """build_test_ids method.
 
         Returns:
-            FlextTypes.StringList: List of test IDs.
+            FlextCore.Types.StringList: List of test IDs.
 
         """
         return [
@@ -317,11 +319,14 @@ class AssertionBuilder:
     """Builder for complex test assertions."""
 
     def __init__(
-        self, data: list[object] | dict[str, object] | str | tuple[object, ...]
+        self,
+        data: FlextCore.Types.List | FlextCore.Types.Dict | str | tuple[object, ...],
     ) -> None:
         """Initialize assertionbuilder:."""
         super().__init__()
-        self.data: list[object] | dict[str, object] | str | tuple[object, ...] = data
+        self.data: (
+            FlextCore.Types.List | FlextCore.Types.Dict | str | tuple[object, ...]
+        ) = data
         self._assertions: list[Callable[[], None]] = []
 
     def assert_equals(self, expected: object) -> AssertionBuilder:
@@ -351,7 +356,7 @@ class AssertionBuilder:
             if isinstance(self.data, (list, tuple, set, str)):
                 # Type-safe check for sequence types
                 if isinstance(self.data, (list, tuple, set)):
-                    container_data = cast("list[object]", self.data)
+                    container_data = cast("FlextCore.Types.List", self.data)
                     assert item in container_data
                 else:  # self.data is str
                     assert str(item) in self.data
@@ -381,7 +386,8 @@ class AssertionBuilder:
     def satisfies(
         self,
         condition: Callable[
-            [list[object] | dict[str, object] | str | tuple[object, ...]], bool
+            [FlextCore.Types.List | FlextCore.Types.Dict | str | tuple[object, ...]],
+            bool,
         ],
         description: str = "",
     ) -> AssertionBuilder:
@@ -490,7 +496,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: dict[str, object] = {"name": "John", "age": 30, "active": True}
+        test_data: FlextCore.Types.Dict = {"name": "John", "age": 30, "active": True}
 
         assertion_builder = (
             AssertionBuilder(test_data)
@@ -505,7 +511,7 @@ class TestAdvancedPatterns:
     @mark_test_pattern("mock_scenario")
     def test_mock_scenario_pattern(self) -> None:
         """Test mock scenario pattern."""
-        scenario_data: dict[str, object] = {
+        scenario_data: FlextCore.Types.Dict = {
             "given": {"user": "authenticated"},
             "when": {"action": "request_data"},
             "then": {"result": "success"},
@@ -538,20 +544,20 @@ class TestAdvancedPatterns:
                 self.call_count = 0
                 self.states = ["processing", "completed", "error"]
 
-            def process(self, data: str) -> FlextResult[dict[str, str]]:
+            def process(self, data: str) -> FlextCore.Result[dict[str, str]]:
                 """Process data with state transitions."""
                 self.call_count += 1
 
                 # First call: processing state
                 if self.call_count == 1:
-                    return FlextResult[dict[str, str]].ok({"status": "processing"})
+                    return FlextCore.Result[dict[str, str]].ok({"status": "processing"})
 
                 # Second call: completed state
                 if self.call_count == 2:
-                    return FlextResult[dict[str, str]].ok({"status": "completed"})
+                    return FlextCore.Result[dict[str, str]].ok({"status": "completed"})
 
                 # Third call: error state
-                return FlextResult[dict[str, str]].fail("Service unavailable")
+                return FlextCore.Result[dict[str, str]].fail("Service unavailable")
 
         # Create real service instance
         service = ProcessingService()

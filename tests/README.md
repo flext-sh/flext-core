@@ -11,7 +11,7 @@ tests/
 ├── unit/                # Module-level guarantees (result, container, dispatcher, etc.)
 ├── integration/         # Cross-module flows (config + container + dispatcher)
 ├── patterns/            # Behavioural contracts shared with ecosystem packages
-└── conftest.py          # Fixtures that bootstrap FlextContext and the global container
+└── conftest.py          # Fixtures that bootstrap FlextCore.Context and the global container
 ```
 
 Notable files:
@@ -42,8 +42,8 @@ poetry run pytest tests/patterns -m dispatcher
 
 ## Modernization Expectations
 
-- All new tests must exercise `FlextDispatcher` + `FlextContext` interactions where applicable.
+- All new tests must exercise `FlextCore.Dispatcher` + `FlextCore.Context` interactions where applicable.
 - Coverage target: keep the baseline ≥79% while pushing towards the 85% goal called out in the modernization plan.
-- Fixtures should rely on `FlextConfig` and `FlextContainer` bootstrap helpers rather than bespoke setup code.
+- Fixtures should rely on `FlextCore.Config` and `FlextCore.Container` bootstrap helpers rather than bespoke setup code.
 
 Please update this README if new suites or markers are introduced as part of the 1.0.0 workstream.

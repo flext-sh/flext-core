@@ -25,30 +25,30 @@ import time
 import warnings
 from uuid import uuid4
 
-from flext_core import FlextCore, FlextResult, FlextService, FlextTypes
+from flext_core import FlextCore
 
 
-class ContextManagementService(FlextService[FlextTypes.Dict]):
-    """Service demonstrating ALL FlextCore.Context patterns with FlextMixins infrastructure.
+class ContextManagementService(FlextCore.Service[FlextCore.Types.Dict]):
+    """Service demonstrating ALL FlextCore.Context patterns with FlextCore.Mixins infrastructure.
 
-    This service inherits from FlextService to demonstrate:
+    This service inherits from FlextCore.Service to demonstrate:
     - Inherited container property (FlextCore.Container singleton)
-    - Inherited logger property (FlextLogger with service context - CONTEXT FOCUS!)
+    - Inherited logger property (FlextCore.Logger with service context - CONTEXT FOCUS!)
     - Inherited context property (FlextCore.Context for request/correlation tracking)
     - Inherited config property (FlextCore.Config with application settings)
     - Inherited metrics property (FlextMetrics for observability)
 
     The focus is on demonstrating FlextCore.Context patterns: correlation tracking,
     context variables, service context, request context, and performance tracking,
-    while leveraging complete FlextMixins infrastructure.
+    while leveraging complete FlextCore.Mixins infrastructure.
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins infrastructure.
+        """Initialize with inherited FlextCore.Mixins infrastructure.
 
         Note: No manual logger initialization needed!
-        All infrastructure is inherited from FlextService base class:
-        - self.logger: FlextLogger with service context (ALREADY CONFIGURED!)
+        All infrastructure is inherited from FlextCore.Service base class:
+        - self.logger: FlextCore.Logger with service context (ALREADY CONFIGURED!)
         - self.container: FlextCore.Container global singleton
         - self.context: FlextCore.Context for request/correlation tracking
         - self.config: FlextCore.Config with application settings
@@ -71,7 +71,7 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
             },
         )
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
         """Execute all context management demonstrations.
 
         Demonstrates inherited infrastructure alongside context patterns:
@@ -82,7 +82,7 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
         - Performance tracking
 
         Returns:
-            FlextResult[Dict] with demonstration summary including infrastructure details
+            FlextCore.Result[Dict] with demonstration summary including infrastructure details
 
         """
         self.logger.info("Starting comprehensive FlextCore.Context demonstration")
@@ -97,12 +97,12 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
             self.demonstrate_serialization_context()
             self.demonstrate_context_utilities()
 
-            # NEW: FlextResult v0.9.9+ methods for context are demonstrated later
+            # NEW: FlextCore.Result v0.9.9+ methods for context are demonstrated later
 
             # Deprecation warnings
             self.demonstrate_deprecated_patterns()
 
-            summary: dict[str, object] = {
+            summary: FlextCore.Types.Dict = {
                 "demonstrations_completed": "12",
                 "status": "completed",
                 "context_managed": "true",
@@ -125,12 +125,12 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
                 "FlextCore.Context demonstration completed successfully", extra=summary
             )
 
-            return FlextResult[FlextTypes.Dict].ok(summary)
+            return FlextCore.Result[FlextCore.Types.Dict].ok(summary)
 
         except Exception as e:
             error_msg = f"FlextCore.Context demonstration failed: {e}"
             self.logger.exception(error_msg)
-            return FlextResult[FlextTypes.Dict].fail(error_msg)
+            return FlextCore.Result[FlextCore.Types.Dict].fail(error_msg)
 
     # ========== CONTEXT VARIABLES ==========
 
@@ -282,7 +282,7 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
         print("\n=== Request Context ===")
 
         # Set request context
-        request_data: FlextTypes.Dict = {
+        request_data: FlextCore.Types.Dict = {
             "method": "POST",
             "path": "/api/orders",
             "user_id": "USER-456",
@@ -441,15 +441,15 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
         print("\n=== Context Utilities ===")
 
         # Merge contexts
-        context1: FlextTypes.StringDict = {"user": "alice", "role": "REDACTED_LDAP_BIND_PASSWORD"}
-        context2: FlextTypes.StringDict = {"tenant": "acme", "role": "superREDACTED_LDAP_BIND_PASSWORD"}
+        context1: FlextCore.Types.StringDict = {"user": "alice", "role": "REDACTED_LDAP_BIND_PASSWORD"}
+        context2: FlextCore.Types.StringDict = {"tenant": "acme", "role": "superREDACTED_LDAP_BIND_PASSWORD"}
 
-        merged: FlextTypes.StringDict = {**context1, **context2}
+        merged: FlextCore.Types.StringDict = {**context1, **context2}
         print("✅ Contexts merged:")
         print(f"  Result: {merged}")
 
         # Copy context
-        original: FlextTypes.Dict = {
+        original: FlextCore.Types.Dict = {
             "data": {"nested": "value"},
             "id": 123,
         }
@@ -572,10 +572,10 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
 
     # ========== DEPRECATED PATTERNS ==========
 
-    # ========== NEW FlextResult METHODS (v0.9.9+) ==========
+    # ========== NEW FlextCore.Result METHODS (v0.9.9+) ==========
 
     def demonstrate_new_flextresult_methods(self) -> None:
-        """Demonstrate the 5 new FlextResult methods in context management.
+        """Demonstrate the 5 new FlextCore.Result methods in context management.
 
         Shows how the new v0.9.9+ methods integrate with context operations:
         - from_callable: Safe context operations
@@ -584,12 +584,12 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
         - alt: Context provider alternatives
         - value_or_call: Lazy context loading
         """
-        print("\n=== NEW FlextResult METHODS (v0.9.9+) ===")
+        print("\n=== NEW FlextCore.Result METHODS (v0.9.9+) ===")
 
         # 1. from_callable - Safe Context Operations
         print("\n1. from_callable: Safe Context Operations")
 
-        def risky_context_operation() -> dict[str, object]:
+        def risky_context_operation() -> FlextCore.Types.Dict:
             """Context operation that might raise exceptions."""
             user_id = FlextCore.Context.Variables.Request.USER_ID.get()
             if not user_id:
@@ -613,7 +613,9 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
         FlextCore.Context.Variables.Service.SERVICE_NAME.set("context-service")
 
         # Safe context extraction without try/except
-        result = FlextResult[dict[str, object]].from_callable(risky_context_operation)
+        result = FlextCore.Result[FlextCore.Types.Dict].from_callable(
+            risky_context_operation
+        )
         if result.is_success:
             context_data = result.unwrap()
             print(f"✅ Context extracted safely: user={context_data['user_id']}")
@@ -624,51 +626,53 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
         print("\n2. flow_through: Context Pipeline Composition")
 
         def validate_user_context(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            data: FlextCore.Types.Dict,
+        ) -> FlextCore.Result[FlextCore.Types.Dict]:
             """Validate user context exists."""
             if not data.get("user_id"):
-                return FlextResult[dict[str, object]].fail("User context required")
-            return FlextResult[dict[str, object]].ok(data)
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
+                    "User context required"
+                )
+            return FlextCore.Result[FlextCore.Types.Dict].ok(data)
 
         def enrich_with_correlation(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            data: FlextCore.Types.Dict,
+        ) -> FlextCore.Result[FlextCore.Types.Dict]:
             """Add correlation ID from context."""
             correlation_id = FlextCore.Context.Correlation.get_correlation_id()
-            enriched: dict[str, object] = {**data, "correlation_id": correlation_id}
-            return FlextResult[dict[str, object]].ok(enriched)
+            enriched: FlextCore.Types.Dict = {**data, "correlation_id": correlation_id}
+            return FlextCore.Result[FlextCore.Types.Dict].ok(enriched)
 
         def add_service_metadata(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            data: FlextCore.Types.Dict,
+        ) -> FlextCore.Result[FlextCore.Types.Dict]:
             """Add service metadata from context."""
-            enriched: dict[str, object] = {
+            enriched: FlextCore.Types.Dict = {
                 **data,
                 "service_name": FlextCore.Context.Service.get_service_name(),
                 "service_version": FlextCore.Context.Service.get_service_version(),
             }
-            return FlextResult[dict[str, object]].ok(enriched)
+            return FlextCore.Result[FlextCore.Types.Dict].ok(enriched)
 
         def validate_complete_context(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            data: FlextCore.Types.Dict,
+        ) -> FlextCore.Result[FlextCore.Types.Dict]:
             """Ensure all required context fields present."""
             required = ["user_id", "correlation_id", "service_name"]
             missing = [f for f in required if not data.get(f)]
             if missing:
-                return FlextResult[dict[str, object]].fail(
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
                     f"Missing context fields: {missing}"
                 )
-            return FlextResult[dict[str, object]].ok(data)
+            return FlextCore.Result[FlextCore.Types.Dict].ok(data)
 
         # Flow through context enrichment pipeline
-        pipeline_context_data: dict[str, object] = {
+        pipeline_context_data: FlextCore.Types.Dict = {
             "user_id": FlextCore.Context.Variables.Request.USER_ID.get(),
             "timestamp": time.time(),
         }
         pipeline_result = (
-            FlextResult[dict[str, object]]
+            FlextCore.Result[FlextCore.Types.Dict]
             .ok(pipeline_context_data)
             .flow_through(
                 validate_user_context,
@@ -690,22 +694,24 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
         # 3. lash - Context Fallback Recovery
         print("\n3. lash: Context Fallback Recovery")
 
-        def try_get_user_from_context() -> FlextResult[dict[str, object]]:
+        def try_get_user_from_context() -> FlextCore.Result[FlextCore.Types.Dict]:
             """Try to get user from primary context."""
             user_id = FlextCore.Context.Variables.Request.USER_ID.get()
             if not user_id:
-                return FlextResult[dict[str, object]].fail(
+                return FlextCore.Result[FlextCore.Types.Dict].fail(
                     "User not in request context"
                 )
-            return FlextResult[dict[str, object]].ok({
+            return FlextCore.Result[FlextCore.Types.Dict].ok({
                 "user_id": user_id,
                 "source": "context",
             })
 
-        def fallback_to_default_user(error: str) -> FlextResult[dict[str, object]]:
+        def fallback_to_default_user(
+            error: str,
+        ) -> FlextCore.Result[FlextCore.Types.Dict]:
             """Fallback to default anonymous user."""
             print(f"   ⚠️  Context lookup failed: {error}, using fallback...")
-            return FlextResult[dict[str, object]].ok({
+            return FlextCore.Result[FlextCore.Types.Dict].ok({
                 "user_id": "anonymous",
                 "source": "fallback",
             })
@@ -727,14 +733,16 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
         # 4. alt - Context Provider Alternatives
         print("\n4. alt: Context Provider Alternatives")
 
-        def get_cached_service_config() -> FlextResult[dict[str, object]]:
+        def get_cached_service_config() -> FlextCore.Result[FlextCore.Types.Dict]:
             """Try to get service config from cache context."""
             # Simulate cache miss
-            return FlextResult[dict[str, object]].fail("Config not in cache context")
+            return FlextCore.Result[FlextCore.Types.Dict].fail(
+                "Config not in cache context"
+            )
 
-        def get_default_service_config() -> FlextResult[dict[str, object]]:
+        def get_default_service_config() -> FlextCore.Result[FlextCore.Types.Dict]:
             """Get default service configuration."""
-            return FlextResult[dict[str, object]].ok({
+            return FlextCore.Result[FlextCore.Types.Dict].ok({
                 "timeout": 30,
                 "max_retries": 3,
                 "log_level": "INFO",
@@ -769,7 +777,9 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
             }
 
         # User not in context, lazy-load profile
-        user_context: FlextResult[dict[str, str]] = FlextResult[dict[str, str]].fail(
+        user_context: FlextCore.Result[dict[str, str]] = FlextCore.Result[
+            dict[str, str]
+        ].fail(
             "User not in context",
         )
 
@@ -780,7 +790,9 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
         print(f"   Role: {user_profile.get('role')}")
 
         # When user is in context, doesn't call the expensive function
-        cached_user: FlextResult[dict[str, str]] = FlextResult[dict[str, str]].ok({
+        cached_user: FlextCore.Result[dict[str, str]] = FlextCore.Result[
+            dict[str, str]
+        ].ok({
             "user_id": "USER-CACHED-789",
             "name": "Jane Cached",
         })
@@ -789,7 +801,7 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
         )  # Won't execute
         print(f"✅ Cached profile used: {cached_profile}")
 
-        print("\n✅ NEW FlextResult METHODS DEMONSTRATED!")
+        print("\n✅ NEW FlextCore.Result METHODS DEMONSTRATED!")
         print("All 5 methods integrated with context management operations")
 
     def demonstrate_deprecated_patterns(self) -> None:
@@ -873,7 +885,7 @@ def main() -> None:
     print("\n=== Running Context Demo ===")
     service.demonstrate_context()
 
-    # New FlextResult methods (v0.9.9+)
+    # New FlextCore.Result methods (v0.9.9+)
     service.demonstrate_new_flextresult_methods()
 
     # Deprecation warnings

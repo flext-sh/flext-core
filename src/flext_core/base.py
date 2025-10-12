@@ -1,24 +1,21 @@
-"""Unified foundation base class for FLEXT ecosystem domain libraries.
+"""Convenience base class with flext-core namespace integration.
 
-This module introduces :class:`FlextBase`, a convenience layer that exposes all
-flext-core namespace classes (constants, models, protocols, utilities, etc.)
-while providing ready-to-use infrastructure helpers (configuration, logging,
-context propagation, dependency injection, metrics) backed by
-:class:`flext_core.mixins.FlextMixins`.
+This module provides FlextBase, a convenience base class that exposes all
+flext-core namespace classes while providing ready-to-use infrastructure
+helpers including configuration, logging, context propagation, dependency
+injection, and metrics
 
-Domain libraries can inherit from :class:`FlextBase` to eliminate boilerplate in
-examples and services, override any namespace class to extend behaviour, and
-benefit from automatic container registration, context binding, and logging.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 """
-
 # ruff: noqa: D102
 # pyright: basic
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from contextlib import AbstractContextManager
-from typing import TypeVar
+from typing import TypeVar, TypeAlias
 
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
@@ -38,15 +35,30 @@ from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
-from flext_core.typings import FlextTypes
+from flext_core.typings import FlextTypes, T_co
 from flext_core.utilities import FlextUtilities
 
 
 class FlextBase(FlextMixins):
-    """Convenience base exposing flext-core namespaces and infrastructure.
+    """Convenience base class with flext-core namespace integration.
 
-    Inherits directly from FlextMixins to provide all service infrastructure
-    (container, logger, config, context, metrics) automatically.
+    Provides ready-to-use infrastructure helpers including configuration,
+    logging, context propagation, dependency injection, and metrics.
+
+    Features:
+    - Access to all flext-core namespace classes (Constants, Models, etc.)
+    - Infrastructure helpers for common patterns
+    - Automatic service registration and context binding
+    - Ready-to-use logging and configuration integration
+    - Extension points for domain-specific behavior
+
+    Usage:
+        >>> from flext_core.base import FlextBase
+        >>>
+        >>> class MyService(FlextBase):
+        ...     def __init__(self):
+        ...         super().__init__(service_name="MyService")
+        ...         self.logger.info("Service initialized")
     """
 
     # Type variables for generic operations
@@ -54,7 +66,7 @@ class FlextBase(FlextMixins):
 
     # Namespace aliases – inherit to enable domain-specific extension.
 
-    Result: type[FlextResult[object]] = FlextResult  # Type alias for linter
+    Result = FlextResult  # Direct generic alias
 
     class Config(FlextConfig):
         """Pydantic settings namespace."""
@@ -78,7 +90,8 @@ class FlextBase(FlextMixins):
         """Cross-cutting utility namespace."""
 
     class Mixins(FlextMixins):
-        """Reusable behaviour mixins."""
+        """Reusable behaviour mixins - direct passthrough."""
+        pass
 
     class Service[TDomainResult](FlextService[TDomainResult]):
         """Service base alias preserving generic typing."""
@@ -138,6 +151,14 @@ class FlextBase(FlextMixins):
         if auto_register:
             resolved_name = service_name or self.__class__.__name__
             self._init_service(resolved_name)
+
+            # Enrich context with base service metadata for observability
+            self._enrich_context(
+                service_type="base_service",
+                service_name=resolved_name,
+                runtime_type=type(self._runtime).__name__,
+                auto_registered=True,
+            )
 
     # ------------------------------------------------------------------
     # Core helpers – runtime
@@ -253,10 +274,6 @@ class FlextBase(FlextMixins):
     def bind_context(self, **context: object) -> None:
         """Bind context data (delegates to FlextMixins)."""
         self._enrich_context(**context)
-
-    def track(self, operation_name: str) -> AbstractContextManager[FlextTypes.Dict]:
-        """Track operation metrics (delegates to FlextMixins)."""
-        return self._track_operation(operation_name)
 
     def run_operation(
         self,

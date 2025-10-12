@@ -26,7 +26,7 @@ cd flext-core
 make setup
 
 # Verify installation
-python -c "from flext_core import FlextResult; print('✅ FLEXT-Core ready')"
+python -c "from flext_core import FlextCore; print('✅ FLEXT-Core ready')"
 ```
 
 ## How to Contribute
@@ -163,10 +163,10 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
 **Best Practices:**
 
-- Use `FlextResult[T]` for all operations that can fail
-- Register services with `FlextContainer.get_global()`
-- Follow DDD patterns with `FlextModels.Entity/Value/AggregateRoot`
-- Use `FlextLogger` with context propagation
+- Use `FlextCore.Result[T]` for all operations that can fail
+- Register services with `FlextCore.Container.get_global()`
+- Follow DDD patterns with `FlextCore.Models.Entity/Value/AggregateRoot`
+- Use `FlextCore.Logger` with context propagation
 - Write tests using `flext_tests` infrastructure (no mocks)
 - Keep functions small and focused (single responsibility)
 
@@ -234,21 +234,21 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 **2. Domain Layer Changes**
 
 - Focus on business logic only
-- Use `FlextModels` for entities and value objects
+- Use `FlextCore.Models` for entities and value objects
 - Implement validation in `model_post_init`
 - Add domain events for significant state changes
 
 **3. Application Layer Changes**
 
-- Use CQRS patterns with `FlextBus`
+- Use CQRS patterns with `FlextCore.Bus`
 - Implement handlers for commands/queries
 - Add middleware for cross-cutting concerns
-- Register components in `FlextRegistry`
+- Register components in `FlextCore.Registry`
 
 **4. Infrastructure Layer Changes**
 
 - Abstract external dependencies
-- Use `FlextProtocols` for runtime contracts
+- Use `FlextCore.Protocols` for runtime contracts
 - Implement proper error handling
 - Add configuration options for new features
 
@@ -273,13 +273,13 @@ src/flext_core/
 
 ```python
 # ✅ Good - Direct imports
-from flext_core import FlextResult, FlextContainer
+from flext_core import FlextCore
 
 # ❌ Bad - Star imports in production code
 from flext_core import *
 
 # ❌ Bad - Relative imports in public APIs
-from .result import FlextResult
+from .result import FlextCore.Result
 ```
 
 ## Review Process

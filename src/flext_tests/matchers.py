@@ -9,8 +9,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from typing import (
+    TypeVar,
+)
 
-from flext_core import FlextResult
+from flext_core import FlextCore
+
+T_co = TypeVar("T_co", covariant=True)
 
 
 class TestDataBuilder:
@@ -19,7 +24,7 @@ class TestDataBuilder:
     def __init__(self) -> None:
         """Initialize test data builder."""
         super().__init__()
-        self._data: dict[str, object] = {}
+        self._data: FlextCore.Types.Dict = {}
 
     def with_users(self, count: int = 5) -> TestDataBuilder:
         """Add users to dataset."""
@@ -55,7 +60,7 @@ class TestDataBuilder:
         }
         return self
 
-    def build(self) -> dict[str, object]:
+    def build(self) -> FlextCore.Types.Dict:
         """Build the dataset."""
         return dict(self._data)
 
@@ -72,7 +77,7 @@ class FlextTestsMatchers:
         def __init__(self) -> None:
             """Initialize test data builder."""
             super().__init__()
-            self._data: dict[str, object] = {}
+            self._data: FlextCore.Types.Dict = {}
 
         def with_users(self, count: int = 5) -> FlextTestsMatchers.TestDataBuilder:
             """Add users to dataset."""
@@ -112,19 +117,19 @@ class FlextTestsMatchers:
             }
             return self
 
-        def build(self) -> dict[str, object]:
+        def build(self) -> FlextCore.Types.Dict:
             """Build the dataset."""
             return dict(self._data)
 
     def assert_result_success(
         self,
-        result: FlextResult[object],
+        result: FlextCore.Result[T_co],
         message: str | None = None,
     ) -> None:
-        """Assert that a FlextResult is successful.
+        """Assert that a FlextCore.Result is successful.
 
         Args:
-            result: FlextResult to check
+            result: FlextCore.Result to check
             message: Custom error message
 
         Raises:
@@ -135,14 +140,14 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_result_failure(
-        result: FlextResult[object],
+        result: FlextCore.Result[T_co],
         expected_error: str | None = None,
         message: str | None = None,
     ) -> None:
-        """Assert that a FlextResult is a failure.
+        """Assert that a FlextCore.Result is a failure.
 
         Args:
-            result: FlextResult to check
+            result: FlextCore.Result to check
             expected_error: Expected error message substring
             message: Custom error message
 
@@ -160,8 +165,8 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_dict_contains(
-        data: dict[str, object],
-        expected: dict[str, object],
+        data: FlextCore.Types.Dict,
+        expected: FlextCore.Types.Dict,
         message: str | None = None,
     ) -> None:
         """Assert that a dictionary contains expected key-value pairs.
@@ -183,7 +188,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_list_contains(
-        items: list[object],
+        items: FlextCore.Types.List,
         expected_item: object,
         message: str | None = None,
     ) -> None:
@@ -222,7 +227,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_config_valid(
-        config: dict[str, object], message: str | None = None
+        config: FlextCore.Types.Dict, message: str | None = None
     ) -> None:
         """Assert that a configuration dictionary is valid.
 

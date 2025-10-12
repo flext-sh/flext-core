@@ -8,8 +8,9 @@ All utilities are designed to work with FlextResult for consistent error
 handling and composability across ecosystem projects.
 """
 
-# ruff: E402, S404
 # pyright: reportUnknownArgumentType=false
+# ruff: E402, S404
+# nosec B404 - Required for shell command execution utilities
 from __future__ import annotations
 
 import contextvars
@@ -22,7 +23,7 @@ import pathlib
 import re
 import secrets
 import string
-import subprocess  # nosec B404 - Required for shell command execution utilities
+import subprocess
 import threading
 import time
 import uuid
@@ -48,7 +49,26 @@ from flext_core.typings import FlextTypes
 
 
 class FlextUtilities:
-    """Comprehensive utility functions for FLEXT ecosystem operations."""
+    """Utility functions for validation, generation, and data processing.
+
+    This class provides comprehensive utility functions for common operations
+    throughout the FLEXT ecosystem, organized into specialized namespaces:
+
+    - Cache: Data normalization and sorting utilities
+    - Validation: Input validation with FlextResult patterns
+    - Generators: ID and data generation utilities
+    - Correlation: Distributed tracing and correlation utilities
+    - TextProcessor: Text processing and manipulation utilities
+    - TypeConversions: Type conversion with validation
+    - Reliability: Resilient operation patterns (timeout, retry)
+    - TypeChecker: Runtime type checking and introspection
+    - Serialization: JSON and dictionary serialization utilities
+    - Timestamps: Timestamp creation and management utilities
+    - Configuration: Configuration parameter access utilities
+
+    All utilities integrate with FlextConstants for consistent behavior
+    and use FlextResult for railway-oriented error handling.
+    """
 
     class Cache:
         """Cache utility functions for data normalization and sorting."""
@@ -152,11 +172,6 @@ class FlextUtilities:
             """Generate a cache key from arguments."""
             key_data = str(args) + str(sorted(kwargs.items()))
             return hashlib.sha256(key_data.encode()).hexdigest()
-
-    @staticmethod
-    def generate_id() -> str:
-        """Generate a unique identifier."""
-        return str(uuid.uuid4())
 
     class Validation:
         """Unified validation patterns using railway composition."""
@@ -329,7 +344,7 @@ class FlextUtilities:
 
         @staticmethod
         def validate_pipeline(
-            value: str, validators: list[object]
+            value: str, validators: FlextTypes.List
         ) -> FlextResult[None]:
             """Validate using a pipeline of validators."""
             for validator in validators:
@@ -922,7 +937,7 @@ class FlextUtilities:
             timeout_seconds: float,
         ) -> FlextResult[TTimeout]:
             """Execute operation with timeout using railway patterns."""
-            if timeout_seconds <= FlextConstants.Core.INITIAL_TIME:
+            if timeout_seconds <= FlextConstants.INITIAL_TIME:
                 return FlextResult[TTimeout].fail("Timeout must be positive")
 
             # Use proper typing for containers
@@ -1180,6 +1195,17 @@ class FlextUtilities:
             origin_type = get_origin(expected_type) or expected_type
             message_origin = get_origin(message_type) or message_type
 
+            # Special handling for dict types - dict[str, object] should accept dict instances
+            if origin_type is dict or (
+                hasattr(origin_type, "__name__")
+                and getattr(origin_type, "__name__", "") == "dict"
+            ):
+                return True
+
+            if message_origin is dict or (
+                isinstance(message_type, type) and issubclass(message_type, dict)
+            ):
+                return True
             if isinstance(message_type, type) or hasattr(message_type, "__origin__"):
                 return cls._handle_type_or_origin_check(
                     expected_type,

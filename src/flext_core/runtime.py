@@ -1,24 +1,8 @@
-"""Layer 0.5: Runtime utilities and external library connectors.
+"""Runtime utilities and external library connectors.
 
-This module provides runtime utilities and exposes external libraries that are required by
-higher-level modules. It imports from Layer 0 (constants.py) to use validation patterns,
-eliminating duplication while maintaining the correct dependency hierarchy.
-
-**ARCHITECTURE HIERARCHY**:
-- Layer 0: constants.py, typings.py (pure Python, no flext_core imports)
-- Layer 0.5: runtime.py (imports Layer 0, exposes external libraries)
-- Layer 1+: All other modules (import Layer 0 and 0.5)
-
-**KEY FEATURES**:
-- Type guard utilities using patterns from FlextConstants.Platform
-- Serialization utilities for object conversion
-- Direct access to external library modules (structlog, dependency_injector)
-- Structured logging configuration with FLEXT defaults
-- Optional type introspection utilities
-- Sequence type checking utilities
-
-**DEPENDENCIES**: FlextConstants (Layer 0), structlog, dependency_injector, Python stdlib
-**USED BY**: ALL higher-layer modules (loggings, config, container, models, exceptions)
+This module provides runtime utilities that consume patterns from FlextConstants
+and expose external library APIs to higher-level modules, maintaining proper
+dependency hierarchy while eliminating code duplication.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -39,42 +23,34 @@ import structlog
 from dependency_injector import containers, providers
 
 from flext_core.constants import FlextConstants
+from flext_core.typings import FlextTypes
 
 
 class FlextRuntime:
-    """Runtime utilities and external library connectors for higher layers (Layer 0.5).
+    """Runtime utilities and external library connectors.
 
-    FlextRuntime provides runtime utilities that consume patterns from FlextConstants
-    (Layer 0) and expose external library APIs to higher-level modules (Layer 1+).
-    This eliminates code duplication while maintaining proper dependency hierarchy.
+    Provides runtime utilities that consume patterns from FlextConstants
+    and expose external library APIs to higher-level modules, maintaining
+    proper dependency hierarchy while eliminating code duplication.
 
-    **ARCHITECTURE ROLE**: Layer 0.5 - Runtime Utilities
-        - Imports FlextConstants (Layer 0) for validation patterns
-        - NO imports from other flext_core modules (loggings, config, models, etc.)
-        - Imported by ALL higher-level modules for runtime utilities
-        - Exposes structlog and dependency-injector APIs
+    Features:
+    - Type guard utilities using FlextConstants validation patterns
+    - Serialization utilities for Pydantic and dict conversion
+    - Optional type introspection utilities
+    - Sequence type checking utilities
+    - Direct access to external library modules (structlog, dependency_injector)
+    - Structured logging configuration with FLEXT defaults
 
-    **PROVIDES**:
-        - Type guard utilities using FlextConstants.Platform patterns
-          (is_valid_email, is_valid_url, is_valid_uuid, etc.)
-        - Serialization utilities for Pydantic and dict conversion
-        - Optional type introspection (is_optional_type, extract_generic_args)
-        - Sequence type checking (is_sequence_type)
-        - Direct access to external library modules (structlog(), dependency_providers())
-        - Structured logging configuration (configure_structlog())
-
-    **USAGE**: Higher-level modules use FlextRuntime for utilities
-        ```python
-        from flext_core.runtime import FlextRuntime
-
-        # Type guards using FlextConstants patterns
-        if FlextRuntime.is_valid_email(user_input):
-            process_email(user_input)
-
-        # Access external libraries
-        structlog_module = FlextRuntime.structlog()
-        providers = FlextRuntime.dependency_providers()
-        ```
+    Usage:
+        >>> from flext_core.runtime import FlextRuntime
+        >>>
+        >>> # Type guards using constants patterns
+        >>> if FlextRuntime.is_valid_email("user@example.com"):
+        ...     print("Valid email")
+        >>>
+        >>> # Access external libraries
+        >>> structlog = FlextRuntime.structlog()
+        >>> providers = FlextRuntime.dependency_providers()
     """
 
     _structlog_configured: bool = False
@@ -166,7 +142,7 @@ class FlextRuntime:
         return pattern.match(value) is not None
 
     @staticmethod
-    def is_dict_like(value: object) -> TypeGuard[dict[str, object]]:
+    def is_dict_like(value: object) -> TypeGuard[FlextTypes.Dict]:
         """Type guard to check if value is dict-like.
 
         Args:
@@ -179,7 +155,7 @@ class FlextRuntime:
         return isinstance(value, dict)
 
     @staticmethod
-    def is_list_like(value: object) -> TypeGuard[list[object]]:
+    def is_list_like(value: object) -> TypeGuard[FlextTypes.List]:
         """Type guard to check if value is list-like.
 
         Args:
@@ -263,7 +239,7 @@ class FlextRuntime:
         return getattr(obj, attr, default)
 
     @staticmethod
-    def safe_serialize_to_dict(obj: object) -> dict[str, object] | None:
+    def safe_serialize_to_dict(obj: object) -> FlextTypes.Dict | None:
         """Serialize object to dictionary without dependencies.
 
         Attempts multiple serialization strategies without importing
@@ -282,7 +258,7 @@ class FlextRuntime:
                 model_dump_method = getattr(obj, "model_dump")
                 result = model_dump_method()
                 if isinstance(result, dict):
-                    return cast("dict[str, object]", result)
+                    return cast("FlextTypes.Dict", result)
             except Exception as e:
                 # Silent fallback for serialization strategy - log at debug level
                 logging.getLogger(__name__).debug(
@@ -295,7 +271,7 @@ class FlextRuntime:
                 dict_method = getattr(obj, "dict")
                 result = dict_method()
                 if isinstance(result, dict):
-                    return cast("dict[str, object]", result)
+                    return cast("FlextTypes.Dict", result)
             except Exception as e:
                 # Silent fallback for serialization strategy - log at debug level
                 logging.getLogger(__name__).debug(
@@ -306,7 +282,7 @@ class FlextRuntime:
         if hasattr(obj, "__dict__"):
             try:
                 result = obj.__dict__
-                return cast("dict[str, object]", dict(result))
+                return cast("FlextTypes.Dict", dict(result))
             except Exception as e:  # pragma: no cover
                 # Silent fallback for serialization strategy - log at debug level
                 # Extremely rare: __dict__ exists but dict() conversion fails
@@ -316,7 +292,7 @@ class FlextRuntime:
 
         # Strategy 4: Check if already dict
         if isinstance(obj, dict):
-            return cast("dict[str, object]", obj)
+            return cast("FlextTypes.Dict", obj)
 
         return None
 
@@ -360,7 +336,32 @@ class FlextRuntime:
 
         """
         try:
-            return typing.get_args(type_hint)
+            # First try the standard typing.get_args
+            args = typing.get_args(type_hint)
+            if args:
+                return args
+
+            # Fallback for type aliases: check if it's a known type alias
+            if hasattr(type_hint, "__name__"):
+                type_name = getattr(type_hint, "__name__", "")
+                # Handle common type aliases
+                type_mapping: dict[str, tuple[type, ...]] = {
+                    "StringList": (str,),
+                    "IntList": (int,),
+                    "FloatList": (float,),
+                    "BoolList": (bool,),
+                    "Dict": (str, object),
+                    "List": (object,),
+                    "StringDict": (str, str),
+                    "IntDict": (str, int),
+                    "FloatDict": (str, float),
+                    "BoolDict": (str, bool),
+                    "NestedDict": (str, object),  # Simplified
+                }
+                if type_name in type_mapping:
+                    return type_mapping[type_name]
+
+            return ()
         except Exception:  # pragma: no cover
             # Defensive: typing module failures are extremely rare
             return ()
@@ -436,7 +437,7 @@ class FlextRuntime:
 
         level_to_use = log_level if log_level is not None else logging.INFO
 
-        processors: list[object] = [
+        processors: FlextTypes.List = [
             module.contextvars.merge_contextvars,
             module.processors.add_log_level,
             module.processors.TimeStamper(fmt="iso"),
@@ -453,7 +454,7 @@ class FlextRuntime:
             processors.append(module.processors.JSONRenderer())
 
         module.configure(
-            processors=cast("list[Callable[..., dict[str, object]]]", processors),
+            processors=cast("list[Callable[..., FlextTypes.Dict]]", processors),
             wrapper_class=cast(
                 "type[structlog.BoundLoggerBase] | None",
                 wrapper_class_factory
@@ -608,7 +609,7 @@ class FlextRuntime:
         def track_domain_event(
             event_name: str,
             aggregate_id: str | None = None,
-            event_data: dict[str, object] | None = None,
+            event_data: FlextTypes.Dict | None = None,
         ) -> None:
             """Track domain event with context correlation.
 

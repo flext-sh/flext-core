@@ -1,4 +1,4 @@
-"""Comprehensive tests for FlextBus - CQRS Command Bus.
+"""Comprehensive tests for FlextCore.Bus - CQRS Command Bus.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,40 +13,36 @@ from typing import cast
 
 from pydantic import Field
 
-from flext_core import (
-    FlextBus,
-    FlextConstants,
-    FlextHandlers,
-    FlextModels,
-    FlextResult,
-    FlextTypes,
-)
+from flext_core import FlextCore
 
 
 class TestFlextBus:
-    """Test suite for FlextBus CQRS command bus functionality."""
+    """Test suite for FlextCore.Bus CQRS command bus functionality."""
 
     def test_bus_initialization(self) -> None:
         """Test bus initialization with default settings."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
         assert bus is not None
-        assert isinstance(bus, FlextBus)
+        assert isinstance(bus, FlextCore.Bus)
         assert bus.config is not None
 
     def test_bus_with_custom_config(self) -> None:
         """Test bus initialization with custom configuration."""
-        config: FlextTypes.Dict = {"enable_middleware": True, "enable_caching": False}
-        bus = FlextBus(bus_config=config)
+        config: FlextCore.Types.Dict = {
+            "enable_middleware": True,
+            "enable_caching": False,
+        }
+        bus = FlextCore.Bus(bus_config=config)
         assert bus is not None
         assert bus.bus_config.enable_caching is False
 
     def test_register_handler_single_arg(self) -> None:
         """Test handler registration with single argument (auto-discovery)."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
         class TestHandler:
-            def handle(self, command: object) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command}")
+            def handle(self, command: object) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command}")
 
         handler = TestHandler()
         result = bus.register_handler(handler)
@@ -54,14 +50,14 @@ class TestFlextBus:
 
     def test_register_handler_two_args(self) -> None:
         """Test handler registration with command type and handler."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class TestHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command.data}")
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         handler = TestHandler()
         result = bus.register_handler("TestCommand", handler)
@@ -69,7 +65,7 @@ class TestFlextBus:
 
     def test_register_handler_invalid(self) -> None:
         """Test handler registration with invalid parameters."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
         # Test with invalid command type (empty string)
         result = bus.register_handler("", object())
@@ -77,11 +73,11 @@ class TestFlextBus:
 
     def test_unregister_handler(self) -> None:
         """Test handler unregistration."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
         class TestHandler:
-            def handle(self, command: object) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command}")
+            def handle(self, command: object) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command}")
 
         handler = TestHandler()
         bus.register_handler("TestCommand", handler)
@@ -90,21 +86,21 @@ class TestFlextBus:
 
     def test_unregister_nonexistent_handler(self) -> None:
         """Test unregistering non-existent handler."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
         result = bus.unregister_handler("NonexistentCommand")
         assert result.is_failure
 
     def test_execute_command(self) -> None:
         """Test command execution."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class TestHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command.data}")
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         handler = TestHandler()
         bus.register_handler("TestCommand", handler)
@@ -116,9 +112,9 @@ class TestFlextBus:
 
     def test_execute_command_nonexistent_handler(self) -> None:
         """Test executing command with non-existent handler."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         command = TestCommand(data="test_data")
@@ -127,14 +123,14 @@ class TestFlextBus:
 
     def test_execute_command_with_failing_handler(self) -> None:
         """Test executing command with failing handler."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class FailingHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
-                return FlextResult[str].fail(
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].fail(
                     f"Handler failed for command: {command.data}",
                 )
 
@@ -150,11 +146,11 @@ class TestFlextBus:
 
     def test_get_registered_handlers(self) -> None:
         """Test getting registered handlers."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
         class TestHandler:
-            def handle(self, command: object) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command}")
+            def handle(self, command: object) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command}")
 
         handler = TestHandler()
         bus.register_handler("TestCommand", handler)
@@ -164,11 +160,11 @@ class TestFlextBus:
 
     def test_get_all_handlers(self) -> None:
         """Test getting all handlers."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
         class TestHandler:
-            def handle(self, command: object) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command}")
+            def handle(self, command: object) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command}")
 
         handler = TestHandler()
         bus.register_handler("TestCommand", handler)
@@ -178,14 +174,14 @@ class TestFlextBus:
 
     def test_find_handler(self) -> None:
         """Test finding handler for command."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class TestHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command.data}")
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         handler = TestHandler()
         bus.register_handler("TestCommand", handler)
@@ -197,13 +193,13 @@ class TestFlextBus:
 
     def test_bus_error_handling(self) -> None:
         """Test bus error handling mechanisms."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class ErrorHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
                 msg = f"Handler error for command: {command.data}"
                 raise ValueError(msg)
 
@@ -219,14 +215,14 @@ class TestFlextBus:
 
     def test_bus_performance(self) -> None:
         """Test bus performance characteristics."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class FastHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command.data}")
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         handler = FastHandler()
         bus.register_handler("TestCommand", handler)
@@ -243,23 +239,23 @@ class TestFlextBus:
 
     def test_bus_concurrent_access(self) -> None:
         """Test bus concurrent access patterns."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class TestHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command.data}")
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         handler = TestHandler()
         bus.register_handler("TestCommand", handler)
 
         # Simulate concurrent access
-        results: list[FlextResult[object]] = []
+        results: list[FlextCore.Result[object]] = []
         for i in range(10):
             command = TestCommand(data=f"data_{i}")
-            result: FlextResult[object] = bus.execute(command)
+            result: FlextCore.Result[object] = bus.execute(command)
             results.append(result)
 
         # All operations should succeed
@@ -267,9 +263,9 @@ class TestFlextBus:
 
     def test_bus_middleware(self) -> None:
         """Test bus middleware functionality."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class TestMiddleware:
@@ -277,15 +273,15 @@ class TestFlextBus:
                 self,
                 command: TestCommand,
                 handler: object,
-            ) -> FlextResult[None]:
+            ) -> FlextCore.Result[None]:
                 # Log the middleware processing
                 _ = command  # Use command parameter to avoid unused argument warning
                 _ = handler  # Use handler parameter to avoid unused argument warning
-                return FlextResult[None].ok(None)
+                return FlextCore.Result[None].ok(None)
 
         class TestHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command.data}")
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         middleware = TestMiddleware()
         handler = TestHandler()
@@ -298,47 +294,47 @@ class TestFlextBus:
         assert result.is_success
 
     def test_create_command_bus_factory(self) -> None:
-        """Test direct FlextBus instantiation (factory method removed)."""
-        bus = FlextBus()  # Direct instantiation instead of factory method
+        """Test direct FlextCore.Bus instantiation (factory method removed)."""
+        bus = FlextCore.Bus()  # Direct instantiation instead of factory method
         assert bus is not None
-        assert isinstance(bus, FlextBus)
+        assert isinstance(bus, FlextCore.Bus)
 
     def test_create_simple_handler(self) -> None:
-        """Test FlextHandlers.from_callable() (factory method removed)."""
+        """Test FlextCore.Handlers.from_callable() (factory method removed)."""
 
         def simple_handler(data: object) -> object:
             return f"processed_{data}"
 
-        handler = FlextHandlers.from_callable(
+        handler = FlextCore.Handlers.from_callable(
             callable_func=simple_handler,
             handler_name="simple_handler",
-            handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            handler_type=FlextCore.Constants.Cqrs.COMMAND_HANDLER_TYPE,
         )
         assert handler is not None
 
     def test_create_query_handler(self) -> None:
-        """Test FlextHandlers.from_callable() for query handlers (factory method removed)."""
+        """Test FlextCore.Handlers.from_callable() for query handlers (factory method removed)."""
 
         def query_handler(data: object) -> object:
             return f"query_result_{data}"
 
-        handler = FlextHandlers.from_callable(
+        handler = FlextCore.Handlers.from_callable(
             callable_func=query_handler,
             handler_name="query_handler",
-            handler_type=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+            handler_type=FlextCore.Constants.Cqrs.QUERY_HANDLER_TYPE,
         )
         assert handler is not None
 
     def test_bus_caching(self) -> None:
         """Test bus caching functionality."""
-        bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
+        bus = FlextCore.Bus(bus_config={"enable_caching": True, "max_cache_size": 10})
 
-        class TestQuery(FlextModels.Query):
+        class TestQuery(FlextCore.Models.Query):
             data: str
 
         class TestQueryHandler:
-            def handle(self, query: TestQuery) -> FlextResult[str]:
-                return FlextResult[str].ok(f"query_result_{query.data}")
+            def handle(self, query: TestQuery) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"query_result_{query.data}")
 
         handler = TestQueryHandler()
         bus.register_handler("TestQuery", handler)
@@ -360,9 +356,9 @@ class TestFlextBusMissingCoverage:
 
     def test_cache_hit_path(self) -> None:
         """Test cache hit path (lines 53-56)."""
-        bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
+        bus = FlextCore.Bus(bus_config={"enable_caching": True, "max_cache_size": 10})
 
-        class TestQuery(FlextModels.Query):
+        class TestQuery(FlextCore.Models.Query):
             data: str = Field(default="")
 
             def __init__(self, data: str, **kwargs: object) -> None:
@@ -371,8 +367,8 @@ class TestFlextBusMissingCoverage:
                 pagination_raw = kwargs.get("pagination")
                 query_type_raw = kwargs.get("query_type")
 
-                filters: dict[str, object] | None = (
-                    cast("dict[str, object]", filters_raw)
+                filters: FlextCore.Types.Dict | None = (
+                    cast("FlextCore.Types.Dict", filters_raw)
                     if isinstance(filters_raw, dict)
                     else None
                 )
@@ -404,9 +400,9 @@ class TestFlextBusMissingCoverage:
                 super().__init__()
                 self.call_count = 0
 
-            def handle(self, query: TestQuery) -> FlextResult[str]:
+            def handle(self, query: TestQuery) -> FlextCore.Result[str]:
                 self.call_count += 1
-                return FlextResult[str].ok(f"result_{query.data}")
+                return FlextCore.Result[str].ok(f"result_{query.data}")
 
         handler = TestQueryHandler()
         # Register with class directly
@@ -427,15 +423,15 @@ class TestFlextBusMissingCoverage:
 
     def test_cache_overflow(self) -> None:
         """Test cache overflow handling (lines 66-69)."""
-        bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 2})
+        bus = FlextCore.Bus(bus_config={"enable_caching": True, "max_cache_size": 2})
 
-        class TestQuery(FlextModels.Query):
+        class TestQuery(FlextCore.Models.Query):
             query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
             data: str
 
         class TestQueryHandler:
-            def handle(self, query: TestQuery) -> FlextResult[str]:
-                return FlextResult[str].ok(f"result_{query.data}")
+            def handle(self, query: TestQuery) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"result_{query.data}")
 
         handler = TestQueryHandler()
         bus.register_handler(TestQuery, handler)
@@ -455,13 +451,13 @@ class TestFlextBusMissingCoverage:
 
     def test_cache_clear(self) -> None:
         """Test cache clear functionality (line 73)."""
-        from flext_core.bus import FlextBus
+        from flext_core import FlextCore
 
-        cache = FlextBus._Cache(max_size=10)
+        cache = FlextCore.Bus._Cache(max_size=10)
 
         # Add items to cache
-        result1: FlextResult[object] = FlextResult[object].ok("test1")
-        result2: FlextResult[object] = FlextResult[object].ok("test2")
+        result1: FlextCore.Result[object] = FlextCore.Result[object].ok("test1")
+        result2: FlextCore.Result[object] = FlextCore.Result[object].ok("test2")
         cache.put("key1", result1)
         cache.put("key2", result2)
 
@@ -478,17 +474,17 @@ class TestFlextBusMissingCoverage:
 
     def test_normalize_bus_config_with_bus_model(self) -> None:
         """Test _normalize_bus_config with Cqrs.Bus instance (line 261)."""
-        from flext_core import FlextModels
+        from flext_core import FlextCore
 
         # Create a Bus config model instance
-        bus_model = FlextModels.Cqrs.Bus(
+        bus_model = FlextCore.Models.Cqrs.Bus(
             enable_middleware=True,
             enable_caching=False,
             max_cache_size=50,
         )
 
         # Should return the same instance
-        bus = FlextBus(bus_config=bus_model)
+        bus = FlextCore.Bus(bus_config=bus_model)
         assert bus.bus_config.enable_middleware is True
         assert bus.bus_config.enable_caching is False
         assert bus.bus_config.max_cache_size == 50
@@ -498,7 +494,7 @@ class TestFlextBusMissingCoverage:
         from collections.abc import Mapping as ABCMapping
 
         class CustomMapping(ABCMapping[str, object]):
-            def __init__(self, data: FlextTypes.Dict) -> None:
+            def __init__(self, data: FlextCore.Types.Dict) -> None:
                 super().__init__()
                 self._data = data
 
@@ -511,7 +507,7 @@ class TestFlextBusMissingCoverage:
             def __len__(self) -> int:
                 return len(self._data)
 
-        bus = FlextBus()
+        bus = FlextCore.Bus()
         config_mapping = CustomMapping({"enabled": True, "priority": 10})
 
         # Access the private method to test it
@@ -528,7 +524,7 @@ class TestFlextBusMissingCoverage:
             enabled: bool
             timeout: int
 
-        bus = FlextBus()
+        bus = FlextCore.Bus()
         config_model = MiddlewareConfig(enabled=True, timeout=30)
 
         result = bus._normalize_middleware_config(config_model)
@@ -540,10 +536,10 @@ class TestFlextBusMissingCoverage:
         """Test _normalize_middleware_config with dict method (lines 369-379)."""
 
         class LegacyConfig:
-            def dict(self) -> FlextTypes.Dict:
+            def dict(self) -> FlextCore.Types.Dict:
                 return {"legacy": True, "version": 1}
 
-        bus = FlextBus()
+        bus = FlextCore.Bus()
         config = LegacyConfig()
 
         result = bus._normalize_middleware_config(config)
@@ -555,14 +551,14 @@ class TestFlextBusMissingCoverage:
         """Test _normalize_middleware_config when method() raises TypeError (lines 374-375)."""
 
         class BrokenConfig:
-            def model_dump(self, *args: object) -> FlextTypes.Dict:
+            def model_dump(self, *args: object) -> FlextCore.Types.Dict:
                 msg = "Required parameter missing"
                 raise TypeError(msg)
 
-            def dict(self) -> FlextTypes.Dict:
+            def dict(self) -> FlextCore.Types.Dict:
                 return {"fallback": True}
 
-        bus = FlextBus()
+        bus = FlextCore.Bus()
         config = BrokenConfig()
 
         # Should fallback to dict() method
@@ -572,7 +568,7 @@ class TestFlextBusMissingCoverage:
 
     def test_normalize_middleware_config_returns_empty_dict(self) -> None:
         """Test _normalize_middleware_config returns empty dict for invalid input (line 381)."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
         # Test with object that has no dict/model_dump methods
         result = bus._normalize_middleware_config("invalid")
@@ -580,9 +576,9 @@ class TestFlextBusMissingCoverage:
 
     def test_command_validation_with_failing_custom_validator(self) -> None:
         """Test command validation with custom validator that returns failure (lines 509-532)."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class ValidatedCommand(FlextModels.Command):
+        class ValidatedCommand(FlextCore.Models.Command):
             data: str
 
             @property
@@ -591,8 +587,8 @@ class TestFlextBusMissingCoverage:
                 return self.data != "invalid"
 
         class TestHandler:
-            def handle(self, command: ValidatedCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command.data}")
+            def handle(self, command: ValidatedCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         handler = TestHandler()
         bus.register_handler(ValidatedCommand, handler)
@@ -603,25 +599,25 @@ class TestFlextBusMissingCoverage:
         assert not command.is_valid
 
         # Execute - handler should process it (bus doesn't validate automatically)
-        # Since FlextBus doesn't call is_valid automatically, it will succeed
+        # Since FlextCore.Bus doesn't call is_valid automatically, it will succeed
         # This test just verifies the validation property exists
         bus.execute(command)
         assert command.data == "invalid"
 
     def test_command_validation_exception_handling(self) -> None:
         """Test validation exception handling (lines 533-536)."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class ProblemCommand(FlextModels.Command):
+        class ProblemCommand(FlextCore.Models.Command):
             data: str
 
-            def validate_business_rules(self, *args: object) -> FlextResult[None]:
+            def validate_business_rules(self, *args: object) -> FlextCore.Result[None]:
                 """Validation that requires parameters (Pydantic-style)."""
-                return FlextResult[None].ok(None)
+                return FlextCore.Result[None].ok(None)
 
         class TestHandler:
-            def handle(self, command: ProblemCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(command.data)
+            def handle(self, command: ProblemCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(command.data)
 
         handler = TestHandler()
         bus.register_handler(ProblemCommand, handler)
@@ -635,12 +631,14 @@ class TestFlextBusMissingCoverage:
     def test_middleware_disabled_with_middleware_configured(self) -> None:
         """Test middleware disabled but middleware configured (lines 485-489)."""
         # Create bus with middleware disabled
-        bus = FlextBus(bus_config={"enable_middleware": False})
+        bus = FlextCore.Bus(bus_config={"enable_middleware": False})
 
         class TestMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:
+            def process(
+                self, command: object, handler: object
+            ) -> FlextCore.Result[None]:
                 """Test middleware that returns failure to stop processing."""
-                return FlextResult[None].fail("Middleware disabled")
+                return FlextCore.Result[None].fail("Middleware disabled")
 
         test_middleware = TestMiddleware()
 
@@ -648,12 +646,12 @@ class TestFlextBusMissingCoverage:
         # (this tests the edge case where middleware was configured but then disabled)
         bus.add_middleware(test_middleware, {"middleware_id": "test_middleware"})
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class TestHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command.data}")
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         bus.register_handler(TestCommand, TestHandler())
 
@@ -665,9 +663,9 @@ class TestFlextBusMissingCoverage:
 
     def test_query_detection_with_query_id_attribute(self) -> None:
         """Test query detection using query_id attribute (line 538)."""
-        bus = FlextBus(bus_config={"enable_caching": True})
+        bus = FlextCore.Bus(bus_config={"enable_caching": True})
 
-        class TestQuery(FlextModels.Query):
+        class TestQuery(FlextCore.Models.Query):
             data: str = Field(default="")
 
             def __init__(self, data: str, **kwargs: object) -> None:
@@ -676,8 +674,8 @@ class TestFlextBusMissingCoverage:
                 pagination_raw = kwargs.get("pagination")
                 query_type_raw = kwargs.get("query_type")
 
-                filters: dict[str, object] | None = (
-                    cast("dict[str, object]", filters_raw)
+                filters: FlextCore.Types.Dict | None = (
+                    cast("FlextCore.Types.Dict", filters_raw)
                     if isinstance(filters_raw, dict)
                     else None
                 )
@@ -705,8 +703,8 @@ class TestFlextBusMissingCoverage:
                 self.data = data
 
         class TestHandler:
-            def handle(self, query: TestQuery) -> FlextResult[str]:
-                return FlextResult[str].ok(f"result_{query.data}")
+            def handle(self, query: TestQuery) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"result_{query.data}")
 
         bus.register_handler(TestQuery, TestHandler())
 
@@ -716,14 +714,14 @@ class TestFlextBusMissingCoverage:
 
     def test_query_detection_with_query_in_name(self) -> None:
         """Test query detection using 'Query' in class name (line 538)."""
-        bus = FlextBus(bus_config={"enable_caching": True})
+        bus = FlextCore.Bus(bus_config={"enable_caching": True})
 
-        class UserQuery(FlextModels.Query):  # Name contains "Query" (line 538)
+        class UserQuery(FlextCore.Models.Query):  # Name contains "Query" (line 538)
             user_id: str
 
         class TestHandler:
-            def handle(self, query: UserQuery) -> FlextResult[str]:
-                return FlextResult[str].ok(f"user_{query.user_id}")
+            def handle(self, query: UserQuery) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"user_{query.user_id}")
 
         bus.register_handler(UserQuery, TestHandler())
 
@@ -733,9 +731,9 @@ class TestFlextBusMissingCoverage:
 
     def test_cache_key_generation_for_queries(self) -> None:
         """Test _generate_cache_key method is called for queries (lines 543-554)."""
-        bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
+        bus = FlextCore.Bus(bus_config={"enable_caching": True, "max_cache_size": 10})
 
-        class CacheableQuery(FlextModels.Query):
+        class CacheableQuery(FlextCore.Models.Query):
             query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
             param1: str
             param2: int
@@ -745,9 +743,11 @@ class TestFlextBusMissingCoverage:
                 super().__init__()
                 self.call_count = 0
 
-            def handle(self, query: CacheableQuery) -> FlextResult[dict[str, object]]:
+            def handle(
+                self, query: CacheableQuery
+            ) -> FlextCore.Result[FlextCore.Types.Dict]:
                 self.call_count += 1
-                return FlextResult[dict[str, object]].ok({
+                return FlextCore.Result[FlextCore.Types.Dict].ok({
                     "query_id": query.query_id,
                     "param1": query.param1,
                     "param2": query.param2,
@@ -770,21 +770,21 @@ class TestFlextBusMissingCoverage:
         assert result2.is_success
         # Verify cache key generation was executed (lines 543-554 covered)
         assert isinstance(result2.value, dict)
-        value_dict = cast("dict[str, object]", result2.value)
+        value_dict = cast("FlextCore.Types.Dict", result2.value)
         assert value_dict["query_id"] == "q1"
 
     def test_handler_execution_with_timing(self) -> None:
         """Test _execute_handler with timing (lines 594-600)."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class SlowHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
                 # Simulate some processing time
                 time.sleep(0.01)
-                return FlextResult[str].ok(f"processed_{command.data}")
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         bus.register_handler(TestCommand, SlowHandler())
 
@@ -796,9 +796,9 @@ class TestFlextBusMissingCoverage:
 
     def test_cache_successful_query_results(self) -> None:
         """Test caching of successful query results (lines 597-605)."""
-        bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
+        bus = FlextCore.Bus(bus_config={"enable_caching": True, "max_cache_size": 10})
 
-        class TestQuery(FlextModels.Query):
+        class TestQuery(FlextCore.Models.Query):
             query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
         class TestHandler:
@@ -806,9 +806,9 @@ class TestFlextBusMissingCoverage:
                 super().__init__()
                 self.execution_count = 0
 
-            def handle(self, query: TestQuery) -> FlextResult[str]:
+            def handle(self, query: TestQuery) -> FlextCore.Result[str]:
                 self.execution_count += 1
-                return FlextResult[str].ok(f"result_{query.query_id}")
+                return FlextCore.Result[str].ok(f"result_{query.query_id}")
 
         handler = TestHandler()
         bus.register_handler(TestQuery, handler)
@@ -829,13 +829,13 @@ class TestFlextBusMissingCoverage:
 
     def test_execute_handler_with_method_error(self) -> None:
         """Test _execute_handler when handler method raises exception (lines 629-650)."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class BrokenHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
                 # Raise an exception during handling
                 msg = f"Handler error: {command.data}"
                 raise ValueError(msg)
@@ -849,43 +849,45 @@ class TestFlextBusMissingCoverage:
         assert "Handler error" in (result.error or "")
 
     def test_execute_handler_with_invalid_return_type(self) -> None:
-        """Test _execute_handler when handler returns non-FlextResult (lines 652-668)."""
-        bus = FlextBus()
+        """Test _execute_handler when handler returns non-FlextCore.Result (lines 652-668)."""
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class BadHandler:
             def handle(
                 self,
                 command: TestCommand,
-            ) -> str:  # Returns str, not FlextResult
+            ) -> str:  # Returns str, not FlextCore.Result
                 return f"raw_{command.data}"
 
         bus.register_handler(TestCommand, BadHandler())
 
         command = TestCommand(data="test")
         result = bus.execute(command)
-        # Should handle non-FlextResult return gracefully (lines 652-657)
+        # Should handle non-FlextCore.Result return gracefully (lines 652-657)
         assert result.is_failure or result.is_success  # Depends on implementation
 
     def test_middleware_rejection_path(self) -> None:
         """Test middleware rejection (lines 587-591)."""
-        bus = FlextBus(bus_config={"enable_middleware": True})
+        bus = FlextCore.Bus(bus_config={"enable_middleware": True})
 
         class RejectingMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:
+            def process(
+                self, command: object, handler: object
+            ) -> FlextCore.Result[None]:
                 # Middleware rejects the command
-                return FlextResult[None].fail("Middleware rejected command")
+                return FlextCore.Result[None].fail("Middleware rejected command")
 
         bus.add_middleware(RejectingMiddleware())
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class TestHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command.data}")
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         bus.register_handler(TestCommand, TestHandler())
 
@@ -897,16 +899,16 @@ class TestFlextBusMissingCoverage:
 
     def test_handler_with_audit_metadata(self) -> None:
         """Test handler execution with audit metadata (lines 680-686)."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class AuditCommand(FlextModels.Command):
+        class AuditCommand(FlextCore.Models.Command):
             data: str
             audit_user: str = "system"
             audit_reason: str = "test"
 
         class AuditHandler:
-            def handle(self, command: AuditCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"audited_{command.data}")
+            def handle(self, command: AuditCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"audited_{command.data}")
 
         bus.register_handler(AuditCommand, AuditHandler())
 
@@ -916,7 +918,7 @@ class TestFlextBusMissingCoverage:
 
     def test_register_handler_with_none_handler(self) -> None:
         """Test register_handler with None handler (line 396)."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
         # Register with None handler (line 396)
         result = bus.register_handler(None)
@@ -925,7 +927,7 @@ class TestFlextBusMissingCoverage:
 
     def test_register_handler_two_args_with_none(self) -> None:
         """Test register_handler two-arg form with None arguments (line 431)."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
         # Test with None command_type
         result = bus.register_handler(None, object())
@@ -943,7 +945,7 @@ class TestFlextBusMissingCoverage:
 
     def test_register_handler_invalid_arg_count(self) -> None:
         """Test register_handler with invalid argument count (line 448)."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
         # Test with no arguments
         result = bus.register_handler()
@@ -957,11 +959,13 @@ class TestFlextBusMissingCoverage:
 
     def test_register_handler_without_handle_method(self) -> None:
         """Test register_handler with handler missing handle method (lines 399-403)."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
         class InvalidHandler:
-            def process(self, command: object) -> FlextResult[str]:  # Wrong method name
-                return FlextResult[str].ok("processed")
+            def process(
+                self, command: object
+            ) -> FlextCore.Result[str]:  # Wrong method name
+                return FlextCore.Result[str].ok("processed")
 
         # Register handler without handle() method (lines 401-402)
         result = bus.register_handler(InvalidHandler())
@@ -970,15 +974,15 @@ class TestFlextBusMissingCoverage:
 
     def test_register_handler_with_handler_id(self) -> None:
         """Test register_handler with handler_id attribute (lines 409-412)."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
         class HandlerWithId:
             def __init__(self) -> None:
                 super().__init__()
                 self.handler_id = "custom_handler_123"  # Has handler_id (line 410)
 
-            def handle(self, command: object) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command}")
+            def handle(self, command: object) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command}")
 
         handler = HandlerWithId()
         # Register handler with handler_id (lines 410-412)
@@ -991,11 +995,13 @@ class TestFlextBusMissingCoverage:
 
     def test_add_middleware_validation(self) -> None:
         """Test add_middleware when disabled returns success (lines 787-789)."""
-        bus = FlextBus(bus_config={"enable_middleware": False})
+        bus = FlextCore.Bus(bus_config={"enable_middleware": False})
 
         class TestMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:
-                return FlextResult[None].ok(None)
+            def process(
+                self, command: object, handler: object
+            ) -> FlextCore.Result[None]:
+                return FlextCore.Result[None].ok(None)
 
         # Add middleware when disabled returns success (line 787-789)
         result = bus.add_middleware(TestMiddleware())
@@ -1003,9 +1009,9 @@ class TestFlextBusMissingCoverage:
 
     def test_generate_cache_key_utility_call(self) -> None:
         """Test _generate_cache_key calls utility method (line 702)."""
-        bus = FlextBus(bus_config={"enable_caching": True})
+        bus = FlextCore.Bus(bus_config={"enable_caching": True})
 
-        class TestQuery(FlextModels.Query):
+        class TestQuery(FlextCore.Models.Query):
             data: str = Field(default="")
 
             def __init__(self, data: str, **kwargs: object) -> None:
@@ -1014,8 +1020,8 @@ class TestFlextBusMissingCoverage:
                 pagination_raw = kwargs.get("pagination")
                 query_type_raw = kwargs.get("query_type")
 
-                filters: dict[str, object] | None = (
-                    cast("dict[str, object]", filters_raw)
+                filters: FlextCore.Types.Dict | None = (
+                    cast("FlextCore.Types.Dict", filters_raw)
                     if isinstance(filters_raw, dict)
                     else None
                 )
@@ -1043,8 +1049,8 @@ class TestFlextBusMissingCoverage:
                 self.data = data
 
         class TestHandler:
-            def handle(self, query: TestQuery) -> FlextResult[str]:
-                return FlextResult[str].ok(f"result_{query.data}")
+            def handle(self, query: TestQuery) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"result_{query.data}")
 
         bus.register_handler(TestQuery, TestHandler())
 
@@ -1056,41 +1062,41 @@ class TestFlextBusMissingCoverage:
     def test_factory_methods_coverage(self) -> None:
         """Test factory methods for coverage (lines 848, 856, 885-886)."""
         # Test direct instantiation (line 848)
-        bus1 = FlextBus()  # Direct instantiation instead of factory method
+        bus1 = FlextCore.Bus()  # Direct instantiation instead of factory method
         assert bus1 is not None
 
-        # Test FlextHandlers.from_callable() for simple handler (line 856)
+        # Test FlextCore.Handlers.from_callable() for simple handler (line 856)
         def simple_func(data: object) -> object:
             return f"processed_{data}"
 
-        handler1 = FlextHandlers.from_callable(
+        handler1 = FlextCore.Handlers.from_callable(
             callable_func=simple_func,
             handler_name="simple_func",
-            handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            handler_type=FlextCore.Constants.Cqrs.COMMAND_HANDLER_TYPE,
         )
         assert handler1 is not None
 
-        # Test FlextHandlers.from_callable() for query handler (line 885-886)
+        # Test FlextCore.Handlers.from_callable() for query handler (line 885-886)
         def query_func(data: object) -> object:
             return f"query_{data}"
 
-        handler2 = FlextHandlers.from_callable(
+        handler2 = FlextCore.Handlers.from_callable(
             callable_func=query_func,
             handler_name="query_func",
-            handler_type=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+            handler_type=FlextCore.Constants.Cqrs.QUERY_HANDLER_TYPE,
         )
         assert handler2 is not None
 
     def test_unregister_handler_method(self) -> None:
         """Test unregister_handler method (lines 757, 763, 767)."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class TestHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command.data}")
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         # Register handler
         bus.register_handler(TestCommand, TestHandler())
@@ -1104,17 +1110,17 @@ class TestFlextBusMissingCoverage:
         assert result2.is_failure
 
     def test_handler_with_non_flext_result_return(self) -> None:
-        """Test handler returning non-FlextResult is wrapped (lines 652-657)."""
-        bus = FlextBus()
+        """Test handler returning non-FlextCore.Result is wrapped (lines 652-657)."""
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class RawHandler:
             def handle(
                 self,
                 command: TestCommand,
-            ) -> dict[str, object]:  # Returns dict, not FlextResult
+            ) -> FlextCore.Types.Dict:  # Returns dict, not FlextCore.Result
                 return {"processed": command.data}
 
         bus.register_handler(TestCommand, RawHandler())
@@ -1127,7 +1133,7 @@ class TestFlextBusMissingCoverage:
 
     def test_handler_registration_edge_cases(self) -> None:
         """Test handler registration edge cases and error conditions."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
         # Test registering None handler
         result = bus.register_handler(None)
@@ -1142,22 +1148,22 @@ class TestFlextBusMissingCoverage:
 
         # Test registering with empty command type
         class ValidHandler:
-            def handle(self, command: object) -> FlextResult[object]:
-                return FlextResult[object].ok(command)
+            def handle(self, command: object) -> FlextCore.Result[object]:
+                return FlextCore.Result[object].ok(command)
 
         result = bus.register_handler("", ValidHandler())
         assert result.is_failure
 
     def test_find_handler_functionality(self) -> None:
         """Test handler discovery and lookup functionality."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class TestHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command.data}")
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         # Test finding non-existent handler
         handler = bus.find_handler(TestCommand(data="test"))
@@ -1171,14 +1177,14 @@ class TestFlextBusMissingCoverage:
 
     def test_unregister_handler_functionality(self) -> None:
         """Test handler unregistration functionality."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class TestHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command.data}")
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         # Register handler
         bus.register_handler(TestCommand, TestHandler())
@@ -1195,19 +1201,21 @@ class TestFlextBusMissingCoverage:
 
     def test_bus_caching_functionality(self) -> None:
         """Test query result caching functionality."""
-        bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 5})
+        bus = FlextCore.Bus(bus_config={"enable_caching": True, "max_cache_size": 5})
 
-        class TestQuery(FlextModels.Query):
+        class TestQuery(FlextCore.Models.Query):
             query_id: str = ""
             data: str = ""
 
         execution_count = 0
 
         class TestQueryHandler:
-            def handle(self, query: TestQuery) -> FlextResult[dict[str, object]]:
+            def handle(
+                self, query: TestQuery
+            ) -> FlextCore.Result[FlextCore.Types.Dict]:
                 nonlocal execution_count
                 execution_count += 1
-                return FlextResult[dict[str, object]].ok({
+                return FlextCore.Result[FlextCore.Types.Dict].ok({
                     "result": query.data,
                     "count": execution_count,
                 })
@@ -1234,21 +1242,21 @@ class TestFlextBusMissingCoverage:
 
     def test_event_publishing_functionality(self) -> None:
         """Test domain event publishing functionality."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class TestEvent(FlextModels.DomainEvent):
+        class TestEvent(FlextCore.Models.DomainEvent):
             event_type: str = ""
             aggregate_id: str = ""
             event_id: str = ""
-            data: FlextTypes.Domain.EventPayload = Field(default_factory=dict)
+            data: FlextCore.Types.Domain.EventPayload = Field(default_factory=dict)
 
         execution_count = 0
 
         class TestEventHandler:
-            def handle(self, event: TestEvent) -> FlextResult[None]:
+            def handle(self, event: TestEvent) -> FlextCore.Result[None]:
                 nonlocal execution_count
                 execution_count += 1
-                return FlextResult[None].ok(None)
+                return FlextCore.Result[None].ok(None)
 
         # Subscribe to event
         result = bus.subscribe("TestEvent", TestEventHandler())
@@ -1280,7 +1288,7 @@ class TestFlextBusMissingCoverage:
                 data={"value": "test_data3"},
             ),
         ]
-        result = bus.publish_events(cast("list[object]", events))
+        result = bus.publish_events(cast("FlextCore.Types.List", events))
         assert result.is_success
         assert execution_count == 3
 
@@ -1290,26 +1298,28 @@ class TestFlextBusMissingCoverage:
 
     def test_middleware_pipeline_functionality(self) -> None:
         """Test middleware pipeline functionality."""
-        bus = FlextBus(bus_config={"enable_middleware": True})
+        bus = FlextCore.Bus(bus_config={"enable_middleware": True})
 
-        execution_order: list[str] = []
+        execution_order: FlextCore.Types.StringList = []
 
         class LoggingMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[object]:
+            def process(
+                self, command: object, handler: object
+            ) -> FlextCore.Result[object]:
                 execution_order.append("middleware_before")
                 # Call the handler (next in chain)
-                result: FlextResult[object] = getattr(handler, "handle")(command)
+                result: FlextCore.Result[object] = getattr(handler, "handle")(command)
                 execution_order.append("middleware_after")
                 # Return the handler result
                 return result
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextCore.Models.Command):
             data: str
 
         class TestHandler:
-            def handle(self, command: TestCommand) -> FlextResult[str]:
+            def handle(self, command: TestCommand) -> FlextCore.Result[str]:
                 execution_order.append("handler")
-                return FlextResult[str].ok(f"processed_{command.data}")
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         # Add middleware
         bus.add_middleware(LoggingMiddleware(), {"middleware_id": "logging"})
@@ -1330,14 +1340,14 @@ class TestFlextBusMissingCoverage:
 
     def test_command_validation_functionality(self) -> None:
         """Test command validation functionality."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
-        class ValidatableCommand(FlextModels.Command):
+        class ValidatableCommand(FlextCore.Models.Command):
             data: str
 
         class TestHandler:
-            def handle(self, command: ValidatableCommand) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{command.data}")
+            def handle(self, command: ValidatableCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].ok(f"processed_{command.data}")
 
         bus.register_handler(ValidatableCommand, TestHandler())
 
@@ -1349,12 +1359,12 @@ class TestFlextBusMissingCoverage:
 
     def test_bus_configuration_functionality(self) -> None:
         """Test bus configuration and property access."""
-        config: dict[str, object] = {
+        bus_config: FlextCore.Types.Dict = {
             "enable_caching": True,
             "max_cache_size": 10,
             "enable_middleware": False,
         }
-        bus = FlextBus(bus_config=config)
+        bus = FlextCore.Bus(bus_config=bus_config)
 
         # Test configuration access
         assert bus.bus_config.enable_caching is True
@@ -1362,24 +1372,23 @@ class TestFlextBusMissingCoverage:
         assert bus.bus_config.enable_middleware is False
 
         # Test configuration model creation
-        config_model = bus._create_config_model(config)
+        config_model = bus._create_config_model(bus_config)
         assert config_model.enable_caching is True
 
-        # Test configuration model creation from FlextModels.Cqrs.Bus
-        from flext_core.models import FlextModels
+        # Test configuration model creation from FlextCore.Models.Cqrs.Bus
 
-        bus_config_model = FlextModels.Cqrs.Bus(enable_caching=True)
+        bus_config_model = FlextCore.Models.Cqrs.Bus(enable_caching=True)
         config_model2 = bus._create_config_model(bus_config_model)
         assert config_model2.enable_caching is True
 
     def test_cache_functionality(self) -> None:
         """Test cache functionality directly."""
-        cache = FlextBus._Cache(max_size=3)
+        cache = FlextCore.Bus._Cache(max_size=3)
 
         # Test cache operations
-        cache.put("key1", FlextResult[object].ok("value1"))
-        cache.put("key2", FlextResult[object].ok("value2"))
-        cache.put("key3", FlextResult[object].ok("value3"))
+        cache.put("key1", FlextCore.Result[object].ok("value1"))
+        cache.put("key2", FlextCore.Result[object].ok("value2"))
+        cache.put("key3", FlextCore.Result[object].ok("value3"))
 
         # Test cache retrieval
         result1 = cache.get("key1")
@@ -1390,7 +1399,7 @@ class TestFlextBusMissingCoverage:
         assert cache.size() == 3
 
         # Test cache eviction (add 4th item, should evict least recently used)
-        cache.put("key4", FlextResult[object].ok("value4"))
+        cache.put("key4", FlextCore.Result[object].ok("value4"))
         assert cache.size() == 3
 
         # key2 should be evicted (least recently used)
@@ -1407,10 +1416,10 @@ class TestFlextBusMissingCoverage:
 
     def test_error_handling_scenarios(self) -> None:
         """Test various error handling scenarios."""
-        bus = FlextBus()
+        bus = FlextCore.Bus()
 
         # Test execution without handler
-        class UnknownCommand(FlextModels.Command):
+        class UnknownCommand(FlextCore.Models.Command):
             data: str
 
         unknown_command = UnknownCommand(data="test")
@@ -1419,12 +1428,12 @@ class TestFlextBusMissingCoverage:
         assert "No handler found" in (result.error or "")
 
         # Test handler execution failure
-        class FailingCommand(FlextModels.Command):
+        class FailingCommand(FlextCore.Models.Command):
             data: str
 
         class FailingHandler:
-            def handle(self, command: FailingCommand) -> FlextResult[str]:
-                return FlextResult[str].fail("Handler intentionally failed")
+            def handle(self, command: FailingCommand) -> FlextCore.Result[str]:
+                return FlextCore.Result[str].fail("Handler intentionally failed")
 
         bus.register_handler(FailingCommand, FailingHandler())
 
@@ -1434,11 +1443,11 @@ class TestFlextBusMissingCoverage:
         assert "Handler intentionally failed" in (result.error or "")
 
         # Test handler with exception
-        class ExceptionCommand(FlextModels.Command):
+        class ExceptionCommand(FlextCore.Models.Command):
             data: str
 
         class ExceptionHandler:
-            def handle(self, command: ExceptionCommand) -> FlextResult[str]:
+            def handle(self, command: ExceptionCommand) -> FlextCore.Result[str]:
                 msg = "Handler raised exception"
                 raise ValueError(msg)
 

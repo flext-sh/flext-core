@@ -1,52 +1,112 @@
-# Source Layout
+# FLEXT Core
 
-This directory implements the public API exported by `flext_core`. The structure mirrors the 1.0.0 modernization pillars – dispatcher unification, context-first observability, and aligned configuration/domain services.
+FLEXT Core is a foundational framework providing core abstractions for building robust, maintainable applications following domain-driven design (DDD) and clean architecture principles.
 
----
+## Overview
 
-## Foundations
+This module provides the core infrastructure components used across the FLEXT ecosystem:
 
-| Module         | Responsibility                                        |
-| -------------- | ----------------------------------------------------- |
-| `result.py`    | `FlextResult` railway type and helpers                |
-| `typings.py`   | Shared generics and aliases (no runtime dependencies) |
-| `constants.py` | Canonical constants used across modules               |
-| `version.py`   | Version helpers and release metadata                  |
+- **Railway-oriented error handling** with `FlextResult[T]`
+- **Dependency injection container** with type-safe service registration
+- **CQRS implementation** with command bus and message dispatching
+- **Domain modeling** with entities, value objects, and aggregates
+- **Structured logging** with context propagation
+- **Configuration management** with validation and environment support
+- **Context management** for distributed tracing and correlation
+- **Protocol definitions** for interface contracts
+- **Utility functions** for validation, serialization, and type checking
 
-## Runtime Surfaces
+## Architecture
 
-| Module         | Responsibility                                            |
-| -------------- | --------------------------------------------------------- |
-| `container.py` | Global dependency container with typed service keys       |
-| `service.py`   | Base class for domain services (immutable, context-aware) |
-| `models.py`    | Entities, values, aggregates, plus helper models          |
-| `utilities.py` | Validation, ID generation, retry helpers                  |
+The framework is organized into logical layers:
 
-## Execution Flow
+### Foundation Layer
+Core types and constants that have no dependencies on other framework modules.
 
-| Module          | Responsibility                                     |
-| --------------- | -------------------------------------------------- |
-| `bus.py`        | Core command bus implementation                    |
-| `dispatcher.py` | Dispatcher façade orchestrating bus + context      |
-| `registry.py`   | Batch registration helpers for downstream packages |
-| `handlers.py`   | Base classes for command/query handlers            |
-| `processing.py` | Lightweight processing utilities and registries    |
-| `cqrs.py`       | CQRS adapters built on top of the bus/handlers     |
+### Domain Layer
+Business logic abstractions including entities, value objects, services, and domain events.
 
-## Context & Observability
+### Application Layer
+Use case coordination with CQRS patterns, command/query handlers, and application services.
 
-| Module        | Responsibility                                                  |
-| ------------- | --------------------------------------------------------------- |
-| `context.py`  | Hierarchical context (correlation, request, performance scopes) |
-| `loggings.py` | Structured logging integrated with `FlextContext`               |
-| `mixins.py`   | Serialization/logging/timestamp mixins reused across modules    |
+### Infrastructure Layer
+External concerns including logging, configuration, dependency injection, and context management.
 
-## Configuration
+## Key Components
 
-| Module      | Responsibility                                     |
-| ----------- | -------------------------------------------------- |
-| `config.py` | `FlextConfig` base with `.env`, YAML, TOML support |
+| Component | Description |
+|-----------|-------------|
+| `FlextResult[T]` | Railway-oriented error handling with monadic operations |
+| `FlextContainer` | Dependency injection container with type-safe registration |
+| `FlextBus` | Command/query bus for CQRS message routing |
+| `FlextDispatcher` | High-level message dispatch orchestration |
+| `FlextContext` | Hierarchical context management for tracing |
+| `FlextLogger` | Structured logging with automatic context propagation |
+| `FlextConfig` | Configuration management with Pydantic validation |
+| `FlextService` | Base class for domain services |
+| `FlextModels` | DDD patterns (Entity, Value, AggregateRoot) |
 
----
+## Usage Examples
 
-All exported symbols are surfaced through `__init__.py` and protected by integration tests. When adding new modules or exports, update this document and the modernization plan notes accordingly.
+### Basic Setup
+```python
+from flext_core import FlextCore, FlextResult
+
+# Get unified facade
+core = FlextCore()
+
+# Railway-oriented error handling
+result = FlextResult.success("operation completed")
+if result.is_success:
+    data = result.unwrap()
+```
+
+### Dependency Injection
+```python
+from flext_core import FlextContainer
+
+container = FlextContainer()
+container.register("logger", FlextCore.create_logger("my-service"))
+logger_result = container.get("logger")
+```
+
+### Domain Modeling
+```python
+from flext_core.models import FlextModels
+
+class User(FlextModels.Entity):
+    name: str
+    email: str
+
+    def validate(self) -> FlextResult[None]:
+        if "@" not in self.email:
+            return FlextResult.fail("Invalid email")
+        return FlextResult.ok(None)
+```
+
+### CQRS Pattern
+```python
+from flext_core import FlextDispatcher
+
+dispatcher = FlextDispatcher()
+dispatcher.register_handler(CreateUserCommand, create_user_handler)
+result = dispatcher.dispatch(CreateUserCommand(email="user@example.com"))
+```
+
+## Dependencies
+
+- **Runtime**: structlog, dependency-injector, pydantic, returns
+- **Type System**: typing, collections.abc
+- **Standards**: Follows PEP8, provides type hints for Python 3.8+
+
+## Extension Points
+
+The framework is designed for extension through:
+
+- **Custom handlers** inheriting from `FlextHandlers`
+- **Domain services** inheriting from `FlextService`
+- **Protocol implementations** for interface contracts
+- **Custom processors** for specialized message handling
+- **Mixin composition** for reusable behaviors
+
+All components integrate with the core infrastructure while maintaining clear separation of concerns.
