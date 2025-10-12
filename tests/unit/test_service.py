@@ -543,7 +543,7 @@ class TestDomainServicesFixed:
         """Test service logging through mixins."""
         service = SampleUserService()
 
-        # Service inherits from FlextMixins which includes Logging mixin
+        # Service inherits from FlextCore.Mixins which includes Logging mixin
         assert isinstance(service, FlextCore.Mixins)
 
         FlextCore.Models.LogOperation(

@@ -172,6 +172,7 @@ email_pattern = FlextCore.Constants.Validation.EMAIL_PATTERN
 ```
 
 **Key Features**:
+
 - ✅ **50+ Error Codes**: Categorized exception handling across ecosystem
 - ✅ **Validation Patterns**: Email, URL, UUID, phone number patterns
 - ✅ **Configuration Defaults**: Timeouts, network settings, logging levels
@@ -197,6 +198,7 @@ json_data = FlextCore.Runtime.serialize_to_json(data)
 ```
 
 **Key Features**:
+
 - ✅ **Type Guards**: Email, URL, UUID validation using Layer 0 patterns
 - ✅ **Serialization**: JSON conversion with FLEXT defaults
 - ✅ **External Libraries**: Direct access to structlog, dependency_injector
@@ -208,12 +210,14 @@ json_data = FlextCore.Runtime.serialize_to_json(data)
 **Test Coverage**: 80% (1,143 tests passing, 92 failures) - **Target**: 79% ✅ **ACHIEVED**
 
 **Module Coverage Breakdown**:
+
 - **Foundation Layer**: 92%+ (result.py 92%, container.py 81%, typings.py 100%, constants.py 98%)
 - **Domain Layer**: 71% (models.py 64%, service.py 100%, mixins.py 77%, utilities.py 65%)
 - **Application Layer**: 75% (bus.py 91%, handlers.py 79%, dispatcher.py 60%, processors.py 70%)
 - **Infrastructure Layer**: 79% (config.py 83%, loggings.py 81%, context.py 73%, registry.py 90%)
 
 **Quality Gates Status**:
+
 - ✅ **Ruff Linting**: Zero violations
 - ⚠️ **Type Checking**: 1,743 errors (PyRight strict mode) - **Needs attention**
 - ⚠️ **Test Suite**: 1,143 tests passing, 92 failures - **Needs investigation**
@@ -597,8 +601,8 @@ if user_result.is_success:
 |                    | `exceptions.py` | 59%      | Exception hierarchy                      |
 | **Domain**         | `models.py`     | 64%      | DDD patterns (Entity/Value/Aggregate)    |
 |                    | `service.py`    | 100%     | Domain service base class                |
-|                    | `mixins.py`    | 77%      | Reusable behaviors                       |
-|                    | `utilities.py` | 65%      | Domain utilities                         |
+|                    | `mixins.py`     | 77%      | Reusable behaviors                       |
+|                    | `utilities.py`  | 65%      | Domain utilities                         |
 | **Application**    | `bus.py`        | 91%      | Message bus with middleware              |
 |                    | `cqrs.py`       | 100%     | CQRS patterns                            |
 |                    | `handlers.py`   | 79%      | Handler registry                         |

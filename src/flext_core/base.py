@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TypeVar, TypeAlias
+from typing import TypeVar
 
 from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
@@ -35,7 +35,7 @@ from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
-from flext_core.typings import FlextTypes, T_co
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
@@ -91,7 +91,6 @@ class FlextBase(FlextMixins):
 
     class Mixins(FlextMixins):
         """Reusable behaviour mixins - direct passthrough."""
-        pass
 
     class Service[TDomainResult](FlextService[TDomainResult]):
         """Service base alias preserving generic typing."""

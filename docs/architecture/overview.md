@@ -56,13 +56,14 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 
 **Modules**:
 
-| Module          | Coverage | Purpose                                        |
-| --------------- | -------- | ---------------------------------------------- |
-| `constants.py`  | 100%     | 50+ error codes, validation patterns, config defaults |
-| `typings.py`    | 100%     | Type system (50+ TypeVars, protocols, aliases) |
-| `protocols.py`  | 99%      | Runtime-checkable interfaces                   |
+| Module         | Coverage | Purpose                                               |
+| -------------- | -------- | ----------------------------------------------------- |
+| `constants.py` | 100%     | 50+ error codes, validation patterns, config defaults |
+| `typings.py`   | 100%     | Type system (50+ TypeVars, protocols, aliases)        |
+| `protocols.py` | 99%      | Runtime-checkable interfaces                          |
 
 **Key Features**:
+
 - ✅ **50+ Error Codes**: Categorized exception handling across ecosystem
 - ✅ **Validation Patterns**: Email, URL, UUID, phone number regex patterns
 - ✅ **Configuration Defaults**: Timeouts, network settings, logging levels
@@ -70,6 +71,7 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 - ✅ **Complete Immutability**: All constants marked with `typing.Final`
 
 **Design Principles**:
+
 - Zero dependencies (not even internal flext_core imports)
 - All constants immutable
 - Foundation for entire ecosystem
@@ -81,11 +83,12 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 
 **Modules**:
 
-| Module        | Coverage | Purpose                                        |
-| ------------- | -------- | ---------------------------------------------- |
-| `runtime.py`  | N/A      | External library integration (structlog, dependency_injector) |
+| Module       | Coverage | Purpose                                                       |
+| ------------ | -------- | ------------------------------------------------------------- |
+| `runtime.py` | N/A      | External library integration (structlog, dependency_injector) |
 
 **Key Features**:
+
 - ✅ **Type Guards**: Email, URL, UUID validation using Layer 0 patterns
 - ✅ **Serialization**: JSON conversion with FLEXT defaults
 - ✅ **External Libraries**: Direct access to structlog, dependency_injector
@@ -93,6 +96,7 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 - ✅ **No Layer 1+ Imports**: Prevents circular dependencies
 
 **Design Principles**:
+
 - Bridge between pure constants and foundation
 - No imports from Layer 1 or higher
 - External library integration point
@@ -465,12 +469,12 @@ FlextCore.Context
 
 ### Coverage by Layer
 
-| Layer              | Coverage | Status              |
-| ------------------ | -------- | ------------------- |
-| **Foundation**     | 92%      | ✅ Excellent        |
-| **Domain**         | 71%      | ✅ Good             |
-| **Application**    | 75%      | ✅ Good             |
-| **Infrastructure** | 79%      | ✅ Good             |
+| Layer              | Coverage | Status       |
+| ------------------ | -------- | ------------ |
+| **Foundation**     | 92%      | ✅ Excellent |
+| **Domain**         | 71%      | ✅ Good      |
+| **Application**    | 75%      | ✅ Good      |
+| **Infrastructure** | 79%      | ✅ Good      |
 
 ## Phase 1 Context Enrichment (v0.9.9)
 
