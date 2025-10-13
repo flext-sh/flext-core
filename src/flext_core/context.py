@@ -19,7 +19,6 @@ import json
 import uuid
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
-from contextvars import Token
 from datetime import UTC, datetime
 from typing import (
     Final,
@@ -799,9 +798,7 @@ class FlextContext:
             """Service context variables for identification."""
 
             SERVICE_NAME: Final[FlextModels.StructlogProxyContextVar[str]] = (
-                FlextModels.StructlogProxyContextVar[str](
-                    "service_name", default=None
-                )
+                FlextModels.StructlogProxyContextVar[str]("service_name", default=None)
             )
             SERVICE_VERSION: Final[FlextModels.StructlogProxyContextVar[str]] = (
                 FlextModels.StructlogProxyContextVar[str](
@@ -819,24 +816,28 @@ class FlextContext:
                 FlextModels.StructlogProxyContextVar[str]("request_id", default=None)
             )
             REQUEST_TIMESTAMP: Final[FlextModels.StructlogProxyContextVar[datetime]] = (
-                FlextModels.StructlogProxyContextVar[datetime]("request_timestamp", default=None)
+                FlextModels.StructlogProxyContextVar[datetime](
+                    "request_timestamp", default=None
+                )
             )
 
         class Performance:
             """Performance context variables for timing."""
 
             OPERATION_NAME: Final[FlextModels.StructlogProxyContextVar[str]] = (
-                FlextModels.StructlogProxyContextVar[str]("operation_name", default=None)
-            )
-            OPERATION_START_TIME: Final[FlextModels.StructlogProxyContextVar[datetime]] = (
-                FlextModels.StructlogProxyContextVar[datetime](
-                    "operation_start_time", default=None
+                FlextModels.StructlogProxyContextVar[str](
+                    "operation_name", default=None
                 )
             )
-            OPERATION_METADATA: Final[FlextModels.StructlogProxyContextVar[FlextTypes.Dict]] = (
-                FlextModels.StructlogProxyContextVar[FlextTypes.Dict](
-                    "operation_metadata", default=None
-                )
+            OPERATION_START_TIME: Final[
+                FlextModels.StructlogProxyContextVar[datetime]
+            ] = FlextModels.StructlogProxyContextVar[datetime](
+                "operation_start_time", default=None
+            )
+            OPERATION_METADATA: Final[
+                FlextModels.StructlogProxyContextVar[FlextTypes.Dict]
+            ] = FlextModels.StructlogProxyContextVar[FlextTypes.Dict](
+                "operation_metadata", default=None
             )
 
     # =========================================================================
@@ -1396,6 +1397,7 @@ class FlextContext:
             return (
                 f"FlextContext({', '.join(parts)})" if parts else "FlextContext(empty)"
             )
+
 
 __all__: FlextTypes.StringList = [
     "FlextContext",

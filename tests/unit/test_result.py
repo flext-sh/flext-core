@@ -2378,8 +2378,11 @@ class TestIOInterop:
 
     def test_to_io_success(self) -> None:
         """Test converting successful result to IO."""
+        from typing import cast
+
         result = FlextCore.Result[str].ok("test_value")
-        io_container = result.to_io()
+        # Cast needed because to_io() returns object (returns.io.IO may not be available)
+        io_container: IO[str] = cast("IO[str]", result.to_io())
 
         assert isinstance(io_container, IO)
         # Note: returns.io.IO intentionally hides internal value
@@ -2389,7 +2392,7 @@ class TestIOInterop:
             return x.upper()
 
         # Direct assignment helps PyRight infer the type correctly
-        mapped = io_container.map(to_upper)
+        mapped: IO[str] = io_container.map(to_upper)
         assert isinstance(mapped, IO)
 
     def test_to_io_failure_raises(self) -> None:

@@ -22,7 +22,6 @@ import time as time_module
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
-from enum import StrEnum
 from typing import (
     Annotated,
     ClassVar,
@@ -718,41 +717,6 @@ class FlextModels:
                 return False
             return datetime.now(UTC) > self.expires_at
 
-    class Permission(FrozenStrictModel):
-        """Immutable permission model."""
-
-        resource: str
-        action: str
-        conditions: FlextTypes.Dict = Field(default_factory=dict)
-
-    class Role(ArbitraryTypesModel):
-        """Role model for authorization."""
-
-        name: str
-        description: str | None = None
-        permissions: Annotated[
-            list[FlextModels.Permission], Field(default_factory=list)
-        ]
-
-    class User(Entity):
-        """User entity model."""
-
-        username: str
-        email: str
-        roles: FlextTypes.StringList = Field(default_factory=list)
-        is_active: bool = True
-        last_login: datetime | None = None
-
-    class Session(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
-        """Session model.
-
-        Uses IdentifiableMixin for id and TimestampableMixin for created_at.
-        """
-
-        user_id: str
-        expires_at: datetime
-        data: FlextTypes.Dict = Field(default_factory=dict)
-
     class Url(Value):
         """Enhanced URL value object."""
 
@@ -769,77 +733,6 @@ class FlextModels:
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
             return result.value
-
-    class Project(Entity):
-        """Enhanced project entity with advanced validation."""
-
-        name: str
-        organization_id: str
-        repository_path: str | None = None
-        is_test_project: bool = False
-        test_framework: str | None = None
-        project_type: str = "application"
-
-        @model_validator(mode="after")
-        def validate_business_rules(self) -> Self:
-            """Complex business rules validation."""
-            # Test project consistency
-            if self.is_test_project and not self.test_framework:
-                self.test_framework = "pytest"  # Default
-
-            # Repository path validation
-            if (
-                self.repository_path
-                and not self.repository_path.startswith("/")
-                and not self.repository_path.startswith("http")
-            ):
-                msg = "Repository path must be absolute or URL"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
-
-            return self
-
-    class WorkspaceInfo(AggregateRoot):
-        """Enhanced workspace aggregate with advanced validation."""
-
-        workspace_id: str
-        name: str
-        root_path: str
-        projects: Annotated[list[FlextModels.Project], Field(default_factory=list)]
-        total_files: int = 0
-        total_size_bytes: int = 0
-
-        @model_validator(mode="after")
-        def validate_business_rules(self) -> Self:
-            """Complex workspace validation."""
-            # Workspace consistency
-            if self.projects and self.total_files == 0:
-                msg = "Workspace with projects must have files"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
-
-            # Size validation
-            max_workspace_size = 10 * FlextConstants.Utilities.BYTES_PER_KB**3  # 10GB
-            if self.total_size_bytes > max_workspace_size:
-                msg = "Workspace too large"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
-
-            return self
-
-    class WorkspaceStatus(StrEnum):
-        """Workspace status enumeration."""
-
-        INITIALIZING = "initializing"
-        READY = "ready"
-        ERROR = "error"
-        MAINTENANCE = "maintenance"
 
     class LogOperation(StrictArbitraryTypesModel):
         """Enhanced log operation model."""
@@ -1531,7 +1424,7 @@ class FlextModels:
             ...     registration_id="reg-123",
             ...     handler_mode="command",
             ...     timestamp="2025-01-01T00:00:00Z",
-            ...     status="running"
+            ...     status="running",
             ... )
             >>> details.registration_id
             'reg-123'
@@ -1658,7 +1551,7 @@ class FlextModels:
             ),
         ] = FlextConstants.Pagination.DEFAULT_PAGE_SIZE
 
-        @computed_field  # type: ignore[prop-decorator]
+        @computed_field
         @property
         def offset(self) -> int:
             """Calculate offset from page and size.
@@ -1675,7 +1568,7 @@ class FlextModels:
             """
             return (self.page - 1) * self.size
 
-        @computed_field  # type: ignore[prop-decorator]
+        @computed_field
         @property
         def limit(self) -> int:
             """Get limit (same as size).
@@ -1728,7 +1621,7 @@ class FlextModels:
             >>> query = FlextModels.Query(
             ...     filters={"status": "active", "age__gte": 18},
             ...     pagination={"page": 2, "size": 50},
-            ...     query_type="user_search"
+            ...     query_type="user_search",
             ... )
             >>> query.filters["status"]
             'active'
@@ -1885,8 +1778,7 @@ class FlextModels:
 
         Examples:
             >>> token = FlextModels.StructlogProxyToken(
-            ...     key="correlation_id",
-            ...     previous_value="abc-123"
+            ...     key="correlation_id", previous_value="abc-123"
             ... )
             >>> token.key
             'correlation_id'
@@ -1934,7 +1826,9 @@ class FlextModels:
             - Performance: Direct delegation, no overhead
 
         Usage:
-            >>> var = FlextModels.StructlogProxyContextVar[str]("correlation_id", default=None)
+            >>> var = FlextModels.StructlogProxyContextVar[str](
+            ...     "correlation_id", default=None
+            ... )
             >>> var.set("abc-123")
             >>> var.get()  # Returns "abc-123"
 
@@ -1990,7 +1884,9 @@ class FlextModels:
                 structlog.contextvars.unbind_contextvars(self._key)
 
             # Create token for reset functionality
-            return FlextModels.StructlogProxyToken(key=self._key, previous_value=current_value)
+            return FlextModels.StructlogProxyToken(
+                key=self._key, previous_value=current_value
+            )
 
         def reset(self, token: FlextModels.StructlogProxyToken) -> None:
             """Reset to previous value using token.
@@ -2010,7 +1906,9 @@ class FlextModels:
             if token.previous_value is None:
                 structlog.contextvars.unbind_contextvars(token.key)
             else:
-                structlog.contextvars.bind_contextvars(**{token.key: token.previous_value})
+                structlog.contextvars.bind_contextvars(**{
+                    token.key: token.previous_value
+                })
 
     class Token(Value):
         """Token for context variable reset operations.
@@ -2027,10 +1925,7 @@ class FlextModels:
             old_value: The value before the set operation (None if unset)
 
         Examples:
-            >>> token = FlextModels.Token(
-            ...     key="user_id",
-            ...     old_value="user-123"
-            ... )
+            >>> token = FlextModels.Token(key="user_id", old_value="user-123")
             >>> token.key
             'user_id'
             >>> token.old_value
@@ -2079,7 +1974,7 @@ class FlextModels:
         Examples:
             >>> context_data = FlextModels.ContextData(
             ...     data={"user_id": "123", "correlation_id": "abc-xyz"},
-            ...     metadata={"source": "api", "created_at": "2025-01-01T00:00:00Z"}
+            ...     metadata={"source": "api", "created_at": "2025-01-01T00:00:00Z"},
             ... )
             >>> context_data.data["user_id"]
             '123'
@@ -2155,7 +2050,7 @@ class FlextModels:
             >>> export = FlextModels.ContextExport(
             ...     data={"user_id": "123", "correlation_id": "abc-xyz"},
             ...     metadata={"source": "api", "version": "1.0"},
-            ...     statistics={"sets": 5, "gets": 10, "removes": 2}
+            ...     statistics={"sets": 5, "gets": 10, "removes": 2},
             ... )
             >>> export.data["user_id"]
             '123'
@@ -2247,8 +2142,7 @@ class FlextModels:
 
         Examples:
             >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
-            ...     handler_name="ProcessOrderCommand",
-            ...     handler_mode="command"
+            ...     handler_name="ProcessOrderCommand", handler_mode="command"
             ... )
             >>> context.start_execution()
             >>> # ... handler executes ...
@@ -2299,7 +2193,7 @@ class FlextModels:
         @classmethod
         def validate_handler_mode(cls, v: str) -> str:
             """Validate that handler mode is a recognized value."""
-            valid_modes = {"command", "query", "event", "operation"}
+            valid_modes = {"command", "query", "event", "operation", "saga"}
             if v.lower() not in valid_modes:
                 msg = f"Handler mode must be one of {valid_modes}, got: {v}"
                 raise ValueError(msg)
@@ -2313,8 +2207,7 @@ class FlextModels:
 
             Examples:
                 >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler",
-                ...     handler_mode="command"
+                ...     handler_name="MyHandler", handler_mode="command"
                 ... )
                 >>> context.start_execution()
 
@@ -2329,8 +2222,7 @@ class FlextModels:
 
             Examples:
                 >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler",
-                ...     handler_mode="command"
+                ...     handler_name="MyHandler", handler_mode="command"
                 ... )
                 >>> context.start_execution()
                 >>> # ... handler executes ...
@@ -2353,8 +2245,7 @@ class FlextModels:
 
             Examples:
                 >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler",
-                ...     handler_mode="command"
+                ...     handler_name="MyHandler", handler_mode="command"
                 ... )
                 >>> metrics = context.get_metrics_state()
                 >>> isinstance(metrics, dict)
@@ -2376,8 +2267,7 @@ class FlextModels:
 
             Examples:
                 >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler",
-                ...     handler_mode="command"
+                ...     handler_name="MyHandler", handler_mode="command"
                 ... )
                 >>> context.set_metrics_state({"items_processed": 42, "errors": 0})
 
@@ -2401,8 +2291,7 @@ class FlextModels:
 
             Examples:
                 >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
-                ...     handler_name="MyHandler",
-                ...     handler_mode="command"
+                ...     handler_name="MyHandler", handler_mode="command"
                 ... )
                 >>> context.start_execution()
                 >>> context.reset()
@@ -2433,8 +2322,7 @@ class FlextModels:
 
             Examples:
                 >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
-                ...     handler_name="ProcessOrderCommand",
-                ...     handler_mode="command"
+                ...     handler_name="ProcessOrderCommand", handler_mode="command"
                 ... )
                 >>> context.handler_name
                 'ProcessOrderCommand'
@@ -2444,13 +2332,13 @@ class FlextModels:
             """
             return cls(handler_name=handler_name, handler_mode=handler_mode)
 
-        @computed_field  # type: ignore[prop-decorator]
+        @computed_field
         @property
         def is_running(self) -> bool:
             """Check if execution is currently running."""
             return self._start_time is not None
 
-        @computed_field  # type: ignore[prop-decorator]
+        @computed_field
         @property
         def has_metrics(self) -> bool:
             """Check if metrics have been recorded."""
@@ -3177,3 +3065,8 @@ FlextModels.Token.model_rebuild()
 FlextModels.ContextData.model_rebuild()
 FlextModels.ContextExport.model_rebuild()
 FlextModels.HandlerExecutionContext.model_rebuild()
+FlextModels.HandlerExecutionConfig.model_rebuild()
+FlextModels.BatchProcessingConfig.model_rebuild()
+FlextModels.DomainServiceExecutionRequest.model_rebuild()
+FlextModels.ConditionalExecutionRequest.model_rebuild()
+FlextModels.DomainServiceBatchRequest.model_rebuild()

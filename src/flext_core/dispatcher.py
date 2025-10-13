@@ -535,7 +535,6 @@ class FlextDispatcher(FlextMixins):
         """Dispatch message with support for both old and new API.
 
         Refactored to use specialized processors for SOLID compliance:
-        - Circuit breaker, rate limiting, caching → FlextProcessors
         - Timeout, retry → Uses threading with processors
 
         Args:

@@ -508,20 +508,25 @@ class TestRuntimeIntegrationWithConstants:
     def test_runtime_has_no_circular_imports(self) -> None:
         """Test that FlextCore.Runtime can be imported without circular dependencies."""
         # This test passes if the import succeeds
-        from flext_core import FlextCore as RuntimeClass
+        from flext_core import FlextCore
 
-        assert RuntimeClass is not None
-        assert RuntimeClass is FlextCore.Runtime
+        assert FlextCore is not None
+        assert FlextCore.Runtime is not None
+        # Verify Runtime is accessible as nested class
+        assert hasattr(FlextCore, 'Runtime')
 
     def test_layer_hierarchy_respected(self) -> None:
         """Test that Layer 0.5 (runtime) imports from Layer 0 (constants) only."""
         # FlextCore.Runtime should import FlextCore.Constants (Layer 0)
         # This test verifies the import chain is correct
-        from flext_core import FlextCore as ConstantsClass, FlextCore as RuntimeClass
+        from flext_core import FlextCore
 
-        # Both should be importable
-        assert ConstantsClass is not None
-        assert RuntimeClass is not None
+        # Verify FlextCore is importable
+        assert FlextCore is not None
+
+        # Verify both Runtime and Constants are accessible
+        assert FlextCore.Runtime is not None
+        assert FlextCore.Constants is not None
 
         # FlextCore.Runtime should be able to access FlextCore.Constants patterns
         assert FlextCore.Constants.Platform.PATTERN_EMAIL is not None

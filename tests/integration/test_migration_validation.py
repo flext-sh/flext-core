@@ -16,10 +16,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic import Field
-
 from flext_core import (
-    FlextConstants,
     FlextContainer,
     FlextLogger,
     FlextModels,
@@ -113,24 +110,21 @@ class TestMigrationScenario3:
     def test_entity_value_aggregate_patterns(self) -> None:
         """Verify FlextModels patterns continue working."""
 
-        class User(FlextModels.Entity):
-            """User entity extending FlextModels.Entity."""
+        # Use predefined FlextModels.User instead of local class
+        user = FlextModels.User(
+            username="alice",
+            email="alice@example.com"
+        )
+        assert user.username == "alice"
+        assert user.email == "alice@example.com"
 
-            username: str
-            email: str
-
+        # Create value object using predefined pattern
         class Address(FlextModels.Value):
             """Address value object extending FlextModels.Value."""
 
             street: str
             city: str
 
-        # Create entity
-        user = User(id="user_123", username="alice", email="alice@example.com")
-        assert user.id == "user_123"
-        assert user.username == "alice"
-
-        # Create value object
         address = Address(street="123 Main St", city="Springfield")
         assert address.street == "123 Main St"
         assert address.city == "Springfield"
@@ -182,114 +176,6 @@ class TestMigrationScenario5:
         logger.debug("Debug message")
         logger.warning("Warning message")
         logger.error("Error message")
-
-
-class TestNewFeatures:
-    """Test new features introduced in 0.9.9 that are stable in 1.0.0."""
-
-    def test_http_constants(self) -> None:
-        """Verify HTTP constants are accessible and correct."""
-        # HTTP status codes
-        assert FlextConstants.Http.HTTP_OK == 200
-        assert FlextConstants.Http.HTTP_CREATED == 201
-        assert FlextConstants.Http.HTTP_BAD_REQUEST == 400
-        assert FlextConstants.Http.HTTP_NOT_FOUND == 404
-        assert FlextConstants.Http.HTTP_INTERNAL_SERVER_ERROR == 500
-
-        # HTTP status ranges (use direct constants, not StatusRange namespace)
-        assert FlextConstants.Http.HTTP_SUCCESS_MIN == 200
-        assert FlextConstants.Http.HTTP_SUCCESS_MAX == 299
-        assert FlextConstants.Http.HTTP_CLIENT_ERROR_MIN == 400
-        assert FlextConstants.Http.HTTP_CLIENT_ERROR_MAX == 499
-
-        # HTTP methods
-        assert FlextConstants.Http.Method.GET == "GET"
-        assert FlextConstants.Http.Method.POST == "POST"
-        assert FlextConstants.Http.Method.PUT == "PUT"
-        assert FlextConstants.Http.Method.DELETE == "DELETE"
-
-        # Content types
-        assert FlextConstants.Http.ContentType.JSON == "application/json"
-        assert FlextConstants.Http.ContentType.XML == "application/xml"
-        assert (
-            FlextConstants.Http.ContentType.FORM == "application/x-www-form-urlencoded"
-        )
-
-        # Ports
-        assert FlextConstants.Http.HTTP_PORT == 80
-        assert FlextConstants.Http.HTTPS_PORT == 443
-
-    def test_http_request_model(self) -> None:
-        """Verify HTTP request base model works."""
-
-        class MyHttpRequest(FlextModels.HttpRequest):
-            """Custom HTTP request extending base."""
-
-            custom_field: str = ""
-
-        # Create request
-        request = MyHttpRequest(
-            url="https://api.example.com/users",
-            method="POST",
-            headers={"Content-Type": "application/json"},
-            body='{"name": "Alice"}',
-            custom_field="test",
-        )
-
-        # Verify base fields
-        assert request.url == "https://api.example.com/users"
-        assert request.method == "POST"
-        assert request.headers["Content-Type"] == "application/json"
-        assert request.body == '{"name": "Alice"}'
-
-        # Verify computed properties
-        assert request.is_secure
-        assert request.has_body
-
-        # Verify custom field
-        assert request.custom_field == "test"
-
-    def test_http_response_model(self) -> None:
-        """Verify HTTP response base model works."""
-
-        class MyHttpResponse(FlextModels.HttpResponse):
-            """Custom HTTP response extending base."""
-
-            custom_data: dict[str, object] = Field(default_factory=dict)
-
-        # Create response - success
-        success_response = MyHttpResponse(
-            status_code=200,
-            headers={"Content-Type": "application/json"},
-            body='{"result": "success"}',
-            elapsed_time=0.123,
-            custom_data={"processed": True},
-        )
-
-        # Verify base fields
-        assert success_response.status_code == 200
-        assert success_response.elapsed_time == 0.123
-
-        # Verify computed properties
-        assert success_response.is_success
-        assert not success_response.is_client_error
-        assert not success_response.is_server_error
-
-        # Verify custom field
-        assert success_response.custom_data["processed"] is True
-
-        # Create response - client error
-        error_response = MyHttpResponse(
-            status_code=400,
-            headers={},
-            body='{"error": "Bad request"}',
-            elapsed_time=0.05,
-        )
-
-        # Verify error detection
-        assert not error_response.is_success
-        assert error_response.is_client_error
-        assert not error_response.is_server_error
 
 
 class TestBackwardCompatibility:

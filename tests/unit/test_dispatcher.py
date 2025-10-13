@@ -691,10 +691,14 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextCore.Dispatcher()
 
         # Test with invalid handler mode
+        def test_handler(x: object) -> object:
+            """Simple identity handler for testing."""
+            return x
+
         invalid_request: FlextCore.Types.Dict = {
             "handler_mode": "invalid_mode",
             "message_type": "test",
-            "handler": lambda x: x,
+            "handler": test_handler,
         }
 
         result = dispatcher.register_handler_with_request(invalid_request)

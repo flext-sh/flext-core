@@ -38,10 +38,8 @@ from typing import (
 
 import orjson
 
-from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
-from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -651,18 +649,6 @@ class FlextUtilities:
 
             """
             setattr(obj, field_name, True)
-
-        @staticmethod
-        def initialize_state(request: FlextModels.StateInitializationRequest) -> None:
-            """Initialize state for object using StateInitializationRequest model.
-
-            Args:
-                request: StateInitializationRequest containing object and state settings
-
-            """
-            obj = request.data
-            if hasattr(obj, request.field_name):
-                setattr(obj, request.field_name, request.state)
 
     class TypeGuards:
         """Type guard utilities for runtime type checking."""
@@ -1364,137 +1350,6 @@ class FlextUtilities:
                     error_code="COMMAND_ERROR",
                     error_data={"cmd": cmd, "error": str(e)},
                 )
-
-    class Serialization:
-        """JSON and dictionary serialization utilities."""
-
-        @staticmethod
-        def to_json(request: FlextModels.SerializationRequest) -> str:
-            """Convert object to JSON string using SerializationRequest model.
-
-            Simplified implementation leveraging Pydantic's model_dump when available,
-            with fallback to __dict__ serialization.
-
-            Args:
-                request: SerializationRequest containing object and serialization options
-
-            Returns:
-                JSON string representation of the object
-
-            """
-            obj = request.data
-
-            # Use Pydantic model_dump if available and requested
-            if request.use_model_dump and hasattr(obj, "model_dump"):
-                # Type narrow obj to have model_dump method
-                model_obj = cast("FlextProtocols.Foundation.HasModelFields", obj)
-                data: FlextTypes.Dict = model_obj.model_dump()
-                return json.dumps(
-                    data,
-                    indent=request.indent,
-                    sort_keys=request.sort_keys,
-                    ensure_ascii=request.ensure_ascii,
-                )
-
-            # Fallback to __dict__ for simple objects
-            if hasattr(obj, "__dict__"):
-                data = obj.__dict__
-                return json.dumps(
-                    data,
-                    indent=request.indent,
-                    sort_keys=request.sort_keys,
-                    ensure_ascii=request.ensure_ascii,
-                )
-
-            # Final fallback to string representation
-            return json.dumps(
-                str(obj),
-                indent=request.indent,
-                sort_keys=request.sort_keys,
-                ensure_ascii=request.ensure_ascii,
-            )
-
-        @staticmethod
-        def to_dict(request: FlextModels.SerializationRequest) -> FlextTypes.Dict:
-            """Convert object to dictionary using SerializationRequest model.
-
-            Args:
-                request: SerializationRequest containing object and serialization options
-
-            Returns:
-                Dictionary representation of the object
-
-            """
-            obj = request.data
-
-            # Use Pydantic model_dump if available and requested
-            if request.use_model_dump and hasattr(obj, "model_dump"):
-                # Type narrow obj to have model_dump method
-                model_obj = cast("FlextProtocols.Foundation.HasModelFields", obj)
-                return model_obj.model_dump()
-
-            # Use __dict__ if available
-            if hasattr(obj, "__dict__"):
-                return cast("FlextTypes.Dict", obj.__dict__)
-
-            # Fallback to type representation
-            return cast(
-                "FlextTypes.Dict",
-                {"type": type(obj).__name__, "value": str(obj)},
-            )
-
-    class Timestamps:
-        """Timestamp creation and management utilities."""
-
-        @staticmethod
-        def create_fields(config: FlextModels.TimestampConfig) -> None:
-            """Create timestamp fields for object using TimestampConfig model.
-
-            Args:
-                config: TimestampConfig containing object and timestamp settings
-
-            """
-            obj = config.obj
-            timezone = UTC if config.use_utc else None
-            current_time = datetime.now(timezone)
-
-            # Set created_at if not already set
-            created_field = config.field_names.get("created_at", "created_at")
-            if (
-                hasattr(obj, created_field)
-                and getattr(obj, created_field, None) is None
-            ):
-                setattr(obj, created_field, current_time)
-
-            # Set updated_at if auto_update is enabled
-            updated_field = config.field_names.get("updated_at", "updated_at")
-            if hasattr(obj, updated_field) and config.auto_update:
-                setattr(obj, updated_field, current_time)
-
-        @staticmethod
-        def update(config: FlextModels.TimestampConfig) -> None:
-            """Update timestamp for object using TimestampConfig model.
-
-            Args:
-                config: TimestampConfig containing object and timestamp settings
-
-            """
-            obj = config.obj
-
-            # Check global configuration using FlextConfig
-            global_config = FlextConfig.get_global_instance()
-            global_auto_update = getattr(global_config, "timestamp_auto_update", False)
-
-            # Update if auto_update is enabled locally or globally
-            auto_update_enabled = config.auto_update or global_auto_update
-
-            if auto_update_enabled:
-                timezone = UTC if config.use_utc else None
-                current_time = datetime.now(timezone)
-
-                updated_field = config.field_names.get("updated_at", "updated_at")
-                if hasattr(obj, updated_field):
-                    setattr(obj, updated_field, current_time)
 
     class Configuration:
         """Configuration parameter access and manipulation utilities."""

@@ -155,8 +155,9 @@ class FlextService[TDomainResult](
             FlextResult[TDomainResult]: Success with operation result or failure with validation/execution error
 
         """
-        with self.track(request.operation_name):
-            self._propagate_context(request.operation_name)
+        operation_name = request.operation_name or "unnamed_operation"
+        with self.track(operation_name):
+            self._propagate_context(operation_name)
 
             self.logger.info(
                 f"Executing operation: {request.operation_name}",
@@ -253,6 +254,10 @@ class FlextService[TDomainResult](
 
                     # Apply timeout if specified
                     if request.timeout_seconds and request.timeout_seconds > 0:
+                        if not callable(request.operation_callable):
+                            return FlextResult[TDomainResult].fail(
+                                f"operation_callable must be callable, got {type(request.operation_callable)}"
+                            )
                         with concurrent.futures.ThreadPoolExecutor(
                             max_workers=1
                         ) as executor:
@@ -269,6 +274,10 @@ class FlextService[TDomainResult](
                                 )
                     else:
                         # Execute the operation without timeout
+                        if not callable(request.operation_callable):
+                            return FlextResult[TDomainResult].fail(
+                                f"operation_callable must be callable, got {type(request.operation_callable)}"
+                            )
                         result = request.operation_callable(
                             *filtered_args, **request.keyword_arguments
                         )
@@ -468,111 +477,6 @@ class FlextService[TDomainResult](
         ) -> None:
             """Clean up execution context after operation."""
             # Basic cleanup - could be extended for more complex operations
-
-    def execute_batch_with_request(
-        self,
-        request: FlextModels.DomainServiceBatchRequest,
-    ) -> FlextResult[FlextTypes.List]:
-        """Execute batch operations using DomainServiceBatchRequest.
-
-        Args:
-            request: Batch request containing operations to execute
-
-        Returns:
-            FlextResult[List]: List of operation results or failure
-
-        """
-        operation_name = f"batch_{request.service_name}"
-
-        with self.track(operation_name):
-            self._propagate_context(operation_name)
-
-            self.logger.info(
-                f"Executing batch operations for service: {request.service_name}",
-                extra={
-                    "operation_count": len(request.operations),
-                    "batch_size": request.batch_size,
-                    "parallel_execution": request.parallel_execution,
-                    "stop_on_error": request.stop_on_error,
-                    "correlation_id": self._get_correlation_id(),
-                },
-            )
-
-            # Validate business rules before batch execution
-            business_rules_result = self.validate_business_rules()
-            if business_rules_result.is_failure:
-                self.logger.error(
-                    f"Business rules validation failed for batch operation: {operation_name}",
-                    extra={"error": business_rules_result.error},
-                )
-                return FlextResult[FlextTypes.List].fail(
-                    f"Business rules validation failed: {business_rules_result.error}"
-                )
-
-            # Validate configuration
-            config_result = self.validate_config()
-            if config_result.is_failure:
-                self.logger.error(
-                    f"Configuration validation failed for batch operation: {operation_name}",
-                    extra={"error": config_result.error},
-                )
-                return FlextResult[FlextTypes.List].fail(
-                    f"Configuration validation failed: {config_result.error}"
-                )
-
-            results: list[FlextResult[object]] = []
-            failed_count = 0
-
-            # Determine number of operations to execute
-            num_operations = (
-                max(len(request.operations), request.batch_size)
-                if request.operations
-                else request.batch_size
-            )
-
-            for i in range(num_operations):
-                try:
-                    # Execute individual operation directly
-                    operation_result = self.execute()
-
-                    if operation_result.is_failure:
-                        failed_count += 1
-                        if request.stop_on_error:
-                            self.logger.error(
-                                f"Batch operation failed at index {i}, stopping execution",
-                                extra={"error": operation_result.error},
-                            )
-                            return FlextResult[FlextTypes.List].fail(
-                                f"Batch execution failed at operation {i}: {operation_result.error}"
-                            )
-
-                    results.append(cast("FlextResult[object]", operation_result))
-
-                except Exception as e:
-                    failed_count += 1
-                    error_message = f"Batch execution exception at operation {i}: {e!s}"
-                    self.logger.exception(error_message, extra={"exception": str(e)})
-
-                    if request.stop_on_error:
-                        return FlextResult[FlextTypes.List].fail(
-                            f"Batch execution failed: {error_message}"
-                        )
-
-                    results.append(FlextResult[object].fail(error_message))
-
-            if failed_count > 0:
-                return FlextResult[FlextTypes.List].fail("Batch execution failed")
-
-            self.logger.info(
-                f"Batch execution completed: {len(results)} operations, {failed_count} failed",
-                extra={
-                    "total_operations": len(results),
-                    "failed_operations": failed_count,
-                    "successful_operations": len(results) - failed_count,
-                },
-            )
-
-            return FlextResult[FlextTypes.List].ok(cast("FlextTypes.List", results))
 
     class _MetadataHelper:
         """Helper class for metadata extraction and formatting utilities."""

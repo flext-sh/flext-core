@@ -691,6 +691,9 @@ class ComprehensiveDIService(FlextCore.Service[User]):
             name=str(user_source["name"]),
             email=str(user_source["email"]),
             age=int(age_raw) if isinstance(age_raw, (int, str)) else 0,
+            created_at=datetime.now(UTC),
+            updated_at=None,
+            version=1,
         )
 
         self._log_service_statistics()

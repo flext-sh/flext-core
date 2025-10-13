@@ -290,7 +290,7 @@ class TestFlextHandlers:
 
         assert isinstance(
             handler._execution_context,
-            FlextCore.Context.HandlerExecutionContext,
+            FlextCore.Models.HandlerExecutionContext,
         )
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:

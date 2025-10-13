@@ -563,6 +563,9 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
             id=str(uuid4()),
             customer_id=str(uuid4()),
             order_number=f"ORD-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}",
+            version=1,
+            created_at=datetime.now(UTC),
+            updated_at=None,
         )
 
         self.logger.info(
@@ -709,6 +712,9 @@ class ComprehensiveModelsService(FlextCore.Service[Order]):
             id=str(order_data["order_id"]),
             customer_id=str(order_data["customer_id"]),
             order_number=str(order_data["order_id"])[:12],
+            version=1,
+            created_at=datetime.now(UTC),
+            updated_at=None,
         )
         print(f"Order created: {order.order_number}")
 

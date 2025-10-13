@@ -9,11 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import NoReturn
+from collections.abc import Callable
+from typing import NoReturn, cast
 
 import pytest
 
-from flext_core import FlextBase, FlextCore
+from flext_core import FlextBase, FlextConfig, FlextContainer, FlextCore, FlextLogger
 
 
 class TestFlextImports:
@@ -48,9 +49,11 @@ class TestFlextBase:
         """FlextBase instances provide ready helpers."""
         base = FlextBase()
 
-        assert isinstance(base.config, FlextCore.Config)
-        assert isinstance(base.container, FlextCore.Container)
-        assert isinstance(base.logger, FlextCore.Logger)
+        # config property returns FlextConfig instance (global singleton)
+        # FlextCore.Config/FlextBase.Config are nested classes for subclassing
+        assert isinstance(base.config, FlextConfig)
+        assert isinstance(base.container, FlextContainer)
+        assert isinstance(base.logger, FlextLogger)
         assert isinstance(base.runtime, FlextBase.Runtime)
         assert base.constants is FlextBase.Constants
         assert base.handlers is FlextBase.Handlers

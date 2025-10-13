@@ -42,7 +42,7 @@ class TestCleanArchitecturePatterns:
                     return FlextCore.Result[None].fail("Invalid email format")
                 return FlextCore.Result[None].ok(None)
 
-        class User(FlextCore.Models.Entity):
+        class User(FlextCore.Models.ArbitraryTypesModel, FlextCore.Models.IdentifiableMixin):
             """Domain entity."""
 
             name: str
@@ -257,7 +257,8 @@ class TestCleanArchitecturePatterns:
                     )
 
                 # Create new instance with updated status (immutable pattern)
-                result = FlextCore.Result[Order].ok(
+                # Use object type to avoid forward reference issues with locally defined Order class
+                result = FlextCore.Result[object].ok(
                     self.model_copy(update={"status": "confirmed"}),
                 )
                 if result.is_failure:
@@ -266,6 +267,9 @@ class TestCleanArchitecturePatterns:
                     )
 
                 return FlextCore.Result[None].ok(None)
+
+        # Rebuild model with proper namespace to resolve forward references (Pydantic v2 requirement)
+        Order.model_rebuild(_types_namespace={'FlextCore': FlextCore, 'FlextModels': FlextCore.Models})
 
         return Order(
             id="order_123",

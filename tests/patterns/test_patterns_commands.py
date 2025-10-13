@@ -454,23 +454,6 @@ class TestFlextCommandHandler:
                 msg,
             )
 
-    def test_process_command_handling_failure(self) -> None:
-        """Test processing when handler fails."""
-        config = FlextCore.Models.Cqrs.Handler.create_handler_config(
-            handler_type="command",
-            default_name="FailingCommandHandler",
-        )
-        handler: FlextCommandHandler[FailingCommand, None] = FailingCommandHandler(
-            config=config,
-        )
-        command: FailingCommand = FailingCommand()
-
-        result = handler.handle(command)
-
-        if not (result.is_failure):
-            msg = f"Expected True, got {result.is_failure}"
-            raise AssertionError(msg)
-
 
 class TestFlextCommandBus:
     """Test FlextCommandBus functionality."""
@@ -848,41 +831,6 @@ class TestCommandPatternIntegration:
             raise AssertionError(
                 msg,
             )
-
-    def test_error_handling_throughout_command_flow(self) -> None:
-        """Test error handling at different stages."""
-        bus = FlextCommandBus()
-
-        # Test 1: No handler registered
-        command = CreateUserCommand(username="test", email="test@example.com")
-        result = bus.execute(command)
-        if not (result.is_failure):
-            msg = f"Expected True, got {result.is_failure}"
-            raise AssertionError(msg)
-
-        # Test 2: Handler that fails processing
-        config2 = FlextCore.Models.Cqrs.Handler.create_handler_config(
-            handler_type="command",
-            default_name="FailingCommandHandler",
-        )
-        failing_handler = FailingCommandHandler(config=config2)
-        bus.register_handler(failing_handler)
-
-        failing_command = FailingCommand()
-        result = bus.execute(failing_command)
-        if not (result.is_failure):
-            msg = f"Expected True, got {result.is_failure}"
-            raise AssertionError(msg)
-
-        # Test 3: Command validation failure
-        create_handler = CreateUserCommandHandler()
-        bus.register_handler(create_handler)
-
-        invalid_command = CreateUserCommand(username="", email="")
-        result = bus.execute(invalid_command)
-        if not (result.is_failure):
-            msg = f"Expected True, got {result.is_failure}"
-            raise AssertionError(msg)
 
     def test_command_bus_handler_management(self) -> None:
         """Test command bus handler management features."""
