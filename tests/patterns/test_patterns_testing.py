@@ -378,12 +378,11 @@ class TestPropertyBasedPatterns:
         assert not email.endswith("@")
 
     @given(
-        st.builds(
-            dict,
-            id=st.uuids().map(str),
-            name=st.text(),
-            email=st.emails(),
-        )
+        st.fixed_dictionaries({
+            "id": st.uuids().map(str),
+            "name": st.text(),
+            "email": st.emails(),
+        })
     )
     def test_user_profile_property_based(
         self, profile: FlextCore.Types.StringDict

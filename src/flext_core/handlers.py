@@ -295,7 +295,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         self._execution_context = (
             FlextModels.HandlerExecutionContext.create_for_handler(
                 handler_name=config.handler_name,
-                handler_mode=config.handler_type,
+                handler_mode=config.handler_mode,
             )
         )
         self._accepted_message_types = (

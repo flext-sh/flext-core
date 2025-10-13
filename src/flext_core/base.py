@@ -72,7 +72,7 @@ class FlextBase(FlextMixins):
         """Pydantic settings namespace."""
 
     class Constants(FlextConstants):
-        """Centralised constant definitions."""
+        """Foundation constant definitions."""
 
     class Types(FlextTypes):
         """Type system namespace."""

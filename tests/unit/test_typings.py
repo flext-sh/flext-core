@@ -189,18 +189,22 @@ class TestFlextTypes:
 
     def test_flexttypes_project_types(self) -> None:
         """Test FlextCore.Types.Project types."""
-        # Test Literal types
-        proj_type: FlextCore.Types.Project.ProjectType = "library"
+        # Test Literal types - use valid FlextConstants.ProjectType value
+        proj_type: FlextCore.Types.Project.ProjectType = "flext-core"
+        # ProjectType is defined as specific flext project names
         expected_types = [
-            "library",
-            "application",
-            "service",
-            "cli",
-            "web",
-            "api",
-            "PYTHON",
-            "GO",
-            "JAVASCRIPT",
+            "flext-core",
+            "flext-api",
+            "flext-ldap",
+            "flext-ldif",
+            "flext-cli",
+            "flext-auth",
+            "flext-web",
+            "flext-grpc",
+            "flext-plugin",
+            "flext-observability",
+            "flext-quality",
+            "flext-meltano",
         ]
         assert proj_type in expected_types
 
@@ -225,10 +229,12 @@ class TestFlextTypes:
         handler_type: FlextCore.Types.Processing.HandlerType = "command"
         assert handler_type in {"command", "query", "event", "processor"}
 
-        workflow_status: FlextCore.Types.Processing.WorkflowStatus = "pending"
+        workflow_status: FlextCore.Types.Processing.WorkflowStatus = "created"
         assert workflow_status in {
-            "pending",
+            "created",
+            "started",
             "running",
+            "paused",
             "completed",
             "failed",
             "cancelled",

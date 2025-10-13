@@ -14,7 +14,14 @@ import threading
 from typing import ClassVar, Self, cast
 
 from dependency_injector import providers
-from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
+from pydantic import (
+    Field,
+    SecretStr,
+    computed_field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
@@ -382,13 +389,45 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def get_global_instance(cls) -> Self:
-        """Get or create global singleton instance."""
-        if cls not in cls._instances:
+        """Get or create global singleton instance.
+
+        Note: Uses FlextConfig as the singleton key to ensure all subclasses
+        (including FlextBase.Config and FlextCore.Config) share the same instance.
+        This is intentional to maintain a single global configuration across the
+        entire flext-core ecosystem, regardless of access pattern.
+
+        If a more derived subclass is requested after a base class instance was
+        created, the singleton is upgraded to the more derived type to maintain
+        type compatibility with isinstance checks.
+
+        Returns:
+            Self: The global singleton instance
+
+        """
+        # Use base class (FlextConfig) as key to ensure single global singleton
+        # Subclasses (FlextBase.Config, FlextCore.Config) share this instance
+        base_class = FlextConfig
+
+        if base_class not in cls._instances:
+            # No instance exists - create one
             with cls._lock:
-                if cls not in cls._instances:
+                if base_class not in cls._instances:
                     instance = cls()
-                    cls._instances[cls] = instance
-        return cast("Self", cls._instances[cls])
+                    cls._instances[base_class] = instance
+        else:
+            # Instance exists - check if it's compatible with requested class
+            stored = cls._instances[base_class]
+            if not isinstance(stored, cls):
+                # Stored instance is less derived than requested class
+                # Upgrade singleton to more derived type for isinstance compatibility
+                with cls._lock:
+                    # Double-check after acquiring lock
+                    stored = cls._instances[base_class]
+                    if not isinstance(stored, cls):
+                        instance = cls()
+                        cls._instances[base_class] = instance
+
+        return cast("Self", cls._instances[base_class])
 
     @classmethod
     def set_global_instance(cls, instance: FlextConfig) -> None:
@@ -420,13 +459,15 @@ class FlextConfig(BaseSettings):
         """Validate business rules for configuration consistency."""
         return FlextResult[None].ok(None)
 
-    # Computed fields
+    # Computed fields - Enhanced Pydantic 2 features
     @computed_field
+    @property
     def is_debug_enabled(self) -> bool:
         """Check if debug mode is enabled."""
         return self.debug or self.trace
 
     @computed_field
+    @property
     def effective_log_level(self) -> str:
         """Get effective log level considering debug/trace modes."""
         if self.trace:
@@ -434,6 +475,263 @@ class FlextConfig(BaseSettings):
         if self.debug:
             return "INFO"
         return self.log_level
+
+    @computed_field
+    @property
+    def is_production(self) -> bool:
+        """Check if running in production mode (not debug/trace)."""
+        return not (self.debug or self.trace)
+
+    @computed_field
+    @property
+    def effective_timeout(self) -> int:
+        """Get effective timeout considering debug mode (longer timeout for debugging)."""
+        if self.debug or self.trace:
+            return self.timeout_seconds * 3  # 3x timeout for debugging
+        return self.timeout_seconds
+
+    @computed_field
+    @property
+    def has_database(self) -> bool:
+        """Check if database is configured."""
+        return self.database_url is not None and len(self.database_url) > 0
+
+    @computed_field
+    @property
+    def has_cache(self) -> bool:
+        """Check if caching is enabled and configured."""
+        return self.enable_caching and self.cache_max_size > 0
+
+    # Field serializers for SecretStr masking
+    @field_serializer("secret_key", "api_key", when_used="json")
+    def serialize_secrets(self, value: SecretStr | None) -> str:
+        """Mask secret values in JSON serialization."""
+        if value is None:
+            return ""
+        return "***MASKED***"
+
+    # =========================================================================
+    # REUSABLE VALIDATORS - For ecosystem-wide consistency
+    # =========================================================================
+
+    @classmethod
+    def validate_log_level_field(cls, v: str) -> str:
+        """Reusable validator for log level fields.
+
+        Validates log levels against standard set (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+        Can be used by subclasses via field_validator.
+
+        Args:
+            v: Log level string to validate
+
+        Returns:
+            str: Validated and normalized log level (uppercase)
+
+        Raises:
+            ValueError: If log level is invalid
+
+        Example:
+            >>> @field_validator("log_level")
+            >>> @classmethod
+            >>> def validate_log_level(cls, v: str) -> str:
+            ...     return cls.validate_log_level_field(v)
+
+        """
+        valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        level_upper = v.upper()
+        if level_upper not in valid_levels:
+            msg = f"Invalid log level '{v}'. Must be one of: {', '.join(sorted(valid_levels))}"
+            raise ValueError(msg)
+        return level_upper
+
+    @classmethod
+    def validate_log_verbosity_field(cls, v: str) -> str:
+        """Reusable validator for log verbosity fields.
+
+        Validates verbosity against standard set (compact, detailed, full).
+        Can be used by subclasses via field_validator.
+
+        Args:
+            v: Verbosity string to validate
+
+        Returns:
+            str: Validated and normalized verbosity (lowercase)
+
+        Raises:
+            ValueError: If verbosity is invalid
+
+        Example:
+            >>> @field_validator("log_verbosity")
+            >>> @classmethod
+            >>> def validate_verbosity(cls, v: str) -> str:
+            ...     return cls.validate_log_verbosity_field(v)
+
+        """
+        valid_verbosity = {"compact", "detailed", "full"}
+        verbosity_lower = v.lower()
+        if verbosity_lower not in valid_verbosity:
+            msg = f"Invalid log verbosity '{v}'. Must be one of: {', '.join(sorted(valid_verbosity))}"
+            raise ValueError(msg)
+        return verbosity_lower
+
+    @classmethod
+    def validate_environment_field(cls, v: str) -> str:
+        """Reusable validator for environment fields.
+
+        Validates environment against standard set (development, staging, production, test).
+        Can be used by subclasses via field_validator.
+
+        Args:
+            v: Environment string to validate
+
+        Returns:
+            str: Validated and normalized environment (lowercase)
+
+        Raises:
+            ValueError: If environment is invalid
+
+        Example:
+            >>> @field_validator("environment")
+            >>> @classmethod
+            >>> def validate_env(cls, v: str) -> str:
+            ...     return cls.validate_environment_field(v)
+
+        """
+        valid_environments = {"development", "staging", "production", "test"}
+        env_lower = v.lower()
+        if env_lower not in valid_environments:
+            msg = f"Invalid environment '{v}'. Must be one of: {', '.join(sorted(valid_environments))}"
+            raise ValueError(msg)
+        return env_lower
+
+    # =========================================================================
+    # CONFIGURATION UTILITY METHODS - For ecosystem-wide reuse
+    # =========================================================================
+
+    def update_from_dict(self, **kwargs: object) -> FlextResult[None]:
+        """Update configuration from dictionary with validation.
+
+        Allows dynamic override of configuration values with Pydantic validation.
+        Only valid configuration fields are updated.
+
+        Args:
+            **kwargs: Configuration key-value pairs to update
+
+        Returns:
+            FlextResult[None]: Success or validation error
+
+        Example:
+            >>> config = FlextConfig()
+            >>> result = config.update_from_dict(log_level="DEBUG", debug=True)
+            >>> result.is_success
+            True
+
+        """
+        try:
+            # Filter only valid configuration fields
+            valid_updates = {
+                key: value for key, value in kwargs.items() if hasattr(self, key)
+            }
+
+            # Apply updates using Pydantic's validation
+            for key, value in valid_updates.items():
+                setattr(self, key, value)
+
+            # Re-validate entire model to ensure consistency
+            self.model_validate(self.model_dump())
+
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            return FlextResult[None].fail(f"Configuration update failed: {e}")
+
+    def merge_with_env_vars(self) -> FlextResult[None]:
+        """Re-load environment variables and merge with current config.
+
+        Useful when environment variables change during runtime.
+        Existing config values take precedence over environment variables.
+
+        Returns:
+            FlextResult[None]: Success or error
+
+        Example:
+            >>> config = FlextConfig()
+            >>> # Environment changes
+            >>> import os
+            >>> os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
+            >>> result = config.merge_with_env_vars()
+            >>> config.log_level  # Will be "DEBUG" if not explicitly set
+
+        """
+        try:
+            # Get current config snapshot
+            current_config = self.model_dump()
+
+            # Create new instance from environment
+            env_config = self.__class__()
+
+            # Merge: current config overrides env
+            for key, value in current_config.items():
+                if value != getattr(self.__class__(), key, None):
+                    # Value was explicitly set, keep it
+                    setattr(env_config, key, value)
+
+            # Copy merged config back
+            for key in current_config:
+                setattr(self, key, getattr(env_config, key))
+
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            return FlextResult[None].fail(f"Environment merge failed: {e}")
+
+    def validate_overrides(self, **overrides: object) -> FlextResult[dict[str, object]]:
+        """Validate configuration overrides without applying them.
+
+        Useful for checking if overrides are valid before applying.
+
+        Args:
+            **overrides: Configuration overrides to validate
+
+        Returns:
+            FlextResult[dict[str, object]]: Valid overrides or validation errors
+
+        Example:
+            >>> config = FlextConfig()
+            >>> result = config.validate_overrides(log_level="DEBUG", max_workers=10)
+            >>> if result.is_success:
+            ...     config.update_from_dict(**result.unwrap())
+
+        """
+        try:
+            valid_overrides: dict[str, object] = {}
+            errors: list[str] = []
+
+            for key, value in overrides.items():
+                # Check if field exists
+                if not hasattr(self, key):
+                    errors.append(f"Unknown configuration field: '{key}'")
+                    continue
+
+                # Try to validate the value
+                try:
+                    # Create test instance with override
+                    test_config = self.model_copy()
+                    setattr(test_config, key, value)
+                    test_config.model_validate(test_config.model_dump())
+                    valid_overrides[key] = value
+                except Exception as e:
+                    errors.append(f"Invalid value for '{key}': {e}")
+
+            if errors:
+                return FlextResult[dict[str, object]].fail(
+                    f"Validation errors: {'; '.join(errors)}"
+                )
+
+            return FlextResult[dict[str, object]].ok(valid_overrides)
+
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(f"Validation failed: {e}")
 
 
 __all__ = [

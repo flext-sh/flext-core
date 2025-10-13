@@ -403,7 +403,7 @@ class FlextTypes:
         """Enhanced service layer types with flext-core integration.
 
         This namespace provides comprehensive service types that integrate
-        with FlextService, FlextContainer, and other flext-core components
+        with FlextContainer, and other flext-core components
         for robust service-oriented architecture.
 
         Examples:

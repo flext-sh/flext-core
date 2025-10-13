@@ -532,7 +532,7 @@ class FlextProtocols:
 
         @runtime_checkable
         class Service(Protocol, Generic[T_Service_co]):
-            """Domain service contract aligned with FlextService implementation."""
+            """Domain service contract."""
 
             @abstractmethod
             def execute(self) -> object:

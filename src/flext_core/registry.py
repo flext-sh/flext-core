@@ -89,11 +89,11 @@ class FlextRegistry(FlextMixins):
             ...             registration_id="reg-001",
             ...             handler_mode="command",
             ...             timestamp="2025-01-01T00:00:00Z",
-            ...             status="running"
+            ...             status="running",
             ...         )
             ...     ],
             ...     skipped=["CreateUserCommand"],
-            ...     errors=[]
+            ...     errors=[],
             ... )
             >>> summary.is_success
             True
@@ -126,7 +126,7 @@ class FlextRegistry(FlextMixins):
             ),
         ] = Field(default_factory=list)
 
-        @computed_field  # type: ignore[prop-decorator]
+        @computed_field
         @property
         def is_success(self) -> bool:
             """Indicate whether the batch registration fully succeeded.
@@ -142,7 +142,7 @@ class FlextRegistry(FlextMixins):
             """
             return not self.errors
 
-        @computed_field  # type: ignore[prop-decorator]
+        @computed_field
         @property
         def successful_registrations(self) -> int:
             """Number of successful registrations.
@@ -158,7 +158,7 @@ class FlextRegistry(FlextMixins):
             """
             return len(self.registered)
 
-        @computed_field  # type: ignore[prop-decorator]
+        @computed_field
         @property
         def failed_registrations(self) -> int:
             """Number of failed registrations.

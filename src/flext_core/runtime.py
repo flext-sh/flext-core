@@ -17,7 +17,7 @@ import typing
 import uuid
 from collections.abc import Callable, Sequence
 from types import ModuleType
-from typing import TypeGuard, cast
+from typing import Any, TypeGuard, cast
 
 import structlog
 from dependency_injector import containers, providers
@@ -387,8 +387,10 @@ class FlextRuntime:
                 return True
 
             # Check __name__ for type aliases like StringList
-            if hasattr(type_hint, "__name__"):
-                type_name = getattr(type_hint, "__name__", "")
+            # Cast to Any to avoid pyright warnings about unknown argument types
+            type_hint_any = cast("Any", type_hint)
+            if hasattr(type_hint_any, "__name__"):
+                type_name = getattr(type_hint_any, "__name__", "")
                 # Common sequence type aliases
                 if type_name in {
                     "StringList",

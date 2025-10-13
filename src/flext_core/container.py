@@ -1078,27 +1078,28 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             if not validators:
                 return FlextResult[object].ok(service)
 
-            validator_result: FlextResult[object] | None = None
             for validator in validators:
                 if callable(validator):
                     # Call validator - returns FlextResult[object]
-                    validator_result = cast("FlextResult[object]", validator(service))
+                    result = validator(service)
+
+                    # Ensure result is a FlextResult
+                    if not isinstance(result, FlextResult):
+                        return FlextResult[object].fail(
+                            f"Validator must return FlextResult, got {type(result)}"
+                        )
+
+                    validator_result: FlextResult[object] = result
 
                     # Check if validation failed
-                    if validator_result is not None and validator_result.is_failure:
+                    if validator_result.is_failure:
                         return FlextResult[object].fail(
                             f"Validation failed: {validator_result.error}"
                         )
                     # Continue with validated service
 
-            if validator_result is None:
-                return FlextResult[object].fail(
-                    f"Validator must return FlextResult, got {None}"
-                )
-
-            result: FlextResult[object] = validator_result
-
-            return result
+            # All validators passed
+            return FlextResult[object].ok(service)
 
         return self.get(name).flat_map(apply_validators)
 

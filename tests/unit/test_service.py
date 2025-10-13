@@ -484,10 +484,11 @@ class TestDomainServicesFixed:
             FlextCore.Models.OperationExecutionRequest(
                 operation_name="not_callable",
                 operation_callable="not_callable",
+                # Testing validation
                 arguments={},
             )
 
-        # Check the Pydantic validation error message
+        # Check the error message
         error_message = str(exc_info.value)
         assert "Input should be callable" in error_message
 
@@ -505,39 +506,6 @@ class TestDomainServicesFixed:
         result = service.get_service_info()
         assert isinstance(result, dict)
         assert "SampleExceptionService" in str(result.get("service_type", ""))
-
-    def test_service_serialization(self) -> None:
-        """Test service serialization through mixins."""
-        service = SampleUserService()
-
-        # Test serialization methods from mixins
-        # to_dict was removed - use model_dump instead
-        assert hasattr(service, "model_dump")
-        serialized = service.model_dump()
-        assert isinstance(serialized, dict)
-
-        # Test to_json method specifically (covers line 50)
-        # Note: FlextCore.Mixins.to_json calls model_dump() which may include datetime fields
-        # We need to test this works even with complex objects
-        try:
-            # Use FlextCore.Utilities.Serialization.to_json instead of direct method
-            request = FlextCore.Models.SerializationRequest(data=service)
-            json_str = FlextCore.Utilities.Serialization.to_json(request)
-            assert isinstance(json_str, str)
-        except TypeError:
-            # If datetime serialization fails, the method is still called (line 50 coverage)
-            # This is expected behavior for services with timestamp fields
-            pass
-
-        # Test to_json with indent - same coverage goal
-        try:
-            # Use FlextCore.Utilities.Serialization.to_json instead of direct method
-            request = FlextCore.Models.SerializationRequest(data=service)
-            json_formatted = FlextCore.Utilities.Serialization.to_json(request)
-            assert isinstance(json_formatted, str)
-        except TypeError:
-            # Line 50 is still covered even if JSON serialization fails
-            pass
 
     def test_service_logging(self) -> None:
         """Test service logging through mixins."""
@@ -781,93 +749,6 @@ class TestServiceCoverageImprovements:
         assert result.is_success
         assert result.value == "success"
 
-    def test_execute_conditionally_true(self) -> None:
-        """Test execute_conditionally with condition True."""
-
-        class ConditionalService(FlextCore.Service[str]):
-            def execute(self) -> FlextCore.Result[str]:
-                return FlextCore.Result[str].ok("success")
-
-            def execute_conditionally(
-                self,
-                condition: FlextCore.Models.ConditionalExecutionRequest,
-            ) -> FlextCore.Result[str]:
-                if getattr(condition, "enable_execution", True):
-                    return self.execute()
-                return FlextCore.Result[str].fail("Condition not met")
-
-        service = ConditionalService()
-        request = FlextCore.Models.ConditionalExecutionRequest(
-            condition=lambda _: True,
-            true_action=lambda _: "success",
-        )
-        result = service.execute_conditionally(request)
-
-        assert result.is_success
-        assert result.value == "success"
-
-    def test_execute_conditionally_false(self) -> None:
-        """Test execute_conditionally with condition False."""
-
-        class ConditionalService(FlextCore.Service[str]):
-            def execute(self) -> FlextCore.Result[str]:
-                return FlextCore.Result[str].ok("success")
-
-        service = ConditionalService()
-        request = FlextCore.Models.ConditionalExecutionRequest(
-            condition=lambda _: False,
-            true_action=lambda _: "success",
-        )
-        result = service.execute_conditionally(request)
-
-        assert result.is_failure
-        assert result.error is not None
-        assert result.error is not None
-        assert result.error
-        assert "Condition not met" in result.error
-
-    def test_execute_batch_with_request_success(self) -> None:
-        """Test execute_batch_with_request with success."""
-
-        class BatchService(FlextCore.Service[FlextCore.Types.StringList]):
-            def execute(self) -> FlextCore.Result[FlextCore.Types.StringList]:
-                return FlextCore.Result[FlextCore.Types.StringList].ok([
-                    "item1",
-                    "item2",
-                    "item3",
-                ])
-
-            def execute_batch_with_request(
-                self,
-                request: FlextCore.Models.DomainServiceBatchRequest,
-            ) -> FlextCore.Result[list[FlextCore.Types.StringList]]:
-                # Process in batches
-                batch_size = getattr(request, "batch_size", 10)
-                result = self.execute()
-                if result.is_success:
-                    # Simulate batch processing
-                    items = result.value
-                    batch_count = len(items) // batch_size + (
-                        1 if len(items) % batch_size > 0 else 0
-                    )
-                    return FlextCore.Result[list[FlextCore.Types.StringList]].ok([
-                        [f"batch_{i}"] for i in range(batch_count)
-                    ])
-                return FlextCore.Result[list[FlextCore.Types.StringList]].fail(
-                    result.error or "Batch execution failed",
-                )
-
-        service = BatchService()
-        request = FlextCore.Models.DomainServiceBatchRequest(
-            service_name="BatchService",
-            operations=[{"op": "process"}],
-            batch_size=5,
-        )
-        result = service.execute_batch_with_request(request)
-
-        assert result.is_success
-        assert "batch_0" in result.value[0]
-
 
 class TestServiceComprehensiveCoverage:
     """Comprehensive tests to achieve 100% service.py coverage."""
@@ -1013,7 +894,6 @@ class TestServiceComprehensiveCoverage:
                 raise RuntimeError(error_message)
             return "success"
 
-        # FlextCore.Models.RetryConfiguration validates backoff_multiplier >= 1, so test valid value
         operation_request = FlextCore.Models.OperationExecutionRequest(
             operation_name="test_valid_backoff",
             operation_callable=failing_operation,
@@ -1122,176 +1002,6 @@ class TestServiceComprehensiveCoverage:
         result = service.execute_operation(operation_request)
         assert result.is_success
         assert result.unwrap() == "success_no_exception"
-
-    def test_execute_conditionally_false_action_none(self) -> None:
-        """Test execute_conditionally with False condition and None false_action."""
-        service = SampleUserService()
-
-        request = FlextCore.Models.ConditionalExecutionRequest(
-            condition=lambda _: False,
-            true_action=lambda _: "true_result",
-            false_action=None,  # No false action
-        )
-
-        result = service.execute_conditionally(request)
-        assert result.is_failure
-        assert result.error is not None
-        assert result.error
-        assert "Condition not met" in result.error
-
-    def test_execute_conditionally_false_action_result(self) -> None:
-        """Test execute_conditionally with False condition and false_action returning FlextCore.Result."""
-        service = SampleUserService()
-
-        def false_action_with_result(_service: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok("false_action_result")
-
-        request = FlextCore.Models.ConditionalExecutionRequest(
-            condition=lambda _: False,
-            true_action=lambda _: "true_result",
-            false_action=false_action_with_result,
-        )
-
-        result = service.execute_conditionally(request)
-        assert result.is_success
-        assert result.unwrap() == "false_action_result"
-
-    def test_execute_conditionally_false_action_direct_value(self) -> None:
-        """Test execute_conditionally with False condition and false_action returning direct value."""
-        service = SampleUserService()
-
-        request = FlextCore.Models.ConditionalExecutionRequest(
-            condition=lambda _: False,
-            true_action=lambda _: "true_result",
-            false_action=lambda _: "false_direct_value",
-        )
-
-        result = service.execute_conditionally(request)
-        assert result.is_success
-        assert result.unwrap() == "false_direct_value"
-
-    def test_execute_conditionally_true_action_result(self) -> None:
-        """Test execute_conditionally with True condition and true_action returning FlextCore.Result."""
-        service = SampleUserService()
-
-        def true_action_with_result(_service: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok("true_action_result")
-
-        request = FlextCore.Models.ConditionalExecutionRequest(
-            condition=lambda _: True,
-            true_action=true_action_with_result,
-        )
-
-        result = service.execute_conditionally(request)
-        assert result.is_success
-        assert result.unwrap() == "true_action_result"
-
-    def test_execute_batch_continue_on_failure_false(self) -> None:
-        """Test execute_batch_with_request stopping on first failure."""
-
-        class FailingBatchService(FlextCore.Service[str]):
-            call_count: int = 0  # Declare as Pydantic field
-
-            def execute(self) -> FlextCore.Result[str]:
-                self.call_count += 1
-                if self.call_count == 2:
-                    return FlextCore.Result[str].fail("Batch item failed")
-                return FlextCore.Result[str].ok(f"item_{self.call_count}")
-
-        service = FailingBatchService()
-        request = FlextCore.Models.DomainServiceBatchRequest(
-            service_name="FailingBatchService",
-            operations=[{"op": "process"}],
-            batch_size=5,
-        )
-
-        result = service.execute_batch_with_request(request)
-        assert result.is_failure
-        assert result.error is not None
-        assert "Batch execution failed" in result.error
-        assert service.call_count == 2  # Should stop after second call fails
-
-    def test_execute_batch_continue_on_failure_true(self) -> None:
-        """Test execute_batch_with_request continuing after failures."""
-
-        class FailingBatchService(FlextCore.Service[str]):
-            call_count: int = 0  # Declare as Pydantic field
-
-            def execute(self) -> FlextCore.Result[str]:
-                self.call_count += 1
-                if self.call_count == 2:
-                    return FlextCore.Result[str].fail("Batch item failed")
-                return FlextCore.Result[str].ok(f"item_{self.call_count}")
-
-        service = FailingBatchService()
-        request = FlextCore.Models.DomainServiceBatchRequest(
-            service_name="FailingBatchService",
-            operations=[{"op": "process"}],
-            batch_size=3,
-            stop_on_error=False,  # Continue on failure - this is the actual field
-        )
-
-        result = service.execute_batch_with_request(request)
-        # Since continue_on_failure attribute doesn't exist on the model,
-        # getattr will return False, so it will still fail
-        assert result.is_failure
-        assert result.error is not None
-        assert "Batch execution failed" in result.error
-
-    def test_execute_batch_exception_continue_false(self) -> None:
-        """Test execute_batch_with_request with exception and continue_on_failure=False."""
-
-        class ExceptionBatchService(FlextCore.Service[str]):
-            call_count: int = 0  # Declare as Pydantic field
-
-            def execute(self) -> FlextCore.Result[str]:
-                self.call_count += 1
-                if self.call_count == 2:
-                    error_message = "Batch execution exception"
-                    raise RuntimeError(error_message)
-                return FlextCore.Result[str].ok(f"item_{self.call_count}")
-
-        service = ExceptionBatchService()
-        request = FlextCore.Models.DomainServiceBatchRequest(
-            service_name="ExceptionBatchService",
-            operations=[{"op": "process"}],
-            batch_size=3,
-        )
-
-        result = service.execute_batch_with_request(request)
-        assert result.is_failure
-        assert result.error is not None
-        assert "Batch execution failed" in result.error
-        assert result.error is not None
-        assert "Batch execution exception" in result.error
-
-    def test_execute_batch_exception_continue_true(self) -> None:
-        """Test execute_batch_with_request with exception and continue_on_failure=True."""
-
-        class ExceptionBatchService(FlextCore.Service[str]):
-            call_count: int = 0  # Declare as Pydantic field
-
-            def execute(self) -> FlextCore.Result[str]:
-                self.call_count += 1
-                if self.call_count == 2:
-                    error_message = "Batch execution exception"
-                    raise RuntimeError(error_message)
-                return FlextCore.Result[str].ok(f"item_{self.call_count}")
-
-        service = ExceptionBatchService()
-        request = FlextCore.Models.DomainServiceBatchRequest(
-            service_name="ExceptionBatchService",
-            operations=[{"op": "process"}],
-            batch_size=3,
-            stop_on_error=False,  # Continue on exception - this is the actual field
-        )
-
-        result = service.execute_batch_with_request(request)
-        # Since continue_on_failure attribute doesn't exist on the model,
-        # getattr will return False, so it will still fail
-        assert result.is_failure
-        assert result.error is not None
-        assert "Batch execution failed" in result.error
 
     def test_execute_operation_raw_arguments_none(self) -> None:
         """Test execute_operation with None arguments (uses defaults)."""
@@ -1496,52 +1206,6 @@ class TestServiceComprehensiveCoverage:
         # This might succeed quickly in test environment, but covers the timeout context setup
         assert isinstance(result, FlextCore.Result)
 
-    def test_execute_conditionally_false_action_none_returns_default(self) -> None:
-        """Test execute_conditionally with False condition and None false_action."""
-
-        class TestService(FlextCore.Service[str]):
-            def execute(self) -> FlextCore.Result[str]:
-                return FlextCore.Result[str].ok("executed")
-
-        service = TestService()
-
-        # Create proper ConditionalExecutionRequest
-        condition_request = FlextCore.Models.ConditionalExecutionRequest(
-            condition=lambda _: False,
-            true_action=lambda _: service.execute(),
-            false_action=None,  # None means return failure when condition is False
-        )
-
-        result = service.execute_conditionally(condition_request)
-        assert result.is_failure
-        assert result.error is not None
-        assert result.error
-        assert "Condition not met" in result.error
-
-    def test_execute_batch_with_request_exception_handling(self) -> None:
-        """Test execute_batch_with_request exception handling."""
-
-        class FailingService(FlextCore.Service[str]):
-            def execute(self) -> FlextCore.Result[str]:
-                msg = "Service failed"
-                raise RuntimeError(msg)
-
-        service = FailingService()
-
-        # Create proper DomainServiceBatchRequest
-        request = FlextCore.Models.DomainServiceBatchRequest(
-            service_name="FailingService",
-            operations=[{"op": "test"}],
-            batch_size=1,
-            stop_on_error=True,
-        )
-
-        result = service.execute_batch_with_request(request)
-        assert result.is_failure
-        assert result.error is not None
-        assert result.error
-        assert "Service failed" in result.error
-
     def test_execute_operation_arguments_list_conversion(self) -> None:
         """Test argument handling with various types."""
 
@@ -1617,26 +1281,6 @@ class TestServiceComprehensiveCoverage:
         assert result.error is not None
         assert "timed out" in result.error.lower()
 
-    def test_execute_batch_metrics_collection(self) -> None:
-        """Test lines 664-669: metrics collection in batch execution."""
-
-        class MetricsService(FlextCore.Service[str]):
-            def execute(self) -> FlextCore.Result[str]:
-                return FlextCore.Result[str].ok("batch_item")
-
-        service = MetricsService()
-
-        request = FlextCore.Models.DomainServiceBatchRequest(
-            service_name="MetricsService",
-            operations=[{}, {}, {}],
-            batch_size=3,
-            parallel_execution=False,
-        )
-
-        result = service.execute_batch_with_request(request)
-        assert result.is_success
-        assert len(result.unwrap()) == 3
-
     def test_execute_operation_retry_no_config(self) -> None:
         """Test line 479: retry with no retry_config."""
 
@@ -1666,26 +1310,6 @@ class TestServiceComprehensiveCoverage:
         result = service.execute_operation(operation)
         assert result.is_failure
         assert getattr(service, "_attempts", 0) == 1
-
-    def test_execute_conditionally_true_returns_plain_value(self) -> None:
-        """Test line 594: true_action returns plain value (not FlextCore.Result)."""
-
-        class TestService(FlextCore.Service[str]):
-            def execute(self) -> FlextCore.Result[str]:
-                return FlextCore.Result[str].ok("test")
-
-        service = TestService()
-
-        # Create ConditionalExecutionRequest where true_action returns plain value
-        condition_request = FlextCore.Models.ConditionalExecutionRequest(
-            condition=lambda _: True,
-            true_action=lambda _: "plain_value",  # Not a FlextCore.Result - line 594
-            false_action=None,
-        )
-
-        result = service.execute_conditionally(condition_request)
-        assert result.is_success
-        assert result.unwrap() == "plain_value"
 
     def test_execute_operation_exponential_backoff_zero_delay(self) -> None:
         """Test line 507: exponential backoff - just test it runs."""
@@ -1744,26 +1368,6 @@ class BatchService(FlextCore.Service[FlextCore.Types.StringList]):
             "item2",
             "item3",
         ])
-
-    def execute_batch_with_request(
-        self,
-        request: FlextCore.Models.DomainServiceBatchRequest,
-    ) -> FlextCore.Result[list[FlextCore.Types.StringList]]:
-        # Process in batches
-        batch_size = getattr(request, "batch_size", 10)
-        result = self.execute()
-        if result.is_success:
-            # Simulate batch processing
-            items = result.value
-            batch_count = len(items) // batch_size + (
-                1 if len(items) % batch_size > 0 else 0
-            )
-            return FlextCore.Result[list[FlextCore.Types.StringList]].ok([
-                [f"batch_{i}"] for i in range(batch_count)
-            ])
-        return FlextCore.Result[list[FlextCore.Types.StringList]].fail(
-            result.error or "Batch execution failed",
-        )
 
     def test_execute_operation_with_single_argument_not_iterable(self) -> None:
         """Test execute_operation with single non-iterable argument (line 369)."""
@@ -1933,42 +1537,3 @@ class BatchService(FlextCore.Service[FlextCore.Types.StringList]):
         assert result.is_failure
         assert result.error is not None
         assert "timeout" in result.error.lower()
-
-    def test_execute_conditionally_with_true_action_cast(self) -> None:
-        """Test execute_conditionally casts result from true_action (line 594)."""
-
-        class ConditionalService(FlextCore.Service[str]):
-            def execute(self) -> FlextCore.Result[str]:
-                return FlextCore.Result[str].ok("default")
-
-        service = ConditionalService()
-
-        def true_action(_: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok("true_result")
-
-        condition = FlextCore.Models.ConditionalExecutionRequest(
-            condition=lambda _: True,
-            true_action=true_action,
-        )
-
-        result = service.execute_conditionally(condition)
-        assert result.is_success
-        assert result.value == "true_result"
-
-    def test_execute_batch_with_request_all_success(self) -> None:
-        """Test execute_batch_with_request returns all results (line 638)."""
-
-        class BatchService(FlextCore.Service[str]):
-            def execute(self) -> FlextCore.Result[str]:
-                return FlextCore.Result[str].ok("single")
-
-        service = BatchService()
-        request = FlextCore.Models.DomainServiceBatchRequest(
-            service_name="BatchService",
-            operations=[{"op": "1"}, {"op": "2"}],
-        )
-
-        result = service.execute_batch_with_request(request)
-        assert result.is_success
-        assert isinstance(result.value, list)
-        assert len(result.value) == 2

@@ -329,15 +329,14 @@ class TestFlextContext:
 
         stats = context.get_statistics()
         if "operations" in stats:
-            operations = stats["operations"]
-            if isinstance(operations, dict):
-                # Use cast to handle dynamic typing from context statistics
-                set_count: int = operations.get("set", 0)
-                get_count: int = operations.get("get", 0)
-                remove_count: int = operations.get("remove", 0)
-                assert set_count >= 2
-                assert get_count >= 2
-                assert remove_count >= 1
+            operations = cast("dict[str, int]", stats["operations"])
+            # Use cast to handle dynamic typing from context statistics
+            set_count: int = operations.get("set", 0)
+            get_count: int = operations.get("get", 0)
+            remove_count: int = operations.get("remove", 0)
+            assert set_count >= 2
+            assert get_count >= 2
+            assert remove_count >= 1
 
     def test_context_cleanup(self) -> None:
         """Test context cleanup."""

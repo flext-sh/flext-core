@@ -47,7 +47,6 @@ External concerns including logging, configuration, dependency injection, and co
 | `FlextContext`    | Hierarchical context management for tracing                |
 | `FlextLogger`     | Structured logging with automatic context propagation      |
 | `FlextConfig`     | Configuration management with Pydantic validation          |
-| `FlextService`    | Base class for domain services                             |
 | `FlextModels`     | DDD patterns (Entity, Value, AggregateRoot)                |
 
 ## Usage Examples
@@ -112,7 +111,6 @@ result = dispatcher.dispatch(CreateUserCommand(email="user@example.com"))
 The framework is designed for extension through:
 
 - **Custom handlers** inheriting from `FlextHandlers`
-- **Domain services** inheriting from `FlextService`
 - **Protocol implementations** for interface contracts
 - **Custom processors** for specialized message handling
 - **Mixin composition** for reusable behaviors

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections import UserDict
 from collections.abc import Callable
 from typing import Never, cast
 
@@ -249,7 +250,9 @@ class TestFlextContainer:
         )
         assert result.is_success
         assert isinstance(result.value, dict)
-        value = cast("FlextCore.Types.StringDict", result.value)
+        # Type assertion for test purposes
+        value = result.value
+        assert isinstance(value, dict)
         assert value["created"] == "by_factory"
 
         # Service now exists, should return existing
@@ -257,7 +260,8 @@ class TestFlextContainer:
             "test_service", factory
         )
         assert result2.is_success
-        assert result2.value is result.value
+        value: dict[str, object] = result.value
+        assert result2.value is value
 
     def test_container_get_or_create_no_factory(self) -> None:
         """Test get or create without factory."""
@@ -577,7 +581,7 @@ class TestFlextContainer:
         )
         assert result.is_success
         assert isinstance(result.value, dict)
-        value = result.value
+        value: dict[str, object] = result.value
         assert value["type"] == "test"
 
     def test_container_module_utilities(self) -> None:
@@ -739,19 +743,21 @@ class TestFlextContainer:
 
     def test_container_clear_exception_handling(self) -> None:
         """Test clear() exception handling with corrupted state."""
+        from typing import cast
+
         container = FlextCore.Container()
         container.register("test", "value")
 
         # Simulate exception by corrupting internal state
         # Replace _services dict with object that raises on clear()
-        class FailingDict(FlextCore.Types.Dict):
+        class FailingDict(UserDict[str, object]):
             def clear(self) -> None:
                 msg = "Clear failed"
                 raise RuntimeError(msg)
 
+        # Cast needed to satisfy type checker for test scenario
         container._services = cast(
-            "FlextCore.Types.Dict",
-            FailingDict(container._services),
+            "dict[str, object]", FailingDict(container._services)
         )
 
         result = container.clear()
@@ -772,7 +778,7 @@ class TestFlextContainer:
         container.register("test", "value")
 
         # Corrupt _services to trigger exception
-        class FailingDict(FlextCore.Types.Dict):
+        class FailingDict(UserDict[str, object]):
             def keys(self) -> Never:
                 msg = "Keys failed"
                 raise RuntimeError(msg)
@@ -831,7 +837,7 @@ class TestFlextContainer:
         config: FlextCore.Types.Dict = {"invalid_key": object()}
 
         # Corrupt _user_overrides to trigger exception
-        class FailingDict(FlextCore.Types.Dict):
+        class FailingDict(UserDict[str, object]):
             def update(self, *args: object, **kwargs: object) -> None:
                 msg = "Update failed"
                 raise RuntimeError(msg)

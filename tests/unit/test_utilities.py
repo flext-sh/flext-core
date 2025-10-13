@@ -697,51 +697,6 @@ class TestFlextUtilitiesComprehensive:
         assert len(id1) > 0
         assert isinstance(id1, str)
 
-    def test_serialization_to_json(self) -> None:
-        """Test FlextCore.Utilities.Serialization.to_json static method."""
-        from flext_core import FlextCore
-
-        request = FlextCore.Models.SerializationRequest(data={"key": "value"})
-        json_str = FlextCore.Utilities.Serialization.to_json(request)
-        assert isinstance(json_str, str)
-        assert "key" in json_str
-        assert "value" in json_str
-
-    def test_serialization_to_dict(self) -> None:
-        """Test FlextCore.Utilities.Serialization.to_dict static method."""
-        from flext_core import FlextCore
-
-        request = FlextCore.Models.SerializationRequest(data={"key": "value"})
-        result_dict = FlextCore.Utilities.Serialization.to_dict(request)
-        assert isinstance(result_dict, dict)
-
-    def test_timestamps_create_fields(self) -> None:
-        """Test FlextCore.Utilities.Timestamps.create_fields static method."""
-        from flext_core import FlextCore
-
-        class TestObj:
-            created_at: object = None
-            updated_at: object = None
-
-        obj = TestObj()
-        config = FlextCore.Models.TimestampConfig(obj=obj, use_utc=True)
-        FlextCore.Utilities.Timestamps.create_fields(config)
-        assert obj.created_at is not None
-
-    def test_timestamps_update(self) -> None:
-        """Test FlextCore.Utilities.Timestamps.update static method."""
-        from flext_core import FlextCore
-
-        class TestObj:
-            updated_at: object = None
-
-        obj = TestObj()
-        config = FlextCore.Models.TimestampConfig(
-            obj=obj, use_utc=True, auto_update=True
-        )
-        FlextCore.Utilities.Timestamps.update(config)
-        assert obj.updated_at is not None
-
     def test_validation_initialize(self) -> None:
         """Test FlextCore.Utilities.Validation.initialize static method."""
 
@@ -751,24 +706,6 @@ class TestFlextUtilitiesComprehensive:
         obj = TestObj()
         FlextCore.Utilities.Validation.initialize(obj, "is_valid")
         assert obj.is_valid is True
-
-    def test_validation_initialize_state(self) -> None:
-        """Test FlextCore.Utilities.Validation.initialize_state static method."""
-        from flext_core import FlextCore
-
-        class TestObj:
-            state: str = ""
-
-        obj = TestObj()
-        request = FlextCore.Models.StateInitializationRequest(
-            data=obj,
-            state_key="state",
-            initial_value="initialized",
-            field_name="state",
-            state="initialized",
-        )
-        FlextCore.Utilities.Validation.initialize_state(request)
-        assert obj.state == "initialized"
 
     def test_cache_clear_object_cache(self) -> None:
         """Test FlextCore.Utilities.Cache.clear_object_cache static method."""

@@ -129,15 +129,15 @@ class TestFlextModels:
         assert command.created_at is not None  # Timestamp from TimestampableMixin
         assert command.id is not None  # ID from IdentifiableMixin
 
-    def test_models_payload_creation(self) -> None:
-        """Test payload model creation."""
-        payload = FlextCore.Models.Payload(data="test_data")
-        assert payload.data == "test_data"
-        assert payload.created_at is not None
-        assert payload.id is not None  # ID from IdentifiableMixin
-
-        # Test expiration functionality
-        assert payload.is_expired is False
+    def test_models_metadata_creation(self) -> None:
+        """Test metadata model creation."""
+        metadata = FlextCore.Models.Metadata(
+            created_by="test_user",
+            tags=["tag1", "tag2"],
+        )
+        assert metadata.created_by == "test_user"
+        assert metadata.created_at is not None
+        assert len(metadata.tags) == 2
 
     def test_models_pagination_creation(self) -> None:
         """Test pagination model creation."""
@@ -151,9 +151,10 @@ class TestFlextModels:
 
     def test_models_advanced_value_objects(self) -> None:
         """Test advanced value objects."""
-        # Test Url
-        url = FlextCore.Models.Url(url="https://example.com")
-        assert url.url == "https://example.com"
+        # Test URL validation using Validation utility
+        result = FlextCore.Models.Validation.validate_url("https://example.com")
+        assert result.is_success
+        assert result.value == "https://example.com"
 
     def test_models_project_entity(self) -> None:
         """Test Project entity."""
@@ -285,16 +286,16 @@ class TestFlextModels:
 
     def test_models_serialization(self) -> None:
         """Test model serialization."""
-        entity = FlextCore.Models.User(
-            username="test",
-            email="test@example.com",
+        entity = FlextCore.Models.Project(
+            name="test",
+            organization_id="org-123",
             domain_events=[],
         )
 
         # Test to_dict
         data = entity.model_dump()
-        assert "username" in data
-        assert "email" in data
+        assert "name" in data
+        assert "organization_id" in data
         assert "id" in data
 
         # Test JSON serialization
@@ -341,11 +342,11 @@ class TestFlextModels:
         start_time = time.time()
 
         # Create many entities
-        entities: list[FlextCore.Models.User] = []
+        entities: list[FlextCore.Models.Project] = []
         for i in range(1000):
-            entity = FlextCore.Models.User(
-                username=f"user{i}",
-                email=f"user{i}@example.com",
+            entity = FlextCore.Models.Project(
+                name=f"project{i}",
+                organization_id=f"org-{i}",
                 domain_events=[],
             )
             entities.append(entity)

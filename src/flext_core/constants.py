@@ -20,11 +20,11 @@ from typing import (
     Literal,
 )
 
-from flext_core.__version__ import __version__
+from flext_core import __version__
 
 
 class FlextConstants:
-    """Centralized constants for the FLEXT ecosystem.
+    """Foundation constants for the FLEXT ecosystem.
 
     Provides immutable constants organized in namespaces for configuration,
     validation, error handling, and system defaults. All constants use
@@ -102,6 +102,14 @@ class FlextConstants:
         except AttributeError as e:
             msg = f"Constant path '{key}' not found in FlextConstants"
             raise AttributeError(msg) from e
+
+    class Core:
+        """Core identifiers and version information."""
+
+        NAME: Final[str] = "FLEXT"
+        VERSION: Final[str] = __version__
+        ZERO: Final[int] = 0
+        INITIAL_TIME: Final[float] = 0.0
 
     class Network:
         """Network-related defaults and limits."""
@@ -489,37 +497,7 @@ class FlextConstants:
         FLEXT_API_PORT: Final[int] = 8000
         DEFAULT_HOST: Final[str] = "localhost"
         LOOPBACK_IP: Final[str] = "127.0.0.1"  # Localhost IP address
-
-        # Database defaults
-        POSTGRES_DEFAULT_PORT: Final[int] = 5432
-        MYSQL_DEFAULT_PORT: Final[int] = 3306
-        REDIS_DEFAULT_PORT: Final[int] = 6379
-        MONGODB_DEFAULT_PORT: Final[int] = 27017
-        DATABASE_DEFAULT_PORT: Final[int] = 1521  # Oracle database default port
         DEFAULT_HTTP_PORT: Final[int] = 8080  # Alternative HTTP port
-
-        # HTTP status code validation ranges
-        MIN_HTTP_STATUS_CODE: Final[int] = 200
-        MAX_HTTP_STATUS_CODE: Final[int] = 599
-
-        # HTTP methods
-        HTTP_METHOD_GET: Final[str] = "GET"
-        HTTP_METHOD_POST: Final[str] = "POST"
-        HTTP_METHOD_PUT: Final[str] = "PUT"
-        HTTP_METHOD_DELETE: Final[str] = "DELETE"
-        HTTP_METHOD_PATCH: Final[str] = "PATCH"
-        HTTP_METHOD_HEAD: Final[str] = "HEAD"
-        HTTP_METHOD_OPTIONS: Final[str] = "OPTIONS"
-
-        VALID_HTTP_METHODS: Final[set[str]] = {
-            HTTP_METHOD_GET,
-            HTTP_METHOD_POST,
-            HTTP_METHOD_PUT,
-            HTTP_METHOD_DELETE,
-            HTTP_METHOD_PATCH,
-            HTTP_METHOD_HEAD,
-            HTTP_METHOD_OPTIONS,
-        }
 
         # Common MIME types
         MIME_TYPE_JSON: Final[str] = "application/json"
@@ -532,33 +510,6 @@ class FlextConstants:
         PROTOCOL_HTTPS: Final[str] = "https://"
         PROTOCOL_TCP: Final[str] = "tcp://"
         PROTOCOL_UDP: Final[str] = "udp://"
-        PROTOCOL_LDAP: Final[str] = "ldap://"
-        PROTOCOL_LDAPS: Final[str] = "ldaps://"
-
-        # LDAP protocol constants
-        LDAP_DEFAULT_PORT: Final[int] = 389
-        LDAPS_DEFAULT_PORT: Final[int] = 636
-
-        # LDAP search scope constants (RFC 4511)
-        LDAP_SCOPE_BASE: Final[str] = "base"
-        LDAP_SCOPE_LEVEL: Final[str] = (
-            "onelevel"  # Fixed: RFC 4511 uses "onelevel", not "level"
-        )
-        LDAP_SCOPE_SUBTREE: Final[str] = "subtree"
-
-        # LDAP modify operation constants
-        LDAP_MODIFY_ADD: Final[str] = "add"
-        LDAP_MODIFY_DELETE: Final[str] = "delete"
-        LDAP_MODIFY_REPLACE: Final[str] = "replace"
-
-        # LDAP authentication constants
-        LDAP_AUTH_SIMPLE: Final[str] = "simple"
-        LDAP_AUTH_SASL: Final[str] = "sasl"
-
-        # LDAP attribute constants
-        LDAP_ATTR_ALL: Final[str] = "*"
-        LDAP_ATTR_OBJECT_CLASS: Final[str] = "objectClass"
-        LDAP_ATTR_DISTINGUISHED_NAME: Final[str] = "distinguishedName"
 
         # Output formats
         FORMAT_JSON: Final[str] = "json"
@@ -578,22 +529,6 @@ class FlextConstants:
         EXT_CSV: Final[str] = ".csv"
         EXT_XML: Final[str] = ".xml"
         EXT_MD: Final[str] = ".md"
-
-        # Database types and drivers
-        DB_SQLITE: Final[str] = "sqlite"
-        DB_POSTGRESQL: Final[str] = "postgresql"
-        DB_MYSQL: Final[str] = "mysql"
-        DB_ORACLE: Final[str] = "oracle"
-        DB_MONGODB: Final[str] = "mongodb"
-        DB_REDIS: Final[str] = "redis"
-
-        # Database URL schemes
-        DB_SCHEME_SQLITE: Final[str] = "sqlite:///"
-        DB_SCHEME_POSTGRESQL: Final[str] = "postgresql://"
-        DB_SCHEME_MYSQL: Final[str] = "mysql://"
-        DB_SCHEME_ORACLE: Final[str] = "oracle://"
-        DB_SCHEME_MONGODB: Final[str] = "mongodb://"
-        DB_SCHEME_REDIS: Final[str] = "redis://"
 
         # Common directory names
         DIR_LOGS: Final[str] = "logs"
@@ -646,19 +581,6 @@ class FlextConstants:
         HEADER_API_KEY: Final[str] = "X-API-Key"
         HEADER_REQUEST_ID: Final[str] = "X-Request-ID"
         HEADER_CORRELATION_ID: Final[str] = "X-Correlation-ID"
-
-        # HTTP status codes
-        HTTP_STATUS_OK: Final[int] = 200
-        HTTP_STATUS_CREATED: Final[int] = 201
-        HTTP_STATUS_BAD_REQUEST: Final[int] = 400
-        HTTP_STATUS_UNAUTHORIZED: Final[int] = 401
-        HTTP_STATUS_FORBIDDEN: Final[int] = 403
-        HTTP_STATUS_NOT_FOUND: Final[int] = 404
-        HTTP_STATUS_INTERNAL_ERROR: Final[int] = 500
-
-        # HTTP status ranges
-        MIN_HTTP_STATUS_RANGE: Final[int] = 100
-        MAX_HTTP_STATUS_RANGE: Final[int] = 599
 
     class Observability:
         """Observability and logging constants."""
@@ -820,6 +742,12 @@ class FlextConstants:
             30.0  # Alternative recovery timeout
         )
 
+    class Security:
+        """Security and authentication constants."""
+
+        MAX_JWT_EXPIRY_MINUTES: Final[int] = 43200  # 30 days maximum
+        DEFAULT_JWT_EXPIRY_MINUTES: Final[int] = 60  # 1 hour default
+
     class Logging:
         """Logging configuration constants."""
 
@@ -873,84 +801,6 @@ class FlextConstants:
 
         # Security
         MASK_SENSITIVE_DATA: Final[bool] = True
-
-    class Security:
-        """Security and authentication constants."""
-
-        # Security constants
-        DEFAULT_ADMIN_PASSWORD: Final[str] = (
-            "admin123"  # Default admin password for development
-        )
-        MIN_PASSWORD_LENGTH: Final[int] = 8
-        MAX_PASSWORD_LENGTH: Final[int] = 128
-        DEFAULT_BCRYPT_ROUNDS: Final[int] = 12
-        SHORT_JWT_EXPIRY_MINUTES: Final[int] = 15
-        DEFAULT_JWT_EXPIRY_MINUTES: Final[int] = 60
-        MAX_JWT_EXPIRY_MINUTES: Final[int] = 43200  # 30 days in minutes
-        MAX_SESSION_EXTENSION_HOURS: Final[int] = 24
-        DEFAULT_SESSION_HOURS: Final[int] = 8
-        MIN_BCRYPT_HASH_LENGTH: Final[int] = 32  # Minimum bcrypt hash length
-        MIN_BCRYPT_ROUNDS: Final[int] = 10  # Minimum acceptable rounds
-        MAX_BCRYPT_ROUNDS: Final[int] = 15  # Maximum reasonable rounds
-        MAX_DAYS_FOR_MONTH_ADDITION: Final[int] = 28  # Safe days for month calculations
-
-        # Default JWT secret
-        DEFAULT_JWT_SECRET: Final[str] = "default-jwt-secret-change-before-deployment"
-
-        # JWT token defaults
-        JWT_DEFAULT_ALGORITHM: Final[str] = "HS256"
-        JWT_DEFAULT_EXPIRY_MINUTES: Final[int] = 30
-        JWT_MAX_EXPIRY_MINUTES: Final[int] = 1440  # 24 hours
-        JWT_ISSUER_CLAIM: Final[str] = "flext-auth"
-        JWT_AUDIENCE_CLAIM: Final[str] = "flext-users"
-        JWT_ALLOWED_ALGORITHMS: Final[tuple[str, ...]] = (
-            "HS256",
-            "HS384",
-            "HS512",
-            "RS256",
-            "RS384",
-            "RS512",
-        )
-        JWT_DEFAULT_TOKEN_TYPE: Final[str] = "Bearer"
-        JWT_DEFAULT_ACCESS_TOKEN_TYPE: Final[str] = "access"
-        JWT_API_TOKEN_TYPE: Final[str] = "api"
-        JWT_BASIC_TOKEN_TYPE: Final[str] = "bearer"
-        JWT_BEARER_PREFIX: Final[str] = "Bearer "
-        JWT_MIN_SECRET_KEY_LENGTH: Final[int] = 32
-
-        # Session management
-        SESSION_DEFAULT_EXPIRY_MINUTES: Final[int] = 120  # 2 hours
-        SESSION_MAX_EXPIRY_MINUTES: Final[int] = 1440  # 24 hours
-        SESSION_MAX_SESSIONS_PER_USER: Final[int] = 5
-        SESSION_CLEANUP_INTERVAL_MINUTES: Final[int] = 30
-        SESSION_EXTEND_MINUTES: Final[int] = 30
-        SESSION_MIN_TOKEN_LENGTH: Final[int] = 32
-        SESSION_DEFAULT_EXTEND_HOURS: Final[int] = 2
-
-        # Authentication security
-        AUTH_MAX_LOGIN_ATTEMPTS: Final[int] = 5
-        AUTH_LOCKOUT_DURATION_MINUTES: Final[int] = 30
-        AUTH_MAX_REQUESTS_PER_MINUTE: Final[int] = 60
-        AUTH_MAX_REQUESTS_PER_HOUR: Final[int] = 1000
-        AUTH_RATE_LIMIT_MAX_ATTEMPTS: Final[int] = 5
-        AUTH_RATE_LIMIT_WINDOW_MINUTES: Final[int] = 15
-
-        # Credential validation
-        CREDENTIAL_USERNAME_MIN_LENGTH: Final[int] = 3
-        CREDENTIAL_USERNAME_MAX_LENGTH: Final[int] = 50
-        CREDENTIAL_PASSWORD_MIN_LENGTH: Final[int] = 8
-        CREDENTIAL_PASSWORD_MAX_LENGTH: Final[int] = 128
-        CREDENTIAL_PASSWORD_MIN_SCORE: Final[int] = 3
-        CREDENTIAL_MIN_BCRYPT_HASH_LENGTH: Final[int] = 60
-        CREDENTIAL_BCRYPT_ROUNDS: Final[int] = 12
-        CREDENTIAL_MIN_BCRYPT_ROUNDS: Final[int] = 10
-        CREDENTIAL_MAX_BCRYPT_ROUNDS: Final[int] = 15
-
-        # Base64 encoding
-        BASE64_PADDING_SIZE: Final[int] = 4
-
-        # OIDC defaults
-        OIDC_DEFAULT_ID_TOKEN_SIGNING_ALGORITHM: Final[str] = "RS256"
 
     class Cqrs:
         """CQRS pattern constants and configuration."""
