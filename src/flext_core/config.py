@@ -6,6 +6,7 @@ environment variable support, and validation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -363,6 +364,42 @@ class FlextConfig(BaseSettings):
             error_msg = f"Invalid log level: {v}. Must be one of: {valid_levels}"
             raise FlextExceptions.ValidationError(error_msg)
         return v_upper
+
+    @field_validator("debug", "trace", mode="before")
+    @classmethod
+    def validate_boolean_field(cls, v: str | bool | int) -> bool:
+        """Validate and convert string/int boolean values to actual booleans.
+
+        Handles common string representations from environment variables:
+        - "true", "yes", "1", "on" → True
+        - "false", "no", "0", "off" → False
+
+        Args:
+            v: Boolean value or string representation
+
+        Returns:
+            bool: Converted boolean value
+
+        Raises:
+            ValueError: If string cannot be converted to boolean
+
+        """
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, int):
+            return v != 0
+        if isinstance(v, str):
+            v_lower = v.lower().strip()
+            if v_lower in {"true", "yes", "1", "on", "t", "y"}:
+                return True
+            if v_lower in {"false", "no", "0", "off", "f", "n", ""}:
+                return False
+            msg = (
+                f"Invalid boolean value: '{v}'. Must be true/false, yes/no, 1/0, on/off"
+            )
+            raise ValueError(msg)
+        msg = f"Cannot convert {type(v).__name__} to boolean"
+        raise ValueError(msg)
 
     @model_validator(mode="after")
     def validate_debug_trace_consistency(self) -> Self:

@@ -10,6 +10,7 @@ Updated to use FlextCore.Config.get_global_instance() for singleton behavior.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

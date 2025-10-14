@@ -4,6 +4,7 @@ Provides common test utilities, matchers, and domain objects for the FLEXT ecosy
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
