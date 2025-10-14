@@ -1099,9 +1099,8 @@ def test_registry_register_function_map_exception_handling() -> None:
         return msg
 
     # Use proper typing for the mapping
-    from typing import Any
 
-    mapping: dict[type[object], tuple[Any, dict[str, Any]]] = {
+    mapping: dict[type[object], tuple[object, dict[str, object]]] = {
         ProblematicMessage: (test_handler, {})
     }
     result = registry.register_function_map(mapping)

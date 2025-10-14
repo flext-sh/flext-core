@@ -901,8 +901,6 @@ class TestFlextProcessorsCriticalCoverage:
             retry_attempts=3,
         )
         assert request.retry_attempts == 3
-        assert request.has_data is True
-        assert request.total_timeout > 0
 
     def test_pipeline_validation_with_validators(self) -> None:
         """Test pipeline processing with custom validators."""

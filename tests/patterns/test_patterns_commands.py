@@ -83,12 +83,6 @@ class FailingCommand(FlextCore.Models.TimestampedModel):
         return FlextCore.Result[None].fail("This command always fails")
 
 
-# Rebuild models to resolve forward references
-CreateUserCommand.model_rebuild()
-UpdateUserCommand.model_rebuild()
-FailingCommand.model_rebuild()
-
-
 class CreateUserCommandHandler(
     FlextCommandHandler[CreateUserCommand, FlextCore.Types.Dict],
 ):

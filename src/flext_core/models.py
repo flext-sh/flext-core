@@ -11,9 +11,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
 """
-# Expected: Complex model inheritance and mixins.
-# ruff: disable=PLC2701,E402
-# pyright: basic
 
 from __future__ import annotations
 
@@ -105,28 +102,22 @@ class FlextModels:
         - Annotated fields with rich metadata
         """
 
-        created_at: Annotated[
-            datetime,
-            Field(
-                default_factory=lambda: datetime.now(UTC),
-                description="Timestamp when the model was created (UTC timezone)",
-                examples=[
-                    datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
-                    datetime(2025, 10, 12, 15, 30, 0, tzinfo=UTC),
-                ],
-            ),
-        ]
-        updated_at: Annotated[
-            datetime | None,
-            Field(
-                default=None,
-                description="Timestamp when the model was last updated (UTC timezone)",
-                examples=[
-                    None,
-                    datetime(2025, 1, 2, 14, 30, 0, tzinfo=UTC),
-                ],
-            ),
-        ]
+        created_at: datetime = Field(
+            default_factory=lambda: datetime.now(UTC),
+            description="Timestamp when the model was created (UTC timezone)",
+            examples=[
+                datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+                datetime(2025, 10, 12, 15, 30, 0, tzinfo=UTC),
+            ],
+        )
+        updated_at: datetime | None = Field(
+            default=None,
+            description="Timestamp when the model was last updated (UTC timezone)",
+            examples=[
+                None,
+                datetime(2025, 1, 2, 14, 30, 0, tzinfo=UTC),
+            ],
+        )
 
         @field_serializer("created_at", "updated_at", when_used="json")
         def serialize_timestamps(self, value: datetime | None) -> str | None:
@@ -154,15 +145,12 @@ class FlextModels:
         - Computed field for version state checks
         """
 
-        version: Annotated[
-            int,
-            Field(
-                default=FlextConstants.Performance.DEFAULT_VERSION,
-                ge=FlextConstants.Performance.MIN_VERSION,
-                description="Version number for optimistic locking - increments with each update",
-                examples=[1, 5, 42, 100],
-            ),
-        ]
+        version: int = Field(
+            default=FlextConstants.Performance.DEFAULT_VERSION,
+            ge=FlextConstants.Performance.MIN_VERSION,
+            description="Version number for optimistic locking - increments with each update",
+            examples=[1, 5, 42, 100],
+        )
 
         @computed_field
         @property
@@ -250,6 +238,17 @@ class FlextModels:
         Provides created_at and updated_at fields with automatic management.
         """
 
+    class DomainEvent(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
+        """Base class for domain events.
+
+        Uses IdentifiableMixin for id and TimestampableMixin for created_at.
+        """
+
+        event_type: str
+        aggregate_id: str
+        data: FlextTypes.Domain.EventPayload = Field(default_factory=dict)
+        metadata: FlextTypes.Domain.EventMetadata = Field(default_factory=dict)
+
     class Entity(TimestampedModel, IdentifiableMixin, VersionableMixin):
         """Base class for domain entities with identity.
 
@@ -273,7 +272,7 @@ class FlextModels:
                 cls._internal_logger = FlextLogger(__name__)
             return cls._internal_logger
 
-        domain_events: list[FlextModels.DomainEvent] = Field(default_factory=list)
+        domain_events: list[DomainEvent] = Field(default_factory=list)
 
         @override
         def model_post_init(self, __context: object, /) -> None:
@@ -345,7 +344,6 @@ class FlextModels:
                     event_type=event_name,
                     aggregate_id=self.id,
                     data=data or {},
-                    # Removed occurred_at - auto-generated via TimestampableMixin
                 )
 
                 # Validate the created domain event
@@ -410,7 +408,7 @@ class FlextModels:
                     error_code=FlextConstants.Errors.DOMAIN_EVENT_ERROR,
                 )
 
-        def get_uncommitted_events(self) -> list[FlextModels.DomainEvent]:
+        def get_uncommitted_events(self) -> list[DomainEvent]:
             """Get uncommitted domain events without clearing them.
 
             Returns:
@@ -421,7 +419,7 @@ class FlextModels:
 
         def mark_events_as_committed(
             self,
-        ) -> FlextResult[list[FlextModels.DomainEvent]]:
+        ) -> FlextResult[list[DomainEvent]]:
             """Mark all domain events as committed and return them.
 
             Enhanced method with proper error handling and validation.
@@ -459,15 +457,15 @@ class FlextModels:
                 # Clear all events
                 self.domain_events.clear()
 
-                return FlextResult[list[FlextModels.DomainEvent]].ok(events)
+                return FlextResult[list[DomainEvent]].ok(events)
 
             except Exception as e:
-                return FlextResult[list[FlextModels.DomainEvent]].fail(
+                return FlextResult[list[DomainEvent]].fail(
                     f"Failed to commit domain events: {e}",
                     error_code=FlextConstants.Errors.DOMAIN_EVENT_ERROR,
                 )
 
-        def clear_domain_events(self) -> list[FlextModels.DomainEvent]:
+        def clear_domain_events(self) -> list[DomainEvent]:
             """Clear and return domain events.
 
             This method logs the clearing operation via structlog for
@@ -675,17 +673,6 @@ class FlextModels:
             if not v:
                 return cls.__name__
             return v
-
-    class DomainEvent(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
-        """Base class for domain events.
-
-        Uses IdentifiableMixin for id and TimestampableMixin for created_at.
-        """
-
-        event_type: str
-        aggregate_id: str
-        data: FlextTypes.Domain.EventPayload = Field(default_factory=dict)
-        metadata: FlextTypes.Domain.EventMetadata = Field(default_factory=dict)
 
     class Metadata(FrozenStrictModel):
         """Immutable metadata model."""
@@ -989,7 +976,7 @@ class FlextModels:
         """Domain service batch request."""
 
         service_name: str
-        operations: Annotated[list[FlextTypes.Dict], Field(default_factory=list)]
+        operations: list[FlextTypes.Dict] = Field(default_factory=list)
         parallel_execution: bool = False
         stop_on_error: bool = True
         batch_size: int = Field(
@@ -1171,9 +1158,9 @@ class FlextModels:
                     if isinstance(code, (int, str)):
                         code_int = int(str(code))
                         if (
-                            not FlextConstants.Platform.MIN_HTTP_STATUS_RANGE
+                            not FlextConstants.Http.HTTP_STATUS_MIN
                             <= code_int
-                            <= FlextConstants.Platform.MAX_HTTP_STATUS_RANGE
+                            <= FlextConstants.Http.HTTP_STATUS_MAX
                         ):
                             msg = f"Invalid HTTP status code: {code}"
                             raise FlextExceptions.ValidationError(
@@ -1521,7 +1508,7 @@ class FlextModels:
             limit: Items to fetch (same as size)
 
         Examples:
-            >>> pagination = FlextModels.Pagination(page=2, size=20)
+            >>> pagination = Pagination(page=2, size=20)
             >>> pagination.page
             2
             >>> pagination.offset  # Computed: (2-1) * 20
@@ -1560,9 +1547,9 @@ class FlextModels:
                 0-based starting position for database queries
 
             Examples:
-                >>> FlextModels.Pagination(page=1, size=20).offset
+                >>> Pagination(page=1, size=20).offset
                 0
-                >>> FlextModels.Pagination(page=3, size=20).offset
+                >>> Pagination(page=3, size=20).offset
                 40
 
             """
@@ -1577,7 +1564,7 @@ class FlextModels:
                 Number of items to fetch
 
             Examples:
-                >>> FlextModels.Pagination(page=1, size=20).limit
+                >>> Pagination(page=1, size=20).limit
                 20
 
             """
@@ -1590,7 +1577,7 @@ class FlextModels:
                 Dictionary with page, size, offset, and limit
 
             Examples:
-                >>> pagination = FlextModels.Pagination(page=2, size=20)
+                >>> pagination = Pagination(page=2, size=20)
                 >>> pagination.to_dict()
                 {'page': 2, 'size': 20, 'offset': 20, 'limit': 20}
 
@@ -1618,14 +1605,14 @@ class FlextModels:
             query_type: Optional query classification/type
 
         Examples:
-            >>> query = FlextModels.Query(
+            >>> query = Query(
             ...     filters={"status": "active", "age__gte": 18},
             ...     pagination={"page": 2, "size": 50},
             ...     query_type="user_search",
             ... )
             >>> query.filters["status"]
             'active'
-            >>> isinstance(query.pagination, FlextModels.Pagination)
+            >>> isinstance(query.pagination, Pagination)
             True
 
         """
@@ -1643,7 +1630,7 @@ class FlextModels:
             ),
         ] = Field(default_factory=dict)
         pagination: Annotated[
-            FlextModels.Pagination | dict[str, int],
+            Pagination | dict[str, int],
             Field(
                 default_factory=dict,
                 description="Pagination settings (Pagination object or dict with page/size)",
@@ -1710,15 +1697,13 @@ class FlextModels:
             return FlextModels.Pagination()
 
         @classmethod
-        def validate_query(
-            cls, query_payload: FlextTypes.Dict
-        ) -> FlextResult[FlextModels.Query]:
+        def validate_query(cls, query_payload: FlextTypes.Dict) -> FlextResult[Query]:
             """Validate and create Query from payload."""
             try:
                 # Extract the required fields with proper typing
                 filters: object = query_payload.get("filters", {})
                 pagination_data = query_payload.get("pagination", {})
-                if isinstance(pagination_data, FlextModels.Pagination):
+                if isinstance(pagination_data, Pagination):
                     pagination = pagination_data
                 elif isinstance(pagination_data, dict):
                     pagination_dict = cast("FlextTypes.Dict", pagination_data)
@@ -1728,12 +1713,12 @@ class FlextModels:
                     size: int = (
                         int(size_raw) if isinstance(size_raw, (int, str)) else 20
                     )
-                    pagination = FlextModels.Pagination(
+                    pagination = Pagination(
                         page=page,
                         size=size,
                     )
                 else:
-                    pagination = FlextModels.Pagination()
+                    pagination = Pagination()
                 query_id = str(query_payload.get("query_id", str(uuid.uuid4())))
                 query_type: object = query_payload.get("query_type")
 
@@ -1749,14 +1734,9 @@ class FlextModels:
                     query_id=query_id,
                     query_type=str(query_type) if query_type is not None else None,
                 )
-                return FlextResult[FlextModels.Query].ok(query)
+                return FlextResult[Query].ok(query)
             except Exception as e:
-                return FlextResult[FlextModels.Query].fail(
-                    f"Query validation failed: {e}"
-                )
-
-    # NOTE: HttpRequest and HttpResponse have been moved to flext-web since they're web-specific
-    # flext-api has its own HttpRequest and HttpResponse implementations
+                return FlextResult[Query].fail(f"Query validation failed: {e}")
 
     # =========================================================================
     # CONTEXT MODELS - Context management data structures
@@ -1846,6 +1826,7 @@ class FlextModels:
                 default: Default value when not set
 
             """
+            super().__init__()
             self._key = key
             self._default = default
 
@@ -2992,8 +2973,7 @@ class FlextModels:
                 events = getattr(aggregate, "domain_events", [])
                 if len(events) > FlextConstants.Validation.MAX_UNCOMMITTED_EVENTS:
                     return FlextResult[T].fail(
-                        f"Too many uncommitted domain events: {len(events)} "
-                        f"(max: {FlextConstants.Validation.MAX_UNCOMMITTED_EVENTS})",
+                        f"Too many uncommitted domain events: {len(events)} (max: {FlextConstants.Validation.MAX_UNCOMMITTED_EVENTS})",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
@@ -3055,18 +3035,3 @@ class FlextModels:
 __all__ = [
     "FlextModels",
 ]
-
-# Rebuild models for Pydantic v2 forward references
-FlextModels.Query.model_rebuild()
-FlextModels.Command.model_rebuild()
-FlextModels.DomainEvent.model_rebuild()
-FlextModels.StructlogProxyToken.model_rebuild()
-FlextModels.Token.model_rebuild()
-FlextModels.ContextData.model_rebuild()
-FlextModels.ContextExport.model_rebuild()
-FlextModels.HandlerExecutionContext.model_rebuild()
-FlextModels.HandlerExecutionConfig.model_rebuild()
-FlextModels.BatchProcessingConfig.model_rebuild()
-FlextModels.DomainServiceExecutionRequest.model_rebuild()
-FlextModels.ConditionalExecutionRequest.model_rebuild()
-FlextModels.DomainServiceBatchRequest.model_rebuild()

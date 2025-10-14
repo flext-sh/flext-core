@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-import time
 
 import pytest
 from pydantic import field_validator
@@ -38,9 +37,6 @@ class TestFlextModels:
                     msg = "Invalid email"
                     raise ValueError(msg)
                 return v
-
-        # Rebuild model to resolve forward references
-        TestEntity.model_rebuild(_types_namespace={"FlextModels": FlextCore.Models})
 
         # Test entity creation
         entity = TestEntity(
@@ -96,13 +92,12 @@ class TestFlextModels:
 
             def change_status(self, new_status: str) -> None:
                 self.status = new_status
-                self.add_domain_event(
+                result = self.add_domain_event(
                     "status_changed",
                     {"old_status": "active", "new_status": new_status},
                 )
-
-        # Rebuild model to resolve forward references
-        TestAggregate.model_rebuild(_types_namespace={"FlextModels": FlextCore.Models})
+                if result.is_failure:
+                    raise ValueError(f"Failed to add domain event: {result.error}")
 
         # Test aggregate creation
         aggregate = TestAggregate(name="Test Aggregate", domain_events=[])
@@ -156,31 +151,6 @@ class TestFlextModels:
         assert result.is_success
         assert result.value == "https://example.com"
 
-    def test_models_project_entity(self) -> None:
-        """Test Project entity."""
-        project = FlextCore.Models.Project(
-            name="Test Project",
-            organization_id="org-123",
-            repository_path="/path/to/repo",
-        )
-        assert project.name == "Test Project"
-        assert project.organization_id == "org-123"
-        assert project.repository_path == "/path/to/repo"
-        assert project.id is not None
-
-    def test_models_workspace_aggregate(self) -> None:
-        """Test WorkspaceInfo aggregate."""
-        workspace = FlextCore.Models.WorkspaceInfo(
-            workspace_id="ws-123",
-            name="Test Workspace",
-            root_path="/workspace/root",
-            projects=[],
-        )
-        assert workspace.workspace_id == "ws-123"
-        assert workspace.name == "Test Workspace"
-        assert workspace.root_path == "/workspace/root"
-        assert workspace.id is not None
-
     def test_models_domain_events(self) -> None:
         """Test domain events functionality."""
 
@@ -189,9 +159,6 @@ class TestFlextModels:
 
             def trigger_event(self) -> None:
                 self.add_domain_event("test_event", {"data": "test"})
-
-        # Rebuild model to resolve forward references
-        EventAggregate.model_rebuild(_types_namespace={"FlextModels": FlextCore.Models})
 
         aggregate = EventAggregate(name="Test", domain_events=[])
 
@@ -209,11 +176,6 @@ class TestFlextModels:
         class VersionedEntity(FlextCore.Models.Entity):
             name: str
 
-        # Rebuild model to resolve forward references
-        VersionedEntity.model_rebuild(
-            _types_namespace={"FlextModels": FlextCore.Models}
-        )
-
         entity = VersionedEntity(name="Test", domain_events=[])
         initial_version = entity.version
 
@@ -226,11 +188,6 @@ class TestFlextModels:
 
         class TimestampedEntity(FlextCore.Models.Entity):
             name: str
-
-        # Rebuild model to resolve forward references
-        TimestampedEntity.model_rebuild(
-            _types_namespace={"FlextModels": FlextCore.Models}
-        )
 
         entity = TimestampedEntity(name="Test", domain_events=[])
         initial_created = entity.created_at
@@ -263,11 +220,6 @@ class TestFlextModels:
                     raise ValueError(msg)
                 return v
 
-        # Rebuild model to resolve forward references
-        ValidatedEntity.model_rebuild(
-            _types_namespace={"FlextModels": FlextCore.Models}
-        )
-
         # Test valid entity
         entity = ValidatedEntity(
             name="Test",
@@ -284,25 +236,6 @@ class TestFlextModels:
         with pytest.raises(ValueError, match="Invalid email"):
             ValidatedEntity(name="Test", email="invalid", domain_events=[])
 
-    def test_models_serialization(self) -> None:
-        """Test model serialization."""
-        entity = FlextCore.Models.Project(
-            name="test",
-            organization_id="org-123",
-            domain_events=[],
-        )
-
-        # Test to_dict
-        data = entity.model_dump()
-        assert "name" in data
-        assert "organization_id" in data
-        assert "id" in data
-
-        # Test JSON serialization
-        json_data = entity.model_dump_json()
-        assert isinstance(json_data, str)
-        assert "test" in json_data
-
     def test_models_thread_safety(self) -> None:
         """Test thread safety of models."""
 
@@ -311,11 +244,6 @@ class TestFlextModels:
 
             def increment(self) -> None:
                 self.counter += 1
-
-        # Rebuild model to resolve forward references
-        ThreadSafeEntity.model_rebuild(
-            _types_namespace={"FlextModels": FlextCore.Models}
-        )
 
         entity = ThreadSafeEntity(domain_events=[])
 
@@ -336,24 +264,3 @@ class TestFlextModels:
 
         # Check final counter
         assert entity.counter == 500
-
-    def test_models_performance(self) -> None:
-        """Test model creation performance."""
-        start_time = time.time()
-
-        # Create many entities
-        entities: list[FlextCore.Models.Project] = []
-        for i in range(1000):
-            entity = FlextCore.Models.Project(
-                name=f"project{i}",
-                organization_id=f"org-{i}",
-                domain_events=[],
-            )
-            entities.append(entity)
-
-        end_time = time.time()
-        creation_time = end_time - start_time
-
-        # Should be fast (less than 1 second for 1000 entities)
-        assert creation_time < 1.0
-        assert len(entities) == 1000

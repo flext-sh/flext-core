@@ -20,7 +20,7 @@ from collections.abc import Callable, Iterator
 from enum import Enum
 from pathlib import Path
 from types import ModuleType
-from typing import Any, ClassVar, cast
+from typing import ClassVar, cast
 
 import click
 import docker
@@ -771,7 +771,7 @@ class FlextTestDocker:
             # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(name)
             # Cast to access status attribute
-            container_obj = cast("Any", container)
+            container_obj = cast("object", container)
             status = (
                 ContainerStatus.RUNNING
                 if container_obj.status == "running"
@@ -881,8 +881,8 @@ class FlextTestDocker:
         try:
             client = self.get_client()
             if hasattr(client, "images") and hasattr(client.images, "remove"):
-                # Cast to Any to handle unknown method signature
-                images_api = cast("Any", client.images)
+                # Cast to object to handle unknown method signature
+                images_api = cast("object", client.images)
                 remove_method = cast("Callable[..., None]", images_api.remove)
                 remove_method(image, force=force)
             return FlextCore.Result[str].ok(f"Image {image} removed")
@@ -904,8 +904,8 @@ class FlextTestDocker:
             client = self.get_client()
             # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(container_name)
-            # Cast container to Any to handle unknown method signatures
-            container_api = cast("Any", container)
+            # Cast container to object to handle unknown method signatures
+            container_api = cast("object", container)
             logs_method = getattr(container_api, "logs", None)
             if logs_method is not None:
                 logs = cast("Callable[..., bytes]", logs_method)(
@@ -957,10 +957,10 @@ class FlextTestDocker:
         """List containers."""
         try:
             client = self.get_client()
-            # Cast containers API to Any to handle unknown method signature
-            containers_api = cast("Any", client.containers)
+            # Cast containers API to object to handle unknown method signature
+            containers_api = cast("object", client.containers)
             list_method = containers_api.list
-            containers = cast("list[Any]", list_method(all=all_containers))
+            containers = cast("list[object]", list_method(all=all_containers))
             container_infos: list[ContainerInfo] = []
             for container in containers:
                 # Container attributes not fully typed in docker stubs

@@ -431,15 +431,31 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def set_global_instance(cls, instance: FlextConfig) -> None:
-        """Set global singleton instance."""
+        """Set global singleton instance.
+
+        Uses FlextConfig as the key to match get_global_instance() behavior,
+        ensuring all subclasses (FlextBase.Config, FlextCore.Config) properly
+        set the shared singleton.
+
+        Args:
+            instance: The config instance to set as global singleton
+
+        """
         with cls._lock:
-            cls._instances[cls] = instance
+            base_class = FlextConfig
+            cls._instances[base_class] = instance  # Use base_class key, not cls
 
     @classmethod
     def reset_global_instance(cls) -> None:
-        """Reset global singleton instance."""
+        """Reset global singleton instance.
+
+        Uses FlextConfig as the key to match get_global_instance() behavior,
+        ensuring all subclasses (FlextBase.Config, FlextCore.Config) properly
+        reset the shared singleton.
+        """
         with cls._lock:
-            cls._instances.pop(cls, None)
+            base_class = FlextConfig
+            cls._instances.pop(base_class, None)  # Use base_class key, not cls
 
     def validate_runtime_requirements(self) -> FlextResult[None]:
         """Validate configuration meets runtime requirements."""

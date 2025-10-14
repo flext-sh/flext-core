@@ -299,21 +299,9 @@ class DatabaseService(FlextCore.Service[None]):
                 {"id": 1, "name": "John Doe", "email": "john@example.com"},
                 {"id": 2, "name": "Jane Smith", "email": "jane@example.com"},
             ]
-            # Apply command type transformation if specified
-            if command_type is FlextCore.Types.Dict:
-                return FlextCore.Result[list[FlextCore.Types.Dict]].ok(user_data)
-            if command_type is FlextCore.Types.List:
-                # Return user_data as-is since it's already a list[FlextCore.Types.Dict]
-                return FlextCore.Result[list[FlextCore.Types.Dict]].ok(user_data)
             return FlextCore.Result[list[FlextCore.Types.Dict]].ok(user_data)
         if "count" in sql.lower():
             count_data: FlextCore.Types.Dict = {"count": 42}
-            # Apply command type transformation if specified
-            if command_type is FlextCore.Types.Dict:
-                return FlextCore.Result[list[FlextCore.Types.Dict]].ok([count_data])
-            if command_type is FlextCore.Types.List:
-                # Return [count_data] as-is since it's already a list[FlextCore.Types.Dict]
-                return FlextCore.Result[list[FlextCore.Types.Dict]].ok([count_data])
             return FlextCore.Result[list[FlextCore.Types.Dict]].ok([count_data])
 
         return FlextCore.Result[list[FlextCore.Types.Dict]].ok([])
