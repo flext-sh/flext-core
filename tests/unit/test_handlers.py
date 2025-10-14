@@ -294,7 +294,7 @@ class TestFlextHandlers:
         )
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
-        """Test _run_pipeline with dict message having command_id."""
+        """Test _run_pipeline with dict[str, object] message having command_id."""
         config = FlextCore.Models.Cqrs.Handler(
             handler_id="test_pipeline_dict_command_id",
             handler_name="Test Pipeline Dict Command ID",
@@ -302,7 +302,7 @@ class TestFlextHandlers:
             handler_mode="command",
         )
 
-        # Create handler that accepts dict messages
+        # Create handler that accepts dict[str, object] messages
         class DictHandler(FlextCore.Handlers[FlextCore.Types.Dict, str]):
             def __init__(self, config: FlextCore.Models.Cqrs.Handler) -> None:
                 super().__init__(config=config)
@@ -323,7 +323,7 @@ class TestFlextHandlers:
         )
 
     def test_handlers_run_pipeline_with_dict_message_message_id(self) -> None:
-        """Test _run_pipeline with dict message having message_id."""
+        """Test _run_pipeline with dict[str, object] message having message_id."""
         config = FlextCore.Models.Cqrs.Handler(
             handler_id="test_pipeline_dict_message_id",
             handler_name="Test Pipeline Dict Message ID",
@@ -331,7 +331,7 @@ class TestFlextHandlers:
             handler_mode="command",
         )
 
-        # Create handler that accepts dict messages
+        # Create handler that accepts dict[str, object] messages
         class DictHandler(FlextCore.Handlers[FlextCore.Types.Dict, str]):
             def __init__(self, config: FlextCore.Models.Cqrs.Handler) -> None:
                 super().__init__(config=config)
@@ -660,7 +660,7 @@ class TestFlextHandlers:
         assert "Invalid handler mode: invalid_mode" in str(exc_info.value)
 
     def test_handlers_from_callable_with_dict_config(self) -> None:
-        """Test from_callable with dict handler_config."""
+        """Test from_callable with dict[str, object] handler_config."""
 
         def dict_config_handler(message: str) -> str:
             return f"dict_config_{message}"
@@ -683,7 +683,7 @@ class TestFlextHandlers:
         assert handler._config_model.metadata == {"test": "value"}
 
     def test_handlers_from_callable_with_invalid_dict_config(self) -> None:
-        """Test from_callable with invalid dict handler_config."""
+        """Test from_callable with invalid dict[str, object] handler_config."""
 
         def invalid_config_handler(message: object) -> object:
             if isinstance(message, str):

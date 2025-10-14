@@ -35,7 +35,7 @@ class FlextRuntime:
 
     Features:
     - Type guard utilities using FlextConstants validation patterns
-    - Serialization utilities for Pydantic and dict conversion
+    - Serialization utilities for Pydantic and dict[str, object] conversion
     - Optional type introspection utilities
     - Sequence type checking utilities
     - Direct access to external library modules (structlog, dependency_injector)
@@ -149,7 +149,7 @@ class FlextRuntime:
             value: Value to check
 
         Returns:
-            True if value is a dict or dict-like object, False otherwise
+            True if value is a dict[str, object] or dict-like object, False otherwise
 
         """
         return isinstance(value, dict)
@@ -265,7 +265,7 @@ class FlextRuntime:
                     f"model_dump() serialization strategy failed: {e}"
                 )
 
-        # Strategy 2: Check for dict method
+        # Strategy 2: Check for dict[str, object] method
         if hasattr(obj, "dict") and callable(getattr(obj, "dict")):
             try:
                 dict_method = getattr(obj, "dict")
@@ -282,10 +282,10 @@ class FlextRuntime:
         if hasattr(obj, "__dict__"):
             try:
                 result = obj.__dict__
-                return cast("FlextTypes.Dict", dict(result))
+                return cast("FlextTypes.Dict", dict[str, object](result))
             except Exception as e:  # pragma: no cover
                 # Silent fallback for serialization strategy - log at debug level
-                # Extremely rare: __dict__ exists but dict() conversion fails
+                # Extremely rare: __dict__ exists but dict[str, object]() conversion fails
                 logging.getLogger(__name__).debug(
                     f"__dict__ serialization strategy failed: {e}"
                 )
@@ -387,10 +387,8 @@ class FlextRuntime:
                 return True
 
             # Check __name__ for type aliases like StringList
-            # Cast to object to avoid pyright warnings about unknown argument types
-            type_hint_any = cast("object", type_hint)
-            if hasattr(type_hint_any, "__name__"):
-                type_name = getattr(type_hint_any, "__name__", "")
+            if hasattr(type_hint, "__name__"):
+                type_name = getattr(type_hint, "__name__", "")
                 # Common sequence type aliases
                 if type_name in {
                     "StringList",

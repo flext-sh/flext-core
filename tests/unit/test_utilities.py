@@ -418,7 +418,7 @@ class TestFlextUtilitiesComprehensive:
         assert FlextCore.Utilities.TypeGuards.is_string_non_empty(None) is False
         assert FlextCore.Utilities.TypeGuards.is_string_non_empty(123) is False
 
-        # Test dict non-empty check
+        # Test dict[str, object] non-empty check
         assert FlextCore.Utilities.TypeGuards.is_dict_non_empty({"a": 1}) is True
         assert FlextCore.Utilities.TypeGuards.is_dict_non_empty({}) is False
         assert FlextCore.Utilities.TypeGuards.is_dict_non_empty(None) is False

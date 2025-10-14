@@ -88,6 +88,25 @@ class FlextModels:
         Used by Entity, Command, DomainEvent, Saga, and other identifiable models.
         """
 
+        model_config = ConfigDict(
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            strict=True,
+            str_strip_whitespace=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            extra="forbid",
+            frozen=False,
+            ser_json_timedelta="iso8601",
+            ser_json_bytes="base64",
+            hide_input_in_errors=True,
+            json_schema_extra={
+                "title": "IdentifiableMixin",
+                "description": "Mixin providing unique identifier fields",
+            },
+        )
+
         id: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
     class TimestampableMixin(BaseModel):
@@ -101,6 +120,25 @@ class FlextModels:
         - Automatic timestamp management
         - Annotated fields with rich metadata
         """
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            strict=True,
+            str_strip_whitespace=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            extra="forbid",
+            frozen=False,
+            ser_json_timedelta="iso8601",
+            ser_json_bytes="base64",
+            hide_input_in_errors=True,
+            json_schema_extra={
+                "title": "TimestampableMixin",
+                "description": "Mixin providing timestamp fields and serialization",
+            },
+        )
 
         created_at: datetime = Field(
             default_factory=lambda: datetime.now(UTC),
@@ -144,6 +182,25 @@ class FlextModels:
         - Annotated field with rich metadata
         - Computed field for version state checks
         """
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            strict=True,
+            str_strip_whitespace=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            extra="forbid",
+            frozen=False,
+            ser_json_timedelta="iso8601",
+            ser_json_bytes="base64",
+            hide_input_in_errors=True,
+            json_schema_extra={
+                "title": "VersionableMixin",
+                "description": "Mixin providing version fields and optimistic locking",
+            },
+        )
 
         version: int = Field(
             default=FlextConstants.Performance.DEFAULT_VERSION,
@@ -545,7 +602,7 @@ class FlextModels:
                     )
                 if data is not None and not isinstance(data, dict):
                     return FlextResult[None].fail(
-                        f"Event {i}: data must be dict or None",
+                        f"Event {i}: data must be dict[str, object] or None",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 validated_events.append((event_name, data or {}))
@@ -1265,6 +1322,25 @@ class FlextModels:
         class Bus(BaseModel):
             """Bus configuration model for CQRS command bus."""
 
+            model_config = ConfigDict(
+                validate_assignment=True,
+                validate_return=True,
+                validate_default=True,
+                strict=True,
+                str_strip_whitespace=True,
+                use_enum_values=True,
+                arbitrary_types_allowed=True,
+                extra="forbid",
+                frozen=False,
+                ser_json_timedelta="iso8601",
+                ser_json_bytes="base64",
+                hide_input_in_errors=True,
+                json_schema_extra={
+                    "title": "Bus",
+                    "description": "CQRS command bus configuration",
+                },
+            )
+
             enable_middleware: bool = Field(
                 default=True, description="Enable middleware pipeline"
             )
@@ -1331,6 +1407,25 @@ class FlextModels:
 
         class Handler(BaseModel):
             """Handler configuration model for CQRS handlers."""
+
+            model_config = ConfigDict(
+                validate_assignment=True,
+                validate_return=True,
+                validate_default=True,
+                strict=True,
+                str_strip_whitespace=True,
+                use_enum_values=True,
+                arbitrary_types_allowed=True,
+                extra="forbid",
+                frozen=False,
+                ser_json_timedelta="iso8601",
+                ser_json_bytes="base64",
+                hide_input_in_errors=True,
+                json_schema_extra={
+                    "title": "Handler",
+                    "description": "CQRS handler configuration",
+                },
+            )
 
             handler_id: str = Field(description="Unique handler identifier")
             handler_name: str = Field(description="Human-readable handler name")
@@ -1417,6 +1512,25 @@ class FlextModels:
             'reg-123'
 
         """
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            strict=True,
+            str_strip_whitespace=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            extra="forbid",
+            frozen=False,
+            ser_json_timedelta="iso8601",
+            ser_json_bytes="base64",
+            hide_input_in_errors=True,
+            json_schema_extra={
+                "title": "RegistrationDetails",
+                "description": "Handler registration tracking details",
+            },
+        )
 
         registration_id: Annotated[
             str,
@@ -1633,7 +1747,7 @@ class FlextModels:
             Pagination | dict[str, int],
             Field(
                 default_factory=dict,
-                description="Pagination settings (Pagination object or dict with page/size)",
+                description="Pagination settings (Pagination object or dict[str, object] with page/size)",
                 examples=[
                     {"page": 1, "size": 20},
                     {"page": 5, "size": 100},
@@ -1666,7 +1780,7 @@ class FlextModels:
             if isinstance(v, FlextModels.Pagination):
                 return v
             if isinstance(v, dict):
-                # Extract page and size from dict with proper type casting
+                # Extract page and size from dict[str, object] with proper type casting
                 v_dict = cast("FlextTypes.Dict", v)
                 page_raw = v_dict.get("page", 1)
                 size_raw = v_dict.get("size", 20)
@@ -1726,11 +1840,11 @@ class FlextModels:
                     filters = {}
                 # Type casting for mypy - after validation, filters is guaranteed to be dict
                 filters_dict = cast("FlextTypes.Dict", filters)
-                # No need to validate pagination dict - Pydantic validator handles conversion
+                # No need to validate pagination dict[str, object] - Pydantic validator handles conversion
 
                 query = cls(
                     filters=filters_dict,
-                    pagination=pagination,  # Pydantic will convert dict to Pagination
+                    pagination=pagination,  # Pydantic will convert dict[str, object] to Pagination
                     query_id=query_id,
                     query_type=str(query_type) if query_type is not None else None,
                 )
@@ -1837,7 +1951,7 @@ class FlextModels:
                 Current value or default if not set
 
             """
-            # Get from structlog's contextvar dict (single source of truth)
+            # Get from structlog's contextvar dict[str, object] (single source of truth)
             import structlog.contextvars
 
             current_context = structlog.contextvars.get_contextvars()
@@ -1982,7 +2096,7 @@ class FlextModels:
         @field_validator("data", "metadata", mode="before")
         @classmethod
         def validate_dict_serializable(cls, v: object) -> FlextTypes.Dict:
-            """Validate that dict values are JSON-serializable.
+            """Validate that dict[str, object] values are JSON-serializable.
 
             Uses mode='before' to validate raw input before Pydantic processing.
             Only allows basic JSON-serializable types: str, int, float, bool, list, dict, None.
@@ -2065,7 +2179,7 @@ class FlextModels:
         @field_validator("data", "metadata", "statistics", mode="before")
         @classmethod
         def validate_dict_serializable(cls, v: object) -> FlextTypes.Dict:
-            """Validate that dict values are JSON-serializable.
+            """Validate that dict[str, object] values are JSON-serializable.
 
             Uses mode='before' to validate raw input before Pydantic processing.
             Only allows basic JSON-serializable types: str, int, float, bool, list, dict, None.
@@ -2222,7 +2336,7 @@ class FlextModels:
             """Get current metrics state.
 
             Returns:
-                Dictionary containing metrics state (empty dict if not set)
+                Dictionary containing metrics state (empty dict[str, object] if not set)
 
             Examples:
                 >>> context = FlextModels.HandlerExecutionContext.create_for_handler(

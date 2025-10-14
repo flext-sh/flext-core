@@ -487,7 +487,7 @@ class TestFlextExceptionsComprehensive:
         exc = FlextCore.Exceptions.BaseError("Error", metadata={"items": [1, 2, 3]})
         assert exc.metadata["items"] == [1, 2, 3]
 
-        # Nested dict metadata
+        # Nested dict[str, object] metadata
         exc = FlextCore.Exceptions.BaseError(
             "Error", metadata={"nested": {"key": "val"}}
         )

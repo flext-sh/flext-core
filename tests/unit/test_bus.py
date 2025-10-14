@@ -533,10 +533,10 @@ class TestFlextBusMissingCoverage:
         assert result["timeout"] == 30
 
     def test_normalize_middleware_config_with_dict_method(self) -> None:
-        """Test _normalize_middleware_config with dict method (lines 369-379)."""
+        """Test _normalize_middleware_config with dict[str, object] method (lines 369-379)."""
 
         class LegacyConfig:
-            def dict(self) -> FlextCore.Types.Dict:
+            def dict[str, object](self) -> FlextCore.Types.Dict:
                 return {"legacy": True, "version": 1}
 
         bus = FlextCore.Bus()
@@ -555,19 +555,19 @@ class TestFlextBusMissingCoverage:
                 msg = "Required parameter missing"
                 raise TypeError(msg)
 
-            def dict(self) -> FlextCore.Types.Dict:
+            def dict[str, object](self) -> FlextCore.Types.Dict:
                 return {"fallback": True}
 
         bus = FlextCore.Bus()
         config = BrokenConfig()
 
-        # Should fallback to dict() method
+        # Should fallback to dict[str, object]() method
         result = bus._normalize_middleware_config(config)
         assert isinstance(result, dict)
         assert result["fallback"] is True
 
     def test_normalize_middleware_config_returns_empty_dict(self) -> None:
-        """Test _normalize_middleware_config returns empty dict for invalid input (line 381)."""
+        """Test _normalize_middleware_config returns empty dict[str, object] for invalid input (line 381)."""
         bus = FlextCore.Bus()
 
         # Test with object that has no dict/model_dump methods

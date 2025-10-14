@@ -651,7 +651,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         # Use provided config or create default
         if handler_config is not None:
             if isinstance(handler_config, dict):
-                # Merge defaults with provided dict (dict values override defaults)
+                # Merge defaults with provided dict[str, object] (dict values override defaults)
                 config_data: FlextTypes.Dict = {
                     "handler_id": f"{resolved_handler_name}_{id(callable_func)}",
                     "handler_name": resolved_handler_name,

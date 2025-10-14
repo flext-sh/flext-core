@@ -271,7 +271,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     def _store_service(self, name: str, service: object) -> FlextResult[None]:
         """Store service in registry AND internal DI container with conflict detection.
 
-        Stores in both tracking dict (backward compatibility) and internal
+        Stores in both tracking dict[str, object] (backward compatibility) and internal
         dependency-injector container (advanced DI features). Uses Object
         provider for existing service instances.
 
@@ -287,7 +287,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         provider_registered = False
         try:
-            # Store in tracking dict (backward compatibility)
+            # Store in tracking dict[str, object] (backward compatibility)
             self._services[name] = service
 
             # Store in internal DI container using Object provider
@@ -328,7 +328,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     ) -> FlextResult[None]:
         """Store factory in registry AND internal DI container with callable validation.
 
-        Stores in both tracking dict (backward compatibility) and internal
+        Stores in both tracking dict[str, object] (backward compatibility) and internal
         dependency-injector container using Singleton provider with factory.
         This ensures factory is called once and result is cached (lazy singleton).
 
@@ -348,7 +348,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         provider_registered = False
         try:
-            # Store in tracking dict (backward compatibility)
+            # Store in tracking dict[str, object] (backward compatibility)
             self._factories[name] = factory
 
             # Store in internal DI container using Singleton with factory
@@ -434,7 +434,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                 provider = getattr(self._di_container, name)
                 service = provider()
 
-                # Cache factory results in tracking dict for compatibility
+                # Cache factory results in tracking dict[str, object] for compatibility
                 if name in self._factories and name not in self._services:
                     self._services[name] = service
 
@@ -889,7 +889,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
     # =========================================================================
 
     @classmethod
-    def _ensure_global_instance(cls) -> FlextContainer:
+    def ensure_global_instance(cls) -> FlextContainer:
         """Ensure global instance exists with thread safety.
 
         Returns:
@@ -915,7 +915,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             For new code, use FlextContainer() directly.
 
         """
-        return cls._ensure_global_instance()
+        return cls.ensure_global_instance()
 
     @classmethod
     def create_module_utilities(
@@ -925,7 +925,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """Create module-specific utilities with container integration.
 
         Returns:
-            FlextResult[FlextTypes.Dict]: Success with utilities dict or failure with error.
+            FlextResult[FlextTypes.Dict]: Success with utilities dict[str, object] or failure with error.
 
         """
         if not module_name:
@@ -933,7 +933,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
                 "Module name must be non-empty string",
             )
 
-        container = cls._ensure_global_instance()
+        container = cls.ensure_global_instance()
         return FlextResult[FlextTypes.Dict].ok({
             "container": container,
             "module": module_name,

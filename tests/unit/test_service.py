@@ -817,7 +817,7 @@ class TestServiceComprehensiveCoverage:
             return str(kwargs)
 
         # Since FlextCore.Models.OperationExecutionRequest validates keyword_arguments,
-        # we need to test a different path that causes dict() conversion to fail
+        # we need to test a different path that causes dict[str, object]() conversion to fail
         operation_request = FlextCore.Models.OperationExecutionRequest(
             operation_name="test_normal_kwargs",
             operation_callable=test_operation,
@@ -1030,7 +1030,7 @@ class TestServiceComprehensiveCoverage:
         assert result.unwrap() == "success"
 
     def test_execute_operation_raw_arguments_single_value(self) -> None:
-        """Test execute_operation with arguments dict containing single value."""
+        """Test execute_operation with arguments dict[str, object] containing single value."""
 
         class TestService(FlextCore.Service[str]):
             def execute(self) -> FlextCore.Result[str]:
@@ -1220,11 +1220,11 @@ class TestServiceComprehensiveCoverage:
 
         service = TestService()
 
-        # Test with dict arguments that internally use various conversions
+        # Test with dict[str, object] arguments that internally use various conversions
         operation = FlextCore.Models.OperationExecutionRequest(
             operation_name="test_operation",
             operation_callable=service.test_operation,
-            arguments={},  # Must be dict per model
+            arguments={},  # Must be dict[str, object] per model
             keyword_arguments={"arg1": "value1", "arg2": "value2"},
         )
 

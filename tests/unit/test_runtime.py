@@ -250,7 +250,7 @@ class TestSerializationUtilities:
         assert result["value"] == 42
 
     def test_safe_serialize_to_dict_already_dict(self) -> None:
-        """Test safe_serialize_to_dict with already dict object."""
+        """Test safe_serialize_to_dict with already dict[str, object] object."""
         original = {"key": "value"}
         result = FlextCore.Runtime.safe_serialize_to_dict(original)
 
@@ -284,14 +284,14 @@ class TestSerializationUtilities:
         assert result.get("data") == "test"
 
     def test_safe_serialize_to_dict_dict_method_exception(self) -> None:
-        """Test safe_serialize_to_dict with dict() method raising exception falls back to __dict__."""
+        """Test safe_serialize_to_dict with dict[str, object]() method raising exception falls back to __dict__."""
 
         class BrokenDict:
             def __init__(self) -> None:
                 super().__init__()
                 self.data = "test"
 
-            def dict(self) -> FlextCore.Types.Dict:
+            def dict[str, object](self) -> FlextCore.Types.Dict:
                 msg = "Intentional error"
                 raise RuntimeError(msg)
 
@@ -302,14 +302,14 @@ class TestSerializationUtilities:
         assert result.get("data") == "test"
 
     def test_safe_serialize_to_dict_dict_method_returns_non_dict(self) -> None:
-        """Test safe_serialize_to_dict when dict() returns non-dict value."""
+        """Test safe_serialize_to_dict when dict[str, object]() returns non-dict value."""
 
         class NonDictReturn:
             def __init__(self) -> None:
                 super().__init__()
                 self.data = "test"
 
-            def dict(self) -> str:
+            def dict[str, object](self) -> str:
                 return "not a dict"
 
         obj = NonDictReturn()
@@ -319,19 +319,19 @@ class TestSerializationUtilities:
         assert result.get("data") == "test"
 
     def test_safe_serialize_to_dict_dict_method_returns_dict(self) -> None:
-        """Test safe_serialize_to_dict when dict() returns dict successfully."""
+        """Test safe_serialize_to_dict when dict[str, object]() returns dict[str, object] successfully."""
 
         class DictMethodWorking:
             def __init__(self) -> None:
                 super().__init__()
                 self.data = "test"
 
-            def dict(self) -> FlextCore.Types.Dict:
+            def dict[str, object](self) -> FlextCore.Types.Dict:
                 return {"data": self.data, "method": "dict"}
 
         obj = DictMethodWorking()
         result = FlextCore.Runtime.safe_serialize_to_dict(obj)
-        # Should return result from dict() method
+        # Should return result from dict[str, object]() method
         assert result is not None
         assert result["data"] == "test"
         assert result["method"] == "dict"

@@ -28,6 +28,7 @@ class TestFlextContainer:
 
         class TestService:
             def __init__(self) -> None:
+                super().__init__()
                 self.value = "test"
 
         service_instance = TestService()
@@ -41,10 +42,12 @@ class TestFlextContainer:
         # Register a dependency
         class Dependency:
             def __init__(self) -> None:
+                super().__init__()
                 self.name = "dependency"
 
         class Service:
             def __init__(self, dependency: Dependency) -> None:
+                super().__init__()
                 self.dependency = dependency
                 self.initialized = True
 
@@ -66,10 +69,12 @@ class TestFlextContainer:
         # Register a dependency
         class Dependency:
             def __init__(self) -> None:
+                super().__init__()
                 self.name = "dependency"
 
         class Service:
             def __init__(self, dependency: Dependency) -> None:
+                super().__init__()
                 self.dependency = dependency
                 self.initialized = True
 
@@ -93,6 +98,7 @@ class TestFlextContainer:
 
         class Service:
             def __init__(self, _missing_dep: object) -> None:
+                super().__init__()
                 self.initialized = True
 
         # Auto-wire service with missing dependency
@@ -108,6 +114,7 @@ class TestFlextContainer:
 
         class Service:
             def __init__(self, optional: str = "default") -> None:
+                super().__init__()
                 self.optional = optional
                 self.initialized = True
 
@@ -204,6 +211,7 @@ class TestFlextContainer:
 
         class TestService:
             def __init__(self) -> None:
+                super().__init__()
                 self.value = "test"
 
         service = TestService()
@@ -226,7 +234,9 @@ class TestFlextContainer:
 
         # Get with wrong type
         result: FlextCore.Result[object] = container.get_typed("test_service", dict)
-        assert result.is_success  # Should succeed because dict is the correct type
+        assert (
+            result.is_success
+        )  # Should succeed because dict[str, object] is the correct type
 
         # Get with wrong type
         class WrongType:
@@ -288,7 +298,7 @@ class TestFlextContainer:
         services = result.value
         assert len(services) == 2
 
-        # Check service info with type casts for dict access
+        # Check service info with type casts for dict[str, object] access
         service_names = [cast("FlextCore.Types.Dict", s)["name"] for s in services]
         assert "instance" in service_names
         assert "factory" in service_names
@@ -316,7 +326,7 @@ class TestFlextContainer:
 
         container.register("test", "value")
 
-        # Direct access pattern - build info dict manually
+        # Direct access pattern - build info dict[str, object] manually
         info: FlextCore.Types.Dict = {
             "service_count": len(
                 set(container._services.keys()) | set(container._factories.keys())
@@ -444,6 +454,7 @@ class TestFlextContainer:
 
         class Service:
             def __init__(self) -> None:
+                super().__init__()
                 self.initialized = True
 
         result = container.create_service(Service, "custom_name")
@@ -460,6 +471,7 @@ class TestFlextContainer:
 
         class Service:
             def __init__(self, _missing: object) -> None:
+                super().__init__()
                 self.initialized = True
 
         result = container.create_service(Service)
@@ -474,6 +486,7 @@ class TestFlextContainer:
 
         class Service:
             def __init__(self, optional: str = "default") -> None:
+                super().__init__()
                 self.optional = optional
                 self.initialized = True
 
@@ -512,6 +525,7 @@ class TestFlextContainer:
 
         class FailingService:
             def __init__(self) -> None:
+                super().__init__()
                 error_msg = "Service creation failed"
                 raise ValueError(error_msg)
 
@@ -645,7 +659,7 @@ class TestFlextContainer:
         # Register initial service
         container.register("initial", "value")
 
-        # Create services dict with invalid entry that will cause exception
+        # Create services dict[str, object] with invalid entry that will cause exception
         # Using service name with invalid characters to trigger validation failure
         services_with_invalid_key: FlextCore.Types.Dict = {
             "valid_service": "valid_value",
@@ -683,7 +697,7 @@ class TestFlextContainer:
             """Mock class for testing."""
 
             def __init__(self) -> None:
-                pass
+                super().__init__()
 
         # Use a type that doesn't have __name__ by using a custom descriptor
         # Python classes always have __name__, so we test the getattr fallback
@@ -716,6 +730,7 @@ class TestFlextContainer:
         # Create a simple service class
         class SimpleService:
             def __init__(self) -> None:
+                super().__init__()
                 self.value = "test"
 
         # Pre-register to cause registration failure
@@ -734,6 +749,7 @@ class TestFlextContainer:
         # Create a class that will raise exception during instantiation
         class FailingService:
             def __init__(self) -> None:
+                super().__init__()
                 msg = "Intentional failure"
                 raise RuntimeError(msg)
 
@@ -749,7 +765,7 @@ class TestFlextContainer:
         container.register("test", "value")
 
         # Simulate exception by corrupting internal state
-        # Replace _services dict with object that raises on clear()
+        # Replace _services dict[str, object] with object that raises on clear()
         class FailingDict(UserDict[str, object]):
             def clear(self) -> None:
                 msg = "Clear failed"
@@ -814,7 +830,7 @@ class TestFlextContainer:
 
         service = ProblematicService()
 
-        # Should return fallback dict with "unknown" values
+        # Should return fallback dict[str, object] with "unknown" values
         info = container._build_service_info("test", service, "service")
 
         assert info[FlextCore.Constants.Mixins.FIELD_NAME] == "test"
@@ -832,7 +848,7 @@ class TestFlextContainer:
         """Test configure_container() exception handling."""
         container = FlextCore.Container()
 
-        # Create config dict that will cause exception during processing
+        # Create config dict[str, object] that will cause exception during processing
         # Use invalid type that breaks the update logic
         config: FlextCore.Types.Dict = {"invalid_key": object()}
 
@@ -936,10 +952,10 @@ class TestDIContainerInitialization:
 
 
 class TestServiceRegistrationSync:
-    """Test service registration syncs to both tracking dict and DI container."""
+    """Test service registration syncs to both tracking dict[str, object] and DI container."""
 
     def test_register_service_dual_storage(self) -> None:
-        """Service registration stores in both dict and DI container."""
+        """Service registration stores in both dict[str, object] and DI container."""
         container = FlextCore.Container()
         test_service = {"value": "test"}
 
@@ -959,7 +975,7 @@ class TestServiceRegistrationSync:
         assert provider() is test_service
 
     def test_register_factory_dual_storage(self) -> None:
-        """Factory registration stores in both dict and DI container."""
+        """Factory registration stores in both dict[str, object] and DI container."""
         container = FlextCore.Container()
         factory_calls: FlextCore.Types.IntList = []
 
@@ -1056,10 +1072,10 @@ class TestServiceResolutionSync:
 
 
 class TestServiceUnregistrationSync:
-    """Test service unregistration from both tracking dict and DI container."""
+    """Test service unregistration from both tracking dict[str, object] and DI container."""
 
     def test_unregister_removes_from_both(self) -> None:
-        """Unregistration removes from both dict and DI container."""
+        """Unregistration removes from both dict[str, object] and DI container."""
         container = FlextCore.Container()
         test_service = {"value": "test"}
 

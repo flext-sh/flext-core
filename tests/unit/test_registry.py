@@ -420,7 +420,7 @@ class TestFlextRegistry:
 
         registry = FlextCore.Registry(FlextCore.Dispatcher())
 
-        # Test with valid empty dict first
+        # Test with valid empty dict[str, object] first
         result_empty = registry.register_function_map({})
         assert result_empty.is_success
 
@@ -480,7 +480,7 @@ class TestFlextRegistry:
         assert "test_func" in key2
         assert "str" in key2
 
-        # Test with dict entry
+        # Test with dict[str, object] entry
         dict_entry: FlextCore.Types.Dict = {"command_type": int}
         key3 = registry._resolve_binding_key_from_entry(dict_entry, int)
         assert key3 is not None
@@ -669,12 +669,12 @@ class TestFlextRegistry:
         assert isinstance(key, str)
 
     def test_registry_resolve_binding_key_from_entry_with_dict(self) -> None:
-        """Test _resolve_binding_key_from_entry with dict (line 563)."""
+        """Test _resolve_binding_key_from_entry with dict[str, object] (line 563)."""
         from flext_core import FlextCore
 
         registry = FlextCore.Registry(FlextCore.Dispatcher())
 
-        # Test with dict entry (non-tuple, non-FlextCore.Handlers)
+        # Test with dict[str, object] entry (non-tuple, non-FlextCore.Handlers)
         dict_entry: FlextCore.Types.Dict = {"some_key": "some_value"}
 
         key = registry._resolve_binding_key_from_entry(dict_entry, str)

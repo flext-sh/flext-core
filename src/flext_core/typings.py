@@ -120,7 +120,7 @@ class FlextTypes:
     # Collection types for backward compatibility
     type OrderedDict = (
         FlextTypes.Dict
-    )  # Use dict for type annotation (modern Python 3.7+)
+    )  # Use dict[str, object] for type annotation (modern Python 3.7+)
 
     # Core types reference for backward compatibility
 
@@ -146,7 +146,7 @@ class FlextTypes:
     type Value = str | int | float | bool | object | None
     type Success = str  # Generic success type without dependencies
 
-    # Collection types with ordering (duplicate removed - use dict for type hints)
+    # Collection types with ordering (duplicate removed - use dict[str, object] for type hints)
     # Note: Use FlextTypes.Dict for OrderedDict type annotations in modern Python
 
     # Assign for backward compatibility - moved outside class
@@ -319,7 +319,7 @@ class FlextTypes:
         Examples:
             Sync operations with proper typing:
 
-            >>> def process_data(data: dict) -> dict:
+            >>> def process_data(data: dict) -> dict[str, object]:
             ...     results = []
             ...     for key, value in data.items():
             ...         result = process_item(key, value)
