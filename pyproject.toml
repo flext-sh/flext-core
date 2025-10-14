@@ -248,11 +248,35 @@
                 "flext_tests",
             ]
 
-    [tool.pyrefly]
-        python-version = "3.13"
-        search-path = [
-            "examples",
-            "scripts",
-            "src",
-            "tests",
-        ]
+
+
+	[tool.pyrefly]
+		# NOTE: Pyrefly (MyPy successor) with Pydantic plugin properly handles:
+		#   - @computed_field + @property pattern (Pydantic 2.11+)
+		#   - dict[str, object] type annotations (legitimate generic usage)
+		#   - Field validators and serializers with proper type inference
+		permissive-ignores = true
+		project-excludes = [
+		    "**/.git",
+		    "**/.cache",
+		    "**/.claude",
+		    "**/__pycache__",
+		    "**/*.venv",
+		    "**/*dist",
+		    "**/*mypy_cache",
+		    "**/*pytest_cache",
+		    "**/*ruff_cache",
+		    "**/*venv/**",
+		    "**/node_modules/**",
+		    "**/*.pb2.py",
+		    "**/*.pb2_grpc.py",
+		    "**/build/**",
+		]
+		python-version = "3.13"
+
+		# SubConfig: Disable unknown-name error for all models.py files
+		# This handles forward references to classes defined later in the same file
+		[[tool.pyrefly.sub-config]]
+			matches = "**/*models.py"
+			[tool.pyrefly.sub-config.errors]
+				unknown-name = false

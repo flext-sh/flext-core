@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 """
 # Expected: Internal IO monad implementation details.
 # pyright: reportPrivateUsage=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
-# ruff: disable=PLC0415
 
 from __future__ import annotations
 

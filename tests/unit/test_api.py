@@ -9,8 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import NoReturn, cast
+from typing import NoReturn
 
 import pytest
 
@@ -94,13 +93,11 @@ class TestFlextBase:
         """Helpers should simplify operation execution and tracking."""
         base = FlextBase()
 
-        def add_operation(a: object, b: object) -> object:
+        # Simple function returning int - run_operation will wrap in FlextResult
+        def add_operation(a: object, b: object) -> int:
             return int(str(a)) + int(str(b))
 
-        # PyRefly has difficulty matching concrete type `int` to TypeVar ResultType
-        result = base.run_operation(
-            "add", cast("Callable[..., object]", add_operation), 2, 3
-        )
+        result = base.run_operation("add", add_operation, 2, 3)
         assert result.is_success
         assert result.unwrap() == 5
 

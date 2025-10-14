@@ -201,10 +201,13 @@ class FlextMixins:
         register_result = self._register_in_container(service_name)
 
         if register_result.is_failure:
-            self.logger.warning(
-                f"Service registration failed: {register_result.error}",
-                extra={"service_name": service_name},
-            )
+            # Only log warning if it's not an "already registered" error
+            error_msg = register_result.error or ""
+            if "already registered" not in error_msg.lower():
+                self.logger.warning(
+                    f"Service registration failed: {register_result.error}",
+                    extra={"service_name": service_name},
+                )
 
     # =========================================================================
     # CONTEXT ENRICHMENT METHODS - Automatic Context Management

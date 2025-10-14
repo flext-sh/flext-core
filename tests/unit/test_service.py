@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 import operator
 import signal
 import time
+from collections.abc import Callable
+from typing import cast
 
 import pytest
 from pydantic import Field, ValidationError
@@ -483,7 +485,7 @@ class TestDomainServicesFixed:
         with pytest.raises(ValidationError) as exc_info:
             FlextCore.Models.OperationExecutionRequest(
                 operation_name="not_callable",
-                operation_callable="not_callable",
+                operation_callable=cast("Callable[..., object]", "not_callable"),
                 # Testing validation
                 arguments={},
             )

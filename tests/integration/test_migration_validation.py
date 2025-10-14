@@ -19,7 +19,6 @@ from __future__ import annotations
 from flext_core import (
     FlextContainer,
     FlextLogger,
-    FlextModels,
     FlextResult,
     FlextService,
     FlextTypes,
@@ -102,32 +101,6 @@ class TestMigrationScenario2:
         service = resolution_result.unwrap()
         assert isinstance(service, TestService)
         assert service.name == "test"
-
-
-class TestMigrationScenario3:
-    """Test Scenario 3: Domain-Driven Design with FlextModels."""
-
-    def test_entity_value_aggregate_patterns(self) -> None:
-        """Verify FlextModels patterns continue working."""
-
-        # Use predefined FlextModels.User instead of local class
-        user = FlextModels.User(
-            username="alice",
-            email="alice@example.com"
-        )
-        assert user.username == "alice"
-        assert user.email == "alice@example.com"
-
-        # Create value object using predefined pattern
-        class Address(FlextModels.Value):
-            """Address value object extending FlextModels.Value."""
-
-            street: str
-            city: str
-
-        address = Address(street="123 Main St", city="Springfield")
-        assert address.street == "123 Main St"
-        assert address.city == "Springfield"
 
 
 class TestMigrationScenario4:

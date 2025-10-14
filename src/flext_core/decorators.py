@@ -14,7 +14,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from functools import wraps
-from typing import Any, cast
+from typing import cast
 
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
@@ -658,7 +658,7 @@ class FlextDecorators:
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             # Start with the base function
-            decorated: Callable[..., Any] = func
+            decorated: Callable[..., object] = func
 
             # Apply railway pattern first if requested (outermost wrapper)
             if use_railway:

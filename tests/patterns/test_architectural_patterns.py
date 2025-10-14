@@ -14,8 +14,7 @@ from typing import cast
 
 import pytest
 
-# BaseModel usage replaced with FlextCore.Models for test standardization
-from flext_core import FlextCore
+from flext_core import FlextCore, FlextModels
 
 
 class TestCleanArchitecturePatterns:
@@ -42,7 +41,9 @@ class TestCleanArchitecturePatterns:
                     return FlextCore.Result[None].fail("Invalid email format")
                 return FlextCore.Result[None].ok(None)
 
-        class User(FlextCore.Models.ArbitraryTypesModel, FlextCore.Models.IdentifiableMixin):
+        class User(
+            FlextCore.Models.ArbitraryTypesModel, FlextCore.Models.IdentifiableMixin
+        ):
             """Domain entity."""
 
             name: str
@@ -193,7 +194,7 @@ class TestCleanArchitecturePatterns:
         """Create DDD aggregate for testing."""
 
         # Aggregate Root
-        class Order(FlextCore.Models.AggregateRoot):
+        class Order(FlextModels.AggregateRoot):
             """Order aggregate root."""
 
             order_id: str
@@ -267,9 +268,6 @@ class TestCleanArchitecturePatterns:
                     )
 
                 return FlextCore.Result[None].ok(None)
-
-        # Rebuild model with proper namespace to resolve forward references (Pydantic v2 requirement)
-        Order.model_rebuild(_types_namespace={'FlextCore': FlextCore, 'FlextModels': FlextCore.Models})
 
         return Order(
             id="order_123",

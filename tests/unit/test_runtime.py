@@ -376,7 +376,8 @@ class TestTypeIntrospection:
     def test_is_sequence_type_with_non_sequences(self) -> None:
         """Test is_sequence_type with non-sequence types."""
         assert not FlextCore.Runtime.is_sequence_type(dict[str, int])
-        assert not FlextCore.Runtime.is_sequence_type(str)
+        # Note: str is actually a sequence type in Python (subclass of Sequence)
+        assert FlextCore.Runtime.is_sequence_type(str)
         assert not FlextCore.Runtime.is_sequence_type(int)
 
     def test_is_optional_type_with_exception(self) -> None:
@@ -513,7 +514,7 @@ class TestRuntimeIntegrationWithConstants:
         assert FlextCore is not None
         assert FlextCore.Runtime is not None
         # Verify Runtime is accessible as nested class
-        assert hasattr(FlextCore, 'Runtime')
+        assert hasattr(FlextCore, "Runtime")
 
     def test_layer_hierarchy_respected(self) -> None:
         """Test that Layer 0.5 (runtime) imports from Layer 0 (constants) only."""

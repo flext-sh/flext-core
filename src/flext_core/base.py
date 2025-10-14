@@ -274,30 +274,40 @@ class FlextBase(FlextMixins):
         """Bind context data (delegates to FlextMixins)."""
         self._enrich_context(**context)
 
-    def run_operation(
+    def run_operation[T](
         self,
         operation_name: str,
-        operation: Callable[
-            ..., FlextBase.ResultType | FlextResult[FlextBase.ResultType]
-        ],
+        operation: Callable[..., T | FlextResult[T]],
         *args: object,
         **kwargs: object,
-    ) -> FlextResult[FlextBase.ResultType]:
+    ) -> FlextResult[T]:
+        """Run operation with automatic result wrapping and error handling.
+
+        Args:
+            operation_name: Name of operation for tracking
+            operation: Callable returning T or FlextResult[T]
+            *args: Positional arguments to pass to operation
+            **kwargs: Keyword arguments to pass to operation
+
+        Returns:
+            FlextResult[T]: Wrapped result of operation
+
+        """
         with self.track(operation_name):
             try:
                 outcome = operation(*args, **kwargs)
                 if isinstance(outcome, FlextResult):
-                    # Type check: outcome is already FlextResult[ResultType]
+                    # Type check: outcome is already FlextResult[T]
                     return outcome
-                # Type check: outcome is ResultType, wrap in FlextResult
-                return FlextResult[FlextBase.ResultType].ok(outcome)
+                # Type check: outcome is T, wrap in FlextResult
+                return FlextResult[T].ok(outcome)
             except Exception as exc:  # pragma: no cover - defensive logging path
                 self.error(
                     "Operation failed",
                     operation=operation_name,
                     error=str(exc),
                 )
-                return FlextResult[FlextBase.ResultType].fail(
+                return FlextResult[T].fail(
                     str(exc),
                     error_code=self.Constants.Errors.UNKNOWN_ERROR,
                     error_data={

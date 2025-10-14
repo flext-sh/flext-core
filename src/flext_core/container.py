@@ -93,13 +93,30 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         self._services: FlextTypes.Dict = {}
         self._factories: FlextTypes.Dict = {}
 
-        # Use FlextConfig global singleton for container configuration
-        self._flext_config: FlextConfig = FlextConfig.get_global_instance()
+        # Note: _flext_config is now a property that always returns the current global config
+        # This ensures the container stays in sync with config resets and upgrades
         self._global_config: FlextTypes.Dict = self._create_container_config()
         self._user_overrides: FlextTypes.Dict = {}
 
         # Sync FlextConfig to internal DI container
         self._sync_config_to_di()
+
+    @property
+    def _flext_config(self) -> FlextConfig:
+        """Get current global FlextConfig singleton.
+
+        Always returns the current global config instance, ensuring the
+        container stays in sync even after FlextConfig.reset_global_instance()
+        or upgrades to derived classes (FlextCore.Config, FlextBase.Config).
+
+        This property pattern prevents stale config references in tests and
+        ensures proper singleton behavior across the ecosystem.
+
+        Returns:
+            FlextConfig: Current global configuration instance
+
+        """
+        return FlextConfig.get_global_instance()
 
     def _create_container_config(self) -> FlextTypes.Dict:
         """Create container configuration from FlextConfig defaults."""
@@ -731,6 +748,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
     def clear(self) -> FlextResult[None]:
         """Clear all services and factories.
+
+        Note: _flext_config is now a property that always returns the current
+        global config, so no need to manually refresh it here.
 
         Returns:
             FlextResult[None]: Success if cleared or failure with error.
