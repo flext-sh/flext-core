@@ -310,8 +310,8 @@ class TestSerializationUtilities:
                 super().__init__()
                 self.data = "test"
 
-            def dict[str, object](self) -> str:
-                return "not a dict"
+            def dict[str, object](self) -> FlextCore.Types.Dict:
+                return {"not": "a dict"}
 
         obj = NonDictReturn()
         result = FlextCore.Runtime.safe_serialize_to_dict(obj)

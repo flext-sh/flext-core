@@ -233,19 +233,22 @@ class FlextModels:
         """
 
         model_config = ConfigDict(
-            validate_assignment=True,
-            validate_return=True,
-            validate_default=True,
-            use_enum_values=True,
-            arbitrary_types_allowed=True,
-            ser_json_timedelta="iso8601",
-            ser_json_bytes="base64",
-            serialize_by_alias=True,
-            populate_by_name=True,
-            str_strip_whitespace=True,
-            str_to_lower=False,
-            str_to_upper=False,
-            defer_build=False,
+            validate_assignment=True,  # Validate on field assignment
+            validate_return=True,  # Validate return values
+            validate_default=True,  # Validate default values
+            strict=True,  # Strict type coercion
+            str_strip_whitespace=True,  # Auto-strip whitespace
+            use_enum_values=True,  # Use enum values
+            arbitrary_types_allowed=True,  # Allow custom types
+            extra="forbid",  # No extra fields
+            frozen=False,  # Allow mutations
+            ser_json_timedelta="iso8601",  # ISO 8601 timedelta
+            ser_json_bytes="base64",  # Base64 bytes
+            hide_input_in_errors=True,  # Security
+            json_schema_extra={
+                "title": "ArbitraryTypesModel",
+                "description": "Base model with arbitrary types support and comprehensive validation",
+            },
         )
 
     # =============================================================================
@@ -260,14 +263,22 @@ class FlextModels:
         """
 
         model_config = ConfigDict(
-            validate_assignment=True,
-            validate_return=True,
-            validate_default=True,
-            use_enum_values=True,
-            str_strip_whitespace=True,
-            str_to_lower=False,
-            str_to_upper=False,
-            defer_build=False,
+            validate_assignment=True,  # Validate on field assignment
+            validate_return=True,  # Validate return values
+            validate_default=True,  # Validate default values
+            strict=True,  # Strict type coercion
+            str_strip_whitespace=True,  # Auto-strip whitespace
+            use_enum_values=True,  # Use enum values
+            arbitrary_types_allowed=True,  # Allow custom types
+            extra="forbid",  # No extra fields
+            frozen=False,  # Allow mutations
+            ser_json_timedelta="iso8601",  # ISO 8601 timedelta
+            ser_json_bytes="base64",  # Base64 bytes
+            hide_input_in_errors=True,  # Security
+            json_schema_extra={
+                "title": "StrictArbitraryTypesModel",
+                "description": "Base model with strict validation and arbitrary types support",
+            },
         )
 
     class FrozenStrictModel(BaseModel):
@@ -277,15 +288,22 @@ class FlextModels:
         """
 
         model_config = ConfigDict(
-            validate_assignment=False,
-            validate_return=True,
-            validate_default=True,
-            use_enum_values=True,
-            str_strip_whitespace=True,
-            str_to_lower=False,
-            str_to_upper=False,
-            defer_build=False,
-            frozen=True,
+            validate_assignment=False,  # No assignment validation for frozen models
+            validate_return=True,  # Validate return values
+            validate_default=True,  # Validate default values
+            strict=True,  # Strict type coercion
+            str_strip_whitespace=True,  # Auto-strip whitespace
+            use_enum_values=True,  # Use enum values
+            arbitrary_types_allowed=True,  # Allow custom types
+            extra="forbid",  # No extra fields
+            frozen=True,  # Immutable model
+            ser_json_timedelta="iso8601",  # ISO 8601 timedelta
+            ser_json_bytes="base64",  # Base64 bytes
+            hide_input_in_errors=True,  # Security
+            json_schema_extra={
+                "title": "FrozenStrictModel",
+                "description": "Immutable base model with strict validation and frozen state",
+            },
         )
 
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
@@ -1632,6 +1650,25 @@ class FlextModels:
 
         """
 
+        model_config = ConfigDict(
+            validate_assignment=True,  # Validate on field assignment
+            validate_return=True,  # Validate return values
+            validate_default=True,  # Validate default values
+            strict=True,  # Strict type coercion
+            str_strip_whitespace=True,  # Auto-strip whitespace
+            use_enum_values=True,  # Use enum values
+            arbitrary_types_allowed=True,  # Allow custom types
+            extra="forbid",  # No extra fields
+            frozen=False,  # Allow mutations
+            ser_json_timedelta="iso8601",  # ISO 8601 timedelta
+            ser_json_bytes="base64",  # Base64 bytes
+            hide_input_in_errors=True,  # Security
+            json_schema_extra={
+                "title": "Pagination",
+                "description": "Pagination model for query results with computed fields",
+            },
+        )
+
         page: Annotated[
             int,
             Field(
@@ -1653,7 +1690,6 @@ class FlextModels:
         ] = FlextConstants.Pagination.DEFAULT_PAGE_SIZE
 
         @computed_field
-        @property
         def offset(self) -> int:
             """Calculate offset from page and size.
 
@@ -1670,7 +1706,6 @@ class FlextModels:
             return (self.page - 1) * self.size
 
         @computed_field
-        @property
         def limit(self) -> int:
             """Get limit (same as size).
 
@@ -1730,6 +1765,25 @@ class FlextModels:
             True
 
         """
+
+        model_config = ConfigDict(
+            validate_assignment=True,  # Validate on field assignment
+            validate_return=True,  # Validate return values
+            validate_default=True,  # Validate default values
+            strict=True,  # Strict type coercion
+            str_strip_whitespace=True,  # Auto-strip whitespace
+            use_enum_values=True,  # Use enum values
+            arbitrary_types_allowed=True,  # Allow custom types
+            extra="forbid",  # No extra fields
+            frozen=False,  # Allow mutations
+            ser_json_timedelta="iso8601",  # ISO 8601 timedelta
+            ser_json_bytes="base64",  # Base64 bytes
+            hide_input_in_errors=True,  # Security
+            json_schema_extra={
+                "title": "Query",
+                "description": "Query model for CQRS query operations with pagination",
+            },
+        )
 
         filters: Annotated[
             FlextTypes.Dict,
@@ -2247,13 +2301,22 @@ class FlextModels:
         """
 
         model_config = ConfigDict(
-            extra="forbid",
-            frozen=False,
-            validate_assignment=True,
-            validate_return=True,
-            validate_default=True,
-            str_strip_whitespace=True,
-            use_enum_values=True,
+            validate_assignment=True,  # Validate on field assignment
+            validate_return=True,  # Validate return values
+            validate_default=True,  # Validate default values
+            strict=True,  # Strict type coercion
+            str_strip_whitespace=True,  # Auto-strip whitespace
+            use_enum_values=True,  # Use enum values
+            arbitrary_types_allowed=True,  # Allow custom types
+            extra="forbid",  # No extra fields
+            frozen=False,  # Allow mutations
+            ser_json_timedelta="iso8601",  # ISO 8601 timedelta
+            ser_json_bytes="base64",  # Base64 bytes
+            hide_input_in_errors=True,  # Security
+            json_schema_extra={
+                "title": "HandlerExecutionContext",
+                "description": "Handler execution context for tracking performance and state",
+            },
         )
 
         handler_name: Annotated[
