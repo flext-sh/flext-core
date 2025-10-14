@@ -162,7 +162,7 @@ class FlextLogger:
     @classmethod
     def get_global_context(cls) -> FlextTypes.Dict:
         """Get current global context."""
-        return dict(FlextRuntime.structlog().contextvars.get_contextvars())
+        return dict[str, object](FlextRuntime.structlog().contextvars.get_contextvars())
 
     @classmethod
     def get_logger(cls) -> FlextLogger:

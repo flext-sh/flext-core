@@ -1181,14 +1181,14 @@ class FlextUtilities:
             origin_type = get_origin(expected_type) or expected_type
             message_origin = get_origin(message_type) or message_type
 
-            # Special handling for dict types - dict[str, object] should accept dict instances
-            if origin_type is dict or (
+            # Special handling for dict[str, object] types - dict[str, object] should accept dict[str, object] instances
+            if origin_type is dict[str, object] or (
                 hasattr(origin_type, "__name__")
                 and getattr(origin_type, "__name__", "") == "dict"
             ):
                 return True
 
-            if message_origin is dict or (
+            if message_origin is dict[str, object] or (
                 isinstance(message_type, type) and issubclass(message_type, dict)
             ):
                 return True

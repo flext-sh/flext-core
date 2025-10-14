@@ -27,6 +27,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 
 
 class FlextConfig(BaseSettings):
@@ -344,7 +345,7 @@ class FlextConfig(BaseSettings):
     )
 
     # Direct access method - simplified
-    def __call__(self, key: str) -> object:
+    def __call__(self, key: str) -> FlextTypes.ConfigValue:
         """Direct value access: config('log_level')."""
         if not hasattr(self, key):
             msg = f"Configuration key '{key}' not found"
@@ -358,7 +359,8 @@ class FlextConfig(BaseSettings):
         """Validate log level using FlextConstants."""
         v_upper = v.upper()
         if v_upper not in FlextConstants.Logging.VALID_LEVELS:
-            error_msg = f"Invalid log level: {v}. Must be one of: {', '.join(FlextConstants.Logging.VALID_LEVELS)}"
+            valid_levels = ", ".join(FlextConstants.Logging.VALID_LEVELS)
+            error_msg = f"Invalid log level: {v}. Must be one of: {valid_levels}"
             raise FlextExceptions.ValidationError(error_msg)
         return v_upper
 
@@ -501,7 +503,10 @@ class FlextConfig(BaseSettings):
     @computed_field
     @property
     def effective_timeout(self) -> int:
-        """Get effective timeout considering debug mode (longer timeout for debugging)."""
+        """Get effective timeout considering debug mode.
+
+        Longer timeout for debugging.
+        """
         if self.debug or self.trace:
             return self.timeout_seconds * 3  # 3x timeout for debugging
         return self.timeout_seconds
@@ -534,7 +539,8 @@ class FlextConfig(BaseSettings):
     def validate_log_level_field(cls, v: str) -> str:
         """Reusable validator for log level fields.
 
-        Validates log levels against standard set (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+        Validates log levels against standard set.
+        (DEBUG, INFO, WARNING, ERROR, CRITICAL).
         Can be used by subclasses via field_validator.
 
         Args:
@@ -556,7 +562,8 @@ class FlextConfig(BaseSettings):
         valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
         level_upper = v.upper()
         if level_upper not in valid_levels:
-            msg = f"Invalid log level '{v}'. Must be one of: {', '.join(sorted(valid_levels))}"
+            sorted_levels = ", ".join(sorted(valid_levels))
+            msg = f"Invalid log level '{v}'. Must be one of: {sorted_levels}"
             raise ValueError(msg)
         return level_upper
 
@@ -586,7 +593,8 @@ class FlextConfig(BaseSettings):
         valid_verbosity = {"compact", "detailed", "full"}
         verbosity_lower = v.lower()
         if verbosity_lower not in valid_verbosity:
-            msg = f"Invalid log verbosity '{v}'. Must be one of: {', '.join(sorted(valid_verbosity))}"
+            sorted_verbosity = ", ".join(sorted(valid_verbosity))
+            msg = f"Invalid log verbosity '{v}'. Must be one of: {sorted_verbosity}"
             raise ValueError(msg)
         return verbosity_lower
 
@@ -594,7 +602,8 @@ class FlextConfig(BaseSettings):
     def validate_environment_field(cls, v: str) -> str:
         """Reusable validator for environment fields.
 
-        Validates environment against standard set (development, staging, production, test).
+        Validates environment against standard set.
+        (development, staging, production, test).
         Can be used by subclasses via field_validator.
 
         Args:
@@ -616,7 +625,8 @@ class FlextConfig(BaseSettings):
         valid_environments = {"development", "staging", "production", "test"}
         env_lower = v.lower()
         if env_lower not in valid_environments:
-            msg = f"Invalid environment '{v}'. Must be one of: {', '.join(sorted(valid_environments))}"
+            sorted_envs = ", ".join(sorted(valid_environments))
+            msg = f"Invalid environment '{v}'. Must be one of: {sorted_envs}"
             raise ValueError(msg)
         return env_lower
 
@@ -624,7 +634,7 @@ class FlextConfig(BaseSettings):
     # CONFIGURATION UTILITY METHODS - For ecosystem-wide reuse
     # =========================================================================
 
-    def update_from_dict(self, **kwargs: object) -> FlextResult[None]:
+    def update_from_dict(self, **kwargs: FlextTypes.ConfigValue) -> FlextResult[None]:
         """Update configuration from dictionary with validation.
 
         Allows dynamic override of configuration values with Pydantic validation.
@@ -701,7 +711,9 @@ class FlextConfig(BaseSettings):
         except Exception as e:
             return FlextResult[None].fail(f"Environment merge failed: {e}")
 
-    def validate_overrides(self, **overrides: object) -> FlextResult[dict[str, object]]:
+    def validate_overrides(
+        self, **overrides: FlextTypes.ConfigValue
+    ) -> FlextResult[dict[str, FlextTypes.ConfigValue]]:
         """Validate configuration overrides without applying them.
 
         Useful for checking if overrides are valid before applying.
@@ -720,7 +732,7 @@ class FlextConfig(BaseSettings):
 
         """
         try:
-            valid_overrides: dict[str, object] = {}
+            valid_overrides: dict[str, FlextTypes.ConfigValue] = {}
             errors: list[str] = []
 
             for key, value in overrides.items():

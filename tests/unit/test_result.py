@@ -929,7 +929,7 @@ class TestFlextResult:
         # Should have 3 unique items (2 successes with different values, 1 failure)
         assert len(result_set) == 3
 
-        # Test as dict keys
+        # Test as dict[str, object] keys
         result_dict = {
             result1: "first",
             result2: "second",  # Should overwrite first
@@ -2025,7 +2025,7 @@ class TestFlextResultFinalPush:
         assert isinstance(hash_value, int)
 
     def test_hash_dict_attributes_exception_fallback(self) -> None:
-        """Test __hash__ dict attributes exception fallback (lines 880-884)."""
+        """Test __hash__ dict[str, object] attributes exception fallback (lines 880-884)."""
 
         class UnhashableAttributes:
             def __init__(self) -> None:

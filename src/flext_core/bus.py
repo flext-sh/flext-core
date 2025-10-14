@@ -161,10 +161,10 @@ class FlextBus(
         if isinstance(bus_config, FlextModels.Cqrs.Bus):
             return bus_config
         if isinstance(bus_config, dict):
-            # Cast dict to proper types for Bus model
-            config_dict = dict(
+            # Cast dict[str, object] to proper types for Bus model
+            config_dict = dict[str, object](
                 bus_config,
-            )  # Create a new dict to avoid mutating the original
+            )  # Create a new dict[str, object] to avoid mutating the original
             return FlextModels.Cqrs.Bus.model_validate(config_dict)
         return FlextModels.Cqrs.Bus()
 
@@ -194,7 +194,7 @@ class FlextBus(
 
         if isinstance(middleware_config, Mapping):
             # Cast to proper type for type checker
-            return dict(cast("Mapping[str, object]", middleware_config))
+            return dict[str, object](cast("Mapping[str, object]", middleware_config))
 
         # For Pydantic models or objects with model_dump
         for attr_name in ("model_dump", "dict"):
@@ -205,7 +205,7 @@ class FlextBus(
                 except TypeError:
                     continue
                 if isinstance(result, Mapping):
-                    return dict(cast("Mapping[str, object]", result))
+                    return dict[str, object](cast("Mapping[str, object]", result))
                 if isinstance(result, dict):
                     return cast("FlextTypes.Dict", result)
 
@@ -867,7 +867,7 @@ class FlextBus(
             FlextResult[None]: Success or failure result
 
         """
-        # Create a simple event dict with name and data
+        # Create a simple event dict[str, object] with name and data
         event: FlextTypes.Dict = {
             "event_name": event_name,
             "data": data,

@@ -714,7 +714,7 @@ class FlextContext:
 
         """
         export_snapshot = self.export_snapshot()
-        return dict(export_snapshot.data)
+        return dict[str, object](export_snapshot.data)
 
     def export_snapshot(self) -> FlextModels.ContextExport:
         """Return typed export snapshot including metadata and statistics.

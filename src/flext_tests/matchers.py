@@ -62,7 +62,7 @@ class TestDataBuilder:
 
     def build(self) -> FlextCore.Types.Dict:
         """Build the dataset."""
-        return dict(self._data)
+        return dict[str, object](self._data)
 
 
 class FlextTestsMatchers:
@@ -119,7 +119,7 @@ class FlextTestsMatchers:
 
         def build(self) -> FlextCore.Types.Dict:
             """Build the dataset."""
-            return dict(self._data)
+            return dict[str, object](self._data)
 
     def assert_result_success(
         self,

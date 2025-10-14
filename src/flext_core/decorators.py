@@ -48,7 +48,7 @@ class FlextDecorators:
         ...     @FlextDecorators.inject(repo=MyRepository)
         ...     @FlextDecorators.log_operation("process_data")
         ...     @FlextDecorators.track_performance()
-        ...     def process_data(self, data: dict, *, repo) -> dict:
+        ...     def process_data(self, data: dict, *, repo) -> dict[str, object]:
         ...         return repo.save(data)
     """
 
@@ -155,7 +155,7 @@ class FlextDecorators:
 
                 # Get logger from self if available, otherwise create one
                 args_tuple = cast("tuple[object, ...]", args)
-                first_arg = args_tuple[0] if args_tuple else None
+                first_arg: object = args_tuple[0] if args_tuple else None
                 if first_arg is not None and hasattr(first_arg, "logger"):
                     potential_logger = getattr(first_arg, "logger")
                     logger = (
@@ -246,7 +246,7 @@ class FlextDecorators:
 
                 # Get logger from self if available, otherwise create one
                 args_tuple = cast("tuple[object, ...]", args)
-                first_arg = args_tuple[0] if args_tuple else None
+                first_arg: object = args_tuple[0] if args_tuple else None
                 if first_arg is not None and hasattr(first_arg, "logger"):
                     potential_logger = getattr(first_arg, "logger")
                     logger = (
@@ -398,7 +398,7 @@ class FlextDecorators:
                 @FlextDecorators.retry(
                     max_attempts=5, delay_seconds=2.0, backoff_strategy="exponential"
                 )
-                def unreliable_operation(self) -> dict:
+                def unreliable_operation(self) -> dict[str, object]:
                     # Automatically retries on failure with exponential backoff
                     return self._make_api_call()
             ```
@@ -539,7 +539,7 @@ class FlextDecorators:
 
             class MyService:
                 @FlextDecorators.timeout(timeout_seconds=30.0)
-                def long_running_operation(self) -> dict:
+                def long_running_operation(self) -> dict[str, object]:
                     # Automatically raises TimeoutError if exceeds 30 seconds
                     return self._process_data()
             ```
@@ -658,27 +658,32 @@ class FlextDecorators:
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             # Start with the base function
-            decorated: Callable[..., object] = func
+            decorated: Callable[..., R] = func
 
             # Apply railway pattern first if requested (outermost wrapper)
             if use_railway:
-                decorated = FlextDecorators.railway(error_code=error_code)(decorated)
+                railway_result = FlextDecorators.railway(error_code=error_code)(
+                    decorated
+                )
+                decorated = cast("Callable[..., R]", railway_result)
 
             # Apply dependency injection
             if inject_deps:
-                decorated = FlextDecorators.inject(**inject_deps)(decorated)
+                inject_result = FlextDecorators.inject(**inject_deps)(decorated)
+                decorated = cast("Callable[..., R]", inject_result)
 
             # Apply performance tracking
             if track_perf:
-                decorated = FlextDecorators.track_performance(
+                perf_result = FlextDecorators.track_performance(
                     operation_name=operation_name
                 )(decorated)
+                decorated = cast("Callable[..., R]", perf_result)
 
             # Apply operation logging (innermost wrapper)
-            return cast(
-                "Callable[P, R]",
-                FlextDecorators.log_operation(operation_name=operation_name)(decorated),
+            log_result = FlextDecorators.log_operation(operation_name=operation_name)(
+                decorated
             )
+            return cast("Callable[P, R]", log_result)
 
         return decorator
 

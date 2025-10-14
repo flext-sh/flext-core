@@ -206,7 +206,7 @@ class FlextTestDocker:
         """Clean up all dirty containers by recreating them with fresh volumes.
 
         Returns:
-            FlextCore.Result with dict of container names to cleanup status
+            FlextCore.Result with dict[str, object] of container names to cleanup status
 
         """
         results: FlextCore.Types.StringDict = {}
@@ -770,15 +770,15 @@ class FlextTestDocker:
             client = self.get_client()
             # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(name)
-            # Cast to access status attribute
-            container_obj = cast("object", container)
+            # Get status attribute using getattr for proper typing
+            container_status = getattr(container, "status", "unknown")
             status = (
                 ContainerStatus.RUNNING
-                if container_obj.status == "running"
+                if container_status == "running"
                 else ContainerStatus.STOPPED
             )
             # Extract image name from Image object
-            container_image = getattr(container_obj, "image", None)
+            container_image = getattr(container, "image", None)
             image_tags: FlextCore.Types.StringList = (
                 container_image.tags
                 if container_image and hasattr(container_image, "tags")
@@ -880,11 +880,12 @@ class FlextTestDocker:
         """Remove a Docker image."""
         try:
             client = self.get_client()
-            if hasattr(client, "images") and hasattr(client.images, "remove"):
-                # Cast to object to handle unknown method signature
-                images_api = cast("object", client.images)
-                remove_method = cast("Callable[..., None]", images_api.remove)
-                remove_method(image, force=force)
+            # Use getattr to access the remove method safely
+            images_api = getattr(client, "images", None)
+            if images_api:
+                remove_method = getattr(images_api, "remove", None)
+                if remove_method:
+                    remove_method(image, force=force)
             return FlextCore.Result[str].ok(f"Image {image} removed")
         except NotFound:
             return FlextCore.Result[str].fail(f"Image {image} not found")
@@ -904,9 +905,8 @@ class FlextTestDocker:
             client = self.get_client()
             # Docker SDK returns Container but docker-stubs types as Model - narrow type
             container = client.containers.get(container_name)
-            # Cast container to object to handle unknown method signatures
-            container_api = cast("object", container)
-            logs_method = getattr(container_api, "logs", None)
+            # Use getattr to access logs method safely
+            logs_method = getattr(container, "logs", None)
             if logs_method is not None:
                 logs = cast("Callable[..., bytes]", logs_method)(
                     tail=tail, follow=follow, stream=False
@@ -957,10 +957,12 @@ class FlextTestDocker:
         """List containers."""
         try:
             client = self.get_client()
-            # Cast containers API to object to handle unknown method signature
-            containers_api = cast("object", client.containers)
-            list_method = containers_api.list
-            containers = cast("list[object]", list_method(all=all_containers))
+            # Use getattr to access the list method safely
+            containers_api = getattr(client, "containers", None)
+            list_method = (
+                getattr(containers_api, "list", None) if containers_api else None
+            )
+            containers = list_method(all=all_containers) if list_method else []
             container_infos: list[ContainerInfo] = []
             for container in containers:
                 # Container attributes not fully typed in docker stubs
@@ -1376,7 +1378,7 @@ class FlextTestDocker:
                 f"Status check failed: {status_result.error}",
             )
 
-        # Convert dict[str, ContainerInfo] to generic dict for FlextCore.Types.Dict compatibility
+        # Convert dict[str, ContainerInfo] to generic dict[str, object] for FlextCore.Types.Dict compatibility
         status_info: FlextCore.Types.Dict = cast(
             "FlextCore.Types.Dict", status_result.value.copy()
         )

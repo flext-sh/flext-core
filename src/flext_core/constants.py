@@ -1487,6 +1487,7 @@ class FlextConstants:
 
     # Project literals (from FlextTypes.Project)
     ProjectType = Literal[
+        # FLEXT ecosystem modules
         "flext-core",
         "flext-api",
         "flext-ldap",
@@ -1514,6 +1515,12 @@ class FlextConstants:
         "flext-dbt-ldif",
         "flext-dbt-oracle",
         "flext-dbt-oracle-wms",
+        # External project types (for dev tools analysis)
+        "application",  # General application projects
+        "library",  # Library/package projects
+        "service",  # Service projects
+        "web",  # Web application projects
+        # Project-specific modules
         "algar-oud-mig",
         "gruponos-meltano-native",
         "flexcore",

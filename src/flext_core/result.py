@@ -296,7 +296,7 @@ class FlextResult[T_co]:
             from flext_core import FlextResult
 
 
-            def risky_operation() -> dict:
+            def risky_operation() -> dict[str, object]:
                 return api.fetch_data()  # May raise exceptions
 
 
@@ -803,7 +803,7 @@ class FlextResult[T_co]:
             from flext_core import FlextResult
 
 
-            def expensive_default() -> dict:
+            def expensive_default() -> dict[str, object]:
                 # This only runs if result is failure
                 print("Computing expensive default...")
                 return {"default": True, "computed": True}
@@ -1042,7 +1042,7 @@ class FlextResult[T_co]:
 
         Example:
             ```python
-            def fetch_data() -> dict:
+            def fetch_data() -> dict[str, object]:
                 return api.get_data()
 
 

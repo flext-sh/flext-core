@@ -844,7 +844,7 @@ class FlextDispatcher(FlextMixins):
             str(key): value for key, value in raw_metadata.items()
         }
 
-        return dict(normalized)
+        return dict[str, object](normalized)
 
     @contextmanager
     def _context_scope(
