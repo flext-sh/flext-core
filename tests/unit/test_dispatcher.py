@@ -5,6 +5,7 @@ increase coverage for the 495-line dispatcher.py module (currently 54% coverage)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
