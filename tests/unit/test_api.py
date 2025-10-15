@@ -14,7 +14,7 @@ from typing import NoReturn
 
 import pytest
 
-from flext_core import FlextBase, FlextConfig, FlextContainer, FlextCore, FlextLogger
+from flext_core import FlextBase, FlextCore
 
 
 class TestFlextImports:
@@ -49,11 +49,11 @@ class TestFlextBase:
         """FlextBase instances provide ready helpers."""
         base = FlextBase()
 
-        # config property returns FlextConfig instance (global singleton)
+        # config property returns FlextCore.Config instance (global singleton)
         # FlextCore.Config/FlextBase.Config are nested classes for subclassing
-        assert isinstance(base.config, FlextConfig)
-        assert isinstance(base.container, FlextContainer)
-        assert isinstance(base.logger, FlextLogger)
+        assert isinstance(base.config, FlextCore.Config)
+        assert isinstance(base.container, FlextCore.Container)
+        assert isinstance(base.logger, FlextCore.Logger)
         assert isinstance(base.runtime, FlextBase.Runtime)
         assert base.constants is FlextBase.Constants
         assert base.handlers is FlextBase.Handlers
@@ -94,7 +94,7 @@ class TestFlextBase:
         """Helpers should simplify operation execution and tracking."""
         base = FlextBase()
 
-        # Simple function returning int - run_operation will wrap in FlextResult
+        # Simple function returning int - run_operation will wrap in FlextCore.Result
         def add_operation(a: object, b: object) -> int:
             return int(str(a)) + int(str(b))
 

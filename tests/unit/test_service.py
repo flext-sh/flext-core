@@ -612,14 +612,14 @@ class TestDomainServicesFixed:
 
     def test_service_extra_forbid(self) -> None:
         """Test service with extra fields forbidden."""
-        service = SampleComplexService(
-            name="test",
-            value=10,
-            enabled=True,
-            extra_field="not_allowed",
-        )
-
-        assert not hasattr(service, "extra_field")
+        # Should raise validation error for extra fields
+        with pytest.raises(ValidationError, match="extra_field"):
+            SampleComplexService(
+                name="test",
+                value=10,
+                enabled=True,
+                extra_field="not_allowed",
+            )
 
 
 class TestDomainServiceStaticMethods:

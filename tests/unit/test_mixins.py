@@ -27,15 +27,13 @@ class TestFlextMixinsNestedClasses:
 
     def test_context_mixin_property(self) -> None:
         """Test Context mixin context property."""
-        from flext_core import FlextCore
 
         class MyService(FlextCore.Mixins):
             pass
 
         service = MyService()
-        from flext_core.context import FlextContext
 
-        assert isinstance(service.context, FlextContext)
+        assert isinstance(service.context, FlextCore.Context)
 
     def test_context_mixin_propagate_context(self) -> None:
         """Test Context mixin _propagate_context."""

@@ -759,7 +759,7 @@ class FlextConfig(BaseSettings):
             **overrides: Configuration overrides to validate
 
         Returns:
-            FlextResult[dict[str, object]]: Valid overrides or validation errors
+            FlextResult[dict[str, FlextTypes.ConfigValue]]: Valid overrides or validation errors
 
         Example:
             >>> config = FlextConfig()
@@ -789,14 +789,16 @@ class FlextConfig(BaseSettings):
                     errors.append(f"Invalid value for '{key}': {e}")
 
             if errors:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[dict[str, FlextTypes.ConfigValue]].fail(
                     f"Validation errors: {'; '.join(errors)}"
                 )
 
-            return FlextResult[dict[str, object]].ok(valid_overrides)
+            return FlextResult[dict[str, FlextTypes.ConfigValue]].ok(valid_overrides)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Validation failed: {e}")
+            return FlextResult[dict[str, FlextTypes.ConfigValue]].fail(
+                f"Validation failed: {e}"
+            )
 
 
 __all__ = [

@@ -347,7 +347,7 @@ class FlextModels:
                 cls._internal_logger = FlextLogger(__name__)
             return cls._internal_logger
 
-        domain_events: list[DomainEvent] = Field(default_factory=list)
+        domain_events: list[FlextModels.DomainEvent] = Field(default_factory=list)
 
         @override
         def model_post_init(self, __context: object, /) -> None:
@@ -483,7 +483,7 @@ class FlextModels:
                     error_code=FlextConstants.Errors.DOMAIN_EVENT_ERROR,
                 )
 
-        def get_uncommitted_events(self) -> list[DomainEvent]:
+        def get_uncommitted_events(self) -> list[FlextModels.DomainEvent]:
             """Get uncommitted domain events without clearing them.
 
             Returns:
@@ -494,7 +494,7 @@ class FlextModels:
 
         def mark_events_as_committed(
             self,
-        ) -> FlextResult[list[DomainEvent]]:
+        ) -> FlextResult[list[FlextModels.DomainEvent]]:
             """Mark all domain events as committed and return them.
 
             Enhanced method with proper error handling and validation.
@@ -532,15 +532,15 @@ class FlextModels:
                 # Clear all events
                 self.domain_events.clear()
 
-                return FlextResult[list[DomainEvent]].ok(events)
+                return FlextResult[list[FlextModels.DomainEvent]].ok(events)
 
             except Exception as e:
-                return FlextResult[list[DomainEvent]].fail(
+                return FlextResult[list[FlextModels.DomainEvent]].fail(
                     f"Failed to commit domain events: {e}",
                     error_code=FlextConstants.Errors.DOMAIN_EVENT_ERROR,
                 )
 
-        def clear_domain_events(self) -> list[DomainEvent]:
+        def clear_domain_events(self) -> list[FlextModels.DomainEvent]:
             """Clear and return domain events.
 
             This method logs the clearing operation via structlog for
@@ -1798,7 +1798,7 @@ class FlextModels:
             ),
         ] = Field(default_factory=dict)
         pagination: Annotated[
-            Pagination | dict[str, int],
+            FlextModels.Pagination | dict[str, int],
             Field(
                 default_factory=dict,
                 description="Pagination settings (Pagination object or dict[str, object] with page/size)",
@@ -1865,15 +1865,15 @@ class FlextModels:
             return FlextModels.Pagination()
 
         @classmethod
-        def validate_query(cls, query_payload: FlextTypes.Dict) -> FlextResult[Query]:
+        def validate_query(
+            cls, query_payload: FlextTypes.Dict
+        ) -> FlextResult[FlextModels.Query]:
             """Validate and create Query from payload."""
             try:
                 # Extract the required fields with proper typing
                 filters: object = query_payload.get("filters", {})
                 pagination_data = query_payload.get("pagination", {})
-                if isinstance(pagination_data, Pagination):
-                    pagination = pagination_data
-                elif isinstance(pagination_data, dict):
+                if isinstance(pagination_data, dict):
                     pagination_dict = cast("FlextTypes.Dict", pagination_data)
                     page_raw = pagination_dict.get("page", 1)
                     size_raw = pagination_dict.get("size", 20)
@@ -1881,12 +1881,9 @@ class FlextModels:
                     size: int = (
                         int(size_raw) if isinstance(size_raw, (int, str)) else 20
                     )
-                    pagination = Pagination(
-                        page=page,
-                        size=size,
-                    )
+                    pagination: dict[str, int] = {"page": page, "size": size}
                 else:
-                    pagination = Pagination()
+                    pagination = {"page": 1, "size": 20}
                 query_id = str(query_payload.get("query_id", str(uuid.uuid4())))
                 query_type: object = query_payload.get("query_type")
 
@@ -1902,9 +1899,11 @@ class FlextModels:
                     query_id=query_id,
                     query_type=str(query_type) if query_type is not None else None,
                 )
-                return FlextResult[Query].ok(query)
+                return FlextResult[FlextModels.Query].ok(query)
             except Exception as e:
-                return FlextResult[Query].fail(f"Query validation failed: {e}")
+                return FlextResult[FlextModels.Query].fail(
+                    f"Query validation failed: {e}"
+                )
 
     # =========================================================================
     # CONTEXT MODELS - Context management data structures
@@ -3207,6 +3206,13 @@ class FlextModels:
 
             # Type-safe return for generic method using cast for proper type inference
             return cast("FlextResult[T]", FlextResult.ok(entity))
+
+
+# Rebuild models after all classes are defined to resolve forward references
+FlextModels.DomainEvent.model_rebuild()
+FlextModels.Entity.model_rebuild()
+FlextModels.Query.model_rebuild()
+FlextModels.Pagination.model_rebuild()
 
 
 __all__ = [
