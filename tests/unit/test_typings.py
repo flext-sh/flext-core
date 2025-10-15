@@ -189,7 +189,7 @@ class TestFlextTypes:
 
     def test_flexttypes_project_types(self) -> None:
         """Test FlextCore.Types.Project types."""
-        # Test Literal types - use valid FlextConstants.ProjectType value
+        # Test Literal types - use valid FlextCore.Constants.ProjectType value
         proj_type: FlextCore.Types.Project.ProjectType = "flext-core"
         # ProjectType is defined as specific flext project names
         expected_types = [
