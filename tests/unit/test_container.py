@@ -949,7 +949,8 @@ class TestDIContainerInitialization:
 
         # Config should be a Configuration provider
         di_container = container._di_container
-        assert di_container.config.__class__.__name__ == "Configuration"
+        config_provider = getattr(di_container, "config")
+        assert config_provider.__class__.__name__ == "Configuration"
 
 
 class TestServiceRegistrationSync:
@@ -1139,7 +1140,7 @@ class TestFlextConfigSync:
         container = FlextCore.Container()
 
         # Access the config provider
-        config_provider = container._di_container.config
+        config_provider = getattr(container._di_container, "config")
 
         # Verify config values are synced
         # Note: Config provider sync is incomplete - values return None
@@ -1165,7 +1166,8 @@ class TestFlextConfigSync:
 
         assert hasattr(container._di_container, "config")
         di_container = container._di_container
-        assert di_container.config.__class__.__name__ == "Configuration"
+        config_provider = getattr(di_container, "config")
+        assert config_provider.__class__.__name__ == "Configuration"
 
 
 class TestFlextResultWrapping:

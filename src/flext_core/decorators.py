@@ -670,14 +670,14 @@ class FlextDecorators:
             # Apply dependency injection
             if inject_deps:
                 inject_result = FlextDecorators.inject(**inject_deps)(decorated)
-                decorated = cast("Callable[..., R]", inject_result)
+                decorated = inject_result
 
             # Apply performance tracking
             if track_perf:
                 perf_result = FlextDecorators.track_performance(
                     operation_name=operation_name
                 )(decorated)
-                decorated = cast("Callable[..., R]", perf_result)
+                decorated = perf_result
 
             # Apply operation logging (innermost wrapper)
             log_result = FlextDecorators.log_operation(operation_name=operation_name)(

@@ -283,7 +283,7 @@ class FlextRuntime:
         if hasattr(obj, "__dict__"):
             try:
                 result = obj.__dict__
-                return cast("FlextTypes.Dict", dict[str, object](result))
+                return dict[str, object](result)
             except Exception as e:  # pragma: no cover
                 # Silent fallback for serialization strategy - log at debug level
                 # Extremely rare: __dict__ exists but dict[str, object]() conversion fails

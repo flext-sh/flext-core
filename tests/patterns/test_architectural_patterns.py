@@ -15,7 +15,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextCore, FlextModels
+from flext_core import FlextCore
 
 
 class TestCleanArchitecturePatterns:
@@ -195,7 +195,7 @@ class TestCleanArchitecturePatterns:
         """Create DDD aggregate for testing."""
 
         # Aggregate Root
-        class Order(FlextModels.AggregateRoot):
+        class Order(FlextCore.Models.AggregateRoot):
             """Order aggregate root."""
 
             order_id: str

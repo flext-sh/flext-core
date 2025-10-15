@@ -1253,104 +1253,6 @@ class FlextUtilities:
             except TypeError:
                 return True
 
-        @staticmethod
-        def run_external_command(
-            cmd: FlextTypes.StringList,
-            *,
-            capture_output: bool = True,
-            check: bool = True,
-            env: FlextTypes.StringDict | None = None,
-            cwd: str | pathlib.Path | None = None,
-            timeout: float | None = None,
-            command_input: str | bytes | None = None,
-            text: bool | None = None,
-        ) -> FlextResult[subprocess.CompletedProcess[str]]:
-            """Execute external command with proper error handling using FlextResult pattern.
-
-            Args:
-                cmd: Command to execute as list of strings
-                capture_output: Whether to capture stdout/stderr
-                check: Whether to raise exception on non-zero exit code
-                env: Environment variables dictionary for the command
-                cwd: Working directory for the command
-                timeout: Command timeout in seconds
-                input: Input to send to the command
-                text: Whether to decode stdout/stderr as text (Python 3.7+)
-
-            Returns:
-                FlextResult containing CompletedProcess on success or error details on failure
-
-            Example:
-                ```python
-                result = FlextUtilities.run_external_command(
-                    ["python", "script.py"], capture_output=True, timeout=60.0
-                )
-                if result.is_success:
-                    process = result.value
-                    print(f"Exit code: {process.returncode}")
-                    print(f"Output: {process.stdout}")
-                ```
-
-            """
-            try:
-                # Validate command for security - ensure all parts are safe strings
-                # This prevents shell injection since we use list form, not shell=True
-                if not cmd or not all(part for part in cmd):
-                    return FlextResult[subprocess.CompletedProcess[str]].fail(
-                        "Command must be a non-empty list of strings",
-                        error_code="INVALID_COMMAND",
-                    )
-
-                # Execute subprocess.run with explicit parameters to avoid overload issues
-                # S603: Command is validated above to ensure it's a safe list of strings
-                result = subprocess.run(  # nosec B603
-                    cmd,
-                    capture_output=capture_output,
-                    check=check,
-                    env=env,
-                    cwd=cwd,
-                    timeout=timeout,
-                    input=command_input,
-                    text=text if text is not None else True,
-                )
-
-                return FlextResult[subprocess.CompletedProcess[str]].ok(result)
-
-            except subprocess.CalledProcessError as e:
-                return FlextResult[subprocess.CompletedProcess[str]].fail(
-                    f"Command failed with exit code {e.returncode}",
-                    error_code="COMMAND_FAILED",
-                    error_data={
-                        "cmd": cmd,
-                        "returncode": e.returncode,
-                        "stdout": e.stdout,
-                        "stderr": e.stderr,
-                    },
-                )
-            except subprocess.TimeoutExpired as e:
-                return FlextResult[subprocess.CompletedProcess[str]].fail(
-                    f"Command timed out after {timeout} seconds",
-                    error_code="COMMAND_TIMEOUT",
-                    error_data={
-                        "cmd": cmd,
-                        "timeout": timeout,
-                        "stdout": e.stdout,
-                        "stderr": e.stderr,
-                    },
-                )
-            except FileNotFoundError:
-                return FlextResult[subprocess.CompletedProcess[str]].fail(
-                    f"Command not found: {cmd[0]}",
-                    error_code="COMMAND_NOT_FOUND",
-                    error_data={"cmd": cmd, "executable": cmd[0]},
-                )
-            except Exception as e:
-                return FlextResult[subprocess.CompletedProcess[str]].fail(
-                    f"Unexpected error running command: {e!s}",
-                    error_code="COMMAND_ERROR",
-                    error_data={"cmd": cmd, "error": str(e)},
-                )
-
     class Configuration:
         """Configuration parameter access and manipulation utilities."""
 
@@ -1475,6 +1377,104 @@ class FlextUtilities:
                     )
 
             return False
+
+    @staticmethod
+    def run_external_command(
+        cmd: FlextTypes.StringList,
+        *,
+        capture_output: bool = True,
+        check: bool = True,
+        env: FlextTypes.StringDict | None = None,
+        cwd: str | pathlib.Path | None = None,
+        timeout: float | None = None,
+        command_input: str | bytes | None = None,
+        text: bool | None = None,
+    ) -> FlextResult[subprocess.CompletedProcess[str]]:
+        """Execute external command with proper error handling using FlextResult pattern.
+
+        Args:
+            cmd: Command to execute as list of strings
+            capture_output: Whether to capture stdout/stderr
+            check: Whether to raise exception on non-zero exit code
+            env: Environment variables dictionary for the command
+            cwd: Working directory for the command
+            timeout: Command timeout in seconds
+            input: Input to send to the command
+            text: Whether to decode stdout/stderr as text (Python 3.7+)
+
+        Returns:
+            FlextResult containing CompletedProcess on success or error details on failure
+
+        Example:
+            ```python
+            result = FlextUtilities.run_external_command(
+                ["python", "script.py"], capture_output=True, timeout=60.0
+            )
+            if result.is_success:
+                process = result.value
+                print(f"Exit code: {process.returncode}")
+                print(f"Output: {process.stdout}")
+            ```
+
+        """
+        try:
+            # Validate command for security - ensure all parts are safe strings
+            # This prevents shell injection since we use list form, not shell=True
+            if not cmd or not all(part for part in cmd):
+                return FlextResult[subprocess.CompletedProcess[str]].fail(
+                    "Command must be a non-empty list of strings",
+                    error_code="INVALID_COMMAND",
+                )
+
+            # Execute subprocess.run with explicit parameters to avoid overload issues
+            # S603: Command is validated above to ensure it's a safe list of strings
+            result = subprocess.run(  # nosec B603
+                cmd,
+                capture_output=capture_output,
+                check=check,
+                env=env,
+                cwd=cwd,
+                timeout=timeout,
+                input=command_input,
+                text=text if text is not None else True,
+            )
+
+            return FlextResult[subprocess.CompletedProcess[str]].ok(result)
+
+        except subprocess.CalledProcessError as e:
+            return FlextResult[subprocess.CompletedProcess[str]].fail(
+                f"Command failed with exit code {e.returncode}",
+                error_code="COMMAND_FAILED",
+                error_data={
+                    "cmd": cmd,
+                    "returncode": e.returncode,
+                    "stdout": e.stdout,
+                    "stderr": e.stderr,
+                },
+            )
+        except subprocess.TimeoutExpired as e:
+            return FlextResult[subprocess.CompletedProcess[str]].fail(
+                f"Command timed out after {timeout} seconds",
+                error_code="COMMAND_TIMEOUT",
+                error_data={
+                    "cmd": cmd,
+                    "timeout": timeout,
+                    "stdout": e.stdout,
+                    "stderr": e.stderr,
+                },
+            )
+        except FileNotFoundError:
+            return FlextResult[subprocess.CompletedProcess[str]].fail(
+                f"Command not found: {cmd[0]}",
+                error_code="COMMAND_NOT_FOUND",
+                error_data={"cmd": cmd, "executable": cmd[0]},
+            )
+        except Exception as e:
+            return FlextResult[subprocess.CompletedProcess[str]].fail(
+                f"Unexpected error running command: {e!s}",
+                error_code="COMMAND_ERROR",
+                error_data={"cmd": cmd, "error": str(e)},
+            )
 
 
 __all__ = [

@@ -1205,7 +1205,7 @@ class TestFlextBusMissingCoverage:
         bus = FlextCore.Bus(bus_config={"enable_caching": True, "max_cache_size": 5})
 
         class TestQuery(FlextCore.Models.Query):
-            query_id: str = ""
+            query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
             data: str = ""
 
         execution_count = 0

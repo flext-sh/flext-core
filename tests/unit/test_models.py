@@ -49,8 +49,9 @@ class TestFlextModels:
         assert entity.email == "test@example.com"
         assert entity.id is not None  # Entity should have auto-generated ID
 
-        # Test validation - should work with valid email
-        validated_entity = entity.model_validate(entity.model_dump())
+        # Test validation - should work with valid email (exclude extra fields from base Entity class)
+        entity_dict = entity.model_dump(exclude={"is_initial_version", "is_modified"})
+        validated_entity = entity.model_validate(entity_dict)
         assert validated_entity.email == "test@example.com"
 
         # Test validation failure with invalid email
@@ -112,6 +113,9 @@ class TestFlextModels:
         events = aggregate.clear_domain_events()
         assert len(events) == 1
 
+        # Rebuild test class after base classes are defined
+        TestAggregate.model_rebuild()
+
     def test_models_command_creation(self) -> None:
         """Test command model creation."""
 
@@ -170,6 +174,9 @@ class TestFlextModels:
         # Check events are stored
         events = aggregate.clear_domain_events()
         assert len(events) == 2
+
+        # Rebuild test class after base classes are defined
+        EventAggregate.model_rebuild()
 
     def test_models_version_management(self) -> None:
         """Test version management in entities."""

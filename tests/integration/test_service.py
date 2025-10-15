@@ -393,12 +393,10 @@ class TestServiceIntegrationPatterns:
                 return FlextCore.Result[str].fail("Service unavailable")
 
             retrieved_user_service = cast(
-                "FunctionalUserService",
-                user_service_result.value,
+                "FunctionalUserService", user_service_result.value
             )
             retrieved_notification_service = cast(
-                "FunctionalNotificationService",
-                notification_service_result.value,
+                "FunctionalNotificationService", notification_service_result.value
             )
 
             # Get user data first
@@ -475,10 +473,7 @@ class TestServiceIntegrationPatterns:
         assert service_result.is_success is True
         assert config_fetch_result.is_success is True
 
-        service = cast(
-            "FunctionalLifecycleService",
-            service_result.value,
-        )  # This is our FunctionalLifecycleService
+        service = cast("FunctionalLifecycleService", service_result.value)
         config = cast("FlextCore.Types.Dict", config_fetch_result.value)
 
         # Act - Test service lifecycle
