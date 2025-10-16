@@ -618,7 +618,11 @@ class TestModelIntegration:
         customer = Customer(name="John", email="john@example.com")
         # Exclude computed fields when dumping for re-validation
         customer_dict = customer.model_dump(
-            exclude={"is_initial_version", "is_modified"}
+            exclude={
+                "is_initial_version",
+                "is_modified",
+                "uncommitted_events",  # Computed field
+            }
         )
 
         # Validate by creating new instance from dict data

@@ -78,8 +78,10 @@ class TestFlextModels:
         assert entity.email == "test@example.com"
         assert entity.id is not None  # Entity should have auto-generated ID
 
-        # Test validation - should work with valid email (exclude extra fields from base Entity class)
-        entity_dict = entity.model_dump(exclude={"is_initial_version", "is_modified"})
+        # Test validation - should work with valid email (exclude extra fields from base Entity class and computed fields)
+        entity_dict = entity.model_dump(
+            exclude={"is_initial_version", "is_modified", "uncommitted_events"}
+        )
         validated_entity = entity.model_validate(entity_dict)
         assert validated_entity.email == "test@example.com"
 

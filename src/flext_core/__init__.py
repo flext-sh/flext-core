@@ -17,7 +17,7 @@ FLEXT Core provides the foundation for 32+ dependent projects through:
   - Structural typing: Satisfies FlextProtocols.Result via method signatures
   - Methods: ok(), fail(), is_success, is_failure, unwrap(), unwrap_error()
   - Operations: map, flat_map, map_error, alt, filter, pipeline
-  - Backward compatibility: Both .data and .value properties supported
+  - Primary access: .value (raises on failure), .value_or_none, .unwrap()
 
 **Dependency Injection & Configuration**:
   FlextContainer - Type-safe singleton dependency injection
@@ -191,7 +191,7 @@ Production Readiness (All Mandatory):
   ✅ Testing: Comprehensive test coverage (80%+)
   ✅ Security: Bandit security scanning
   ✅ Documentation: Complete API documentation
-  ✅ Backward Compatibility: Both .data and .value properties
+  ✅ Type-Safe APIs: Full generic type preservation and strict typing
 
 This module re-exports all public APIs from 12+ sub-modules while maintaining
 strict layer hierarchy and protocol compliance.

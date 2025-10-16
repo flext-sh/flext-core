@@ -16,6 +16,7 @@ import threading
 import time
 from collections.abc import Callable
 from typing import (
+    TypeVar,
     cast,
     override,
 )
@@ -29,6 +30,11 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
+# TypeVars for generic processor operations
+ProcessedDataT = TypeVar("ProcessedDataT")
+ProcessorResultT = TypeVar("ProcessorResultT")
+RegistryHandlerT = TypeVar("RegistryHandlerT")
+
 
 class FlextProcessors(FlextMixins):
     """Processing utilities for message handling and data transformation.
@@ -36,6 +42,11 @@ class FlextProcessors(FlextMixins):
     Implements FlextProtocols.Middleware patterns through structural typing. Provides
     utilities for processing messages, applying middleware pipelines, and managing
     processing state with circuit breakers, rate limiting, and caching.
+
+    BREAKING CHANGES (v0.10.0):
+        - Handlers MUST implement handle(message) -> FlextResult[object] method
+        - No fallback to callable() if handle() method missing - validation at registration time
+        - Handler validation enforces standard interface immediately upon registration
 
     Middleware Integration:
         - add_middleware(middleware) - Register middleware for processing pipeline
@@ -594,7 +605,13 @@ class FlextProcessors(FlextMixins):
             return FlextResult[str].ok(f"Base handler processed: {request}")
 
     class HandlerRegistry:
-        """Registry managing named handler instances for dispatcher pilots."""
+        """Registry managing named handler instances for dispatcher pilots.
+
+        BREAKING CHANGES (v0.10.0):
+            - Handlers MUST implement handle(message) -> FlextResult[object] method
+            - No fallback to callable() if handle() method missing
+            - Validation enforces standard interface at registration time
+        """
 
         @override
         def __init__(self) -> None:
@@ -607,6 +624,9 @@ class FlextProcessors(FlextMixins):
             registration: FlextModels.HandlerRegistration,
         ) -> FlextResult[None]:
             """Register a handler using Pydantic model validation.
+
+            Validates that handler implements standard handle() method.
+            No fallback to callable() - BREAKING CHANGE in v0.10.0.
 
             Returns:
                 FlextResult[None]: Success when registration is stored or a
@@ -627,16 +647,39 @@ class FlextProcessors(FlextMixins):
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
-            # Validate handler safety
-            if not FlextProcessors.is_handler_safe(registration.handler):
+            # BREAKING CHANGE: Validate handler has handle() method
+            if not self._validate_handler_interface(registration.handler):
                 return FlextResult[None].fail(
-                    f"Handler '{registration.name}' is not safe (must have handle method or be callable)",
+                    f"Handler '{registration.name}' must implement handle(message) -> FlextResult[object] method",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
             # Validate handler using the model's built-in validation
             self._handlers[registration.name] = registration.handler
             return FlextResult[None].ok(None)
+
+        def _validate_handler_interface(self, handler: object) -> bool:
+            """Validate handler implements standard handle() method.
+
+            BREAKING CHANGE: No fallback to callable().
+            Handler MUST have handle() method.
+
+            Args:
+                handler: Handler object to validate
+
+            Returns:
+                bool: True if handler has callable handle() method
+
+            """
+            if not hasattr(handler, FlextConstants.Mixins.METHOD_HANDLE):
+                return False
+
+            handle_method = getattr(
+                handler,
+                FlextConstants.Mixins.METHOD_HANDLE,
+                None,
+            )
+            return handle_method is not None and callable(handle_method)
 
         def get(self, name: str) -> FlextResult[object]:
             """Get a handler.
@@ -662,16 +705,19 @@ class FlextProcessors(FlextMixins):
 
             """
             return self.get(name).flat_map(
-                lambda handler: self._execute_handler_safely(handler, request, name),
+                lambda handler: self._execute_handler(handler, request, name),
             )
 
-        def _execute_handler_safely(
+        def _execute_handler(
             self,
             handler: object,
             request: object,
             name: str,
         ) -> FlextResult[object]:
-            """Execute handler with proper method resolution and error handling.
+            """Execute handler using standard handle() method.
+
+            BREAKING CHANGE: No fallback to callable().
+            Requires handlers to implement handle(message) -> FlextResult[object].
 
             Returns:
                 FlextResult[object]: The result returned by the handler, or a
@@ -679,40 +725,34 @@ class FlextProcessors(FlextMixins):
 
             """
             try:
-                # Check for handle method first
-                if hasattr(handler, FlextConstants.Mixins.METHOD_HANDLE):
-                    handle_method = getattr(
-                        handler,
-                        FlextConstants.Mixins.METHOD_HANDLE,
-                        None,
+                # Require standard handle() method - no fallback pattern
+                if not hasattr(handler, FlextConstants.Mixins.METHOD_HANDLE):
+                    return FlextResult[object].fail(
+                        f"Handler '{name}' must implement handle(message) -> FlextResult[object] method",
+                        error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
                     )
-                    if handle_method is not None and callable(handle_method):
-                        result: object = handle_method(request)
-                        if isinstance(result, FlextResult):
-                            # Cast to FlextResult[object] to ensure type compatibility
-                            typed_result: FlextResult[object] = cast(
-                                "FlextResult[object]",
-                                result,
-                            )
-                            return typed_result
-                        return FlextResult[object].ok(result)
 
-                # Check if handler itself is callable
-                if callable(handler):
-                    handler_result: object = handler(request)
-                    if isinstance(handler_result, FlextResult):
-                        # Cast to FlextResult[object] to ensure type compatibility
-                        handler_typed_result: FlextResult[object] = cast(
-                            "FlextResult[object]",
-                            handler_result,
-                        )
-                        return handler_typed_result
-                    return FlextResult[object].ok(handler_result)
-
-                return FlextResult[object].fail(
-                    f"Handler '{name}' does not implement handle method",
-                    error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
+                handle_method = getattr(
+                    handler,
+                    FlextConstants.Mixins.METHOD_HANDLE,
+                    None,
                 )
+                if handle_method is None or not callable(handle_method):
+                    return FlextResult[object].fail(
+                        f"Handler '{name}' handle method is not callable",
+                        error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
+                    )
+
+                result: object = handle_method(request)
+                if isinstance(result, FlextResult):
+                    # Cast to FlextResult[object] to ensure type compatibility
+                    typed_result: FlextResult[object] = cast(
+                        "FlextResult[object]",
+                        result,
+                    )
+                    return typed_result
+                return FlextResult[object].ok(result)
+
             except Exception as e:
                 return FlextResult[object].fail(
                     f"Handler execution failed: {e}",
@@ -1169,17 +1209,20 @@ class FlextProcessors(FlextMixins):
 
     @staticmethod
     def is_handler_safe(handler: object) -> bool:
-        """Check if a handler is safe (has handle method or is callable).
+        """Check if handler implements standard handle() method.
+
+        BREAKING CHANGE: No longer checks if handler is callable.
+        Handler MUST implement handle() method.
 
         Returns:
-            bool: True if handler is safe to execute.
+            bool: True if handler has callable handle() method.
 
         """
-        if hasattr(handler, FlextConstants.Mixins.METHOD_HANDLE):
-            handle_method = getattr(handler, FlextConstants.Mixins.METHOD_HANDLE, None)
-            if handle_method is not None and callable(handle_method):
-                return True
-        return callable(handler)
+        if not hasattr(handler, FlextConstants.Mixins.METHOD_HANDLE):
+            return False
+
+        handle_method = getattr(handler, FlextConstants.Mixins.METHOD_HANDLE, None)
+        return handle_method is not None and callable(handle_method)
 
     # =========================================================================
     # HANDLER CLASSES - For examples and demos

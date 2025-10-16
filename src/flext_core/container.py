@@ -64,8 +64,17 @@ class FlextContainer(FlextProtocols.Configurable):
     Advanced Patterns:
         - get_with_fallback() - Alt pattern for service resolution chains
         - safe_register_from_factory() - from_callable for safe factories
-        - get_typed_with_recovery() - Lash pattern for error recovery
+        - get_typed_with_recovery() - Lash pattern for error recovery with type preservation
         - validate_and_get() - flow_through for resolution pipelines
+
+    BREAKING CHANGES (Phase 4 - v0.9.9):
+        - register[T]() now uses generic type T instead of object
+        - register_factory[T]() now uses Callable[[], T] instead of Callable[[], object]
+        - get_typed[T]() now returns FlextResult[T] instead of FlextResult[object]
+        - _validate_service_type[T]() now returns FlextResult[T] instead of FlextResult[object]
+        - get_typed_with_recovery[T]() now returns FlextResult[T] instead of FlextResult[object]
+        - PREFERRED: Use get_typed[T](name, type_cls) for type-safe service retrieval
+        - DEPRECATED: Direct use of get(name) for typed retrieval (loses type info)
 
     Usage Example:
         >>> from flext_core import FlextContainer, FlextResult
@@ -77,16 +86,20 @@ class FlextContainer(FlextProtocols.Configurable):
         >>> logger = create_logger(__name__)
         >>> result: FlextResult[None] = container.register("logger", logger)
         >>>
-        >>> # Retrieve service
+        >>> # Retrieve service (untyped)
         >>> logger_result: FlextResult[object] = container.get("logger")
         >>> if logger_result.is_success:
         ...     logger = logger_result.unwrap()
         >>>
+        >>> # Type-safe retrieval with generic type preservation (PREFERRED in v0.9.9+)
+        >>> typed_logger_result: FlextResult[FlextLogger] = container.get_typed(
+        ...     "logger", FlextLogger
+        ... )
+        >>> if typed_logger_result.is_success:
+        ...     logger: FlextLogger = typed_logger_result.unwrap()  # Type preserved
+        >>>
         >>> # Configure container
         >>> config_result = container.configure({"max_workers": 8})
-        >>>
-        >>> # Type-safe retrieval with validation
-        >>> typed_result = container.get_typed("logger", LoggerService)
 
     Instance Compliance Verification:
         >>> from flext_core import FlextContainer, FlextProtocols
@@ -271,19 +284,20 @@ class FlextContainer(FlextProtocols.Configurable):
         """
         return FlextModels.Validation.validate_service_name(name)
 
-    def register(
+    def register[T](
         self,
         name: str,
-        service: object,
+        service: T,
     ) -> FlextResult[None]:
-        """Register a service in the FlextContainer.
+        """Register a service in the FlextContainer with type preservation.
 
         Use this method to register services for dependency injection throughout
         FLEXT applications. Returns FlextResult for explicit error handling.
+        Type T is preserved for static type checking purposes.
 
         Args:
             name: Service name for later retrieval
-            service: Service instance to register
+            service: Service instance to register (generic type T for type safety)
 
         Returns:
             FlextResult[None]: Success if registered or failure with error details.
@@ -295,7 +309,7 @@ class FlextContainer(FlextProtocols.Configurable):
             container = FlextContainer()
             logger = FlextLogger(__name__)
 
-            result: FlextResult[object] = container.register("logger", logger)
+            result: FlextResult[None] = container.register("logger", logger)
             if result.is_failure:
                 print(f"Registration failed: {result.error}")
             ```
@@ -305,18 +319,19 @@ class FlextContainer(FlextProtocols.Configurable):
             lambda validated_name: self._store_service(validated_name, service),
         )
 
-    def _store_service(self, name: str, service: object) -> FlextResult[None]:
-        """Store service in registry AND internal DI container with conflict detection.
+    def _store_service[T](self, name: str, service: T) -> FlextResult[None]:
+        """Store service in registry AND internal DI container with type preservation.
 
         Stores in both tracking dict[str, object] (backward compatibility) and internal
         dependency-injector container (advanced DI features). Uses Object
-        provider for existing service instances.
+        provider for existing service instances. Type T is preserved for static typing.
 
         Returns:
             FlextResult[None]: Success if stored or failure with error.
 
         Note:
             Updated in v1.1.0 to use internal DI container while maintaining API.
+            Phase 4: Updated to use generic type T for type preservation.
 
         """
         if name in self._services:
@@ -329,7 +344,7 @@ class FlextContainer(FlextProtocols.Configurable):
 
             # Store in internal DI container using Object provider
             # Object provider is for existing instances (singletons by nature)
-            provider = Object(service)
+            provider = Object(cast("object", service))
             cast("DynamicContainer", self._di_container).set_provider(name, provider)
             provider_registered = True
 
@@ -343,12 +358,15 @@ class FlextContainer(FlextProtocols.Configurable):
             self._services.pop(name, None)
             return FlextResult[None].fail(f"Service storage failed: {e}")
 
-    def register_factory(
+    def register_factory[T](
         self,
         name: str,
-        factory: Callable[[], object],
+        factory: Callable[[], T],
     ) -> FlextResult[None]:
-        """Register service factory with validation.
+        """Register service factory with type preservation.
+
+        Type T is preserved for static type checking and inferred from the
+        factory callable's return type at registration time.
 
         Returns:
             FlextResult[None]: Success if registered or failure with error.
@@ -358,22 +376,24 @@ class FlextContainer(FlextProtocols.Configurable):
             lambda validated_name: self._store_factory(validated_name, factory),
         )
 
-    def _store_factory(
+    def _store_factory[T](
         self,
         name: str,
-        factory: Callable[[], object],
+        factory: Callable[[], T],
     ) -> FlextResult[None]:
-        """Store factory in registry AND internal DI container with callable validation.
+        """Store factory in registry AND internal DI container with type preservation.
 
         Stores in both tracking dict[str, object] (backward compatibility) and internal
         dependency-injector container using Singleton provider with factory.
         This ensures factory is called once and result is cached (lazy singleton).
+        Type T is preserved for static type checking.
 
         Returns:
             FlextResult[None]: Success if stored or failure with error.
 
         Note:
             Updated in v1.1.0 to use DI Singleton(factory) for cached factory results.
+            Phase 4: Updated to use generic type T for type preservation.
 
         """
         # Validate that factory is actually callable
@@ -390,7 +410,7 @@ class FlextContainer(FlextProtocols.Configurable):
 
             # Store in internal DI container using Singleton with factory
             # This creates lazy singleton: factory called once, result cached
-            provider = Singleton(factory)
+            provider = Singleton(cast("Callable[[], object]", factory))
             cast("DynamicContainer", self._di_container).set_provider(name, provider)
             provider_registered = True
 
@@ -521,11 +541,18 @@ class FlextContainer(FlextProtocols.Configurable):
         except Exception as e:
             return FlextResult[object].fail(f"Factory '{name}' failed: {e}")
 
-    def get_typed[T](self, name: str, expected_type: type[T]) -> FlextResult[object]:
-        """Get service with type validation.
+    def get_typed[T](self, name: str, expected_type: type[T]) -> FlextResult[T]:
+        """Get service with type validation and generic return type preservation.
+
+        Retrieves a service and validates it matches the expected type.
+        Return type is properly preserved as FlextResult[T] for type safety.
+
+        Args:
+            name: Service name to retrieve
+            expected_type: Expected service type for validation (used for runtime type checking)
 
         Returns:
-            FlextResult[object]: Success with typed service or failure with error.
+            FlextResult[T]: Success with typed service or failure with error.
 
         """
         return self.get(name).flat_map(
@@ -536,18 +563,18 @@ class FlextContainer(FlextProtocols.Configurable):
         self,
         service: object,
         expected_type: type[T],
-    ) -> FlextResult[object]:
-        """Validate service type and return typed result.
+    ) -> FlextResult[T]:
+        """Validate service type and return with generic type preservation.
 
         Returns:
-            FlextResult[object]: Success with validated service or failure with error.
+            FlextResult[T]: Success with validated typed service or failure with error.
 
         """
         if not isinstance(service, expected_type):
-            return FlextResult[object].fail(
+            return FlextResult[T].fail(
                 f"Service type mismatch: expected {getattr(expected_type, '__name__', str(expected_type))}, got {getattr(type(service), '__name__', str(type(service)))}",
             )
-        return FlextResult[object].ok(service)
+        return FlextResult[T].ok(service)
 
     # =========================================================================
     # BATCH OPERATIONS - Efficient bulk service management
@@ -1048,10 +1075,11 @@ class FlextContainer(FlextProtocols.Configurable):
         name: str,
         expected_type: type[T],
         recovery_factory: object | None = None,
-    ) -> FlextResult[object]:
-        """Get typed service with recovery using lash pattern.
+    ) -> FlextResult[T]:
+        """Get typed service with recovery using lash pattern and type preservation.
 
         Demonstrates lash for error recovery with factory.
+        Return type is properly preserved as FlextResult[T] for type safety.
 
         Args:
             name: Service name
@@ -1059,7 +1087,7 @@ class FlextContainer(FlextProtocols.Configurable):
             recovery_factory: Optional factory to create service if not found
 
         Returns:
-            FlextResult[object]: Service or recovered value
+            FlextResult[T]: Service or recovered value with proper type
 
         Example:
             >>> container = FlextContainer.get_global()
@@ -1069,9 +1097,9 @@ class FlextContainer(FlextProtocols.Configurable):
 
         """
 
-        def try_recovery(_error: str) -> FlextResult[object]:
+        def try_recovery(_error: str) -> FlextResult[T]:
             if recovery_factory is None:
-                return FlextResult[object].fail(
+                return FlextResult[T].fail(
                     f"Service '{name}' not found and no recovery factory provided"
                 )
 
@@ -1087,19 +1115,19 @@ class FlextContainer(FlextProtocols.Configurable):
             )
 
             if factory_result.is_failure:
-                return FlextResult[object].fail(
+                return FlextResult[T].fail(
                     f"Recovery factory failed: {factory_result.error}"
                 )
 
             service: object = factory_result.unwrap()
             if not isinstance(service, expected_type):
-                return FlextResult[object].fail(
+                return FlextResult[T].fail(
                     f"Recovery factory returned wrong type: expected {getattr(expected_type, '__name__', str(expected_type))}, got {getattr(type(service), '__name__', str(type(service)))}"
                 )
 
             # Register the recovered service for future use
             self.register(name, service)
-            return FlextResult[object].ok(service)
+            return FlextResult[T].ok(service)
 
         return self.get_typed(name, expected_type).lash(try_recovery)
 

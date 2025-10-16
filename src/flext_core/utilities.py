@@ -31,6 +31,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, is_dataclass
 from datetime import UTC, datetime
 from typing import (
+    TypeVar,
     cast,
     get_origin,
     get_type_hints,
@@ -44,6 +45,16 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
+
+# Module logger for exception tracking
+_logger = logging.getLogger(__name__)
+
+# Module-level TypeVars for generic operations
+T = TypeVar("T")
+T_co = TypeVar("T_co", covariant=True)
+TCache = TypeVar("TCache")
+TConfig = TypeVar("TConfig", bound=FlextProtocols.HasModelDump)
+TValue = TypeVar("TValue")
 
 
 class FlextUtilities:
@@ -216,30 +227,35 @@ class FlextUtilities:
 
         @staticmethod
         def normalize_component(
-            component: object,
-        ) -> object:
+            component: T,
+        ) -> T:
             """Normalize a component for consistent representation."""
             if isinstance(component, dict):
                 component_dict = cast("FlextTypes.Dict", component)
-                return {
-                    str(k): FlextUtilities.Cache.normalize_component(v)
-                    for k, v in component_dict.items()
-                }
+                return cast(
+                    "T",
+                    {
+                        str(k): FlextUtilities.Cache.normalize_component(v)
+                        for k, v in component_dict.items()
+                    },
+                )
             if isinstance(component, (list, tuple)):
-                sequence = cast("Sequence[object]", component)
-                return [
+                sequence = cast("Sequence[T]", component)
+                normalized_list = [
                     FlextUtilities.Cache.normalize_component(item) for item in sequence
                 ]
+                return cast("T", normalized_list)
             if isinstance(component, set):
-                set_component = cast("set[object]", component)
-                return {
+                set_component = cast("set[T]", component)
+                normalized_set = {
                     FlextUtilities.Cache.normalize_component(item)
                     for item in set_component
                 }
+                return cast("T", normalized_set)
             return component
 
         @staticmethod
-        def sort_key(key: object) -> tuple[int, str]:
+        def sort_key(key: T) -> tuple[int, str]:
             """Generate a sort key for consistent ordering."""
             if isinstance(key, str):
                 return (0, key.lower())
@@ -248,12 +264,12 @@ class FlextUtilities:
             return (2, str(key))
 
         @staticmethod
-        def sort_dict_keys(data: object) -> object:
+        def sort_dict_keys(data: T) -> T:
             """Sort dictionary keys for consistent representation."""
             if isinstance(data, dict):
                 data_dict = cast("FlextTypes.Dict", data)
                 return cast(
-                    "object",
+                    "T",
                     {
                         k: FlextUtilities.Cache.sort_dict_keys(data_dict[k])
                         for k in sorted(
@@ -264,7 +280,7 @@ class FlextUtilities:
             return data
 
         @staticmethod
-        def clear_object_cache(obj: object) -> FlextResult[None]:
+        def clear_object_cache(obj: T) -> FlextResult[None]:
             """Clear any caches on an object."""
             try:
                 # Common cache attribute names to check and clear
@@ -297,7 +313,7 @@ class FlextUtilities:
                 return FlextResult[None].fail(f"Failed to clear caches: {e}")
 
         @staticmethod
-        def has_cache_attributes(obj: object) -> bool:
+        def has_cache_attributes(obj: T) -> bool:
             """Check if object has any cache-related attributes."""
             cache_attributes = [
                 "_cache",
@@ -309,7 +325,7 @@ class FlextUtilities:
             return any(hasattr(obj, attr) for attr in cache_attributes)
 
         @staticmethod
-        def generate_cache_key(*args: object, **kwargs: object) -> str:
+        def generate_cache_key(*args: T, **kwargs: T) -> str:
             """Generate a cache key from arguments."""
             key_data = str(args) + str(sorted(kwargs.items()))
             return hashlib.sha256(key_data.encode()).hexdigest()
@@ -318,7 +334,7 @@ class FlextUtilities:
         """Unified validation patterns using railway composition."""
 
         @staticmethod
-        def validate_string_not_none(value: object) -> FlextResult[None]:
+        def validate_string_not_none(value: str | None) -> FlextResult[None]:
             """Validate that a string value is not None."""
             if value is None:
                 return FlextResult[None].fail("Value cannot be None")
@@ -501,14 +517,14 @@ class FlextUtilities:
             return FlextResult[None].ok(None)
 
         @staticmethod
-        def validate_positive_integer(value: object) -> FlextResult[None]:
+        def validate_positive_integer(value: int) -> FlextResult[None]:
             """Validate that value is a positive integer."""
             if not isinstance(value, int) or value <= 0:
                 return FlextResult[None].fail("Value must be a positive integer")
             return FlextResult[None].ok(None)
 
         @staticmethod
-        def validate_non_negative_integer(value: object) -> FlextResult[None]:
+        def validate_non_negative_integer(value: int) -> FlextResult[None]:
             """Validate that value is a non-negative integer."""
             if not isinstance(value, int) or value < 0:
                 return FlextResult[None].fail("Value must be a non-negative integer")
@@ -524,12 +540,12 @@ class FlextUtilities:
             return FlextResult[None].ok(None)
 
         @staticmethod
-        def is_non_empty_string(value: object) -> bool:
+        def is_non_empty_string(value: str | None) -> bool:
             """Check if value is a non-empty string."""
             return isinstance(value, str) and len(value.strip()) > 0
 
         @staticmethod
-        def clear_all_caches(obj: object) -> FlextResult[None]:
+        def clear_all_caches(obj: T) -> FlextResult[None]:
             """Clear all caches on an object to prevent memory leaks.
 
             Args:
@@ -570,7 +586,7 @@ class FlextUtilities:
                 return FlextResult[None].fail(f"Failed to clear caches: {e}")
 
         @staticmethod
-        def has_cache_attributes(obj: object) -> bool:
+        def has_cache_attributes(obj: T) -> bool:
             """Check if object has any cache-related attributes.
 
             Args:
@@ -604,13 +620,13 @@ class FlextUtilities:
             return json.dumps(value, sort_keys=True, default=str)
 
         @staticmethod
-        def normalize_component(value: object) -> object:
+        def normalize_component(value: T) -> T:
             """Normalize arbitrary objects into cache-friendly deterministic structures."""
             if value is None or isinstance(value, (bool, int, float, str)):
                 return value
 
             if isinstance(value, bytes):
-                return ("bytes", value.hex())
+                return cast("T", ("bytes", value.hex()))
 
             if isinstance(value, FlextProtocols.HasModelDump):
                 try:
@@ -618,42 +634,45 @@ class FlextUtilities:
                 except TypeError:
                     dumped = {}
                 normalized_dumped = FlextUtilities.Cache.normalize_component(dumped)
-                return ("pydantic", normalized_dumped)
+                return cast("T", ("pydantic", normalized_dumped))
 
             if is_dataclass(value):
                 # Ensure we have a dataclass instance, not a class
                 if isinstance(value, type):
-                    return ("dataclass_class", str(value))
+                    return cast("T", ("dataclass_class", str(value)))
                 dataclass_dict = asdict(value)
                 normalized_dict = FlextUtilities.Cache.normalize_component(
                     dataclass_dict
                 )
-                return ("dataclass", normalized_dict)
+                return cast("T", ("dataclass", normalized_dict))
 
             if isinstance(value, Mapping):
                 # Return sorted FlextTypes.Dict for cache-friendly deterministic ordering
-                mapping_value = cast("Mapping[object, object]", value)
+                mapping_value = cast("Mapping[T, T]", value)
                 sorted_items = sorted(
                     mapping_value.items(),
                     key=lambda x: FlextUtilities.Cache.sort_key(x[0]),
                 )
-                return {
-                    FlextUtilities.Cache.normalize_component(
-                        k,
-                    ): FlextUtilities.Cache.normalize_component(v)
-                    for k, v in sorted_items
-                }
+                return cast(
+                    "T",
+                    {
+                        FlextUtilities.Cache.normalize_component(
+                            k,
+                        ): FlextUtilities.Cache.normalize_component(v)
+                        for k, v in sorted_items
+                    },
+                )
 
             if isinstance(value, (list, tuple)):
-                sequence_value = cast("Sequence[object]", value)
+                sequence_value = cast("Sequence[T]", value)
                 sequence_items = [
                     FlextUtilities.Cache.normalize_component(item)
                     for item in sequence_value
                 ]
-                return ("sequence", tuple(sequence_items))
+                return cast("T", ("sequence", tuple(sequence_items)))
 
             if isinstance(value, set):
-                set_value = cast("set[object]", value)
+                set_value = cast("set[T]", value)
                 set_items = [
                     FlextUtilities.Cache.normalize_component(item) for item in set_value
                 ]
@@ -662,7 +681,7 @@ class FlextUtilities:
                 set_items.sort(key=str)
 
                 normalized_set = tuple(set_items)
-                return ("set", normalized_set)
+                return cast("T", ("set", normalized_set))
 
             try:
                 # Cast to proper type for type checker
@@ -671,7 +690,7 @@ class FlextUtilities:
                     vars(value),
                 )
             except TypeError:
-                return ("repr", repr(value))
+                return cast("T", ("repr", repr(value)))
 
             normalized_vars = tuple(
                 (key, FlextUtilities.Cache.normalize_component(val))
@@ -680,11 +699,11 @@ class FlextUtilities:
                     key=operator.itemgetter(0),
                 )
             )
-            return ("vars", normalized_vars)
+            return cast("T", ("vars", normalized_vars))
 
         @staticmethod
         def generate_cache_key(
-            command: object | None, command_type: type[object]
+            command: TCache | None, command_type: type[TCache]
         ) -> str:
             """Generate a deterministic cache key for the command.
 
@@ -702,7 +721,7 @@ class FlextUtilities:
                     data = command.model_dump(mode="python")
                     # Sort keys recursively for deterministic ordering
                     sorted_data = FlextUtilities.Cache.sort_dict_keys(data)
-                    return f"{command_type.__name__}_{hash(str(sorted_data))}"
+                    return f"{cast('type', command_type).__name__}_{hash(str(sorted_data))}"
 
                 # For dataclasses, use asdict with sorted keys
                 if (
@@ -714,19 +733,19 @@ class FlextUtilities:
                     dataclass_sorted_data = FlextUtilities.Cache.sort_dict_keys(
                         dataclass_data,
                     )
-                    return f"{command_type.__name__}_{hash(str(dataclass_sorted_data))}"
+                    return f"{cast('type', command_type).__name__}_{hash(str(dataclass_sorted_data))}"
 
                 # For dictionaries, sort keys
                 if isinstance(command, dict):
                     dict_sorted_data = FlextUtilities.Cache.sort_dict_keys(
                         cast("FlextTypes.Dict", command),
                     )
-                    return f"{command_type.__name__}_{hash(str(dict_sorted_data))}"
+                    return f"{cast('type', command_type).__name__}_{hash(str(dict_sorted_data))}"
 
                 # For other objects, use string representation
                 command_str = str(command) if command is not None else "None"
                 command_hash = hash(command_str)
-                return f"{command_type.__name__}_{command_hash}"
+                return f"{cast('type', command_type).__name__}_{command_hash}"
 
             except Exception:
                 # Fallback to string representation if anything fails
@@ -736,16 +755,18 @@ class FlextUtilities:
                 # Ensure we have a valid string for encoding
                 try:
                     command_hash_fallback = hash(command_str_fallback)
-                    return f"{command_type.__name__}_{command_hash_fallback}"
+                    return (
+                        f"{cast('type', command_type).__name__}_{command_hash_fallback}"
+                    )
                 except TypeError:
                     # If hash fails, use a deterministic fallback with proper encoding
                     encoded_fallback = command_str_fallback.encode(
                         FlextConstants.Utilities.DEFAULT_ENCODING
                     )
-                    return f"{command_type.__name__}_{abs(hash(encoded_fallback))}"
+                    return f"{cast('type', command_type).__name__}_{abs(hash(encoded_fallback))}"
 
         @staticmethod
-        def sort_dict_keys(obj: object) -> object:
+        def sort_dict_keys(obj: T) -> T:
             """Recursively sort dictionary keys for deterministic ordering.
 
             Args:
@@ -757,26 +778,35 @@ class FlextUtilities:
             """
             if isinstance(obj, dict):
                 dict_obj: FlextTypes.Dict = cast("FlextTypes.Dict", obj)
-                sorted_items: list[tuple[object, object]] = sorted(
-                    dict_obj.items(),
+                sorted_items: list[tuple[str, T]] = sorted(
+                    cast("list[tuple[str, T]]", dict_obj.items()),
                     key=lambda x: str(x[0]),
                 )
-                return {
-                    str(k): FlextUtilities.Cache.sort_dict_keys(v)
-                    for k, v in sorted_items
-                }
+                return cast(
+                    "T",
+                    {
+                        str(k): FlextUtilities.Cache.sort_dict_keys(v)
+                        for k, v in sorted_items
+                    },
+                )
             if isinstance(obj, list):
                 obj_list: FlextTypes.List = cast("FlextTypes.List", obj)
-                return [FlextUtilities.Cache.sort_dict_keys(item) for item in obj_list]
+                return cast(
+                    "T",
+                    [FlextUtilities.Cache.sort_dict_keys(item) for item in obj_list],
+                )
             if isinstance(obj, tuple):
-                obj_tuple: tuple[object, ...] = cast("tuple[object, ...]", obj)
-                return tuple(
-                    FlextUtilities.Cache.sort_dict_keys(item) for item in obj_tuple
+                obj_tuple: tuple[T, ...] = cast("tuple[T, ...]", obj)
+                return cast(
+                    "T",
+                    tuple(
+                        FlextUtilities.Cache.sort_dict_keys(item) for item in obj_tuple
+                    ),
                 )
             return obj
 
         @staticmethod
-        def initialize(obj: object, field_name: str) -> None:
+        def initialize(obj: T, field_name: str) -> None:
             """Initialize validation for object.
 
             Simplified implementation that directly sets the validation flag.
@@ -802,12 +832,12 @@ class FlextUtilities:
             return isinstance(value, str) and bool(value.strip())
 
         @staticmethod
-        def is_dict_non_empty(value: object | None) -> bool:
+        def is_dict_non_empty(value: object) -> bool:
             """Check if value is a non-empty dictionary."""
             return isinstance(value, dict) and bool(value)
 
         @staticmethod
-        def is_list_non_empty(value: object | None) -> bool:
+        def is_list_non_empty(value: object) -> bool:
             """Check if value is a non-empty list."""
             return isinstance(value, list) and bool(value)
 
@@ -856,18 +886,18 @@ class FlextUtilities:
             return str(uuid.uuid4())
 
         @staticmethod
-        def create_module_utilities(module_name: str) -> FlextResult[object]:
+        def create_module_utilities(module_name: str) -> FlextResult[type]:
             """Create utilities for a specific module.
 
             Args:
                 module_name: Name of the module to create utilities for
 
             Returns:
-                FlextResult containing module utilities or error
+                FlextResult containing module utilities type or error
 
             """
             if not module_name:
-                return FlextResult[object].fail(
+                return FlextResult[type].fail(
                     "Module name must be a non-empty string",
                 )
 
@@ -883,7 +913,7 @@ class FlextUtilities:
                 },
             )()
 
-            return FlextResult[object].ok(utilities)
+            return FlextResult[type].ok(type(utilities))
 
         @staticmethod
         def generate_correlation_id_with_context(context: str) -> str:
@@ -937,7 +967,7 @@ class FlextUtilities:
             )
 
         @staticmethod
-        def ensure_id(obj: object) -> None:
+        def ensure_id(obj: T) -> None:
             """Ensure object has an ID using FlextUtilities and FlextConstants.
 
             Args:
@@ -1189,11 +1219,15 @@ class FlextUtilities:
                 Tuple of accepted message types
 
             """
-            message_types: FlextTypes.List = []
-            message_types.extend(cls._extract_generic_message_types(handler_class))
+            message_types: list[object] = []
+            generic_types = cls._extract_generic_message_types(handler_class)
+            # Extend with extracted generic types
+            message_types.extend(generic_types)
 
             if not message_types:
-                explicit_type = cls._extract_message_type_from_handle(handler_class)
+                explicit_type: object = cls._extract_message_type_from_handle(
+                    handler_class
+                )
                 if explicit_type is not None:
                     message_types.append(explicit_type)
 
@@ -1226,7 +1260,7 @@ class FlextUtilities:
         def _extract_message_type_from_handle(
             cls,
             handler_class: type,
-        ) -> object | None:
+        ) -> object:
             """Extract message type from handle method annotations when generics are absent.
 
             Args:
@@ -1259,12 +1293,12 @@ class FlextUtilities:
                     continue
 
                 if name in type_hints:
-                    # Cast the object type hint to object for return type compatibility
-                    return cast("object", type_hints[name])
+                    # Return the type hint directly
+                    return type_hints[name]
 
                 annotation = parameter.annotation
                 if annotation is not inspect.Signature.empty:
-                    return cast("object", annotation)
+                    return annotation
 
                 break
 
@@ -1366,12 +1400,12 @@ class FlextUtilities:
             """
             try:
                 if hasattr(message_type, "__origin__"):
-                    return message_origin == origin_type
+                    return message_origin is origin_type
                 if isinstance(message_type, type) and isinstance(origin_type, type):
                     return issubclass(message_type, origin_type)
-                return message_type == expected_type
+                return message_type is expected_type
             except TypeError:
-                return message_type == expected_type
+                return message_type is expected_type
 
         @classmethod
         def _handle_instance_check(
@@ -1406,7 +1440,7 @@ class FlextUtilities:
             Simplified implementation using Pydantic's model_dump for safe access.
 
             Args:
-                obj: The configuration object (must have model_dump method)
+                obj: The configuration object (must have model_dump method or dict-like access)
                 parameter: The parameter name to retrieve (must exist in model)
 
             Returns:
@@ -1416,13 +1450,26 @@ class FlextUtilities:
                 KeyError: If parameter is not defined in the model
 
             """
-            # Check for Pydantic model with model_dump method
-            if isinstance(obj, FlextProtocols.HasModelDump):
-                model_data: FlextTypes.Dict = obj.model_dump()
-                if parameter not in model_data:
-                    msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
+            # Check for dict-like access first
+            if isinstance(obj, dict):
+                if parameter not in obj:
+                    msg = f"Parameter '{parameter}' is not defined"
                     raise FlextExceptions.NotFoundError(msg, resource_id=parameter)
-                return model_data[parameter]
+                return obj[parameter]
+
+            # Check for Pydantic model with model_dump method
+            if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
+                try:
+                    # Cast to protocol with model_dump for type safety
+                    pydantic_obj = cast("FlextProtocols.HasModelDump", obj)
+                    model_data: FlextTypes.Dict = pydantic_obj.model_dump()
+                    if parameter not in model_data:
+                        msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
+                        raise FlextExceptions.NotFoundError(msg, resource_id=parameter)
+                    return model_data[parameter]
+                except Exception as e:
+                    # Log and continue to fallback - object may not be Pydantic model
+                    _logger.debug(f"Failed to get parameter from model_dump: {e}")
 
             # Fallback for non-Pydantic objects - direct attribute access
             if not hasattr(obj, parameter):
@@ -1460,7 +1507,7 @@ class FlextUtilities:
                 return True
 
             except Exception:
-                # object validation error or attribute error returns False
+                # Validation error or attribute error returns False
                 return False
 
         @staticmethod
@@ -1485,9 +1532,10 @@ class FlextUtilities:
                 )
                 if callable(get_global_instance_method):
                     instance = get_global_instance_method()
-                    return FlextUtilities.Configuration.get_parameter(
-                        instance, parameter
-                    )
+                    if isinstance(instance, FlextProtocols.HasModelDump):
+                        return FlextUtilities.Configuration.get_parameter(
+                            instance, parameter
+                        )
 
             msg = f"Class {singleton_class.__name__} does not have get_global_instance method"
             raise FlextExceptions.ValidationError(msg)
@@ -1515,9 +1563,10 @@ class FlextUtilities:
                 )
                 if callable(get_global_instance_method):
                     instance = get_global_instance_method()
-                    return FlextUtilities.Configuration.set_parameter(
-                        instance, parameter, value
-                    )
+                    if isinstance(instance, FlextProtocols.HasModelDump):
+                        return FlextUtilities.Configuration.set_parameter(
+                            instance, parameter, value
+                        )
 
             return False
 
