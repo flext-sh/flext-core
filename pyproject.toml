@@ -248,7 +248,13 @@
                 "flext_tests",
             ]
 
-
+	[tool.mypy]
+		python_version = "3.13"
+		strict = true
+		warn_return_any = true
+		warn_unused_configs = true
+		# Pydantic v2 @computed_field + @property pattern is valid (Pydantic 2.11+)
+		# MyPy has known limitations with this pattern, but pyrefly handles it correctly
 
 	[tool.pyrefly]
 		# NOTE: Pyrefly (MyPy successor) with Pydantic plugin properly handles:

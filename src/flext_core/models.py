@@ -662,7 +662,9 @@ class FlextModels:
                     error_code=FlextConstants.Errors.DOMAIN_EVENT_ERROR,
                 )
 
-        def get_uncommitted_events(self) -> list[FlextModels.DomainEvent]:
+        @computed_field
+        @property
+        def uncommitted_events(self) -> list[FlextModels.DomainEvent]:
             """Get uncommitted domain events without clearing them.
 
             Returns:
@@ -694,7 +696,7 @@ class FlextModels:
             """
             try:
                 # Get uncommitted events before clearing
-                events = self.get_uncommitted_events()
+                events = self.uncommitted_events
 
                 # Log commitment via structlog if there are events
                 if events:
@@ -2471,7 +2473,7 @@ class FlextModels:
             ... )
             >>> context.start_execution()
             >>> # ... handler executes ...
-            >>> elapsed_ms = context.get_execution_time_ms()
+            >>> elapsed_ms = context.execution_time_ms
             >>> context.set_metrics_state({"items_processed": 42})
 
         """
@@ -2548,7 +2550,9 @@ class FlextModels:
             """
             self._start_time = time_module.time()
 
-        def get_execution_time_ms(self) -> float:
+        @computed_field
+        @property
+        def execution_time_ms(self) -> float:
             """Get execution time in milliseconds.
 
             Returns:
@@ -2560,7 +2564,7 @@ class FlextModels:
                 ... )
                 >>> context.start_execution()
                 >>> # ... handler executes ...
-                >>> elapsed = context.get_execution_time_ms()
+                >>> elapsed = context.execution_time_ms
                 >>> isinstance(elapsed, float)
                 True
 
@@ -2571,7 +2575,9 @@ class FlextModels:
             elapsed = time_module.time() - self._start_time
             return round(elapsed * 1000, 2)
 
-        def get_metrics_state(self) -> FlextTypes.Dict:
+        @computed_field
+        @property
+        def metrics_state(self) -> FlextTypes.Dict:
             """Get current metrics state.
 
             Returns:
@@ -2581,7 +2587,7 @@ class FlextModels:
                 >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
                 ...     handler_name="MyHandler", handler_mode="command"
                 ... )
-                >>> metrics = context.get_metrics_state()
+                >>> metrics = context.metrics_state
                 >>> isinstance(metrics, dict)
                 True
 
@@ -2593,11 +2599,10 @@ class FlextModels:
         def set_metrics_state(self, state: FlextTypes.Dict) -> None:
             """Set metrics state.
 
-            Args:
-                state: Metrics state to set (must be JSON-serializable)
+            Direct assignment to _metrics_state. Use this to update metrics.
 
-            Raises:
-                ValueError: If state is not JSON-serializable
+            Args:
+                state: Metrics state to set
 
             Examples:
                 >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
@@ -2606,15 +2611,6 @@ class FlextModels:
                 >>> context.set_metrics_state({"items_processed": 42, "errors": 0})
 
             """
-            # Validate serializability
-            import json
-
-            try:
-                json.dumps(state, default=str)
-            except (TypeError, ValueError) as e:
-                msg = f"Metrics state must be JSON-serializable: {e}"
-                raise ValueError(msg) from e
-
             self._metrics_state = state
 
         def reset(self) -> None:
@@ -2629,7 +2625,7 @@ class FlextModels:
                 ... )
                 >>> context.start_execution()
                 >>> context.reset()
-                >>> context.get_execution_time_ms()
+                >>> context.execution_time_ms
                 0.0
 
             """

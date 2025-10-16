@@ -145,27 +145,27 @@ class TestFlextConfig:
         """Test config field reset operation."""
         config = FlextConfig()
 
-        # Set multiple fields
+        # Set multiple fields with valid semantic versions
         config.app_name = "value1"
-        config.version = "value2"
+        config.version = "2.0.0"
 
         assert config.app_name == "value1"
-        assert config.version == "value2"
+        assert config.version == "2.0.0"
 
         # Reset to defaults
         config.app_name = FlextConfig.model_fields["app_name"].default
         config.version = FlextConfig.model_fields["version"].default
 
         assert config.app_name != "value1"
-        assert config.version != "value2"
+        assert config.version != "2.0.0"
 
     def test_config_keys_values_items(self) -> None:
         """Test config keys, values, and items operations."""
         config = FlextConfig()
 
-        # Set actual fields
+        # Set actual fields with valid semantic version
         config.app_name = "value1"
-        config.version = "value2"
+        config.version = "2.0.0"
 
         # Use model_dump to get dict-like access
         config_dict = config.model_dump()
@@ -175,11 +175,11 @@ class TestFlextConfig:
 
         values = list(config_dict.values())
         assert "value1" in values
-        assert "value2" in values
+        assert "2.0.0" in values
 
         items = list(config_dict.items())
         assert ("app_name", "value1") in items
-        assert ("version", "value2") in items
+        assert ("version", "2.0.0") in items
 
     def test_config_singleton_pattern(self) -> None:
         """Test config creates independent instances with same defaults."""
@@ -236,12 +236,21 @@ class TestFlextConfig:
             version="1.0.0",
         )
 
-        # Test JSON serialization using model_dump_json
-        json_str = config.model_dump_json()
+        # Test JSON serialization excluding computed fields
+        json_str = config.model_dump_json(
+            exclude={
+                "is_debug_enabled",
+                "effective_log_level",
+                "is_production",
+                "effective_timeout",
+                "has_database",
+                "has_cache",
+            }
+        )
         assert isinstance(json_str, str)
         assert "serialize_app" in json_str
 
-        # Test JSON deserialization using model_validate_json
+        # Test JSON deserialization
         restored_config = FlextConfig.model_validate_json(json_str)
         assert restored_config.app_name == config.app_name
         assert restored_config.version == config.version

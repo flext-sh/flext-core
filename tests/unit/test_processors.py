@@ -757,16 +757,27 @@ class TestFlextProcessorsCriticalCoverage:
         config = FlextConfig.get_global_instance()
         max_handlers = config.max_workers
 
-        # Fill registry to limit
-        def create_handler(
-            r: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
-            return FlextResult[FlextTypes.Dict].ok({"result": r})
+        # Fill registry to limit - use handlers with handle() method
+        class TestHandler:
+            """Handler with proper handle() method."""
+
+            def handle(
+                self,
+                r: FlextTypes.Dict,
+            ) -> FlextResult[FlextTypes.Dict]:
+                return FlextResult[FlextTypes.Dict].ok({"result": r})
+
+            def __call__(
+                self,
+                r: FlextTypes.Dict,
+            ) -> FlextResult[FlextTypes.Dict]:
+                """Make handler callable for model validation."""
+                return self.handle(r)
 
         for i in range(max_handlers):
             registration = FlextModels.HandlerRegistration(
                 name=f"handler_{i}",
-                handler=create_handler,
+                handler=TestHandler(),
             )
             result = registry.register(registration)
             assert result.is_success
@@ -774,7 +785,7 @@ class TestFlextProcessorsCriticalCoverage:
         # Next registration should fail
         extra_registration = FlextModels.HandlerRegistration(
             name="extra_handler",
-            handler=create_handler,
+            handler=TestHandler(),
         )
         result = registry.register(extra_registration)
         assert result.is_failure

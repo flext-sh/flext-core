@@ -210,21 +210,23 @@ class FlextConfig(BaseSettings):
         # through its metaclass; kwargs are consumed by Pydantic's __init__
         return super().__new__(cls)
 
-    # Pydantic 2.11+ BaseSettings configuration with environment variable support
+    # Pydantic 2.11+ BaseSettings configuration with STRICT validation (BREAKING)
     model_config = SettingsConfigDict(
         case_sensitive=False,
         env_prefix=FlextConstants.Platform.ENV_PREFIX,
         env_file=FlextConstants.Platform.ENV_FILE_DEFAULT,
         env_file_encoding=FlextConstants.Mixins.DEFAULT_ENCODING,
         env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
-        extra="ignore",
+        extra="ignore",  # Allow unknown fields from other projects
         use_enum_values=True,
         frozen=False,
         arbitrary_types_allowed=True,
         validate_return=True,
         validate_assignment=True,
+        validate_default=True,  # Validate all default values
         str_strip_whitespace=True,
         str_to_lower=False,
+        strict=True,  # BREAKING: strict type coercion
         json_schema_extra={
             "title": "FLEXT Configuration",
             "description": "Enterprise FLEXT ecosystem configuration",
@@ -234,11 +236,17 @@ class FlextConfig(BaseSettings):
     # Core application configuration - ALL defaults from FlextConstants
     app_name: str = Field(
         default=f"{FlextConstants.NAME} Application",
+        min_length=1,
+        max_length=256,
+        pattern=r"^[\w\s\-\.]+$",  # Alphanumeric, spaces, hyphens, dots
         description="Application name",
     )
 
     version: str = Field(
         default=FlextConstants.VERSION,
+        min_length=1,
+        max_length=50,
+        pattern=r"^\d+\.\d+\.\d+",  # Semantic versioning pattern
         description="Application version",
     )
 
@@ -276,7 +284,9 @@ class FlextConfig(BaseSettings):
     # Extended logging configuration
     log_verbosity: str = Field(
         default=FlextConstants.Logging.VERBOSITY,
-        description="Logging verbosity level",
+        min_length=3,
+        max_length=20,
+        description="Logging verbosity level (compact, detailed, full)",
     )
 
     include_context: bool = Field(
@@ -291,7 +301,9 @@ class FlextConfig(BaseSettings):
 
     log_file: str | None = Field(
         default=None,
-        description="Log file path",
+        min_length=3,
+        max_length=1024,
+        description="Log file path (must be valid file path)",
     )
 
     log_file_max_size: int = Field(
@@ -324,6 +336,9 @@ class FlextConfig(BaseSettings):
     # Database configuration
     database_url: str | None = Field(
         default=None,
+        min_length=5,
+        max_length=2048,
+        pattern=r"^[a-zA-Z][a-zA-Z0-9+.-]*://",  # Must be valid URI scheme
         description="Database connection URL",
     )
 
@@ -519,6 +534,54 @@ class FlextConfig(BaseSettings):
             raise FlextExceptions.ValidationError(error_msg)
         return v_upper
 
+    @field_validator(
+        "max_retry_attempts",
+        "timeout_seconds",
+        "dispatcher_timeout_seconds",
+        "circuit_breaker_threshold",
+        "rate_limit_max_requests",
+        "executor_workers",
+        "max_workers",
+        "max_batch_size",
+        "max_name_length",
+        "min_phone_digits",
+        "validation_timeout_ms",
+        "log_file_max_size",
+        "log_file_backup_count",
+        "database_pool_size",
+        "cache_ttl",
+        "cache_max_size",
+        mode="before",
+    )
+    @classmethod
+    def validate_int_field(cls, v: int | str) -> int:
+        """Convert string to int for environment variables.
+
+        Pydantic with strict=True won't auto-convert environment variable strings
+        to integers, so we need to handle this explicitly for fields that come
+        from environment variables.
+
+        Args:
+            v: Integer or string representation of integer
+
+        Returns:
+            int: Converted integer value
+
+        Raises:
+            ValueError: If string cannot be converted to integer
+
+        """
+        if isinstance(v, int):
+            return v
+        if isinstance(v, str):
+            try:
+                return int(v.strip())
+            except ValueError as e:
+                msg = f"Cannot convert '{v}' to integer: {e}"
+                raise ValueError(msg) from e
+        msg = f"Expected int or str, got {type(v).__name__}"
+        raise ValueError(msg)
+
     @field_validator("debug", "trace", mode="before")
     @classmethod
     def validate_boolean_field(cls, v: str | bool | int) -> bool:
@@ -553,6 +616,117 @@ class FlextConfig(BaseSettings):
             )
             raise ValueError(msg)
         msg = f"Cannot convert {type(v).__name__} to boolean"
+        raise ValueError(msg)
+
+    @field_validator(
+        "rate_limit_window_seconds",
+        "retry_delay",
+        mode="before",
+    )
+    @classmethod
+    def validate_float_field(cls, v: float | str) -> float:
+        """Convert string to float for environment variables.
+
+        Args:
+            v: Float or string representation of float
+
+        Returns:
+            float: Converted float value
+
+        Raises:
+            ValueError: If string cannot be converted to float
+
+        """
+        if isinstance(v, (int, float)):
+            return float(v)
+        if isinstance(v, str):
+            try:
+                return float(v.strip())
+            except ValueError as e:
+                msg = f"Cannot convert '{v}' to float: {e}"
+                raise ValueError(msg) from e
+        msg = f"Expected float or str, got {type(v).__name__}"
+        raise ValueError(msg)
+
+    @field_validator("database_url")
+    @classmethod
+    def validate_database_url(cls, v: str | None) -> str | None:
+        """Validate database URL format.
+
+        Allows None for optional database configuration.
+        Validates that non-None values follow standard URI scheme format.
+
+        Args:
+            v: Database URL or None
+
+        Returns:
+            str | None: Validated database URL
+
+        Raises:
+            ValueError: If database URL is invalid
+
+        """
+        if v is None:
+            return v
+        v_stripped = v.strip()
+        if not v_stripped:
+            return None
+        # Must start with valid URI scheme (e.g., postgresql://, mysql://, sqlite:)
+        if "://" not in v_stripped:
+            msg = "Invalid database URL: must contain URI scheme (e.g., postgresql://)"
+            raise ValueError(msg)
+        return v_stripped
+
+    @field_validator("log_verbosity")
+    @classmethod
+    def validate_log_verbosity(cls, v: str) -> str:
+        """Validate log verbosity level.
+
+        Ensures verbosity is one of: compact, detailed, full.
+
+        Args:
+            v: Verbosity level
+
+        Returns:
+            str: Validated verbosity level (lowercase)
+
+        Raises:
+            ValueError: If verbosity is invalid
+
+        """
+        return cls.validate_log_verbosity_field(v)
+
+    @field_validator("log_file")
+    @classmethod
+    def validate_log_file(cls, v: str | None) -> str | None:
+        """Validate log file path format.
+
+        Allows None for disabled file logging.
+        Ensures non-None values are valid file paths.
+
+        Args:
+            v: Log file path or None
+
+        Returns:
+            str | None: Validated log file path
+
+        Raises:
+            ValueError: If log file path is invalid
+
+        """
+        if v is None:
+            return v
+        v_stripped = v.strip()
+        if not v_stripped:
+            return None
+        # Basic validation: must not start with invalid characters
+        if v_stripped.startswith("/"):
+            # Absolute path - valid
+            return v_stripped
+        if v_stripped[0].isalpha() or v_stripped[0] in {".", "~"}:
+            # Relative path or special - valid
+            return v_stripped
+        msg = f"Invalid log file path: '{v}' (must be absolute or relative path)"
         raise ValueError(msg)
 
     @model_validator(mode="after")

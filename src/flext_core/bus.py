@@ -16,7 +16,7 @@ import inspect
 import time
 from collections import OrderedDict
 from collections.abc import Callable, Mapping
-from typing import cast
+from typing import TypeVar, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.mixins import FlextMixins
@@ -25,6 +25,10 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
+
+# Type variables for generic message handling
+MessageT = TypeVar("MessageT")  # Covariant message type
+ResultT = TypeVar("ResultT")  # Covariant result type
 
 
 class FlextBus(
@@ -42,12 +46,18 @@ class FlextBus(
     handlers with automatic validation and result wrapping.
 
     Protocol Compliance:
-        - register_handler(*args) -> FlextResult[None] - Register command handler
-        - execute(command) -> FlextResult[object] - Execute command/query
+        - register_handler(*args) -> FlextResult[None] - Register command handler (validates handle() interface)
+        - execute(command) -> FlextResult[object] - Execute command/query via standard handle() method
         - add_middleware(middleware, config) -> FlextResult[None] - Add middleware
         - find_handler(command) -> object | None - Find handler for command
         - get_all_handlers() -> list - Retrieve all registered handlers
         - unregister_handler(command_type) -> FlextResult[None] - Remove handler
+
+    BREAKING CHANGES (Phase 6 - v0.9.9):
+        - Handlers MUST implement handle(message) -> FlextResult[object]
+        - No fallback to execute() or process_command() methods
+        - Handler validation occurs at registration time
+        - Non-compliant handlers rejected with detailed error messages
 
     Features:
         - Handler registration with automatic discovery
@@ -248,7 +258,10 @@ class FlextBus(
         return {}
 
     def register_handler(self, *args: object) -> FlextResult[None]:
-        """Register a handler instance.
+        """Register a handler instance with required interface validation.
+
+        Phase 6 Breaking Change: Handlers MUST implement handle() method.
+        No fallback to execute() or process_command() - enforces standard interface.
 
         Args:
             *args: Handler instance or (command_type, handler) pair
@@ -262,12 +275,14 @@ class FlextBus(
             if handler is None:
                 return FlextResult[None].fail("Handler cannot be None")
 
-            # Validate handler has required method
+            # BREAKING CHANGE (Phase 6): Require standard handle() method
+            # Enforces type-safe handler interface across entire ecosystem
             method_name = FlextConstants.Mixins.METHOD_HANDLE
             handle_method = getattr(handler, method_name, None)
             if not callable(handle_method):
                 return FlextResult[None].fail(
-                    f"Invalid handler: must have callable '{method_name}' method"
+                    f"Invalid handler: must have callable '{method_name}' method. "
+                    f"Handlers must implement handle(message) -> FlextResult[object]"
                 )
 
             # Add to auto-discovery list
@@ -302,6 +317,15 @@ class FlextBus(
 
             if isinstance(command_type_obj, str) and not command_type_obj.strip():
                 return FlextResult[None].fail("Command type cannot be empty")
+
+            # BREAKING CHANGE (Phase 6): Validate handler interface
+            method_name = FlextConstants.Mixins.METHOD_HANDLE
+            handle_method = getattr(handler, method_name, None)
+            if not callable(handle_method):
+                return FlextResult[None].fail(
+                    f"Invalid handler for '{command_type_obj}': must have callable '{method_name}' method. "
+                    f"Handlers must implement handle(message) -> FlextResult[object]"
+                )
 
             key = self._normalize_command_key(command_type_obj)
             self._handlers[key] = handler
@@ -604,10 +628,13 @@ class FlextBus(
         handler: object,
         command: object,
     ) -> FlextResult[object]:
-        """Execute the handler while normalizing return types to `FlextResult`.
+        """Execute the handler using standard handle() method.
+
+        Requires handlers to implement handle(message) -> FlextResult[object].
+        This eliminates the fallback pattern for type consistency.
 
         Args:
-            handler: The handler instance to execute
+            handler: The handler instance to execute (must have handle() method)
             command: The command/query to process
 
         Returns:
@@ -619,55 +646,26 @@ class FlextBus(
             handler_type=handler.__class__.__name__,
         )
 
-        # ISSUE: Fallback pattern - tries multiple method names instead
-        # of requiring standard interface
-        # Try different handler methods in order of preference
-        handler_methods = [
-            FlextConstants.Mixins.METHOD_EXECUTE,
-            FlextConstants.Mixins.METHOD_HANDLE,
-            FlextConstants.Mixins.METHOD_PROCESS_COMMAND,
-        ]
-
-        last_failure: FlextResult[object] | None = None
-
-        for method_name in handler_methods:
-            method = getattr(handler, method_name, None)
-            if callable(method):
-                try:
-                    result = method(command)
-                    if isinstance(result, FlextResult):
-                        # Cast to FlextResult[object] to ensure type compatibility
-                        typed_result: FlextResult[object] = cast(
-                            "FlextResult[object]",
-                            result,
-                        )
-                        if typed_result.is_success:
-                            return typed_result
-                        last_failure = typed_result
-                    else:
-                        return FlextResult[object].ok(result)
-                except Exception as e:
-                    return FlextResult[object].fail(
-                        f"Handler execution failed: {e}",
-                        error_code=str(FlextConstants.Errors.COMMAND_PROCESSING_FAILED),
-                    )
-
-        # No valid handler method found
-        if not handler_methods:
-            formatted_methods = "handler method"
-        elif len(handler_methods) > 1:
-            formatted_methods = (
-                f"{', '.join(handler_methods[:-1])}, or {handler_methods[-1]}"
+        # BREAKING CHANGE: Require standard handle() method (Phase 6)
+        # No fallback to execute() or process_command() - must use handle()
+        handle_method = getattr(handler, FlextConstants.Mixins.METHOD_HANDLE, None)
+        if not callable(handle_method):
+            return FlextResult[object].fail(
+                f"Handler must have callable '{FlextConstants.Mixins.METHOD_HANDLE}' method",
+                error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
             )
-        else:
-            formatted_methods = handler_methods[0]
-        if last_failure is not None:
-            return last_failure
 
-        return FlextResult[object].fail(
-            f"Handler has no callable {formatted_methods} method",
-            error_code=str(FlextConstants.Errors.COMMAND_BUS_ERROR),
-        )
+        try:
+            result = handle_method(command)
+            if isinstance(result, FlextResult):
+                return result
+            # Wrap non-FlextResult return values
+            return FlextResult[object].ok(result)
+        except Exception as e:
+            return FlextResult[object].fail(
+                f"Handler execution failed: {e}",
+                error_code=FlextConstants.Errors.COMMAND_PROCESSING_FAILED,
+            )
 
     def add_middleware(
         self,

@@ -662,9 +662,15 @@ class FlextResult[T_co]:
         return
 
     @property
-    def data(self) -> T_co | None:
-        """Legacy property for backward compatibility - equivalent to value_or_none."""
-        return self._data if self.is_success else None
+    def data(self) -> T_co:
+        """Legacy property for backward compatibility - equivalent to value."""
+        if self.is_failure:
+            msg = "Attempted to access data on failed result"
+            raise FlextResult._get_exceptions().ValidationError(
+                message=msg,
+                error_code="VALIDATION_ERROR",
+            )
+        return cast("T_co", self._data)
 
     @property
     def value_or_none(self) -> T_co | None:
