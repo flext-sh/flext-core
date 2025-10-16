@@ -17,20 +17,39 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextCore
+from flext_core import (
+    FlextBus,
+    FlextConfig,
+    FlextConstants,
+    FlextContainer,
+    FlextContext,
+    FlextDispatcher,
+    FlextExceptions,
+    FlextHandlers,
+    FlextLogger,
+    FlextMixins,
+    FlextModels,
+    FlextProcessors,
+    FlextProtocols,
+    FlextRegistry,
+    FlextResult,
+    FlextService,
+    FlextTypes,
+    FlextUtilities,
+)
 
 class TestMigrationScenario1:
-    """Test Scenario 1: Existing Application Using FlextCore.Result (No Changes Required)."""
+    """Test Scenario 1: Existing Application Using FlextResult (No Changes Required)."""
 
     def test_flext_result_dual_access_pattern(self) -> None:
         """Verify both .value and .data access patterns work (ABI compatibility)."""
 
-        def process_user(user_id: str) -> FlextCore.Result[dict[str, str]]:
+        def process_user(user_id: str) -> FlextResult[dict[str, str]]:
             if not user_id:
-                return FlextCore.Result[dict[str, str]].fail("User ID required")
+                return FlextResult[dict[str, str]].fail("User ID required")
 
             user_data: dict[str, str] = {"id": user_id, "name": "Alice"}
-            return FlextCore.Result[dict[str, str]].ok(user_data)
+            return FlextResult[dict[str, str]].ok(user_data)
 
         # Test with .value (primary access - documented pattern)
         result = process_user("user_123")
@@ -46,10 +65,10 @@ class TestMigrationScenario1:
     def test_flext_result_error_handling(self) -> None:
         """Verify error handling patterns continue working."""
 
-        def validate_email(email: str) -> FlextCore.Result[str]:
+        def validate_email(email: str) -> FlextResult[str]:
             if "@" not in email:
-                return FlextCore.Result[str].fail("Invalid email format")
-            return FlextCore.Result[str].ok(email)
+                return FlextResult[str].fail("Invalid email format")
+            return FlextResult[str].ok(email)
 
         # Test failure case
         failure_result = validate_email("invalid")
@@ -63,20 +82,20 @@ class TestMigrationScenario1:
 
 
 class TestMigrationScenario2:
-    """Test Scenario 2: Using FlextCore.Container for Dependency Injection."""
+    """Test Scenario 2: Using FlextContainer for Dependency Injection."""
 
     def test_container_global_instance(self) -> None:
-        """Verify FlextCore.Container.get_global() continues working."""
-        container = FlextCore.Container.get_global()
+        """Verify FlextContainer.get_global() continues working."""
+        container = FlextContainer.get_global()
         assert container is not None
 
         # Verify singleton pattern
-        container2 = FlextCore.Container.get_global()
+        container2 = FlextContainer.get_global()
         assert container is container2
 
     def test_container_registration_and_resolution(self) -> None:
         """Verify service registration and resolution."""
-        container = FlextCore.Container.get_global()
+        container = FlextContainer.get_global()
 
         # Register a simple service
         class TestService:
@@ -98,30 +117,30 @@ class TestMigrationScenario2:
 
 
 class TestMigrationScenario4:
-    """Test Scenario 4: Service Layer with FlextCore.Service."""
+    """Test Scenario 4: Service Layer with FlextService."""
 
     def test_service_base_class_extension(self) -> None:
-        """Verify FlextCore.Service extension pattern continues working."""
+        """Verify FlextService extension pattern continues working."""
 
-        class UserService(FlextCore.Service[None]):
-            """User service extending FlextCore.Service."""
+        class UserService(FlextService[None]):
+            """User service extending FlextService."""
 
             def __init__(self) -> None:
                 super().__init__()
-                self._logger = FlextCore.Logger(__name__)
+                self._logger = FlextLogger(__name__)
 
-            def execute(self) -> FlextCore.Result[None]:
-                """Execute method required by FlextCore.Service abstract class."""
-                return FlextCore.Result[None].ok(None)
+            def execute(self) -> FlextResult[None]:
+                """Execute method required by FlextService abstract class."""
+                return FlextResult[None].ok(None)
 
-            def create_user(self, username: str, email: str) -> FlextCore.Result[dict[str, str]]:
+            def create_user(self, username: str, email: str) -> FlextResult[dict[str, str]]:
                 """Create user with validation."""
                 if not username or not email:
-                    return FlextCore.Result[dict[str, str]].fail("Username and email required")
+                    return FlextResult[dict[str, str]].fail("Username and email required")
 
                 self._logger.info("Creating user", extra={"username": username})
                 user_data = {"username": username, "email": email}
-                return FlextCore.Result[dict[str, str]].ok(user_data)
+                return FlextResult[dict[str, str]].ok(user_data)
 
         # Test service functionality
         service = UserService()
@@ -131,11 +150,11 @@ class TestMigrationScenario4:
 
 
 class TestMigrationScenario5:
-    """Test Scenario 5: Logging with FlextCore.Logger."""
+    """Test Scenario 5: Logging with FlextLogger."""
 
     def test_logger_structured_logging(self) -> None:
-        """Verify FlextCore.Logger continues working."""
-        logger = FlextCore.Logger(__name__)
+        """Verify FlextLogger continues working."""
+        logger = FlextLogger(__name__)
         assert logger is not None
 
         # Test logging methods exist and are callable
@@ -151,32 +170,32 @@ class TestBackwardCompatibility:
     def test_all_stable_apis_accessible(self) -> None:
         """Verify all guaranteed stable APIs from API_STABILITY.md are accessible."""
         # Core foundation (Level 1: 100% stable)
-        from flext_core import FlextCore
+        # No longer using FlextCore facade
 
         # Verify all imports successful
-        assert FlextCore.Result is not None
-        assert FlextCore.Container is not None
-        assert FlextCore.Models is not None
-        assert FlextCore.Service is not None
-        assert FlextCore.Logger is not None
-        assert FlextCore.Bus is not None
-        assert FlextCore.Config is not None
-        assert FlextCore.Constants is not None
-        assert FlextCore.Context is not None
-        assert FlextCore.Dispatcher is not None
-        assert FlextCore.Exceptions is not None
-        assert FlextCore.Handlers is not None
-        assert FlextCore.Mixins is not None
-        assert FlextCore.Processors is not None
-        assert FlextCore.Protocols is not None
-        assert FlextCore.Registry is not None
-        assert FlextCore.Types is not None
-        assert FlextCore.Utilities is not None
+        assert FlextResult is not None
+        assert FlextContainer is not None
+        assert FlextModels is not None
+        assert FlextService is not None
+        assert FlextLogger is not None
+        assert FlextBus is not None
+        assert FlextConfig is not None
+        assert FlextConstants is not None
+        assert FlextContext is not None
+        assert FlextDispatcher is not None
+        assert FlextExceptions is not None
+        assert FlextHandlers is not None
+        assert FlextMixins is not None
+        assert FlextProcessors is not None
+        assert FlextProtocols is not None
+        assert FlextRegistry is not None
+        assert FlextTypes is not None
+        assert FlextUtilities is not None
 
     def test_flext_result_all_methods(self) -> None:
-        """Verify all FlextCore.Result methods continue working."""
+        """Verify all FlextResult methods continue working."""
         # Create success result
-        success = FlextCore.Result[str].ok("test_value")
+        success = FlextResult[str].ok("test_value")
 
         # Test all documented methods and properties
         assert success.is_success
@@ -188,7 +207,7 @@ class TestBackwardCompatibility:
         assert success.unwrap_or("default") == "test_value"
 
         # Create failure result
-        failure = FlextCore.Result[str].fail("test_error")
+        failure = FlextResult[str].fail("test_error")
 
         assert not failure.is_success
         assert failure.is_failure
@@ -208,14 +227,14 @@ class TestBackwardCompatibility:
         # "Deprecated: NONE in 1.0.0 release - All 0.9.9 APIs remain fully supported"
 
         # Test that old patterns still work without deprecation
-        result = FlextCore.Result[str].ok("test")
+        result = FlextResult[str].ok("test")
 
         # Both access patterns work
         _ = result.value  # No warning
         _ = result.data  # No warning
 
         # Container patterns work
-        container = FlextCore.Container.get_global()
+        container = FlextContainer.get_global()
         assert container is not None
 
 
@@ -231,17 +250,17 @@ class TestMigrationComplexity:
 
             def __init__(self) -> None:
                 super().__init__()
-                self.logger = FlextCore.Logger(__name__)
-                self.container = FlextCore.Container.get_global()
+                self.logger = FlextLogger(__name__)
+                self.container = FlextContainer.get_global()
 
-            def process_data(self, data: dict[str, str]) -> FlextCore.Result[dict[str, object]]:
+            def process_data(self, data: dict[str, str]) -> FlextResult[dict[str, object]]:
                 """Typical data processing method."""
                 if not data:
-                    return FlextCore.Result[dict[str, object]].fail("Data required")
+                    return FlextResult[dict[str, object]].fail("Data required")
 
                 self.logger.info("Processing data", extra={"size": len(data)})
                 processed: dict[str, object] = {"original": str(data), "processed": True}
-                return FlextCore.Result[dict[str, object]].ok(processed)
+                return FlextResult[dict[str, object]].ok(processed)
 
         # Test application works identically
         app = ExistingApplication()

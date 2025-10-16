@@ -14,20 +14,22 @@ from typing import (
     TypeVar,
 )
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextTypes
 
 T_co = TypeVar("T_co", covariant=True)
+TKey = TypeVar("TKey")
+TValue = TypeVar("TValue")
 
 
-class TestDataBuilder:
-    """Builder for test datasets."""
+class DataBuilder:
+    """Builder for test datasets (renamed to avoid pytest collection)."""
 
     def __init__(self) -> None:
         """Initialize test data builder."""
         super().__init__()
-        self._data: FlextCore.Types.Dict = {}
+        self._data: FlextTypes.Dict = {}
 
-    def with_users(self, count: int = 5) -> TestDataBuilder:
+    def with_users(self, count: int = 5) -> DataBuilder:
         """Add users to dataset."""
         self._data["users"] = [
             {
@@ -40,7 +42,7 @@ class TestDataBuilder:
         ]
         return self
 
-    def with_configs(self, *, production: bool = False) -> TestDataBuilder:
+    def with_configs(self, *, production: bool = False) -> DataBuilder:
         """Add configuration to dataset."""
         self._data["configs"] = {
             "environment": "production" if production else "development",
@@ -51,7 +53,7 @@ class TestDataBuilder:
         }
         return self
 
-    def with_validation_fields(self, count: int = 5) -> TestDataBuilder:
+    def with_validation_fields(self, count: int = 5) -> DataBuilder:
         """Add validation fields to dataset."""
         self._data["validation_fields"] = {
             "valid_emails": [f"user{i}@example.com" for i in range(count)],
@@ -61,7 +63,7 @@ class TestDataBuilder:
         }
         return self
 
-    def build(self) -> FlextCore.Types.Dict:
+    def build(self) -> FlextTypes.Dict:
         """Build the dataset."""
         return dict[str, object](self._data)
 
@@ -78,7 +80,7 @@ class FlextTestsMatchers:
         def __init__(self) -> None:
             """Initialize test data builder."""
             super().__init__()
-            self._data: FlextCore.Types.Dict = {}
+            self._data: FlextTypes.Dict = {}
 
         def with_users(self, count: int = 5) -> FlextTestsMatchers.TestDataBuilder:
             """Add users to dataset."""
@@ -118,19 +120,19 @@ class FlextTestsMatchers:
             }
             return self
 
-        def build(self) -> FlextCore.Types.Dict:
+        def build(self) -> FlextTypes.Dict:
             """Build the dataset."""
             return dict[str, object](self._data)
 
     def assert_result_success(
         self,
-        result: FlextCore.Result[T_co],
+        result: FlextResult[T_co],
         message: str | None = None,
     ) -> None:
-        """Assert that a FlextCore.Result is successful.
+        """Assert that a FlextResult is successful.
 
         Args:
-            result: FlextCore.Result to check
+            result: FlextResult to check
             message: Custom error message
 
         Raises:
@@ -141,14 +143,14 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_result_failure(
-        result: FlextCore.Result[T_co],
+        result: FlextResult[T_co],
         expected_error: str | None = None,
         message: str | None = None,
     ) -> None:
-        """Assert that a FlextCore.Result is a failure.
+        """Assert that a FlextResult is a failure.
 
         Args:
-            result: FlextCore.Result to check
+            result: FlextResult to check
             expected_error: Expected error message substring
             message: Custom error message
 
@@ -166,8 +168,8 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_dict_contains(
-        data: FlextCore.Types.Dict,
-        expected: FlextCore.Types.Dict,
+        data: dict[TKey, TValue],
+        expected: dict[TKey, TValue],
         message: str | None = None,
     ) -> None:
         """Assert that a dictionary contains expected key-value pairs.
@@ -189,8 +191,8 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_list_contains(
-        items: FlextCore.Types.List,
-        expected_item: object,
+        items: list[TValue],
+        expected_item: TValue,
         message: str | None = None,
     ) -> None:
         """Assert that a list contains an expected item.
@@ -228,7 +230,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_config_valid(
-        config: FlextCore.Types.Dict, message: str | None = None
+        config: dict[TKey, TValue], message: str | None = None
     ) -> None:
         """Assert that a configuration dictionary is valid.
 

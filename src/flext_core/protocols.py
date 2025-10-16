@@ -1,8 +1,27 @@
 """Protocol definitions for interface contracts and type safety.
 
-This module provides FlextProtocols, a comprehensive collection of protocol
+This module provides FlextProtocols, a hierarchical collection of protocol
 definitions that establish interface contracts and enable type-safe
 implementations throughout the FLEXT ecosystem.
+
+ARCHITECTURE:
+    Layer 0: Foundation protocols (used within flext-core)
+    Layer 1: Domain protocols (services, repositories)
+    Layer 2: Application protocols (command/query patterns)
+    Layer 3: Infrastructure protocols (external integrations)
+
+PROTOCOL INHERITANCE:
+    Protocols use inheritance to reduce duplication and create logical hierarchies.
+    Example: HasModelFields extends HasModelDump, adding model_fields attribute.
+
+USAGE IN PROJECTS:
+    Domain libraries extend FlextProtocols with domain-specific protocols:
+
+    >>> class FlextLdapProtocols(FlextProtocols):
+    ...     class Ldap:
+    ...         class LdapConnection(FlextProtocols.Service):
+    ...             # LDAP-specific extensions
+    ...             pass
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,937 +35,581 @@ from collections.abc import Callable
 from typing import (
     Generic,
     Protocol,
-    TypeVar,
     overload,
     runtime_checkable,
 )
 
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
-
-# Local TypeVars for protocol definitions (avoiding import of instance TypeVars)
-T_ResultProtocol = TypeVar("T_ResultProtocol")  # Invariant (used in parameters)
-T_Validator_contra = TypeVar("T_Validator_contra", contravariant=True)
-T_Service_co = TypeVar("T_Service_co", covariant=True)
-T_Repository_contra = TypeVar("T_Repository_contra", contravariant=True)
-TInput_Handler_contra = TypeVar("TInput_Handler_contra", contravariant=True)
-TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True)
+from flext_core.typings import (
+    FlextTypes,
+    T_Repository_contra,
+    T_ResultProtocol,
+    T_Service_co,
+    TInput_Handler_contra,
+    TResult_Handler_co,
+)
 
 
 class FlextProtocols:
-    """Protocol definitions for interface contracts and type safety.
+    """Hierarchical protocol definitions for FLEXT ecosystem.
 
-    Provides comprehensive protocol definitions that establish interface
-    contracts and enable type-safe implementations throughout the FLEXT ecosystem.
+    This class provides a complete protocol hierarchy for the FLEXT ecosystem,
+    organized by architectural layers and using inheritance to reduce duplication.
 
-    Includes:
-    - Foundation: Core protocols for validators, serialization, and basic interfaces
-    - Domain: Domain layer protocols for services and repositories
-    - Application: Application layer protocols for handlers and use cases
-    - Infrastructure: Infrastructure protocols for external systems and configuration
-    - Extensions: Extension protocols for plugins and middleware
+    CORE PRINCIPLES:
+        1. Protocols in flext-core are ONLY those used within flext-core
+        2. Domain-specific protocols live in their respective projects
+        3. Protocol inheritance creates logical hierarchies
+        4. All protocols are @runtime_checkable for isinstance() validation
 
-    All protocols use @runtime_checkable for isinstance checks and provide
-    type-safe interfaces for implementing components.
+    ARCHITECTURAL LAYERS:
+        - Foundation: Core building blocks (serialization, validation)
+        - Domain: Business logic protocols (services, repositories)
+        - Application: Use case patterns (handlers, command bus)
+        - Infrastructure: External integrations (connections, logging)
 
-    Usage:
-        >>> from flext_core.protocols import FlextProtocols
-        >>>
-        >>> class EmailValidator(FlextProtocols.Foundation.Validator[str]):
-        ...     def validate(self, data: str) -> object:
-        ...         if "@" not in data:
-        ...             return FlextResult.fail("Invalid email")
-        ...         return FlextResult.ok(None)
+    EXTENSION PATTERN:
+        Domain libraries extend FlextProtocols:
+
+        >>> class FlextAuthProtocols(FlextProtocols):
+        ...     class Auth:
+        ...         class UserProtocol(FlextProtocols.Service):
+        ...             pass
+
     """
 
     # =========================================================================
-    # FOUNDATION LAYER - Core building blocks
+    # FOUNDATION LAYER - Core protocols used within flext-core
     # =========================================================================
 
-    class Foundation:
-        """Foundation layer protocols cementing the 1.0.0 contracts."""
+    @runtime_checkable
+    class HasModelDump(Protocol):
+        """Protocol for objects with model_dump method (Pydantic compatibility).
 
-        @runtime_checkable
-        class OperationCallable(Protocol):
-            """Protocol for callable operations in the FLEXT ecosystem.
+        Base protocol for Pydantic-like model serialization. Extended by other
+        protocols to add additional capabilities.
 
-            This protocol defines the interface for operations that can be executed
-            within the FLEXT framework, ensuring type safety and consistent behavior.
+        Used in: utilities.py (safe_serialize_to_dict, model_dump)
+
+        Extensions:
+            - HasModelFields: Adds model_fields attribute
+            - ModelProtocol: Adds validation methods
+        """
+
+        def model_dump(self, mode: str = "python") -> FlextTypes.Dict:
+            """Dump the model to a dictionary.
+
+            Args:
+                mode: Serialization mode ('python' or 'json')
+
+            Returns:
+                Dictionary representation of the model
+
             """
+            ...
 
-            def __call__(self, *args: object, **kwargs: object) -> object:
-                """Execute the operation with given arguments.
+    @runtime_checkable
+    class HasModelFields(HasModelDump, Protocol):
+        """Protocol for objects with model_fields attribute.
 
-                Args:
-                    *args: Positional arguments for the operation
-                    **kwargs: Keyword arguments for the operation
+        Extends HasModelDump with model_fields attribute for Pydantic models.
+        Inherits model_dump method from parent protocol.
 
-                Returns:
-                    The result of the operation execution
+        Used in: utilities.py (safe_serialize_to_dict)
 
-                """
-                ...
+        Inheritance: HasModelDump → HasModelFields
+        """
 
-        @runtime_checkable
-        class Validator(Protocol, Generic[T_Validator_contra]):
-            """Generic validator protocol reused by modernization guardrails."""
+        model_fields: FlextTypes.Dict
 
-            def validate(self, data: T_Validator_contra) -> object:
-                """Validate input data according to the shared release policy."""
-                ...
+    @runtime_checkable
+    class HasResultValue(Protocol):
+        """Protocol for FlextResult-like objects.
 
-        @runtime_checkable
-        class HasModelDump(Protocol):
-            """Protocol for objects that have model_dump method.
+        Minimal protocol for result types with value and success status.
+        Used for type checking without importing FlextResult (breaks circular imports).
 
-            Supports Pydantic's model_dump signature with optional mode parameter.
+        Used in: processors.py (middleware processing)
+        """
+
+        value: object
+        is_success: bool
+
+    @runtime_checkable
+    class HasValidateCommand(Protocol):
+        """Protocol for commands with validate_command method.
+
+        CQRS pattern support for command validation before execution.
+
+        Used in: bus.py (command validation)
+        """
+
+        def validate_command(self) -> FlextResult[None]:
+            """Validate command and return FlextResult."""
+            ...
+
+    @runtime_checkable
+    class HasInvariants(Protocol):
+        """Protocol for domain objects with business invariants.
+
+        Domain-Driven Design pattern for aggregate root validation.
+
+        Used in: models.py (validate_aggregate_consistency)
+        """
+
+        def check_invariants(self) -> None:
+            """Check business invariants for the object.
+
+            Raises:
+                FlextExceptions.ValidationError: If any invariant is violated
+
             """
+            ...
 
-            def model_dump(self, mode: str = "python") -> FlextTypes.Dict:
-                """Dump the model to a dictionary.
+    @runtime_checkable
+    class HasTimestamps(Protocol):
+        """Protocol for objects with timestamp attributes.
 
-                Args:
-                    mode: Serialization mode ('python' or 'json')
+        Provides standardized timestamp tracking for audit and versioning.
+        Used for entities that need creation/modification timestamps.
 
-                Returns:
-                    Dictionary representation of the model
+        Used in: models with timestamp fields
+        """
 
-                """
-                ...
+        created_at: str | int | float
+        updated_at: str | int | float
 
-        @runtime_checkable
-        class HasModelFields(Protocol):
-            """Protocol for objects that have model_fields attribute.
+    @runtime_checkable
+    class HasHandlerType(Protocol):
+        """Protocol for handlers with type identification.
 
-            Consolidated from mixins.py for centralized protocol management.
+        Allows handlers to declare their type (command/query) for routing
+        and middleware processing.
+
+        Used in: handler implementations
+        """
+
+        handler_type: str
+
+    @runtime_checkable
+    class Configurable(Protocol):
+        """Protocol for configurable components.
+
+        Infrastructure protocol for components that can be configured with
+        dictionary-based settings. Returns FlextResult for error handling.
+
+        Used in: container.py (FlextContainer configuration)
+
+        Note: Replaces duplicate Configurable in Infrastructure namespace.
+        """
+
+        def configure(self, config: FlextTypes.Dict) -> FlextResult[None]:
+            """Configure component with provided settings.
+
+            Args:
+                config: Configuration dictionary
+
+            Returns:
+                FlextResult[None]: Success if configured, failure with error details
+
             """
-
-            model_fields: FlextTypes.Dict
-
-            def model_dump(self, **kwargs: object) -> FlextTypes.Dict:
-                """Dump model to dictionary (Pydantic compatibility)."""
-                ...
-
-        @runtime_checkable
-        class HasValue(Protocol):
-            """Protocol for enum-like objects with a value attribute.
-
-            Consolidated from loggings.py for centralized protocol management.
-            """
-
-            value: object
-
-        @runtime_checkable
-        class HasInvariants(Protocol):
-            """Protocol for objects that have business invariants to check.
-
-            Objects implementing this protocol can have their business invariants
-            validated through the check_invariants method.
-            """
-
-            def check_invariants(self) -> None:
-                """Check business invariants for the object.
-
-                Raises:
-                    FlextExceptions.ValidationError: If any invariant is violated
-
-                """
-                ...
-
-        @runtime_checkable
-        class HasResultValue(Protocol):
-            """Protocol for FlextResult-like objects with value and is_success attributes.
-
-            Consolidated from processors.py for centralized protocol management.
-            """
-
-            value: object
-            is_success: bool
-
-        @runtime_checkable
-        class HasTimestamps(Protocol):
-            """Protocol for objects with created_at and updated_at timestamps.
-
-            Consolidated from service.py for centralized protocol management.
-            """
-
-            created_at: object
-            updated_at: object
-
-        @runtime_checkable
-        class HasHandlerType(Protocol):
-            """Protocol for config objects with handler_type attribute.
-
-            Consolidated from config.py for centralized protocol management.
-            """
-
-            handler_type: str | None
-
-        @runtime_checkable
-        class HasValidateCommand(Protocol):
-            """Protocol for commands with validate_command method.
-
-            Consolidated from bus.py for centralized protocol management.
-            """
-
-            def validate_command(self) -> FlextResult[None]:
-                """Validate command and return FlextResult."""
-                ...
-
-        @runtime_checkable
-        class Injectable(Protocol):
-            """Protocol for DI-injectable components with logger access.
-
-            Components implementing this protocol can receive logger instances
-            through dependency injection from FlextContainer.
-            """
-
-            @property
-            def logger(self) -> object:
-                """Get logger instance from DI container.
-
-                Returns:
-                    Logger instance injected via FlextContainer
-
-                """
-                ...
-
-        @runtime_checkable
-        class ContextAware(Protocol):
-            """Protocol for context-aware components using structlog.
-
-            Components implementing this protocol can manage execution context
-            using structlog's contextvars for automatic context propagation.
-            """
-
-            def get_current_context(self) -> FlextTypes.Dict:
-                """Get current structlog context.
-
-                Returns:
-                    Dictionary of current context variables
-
-                """
-                ...
-
-            def bind_context(self, **context_data: object) -> None:
-                """Bind context data to current context.
-
-                Args:
-                    **context_data: Context key-value pairs to bind
-
-                """
-                ...
-
-            def clear_context(self) -> None:
-                """Clear all context variables."""
-                ...
-
-        @runtime_checkable
-        class Measurable(Protocol):
-            """Protocol for components with performance measurement capabilities.
-
-            Components implementing this protocol can measure operation timing
-            with automatic logging and structlog integration.
-            """
-
-            def get_timing_stats(self) -> FlextTypes.Dict:
-                """Get timing statistics from structlog context.
-
-                Returns:
-                    Dictionary of timing metrics with _ms suffix keys
-
-                """
-                ...
-
-        @runtime_checkable
-        class Validatable(Protocol):
-            """Protocol for components with returns-based validation.
-
-            Components implementing this protocol can validate data using
-            railway-oriented programming with FlextResult composition.
-            """
-
-            def validate_with_result(
-                self,
-                data: object,
-                validators: FlextTypes.List | None = None,
-            ) -> object:
-                """Validate data using returns Result type.
-
-                Args:
-                    data: Data to validate
-                    validators: List of validator functions
-
-                Returns:
-                    FlextResult indicating validation success or failure
-
-                """
-                ...
-
-        @runtime_checkable
-        class ResultProtocol(Protocol, Generic[T_ResultProtocol]):
-            """Protocol for FlextResult-like types (breaks circular imports).
-
-            This protocol defines the interface for result types without importing
-            the concrete FlextResult class, preventing circular dependencies between
-            config, models, utilities, and result modules.
-            """
-
-            @property
-            def is_success(self) -> bool:
-                """Check if result represents success."""
-                ...
-
-            @property
-            def is_failure(self) -> bool:
-                """Check if result represents failure."""
-                ...
-
-            @property
-            def value(self) -> T_ResultProtocol:
-                """Get the success value (may raise if failure)."""
-                ...
-
-            @property
-            def error(self) -> str | None:
-                """Get the error message if failure, None otherwise."""
-                ...
-
-            def unwrap(self) -> T_ResultProtocol:
-                """Extract value, raising exception if failure."""
-                ...
-
-            def unwrap_or(self, default: T_ResultProtocol) -> T_ResultProtocol:
-                """Extract value or return default if failure."""
-                ...
-
-        @runtime_checkable
-        class ConfigProtocol(Protocol):
-            """Protocol for FlextConfig-like types (breaks circular imports).
-
-            This protocol defines the interface for configuration objects without
-            importing the concrete FlextConfig class, preventing circular dependencies
-            between config, utilities, models, and other modules.
-            """
-
-            @property
-            def debug(self) -> bool:
-                """Check if debug mode is enabled."""
-                ...
-
-            @property
-            def log_level(self) -> str:
-                """Get logging level."""
-                ...
-
-        @runtime_checkable
-        class LoggerProtocolSimple(Protocol):
-            """Simplified logger protocol (breaks circular imports).
-
-            This protocol defines a minimal interface for logger objects without
-            importing the concrete FlextLogger class, preventing circular dependencies.
-            This is a simpler alternative to Infrastructure.LoggerProtocol for cases
-            where full FlextResult integration is not needed.
-            """
-
-            def debug(self, message: str, **kwargs: object) -> None:
-                """Log debug message."""
-                ...
-
-            def info(self, message: str, **kwargs: object) -> None:
-                """Log info message."""
-                ...
-
-            def warning(self, message: str, **kwargs: object) -> None:
-                """Log warning message."""
-                ...
-
-            def error(self, message: str, **kwargs: object) -> None:
-                """Log error message."""
-                ...
-
-        @runtime_checkable
-        class ModelProtocol(Protocol):
-            """Protocol for model-like objects (breaks circular imports).
-
-            This protocol defines the interface for domain model types without
-            importing the concrete FlextModels class, preventing circular dependencies
-            between models, config, utilities, and other modules.
-            """
-
-            def validate(self) -> object:
-                """Validate model business rules.
-
-                Returns:
-                    FlextResult[None]: Success if valid, failure with error details
-
-                """
-                ...
-
-            def model_dump(self, **kwargs: object) -> FlextTypes.Dict:
-                """Dump model to dictionary (Pydantic compatibility).
-
-                Args:
-                    **kwargs: Additional serialization options
-
-                Returns:
-                    Dictionary representation of the model
-
-                """
-                ...
-
-            def model_dump_json(self, **kwargs: object) -> str:
-                """Dump model to JSON string (Pydantic compatibility).
-
-                Args:
-                    **kwargs: Additional serialization options
-
-                Returns:
-                    JSON string representation of the model
-
-                """
-                ...
-
-        @runtime_checkable
-        class ValidationUtility(Protocol):
-            """Protocol for validation utility functions (breaks circular imports).
-
-            This protocol defines interfaces for validation utilities without
-            importing concrete utility implementations, preventing circular dependencies.
-            """
-
-            @staticmethod
-            def validate_email(email: str) -> bool:
-                """Validate email address format.
-
-                Args:
-                    email: Email address to validate
-
-                Returns:
-                    True if valid email, False otherwise
-
-                """
-                ...
-
-            @staticmethod
-            def validate_url(url: str) -> bool:
-                """Validate URL format.
-
-                Args:
-                    url: URL to validate
-
-                Returns:
-                    True if valid URL, False otherwise
-
-                """
-                ...
-
-            @staticmethod
-            def validate_phone(phone: str) -> bool:
-                """Validate phone number format.
-
-                Args:
-                    phone: Phone number to validate
-
-                Returns:
-                    True if valid phone, False otherwise
-
-                """
-                ...
-
-        @runtime_checkable
-        class ConstantsProtocol(Protocol):
-            """Protocol for constants access (breaks circular imports).
-
-            This protocol defines interfaces for accessing constants without
-            importing the concrete FlextConstants class, preventing circular dependencies.
-            """
-
-            DEFAULT_LOG_LEVEL: str
-            DEFAULT_TIMEOUT: int
-            DEFAULT_ENCODING: str
-            DEFAULT_MAX_WORKERS: int
-            DEFAULT_PAGE_SIZE: int
-
-        @runtime_checkable
-        class OperationExecutionRequestProtocol(Protocol):
-            """Protocol for operation execution request (breaks circular imports).
-
-            This protocol defines the interface for operation execution requests without
-            importing the concrete OperationExecutionRequest class, preventing circular dependencies.
-            """
-
-            operation_name: str
-            operation_callable: Callable[..., object]
-            arguments: FlextTypes.Dict
-            keyword_arguments: FlextTypes.Dict
-            timeout_seconds: int
-            retry_config: FlextTypes.Dict
-
-        @runtime_checkable
-        class SerializationUtility(Protocol):
-            """Protocol for serialization utility functions (breaks circular imports).
-
-            This protocol defines interfaces for serialization utilities without
-            importing concrete implementations, preventing circular dependencies.
-            """
-
-            @staticmethod
-            def safe_serialize_to_dict(obj: object) -> FlextTypes.Dict | None:
-                """Serialize object to dictionary safely.
-
-                Args:
-                    obj: Object to serialize
-
-                Returns:
-                    Dictionary representation or None if serialization fails
-
-                """
-                ...
-
-            @staticmethod
-            def safe_get_attribute(
-                obj: object, attr: str, default: object = None
-            ) -> object:
-                """Get attribute safely without raising AttributeError.
-
-                Args:
-                    obj: Object to get attribute from
-                    attr: Attribute name
-                    default: Default value if attribute doesn't exist
-
-                Returns:
-                    Attribute value or default
-
-                """
-                ...
+            ...
 
     # =========================================================================
-    # DOMAIN LAYER - Business logic protocols
+    # CIRCULAR IMPORT PREVENTION PROTOCOLS
     # =========================================================================
+    # These protocols prevent circular dependencies between core modules
+    # by providing interfaces without importing concrete implementations.
 
-    class Domain:
-        """Domain layer protocols reflecting FLEXT's modernization DDD usage."""
+    @runtime_checkable
+    class ResultProtocol(Protocol, Generic[T_ResultProtocol]):
+        """Protocol for FlextResult-like types (prevents circular imports).
 
-        # Domain protocols providing service and repository patterns
+        Defines the interface for result types without importing the concrete
+        FlextResult class, preventing circular dependencies between config,
+        models, utilities, and result modules.
 
-        @runtime_checkable
-        class Service(Protocol, Generic[T_Service_co]):
-            """Domain service contract."""
+        Note: For internal use only. Domain libraries should use FlextResult directly.
+        """
 
-            @abstractmethod
-            def execute(self) -> object:
-                """Execute the main domain operation.
+        @property
+        def is_success(self) -> bool:
+            """Check if result represents success."""
+            ...
 
-                Returns:
-                    FlextResult[T_Service_co]: Success with domain result or failure with error
+        @property
+        def is_failure(self) -> bool:
+            """Check if result represents failure."""
+            ...
 
-                """
-                ...
+        @property
+        def value(self) -> T_ResultProtocol:
+            """Get the success value (may raise if failure)."""
+            ...
 
-            def is_valid(self) -> bool:
-                """Check if the domain service is in a valid state.
+        @property
+        def error(self) -> str | None:
+            """Get the error message if failure, None otherwise."""
+            ...
 
-                Returns:
-                    bool: True if valid, False otherwise
+        def unwrap(self) -> T_ResultProtocol:
+            """Extract value, raising exception if failure."""
+            ...
 
-                """
-                ...
+        def unwrap_or(self, default: T_ResultProtocol) -> T_ResultProtocol:
+            """Extract value or return default if failure."""
+            ...
 
-            def validate_business_rules(self) -> FlextResult[None]:
-                """Validate business rules for the domain service.
+    @runtime_checkable
+    class ConfigProtocol(Protocol):
+        """Protocol for FlextConfig-like types (prevents circular imports).
 
-                Returns:
-                    FlextResult[None]: Success if valid, failure with error details
+        Defines the interface for configuration objects without importing the
+        concrete FlextConfig class, preventing circular dependencies.
 
-                """
-                ...
+        Note: For internal use only. Domain libraries should use FlextConfig directly.
+        """
 
-            def validate_config(self) -> FlextResult[None]:
-                """Validate service configuration.
+        @property
+        def debug(self) -> bool:
+            """Check if debug mode is enabled."""
+            ...
 
-                Returns:
-                    FlextResult[None]: Success if valid, failure with error details
+        @property
+        def log_level(self) -> str:
+            """Get logging level."""
+            ...
 
-                """
-                ...
+    @runtime_checkable
+    class ModelProtocol(HasModelDump, Protocol):
+        """Protocol for domain model types (prevents circular imports).
 
-            def execute_operation(
-                self,
-                operation: FlextProtocols.Foundation.OperationExecutionRequestProtocol,
-            ) -> FlextResult[object]:
-                """Execute operation using OperationExecutionRequest model.
+        Extends HasModelDump with validation and JSON serialization.
+        Prevents circular dependencies between models, config, and utilities.
 
-                Args:
-                    operation: OperationExecutionRequest containing operation settings
+        Inheritance: HasModelDump → ModelProtocol
 
-                Returns:
-                    FlextResult[T_co]: Success with result or failure with error
+        Note: For internal use only. Domain libraries should use FlextModels directly.
+        """
 
-                """
-                ...
+        def validate(self) -> object:
+            """Validate model business rules.
 
-            def get_service_info(self: object) -> FlextTypes.Dict:
-                """Get service information and metadata.
+            Returns:
+                FlextResult[None]: Success if valid, failure with error details
 
-                Returns:
-                    FlextTypes.Dict: Service information dictionary
+            """
+            ...
 
-                """
-                ...
+        def model_dump_json(self, **kwargs: object) -> str:
+            """Dump model to JSON string (Pydantic compatibility).
 
-        @runtime_checkable
-        class Repository(Protocol, Generic[T_Repository_contra]):
-            """Repository protocol shaping modernization data access patterns."""
+            Args:
+                **kwargs: Additional serialization options
 
-            @abstractmethod
-            def get_by_id(self, entity_id: str) -> object:
-                """Retrieve an aggregate using the standardized identity lookup."""
-                ...
+            Returns:
+                JSON string representation of the model
 
-            @abstractmethod
-            def save(self, entity: T_Repository_contra) -> object:
-                """Persist an entity following modernization consistency rules."""
-                ...
-
-            @abstractmethod
-            def delete(self, entity_id: str) -> object:
-                """Delete an entity while respecting modernization invariants."""
-                ...
-
-            @abstractmethod
-            def find_all(self: object) -> object:
-                """Enumerate entities for modernization-aligned queries."""
-                ...
-
-    # =========================================================================
-    # APPLICATION LAYER - Use cases and handlers
-    # =========================================================================
-
-    class Application:
-        """Application layer protocols - use cases and handlers."""
-
-        @runtime_checkable
-        class Handler(Protocol, Generic[TInput_Handler_contra, TResult_Handler_co]):
-            """Application handler protocol aligned with FlextHandlers implementation."""
-
-            @abstractmethod
-            def handle(self, message: TInput_Handler_contra) -> object:
-                """Handle the message and return result.
-
-                Args:
-                    message: The input message to process
-
-                Returns:
-                    FlextResult[TResult_Handler_co]: Success with result or failure with error
-
-                """
-                ...
-
-            def __call__(self, input_data: TInput_Handler_contra) -> object:
-                """Process input and return a ``FlextResult`` containing the output."""
-                ...
-
-            def can_handle(self, message_type: object) -> bool:
-                """Check if handler can process this message type.
-
-                Args:
-                    message_type: The message type to check
-
-                Returns:
-                    bool: True if handler can process the message type, False otherwise
-
-                """
-                ...
-
-            def execute(self, message: TInput_Handler_contra) -> object:
-                """Execute the handler with the given message.
-
-                Args:
-                    message: The input message to execute
-
-                Returns:
-                    FlextResult[TResult_Handler_co]: Execution result
-
-                """
-                ...
-
-            def validate_command(self, command: TInput_Handler_contra) -> object:
-                """Validate a command message.
-
-                Args:
-                    command: The command to validate
-
-                Returns:
-                    FlextResult[None]: Success if valid, failure with error details
-
-                """
-                ...
-
-            def validate(self, _data: TInput_Handler_contra) -> object:
-                """Validate input before processing and wrap the outcome in ``FlextResult``."""
-                ...
-
-            def validate_query(self, query: TInput_Handler_contra) -> object:
-                """Validate a query message.
-
-                Args:
-                    query: The query to validate
-
-                Returns:
-                    FlextResult[None]: Success if valid, failure with error details
-
-                """
-                ...
-
-            @property
-            def handler_name(self: object) -> str:
-                """Get the handler name.
-
-                Returns:
-                    str: Handler name
-
-                """
-                ...
-
-            @property
-            def mode(self: object) -> str:
-                """Get the handler mode (command/query).
-
-                Returns:
-                    str: Handler mode
-
-                """
-                ...
+            """
+            ...
 
     # =========================================================================
-    # INFRASTRUCTURE LAYER - External concerns and integrations
+    # DOMAIN LAYER - Service and Repository protocols
     # =========================================================================
 
-    class Infrastructure:
-        """Infrastructure layer protocols - external systems."""
+    @runtime_checkable
+    class Service(Protocol, Generic[T_Service_co]):
+        """Base domain service protocol.
 
-        @runtime_checkable
-        class Connection(Protocol):
-            """Connection protocol for external systems."""
+        Provides the foundation for all domain services in the FLEXT ecosystem.
+        Domain libraries extend this protocol with specific service operations.
 
-            def __call__(self, *args: object, **kwargs: object) -> object:
-                """Callable interface for connection."""
-                ...
+        Domain Extensions:
+            - FlextLdapProtocols.Ldap.LdapConnectionProtocol
+            - FlextAuthProtocols.Auth.ServiceProtocol
+            - FlextGrpcProtocols.Grpc.ServerProtocol
+        """
 
-            def test_connection(self: object) -> object:
-                """Test connection to external system."""
-                ...
+        @abstractmethod
+        def execute(self) -> object:
+            """Execute the main domain operation.
 
-            def get_connection_string(self: object) -> str:
-                """Get connection string for external system."""
-                ...
+            Returns:
+                FlextResult[T_Service_co]: Success with domain result or failure
 
-            def close_connection(self: object) -> object:
-                """Close connection to external system."""
-                ...
+            """
+            ...
 
-        @runtime_checkable
-        class Configurable(Protocol):
-            """Configurable component protocol."""
+        def is_valid(self) -> bool:
+            """Check if the domain service is in a valid state.
 
-            def configure(self, config: FlextTypes.Dict) -> FlextResult[None]:
-                """Configure component with provided settings."""
-                ...
+            Returns:
+                bool: True if valid, False otherwise
 
-        @runtime_checkable
-        class LoggerProtocol(Protocol):
-            """Logger protocol with standard logging methods returning FlextResult."""
+            """
+            ...
 
-            def trace(
-                self, message: str, *args: object, **kwargs: object
-            ) -> FlextResult[None]:
-                """Log trace message."""
-                ...
+        def validate_business_rules(self) -> FlextResult[None]:
+            """Validate business rules for the domain service.
 
-            def debug(
-                self, message: str, *args: object, **context: object
-            ) -> FlextResult[None]:
-                """Log debug message."""
-                ...
+            Returns:
+                FlextResult[None]: Success if valid, failure with error details
 
-            def info(
-                self, message: str, *args: object, **context: object
-            ) -> FlextResult[None]:
-                """Log info message."""
-                ...
+            """
+            ...
 
-            def warning(
-                self, message: str, *args: object, **context: object
-            ) -> FlextResult[None]:
-                """Log warning message."""
-                ...
+        def validate_config(self) -> FlextResult[None]:
+            """Validate service configuration.
 
-            def error(
-                self, message: str, *args: object, **kwargs: object
-            ) -> FlextResult[None]:
-                """Log error message."""
-                ...
+            Returns:
+                FlextResult[None]: Success if valid, failure with error details
 
-            def critical(
-                self, message: str, *args: object, **kwargs: object
-            ) -> FlextResult[None]:
-                """Log critical message."""
-                ...
+            """
+            ...
 
-            def exception(
-                self,
-                message: str,
-                *,
-                exc_info: bool = True,
-                **kwargs: object,
-            ) -> None:
-                """Log exception message."""
-                ...
+        def get_service_info(self: object) -> FlextTypes.Dict:
+            """Get service information and metadata.
+
+            Returns:
+                FlextTypes.Dict: Service information dictionary
+
+            """
+            ...
+
+    @runtime_checkable
+    class Repository(Protocol, Generic[T_Repository_contra]):
+        """Base repository protocol for data access.
+
+        Provides the foundation for repository implementations following
+        Domain-Driven Design patterns. Domain libraries extend with specific
+        repository operations.
+
+        Domain Extensions:
+            - FlextLdapProtocols should define LDAP-specific repositories
+            - FlextAuthProtocols should define user/session repositories
+        """
+
+        @abstractmethod
+        def get_by_id(self, entity_id: str) -> object:
+            """Retrieve an aggregate using the standardized identity lookup."""
+            ...
+
+        @abstractmethod
+        def save(self, entity: T_Repository_contra) -> object:
+            """Persist an entity following modernization consistency rules."""
+            ...
+
+        @abstractmethod
+        def delete(self, entity_id: str) -> object:
+            """Delete an entity while respecting modernization invariants."""
+            ...
+
+        @abstractmethod
+        def find_all(self: object) -> object:
+            """Enumerate entities for modernization-aligned queries."""
+            ...
 
     # =========================================================================
-    # EXTENSIONS LAYER - Advanced patterns and plugins
+    # APPLICATION LAYER - Command/Query patterns
     # =========================================================================
 
-    class Extensions:
-        """Extensions layer protocols - plugins and extension patterns."""
+    @runtime_checkable
+    class Handler(Protocol, Generic[TInput_Handler_contra, TResult_Handler_co]):
+        """Application handler protocol for CQRS patterns.
 
-        # Plugin architecture and middleware system for extensible applications
-        # Provides plugin ecosystem support for applications
+        Used in: handlers.py (FlextHandlers implementation)
 
-        @runtime_checkable
-        class PluginContext(Protocol):
-            """Plugin execution context."""
+        Provides standardized interface for command and query handlers with
+        validation and execution methods.
+        """
 
-            def get_service(self, service_name: str) -> object:
-                """Get service by name."""
-                ...
+        @abstractmethod
+        def handle(self, message: TInput_Handler_contra) -> object:
+            """Handle the message and return result.
 
-            def get_config(self: object) -> FlextTypes.Dict:
-                """Get plugin configuration."""
-                ...
+            Args:
+                message: The input message to process
 
-            def flext_logger(
-                self: object,
-            ) -> FlextProtocols.Infrastructure.LoggerProtocol:
-                """Get logger instance for plugin."""
-                ...
+            Returns:
+                FlextResult[TResult_Handler_co]: Success with result or failure
 
-        @runtime_checkable
-        class Middleware(Protocol):
-            """Middleware pipeline component protocol."""
+            """
+            ...
 
-            def process(
-                self,
-                request: object,
-                _next_handler: Callable[[object], object],
-            ) -> object:
-                """Process request with middleware logic."""
-                ...
+        def __call__(self, input_data: TInput_Handler_contra) -> object:
+            """Process input and return a FlextResult containing the output."""
+            ...
 
-        @runtime_checkable
-        class Observability(Protocol):
-            """Observability and monitoring protocol."""
+        def can_handle(self, message_type: object) -> bool:
+            """Check if handler can process this message type."""
+            ...
 
-            def record_metric(
-                self,
-                name: str,
-                value: float,
-                _tags: FlextTypes.StringDict | None = None,
-            ) -> object:
-                """Record metric value."""
-                ...
+        def execute(self, message: TInput_Handler_contra) -> object:
+            """Execute the handler with the given message."""
+            ...
 
-            def start_trace(self, operation_name: str) -> object:
-                """Start distributed trace."""
-                ...
+        def validate_command(self, command: TInput_Handler_contra) -> object:
+            """Validate a command message."""
+            ...
 
-            def health_check(self: object) -> object:
-                """Perform health check."""
-                ...
+        def validate(self, _data: TInput_Handler_contra) -> object:
+            """Validate input before processing."""
+            ...
 
-    class Commands:
-        """CQRS Command and Query protocols for Flext CQRS components."""
+        def validate_query(self, query: TInput_Handler_contra) -> object:
+            """Validate a query message."""
+            ...
 
-        @runtime_checkable
-        class CommandBus(Protocol):
-            """Protocol for command bus routing and execution."""
+        @property
+        def handler_name(self: object) -> str:
+            """Get the handler name."""
+            ...
 
-            @overload
-            def register_handler(
-                self,
-                handler: Callable[[object], object],
-                /,
-            ) -> FlextResult[None]: ...
+        @property
+        def mode(self: object) -> str:
+            """Get the handler mode (command/query)."""
+            ...
 
-            @overload
-            def register_handler(
-                self,
-                command_type: type,
-                handler: Callable[[object], object],
-                /,
-            ) -> FlextResult[None]: ...
+    @runtime_checkable
+    class CommandBus(Protocol):
+        """Protocol for command bus routing and execution."""
 
-            def register_handler(self, *_args: object) -> FlextResult[None]:
-                """Register a command handler with the command bus.
+        @overload
+        def register_handler(
+            self,
+            handler: Callable[[object], object],
+            /,
+        ) -> FlextResult[None]: ...
 
-                The command bus accepts both ``register_handler(handler)`` for
-                automatic type detection and ``register_handler(command_type, handler)``
-                for explicit type specification.
+        @overload
+        def register_handler(
+            self,
+            command_type: type,
+            handler: Callable[[object], object],
+            /,
+        ) -> FlextResult[None]: ...
 
-                Args:
-                    handler: The handler function to register
-                    command_type: Optional command type for explicit registration
+        def register_handler(
+            self,
+            command_type_or_handler: type | Callable[[object], object],
+            handler: Callable[[object], object] | None = None,
+            /,
+        ) -> FlextResult[None]:
+            """Register command handler."""
+            ...
 
-                Returns:
-                    FlextResult indicating success or failure
+        def execute(self, command: object) -> FlextResult[object]:
+            """Execute command and return result."""
+            ...
 
-                """
-                # Implementation would go here
-                ...
+    @runtime_checkable
+    class Middleware(Protocol):
+        """Middleware protocol for command/query processing pipeline."""
 
-            def unregister_handler(self, command_type: type | str) -> FlextResult[None]:
-                """Remove a handler registration by type or name.
+        def process(
+            self,
+            command_or_query: object,
+            next_handler: Callable[[object], FlextResult[object]],
+        ) -> FlextResult[object]:
+            """Process command/query through middleware chain."""
+            ...
 
-                Args:
-                    command_type: The command type or name to unregister
+    # =========================================================================
+    # INFRASTRUCTURE LAYER - External integrations
+    # =========================================================================
 
-                Returns:
-                    FlextResult[None]: Success if handler was removed, failure if not found
+    @runtime_checkable
+    class LoggerProtocol(Protocol):
+        """Infrastructure logging protocol.
 
-                """
-                ...
+        Provides standardized logging interface for infrastructure components.
 
-            def execute(self, command: object) -> object:
-                """Execute a command through registered handlers.
+        Used in: infrastructure logging implementations
+        """
 
-                Args:
-                    command: The command to execute
+        def log(
+            self, level: str, message: str, context: FlextTypes.Dict | None = None
+        ) -> None:
+            """Log a message with optional context."""
+            ...
 
-                Returns:
-                    The result of command execution
+        def debug(self, message: str, context: FlextTypes.Dict | None = None) -> None:
+            """Log debug message."""
+            ...
 
-                """
-                ...
+        def info(self, message: str, context: FlextTypes.Dict | None = None) -> None:
+            """Log info message."""
+            ...
 
-        @runtime_checkable
-        class Middleware(Protocol):
-            """Protocol for command bus middleware."""
+        def warning(self, message: str, context: FlextTypes.Dict | None = None) -> None:
+            """Log warning message."""
+            ...
 
-            def process(self, command: object, handler: object) -> object:
-                """Process command through middleware.
+        def error(self, message: str, context: FlextTypes.Dict | None = None) -> None:
+            """Log error message."""
+            ...
 
-                Args:
-                    command: The command being processed
-                    handler: The handler that will process the command
+    @runtime_checkable
+    class Connection(Protocol):
+        """Generic connection protocol for external systems.
 
-                Returns:
-                    The result of middleware processing
+        Base protocol for database, LDAP, API, and other connections.
+        Domain libraries extend with specific connection operations.
 
-                """
-                ...
+        Domain Extensions:
+            - FlextLdapProtocols.Ldap.LdapConnectionProtocol
+            - Database connection protocols
+            - API client connection protocols
+        """
+
+        def test_connection(self: object) -> object:
+            """Test connection to external system."""
+            ...
+
+        def get_connection_string(self: object) -> str:
+            """Get connection string for external system."""
+            ...
+
+        def close_connection(self: object) -> object:
+            """Close connection to external system."""
+            ...
+
+    # =========================================================================
+    # EXTENSIONS LAYER - Additional protocols for ecosystem extensions
+    # =========================================================================
+
+    @runtime_checkable
+    class PluginContext(Protocol):
+        """Protocol for plugin execution contexts.
+
+        Provides context information for plugin execution, including
+        configuration, runtime state, and execution metadata.
+
+        Used in: plugin systems
+        """
+
+        config: FlextTypes.Dict
+        runtime_id: str
+
+    @runtime_checkable
+    class Observability(Protocol):
+        """Protocol for observability implementations.
+
+        Provides standardized interfaces for metrics, logging, and monitoring
+        across the FLEXT ecosystem.
+
+        Used in: monitoring and metrics collection
+        """
+
+        def record_metric(self, name: str, value: float, tags: FlextTypes.Dict) -> None:
+            """Record a metric with optional tags."""
+            ...
+
+        def log_event(self, level: str, message: str, context: FlextTypes.Dict) -> None:
+            """Log an event with context."""
+            ...
 
 
 __all__ = [
-    "FlextProtocols",  # Main hierarchical protocol architecture with Config
+    "FlextProtocols",  # Main hierarchical protocol architecture
 ]

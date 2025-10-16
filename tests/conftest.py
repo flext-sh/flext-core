@@ -10,18 +10,28 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import math
 import os
 import shutil
 import tempfile
 import warnings
 from collections.abc import Generator
-from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 
-from flext_core import FlextCore
+from flext_core import FlextConfig, FlextContainer, FlextLogger, FlextResult, FlextTypes
+
+from .fixtures import (
+    get_benchmark_data,
+    get_error_context,
+    get_performance_threshold,
+    get_sample_data,
+    get_test_constants,
+    get_test_contexts,
+    get_test_error_scenarios,
+    get_test_payloads,
+    get_test_user_data,
+)
 
 # Suppress pkg_resources deprecation warning from fs package
 warnings.filterwarnings(
@@ -32,16 +42,22 @@ warnings.filterwarnings(
 # Core Fixtures
 @pytest.fixture(autouse=True)
 def reset_container_singleton() -> Generator[None]:
-    """Reset FlextCore.Container singleton between tests for isolation.
+    """Reset FlextContainer and FlextConfig singletons between tests for isolation.
 
-    This autouse fixture ensures that every test starts with a clean
-    FlextCore.Container singleton state, preventing test contamination.
+    This autouse fixture ensures that every test starts with clean singleton states,
+    preventing test contamination from shared state.
     """
-    # Clear singleton before test
-    FlextCore.Container._global_instance = None
+    # Clear singletons before test
+    FlextContainer._global_instance = None
+    FlextConfig._instances.clear()
+    FlextConfig._di_config_provider = None
+
     yield
-    # Clear singleton after test
-    FlextCore.Container._global_instance = None
+
+    # Clear singletons after test
+    FlextContainer._global_instance = None
+    FlextConfig._instances.clear()
+    FlextConfig._di_config_provider = None
 
 
 @pytest.fixture
@@ -56,70 +72,36 @@ def test_scenario() -> dict[str, str]:
 
 
 @pytest.fixture
-def clean_container() -> Generator[FlextCore.Container]:
-    """Provide isolated FlextCore.Container for dependency injection testing.
+def clean_container() -> Generator[object]:
+    """Provide isolated FlextContainer for dependency injection testing.
 
     Enterprise-grade DI container fixture ensuring complete test isolation.
     Each test receives a fresh container with no service registrations.
 
     Yields:
-      FlextCore.Container instance with proper cleanup
+      FlextContainer instance with proper cleanup
 
     """
     # Clear any existing singleton state before test
-    FlextCore.Container._global_instance = None
-    container = FlextCore.Container()
+    FlextContainer._global_instance = None
+    container = FlextContainer()
     container.clear()  # Ensure it starts clean
     yield container
     # Cleanup: Clear the container and reset singleton after test
     container.clear()
-    FlextCore.Container._global_instance = None
+    FlextContainer._global_instance = None
 
 
 @pytest.fixture
-def sample_data() -> FlextCore.Types.Dict:
-    """Provide deterministic sample data for tests.
-
-    Enterprise-grade test data factory providing consistent, typed sample data
-    for testing data transformation and validation patterns across the ecosystem.
-
-    Returns:
-      Dict containing various data types for comprehensive testing
-
-    """
-    return {
-        "string": "test_string",
-        "integer": 42,
-        "float": math.pi,
-        "boolean": True,
-        "list": [1, 2, 3],
-        "dict": {"key": "value"},
-        "none": None,
-        "timestamp": datetime.now(UTC).isoformat(),
-        "uuid": "550e8400-e29b-41d4-a716-446655440000",
-    }
+def sample_data() -> FlextTypes.Dict:
+    """Provide deterministic sample data for tests."""
+    return get_sample_data()
 
 
 @pytest.fixture
-def test_user_data() -> FlextCore.Types.Dict | FlextCore.Types.StringList | None:
-    """Provide consistent user data for domain testing.
-
-    User data factory aligned with shared domain patterns
-    for testing DDD entities and value objects.
-
-    Returns:
-      Dict containing user data for testing
-
-    """
-    return {
-        "id": "user-12345",
-        "name": "Test User",
-        "email": "test.user@flext.example.com",
-        "age": 30,
-        "is_active": True,
-        "created_at": datetime.now(UTC).isoformat(),
-        "roles": ["user", "tester"],
-    }
+def test_user_data() -> FlextTypes.Dict | FlextTypes.StringList | None:
+    """Provide consistent user data for domain testing."""
+    return get_test_user_data()
 
 
 @pytest.fixture
@@ -156,24 +138,24 @@ def mock_external_service() -> object:
         def __init__(self) -> None:
             super().__init__()
             self.call_count = 0
-            self.processed_items: FlextCore.Types.List = []
+            self.processed_items: list[object] = []
             self._should_fail = False
             self._failure_message = ""
 
-        def process(self, data: object) -> FlextCore.Result[str]:
+        def process(self, data: object) -> object:
             """Process data through mock external service.
 
             Returns:
-                FlextCore.Result[str]: Success with processed data or failure with error message.
+                Result: Success with processed data or failure with error message.
 
             """
             self.call_count += 1
             self.processed_items.append(data)
 
             if self._should_fail:
-                return FlextCore.Result[str].fail(self._failure_message)
+                return FlextResult[str].fail(self._failure_message)
 
-            return FlextCore.Result[str].ok(f"processed_{data}")
+            return FlextResult[str].ok(f"processed_{data}")
 
         def get_call_count(self) -> int:
             """Get number of times process was called.
@@ -199,9 +181,9 @@ def mock_external_service() -> object:
 
 @pytest.fixture
 def configured_container(
-    clean_container: FlextCore.Container,
+    clean_container: FlextContainer,
     mock_external_service: object,
-) -> FlextCore.Container:
+) -> FlextContainer:
     """Provide pre-configured container for integration testing.
 
     Container factory with common service registrations for testing
@@ -212,7 +194,7 @@ def configured_container(
       mock_external_service: External service for functional testing
 
     Returns:
-      FlextCore.Container with standard test services registered
+      FlextContainer with standard test services registered
 
     """
     clean_container.register("external_service", mock_external_service)
@@ -223,287 +205,45 @@ def configured_container(
 
 @pytest.fixture
 def error_context() -> dict[str, str | None]:
-    """Provide structured error context for testing.
-
-    Error context factory for testing FlextCore.Result error handling,
-    logging, and observability patterns.
-
-    Returns:
-      Dict containing error context fields for testing
-
-    """
-    return {
-        "error_code": "TEST_ERROR_001",
-        "severity": "medium",
-        "component": "test_module",
-        "user_id": "test_user_123",
-        "request_id": "test-request-456",
-        "timestamp": datetime.now(UTC).isoformat(),
-        "stack_trace": None,  # Populated by actual error handling
-    }
+    """Provide structured error context for testing."""
+    return get_error_context()
 
 
 # Test Data Constants - Centralized test data and constants
 @pytest.fixture
-def test_constants() -> FlextCore.Types.Dict:
-    """Provide centralized test constants for all tests.
-
-    Centralized constants used across multiple test files to ensure
-    consistency and reduce duplication.
-
-    Returns:
-        Dict containing test constants and data
-
-    """
-    return {
-        # Common test identifiers
-        "test_user_id": "test_user_123",
-        "test_session_id": "test_session_123",
-        "test_service_name": "test_service",
-        "test_operation_id": "test_operation",
-        "test_request_id": "test-request-456",
-        "test_correlation_id": "test-corr-123",
-        # Test module and component names
-        "test_module_name": "test_module",
-        "test_handler_name": "test_handler",
-        "test_chain_name": "test_chain",
-        "test_command_type": "test_command",
-        "test_query_type": "test_query",
-        # Test error codes and messages
-        "test_error_code": "TEST_ERROR_001",
-        "test_validation_error": "test_error",
-        "test_operation_error": "Op failed",
-        "test_config_error": "Config failed",
-        "test_timeout_error": "Operation timeout",
-        # Test field names and values
-        "test_field_name": "test_field",
-        "test_config_key": "test_key",
-        "test_username": "test_user",
-        "test_email": "test@example.com",
-        "test_password": "test_pass",
-        # Test data values
-        "test_string_value": "test_value",
-        "test_input_data": "test_input",
-        "test_request_data": "test_request",
-        "test_result_data": "test_result",
-        "test_message": "test_message",
-        # Test service and component identifiers
-        "test_logger_name": "test_logger",
-        "test_app_name": "test-app",
-        "test_validation_app": "validation-test",
-        "test_source_service": "test_service",
-        # Test patterns and formats
-        "test_slug_input": "Test_String",
-        "test_slug_expected": "test_string",
-        "test_uuid_format": "550e8400-e29b-41d4-a716-446655440000",
-        # Test port and numeric values
-        "test_port": 8080,
-        "test_timeout": 30,
-        "test_retry_count": 3,
-        "test_batch_size": 100,
-    }
+def test_constants() -> FlextTypes.Dict:
+    """Provide centralized test constants for all tests."""
+    return get_test_constants()
 
 
 @pytest.fixture
-def test_contexts() -> FlextCore.Types.NestedDict:
-    """Provide common test contexts for various scenarios.
-
-    Pre-defined contexts for testing different scenarios like
-    user operations, service calls, validation, etc.
-
-    Returns:
-        Dict containing various test contexts
-
-    """
-    return {
-        "user_context": {
-            "user_id": "test_user_123",
-            "username": "test_user",
-            "email": "test@example.com",
-            "roles": ["user", "tester"],
-        },
-        "service_context": {
-            "service_name": "test_service",
-            "version": "1.0.0",
-            "environment": "test",
-            "port": 8080,
-        },
-        "operation_context": {
-            "operation_id": "test_operation",
-            "module": "test_module",
-            "function": "test_func",
-            "correlation_id": "test-corr-123",
-        },
-        "error_context": {
-            "error_code": "TEST_ERROR_001",
-            "severity": "medium",
-            "component": "test_module",
-            "timestamp": datetime.now(UTC).isoformat(),
-        },
-        "validation_context": {
-            "field": "test_field",
-            "rule": "required",
-            "validator": "test_validator",
-            "message": "Validation failed",
-        },
-        "request_context": {
-            "request_id": "test-request-456",
-            "method": "POST",
-            "path": "/api/test",
-            "headers": {"Content-Type": "application/json"},
-        },
-    }
+def test_contexts() -> FlextTypes.NestedDict:
+    """Provide common test contexts for various scenarios."""
+    return get_test_contexts()
 
 
 @pytest.fixture
-def test_payloads() -> FlextCore.Types.NestedDict:
-    """Provide common test payloads for different operations.
-
-    Standardized payloads for testing commands, queries, events,
-    and other data structures across the system.
-
-    Returns:
-        Dict containing various test payloads
-
-    """
-    return {
-        "command_payload": {
-            "command_type": "test_command",
-            "data": {"action": "create", "entity": "user"},
-            "timestamp": datetime.now(UTC).isoformat(),
-            "correlation_id": "test-corr-123",
-        },
-        "query_payload": {
-            "query_type": "test_query",
-            "filters": {"status": "active", "type": "test"},
-            "pagination": {"page": 1, "size": 10},
-            "sort": {"field": "created_at", "order": "desc"},
-        },
-        "event_payload": {
-            "event_type": "test_event",
-            "source": "test_service",
-            "data": {"entity_id": "123", "action": "created"},
-            "timestamp": datetime.now(UTC).isoformat(),
-        },
-        "user_creation_payload": {
-            "username": "test_user",
-            "email": "test@example.com",
-            "password": "test_pass",
-            "profile": {"first_name": "Test", "last_name": "User"},
-        },
-        "service_config_payload": {
-            "name": "test_service",
-            "port": 8080,
-            "timeout": 30,
-            "retries": 3,
-            "endpoints": ["/health", "/metrics"],
-        },
-        "validation_payload": {
-            "field": "email",
-            "value": "test@example.com",
-            "rules": ["required", "email_format"],
-            "context": {"form": "user_registration"},
-        },
-    }
+def test_payloads() -> object:
+    """Provide common test payloads for different operations."""
+    return get_test_payloads()
 
 
 @pytest.fixture
-def test_error_scenarios() -> FlextCore.Types.NestedDict:
-    """Provide common error scenarios for testing.
-
-    Pre-defined error scenarios for testing error handling,
-    validation failures, timeouts, and other edge cases.
-
-    Returns:
-        Dict containing various error scenarios
-
-    """
-    return {
-        "validation_error": {
-            "type": "ValidationError",
-            "message": "Invalid input data",
-            "field": "test_field",
-            "code": "VAL_001",
-            "context": {"input": "invalid_data"},
-        },
-        "configuration_error": {
-            "type": "ConfigurationError",
-            "message": "Missing required configuration",
-            "config_key": "database_url",
-            "code": "CFG_001",
-            "context": {"section": "database"},
-        },
-        "connection_error": {
-            "type": "ConnectionError",
-            "message": "Failed to connect to service",
-            "service": "test_service",
-            "code": "CONN_001",
-            "context": {"host": "localhost", "port": 8080},
-        },
-        "timeout_error": {
-            "type": "TimeoutError",
-            "message": "Operation timed out",
-            "operation": "test_operation",
-            "code": "TIMEOUT_001",
-            "context": {"timeout": 30, "elapsed": 35},
-        },
-        "processing_error": {
-            "type": "ProcessingError",
-            "message": "Failed to process request",
-            "handler": "test_handler",
-            "code": "PROC_001",
-            "context": {"stage": "validation", "input_size": 1024},
-        },
-        "authentication_error": {
-            "type": "AuthenticationError",
-            "message": "Authentication failed",
-            "user": "test_user",
-            "code": "AUTH_001",
-            "context": {"method": "token", "reason": "expired"},
-        },
-    }
+def test_error_scenarios() -> object:
+    """Provide common error scenarios for testing."""
+    return get_test_error_scenarios()
 
 
 @pytest.fixture
-def performance_threshold() -> FlextCore.Types.FloatDict:
-    """Provide performance thresholds for testing.
-
-    Performance threshold configuration for validating
-    that core operations meet enterprise performance standards.
-
-    Returns:
-      Dict containing performance thresholds in seconds
-
-    """
-    return {
-        "result_creation": 0.001,  # 1ms for FlextCore.Result creation
-        "container_registration": 0.005,  # 5ms for service registration
-        "container_retrieval": 0.001,  # 1ms for service retrieval
-        "validation": 0.01,  # 10ms for validation operations
-        "serialization": 0.05,  # 50ms for serialization
-    }
+def performance_threshold() -> object:
+    """Provide performance thresholds for testing."""
+    return get_performance_threshold()
 
 
 @pytest.fixture
-def benchmark_data() -> FlextCore.Types.Dict:
-    """Provide standardized data for performance testing.
-
-    Benchmark data factory for testing performance characteristics
-    of core patterns and algorithms.
-
-    Returns:
-      Dict containing benchmark data sets
-
-    """
-    return {
-        "small_dataset": list(range(100)),
-        "medium_dataset": list(range(1000)),
-        "large_dataset": list(range(10000)),
-        "complex_dict": {f"key_{i}": f"value_{i}" for i in range(1000)},
-        "nested_structure": {
-            "level1": {"level2": {"level3": {"data": list(range(100))}}},
-        },
-    }
+def benchmark_data() -> object:
+    """Provide standardized data for performance testing."""
+    return get_benchmark_data()
 
 
 # Factory Fixtures - COMMENTED OUT: Use FlextTestsMatchers directly instead of aliases
@@ -561,7 +301,7 @@ def benchmark_data() -> FlextCore.Types.Dict:
 #     try:
 #         # Individual components isolation - Flext facade was removed
 #         # Reset container singleton state if needed
-#         manager = FlextCore.Container.get_global().clear()()
+#         manager = FlextContainer.get_global().clear()()
 #         container = manager.get_or_create()
 #         container.clear()
 #     except Exception:
@@ -582,18 +322,18 @@ def logging_test_env() -> Generator[None]:
 
     try:
         # Clear both config and logger singleton states
-        FlextCore.Config.reset_global_instance()
+        FlextConfig.reset_global_instance()
 
         # Reset logger singleton state
-        FlextCore.Logger._structlog_configured = False
+        FlextLogger._structlog_configured = False
 
         # Set the expected log level for logging tests
         os.environ["FLEXT_LOG_LEVEL"] = "WARNING"
         yield
     finally:
         # Clear both singleton states again and restore original value
-        FlextCore.Config.reset_global_instance()
-        FlextCore.Logger._structlog_configured = False
+        FlextConfig.reset_global_instance()
+        FlextLogger._structlog_configured = False
 
         if original_log_level is not None:
             os.environ["FLEXT_LOG_LEVEL"] = original_log_level

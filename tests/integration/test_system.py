@@ -13,7 +13,14 @@ from __future__ import annotations
 
 import uuid
 
-from flext_core import FlextCore
+from flext_core import (
+    FlextConstants,
+    FlextContainer,
+    FlextExceptions,
+    FlextResult,
+    FlextTypes,
+    FlextUtilities,
+)
 
 
 class TestCompleteFlextSystemIntegration:
@@ -28,7 +35,7 @@ class TestCompleteFlextSystemIntegration:
 
         Este teste abrange:
         1. Wildcard imports funcionais
-        2. Railway-oriented programming com FlextCore.Result
+        2. Railway-oriented programming com FlextResult
         3. Sistema hierárquico de constantes
         4. Hierarquia de exceções estruturada
         5. Utilitários e funções auxiliares
@@ -48,22 +55,16 @@ class TestCompleteFlextSystemIntegration:
 
     def _validate_imports(self) -> None:
         """Validate that all main components are available."""
-        assert FlextCore.Result is not None, "FlextCore.Result não está disponível"
-        assert FlextCore.Constants is not None, (
-            "FlextCore.Constants não está disponível"
-        )
-        assert FlextCore.Exceptions is not None, (
-            "FlextCore.Exceptions não está disponível"
-        )
-        assert FlextCore.Utilities is not None, (
-            "FlextCore.Utilities não está disponível"
-        )
-        assert FlextCore.Types is not None, "FlextCore.Types não está disponível"
+        assert FlextResult is not None, "FlextResult não está disponível"
+        assert FlextConstants is not None, "FlextConstants não está disponível"
+        assert FlextExceptions is not None, "FlextExceptions não está disponível"
+        assert FlextUtilities is not None, "FlextUtilities não está disponível"
+        assert FlextTypes is not None, "FlextTypes não está disponível"
 
     def _test_railway_programming(self) -> None:
-        """Test railway-oriented programming with FlextCore.Result."""
+        """Test railway-oriented programming with FlextResult."""
         # Cenário de sucesso - criação e encadeamento
-        success_result = FlextCore.Result[str].ok("dados_iniciais")
+        success_result = FlextResult[str].ok("dados_iniciais")
         assert success_result.is_success is True
         assert success_result.is_success is True
         assert success_result.is_failure is False
@@ -81,23 +82,23 @@ class TestCompleteFlextSystemIntegration:
         assert pipeline_result.value == "processado-DADOS-INICIAIS"
 
         # Cenário de falha
-        failure_result = FlextCore.Result[str].fail("erro_de_processamento")
+        failure_result = FlextResult[str].fail("erro_de_processamento")
         assert failure_result.is_success is False
         assert failure_result.is_failure is True
         assert failure_result.error == "erro_de_processamento"
         assert failure_result.value_or_none is None
 
         # Teste de flat_map para operações que podem falhar
-        def operacao_que_pode_falhar(data: str) -> FlextCore.Result[str]:
+        def operacao_que_pode_falhar(data: str) -> FlextResult[str]:
             if "invalido" in data:
-                return FlextCore.Result[str].fail("dados_invalidos")
-            return FlextCore.Result[str].ok(f"validado_{data}")
+                return FlextResult[str].fail("dados_invalidos")
+            return FlextResult[str].ok(f"validado_{data}")
 
         flat_map_success = success_result.flat_map(operacao_que_pode_falhar)
         assert flat_map_success.is_success is True
         assert flat_map_success.value == "validado_dados_iniciais"
 
-        invalid_data = FlextCore.Result[str].ok("dados_invalido")
+        invalid_data = FlextResult[str].ok("dados_invalido")
         flat_map_failure = invalid_data.flat_map(operacao_que_pode_falhar)
         assert flat_map_failure.is_success is False
         assert flat_map_failure.error == "dados_invalidos"
@@ -105,31 +106,31 @@ class TestCompleteFlextSystemIntegration:
     def _test_constants_system(self) -> None:
         """Test hierarchical constants system."""
         # Testar acesso às constantes hierárquicas
-        timeout_default = FlextCore.Constants.Defaults.TIMEOUT
+        timeout_default = FlextConstants.Defaults.TIMEOUT
         assert isinstance(timeout_default, int)
         assert timeout_default > 0
 
         # Constantes de erro
-        validation_error_code = FlextCore.Constants.Errors.VALIDATION_ERROR
+        validation_error_code = FlextConstants.Errors.VALIDATION_ERROR
         assert isinstance(validation_error_code, str)
         assert validation_error_code == "VALIDATION_ERROR"
 
         # Verificar outros códigos de erro importantes
-        config_error_code = FlextCore.Constants.Errors.CONFIG_ERROR
+        config_error_code = FlextConstants.Errors.CONFIG_ERROR
         assert isinstance(config_error_code, str)
         assert config_error_code == "CONFIG_ERROR"
 
         # Constantes de validação
-        min_name_length = FlextCore.Constants.Validation.MIN_NAME_LENGTH
+        min_name_length = FlextConstants.Validation.MIN_NAME_LENGTH
         assert isinstance(min_name_length, int)
         assert min_name_length > 0
 
     def _test_exceptions_system(self) -> None:
         """Test structured exceptions system."""
         # Teste da hierarquia de exceções
-        validation_exception = FlextCore.Exceptions.ValidationError("campo_invalido")
+        validation_exception = FlextExceptions.ValidationError("campo_invalido")
         assert isinstance(validation_exception, Exception)
-        assert isinstance(validation_exception, FlextCore.Exceptions.BaseError)
+        assert isinstance(validation_exception, FlextExceptions.BaseError)
 
         # Verificar formato da mensagem de erro
         error_message = str(validation_exception)
@@ -137,22 +138,18 @@ class TestCompleteFlextSystemIntegration:
         assert "campo_invalido" in error_message
 
         # Teste de outras exceções da hierarquia
-        operation_exception = FlextCore.Exceptions.OperationError("operacao_falhada")
-        assert isinstance(operation_exception, FlextCore.Exceptions.BaseError)
+        operation_exception = FlextExceptions.OperationError("operacao_falhada")
+        assert isinstance(operation_exception, FlextExceptions.BaseError)
         assert "operacao_falhada" in str(operation_exception)
 
         # Verificar que as exceções seguem a hierarquia correta
-        assert issubclass(
-            FlextCore.Exceptions.ValidationError, FlextCore.Exceptions.BaseError
-        )
-        assert issubclass(
-            FlextCore.Exceptions.OperationError, FlextCore.Exceptions.BaseError
-        )
+        assert issubclass(FlextExceptions.ValidationError, FlextExceptions.BaseError)
+        assert issubclass(FlextExceptions.OperationError, FlextExceptions.BaseError)
 
     def _test_utilities(self) -> None:
         """Test utilities and helper functions."""
         # Geração de UUID
-        generated_uuid = FlextCore.Utilities.Generators.generate_uuid()
+        generated_uuid = FlextUtilities.Generators.generate_uuid()
         assert isinstance(generated_uuid, str)
         assert len(generated_uuid) == 36  # Formato padrão UUID
 
@@ -161,7 +158,7 @@ class TestCompleteFlextSystemIntegration:
         assert str(uuid_obj) == generated_uuid
 
         # Geração de timestamp
-        timestamp = FlextCore.Utilities.Generators.generate_iso_timestamp()
+        timestamp = FlextUtilities.Generators.generate_iso_timestamp()
         assert isinstance(timestamp, str)
         assert len(timestamp) > 0
 
@@ -182,7 +179,7 @@ class TestCompleteFlextSystemIntegration:
         """Test container system (Dependency Injection)."""
         # Teste do sistema de container
         # API changed: use get_global() instead of ensure_global_manager()
-        container = FlextCore.Container.get_global()
+        container = FlextContainer.get_global()
 
         # Registrar serviço
         register_result = container.register("test_service", "test_value")
@@ -204,30 +201,30 @@ class TestCompleteFlextSystemIntegration:
 
         # Simulação de processamento de dados completo
         def processar_dados_usuario(
-            dados: FlextCore.Types.StringDict,
-        ) -> FlextCore.Result[FlextCore.Types.StringDict]:
+            dados: FlextTypes.StringDict,
+        ) -> FlextResult[FlextTypes.StringDict]:
             """Função que simula processamento completo usando todo o sistema.
 
             Returns:
-                FlextCore.Result[FlextCore.Types.StringDict]: Resultado do processamento ou erro.
+                FlextResult[FlextTypes.StringDict]: Resultado do processamento ou erro.
 
             """
             # Validar entrada
             if not dados:
-                return FlextCore.Result[FlextCore.Types.StringDict].fail(
+                return FlextResult[FlextTypes.StringDict].fail(
                     "Dados não fornecidos",
-                    error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
             # Processar dados
-            dados_processados: FlextCore.Types.StringDict = {}
+            dados_processados: FlextTypes.StringDict = {}
 
             # FlextValidations was completely removed - using direct validation
             for key, value in dados.items():
                 if len(value.strip()) == 0:
-                    return FlextCore.Result[FlextCore.Types.StringDict].fail(
+                    return FlextResult[FlextTypes.StringDict].fail(
                         f"Campo '{key}' não pode estar vazio",
-                        error_code=FlextCore.Constants.Errors.VALIDATION_ERROR,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
                 # Transformar dados
@@ -235,11 +232,11 @@ class TestCompleteFlextSystemIntegration:
 
             # Adicionar metadados
             dados_processados["processado_em"] = (
-                FlextCore.Utilities.Generators.generate_iso_timestamp()
+                FlextUtilities.Generators.generate_iso_timestamp()
             )
             dados_processados["processado_por"] = "sistema_flext"
 
-            return FlextCore.Result[FlextCore.Types.StringDict].ok(dados_processados)
+            return FlextResult[FlextTypes.StringDict].ok(dados_processados)
 
         # Teste do processamento completo
         dados_teste = {"nome": "João", "email": "joao@exemplo.com"}
@@ -263,29 +260,29 @@ class TestCompleteFlextSystemIntegration:
 
     def _test_error_recovery(self) -> None:
         """Test error recovery scenarios."""
-        resultado_com_erro = FlextCore.Result[str].fail("erro_original")
+        resultado_com_erro = FlextResult[str].fail("erro_original")
         # Use or_else_get for error recovery instead of flat_map
         resultado_recuperado = resultado_com_erro.or_else_get(
-            lambda: FlextCore.Result[str].ok("valor_recuperado"),
+            lambda: FlextResult[str].ok("valor_recuperado"),
         )
         assert resultado_recuperado.is_success is True
         assert resultado_recuperado.value == "valor_recuperado"
 
         # Teste de múltiplas operações em cadeia com possibilidade de falha
-        def operacao_1(data: str) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"etapa1_{data}")
+        def operacao_1(data: str) -> FlextResult[str]:
+            return FlextResult[str].ok(f"etapa1_{data}")
 
-        def operacao_2(data: str) -> FlextCore.Result[str]:
+        def operacao_2(data: str) -> FlextResult[str]:
             if "erro" in data:
-                return FlextCore.Result[str].fail("erro_na_etapa2")
-            return FlextCore.Result[str].ok(f"etapa2_{data}")
+                return FlextResult[str].fail("erro_na_etapa2")
+            return FlextResult[str].ok(f"etapa2_{data}")
 
-        def operacao_3(data: str) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"final_{data}")
+        def operacao_3(data: str) -> FlextResult[str]:
+            return FlextResult[str].ok(f"final_{data}")
 
         # Pipeline de sucesso
         pipeline_sucesso = (
-            FlextCore.Result[str]
+            FlextResult[str]
             .ok("dados_iniciais")
             .flat_map(operacao_1)
             .flat_map(operacao_2)
@@ -297,7 +294,7 @@ class TestCompleteFlextSystemIntegration:
 
         # Pipeline com falha
         pipeline_falha = (
-            FlextCore.Result[str]
+            FlextResult[str]
             .ok("dados_com_erro")
             .flat_map(operacao_1)
             .flat_map(operacao_2)
@@ -310,18 +307,18 @@ class TestCompleteFlextSystemIntegration:
     def _validate_final_system(self) -> None:
         """Validate final system state."""
         # Verificar que todos os componentes principais funcionam em conjunto
-        assert FlextCore.Result is not None
-        assert FlextCore.Constants is not None
-        assert FlextCore.Exceptions is not None
-        assert FlextCore.Utilities is not None
-        assert FlextCore.Types is not None
+        assert FlextResult is not None
+        assert FlextConstants is not None
+        assert FlextExceptions is not None
+        assert FlextUtilities is not None
+        assert FlextTypes is not None
 
         # Verificar que o sistema está pronto para uso em produção
         # API changed: use get_global() instead of ensure_global_manager()
-        container_final = FlextCore.Container.get_global()
+        container_final = FlextContainer.get_global()
         assert container_final is not None
 
         # Teste final de integração
-        resultado_final = FlextCore.Result[str].ok("sistema_funcionando")
+        resultado_final = FlextResult[str].ok("sistema_funcionando")
         assert resultado_final.is_success is True
         assert resultado_final.value == "sistema_funcionando"

@@ -2,19 +2,19 @@
 """10 - FLEXT Core Utilities Integration: Manual Component Setup Patterns.
 
 This comprehensive example demonstrates MANUAL integration patterns for flext-core
-components WITHOUT using FlextCore.Mixins inheritance. This contrasts with
+components WITHOUT using FlextMixins inheritance. This contrasts with
 Examples 01-09 which demonstrate inherited infrastructure patterns.
 
 **IMPORTANT**: This example shows MANUAL setup for advanced integration scenarios.
-For standard service development, use FlextCore.Mixins inheritance as shown
+For standard service development, use FlextMixins inheritance as shown
 in Examples 01-09 to get automatic infrastructure (logger, container, context, etc.).
 
 Key Integration Patterns Demonstrated:
-- FlextCore.Config: Manual configuration integration with computed fields and validators
-- FlextCore.Container: Manual dependency injection without inherited container property
-- FlextCore.Bus: Manual event-driven architecture setup
-- FlextCore.Dispatcher: Manual message routing and dispatching
-- FlextCore.Logger: Manual logger instantiation vs inherited logger property
+- FlextConfig: Manual configuration integration with computed fields and validators
+- FlextContainer: Manual dependency injection without inherited container property
+- FlextBus: Manual event-driven architecture setup
+- FlextDispatcher: Manual message routing and dispatching
+- FlextLogger: Manual logger instantiation vs inherited logger property
 - Complete service integration with manual component wiring
 
 **When to use Manual vs Inherited patterns**:
@@ -30,52 +30,61 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextCore
+from flext_core import (
+    FlextBus,
+    FlextConfig,
+    FlextContainer,
+    FlextDispatcher,
+    FlextExceptions,
+    FlextLogger,
+    FlextResult,
+    FlextTypes,
+)
 
-logger = FlextCore.Logger(__name__)
+logger = FlextLogger(__name__)
 
 
 class MyService:
-    """Example service demonstrating FlextCore.Config integration."""
+    """Example service demonstrating FlextConfig integration."""
 
     def __init__(self) -> None:
         """Initialize service with configuration."""
         super().__init__()
-        self._config = FlextCore.create_config()
+        self._config = FlextConfig()
 
         # Use computed fields for enhanced configuration
         self._timeout = self._config.timeout_seconds
         self._max_retries = self._config.max_retry_attempts
         self._debug_mode = self._config.is_debug_enabled
 
-    def process_data(
-        self, data: FlextCore.Types.Dict
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def process_data(self, data: FlextTypes.Dict) -> FlextResult[FlextTypes.Dict]:
         """Process data with configuration-driven validation."""
         # Use configuration-driven validation
         if len(data) > self._config.max_batch_size:
-            return FlextCore.Result[FlextCore.Types.Dict].fail("Data batch too large")
+            return FlextResult[FlextTypes.Dict].fail("Data batch too large")
 
         # Process with configuration-driven settings
-        return FlextCore.Result[FlextCore.Types.Dict].ok({
-            "processed": True,
-            "config_used": self._debug_mode,
-        })
+        return FlextResult[FlextTypes.Dict].ok(
+            {
+                "processed": True,
+                "config_used": self._debug_mode,
+            }
+        )
 
 
 class DatabaseService:
-    """Example database service demonstrating FlextCore.Container integration."""
+    """Example database service demonstrating FlextContainer integration."""
 
     def __init__(self) -> None:
         """Initialize database service."""
         super().__init__()
         self._connection: str | None = None
 
-    def connect(self) -> FlextCore.Result[None]:
+    def connect(self) -> FlextResult[None]:
         """Connect to database with proper error handling."""
         # Simulate connection logic
         self._connection = "connected"
-        return FlextCore.Result[None].ok(None)
+        return FlextResult[None].ok(None)
 
 
 class UserService:
@@ -84,63 +93,63 @@ class UserService:
     def __init__(self) -> None:
         """Initialize user service with dependency injection."""
         super().__init__()
-        self._container = FlextCore.Container.get_global()
+        self._container = FlextContainer.get_global()
 
         # Register services with proper error handling
         db_result = self._container.register("database", DatabaseService())
         if db_result.is_failure:
             msg = f"Failed to register database service: {db_result.error}"
-            raise FlextCore.Exceptions.ConfigurationError(msg)
+            raise FlextExceptions.ConfigurationError(msg)
 
-    def get_user(self, user_id: str) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def get_user(self, user_id: str) -> FlextResult[FlextTypes.Dict]:
         """Get user with dependency injection and error handling."""
         # Retrieve service with error handling
         db_result = self._container.get("database")
         if db_result.is_failure:
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 f"Database service unavailable: {db_result.error}"
             )
 
         db_service = db_result.unwrap()
-        return FlextCore.Result[FlextCore.Types.Dict].ok({
-            "user_id": user_id,
-            "service": type(db_service).__name__,
-        })
+        return FlextResult[FlextTypes.Dict].ok(
+            {
+                "user_id": user_id,
+                "service": type(db_service).__name__,
+            }
+        )
 
 
 class EventService:
-    """Example event service demonstrating FlextCore.Bus integration."""
+    """Example event service demonstrating FlextBus integration."""
 
     def __init__(self) -> None:
         """Initialize event service with bus integration."""
         super().__init__()
-        self._bus = FlextCore.Bus()
-        self._events: list[FlextCore.Types.Dict] = []
+        self._bus = FlextBus()
+        self._events: list[FlextTypes.Dict] = []
 
     def publish_event(
-        self, event_type: str, data: FlextCore.Types.Dict
-    ) -> FlextCore.Result[None]:
+        self, event_type: str, data: FlextTypes.Dict
+    ) -> FlextResult[None]:
         """Publish event with proper error handling."""
         try:
-            # FlextCore.Bus.publish_event takes a single event object
-            event: FlextCore.Types.Dict = {"type": event_type, **data}
+            # FlextBus.publish_event takes a single event object
+            event: FlextTypes.Dict = {"type": event_type, **data}
             result = self._bus.publish_event(event)
             if result.is_failure:
                 return result
 
             self._events.append({"type": event_type, "data": data, "timestamp": "now"})
-            return FlextCore.Result[None].ok(None)
+            return FlextResult[None].ok(None)
         except Exception as e:
-            return FlextCore.Result[None].fail(f"Failed to publish event: {e}")
+            return FlextResult[None].fail(f"Failed to publish event: {e}")
 
-    def get_events(self) -> FlextCore.Result[list[FlextCore.Types.Dict]]:
+    def get_events(self) -> FlextResult[list[FlextTypes.Dict]]:
         """Get events with railway pattern."""
         if not self._events:
-            return FlextCore.Result[list[FlextCore.Types.Dict]].fail(
-                "No events available"
-            )
+            return FlextResult[list[FlextTypes.Dict]].fail("No events available")
 
-        return FlextCore.Result[list[FlextCore.Types.Dict]].ok(self._events)
+        return FlextResult[list[FlextTypes.Dict]].ok(self._events)
 
 
 class EventHandler:
@@ -151,33 +160,31 @@ class EventHandler:
         super().__init__()
         self._event_service = event_service
 
-    def handle_user_created(
-        self, event_data: FlextCore.Types.Dict
-    ) -> FlextCore.Result[None]:
+    def handle_user_created(self, event_data: FlextTypes.Dict) -> FlextResult[None]:
         """Handle user created event with validation."""
         user_id = event_data.get("user_id")
         if not user_id:
-            return FlextCore.Result[None].fail("Invalid event data: missing user_id")
+            return FlextResult[None].fail("Invalid event data: missing user_id")
 
         # Process event
         return self._event_service.publish_event("user_processed", {"user_id": user_id})
 
 
 class MessageService:
-    """Example message service demonstrating FlextCore.Dispatcher integration."""
+    """Example message service demonstrating FlextDispatcher integration."""
 
     def __init__(self) -> None:
         """Initialize message service with dispatcher."""
         super().__init__()
-        self._dispatcher = FlextCore.Dispatcher()
-        self._messages: list[FlextCore.Types.Dict] = []
+        self._dispatcher = FlextDispatcher()
+        self._messages: list[FlextTypes.Dict] = []
 
-    def send_message(self, message: FlextCore.Types.Dict) -> FlextCore.Result[str]:
+    def send_message(self, message: FlextTypes.Dict) -> FlextResult[str]:
         """Send message with proper error handling."""
         try:
             message_id = f"msg_{len(self._messages)}"
             enhanced_message = cast(
-                "FlextCore.Types.Dict",
+                "FlextTypes.Dict",
                 {**message, "id": message_id, "timestamp": "now"},
             )
 
@@ -185,18 +192,16 @@ class MessageService:
             self._dispatcher.dispatch(enhanced_message)
             self._messages.append(enhanced_message)
 
-            return FlextCore.Result[str].ok(message_id)
+            return FlextResult[str].ok(message_id)
         except Exception as e:
-            return FlextCore.Result[str].fail(f"Failed to send message: {e}")
+            return FlextResult[str].fail(f"Failed to send message: {e}")
 
-    def get_messages(self) -> FlextCore.Result[list[FlextCore.Types.Dict]]:
+    def get_messages(self) -> FlextResult[list[FlextTypes.Dict]]:
         """Get messages with railway pattern."""
         if not self._messages:
-            return FlextCore.Result[list[FlextCore.Types.Dict]].fail(
-                "No messages available"
-            )
+            return FlextResult[list[FlextTypes.Dict]].fail("No messages available")
 
-        return FlextCore.Result[list[FlextCore.Types.Dict]].ok(self._messages)
+        return FlextResult[list[FlextTypes.Dict]].ok(self._messages)
 
 
 class MessageHandler:
@@ -207,67 +212,67 @@ class MessageHandler:
         super().__init__()
         self._message_service = message_service
 
-    def process_message(
-        self, message: FlextCore.Types.Dict
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def process_message(self, message: FlextTypes.Dict) -> FlextResult[FlextTypes.Dict]:
         """Process message with validation."""
         msg_type = message.get("type")
         if not msg_type:
-            return FlextCore.Result[FlextCore.Types.Dict].fail("Message missing type")
+            return FlextResult[FlextTypes.Dict].fail("Message missing type")
 
         # Process based on type
         if msg_type == "greeting":
-            return FlextCore.Result[FlextCore.Types.Dict].ok({
-                "response": "Hello!",
-                "original": message,
-            })
-        return FlextCore.Result[FlextCore.Types.Dict].ok({
-            "response": "Processed",
-            "type": msg_type,
-        })
+            return FlextResult[FlextTypes.Dict].ok(
+                {
+                    "response": "Hello!",
+                    "original": message,
+                }
+            )
+        return FlextResult[FlextTypes.Dict].ok(
+            {
+                "response": "Processed",
+                "type": msg_type,
+            }
+        )
 
 
 class IntegratedService:
     """Complete service integration demonstrating MANUAL component setup.
 
     This service demonstrates MANUAL integration of all flext-core components
-    WITHOUT using FlextCore.Mixins inheritance. This contrasts with the
+    WITHOUT using FlextMixins inheritance. This contrasts with the
     inherited infrastructure pattern shown in Examples 01-09.
 
     **IMPORTANT**: This manual setup is for advanced scenarios. For standard
-    service development, use FlextCore.Mixins to get automatic infrastructure:
-    - Inherited self.logger (no manual FlextCore.Logger instantiation)
-    - Inherited self.container (no manual FlextCore.Container.get_global())
+    service development, use FlextMixins to get automatic infrastructure:
+    - Inherited self.logger (no manual FlextLogger instantiation)
+    - Inherited self.container (no manual FlextContainer.get_global())
     - Inherited self.context (automatic request/correlation tracking)
-    - Inherited self.config (automatic FlextCore.Config with settings)
+    - Inherited self.config (automatic FlextConfig with settings)
     - Inherited self.metrics (automatic observability)
 
-    See Examples 01-09 for the recommended FlextCore.Mixins inheritance pattern.
+    See Examples 01-09 for the recommended FlextMixins inheritance pattern.
     """
 
     def __init__(self) -> None:
         """Initialize with MANUAL component setup.
 
         This demonstrates manual wiring of all components. Compare with
-        FlextCore.Mixins inheritance which provides all these automatically
+        FlextMixins inheritance which provides all these automatically
         via inherited properties (see Examples 01-09).
         """
         super().__init__()
-        # MANUAL setup - compare with FlextCore.Mixins automatic inheritance:
-        self._config = FlextCore.create_config()  # vs inherited self.config
-        self._container = (
-            FlextCore.Container.get_global()
-        )  # vs inherited self.container
-        self._bus = FlextCore.Bus()  # vs inherited self.bus
-        self._dispatcher = FlextCore.Dispatcher()  # vs inherited self.dispatcher
-        self.logger = FlextCore.create_logger(__name__)  # vs inherited self.logger
+        # MANUAL setup - compare with FlextMixins automatic inheritance:
+        self._config = FlextConfig()  # vs inherited self.config
+        self._container = FlextContainer.get_global()  # vs inherited self.container
+        self._bus = FlextBus()  # vs inherited self.bus
+        self._dispatcher = FlextDispatcher()  # vs inherited self.dispatcher
+        self.logger = FlextLogger.create_module_logger(
+            __name__
+        )  # vs inherited self.logger
 
         # Register this service in the container
         self._container.register("integrated_service", self)
 
-    def process_request(
-        self, request: FlextCore.Types.Dict
-    ) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def process_request(self, request: FlextTypes.Dict) -> FlextResult[FlextTypes.Dict]:
         """Process request with full flext-core integration."""
         # Log request with structured logging
         self.logger.info(
@@ -280,11 +285,11 @@ class IntegratedService:
 
         # Validate using configuration
         if len(str(request)) > self._config.validation_timeout_ms:
-            return FlextCore.Result[FlextCore.Types.Dict].fail("Request too large")
+            return FlextResult[FlextTypes.Dict].fail("Request too large")
 
         # Publish processing event
         event = cast(
-            "FlextCore.Types.Dict",
+            "FlextTypes.Dict",
             {
                 "type": "request_processing",
                 "request_id": request.get("id", "unknown"),
@@ -300,13 +305,13 @@ class IntegratedService:
 
         # Process with dispatcher
         response = cast(
-            "FlextCore.Types.Dict", {"processed": True, "request_id": request.get("id")}
+            "FlextTypes.Dict", {"processed": True, "request_id": request.get("id")}
         )
 
         # Send response through dispatcher
         dispatch_result = self._dispatcher.dispatch(
             cast(
-                "FlextCore.Types.Dict",
+                "FlextTypes.Dict",
                 {
                     "type": "response",
                     "data": response,
@@ -316,13 +321,13 @@ class IntegratedService:
         )
 
         if dispatch_result.is_failure:
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
+            return FlextResult[FlextTypes.Dict].fail(
                 f"Failed to dispatch response: {dispatch_result.error}"
             )
 
-        return FlextCore.Result[FlextCore.Types.Dict].ok(response)
+        return FlextResult[FlextTypes.Dict].ok(response)
 
-    def get_service_status(self) -> FlextCore.Result[FlextCore.Types.Dict]:
+    def get_service_status(self) -> FlextResult[FlextTypes.Dict]:
         """Get comprehensive service status with flext-core integration."""
         # Get component status
         config_status = "loaded" if self._config else "unavailable"
@@ -330,18 +335,20 @@ class IntegratedService:
         bus_status = "available" if self._bus else "unavailable"
         dispatcher_status = "available" if self._dispatcher else "unavailable"
 
-        return FlextCore.Result[FlextCore.Types.Dict].ok({
-            "service_name": "IntegratedService",
-            "status": "running",
-            "components": {
-                "config": config_status,
-                "container": container_status,
-                "bus": bus_status,
-                "dispatcher": dispatcher_status,
-                "logger": "available",
-            },
-            "integration_level": "complete",
-        })
+        return FlextResult[FlextTypes.Dict].ok(
+            {
+                "service_name": "IntegratedService",
+                "status": "running",
+                "components": {
+                    "config": config_status,
+                    "container": container_status,
+                    "bus": bus_status,
+                    "dispatcher": dispatcher_status,
+                    "logger": "available",
+                },
+                "integration_level": "complete",
+            }
+        )
 
 
 def run_integration_examples() -> None:
@@ -386,23 +393,23 @@ def run_integration_examples() -> None:
     print("  • Structured logging practices")
     print("  • Railway-oriented error handling")
 
-    # Demonstrate new FlextCore.Result methods (v0.9.9+)
+    # Demonstrate new FlextResult methods (v0.9.9+)
     demonstrate_new_flextresult_methods()
 
 
 def demonstrate_new_flextresult_methods() -> None:
-    """Demonstrate new FlextCore.Result methods (v0.9.9+)."""
+    """Demonstrate new FlextResult methods (v0.9.9+)."""
     # 4. alt - Utility Provider Alternatives
     print("\n=== 4. alt: Utility Provider Alternatives ===")
 
-    def get_custom_logger() -> FlextCore.Result[FlextCore.Logger]:
+    def get_custom_logger() -> FlextResult[FlextLogger]:
         """Try to get custom configured logger."""
-        return FlextCore.Result[FlextCore.Logger].fail("Custom logger not configured")
+        return FlextResult[FlextLogger].fail("Custom logger not configured")
 
-    def get_default_logger() -> FlextCore.Result[FlextCore.Logger]:
+    def get_default_logger() -> FlextResult[FlextLogger]:
         """Provide default logger as fallback."""
-        logger = FlextCore.Logger("utilities_integration")
-        return FlextCore.Result[FlextCore.Logger].ok(logger)
+        logger = FlextLogger("utilities_integration")
+        return FlextResult[FlextLogger].ok(logger)
 
     # Try custom, fall back to default
     logger_result = get_custom_logger().alt(get_default_logger())
@@ -416,26 +423,22 @@ def demonstrate_new_flextresult_methods() -> None:
     # 5. value_or_call - Lazy Utility Loading
     print("\n=== 5. value_or_call: Lazy Utility Loading ===")
 
-    def create_expensive_container() -> FlextCore.Container:
+    def create_expensive_container() -> FlextContainer:
         """Create and configure a new container (expensive operation)."""
         print("   ⚙️  Creating new container with full configuration...")
-        container = FlextCore.Container()
-        container.register("logger", FlextCore.create_logger("lazy_container"))
-        container.register("config", FlextCore.create_config())
+        container = FlextContainer()
+        container.register("logger", FlextLogger.create_module_logger("lazy_container"))
+        container.register("config", FlextConfig())
         return container
 
     # Try to get existing container, create new one if not available
-    container_fail_result = FlextCore.Result[FlextCore.Container].fail(
-        "No existing container"
-    )
+    container_fail_result = FlextResult[FlextContainer].fail("No existing container")
     container = container_fail_result.value_or_call(create_expensive_container)
     print(f"✅ Container acquired: {type(container).__name__}")
     print(f"   Container has services: {hasattr(container, '_services')}")
 
     # Try again with successful result (lazy function NOT called)
-    container_success_result = FlextCore.Result[FlextCore.Container].ok(
-        FlextCore.Container()
-    )
+    container_success_result = FlextResult[FlextContainer].ok(FlextContainer())
     container_cached = container_success_result.value_or_call(
         create_expensive_container
     )
@@ -443,7 +446,7 @@ def demonstrate_new_flextresult_methods() -> None:
     print("   No expensive creation needed")
 
     print("\n" + "=" * 60)
-    print("✅ NEW FlextCore.Result METHODS UTILITIES INTEGRATION DEMO COMPLETE!")
+    print("✅ NEW FlextResult METHODS UTILITIES INTEGRATION DEMO COMPLETE!")
     print("All 5 methods demonstrated with complete utility integration context")
     print("=" * 60)
 

@@ -250,12 +250,14 @@ class FlextProcessors(FlextMixins):
                         self._metrics["successful_processes"] = (
                             self._metrics.get("successful_processes", 0) + 1
                         )
-                        self._audit_log.append({
-                            "timestamp": time.time(),
-                            "processor": name,
-                            "status": "success",
-                            "data_hash": hash(str(data)),
-                        })
+                        self._audit_log.append(
+                            {
+                                "timestamp": time.time(),
+                                "processor": name,
+                                "status": "success",
+                                "data_hash": hash(str(data)),
+                            }
+                        )
                         # Return the FlextResult directly, don't wrap it
                         return typed_result
                     # Cast to the expected return type for better type inference
@@ -263,13 +265,15 @@ class FlextProcessors(FlextMixins):
                     self._metrics["failed_processes"] = (
                         self._metrics.get("failed_processes", 0) + 1
                     )
-                    self._audit_log.append({
-                        "timestamp": time.time(),
-                        "processor": name,
-                        "status": "failure",
-                        "error": typed_result.error,
-                        "data_hash": hash(str(data)),
-                    })
+                    self._audit_log.append(
+                        {
+                            "timestamp": time.time(),
+                            "processor": name,
+                            "status": "failure",
+                            "error": typed_result.error,
+                            "data_hash": hash(str(data)),
+                        }
+                    )
 
                     return typed_result
 
@@ -286,13 +290,15 @@ class FlextProcessors(FlextMixins):
             self._metrics["failed_processes"] = (
                 self._metrics.get("failed_processes", 0) + 1
             )
-            self._audit_log.append({
-                "timestamp": time.time(),
-                "processor": name,
-                "status": "error",
-                "error": str(e),
-                "data_hash": hash(str(data)),
-            })
+            self._audit_log.append(
+                {
+                    "timestamp": time.time(),
+                    "processor": name,
+                    "status": "error",
+                    "error": str(e),
+                    "data_hash": hash(str(data)),
+                }
+            )
             return FlextResult[object].fail(f"Processor execution error: {e}")
 
     def add_middleware(self, middleware: object) -> None:
@@ -1289,7 +1295,7 @@ class FlextProcessors(FlextMixins):
 
                 """
                 # Extract data from FlextResult if it's a FlextResult
-                if isinstance(request, FlextProtocols.Foundation.HasResultValue):
+                if isinstance(request, FlextProtocols.HasResultValue):
                     actual_request = request.value
                 else:
                     actual_request = request

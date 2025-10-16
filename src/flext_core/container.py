@@ -29,7 +29,7 @@ from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes, T
 
 
-class FlextContainer(FlextProtocols.Infrastructure.Configurable):
+class FlextContainer(FlextProtocols.Configurable):
     """Type-safe dependency injection container for service management.
 
     Provides centralized service management with singleton pattern support,
@@ -52,10 +52,6 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         >>> container.register("logger", FlextLogger(__name__))
         >>> logger_result = container.get("logger")
     """
-
-    # =========================================================================
-    # SINGLETON MANAGEMENT - Class-level global state
-    # =========================================================================
 
     _global_instance: FlextContainer | None = None
     _global_lock: threading.RLock = threading.RLock()
@@ -107,7 +103,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         Always returns the current global config instance, ensuring the
         container stays in sync even after FlextConfig.reset_global_instance()
-        or upgrades to derived classes (FlextCore.Config, FlextBase.Config).
+        or upgrades to derived classes (FlextConfig, FlextBase.Config).
 
         This property pattern prevents stale config references in tests and
         ensures proper singleton behavior across the ecosystem.
@@ -252,8 +248,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
 
         Example:
             ```python
-            from flext_core.api import FlextCore
-            from flext_core.container import FlextContainer, FlextLogger
+            from flext_core import FlextContainer, FlextLogger
 
             container = FlextContainer()
             logger = FlextLogger(__name__)
@@ -879,9 +874,9 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         # Merge FlextConfig defaults with user overrides
         merged: FlextTypes.Dict = {}
         for source in (self._create_container_config(), self._user_overrides):
-            merged.update({
-                key: value for key, value in source.items() if value is not None
-            })
+            merged.update(
+                {key: value for key, value in source.items() if value is not None}
+            )
         self._global_config = merged
 
     # =========================================================================
@@ -934,11 +929,13 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
             )
 
         container = cls.ensure_global_instance()
-        return FlextResult[FlextTypes.Dict].ok({
-            "container": container,
-            "module": module_name,
-            "logger": f"flext.{module_name}",
-        })
+        return FlextResult[FlextTypes.Dict].ok(
+            {
+                "container": container,
+                "module": module_name,
+                "logger": f"flext.{module_name}",
+            }
+        )
 
     def get_with_fallback(
         self,
@@ -1133,7 +1130,7 @@ class FlextContainer(FlextProtocols.Infrastructure.Configurable):
         """
         total_registered = len(set(self._services.keys()) | set(self._factories.keys()))
         return (
-            f"FlextCore.Container(services={len(self._services)}, "
+            f"FlextContainer(services={len(self._services)}, "
             f"factories={len(self._factories)}, "
             f"total_registered={total_registered})"
         )

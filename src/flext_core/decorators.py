@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from contextlib import suppress
 from functools import wraps
 from typing import cast
 
@@ -199,8 +200,10 @@ class FlextDecorators:
                     )
                     raise
                 finally:
-                    # Unbind operation context
-                    FlextLogger.unbind_global_context("operation")
+                    # CRITICAL: Unbind operation context (defensive cleanup)
+                    # Use suppress to ensure cleanup never fails
+                    with suppress(Exception):
+                        FlextLogger.unbind_global_context("operation")
 
             return wrapper
 
@@ -292,8 +295,10 @@ class FlextDecorators:
                     )
                     raise
                 finally:
-                    # Unbind operation context
-                    FlextLogger.unbind_global_context("operation")
+                    # CRITICAL: Unbind operation context (defensive cleanup)
+                    # Use suppress to ensure cleanup never fails
+                    with suppress(Exception):
+                        FlextLogger.unbind_global_context("operation")
 
             return wrapper
 

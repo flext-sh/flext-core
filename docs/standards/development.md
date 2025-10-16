@@ -10,10 +10,10 @@ This document outlines the development standards, patterns, and quality requirem
 
 **CORE RESPONSIBILITIES**:
 
-- ✅ **Railway Pattern Foundation**: FlextCore.Result[T] with .data/.value compatibility
-- ✅ **Dependency Injection**: FlextCore.Container.get_global() with type safety
-- ✅ **Domain Models**: FlextCore.Models.Entity/Value/AggregateRoot for DDD patterns
-- ✅ **Service Architecture**: FlextCore.Service with Pydantic Generic[T] base
+- ✅ **Railway Pattern Foundation**: FlextResult[T] with .data/.value compatibility
+- ✅ **Dependency Injection**: FlextContainer.get_global() with type safety
+- ✅ **Domain Models**: FlextModels.Entity/Value/AggregateRoot for DDD patterns
+- ✅ **Service Architecture**: FlextService with Pydantic Generic[T] base
 - ✅ **Type Safety**: Complete type annotations for ecosystem-wide consistency
 - ✅ **Zero Breaking Changes**: Maintain API compatibility across versions
 - ✅ **Evidence-Based Quality**: 79% coverage proven stable, targeting 85% for 1.0.0
@@ -67,25 +67,25 @@ Inner layers know NOTHING about outer layers.
 **Layer Responsibilities:**
 
 1. **Foundation Layer** (No Dependencies):
-   - FlextCore.Result[T] - Railway pattern
-   - FlextCore.Container - Dependency injection
-   - FlextCore.Types - Type system
-   - FlextCore.Constants - Centralized constants
+   - FlextResult[T] - Railway pattern
+   - FlextContainer - Dependency injection
+   - FlextTypes - Type system
+   - FlextConstants - Centralized constants
 
 2. **Domain Layer** (Foundation Only):
-   - FlextCore.Models - DDD patterns
-   - FlextCore.Service - Domain services
-   - FlextCore.Mixins - Reusable behaviors
+   - FlextModels - DDD patterns
+   - FlextService - Domain services
+   - FlextMixins - Reusable behaviors
 
 3. **Application Layer** (Foundation + Domain):
-   - FlextCore.Bus - Message routing
-   - FlextCore.Handlers - Handler registry
-   - FlextCore.Registry - Component management
+   - FlextBus - Message routing
+   - FlextHandlers - Handler registry
+   - FlextRegistry - Component management
 
 4. **Infrastructure Layer** (All Layers):
-   - FlextCore.Config - Configuration management
-   - FlextCore.Logger - Structured logging
-   - FlextCore.Context - Context propagation
+   - FlextConfig - Configuration management
+   - FlextLogger - Structured logging
+   - FlextContext - Context propagation
 
 ### Module Organization
 
@@ -94,15 +94,15 @@ Inner layers know NOTHING about outer layers.
 ```
 src/flext_core/
 ├── __init__.py          # Public API exports ONLY
-├── result.py           # Railway pattern (FlextCore.Result)
-├── container.py        # DI singleton (FlextCore.Container)
-├── typings.py          # Type system (FlextCore.Types)
-├── constants.py        # Constants (FlextCore.Constants)
-├── models.py           # DDD base classes (FlextCore.Models)
-├── service.py          # Domain service base (FlextCore.Service)
-├── bus.py             # Message bus (FlextCore.Bus)
-├── config.py          # Configuration (FlextCore.Config)
-├── loggings.py        # Logging (FlextCore.Logger)
+├── result.py           # Railway pattern (FlextResult)
+├── container.py        # DI singleton (FlextContainer)
+├── typings.py          # Type system (FlextTypes)
+├── constants.py        # Constants (FlextConstants)
+├── models.py           # DDD base classes (FlextModels)
+├── service.py          # Domain service base (FlextService)
+├── bus.py             # Message bus (FlextBus)
+├── config.py          # Configuration (FlextConfig)
+├── loggings.py        # Logging (FlextLogger)
 └── ... (other modules)
 ```
 
@@ -110,13 +110,32 @@ src/flext_core/
 
 ```python
 # ✅ CORRECT - Direct imports
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
 # ❌ WRONG - Star imports in production
 from flext_core import *
 
 # ❌ WRONG - Relative imports in public APIs
-from .result import FlextCore.Result
+from .result import FlextResult
 ```
 
 ## 🔧 Development Workflow
@@ -141,7 +160,26 @@ cd flext-core
 make setup
 
 # 3. Verify installation
-python -c "from flext_core import FlextCore; print('✅ Ready')"
+python -c "from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities; print('✅ Ready')"
 ```
 
 ### Development Commands
@@ -196,13 +234,13 @@ pytest tests/unit/test_container.py::TestFlextContainer::test_singleton -v
 
 ```python
 # ✅ CORRECT - Type hints, proper naming
-def process_user(user_id: str) -> FlextCore.Result[User]:
+def process_user(user_id: str) -> FlextResult[User]:
     """Process user with validation."""
     if not user_id:
-        return FlextCore.Result[User].fail("User ID required")
+        return FlextResult[User].fail("User ID required")
 
     user = self.user_repository.get(user_id)
-    return FlextCore.Result[User].ok(user)
+    return FlextResult[User].ok(user)
 
 # ❌ WRONG - Missing types, poor naming
 def do_stuff(x):
@@ -216,13 +254,13 @@ def do_stuff(x):
 **1. Railway Pattern (MANDATORY for all operations):**
 
 ```python
-# ✅ CORRECT - Always return FlextCore.Result
-def create_user(name: str, email: str) -> FlextCore.Result[User]:
+# ✅ CORRECT - Always return FlextResult
+def create_user(name: str, email: str) -> FlextResult[User]:
     if not name or not email:
-        return FlextCore.Result[User].fail("Name and email required")
+        return FlextResult[User].fail("Name and email required")
 
     user = User(id=f"user_{name}", name=name, email=email)
-    return FlextCore.Result[User].ok(user)
+    return FlextResult[User].ok(user)
 
 # ❌ WRONG - Using exceptions for control flow
 def create_user(name: str, email: str) -> User:
@@ -235,15 +273,15 @@ def create_user(name: str, email: str) -> User:
 
 ```python
 # ✅ CORRECT - Use global container
-class UserService(FlextCore.Service):
+class UserService(FlextService):
     def __init__(self) -> None:
         super().__init__()
-        self.container = FlextCore.Container.get_global()
+        self.container = FlextContainer.get_global()
         self.logger = self._get_logger()
 
-    def _get_logger(self) -> FlextCore.Logger:
+    def _get_logger(self) -> FlextLogger:
         result = self.container.get("logger")
-        return result.unwrap() if result.is_success else FlextCore.Logger(__name__)
+        return result.unwrap() if result.is_success else FlextLogger(__name__)
 
 # ❌ WRONG - Manual DI or no DI
 class UserService:
@@ -255,18 +293,18 @@ class UserService:
 
 ```python
 # ✅ CORRECT - Proper DDD patterns
-class Order(FlextCore.Models.AggregateRoot):
+class Order(FlextModels.AggregateRoot):
     customer_id: str
     items: list[OrderItem]
     total: Decimal
 
-    def add_item(self, item: OrderItem) -> FlextCore.Result[None]:
+    def add_item(self, item: OrderItem) -> FlextResult[None]:
         if self.status != OrderStatus.PENDING:
-            return FlextCore.Result[None].fail("Can only modify pending orders")
+            return FlextResult[None].fail("Can only modify pending orders")
 
         self.items.append(item)
         self.add_domain_event("ItemAdded", {"item_id": item.id})
-        return FlextCore.Result[None].ok(None)
+        return FlextResult[None].ok(None)
 
 # ❌ WRONG - Anemic model
 class Order:
@@ -282,9 +320,9 @@ class Order:
 
 **Stability Guarantees:**
 
-- **FlextCore.Result[T]**: Dual `.value`/`.data` access maintained
-- **FlextCore.Container**: Singleton pattern preserved
-- **FlextCore.Models**: DDD patterns locked
+- **FlextResult[T]**: Dual `.value`/`.data` access maintained
+- **FlextContainer**: Singleton pattern preserved
+- **FlextModels**: DDD patterns locked
 - **Public APIs**: Zero breaking changes in 1.x series
 
 **Adding New Features:**
@@ -335,7 +373,7 @@ tests/
 ```python
 def test_flext_result_ok():
     """Test successful result creation."""
-    result = FlextCore.Result[str].ok("success")
+    result = FlextResult[str].ok("success")
 
     assert result.is_success
     assert not result.is_failure
@@ -348,8 +386,8 @@ def test_flext_result_ok():
 ```python
 def test_container_singleton():
     """Test container singleton behavior."""
-    container1 = FlextCore.Container.get_global()
-    container2 = FlextCore.Container.get_global()
+    container1 = FlextContainer.get_global()
+    container2 = FlextContainer.get_global()
 
     assert container1 is container2  # Same instance
 ```

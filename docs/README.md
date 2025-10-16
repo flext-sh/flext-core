@@ -54,24 +54,62 @@ cd flext-core
 make setup
 
 # Verify installation
-python -c "from flext_core import FlextCore; print('✅ FLEXT-Core v0.9.9 ready')"
+python -c "from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities; print('✅ FLEXT-Core v0.9.9 ready')"
 ```
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
 # Railway-oriented error handling
-result = FlextCore.Result[str].ok("Success!")
+result = FlextResult[str].ok("Success!")
 if result.is_success:
     value = result.unwrap()
 
 # Dependency injection
-container = FlextCore.Container.get_global()
-container.register("logger", FlextCore.Logger(**name**))
+container = FlextContainer.get_global()
+container.register("logger", FlextLogger(**name**))
 
 
 # Domain modeling with DDD patterns
-class User(FlextCore.Models.Entity):
+class User(FlextModels.Entity):
     name: str
     email: str
 ```
@@ -80,13 +118,13 @@ class User(FlextCore.Models.Entity):
 
 ### 1. Railway-Oriented Programming
 
-FLEXT-Core uses the `FlextCore.Result[T]` monad for error handling without exceptions:
+FLEXT-Core uses the `FlextResult[T]` monad for error handling without exceptions:
 
 ```python
-def divide(a: float, b: float) -> FlextCore.Result[float]:
+def divide(a: float, b: float) -> FlextResult[float]:
     if b == 0:
-        return FlextCore.Result[float].fail("Division by zero")
-    return FlextCore.Result[float].ok(a / b)
+        return FlextResult[float].fail("Division by zero")
+    return FlextResult[float].ok(a / b)
 
 result = divide(10, 2)
 if result.is_success:
@@ -98,9 +136,28 @@ if result.is_success:
 Global container with type-safe service registration:
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-container = FlextCore.Container.get_global()
+container = FlextContainer.get_global()
 container.register("database", DatabaseService())
 db = container.get("database")
 ```
@@ -112,14 +169,33 @@ Entity, Value Object, and Aggregate Root patterns:
 ```python
 from typing import List
 from decimal import Decimal
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-class Order(FlextCore.Models.Entity):
+class Order(FlextModels.Entity):
     customer_id: str
     items: List[OrderItem]
     total: Decimal
 
-    def calculate_total(self) -> FlextCore.Result[Decimal]:
+    def calculate_total(self) -> FlextResult[Decimal]:
         # Business logic here
         pass
 ```

@@ -22,7 +22,7 @@ from typing import cast
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextCore
+from flext_core import FlextTypes
 
 
 def mark_test_pattern(
@@ -49,7 +49,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: FlextCore.Types.Dict) -> None:
+    def __init__(self, name: str, data: FlextTypes.Dict) -> None:
         """Initialize mock scenario with name and test data."""
         super().__init__()
         self.name = name
@@ -67,10 +67,10 @@ class GivenWhenThenBuilder:
         """Initialize Given-When-Then builder with test name."""
         super().__init__()
         self.name = name
-        self._given: FlextCore.Types.Dict = {}
-        self._when: FlextCore.Types.Dict = {}
-        self._then: FlextCore.Types.Dict = {}
-        self._tags: FlextCore.Types.StringList = []
+        self._given: FlextTypes.Dict = {}
+        self._when: FlextTypes.Dict = {}
+        self._then: FlextTypes.Dict = {}
+        self._tags: FlextTypes.StringList = []
         self._priority = "normal"
 
     def given(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
@@ -118,7 +118,7 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize test data builder with empty data."""
         super().__init__()
-        self._data: FlextCore.Types.Dict = {}
+        self._data: FlextTypes.Dict = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """Add ID to the test data."""
@@ -152,7 +152,7 @@ class FlextTestBuilder:
         # No-op stub to keep example API; could attach schema metadata here
         return self
 
-    def build(self) -> FlextCore.Types.Dict:
+    def build(self) -> FlextTypes.Dict:
         """Build the final test data dictionary."""
         return self._data.copy()
 
@@ -164,9 +164,9 @@ class ParameterizedTestBuilder:
         """Initialize parameterized test builder with test name."""
         super().__init__()
         self.test_name = test_name
-        self._cases: list[FlextCore.Types.Dict] = []
-        self._success_cases: list[FlextCore.Types.Dict] = []
-        self._failure_cases: list[FlextCore.Types.Dict] = []
+        self._cases: list[FlextTypes.Dict] = []
+        self._success_cases: list[FlextTypes.Dict] = []
+        self._failure_cases: list[FlextTypes.Dict] = []
 
     def add_case(self, **kwargs: object) -> ParameterizedTestBuilder:
         """Add a test case with the given parameters."""
@@ -175,7 +175,7 @@ class ParameterizedTestBuilder:
 
     def add_success_cases(
         self,
-        cases: list[FlextCore.Types.Dict],
+        cases: list[FlextTypes.Dict],
     ) -> ParameterizedTestBuilder:
         """Add multiple success test cases."""
         self._success_cases.extend(cases)
@@ -183,13 +183,13 @@ class ParameterizedTestBuilder:
 
     def add_failure_cases(
         self,
-        cases: list[FlextCore.Types.Dict],
+        cases: list[FlextTypes.Dict],
     ) -> ParameterizedTestBuilder:
         """Add multiple failure test cases."""
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[FlextCore.Types.Dict]:
+    def build(self) -> list[FlextTypes.Dict]:
         """Build the list of test cases."""
         return self._cases.copy()
 
@@ -205,7 +205,7 @@ class ParameterizedTestBuilder:
         ]
         return success_params + failure_params
 
-    def build_test_ids(self) -> FlextCore.Types.StringList:
+    def build_test_ids(self) -> FlextTypes.StringList:
         """Build test IDs for pytest parametrization."""
         return [
             str(c.get("input", ""))
@@ -256,11 +256,11 @@ class SuiteBuilder:
         """Initialize test suite builder with suite name."""
         super().__init__()
         self.name = name
-        self._scenarios: FlextCore.Types.List = []
-        self._setup_data: FlextCore.Types.Dict = {}
-        self._tags: FlextCore.Types.StringList = []
+        self._scenarios: FlextTypes.List = []
+        self._setup_data: FlextTypes.Dict = {}
+        self._tags: FlextTypes.StringList = []
 
-    def add_scenarios(self, scenarios: FlextCore.Types.List) -> SuiteBuilder:
+    def add_scenarios(self, scenarios: FlextTypes.List) -> SuiteBuilder:
         """Add multiple test scenarios to the suite."""
         self._scenarios.extend(scenarios)
         return self
@@ -275,7 +275,7 @@ class SuiteBuilder:
         self._tags.append(tag)
         return self
 
-    def build(self) -> FlextCore.Types.Dict:
+    def build(self) -> FlextTypes.Dict:
         """Build the test suite configuration."""
         return {
             "suite_name": self.name,
@@ -291,9 +291,9 @@ class FixtureBuilder:
     def __init__(self) -> None:
         """Initialize test fixture builder with empty fixtures."""
         super().__init__()
-        self._fixtures: FlextCore.Types.Dict = {}
-        self._setups: FlextCore.Types.List = []
-        self._teardowns: FlextCore.Types.List = []
+        self._fixtures: FlextTypes.Dict = {}
+        self._setups: FlextTypes.List = []
+        self._teardowns: FlextTypes.List = []
 
     def with_user(self, **kwargs: object) -> FixtureBuilder:
         """Add user fixture data."""
@@ -305,7 +305,7 @@ class FixtureBuilder:
         self._fixtures["request"] = kwargs
         return self
 
-    def build(self) -> FlextCore.Types.Dict:
+    def build(self) -> FlextTypes.Dict:
         """Build the test fixtures configuration."""
         return self._fixtures.copy()
 
@@ -324,11 +324,11 @@ class FixtureBuilder:
         self._fixtures[key] = value
         return self
 
-    def setup_context(self) -> Callable[[], ContextManager[FlextCore.Types.Dict]]:
+    def setup_context(self) -> Callable[[], ContextManager[FlextTypes.Dict]]:
         """Create a context manager for test setup and teardown."""
 
         @contextmanager
-        def _ctx() -> Iterator[FlextCore.Types.Dict]:
+        def _ctx() -> Iterator[FlextTypes.Dict]:
             for f in self._setups:
                 if callable(f):
                     f()
@@ -379,15 +379,15 @@ class TestPropertyBasedPatterns:
         assert not email.endswith("@")
 
     @given(
-        st.fixed_dictionaries({
-            "id": st.uuids().map(str),
-            "name": st.text(),
-            "email": st.emails(),
-        })
+        st.fixed_dictionaries(
+            {
+                "id": st.uuids().map(str),
+                "name": st.text(),
+                "email": st.emails(),
+            }
+        )
     )
-    def test_user_profile_property_based(
-        self, profile: FlextCore.Types.StringDict
-    ) -> None:
+    def test_user_profile_property_based(self, profile: FlextTypes.StringDict) -> None:
         """Property-based test for user profiles."""
         # Verify required fields
         assert "id" in profile
@@ -476,7 +476,7 @@ class TestPerformanceAnalysis:
     def test_endurance_testing(self) -> None:
         """Demonstrate endurance testing."""
 
-        def memory_operation() -> FlextCore.Types.IntList:
+        def memory_operation() -> FlextTypes.IntList:
             """Operation that uses some memory."""
             return list(range(100))
 
@@ -539,10 +539,10 @@ class TestAdvancedPatterns:
         )
 
         assert scenario.name == "user_registration"
-        assert "email" in cast("FlextCore.Types.Dict", scenario.given)
-        assert "action" in cast("FlextCore.Types.Dict", scenario.when)
-        assert "success" in cast("FlextCore.Types.Dict", scenario.then)
-        assert "integration" in cast("FlextCore.Types.StringList", scenario.tags)
+        assert "email" in cast("FlextTypes.Dict", scenario.given)
+        assert "action" in cast("FlextTypes.Dict", scenario.when)
+        assert "success" in cast("FlextTypes.Dict", scenario.then)
+        assert "integration" in cast("FlextTypes.StringList", scenario.tags)
         assert scenario.priority == "high"
 
     def test_builder_pattern_advanced(self) -> None:
@@ -602,7 +602,7 @@ class TestAdvancedPatterns:
             if not isinstance(x, list):
                 return False
             # Type-safe check for each item in the list
-            list_x = cast("FlextCore.Types.List", x)  # Type is now verified as list
+            list_x = cast("FlextTypes.List", x)  # Type is now verified as list
             return all(isinstance(item, str) for item in list_x)
 
         # Build complex assertions
@@ -617,15 +617,15 @@ class TestAdvancedPatterns:
     def test_arrange_act_assert_decorator(self) -> None:
         """Demonstrate Arrange-Act-Assert pattern decorator."""
 
-        def arrange_data(*_args: object) -> FlextCore.Types.Dict:
+        def arrange_data(*_args: object) -> FlextTypes.Dict:
             return {"numbers": [1, 2, 3, 4, 5]}
 
-        def act_on_data(data: FlextCore.Types.Dict) -> int:
-            return sum(cast("FlextCore.Types.IntList", data["numbers"]))
+        def act_on_data(data: FlextTypes.Dict) -> int:
+            return sum(cast("FlextTypes.IntList", data["numbers"]))
 
-        def assert_result(result: int, original_data: FlextCore.Types.Dict) -> None:
+        def assert_result(result: int, original_data: FlextTypes.Dict) -> None:
             assert result == 15
-            assert len(cast("FlextCore.Types.IntList", original_data["numbers"])) == 5
+            assert len(cast("FlextTypes.IntList", original_data["numbers"])) == 5
 
         @arrange_act_assert(
             arrange_data,
@@ -678,7 +678,7 @@ class TestComprehensiveIntegration:
         # Build complete test suite
         suite = (
             SuiteBuilder("comprehensive_operation_tests")
-            .add_scenarios(cast("FlextCore.Types.List", scenarios))
+            .add_scenarios(cast("FlextTypes.List", scenarios))
             .with_setup_data(environment="test", timeout=30)
             .with_tag("integration")
             .build()
@@ -686,10 +686,8 @@ class TestComprehensiveIntegration:
 
         assert suite["suite_name"] == "comprehensive_operation_tests"
         assert suite["scenario_count"] == 2
-        assert "integration" in cast("FlextCore.Types.StringList", suite["tags"])
-        assert (
-            cast("FlextCore.Types.Dict", suite["setup_data"])["environment"] == "test"
-        )
+        assert "integration" in cast("FlextTypes.StringList", suite["tags"])
+        assert cast("FlextTypes.Dict", suite["setup_data"])["environment"] == "test"
 
 
 # ============================================================================
@@ -719,7 +717,7 @@ class TestRealWorldScenarios:
 
         with fixture_builder.setup_context()():
             # Use a fixed test request instead of Hypothesis example
-            test_request: FlextCore.Types.Dict = {
+            test_request: FlextTypes.Dict = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",
@@ -729,8 +727,8 @@ class TestRealWorldScenarios:
 
             # Simulate API processing
             def process_api_request(
-                request: FlextCore.Types.Dict,
-            ) -> FlextCore.Types.Dict:
+                request: FlextTypes.Dict,
+            ) -> FlextTypes.Dict:
                 return {
                     "status": "success",
                     "method": request["method"],
@@ -794,7 +792,7 @@ class TestRealWorldScenarios:
     @settings()
     def test_configuration_validation_comprehensive(
         self,
-        config: FlextCore.Types.Dict,
+        config: FlextTypes.Dict,
     ) -> None:
         """Comprehensive configuration validation testing."""
         # Validate configuration structure
@@ -820,5 +818,5 @@ class TestRealWorldScenarios:
             .build()
         )
 
-        assert cast("FlextCore.Types.Dict", scenario.given)["config"] == config
-        assert "configuration" in cast("FlextCore.Types.StringList", scenario.tags)
+        assert cast("FlextTypes.Dict", scenario.given)["config"] == config
+        assert "configuration" in cast("FlextTypes.StringList", scenario.tags)
