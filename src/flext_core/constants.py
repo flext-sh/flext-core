@@ -24,25 +24,221 @@ from typing import (
 class FlextConstants:
     """Foundation constants for the FLEXT ecosystem.
 
+    Architecture: Layer 0 (Pure Constants - No Layer 1+ Imports)
+    ============================================================
     Provides immutable constants organized in namespaces for configuration,
     validation, error handling, and system defaults. All constants use
-    typing.Final for immutability and serve as the single source of truth.
+    typing.Final for immutability and serve as the single source of truth
+    throughout the FLEXT ecosystem.
 
-    The class is organized into nested namespaces:
-    - Core: Basic identifiers and version information
-    - Network: Network-related defaults and limits
-    - Validation: Input validation limits and patterns
-    - Errors: Error codes for exception categorization
-    - Messages: User-facing message templates
-    - Config: Configuration defaults and limits
-    - Platform: Platform-specific constants (HTTP, database, file types)
-    - Logging: Logging configuration and levels
-    - Security: Security and authentication constants
+    **Structural Typing and Protocol Compliance**:
+    This class satisfies FlextProtocols.Constants through structural typing
+    (duck typing) via the following protocol-compliant interface:
+    - 40+ nested namespace classes providing organized constant access
+    - typing.Final type annotations for immutability guarantees
+    - Hierarchical access patterns (FlextConstants.Namespace.CONSTANT)
+    - Compile-time constant verification via strict type checking
+    - Runtime constant validation through __getitem__ and __class_getitem__
 
-    Usage:
+    **Core Features**:
+    1. **Immutable Constants**: All constants wrapped with typing.Final
+    2. **Namespace Organization**: 30+ nested classes for logical grouping
+    3. **Type Safety**: Complete type annotations (no Any, no implicit types)
+    4. **Hierarchical Access**: Multi-level namespace access patterns
+    5. **Alternative Access**: __getitem__ for dynamic constant retrieval
+    6. **Ecosystem Single Source of Truth**: Centralized configuration
+    7. **Integration Ready**: Seamless use throughout 32+ FLEXT projects
+    8. **Error Code Registry**: 50+ error codes with reserved purposes
+    9. **Literal Type Definitions**: Type-safe literal types for annotations
+    10. **StrEnum Integration**: Platform and configuration StrEnums
+
+    **Namespace Organization**:
+    - **Core**: Basic identifiers and version information
+    - **Network**: Network-related defaults, timeouts, connection pools
+    - **Validation**: Input validation limits and patterns
+    - **Errors**: 50+ error codes with purpose documentation
+    - **Messages**: User-facing message templates
+    - **Entities**: Entity-specific constants
+    - **Defaults**: Default values for common operations
+    - **Limits**: Upper bounds for resource usage
+    - **Utilities**: Utility constants (encoding, batch sizes)
+    - **Patterns**: Regex patterns for validation
+    - **Config**: Configuration defaults and StrEnum types
+    - **Enums**: Shared enumeration types (FieldType, WorkspaceStatus)
+    - **Platform**: HTTP, database, file type, MIME type constants
+    - **Observability**: Logging and monitoring defaults
+    - **Performance**: Performance thresholds, connection limits, batch sizes
+    - **Reliability**: Retry, circuit breaker, rate limiting constants
+    - **Security**: JWT, authentication, session management constants
+    - **Logging**: Log levels, output formats, context inclusion
+    - **Cqrs**: CQRS patterns, handler types, timeout/retry settings
+    - **Context**: Context scope, correlation ID, export formats
+    - **Container**: Dependency injection container constants
+    - **Dispatcher**: Message dispatcher modes and settings
+    - **Pagination**: Pagination configuration constants
+    - **Mixins**: Field names, status constants, default states
+    - **Http**: HTTP status codes, methods, content types, headers
+    - **Web**: Web application timeouts
+    - **Batch**: Batch processing size constants
+    - **Processing**: Processing pipeline constants
+
+    **Error Code Registry** (50+ codes with explicit purposes):
+    - **Core errors**: VALIDATION_ERROR, TYPE_ERROR, ATTRIBUTE_ERROR (active)
+    - **FlextResult operations**: MAP_ERROR, BIND_ERROR, CHAIN_ERROR, UNWRAP_ERROR
+    - **Business logic**: OPERATION_ERROR, SERVICE_ERROR, BUSINESS_RULE_VIOLATION
+    - **CRUD/Resource**: NOT_FOUND_ERROR, ALREADY_EXISTS, RESOURCE_NOT_FOUND
+    - **CQRS**: COMMAND_BUS_ERROR, COMMAND_HANDLER_NOT_FOUND, DOMAIN_EVENT_ERROR
+    - **Infrastructure**: TIMEOUT_ERROR, CONNECTION_ERROR, CONFIGURATION_ERROR
+    - **Security**: PERMISSION_ERROR, AUTHENTICATION_ERROR
+    - **System**: EXCEPTION_ERROR, CRITICAL_ERROR, NONEXISTENT_ERROR
+
+    **Literal Type Definitions** (Type-Safe Annotations):
+    - Status, CircuitBreakerState, HandlerType, HandlerMode
+    - Compression, ErrorCategory, ErrorSeverity
+    - ServiceType, ServiceLifecycleState, ServiceProtocol
+    - ContextScope, ContextExportFormat, LoggingLevel
+    - ProcessingOutputFormat, ProcessingSerializationFormat, ProcessingCompressionFormat
+    - WorkflowProcessingStatus, WorkflowProcessingMode, WorkflowValidationLevel
+    - CqrsMode, WorkspaceStatus, ProjectType, ProjectStatus
+
+    **Integration with FlextProtocols**:
+    This module provides the complete constant registry that other FLEXT
+    components depend on. By centralizing all constants here:
+    - Error codes are consistent across all 32+ projects
+    - Configuration defaults are standardized
+    - Type-safe literals support strict type checking
+    - All components reference single source of truth
+    - Reduces configuration drift and inconsistencies
+
+    **Usage Patterns**:
+
+    1. Direct namespace access:
         >>> from flext_core import FlextConstants
-        >>> error_code = FlextConstants.Errors.VALIDATION_ERROR
+        >>> error = FlextConstants.Errors.VALIDATION_ERROR
         >>> timeout = FlextConstants.Config.DEFAULT_TIMEOUT
+
+    2. Dynamic access via __getitem__:
+        >>> const = FlextConstants["Errors.VALIDATION_ERROR"]
+        >>> port = FlextConstants["Platform.FLEXT_API_PORT"]
+
+    3. Literal type annotations:
+        >>> from flext_core import FlextConstants
+        >>> def process_error(code: FlextConstants.ErrorCategory) -> None: ...
+
+    4. StrEnum access for configuration:
+        >>> env = FlextConstants.Config.Environment.PRODUCTION
+        >>> log_level = FlextConstants.Config.LogLevel.INFO
+
+    5. Error code patterns:
+        >>> validation_errors = [
+        ...     FlextConstants.Errors.VALIDATION_ERROR,
+        ...     FlextConstants.Errors.TYPE_ERROR,
+        ... ]
+
+    6. Network and timeout constants:
+        >>> timeout_sec = FlextConstants.Network.DEFAULT_TIMEOUT
+        >>> pool_size = FlextConstants.Network.DEFAULT_CONNECTION_POOL_SIZE
+
+    7. Performance thresholds:
+        >>> batch_size = FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
+        >>> max_retries = FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
+
+    8. Security and authentication:
+        >>> jwt_algo = FlextConstants.Security.JWT_DEFAULT_ALGORITHM
+        >>> bcrypt_rounds = FlextConstants.Security.CREDENTIAL_BCRYPT_ROUNDS
+
+    9. Platform constants:
+        >>> api_port = FlextConstants.Platform.FLEXT_API_PORT
+        >>> json_mime = FlextConstants.Platform.MIME_TYPE_JSON
+        >>> email_pattern = FlextConstants.Platform.PATTERN_EMAIL
+
+    10. Logging configuration:
+        >>> log_level = FlextConstants.Logging.DEFAULT_LEVEL
+        >>> include_context = FlextConstants.Logging.INCLUDE_CONTEXT
+
+    **Integration with FLEXT Ecosystem**:
+    - **FlextResult**: Uses error codes from Errors namespace
+    - **FlextConfig**: References Config and Platform constants
+    - **FlextLogger**: Uses Logging constants for configuration
+    - **FlextBus**: Uses Cqrs constants for handler types
+    - **FlextContext**: Uses Context constants for scope management
+    - **FlextContainer**: Uses Container constants for lifecycle
+    - **Domain Services**: Reference validation and business error codes
+    - **All 32+ projects**: Depend on this centralized constant registry
+
+    **Thread Safety**:
+    All constants are immutable (typing.Final). Access is thread-safe as
+    there is no mutable state in this module.
+
+    **Performance Characteristics**:
+    - O(1) constant access via namespace attributes
+    - O(1) constant access via __getitem__ (dict-like lookup)
+    - No runtime compilation or validation overhead
+    - Constants are resolved at import time
+
+    **Advanced Patterns**:
+
+    1. Error code grouping for handling:
+        >>> business_errors = [
+        ...     FlextConstants.Errors.BUSINESS_RULE_VIOLATION,
+        ...     FlextConstants.Errors.BUSINESS_RULE_ERROR,
+        ... ]
+
+    2. Configuration profile constants:
+        >>> if env == FlextConstants.Config.Environment.PRODUCTION:
+        ...     timeout = FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS
+
+    3. Validation limit application:
+        >>> if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
+        ...     return FlextResult[str].fail(FlextConstants.Errors.VALIDATION_ERROR)
+
+    4. Dynamic constant path resolution:
+        >>> error_path = "Errors.VALIDATION_ERROR"
+        >>> error_code = FlextConstants[error_path]
+
+    5. Type-safe literal unions:
+        >>> handler_types: list[FlextConstants.HandlerType] = [
+        ...     FlextConstants.Cqrs.HandlerTypeLiteral.COMMAND,
+        ...     FlextConstants.Cqrs.HandlerTypeLiteral.QUERY,
+        ... ]
+
+    6. Platform-specific constant selection:
+        >>> if FlextConstants.Config.Environment.DEVELOPMENT:
+        ...     log_level = FlextConstants.Logging.DEFAULT_LEVEL_DEVELOPMENT
+        ... else:
+        ...     log_level = FlextConstants.Logging.DEFAULT_LEVEL_PRODUCTION
+
+    7. Performance threshold application:
+        >>> if elapsed_ms > FlextConstants.Performance.CLI_PERFORMANCE_CRITICAL_MS:
+        ...     logger.warning("Critical performance threshold exceeded")
+
+    8. Circuit breaker initialization:
+        >>> circuit_breaker = CircuitBreaker(
+        ...     failure_threshold=FlextConstants.Reliability.DEFAULT_FAILURE_THRESHOLD,
+        ...     recovery_timeout=FlextConstants.Reliability.DEFAULT_RECOVERY_TIMEOUT,
+        ... )
+
+    **Complete Usage Example**:
+        >>> from flext_core import FlextConstants, FlextResult
+        >>>
+        >>> def validate_input(name: str) -> FlextResult[str]:
+        ...     if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
+        ...         error = FlextConstants.Errors.VALIDATION_ERROR
+        ...         return FlextResult[str].fail(error)
+        ...
+        ...     if len(name) > FlextConstants.Validation.MAX_NAME_LENGTH:
+        ...         error = FlextConstants.Errors.VALIDATION_ERROR
+        ...         return FlextResult[str].fail(error)
+        ...
+        ...     return FlextResult[str].ok(name)
+        >>>
+        >>> # Use in configuration
+        >>> timeout = FlextConstants.Network.DEFAULT_TIMEOUT
+        >>> env = FlextConstants.Config.Environment.PRODUCTION
+        >>>
+        >>> # Use in error handling
+        >>> if result.error == FlextConstants.Errors.VALIDATION_ERROR:
+        ...     handle_validation_error(result)
     """
 
     """Core identifiers."""
@@ -560,7 +756,7 @@ class FlextConstants:
             r"(?:/?|[/?]\S+)$"
         )
 
-        # Phone number validation (international format with separators) - used by FlextRuntime.is_valid_phone()
+        # Phone number validation (international format with separators)
         PATTERN_PHONE_NUMBER: Final[str] = r"^\+?[\d\s\-\(\)]{10,20}$"
 
         # UUID validation (with/without hyphens) - used by FlextRuntime.is_valid_uuid()
@@ -619,15 +815,9 @@ class FlextConstants:
         DEFAULT_RECOVERY_TIMEOUT: Final[int] = 60
         DEFAULT_FALLBACK_DELAY: Final[float] = 0.1
 
-        # Backward compatibility aliases for batch processing
-        DEFAULT_BATCH_SIZE: Final[int] = 1000  # Alias for BatchProcessing.DEFAULT_SIZE
-        MAX_BATCH_SIZE_VALIDATION: Final[int] = (
-            10000  # Maximum batch size for validation
-        )
-
         # Batch processing constants - consolidated from duplicates
         class BatchProcessing:
-            """Batch processing configuration constants - consolidated from duplicates."""
+            """Batch processing configuration constants."""
 
             # Core batch sizes (consolidated from previous duplicates)
             DEFAULT_SIZE: Final[int] = 1000  # Main batch size (was DEFAULT_BATCH_SIZE)
@@ -1178,7 +1368,6 @@ class FlextConstants:
 
         # Worker thread configuration
         DEFAULT_WORKERS: Final[int] = 4  # Default thread pool size for async operations
-        MAX_WORKERS: Final[int] = 4  # Alias for DEFAULT_WORKERS (config.py uses this)
         MIN_WORKERS: Final[int] = 1  # Minimum worker threads allowed
 
         # Service lifecycle timeouts

@@ -35,30 +35,87 @@ from flext_core.typings import FlextTypes
 class FlextContext:
     """Hierarchical context management for distributed tracing and correlation.
 
-    Provides comprehensive context management for request metadata, correlation
+    Implements comprehensive context management for request metadata, correlation
     IDs, performance tracking, and distributed tracing across the FLEXT ecosystem.
+    Uses Python's contextvars for thread-safe context variable storage with automatic
+    FlextLogger integration for structured logging.
 
-    Features:
-    - Hierarchical context scopes (global, request, session, transaction)
-    - Correlation ID management for distributed tracing
-    - Service identification context (name, version)
-    - Request context with user and operation metadata
-    - Performance tracking with timing operations
-    - Context serialization for cross-service propagation
-    - Thread-safe context variable management
-    - Context cloning and merging capabilities
-    - Automatic integration with FlextLogger
+    Architecture:
+        - Single-instance context per operation (scope-based isolation)
+        - ContextVar storage for thread-safe access across async/threading boundaries
+        - Hierarchical scopes (global, user, session) with scope-based access
+        - Delegation to FlextLogger for structured logging integration
+        - Container integration via FlextContext.Service for DI pattern
+        - StructlogProxyContextVar for direct logging system integration
 
-    Usage:
-        >>> from flext_core import FlextContext
+    Core Features:
+        - Hierarchical context scopes (global, request, session, transaction)
+        - Correlation ID management for distributed tracing (automatic generation)
+        - Service identification context (name, version)
+        - Request context with user and operation metadata
+        - Performance tracking with timing operations (start/end, duration)
+        - Context serialization for cross-service propagation (HTTP headers)
+        - Thread-safe context variable management via Python contextvars
+        - Context cloning and merging capabilities
+        - Automatic integration with FlextLogger for logging
+        - Extensible hook system for context events
+        - Statistics tracking for context operations
+
+    Nested Domains:
+        - FlextContext.Variables - Context variable definitions (Correlation, Service, Request, Performance)
+        - FlextContext.Correlation - Distributed tracing and correlation ID management
+        - FlextContext.Service - Service identification and lifecycle context
+        - FlextContext.Request - User and request metadata management
+        - FlextContext.Performance - Operation timing and performance tracking
+        - FlextContext.Serialization - Context serialization for cross-service communication
+        - FlextContext.Utilities - Helper methods and utility operations
+
+    Integration Patterns:
+        - Container Integration - FlextContext.Service.get_service() / register_service()
+        - Logger Delegation - Automatic FlextLogger.bind_global_context() on context changes
+        - Cross-Service Propagation - HTTP header format (X-Correlation-Id, X-Service-Name)
+        - FlextResult Integration - All service operations return FlextResult[T]
+
+    Usage Example:
+        >>> from flext_core import FlextContext, FlextResult
         >>>
+        >>> # Create context instance
         >>> context = FlextContext()
         >>> context.set("user_id", "123")
         >>> user_id = context.get("user_id")
         >>>
-        >>> # Correlation ID management
+        >>> # Correlation ID management for distributed tracing
         >>> with FlextContext.Correlation.new_correlation() as corr_id:
         ...     print(f"Processing request {corr_id}")
+        >>>
+        >>> # Service context management
+        >>> with FlextContext.Service.service_context("my_service", "v1.0"):
+        ...     result = FlextContext.Service.get_service("logger")
+        ...     if result.is_success:
+        ...         logger = result.unwrap()
+        >>>
+        >>> # Request context with metadata
+        >>> with FlextContext.Request.request_context(
+        ...     user_id="user123",
+        ...     operation_name="process_payment",
+        ... ):
+        ...     # All logging will include context automatically
+        ...     pass
+        >>>
+        >>> # Performance tracking with timing
+        >>> with FlextContext.Performance.timed_operation("data_processing"):
+        ...     # Operation metrics automatically tracked
+        ...     process_data()
+        >>>
+        >>> # Cross-service context propagation
+        >>> headers = FlextContext.Serialization.get_correlation_context()
+        >>> # headers: {"X-Correlation-Id": "...", "X-Service-Name": "..."}
+
+    Context Variable Compliance:
+        - Uses Python contextvars for inherent thread-safety and async support
+        - StructlogProxyContextVar wraps contextvars with structlog integration
+        - No explicit protocol inheritance needed - implements context management patterns
+        - Automatic FlextLogger delegation for logging consistency across ecosystem
     """
 
     # =========================================================================

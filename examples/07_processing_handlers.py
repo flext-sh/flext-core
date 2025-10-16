@@ -424,15 +424,13 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             def process(self, amount: float) -> FlextResult[FlextTypes.Dict]:
                 """Process credit card payment."""
                 fee = amount * 0.029
-                return FlextResult[FlextTypes.Dict].ok(
-                    {
-                        "method": "credit_card",
-                        "amount": amount,
-                        "fee": round(fee, 2),
-                        "total": round(amount + fee, 2),
-                        "status": "processed",
-                    }
-                )
+                return FlextResult[FlextTypes.Dict].ok({
+                    "method": "credit_card",
+                    "amount": amount,
+                    "fee": round(fee, 2),
+                    "total": round(amount + fee, 2),
+                    "status": "processed",
+                })
 
         class PayPalStrategy(PaymentStrategy):
             """PayPal payment strategy."""
@@ -440,15 +438,13 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             def process(self, amount: float) -> FlextResult[FlextTypes.Dict]:
                 """Process PayPal payment."""
                 fee = amount * 0.034 + 0.30
-                return FlextResult[FlextTypes.Dict].ok(
-                    {
-                        "method": "paypal",
-                        "amount": amount,
-                        "fee": round(fee, 2),
-                        "total": round(amount + fee, 2),
-                        "status": "processed",
-                    }
-                )
+                return FlextResult[FlextTypes.Dict].ok({
+                    "method": "paypal",
+                    "amount": amount,
+                    "fee": round(fee, 2),
+                    "total": round(amount + fee, 2),
+                    "status": "processed",
+                })
 
         class BankTransferStrategy(PaymentStrategy):
             """Bank transfer payment strategy."""
@@ -456,15 +452,13 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             def process(self, amount: float) -> FlextResult[FlextTypes.Dict]:
                 """Process bank transfer."""
                 fee = 5.00
-                return FlextResult[FlextTypes.Dict].ok(
-                    {
-                        "method": "bank_transfer",
-                        "amount": amount,
-                        "fee": fee,
-                        "total": amount + fee,
-                        "status": "pending",
-                    }
-                )
+                return FlextResult[FlextTypes.Dict].ok({
+                    "method": "bank_transfer",
+                    "amount": amount,
+                    "fee": fee,
+                    "total": amount + fee,
+                    "status": "pending",
+                })
 
         class PaymentProcessor:
             """Payment processor using strategy pattern."""

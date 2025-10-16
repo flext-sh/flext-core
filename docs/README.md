@@ -1,7 +1,7 @@
 # FLEXT-Core Documentation
 
 Professional Documentation · Status: Production Ready · Version: 0.9.9
-Last Updated: 2025-10-10
+Last Updated: 2025-10-16
 
 This comprehensive documentation covers FLEXT-Core, the foundation library for the
 FLEXT ecosystem. It provides railway-oriented programming, dependency injection,

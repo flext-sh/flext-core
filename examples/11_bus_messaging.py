@@ -189,13 +189,11 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
         ) -> FlextResult[FlextTypes.Dict]:
             """Handle user query."""
             print(f"  Getting user: {query.user_id}")
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "id": query.user_id,
-                    "name": "John Doe",
-                    "email": "john@example.com",
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "id": query.user_id,
+                "name": "John Doe",
+                "email": "john@example.com",
+            })
 
         # Register handlers
         bus.register_handler(CreateUserCommand, handle_create_user)
@@ -526,12 +524,10 @@ class BusMessagingService(FlextService[FlextTypes.Dict]):
             return FlextResult[str].ok(cmd.value.upper())
 
         def handle_query1(query: Query1) -> FlextResult[FlextTypes.Dict]:
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "id": query.id,
-                    "found": True,
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "id": query.id,
+                "found": True,
+            })
 
         bus.register_handler(Command1, handle_command1)
         bus.register_handler(Command2, handle_command2)

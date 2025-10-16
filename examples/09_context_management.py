@@ -345,13 +345,11 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
             print(f"Duration: {duration:.3f} seconds")
 
         # Record metric
-        FlextContext.Performance.set_operation_metadata(
-            {
-                "items_processed": "150",
-                "cache_hits": "45",
-                "cache_misses": "5",
-            }
-        )
+        FlextContext.Performance.set_operation_metadata({
+            "items_processed": "150",
+            "cache_hits": "45",
+            "cache_misses": "5",
+        })
 
         # Get metrics
         metadata = FlextContext.Performance.get_operation_metadata()
@@ -694,24 +692,20 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
             user_id = FlextContext.Variables.Request.USER_ID.get()
             if not user_id:
                 return FlextResult[FlextTypes.Dict].fail("User not in request context")
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "user_id": user_id,
-                    "source": "context",
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "user_id": user_id,
+                "source": "context",
+            })
 
         def fallback_to_default_user(
             error: str,
         ) -> FlextResult[FlextTypes.Dict]:
             """Fallback to default anonymous user."""
             print(f"   ⚠️  Context lookup failed: {error}, using fallback...")
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "user_id": "anonymous",
-                    "source": "fallback",
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "user_id": "anonymous",
+                "source": "fallback",
+            })
 
         # Clear user context to trigger fallback
         FlextContext.Variables.Request.USER_ID.set(None)
@@ -737,14 +731,12 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
 
         def get_default_service_config() -> FlextResult[FlextTypes.Dict]:
             """Get default service configuration."""
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "timeout": 30,
-                    "max_retries": 3,
-                    "log_level": "INFO",
-                    "environment": FlextContext.Service.get_service_name() or "unknown",
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "timeout": 30,
+                "max_retries": 3,
+                "log_level": "INFO",
+                "environment": FlextContext.Service.get_service_name() or "unknown",
+            })
 
         # Try cached config, fall back to default
         config = get_cached_service_config().alt(get_default_service_config())
@@ -784,12 +776,10 @@ class ContextManagementService(FlextService[FlextTypes.Dict]):
         print(f"   Role: {user_profile.get('role')}")
 
         # When user is in context, doesn't call the expensive function
-        cached_user: FlextResult[dict[str, str]] = FlextResult[dict[str, str]].ok(
-            {
-                "user_id": "USER-CACHED-789",
-                "name": "Jane Cached",
-            }
-        )
+        cached_user: FlextResult[dict[str, str]] = FlextResult[dict[str, str]].ok({
+            "user_id": "USER-CACHED-789",
+            "name": "Jane Cached",
+        })
         cached_profile = cached_user.value_or_call(
             load_expensive_user_profile
         )  # Won't execute

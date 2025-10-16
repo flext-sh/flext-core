@@ -281,22 +281,22 @@ class FlextTestDocker:
     # Essential methods that are being called by other files
     def start_all(self) -> FlextResult[FlextTypes.StringDict]:
         """Start all containers."""
-        return FlextResult[FlextTypes.StringDict].ok(
-            {"message": "All containers started"}
-        )
+        return FlextResult[FlextTypes.StringDict].ok({
+            "message": "All containers started"
+        })
 
     def stop_all(self, *, remove: bool = False) -> FlextResult[FlextTypes.StringDict]:
         """Stop all containers."""
         _ = remove  # Parameter required by API but not used in stub implementation
-        return FlextResult[FlextTypes.StringDict].ok(
-            {"message": "All containers stopped"}
-        )
+        return FlextResult[FlextTypes.StringDict].ok({
+            "message": "All containers stopped"
+        })
 
     def reset_all(self) -> FlextResult[FlextTypes.StringDict]:
         """Reset all containers."""
-        return FlextResult[FlextTypes.StringDict].ok(
-            {"message": "All containers reset"}
-        )
+        return FlextResult[FlextTypes.StringDict].ok({
+            "message": "All containers reset"
+        })
 
     def reset_container(self, name: str) -> FlextResult[str]:
         """Reset a specific container."""
@@ -334,12 +334,10 @@ class FlextTestDocker:
             health_check_cmd,
             startup_timeout,
         )  # Unused parameters
-        return FlextResult[FlextTypes.StringDict].ok(
-            {
-                "service": service_name,
-                "status": "registered",
-            }
-        )
+        return FlextResult[FlextTypes.StringDict].ok({
+            "service": service_name,
+            "status": "registered",
+        })
 
     def shell_script_compatibility_run(
         self,
@@ -367,13 +365,11 @@ class FlextTestDocker:
                 stdout = process.stdout if capture_output else ""
                 stderr = process.stderr if capture_output else ""
 
-                return FlextResult[tuple[int, str, str]].ok(
-                    (
-                        process.returncode,
-                        stdout,
-                        stderr,
-                    )
-                )
+                return FlextResult[tuple[int, str, str]].ok((
+                    process.returncode,
+                    stdout,
+                    stderr,
+                ))
             return FlextResult[tuple[int, str, str]].fail(
                 f"Command execution failed: {result.error}"
             )
@@ -464,43 +460,35 @@ class FlextTestDocker:
         self,
     ) -> FlextResult[dict[str, int | FlextTypes.StringList]]:
         """Clean up unused volumes."""
-        return FlextResult[dict[str, int | FlextTypes.StringList]].ok(
-            {
-                "removed": 0,
-                "volumes": [],
-            }
-        )
+        return FlextResult[dict[str, int | FlextTypes.StringList]].ok({
+            "removed": 0,
+            "volumes": [],
+        })
 
     def cleanup_images(
         self,
     ) -> FlextResult[dict[str, int | FlextTypes.StringList]]:
         """Clean up unused images."""
-        return FlextResult[dict[str, int | FlextTypes.StringList]].ok(
-            {
-                "removed": 0,
-                "images": [],
-            }
-        )
+        return FlextResult[dict[str, int | FlextTypes.StringList]].ok({
+            "removed": 0,
+            "images": [],
+        })
 
     def cleanup_all_test_containers(
         self,
     ) -> FlextResult[FlextTypes.StringDict]:
         """Clean up all test containers."""
-        return FlextResult[FlextTypes.StringDict].ok(
-            {
-                "message": "All test containers cleaned up",
-            }
-        )
+        return FlextResult[FlextTypes.StringDict].ok({
+            "message": "All test containers cleaned up",
+        })
 
     def stop_services_for_test(
         self, test_name: str
     ) -> FlextResult[FlextTypes.StringDict]:
         """Stop services for a specific test."""
-        return FlextResult[FlextTypes.StringDict].ok(
-            {
-                "message": f"Services stopped for test {test_name}",
-            }
-        )
+        return FlextResult[FlextTypes.StringDict].ok({
+            "message": f"Services stopped for test {test_name}",
+        })
 
     def auto_discover_services(
         self,
@@ -584,13 +572,11 @@ class FlextTestDocker:
             return FlextResult[FlextTypes.StringDict].fail(
                 f"Service '{service_name}' is not registered",
             )
-        return FlextResult[FlextTypes.StringDict].ok(
-            {
-                "status": "healthy",
-                "container_status": "running",
-                "health_check": "passed",
-            }
-        )
+        return FlextResult[FlextTypes.StringDict].ok({
+            "status": "healthy",
+            "container_status": "running",
+            "health_check": "passed",
+        })
 
     def create_network(self, name: str, *, driver: str = "bridge") -> FlextResult[str]:
         """Create a Docker network."""
@@ -642,12 +628,10 @@ class FlextTestDocker:
             show_all,
             format_string,
         )  # Parameters required by API but not used in stub implementation
-        return FlextResult[FlextTypes.StringList].ok(
-            [
-                "test_container_1",
-                "test_container_2",
-            ]
-        )
+        return FlextResult[FlextTypes.StringList].ok([
+            "test_container_1",
+            "test_container_2",
+        ])
 
     def list_networks(self) -> FlextResult[FlextTypes.StringList]:
         """List Docker networks."""
@@ -763,12 +747,10 @@ class FlextTestDocker:
                 )
 
         self._dirty_containers.discard(container_name)
-        return FlextResult[dict[str, str | int | bool]].ok(
-            {
-                "container": container_name,
-                "stopped": True,
-            }
-        )
+        return FlextResult[dict[str, str | int | bool]].ok({
+            "container": container_name,
+            "stopped": True,
+        })
 
     def get_container_info(self, name: str) -> FlextResult[ContainerInfo]:
         """Get container information."""
@@ -1194,18 +1176,16 @@ class FlextTestDocker:
 
             docker_control.stop_all(remove=False)
 
-        ns.update(
-            {
-                "docker_control": docker_control,
-                "flext_ldap_container": flext_ldap_container,
-                "flext_postgres_container": flext_postgres_container,
-                "flext_redis_container": flext_redis_container,
-                "flext_oracle_container": flext_oracle_container,
-                "reset_ldap_container": reset_ldap_container,
-                "reset_postgres_container": reset_postgres_container,
-                "all_containers_running": all_containers_running,
-            }
-        )
+        ns.update({
+            "docker_control": docker_control,
+            "flext_ldap_container": flext_ldap_container,
+            "flext_postgres_container": flext_postgres_container,
+            "flext_redis_container": flext_redis_container,
+            "flext_oracle_container": flext_oracle_container,
+            "reset_ldap_container": reset_ldap_container,
+            "reset_postgres_container": reset_postgres_container,
+            "all_containers_running": all_containers_running,
+        })
 
         cls._pytest_registered = True
 

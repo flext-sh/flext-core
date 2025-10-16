@@ -148,12 +148,10 @@ class ComplexTypeService(FlextService[FlextTypes.Dict]):
 
     def execute(self) -> FlextResult[FlextTypes.Dict]:
         """Execute operation with complex types."""
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "data": self.data,
-                "items": self.items,
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "data": self.data,
+            "items": self.items,
+        })
 
 
 class TestDomainServicesFixed:
@@ -1364,13 +1362,11 @@ class BatchService(FlextService[FlextTypes.StringList]):
     """Test service for batch processing."""
 
     def execute(self) -> FlextResult[FlextTypes.StringList]:
-        return FlextResult[FlextTypes.StringList].ok(
-            [
-                "item1",
-                "item2",
-                "item3",
-            ]
-        )
+        return FlextResult[FlextTypes.StringList].ok([
+            "item1",
+            "item2",
+            "item3",
+        ])
 
     def test_execute_operation_with_single_argument_not_iterable(self) -> None:
         """Test execute_operation with single non-iterable argument (line 369)."""

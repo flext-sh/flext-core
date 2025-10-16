@@ -33,11 +33,24 @@ from flext_core.typings import FlextTypes
 class FlextProcessors(FlextMixins):
     """Processing utilities for message handling and data transformation.
 
-    Provides utilities for processing messages, applying middleware pipelines,
-    and managing processing state with circuit breakers, rate limiting, and caching.
+    Implements FlextProtocols.Middleware patterns through structural typing. Provides
+    utilities for processing messages, applying middleware pipelines, and managing
+    processing state with circuit breakers, rate limiting, and caching.
+
+    Middleware Integration:
+        - add_middleware(middleware) - Register middleware for processing pipeline
+        - Middleware implements FlextProtocols.Middleware protocol via duck typing
+        - process(name, data) - Process data through registered middleware
+        - process_parallel(name, data_list) - Parallel processing with middleware
+        - process_batch(name, data_list) - Batch processing with middleware chain
+
+    Nested Protocol Implementations:
+        - FlextProcessors.Pipeline - Advanced processing pipeline with monadic composition
+        - FlextProcessors.HandlerRegistry - Handler registry with FlextProtocols.Handler support
+        - FlextProcessors.Protocols.ChainableHandler - Example Handler protocol implementation
 
     Features:
-    - Message processing with middleware pipeline
+    - Message processing with middleware pipeline implementing protocol patterns
     - Circuit breaker pattern for fault tolerance
     - Rate limiting for request throttling
     - Result caching with TTL support
@@ -45,13 +58,25 @@ class FlextProcessors(FlextMixins):
     - Audit logging for operations
     - Batch processing for multiple messages
     - Parallel processing with ThreadPoolExecutor
+    - Handler registry with protocol compliance checking
+    - Advanced processing pipeline with railway-oriented composition
 
     Usage:
         >>> from flext_core import FlextProcessors
+        >>> from flext_core.protocols import FlextProtocols
         >>>
         >>> processors = FlextProcessors()
         >>> processors.register("audit", lambda d: {"audited": True, **d})
+        >>>
+        >>> # Add middleware that implements FlextProtocols.Middleware pattern
+        >>> processors.add_middleware(lambda data: {"enriched": True, **data})
+        >>>
         >>> result = processors.process("audit", {"data": "value"})
+        >>>
+        >>> # Middleware instances satisfy FlextProtocols.Middleware through structural typing
+        >>> assert callable(processors._middleware[0]) or isinstance(
+        ...     processors._middleware[0], FlextProtocols.Middleware
+        ... )
     """
 
     @override
@@ -78,7 +103,7 @@ class FlextProcessors(FlextMixins):
 
         self._registry: FlextTypes.Dict = {}
         self._middleware: FlextTypes.List = []
-        self._processor_config = config or {}
+        self._processor_config: FlextTypes.Dict = config or {}
         self._metrics: dict[str, int] = {}
         self._audit_log: list[FlextTypes.Dict] = []
         self._performance_metrics: FlextTypes.FloatDict = {}
@@ -127,12 +152,16 @@ class FlextProcessors(FlextMixins):
             else FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS
         )
 
-    def register(self, name: str, processor: object) -> FlextResult[None]:
+    def register(
+        self,
+        name: str,
+        processor: Callable[[object], object],
+    ) -> FlextResult[None]:
         """Register a processor with the given name.
 
         Args:
             name: Name to register the processor under
-            processor: The processor function or object to register
+            processor: The processor function to register
 
         Returns:
             FlextResult[None]: Success if registration succeeded, failure otherwise
@@ -250,14 +279,12 @@ class FlextProcessors(FlextMixins):
                         self._metrics["successful_processes"] = (
                             self._metrics.get("successful_processes", 0) + 1
                         )
-                        self._audit_log.append(
-                            {
-                                "timestamp": time.time(),
-                                "processor": name,
-                                "status": "success",
-                                "data_hash": hash(str(data)),
-                            }
-                        )
+                        self._audit_log.append({
+                            "timestamp": time.time(),
+                            "processor": name,
+                            "status": "success",
+                            "data_hash": hash(str(data)),
+                        })
                         # Return the FlextResult directly, don't wrap it
                         return typed_result
                     # Cast to the expected return type for better type inference
@@ -265,15 +292,13 @@ class FlextProcessors(FlextMixins):
                     self._metrics["failed_processes"] = (
                         self._metrics.get("failed_processes", 0) + 1
                     )
-                    self._audit_log.append(
-                        {
-                            "timestamp": time.time(),
-                            "processor": name,
-                            "status": "failure",
-                            "error": typed_result.error,
-                            "data_hash": hash(str(data)),
-                        }
-                    )
+                    self._audit_log.append({
+                        "timestamp": time.time(),
+                        "processor": name,
+                        "status": "failure",
+                        "error": typed_result.error,
+                        "data_hash": hash(str(data)),
+                    })
 
                     return typed_result
 
@@ -290,18 +315,16 @@ class FlextProcessors(FlextMixins):
             self._metrics["failed_processes"] = (
                 self._metrics.get("failed_processes", 0) + 1
             )
-            self._audit_log.append(
-                {
-                    "timestamp": time.time(),
-                    "processor": name,
-                    "status": "error",
-                    "error": str(e),
-                    "data_hash": hash(str(data)),
-                }
-            )
+            self._audit_log.append({
+                "timestamp": time.time(),
+                "processor": name,
+                "status": "error",
+                "error": str(e),
+                "data_hash": hash(str(data)),
+            })
             return FlextResult[object].fail(f"Processor execution error: {e}")
 
-    def add_middleware(self, middleware: object) -> None:
+    def add_middleware(self, middleware: Callable[[object], object]) -> None:
         """Add middleware to the processing pipeline.
 
         Args:
@@ -560,15 +583,15 @@ class FlextProcessors(FlextMixins):
     class Handler:
         """Minimal handler base returning modernization-compliant results."""
 
-        def handle(self, request: object) -> FlextResult[object]:
+        def handle(self, request: object) -> FlextResult[str]:
             """Handle a request.
 
             Returns:
-                FlextResult[object]: A successful FlextResult wrapping handler
+                FlextResult[str]: A successful FlextResult wrapping handler
                 output.
 
             """
-            return FlextResult[object].ok(f"Base handler processed: {request}")
+            return FlextResult[str].ok(f"Base handler processed: {request}")
 
     class HandlerRegistry:
         """Registry managing named handler instances for dispatcher pilots."""

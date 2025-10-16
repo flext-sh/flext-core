@@ -80,8 +80,8 @@ class TestFlextProcessors:
         processors.register("test_processor", test_processor)
         result = processors.process("test_processor", "test_data")
         assert result.is_success
-        assert isinstance(result.data, str)
-        assert "processed_test_data" in result.data
+        assert isinstance(result.value, str)
+        assert "processed_test_data" in result.value
 
     def test_processors_process_nonexistent_processor(self) -> None:
         """Test processing with non-existent processor."""
@@ -132,8 +132,8 @@ class TestFlextProcessors:
         processors.register("test_processor", retry_processor)
         result = processors.process("test_processor", "test_data")
         assert result.is_success
-        assert isinstance(result.data, str)
-        assert "processed_data" in result.data
+        assert isinstance(result.value, str)
+        assert "processed_data" in result.value
 
     def test_processors_process_with_timeout(self) -> None:
         """Test processing with timeout."""
@@ -240,7 +240,7 @@ class TestFlextProcessors:
         data_list: FlextTypes.List = ["test1", "test2", "test3"]
         result = processors.process_batch("test_processor", data_list)
         assert result.is_success
-        assert len(result.data) == 3
+        assert len(result.value) == 3
 
     def test_processors_process_with_parallel(self) -> None:
         """Test processing with parallel processing."""
@@ -259,7 +259,7 @@ class TestFlextProcessors:
         end_time = time.time()
 
         assert result.is_success
-        assert len(result.data) == 3
+        assert len(result.value) == 3
         # Should complete in reasonable time
         assert end_time - start_time < 5.0
 
@@ -317,7 +317,7 @@ class TestFlextProcessors:
         # Second processing should use cache
         result2 = processors.process("test_processor", "test_data")
         assert result2.is_success
-        assert result1.data == result2.data
+        assert result1.value == result2.value
 
     def test_processors_process_with_audit(self) -> None:
         """Test processing with audit logging."""
@@ -535,8 +535,8 @@ class TestFlextProcessors:
         new_processors.register("test_processor", test_processor_2)
         process_result = new_processors.process("test_processor", "test_data")
         assert process_result.is_success
-        assert isinstance(process_result.data, str)
-        assert "processed_test_data" in process_result.data
+        assert isinstance(process_result.value, str)
+        assert "processed_test_data" in process_result.value
 
     def test_processors_cleanup(self) -> None:
         """Test processors cleanup."""
@@ -670,12 +670,10 @@ class TestFlextProcessorsCriticalCoverage:
         ) -> FlextResult[FlextTypes.Dict]:
             if data.get("fail"):
                 return FlextResult[FlextTypes.Dict].fail("Processor decided to fail")
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "processed": True,
-                    **data,
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "processed": True,
+                **data,
+            })
 
         processors.register("result", result_processor)
 
@@ -736,12 +734,10 @@ class TestFlextProcessorsCriticalCoverage:
         ) -> FlextResult[FlextTypes.Dict]:
             if data.get("id") == 2:
                 return FlextResult[FlextTypes.Dict].fail("Failed on id=2")
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "id": data["id"],
-                    "processed": True,
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "id": data["id"],
+                "processed": True,
+            })
 
         processors.register("conditional", conditional_processor)
 

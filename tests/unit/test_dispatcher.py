@@ -561,12 +561,10 @@ class TestFlextDispatcherCoverage:
                 super().__init__(config=config)
 
             def handle(self, message: object) -> FlextResult[object]:
-                return FlextResult[object].ok(
-                    {
-                        "user_created": True,
-                        "data": message,
-                    }
-                )
+                return FlextResult[object].ok({
+                    "user_created": True,
+                    "data": message,
+                })
 
         handler = CreateUserCommand()
 
@@ -669,12 +667,10 @@ class TestFlextDispatcherCoverage:
                 super().__init__(config=config)
 
             def handle(self, message: object) -> FlextResult[object]:
-                return FlextResult[object].ok(
-                    {
-                        "processed": message,
-                        "with_request": True,
-                    }
-                )
+                return FlextResult[object].ok({
+                    "processed": message,
+                    "with_request": True,
+                })
 
         handler = RequestHandler()
 
@@ -776,13 +772,11 @@ class TestFlextDispatcherCoverage:
                     self.handler_mode = mode
 
                 def handle(self, message: object) -> FlextResult[object]:
-                    return FlextResult[object].ok(
-                        {
-                            "type": self.msg_type,
-                            "message": message,
-                            "mode": self.handler_mode,
-                        }
-                    )
+                    return FlextResult[object].ok({
+                        "type": self.msg_type,
+                        "message": message,
+                        "mode": self.handler_mode,
+                    })
 
             handler = DynamicHandler(
                 f"handler_{current_msg_type}", current_msg_type, current_mode
@@ -858,12 +852,10 @@ class TestFlextDispatcherCoverage:
 
             def handle(self, message: object) -> FlextResult[object]:
                 self.count += 1
-                return FlextResult[object].ok(
-                    {
-                        "count": self.count,
-                        "message": message,
-                    }
-                )
+                return FlextResult[object].ok({
+                    "count": self.count,
+                    "message": message,
+                })
 
         handler = ConcurrentHandler()
         dispatcher.register_handler("ConcurrentMessage", handler)
@@ -895,12 +887,10 @@ class TestFlextDispatcherCoverage:
 
             def handle(self, message: object) -> FlextResult[object]:
                 # Handler should receive and process metadata
-                return FlextResult[object].ok(
-                    {
-                        "message": message,
-                        "metadata_processed": True,
-                    }
-                )
+                return FlextResult[object].ok({
+                    "message": message,
+                    "metadata_processed": True,
+                })
 
         handler = MetadataHandler()
         dispatcher.register_handler("MetadataMessage", handler)

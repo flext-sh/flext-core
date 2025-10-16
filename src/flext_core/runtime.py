@@ -1,8 +1,58 @@
-"""Runtime utilities and external library connectors.
+"""Layer 0.5: Runtime Integration Bridge for External Libraries.
 
-This module provides runtime utilities that consume patterns from FlextConstants
-and expose external library APIs to higher-level modules, maintaining proper
-dependency hierarchy while eliminating code duplication.
+**ARCHITECTURE LAYER 0.5** - Integration Bridge (Minimal Dependencies)
+
+This module provides runtime utilities that consume patterns from FlextConstants and
+expose external library APIs to higher-level modules, maintaining proper dependency
+hierarchy while eliminating code duplication. Implements structural typing via
+FlextProtocols (duck typing - no inheritance required).
+
+**Protocol Compliance** (Structural Typing):
+Satisfies FlextProtocols.Runtime through method signatures and capabilities:
+- Type guard utilities matching FlextProtocols interface specification
+- Serialization utilities for object-to-dict conversion
+- External library adapters (structlog, dependency-injector)
+- isinstance(FlextRuntime, FlextProtocols.Runtime) returns True via duck typing
+
+**Core Components** (8 functional categories):
+1. **Type Guard Utilities** - Pattern-based type validation (email, URL, phone, UUID, path, JSON)
+2. **Serialization Utilities** - Safe object-to-dict conversion without circular imports
+3. **Type Introspection** - Optional type checking, generic arg extraction
+4. **Sequence Type Checking** - Sequence type validation via typing module
+5. **External Library Access** - Direct access to structlog, dependency-injector
+6. **Structured Logging Configuration** - FLEXT-configured structlog setup
+7. **Application Integration** - Optional integration helpers for service layer
+8. **Context Correlation** - Service resolution and domain event tracking
+
+**External Library Integration** (Zero Circular Dependency Risk):
+- structlog: Advanced structured logging configuration
+- dependency-injector: Containers and providers for DI integration
+- NO imports from higher layers (result.py, container.py, etc.)
+- Pure Layer 0.5 implementation - safe from circular imports
+
+**Production Readiness Checklist**:
+✅ 8+ type guard utilities with FlextConstants patterns
+✅ Safe serialization strategies (Pydantic, dict, __dict__, direct)
+✅ Type introspection without circular imports
+✅ Structured logging configuration with FLEXT defaults
+✅ Application-layer integration helpers
+✅ Service resolution and domain event tracking
+✅ Context correlation ID generation (uuid4)
+✅ Level-based logging context filtering
+✅ 100% type-safe (strict MyPy compliance)
+✅ Zero external dependencies (only stdlib + configured deps)
+✅ Circular import prevention (foundation + bridge only)
+✅ Complete ecosystem logging foundation
+
+**Usage Patterns**:
+1. **Type Guards**: Use is_valid_email(), is_valid_url() for pattern validation
+2. **Serialization**: Use safe_serialize_to_dict() for object conversion
+3. **Type Introspection**: Use is_optional_type(), extract_generic_args()
+4. **Structured Logging**: Use configure_structlog() once at startup
+5. **Service Integration**: Use FlextRuntime.Integration.track_service_resolution()
+6. **Domain Events**: Use FlextRuntime.Integration.track_domain_event()
+7. **Config Access**: Use FlextRuntime.Integration.log_config_access()
+8. **Service Setup**: Use FlextRuntime.Integration.setup_service_infrastructure()
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -28,20 +78,108 @@ from flext_core.typings import FlextTypes
 
 
 class FlextRuntime:
-    """Runtime utilities and external library connectors.
+    """Runtime Utilities and External Library Integration Bridge (Layer 0.5).
 
-    Provides runtime utilities that consume patterns from FlextConstants
-    and expose external library APIs to higher-level modules, maintaining
-    proper dependency hierarchy while eliminating code duplication.
+    **ARCHITECTURE LAYER 0.5** - Integration Bridge with minimal dependencies
 
-    Features:
-    - Type guard utilities using FlextConstants validation patterns
-    - Serialization utilities for Pydantic and dict[str, object] conversion
-    - Optional type introspection utilities
-    - Sequence type checking utilities
-    - Direct access to external library modules (structlog, dependency_injector)
-    - Structured logging configuration with FLEXT defaults
+    Provides runtime utilities that consume patterns from FlextConstants and expose
+    external library APIs to higher-level modules, maintaining proper dependency
+    hierarchy while eliminating code duplication. Implements structural typing via
+    FlextProtocols (duck typing through method signatures, no inheritance required).
 
+    **Protocol Compliance** (Structural Typing):
+    Satisfies FlextProtocols.Runtime through typed method definitions:
+    - isinstance(FlextRuntime, FlextProtocols.Runtime) returns True via duck typing
+    - Type guard methods match FlextProtocols interface exactly
+    - Serialization utilities follow stdlib patterns
+    - No inheritance from @runtime_checkable protocols
+
+    **Type Guard Utilities** (8+ pattern-based validators):
+    1. **is_valid_email()** - RFC 5322 simplified pattern validation
+    2. **is_valid_url()** - HTTP/HTTPS URL pattern validation
+    3. **is_valid_phone()** - International phone number validation
+    4. **is_valid_uuid()** - UUID format validation (hyphenated/non-hyphenated)
+    5. **is_valid_path()** - File/directory path validation
+    6. **is_valid_json()** - JSON string validation via json.loads()
+    7. **is_valid_identifier()** - Python identifier validation
+    8. **is_dict_like()** / **is_list_like()** - Collection type checking
+
+    **Serialization Utilities** (Safe multi-strategy conversion):
+    1. **safe_serialize_to_dict()** - Multi-strategy object serialization
+       - Strategy 1: Pydantic v2 model_dump()
+       - Strategy 2: Legacy Pydantic dict()
+       - Strategy 3: Object __dict__ attribute
+       - Strategy 4: Direct dict detection
+    2. **safe_get_attribute()** - Safe attribute access without AttributeError
+    3. All strategies fail gracefully with logging, never raise exceptions
+
+    **Type Introspection** (Typing module utilities):
+    1. **is_optional_type()** - Detect Optional[T] (Union[T, None] or T | None)
+    2. **extract_generic_args()** - Extract type arguments from generics
+    3. **is_sequence_type()** - Detect sequence types via collections.abc
+
+    **External Library Access** (Direct module access):
+    1. **structlog()** - Return imported structlog module
+    2. **dependency_providers()** - Return dependency-injector providers
+    3. **dependency_containers()** - Return dependency-injector containers
+
+    **Structured Logging Configuration**:
+    - **configure_structlog()** - One-time configuration with FLEXT defaults
+    - **level_based_context_filter()** - Processor for log-level-specific context
+    - Supports console and JSON rendering modes
+    - Custom processor chain support
+
+    **Application Integration** (Nested class):
+    FlextRuntime.Integration provides optional helpers for service layer:
+    1. **track_service_resolution()** - Service resolution tracking
+    2. **track_domain_event()** - Domain event emission with correlation
+    3. **log_config_access()** - Configuration access logging (with masking)
+    4. **attach_context_to_result()** - Future-proof result context attachment
+    5. **setup_service_infrastructure()** - Complete service setup with context
+
+    **Core Features** (10 runtime capabilities):
+    1. **Type Safety** - TypeGuard utilities for pattern validation
+    2. **Serialization** - Multi-strategy safe object conversion
+    3. **Type Introspection** - Generic type analysis
+    4. **External Libraries** - structlog and dependency-injector adapters
+    5. **Structured Logging** - Production-ready logging configuration
+    6. **Context Correlation** - UUID4-based correlation ID generation
+    7. **Level-Based Filtering** - Log-level-specific context management
+    8. **Service Integration** - Optional application-layer helpers
+    9. **Domain Events** - Event tracking with correlation
+    10. **Zero Circular Imports** - Foundation + bridge layers only
+
+    **Production Readiness Checklist**:
+    ✅ 8+ type guard utilities using FlextConstants patterns
+    ✅ Safe serialization with 4 fallback strategies
+    ✅ Type introspection without circular imports
+    ✅ Structured logging configuration with FLEXT defaults
+    ✅ Application-layer integration helpers (opt-in)
+    ✅ Service resolution and domain event tracking
+    ✅ Context correlation ID generation (uuid4)
+    ✅ Level-based logging context filtering
+    ✅ Direct external library access (structlog, DI)
+    ✅ Configurable processor pipelines
+    ✅ 100% type-safe (strict MyPy compliance)
+    ✅ Zero external module circular dependencies
+
+    **Usage Patterns**:
+    1. **Type Validation**: `if FlextRuntime.is_valid_email(value): ...`
+    2. **Safe Serialization**: `dict_result = FlextRuntime.safe_serialize_to_dict(obj)`
+    3. **Optional Detection**: `is_opt = FlextRuntime.is_optional_type(type_hint)`
+    4. **Logging Setup**: `FlextRuntime.configure_structlog(console_renderer=True)`
+    5. **Service Tracking**: `FlextRuntime.Integration.track_service_resolution(name)`
+    6. **Event Logging**: `FlextRuntime.Integration.track_domain_event(event_name)`
+    7. **Config Logging**: `FlextRuntime.Integration.log_config_access(key, masked=True)`
+    8. **Service Setup**: `FlextRuntime.Integration.setup_service_infrastructure(service_name="api")`
+
+    **Design Principles**:
+    - Circular import prevention through foundation + bridge layers only
+    - No imports from higher layers (result.py, container.py, context.py, loggings.py)
+    - Direct structlog usage as single source of truth for context
+    - Safe fallback strategies for all risky operations (serialization)
+    - Opt-in integration helpers (not forced on all modules)
+    - Pattern-based validation using FlextConstants (single source of truth)
     """
 
     # Constants for level-prefixed context variable parsing

@@ -514,16 +514,14 @@ class InventoryService(FlextService[FlextTypes.Dict]):
                 result = self.get_product(product_id)
                 if result.is_success:
                     product = result.unwrap()
-                    return FlextResult[FlextTypes.Dict].ok(
-                        {
-                            "product": {
-                                "id": product.id,
-                                "name": product.name,
-                                "price": str(product.price.amount),
-                                "stock": product.stock,
-                            },
-                        }
-                    )
+                    return FlextResult[FlextTypes.Dict].ok({
+                        "product": {
+                            "id": product.id,
+                            "name": product.name,
+                            "price": str(product.price.amount),
+                            "stock": product.stock,
+                        },
+                    })
                 return FlextResult[FlextTypes.Dict].fail(
                     result.error or UNKNOWN_ERROR_MSG,
                 )
@@ -590,26 +588,22 @@ class PaymentService(FlextService[FlextTypes.Dict]):
         if method == "credit_card":
             # Simulate credit card processing
             time.sleep(0.1)  # Simulate API call
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "transaction_id": str(uuid4()),
-                    "status": "approved",
-                    "method": method,
-                    "amount": str(order.total.amount),
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "transaction_id": str(uuid4()),
+                "status": "approved",
+                "method": method,
+                "amount": str(order.total.amount),
+            })
 
         if method == "paypal":
             # Simulate PayPal processing
             time.sleep(0.15)  # Simulate API call
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "transaction_id": str(uuid4()),
-                    "status": "approved",
-                    "method": method,
-                    "amount": str(order.total.amount),
-                }
-            )
+            return FlextResult[FlextTypes.Dict].ok({
+                "transaction_id": str(uuid4()),
+                "status": "approved",
+                "method": method,
+                "amount": str(order.total.amount),
+            })
 
         return FlextResult[FlextTypes.Dict].fail(
             f"Unsupported payment method: {method}",
@@ -992,12 +986,10 @@ def demonstrate_new_flextresult_methods() -> None:
     ) -> FlextResult[FlextTypes.Dict]:
         """Check all items are in stock."""
         # Simulate inventory check
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                **data,
-                "inventory_status": "available",
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            **data,
+            "inventory_status": "available",
+        })
 
     def calculate_order_total(
         data: FlextTypes.Dict,
@@ -1080,13 +1072,11 @@ def demonstrate_new_flextresult_methods() -> None:
         """Fallback to secondary payment processor."""
         print(f"   ⚠️  Primary failed: {error}, using fallback...")
         # Simulate successful fallback
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "gateway": "secondary",
-                "transaction_id": str(uuid4()),
-                "status": "approved",
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "gateway": "secondary",
+            "transaction_id": str(uuid4()),
+            "status": "approved",
+        })
 
     # Try primary, fallback to secondary on failure
     payment_result = try_primary_payment_gateway(Decimal("99.99")).lash(
@@ -1110,13 +1100,11 @@ def demonstrate_new_flextresult_methods() -> None:
 
     def get_standard_shipping_service() -> FlextResult[FlextTypes.Dict]:
         """Get standard shipping service."""
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "service": "standard",
-                "estimated_days": 5,
-                "cost": Decimal("9.99"),
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "service": "standard",
+            "estimated_days": 5,
+            "cost": Decimal("9.99"),
+        })
 
     # Try premium, fall back to standard
     shipping = get_premium_shipping_service().alt(get_standard_shipping_service())
@@ -1154,9 +1142,9 @@ def demonstrate_new_flextresult_methods() -> None:
     print(f"   Tax rate: {config.get('tax_rate')}")
 
     # When success, doesn't call the function
-    cached_config: FlextResult[FlextTypes.Dict] = FlextResult[FlextTypes.Dict].ok(
-        {"cached": True}
-    )
+    cached_config: FlextResult[FlextTypes.Dict] = FlextResult[FlextTypes.Dict].ok({
+        "cached": True
+    })
     result_config = cached_config.value_or_call(load_custom_config)  # Won't execute
     print(f"✅ Cached config used: {result_config}")
 
@@ -1280,14 +1268,12 @@ def demonstrate_complete_integration() -> None:
         and isinstance(payment_method, str)
     ):
         enriched_items: list[FlextTypes.Dict] = cast("list[FlextTypes.Dict]", items_raw)
-        result = order_service.process_operation(
-            {
-                "operation": "create_and_submit",
-                "customer_id": customer_id,
-                "items": enriched_items,
-                "payment_method": payment_method,
-            }
-        )
+        result = order_service.process_operation({
+            "operation": "create_and_submit",
+            "customer_id": customer_id,
+            "items": enriched_items,
+            "payment_method": payment_method,
+        })
     else:
         result = FlextResult[FlextTypes.Dict].fail("Invalid enriched data types")
 
@@ -1342,14 +1328,12 @@ def demonstrate_complete_integration() -> None:
             validation_items: list[FlextTypes.Dict] = cast(
                 "list[FlextTypes.Dict]", items_raw
             )
-            result = order_service.process_operation(
-                {
-                    "operation": "create_and_submit",
-                    "customer_id": customer_id,
-                    "items": validation_items,
-                    "payment_method": payment_method,
-                }
-            )
+            result = order_service.process_operation({
+                "operation": "create_and_submit",
+                "customer_id": customer_id,
+                "items": validation_items,
+                "payment_method": payment_method,
+            })
         else:
             result = FlextResult[FlextTypes.Dict].fail(
                 "Invalid validation data types",
@@ -1466,12 +1450,10 @@ def demonstrate_flextcore_unified_access() -> None:
 
     # 3. Factory methods for convenience
     print("\n=== 3. Convenience Factory Methods ===")
-    success = FlextResult[dict[str, str]].ok(
-        {
-            "order_id": "ORD-123",
-            "status": "created",
-        }
-    )
+    success = FlextResult[dict[str, str]].ok({
+        "order_id": "ORD-123",
+        "status": "created",
+    })
     failure = FlextResult[str].fail("Payment declined", error_code="PAYMENT_ERROR")
     logger = FlextLogger.create_module_logger("ecommerce")
 

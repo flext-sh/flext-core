@@ -33,24 +33,60 @@ class FlextBus(
 ):
     """Command and query bus for CQRS message routing.
 
-    Provides message dispatching with middleware support, caching,
-    and comprehensive error handling. Routes commands and queries
-    to registered handlers with automatic validation and result wrapping.
+    Implements FlextProtocols.CommandBus through structural typing. All
+    bus instances automatically satisfy the CommandBus protocol by implementing
+    the required methods: register_handler(), execute(), and add_middleware().
+
+    Provides message dispatching with middleware support, caching, and
+    comprehensive error handling. Routes commands and queries to registered
+    handlers with automatic validation and result wrapping.
+
+    Protocol Compliance:
+        - register_handler(*args) -> FlextResult[None] - Register command handler
+        - execute(command) -> FlextResult[object] - Execute command/query
+        - add_middleware(middleware, config) -> FlextResult[None] - Add middleware
+        - find_handler(command) -> object | None - Find handler for command
+        - get_all_handlers() -> list - Retrieve all registered handlers
+        - unregister_handler(command_type) -> FlextResult[None] - Remove handler
 
     Features:
-    - Handler registration and discovery
-    - Middleware pipeline processing
-    - Result caching for query optimization
-    - Context-aware telemetry and logging
-    - Thread-safe handler registry
-    - Automatic FlextResult wrapping
+        - Handler registration with automatic discovery
+        - Middleware pipeline processing with ordering
+        - Result caching for query optimization (LRU)
+        - Context-aware telemetry and logging
+        - Thread-safe handler registry
+        - Automatic FlextResult wrapping for all operations
+        - Event publishing and subscription support
+        - Distributed tracing with correlation IDs
 
-    Usage:
-        >>> from flext_core import FlextBus
+    Nested Protocol Implementations:
+        - FlextBus._Cache - Private LRU cache manager for query result caching
+        - Event Publisher Protocol - publish_event, subscribe, unsubscribe methods
+        - Middleware Pipeline - FlextProtocols.Middleware support for all middleware
+
+    Usage Example:
+        >>> from flext_core import FlextBus, FlextResult
         >>>
+        >>> # Create and configure bus
         >>> bus = FlextBus()
-        >>> bus.register_handler("CreateUser", handler)
-        >>> result = bus.execute("CreateUser", command)
+        >>>
+        >>> # Register handler for command type
+        >>> class CreateUserHandler:
+        ...     def handle(self, command: dict) -> FlextResult[dict]:
+        ...         return FlextResult[dict].ok({"user_id": 1})
+        >>>
+        >>> bus.register_handler("CreateUser", CreateUserHandler())
+        >>>
+        >>> # Execute command through bus
+        >>> result = bus.execute({"type": "CreateUser"})
+        >>> if result.is_success:
+        ...     print(f"User created: {result.value}")
+
+    Instance Compliance Verification:
+        >>> from flext_core import FlextBus, FlextProtocols
+        >>> bus = FlextBus()
+        >>> isinstance(bus, FlextProtocols.CommandBus)
+        True  # Bus instances satisfy CommandBus protocol via structural typing
     """
 
     class _Cache:

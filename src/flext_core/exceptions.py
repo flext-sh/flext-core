@@ -25,38 +25,238 @@ from flext_core.typings import FlextTypes
 class FlextExceptions:
     """Structured exception hierarchy with error codes and correlation tracking.
 
+    Architecture: Layer 1 (Foundation - Error Hierarchy)
+    ===================================================
     Provides a comprehensive collection of structured exception types with
     error codes, correlation IDs, and metadata for comprehensive error handling
-    throughout the FLEXT ecosystem.
+    throughout the FLEXT ecosystem. All exceptions integrate with FlextResult
+    error handling and structured logging via structlog.
 
-    Includes:
-    - BaseError: Base exception class with structured metadata
-    - ValidationError: Input validation failures
-    - ConfigurationError: Configuration-related errors
-    - ConnectionError: Network and connection failures
-    - TimeoutError: Operation timeout errors
-    - AuthenticationError: Authentication failures
-    - AuthorizationError: Permission and authorization failures
-    - NotFoundError: Resource not found errors
-    - ConflictError: Resource conflict errors
-    - RateLimitError: Rate limiting violations
-    - CircuitBreakerError: Circuit breaker open errors
-    - TypeError: Type-related errors
-    - OperationError: Operation-specific errors
+    **Structural Typing and Protocol Compliance**:
+    This class satisfies FlextProtocols.Exception through structural typing
+    (duck typing) via the following protocol-compliant interface:
+    - 13 exception classes with consistent error handling
+    - All extend BaseError with structured metadata
+    - Error codes from FlextConstants for consistency
+    - Correlation ID generation for distributed tracing
+    - Automatic structured logging via structlog
+    - Exception chaining with cause preservation
+    - Flexible metadata for context propagation
 
-    All exceptions include:
-    - Structured error codes for categorization
-    - Correlation IDs for distributed tracing
-    - Metadata dictionaries for additional context
-    - Proper inheritance hierarchy for catch handling
+    **Exception Hierarchy** (13 types):
+    1. **BaseError**: Base class with error codes, correlation IDs, metadata
+       - Automatic structured logging on creation (optional)
+       - Correlation ID generation for distributed tracing
+       - Exception chaining with cause tracking
+       - Methods: with_context(), chain_from(), to_dict()
 
-    Usage:
-        >>> from flext_core.exceptions import FlextExceptions
-        >>>
+    2. **ValidationError**: Input validation failures
+       - Field-specific validation errors
+       - Value tracking for invalid data
+       - Integrates with FlextUtilities validation
+
+    3. **ConfigurationError**: Configuration-related errors
+       - Config key tracking (which config failed)
+       - Config source tracking (file, env, etc.)
+       - Integration with FlextConfig validation
+
+    4. **ConnectionError**: Network and connection failures
+       - Host and port tracking
+       - Timeout duration tracking
+       - Connection pool exhaustion handling
+
+    5. **TimeoutError**: Operation timeout errors
+       - Timeout duration tracking
+       - Operation name for context
+       - Integration with @timeout decorator
+
+    6. **AuthenticationError**: Authentication failures
+       - Authentication method tracking
+       - User ID tracking for audit trails
+       - Integration with FlextAuth patterns
+
+    7. **AuthorizationError**: Permission and authorization failures
+       - User ID tracking
+       - Resource being accessed
+       - Permission being checked
+       - Integration with RBAC patterns
+
+    8. **NotFoundError**: Resource not found errors
+       - Resource type tracking
+       - Resource ID tracking
+       - REST API 404 responses
+
+    9. **ConflictError**: Resource conflict errors
+       - Resource type and ID tracking
+       - Conflict reason tracking
+       - Handles duplicates and concurrent modifications
+
+    10. **RateLimitError**: Rate limiting violations
+        - Limit and window tracking
+        - Retry-after duration
+        - Integration with rate limiting patterns
+
+    11. **CircuitBreakerError**: Circuit breaker open errors
+        - Service name tracking
+        - Failure count tracking
+        - Reset timeout duration
+        - Integration with resilience patterns
+
+    12. **TypeError**: Type-related errors
+        - Expected type tracking
+        - Actual type tracking
+        - Validation error handling
+
+    13. **AttributeAccessError**: Attribute access errors
+        - Attribute name tracking
+        - Access context information
+        - Missing/invalid attribute handling
+
+    14. **OperationError**: Operation-specific errors
+        - Operation name tracking
+        - Failure reason tracking
+        - Business logic violations
+
+    **Core Features**:
+    1. **Structured Error Codes**: All use FlextConstants.Errors for consistency
+    2. **Correlation ID Tracking**: Unique IDs for distributed tracing
+    3. **Automatic Logging**: Optional structured logging via structlog
+    4. **Exception Chaining**: Preserve cause exceptions with __cause__
+    5. **Flexible Metadata**: Arbitrary key-value context storage
+    6. **String Representation**: Human-readable with error code and correlation ID
+    7. **Dictionary Serialization**: to_dict() for JSON/logging serialization
+    8. **Context Enrichment**: with_context() for adding metadata
+    9. **Metrics Tracking**: record_exception(), get_metrics() for monitoring
+    10. **Factory Methods**: create() and create_error() for dynamic creation
+
+    **Integration Points**:
+    - **FlextResult** (Layer 1): Error handling in railway pattern
+    - **FlextConstants** (Layer 0): Error codes for categorization
+    - **FlextDecorators** (Layer 3): @retry, @timeout use TimeoutError
+    - **FlextLogger** (Layer 4): Structured logging via structlog
+    - **FlextConfig** (Layer 4): Configuration validation errors
+    - **All layers**: Error handling and exception propagation
+
+    **Defensive Programming Patterns**:
+    1. Automatic logging uses try/except to prevent logging failures
+    2. Exception chaining preserves cause for debugging
+    3. Metadata update via dict.update() for atomicity
+    4. Correlation ID generated only when explicitly requested
+    5. All exception attributes stored as instance variables
+
+    **Structured Logging Integration**:
+    - BaseError._log_exception() uses structlog.get_logger()
+    - Exception chaining logged with chain_from()
+    - All exception metadata included in structured logs
+    - Fallback to standard logging if structlog fails
+
+    **Exception Factory Methods**:
+    1. **create_error(error_type, message)**: By type name
+    2. **create(message, error_code, **kwargs)**: Smart type detection
+    3. FlextExceptions as callable: delegates to create()
+
+    **Metrics and Monitoring**:
+    - record_exception(exception_type): Track exception counts
+    - get_metrics(): Retrieve exception statistics
+    - clear_metrics(): Reset exception counters
+    - Integration with monitoring and alerting systems
+
+    **Thread Safety**:
+    - All exceptions are thread-safe (no mutable shared state)
+    - Metadata dictionaries are instance-specific
+    - Correlation ID generation uses uuid.uuid4()
+    - Metrics dictionary is ClassVar (protected by GIL in CPython)
+
+    **Performance Characteristics**:
+    - O(1) exception creation
+    - O(n) structured logging where n = metadata size
+    - O(1) context binding via dict.update()
+    - O(1) metrics recording
+
+    **Usage Patterns**:
+
+    1. Simple validation error:
+        >>> if not email:
+        ...     raise FlextExceptions.ValidationError("Email required")
+
+    2. Validation error with field information:
+        >>> raise FlextExceptions.ValidationError(
+        ...     "Invalid email format", field="email", value=user_input
+        ... )
+
+    3. Configuration error with source tracking:
+        >>> raise FlextExceptions.ConfigurationError(
+        ...     "Missing API key", config_key="API_KEY", config_source="environment"
+        ... )
+
+    4. Connection error with host/port tracking:
+        >>> raise FlextExceptions.ConnectionError(
+        ...     "Failed to connect to database",
+        ...     host="db.example.com",
+        ...     port=5432,
+        ...     timeout=30.0,
+        ... )
+
+    5. Exception with automatic logging:
+        >>> raise FlextExceptions.ValidationError(
+        ...     "Invalid user", auto_log=True, auto_correlation=True
+        ... )
+
+    6. Exception chaining:
         >>> try:
-        ...     validate_email("invalid-email")
+        ...     risky_operation()
+        ... except ValueError as e:
+        ...     raise FlextExceptions.OperationError("Operation failed").chain_from(e)
+
+    7. Context enrichment:
+        >>> raise FlextExceptions.OperationError("Cannot process order").with_context(
+        ...     order_id="ORD-123", customer_id="CUST-456"
+        ... )
+
+    8. Using factory methods:
+        >>> error = FlextExceptions.create(
+        ...     "Validation failed", field="email", value="invalid"
+        ... )
+
+    9. Serialization for logging/API responses:
+        >>> try:
+        ...     validate_data(data)
         ... except FlextExceptions.ValidationError as e:
-        ...     print(f"Validation failed: {e.error_code}")
+        ...     error_dict = e.to_dict()
+        ...     # Send to API response or log
+
+    10. Exception tracking:
+        >>> try:
+        ...     risky_operation()
+        ... except FlextExceptions.BaseError as e:
+        ...     FlextExceptions.record_exception(type(e).__name__)
+        >>>
+        >>> stats = FlextExceptions.get_metrics()
+        >>> print(f"Total exceptions: {stats['total_exceptions']}")
+
+    **Complete Integration Example**:
+        >>> from flext_core import FlextExceptions, FlextResult
+        >>>
+        >>> def process_user(user_data: dict) -> FlextResult[dict]:
+        ...     try:
+        ...         # Validation
+        ...         if not user_data.get("email"):
+        ...             raise FlextExceptions.ValidationError(
+        ...                 "Email required", field="email"
+        ...             ).with_context(user_id=user_data.get("id"))
+        ...
+        ...         # Processing
+        ...         result = save_user(user_data)
+        ...         return FlextResult[dict].ok(result)
+        ...
+        ...     except FlextExceptions.ValidationError as e:
+        ...         # Automatic context and logging
+        ...         return FlextResult[dict].fail(
+        ...             str(e), error_code=e.error_code, metadata=e.metadata
+        ...         )
+        ...     except Exception as e:
+        ...         # Unknown errors as operation errors
+        ...         return FlextResult[dict].fail(str(e), error_code="OPERATION_ERROR")
     """
 
     class BaseError(Exception):

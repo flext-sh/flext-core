@@ -36,9 +36,22 @@ from flext_core.utilities import FlextUtilities
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     """Base class for CQRS command and query handlers.
 
+    Implements FlextProtocols.Handler through structural typing. All handler
+    subclasses automatically satisfy the Handler protocol by implementing the
+    required methods: handle(), validate(), and __call__().
+
     Provides the foundation for implementing CQRS handlers with validation,
     execution context, metrics collection, and configuration management.
     Supports commands, queries, events, and sagas with type safety.
+
+    Protocol Compliance:
+        - execute(message: T) -> FlextResult[R] - Execute handler with message
+        - handle(message: T) -> FlextResult[R] - Abstract method for implementation
+        - __call__(input_data: T) -> FlextResult[R] - Callable interface
+        - validate(data: object) -> FlextResult[None] - Validate input data
+        - validate_command(command: object) -> FlextResult[None] - Validate command
+        - validate_query(query: object) -> FlextResult[None] - Validate query
+        - can_handle(message_type: object) -> bool - Check handler capability
 
     Features:
     - Abstract base for command/query/event handlers
@@ -49,14 +62,19 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     - Execution context tracking per handler
     - Message validation with FlextResult
     - Logger integration for handler operations
+    - Automatic protocol satisfaction via structural typing
 
     Usage:
-        >>> from flext_core.handlers import FlextHandlers
-        >>> from flext_core.result import FlextResult
+        >>> from flext_core import FlextHandlers, FlextResult
+        >>> from flext_core.protocols import FlextProtocols
         >>>
         >>> class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
         ...     def handle(self, command: CreateUserCommand) -> FlextResult[User]:
         ...         return FlextResult[User].ok(User(name=command.name))
+        >>>
+        >>> handler = CreateUserHandler(config=...)
+        >>> # FlextHandlers instances satisfy FlextProtocols.Handler protocol
+        >>> assert isinstance(handler, FlextProtocols.Handler)
     """
 
     # Class-level logger for internal operations (not for subclass use)

@@ -29,28 +29,271 @@ from flext_core.typings import P, R, T
 class FlextDecorators:
     """Automation decorators for infrastructure concerns.
 
+    Architecture: Layer 3 (Application Layer - Cross-Cutting Concerns)
+    ==================================================================
     Provides decorators that automatically handle common infrastructure
     concerns to reduce boilerplate code in services, handlers, and other
-    components.
+    components. All decorators are designed to integrate seamlessly with
+    FlextResult, FlextContext, FlextLogger, and FlextContainer.
 
-    Includes:
-    - @inject: Automatic dependency injection from FlextContainer
-    - @log_operation: Automatic operation logging with structured context
-    - @track_performance: Automatic performance tracking and metrics
-    - @railway: Automatic railway pattern wrapping with FlextResult
-    - @retry: Automatic retry logic with exponential backoff
-    - @timeout: Automatic operation timeout enforcement
-    - @combined: Multiple decorators applied together
+    **Structural Typing and Protocol Compliance**:
+    This class satisfies FlextProtocols.Decorator through structural typing
+    (duck typing) via the following protocol-compliant interface:
+    - 8 static methods providing cross-cutting concern automation
+    - Automatic context propagation and cleanup (defensive programming)
+    - Integration with Foundation layer (FlextResult, FlextContext)
+    - Integration with Infrastructure layer (FlextLogger, FlextContainer)
+    - Composable decorator patterns with correct wrapper ordering
 
-    Usage:
-        >>> from flext_core.decorators import FlextDecorators
+    **Core Decorators** (8 patterns):
+    1. **@inject**: Automatic dependency injection from FlextContainer
+       - Eliminates manual container.resolve() calls
+       - Keyword-only parameter injection
+       - Graceful fallback on resolution failure
+       - Thread-safe via global container singleton
+
+    2. **@log_operation**: Automatic operation logging with structured context
+       - Logs operation start/completion/failure automatically
+       - Structured logging with operation context binding
+       - Defensive cleanup via context.suppress() to ensure unbinding
+       - Integration with FlextLogger for context propagation
+
+    3. **@track_performance**: Automatic performance tracking and metrics
+       - Tracks operation duration (milliseconds and seconds)
+       - Logs performance metrics with success/failure status
+       - Error-aware timing (tracks duration even on exceptions)
+       - Integration with FlextLogger for metrics collection
+
+    4. **@railway**: Automatic railway pattern wrapping with FlextResult
+       - Converts exceptions to FlextResult.fail()
+       - Converts successful returns to FlextResult.ok()
+       - Idempotent for functions already returning FlextResult
+       - Enables functional error handling without try/except
+
+    5. **@retry**: Automatic retry logic with exponential/linear backoff
+       - Uses FlextConstants.Reliability for defaults
+       - Supports exponential and linear backoff strategies
+       - Logs retry attempts and exhaustion
+       - Integration with FlextLogger for retry tracking
+
+    6. **@timeout**: Automatic operation timeout enforcement
+       - Uses FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS
+       - Checks timeout after operation completion
+       - Raises FlextExceptions.TimeoutError on violation
+       - Tracks duration even on exceptions for accurate timeout detection
+
+    7. **@with_correlation**: Correlation ID management for distributed tracing
+       - Ensures correlation ID exists in FlextContext
+       - Uses FlextContext.Utilities.ensure_correlation_id()
+       - Essential for request tracing across services
+       - No-op if correlation ID already set
+
+    8. **@combined**: Multiple decorators applied together
+       - Combines @inject, @log_operation, @track_performance, @railway
+       - Single-line configuration for maximum automation
+       - Correct wrapper ordering for proper exception propagation
+       - Balances automation with code clarity
+
+    **Additional Decorators**:
+    - **@with_context**: Context variable binding for operation duration
+    - **@track_operation**: Combined correlation ID + logging tracking
+
+    **Integration Points**:
+    - **FlextContainer** (Layer 1): Service resolution for @inject
+    - **FlextResult** (Layer 1): Result wrapping for @railway
+    - **FlextContext** (Layer 4): Correlation ID and context management
+    - **FlextLogger** (Layer 4): Structured logging and context binding
+    - **FlextExceptions** (Layer 1): TimeoutError for @timeout
+    - **FlextConstants** (Layer 0): Default values for retry/timeout
+
+    **Defensive Programming Patterns**:
+    1. Context cleanup uses `with suppress(Exception)` to ensure unbinding
+    2. Retry decorator handles both success and exception cases
+    3. Timeout checks both normal and exceptional code paths
+    4. Dependency injection gracefully falls back on resolution failure
+    5. Logger resolution tries self.logger before creating new logger
+
+    **Decorator Composition Ordering** (Correct for Exception Propagation):
+    ```
+    @railway (outermost - converts exceptions to FlextResult)
+    @inject (provides dependencies)
+    @track_performance (tracks execution time)
+    @log_operation (logs operations)
+    (function)
+    ```
+
+    **Thread Safety**:
+    - All decorators use thread-safe FlextContainer.get_global()
+    - Context binding is thread-safe via FlextContext.contextvars
+    - FlextLogger context binding is thread-safe
+    - No decorator maintains mutable state across calls
+
+    **Performance Characteristics**:
+    - O(1) decorator wrapping at function definition time
+    - O(1) context binding/unbinding at runtime
+    - O(n) for dependency injection where n = dependency count (typically 1-3)
+    - O(1) timing via time.perf_counter()
+    - No reflection or introspection at runtime
+
+    **Usage Patterns**:
+
+    1. Simple dependency injection:
+        >>> from flext_core import FlextDecorators, FlextResult
         >>>
-        >>> class MyService:
-        ...     @FlextDecorators.inject(repo=MyRepository)
-        ...     @FlextDecorators.log_operation("process_data")
-        ...     @FlextDecorators.track_performance()
-        ...     def process_data(self, data: dict, *, repo) -> dict[str, object]:
-        ...         return repo.save(data)
+        >>> class UserService:
+        ...     @FlextDecorators.inject(repo=UserRepository)
+        ...     def get_user(self, user_id: str, *, repo) -> FlextResult[User]:
+        ...         return repo.find_by_id(user_id)
+
+    2. Automatic operation logging:
+        >>> class OrderService:
+        ...     @FlextDecorators.log_operation("create_order")
+        ...     def create_order(self, order_data: dict) -> FlextResult[Order]:
+        ...         # Start/completion/failure automatically logged
+        ...         return self._process_order(order_data)
+
+    3. Performance tracking:
+        >>> class ReportService:
+        ...     @FlextDecorators.track_performance("generate_report")
+        ...     def generate_report(self, params: dict) -> FlextResult[Report]:
+        ...         # Duration and metrics automatically tracked
+        ...         return self._generate(params)
+
+    4. Railway pattern wrapping:
+        >>> @FlextDecorators.railway(error_code="VALIDATION_ERROR")
+        ... def validate_email(email: str) -> str:
+        ...     if "@" not in email:
+        ...         raise ValueError("Invalid email")
+        ...     return email.lower()
+        >>>
+        >>> result = validate_email("user@example.com")
+        >>> assert result.is_success
+
+    5. Automatic retry logic:
+        >>> class ApiClient:
+        ...     @FlextDecorators.retry(
+        ...         max_attempts=5, delay_seconds=1.0, backoff_strategy="exponential"
+        ...     )
+        ...     def call_external_api(self, endpoint: str) -> dict[str, object]:
+        ...         # Automatically retries on failure with backoff
+        ...         return requests.get(endpoint).json()
+
+    6. Operation timeout enforcement:
+        >>> class LongRunningService:
+        ...     @FlextDecorators.timeout(timeout_seconds=30.0)
+        ...     def expensive_operation(self, data: list) -> FlextResult[float]:
+        ...         # Raises TimeoutError if exceeds 30 seconds
+        ...         return self._expensive_computation(data)
+
+    7. Correlation ID management:
+        >>> class PaymentService:
+        ...     @FlextDecorators.with_correlation()
+        ...     def process_payment(self, payment_id: str) -> FlextResult[str]:
+        ...         # Correlation ID automatically ensured
+        ...         # All logs include correlation_id
+        ...         return self._charge(payment_id)
+
+    8. Maximum automation with @combined:
+        >>> class OrderService:
+        ...     @FlextDecorators.combined(
+        ...         inject_deps={"repo": OrderRepository, "validator": OrderValidator},
+        ...         operation_name="create_order",
+        ...         track_perf=True,
+        ...         use_railway=True,
+        ...     )
+        ...     def create_order(
+        ...         self, order_data: dict, *, repo, validator
+        ...     ) -> FlextResult[Order]:
+        ...         # All infrastructure automatic:
+        ...         # - DI injection
+        ...         # - Logging
+        ...         # - Performance tracking
+        ...         # - Railway pattern
+        ...         return validator.validate(order_data).flat_map(repo.create)
+
+    9. Context variable binding:
+        >>> class MultiTenantService:
+        ...     @FlextDecorators.with_context(
+        ...         tenant_id="tenant-123", user_id="user-456"
+        ...     )
+        ...     def process_tenant_data(self) -> FlextResult[dict]:
+        ...         # tenant_id and user_id bound to context
+        ...         # All logs include these values
+        ...         return self._process()
+
+    10. Comprehensive operation tracking:
+        >>> class CriticalService:
+        ...     @FlextDecorators.track_operation(
+        ...         operation_name="critical_process", track_correlation=True
+        ...     )
+        ...     def critical_process(self) -> FlextResult[str]:
+        ...         # Automatic correlation ID + logging + performance
+        ...         return self._critical_work()
+
+    **Error Handling Patterns**:
+
+    1. Retry with exponential backoff:
+        >>> @FlextDecorators.retry(max_attempts=3, backoff_strategy="exponential")
+        ... def unreliable_operation() -> str:
+        ...     # Fails, retries with delays: 1s, 2s, 4s
+        ...     return api_call()
+
+    2. Timeout protection:
+        >>> @FlextDecorators.timeout(timeout_seconds=30)
+        ... def long_operation() -> str:
+        ...     # Raises TimeoutError if exceeds 30 seconds
+        ...     return expensive_computation()
+
+    3. Railway pattern error handling:
+        >>> @FlextDecorators.railway(error_code="BUSINESS_ERROR")
+        ... def business_operation() -> dict[str, object]:
+        ...     # Any exception becomes FlextResult.fail()
+        ...     return process_business_logic()
+        >>>
+        >>> result = business_operation()
+        >>> if result.is_failure:
+        ...     handle_error(result.error)
+
+    **Complete Integration Example**:
+        >>> from flext_core import (
+        ...     FlextDecorators,
+        ...     FlextResult,
+        ...     FlextLogger,
+        ...     FlextContainer,
+        ... )
+        >>>
+        >>> class ProductService:
+        ...     def __init__(self):
+        ...         self.logger = FlextLogger(__name__)
+        ...
+        ...     @FlextDecorators.combined(
+        ...         inject_deps={"repo": ProductRepository},
+        ...         operation_name="create_product",
+        ...         track_perf=True,
+        ...         use_railway=True,
+        ...     )
+        ...     def create_product(
+        ...         self, product_data: dict, *, repo
+        ...     ) -> FlextResult[Product]:
+        ...         # Automatic infrastructure:
+        ...         # - Dependency injection
+        ...         # - Structured logging
+        ...         # - Performance tracking
+        ...         # - Railway pattern
+        ...         # - Exception handling
+        ...         # - Context propagation
+        ...
+        ...         return (
+        ...             FlextResult[dict]
+        ...             .ok(product_data)
+        ...             .flat_map(self._validate)
+        ...             .flat_map(repo.save)
+        ...         )
+        ...
+        ...     def _validate(self, data: dict) -> FlextResult[dict]:
+        ...         if "name" not in data:
+        ...             return FlextResult[dict].fail("Name required")
+        ...         return FlextResult[dict].ok(data)
     """
 
     @staticmethod

@@ -32,25 +32,67 @@ from flext_core.typings import FlextTypes, T
 class FlextContainer(FlextProtocols.Configurable):
     """Type-safe dependency injection container for service management.
 
+    Implements FlextProtocols.Configurable through structural typing. All
+    container instances automatically satisfy the Configurable protocol by
+    implementing the required methods: configure() and get_config().
+
     Provides centralized service management with singleton pattern support,
     type-safe registration and resolution, and automatic dependency injection
     via constructor inspection.
 
-    Features:
-    - Type-safe service registration and resolution
-    - Singleton and factory pattern support
-    - Automatic dependency injection via constructor inspection
-    - Batch operations with rollback on failure
-    - Thread-safe singleton access
-    - Integration with FlextConfig for container configuration
-    - FlextResult-based error handling for all operations
+    Protocol Compliance:
+        - configure(config: dict) -> FlextResult[None] - Configure component settings
+        - get_config() -> dict - Get current configuration
+        - Automatic singleton pattern enforcement
 
-    Usage:
-        >>> from flext_core import FlextContainer
+    Features:
+        - Type-safe service registration and resolution
+        - Singleton and factory pattern support
+        - Automatic dependency injection via constructor inspection
+        - Batch operations with rollback on failure
+        - Thread-safe singleton access via double-checked locking
+        - Integration with FlextConfig for container configuration
+        - FlextResult-based error handling for all operations
+        - Advanced DI features via dependency-injector integration
+
+    Nested Protocols:
+        - Service Registry Pattern - Thread-safe service/factory tracking
+        - Factory Resolution - Lazy singleton pattern with caching
+        - Dependency Autowiring - Constructor inspection and injection
+        - Configuration Management - FlextConfig synchronization
+
+    Advanced Patterns:
+        - get_with_fallback() - Alt pattern for service resolution chains
+        - safe_register_from_factory() - from_callable for safe factories
+        - get_typed_with_recovery() - Lash pattern for error recovery
+        - validate_and_get() - flow_through for resolution pipelines
+
+    Usage Example:
+        >>> from flext_core import FlextContainer, FlextResult
         >>>
+        >>> # Get global singleton container
+        >>> container = FlextContainer.get_global()
+        >>>
+        >>> # Register service instance
+        >>> logger = create_logger(__name__)
+        >>> result: FlextResult[None] = container.register("logger", logger)
+        >>>
+        >>> # Retrieve service
+        >>> logger_result: FlextResult[object] = container.get("logger")
+        >>> if logger_result.is_success:
+        ...     logger = logger_result.unwrap()
+        >>>
+        >>> # Configure container
+        >>> config_result = container.configure({"max_workers": 8})
+        >>>
+        >>> # Type-safe retrieval with validation
+        >>> typed_result = container.get_typed("logger", LoggerService)
+
+    Instance Compliance Verification:
+        >>> from flext_core import FlextContainer, FlextProtocols
         >>> container = FlextContainer()
-        >>> container.register("logger", FlextLogger(__name__))
-        >>> logger_result = container.get("logger")
+        >>> isinstance(container, FlextProtocols.Configurable)
+        True  # Container instances satisfy Configurable protocol
     """
 
     _global_instance: FlextContainer | None = None
@@ -874,9 +916,9 @@ class FlextContainer(FlextProtocols.Configurable):
         # Merge FlextConfig defaults with user overrides
         merged: FlextTypes.Dict = {}
         for source in (self._create_container_config(), self._user_overrides):
-            merged.update(
-                {key: value for key, value in source.items() if value is not None}
-            )
+            merged.update({
+                key: value for key, value in source.items() if value is not None
+            })
         self._global_config = merged
 
     # =========================================================================
@@ -929,13 +971,11 @@ class FlextContainer(FlextProtocols.Configurable):
             )
 
         container = cls.ensure_global_instance()
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "container": container,
-                "module": module_name,
-                "logger": f"flext.{module_name}",
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "container": container,
+            "module": module_name,
+            "logger": f"flext.{module_name}",
+        })
 
     def get_with_fallback(
         self,

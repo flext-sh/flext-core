@@ -35,26 +35,160 @@ from flext_core.typings import FlextTypes
 
 
 class FlextResult[T_co]:
-    """Type-safe result type implementing the railway pattern.
+    """Type-safe result type implementing the railway pattern (Either monad).
 
-    Provides monadic operations for functional error handling with
-    explicit success/failure states. Wraps operation outcomes and
-    enables composable error propagation without exceptions.
+    Core Foundation Pattern: Railway-Oriented Programming
+    ======================================================
+    Provides monadic operations for functional error handling with explicit
+    success/failure states. Wraps operation outcomes and enables composable
+    error propagation without exceptions in business logic.
 
-    Key features:
-    - Type-safe success/failure wrapping
-    - Monadic operations: map, flat_map, filter, bind
+    Structural Typing and Protocol Compliance:
+    ===========================================
+    FlextResult satisfies FlextProtocols.Result interface through structural
+    typing (duck typing) by implementing required methods:
+    - ok(data) - Create successful result wrapping data
+    - fail(error) - Create failed result with error message
+    - is_success / is_failure - Check result state
+    - map(func) - Transform success value
+    - flat_map(func) - Chain operations returning FlextResult
+    - unwrap() / value - Extract success value
+    - error / error_code - Access error information
+    - pipeline() - Compose multiple operations
+
+    Key Features:
+    =============
+    - Type-safe success/failure wrapping with generic [T_co] covariance
+    - Monadic operations: map, flat_map, filter, bind, traverse, lash
     - Railway pattern for functional composition
-    - Dual API (.value/.data) for backward compatibility
     - Context managers for resource management
+    - Advanced combinators: alt, accumulate_errors, parallel_map, with_resource
     - Integration with returns library for battle-tested operations
+    - Error metadata: error_code, error_data for structured logging
+    - Utility methods: collect_successes, batch_process, safe_call
+    - Maybe/IO interoperability for functional ecosystem integration
 
-    Usage:
+    Architecture Integration:
+    ========================
+    - Layer 1 (Foundation): Core result monad implementation
+    - Used by: ALL layers (2-4) for operation composition
+    - Dependencies: FlextConstants (error codes), FlextExceptions
+    - Integration: FlextLogger (structured error logging)
+    - Ecosystem: 32+ projects depend on FlextResult[T] for error handling
+
+    Monadic Operations (Railway Pattern):
+    =====================================
+    FlextResult implements the following monadic pattern:
+    1. ok(data: T) -> FlextResult[T]: Create successful result
+    2. fail(error: str, ...) -> FlextResult[T]: Create failed result
+    3. map(func: T -> U) -> FlextResult[U]: Transform success
+    4. flat_map(func: T -> FlextResult[U]) -> FlextResult[U]: Chain operations
+    5. filter(predicate: T -> bool) -> FlextResult[T]: Conditional filter
+
+    Railway composition prevents exceptions through explicit error propagation:
+    - Each operation takes the railway: either success or failure track
+    - Failures short-circuit remaining operations
+    - No exception catching needed in application code
+
+    Usage Pattern:
+    ==============
+        >>> from flext_core import FlextResult
+        >>>
+        >>> # Basic success case
         >>> result = FlextResult[int].ok(42)
         >>> if result.is_success:
         ...     value = result.unwrap()
-        >>> # Railway composition
-        >>> final = result.map(lambda x: x * 2).filter(lambda x: x > 0)
+        >>>
+        >>> # Basic failure case
+        >>> result = FlextResult[int].fail("Operation failed", error_code="API_ERROR")
+        >>> if result.is_failure:
+        ...     error = result.error
+        >>>
+        >>> # Railway composition - chaining operations
+        >>> def validate(x: int) -> FlextResult[int]:
+        ...     return (
+        ...         FlextResult[int].ok(x)
+        ...         if x > 0
+        ...         else FlextResult[int].fail("Not positive")
+        ...     )
+        >>> def double(x: int) -> FlextResult[int]:
+        ...     return FlextResult[int].ok(x * 2)
+        >>>
+        >>> # Compose operations - short-circuits on first failure
+        >>> final = (
+        ...     FlextResult[int]
+        ...     .ok(5)
+        ...     .flat_map(validate)
+        ...     .flat_map(double)
+        ...     .map(lambda x: x + 1)
+        ... )
+        >>> # final is Success(21) = ((5 * 2) + 1)
+
+    Advanced Patterns:
+    ==================
+    - flow_through(*funcs): Compose multiple operations sequentially
+    - lash(func): Error recovery function (opposite of flat_map)
+    - alt(default): Alternative result on failure
+    - traverse(items, func): Map over list with failure propagation
+    - pipeline(initial, *ops): Compose operations with initial value
+    - accumulate_errors(*results): Collect multiple errors
+    - parallel_map(items, func): Map with fail-fast or collect-all
+    - with_resource(factory, op, cleanup): Resource management
+
+    API Access Methods:
+    ===================
+    Multiple ways to access result data:
+    - result.value - Get success value (raises on failure)
+    - result.unwrap() - Get success value or raise error
+    - result.value_or_none - Get value or None
+    - result[0] - Tuple unpacking: value or None
+    - result[1] - Tuple unpacking: error or None
+    - result | default - Operator overload for default values
+
+    Error Information Structure:
+    ===========================
+    - error: Human-readable error message (required)
+    - error_code: Categorized error code from FlextConstants.Errors
+    - error_data: Additional metadata dictionary for observability
+    - Example: fail("API timeout", error_code="TIMEOUT_ERROR", error_data={"timeout_ms": 5000})
+
+    Interoperability:
+    =================
+    - to_maybe() / from_maybe(): Convert to/from returns.maybe.Maybe
+    - to_io() / to_io_result(): Convert to returns.io types
+    - from_callable(): Wrap functions that might raise exceptions
+    - safe_call(): Execute callable with automatic exception handling
+
+    Advanced Type Features:
+    =======================
+    - Generic covariance [T_co]: Enables proper type hierarchy
+    - Python 3.13 discriminated union: Pattern matching support
+    - Type operators: >> (flat_map), << (map), % (filter), ^ (recover)
+    - Pattern matching: match result: case FlextResult(_data=v, _error=None)
+
+    Integration Examples:
+    ======================
+    # Service operation with FlextResult
+    from flext_core import FlextResult, FlextService
+
+    class UserService(FlextService):
+        def create_user(self, data: dict) -> FlextResult[User]:
+            if not data.get("email"):
+                return FlextResult[User].fail("Email required")
+            user = User(**data)
+            return FlextResult[User].ok(user)
+
+    # Handler with FlextResult
+    class CreateUserHandler:
+        def execute(self, command: CreateUserCommand) -> FlextResult[User]:
+            return self.service.create_user(command.data)
+
+    # Pipeline composition
+    def process_users(raw_users: list[dict]) -> FlextResult[list[User]]:
+        return FlextResult.traverse(
+            raw_users,
+            lambda d: user_service.create_user(d)
+        )
     """
 
     # Internal storage using returns.Result as backend
@@ -162,15 +296,6 @@ class FlextResult[T_co]:
             )
         # Use the returns backend to unwrap the value
         return self._result.unwrap()
-
-    @property
-    def data(self) -> T_co:
-        """Return the success payload, raising :class:`TypeError` on failure.
-
-        Direct access to the value property - use .value instead.
-        Maintained for ecosystem compatibility but .value is the preferred API.
-        """
-        return self.value
 
     @property
     def error(self) -> str | None:
@@ -535,6 +660,11 @@ class FlextResult[T_co]:
         """Context manager exit."""
         # Parameters available for future error handling logic
         return
+
+    @property
+    def data(self) -> T_co | None:
+        """Legacy property for backward compatibility - equivalent to value_or_none."""
+        return self._data if self.is_success else None
 
     @property
     def value_or_none(self) -> T_co | None:

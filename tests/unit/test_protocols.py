@@ -106,12 +106,10 @@ class TestFlextProtocols:
 
         class UserRepository:
             def find_by_id(self, entity_id: str) -> FlextResult[FlextTypes.Dict]:
-                return FlextResult[FlextTypes.Dict].ok(
-                    {
-                        "id": entity_id,
-                        "name": "Test",
-                    }
-                )
+                return FlextResult[FlextTypes.Dict].ok({
+                    "id": entity_id,
+                    "name": "Test",
+                })
 
             def save(self, entity: FlextTypes.Dict) -> FlextResult[FlextTypes.Dict]:
                 return FlextResult[FlextTypes.Dict].ok(entity)

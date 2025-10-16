@@ -51,30 +51,211 @@ from flext_core.typings import FlextTypes
 
 
 class FlextModels:
-    """Base classes and utilities for domain-driven design patterns.
+    """Domain-Driven Design (DDD) patterns with Pydantic validation.
 
-    Provides comprehensive base classes for implementing DDD patterns
-    with Pydantic validation, event sourcing support, and CQRS integration.
+    Architecture: Layer 2 (Domain)
+    ==============================
+    Provides comprehensive base classes for implementing Domain-Driven Design
+    patterns with Pydantic v2 validation, event sourcing support, and CQRS
+    integration across the FLEXT ecosystem.
 
-    Includes:
-    - Entity: Base class with identity and lifecycle management
-    - Value: Immutable value objects compared by value
-    - AggregateRoot: Consistency boundaries with invariant enforcement
-    - Command/Query: CQRS pattern base classes
-    - DomainEvent: Event sourcing support
-    - Validation: Utility functions for business rules
-    - Various mixins for common model behaviors
+    Structural Typing and Protocol Compliance:
+    ===========================================
+    FlextModels implements multiple FlextProtocols interfaces via structural
+    typing (duck typing) through nested classes:
 
-    Usage:
+    - Entity (satisfies FlextProtocols.Entity):
+      * id: Unique identifier for entity tracking
+      * created_at: Creation timestamp
+      * updated_at: Modification timestamp
+      * is_valid(): Validate entity state
+      * to_dict(): Serialize to dictionary
+
+    - Value (satisfies FlextProtocols.Value):
+      * Immutable value objects (frozen Pydantic models)
+      * Compared by value, not identity
+      * No mutable state after creation
+      * Hashable for use in collections
+
+    - AggregateRoot (satisfies FlextProtocols.AggregateRoot):
+      * Consistency boundary enforcement
+      * Transactional invariant protection
+      * Event sourcing support
+      * Domain event publishing
+
+    - Command (satisfies FlextProtocols.Command):
+      * Represents domain operations
+      * Command validation
+      * Handler mapping
+      * Idempotency support
+
+    - Query (satisfies FlextProtocols.Query):
+      * Read-side operations
+      * Non-mutating operations
+      * Result projection
+      * Caching support
+
+    - DomainEvent (satisfies FlextProtocols.DomainEvent):
+      * Event sourcing backbone
+      * Immutable past events
+      * Event replay support
+      * Audit trail
+
+    Core DDD Concepts:
+    ==================
+    1. **Entity**: Domain object with identity and lifecycle
+       - Changes tracked through updated_at
+       - Compared by id, not value equality
+       - Supports domain logic and invariants
+       - Integrated with FlextResult for operations
+
+    2. **Value Object**: Immutable domain values
+       - No identity (compared by value)
+       - Immutable after creation (frozen Pydantic)
+       - Composable building blocks
+       - Hashable for collections
+
+    3. **Aggregate Root**: Consistency boundary
+       - Contains entities and value objects
+       - Enforces transactional invariants
+       - Single root for external references
+       - Event sourcing support
+
+    4. **Command**: Domain operation request
+       - Represents "I want X to happen"
+       - Immutable command object
+       - Handler determines execution
+       - Async command bus support
+
+    5. **Query**: Domain read operation
+       - Represents "I want to know X"
+       - Non-mutating read projection
+       - Result optimization via caching
+       - Query bus support
+
+    6. **Domain Event**: Significant domain occurrence
+       - Represents "X happened"
+       - Event sourcing backbone
+       - Event replay for reconstruction
+       - Audit trail support
+
+    Pydantic v2 Integration:
+    =======================
+    - Full Pydantic BaseModel support
+    - Automatic validation via field_validator
+    - Model validation via model_validator
+    - Computed fields for derived properties
+    - Custom serializers for domain logic
+    - Config inheritance via ConfigDict
+    - Immutable models (frozen=True)
+
+    Features and Components:
+    ========================
+    - Entity: Base domain entity with lifecycle
+    - Value: Immutable value objects
+    - AggregateRoot: Consistency boundary root
+    - Command: CQRS command pattern
+    - Query: CQRS query pattern
+    - DomainEvent: Event sourcing events
+    - Validation: Business rule validators
+    - Timestamps: Automatic created_at/updated_at
+    - Serialization: JSON and dict conversion
+    - Type validation: Complete type safety
+
+    Advanced Patterns:
+    ==================
+    - Event Sourcing: Replay events to reconstruct state
+    - CQRS: Separate read/write models with Command/Query
+    - Transactional Invariants: Enforce business rules
+    - Aggregate Roots: Consistency boundary enforcement
+    - Value Objects: Rich domain types
+    - Domain Events: Capture domain state changes
+
+    Error Handling:
+    ===============
+    - FlextResult[T] wrapping for operations
+    - Validation errors caught in is_valid()
+    - Business rule violations in invariants
+    - Structured error information
+
+    Usage Patterns:
+    ===============
         >>> from flext_core.models import FlextModels
         >>> from flext_core.result import FlextResult
         >>>
+        >>> # Value Object - immutable by design
+        >>> class Email(FlextModels.Value):
+        ...     address: str
+        ...
+        ...     @field_validator("address")
+        ...     @classmethod
+        ...     def validate_email(cls, v: str) -> str:
+        ...         if "@" not in v:
+        ...             raise ValueError("Invalid email")
+        ...         return v.lower()
+        >>>
+        >>> # Entity - with identity and lifecycle
         >>> class User(FlextModels.Entity):
         ...     name: str
-        ...     email: str
+        ...     email: Email
+        ...     is_active: bool = False
         ...
         ...     def activate(self) -> FlextResult[None]:
-        ...         return FlextResult[None].ok(None)
+        ...         if self.is_active:
+        ...             return FlextResult.fail("Already active")
+        ...         self.is_active = True
+        ...         return FlextResult.ok(None)
+        >>>
+        >>> # Aggregate Root - consistency boundary
+        >>> class Account(FlextModels.AggregateRoot):
+        ...     owner: User
+        ...     balance: float = 0.0
+        ...
+        ...     def deposit(self, amount: float) -> FlextResult[None]:
+        ...         if amount <= 0:
+        ...             return FlextResult.fail("Amount must be positive")
+        ...         self.balance += amount
+        ...         return FlextResult.ok(None)
+        >>>
+        >>> # Command - CQRS pattern
+        >>> class CreateUserCommand(FlextModels.Command):
+        ...     name: str
+        ...     email: str
+        >>>
+        >>> # Query - CQRS pattern
+        >>> class GetUserQuery(FlextModels.Query):
+        ...     user_id: str
+        >>>
+        >>> # Domain Event - Event sourcing
+        >>> class UserCreatedEvent(FlextModels.DomainEvent):
+        ...     user_id: str
+        ...     name: str
+        ...     email: str
+
+    Integration with FLEXT Ecosystem:
+    ==================================
+    - Service Layer: Services receive FlextResult[T] from models
+    - Handler Layer: CQRS handlers process Commands/Queries
+    - Bus Layer: Command/Event buses route through aggregates
+    - Logger Integration: Automatic audit logging
+    - Protocol Compliance: Structural typing satisfaction
+    - Validation Layer: Business rule enforcement
+
+    Thread Safety:
+    ==============
+    - Pydantic models are immutable when frozen=True
+    - Value objects are always immutable
+    - Entities are mutable but thread-safe for creation
+    - Aggregate roots manage transactional boundaries
+    - Event sourcing provides replay safety
+
+    Performance Characteristics:
+    ===========================
+    - O(1) entity/value creation via Pydantic
+    - O(1) identity comparison for entities
+    - O(1) timestamp tracking (automatic)
+    - O(n) event replay for aggregate reconstruction
+    - O(1) command/query dispatch via handler registry
     """
 
     # =========================================================================
@@ -2052,9 +2233,9 @@ class FlextModels:
             if token.previous_value is None:
                 structlog.contextvars.unbind_contextvars(token.key)
             else:
-                structlog.contextvars.bind_contextvars(
-                    **{token.key: token.previous_value}
-                )
+                structlog.contextvars.bind_contextvars(**{
+                    token.key: token.previous_value
+                })
 
     class Token(Value):
         """Token for context variable reset operations.

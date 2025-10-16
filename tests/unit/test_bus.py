@@ -747,14 +747,12 @@ class TestFlextBusMissingCoverage:
 
             def handle(self, query: CacheableQuery) -> FlextResult[FlextTypes.Dict]:
                 self.call_count += 1
-                return FlextResult[FlextTypes.Dict].ok(
-                    {
-                        "query_id": query.query_id,
-                        "param1": query.param1,
-                        "param2": query.param2,
-                        "call_count": self.call_count,
-                    }
-                )
+                return FlextResult[FlextTypes.Dict].ok({
+                    "query_id": query.query_id,
+                    "param1": query.param1,
+                    "param2": query.param2,
+                    "call_count": self.call_count,
+                })
 
         handler = TestHandler()
         bus.register_handler(CacheableQuery, handler)
@@ -1209,12 +1207,10 @@ class TestFlextBusMissingCoverage:
             def handle(self, query: TestQuery) -> FlextResult[FlextTypes.Dict]:
                 nonlocal execution_count
                 execution_count += 1
-                return FlextResult[FlextTypes.Dict].ok(
-                    {
-                        "result": query.data,
-                        "count": execution_count,
-                    }
-                )
+                return FlextResult[FlextTypes.Dict].ok({
+                    "result": query.data,
+                    "count": execution_count,
+                })
 
         bus.register_handler(TestQuery, TestQueryHandler())
 
