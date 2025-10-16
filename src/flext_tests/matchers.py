@@ -19,6 +19,7 @@ from flext_core import FlextResult, FlextTypes
 T_co = TypeVar("T_co", covariant=True)
 TKey = TypeVar("TKey")
 TValue = TypeVar("TValue")
+TConfigValue = TypeVar("TConfigValue", bound=object)
 
 
 class DataBuilder:
@@ -230,7 +231,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_config_valid(
-        config: dict[TKey, TValue], message: str | None = None
+        config: dict[str, TConfigValue], message: str | None = None
     ) -> None:
         """Assert that a configuration dictionary is valid.
 

@@ -30,29 +30,174 @@ from flext_core.typings import FlextTypes, T
 class FlextLogger:
     """Structured logging with context propagation and dependency injection.
 
-    Provides structured logging built on FlextRuntime.structlog() with automatic context
-    propagation, dependency injection support, and integration with the
-    FLEXT ecosystem infrastructure.
+    Architecture: Layer 4 (Infrastructure)
+    ======================================
+    Provides production-ready structured logging built on FlextRuntime.structlog() with
+    automatic context propagation, dependency injection support, and integration with
+    the FLEXT ecosystem infrastructure.
 
-    Features:
+    Structural Typing and Protocol Compliance:
+    ===========================================
+    FlextLogger implements FlextProtocols.LoggerProtocol through structural typing by
+    providing all required logging methods:
+    - debug(message, *args, **context) -> FlextResult[None]
+    - info(message, *args, **context) -> FlextResult[None]
+    - warning(message, *args, **context) -> FlextResult[None]
+    - error(message, *args, **context) -> FlextResult[None]
+    - critical(message, *args, **context) -> FlextResult[None]
+    - exception(message, *, exception=None, exc_info=True, **kwargs) -> FlextResult[None]
+    - bind(**context) -> FlextLogger (new bound logger with context)
+    - trace(message, *args, **kwargs) -> FlextResult[None]
+
+    Core Features:
+    ==============
     - Structured logging with automatic context propagation
-    - Context variable binding and unbinding
-    - Dependency injection integration
-    - Performance tracking with automatic timing
-    - FlextResult integration for operation logging
-    - Service-specific logger factories
-    - Module-specific logger creation
-    - Global context management
+    - Context variable binding and unbinding (global scope)
+    - Three-tier scoped context management (application/request/operation)
+    - Level-based context filtering (DEBUG/INFO/WARNING/ERROR/CRITICAL)
+    - Dependency injection integration via service/module logger factories
+    - Performance tracking with automatic timing and duration logging
+    - FlextResult integration for automatic success/failure handling
+    - Service-specific logger factories for DI pattern
+    - Module-specific logger creation with __name__ support
+    - Global context management with thread-safe access
+    - Context manager support for scoped operations
+    - Exception tracking with stack trace capture
+    - Lazy context binding with PerformanceTracker
 
-    Usage:
+    Architecture Layers:
+    ====================
+    - Uses FlextRuntime.structlog() - Bridge layer for external logging library
+    - Returns FlextResult[None] for all operations - Railway pattern
+    - Integrates with FlextContext for distributed tracing
+    - Provides observability hooks for application layer
+
+    Context Management Architecture:
+    ================================
+    Three-tier scoped context system:
+    1. **Application Context** - Persists for entire application lifetime
+       - Use for: app_name, app_version, environment, deployment_id
+       - Example: FlextLogger.bind_application_context(app_name="client-a-oud-mig")
+
+    2. **Request Context** - Persists for single request/command
+       - Use for: correlation_id, command, user_id, tenant_id
+       - Example: FlextLogger.bind_request_context(correlation_id="abc123")
+
+    3. **Operation Context** - Persists for single service operation
+       - Use for: operation, service_name, method, operation_duration
+       - Example: FlextLogger.bind_operation_context(operation="migrate")
+
+    Context managers for automatic cleanup:
+    >>> with FlextLogger.scoped_context("request", correlation_id="abc123"):
+    ...     # All logs include correlation_id
+    ...     do_work()
+    >>> # Context automatically cleared after block
+
+    Level-Based Context Filtering:
+    ==============================
+    Bind context that only appears at specific log levels:
+    - DEBUG-only context: FlextLogger.bind_context_for_level("DEBUG", config=config_dict)
+    - ERROR-only context: FlextLogger.bind_context_for_level("ERROR", stack_trace=trace)
+    - Prevents context noise in production logs
+
+    Factory Patterns (Dependency Injection):
+    ========================================
+    Service Logger Factory:
+    >>> logger = FlextLogger.create_service_logger(
+    ...     "user-service", version="1.0.0", correlation_id="abc123"
+    ... )
+
+    Module Logger Factory (recommended):
+    >>> logger = FlextLogger.create_module_logger(__name__)
+
+    Performance Tracking:
+    ====================
+    Automatic timing with context managers:
+    >>> with logger.track_performance("database_query"):
+    ...     db.execute_query()
+    # Automatically logs: "database_query completed in 0.123s"
+
+    Result Integration:
+    ==================
+    Automatic success/failure logging:
+    >>> result = validate_user(data)
+    >>> logger.log_result(result, operation="user_validation")
+    # Logs with error_code and error_data if failed
+
+    FlextResult Integration (Railway Pattern):
+    ===========================================
+    All logging methods return FlextResult[None]:
+    - Success: FlextResult[None].ok(None)
+    - Failure: FlextResult[None].fail(error_message)
+    - Enables functional composition of logging operations
+
+    Global Context Management:
+    ==========================
+    Thread-safe context binding at application scope:
+    >>> FlextLogger.bind_global_context(request_id="req-123", user_id="usr-456")
+    >>> logger.info("Processing")  # Includes bound context
+    >>> FlextLogger.unbind_global_context("request_id")  # Selective unbinding
+    >>> FlextLogger.clear_global_context()  # Clear all global context
+
+    Runtime Configuration:
+    ======================
+    No FlextConfig dependency - self-configuring:
+    >>> FlextLogger._configure_structlog_if_needed(log_level=logging.DEBUG)
+    Uses FlextRuntime.structlog() for consistent logging across ecosystem
+
+    Integration with FLEXT Ecosystem:
+    =================================
+    - FlextContext: Automatic correlation ID and context propagation
+    - FlextResult: Structured error and result logging
+    - FlextService: Service-specific logger creation
+    - FlextHandler: Handler operation logging
+    - FlextBus: Message and event logging
+    - All services can use FlextLogger for consistent observability
+
+    Thread Safety:
+    ==============
+    - Thread-safe context variable management via FlextRuntime.structlog().contextvars
+    - Global context safely shared across threads/async tasks
+    - Scoped context per request/operation thread
+    - Connection per logger instance ensures isolation
+
+    Performance Characteristics:
+    ===========================
+    - O(1) logger creation
+    - O(1) context binding/unbinding
+    - O(1) logging operations
+    - Minimal overhead via FlextRuntime.structlog() integration
+    - Lazy context binding for deferred evaluation
+
+    Advanced Patterns:
+    ==================
+    - Chain context binding: logger.bind(a=1).bind(b=2).info("msg")
+    - Exception context: logger.exception("msg", exception=exc, exc_info=True)
+    - Performance tracking: with logger.track_performance("op"): do_work()
+    - Level-specific debugging: FlextLogger.bind_context_for_level("DEBUG", config=cfg)
+    - Scoped context managers: with FlextLogger.scoped_context("operation"): ...
+
+    Usage Patterns:
+    ===============
         >>> from flext_core import FlextLogger
         >>>
-        >>> logger = FlextLogger(__name__)
+        >>> # Create module logger (recommended)
+        >>> logger = FlextLogger.create_module_logger(__name__)
+        >>>
+        >>> # Log with structured context
         >>> logger.info("User logged in", user_id="123", action="login")
         >>>
-        >>> # Bind context globally
+        >>> # Bind context globally for all messages
         >>> FlextLogger.bind_global_context(request_id="req-456")
-        >>> logger.info("Processing request")  # Automatically includes request_id
+        >>> logger.info("Processing request")  # Includes request_id automatically
+        >>>
+        >>> # Track operation performance
+        >>> with logger.track_performance("database_query"):
+        ...     db.execute()
+        >>>
+        >>> # Log FlextResult with automatic success/failure handling
+        >>> result = validate_user(data)
+        >>> logger.log_result(result, operation="user_validation")
     """
 
     # =========================================================================

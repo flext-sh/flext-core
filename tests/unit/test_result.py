@@ -31,7 +31,6 @@ class TestFlextResult:
         assert result.is_success
         assert not result.is_failure
         assert result.value == "test_value"
-        assert result.data == "test_value"  # Backward compatibility
         assert result.unwrap() == "test_value"
 
     def test_result_creation_failure(self) -> None:
@@ -156,14 +155,13 @@ class TestFlextResult:
         assert isinstance(result_int.value, int)
         assert isinstance(result_str.value, str)
 
-    def test_result_backward_compatibility(self) -> None:
-        """Test backward compatibility of .data and .value properties."""
+    def test_result_value_property_dict(self) -> None:
+        """Test .value property access on successful results with dict."""
         result = FlextResult[FlextTypes.Dict].ok({"key": "value"})
 
-        # Both .data and .value should work for ecosystem compatibility
-        assert result.data == {"key": "value"}
+        # .value should return the wrapped dictionary
         assert result.value == {"key": "value"}
-        assert result.data == result.value
+        assert isinstance(result.value, dict)
 
     def test_result_error_handling_edge_cases(self) -> None:
         """Test edge cases in error handling."""
@@ -983,13 +981,11 @@ class TestFlextResult:
 
         # Verify the descriptor works for both contexts
         # Class context
-        class_result = FlextResult[int].sequence(
-            [
-                FlextResult[int].ok(1),
-                FlextResult[int].ok(2),
-                FlextResult[int].ok(3),
-            ]
-        )
+        class_result = FlextResult[int].sequence([
+            FlextResult[int].ok(1),
+            FlextResult[int].ok(2),
+            FlextResult[int].ok(3),
+        ])
         assert class_result.is_success
 
         # Instance context through map
@@ -1152,13 +1148,11 @@ class TestFlextResult:
         result3 = FlextResult[int].ok(3)
 
         # sequence() accepts a list of results
-        combined: FlextResult[FlextTypes.IntList] = FlextResult[int].sequence(
-            [
-                result1,
-                result2,
-                result3,
-            ]
-        )
+        combined: FlextResult[FlextTypes.IntList] = FlextResult[int].sequence([
+            result1,
+            result2,
+            result3,
+        ])
         assert combined.is_success
         assert combined.value == [1, 2, 3]
 
@@ -1347,12 +1341,10 @@ class TestFlextResultAdditionalCoverage:
         assert isinstance(hash1, int)
 
         # Hash with complex data
-        result_dict: FlextResult[FlextTypes.Dict] = FlextResult[FlextTypes.Dict].ok(
-            {
-                "key": "value",
-                "nested": {"a": 1},
-            }
-        )
+        result_dict: FlextResult[FlextTypes.Dict] = FlextResult[FlextTypes.Dict].ok({
+            "key": "value",
+            "nested": {"a": 1},
+        })
         hash2 = hash(result_dict)
         assert isinstance(hash2, int)
 

@@ -10,12 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from typing import Union
 
 from flext_core import FlextTypes
-
-# Type for configuration override values
-ConfigValue = Union[str, int, bool, float, None]
 
 
 class FlextTestsDomains:
@@ -28,7 +24,7 @@ class FlextTestsDomains:
     def create_configuration(
         service_type: str = "api",
         environment: str = "test",
-        **overrides: ConfigValue,
+        **overrides: FlextTypes.ConfigValue,
     ) -> FlextTypes.Dict:
         """Create test configuration data.
 
@@ -59,7 +55,7 @@ class FlextTestsDomains:
     @staticmethod
     def create_payload(
         data_type: str = "user",
-        **custom_fields: ConfigValue,
+        **custom_fields: FlextTypes.ConfigValue,
     ) -> FlextTypes.Dict:
         """Create test payload data.
 
@@ -101,7 +97,7 @@ class FlextTestsDomains:
     def api_response_data(
         status: str = "success",
         include_data: bool | None = None,
-        **custom_fields: ConfigValue,
+        **custom_fields: FlextTypes.ConfigValue,
     ) -> FlextTypes.Dict:
         """Create API response test data.
 
@@ -153,7 +149,7 @@ class FlextTestsDomains:
     @staticmethod
     def create_service(
         service_type: str = "api",
-        **config: ConfigValue,
+        **config: FlextTypes.ConfigValue,
     ) -> FlextTypes.Dict:
         """Create test service configuration.
 

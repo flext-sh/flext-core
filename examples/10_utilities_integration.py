@@ -64,12 +64,10 @@ class MyService:
             return FlextResult[FlextTypes.Dict].fail("Data batch too large")
 
         # Process with configuration-driven settings
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "processed": True,
-                "config_used": self._debug_mode,
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "processed": True,
+            "config_used": self._debug_mode,
+        })
 
 
 class DatabaseService:
@@ -111,12 +109,10 @@ class UserService:
             )
 
         db_service = db_result.unwrap()
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "user_id": user_id,
-                "service": type(db_service).__name__,
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "user_id": user_id,
+            "service": type(db_service).__name__,
+        })
 
 
 class EventService:
@@ -220,18 +216,14 @@ class MessageHandler:
 
         # Process based on type
         if msg_type == "greeting":
-            return FlextResult[FlextTypes.Dict].ok(
-                {
-                    "response": "Hello!",
-                    "original": message,
-                }
-            )
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "response": "Processed",
-                "type": msg_type,
-            }
-        )
+            return FlextResult[FlextTypes.Dict].ok({
+                "response": "Hello!",
+                "original": message,
+            })
+        return FlextResult[FlextTypes.Dict].ok({
+            "response": "Processed",
+            "type": msg_type,
+        })
 
 
 class IntegratedService:
@@ -335,20 +327,18 @@ class IntegratedService:
         bus_status = "available" if self._bus else "unavailable"
         dispatcher_status = "available" if self._dispatcher else "unavailable"
 
-        return FlextResult[FlextTypes.Dict].ok(
-            {
-                "service_name": "IntegratedService",
-                "status": "running",
-                "components": {
-                    "config": config_status,
-                    "container": container_status,
-                    "bus": bus_status,
-                    "dispatcher": dispatcher_status,
-                    "logger": "available",
-                },
-                "integration_level": "complete",
-            }
-        )
+        return FlextResult[FlextTypes.Dict].ok({
+            "service_name": "IntegratedService",
+            "status": "running",
+            "components": {
+                "config": config_status,
+                "container": container_status,
+                "bus": bus_status,
+                "dispatcher": dispatcher_status,
+                "logger": "available",
+            },
+            "integration_level": "complete",
+        })
 
 
 def run_integration_examples() -> None:

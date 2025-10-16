@@ -31,27 +31,50 @@ from flext_core.utilities import FlextUtilities
 class FlextDispatcher(FlextMixins):
     """High-level message dispatch orchestration with reliability patterns.
 
-    Provides message dispatching with circuit breaker, rate limiting,
-    retry logic, timeout enforcement, and comprehensive observability.
-    Wraps FlextBus and adds reliability and monitoring capabilities.
+    Implements FlextProtocols.CommandBus through structural typing. Provides
+    message dispatching with circuit breaker, rate limiting, retry logic,
+    timeout enforcement, and comprehensive observability. Wraps FlextBus and
+    adds reliability and monitoring capabilities.
+
+    CommandBus Protocol Implementation:
+        - register_handler(message_type, handler) - Register command handler
+        - register_command(command_type, handler) - Register typed command handler
+        - register_query(query_type, handler) - Register typed query handler
+        - dispatch(message) - Execute handler with message (FlextProtocols.CommandBus)
+        - dispatch_batch(message_type, messages) - Batch message dispatching
+        - create_from_global_config() - Factory method using global config
+
+    Reliability Patterns:
+        - Circuit breaker: Prevents cascading failures for specific message types
+        - Rate limiting: Throttles message dispatching per message type
+        - Retry logic: Automatic exponential backoff retry with configurable attempts
+        - Timeout enforcement: Operation boundaries with timeout protection
+        - Context propagation: Distributed tracing with correlation IDs
 
     Features:
-    - Handler registration and discovery
-    - Circuit breaker pattern for fault tolerance
-    - Rate limiting for request throttling
-    - Retry logic with exponential backoff
-    - Timeout enforcement for operation boundaries
+    - Handler registration and discovery with support for commands, queries, and functions
+    - Circuit breaker pattern for fault tolerance with per-message-type state
+    - Rate limiting for request throttling with sliding window tracking
+    - Retry logic with exponential backoff for transient failures
+    - Timeout enforcement for operation boundaries using ThreadPoolExecutor
     - Audit logging for compliance and debugging
     - Performance metrics collection and reporting
     - Batch processing for multiple messages
-    - Context propagation for distributed tracing
+    - Context propagation for distributed tracing with correlation IDs
+    - Dispatcher instances satisfy FlextProtocols.CommandBus through duck typing
 
     Usage:
         >>> from flext_core import FlextDispatcher
+        >>> from flext_core.protocols import FlextProtocols
         >>>
         >>> dispatcher = FlextDispatcher()
         >>> dispatcher.register_handler(CreateUserCommand, handler)
-        >>> result = dispatcher.dispatch(command)
+        >>> result = dispatcher.dispatch(CreateUserCommand(name="Alice"))
+        >>>
+        >>> # Dispatcher instances satisfy FlextProtocols.CommandBus protocol
+        >>> # through structural typing - register_handler and dispatch methods
+        >>> assert callable(dispatcher.register_handler)
+        >>> assert callable(dispatcher.dispatch)
     """
 
     @override
@@ -223,7 +246,7 @@ class FlextDispatcher(FlextMixins):
                     return FlextResult[FlextTypes.Dict].fail(
                         handler_result.error or "Handler creation failed",
                     )
-                resolved_handler = handler_result.data
+                resolved_handler = handler_result.value
 
             # Create structured request with message type
             request: FlextTypes.Dict = {
@@ -255,7 +278,7 @@ class FlextDispatcher(FlextMixins):
                     return FlextResult[FlextTypes.Dict].fail(
                         handler_result.error or "Handler creation failed",
                     )
-                resolved_handler = handler_result.data
+                resolved_handler = handler_result.value
 
             # Create structured request
             request = {

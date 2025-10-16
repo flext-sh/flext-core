@@ -248,12 +248,10 @@ class DatabaseService(FlextService[None]):
 
         # Simulate different responses based on query with enhanced data
         if "users" in sql.lower():
-            return FlextResult[list[FlextTypes.Dict]].ok(
-                [
-                    {"id": 1, "name": "John Doe", "email": "john@example.com"},
-                    {"id": 2, "name": "Jane Smith", "email": "jane@example.com"},
-                ]
-            )
+            return FlextResult[list[FlextTypes.Dict]].ok([
+                {"id": 1, "name": "John Doe", "email": "john@example.com"},
+                {"id": 2, "name": "Jane Smith", "email": "jane@example.com"},
+            ])
         if "count" in sql.lower():
             return FlextResult[list[FlextTypes.Dict]].ok([{"count": 42}])
 

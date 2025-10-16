@@ -115,12 +115,10 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
     def execute(self) -> FlextResult[dict[str, str | bool]]:
         """Execute method required by FlextService."""
         self.logger.info("Executing FlextHandlers demo")
-        return FlextResult[dict[str, str | bool]].ok(
-            {
-                "status": "processed",
-                "handlers_executed": True,
-            }
-        )
+        return FlextResult[dict[str, str | bool]].ok({
+            "status": "processed",
+            "handlers_executed": True,
+        })
 
     # ========== COMMAND HANDLERS ==========
 

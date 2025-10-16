@@ -36,6 +36,14 @@ class FlextService[TDomainResult](
 ):
     """Base class for domain services with dependency injection and validation.
 
+    Implements FlextProtocols.Service through structural typing. All subclasses
+    automatically satisfy the Service protocol by implementing the required methods:
+    - execute() - main domain operation (abstract)
+    - validate_business_rules() - business rule validation
+    - validate_config() - configuration validation
+    - is_valid() - validity check
+    - get_service_info() - metadata retrieval
+
     Provides abstract base class for implementing domain services with
     comprehensive infrastructure support including dependency injection,
     context management, logging, and validation.
@@ -53,10 +61,14 @@ class FlextService[TDomainResult](
     Usage:
         >>> from flext_core.service import FlextService
         >>> from flext_core.result import FlextResult
+        >>> from flext_core.protocols import FlextProtocols
         >>>
         >>> class UserService(FlextService[User]):
         ...     def execute(self) -> FlextResult[User]:
         ...         return FlextResult[User].ok(User(name="John"))
+        >>> service = UserService()
+        >>> # FlextService instances satisfy FlextProtocols.Service
+        >>> assert isinstance(service, FlextProtocols.Service)
     """
 
     # Dependency injection attributes provided by FlextMixins
@@ -107,19 +119,9 @@ class FlextService[TDomainResult](
         """
         super().__init_subclass__()
 
-        # AUTOMATIC REGISTRATION: Register service class in global container
-        # This happens at class definition time, not instance creation time
-        # Uses class name as service key for discovery
         service_name = cls.__name__
-
-        try:
-            container = FlextContainer.get_global()
-            # Register the class itself as a factory for service creation
-            container.register_factory(service_name, cls)
-        except Exception:  # noqa: S110
-            # Intentionally silent: Class definition should never fail
-            # Service registration is optional during class creation
-            pass
+        container = FlextContainer.get_global()
+        container.register_factory(service_name, cls)
 
     @override
     def __init__(self, **data: object) -> None:

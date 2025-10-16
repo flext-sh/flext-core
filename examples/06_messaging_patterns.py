@@ -488,13 +488,11 @@ class MessagingPatternsService(FlextService[FlextTypes.Dict]):
         print(f"\n✅ Shipment event: {order_shipped_event.event_type}")
         print(f"Tracking: {order_shipped_event.data['tracking_number']}")
 
-        self._event_store.extend(
-            [
-                order_created_event,
-                payment_processed_event,
-                order_shipped_event,
-            ]
-        )
+        self._event_store.extend([
+            order_created_event,
+            payment_processed_event,
+            order_shipped_event,
+        ])
 
     # ========== EVENT AGGREGATION ==========
 
@@ -871,12 +869,10 @@ class MessagingPatternsService(FlextService[FlextTypes.Dict]):
         result: FlextResult[FlextModels.Payload[FlextTypes.Dict]] = FlextResult[
             FlextModels.Payload[FlextTypes.Dict]
         ].from_callable(
-            lambda: risky_message_parse(
-                {
-                    "message_type": "order",
-                    "data": self._order,
-                }
-            ),
+            lambda: risky_message_parse({
+                "message_type": "order",
+                "data": self._order,
+            }),
         )
         if result.is_success:
             payload = result.unwrap()

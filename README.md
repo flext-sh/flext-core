@@ -8,7 +8,7 @@
 
 **Foundation library** for the FLEXT ecosystem providing railway-oriented programming, dependency injection, domain-driven design patterns, and comprehensive type safety with Python 3.13+.
 
-> **✅ Status**: v0.9.9 Release Candidate · 80% test coverage · 1,143 passing tests · 92 test failures · Zero linting violations · **Foundation for 32+ FLEXT projects**
+> **✅ Status**: v0.9.9 Release Candidate · 76% test coverage · 1,206 passing tests · 0 test failures · Zero linting violations · **Foundation for 32+ FLEXT projects**
 
 ## 📚 Documentation
 
@@ -245,21 +245,21 @@ json_data = FlextRuntime.serialize_to_json(data)
 
 ### Quality Achievements
 
-**Test Coverage**: 80% (1,143 tests passing, 92 failures) - **Target**: 79% ✅ **ACHIEVED**
+**Test Coverage**: 76% (1,206 tests passing, 0 failures) - **Target**: 79%
 
 **Module Coverage Breakdown**:
 
 - **Foundation Layer**: 92%+ (result.py 92%, container.py 81%, typings.py 100%, constants.py 98%)
-- **Domain Layer**: 71% (models.py 64%, service.py 100%, mixins.py 77%, utilities.py 65%)
-- **Application Layer**: 75% (bus.py 91%, handlers.py 79%, dispatcher.py 60%, processors.py 70%)
-- **Infrastructure Layer**: 79% (config.py 83%, loggings.py 81%, context.py 73%, registry.py 90%)
+- **Domain Layer**: 62% (models.py 55%, service.py 67%, mixins.py 84%, utilities.py 66%)
+- **Application Layer**: 65% (bus.py 91%, handlers.py 78%, dispatcher.py 54%, processors.py 64%)
+- **Infrastructure Layer**: 76% (config.py 68%, loggings.py 66%, context.py 72%, registry.py 91%)
 
 **Quality Gates Status**:
 
 - ✅ **Ruff Linting**: Zero violations
-- ⚠️ **Type Checking**: 1,743 errors (PyRight strict mode) - **Needs attention**
-- ⚠️ **Test Suite**: 1,143 tests passing, 92 failures - **Needs investigation**
-- ✅ **Coverage**: 80% (exceeds 79% target)
+- ✅ **Type Checking**: Zero errors (Pyrefly strict mode)
+- ✅ **Test Suite**: 1,206 tests passing, 0 failures
+- ⚠️ **Coverage**: 76% (target 79% for 1.0.0)
 
 ---
 
@@ -532,8 +532,8 @@ See [VERSIONING.md](VERSIONING.md) and [API_STABILITY.md](API_STABILITY.md) for 
 
 - **Ruff**: Zero violations
 - **PyRight/MyPy**: Zero errors (strict mode)
-- **Coverage**: 80% (exceeds 79% target for 1.0.0)
-- **Tests**: 1,268 passing (unit + integration + patterns)
+- **Coverage**: 76% (target 79% for 1.0.0)
+- **Tests**: 1,206 passing (unit + integration + patterns)
 
 ---
 
@@ -694,21 +694,20 @@ if user_result.is_success:
 |                    | `typings.py`    | 100%     | Type system (50+ TypeVars)               |
 |                    | `constants.py`  | 98%      | Centralized constants                    |
 |                    | `exceptions.py` | 59%      | Exception hierarchy                      |
-| **Domain**         | `models.py`     | 64%      | DDD patterns (Entity/Value/Aggregate)    |
-|                    | `service.py`    | 100%     | Domain service base class                |
-|                    | `mixins.py`     | 77%      | Reusable behaviors                       |
-|                    | `utilities.py`  | 65%      | Domain utilities                         |
+| **Domain**         | `models.py`     | 55%      | DDD patterns (Entity/Value/Aggregate)    |
+|                    | `service.py`    | 67%      | Domain service base class                |
+|                    | `mixins.py`     | 84%      | Reusable behaviors                       |
+|                    | `utilities.py`  | 66%      | Domain utilities                         |
 | **Application**    | `bus.py`        | 91%      | Message bus with middleware              |
-|                    | `cqrs.py`       | 100%     | CQRS patterns                            |
-|                    | `handlers.py`   | 79%      | Handler registry                         |
-|                    | `dispatcher.py` | 60%      | Unified dispatcher                       |
-|                    | `registry.py`   | 90%      | Handler registry management              |
-|                    | `processors.py` | 70%      | Message processing                       |
-| **Infrastructure** | `config.py`     | 83%      | Configuration management                 |
-|                    | `loggings.py`   | 81%      | Structured logging                       |
-|                    | `context.py`    | 73%      | Context tracking                         |
+|                    | `handlers.py`   | 78%      | Handler registry                         |
+|                    | `dispatcher.py` | 54%      | Unified dispatcher                       |
+|                    | `registry.py`   | 91%      | Handler registry management              |
+|                    | `processors.py` | 64%      | Message processing                       |
+| **Infrastructure** | `config.py`     | 68%      | Configuration management                 |
+|                    | `loggings.py`   | 66%      | Structured logging                       |
+|                    | `context.py`    | 72%      | Context tracking                         |
 |                    | `protocols.py`  | 100%     | Runtime protocols                        |
-|                    | `decorators.py` | 83%      | Cross-cutting concerns                   |
+|                    | `decorators.py` | 84%      | Cross-cutting concerns                   |
 
 ---
 
@@ -764,8 +763,8 @@ pytest --cov=src --cov-report=term-missing
 - **Linting**: Ruff (ZERO violations)
 - **Type Checking**: MyPy strict mode + PyRight (ZERO errors in src/)
 - **Line Length**: 79 characters (PEP 8 strict)
-- **Coverage**: Current 80%, target 79% for 1.0.0 ✅ **ACHIEVED**
-- **Tests**: 1,268 passing (unit + integration + patterns)
+- **Coverage**: Current 76%, target 79% for 1.0.0
+- **Tests**: 1,206 passing (unit + integration + patterns)
 
 ---
 
@@ -812,15 +811,15 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 ### Current Status (v0.9.9)
 
 - ✅ Core API stable and production-ready
-- ✅ Zero QA violations (Ruff + MyPy + PyRight)
-- ✅ 1,163 tests passing
-- ✅ Coverage at 75% (baseline achieved, targeting 79% for 1.0.0)
+- ✅ Zero QA violations (Ruff + Pyrefly + Pyright)
+- ✅ 1,206 tests passing
+- ⚠️ Coverage at 76% (targeting 79% for 1.0.0)
 
 ### 1.0.0 Requirements
 
-1. **Coverage**: Reach 79% minimum (currently 75%)
-   - Priority: dispatcher (45%), processors (56%), mixins (57%)
-   - Already achieved 75% baseline - only 4% more to target
+1. **Coverage**: Reach 79% minimum (currently 76%)
+   - Priority: models (55%), dispatcher (54%), processors (64%)
+   - Need 3% more coverage to reach target
    - Add functional tests for error paths and edge cases
 2. **API Stability**: Maintain backward compatibility
    - Keep dual `.value`/`.data` access on FlextResult

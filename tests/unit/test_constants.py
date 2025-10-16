@@ -213,7 +213,7 @@ class TestFlextConstants:
 
     def test_container_constants(self) -> None:
         """Test container constants access."""
-        assert FlextConstants.Container.MAX_WORKERS == 4
+        assert FlextConstants.Container.DEFAULT_WORKERS == 4
         assert FlextConstants.Container.MIN_WORKERS == 1
 
     def test_dispatcher_constants(self) -> None:
