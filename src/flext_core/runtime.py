@@ -42,28 +42,19 @@ class FlextRuntime:
     - Direct access to external library modules (structlog, dependency_injector)
     - Structured logging configuration with FLEXT defaults
 
-    Usage:
-        >>> from flext_core.runtime import FlextRuntime
-        >>>
-        >>> # Type guards using constants patterns
-        >>> if FlextRuntime.is_valid_email("user@example.com"):
-        ...     print("Valid email")
-        >>>
-        >>> # Access external libraries
-        >>> structlog = FlextRuntime.structlog()
-        >>> providers = FlextRuntime.dependency_providers()
     """
+
+    # Constants for level-prefixed context variable parsing
+    LEVEL_PREFIX_PARTS_COUNT: int = FlextConstants.Validation.LEVEL_PREFIX_PARTS_COUNT
 
     _structlog_configured: bool = False
 
-    # Log level constants for compatibility with examples and tests
-    LOG_LEVEL_DEBUG: str = "DEBUG"
-    LOG_LEVEL_INFO: str = "INFO"
-    LOG_LEVEL_WARNING: str = "WARNING"
-    LOG_LEVEL_ERROR: str = "ERROR"
-    LOG_LEVEL_CRITICAL: str = "CRITICAL"
-    LOG_LEVEL_NUM_INFO: int = 20
-    LOG_LEVEL_NUM_ERROR: int = 40
+    # Log level constants using FlextConstants (production-ready, not test-only)
+    LOG_LEVEL_DEBUG: str = FlextConstants.Logging.DEBUG
+    LOG_LEVEL_INFO: str = FlextConstants.Logging.INFO
+    LOG_LEVEL_WARNING: str = FlextConstants.Logging.WARNING
+    LOG_LEVEL_ERROR: str = FlextConstants.Logging.ERROR
+    LOG_LEVEL_CRITICAL: str = FlextConstants.Logging.CRITICAL
 
     # =========================================================================
     # TYPE GUARD UTILITIES (Uses regex patterns from FlextConstants)
@@ -231,7 +222,7 @@ class FlextRuntime:
         Args:
             obj: Object to get attribute from
             attr: Attribute name
-            default: Default value if attribute doesn't exist
+            default: Default value if attribute does not exist
 
         Returns:
             Attribute value or default
@@ -420,6 +411,87 @@ class FlextRuntime:
         """Return the dependency-injector containers module."""
         return containers
 
+    @staticmethod
+    def level_based_context_filter(
+        _logger: object,
+        method_name: str,
+        event_dict: FlextTypes.Dict,
+    ) -> FlextTypes.Dict:
+        """Filter context variables based on log level.
+
+        Removes context variables that are restricted to specific log levels
+        when the current log level doesn't match.
+
+        This processor handles level-prefixed context variables created by
+        FlextLogger.bind_context_for_level() and removes them from logs that
+        don't meet the required log level.
+
+        Args:
+            logger: Logger instance (unused, required by structlog protocol)
+            method_name: Log method name ('debug', 'info', 'warning', 'error', etc.)
+            event_dict: Event dictionary with context variables
+
+        Returns:
+            Filtered event dictionary
+
+        Example:
+            Context bound with:
+            >>> FlextLogger.bind_context_for_level("DEBUG", config=config_dict)
+            >>> FlextLogger.bind_context_for_level("ERROR", stack_trace=trace)
+
+            Results in:
+            - DEBUG logs: include config
+            - INFO logs: exclude config
+            - ERROR logs: include stack_trace
+            - INFO logs: exclude stack_trace
+
+        Note:
+            Log level hierarchy: DEBUG < INFO < WARNING < ERROR < CRITICAL
+
+        """
+        # Log level hierarchy (lowest to highest)
+        level_hierarchy = {
+            "debug": 10,
+            "info": 20,
+            "warning": 30,
+            "error": 40,
+            "critical": 50,
+        }
+
+        # Get current log level from method name
+        current_level = level_hierarchy.get(method_name.lower(), 20)  # Default to INFO
+
+        # Process all keys in event_dict
+        filtered_dict: FlextTypes.Dict = {}
+        for key, value in event_dict.items():
+            # Check if this is a level-prefixed variable
+            if key.startswith("_level_"):
+                # Extract the required level and actual key
+                # Format: _level_debug_config -> required_level='debug', actual_key='config'
+                parts = key.split(
+                    "_", FlextConstants.Validation.LEVEL_PREFIX_PARTS_COUNT
+                )  # Split into ['', 'level', 'debug', 'config']
+                if len(parts) >= FlextConstants.Validation.LEVEL_PREFIX_PARTS_COUNT:
+                    required_level_name = parts[2]
+                    actual_key = parts[3]
+                    required_level = level_hierarchy.get(
+                        required_level_name.lower(), 10
+                    )
+
+                    # Only include if current level >= required level
+                    if current_level >= required_level:
+                        # Add with actual key (strip prefix)
+                        filtered_dict[actual_key] = value
+                    # Else: skip this variable (too verbose for current level)
+                else:
+                    # Malformed prefix, include as-is
+                    filtered_dict[key] = value
+            else:
+                # Not level-prefixed, include as-is
+                filtered_dict[key] = value
+
+        return filtered_dict
+
     @classmethod
     def configure_structlog(
         cls,
@@ -459,6 +531,8 @@ class FlextRuntime:
         processors: FlextTypes.List = [
             module.contextvars.merge_contextvars,
             module.processors.add_log_level,
+            # CRITICAL: Level-based context filter (must be after merge_contextvars and add_log_level)
+            cls.level_based_context_filter,
             module.processors.TimeStamper(fmt="iso"),
             module.processors.StackInfoRenderer(),
         ]

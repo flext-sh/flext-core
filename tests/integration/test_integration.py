@@ -8,7 +8,7 @@ Architecture:
     Integration Testing → Cross-Component Validation → Service Integration
 
     This module validates:
-    - FlextCore.Result integration with FlextCore.Container dependency injection
+    - FlextResult integration with FlextContainer dependency injection
     - Type system coherence across foundation patterns
     - Service registration and retrieval workflows
     - Mock-based external service integration patterns
@@ -33,7 +33,13 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextCore, __version__
+from flext_core import (
+    FlextContainer,
+    FlextResult,
+    FlextTypes,
+    FlextUtilities,
+    __version__,
+)
 
 
 class FunctionalExternalService:
@@ -43,26 +49,26 @@ class FunctionalExternalService:
         """Initialize functional external service with processing state."""
         super().__init__()
         self.call_count = 0
-        self.processed_items: FlextCore.Types.StringList = []
+        self.processed_items: FlextTypes.StringList = []
         self.should_fail = False
         self.failure_message = "Service unavailable"
 
-    def process(self, data: str | None = None) -> FlextCore.Result[str]:
+    def process(self, data: str | None = None) -> FlextResult[str]:
         """Functional processing method - validates real behavior.
 
         Returns:
-            FlextCore.Result[str]: Success with processed data or failure with error message.
+            FlextResult[str]: Success with processed data or failure with error message.
 
         """
         self.call_count += 1
 
         if self.should_fail:
-            return FlextCore.Result[str].fail(self.failure_message)
+            return FlextResult[str].fail(self.failure_message)
 
         processed_data = data or "processed"
         self.processed_items.append(processed_data)
 
-        return FlextCore.Result[str].ok(processed_data)
+        return FlextResult[str].ok(processed_data)
 
     def set_failure_mode(
         self,
@@ -115,13 +121,13 @@ class TestLibraryIntegration:
     @pytest.mark.core
     def test_all_exports_work(
         self,
-        clean_container: FlextCore.Container,
-        sample_data: FlextCore.Types.Dict,
+        clean_container: FlextContainer,
+        sample_data: FlextTypes.Dict,
     ) -> None:
         """Test comprehensive integration of core library exports.
 
         Validates that all primary exports work together seamlessly,
-        including FlextCore.Result, FlextCore.Container, and type system integration.
+        including FlextResult, FlextContainer, and type system integration.
 
         Args:
             clean_container: Isolated container fixture
@@ -131,24 +137,22 @@ class TestLibraryIntegration:
         # Arrange
         test_value = str(sample_data["string"])
 
-        # Act - Test FlextCore.Result creation
-        result = FlextCore.Result[str].ok(test_value)
+        # Act - Test FlextResult creation
+        result = FlextResult[str].ok(test_value)
 
-        # Assert - FlextCore.Result functionality
+        # Assert - FlextResult functionality
         assert result.is_success is True
         assert result.value == test_value
 
-        # Act - Test entity ID type system using FlextCore.Utilities
-        entity_id = (
-            FlextCore.Utilities.Generators.generate_id()
-        )  # Use actual method name
+        # Act - Test entity ID type system using FlextUtilities
+        entity_id = FlextUtilities.Generators.generate_id()  # Use actual method name
 
         # Assert - Type system coherence
         assert isinstance(entity_id, str)
         # ID format changed during simplification
         assert len(entity_id) > 0  # Just verify it's a non-empty string
 
-        # Act - Test FlextCore.Container service registration
+        # Act - Test FlextContainer service registration
         register_result = clean_container.register("test_service", test_value)
 
         # Assert - Service registration success
@@ -163,21 +167,21 @@ class TestLibraryIntegration:
 
         # Act - Test global container access
         # API changed: use get_global() instead of ensure_global_manager()
-        global_container = FlextCore.Container.get_global()
+        global_container = FlextContainer.get_global()
 
         # Assert - Global container availability
-        assert isinstance(global_container, FlextCore.Container)
+        assert isinstance(global_container, FlextContainer)
 
     @pytest.mark.integration
     @pytest.mark.core
     def test_flext_result_with_container(
         self,
-        clean_container: FlextCore.Container,
+        clean_container: FlextContainer,
         mock_external_service: FunctionalExternalService,
     ) -> None:
-        """Test FlextCore.Result integration with DI container factory pattern.
+        """Test FlextResult integration with DI container factory pattern.
 
-        Validates that FlextCore.Result works seamlessly with dependency injection
+        Validates that FlextResult works seamlessly with dependency injection
         factory patterns for service creation and result handling.
 
         Args:
@@ -188,7 +192,7 @@ class TestLibraryIntegration:
         # Arrange
         expected_result_data: str = "container_result"
 
-        def create_result() -> FlextCore.Result[str]:
+        def create_result() -> FlextResult[str]:
             # Use functional service processing - real behavior
             return mock_external_service.process(expected_result_data)
 
@@ -207,13 +211,11 @@ class TestLibraryIntegration:
         # Assert - Factory retrieval success
         assert factory_result.is_success is True
 
-        # Act - Verify factory produced FlextCore.Result
-        result: FlextCore.Result[str] = cast(
-            "FlextCore.Result[str]", factory_result.value
-        )
+        # Act - Verify factory produced FlextResult
+        result: FlextResult[str] = cast("FlextResult[str]", factory_result.value)
 
         # Assert - Result type and content validation
-        assert isinstance(result, FlextCore.Result)
+        assert isinstance(result, FlextResult)
         assert result.is_success is True
         assert result.value == expected_result_data
 
@@ -222,11 +224,9 @@ class TestLibraryIntegration:
         assert expected_result_data in mock_external_service.processed_items
 
     def test_entity_id_in_flext_result(self) -> None:
-        """Test entity ID used in FlextCore.Result."""
-        entity_id = (
-            FlextCore.Utilities.Generators.generate_id()
-        )  # Use actual method name
-        result = FlextCore.Result[str].ok(entity_id)
+        """Test entity ID used in FlextResult."""
+        entity_id = FlextUtilities.Generators.generate_id()  # Use actual method name
+        result = FlextResult[str].ok(entity_id)
 
         assert result.is_success
         # Entity ID is a valid UUID string (36 chars)

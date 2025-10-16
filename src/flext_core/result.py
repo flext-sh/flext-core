@@ -12,9 +12,9 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
 """
+
 # Expected: Internal IO monad implementation details.
 # pyright: reportPrivateUsage=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
-
 from __future__ import annotations
 
 import types
@@ -75,8 +75,9 @@ class FlextResult[T_co]:
         """Get FlextExceptions class."""
         return FlextExceptions
 
-    # Python 3.13+ discriminated union architecture.
-
+    # Python 3.13+ discriminated union architecture with pattern matching support
+    # Pattern matching works via __match_args__ which defines positional matching
+    # Example: match result: case FlextResult(_data=value, _error=None)
     __match_args__ = ("_data", "_error")
 
     # Overloaded constructor for proper type discrimination.
@@ -629,8 +630,8 @@ class FlextResult[T_co]:
     def __repr__(self) -> str:
         """Return string representation for debugging."""
         if self.is_success:
-            return f"FlextCore.Result(data={self._data!r}, is_success=True, error=None)"
-        return f"FlextCore.Result(data=None, is_success=False, error={self._error!r})"
+            return f"FlextResult(data={self._data!r}, is_success=True, error=None)"
+        return f"FlextResult(data=None, is_success=False, error={self._error!r})"
 
     # Methods for a railway pattern
 

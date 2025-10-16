@@ -12,9 +12,12 @@ from __future__ import annotations
 import uuid
 from collections.abc import Generator
 from contextlib import contextmanager
+from typing import TypeVar
 from unittest.mock import MagicMock
 
-from flext_core import FlextCore
+from flext_core import FlextResult
+
+TResult = TypeVar("TResult")
 
 
 class FlextTestsUtilities:
@@ -29,8 +32,8 @@ class FlextTestsUtilities:
         success: bool = True,
         data: object | None = None,
         error: str | None = None,
-    ) -> FlextCore.Result[object]:
-        """Create a test FlextCore.Result.
+    ) -> FlextResult[object]:
+        """Create a test FlextResult.
 
         Args:
             success: Whether the result should be successful
@@ -38,12 +41,12 @@ class FlextTestsUtilities:
             error: Error message for failure results
 
         Returns:
-            FlextCore.Result instance
+            FlextResult instance
 
         """
         if success:
-            return FlextCore.Result[object].ok(data)
-        return FlextCore.Result[object].fail(error or "Test error")
+            return FlextResult[object].ok(data)
+        return FlextResult[object].fail(error or "Test error")
 
     @staticmethod
     def functional_service(
@@ -78,7 +81,6 @@ class FlextTestsUtilities:
         target: object,
         attribute: str,
         new_value: object,
-        **options: FlextCore.Types.Dict,
     ) -> Generator[None]:
         """Context manager for temporarily changing object attributes.
 
@@ -86,32 +88,33 @@ class FlextTestsUtilities:
             target: Object to modify
             attribute: Attribute name to change
             new_value: New value for the attribute
-            **options: Additional options
 
         Yields:
             None
 
         """
         original_value = getattr(target, attribute, None)
+        attribute_existed = hasattr(target, attribute)
         setattr(target, attribute, new_value)
 
         try:
             yield
         finally:
-            if original_value is not None:
+            if attribute_existed:
                 setattr(target, attribute, original_value)
-            elif options.get("delete_after"):
+            else:
+                # Attribute didn't exist originally, remove it
                 delattr(target, attribute)
 
     class TestUtilities:
         """Nested class with additional test utilities."""
 
         @staticmethod
-        def assert_result_success(result: FlextCore.Result[object]) -> None:
-            """Assert that a FlextCore.Result is successful.
+        def assert_result_success(result: FlextResult[TResult]) -> None:
+            """Assert that a FlextResult is successful.
 
             Args:
-                result: FlextCore.Result to check
+                result: FlextResult to check
 
             Raises:
                 AssertionError: If result is not successful
@@ -120,11 +123,11 @@ class FlextTestsUtilities:
             assert result.is_success, f"Expected success result, got: {result}"
 
         @staticmethod
-        def assert_result_failure(result: FlextCore.Result[object]) -> None:
-            """Assert that a FlextCore.Result is a failure.
+        def assert_result_failure(result: FlextResult[TResult]) -> None:
+            """Assert that a FlextResult is a failure.
 
             Args:
-                result: FlextCore.Result to check
+                result: FlextResult to check
 
             Raises:
                 AssertionError: If result is not a failure
@@ -133,7 +136,7 @@ class FlextTestsUtilities:
             assert result.is_failure, f"Expected failure result, got: {result}"
 
         @staticmethod
-        def create_mock_service(**methods: FlextCore.Types.Dict) -> MagicMock:
+        def create_mock_service(**methods: object) -> MagicMock:
             """Create a mock service with specified methods.
 
             Args:

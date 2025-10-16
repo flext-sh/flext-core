@@ -1,4 +1,4 @@
-"""Comprehensive tests for FlextCore.Config - Configuration Management.
+"""Comprehensive tests for FlextConfig - Configuration Management.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,21 +13,21 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextCore
+from flext_core import FlextConfig, FlextExceptions, FlextTypes
 
 
 class TestFlextConfig:
-    """Test suite for FlextCore.Config configuration management."""
+    """Test suite for FlextConfig configuration management."""
 
     def test_config_initialization(self) -> None:
         """Test config initialization with default values."""
-        config = FlextCore.Config()
+        config = FlextConfig()
         assert config is not None
-        assert isinstance(config, FlextCore.Config)
+        assert isinstance(config, FlextConfig)
 
     def test_config_with_custom_values(self) -> None:
         """Test config initialization with custom values."""
-        config = FlextCore.Config(
+        config = FlextConfig(
             app_name="test_app",
             version="1.0.0",
             debug=True,
@@ -38,7 +38,7 @@ class TestFlextConfig:
 
     def test_config_callable_interface(self) -> None:
         """Test config callable interface for nested field access."""
-        config = FlextCore.Config(
+        config = FlextConfig(
             app_name="test_app",
             version="1.0.0",
             debug=True,
@@ -62,7 +62,7 @@ class TestFlextConfig:
             "version": "2.0.0",
             "debug": False,
         }
-        config = FlextCore.Config(
+        config = FlextConfig(
             app_name=str(config_data["app_name"]),
             version=str(config_data["version"]),
             debug=bool(config_data["debug"]),
@@ -73,7 +73,7 @@ class TestFlextConfig:
 
     def test_config_to_dict(self) -> None:
         """Test config conversion to dictionary."""
-        config = FlextCore.Config(app_name="test_app", version="1.0.0", debug=True)
+        config = FlextConfig(app_name="test_app", version="1.0.0", debug=True)
         config_dict = config.model_dump()
         assert isinstance(config_dict, dict)
         assert config_dict["app_name"] == "test_app"
@@ -83,7 +83,7 @@ class TestFlextConfig:
     def test_config_validation(self) -> None:
         """Test config validation."""
         # Valid config should pass
-        config = FlextCore.Config(
+        config = FlextConfig(
             app_name="valid_app",
             version="1.0.0",
         )
@@ -91,7 +91,7 @@ class TestFlextConfig:
 
     def test_config_clone(self) -> None:
         """Test config cloning."""
-        original_config = FlextCore.Config(
+        original_config = FlextConfig(
             app_name="original_app",
             version="1.0.0",
         )
@@ -107,7 +107,7 @@ class TestFlextConfig:
 
     def test_config_get_set_value(self) -> None:
         """Test config get/set value operations."""
-        config = FlextCore.Config()
+        config = FlextConfig()
 
         # Set custom value using direct field access
         config.app_name = "custom_value"
@@ -122,7 +122,7 @@ class TestFlextConfig:
 
     def test_config_has_value(self) -> None:
         """Test config has_value check."""
-        config = FlextCore.Config()
+        config = FlextConfig()
 
         # Test with actual fields
         config.app_name = "test_value"
@@ -131,7 +131,7 @@ class TestFlextConfig:
 
     def test_config_field_access(self) -> None:
         """Test config field access operations."""
-        config = FlextCore.Config()
+        config = FlextConfig()
 
         # Test field assignment
         config.app_name = "test_value"
@@ -143,7 +143,7 @@ class TestFlextConfig:
 
     def test_config_field_reset(self) -> None:
         """Test config field reset operation."""
-        config = FlextCore.Config()
+        config = FlextConfig()
 
         # Set multiple fields
         config.app_name = "value1"
@@ -153,15 +153,15 @@ class TestFlextConfig:
         assert config.version == "value2"
 
         # Reset to defaults
-        config.app_name = FlextCore.Config.model_fields["app_name"].default
-        config.version = FlextCore.Config.model_fields["version"].default
+        config.app_name = FlextConfig.model_fields["app_name"].default
+        config.version = FlextConfig.model_fields["version"].default
 
         assert config.app_name != "value1"
         assert config.version != "value2"
 
     def test_config_keys_values_items(self) -> None:
         """Test config keys, values, and items operations."""
-        config = FlextCore.Config()
+        config = FlextConfig()
 
         # Set actual fields
         config.app_name = "value1"
@@ -183,8 +183,8 @@ class TestFlextConfig:
 
     def test_config_singleton_pattern(self) -> None:
         """Test config creates independent instances with same defaults."""
-        config1 = FlextCore.Config()
-        config2 = FlextCore.Config()
+        config1 = FlextConfig()
+        config2 = FlextConfig()
 
         # Each call creates a new instance (no longer singleton)
         assert config1 is not config2
@@ -193,8 +193,8 @@ class TestFlextConfig:
 
     def test_config_thread_safety(self) -> None:
         """Test config thread safety."""
-        config = FlextCore.Config()
-        results: FlextCore.Types.StringList = []
+        config = FlextConfig()
+        results: FlextTypes.StringList = []
 
         def set_value(thread_id: int) -> None:
             # Use Pydantic field assignment instead of non-existent set_value
@@ -215,7 +215,7 @@ class TestFlextConfig:
 
     def test_config_performance(self) -> None:
         """Test config performance characteristics."""
-        config = FlextCore.Config()
+        config = FlextConfig()
 
         start_time = time.time()
 
@@ -231,7 +231,7 @@ class TestFlextConfig:
 
     def test_config_serialization(self) -> None:
         """Test config serialization."""
-        config = FlextCore.Config(
+        config = FlextConfig(
             app_name="serialize_app",
             version="1.0.0",
         )
@@ -242,30 +242,30 @@ class TestFlextConfig:
         assert "serialize_app" in json_str
 
         # Test JSON deserialization using model_validate_json
-        restored_config = FlextCore.Config.model_validate_json(json_str)
+        restored_config = FlextConfig.model_validate_json(json_str)
         assert restored_config.app_name == config.app_name
         assert restored_config.version == config.version
 
     def test_config_validate_log_level_invalid(self) -> None:
         """Test log level validation with invalid level (line 597-601)."""
-        # Test with invalid log level - raises FlextCore.Exceptions.ValidationError
-        with pytest.raises(FlextCore.Exceptions.ValidationError) as exc_info:
-            FlextCore.Config(log_level="INVALID")
+        # Test with invalid log level - raises FlextExceptions.ValidationError
+        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
+            FlextConfig(log_level="INVALID")
 
         assert "Invalid log level" in str(exc_info.value)
 
     def test_config_validate_trace_requires_debug(self) -> None:
         """Test trace requires debug to be enabled (line 616-620)."""
-        # Test trace=True with debug=False should fail - raises FlextCore.Exceptions.ValidationError
-        with pytest.raises(FlextCore.Exceptions.ValidationError) as exc_info:
-            FlextCore.Config(trace=True, debug=False)
+        # Test trace=True with debug=False should fail - raises FlextExceptions.ValidationError
+        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
+            FlextConfig(trace=True, debug=False)
 
         assert "Trace mode requires debug mode" in str(exc_info.value)
 
     def test_config_create_and_configure_pattern(self) -> None:
         """Test direct instantiation and configuration pattern."""
         # New pattern - create and configure directly
-        config = FlextCore.Config()
+        config = FlextConfig()
 
         # Apply project-specific overrides
         config.app_name = "Test Application"
@@ -276,43 +276,43 @@ class TestFlextConfig:
         assert config.debug is True
 
         # Create another instance - each is independent
-        config2 = FlextCore.Config()
+        config2 = FlextConfig()
 
         # Verify it has default values (not the overrides from config)
         assert (
             config2.app_name == "FLEXT Application"
-        )  # Default value from FlextCore.Constants
+        )  # Default value from FlextConstants
         assert config2.debug is False  # Default value
 
     def test_config_debug_enabled(self) -> None:
         """Test debug enabled checking using direct fields."""
         # Test with debug=True - check field directly
-        debug_config = FlextCore.Config(debug=True)
+        debug_config = FlextConfig(debug=True)
         assert debug_config.debug is True
 
         # Test with trace=True (requires debug=True) - check both fields
-        trace_config = FlextCore.Config(debug=True, trace=True)
+        trace_config = FlextConfig(debug=True, trace=True)
         assert trace_config.debug is True
         assert trace_config.trace is True
 
         # Test with neither - check fields directly
-        normal_config = FlextCore.Config(debug=False, trace=False)
+        normal_config = FlextConfig(debug=False, trace=False)
         assert normal_config.debug is False
         assert normal_config.trace is False
 
     def test_config_effective_log_level(self) -> None:
         """Test effective log level using direct fields."""
         # Test normal case - use log_level directly
-        config = FlextCore.Config(log_level="INFO")
+        config = FlextConfig(log_level="INFO")
         assert config.log_level == "INFO"
 
         # Test with debug enabled - log_level unchanged
-        debug_config = FlextCore.Config(log_level="INFO", debug=True)
+        debug_config = FlextConfig(log_level="INFO", debug=True)
         assert debug_config.log_level == "INFO"
         assert debug_config.debug is True
 
         # Test with trace enabled - check both fields directly
-        trace_config = FlextCore.Config(log_level="INFO", debug=True, trace=True)
+        trace_config = FlextConfig(log_level="INFO", debug=True, trace=True)
         assert trace_config.trace is True
         # When trace is enabled, application should use DEBUG level
         assert trace_config.log_level == "INFO"  # Field value unchanged
@@ -320,26 +320,26 @@ class TestFlextConfig:
     def test_global_instance_management(self) -> None:
         """Test global instance management methods."""
         # Save original global instance
-        original_instance = FlextCore.Config.get_global_instance()
+        original_instance = FlextConfig.get_global_instance()
 
         try:
             # Create a new instance
-            new_config = FlextCore.Config(app_name="test_instance", version="1.0.0")
+            new_config = FlextConfig(app_name="test_instance", version="1.0.0")
 
             # Set it as global
-            FlextCore.Config.set_global_instance(new_config)
+            FlextConfig.set_global_instance(new_config)
 
             # Verify it's the global instance
-            global_config = FlextCore.Config.get_global_instance()
+            global_config = FlextConfig.get_global_instance()
             assert global_config is new_config
             assert global_config.app_name == "test_instance"
 
         finally:
             # Restore original instance
-            FlextCore.Config.set_global_instance(original_instance)
+            FlextConfig.set_global_instance(original_instance)
 
     def test_pydantic_env_prefix(self) -> None:
-        """Test that FlextCore.Config uses FLEXT_ prefix for environment variables."""
+        """Test that FlextConfig uses FLEXT_ prefix for environment variables."""
         import os
 
         # Cleanup any existing env vars
@@ -352,7 +352,7 @@ class TestFlextConfig:
             os.environ["DEBUG"] = "true"
             os.environ["LOG_LEVEL"] = "ERROR"
 
-            config = FlextCore.Config()
+            config = FlextConfig()
             assert config.debug is False  # Not loaded
             assert config.log_level == "INFO"  # Not loaded, using default
 
@@ -364,7 +364,7 @@ class TestFlextConfig:
             os.environ["FLEXT_DEBUG"] = "true"
             os.environ["FLEXT_LOG_LEVEL"] = "ERROR"
 
-            config_with_prefix = FlextCore.Config()
+            config_with_prefix = FlextConfig()
             assert config_with_prefix.debug is True  # Loaded from FLEXT_DEBUG
             assert (
                 config_with_prefix.log_level == "ERROR"
@@ -377,7 +377,7 @@ class TestFlextConfig:
                     del os.environ[key]
 
     def test_pydantic_dotenv_file_loading(self, tmp_path: Path) -> None:
-        """Test that FlextCore.Config automatically loads .env file."""
+        """Test that FlextConfig automatically loads .env file."""
         import os
         from pathlib import Path
 
@@ -394,7 +394,7 @@ class TestFlextConfig:
             )
 
             # Create config - should load from .env
-            config = FlextCore.Config()
+            config = FlextConfig()
 
             assert config.app_name == "from-dotenv"
             assert config.log_level == "WARNING"
@@ -428,7 +428,7 @@ class TestFlextConfig:
             os.environ["FLEXT_LOG_LEVEL"] = "ERROR"
 
             # Create config
-            config = FlextCore.Config()
+            config = FlextConfig()
 
             # Environment variables should override .env file
             assert config.app_name == "from-env-var"
@@ -472,18 +472,18 @@ class TestFlextConfig:
             os.environ["FLEXT_TIMEOUT_SECONDS"] = "60"
 
             # Create config with explicit argument (precedence level 1 - highest)
-            config = FlextCore.Config(timeout_seconds=90)
+            config = FlextConfig(timeout_seconds=90)
 
             # Explicit argument should win
             assert config.timeout_seconds == 90
 
             # Test without explicit argument - env var should win
-            config_no_explicit = FlextCore.Config()
+            config_no_explicit = FlextConfig()
             assert config_no_explicit.timeout_seconds == 60  # From env var
 
             # Remove env var - .env should win
             del os.environ["FLEXT_TIMEOUT_SECONDS"]
-            config_no_env = FlextCore.Config()
+            config_no_env = FlextConfig()
             assert config_no_env.timeout_seconds == 45  # From .env
 
         finally:
@@ -505,12 +505,12 @@ class TestFlextConfig:
             # Test with properly cased FLEXT_ prefix
             os.environ["FLEXT_DEBUG"] = "true"
 
-            config = FlextCore.Config()
+            config = FlextConfig()
             assert config.debug is True
 
             # Verify config loaded from environment variable
             os.environ["FLEXT_DEBUG"] = "false"
-            config_updated = FlextCore.Config()
+            config_updated = FlextConfig()
             assert config_updated.debug is False
 
         finally:
@@ -534,7 +534,7 @@ class TestFlextConfig:
             os.environ["FLEXT_LOG_LEVEL"] = "ERROR"
             os.environ["FLEXT_DEBUG"] = "true"
 
-            config = FlextCore.Config()
+            config = FlextConfig()
 
             # Check fields directly - no computed properties
             assert config.log_level == "ERROR"
@@ -542,7 +542,7 @@ class TestFlextConfig:
 
             # Test with debug=False
             os.environ["FLEXT_DEBUG"] = "false"
-            config_no_debug = FlextCore.Config()
+            config_no_debug = FlextConfig()
 
             assert config_no_debug.log_level == "ERROR"
             assert config_no_debug.debug is False

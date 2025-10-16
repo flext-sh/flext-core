@@ -55,9 +55,33 @@ class FlextConfig(BaseSettings):
         >>> config = FlextConfig(log_level="DEBUG", debug=True)
     """
 
-    # Singleton pattern - per-class instances
-    _instances: ClassVar[dict[type, FlextConfig]] = {}
-    _lock: ClassVar[threading.Lock] = threading.Lock()
+    # Class attributes for singleton pattern
+    _instances: ClassVar[dict[type, Self]] = {}
+    _lock: ClassVar[threading.RLock] = threading.RLock()
+
+    def __new__(cls, **kwargs: object) -> Self:
+        """Create new FlextConfig instance.
+
+        Each call to FlextConfig() creates a new instance with the provided kwargs.
+
+        Example:
+            >>> config1 = FlextConfig()
+            >>> config2 = FlextConfig()
+            >>> assert config1 is not config2  # Different instances
+
+            >>> # With custom values
+            >>> config = FlextConfig(app_name="MyApp", debug=True)
+
+        Args:
+            **kwargs: Configuration values
+
+        Returns:
+            Self: New FlextConfig instance
+
+        """
+        instance = super().__new__(cls)
+        instance.__init__(**kwargs)  # type: ignore[misc]
+        return instance
 
     # Pydantic 2.11+ BaseSettings configuration with environment variable support
     model_config = SettingsConfigDict(
@@ -351,7 +375,10 @@ class FlextConfig(BaseSettings):
         if not hasattr(self, key):
             msg = f"Configuration key '{key}' not found"
             raise KeyError(msg)
-        return getattr(self, key)
+        value: FlextTypes.ConfigValue = cast(
+            "FlextTypes.ConfigValue", getattr(self, key)
+        )
+        return value
 
     # Validation methods
     @field_validator("log_level")
@@ -411,7 +438,9 @@ class FlextConfig(BaseSettings):
 
     # Dependency injection integration
     _di_config_provider: ClassVar[providers.Configuration | None] = None
-    _di_provider_lock: ClassVar[threading.Lock] = threading.Lock()
+    _di_provider_lock: ClassVar[threading.RLock] = (
+        threading.RLock()
+    )  # RLock for DI provider too
 
     @classmethod
     def get_di_config_provider(cls) -> providers.Configuration:
@@ -431,7 +460,7 @@ class FlextConfig(BaseSettings):
         """Get or create global singleton instance.
 
         Note: Uses FlextConfig as the singleton key to ensure all subclasses
-        (including FlextBase.Config and FlextCore.Config) share the same instance.
+        (including FlextBase.Config and FlextConfig) share the same instance.
         This is intentional to maintain a single global configuration across the
         entire flext-core ecosystem, regardless of access pattern.
 
@@ -444,7 +473,7 @@ class FlextConfig(BaseSettings):
 
         """
         # Use base class (FlextConfig) as key to ensure single global singleton
-        # Subclasses (FlextBase.Config, FlextCore.Config) share this instance
+        # Subclasses (FlextBase.Config, FlextConfig) share this instance
         base_class = FlextConfig
 
         if base_class not in cls._instances:
@@ -466,14 +495,14 @@ class FlextConfig(BaseSettings):
                         instance = cls()
                         cls._instances[base_class] = instance
 
-        return cast("Self", cls._instances[base_class])
+        return cls._instances[base_class]
 
     @classmethod
-    def set_global_instance(cls, instance: FlextConfig) -> None:
+    def set_global_instance(cls, instance: Self) -> None:
         """Set global singleton instance.
 
         Uses FlextConfig as the key to match get_global_instance() behavior,
-        ensuring all subclasses (FlextBase.Config, FlextCore.Config) properly
+        ensuring all subclasses (FlextBase.Config, FlextConfig) properly
         set the shared singleton.
 
         Args:
@@ -489,7 +518,7 @@ class FlextConfig(BaseSettings):
         """Reset global singleton instance.
 
         Uses FlextConfig as the key to match get_global_instance() behavior,
-        ensuring all subclasses (FlextBase.Config, FlextCore.Config) properly
+        ensuring all subclasses (FlextBase.Config, FlextConfig) properly
         reset the shared singleton.
         """
         with cls._lock:
@@ -515,14 +544,12 @@ class FlextConfig(BaseSettings):
         return FlextResult[None].ok(None)
 
     # Computed fields - Enhanced Pydantic 2 features
-    @computed_field
-    @property
+    @computed_field  # Pydantic v2 computed_field already provides property behavior
     def is_debug_enabled(self) -> bool:
         """Check if debug mode is enabled."""
         return self.debug or self.trace
 
-    @computed_field
-    @property
+    @computed_field  # Pydantic v2 computed_field already provides property behavior
     def effective_log_level(self) -> str:
         """Get effective log level considering debug/trace modes."""
         if self.trace:
@@ -531,14 +558,12 @@ class FlextConfig(BaseSettings):
             return "INFO"
         return self.log_level
 
-    @computed_field
-    @property
+    @computed_field  # Pydantic v2 computed_field already provides property behavior
     def is_production(self) -> bool:
         """Check if running in production mode (not debug/trace)."""
         return not (self.debug or self.trace)
 
-    @computed_field
-    @property
+    @computed_field  # Pydantic v2 computed_field already provides property behavior
     def effective_timeout(self) -> int:
         """Get effective timeout considering debug mode.
 
@@ -548,14 +573,12 @@ class FlextConfig(BaseSettings):
             return self.timeout_seconds * 3  # 3x timeout for debugging
         return self.timeout_seconds
 
-    @computed_field
-    @property
+    @computed_field  # Pydantic v2 computed_field already provides property behavior
     def has_database(self) -> bool:
         """Check if database is configured."""
         return self.database_url is not None and len(self.database_url) > 0
 
-    @computed_field
-    @property
+    @computed_field  # Pydantic v2 computed_field already provides property behavior
     def has_cache(self) -> bool:
         """Check if caching is enabled and configured."""
         return self.enable_caching and self.cache_max_size > 0

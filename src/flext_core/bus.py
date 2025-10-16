@@ -28,8 +28,7 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextBus(
-    FlextProtocols.Commands.CommandBus,
-    FlextProtocols.Commands.Middleware,
+    FlextProtocols.CommandBus,
     FlextMixins,
 ):
     """Command and query bus for CQRS message routing.
@@ -336,7 +335,7 @@ class FlextBus(
 
             # Validate command if it has custom validation method
             # (not Pydantic field validator)
-            if isinstance(command, FlextProtocols.Foundation.HasValidateCommand):
+            if isinstance(command, FlextProtocols.HasValidateCommand):
                 validation_method = command.validate_command
                 # Check if it's a custom validation method (callable without parameters)
                 # and returns a FlextResult (not a Pydantic field validator)

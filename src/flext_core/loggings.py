@@ -14,14 +14,13 @@ from __future__ import annotations
 import time
 import traceback
 import types
-from collections.abc import Callable, Sequence
-from typing import Self, TypeVar
+from collections.abc import Callable, Iterator, Sequence
+from contextlib import contextmanager
+from typing import ClassVar, Self
 
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
-
-T = TypeVar("T")
+from flext_core.typings import FlextTypes, T
 
 # =============================================================================
 # FLEXT LOGGER - THIN WRAPPER AROUND FlextRuntime.structlog()
@@ -62,6 +61,14 @@ class FlextLogger:
 
     _configured: bool = False
     _structlog_configured: bool = False
+
+    # Scoped context tracking
+    # Format: {scope_name: {context_key: context_value}}
+    _scoped_contexts: ClassVar[dict[str, dict[str, object]]] = {}
+
+    # Level-based context tracking
+    # Format: {log_level: {context_key: context_value}}
+    _level_contexts: ClassVar[dict[str, dict[str, object]]] = {}
 
     @staticmethod
     def _configure_structlog_if_needed(
@@ -163,6 +170,270 @@ class FlextLogger:
     def get_global_context(cls) -> FlextTypes.Dict:
         """Get current global context."""
         return dict[str, object](FlextRuntime.structlog().contextvars.get_contextvars())
+
+    # =========================================================================
+    # SCOPED CONTEXT MANAGEMENT - Three-tier context system
+    # =========================================================================
+
+    @classmethod
+    def bind_application_context(cls, **context: object) -> FlextResult[None]:
+        """Bind application-level context (persists for entire app lifetime).
+
+        Application context persists for the entire application lifetime and is
+        only cleared at application exit. Use for app name, version, environment.
+
+        Args:
+            **context: Application-level context variables
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        Example:
+            >>> FlextLogger.bind_application_context(
+            ...     app_name="algar-oud-mig",
+            ...     app_version="0.9.0",
+            ...     environment="production",
+            ... )
+            >>> # All logs include app context until application exit
+
+        """
+        try:
+            # Track in application scope
+            if "application" not in cls._scoped_contexts:
+                cls._scoped_contexts["application"] = {}
+            cls._scoped_contexts["application"].update(context)
+
+            # Bind globally
+            FlextRuntime.structlog().contextvars.bind_contextvars(**context)
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to bind application context: {e}")
+
+    @classmethod
+    def bind_request_context(cls, **context: object) -> FlextResult[None]:
+        """Bind request-level context (persists for single request/command).
+
+        Request context persists for a single CLI command or API request.
+        Cleared at command completion. Use for correlation_id, command, user_id.
+
+        Args:
+            **context: Request-level context variables
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        Example:
+            >>> FlextLogger.bind_request_context(
+            ...     correlation_id="flext-abc123", command="migrate", user_id="admin"
+            ... )
+            >>> # All logs for this request include request context
+
+        """
+        try:
+            # Track in request scope
+            if "request" not in cls._scoped_contexts:
+                cls._scoped_contexts["request"] = {}
+            cls._scoped_contexts["request"].update(context)
+
+            # Bind globally
+            FlextRuntime.structlog().contextvars.bind_contextvars(**context)
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to bind request context: {e}")
+
+    @classmethod
+    def bind_operation_context(cls, **context: object) -> FlextResult[None]:
+        """Bind operation-level context (persists for single service operation).
+
+        Operation context persists for a single service operation.
+        Cleared at operation completion. Use for operation, service_name, method.
+
+        Args:
+            **context: Operation-level context variables
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        Example:
+            >>> FlextLogger.bind_operation_context(
+            ...     operation="migrate",
+            ...     service="AlgarOudMigrationService",
+            ...     method="execute",
+            ... )
+            >>> # All logs for this operation include operation context
+
+        """
+        try:
+            # Track in operation scope
+            if "operation" not in cls._scoped_contexts:
+                cls._scoped_contexts["operation"] = {}
+            cls._scoped_contexts["operation"].update(context)
+
+            # Bind globally
+            FlextRuntime.structlog().contextvars.bind_contextvars(**context)
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to bind operation context: {e}")
+
+    @classmethod
+    def clear_scope(cls, scope: str) -> FlextResult[None]:
+        """Clear all context variables for a specific scope.
+
+        Args:
+            scope: Scope to clear ("application", "request", "operation")
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        Example:
+            >>> FlextLogger.clear_scope("request")
+            >>> # Clears all request-level context
+
+        """
+        try:
+            if scope in cls._scoped_contexts:
+                # Get keys to unbind
+                keys = list(cls._scoped_contexts[scope].keys())
+
+                # Unbind from structlog
+                if keys:
+                    FlextRuntime.structlog().contextvars.unbind_contextvars(*keys)
+
+                # Clear from tracking
+                cls._scoped_contexts[scope] = {}
+
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to clear scope {scope}: {e}")
+
+    @classmethod
+    @contextmanager
+    def scoped_context(cls, scope: str, **context: object) -> Iterator[None]:
+        """Context manager for automatic scoped context cleanup.
+
+        Automatically binds context for the operation duration and clears it
+        after completion. Prevents context accumulation.
+
+        Args:
+            scope: Scope identifier ("application", "request", "operation")
+            **context: Context variables to bind
+
+        Yields:
+            None
+
+        Example:
+            >>> with FlextLogger.scoped_context(
+            ...     "request", correlation_id="abc123", command="migrate"
+            ... ):
+            ...     # All logs include correlation_id and command
+            ...     do_work()
+            >>> # Context automatically cleared after block
+
+        """
+        # Bind context based on scope
+        if scope == "application":
+            result = cls.bind_application_context(**context)
+        elif scope == "request":
+            result = cls.bind_request_context(**context)
+        elif scope == "operation":
+            result = cls.bind_operation_context(**context)
+        else:
+            # Generic scoped binding
+            if scope not in cls._scoped_contexts:
+                cls._scoped_contexts[scope] = {}
+            cls._scoped_contexts[scope].update(context)
+            FlextRuntime.structlog().contextvars.bind_contextvars(**context)
+            result = FlextResult[None].ok(None)
+
+        if result.is_failure:
+            # If binding failed, still yield but log warning
+            logger = cls.create_module_logger("flext_core.loggings")
+            logger.warning(f"Failed to bind scoped context: {result.error}")
+
+        try:
+            yield
+        finally:
+            # Clear scope on exit
+            cls.clear_scope(scope)
+
+    # =========================================================================
+    # LEVEL-BASED CONTEXT MANAGEMENT - Log level filtering
+    # =========================================================================
+
+    @classmethod
+    def bind_context_for_level(cls, level: str, **context: object) -> FlextResult[None]:
+        """Bind context that only appears at specific log level.
+
+        Context variables are tracked and will be filtered by the
+        LevelBasedContextFilter processor to only appear at the specified
+        log level or higher.
+
+        Args:
+            level: Log level ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
+            **context: Context variables to bind
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        Example:
+            >>> # Config only appears in DEBUG logs
+            >>> FlextLogger.bind_context_for_level("DEBUG", config=config_dict)
+            >>>
+            >>> # Stack trace only appears in ERROR/CRITICAL logs
+            >>> FlextLogger.bind_context_for_level("ERROR", stack_trace=trace_str)
+
+        Note:
+            Requires LevelBasedContextFilter processor in structlog chain.
+
+        """
+        try:
+            # Normalize level to uppercase
+            level_upper = level.upper()
+
+            # Track in level-specific context
+            if level_upper not in cls._level_contexts:
+                cls._level_contexts[level_upper] = {}
+            cls._level_contexts[level_upper].update(context)
+
+            # Bind globally with level prefix
+            # The processor will filter based on this prefix
+            prefixed_context = {
+                f"_level_{level_upper.lower()}_{k}": v for k, v in context.items()
+            }
+            FlextRuntime.structlog().contextvars.bind_contextvars(**prefixed_context)
+
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to bind level context: {e}")
+
+    @classmethod
+    def unbind_context_for_level(cls, level: str, *keys: str) -> FlextResult[None]:
+        """Unbind specific level-filtered context variables.
+
+        Args:
+            level: Log level the context was bound to
+            *keys: Context keys to unbind
+
+        Returns:
+            FlextResult[None]: Success or failure result
+
+        """
+        try:
+            level_upper = level.upper()
+
+            # Remove from tracking
+            if level_upper in cls._level_contexts:
+                for key in keys:
+                    cls._level_contexts[level_upper].pop(key, None)
+
+            # Unbind prefixed keys
+            prefixed_keys = [f"_level_{level_upper.lower()}_{k}" for k in keys]
+            if prefixed_keys:
+                FlextRuntime.structlog().contextvars.unbind_contextvars(*prefixed_keys)
+
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to unbind level context: {e}")
 
     @classmethod
     def get_logger(cls) -> FlextLogger:

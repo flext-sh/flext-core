@@ -20,8 +20,6 @@ from typing import (
     Literal,
 )
 
-from flext_core import __version__
-
 
 class FlextConstants:
     """Foundation constants for the FLEXT ecosystem.
@@ -49,7 +47,7 @@ class FlextConstants:
 
     """Core identifiers."""
     NAME: Final[str] = "FLEXT"
-    VERSION: Final[str] = __version__
+    VERSION: Final[str] = "0.9.9"  # Hardcoded to avoid circular import
 
     # Semantic zero and initial values
     ZERO: Final[int] = 0
@@ -107,7 +105,7 @@ class FlextConstants:
         """Core identifiers and version information."""
 
         NAME: Final[str] = "FLEXT"
-        VERSION: Final[str] = __version__
+        VERSION: Final[str] = "0.9.9"  # Hardcoded to avoid circular import
         ZERO: Final[int] = 0
         INITIAL_TIME: Final[float] = 0.0
 
@@ -133,6 +131,9 @@ class FlextConstants:
         MIN_SERVICE_NAME_LENGTH: Final[int] = 2  # Usage count: 0
         MAX_EMAIL_LENGTH: Final[int] = 254  # Usage count: 0
         EMAIL_PARTS_COUNT: Final[int] = 2  # Expected parts when splitting email by @
+        LEVEL_PREFIX_PARTS_COUNT: Final[int] = (
+            4  # Expected parts when splitting _level_<level>_<key>
+        )
         MIN_PERCENTAGE: Final[float] = 0.0  # Usage count: 0
         MAX_PERCENTAGE: Final[float] = 100.0  # Usage count: 0
         MIN_SECRET_KEY_LENGTH: Final[int] = 32  # Usage count: 0
@@ -747,6 +748,50 @@ class FlextConstants:
 
         MAX_JWT_EXPIRY_MINUTES: Final[int] = 43200  # 30 days maximum
         DEFAULT_JWT_EXPIRY_MINUTES: Final[int] = 60  # 1 hour default
+
+        # JWT Token constants
+        JWT_DEFAULT_ALGORITHM: Final[str] = "HS256"
+        JWT_ISSUER_CLAIM: Final[str] = "iss"
+        JWT_AUDIENCE_CLAIM: Final[str] = "aud"
+        JWT_DEFAULT_TOKEN_TYPE: Final[str] = "access"
+        JWT_DEFAULT_ACCESS_TOKEN_TYPE: Final[str] = "access"
+        JWT_API_TOKEN_TYPE: Final[str] = "api"
+        JWT_BASIC_TOKEN_TYPE: Final[str] = "basic"
+        JWT_BEARER_PREFIX: Final[str] = "Bearer"
+        JWT_MIN_SECRET_KEY_LENGTH: Final[int] = 32
+        JWT_ALLOWED_ALGORITHMS: Final[tuple[str, ...]] = ("HS256", "RS256", "ES256")
+        DEFAULT_JWT_SECRET: Final[str] = "your-secret-key-change-in-production"
+
+        # Credential constants
+        CREDENTIAL_USERNAME_MIN_LENGTH: Final[int] = 3
+        CREDENTIAL_USERNAME_MAX_LENGTH: Final[int] = 50
+        CREDENTIAL_PASSWORD_MIN_LENGTH: Final[int] = 8
+        CREDENTIAL_PASSWORD_MAX_LENGTH: Final[int] = 128
+        CREDENTIAL_PASSWORD_MIN_SCORE: Final[int] = 3
+        CREDENTIAL_MIN_BCRYPT_HASH_LENGTH: Final[int] = 60
+        CREDENTIAL_BCRYPT_ROUNDS: Final[int] = 12
+        CREDENTIAL_MIN_BCRYPT_ROUNDS: Final[int] = 8
+        CREDENTIAL_MAX_BCRYPT_ROUNDS: Final[int] = 16
+
+        # Session constants
+        SESSION_DEFAULT_EXPIRY_MINUTES: Final[int] = 60
+        SESSION_MAX_EXPIRY_MINUTES: Final[int] = 10080  # 7 days
+        SESSION_MAX_SESSIONS_PER_USER: Final[int] = 5
+        SESSION_CLEANUP_INTERVAL_MINUTES: Final[int] = 60
+        SESSION_EXTEND_MINUTES: Final[int] = 30
+        SESSION_MIN_TOKEN_LENGTH: Final[int] = 32
+        SESSION_DEFAULT_EXTEND_HOURS: Final[int] = 24
+
+        # Authentication security constants
+        AUTH_MAX_LOGIN_ATTEMPTS: Final[int] = 5
+        AUTH_LOCKOUT_DURATION_MINUTES: Final[int] = 30
+        AUTH_MAX_REQUESTS_PER_MINUTE: Final[int] = 100
+        AUTH_MAX_REQUESTS_PER_HOUR: Final[int] = 1000
+        AUTH_RATE_LIMIT_MAX_ATTEMPTS: Final[int] = 10
+        AUTH_RATE_LIMIT_WINDOW_MINUTES: Final[int] = 15
+
+        # OIDC constants
+        OIDC_DEFAULT_ID_TOKEN_SIGNING_ALGORITHM: Final[str] = "RS256"
 
     class Logging:
         """Logging configuration constants."""

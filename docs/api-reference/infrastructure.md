@@ -4,15 +4,34 @@ This section covers the infrastructure layer classes that handle configuration, 
 
 ## Configuration Management
 
-### FlextCore.Config - Configuration System
+### FlextConfig - Configuration System
 
 Layered configuration system supporting multiple sources (environment variables, files, programmatic).
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
 # Create configuration with multiple sources
-config = FlextCore.Config(
+config = FlextConfig(
     config_files=['config.toml', 'secrets.env'],
     overrides={'debug': True}
 )
@@ -37,15 +56,34 @@ smtp_port = smtp_config.get('port', cast=int, default=587)
 
 ## Logging and Observability
 
-### FlextCore.Logger - Structured Logging
+### FlextLogger - Structured Logging
 
 Structured logging with correlation IDs and context propagation.
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
 # Create logger with context
-logger = FlextCore.Logger(__name__)
+logger = FlextLogger(__name__)
 
 # Basic logging
 logger.info("Application started")
@@ -66,15 +104,34 @@ with logger.context(operation="user_creation", user_id="user_123"):
 - Correlation ID tracking
 - Sensitive data sanitization
 
-### FlextCore.Context - Context Management
+### FlextContext - Context Management
 
 Request and operation context with metadata and correlation tracking.
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
 # Create context
-context = FlextCore.Context.create(
+context = FlextContext.create(
     operation_id="op_123",
     user_id="user_456",
     metadata={"source": "api", "version": "1.0"}
@@ -88,41 +145,60 @@ metadata = context.metadata
 # Context propagation
 with context:
     # Context is available throughout this block
-    logger = FlextCore.Logger(__name__)
+    logger = FlextLogger(__name__)
     logger.info("Processing request")  # Includes context info
 ```
 
 ## External Integrations
 
-### FlextCore.Protocols - Protocol Interfaces
+### FlextProtocols - Protocol Interfaces
 
 Runtime-checkable protocols for external service integration.
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 from typing import Protocol, runtime_checkable
 
 @runtime_checkable
-class DatabaseProtocol(FlextCore.Protocols.BaseProtocol):
+class DatabaseProtocol(FlextProtocols.BaseProtocol):
     """Protocol for database operations."""
 
-    def connect(self) -> FlextCore.Result[Connection]:
+    def connect(self) -> FlextResult[Connection]:
         ...
 
-    def execute(self, query: str) -> FlextCore.Result[Cursor]:
+    def execute(self, query: str) -> FlextResult[Cursor]:
         ...
 
     def close(self) -> None:
         ...
 
 @runtime_checkable
-class EmailProtocol(FlextCore.Protocols.BaseProtocol):
+class EmailProtocol(FlextProtocols.BaseProtocol):
     """Protocol for email services."""
 
-    def send_email(self, to: str, subject: str, body: str) -> FlextCore.Result[bool]:
+    def send_email(self, to: str, subject: str, body: str) -> FlextResult[bool]:
         ...
 
-    def send_template(self, to: str, template: str, data: dict) -> FlextCore.Result[bool]:
+    def send_template(self, to: str, template: str, data: dict) -> FlextResult[bool]:
         ...
 ```
 
@@ -158,30 +234,30 @@ supports_feature = FlextVersion.supports_feature("async_handlers")
 
 ```python
 from flext_core import (
-    FlextCore.Config, FlextCore.Logger, FlextCore.Context,
-    FlextCore.Container, FlextCore.Result
+    FlextConfig, FlextLogger, FlextContext,
+    FlextContainer, FlextResult
 )
 
 # Configuration setup
-config = FlextCore.Config.create(
+config = FlextConfig.create(
     environment='production',
     config_files=['config.toml', 'secrets.env'],
     overrides={'log_level': 'INFO'}
 )
 
 # Logger setup
-logger = FlextCore.Logger("myapp")
+logger = FlextLogger("myapp")
 logger.set_level(config.get('log_level'))
 
 # Context setup
-context = FlextCore.Context.create(
+context = FlextContext.create(
     operation_id="api_request_123",
     user_id="user_456",
     metadata={"endpoint": "/api/users", "method": "POST"}
 )
 
 # Dependency injection setup
-container = FlextCore.Container.get_global()
+container = FlextContainer.get_global()
 
 # Register infrastructure services
 container.register("config", config)
@@ -189,7 +265,7 @@ container.register("logger", logger)
 container.register("context", context)
 
 # Application usage
-def handle_api_request(request_data: dict) -> FlextCore.Result[dict]:
+def handle_api_request(request_data: dict) -> FlextResult[dict]:
     """Handle API request with full infrastructure support."""
 
     # Get dependencies
@@ -197,7 +273,7 @@ def handle_api_request(request_data: dict) -> FlextCore.Result[dict]:
     logger_result = container.get("logger")
 
     if config_result.is_failure or logger_result.is_failure:
-        return FlextCore.Result[dict].fail("Infrastructure not available")
+        return FlextResult[dict].fail("Infrastructure not available")
 
     config = config_result.unwrap()
     logger = logger_result.unwrap()
@@ -212,11 +288,11 @@ def handle_api_request(request_data: dict) -> FlextCore.Result[dict]:
     try:
         # Business logic here
         result = {"status": "success", "data": request_data}
-        return FlextCore.Result[dict].ok(result)
+        return FlextResult[dict].ok(result)
 
     except Exception as e:
         logger.error("Request processing failed", extra={"error": str(e)})
-        return FlextCore.Result[dict].fail("Internal server error")
+        return FlextResult[dict].fail("Internal server error")
 
 # Usage
 result = handle_api_request({
@@ -250,7 +326,7 @@ DATABASE_PASSWORD=secret_password
 API_SECRET_KEY=super_secret_key
 
 # Python code
-config = FlextCore.Config.create(
+config = FlextConfig.create(
     environment='production',
     config_files=['config.toml', 'secrets.env'],
     overrides={'database.pool_size': 10}
@@ -268,15 +344,34 @@ api_port = api_config.get('port', cast=int)
 
 ```python
 import asyncio
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-logger = FlextCore.Logger("payment_service")
+logger = FlextLogger("payment_service")
 
-async def process_payment(order_id: str, amount: float) -> FlextCore.Result[str]:
+async def process_payment(order_id: str, amount: float) -> FlextResult[str]:
     """Process payment with comprehensive logging."""
 
     # Create context for this operation
-    context = FlextCore.Context.create(
+    context = FlextContext.create(
         operation_id=f"payment_{order_id}",
         metadata={"order_id": order_id, "amount": amount}
     )
@@ -288,7 +383,7 @@ async def process_payment(order_id: str, amount: float) -> FlextCore.Result[str]
         with logger.context(step="validation"):
             if amount <= 0:
                 logger.error("Invalid payment amount")
-                return FlextCore.Result[str].fail("Invalid amount")
+                return FlextResult[str].fail("Invalid amount")
 
         # Step 2: Authorize payment
         with logger.context(step="authorization"):
@@ -309,7 +404,7 @@ async def process_payment(order_id: str, amount: float) -> FlextCore.Result[str]
                 return capture_result
 
         logger.info("Payment processed successfully")
-        return FlextCore.Result[str].ok(f"payment_{order_id}")
+        return FlextResult[str].ok(f"payment_{order_id}")
 
 # Usage
 result = asyncio.run(process_payment("order_123", 99.99))

@@ -10,8 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+from typing import Union
 
-from flext_core import FlextCore
+from flext_core import FlextTypes
+
+# Type for configuration override values
+ConfigValue = Union[str, int, bool, float, None]
 
 
 class FlextTestsDomains:
@@ -24,8 +28,8 @@ class FlextTestsDomains:
     def create_configuration(
         service_type: str = "api",
         environment: str = "test",
-        **overrides: FlextCore.Types.Dict,
-    ) -> FlextCore.Types.Dict:
+        **overrides: ConfigValue,
+    ) -> FlextTypes.Dict:
         """Create test configuration data.
 
         Args:
@@ -37,7 +41,7 @@ class FlextTestsDomains:
             Configuration dictionary
 
         """
-        base_config: FlextCore.Types.Dict = {
+        base_config: FlextTypes.Dict = {
             "service_type": service_type,
             "environment": environment,
             "debug": True,
@@ -55,8 +59,8 @@ class FlextTestsDomains:
     @staticmethod
     def create_payload(
         data_type: str = "user",
-        **custom_fields: FlextCore.Types.Dict,
-    ) -> FlextCore.Types.Dict:
+        **custom_fields: ConfigValue,
+    ) -> FlextTypes.Dict:
         """Create test payload data.
 
         Args:
@@ -67,7 +71,7 @@ class FlextTestsDomains:
             Payload dictionary
 
         """
-        payloads: dict[str, FlextCore.Types.Dict] = {
+        payloads: dict[str, FlextTypes.Dict] = {
             "user": {
                 "id": str(uuid.uuid4()),
                 "name": "Test User",
@@ -97,8 +101,8 @@ class FlextTestsDomains:
     def api_response_data(
         status: str = "success",
         include_data: bool | None = None,
-        **custom_fields: FlextCore.Types.Dict,
-    ) -> FlextCore.Types.Dict:
+        **custom_fields: ConfigValue,
+    ) -> FlextTypes.Dict:
         """Create API response test data.
 
         Args:
@@ -110,7 +114,7 @@ class FlextTestsDomains:
             API response dictionary
 
         """
-        response: FlextCore.Types.Dict = {
+        response: FlextTypes.Dict = {
             "status": status,
             "timestamp": "2025-01-01T00:00:00Z",
             "request_id": str(uuid.uuid4()),
@@ -149,8 +153,8 @@ class FlextTestsDomains:
     @staticmethod
     def create_service(
         service_type: str = "api",
-        **config: FlextCore.Types.Dict,
-    ) -> FlextCore.Types.Dict:
+        **config: ConfigValue,
+    ) -> FlextTypes.Dict:
         """Create test service configuration.
 
         Args:
@@ -161,7 +165,7 @@ class FlextTestsDomains:
             Service configuration dictionary
 
         """
-        base_service: FlextCore.Types.Dict = {
+        base_service: FlextTypes.Dict = {
             "type": service_type,
             "name": f"test_{service_type}_service",
             "enabled": True,

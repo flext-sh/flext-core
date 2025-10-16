@@ -26,7 +26,26 @@ cd flext-core
 make setup
 
 # Verify installation
-python -c "from flext_core import FlextCore; print('✅ FLEXT-Core ready')"
+python -c "from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities; print('✅ FLEXT-Core ready')"
 ```
 
 ## How to Contribute
@@ -163,10 +182,10 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
 **Best Practices:**
 
-- Use `FlextCore.Result[T]` for all operations that can fail
-- Register services with `FlextCore.Container.get_global()`
-- Follow DDD patterns with `FlextCore.Models.Entity/Value/AggregateRoot`
-- Use `FlextCore.Logger` with context propagation
+- Use `FlextResult[T]` for all operations that can fail
+- Register services with `FlextContainer.get_global()`
+- Follow DDD patterns with `FlextModels.Entity/Value/AggregateRoot`
+- Use `FlextLogger` with context propagation
 - Write tests using `flext_tests` infrastructure (no mocks)
 - Keep functions small and focused (single responsibility)
 
@@ -234,21 +253,21 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 **2. Domain Layer Changes**
 
 - Focus on business logic only
-- Use `FlextCore.Models` for entities and value objects
+- Use `FlextModels` for entities and value objects
 - Implement validation in `model_post_init`
 - Add domain events for significant state changes
 
 **3. Application Layer Changes**
 
-- Use CQRS patterns with `FlextCore.Bus`
+- Use CQRS patterns with `FlextBus`
 - Implement handlers for commands/queries
 - Add middleware for cross-cutting concerns
-- Register components in `FlextCore.Registry`
+- Register components in `FlextRegistry`
 
 **4. Infrastructure Layer Changes**
 
 - Abstract external dependencies
-- Use `FlextCore.Protocols` for runtime contracts
+- Use `FlextProtocols` for runtime contracts
 - Implement proper error handling
 - Add configuration options for new features
 
@@ -273,13 +292,32 @@ src/flext_core/
 
 ```python
 # ✅ Good - Direct imports
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
 # ❌ Bad - Star imports in production code
 from flext_core import *
 
 # ❌ Bad - Relative imports in public APIs
-from .result import FlextCore.Result
+from .result import FlextResult
 ```
 
 ## Review Process

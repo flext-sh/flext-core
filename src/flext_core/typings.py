@@ -63,6 +63,15 @@ TQuery_contra = TypeVar("TQuery_contra", contravariant=True)
 TResult_contra = TypeVar("TResult_contra", contravariant=True)
 TUtil_contra = TypeVar("TUtil_contra", contravariant=True)
 
+# Advanced TypeVars for protocol definitions
+T_ResultProtocol = TypeVar("T_ResultProtocol")  # Invariant (used in parameters)
+T_Validator_contra = TypeVar("T_Validator_contra", contravariant=True)
+T_Service_co = TypeVar("T_Service_co", covariant=True)
+T_Repository_contra = TypeVar("T_Repository_contra", contravariant=True)
+TInput_Handler_contra = TypeVar("TInput_Handler_contra", contravariant=True)
+TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True)
+
+
 # Domain-specific TypeVars
 Command = TypeVar("Command")
 Event = TypeVar("Event")
@@ -217,6 +226,12 @@ class FlextTypes:
         type TypedDict[K, V] = dict[K, V]
         type TypedList[T] = list[T]
         type TypedSet[T] = set[T]
+
+        # Advanced automation collections
+        type InjectableDict[T] = dict[str, T]
+        type FactoryDict[T] = dict[str, Callable[[], T]]
+        type ValidatorDict[T] = dict[str, Callable[[T], bool]]
+        type ProcessorDict[T, U] = dict[str, Callable[[T], U]]
 
     # Headers types - Direct access for backward compatibility
     HeadersDict = dict[str, str]
@@ -609,6 +624,13 @@ class FlextTypes:
     # =========================================================================
 
     class Validation:
+        """Advanced validation types with automation and dependency injection support.
+
+        This namespace provides sophisticated validation patterns that integrate
+        with FlextContainer for dependency injection and automated validation pipelines.
+        Includes Pydantic-enhanced models and runtime validation capabilities.
+        """
+
         """Validation types for complex validation scenarios.
 
         This namespace provides types for field-level validators, business rules,
@@ -654,6 +676,83 @@ class FlextTypes:
         type ConsistencyRuleRegistry[T] = dict[
             str, dict[str, FlextTypes.Validation.ConsistencyRule[T, object]]
         ]
+
+        # =========================================================================
+        # AUTOMATED VALIDATION PATTERNS - Advanced automation with DI integration
+        # =========================================================================
+
+        type ValidationPipeline[T] = list[
+            Callable[[T], object]
+        ]  # Simplified to avoid circular import
+        type ValidationInjector[T] = Callable[
+            [T, FlextTypes.Dict], object
+        ]  # Simplified to avoid circular import
+        type TypeValidator[T] = Callable[
+            [type[T]], object
+        ]  # Simplified to avoid circular import
+
+        type AutomatedValidator[T] = dict[
+            str, dict[str, FlextTypes.Validation.ValidationPipeline[T]]
+        ]
+        type DependencyInjectedValidator[T] = tuple[
+            FlextTypes.Validation.ValidationPipeline[T],
+            FlextTypes.Validation.ValidationInjector[T],
+        ]
+
+        # Pydantic-enhanced validation types
+        type PydanticModelValidator[T] = Callable[
+            [T], object
+        ]  # Simplified to avoid circular import
+        type SchemaValidator = Callable[
+            [FlextTypes.Dict], object
+        ]  # Simplified to avoid circular import
+        type RuntimeTypeChecker[T] = Callable[
+            [object], object
+        ]  # Simplified to avoid circular import
+
+        # Advanced consistency automation
+        type TypeConsistencyChecker = Callable[
+            [type, type], object  # Simplified to avoid circular import
+        ]
+        type EcosystemConsistencyValidator = Callable[
+            [list[type]], object  # Simplified to avoid circular import
+        ]
+
+        # =========================================================================
+        # PYDANTIC ENHANCEMENT TYPES - Advanced Pydantic integration patterns
+        # =========================================================================
+
+        # Enhanced model types with validation and serialization
+        type PydanticFieldValidator = Callable[[object, object], object]
+        type AnyPydanticModelValidator = Callable[[object], object]
+        type PydanticSerializer = Callable[[object], dict[str, object]]
+        type PydanticDeserializer = Callable[[dict[str, object]], object]
+
+        # Advanced Pydantic patterns
+        type ModelWithValidation[T] = type[T]  # Pydantic model with validation
+        type ModelWithSerialization[T] = type[
+            T
+        ]  # Pydantic model with JSON serialization
+        type ModelWithConfig[T] = type[T]  # Pydantic model with custom config
+
+        # Dependency injection with Pydantic
+        type InjectableModel[T] = tuple[str, Callable[[], type[T]]]
+        type ModelFactory[T] = Callable[[dict[str, object]], T]
+        type ModelRegistry = dict[str, type]
+
+        # Advanced validation patterns
+        type PydanticFieldValidatorRegistry = dict[
+            str, list[FlextTypes.Validation.PydanticFieldValidator]
+        ]
+        type ModelValidatorRegistry = dict[
+            str, FlextTypes.Validation.AnyPydanticModelValidator
+        ]
+        type CrossFieldValidator[T] = Callable[[T], object]
+
+        # Serialization automation
+        type JsonSchemaGenerator = Callable[[type], dict[str, object]]
+        type OpenApiGenerator = Callable[[type], dict[str, object]]
+        type TypeScriptGenerator = Callable[[type], str]
 
     # =========================================================================
     # OUTPUT TYPES - Generic output formatting types
@@ -762,6 +861,61 @@ class FlextTypes:
         type CompensationSteps[T] = list[FlextTypes.Handlers.CompensationStep[T]]
 
     # =========================================================================
+    # AUTOMATION TYPES - Advanced automation with dependency injection
+    # =========================================================================
+
+    class Automation:
+        """Advanced automation types with dependency injection integration.
+
+        This namespace provides types for automated systems that leverage
+        FlextContainer for dependency injection, automated type generation,
+        and runtime validation with Pydantic enhancements.
+        """
+
+        # Dependency injection automation
+        type ServiceFactory[T] = Callable[[], T]
+        type InjectableService[T] = tuple[str, FlextTypes.Automation.ServiceFactory[T]]
+        type ContainerAutomation = dict[
+            str, FlextTypes.Automation.InjectableService[object]
+        ]
+
+        # Advanced DI patterns
+        type ServiceLocator[T] = Callable[[str], T]
+        type DependencyResolver[T] = Callable[[type[T]], T]
+        type ScopedFactory[T] = Callable[[str], FlextTypes.Automation.ServiceFactory[T]]
+        type LifecycleManagedService[T] = tuple[
+            str, T, Callable[[T], None]
+        ]  # (name, service, cleanup)
+
+        # Automated type generation
+        type TypeGenerator = Callable[[str, FlextTypes.Dict], type]
+        type DynamicTypeFactory[T] = Callable[[str], type[T]]
+        type RuntimeTypeBuilder = Callable[[FlextTypes.Dict], type]
+
+        # Pydantic automation enhancements
+        type ModelFactory[T] = Callable[[FlextTypes.Dict], T]
+        type ValidationFactory = Callable[
+            [type], object
+        ]  # Simplified to avoid subscripting issues
+        type SerializationFactory = Callable[[type], Callable[[object], str]]
+
+        # Code generation automation
+        type CodeGenerator = Callable[[FlextTypes.Dict], str]
+        type ImportInjector = Callable[[str, list[str]], str]
+        type TypeAnnotationGenerator = Callable[[object], str]
+
+        # Ecosystem automation
+        type ConsistencyAutomator = Callable[
+            [list[type]], object
+        ]  # Simplified to avoid circular import
+        type RefactoringAutomator = Callable[
+            [str, str], object
+        ]  # Simplified to avoid circular import
+        type OptimizationAutomator = Callable[
+            [FlextTypes.Dict], object
+        ]  # Simplified to avoid circular import
+
+    # =========================================================================
     # RELIABILITY TYPES - Circuit breaker, retry, and rate limiting (NEW)
     # =========================================================================
 
@@ -855,15 +1009,21 @@ __all__: FlextTypes.StringList = [
     "TDomainEvent_co",
     "TEntity_co",
     "TEvent_contra",
+    "TInput_Handler_contra",
     "TInput_contra",
     "TItem_contra",
     "TQuery_contra",
+    "TResult_Handler_co",
     "TResult_co",
     "TResult_contra",
     "TState_co",
     "TUtil_contra",
     "TValueObject_co",
     "TValue_co",
+    "T_Repository_contra",
+    "T_ResultProtocol",
+    "T_Service_co",
+    "T_Validator_contra",
     "T_co",
     "T_contra",
     "U",

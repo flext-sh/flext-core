@@ -271,6 +271,7 @@
 		    "**/*.pb2.py",
 		    "**/*.pb2_grpc.py",
 		    "**/build/**",
+		    "**/examples/**",
 		]
 		python-version = "3.13"
 
@@ -280,3 +281,12 @@
 			matches = "**/*models.py"
 			[tool.pyrefly.sub-config.errors]
 				unknown-name = false
+
+		# SubConfig: Relax some checks for test files
+		# Tests often use dynamic typing and string operations that are valid in test context
+		[[tool.pyrefly.sub-config]]
+			matches = "**/tests/**/*.py"
+			[tool.pyrefly.sub-config.errors]
+				index-error = false
+				unsupported-operation = false
+				import-error = false

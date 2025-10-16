@@ -1,4 +1,4 @@
-"""Tests for FlextCore.Mixins infrastructure - Container, Context, Logging, Metrics, Service.
+"""Tests for FlextMixins infrastructure - Container, Context, Logging, Metrics, Service.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import time
 
-from flext_core import FlextCore
+from flext_core import FlextContext, FlextMixins
 
 
 class TestFlextMixinsNestedClasses:
@@ -18,7 +18,7 @@ class TestFlextMixinsNestedClasses:
     def test_container_mixin_register_in_container(self) -> None:
         """Test Container mixin _register_in_container."""
 
-        class MyService(FlextCore.Mixins):
+        class MyService(FlextMixins):
             pass
 
         service = MyService()
@@ -28,17 +28,17 @@ class TestFlextMixinsNestedClasses:
     def test_context_mixin_property(self) -> None:
         """Test Context mixin context property."""
 
-        class MyService(FlextCore.Mixins):
+        class MyService(FlextMixins):
             pass
 
         service = MyService()
 
-        assert isinstance(service.context, FlextCore.Context)
+        assert isinstance(service.context, FlextContext)
 
     def test_context_mixin_propagate_context(self) -> None:
         """Test Context mixin _propagate_context."""
 
-        class MyService(FlextCore.Mixins):
+        class MyService(FlextMixins):
             pass
 
         service = MyService()
@@ -48,7 +48,7 @@ class TestFlextMixinsNestedClasses:
     def test_context_mixin_correlation_id(self) -> None:
         """Test Context mixin get/set correlation ID."""
 
-        class MyService(FlextCore.Mixins):
+        class MyService(FlextMixins):
             pass
 
         service = MyService()
@@ -59,7 +59,7 @@ class TestFlextMixinsNestedClasses:
     def test_logging_mixin_log_with_context(self) -> None:
         """Test Logging mixin _log_with_context."""
 
-        class MyService(FlextCore.Mixins):
+        class MyService(FlextMixins):
             pass
 
         service = MyService()
@@ -69,7 +69,7 @@ class TestFlextMixinsNestedClasses:
     def test_metrics_mixintrack(self) -> None:
         """Test Metrics mixin track."""
 
-        class MyService(FlextCore.Mixins):
+        class MyService(FlextMixins):
             def process(self) -> str:
                 with self.track("test_op") as metrics:
                     assert isinstance(metrics, dict)
@@ -83,7 +83,7 @@ class TestFlextMixinsNestedClasses:
     def test_service_mixin_init_service(self) -> None:
         """Test Service mixin _init_service."""
 
-        class MyService(FlextCore.Mixins):
+        class MyService(FlextMixins):
             def __init__(self) -> None:
                 super().__init__()
                 self._init_service("MyTestService")
@@ -97,7 +97,7 @@ class TestFlextMixinsNestedClasses:
     def test_service_mixin_enrich_context(self) -> None:
         """Test Service mixin _enrich_context."""
 
-        class MyService(FlextCore.Mixins):
+        class MyService(FlextMixins):
             def __init__(self) -> None:
                 super().__init__()
                 self._init_service()
@@ -109,7 +109,7 @@ class TestFlextMixinsNestedClasses:
     def test_service_mixin_with_operation_context(self) -> None:
         """Test Service mixin _with_operation_context."""
 
-        class MyService(FlextCore.Mixins):
+        class MyService(FlextMixins):
             def __init__(self) -> None:
                 super().__init__()
                 self._init_service()
@@ -121,7 +121,7 @@ class TestFlextMixinsNestedClasses:
     def test_service_mixin_clear_operation_context(self) -> None:
         """Test Service mixin _clear_operation_context."""
 
-        class MyService(FlextCore.Mixins):
+        class MyService(FlextMixins):
             def __init__(self) -> None:
                 super().__init__()
                 self._init_service()

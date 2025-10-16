@@ -8,7 +8,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
 """
-# ruff: disable=SLF001
 
 from __future__ import annotations
 
@@ -248,15 +247,52 @@ class FlextMixins:
         # Log service initialization ONCE instead of binding to all logs
         self.logger.info("Service initialized", **service_context)
 
+    def _log_config_once(
+        self,
+        config: dict[str, object],
+        message: str = "Configuration loaded",
+    ) -> None:
+        """Log configuration ONCE without binding to context.
+
+        Logs configuration as a single INFO event when loaded, preventing
+        it from appearing in all subsequent log messages.
+
+        Args:
+            config: Configuration dictionary to log
+            message: Log message (default: "Configuration loaded")
+
+        Example:
+            ```python
+            class DatabaseService(FlextMixins):
+                def __init__(self, config: dict):
+                    self._init_service("DatabaseService")
+
+                    # Log config ONCE, doesn't appear in all logs
+                    self._log_config_once(config)
+
+                    # This log won't include config
+                    self.logger.info("Connecting to database")
+            ```
+
+        Note:
+            DO NOT pass config to _with_operation_context() as it will
+            bind config to all subsequent logs. Use this method instead.
+
+        """
+        # Log configuration as single event, not bound to context
+        self.logger.info(message, config=config)
+
     def _with_operation_context(
         self,
         operation_name: str,
         **operation_data: object,
     ) -> None:
-        """Set operation context for the current operation.
+        """Set operation context with scoped and level-based binding.
 
-        Binds operation-level information to the context for tracking
-        and debugging specific operations.
+        Binds operation-level information using sophisticated context management:
+        - DEBUG-level data (schema, params) only appears in DEBUG logs
+        - ERROR-level data (stack_trace, exception) only appears in ERROR logs
+        - Normal operation data appears at all levels
 
         Args:
             operation_name: Name of the operation being performed
@@ -265,10 +301,16 @@ class FlextMixins:
         Example:
             ```python
             class InventoryService(FlextMixins):
+                def __init__(self, config: dict):
+                    # Log config ONCE, not bound to context
+                    self._log_config_once(config)
+
                 def reserve_items(self, order_id: str, items: list):
-                    # Set operation context
+                    # Set operation context WITHOUT config
                     self._with_operation_context(
-                        "reserve_items", order_id=order_id, item_count=len(items)
+                        "reserve_items",
+                        order_id=order_id,
+                        item_count=len(items),
                     )
 
                     # All logs include operation context
@@ -276,19 +318,48 @@ class FlextMixins:
                     return self._do_reserve(items)
             ```
 
+        Warning:
+            DO NOT pass 'config', 'configuration', or 'settings' to this method.
+            Use _log_config_once() instead to prevent config from repeating in all logs.
+
+        Note:
+            Uses FlextLogger scoped and level-based binding to prevent
+            context accumulation across service calls.
+
         """
         # Propagate context using inherited Context mixin method
         self._propagate_context(operation_name)
 
-        # Bind additional operation data using structlog's contextvars
+        # Bind additional operation data with level filtering
         if operation_data:
-            FlextLogger.bind_global_context(**operation_data)
+            # Categorize data by log level
+            # NOTE: 'config', 'configuration', 'settings' removed - use _log_config_once() instead
+            debug_keys = {"schema", "params"}
+            error_keys = {"stack_trace", "exception", "traceback", "error_details"}
+
+            # Separate data by level
+            debug_data = {k: v for k, v in operation_data.items() if k in debug_keys}
+            error_data = {k: v for k, v in operation_data.items() if k in error_keys}
+            normal_data = {
+                k: v
+                for k, v in operation_data.items()
+                if k not in debug_keys and k not in error_keys
+            }
+
+            # Bind with appropriate levels
+            if debug_data:
+                FlextLogger.bind_context_for_level("DEBUG", **debug_data)
+            if error_data:
+                FlextLogger.bind_context_for_level("ERROR", **error_data)
+            if normal_data:
+                FlextLogger.bind_operation_context(**normal_data)
 
     def _clear_operation_context(self) -> None:
         """Clear operation-specific context data.
 
-        Useful for cleanup after operation completion or for
-        resetting context between operations.
+        Clears only operation-scoped context, preserving request and
+        application scopes. This prevents context accumulation while
+        maintaining correlation IDs and app-level context.
 
         Example:
             ```python
@@ -301,13 +372,17 @@ class FlextMixins:
                             )
                             self._process_single_item(item)
                         finally:
-                            # Clean up context after each item
+                            # Clean up operation context after each item
+                            # Request context (correlation_id) persists
                             self._clear_operation_context()
             ```
 
+        Note:
+            Uses scoped clearing to preserve application and request contexts.
+
         """
-        # Clear structlog context using contextvars
-        FlextLogger.clear_global_context()
+        # Clear operation scope only (preserves request and application scopes)
+        FlextLogger.clear_scope("operation")
 
         # Clear FlextContext operation name
         FlextContext.Request.set_operation_name("")

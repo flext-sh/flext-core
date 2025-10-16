@@ -1,4 +1,4 @@
-"""Comprehensive tests for FlextCore.Processors - Data Processing.
+"""Comprehensive tests for FlextProcessors - Data Processing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,47 +11,53 @@ import threading
 import time
 from typing import cast
 
-from flext_core import FlextCore
+from flext_core import (
+    FlextConfig,
+    FlextModels,
+    FlextProcessors,
+    FlextResult,
+    FlextTypes,
+)
 
 
 class TestFlextProcessors:
-    """Test suite for FlextCore.Processors data processing functionality."""
+    """Test suite for FlextProcessors data processing functionality."""
 
     def test_processors_initialization(self) -> None:
         """Test processors initialization."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
         assert processors is not None
-        assert isinstance(processors, FlextCore.Processors)
+        assert isinstance(processors, FlextProcessors)
 
     def test_processors_with_custom_config(self) -> None:
         """Test processors initialization with custom configuration."""
-        config: FlextCore.Types.Dict = {"max_retries": 3, "timeout": 30}
-        processors = FlextCore.Processors(config=config)
+        config: FlextTypes.Dict = {"max_retries": 3, "timeout": 30}
+        processors = FlextProcessors(config=config)
         assert processors is not None
 
     def test_processors_register_processor(self) -> None:
         """Test processor registration."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         result = processors.register("test_processor", test_processor)
         assert result.is_success
 
     def test_processors_register_processor_invalid(self) -> None:
         """Test processor registration with invalid parameters."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
         result = processors.register("", None)
         assert result.is_failure
 
     def test_processors_unregister_processor(self) -> None:
         """Test processor unregistration."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
         result = processors.unregister("test_processor")
@@ -59,17 +65,17 @@ class TestFlextProcessors:
 
     def test_processors_unregister_nonexistent_processor(self) -> None:
         """Test unregistering non-existent processor."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
         result = processors.unregister("nonexistent_processor")
         assert result.is_failure
 
     def test_processors_process_data(self) -> None:
         """Test data processing."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
         result = processors.process("test_processor", "test_data")
@@ -79,7 +85,7 @@ class TestFlextProcessors:
 
     def test_processors_process_nonexistent_processor(self) -> None:
         """Test processing with non-existent processor."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
         result = processors.process("nonexistent_processor", "test_data")
         assert result.is_failure
@@ -88,10 +94,10 @@ class TestFlextProcessors:
 
     def test_processors_process_with_failing_processor(self) -> None:
         """Test processing with failing processor."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def failing_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].fail("Processor failed")
+        def failing_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].fail("Processor failed")
 
         processors.register("test_processor", failing_processor)
         result = processors.process("test_processor", "test_data")
@@ -104,9 +110,9 @@ class TestFlextProcessors:
 
     def test_processors_process_with_exception(self) -> None:
         """Test processing with exception."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def exception_processor(_data: object) -> FlextCore.Result[str]:
+        def exception_processor(_data: object) -> FlextResult[str]:
             msg = "Processor exception"
             raise ValueError(msg)
 
@@ -118,10 +124,10 @@ class TestFlextProcessors:
 
     def test_processors_process_with_retry(self) -> None:
         """Test processing with retry mechanism."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def retry_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok("processed_data")
+        def retry_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok("processed_data")
 
         processors.register("test_processor", retry_processor)
         result = processors.process("test_processor", "test_data")
@@ -131,10 +137,10 @@ class TestFlextProcessors:
 
     def test_processors_process_with_timeout(self) -> None:
         """Test processing with timeout."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def timeout_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok("processed_data")
+        def timeout_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok("processed_data")
 
         processors.register("test_processor", timeout_processor)
         result = processors.process("test_processor", "test_data")
@@ -142,12 +148,12 @@ class TestFlextProcessors:
 
     def test_processors_process_with_validation(self) -> None:
         """Test processing with validation."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def validated_processor(_data: object) -> FlextCore.Result[str]:
+        def validated_processor(_data: object) -> FlextResult[str]:
             if not _data:
-                return FlextCore.Result[str].fail("Data is required")
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+                return FlextResult[str].fail("Data is required")
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", validated_processor)
 
@@ -166,7 +172,7 @@ class TestFlextProcessors:
 
     def test_processors_process_with_middleware(self) -> None:
         """Test processing with middleware."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
         middleware_called = False
 
@@ -175,8 +181,8 @@ class TestFlextProcessors:
             middleware_called = True
             return data
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.add_middleware(middleware)
         processors.register("test_processor", test_processor)
@@ -186,10 +192,10 @@ class TestFlextProcessors:
 
     def test_processors_process_with_logging(self) -> None:
         """Test processing with logging."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
         result = processors.process("test_processor", "test_data")
@@ -197,10 +203,10 @@ class TestFlextProcessors:
 
     def test_processors_process_with_metrics(self) -> None:
         """Test processing with metrics."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
         result = processors.process("test_processor", "test_data")
@@ -213,10 +219,10 @@ class TestFlextProcessors:
 
     def test_processors_process_with_correlation_id(self) -> None:
         """Test processing with correlation ID."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
         result = processors.process("test_processor", "test_data")
@@ -224,29 +230,29 @@ class TestFlextProcessors:
 
     def test_processors_process_with_batch(self) -> None:
         """Test processing with batch processing."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
 
-        data_list: FlextCore.Types.List = ["test1", "test2", "test3"]
+        data_list: FlextTypes.List = ["test1", "test2", "test3"]
         result = processors.process_batch("test_processor", data_list)
         assert result.is_success
         assert len(result.data) == 3
 
     def test_processors_process_with_parallel(self) -> None:
         """Test processing with parallel processing."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
+        def test_processor(_data: object) -> FlextResult[str]:
             time.sleep(0.1)  # Simulate work
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
 
-        data_list: FlextCore.Types.List = ["test1", "test2", "test3"]
+        data_list: FlextTypes.List = ["test1", "test2", "test3"]
 
         start_time = time.time()
         result = processors.process_parallel("test_processor", data_list)
@@ -259,10 +265,10 @@ class TestFlextProcessors:
 
     def test_processors_process_with_circuit_breaker(self) -> None:
         """Test processing with circuit breaker."""
-        processors = FlextCore.Processors(config={"circuit_breaker_threshold": 3})
+        processors = FlextProcessors(config={"circuit_breaker_threshold": 3})
 
-        def failing_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].fail("Service unavailable")
+        def failing_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].fail("Service unavailable")
 
         processors.register("test_processor", failing_processor)
 
@@ -277,12 +283,10 @@ class TestFlextProcessors:
 
     def test_processors_process_with_rate_limiting(self) -> None:
         """Test processing with rate limiting."""
-        processors = FlextCore.Processors(
-            config={"rate_limit": 2, "rate_limit_window": 1}
-        )
+        processors = FlextProcessors(config={"rate_limit": 2, "rate_limit_window": 1})
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
 
@@ -299,10 +303,10 @@ class TestFlextProcessors:
 
     def test_processors_process_with_caching(self) -> None:
         """Test processing with caching."""
-        processors = FlextCore.Processors(config={"cache_ttl": 60})
+        processors = FlextProcessors(config={"cache_ttl": 60})
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
 
@@ -317,10 +321,10 @@ class TestFlextProcessors:
 
     def test_processors_process_with_audit(self) -> None:
         """Test processing with audit logging."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
 
@@ -333,11 +337,11 @@ class TestFlextProcessors:
 
     def test_processors_process_with_performance_monitoring(self) -> None:
         """Test processing with performance monitoring."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
+        def test_processor(_data: object) -> FlextResult[str]:
             time.sleep(0.1)  # Simulate work
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
 
@@ -350,9 +354,9 @@ class TestFlextProcessors:
 
     def test_processors_process_with_error_handling(self) -> None:
         """Test processing with error handling."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def error_processor(_data: object) -> FlextCore.Result[str]:
+        def error_processor(_data: object) -> FlextResult[str]:
             msg = "Processor error"
             raise RuntimeError(msg)
 
@@ -365,10 +369,10 @@ class TestFlextProcessors:
 
     def test_processors_process_with_cleanup(self) -> None:
         """Test processing with cleanup."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
 
@@ -384,10 +388,10 @@ class TestFlextProcessors:
 
     def test_processors_get_registered_processors(self) -> None:
         """Test getting registered processors."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
         registered_processors = processors.get_processors("test_processor")
@@ -396,17 +400,17 @@ class TestFlextProcessors:
 
     def test_processors_get_processors_for_nonexistent_processor(self) -> None:
         """Test getting processors for non-existent processor."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
         registered_processors = processors.get_processors("nonexistent_processor")
         assert len(registered_processors) == 0
 
     def test_processors_clear_processors(self) -> None:
         """Test clearing all processors."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
         processors.clear_processors()
@@ -416,10 +420,10 @@ class TestFlextProcessors:
 
     def test_processors_statistics(self) -> None:
         """Test processors statistics tracking."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
         processors.process("test_processor", "test_data")
@@ -432,14 +436,14 @@ class TestFlextProcessors:
     def test_processors_thread_safety(self) -> None:
         """Test processors thread safety."""
         # Disable rate limiting for this test
-        processors = FlextCore.Processors({"rate_limit": 100})
+        processors = FlextProcessors({"rate_limit": 100})
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
 
-        results: list[FlextCore.Result[object]] = []
+        results: list[FlextResult[object]] = []
 
         def process_data(thread_id: int) -> None:
             result = processors.process("test_processor", f"data_{thread_id}")
@@ -459,10 +463,10 @@ class TestFlextProcessors:
 
     def test_processors_performance(self) -> None:
         """Test processors performance characteristics."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def fast_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def fast_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", fast_processor)
 
@@ -479,9 +483,9 @@ class TestFlextProcessors:
 
     def test_processors_error_handling(self) -> None:
         """Test processors error handling mechanisms."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def error_processor(_data: object) -> FlextCore.Result[str]:
+        def error_processor(_data: object) -> FlextResult[str]:
             msg = "Processor error"
             raise ValueError(msg)
 
@@ -494,10 +498,10 @@ class TestFlextProcessors:
 
     def test_processors_validation(self) -> None:
         """Test processors validation."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
 
@@ -506,10 +510,10 @@ class TestFlextProcessors:
 
     def test_processors_export_import(self) -> None:
         """Test processors export/import."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor_1(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor_1(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor_1)
 
@@ -519,14 +523,14 @@ class TestFlextProcessors:
         assert "processor_count" in config
 
         # Create new processors and import configuration
-        new_processors = FlextCore.Processors()
+        new_processors = FlextProcessors()
         import_result = new_processors.import_config(config)
         assert import_result.is_success
 
         # Import config only restores settings, not processors
         # We need to register the processor again
-        def test_processor_2(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor_2(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         new_processors.register("test_processor", test_processor_2)
         process_result = new_processors.process("test_processor", "test_data")
@@ -536,10 +540,10 @@ class TestFlextProcessors:
 
     def test_processors_cleanup(self) -> None:
         """Test processors cleanup."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
-        def test_processor(_data: object) -> FlextCore.Result[str]:
-            return FlextCore.Result[str].ok(f"processed_{_data}")
+        def test_processor(_data: object) -> FlextResult[str]:
+            return FlextResult[str].ok(f"processed_{_data}")
 
         processors.register("test_processor", test_processor)
         processors.process("test_processor", "test_data")
@@ -552,14 +556,14 @@ class TestFlextProcessors:
 
 
 class TestFlextProcessorsCriticalCoverage:
-    """Tests targeting critical coverage gaps in FlextCore.Processors."""
+    """Tests targeting critical coverage gaps in FlextProcessors."""
 
     def test_circuit_breaker_open_blocks_execution(self) -> None:
         """Test that open circuit breaker blocks processor execution."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
         # Register a processor
-        def test_processor(data: FlextCore.Types.Dict) -> FlextCore.Types.Dict:
+        def test_processor(data: FlextTypes.Dict) -> FlextTypes.Dict:
             return {"processed": True, **data}
 
         processors.register("test", test_processor)
@@ -576,16 +580,16 @@ class TestFlextProcessorsCriticalCoverage:
         """Test that rate limiting blocks requests exceeding limit."""
         # Configure with very low rate limit
         config = cast(
-            "FlextCore.Types.Dict",
+            "FlextTypes.Dict",
             {
                 "rate_limit": 2,  # Only 2 requests allowed
                 "rate_limit_window": 60,  # Per 60 seconds
             },
         )
-        processors = FlextCore.Processors(config)
+        processors = FlextProcessors(config)
 
         # Register processor
-        def counter(data: FlextCore.Types.Dict) -> FlextCore.Types.Dict:
+        def counter(data: FlextTypes.Dict) -> FlextTypes.Dict:
             count_val = data.get("count", 0)
             return {
                 "count": int(count_val) + 1 if isinstance(count_val, (int, str)) else 1
@@ -608,15 +612,15 @@ class TestFlextProcessorsCriticalCoverage:
     def test_cache_returns_cached_value_within_ttl(self) -> None:
         """Test that cache returns cached value when within TTL."""
         config = cast(
-            "FlextCore.Types.Dict",
+            "FlextTypes.Dict",
             {
                 "cache_ttl": 10,  # 10 seconds TTL
             },
         )
-        processors = FlextCore.Processors(config)
+        processors = FlextProcessors(config)
 
         # Register processor that returns timestamp
-        def timestamp_processor(_data: FlextCore.Types.Dict) -> FlextCore.Types.Dict:
+        def timestamp_processor(_data: FlextTypes.Dict) -> FlextTypes.Dict:
             return {"timestamp": time.time()}
 
         processors.register("timestamp", timestamp_processor)
@@ -624,29 +628,29 @@ class TestFlextProcessorsCriticalCoverage:
         # First call - should execute and cache
         result1 = processors.process("timestamp", {"test": "data"})
         assert result1.is_success
-        timestamp1 = cast("FlextCore.Types.Dict", result1.unwrap())["timestamp"]
+        timestamp1 = cast("FlextTypes.Dict", result1.unwrap())["timestamp"]
 
         # Second call immediately - should return cached value
         result2 = processors.process("timestamp", {"test": "data"})
         assert result2.is_success
-        timestamp2 = cast("FlextCore.Types.Dict", result2.unwrap())["timestamp"]
+        timestamp2 = cast("FlextTypes.Dict", result2.unwrap())["timestamp"]
 
         # Timestamps should be identical (from cache)
         assert timestamp1 == timestamp2
 
     def test_middleware_error_fails_processing(self) -> None:
         """Test that middleware errors properly fail the processing."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
         # Add middleware that raises exception
-        def failing_middleware(_data: FlextCore.Types.Dict) -> FlextCore.Types.Dict:
+        def failing_middleware(_data: FlextTypes.Dict) -> FlextTypes.Dict:
             msg = "Middleware intentional failure"
             raise ValueError(msg)
 
         processors.add_middleware(failing_middleware)
 
         # Register simple processor
-        def simple_processor(d: FlextCore.Types.Dict) -> FlextCore.Types.Dict:
+        def simple_processor(d: FlextTypes.Dict) -> FlextTypes.Dict:
             return d
 
         processors.register("test", simple_processor)
@@ -657,32 +661,30 @@ class TestFlextProcessorsCriticalCoverage:
         assert "Middleware error" in cast("str", result.error)
 
     def test_processor_returns_flext_result_preserved(self) -> None:
-        """Test that FlextCore.Result returned by processor is preserved."""
-        processors = FlextCore.Processors()
+        """Test that FlextResult returned by processor is preserved."""
+        processors = FlextProcessors()
 
-        # Register processor that returns FlextCore.Result
+        # Register processor that returns FlextResult
         def result_processor(
-            data: FlextCore.Types.Dict,
-        ) -> FlextCore.Result[FlextCore.Types.Dict]:
+            data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             if data.get("fail"):
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
-                    "Processor decided to fail"
-                )
-            return FlextCore.Result[FlextCore.Types.Dict].ok({
-                "processed": True,
-                **data,
-            })
+                return FlextResult[FlextTypes.Dict].fail("Processor decided to fail")
+            return FlextResult[FlextTypes.Dict].ok(
+                {
+                    "processed": True,
+                    **data,
+                }
+            )
 
         processors.register("result", result_processor)
 
         # Success case
         success_result = processors.process("result", {"fail": False})
         assert success_result.is_success
-        assert (
-            cast("FlextCore.Types.Dict", success_result.unwrap())["processed"] is True
-        )
+        assert cast("FlextTypes.Dict", success_result.unwrap())["processed"] is True
 
-        # Failure case - FlextCore.Result failure is preserved
+        # Failure case - FlextResult failure is preserved
         failure_result = processors.process("result", {"fail": True})
         assert failure_result.is_failure
         # The error from the processor is preserved in the audit log and failure result
@@ -691,7 +693,7 @@ class TestFlextProcessorsCriticalCoverage:
 
     def test_non_callable_processor_fails(self) -> None:
         """Test that non-callable processor returns failure."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
         # Register non-callable object
         processors._registry["invalid"] = "not callable"
@@ -703,16 +705,14 @@ class TestFlextProcessorsCriticalCoverage:
     def test_validation_failures(self) -> None:
         """Test processor validation failures."""
         # Test negative cache TTL
-        processors1 = FlextCore.Processors(
-            cast("FlextCore.Types.Dict", {"cache_ttl": -1})
-        )
+        processors1 = FlextProcessors(cast("FlextTypes.Dict", {"cache_ttl": -1}))
         result1 = processors1.validate()
         assert result1.is_failure
         assert "Cache TTL must be non-negative" in cast("str", result1.error)
 
         # Test negative circuit breaker threshold
-        processors2 = FlextCore.Processors(
-            cast("FlextCore.Types.Dict", {"circuit_breaker_threshold": -1})
+        processors2 = FlextProcessors(
+            cast("FlextTypes.Dict", {"circuit_breaker_threshold": -1})
         )
         result2 = processors2.validate()
         assert result2.is_failure
@@ -721,32 +721,32 @@ class TestFlextProcessorsCriticalCoverage:
         )
 
         # Test negative rate limit
-        processors3 = FlextCore.Processors(
-            cast("FlextCore.Types.Dict", {"rate_limit": -1})
-        )
+        processors3 = FlextProcessors(cast("FlextTypes.Dict", {"rate_limit": -1}))
         result3 = processors3.validate()
         assert result3.is_failure
         assert "Rate limit must be non-negative" in cast("str", result3.error)
 
     def test_parallel_processing_with_errors(self) -> None:
         """Test parallel processing fails fast on first error."""
-        processors = FlextCore.Processors()
+        processors = FlextProcessors()
 
         # Register processor that fails on specific input
         def conditional_processor(
-            data: FlextCore.Types.Dict,
-        ) -> FlextCore.Result[FlextCore.Types.Dict]:
+            data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             if data.get("id") == 2:
-                return FlextCore.Result[FlextCore.Types.Dict].fail("Failed on id=2")
-            return FlextCore.Result[FlextCore.Types.Dict].ok({
-                "id": data["id"],
-                "processed": True,
-            })
+                return FlextResult[FlextTypes.Dict].fail("Failed on id=2")
+            return FlextResult[FlextTypes.Dict].ok(
+                {
+                    "id": data["id"],
+                    "processed": True,
+                }
+            )
 
         processors.register("conditional", conditional_processor)
 
         # Process list with failing item
-        items = cast("FlextCore.Types.List", [{"id": 1}, {"id": 2}, {"id": 3}])
+        items = cast("FlextTypes.List", [{"id": 1}, {"id": 2}, {"id": 3}])
         result = processors.process_parallel("conditional", items)
 
         assert result.is_failure
@@ -754,23 +754,21 @@ class TestFlextProcessorsCriticalCoverage:
 
     def test_handler_registry_max_handlers_limit(self) -> None:
         """Test that handler registry enforces max handlers limit."""
-        from flext_core import FlextCore
-
-        registry = FlextCore.Processors.HandlerRegistry()
+        registry = FlextProcessors.HandlerRegistry()
 
         # Get max handlers from config (default is 100)
 
-        config = FlextCore.Config.get_global_instance()
+        config = FlextConfig.get_global_instance()
         max_handlers = config.max_workers
 
         # Fill registry to limit
         def create_handler(
-            r: FlextCore.Types.Dict,
-        ) -> FlextCore.Result[FlextCore.Types.Dict]:
-            return FlextCore.Result[FlextCore.Types.Dict].ok({"result": r})
+            r: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
+            return FlextResult[FlextTypes.Dict].ok({"result": r})
 
         for i in range(max_handlers):
-            registration = FlextCore.Models.HandlerRegistration(
+            registration = FlextModels.HandlerRegistration(
                 name=f"handler_{i}",
                 handler=create_handler,
             )
@@ -778,7 +776,7 @@ class TestFlextProcessorsCriticalCoverage:
             assert result.is_success
 
         # Next registration should fail
-        extra_registration = FlextCore.Models.HandlerRegistration(
+        extra_registration = FlextModels.HandlerRegistration(
             name="extra_handler",
             handler=create_handler,
         )
@@ -798,7 +796,7 @@ class TestFlextProcessorsCriticalCoverage:
         import pytest
 
         with pytest.raises(Exception) as exc_info:
-            FlextCore.Models.HandlerRegistration(
+            FlextModels.HandlerRegistration(
                 name="unsafe",
                 handler=UnsafeHandler(),
             )
@@ -809,26 +807,26 @@ class TestFlextProcessorsCriticalCoverage:
 
     def test_pipeline_process_basic(self) -> None:
         """Test basic pipeline processing."""
-        pipeline = FlextCore.Processors.Pipeline()
+        pipeline = FlextProcessors.Pipeline()
 
         # Add steps to pipeline
         pipeline.add_step(
             lambda d: cast(
-                "FlextCore.Types.Dict",
-                {"step1": True, **cast("FlextCore.Types.Dict", d)},
+                "FlextTypes.Dict",
+                {"step1": True, **cast("FlextTypes.Dict", d)},
             )
         )
         pipeline.add_step(
             lambda d: cast(
-                "FlextCore.Types.Dict",
-                {"step2": True, **cast("FlextCore.Types.Dict", d)},
+                "FlextTypes.Dict",
+                {"step2": True, **cast("FlextTypes.Dict", d)},
             )
         )
 
         # Process data through pipeline
         result = pipeline.process({"input": "test"})
         assert result.is_success
-        data = cast("FlextCore.Types.Dict", result.unwrap())
+        data = cast("FlextTypes.Dict", result.unwrap())
         # Data should have pipeline steps applied
         assert isinstance(data, dict)
         assert data.get("step1") is True
@@ -837,10 +835,10 @@ class TestFlextProcessorsCriticalCoverage:
 
     def test_pipeline_with_timeout_validation(self) -> None:
         """Test pipeline timeout validation."""
-        pipeline = FlextCore.Processors.Pipeline()
+        pipeline = FlextProcessors.Pipeline()
 
         # Test timeout below minimum
-        request_low = FlextCore.Models.ProcessingRequest(
+        request_low = FlextModels.ProcessingRequest(
             data={"test": "data"},
             context={},
             timeout_seconds=0,  # Below minimum
@@ -850,7 +848,7 @@ class TestFlextProcessorsCriticalCoverage:
         assert "below minimum" in cast("str", result_low.error)
 
         # Test timeout above maximum
-        request_high = FlextCore.Models.ProcessingRequest(
+        request_high = FlextModels.ProcessingRequest(
             data={"test": "data"},
             context={},
             timeout_seconds=10000,  # Above maximum
@@ -862,21 +860,19 @@ class TestFlextProcessorsCriticalCoverage:
     def test_pipeline_with_fallback_success(self) -> None:
         """Test pipeline fallback to secondary pipeline."""
         # Primary pipeline that fails
-        primary = FlextCore.Processors.Pipeline()
-        primary.add_step(
-            lambda _: FlextCore.Result[FlextCore.Types.Dict].fail("Primary failed")
-        )
+        primary = FlextProcessors.Pipeline()
+        primary.add_step(lambda _: FlextResult[FlextTypes.Dict].fail("Primary failed"))
 
         # Fallback pipeline that succeeds
-        fallback = FlextCore.Processors.Pipeline()
+        fallback = FlextProcessors.Pipeline()
         fallback.add_step(
             lambda d: cast(
-                "FlextCore.Types.Dict",
-                {"fallback": True, **cast("FlextCore.Types.Dict", d)},
+                "FlextTypes.Dict",
+                {"fallback": True, **cast("FlextTypes.Dict", d)},
             )
         )
 
-        request = FlextCore.Models.ProcessingRequest(
+        request = FlextModels.ProcessingRequest(
             data={"input": "test"},
             context={},
             timeout_seconds=5,
@@ -884,20 +880,18 @@ class TestFlextProcessorsCriticalCoverage:
 
         result = primary.process_with_fallback(request, fallback)
         assert result.is_success
-        assert cast("FlextCore.Types.Dict", result.unwrap())["fallback"] is True
+        assert cast("FlextTypes.Dict", result.unwrap())["fallback"] is True
 
     def test_batch_processing_size_validation(self) -> None:
         """Test batch processing enforces size limits."""
-        from flext_core import FlextCore
-
-        FlextCore.Processors.Pipeline()
+        FlextProcessors.Pipeline()
 
         # Get max batch size from config
 
-        FlextCore.Config.get_global_instance()
+        FlextConfig.get_global_instance()
 
         # Test processing request instead
-        request = FlextCore.Models.ProcessingRequest(
+        request = FlextModels.ProcessingRequest(
             data={"items": list(range(100))},
             retry_attempts=3,
         )
@@ -905,22 +899,22 @@ class TestFlextProcessorsCriticalCoverage:
 
     def test_pipeline_validation_with_validators(self) -> None:
         """Test pipeline processing with custom validators."""
-        pipeline = FlextCore.Processors.Pipeline()
+        pipeline = FlextProcessors.Pipeline()
         pipeline.add_step(
             lambda d: cast(
-                "FlextCore.Types.Dict",
-                {"validated": True, **cast("FlextCore.Types.Dict", d)},
+                "FlextTypes.Dict",
+                {"validated": True, **cast("FlextTypes.Dict", d)},
             )
         )
 
         # Create validator that checks for required field
-        def require_field(data: object) -> FlextCore.Result[None]:
+        def require_field(data: object) -> FlextResult[None]:
             if not isinstance(data, dict) or "required_field" not in data:
-                return FlextCore.Result[None].fail("Missing required_field")
-            return FlextCore.Result[None].ok(None)
+                return FlextResult[None].fail("Missing required_field")
+            return FlextResult[None].ok(None)
 
         # Test with validation enabled and valid data
-        request_valid = FlextCore.Models.ProcessingRequest(
+        request_valid = FlextModels.ProcessingRequest(
             data={"required_field": "present"},
             context={},
             timeout_seconds=5,
@@ -930,7 +924,7 @@ class TestFlextProcessorsCriticalCoverage:
         assert result_valid.is_success
 
         # Test with validation enabled and invalid data
-        request_invalid = FlextCore.Models.ProcessingRequest(
+        request_invalid = FlextModels.ProcessingRequest(
             data={"other_field": "value"},
             context={},
             timeout_seconds=5,
@@ -943,7 +937,7 @@ class TestFlextProcessorsCriticalCoverage:
         assert "Missing required_field" in cast("str", result_invalid.error)
 
         # Test with validation disabled (should succeed even with invalid data)
-        request_no_validation = FlextCore.Models.ProcessingRequest(
+        request_no_validation = FlextModels.ProcessingRequest(
             data={"other_field": "value"},
             context={},
             timeout_seconds=5,

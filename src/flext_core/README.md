@@ -54,10 +54,29 @@ External concerns including logging, configuration, dependency injection, and co
 ### Basic Setup
 
 ```python
-from flext_core import FlextCore, FlextResult
+from flext_core.bus import FlextBus
+from flext_core.config import FlextConfig
+from flext_core.constants import FlextConstants
+from flext_core.container import FlextContainer
+from flext_core.context import FlextContext
+from flext_core.decorators import FlextDecorators
+from flext_core.dispatcher import FlextDispatcher
+from flext_core.exceptions import FlextExceptions
+from flext_core.handlers import FlextHandlers
+from flext_core.loggings import FlextLogger
+from flext_core.mixins import FlextMixins
+from flext_core.models import FlextModels
+from flext_core.processors import FlextProcessors
+from flext_core.protocols import FlextProtocols
+from flext_core.registry import FlextRegistry
+from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
+from flext_core.service import FlextService
+from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities, FlextResult
 
 # Get unified facade
-core = FlextCore()
+core = Flext)
 
 # Railway-oriented error handling
 result = FlextResult.success("operation completed")
@@ -71,7 +90,7 @@ if result.is_success:
 from flext_core import FlextContainer
 
 container = FlextContainer()
-container.register("logger", FlextCore.create_logger("my-service"))
+container.register("logger", Flextcreate_logger("my-service"))
 logger_result = container.get("logger")
 ```
 

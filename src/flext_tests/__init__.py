@@ -9,15 +9,57 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import (
+    FlextBus,
+    FlextConfig,
+    FlextConstants,
+    FlextContainer,
+    FlextContext,
+    FlextDecorators,
+    FlextDispatcher,
+    FlextExceptions,
+    FlextHandlers,
+    FlextLogger,
+    FlextMixins,
+    FlextModels,
+    FlextProcessors,
+    FlextProtocols,
+    FlextRegistry,
+    FlextResult,
+    FlextRuntime,
+    FlextService,
+    FlextTypes,
+    FlextUtilities,
+)
 from flext_tests.docker import FlextTestDocker
 from flext_tests.domains import FlextTestsDomains
-from flext_tests.matchers import FlextTestsMatchers, TestDataBuilder
+from flext_tests.matchers import DataBuilder, FlextTestsMatchers
 from flext_tests.utilities import FlextTestsUtilities
 
 __all__ = [
+    "DataBuilder",
+    "FlextBus",
+    "FlextConfig",
+    "FlextConstants",
+    "FlextContainer",
+    "FlextContext",
+    "FlextDecorators",
+    "FlextDispatcher",
+    "FlextExceptions",
+    "FlextHandlers",
+    "FlextLogger",
+    "FlextMixins",
+    "FlextModels",
+    "FlextProcessors",
+    "FlextProtocols",
+    "FlextRegistry",
+    "FlextResult",
+    "FlextRuntime",
+    "FlextService",
     "FlextTestDocker",
     "FlextTestsDomains",
     "FlextTestsMatchers",
     "FlextTestsUtilities",
-    "TestDataBuilder",
+    "FlextTypes",
+    "FlextUtilities",
 ]

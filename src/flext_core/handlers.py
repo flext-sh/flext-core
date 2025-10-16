@@ -8,8 +8,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
 """
-# ruff: disable=E402
-# pyright: basic
 
 from __future__ import annotations
 
@@ -414,7 +412,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         """Validate input data based on handler mode for Application.Handler protocol.
 
         Generic validation that delegates to mode-specific validation methods.
-        Part of FlextProtocols.Application.Handler protocol implementation.
+        Part of FlextProtocols.Handler protocol implementation.
 
         Args:
             data: The data to validate
@@ -457,7 +455,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         """Callable interface for Application.Handler protocol.
 
         Makes the handler callable as a function, delegating to execute() method
-        for consistent handler invocation. Part of FlextProtocols.Application.Handler
+        for consistent handler invocation. Part of FlextProtocols.Handler
         protocol implementation.
 
         Args:

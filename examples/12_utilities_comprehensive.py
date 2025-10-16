@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""12 - FlextCore.Utilities: Essential Utility Functions.
+"""12 - FlextUtilities: Essential Utility Functions.
 
-This example demonstrates the simplified FlextCore.Utilities API providing
+This example demonstrates the simplified FlextUtilities API providing
 essential validation, generation, and processing utilities for the FLEXT ecosystem.
 
 Key Concepts Demonstrated:
@@ -23,20 +23,20 @@ import time
 import uuid
 from typing import cast
 
-from flext_core import FlextCore
+from flext_core import FlextResult, FlextService, FlextTypes
 
 
-class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
-    """Service demonstrating essential FlextCore.Utilities patterns with FlextCore.Mixins infrastructure.
+class UtilitiesComprehensiveService(FlextService[FlextTypes.Dict]):
+    """Service demonstrating essential FlextUtilities patterns with FlextMixins infrastructure.
 
-    This service inherits from FlextCore.Service to demonstrate:
-    - Inherited container property (FlextCore.Container singleton)
-    - Inherited logger property (FlextCore.Logger with service context - UTILITIES FOCUS!)
-    - Inherited context property (FlextCore.Context for request/correlation tracking)
-    - Inherited config property (FlextCore.Config with application settings)
+    This service inherits from FlextService to demonstrate:
+    - Inherited container property (FlextContainer singleton)
+    - Inherited logger property (FlextLogger with service context - UTILITIES FOCUS!)
+    - Inherited context property (FlextContext for request/correlation tracking)
+    - Inherited config property (FlextConfig with application settings)
     - Inherited metrics property (FlextMetrics for observability)
 
-    FlextCore.Utilities provides:
+    FlextUtilities provides:
     - Validation: String, email, hostname, file path validation
     - ID Generation: UUID, event, command, query, correlation IDs
     - Timestamp Generation: Unix and ISO timestamps
@@ -46,23 +46,23 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextCore.Mixins infrastructure.
+        """Initialize with inherited FlextMixins infrastructure.
 
         Inherited properties (no manual instantiation needed):
-        - self.logger: FlextCore.Logger with service context (utilities operations)
-        - self.container: FlextCore.Container singleton (for service dependencies)
-        - self.context: FlextCore.Context (for correlation tracking)
-        - self.config: FlextCore.Config (for application configuration)
+        - self.logger: FlextLogger with service context (utilities operations)
+        - self.container: FlextContainer singleton (for service dependencies)
+        - self.context: FlextContext (for correlation tracking)
+        - self.config: FlextConfig (for application configuration)
         - self.metrics: FlextMetrics (for observability)
         """
         super().__init__()
-        self._cache: FlextCore.Types.Dict = {}
+        self._cache: FlextTypes.Dict = {}
 
         # Demonstrate inherited logger (no manual instantiation needed!)
         self.logger.info(
             "UtilitiesComprehensiveService initialized with inherited infrastructure",
             extra={
-                "service_type": "FlextCore.Utilities demonstration",
+                "service_type": "FlextUtilities demonstration",
                 "utility_categories": [
                     "validation",
                     "id_generation",
@@ -74,8 +74,8 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
             },
         )
 
-    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
-        """Execute all FlextCore.Utilities pattern demonstrations.
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
+        """Execute all FlextUtilities pattern demonstrations.
 
         Runs comprehensive utilities demonstrations:
         1. Validation: Email, hostname, string validation
@@ -87,10 +87,10 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
         7. Deprecated patterns (for educational comparison)
 
         Returns:
-            FlextCore.Result[FlextCore.Types.Dict]: Execution summary with demonstration results
+            FlextResult[FlextTypes.Dict]: Execution summary with demonstration results
 
         """
-        self.logger.info("Starting comprehensive FlextCore.Utilities demonstration")
+        self.logger.info("Starting comprehensive FlextUtilities demonstration")
 
         try:
             # Run all 7 demonstrations
@@ -100,7 +100,7 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
             self.demonstrate_caching()
             self.demonstrate_deprecated_patterns()
 
-            summary: FlextCore.Types.Dict = {
+            summary: FlextTypes.Dict = {
                 "status": "completed",
                 "demonstrations": 7,
                 "categories": [
@@ -116,16 +116,16 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
             }
 
             self.logger.info(
-                "FlextCore.Utilities demonstration completed successfully",
+                "FlextUtilities demonstration completed successfully",
                 extra={"summary": summary},
             )
 
-            return FlextCore.Result[FlextCore.Types.Dict].ok(summary)
+            return FlextResult[FlextTypes.Dict].ok(summary)
 
         except Exception as e:
-            error_msg = f"FlextCore.Utilities demonstration failed: {e}"
+            error_msg = f"FlextUtilities demonstration failed: {e}"
             self.logger.exception(error_msg, extra={"error_type": type(e).__name__})
-            return FlextCore.Result[FlextCore.Types.Dict].fail(error_msg)
+            return FlextResult[FlextTypes.Dict].fail(error_msg)
 
     # ========== VALIDATION UTILITIES ==========
 
@@ -137,7 +137,7 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
         print("\n1. Email Validation:")
 
         # for email in emails:
-        #     result = FlextCore.Utilities.Validation.validate_email(email)
+        #     result = FlextUtilities.Validation.validate_email(email)
         #     status = "✅" if result.is_success else "❌"
         #     print(
         #         f"  {status} {email}: {result.unwrap() if result.is_success else result.error}"
@@ -155,7 +155,7 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
         # ]
 
         # for hostname in hostnames:
-        #     result = FlextCore.Utilities.validate_hostname(hostname)
+        #     result = FlextUtilities.validate_hostname(hostname)
         #     status = "✅" if result.is_success else "❌"
         #     print(
         #         f"  {status} {hostname}: Valid"
@@ -165,7 +165,7 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
         print("\n3. String Validation:")
 
         # for string_val, min_len, max_len, allow_empty in test_strings:
-        #     result = FlextCore.Utilities.Validation.validate_string(
+        #     result = FlextUtilities.Validation.validate_string(
         #         string_val, min_len, max_len, allow_empty
         #     )
         #     status = "✅" if result.is_success else "❌"
@@ -182,27 +182,27 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
         print("\n=== ID Generation ===")
 
         # Generate different types of IDs
-        # uuid_id = FlextCore.Utilities.Generators.generate_id()
+        # uuid_id = FlextUtilities.Generators.generate_id()
         # print(f"  UUID: {uuid_id}")
 
-        # event_id = FlextCore.Utilities.Generators.generate_event_id()
+        # event_id = FlextUtilities.Generators.generate_event_id()
         # print(f"  Event ID: {event_id}")
 
-        # command_id = FlextCore.Utilities.Correlation.generate_command_id()
+        # command_id = FlextUtilities.Correlation.generate_command_id()
         # print(f"  Command ID: {command_id}")
 
-        # query_id = FlextCore.Utilities.generate_query_id()
+        # query_id = FlextUtilities.generate_query_id()
         # print(f"  Query ID: {query_id}")
 
-        # correlation_id = FlextCore.Utilities.Correlation.generate_correlation_id()
+        # correlation_id = FlextUtilities.Correlation.generate_correlation_id()
         # print(f"  Correlation ID: {correlation_id}")
         print("  INFO: ID generation examples (not yet implemented)")
 
         # Generate timestamps
-        # timestamp = FlextCore.Utilities.Generators.generate_timestamp()
+        # timestamp = FlextUtilities.Generators.generate_timestamp()
         # print(f"  Timestamp: {timestamp}")
 
-        # iso_timestamp = FlextCore.Utilities.Correlation.generate_iso_timestamp()
+        # iso_timestamp = FlextUtilities.Correlation.generate_iso_timestamp()
         # print(f"  ISO Timestamp: {iso_timestamp}")
         print("  INFO: Timestamp generation examples (not yet implemented)")
 
@@ -225,7 +225,7 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
     # ========== DEPRECATED PATTERN WARNINGS ==========
 
     def demonstrate_new_flextresult_methods(self) -> None:
-        """Demonstrate the 5 new FlextCore.Result methods in utilities context.
+        """Demonstrate the 5 new FlextResult methods in utilities context.
 
         Shows how the new v0.9.9+ methods work with utilities operations:
         - from_callable: Safe utility operations
@@ -235,14 +235,14 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
         - value_or_call: Lazy utility initialization
         """
         print("\n" + "=" * 60)
-        print("NEW FlextCore.Result METHODS - UTILITIES CONTEXT")
-        print("Demonstrating v0.9.9+ methods with FlextCore.Utilities patterns")
+        print("NEW FlextResult METHODS - UTILITIES CONTEXT")
+        print("Demonstrating v0.9.9+ methods with FlextUtilities patterns")
         print("=" * 60)
 
         # 1. from_callable - Safe Utility Operations
         print("\n=== 1. from_callable: Safe Utility Operations ===")
 
-        def risky_validation_operation() -> FlextCore.Types.Dict:
+        def risky_validation_operation() -> FlextTypes.Dict:
             """Validation operation that might raise exceptions."""
             test_data = {
                 "email": "test@example.com",
@@ -257,8 +257,8 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
 
         # Safe validation without try/except
         validation_result = cast(
-            "FlextCore.Result[FlextCore.Types.Dict]",
-            FlextCore.Result.from_callable(risky_validation_operation),
+            "FlextResult[FlextTypes.Dict]",
+            FlextResult.from_callable(risky_validation_operation),
         )
         if validation_result.is_success:
             validated_data = validation_result.unwrap()
@@ -270,58 +270,54 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
         print("\n=== 2. flow_through: Utility Pipeline Composition ===")
 
         def validate_email_format(
-            data: FlextCore.Types.Dict,
-        ) -> FlextCore.Result[FlextCore.Types.Dict]:
+            data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Validate email format in data."""
             email = data.get("email", "")
             if not isinstance(email, str) or not email or "@" not in email:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
-                    "Invalid email format"
-                )
-            return FlextCore.Result[FlextCore.Types.Dict].ok(data)
+                return FlextResult[FlextTypes.Dict].fail("Invalid email format")
+            return FlextResult[FlextTypes.Dict].ok(data)
 
         def validate_hostname_format(
-            data: FlextCore.Types.Dict,
-        ) -> FlextCore.Result[FlextCore.Types.Dict]:
+            data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Validate hostname format in data."""
             hostname = data.get("hostname", "")
             if not isinstance(hostname, str) or not hostname or "." not in hostname:
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
-                    "Invalid hostname format"
-                )
-            return FlextCore.Result[FlextCore.Types.Dict].ok(data)
+                return FlextResult[FlextTypes.Dict].fail("Invalid hostname format")
+            return FlextResult[FlextTypes.Dict].ok(data)
 
         def enrich_with_metadata(
-            data: FlextCore.Types.Dict,
-        ) -> FlextCore.Result[FlextCore.Types.Dict]:
+            data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Enrich data with validation metadata."""
-            enriched: FlextCore.Types.Dict = {
+            enriched: FlextTypes.Dict = {
                 **data,
                 "validation_id": str(uuid.uuid4())[:8],
                 "validated_at": time.time(),
-                "validator": "FlextCore.Utilities",
+                "validator": "FlextUtilities",
             }
-            return FlextCore.Result[FlextCore.Types.Dict].ok(enriched)
+            return FlextResult[FlextTypes.Dict].ok(enriched)
 
         def finalize_validation(
-            data: FlextCore.Types.Dict,
-        ) -> FlextCore.Result[FlextCore.Types.Dict]:
+            data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Finalize validation with summary."""
-            enriched: FlextCore.Types.Dict = {
+            enriched: FlextTypes.Dict = {
                 **data,
                 "validation_complete": True,
                 "fields_validated": len(data) - 3,  # Exclude metadata fields
             }
-            return FlextCore.Result[FlextCore.Types.Dict].ok(enriched)
+            return FlextResult[FlextTypes.Dict].ok(enriched)
 
         # Flow through complete validation pipeline
-        test_data: FlextCore.Types.Dict = {
+        test_data: FlextTypes.Dict = {
             "email": "user@example.com",
             "hostname": "server.internal.com",
             "username": "testuser",
         }
         pipeline_result = (
-            FlextCore.Result[FlextCore.Types.Dict]
+            FlextResult[FlextTypes.Dict]
             .ok(test_data)
             .flow_through(
                 validate_email_format,
@@ -344,15 +340,15 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
         # 3. lash - Utility Fallback Recovery
         print("\n=== 3. lash: Utility Fallback Recovery ===")
 
-        def primary_id_generator() -> FlextCore.Result[str]:
+        def primary_id_generator() -> FlextResult[str]:
             """Primary ID generator that might fail."""
-            return FlextCore.Result[str].fail("Primary ID generator unavailable")
+            return FlextResult[str].fail("Primary ID generator unavailable")
 
-        def fallback_id_generator(error: str) -> FlextCore.Result[str]:
+        def fallback_id_generator(error: str) -> FlextResult[str]:
             """Fallback ID generator when primary fails."""
             print(f"   ⚠️  Primary failed: {error}, using fallback...")
             fallback_id = f"FALLBACK-{uuid.uuid4().hex[:8]}"
-            return FlextCore.Result[str].ok(fallback_id)
+            return FlextResult[str].ok(fallback_id)
 
         # Try primary generator, fall back on failure
         id_result = primary_id_generator().lash(fallback_id_generator)
@@ -365,22 +361,20 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
         # 4. alt - Utility Provider Alternatives
         print("\n=== 4. alt: Utility Provider Alternatives ===")
 
-        def get_custom_validator() -> FlextCore.Result[FlextCore.Types.Dict]:
+        def get_custom_validator() -> FlextResult[FlextTypes.Dict]:
             """Try to get custom validator configuration."""
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
-                "Custom validator not configured"
-            )
+            return FlextResult[FlextTypes.Dict].fail("Custom validator not configured")
 
-        def get_default_validator() -> FlextCore.Result[FlextCore.Types.Dict]:
+        def get_default_validator() -> FlextResult[FlextTypes.Dict]:
             """Provide default validator configuration."""
-            config: FlextCore.Types.Dict = {
+            config: FlextTypes.Dict = {
                 "validator_type": "default",
                 "email_validation": True,
                 "hostname_validation": True,
                 "string_validation": True,
                 "strict_mode": False,
             }
-            return FlextCore.Result[FlextCore.Types.Dict].ok(config)
+            return FlextResult[FlextTypes.Dict].ok(config)
 
         # Try custom validator, fall back to default
         validator_result = get_custom_validator().alt(get_default_validator())
@@ -399,7 +393,7 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
         # 5. value_or_call - Lazy Utility Initialization
         print("\n=== 5. value_or_call: Lazy Utility Initialization ===")
 
-        def create_expensive_cache() -> FlextCore.Types.Dict:
+        def create_expensive_cache() -> FlextTypes.Dict:
             """Create and configure cache (expensive operation)."""
             print("   ⚙️  Creating new cache with full configuration...")
             return {
@@ -411,27 +405,25 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
             }
 
         # Try to get existing cache, create new one if not available
-        cache_fail_result = FlextCore.Result[FlextCore.Types.Dict].fail(
-            "No existing cache"
-        )
+        cache_fail_result = FlextResult[FlextTypes.Dict].fail("No existing cache")
         cache = cache_fail_result.value_or_call(create_expensive_cache)
         print(f"✅ Cache acquired: {cache.get('cache_type', 'unknown')}")
         print(f"   Max size: {cache.get('max_size', 0)}")
         print(f"   TTL: {cache.get('ttl', 0)}s")
 
         # Try again with successful result (lazy function NOT called)
-        existing_cache: FlextCore.Types.Dict = {
+        existing_cache: FlextTypes.Dict = {
             "cache_type": "redis",
             "initialized": True,
         }
-        cache_success_result = FlextCore.Result[FlextCore.Types.Dict].ok(existing_cache)
+        cache_success_result = FlextResult[FlextTypes.Dict].ok(existing_cache)
         cache_cached = cache_success_result.value_or_call(create_expensive_cache)
         print(f"✅ Existing cache used: {cache_cached.get('cache_type', 'unknown')}")
         print("   No expensive creation needed")
 
         print("\n" + "=" * 60)
-        print("✅ NEW FlextCore.Result METHODS UTILITIES DEMO COMPLETE!")
-        print("All 5 methods demonstrated with FlextCore.Utilities context")
+        print("✅ NEW FlextResult METHODS UTILITIES DEMO COMPLETE!")
+        print("All 5 methods demonstrated with FlextUtilities context")
         print("=" * 60)
 
     def demonstrate_deprecated_patterns(self) -> None:
@@ -439,32 +431,32 @@ class UtilitiesComprehensiveService(FlextCore.Service[FlextCore.Types.Dict]):
         print("\n=== ⚠️ DEPRECATED PATTERNS (DO NOT USE) ===")
 
         print(
-            "Manual validation is DEPRECATED! Use FlextCore.Utilities validation methods.",
+            "Manual validation is DEPRECATED! Use FlextUtilities validation methods.",
             flush=True,
         )
         print("❌ OLD WAY:")
         print("if '@' in email and '.' in email:")
         print("    # Manual validation logic...")
 
-        print("\n✅ CORRECT WAY (FlextCore.Utilities):")
-        print("result = FlextCore.Utilities.Validation.validate_email(email)")
+        print("\n✅ CORRECT WAY (FlextUtilities):")
+        print("result = FlextUtilities.Validation.validate_email(email)")
 
         print(
-            "\nManual ID generation is DEPRECATED! Use FlextCore.Utilities generators.",
+            "\nManual ID generation is DEPRECATED! Use FlextUtilities generators.",
             flush=True,
         )
         print("❌ OLD WAY:")
         print("import uuid; id = str(uuid.uuid4())")
 
-        print("\n✅ CORRECT WAY (FlextCore.Utilities):")
-        print("id = FlextCore.Utilities.Generators.generate_id()")
+        print("\n✅ CORRECT WAY (FlextUtilities):")
+        print("id = FlextUtilities.Generators.generate_id()")
 
 
 def main() -> None:
-    """Main entry point demonstrating all FlextCore.Utilities capabilities."""
+    """Main entry point demonstrating all FlextUtilities capabilities."""
     service = UtilitiesComprehensiveService()
 
-    print("🚀 FlextCore.Utilities Comprehensive Demo")
+    print("🚀 FlextUtilities Comprehensive Demo")
     print("=" * 50)
 
     # Execute service
@@ -482,7 +474,7 @@ def main() -> None:
     service.demonstrate_deprecated_patterns()
 
     print("\n" + "=" * 50)
-    print("✅ ALL FlextCore.Utilities methods demonstrated!")
+    print("✅ ALL FlextUtilities methods demonstrated!")
     print("📊 Simplified API: ~17 methods instead of 100+")
     print("🏗️  Architecture: Single class, no nested classes")
     print("⚡ Performance: Reduced from 2500+ to ~400 lines")

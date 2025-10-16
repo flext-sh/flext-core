@@ -1,6 +1,6 @@
 # FLEXT-CORE INTEGRATION PATTERNS
 
-## Universal FlextCore.Container & FlextCore.Context Integration Guide
+## Universal FlextContainer & FlextContext Integration Guide
 
 **Version**: 0.9.9 RC | **Status**: Implementation Guide | **Updated**: 2025-10-10 | **Phase 1**: Context Enrichment Completed
 
@@ -8,7 +8,7 @@
 
 ## 🎯 OVERVIEW
 
-This document provides comprehensive guidance on using FlextCore.Container and FlextCore.Context throughout flext-core via the **FlextCore.Mixins** pattern. This pattern provides automatic dependency injection, context management, structured logging, and performance tracking for all service classes.
+This document provides comprehensive guidance on using FlextContainer and FlextContext throughout flext-core via the **FlextMixins** pattern. This pattern provides automatic dependency injection, context management, structured logging, and performance tracking for all service classes.
 
 ### Key Benefits
 
@@ -23,17 +23,36 @@ This document provides comprehensive guidance on using FlextCore.Container and F
 
 **Status**: ✅ **COMPLETED** - Major architectural enhancement providing zero-boilerplate context management for distributed tracing and audit trails.
 
-#### New FlextCore.Service & FlextCore.Mixins Capabilities
+#### New FlextService & FlextMixins Capabilities
 
-Both `FlextCore.Service` and `FlextCore.Mixins` now provide automatic context management methods:
+Both `FlextService` and `FlextMixins` now provide automatic context management methods:
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-class PaymentService(FlextCore.Service[FlextCore.Types.Dict]):
+class PaymentService(FlextService[FlextTypes.Dict]):
     """Service with automatic context enrichment."""
 
-    def process_payment(self, payment_id: str, amount: float, user_id: str) -> FlextCore.Result[dict]:
+    def process_payment(self, payment_id: str, amount: float, user_id: str) -> FlextResult[dict]:
         # Generate correlation ID for distributed tracing
         correlation_id = self._with_correlation_id()
 
@@ -46,7 +65,7 @@ class PaymentService(FlextCore.Service[FlextCore.Types.Dict]):
         # All logs now include full context automatically
         self.logger.info("Processing payment", payment_id=payment_id, amount=amount)
 
-        return FlextCore.Result[dict].ok({"status": "completed", "correlation_id": correlation_id})
+        return FlextResult[dict].ok({"status": "completed", "correlation_id": correlation_id})
 ```
 
 #### Available Context Methods
@@ -57,15 +76,34 @@ class PaymentService(FlextCore.Service[FlextCore.Types.Dict]):
 - `_enrich_context(**context_data)` - Add custom metadata to logs
 - `_clear_operation_context()` - Clean up operation context after completion
 
-#### Direct FlextCore.Mixins Usage
+#### Direct FlextMixins Usage
 
-For simpler services, you can inherit directly from `FlextCore.Mixins`:
+For simpler services, you can inherit directly from `FlextMixins`:
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-class SimpleService(FlextCore.Mixins):
-    """Service using FlextCore.Mixins directly."""
+class SimpleService(FlextMixins):
+    """Service using FlextMixins directly."""
 
     def __init__(self):
         self._init_service("simple_service")
@@ -75,10 +113,10 @@ class SimpleService(FlextCore.Mixins):
         # - self._with_operation_context() (context management)
         # - self.track() (performance metrics)
 
-    def process_data(self, data: dict) -> FlextCore.Result[dict]:
+    def process_data(self, data: dict) -> FlextResult[dict]:
         with self.track("process_data") as metrics:
             self.logger.info("Processing data", size=len(data))
-            return FlextCore.Result[dict].ok({"processed": True})
+            return FlextResult[dict].ok({"processed": True})
 ```
 
 #### Complete Automation Helper
@@ -86,8 +124,8 @@ class SimpleService(FlextCore.Mixins):
 `execute_with_context_enrichment()` provides full automation:
 
 ```python
-class OrderService(FlextCore.Service[Order]):
-    def process_order(self, order_id: str, customer_id: str, correlation_id: str | None = None) -> FlextCore.Result[Order]:
+class OrderService(FlextService[Order]):
+    def process_order(self, order_id: str, customer_id: str, correlation_id: str | None = None) -> FlextResult[Order]:
         return self.execute_with_context_enrichment(
             operation_name="process_order",
             correlation_id=correlation_id,
@@ -109,28 +147,47 @@ See `examples/15_automation_showcase.py` for complete working examples.
 
 ---
 
-## 🏗️ CORE PATTERN: FlextCore.Mixins
+## 🏗️ CORE PATTERN: FlextMixins
 
 ### The Complete Service Infrastructure
 
-`FlextCore.Mixins` is the foundation class that provides complete infrastructure integration:
+`FlextMixins` is the foundation class that provides complete infrastructure integration:
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-class MyService(FlextCore.Mixins):
+class MyService(FlextMixins):
     """Service with automatic infrastructure integration."""
 
     def __init__(self):
         # Initialize service with auto-registration
         self._init_service("my_service")
         # Now you have automatic access to:
-        # - self.container (FlextCore.Container.get_global())
-        # - self.context (FlextCore.Context instance)
-        # - self.logger (FlextCore.Logger with DI)
+        # - self.container (FlextContainer.get_global())
+        # - self.context (FlextContext instance)
+        # - self.logger (FlextLogger with DI)
         # - self.track() (performance metrics)
 
-    def process_data(self, data: dict) -> FlextCore.Result[dict]:
+    def process_data(self, data: dict) -> FlextResult[dict]:
         """Process data with full infrastructure."""
         # Automatic performance tracking
         with self.track("process_data"):
@@ -145,15 +202,15 @@ class MyService(FlextCore.Mixins):
 
             # Your business logic
             result = {"processed": True, "count": len(data)}
-            return FlextCore.Result[dict].ok(result)
+            return FlextResult[dict].ok(result)
 ```
 
 ### What You Get Automatically
 
-#### 1. Container Access (FlextCore.Mixins)
+#### 1. Container Access (FlextMixins)
 
 ```python
-class MyService(FlextCore.Mixins):
+class MyService(FlextMixins):
     def __init__(self):
         self._init_service("my_service")
 
@@ -170,11 +227,11 @@ class MyService(FlextCore.Mixins):
             self.logger.info("Cache service registered")
 ```
 
-#### 2. Context Management (FlextCore.Mixins)
+#### 2. Context Management (FlextMixins)
 
 ```python
-class MyService(FlextCore.Mixins):
-    def process_request(self, request_id: str, data: dict) -> FlextCore.Result[dict]:
+class MyService(FlextMixins):
+    def process_request(self, request_id: str, data: dict) -> FlextResult[dict]:
         # Propagate context for operation
         self._propagate_context("process_request")
 
@@ -187,14 +244,14 @@ class MyService(FlextCore.Mixins):
         # All logs will include correlation ID automatically
         self.logger.info("Processing request", extra={"request_id": request_id})
 
-        return FlextCore.Result[dict].ok({"status": "processed"})
+        return FlextResult[dict].ok({"status": "processed"})
 ```
 
-#### 3. Structured Logging (FlextCore.Mixins)
+#### 3. Structured Logging (FlextMixins)
 
 ```python
-class MyService(FlextCore.Mixins):
-    def complex_operation(self, data: dict) -> FlextCore.Result[dict]:
+class MyService(FlextMixins):
+    def complex_operation(self, data: dict) -> FlextResult[dict]:
         # Logger automatically configured with class name
         self.logger.info("Starting complex operation")
 
@@ -211,14 +268,14 @@ class MyService(FlextCore.Mixins):
         self.logger.warning("Warning message")
         self.logger.error("Error occurred")
 
-        return FlextCore.Result[dict].ok({"status": "completed"})
+        return FlextResult[dict].ok({"status": "completed"})
 ```
 
-#### 4. Performance Tracking (FlextCore.Mixins)
+#### 4. Performance Tracking (FlextMixins)
 
 ```python
-class MyService(FlextCore.Mixins):
-    def timed_operation(self, data: dict) -> FlextCore.Result[dict]:
+class MyService(FlextMixins):
+    def timed_operation(self, data: dict) -> FlextResult[dict]:
         # Automatic performance tracking with context manager
         with self.track("timed_operation") as metrics:
             # Your operation here
@@ -230,7 +287,7 @@ class MyService(FlextCore.Mixins):
             # - Operation name
             # - Timestamp
 
-            return FlextCore.Result[dict].ok(result)
+            return FlextResult[dict].ok(result)
 
     def manual_metrics(self):
         # Access metrics if needed
@@ -249,15 +306,34 @@ class MyService(FlextCore.Mixins):
 **Use Case**: Basic service with DI and logging needs
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-class UserService(FlextCore.Mixins):
+class UserService(FlextMixins):
     """Simple service for user operations."""
 
     def __init__(self):
         self._init_service("user_service")
 
-    def create_user(self, name: str, email: str) -> FlextCore.Result[dict]:
+    def create_user(self, name: str, email: str) -> FlextResult[dict]:
         """Create user with automatic logging and context."""
         with self.track("create_user"):
             self._propagate_context("create_user")
@@ -271,7 +347,7 @@ class UserService(FlextCore.Mixins):
             user = {"id": "123", "name": name, "email": email}
 
             self.logger.info("User created successfully")
-            return FlextCore.Result[dict].ok(user)
+            return FlextResult[dict].ok(user)
 ```
 
 ### Pattern 2: CQRS Handler
@@ -279,20 +355,39 @@ class UserService(FlextCore.Mixins):
 **Use Case**: Command/Query handlers (already uses pattern!)
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-class CreateUserHandler(FlextCore.Handlers[CreateUserCommand, User]):
-    """Handler inherits FlextCore.Mixins automatically."""
+class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
+    """Handler inherits FlextMixins automatically."""
 
     def __init__(self):
-        config = FlextCore.Models.Cqrs.Handler(
+        config = FlextModels.Cqrs.Handler(
             handler_name="CreateUserHandler",
             handler_type="command"
         )
         super().__init__(config=config)
         # Automatically has: container, context, logger, metrics
 
-    def handle(self, command: CreateUserCommand) -> FlextCore.Result[User]:
+    def handle(self, command: CreateUserCommand) -> FlextResult[User]:
         """Handle with automatic infrastructure."""
         # Logger, context, and metrics already configured!
         self.logger.info(f"Handling CreateUserCommand: {command.name}")
@@ -300,7 +395,7 @@ class CreateUserHandler(FlextCore.Handlers[CreateUserCommand, User]):
         # Business logic
         user = User(name=command.name, email=command.email)
 
-        return FlextCore.Result[User].ok(user)
+        return FlextResult[User].ok(user)
 ```
 
 ### Pattern 3: Event Bus / Dispatcher
@@ -308,16 +403,35 @@ class CreateUserHandler(FlextCore.Handlers[CreateUserCommand, User]):
 **Use Case**: Infrastructure services that route messages
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-class FlextCore.Bus(FlextCore.Mixins):
+class FlextBus(FlextMixins):
     """Event bus with automatic infrastructure."""
 
     def __init__(self):
         self._init_service("flext_bus")
         self._subscribers: dict[str, list[Callable]] = {}
 
-    def publish(self, event_name: str, event_data: dict) -> FlextCore.Result[None]:
+    def publish(self, event_name: str, event_data: dict) -> FlextResult[None]:
         """Publish event with automatic tracking."""
         with self.track(f"publish_{event_name}"):
             self._propagate_context(f"publish_{event_name}")
@@ -339,9 +453,9 @@ class FlextCore.Bus(FlextCore.Mixins):
                         extra={"event_name": event_name}
                     )
 
-            return FlextCore.Result[None].ok(None)
+            return FlextResult[None].ok(None)
 
-    def subscribe(self, event_name: str, handler: Callable) -> FlextCore.Result[None]:
+    def subscribe(self, event_name: str, handler: Callable) -> FlextResult[None]:
         """Subscribe to event."""
         if event_name not in self._subscribers:
             self._subscribers[event_name] = []
@@ -349,7 +463,7 @@ class FlextCore.Bus(FlextCore.Mixins):
         self._subscribers[event_name].append(handler)
         self.logger.info(f"Handler subscribed to {event_name}")
 
-        return FlextCore.Result[None].ok(None)
+        return FlextResult[None].ok(None)
 ```
 
 ### Pattern 4: Registry Service
@@ -357,9 +471,28 @@ class FlextCore.Bus(FlextCore.Mixins):
 **Use Case**: Service registration and discovery
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-class FlextCore.Registry(FlextCore.Mixins):
+class FlextRegistry(FlextMixins):
     """Registry service with automatic DI integration."""
 
     def __init__(self):
@@ -369,7 +502,7 @@ class FlextCore.Registry(FlextCore.Mixins):
         self,
         handler_type: str,
         handler: object
-    ) -> FlextCore.Result[None]:
+    ) -> FlextResult[None]:
         """Register handler in both registry and container."""
         with self.track("register_handler"):
             self._propagate_context("register_handler")
@@ -382,16 +515,16 @@ class FlextCore.Registry(FlextCore.Mixins):
                 self.logger.error(
                     f"Failed to register handler: {container_result.error}"
                 )
-                return FlextCore.Result[None].fail(container_result.error)
+                return FlextResult[None].fail(container_result.error)
 
             self.logger.info(
                 f"Handler registered: {handler_type}",
                 extra={"service_key": service_key}
             )
 
-            return FlextCore.Result[None].ok(None)
+            return FlextResult[None].ok(None)
 
-    def get_handler(self, handler_type: str) -> FlextCore.Result[object]:
+    def get_handler(self, handler_type: str) -> FlextResult[object]:
         """Get handler from container."""
         service_key = f"handler:{handler_type}"
         return self.container.get(service_key)
@@ -402,9 +535,28 @@ class FlextCore.Registry(FlextCore.Mixins):
 **Use Case**: Data processing pipelines
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-class FlextCore.Processors(FlextCore.Mixins):
+class FlextProcessors(FlextMixins):
     """Processing pipeline with automatic metrics."""
 
     def __init__(self):
@@ -413,8 +565,8 @@ class FlextCore.Processors(FlextCore.Mixins):
     def process_pipeline(
         self,
         data: dict,
-        steps: list[Callable[[dict], FlextCore.Result[dict]]]
-    ) -> FlextCore.Result[dict]:
+        steps: list[Callable[[dict], FlextResult[dict]]]
+    ) -> FlextResult[dict]:
         """Execute processing pipeline with tracking."""
         with self.track("process_pipeline"):
             self._propagate_context("process_pipeline")
@@ -437,14 +589,14 @@ class FlextCore.Processors(FlextCore.Mixins):
                     self.logger.error(
                         f"Pipeline failed at step {step_name}: {result.error}"
                     )
-                    return FlextCore.Result[dict].fail(
+                    return FlextResult[dict].fail(
                         f"Pipeline failed at {step_name}: {result.error}"
                     )
 
                 current_data = result.unwrap()
 
             self.logger.info("Pipeline completed successfully")
-            return FlextCore.Result[dict].ok(current_data)
+            return FlextResult[dict].ok(current_data)
 ```
 
 ---
@@ -456,24 +608,24 @@ class FlextCore.Processors(FlextCore.Mixins):
 **Compose multiple services with shared infrastructure**:
 
 ```python
-class UserRepository(FlextCore.Mixins):
+class UserRepository(FlextMixins):
     """Repository with database access."""
 
     def __init__(self):
         self._init_service("user_repository")
 
-    def find_by_id(self, user_id: str) -> FlextCore.Result[dict | None]:
+    def find_by_id(self, user_id: str) -> FlextResult[dict | None]:
         # Get database from container
         db_result = self.container.get("database")
         if db_result.is_failure:
-            return FlextCore.Result[dict | None].fail("Database not available")
+            return FlextResult[dict | None].fail("Database not available")
 
         db = db_result.unwrap()
         # Query database...
-        return FlextCore.Result[dict | None].ok({"id": user_id, "name": "John"})
+        return FlextResult[dict | None].ok({"id": user_id, "name": "John"})
 
 
-class UserService(FlextCore.Mixins):
+class UserService(FlextMixins):
     """Service using repository."""
 
     def __init__(self):
@@ -488,7 +640,7 @@ class UserService(FlextCore.Mixins):
             self._repository = UserRepository()
             self.container.register("user_repository", self._repository)
 
-    def get_user(self, user_id: str) -> FlextCore.Result[dict]:
+    def get_user(self, user_id: str) -> FlextResult[dict]:
         """Get user with automatic context propagation."""
         with self.track("get_user"):
             self._propagate_context("get_user")
@@ -503,14 +655,33 @@ class UserService(FlextCore.Mixins):
 
 ```python
 import pytest
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
 class TestUserService:
     @pytest.fixture
     def isolated_service(self):
         """Create service with isolated container."""
         # Get fresh container for test
-        container = FlextCore.Container.get_global()
+        container = FlextContainer.get_global()
 
         # Register test dependencies
         container.register("database", MockDatabase())
@@ -542,13 +713,13 @@ class TestUserService:
 ```python
 class OldService:
     def __init__(self):
-        self.logger = FlextCore.Logger(__name__)
-        self._container = FlextCore.Container.get_global()
+        self.logger = FlextLogger(__name__)
+        self._container = FlextContainer.get_global()
 
-    def process(self, data: dict) -> FlextCore.Result[dict]:
+    def process(self, data: dict) -> FlextResult[dict]:
         self.logger.info("Processing")
         # Manual context setup
-        FlextCore.Context.Request.set_operation_name("process")
+        FlextContext.Request.set_operation_name("process")
         # Manual timing
         start = time.time()
         result = self._do_process(data)
@@ -560,11 +731,11 @@ class OldService:
 **AFTER** (automatic infrastructure):
 
 ```python
-class NewService(FlextCore.Mixins):
+class NewService(FlextMixins):
     def __init__(self):
         self._init_service("new_service")
 
-    def process(self, data: dict) -> FlextCore.Result[dict]:
+    def process(self, data: dict) -> FlextResult[dict]:
         # Everything automatic!
         with self.track("process"):
             self._propagate_context("process")
@@ -578,12 +749,12 @@ class NewService(FlextCore.Mixins):
 
 ```python
 # Old code still works
-logger = FlextCore.Logger(__name__)
-container = FlextCore.Container.get_global()
-context = FlextCore.Context()
+logger = FlextLogger(__name__)
+container = FlextContainer.get_global()
+context = FlextContext()
 
 # New code uses pattern
-class NewService(FlextCore.Mixins):
+class NewService(FlextMixins):
     pass  # Gets everything automatically
 ```
 
@@ -593,29 +764,29 @@ class NewService(FlextCore.Mixins):
 
 ### DO ✅
 
-1. **Inherit from FlextCore.Mixins** for all service classes
+1. **Inherit from FlextMixins** for all service classes
 2. **Call \_init_service()** in **init** with service name
 3. **Use \track()** for performance-critical operations
 4. **Use \_propagate_context()** for operations that call other services
 5. **Use self.logger** for all logging (automatic DI)
 6. **Use self.container** for service discovery
-7. **Return FlextCore.Result** from all operations
+7. **Return FlextResult** from all operations
 
 ### DON'T ❌
 
-1. **Don't manually instantiate FlextCore.Logger** - use self.logger
-2. **Don't manually call FlextCore.Container.get_global()** - use self.container
+1. **Don't manually instantiate FlextLogger** - use self.logger
+2. **Don't manually call FlextContainer.get_global()** - use self.container
 3. **Don't manually manage context** - use \_propagate_context()
 4. **Don't forget \_init_service()** - required for auto-registration
 5. **Don't use print()** for logging - use self.logger
-6. **Don't use try/except for business logic** - use FlextCore.Result
+6. **Don't use try/except for business logic** - use FlextResult
 7. **Don't create custom infrastructure** - use provided patterns
 
 ---
 
 ## 📚 REFERENCE
 
-### FlextCore.Mixins API
+### FlextMixins API
 
 ```python
 class Service(Container, Context, Logging, Metrics):
@@ -623,8 +794,8 @@ class Service(Container, Context, Logging, Metrics):
 
     # Container access
     @property
-    def container() -> FlextCore.Container
-    def _register_in_container(service_name: str) -> FlextCore.Result[None]
+    def container() -> FlextContainer
+    def _register_in_container(service_name: str) -> FlextResult[None]
 
     # Context management
     @property
@@ -635,12 +806,12 @@ class Service(Container, Context, Logging, Metrics):
 
     # Logging
     @property
-    def logger() -> FlextCore.Logger
+    def logger() -> FlextLogger
     def _log_with_context(level: str, message: str, **extra: object) -> None
 
     # Metrics
     @contextmanager
-    def track(operation_name: str) -> Iterator[FlextCore.Types.Dict]
+    def track(operation_name: str) -> Iterator[FlextTypes.Dict]
 
     # Initialization
     def _init_service(service_name: str | None = None) -> None
@@ -649,17 +820,36 @@ class Service(Container, Context, Logging, Metrics):
 ### Complete Example
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-class ComprehensiveService(FlextCore.Mixins):
+class ComprehensiveService(FlextMixins):
     """Complete example using all infrastructure features."""
 
-    def __init__(self, config: FlextCore.Config | None = None):
+    def __init__(self, config: FlextConfig | None = None):
         # Initialize with auto-registration
         self._init_service("comprehensive_service")
 
         # Store config if provided
-        self._config = config or FlextCore.Config.get_global_instance()
+        self._config = config or FlextConfig.get_global_instance()
 
         # Register self in container for discovery
         self.container.register("comprehensive_service", self)
@@ -668,7 +858,7 @@ class ComprehensiveService(FlextCore.Mixins):
         self,
         data: dict,
         correlation_id: str | None = None
-    ) -> FlextCore.Result[dict]:
+    ) -> FlextResult[dict]:
         """Complete workflow demonstrating all features."""
 
         # Set correlation ID if provided
@@ -692,7 +882,7 @@ class ComprehensiveService(FlextCore.Mixins):
             # Get dependencies from container
             validator_result = self.container.get("validator")
             if validator_result.is_failure:
-                return FlextCore.Result[dict].fail("Validator not available")
+                return FlextResult[dict].fail("Validator not available")
 
             validator = validator_result.unwrap()
 
@@ -700,7 +890,7 @@ class ComprehensiveService(FlextCore.Mixins):
             validation = validator.validate(data)
             if validation.is_failure:
                 self.logger.error(f"Validation failed: {validation.error}")
-                return FlextCore.Result[dict].fail(validation.error)
+                return FlextResult[dict].fail(validation.error)
 
             # Processing step
             processed = self._process_data(data)
@@ -714,9 +904,9 @@ class ComprehensiveService(FlextCore.Mixins):
                 extra={"result_keys": list(result.keys())}
             )
 
-            return FlextCore.Result[dict].ok(result)
+            return FlextResult[dict].ok(result)
 
-    def _process_data(self, data: dict) -> FlextCore.Result[dict]:
+    def _process_data(self, data: dict) -> FlextResult[dict]:
         """Internal processing with automatic context."""
         # Context automatically propagated from parent operation
         self.logger.debug("Processing data")
@@ -724,17 +914,17 @@ class ComprehensiveService(FlextCore.Mixins):
         # Business logic here
         processed = {"processed": True, **data}
 
-        return FlextCore.Result[dict].ok(processed)
+        return FlextResult[dict].ok(processed)
 ```
 
 ---
 
 ## 🔗 SEE ALSO
 
-- **FlextCore.Mixins API**: `src/flext_core/mixins.py`
-- **FlextCore.Handlers Pattern**: `src/flext_core/handlers.py`
-- **FlextCore.Container**: `src/flext_core/container.py`
-- **FlextCore.Context**: `src/flext_core/context.py`
+- **FlextMixins API**: `src/flext_core/mixins.py`
+- **FlextHandlers Pattern**: `src/flext_core/handlers.py`
+- **FlextContainer**: `src/flext_core/container.py`
+- **FlextContext**: `src/flext_core/context.py`
 - **FLEXT Standards**: `../CLAUDE.md`
 
 ---

@@ -19,6 +19,10 @@ from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from typing import cast, override
 
+from pydantic import computed_field
+
+from flext_core.config import FlextConfig
+from flext_core.container import FlextContainer
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
@@ -64,15 +68,74 @@ class FlextService[TDomainResult](
 
     _bus: object | None = None  # FlextBus type to avoid circular import
 
+    @computed_field  # Pydantic v2 computed_field already provides property behavior
+    def service_config(self) -> FlextConfig:
+        """Automatic config binding via Pydantic v2 computed_field.
+
+        Pure Pydantic v2 pattern - no wrappers, no descriptors, no boilerplate.
+        Config is transparently available via computed property.
+
+        Example:
+            >>> class OrderService(FlextService[Order]):
+            ...     def execute(self) -> FlextResult[Order]:
+            ...         # Config automatically available
+            ...         timeout = self.service_config.timeout
+            ...         return FlextResult[Order].ok(Order())
+
+        Returns:
+            FlextConfig: Global configuration instance
+
+        """
+        return FlextConfig.get_global_instance()
+
+    def __init_subclass__(cls) -> None:
+        """Automatic service registration on subclass definition.
+
+        Pure Python 3.13+ pattern - no wrappers, no helpers, no boilerplate.
+        Services are transparently registered in global container when class is defined.
+
+        Example:
+            >>> class UserService(FlextService[User]):  # ← Auto-registered
+            ...     def execute(self) -> FlextResult[User]:
+            ...         return FlextResult[User].ok(User(name="John"))
+
+            >>> # Service already registered - no manual calls needed
+            >>> container = FlextContainer.get_global()
+            >>> service_result = container.get("UserService")
+            >>> assert service_result.is_success
+
+        """
+        super().__init_subclass__()
+
+        # AUTOMATIC REGISTRATION: Register service class in global container
+        # This happens at class definition time, not instance creation time
+        # Uses class name as service key for discovery
+        service_name = cls.__name__
+
+        try:
+            container = FlextContainer.get_global()
+            # Register the class itself as a factory for service creation
+            container.register_factory(service_name, cls)
+        except Exception:  # noqa: S110
+            # Intentionally silent: Class definition should never fail
+            # Service registration is optional during class creation
+            pass
+
     @override
     def __init__(self, **data: object) -> None:
-        """Initialize domain service with Pydantic validation and infrastructure."""
-        super().__init__(**data)
-        # Initialize service infrastructure if needed
-        self._init_service(service_name=self.__class__.__name__)
+        """Initialize domain service with Pydantic validation and infrastructure.
 
-        # Context enrichment is now automatic via FlextMixins.__init__
-        # No manual context enrichment needed here
+        Automatic infrastructure provided transparently:
+        - Service registration: via __init_subclass__ (class definition time)
+        - Container access: via FlextMixins.container property
+        - Logger access: via FlextMixins.logger property
+        - Context access: via FlextMixins.context property
+        - Config access: via FlextMixins.config property
+
+        No manual setup needed - pure Python 3.13+ patterns.
+        """
+        super().__init__(**data)
+        # AUTOMATIC: All infrastructure via properties (zero boilerplate)
 
     # =============================================================================
     # ABSTRACT METHODS - Must be implemented by subclasses (Domain.Service protocol)
@@ -86,6 +149,36 @@ class FlextService[TDomainResult](
             FlextResult[TDomainResult]: Success with domain result or failure with error
 
         """
+
+    def execute_with_context_cleanup(self) -> FlextResult[TDomainResult]:
+        """Execute operation with automatic scoped context cleanup.
+
+        This method wraps execute() with automatic cleanup of operation-scoped
+        logging context, preventing context accumulation while preserving
+        request and application-level context.
+
+        Returns:
+            FlextResult[TDomainResult]: Result from execute() with guaranteed context cleanup
+
+        Usage:
+            >>> service = MyService()
+            >>> result = service.execute_with_context_cleanup()
+            >>> # Operation context cleared, request context (correlation_id) preserved
+
+        Note:
+            - Recommended for calling services from CLI/API boundaries
+            - Clears operation scope only (preserves request and application scopes)
+            - Request-level context (correlation_id) persists across service calls
+            - Application-level context (app name, version) persists for lifetime
+
+        """
+        try:
+            # Execute the service operation
+            return self.execute()
+        finally:
+            # CRITICAL: Clean up operation-scoped context to prevent accumulation
+            # Preserves request context (correlation_id) and application context
+            self._clear_operation_context()
 
     # =============================================================================
     # VALIDATION METHODS (Domain.Service protocol)
@@ -382,15 +475,19 @@ class FlextService[TDomainResult](
             # Condition not met, check if there's a false action
             if hasattr(request, "false_action") and request.false_action is not None:
                 try:
-                    result: object = None
+                    false_result: object = None
                     if callable(request.false_action):
-                        result = request.false_action(self)
+                        false_result = request.false_action(self)
                         # If the action returns a FlextResult, return it directly
-                        if isinstance(result, FlextResult):
-                            flext_result: FlextResult[TDomainResult] = result
-                            return flext_result
-                        result_value: TDomainResult = cast("TDomainResult", result)
-                        return FlextResult[TDomainResult].ok(result_value)
+                        if isinstance(false_result, FlextResult):
+                            false_flext_result: FlextResult[TDomainResult] = (
+                                false_result
+                            )
+                            return false_flext_result
+                        false_result_value: TDomainResult = cast(
+                            "TDomainResult", false_result
+                        )
+                        return FlextResult[TDomainResult].ok(false_result_value)
                     false_action_value: TDomainResult = cast(
                         "TDomainResult", request.false_action
                     )
@@ -406,13 +503,15 @@ class FlextService[TDomainResult](
         if hasattr(request, "true_action") and request.true_action is not None:
             try:
                 if callable(request.true_action):
-                    result = request.true_action(self)
+                    true_result = request.true_action(self)
                     # If the action returns a FlextResult, return it directly
-                    if isinstance(result, FlextResult):
-                        flext_result: FlextResult[TDomainResult] = result
-                        return flext_result
-                    result_value: TDomainResult = cast("TDomainResult", result)
-                    return FlextResult[TDomainResult].ok(result_value)
+                    if isinstance(true_result, FlextResult):
+                        true_flext_result: FlextResult[TDomainResult] = true_result
+                        return true_flext_result
+                    true_result_value: TDomainResult = cast(
+                        "TDomainResult", true_result
+                    )
+                    return FlextResult[TDomainResult].ok(true_result_value)
                 true_action_value: TDomainResult = cast(
                     "TDomainResult", request.true_action
                 )
@@ -461,7 +560,9 @@ class FlextService[TDomainResult](
 
         @staticmethod
         def prepare_execution_context(
-            service: FlextService[TDomainResult],
+            service: FlextService[
+                object
+            ],  # Generic service - works with any TDomainResult
         ) -> FlextTypes.Dict:
             """Prepare execution context for a service."""
             context: FlextTypes.Dict = {
@@ -473,7 +574,8 @@ class FlextService[TDomainResult](
 
         @staticmethod
         def cleanup_execution_context(
-            service: FlextService[TDomainResult], context: FlextTypes.Dict
+            service: FlextService[object],
+            context: FlextTypes.Dict,  # Generic service
         ) -> None:
             """Clean up execution context after operation."""
             # Basic cleanup - could be extended for more complex operations
@@ -483,7 +585,9 @@ class FlextService[TDomainResult](
 
         @staticmethod
         def extract_service_metadata(
-            service: FlextService[TDomainResult], *, include_timestamps: bool = True
+            service: FlextService[object],
+            *,
+            include_timestamps: bool = True,  # Generic service
         ) -> FlextTypes.Dict:
             """Extract metadata from a service instance."""
             metadata: FlextTypes.Dict = {
@@ -501,7 +605,8 @@ class FlextService[TDomainResult](
 
         @staticmethod
         def format_service_info(
-            _service: FlextService[TDomainResult], metadata: FlextTypes.Dict
+            _service: FlextService[object],
+            metadata: FlextTypes.Dict,  # Generic service
         ) -> str:
             """Format service information for display."""
             return f"Service: {metadata.get('service_type', 'Unknown')} ({metadata.get('service_name', 'unnamed')})"

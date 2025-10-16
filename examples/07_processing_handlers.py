@@ -1,7 +1,7 @@
 # !/usr/bin/env python3
-"""07 - FlextCore.Processors: Handler Pipeline and Strategy Patterns.
+"""07 - FlextProcessors: Handler Pipeline and Strategy Patterns.
 
-This example demonstrates the COMPLETE FlextCore.Processors API for building
+This example demonstrates the COMPLETE FlextProcessors API for building
 handler pipelines, strategy patterns, and message processing systems.
 
 Key Concepts Demonstrated:
@@ -24,13 +24,22 @@ import warnings
 from copy import deepcopy
 from typing import ClassVar, cast
 
-from flext_core import FlextCore
+from flext_core import (
+    FlextConstants,
+    FlextExceptions,
+    FlextLogger,
+    FlextProcessors,
+    FlextResult,
+    FlextRuntime,
+    FlextService,
+    FlextTypes,
+)
 
 
 class DemoScenarios:
     """Inline scenario helpers for processing handler demonstrations."""
 
-    _DATASET: ClassVar[FlextCore.Types.Dict] = {
+    _DATASET: ClassVar[FlextTypes.Dict] = {
         "users": [
             {
                 "id": 1,
@@ -41,7 +50,7 @@ class DemoScenarios:
         ],
     }
 
-    _REALISTIC: ClassVar[FlextCore.Types.Dict] = {
+    _REALISTIC: ClassVar[FlextTypes.Dict] = {
         "order": {
             "order_id": "order-456",
             "customer_id": "cust-123",
@@ -53,15 +62,15 @@ class DemoScenarios:
     }
 
     @staticmethod
-    def user(**overrides: object) -> FlextCore.Types.Dict:
+    def user(**overrides: object) -> FlextTypes.Dict:
         """Create user data dictionary for processing examples."""
-        users_list = cast("list[FlextCore.Types.Dict]", DemoScenarios._DATASET["users"])
+        users_list = cast("list[FlextTypes.Dict]", DemoScenarios._DATASET["users"])
         user = deepcopy(users_list[0])
         user.update(overrides)
         return user
 
     @staticmethod
-    def realistic_data() -> FlextCore.Types.Dict:
+    def realistic_data() -> FlextTypes.Dict:
         """Create realistic order data dictionary for processing examples."""
         return deepcopy(DemoScenarios._REALISTIC)
 
@@ -69,11 +78,11 @@ class DemoScenarios:
     def metadata(
         *,
         source: str = "examples",
-        tags: FlextCore.Types.StringList | None = None,
+        tags: FlextTypes.StringList | None = None,
         **extra: object,
-    ) -> FlextCore.Types.Dict:
+    ) -> FlextTypes.Dict:
         """Create metadata dictionary for processing examples."""
-        data: FlextCore.Types.Dict = {
+        data: FlextTypes.Dict = {
             "source": source,
             "component": "flext_core",
             "tags": tags or ["processors", "demo"],
@@ -82,45 +91,45 @@ class DemoScenarios:
         return data
 
 
-class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
-    """Service demonstrating ALL FlextCore.Processors patterns with FlextCore.Mixins infrastructure.
+class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
+    """Service demonstrating ALL FlextProcessors patterns with FlextMixins infrastructure.
 
-    This service inherits from FlextCore.Service to demonstrate:
-    - Inherited container property (FlextCore.Container singleton)
-    - Inherited logger property (FlextCore.Logger with service context - PROCESSORS FOCUS!)
-    - Inherited context property (FlextCore.Context for handler execution tracking)
-    - Inherited config property (FlextCore.Config with processing settings)
+    This service inherits from FlextService to demonstrate:
+    - Inherited container property (FlextContainer singleton)
+    - Inherited logger property (FlextLogger with service context - PROCESSORS FOCUS!)
+    - Inherited context property (FlextContext for handler execution tracking)
+    - Inherited config property (FlextConfig with processing settings)
     - Inherited metrics property (FlextMetrics for handler observability)
 
-    The focus is on demonstrating FlextCore.Processors patterns (handlers, pipelines,
+    The focus is on demonstrating FlextProcessors patterns (handlers, pipelines,
     strategies, registry) with structured logging and handler execution tracking,
-    while leveraging complete FlextCore.Mixins infrastructure for orchestration.
+    while leveraging complete FlextMixins infrastructure for orchestration.
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextCore.Mixins infrastructure.
+        """Initialize with inherited FlextMixins infrastructure.
 
         Note: No manual logger initialization needed!
-        All infrastructure is inherited from FlextCore.Service base class:
-        - self.logger: FlextCore.Logger with service context (ALREADY CONFIGURED!)
-        - self.container: FlextCore.Container global singleton
-        - self.context: FlextCore.Context for handler execution tracking
-        - self.config: FlextCore.Config with processing configuration
+        All infrastructure is inherited from FlextService base class:
+        - self.logger: FlextLogger with service context (ALREADY CONFIGURED!)
+        - self.container: FlextContainer global singleton
+        - self.context: FlextContext for handler execution tracking
+        - self.config: FlextConfig with processing configuration
         - self.metrics: FlextMetrics for handler observability
         """
         super().__init__()
-        # Use self.logger from FlextCore.Mixins, not logger
+        # Use self.logger from FlextMixins, not logger
         self._scenarios = DemoScenarios()
         self._user = self._scenarios.user()
-        self._order: FlextCore.Types.Dict = cast(
-            "FlextCore.Types.Dict", self._scenarios.realistic_data()["order"]
+        self._order: FlextTypes.Dict = cast(
+            "FlextTypes.Dict", self._scenarios.realistic_data()["order"]
         )
-        self._admin_user: FlextCore.Types.Dict = {
+        self._admin_user: FlextTypes.Dict = {
             **self._user,
             "role": "admin",
             "token": "valid-token",
         }
-        self._invalid_user: FlextCore.Types.Dict = {
+        self._invalid_user: FlextTypes.Dict = {
             **self._user,
             "email": "invalid",
             "role": "user",
@@ -131,14 +140,14 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         self.logger.info(
             "ProcessingPatternsService initialized with inherited infrastructure",
             extra={
-                "service_type": "FlextCore.Processors & Handler Patterns demonstration",
+                "service_type": "FlextProcessors & Handler Patterns demonstration",
                 "handler_types": ["BasicHandler", "Pipeline", "Strategy", "Registry"],
                 "processing_patterns": True,
             },
         )
 
-    def execute(self) -> FlextCore.Result[FlextCore.Types.Dict]:
-        """Execute all FlextCore.Processors pattern demonstrations.
+    def execute(self) -> FlextResult[FlextTypes.Dict]:
+        """Execute all FlextProcessors pattern demonstrations.
 
         Demonstrates inherited infrastructure alongside handler patterns:
         - Inherited logger for structured handler execution logs
@@ -147,10 +156,10 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         - Registry pattern with handler discovery
 
         Returns:
-            FlextCore.Result[Dict] with demonstration summary including infrastructure details
+            FlextResult[Dict] with demonstration summary including infrastructure details
 
         """
-        self.logger.info("Starting comprehensive FlextCore.Processors demonstration")
+        self.logger.info("Starting comprehensive FlextProcessors demonstration")
 
         try:
             # Core patterns
@@ -164,7 +173,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
             # Professional patterns
             self.demonstrate_error_recovery()
 
-            # NEW: FlextCore.Result v0.9.9+ methods for handlers
+            # NEW: FlextResult v0.9.9+ methods for handlers
             self.demonstrate_from_callable_handlers()
             self.demonstrate_flow_through_handlers()
             self.demonstrate_lash_handlers()
@@ -174,7 +183,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
             # Deprecation warnings
             self.demonstrate_deprecated_patterns()
 
-            summary: FlextCore.Types.Dict = {
+            summary: FlextTypes.Dict = {
                 "demonstrations_completed": 11,
                 "status": "completed",
                 "infrastructure": {
@@ -193,17 +202,17 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
             }
 
             self.logger.info(
-                "FlextCore.Processors demonstration completed successfully",
+                "FlextProcessors demonstration completed successfully",
                 extra=summary,
             )
 
-            return FlextCore.Result[FlextCore.Types.Dict].ok(summary)
+            return FlextResult[FlextTypes.Dict].ok(summary)
 
         except Exception as e:
-            error_msg = f"FlextCore.Processors demonstration failed: {e}"
+            error_msg = f"FlextProcessors demonstration failed: {e}"
             self.logger.exception(error_msg)
-            return FlextCore.Result[FlextCore.Types.Dict].fail(
-                error_msg, error_code=FlextCore.Constants.Errors.VALIDATION_ERROR
+            return FlextResult[FlextTypes.Dict].fail(
+                error_msg, error_code=FlextConstants.Errors.VALIDATION_ERROR
             )
 
     # ========== BASIC HANDLER PATTERNS ==========
@@ -212,45 +221,43 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         """Show basic handler creation and execution."""
         print("\n=== Basic Handler Patterns ===")
 
-        class ValidationHandler(FlextCore.Processors.Implementation.BasicHandler):
+        class ValidationHandler(FlextProcessors.Implementation.BasicHandler):
             """Handler for data validation."""
 
             def __init__(self, name: str) -> None:
                 """Initialize handler with logger."""
                 super().__init__(name)
-                self.logger = FlextCore.create_logger(__name__)
+                self.logger = FlextLogger.create_module_logger(__name__)
 
-            def handle(self, request: object) -> FlextCore.Result[str]:
+            def handle(self, request: object) -> FlextResult[str]:
                 """Validate and process the request."""
                 self.logger.info(f"Validating request in {self.name}")
-                data = cast("FlextCore.Types.Dict", request)
+                data = cast("FlextTypes.Dict", request)
 
-                # request is typed as FlextCore.Types.Dict
+                # request is typed as FlextTypes.Dict
                 email_value = cast("str | None", data.get("email", None))
                 if not email_value:
-                    return FlextCore.Result[str].fail("Email required")
+                    return FlextResult[str].fail("Email required")
 
                 # email_value is guaranteed to be str after cast and None check
 
                 if "@" not in email_value:
-                    return FlextCore.Result[str].fail("Invalid email format")
+                    return FlextResult[str].fail("Invalid email format")
 
                 data["validated_at"] = str(time.time())
-                return FlextCore.Result[str].ok(
-                    f"Validation passed for {data['email']}"
-                )
+                return FlextResult[str].ok(f"Validation passed for {data['email']}")
 
         validator = ValidationHandler("EmailValidator")
 
-        valid_request: FlextCore.Types.Dict = {
+        valid_request: FlextTypes.Dict = {
             "email": self._user["email"],
             "name": self._user["name"],
         }
-        result: FlextCore.Result[str] = validator.handle(valid_request)
+        result: FlextResult[str] = validator.handle(valid_request)
         if result.is_success:
             print(f"✅ Validation passed: {result.unwrap()}")
 
-        invalid_request: FlextCore.Types.Dict = {
+        invalid_request: FlextTypes.Dict = {
             "email": self._invalid_user["email"],
             "name": self._invalid_user["name"],
         }
@@ -264,96 +271,96 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         """Show chain of responsibility pattern with handler pipeline."""
         print("\n=== Handler Pipeline ===")
 
-        class AuthenticationHandler(FlextCore.Processors.Implementation.BasicHandler):
+        class AuthenticationHandler(FlextProcessors.Implementation.BasicHandler):
             """Authenticate the request."""
 
             def __init__(self, name: str) -> None:
                 """Initialize handler with logger."""
                 super().__init__(name)
-                self.logger = FlextCore.create_logger(__name__)
+                self.logger = FlextLogger.create_module_logger(__name__)
 
-            def handle(self, request: object) -> FlextCore.Result[str]:
+            def handle(self, request: object) -> FlextResult[str]:
                 """Check authentication."""
                 self.logger.info("Authenticating request")
 
                 if not isinstance(request, dict):
-                    return FlextCore.Result[str].fail("Request must be a dictionary")
+                    return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict = cast("FlextCore.Types.Dict", request)
+                request_dict = cast("FlextTypes.Dict", request)
                 token_value = cast("str | None", request_dict.get("token", None))
                 if not token_value:
-                    return FlextCore.Result[str].fail("Authentication required")
+                    return FlextResult[str].fail("Authentication required")
 
                 # token_value is guaranteed to be str after cast and None check
 
                 if token_value != "valid-token":
-                    return FlextCore.Result[str].fail("Invalid token")
+                    return FlextResult[str].fail("Invalid token")
 
                 request["authenticated"] = True
-                return FlextCore.Result[str].ok("Authentication successful")
+                return FlextResult[str].ok("Authentication successful")
 
-        class AuthorizationHandler(FlextCore.Processors.Implementation.BasicHandler):
+        class AuthorizationHandler(FlextProcessors.Implementation.BasicHandler):
             """Authorize the request."""
 
             def __init__(self, name: str) -> None:
                 """Initialize handler with logger."""
                 super().__init__(name)
-                self.logger = FlextCore.create_logger(__name__)
+                self.logger = FlextLogger.create_module_logger(__name__)
 
-            def handle(self, request: object) -> FlextCore.Result[str]:
+            def handle(self, request: object) -> FlextResult[str]:
                 """Check authorization."""
                 self.logger.info("Authorizing request")
 
                 if not isinstance(request, dict):
-                    return FlextCore.Result[str].fail("Request must be a dictionary")
+                    return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict = cast("FlextCore.Types.Dict", request)
+                request_dict = cast("FlextTypes.Dict", request)
                 authenticated_value = cast(
                     "bool | None", request_dict.get("authenticated", None)
                 )
                 if not authenticated_value:
-                    return FlextCore.Result[str].fail("Not authenticated")
+                    return FlextResult[str].fail("Not authenticated")
 
                 role_value = cast("str | None", request_dict.get("role", None))
                 if role_value != "admin":
-                    return FlextCore.Result[str].fail("Insufficient permissions")
+                    return FlextResult[str].fail("Insufficient permissions")
 
                 request["authorized"] = True
-                return FlextCore.Result[str].ok("Authorization successful")
+                return FlextResult[str].ok("Authorization successful")
 
-        class ProcessingHandler(FlextCore.Processors.Implementation.BasicHandler):
+        class ProcessingHandler(FlextProcessors.Implementation.BasicHandler):
             """Process the authorized request."""
 
             def __init__(self, name: str) -> None:
                 """Initialize handler with logger."""
                 super().__init__(name)
-                self.logger = FlextCore.create_logger(__name__)
+                self.logger = FlextLogger.create_module_logger(__name__)
 
-            def handle(self, request: object) -> FlextCore.Result[str]:
+            def handle(self, request: object) -> FlextResult[str]:
                 """Process the business logic."""
                 self.logger.info("Processing request")
 
                 if not isinstance(request, dict):
-                    return FlextCore.Result[str].fail("Request must be a dictionary")
+                    return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict = cast("FlextCore.Types.Dict", request)
+                request_dict = cast("FlextTypes.Dict", request)
                 authorized_value = cast(
                     "bool | None", request_dict.get("authorized", None)
                 )
                 if not authorized_value:
-                    return FlextCore.Result[str].fail("Not authorized")
+                    return FlextResult[str].fail("Not authorized")
 
                 request["processed"] = True
                 request["result"] = "Operation completed successfully"
                 request["timestamp"] = str(time.time())
 
-                return FlextCore.Result[str].ok("Processing completed successfully")
+                return FlextResult[str].ok("Processing completed successfully")
 
         auth_handler = AuthenticationHandler("Authenticator")
         authz_handler = AuthorizationHandler("Authorizer")
         process_handler = ProcessingHandler("Processor")
 
-        def execute_pipeline(request: FlextCore.Types.Dict) -> FlextCore.Result[str]:
+        def execute_pipeline(request: FlextTypes.Dict) -> FlextResult[str]:
             """Execute the handler pipeline."""
             result = auth_handler.handle(request)
             if result.is_failure:
@@ -366,7 +373,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
             return process_handler.handle(request)
 
         print("\n1. Valid request through pipeline:")
-        valid_request: FlextCore.Types.Dict = {
+        valid_request: FlextTypes.Dict = {
             "token": self._admin_user["token"],
             "role": self._admin_user["role"],
             "action": "delete_user",
@@ -377,7 +384,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
             print(f"✅ Pipeline success: {result.unwrap()}")
 
         print("\n2. Request with invalid token:")
-        invalid_token: FlextCore.Types.Dict = {
+        invalid_token: FlextTypes.Dict = {
             "token": "invalid",
             "role": self._admin_user["role"],
             "action": "delete_user",
@@ -388,7 +395,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
             print(f"❌ Pipeline failed at auth: {result.error}")
 
         print("\n3. Request with insufficient permissions:")
-        insufficient: FlextCore.Types.Dict = {
+        insufficient: FlextTypes.Dict = {
             "token": self._admin_user["token"],
             "role": self._invalid_user.get("role", "user"),
             "action": "delete_user",
@@ -407,51 +414,57 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         class PaymentStrategy:
             """Base payment processing strategy."""
 
-            def process(self, amount: float) -> FlextCore.Result[FlextCore.Types.Dict]:
+            def process(self, amount: float) -> FlextResult[FlextTypes.Dict]:
                 """Process payment with specific strategy."""
                 raise NotImplementedError
 
         class CreditCardStrategy(PaymentStrategy):
             """Credit card payment strategy."""
 
-            def process(self, amount: float) -> FlextCore.Result[FlextCore.Types.Dict]:
+            def process(self, amount: float) -> FlextResult[FlextTypes.Dict]:
                 """Process credit card payment."""
                 fee = amount * 0.029
-                return FlextCore.Result[FlextCore.Types.Dict].ok({
-                    "method": "credit_card",
-                    "amount": amount,
-                    "fee": round(fee, 2),
-                    "total": round(amount + fee, 2),
-                    "status": "processed",
-                })
+                return FlextResult[FlextTypes.Dict].ok(
+                    {
+                        "method": "credit_card",
+                        "amount": amount,
+                        "fee": round(fee, 2),
+                        "total": round(amount + fee, 2),
+                        "status": "processed",
+                    }
+                )
 
         class PayPalStrategy(PaymentStrategy):
             """PayPal payment strategy."""
 
-            def process(self, amount: float) -> FlextCore.Result[FlextCore.Types.Dict]:
+            def process(self, amount: float) -> FlextResult[FlextTypes.Dict]:
                 """Process PayPal payment."""
                 fee = amount * 0.034 + 0.30
-                return FlextCore.Result[FlextCore.Types.Dict].ok({
-                    "method": "paypal",
-                    "amount": amount,
-                    "fee": round(fee, 2),
-                    "total": round(amount + fee, 2),
-                    "status": "processed",
-                })
+                return FlextResult[FlextTypes.Dict].ok(
+                    {
+                        "method": "paypal",
+                        "amount": amount,
+                        "fee": round(fee, 2),
+                        "total": round(amount + fee, 2),
+                        "status": "processed",
+                    }
+                )
 
         class BankTransferStrategy(PaymentStrategy):
             """Bank transfer payment strategy."""
 
-            def process(self, amount: float) -> FlextCore.Result[FlextCore.Types.Dict]:
+            def process(self, amount: float) -> FlextResult[FlextTypes.Dict]:
                 """Process bank transfer."""
                 fee = 5.00
-                return FlextCore.Result[FlextCore.Types.Dict].ok({
-                    "method": "bank_transfer",
-                    "amount": amount,
-                    "fee": fee,
-                    "total": amount + fee,
-                    "status": "pending",
-                })
+                return FlextResult[FlextTypes.Dict].ok(
+                    {
+                        "method": "bank_transfer",
+                        "amount": amount,
+                        "fee": fee,
+                        "total": amount + fee,
+                        "status": "pending",
+                    }
+                )
 
         class PaymentProcessor:
             """Payment processor using strategy pattern."""
@@ -469,13 +482,11 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                 self,
                 method: str,
                 amount: float,
-            ) -> FlextCore.Result[FlextCore.Types.Dict]:
+            ) -> FlextResult[FlextTypes.Dict]:
                 """Process payment with selected strategy."""
                 strategy = self._strategies.get(method)
                 if strategy is None:
-                    return FlextCore.Result[FlextCore.Types.Dict].fail(
-                        "Unknown payment method"
-                    )
+                    return FlextResult[FlextTypes.Dict].fail("Unknown payment method")
                 return strategy.process(amount)
 
         processor = PaymentProcessor()
@@ -507,67 +518,63 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                 """Initialize registry."""
                 super().__init__()
                 self._handlers: dict[
-                    str, FlextCore.Processors.Implementation.BasicHandler
+                    str, FlextProcessors.Implementation.BasicHandler
                 ] = {}
-                self.logger = FlextCore.create_logger(__name__)
+                self.logger = FlextLogger.create_module_logger(__name__)
 
             def register(
                 self,
                 name: str,
-                handler: FlextCore.Processors.Implementation.BasicHandler,
-            ) -> FlextCore.Result[bool]:
+                handler: FlextProcessors.Implementation.BasicHandler,
+            ) -> FlextResult[bool]:
                 """Register a handler."""
                 if name in self._handlers:
-                    return FlextCore.Result[bool].fail(
-                        f"Handler {name} already registered"
-                    )
+                    return FlextResult[bool].fail(f"Handler {name} already registered")
 
                 self._handlers[name] = handler
                 self.logger.info("Registered handler: %s", name)
-                return FlextCore.Result[bool].ok(True)
+                return FlextResult[bool].ok(True)
 
-            def unregister(self, name: str) -> FlextCore.Result[bool]:
+            def unregister(self, name: str) -> FlextResult[bool]:
                 """Unregister a handler."""
                 if name not in self._handlers:
-                    return FlextCore.Result[bool].fail(f"Handler {name} not found")
+                    return FlextResult[bool].fail(f"Handler {name} not found")
 
                 del self._handlers[name]
                 self.logger.info("Unregistered handler: %s", name)
-                return FlextCore.Result[bool].ok(True)
+                return FlextResult[bool].ok(True)
 
             def get(
                 self,
                 name: str,
-            ) -> FlextCore.Result[FlextCore.Processors.Implementation.BasicHandler]:
+            ) -> FlextResult[FlextProcessors.Implementation.BasicHandler]:
                 """Get a handler by name."""
                 handler = self._handlers.get(name)
                 if not handler:
-                    return FlextCore.Result[
-                        FlextCore.Processors.Implementation.BasicHandler
+                    return FlextResult[
+                        FlextProcessors.Implementation.BasicHandler
                     ].fail(f"Handler {name} not found")
 
-                return FlextCore.Result[
-                    FlextCore.Processors.Implementation.BasicHandler
-                ].ok(
+                return FlextResult[FlextProcessors.Implementation.BasicHandler].ok(
                     handler,
                 )
 
             def execute(
                 self,
                 name: str,
-                request: FlextCore.Types.Dict,
-            ) -> FlextCore.Result[str]:
+                request: FlextTypes.Dict,
+            ) -> FlextResult[str]:
                 """Execute a handler by name."""
                 handler_result = self.get(name)
                 if handler_result.is_failure:
-                    return FlextCore.Result[str].fail(
+                    return FlextResult[str].fail(
                         handler_result.error or "Handler not found",
                     )
 
                 handler = handler_result.unwrap()
                 return handler.handle(request)
 
-            def list_handlers(self) -> FlextCore.Types.StringList:
+            def list_handlers(self) -> FlextTypes.StringList:
                 """List all registered handlers."""
                 return list(self._handlers.keys())
 
@@ -575,44 +582,44 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         registry = HandlerRegistry()
 
         # Register various handlers
-        class UpperCaseHandler(FlextCore.Processors.Implementation.BasicHandler):
+        class UpperCaseHandler(FlextProcessors.Implementation.BasicHandler):
             """Convert text to uppercase."""
 
-            def handle(self, request: object) -> FlextCore.Result[str]:
+            def handle(self, request: object) -> FlextResult[str]:
                 """Process text."""
                 if not isinstance(request, dict):
-                    return FlextCore.Result[str].fail("Request must be a dictionary")
+                    return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict = cast("FlextCore.Types.Dict", request)
+                request_dict = cast("FlextTypes.Dict", request)
                 text_value = cast("str", request_dict.get("text", ""))
-                return FlextCore.Result[str].ok(f"Uppercase: {text_value.upper()}")
+                return FlextResult[str].ok(f"Uppercase: {text_value.upper()}")
 
-        class LowerCaseHandler(FlextCore.Processors.Implementation.BasicHandler):
+        class LowerCaseHandler(FlextProcessors.Implementation.BasicHandler):
             """Convert text to lowercase."""
 
-            def handle(self, request: object) -> FlextCore.Result[str]:
+            def handle(self, request: object) -> FlextResult[str]:
                 """Process text."""
                 if not isinstance(request, dict):
-                    return FlextCore.Result[str].fail("Request must be a dictionary")
+                    return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict = cast("FlextCore.Types.Dict", request)
+                request_dict = cast("FlextTypes.Dict", request)
                 text_value = cast("str", request_dict.get("text", ""))
-                return FlextCore.Result[str].ok(f"Lowercase: {text_value.lower()}")
+                return FlextResult[str].ok(f"Lowercase: {text_value.lower()}")
 
-        class ReverseHandler(FlextCore.Processors.Implementation.BasicHandler):
+        class ReverseHandler(FlextProcessors.Implementation.BasicHandler):
             """Reverse text."""
 
-            def handle(self, request: object) -> FlextCore.Result[str]:
+            def handle(self, request: object) -> FlextResult[str]:
                 """Process text."""
                 if not isinstance(request, dict):
-                    return FlextCore.Result[str].fail("Request must be a dictionary")
+                    return FlextResult[str].fail("Request must be a dictionary")
 
-                request_dict = cast("FlextCore.Types.Dict", request)
+                request_dict = cast("FlextTypes.Dict", request)
                 text_raw = request_dict.get("text", "")
                 text_value: str = (
                     text_raw if isinstance(text_raw, str) else str(text_raw)
                 )
-                return FlextCore.Result[str].ok(f"Reversed: {text_value[::-1]}")
+                return FlextResult[str].ok(f"Reversed: {text_value[::-1]}")
 
         # Register handlers
         registry.register("uppercase", UpperCaseHandler("UpperCase"))
@@ -622,7 +629,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         print(f"Registered handlers: {registry.list_handlers()}")
 
         # Dynamic handler execution
-        test_request: FlextCore.Types.Dict = {"text": "Hello FLEXT"}
+        test_request: FlextTypes.Dict = {"text": "Hello FLEXT"}
 
         print("\n1. Uppercase handler:")
         result = registry.execute("uppercase", test_request)
@@ -655,7 +662,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         print("\n=== Error Recovery Patterns ===")
 
         # Handler with retry logic
-        class RetryableHandler(FlextCore.Processors.Implementation.BasicHandler):
+        class RetryableHandler(FlextProcessors.Implementation.BasicHandler):
             """Handler that can retry on failure."""
 
             def __init__(self, name: str, max_retries: int = 3) -> None:
@@ -663,9 +670,9 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                 super().__init__(name)
                 self._max_retries = max_retries
                 self._attempt = 0
-                self.logger = FlextCore.create_logger(__name__)
+                self.logger = FlextLogger.create_module_logger(__name__)
 
-            def handle(self, request: object) -> FlextCore.Result[str]:
+            def handle(self, request: object) -> FlextResult[str]:
                 """Handle with retry logic."""
                 self._attempt += 1
                 _ = request  # Mark as used to avoid linting warning
@@ -676,17 +683,17 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                         f"Attempt {self._attempt} failed",
                         extra={"handler": self.name},
                     )
-                    return FlextCore.Result[str].fail(f"Attempt {self._attempt} failed")
+                    return FlextResult[str].fail(f"Attempt {self._attempt} failed")
 
                 # Success on final attempt
                 self.logger.info(
                     f"Success on attempt {self._attempt}",
                     extra={"handler": self.name},
                 )
-                return FlextCore.Result[str].ok(f"Success on attempt {self._attempt}")
+                return FlextResult[str].ok(f"Success on attempt {self._attempt}")
 
         # Circuit breaker pattern
-        class CircuitBreakerHandler(FlextCore.Processors.Implementation.BasicHandler):
+        class CircuitBreakerHandler(FlextProcessors.Implementation.BasicHandler):
             """Handler with circuit breaker pattern."""
 
             def __init__(self, name: str, threshold: int = 3) -> None:
@@ -695,20 +702,20 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                 self._failure_count = 0
                 self._threshold = threshold
                 self._is_open = False
-                self.logger = FlextCore.create_logger(__name__)
+                self.logger = FlextLogger.create_module_logger(__name__)
 
-            def handle(self, request: object) -> FlextCore.Result[str]:
+            def handle(self, request: object) -> FlextResult[str]:
                 """Handle with circuit breaker."""
                 # Check if circuit is open
                 if self._is_open:
-                    return FlextCore.Result[str].fail("Circuit breaker is open")
+                    return FlextResult[str].fail("Circuit breaker is open")
 
-                # Convert object to FlextCore.Types.Dict for processing
+                # Convert object to FlextTypes.Dict for processing
                 if not isinstance(request, dict):
-                    return FlextCore.Result[str].fail("Request must be a dictionary")
+                    return FlextResult[str].fail("Request must be a dictionary")
 
                 # Simulate processing
-                request_dict = cast("FlextCore.Types.Dict", request)
+                request_dict = cast("FlextTypes.Dict", request)
                 force_fail_value = cast("bool", request_dict.get("force_fail", False))
                 should_fail = bool(force_fail_value)
 
@@ -720,11 +727,11 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                             "Circuit breaker opened",
                             extra={"failures": self._failure_count},
                         )
-                    return FlextCore.Result[str].fail("Processing failed")
+                    return FlextResult[str].fail("Processing failed")
 
                 # Reset on success
                 self._failure_count = 0
-                return FlextCore.Result[str].ok("Processing successful")
+                return FlextResult[str].ok("Processing successful")
 
             def reset(self) -> None:
                 """Reset circuit breaker."""
@@ -774,13 +781,13 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
 
     # ========== DEPRECATED PATTERNS ==========
 
-    # ========== NEW FlextCore.Result METHODS (v0.9.9+) ==========
+    # ========== NEW FlextResult METHODS (v0.9.9+) ==========
 
     def demonstrate_from_callable_handlers(self) -> None:
         """Show from_callable for safe handler execution."""
         print("\n=== from_callable: Safe Handler Execution ===")
 
-        def risky_handler(data: FlextCore.Types.Dict) -> str:
+        def risky_handler(data: FlextTypes.Dict) -> str:
             """Handler that might raise exceptions."""
             if not data.get("user_id"):
                 msg = "User ID required"
@@ -788,14 +795,14 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
             return f"Processed user {data['user_id']}"
 
         # Safe handler execution without try/except
-        result: FlextCore.Result[str] = FlextCore.Result[str].from_callable(
+        result: FlextResult[str] = FlextResult[str].from_callable(
             lambda: risky_handler({"user_id": self._user["id"]}),
         )
         if result.is_success:
             print(f"✅ Handler success: {result.unwrap()}")
 
         # Failed execution captured as Result
-        failed: FlextCore.Result[str] = FlextCore.Result[str].from_callable(
+        failed: FlextResult[str] = FlextResult[str].from_callable(
             lambda: risky_handler({}),
         )
         if failed.is_failure:
@@ -806,39 +813,37 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         print("\n=== flow_through: Handler Pipeline ===")
 
         def validate_handler(
-            data: FlextCore.Types.Dict,
-        ) -> FlextCore.Result[FlextCore.Types.Dict]:
+            data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Validate request data."""
             if not data.get("email"):
-                return FlextCore.Result[FlextCore.Types.Dict].fail("Email required")
-            return FlextCore.Result[FlextCore.Types.Dict].ok(data)
+                return FlextResult[FlextTypes.Dict].fail("Email required")
+            return FlextResult[FlextTypes.Dict].ok(data)
 
         def authenticate_handler(
-            data: FlextCore.Types.Dict,
-        ) -> FlextCore.Result[FlextCore.Types.Dict]:
+            data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Authenticate the request."""
-            authenticated: FlextCore.Types.Dict = {**data, "authenticated": True}
-            return FlextCore.Result[FlextCore.Types.Dict].ok(authenticated)
+            authenticated: FlextTypes.Dict = {**data, "authenticated": True}
+            return FlextResult[FlextTypes.Dict].ok(authenticated)
 
         def authorize_handler(
-            data: FlextCore.Types.Dict,
-        ) -> FlextCore.Result[FlextCore.Types.Dict]:
+            data: FlextTypes.Dict,
+        ) -> FlextResult[FlextTypes.Dict]:
             """Authorize the request."""
             if data.get("role") != "admin":
-                return FlextCore.Result[FlextCore.Types.Dict].fail(
-                    "Insufficient permissions"
-                )
-            authorized: FlextCore.Types.Dict = {**data, "authorized": True}
-            return FlextCore.Result[FlextCore.Types.Dict].ok(authorized)
+                return FlextResult[FlextTypes.Dict].fail("Insufficient permissions")
+            authorized: FlextTypes.Dict = {**data, "authorized": True}
+            return FlextResult[FlextTypes.Dict].ok(authorized)
 
         # Flow through handler pipeline
-        request_data: FlextCore.Types.Dict = {
+        request_data: FlextTypes.Dict = {
             "email": self._admin_user["email"],
             "role": self._admin_user["role"],
             "action": "delete",
         }
-        result: FlextCore.Result[FlextCore.Types.Dict] = (
-            FlextCore.Result[FlextCore.Types.Dict]
+        result: FlextResult[FlextTypes.Dict] = (
+            FlextResult[FlextTypes.Dict]
             .ok(request_data)
             .flow_through(
                 validate_handler,
@@ -848,7 +853,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         )
 
         if result.is_success:
-            final_data: FlextCore.Types.Dict = result.unwrap()
+            final_data: FlextTypes.Dict = result.unwrap()
             print(f"✅ Pipeline complete: action={final_data.get('action')}")
             authenticated = bool(final_data.get("authenticated", False))
             authorized = bool(final_data.get("authorized", False))
@@ -861,25 +866,25 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
 
         attempt_count = {"count": 0}
 
-        def primary_handler(data: FlextCore.Types.Dict) -> FlextCore.Result[str]:
+        def primary_handler(data: FlextTypes.Dict) -> FlextResult[str]:
             """Try primary handler (might fail)."""
             attempt_count["count"] += 1
-            if attempt_count["count"] < FlextCore.Constants.Validation.RETRY_COUNT_MAX:
-                return FlextCore.Result[str].fail("Primary handler unavailable")
-            return FlextCore.Result[str].ok(f"Primary: Processed {data.get('action')}")
+            if attempt_count["count"] < FlextConstants.Validation.RETRY_COUNT_MAX:
+                return FlextResult[str].fail("Primary handler unavailable")
+            return FlextResult[str].ok(f"Primary: Processed {data.get('action')}")
 
-        def fallback_handler(error: str) -> FlextCore.Result[str]:
+        def fallback_handler(error: str) -> FlextResult[str]:
             """Fallback handler on failure."""
             print(f"   Falling back after: {error}")
-            return FlextCore.Result[str].ok("Fallback: Request queued for retry")
+            return FlextResult[str].ok("Fallback: Request queued for retry")
 
-        request: FlextCore.Types.Dict = {
+        request: FlextTypes.Dict = {
             "action": "process_order",
             "order_id": self._order["order_id"],
         }
 
         # Try primary, fall back on failure
-        result: FlextCore.Result[str] = primary_handler(request).lash(fallback_handler)
+        result: FlextResult[str] = primary_handler(request).lash(fallback_handler)
         if result.is_success:
             print(f"✅ Handler result: {result.unwrap()}")
 
@@ -887,7 +892,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         """Show alt for handler selection fallback."""
         print("\n=== alt: Handler Selection Fallback ===")
 
-        def get_specialized_handler(action: str) -> FlextCore.Result[str]:
+        def get_specialized_handler(action: str) -> FlextResult[str]:
             """Try to get specialized handler."""
             handlers = {
                 "payment": "PaymentHandler",
@@ -895,16 +900,16 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
                 "inventory": "InventoryHandler",
             }
             if action in handlers:
-                return FlextCore.Result[str].ok(handlers[action])
-            return FlextCore.Result[str].fail(f"No specialized handler for {action}")
+                return FlextResult[str].ok(handlers[action])
+            return FlextResult[str].fail(f"No specialized handler for {action}")
 
-        def get_generic_handler() -> FlextCore.Result[str]:
+        def get_generic_handler() -> FlextResult[str]:
             """Fallback to generic handler."""
-            return FlextCore.Result[str].ok("GenericActionHandler")
+            return FlextResult[str].ok("GenericActionHandler")
 
         # Try specialized, use generic as fallback
         action = "notification"
-        handler: FlextCore.Result[str] = get_specialized_handler(action).alt(
+        handler: FlextResult[str] = get_specialized_handler(action).alt(
             get_generic_handler()
         )
 
@@ -922,46 +927,40 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
             return "Default: Request acknowledged"
 
         # Success case - default not called
-        handler_result = FlextCore.Result[str].ok(
-            "Primary: Request processed successfully"
-        )
+        handler_result = FlextResult[str].ok("Primary: Request processed successfully")
         response = handler_result.value_or_call(create_default_handler_result)
         print(f"✅ Got primary response: {response}")
 
         # Failure case - default called lazily
-        failed_handler = FlextCore.Result[str].fail("Handler error")
+        failed_handler = FlextResult[str].fail("Handler error")
         default_response = failed_handler.value_or_call(create_default_handler_result)
         print(f"✅ Got default response: {default_response}")
 
     def demonstrate_flext_constants_processing(self) -> None:
-        """Show FlextCore.Constants integration with processing patterns."""
-        print("\n=== FlextCore.Constants.Processing Integration (Layer 1) ===")
+        """Show FlextConstants integration with processing patterns."""
+        print("\n=== FlextConstants.Processing Integration (Layer 1) ===")
 
-        logger = FlextCore.create_logger(__name__)
+        logger = FlextLogger.create_module_logger(__name__)
 
         # Processing timeout and batch constants
-        print(f"  DEFAULT_TIMEOUT: {FlextCore.Constants.Config.DEFAULT_TIMEOUT}s")
+        print(f"  DEFAULT_TIMEOUT: {FlextConstants.Config.DEFAULT_TIMEOUT}s")
+        print(f"  DEFAULT_MAX_WORKERS: {FlextConstants.Processing.DEFAULT_MAX_WORKERS}")
+        print(f"  DEFAULT_BATCH_SIZE: {FlextConstants.Processing.DEFAULT_BATCH_SIZE}")
         print(
-            f"  DEFAULT_MAX_WORKERS: {FlextCore.Constants.Processing.DEFAULT_MAX_WORKERS}"
-        )
-        print(
-            f"  DEFAULT_BATCH_SIZE: {FlextCore.Constants.Processing.DEFAULT_BATCH_SIZE}"
-        )
-        print(
-            f"  DEFAULT_RETRY_ATTEMPTS: {FlextCore.Constants.Reliability.MAX_RETRY_ATTEMPTS}"
+            f"  DEFAULT_RETRY_ATTEMPTS: {FlextConstants.Reliability.MAX_RETRY_ATTEMPTS}"
         )
 
         # Error codes for handler failures
-        print(f"  VALIDATION_ERROR: {FlextCore.Constants.Errors.VALIDATION_ERROR}")
-        print(f"  TIMEOUT_ERROR: {FlextCore.Constants.Errors.TIMEOUT_ERROR}")
-        print(f"  NOT_FOUND_ERROR: {FlextCore.Constants.Errors.NOT_FOUND_ERROR}")
+        print(f"  VALIDATION_ERROR: {FlextConstants.Errors.VALIDATION_ERROR}")
+        print(f"  TIMEOUT_ERROR: {FlextConstants.Errors.TIMEOUT_ERROR}")
+        print(f"  NOT_FOUND_ERROR: {FlextConstants.Errors.NOT_FOUND_ERROR}")
 
         # Use constants in handler configuration
-        handler_config: FlextCore.Types.Dict = {
-            "timeout": FlextCore.Constants.Config.DEFAULT_TIMEOUT,
-            "max_workers": FlextCore.Constants.Processing.DEFAULT_MAX_WORKERS,
-            "batch_size": FlextCore.Constants.Processing.DEFAULT_BATCH_SIZE,
-            "retry_attempts": FlextCore.Constants.Reliability.MAX_RETRY_ATTEMPTS,
+        handler_config: FlextTypes.Dict = {
+            "timeout": FlextConstants.Config.DEFAULT_TIMEOUT,
+            "max_workers": FlextConstants.Processing.DEFAULT_MAX_WORKERS,
+            "batch_size": FlextConstants.Processing.DEFAULT_BATCH_SIZE,
+            "retry_attempts": FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
         }
 
         logger.info(
@@ -971,22 +970,22 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         print("✅ Processing configuration constants demonstrated")
 
     def demonstrate_flext_exceptions_processing(self) -> None:
-        """Show FlextCore.Exceptions integration with handler error handling."""
-        print("\n=== FlextCore.Exceptions Integration (Layer 2) ===")
+        """Show FlextExceptions integration with handler error handling."""
+        print("\n=== FlextExceptions Integration (Layer 2) ===")
 
-        logger = FlextCore.create_logger(__name__)
+        logger = FlextLogger.create_module_logger(__name__)
 
         # Handler validation error
         try:
             handler_name = ""
             if not handler_name:
                 error_message = "Handler name is required"
-                raise FlextCore.Exceptions.ValidationError(
+                raise FlextExceptions.ValidationError(
                     error_message,
                     field="handler_name",
                     value=handler_name,
                 )
-        except FlextCore.Exceptions.ValidationError as e:
+        except FlextExceptions.ValidationError as e:
             logger.exception(
                 "Handler validation failed",
                 extra={
@@ -1001,12 +1000,12 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         # Handler not found
         try:
             error_message = "Handler not found in registry"
-            raise FlextCore.Exceptions.NotFoundError(
+            raise FlextExceptions.NotFoundError(
                 error_message,
                 resource_type="handler",
                 resource_id="DataTransformHandler",
             )
-        except FlextCore.Exceptions.NotFoundError as e:
+        except FlextExceptions.NotFoundError as e:
             logger.exception(
                 "Handler not found",
                 extra={
@@ -1022,12 +1021,12 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         # Handler timeout error
         try:
             error_message = "Handler processing timeout"
-            raise FlextCore.Exceptions.TimeoutError(
+            raise FlextExceptions.TimeoutError(
                 error_message,
-                timeout_seconds=FlextCore.Constants.Config.DEFAULT_TIMEOUT,
+                timeout_seconds=FlextConstants.Config.DEFAULT_TIMEOUT,
                 operation="process_request",
             )
-        except FlextCore.Exceptions.TimeoutError as e:
+        except FlextExceptions.TimeoutError as e:
             logger.exception(
                 "Handler timeout",
                 extra={
@@ -1043,12 +1042,12 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         # Handler configuration error
         try:
             error_message = "Handler pipeline configuration invalid: max_workers=-1"
-            raise FlextCore.Exceptions.ConfigurationError(
+            raise FlextExceptions.ConfigurationError(
                 error_message,
                 config_key="max_workers",
                 config_source="handler_config.yaml",
             )
-        except FlextCore.Exceptions.ConfigurationError as e:
+        except FlextExceptions.ConfigurationError as e:
             logger.exception(
                 "Handler configuration error",
                 extra={
@@ -1062,31 +1061,25 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
             print(f"   Config: {e.config_key} from {e.config_source}")
 
     def demonstrate_flext_runtime_processing(self) -> None:
-        """Show FlextCore.Runtime integration with processing defaults."""
-        print("\n=== FlextCore.Runtime Integration (Layer 0.5) ===")
+        """Show FlextRuntime integration with processing defaults."""
+        print("\n=== FlextRuntime Integration (Layer 0.5) ===")
 
-        # FlextCore.Runtime configuration defaults for processing
-        print(f"  DEFAULT_TIMEOUT: {FlextCore.Constants.Config.DEFAULT_TIMEOUT}")
+        # FlextRuntime configuration defaults for processing
+        print(f"  DEFAULT_TIMEOUT: {FlextConstants.Config.DEFAULT_TIMEOUT}")
+        print(f"  DEFAULT_MAX_WORKERS: {FlextConstants.Processing.DEFAULT_MAX_WORKERS}")
+        print(f"  DEFAULT_BATCH_SIZE: {FlextConstants.Processing.DEFAULT_BATCH_SIZE}")
         print(
-            f"  DEFAULT_MAX_WORKERS: {FlextCore.Constants.Processing.DEFAULT_MAX_WORKERS}"
+            f"  DEFAULT_RETRY_ATTEMPTS: {FlextConstants.Reliability.MAX_RETRY_ATTEMPTS}"
         )
-        print(
-            f"  DEFAULT_BATCH_SIZE: {FlextCore.Constants.Processing.DEFAULT_BATCH_SIZE}"
-        )
-        print(
-            f"  DEFAULT_RETRY_ATTEMPTS: {FlextCore.Constants.Reliability.MAX_RETRY_ATTEMPTS}"
-        )
-        print(
-            f"  DEFAULT_PAGE_SIZE: {FlextCore.Constants.Pagination.DEFAULT_PAGE_SIZE}"
-        )
+        print(f"  DEFAULT_PAGE_SIZE: {FlextConstants.Pagination.DEFAULT_PAGE_SIZE}")
 
         # Handler processing configuration
-        processing_config: FlextCore.Types.Dict = {
-            "timeout": FlextCore.Constants.Config.DEFAULT_TIMEOUT,
-            "max_workers": FlextCore.Constants.Processing.DEFAULT_MAX_WORKERS,
-            "batch_size": FlextCore.Constants.Processing.DEFAULT_BATCH_SIZE,
-            "retry_attempts": FlextCore.Constants.Reliability.MAX_RETRY_ATTEMPTS,
-            "page_size": FlextCore.Constants.Pagination.DEFAULT_PAGE_SIZE,
+        processing_config: FlextTypes.Dict = {
+            "timeout": FlextConstants.Config.DEFAULT_TIMEOUT,
+            "max_workers": FlextConstants.Processing.DEFAULT_MAX_WORKERS,
+            "batch_size": FlextConstants.Processing.DEFAULT_BATCH_SIZE,
+            "retry_attempts": FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
+            "page_size": FlextConstants.Pagination.DEFAULT_PAGE_SIZE,
         }
 
         print("✅ Processing configuration:")
@@ -1100,18 +1093,16 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         }
 
         handler_id = handler_input.get("handler_id", "")
-        if FlextCore.Runtime.is_valid_identifier(handler_id):
+        if FlextRuntime.is_valid_identifier(handler_id):
             print(f"✅ Valid handler ID: {handler_id}")
 
         handler_type = handler_input.get("handler_type", "")
-        if FlextCore.Runtime.is_valid_identifier(handler_type):
+        if FlextRuntime.is_valid_identifier(handler_type):
             print(f"✅ Valid handler type: {handler_type}")
 
         # Path validation for handler configuration files
         config_path = "/etc/flext/handlers.yaml"
-        if FlextCore.Runtime.is_valid_path(
-            config_path
-        ):  # config_path is a string literal
+        if FlextRuntime.is_valid_path(config_path):  # config_path is a string literal
             print(f"✅ Valid config path: {config_path}")
 
     def demonstrate_deprecated_patterns(self) -> None:
@@ -1120,7 +1111,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
 
         # OLD: Direct exception handling (DEPRECATED)
         warnings.warn(
-            "Exception-based handlers are DEPRECATED! Use FlextCore.Result.",
+            "Exception-based handlers are DEPRECATED! Use FlextResult.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -1130,7 +1121,7 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         print("except ProcessingError as e:")
         print("    handle_error(e)")
 
-        print("\n✅ CORRECT WAY (FlextCore.Result):")
+        print("\n✅ CORRECT WAY (FlextResult):")
         print("result = handler.handle(data)")
         print("if result.is_failure:")
         print("    logger.error(f'Processing failed: {result.error}')")
@@ -1160,18 +1151,16 @@ class ProcessingPatternsService(FlextCore.Service[FlextCore.Types.Dict]):
         print("    return processed_data")
 
         print("\n✅ CORRECT WAY (-ready):")
-        print(
-            "def handle(self, request: dict) -> FlextCore.Result[FlextCore.Types.Dict]:"
-        )
-        print("    # Returns FlextCore.Result for composition")
+        print("def handle(self, request: dict) -> FlextResult[FlextTypes.Dict]:")
+        print("    # Returns FlextResult for composition")
 
 
 def main() -> None:
-    """Main entry point demonstrating all FlextCore.Processors capabilities."""
+    """Main entry point demonstrating all FlextProcessors capabilities."""
     service = ProcessingPatternsService()
 
     print("=" * 60)
-    print("FlextCore.Processors COMPLETE API DEMONSTRATION")
+    print("FlextProcessors COMPLETE API DEMONSTRATION")
     print("Handler Pipelines and Strategy Patterns")
     print("=" * 60)
 
@@ -1186,7 +1175,7 @@ def main() -> None:
     # Professional patterns
     service.demonstrate_error_recovery()
 
-    # NEW: FlextCore.Result v0.9.9+ methods for handlers
+    # NEW: FlextResult v0.9.9+ methods for handlers
     service.demonstrate_from_callable_handlers()
     service.demonstrate_flow_through_handlers()
     service.demonstrate_lash_handlers()
@@ -1202,12 +1191,12 @@ def main() -> None:
     service.demonstrate_deprecated_patterns()
 
     print("\n" + "=" * 60)
-    print("✅ ALL FlextCore.Processors patterns demonstrated!")
+    print("✅ ALL FlextProcessors patterns demonstrated!")
     print(
         "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call"
     )
     print(
-        "🔧 Including foundation integration: FlextCore.Constants processing, FlextCore.Runtime (Layer 0.5), FlextCore.Exceptions (Layer 2)"
+        "🔧 Including foundation integration: FlextConstants processing, FlextRuntime (Layer 0.5), FlextExceptions (Layer 2)"
     )
     print("🎯 Next: See 08_*.py for additional advanced patterns")
     print("=" * 60)

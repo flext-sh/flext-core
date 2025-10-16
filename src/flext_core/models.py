@@ -163,7 +163,6 @@ class FlextModels:
             return value.isoformat() if value else None
 
         @computed_field
-        @property
         def is_modified(self) -> bool:
             """Check if the model has been modified after creation."""
             return self.updated_at is not None
@@ -210,7 +209,6 @@ class FlextModels:
         )
 
         @computed_field
-        @property
         def is_initial_version(self) -> bool:
             """Check if this is the initial version (version 1)."""
             return self.version == FlextConstants.Performance.DEFAULT_VERSION
@@ -2054,9 +2052,9 @@ class FlextModels:
             if token.previous_value is None:
                 structlog.contextvars.unbind_contextvars(token.key)
             else:
-                structlog.contextvars.bind_contextvars(**{
-                    token.key: token.previous_value
-                })
+                structlog.contextvars.bind_contextvars(
+                    **{token.key: token.previous_value}
+                )
 
     class Token(Value):
         """Token for context variable reset operations.
@@ -2263,13 +2261,11 @@ class FlextModels:
             return v
 
         @computed_field
-        @property
         def total_data_items(self) -> int:
             """Compute total number of data items across all scopes."""
             return len(self.data)
 
         @computed_field
-        @property
         def has_statistics(self) -> bool:
             """Check if statistics are available."""
             return bool(self.statistics)
@@ -2490,13 +2486,11 @@ class FlextModels:
             return cls(handler_name=handler_name, handler_mode=handler_mode)
 
         @computed_field
-        @property
         def is_running(self) -> bool:
             """Check if execution is currently running."""
             return self._start_time is not None
 
         @computed_field
-        @property
         def has_metrics(self) -> bool:
             """Check if metrics have been recorded."""
             return self._metrics_state is not None and bool(self._metrics_state)
@@ -3113,7 +3107,7 @@ class FlextModels:
             return FlextResult[None].ok(None)
 
         @staticmethod
-        def validate_aggregate_consistency[T: FlextProtocols.Foundation.HasInvariants](
+        def validate_aggregate_consistency[T: FlextProtocols.HasInvariants](
             aggregate: T,
         ) -> FlextResult[T]:
             """Validate aggregate consistency and business invariants.
@@ -3135,7 +3129,7 @@ class FlextModels:
                 )
 
             # Check invariants if the aggregate supports them
-            if isinstance(aggregate, FlextProtocols.Foundation.HasInvariants):
+            if isinstance(aggregate, FlextProtocols.HasInvariants):
                 try:
                     aggregate.check_invariants()
                 except Exception as e:

@@ -469,7 +469,7 @@ class FlextUtilities:
             if isinstance(value, bytes):
                 return ("bytes", value.hex())
 
-            if isinstance(value, FlextProtocols.Foundation.HasModelDump):
+            if isinstance(value, FlextProtocols.HasModelDump):
                 try:
                     dumped: FlextTypes.Dict = value.model_dump()
                 except TypeError:
@@ -555,7 +555,7 @@ class FlextUtilities:
             """
             try:
                 # For Pydantic models, use model_dump with sorted keys
-                if isinstance(command, FlextProtocols.Foundation.HasModelDump):
+                if isinstance(command, FlextProtocols.HasModelDump):
                     data = command.model_dump(mode="python")
                     # Sort keys recursively for deterministic ordering
                     sorted_data = FlextUtilities.Cache.sort_dict_keys(data)
@@ -1274,7 +1274,7 @@ class FlextUtilities:
 
             """
             # Check for Pydantic model with model_dump method
-            if isinstance(obj, FlextProtocols.Foundation.HasModelDump):
+            if isinstance(obj, FlextProtocols.HasModelDump):
                 model_data: FlextTypes.Dict = obj.model_dump()
                 if parameter not in model_data:
                     msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
@@ -1306,7 +1306,7 @@ class FlextUtilities:
             """
             try:
                 # Check if parameter exists in model fields for Pydantic objects
-                if isinstance(obj, FlextProtocols.Foundation.HasModelFields):
+                if isinstance(obj, FlextProtocols.HasModelFields):
                     # Access model_fields from class, not instance (Pydantic 2.11+ compatibility)
                     model_fields = type(obj).model_fields
                     if parameter not in model_fields:

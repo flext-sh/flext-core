@@ -8,8 +8,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
 """
-# pyright: basic
 
+# pyright: basic
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -127,7 +127,6 @@ class FlextRegistry(FlextMixins):
         ] = Field(default_factory=list)
 
         @computed_field
-        @property
         def is_success(self) -> bool:
             """Indicate whether the batch registration fully succeeded.
 
@@ -143,7 +142,6 @@ class FlextRegistry(FlextMixins):
             return not self.errors
 
         @computed_field
-        @property
         def successful_registrations(self) -> int:
             """Number of successful registrations.
 
@@ -159,7 +157,6 @@ class FlextRegistry(FlextMixins):
             return len(self.registered)
 
         @computed_field
-        @property
         def failed_registrations(self) -> int:
             """Number of failed registrations.
 

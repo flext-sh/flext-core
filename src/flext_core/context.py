@@ -8,8 +8,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
 """
-# Expected: Complex context variable typing with delegation pattern to FlextLogger
-# pyright: reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
 
 from __future__ import annotations
 
@@ -23,7 +21,6 @@ from datetime import UTC, datetime
 from typing import (
     Final,
     Self,
-    TypeVar,
     cast,
 )
 
@@ -33,10 +30,6 @@ from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
-
-# Type variables for generic context variables
-T_co = TypeVar("T_co", covariant=True)
-T = TypeVar("T")
 
 
 class FlextContext:

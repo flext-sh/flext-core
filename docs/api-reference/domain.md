@@ -6,17 +6,36 @@ This section covers **Layer 2** (Domain) classes that implement Domain-Driven De
 
 ## Domain Models
 
-### FlextCore.Models - DDD Base Classes
+### FlextModels - DDD Base Classes
 
-The `FlextCore.Models` module provides base classes for implementing Domain-Driven Design patterns with Pydantic v2.
+The `FlextModels` module provides base classes for implementing Domain-Driven Design patterns with Pydantic v2.
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 from typing import List
 from decimal import Decimal
 
 # Entity - Identity-based domain objects
-class User(FlextCore.Models.Entity):
+class User(FlextModels.Entity):
     """User entity with business logic."""
     name: str
     email: str
@@ -30,7 +49,7 @@ class User(FlextCore.Models.Entity):
             raise ValueError("Invalid email format")
 
 # Value Object - Immutable value-based objects
-class Address(FlextCore.Models.ValueObject):
+class Address(FlextModels.ValueObject):
     """Address value object."""
     street: str
     city: str
@@ -38,52 +57,71 @@ class Address(FlextCore.Models.ValueObject):
     country: str
 
 # Aggregate Root - Entity that maintains consistency boundaries
-class Order(FlextCore.Models.AggregateRoot):
+class Order(FlextModels.AggregateRoot):
     """Order aggregate root."""
     customer_id: str
     items: List[OrderItem]
     total: Decimal
     status: OrderStatus
 
-    def add_item(self, item: OrderItem) -> FlextCore.Result[None]:
+    def add_item(self, item: OrderItem) -> FlextResult[None]:
         """Add item to order with business rules."""
         if self.status != OrderStatus.PENDING:
-            return FlextCore.Result[None].fail("Can only add items to pending orders")
+            return FlextResult[None].fail("Can only add items to pending orders")
 
         self.items.append(item)
         self.total += item.price * item.quantity
-        return FlextCore.Result[None].ok(None)
+        return FlextResult[None].ok(None)
 
-    def confirm(self) -> FlextCore.Result[None]:
+    def confirm(self) -> FlextResult[None]:
         """Confirm order with validation."""
         if len(self.items) == 0:
-            return FlextCore.Result[None].fail("Cannot confirm empty order")
+            return FlextResult[None].fail("Cannot confirm empty order")
 
         self.status = OrderStatus.CONFIRMED
-        return FlextCore.Result[None].ok(None)
+        return FlextResult[None].ok(None)
 ```
 
 **Key Classes:**
 
-- `FlextCore.Models.Entity` - Base class for entities with identity
-- `FlextCore.Models.ValueObject` - Base class for immutable value objects
-- `FlextCore.Models.AggregateRoot` - Base class for aggregate roots
+- `FlextModels.Entity` - Base class for entities with identity
+- `FlextModels.ValueObject` - Base class for immutable value objects
+- `FlextModels.AggregateRoot` - Base class for aggregate roots
 
-### FlextCore.Service - Domain Service Base
+### FlextService - Domain Service Base
 
 Base class for domain services that encapsulate business logic.
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-class UserService(FlextCore.Service):
+class UserService(FlextService):
     """Domain service for user operations."""
 
-    def create_user(self, name: str, email: str) -> FlextCore.Result[User]:
+    def create_user(self, name: str, email: str) -> FlextResult[User]:
         """Create user with domain rules."""
         # Business logic validation
         if not self._is_valid_email(email):
-            return FlextCore.Result[User].fail("Invalid email domain")
+            return FlextResult[User].fail("Invalid email domain")
 
         # Create entity
         user = User(id=f"user_{name.lower()}", name=name, email=email)
@@ -91,7 +129,7 @@ class UserService(FlextCore.Service):
         # Domain events
         self.add_domain_event(UserCreatedEvent(user.id))
 
-        return FlextCore.Result[User].ok(user)
+        return FlextResult[User].ok(user)
 
     def _is_valid_email(self, email: str) -> bool:
         """Domain-specific email validation."""
@@ -99,10 +137,10 @@ class UserService(FlextCore.Service):
         domain = email.split("@")[1] if "@" in email else ""
         return domain in allowed_domains
 
-class OrderService(FlextCore.Service):
+class OrderService(FlextService):
     """Domain service for order operations."""
 
-    def process_order(self, order: Order) -> FlextCore.Result[Order]:
+    def process_order(self, order: Order) -> FlextResult[Order]:
         """Process order with complex business rules."""
         # Inventory check
         inventory_result = self._check_inventory(order)
@@ -118,7 +156,7 @@ class OrderService(FlextCore.Service):
         order.status = OrderStatus.PROCESSING
         self.add_domain_event(OrderProcessedEvent(order.id))
 
-        return FlextCore.Result[Order].ok(order)
+        return FlextResult[Order].ok(order)
 ```
 
 **Key Methods:**
@@ -132,15 +170,34 @@ class OrderService(FlextCore.Service):
 
 #### Context Enrichment Methods
 
-FlextCore.Service now provides automatic context management methods:
+FlextService now provides automatic context management methods:
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-class PaymentService(FlextCore.Service[FlextCore.Types.Dict]):
+class PaymentService(FlextService[FlextTypes.Dict]):
     """Service with automatic context enrichment."""
 
-    def process_payment(self, payment_id: str, amount: float, user_id: str) -> FlextCore.Result[dict]:
+    def process_payment(self, payment_id: str, amount: float, user_id: str) -> FlextResult[dict]:
         # Generate correlation ID for distributed tracing
         correlation_id = self._with_correlation_id()
 
@@ -153,7 +210,7 @@ class PaymentService(FlextCore.Service[FlextCore.Types.Dict]):
         # All logs now include full context automatically
         self.logger.info("Processing payment", payment_id=payment_id, amount=amount)
 
-        return FlextCore.Result[dict].ok({"status": "completed", "correlation_id": correlation_id})
+        return FlextResult[dict].ok({"status": "completed", "correlation_id": correlation_id})
 ```
 
 **Available Context Methods:**
@@ -169,8 +226,8 @@ class PaymentService(FlextCore.Service[FlextCore.Types.Dict]):
 `execute_with_context_enrichment()` provides full automation:
 
 ```python
-class OrderService(FlextCore.Service[Order]):
-    def process_order(self, order_id: str, customer_id: str, correlation_id: str | None = None) -> FlextCore.Result[Order]:
+class OrderService(FlextService[Order]):
+    def process_order(self, order_id: str, customer_id: str, correlation_id: str | None = None) -> FlextResult[Order]:
         """Process order with complete automation."""
         return self.execute_with_context_enrichment(
             operation_name="process_order",
@@ -204,7 +261,26 @@ See `examples/automation_showcase.py` for complete working examples.
 Domain events for decoupled communication between domain objects.
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 from datetime import datetime
 
 class UserCreatedEvent(DomainEvent):
@@ -238,24 +314,43 @@ Mixins that provide common domain behaviors.
 
 Each mixin ships with ready-to-use behavior:
 
-- `FlextCore.Mixins.Auditable` keeps `created_at` and `updated_at` timestamps in sync.
-- `FlextCore.Mixins.SoftDeletable` manages `is_deleted`/`deleted_at` flags and exposes `delete()`/`restore()` helpers.
-- `FlextCore.Mixins.Versioned` performs optimistic locking by auto-incrementing the `version` field whenever state changes.
+- `FlextMixins.Auditable` keeps `created_at` and `updated_at` timestamps in sync.
+- `FlextMixins.SoftDeletable` manages `is_deleted`/`deleted_at` flags and exposes `delete()`/`restore()` helpers.
+- `FlextMixins.Versioned` performs optimistic locking by auto-incrementing the `version` field whenever state changes.
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
-class AuditableEntity(FlextCore.Models.Entity, FlextCore.Mixins.Auditable):
+class AuditableEntity(FlextModels.Entity, FlextMixins.Auditable):
     """Entity with audit timestamps managed automatically."""
     name: str
     # created_at / updated_at are added by the mixin on save or mutation
 
-class SoftDeletableEntity(FlextCore.Models.Entity, FlextCore.Mixins.SoftDeletable):
+class SoftDeletableEntity(FlextModels.Entity, FlextMixins.SoftDeletable):
     """Entity that gains soft-delete helpers from the mixin."""
     name: str
     # call instance.delete() / restore() provided by the mixin; it tracks deleted_at/is_deleted for you
 
-class VersionedEntity(FlextCore.Models.Entity, FlextCore.Mixins.Versioned):
+class VersionedEntity(FlextModels.Entity, FlextMixins.Versioned):
     """Entity with optimistic locking handled by the mixin."""
     name: str
     version: int = 1
@@ -264,10 +359,10 @@ class VersionedEntity(FlextCore.Models.Entity, FlextCore.Mixins.Versioned):
 
 **Available Mixins:**
 
-- `FlextCore.Mixins.Auditable` - Created/updated timestamps
-- `FlextCore.Mixins.SoftDeletable` - Soft deletion support
-- `FlextCore.Mixins.Versioned` - Optimistic locking version
-- `FlextCore.Mixins.Serializable` - JSON serialization helpers
+- `FlextMixins.Auditable` - Created/updated timestamps
+- `FlextMixins.SoftDeletable` - Soft deletion support
+- `FlextMixins.Versioned` - Optimistic locking version
+- `FlextMixins.Serializable` - JSON serialization helpers
 
 ## Domain Utilities
 
@@ -276,23 +371,42 @@ class VersionedEntity(FlextCore.Models.Entity, FlextCore.Mixins.Versioned):
 Utility functions for common domain operations.
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 
 # Validation helpers
-is_valid_email = FlextCore.Utilities.Validation.is_email("user@domain.com")
-is_valid_phone = FlextCore.Utilities.Validation.is_phone("+1234567890")
+is_valid_email = FlextUtilities.Validation.is_email("user@domain.com")
+is_valid_phone = FlextUtilities.Validation.is_phone("+1234567890")
 
 # Type guards
 def is_active_user(user: User) -> bool:
-    return FlextCore.Utilities.TypeGuards.is_entity(user) and not user.is_deleted
+    return FlextUtilities.TypeGuards.is_entity(user) and not user.is_deleted
 
 # Conversion helpers
-price_str = FlextCore.Utilities.Conversion.decimal_to_string(Decimal("19.99"))
-price_decimal = FlextCore.Utilities.Conversion.string_to_decimal("19.99")
+price_str = FlextUtilities.Conversion.decimal_to_string(Decimal("19.99"))
+price_decimal = FlextUtilities.Conversion.string_to_decimal("19.99")
 
 # String utilities
-slug = FlextCore.Utilities.String.slugify("Hello World!")  # "hello-world"
-camel = FlextCore.Utilities.String.to_camel_case("hello_world")  # "helloWorld"
+slug = FlextUtilities.String.slugify("Hello World!")  # "hello-world"
+camel = FlextUtilities.String.to_camel_case("hello_world")  # "helloWorld"
 ```
 
 ## Quality Metrics
@@ -309,38 +423,57 @@ camel = FlextCore.Utilities.String.to_camel_case("hello_world")  # "helloWorld"
 ### Complete Domain Model Example
 
 ```python
-from flext_core import FlextCore
+from flext_core import FlextBus
+from flext_core import FlextConfig
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import FlextHandlers
+from flext_core import FlextLogger
+from flext_core import FlextMixins
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import FlextProtocols
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import FlextTypes
+from flext_core import FlextUtilities
 from typing import List
 from decimal import Decimal
 from datetime import datetime
 
 # Value Objects
-class Money(FlextCore.Models.ValueObject):
+class Money(FlextModels.ValueObject):
     amount: Decimal
     currency: str
 
-class Address(FlextCore.Models.ValueObject):
+class Address(FlextModels.ValueObject):
     street: str
     city: str
     postal_code: str
     country: str
 
 # Entity
-class Customer(FlextCore.Models.Entity):
+class Customer(FlextModels.Entity):
     name: str
     email: str
     addresses: List[Address]
 
 # Aggregate Root
-class Order(FlextCore.Models.AggregateRoot):
+class Order(FlextModels.AggregateRoot):
     customer_id: str
     items: List[OrderItem]
     total: Money
     status: OrderStatus
 
-    def add_item(self, product: Product, quantity: int) -> FlextCore.Result[None]:
+    def add_item(self, product: Product, quantity: int) -> FlextResult[None]:
         if self.status != OrderStatus.PENDING:
-            return FlextCore.Result[None].fail("Can only modify pending orders")
+            return FlextResult[None].fail("Can only modify pending orders")
 
         item = OrderItem(product=product, quantity=quantity)
         self.items.append(item)
@@ -348,14 +481,14 @@ class Order(FlextCore.Models.AggregateRoot):
             amount=self.total.amount + (product.price.amount * quantity),
             currency=self.total.currency
         )
-        return FlextCore.Result[None].ok(None)
+        return FlextResult[None].ok(None)
 
 # Domain Service
-class OrderService(FlextCore.Service):
-    def place_order(self, customer: Customer, items: List[OrderItem]) -> FlextCore.Result[Order]:
+class OrderService(FlextService):
+    def place_order(self, customer: Customer, items: List[OrderItem]) -> FlextResult[Order]:
         # Business rule validation
         if not items:
-            return FlextCore.Result[Order].fail("Order must contain at least one item")
+            return FlextResult[Order].fail("Order must contain at least one item")
 
         # Calculate total
         total_amount = Decimal("0")
@@ -376,7 +509,7 @@ class OrderService(FlextCore.Service):
         # Add domain event
         self.add_domain_event(OrderPlacedEvent(order.id, customer.id, total.amount))
 
-        return FlextCore.Result[Order].ok(order)
+        return FlextResult[Order].ok(order)
 
 # Sample products and order items used below
 product1 = Product(
