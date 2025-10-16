@@ -106,7 +106,7 @@
         [tool.poetry.group.dev.dependencies]
             click        = "^8.3.0"
             docker       = "^7.1.0"
-            pyrefly      = "^0.34.0"
+            pyrefly      = "^0.37.0"
             pytest       = "^8.4.0"
             rich         = "^14.1.0"
             types-pyyaml = "^6.0.12.20250822"
