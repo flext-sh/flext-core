@@ -194,11 +194,11 @@ class FlextRuntime:
     _structlog_configured: bool = False
 
     # Log level constants using FlextConstants (production-ready, not test-only)
-    LOG_LEVEL_DEBUG: str = FlextConstants.Logging.DEBUG
-    LOG_LEVEL_INFO: str = FlextConstants.Logging.INFO
-    LOG_LEVEL_WARNING: str = FlextConstants.Logging.WARNING
-    LOG_LEVEL_ERROR: str = FlextConstants.Logging.ERROR
-    LOG_LEVEL_CRITICAL: str = FlextConstants.Logging.CRITICAL
+    LOG_LEVEL_DEBUG: str = FlextConstants.Config.LogLevel.DEBUG
+    LOG_LEVEL_INFO: str = FlextConstants.Config.LogLevel.INFO
+    LOG_LEVEL_WARNING: str = FlextConstants.Config.LogLevel.WARNING
+    LOG_LEVEL_ERROR: str = FlextConstants.Config.LogLevel.ERROR
+    LOG_LEVEL_CRITICAL: str = FlextConstants.Config.LogLevel.CRITICAL
 
     # =========================================================================
     # TYPE GUARD UTILITIES (Uses regex patterns from FlextConstants)
@@ -278,7 +278,9 @@ class FlextRuntime:
         return pattern.match(value) is not None
 
     @staticmethod
-    def is_dict_like(value: FlextTypes.ValidatableInputType) -> TypeGuard[FlextTypes.Dict]:
+    def is_dict_like(
+        value: FlextTypes.ValidatableInputType,
+    ) -> TypeGuard[FlextTypes.Dict]:
         """Type guard to check if value is dict-like.
 
         Args:
@@ -291,7 +293,9 @@ class FlextRuntime:
         return isinstance(value, dict)
 
     @staticmethod
-    def is_list_like(value: FlextTypes.ValidatableInputType) -> TypeGuard[FlextTypes.List]:
+    def is_list_like(
+        value: FlextTypes.ValidatableInputType,
+    ) -> TypeGuard[FlextTypes.List]:
         """Type guard to check if value is list-like.
 
         Args:
@@ -361,7 +365,9 @@ class FlextRuntime:
 
     @staticmethod
     def safe_get_attribute(
-        obj: FlextTypes.SerializableObjectType, attr: str, default: FlextTypes.SerializableObjectType = None
+        obj: FlextTypes.SerializableObjectType,
+        attr: str,
+        default: FlextTypes.SerializableObjectType = None,
     ) -> FlextTypes.SerializableObjectType:
         """Safe attribute access without raising AttributeError.
 
@@ -377,7 +383,9 @@ class FlextRuntime:
         return getattr(obj, attr, default)
 
     @staticmethod
-    def safe_serialize_to_dict(obj: FlextTypes.SerializableObjectType) -> FlextTypes.Dict | None:
+    def safe_serialize_to_dict(
+        obj: FlextTypes.SerializableObjectType,
+    ) -> FlextTypes.Dict | None:
         """Serialize object to dictionary without dependencies.
 
         Attempts multiple serialization strategies without importing
@@ -485,7 +493,7 @@ class FlextRuntime:
             if hasattr(type_hint, "__name__"):
                 type_name = getattr(type_hint, "__name__", "")
                 # Handle common type aliases
-                type_mapping: dict[str, tuple[type, ...]] = {
+                type_mapping: FlextTypes.Dict = {
                     "StringList": (str,),
                     "IntList": (int,),
                     "FloatList": (float,),

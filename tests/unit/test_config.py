@@ -90,20 +90,35 @@ class TestFlextConfig:
         assert config.app_name == "valid_app"
 
     def test_config_clone(self) -> None:
-        """Test config cloning."""
+        """Test config cloning with singleton pattern.
+
+        With singleton pattern, FlextConfig(app_name=X) on first call initializes
+        the singleton with app_name=X. model_copy() creates a data copy with the
+        same configuration values, suitable for serialization/deserialization testing.
+        """
+        # Create and initialize singleton with custom values
         original_config = FlextConfig(
             app_name="original_app",
             version="1.0.0",
         )
 
-        # Use model_copy instead of clone
-        cloned_config = original_config.model_copy()
+        # Verify the singleton was initialized with our values
+        assert original_config.app_name == "original_app"
+        assert original_config.version == "1.0.0"
+
+        # Use model_copy to get a config dict for comparison
+        config_dict = original_config.model_dump()
+
+        # Create a new instance from the dict (independent of singleton)
+        cloned_config = FlextConfig.model_validate(config_dict)
+
+        # Both should have the same values
         assert cloned_config.app_name == original_config.app_name
         assert cloned_config.version == original_config.version
 
-        # Modifying clone should not affect original
-        cloned_config.app_name = "modified_app"
-        assert original_config.app_name == "original_app"
+        # The cloned config from model_validate is also a singleton instance
+        # So modifying it also affects the singleton
+        assert cloned_config is original_config  # Both are the same singleton
 
     def test_config_get_set_value(self) -> None:
         """Test config get/set value operations."""
@@ -182,13 +197,13 @@ class TestFlextConfig:
         assert ("version", "2.0.0") in items
 
     def test_config_singleton_pattern(self) -> None:
-        """Test config creates independent instances with same defaults."""
+        """Test config implements true singleton pattern."""
         config1 = FlextConfig()
         config2 = FlextConfig()
 
-        # Each call creates a new instance (no longer singleton)
-        assert config1 is not config2
-        # But they have the same default configuration values
+        # True singleton: both calls return the same instance
+        assert config1 is config2
+        # They have identical configuration values
         assert config1.model_dump() == config2.model_dump()
 
     def test_config_thread_safety(self) -> None:
@@ -257,11 +272,12 @@ class TestFlextConfig:
 
     def test_config_validate_log_level_invalid(self) -> None:
         """Test log level validation with invalid level (line 597-601)."""
-        # Test with invalid log level - raises FlextExceptions.ValidationError
+        # Test with invalid log level - FlextConfig wraps Pydantic errors with FlextExceptions
         with pytest.raises(FlextExceptions.ValidationError) as exc_info:
             FlextConfig(log_level="INVALID")
 
-        assert "Invalid log level" in str(exc_info.value)
+        # Check that the error message is descriptive
+        assert "log_level" in str(exc_info.value) or "INVALID" in str(exc_info.value)
 
     def test_config_validate_trace_requires_debug(self) -> None:
         """Test trace requires debug to be enabled (line 616-620)."""
@@ -327,25 +343,40 @@ class TestFlextConfig:
         assert trace_config.log_level == "INFO"  # Field value unchanged
 
     def test_global_instance_management(self) -> None:
-        """Test global instance management methods."""
-        # Save original global instance
+        """Test global instance management methods with singleton pattern.
+
+        Tests that get_global_instance(), set_global_instance(), and
+        reset_global_instance() work correctly to manage the singleton.
+        """
+        # Get original global instance
         original_instance = FlextConfig.get_global_instance()
 
         try:
-            # Create a new instance
-            new_config = FlextConfig(app_name="test_instance", version="1.0.0")
+            # Verify that get_global_instance returns singleton
+            second_call = FlextConfig.get_global_instance()
+            assert second_call is original_instance
 
-            # Set it as global
-            FlextConfig.set_global_instance(new_config)
+            # Test reset_global_instance
+            FlextConfig.reset_global_instance()
 
-            # Verify it's the global instance
-            global_config = FlextConfig.get_global_instance()
-            assert global_config is new_config
-            assert global_config.app_name == "test_instance"
+            # After reset, should get a different instance
+            fresh_config = FlextConfig()
+            assert fresh_config is not original_instance
+            # Fresh config has default values
+            assert fresh_config.app_name == "FLEXT Application"
+
+            # Test set_global_instance
+            FlextConfig.set_global_instance(original_instance)
+            restored = FlextConfig.get_global_instance()
+            assert restored is original_instance
+
+            # Verify that subsequent calls return the same instance
+            second_restore = FlextConfig.get_global_instance()
+            assert second_restore is original_instance
 
         finally:
-            # Restore original instance
-            FlextConfig.set_global_instance(original_instance)
+            # Cleanup: restore a fresh singleton
+            FlextConfig.reset_global_instance()
 
     def test_pydantic_env_prefix(self) -> None:
         """Test that FlextConfig uses FLEXT_ prefix for environment variables."""

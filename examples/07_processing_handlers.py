@@ -973,9 +973,11 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
         logger = FlextLogger.create_module_logger(__name__)
 
         # Processing timeout and batch constants
-        print(f"  DEFAULT_TIMEOUT: {FlextConstants.Config.DEFAULT_TIMEOUT}s")
+        print(f"  DEFAULT_TIMEOUT: {FlextConstants.Defaults.TIMEOUT}s")
         print(f"  DEFAULT_MAX_WORKERS: {FlextConstants.Processing.DEFAULT_MAX_WORKERS}")
-        print(f"  DEFAULT_BATCH_SIZE: {FlextConstants.Processing.DEFAULT_BATCH_SIZE}")
+        print(
+            f"  DEFAULT_BATCH_SIZE: {FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE}"
+        )
         print(
             f"  DEFAULT_RETRY_ATTEMPTS: {FlextConstants.Reliability.MAX_RETRY_ATTEMPTS}"
         )
@@ -987,9 +989,9 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
 
         # Use constants in handler configuration
         handler_config: FlextTypes.Dict = {
-            "timeout": FlextConstants.Config.DEFAULT_TIMEOUT,
+            "timeout": FlextConstants.Defaults.TIMEOUT,
             "max_workers": FlextConstants.Processing.DEFAULT_MAX_WORKERS,
-            "batch_size": FlextConstants.Processing.DEFAULT_BATCH_SIZE,
+            "batch_size": FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
             "retry_attempts": FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
         }
 
@@ -1053,7 +1055,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             error_message = "Handler processing timeout"
             raise FlextExceptions.TimeoutError(
                 error_message,
-                timeout_seconds=FlextConstants.Config.DEFAULT_TIMEOUT,
+                timeout_seconds=FlextConstants.Defaults.TIMEOUT,
                 operation="process_request",
             )
         except FlextExceptions.TimeoutError as e:
@@ -1095,9 +1097,11 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
         print("\n=== FlextRuntime Integration (Layer 0.5) ===")
 
         # FlextRuntime configuration defaults for processing
-        print(f"  DEFAULT_TIMEOUT: {FlextConstants.Config.DEFAULT_TIMEOUT}")
+        print(f"  DEFAULT_TIMEOUT: {FlextConstants.Defaults.TIMEOUT}")
         print(f"  DEFAULT_MAX_WORKERS: {FlextConstants.Processing.DEFAULT_MAX_WORKERS}")
-        print(f"  DEFAULT_BATCH_SIZE: {FlextConstants.Processing.DEFAULT_BATCH_SIZE}")
+        print(
+            f"  DEFAULT_BATCH_SIZE: {FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE}"
+        )
         print(
             f"  DEFAULT_RETRY_ATTEMPTS: {FlextConstants.Reliability.MAX_RETRY_ATTEMPTS}"
         )
@@ -1105,9 +1109,9 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
 
         # Handler processing configuration
         processing_config: FlextTypes.Dict = {
-            "timeout": FlextConstants.Config.DEFAULT_TIMEOUT,
+            "timeout": FlextConstants.Defaults.TIMEOUT,
             "max_workers": FlextConstants.Processing.DEFAULT_MAX_WORKERS,
-            "batch_size": FlextConstants.Processing.DEFAULT_BATCH_SIZE,
+            "batch_size": FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
             "retry_attempts": FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
             "page_size": FlextConstants.Pagination.DEFAULT_PAGE_SIZE,
         }

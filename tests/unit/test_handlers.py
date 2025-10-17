@@ -666,48 +666,28 @@ class TestFlextHandlers:
 
         assert "Invalid handler mode: invalid_mode" in str(exc_info.value)
 
-    def test_handlers_from_callable_with_dict_config(self) -> None:
-        """Test from_callable with dict[str, object] handler_config."""
+    def test_handlers_from_callable_with_model_config(self) -> None:
+        """Test from_callable with FlextModels.Cqrs.Handler model config."""
 
-        def dict_config_handler(message: str) -> str:
-            return f"dict_config_{message}"
+        def model_config_handler(message: str) -> str:
+            return f"model_config_{message}"
 
-        handler_config: FlextTypes.Dict = {
-            "handler_id": "custom_id",
-            "handler_name": "Custom Name",
-            "handler_type": "command",
-            "handler_mode": "command",
-            "metadata": {"test": "value"},
-        }
+        handler_config = FlextModels.Cqrs.Handler(
+            handler_id="custom_id",
+            handler_name="Custom Name",
+            handler_type="command",
+            handler_mode="command",
+            metadata={"test": "value"},
+        )
 
         handler = FlextHandlers.from_callable(
-            cast("Callable[[object], object]", dict_config_handler),
+            cast("Callable[[object], object]", model_config_handler),
             handler_config=handler_config,
         )
 
         assert handler.handler_name == "Custom Name"
         assert handler._config_model.handler_id == "custom_id"
         assert handler._config_model.metadata == {"test": "value"}
-
-    def test_handlers_from_callable_with_invalid_dict_config(self) -> None:
-        """Test from_callable with invalid dict[str, object] handler_config."""
-
-        def invalid_config_handler(message: object) -> object:
-            if isinstance(message, str):
-                return f"invalid_config_{message}"
-            return f"invalid_config_{message!s}"
-
-        invalid_config: FlextTypes.Dict = {
-            "handler_type": "invalid_type",  # Invalid value
-        }
-
-        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
-            FlextHandlers.from_callable(
-                invalid_config_handler,
-                handler_config=invalid_config,
-            )
-
-        assert "Invalid handler config:" in str(exc_info.value)
 
     def test_handlers_from_callable_with_pydantic_config(self) -> None:
         """Test from_callable with FlextModels.Cqrs.Handler object."""

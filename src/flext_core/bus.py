@@ -161,7 +161,7 @@ class FlextBus(
 
     def __init__(
         self,
-        bus_config: FlextModels.Cqrs.Bus | FlextTypes.Dict | None = None,
+        bus_config: FlextModels.Cqrs.Bus | None = None,
     ) -> None:
         """Initialize FlextBus with configuration and service infrastructure."""
         super().__init__()
@@ -203,14 +203,19 @@ class FlextBus(
 
     def _create_config_model(
         self,
-        bus_config: FlextModels.Cqrs.Bus | FlextTypes.Dict | None,
+        bus_config: FlextModels.Cqrs.Bus | None,
     ) -> FlextModels.Cqrs.Bus:
-        """Create configuration model from input."""
-        if isinstance(bus_config, FlextModels.Cqrs.Bus):
+        """Create configuration model from input.
+
+        Args:
+            bus_config: The bus configuration model (must be FlextModels.Cqrs.Bus)
+
+        Returns:
+            FlextModels.Cqrs.Bus: The configuration model
+
+        """
+        if bus_config is not None:
             return bus_config
-        if isinstance(bus_config, dict):
-            # bus_config is already dict, which matches FlextTypes.Dict type
-            return FlextModels.Cqrs.Bus.model_validate(bus_config)
         return FlextModels.Cqrs.Bus()
 
     @property
@@ -231,35 +236,67 @@ class FlextBus(
     def _normalize_middleware_config(
         self,
         middleware_config: object,
-    ) -> FlextTypes.Dict:
-        """Convert middleware configuration into a dictionary."""
-        if middleware_config is None:
-            return {}
+    ) -> FlextModels.MiddlewareConfig | None:
+        """Convert middleware configuration into a MiddlewareConfig model.
+        
+        Accepts explicit types: dict, MiddlewareConfig, BaseModel, or Mapping types.
+        No try/except fallbacks - only processes known types explicitly.
+        Creates validated MiddlewareConfig model for type safety.
+        
+        Args:
+            middleware_config: Configuration to normalize
+            
+        Returns:
+            MiddlewareConfig model or None if config is None
 
-        if isinstance(middleware_config, dict):
+        """
+        if middleware_config is None:
+            return None
+
+        # Already a MiddlewareConfig model - return as is
+        if isinstance(middleware_config, FlextModels.MiddlewareConfig):
             return middleware_config
 
+        # Convert dict to model
+        if isinstance(middleware_config, dict):
+            try:
+                return FlextModels.MiddlewareConfig(
+                    middleware_id=middleware_config.get("middleware_id", ""),
+                    middleware_type=middleware_config.get("middleware_type", ""),
+                    enabled=middleware_config.get("enabled", True),
+                    order=middleware_config.get("order", 0),
+                )
+            except Exception:
+                return None
+
+        # Convert Pydantic BaseModel to dict first, then to model
         if isinstance(middleware_config, BaseModel):
-            return middleware_config.model_dump()
+            try:
+                config_dict = middleware_config.model_dump()
+                return FlextModels.MiddlewareConfig(
+                    middleware_id=config_dict.get("middleware_id", ""),
+                    middleware_type=config_dict.get("middleware_type", ""),
+                    enabled=config_dict.get("enabled", True),
+                    order=config_dict.get("order", 0),
+                )
+            except Exception:
+                return None
 
+        # Convert Mapping to model
         if isinstance(middleware_config, Mapping):
-            # Cast to proper type for type checker
-            return cast("FlextTypes.Dict", dict(middleware_config))
+            try:
+                config_dict = dict(middleware_config)
+                return FlextModels.MiddlewareConfig(
+                    middleware_id=config_dict.get("middleware_id", ""),
+                    middleware_type=config_dict.get("middleware_type", ""),
+                    enabled=config_dict.get("enabled", True),
+                    order=config_dict.get("order", 0),
+                )
+            except Exception:
+                return None
 
-        # For Pydantic models or objects with model_dump
-        for attr_name in ("model_dump", "dict"):
-            method = getattr(middleware_config, attr_name, None)
-            if callable(method):
-                try:
-                    result: object = method()
-                except TypeError:
-                    continue
-                if isinstance(result, Mapping):
-                    return cast("FlextTypes.Dict", dict(result))
-                if isinstance(result, dict):
-                    return cast("FlextTypes.Dict", result)
-
-        return {}
+        # Unknown types: return None (not empty dict)
+        return None
 
     def register_handler(self, *args: object) -> FlextResult[None]:
         """Register a handler instance with required interface validation.
@@ -553,11 +590,8 @@ class FlextBus(
             return FlextResult[None].ok(None)
 
         # Sort middleware by order
-        def get_order(middleware_config: FlextTypes.Dict) -> int:
-            order_value = middleware_config.get(
-                "order",
-                FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER,
-            )
+        def get_order(middleware_config: FlextModels.MiddlewareConfig) -> int:
+            order_value = middleware_config.order
             if isinstance(order_value, str):
                 try:
                     return int(order_value)
@@ -572,11 +606,10 @@ class FlextBus(
         sorted_middleware = sorted(self._middleware_configs, key=get_order)
 
         for middleware_config in sorted_middleware:
-            # Extract configuration values
-            config_dict = middleware_config
-            middleware_id_value = config_dict.get("middleware_id")
-            middleware_type_value = config_dict.get("middleware_type", "")
-            enabled_value = config_dict.get("enabled", True)
+            # Extract configuration values from model
+            middleware_id_value = middleware_config.middleware_id
+            middleware_type_value = middleware_config.middleware_type
+            enabled_value = middleware_config.enabled
 
             # Skip disabled middleware
             if not enabled_value:
@@ -597,10 +630,7 @@ class FlextBus(
                 "Applying middleware",
                 middleware_id=middleware_id_value or "",
                 middleware_type=str(middleware_type_value),
-                order=config_dict.get(
-                    "order",
-                    FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER,
-                ),
+                order=middleware_config.order,
             )
 
             process_method = getattr(middleware, "process", None)
@@ -684,13 +714,13 @@ class FlextBus(
     def add_middleware(
         self,
         middleware: FlextTypes.BusHandlerType,
-        middleware_config: FlextTypes.Dict | None = None,
+        middleware_config: FlextTypes.Dict | FlextModels.MiddlewareConfig | None = None,
     ) -> FlextResult[None]:
-        """Append middleware with validated configuration metadata.
+        """Append middleware with validated configuration using MiddlewareConfig model.
 
         Args:
             middleware: The middleware instance to add
-            middleware_config: Configuration for the middleware
+            middleware_config: Configuration for the middleware (dict or MiddlewareConfig)
 
         Returns:
             FlextResult: Success or failure result
@@ -700,37 +730,48 @@ class FlextBus(
             # Middleware pipeline is disabled, skip adding
             return FlextResult[None].ok(None)
 
-        config_data: FlextTypes.Dict = self._normalize_middleware_config(
-            middleware_config,
-        )
-        if not config_data:
-            config_data = {}
-
-        middleware_id = config_data.get("middleware_id")
-        if middleware_id is None:
-            middleware_id = getattr(
+        # Normalize config to MiddlewareConfig model
+        config_model = self._normalize_middleware_config(middleware_config)
+        
+        # Resolve middleware_id: use config, middleware attribute, or generate
+        if config_model is not None and config_model.middleware_id:
+            middleware_id_str = config_model.middleware_id
+        else:
+            middleware_id_str = getattr(
                 middleware,
                 "middleware_id",
                 f"mw_{len(self._middleware_configs)}",
             )
-            config_data["middleware_id"] = middleware_id
-
-        # Ensure middleware_id is a string
-        middleware_id_str = str(middleware_id)
-
-        config_data.setdefault("middleware_type", type(middleware).__name__)
-        config_data.setdefault("enabled", True)
-        config_data.setdefault("order", len(self._middleware_configs))
+        
+        # Resolve middleware type: use config or get from middleware class
+        middleware_type_str = (
+            config_model.middleware_type
+            if config_model is not None and config_model.middleware_type
+            else type(middleware).__name__
+        )
+        
+        # Create final MiddlewareConfig model with all resolved values
+        try:
+            final_config = FlextModels.MiddlewareConfig(
+                middleware_id=middleware_id_str,
+                middleware_type=middleware_type_str,
+                enabled=config_model.enabled if config_model is not None else True,
+                order=config_model.order if config_model is not None else len(self._middleware_configs),
+            )
+        except Exception as e:
+            return FlextResult[None].fail(
+                f"Failed to create middleware configuration: {e}"
+            )
 
         # Store middleware config separately from callables
-        self._middleware_configs.append(config_data)
+        self._middleware_configs.append(final_config)
         # Also store the actual middleware instance using the resolved ID
         self._middleware_instances[middleware_id_str] = middleware
 
         self.logger.info(
             "Middleware added to pipeline",
-            middleware_type=config_data.get("middleware_type", ""),
-            middleware_id=config_data.get("middleware_id", ""),
+            middleware_type=final_config.middleware_type,
+            middleware_id=final_config.middleware_id,
             total_middleware=len(self._middleware_configs),
         )
 

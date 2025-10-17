@@ -70,9 +70,6 @@ type TypeOriginSpecifier = object
 type ParameterValueType = object
 """Parameter value type for configuration parameters."""
 
-type CallableHandlerType = Callable[[object], object]
-"""Callable handler accepting and returning object."""
-
 
 class FlextUtilities:
     """Utility functions for validation, generation, and data processing.
@@ -258,9 +255,6 @@ class FlextUtilities:
     type ParameterValueType = object
     """Configuration parameter value from get/set operations."""
 
-    type CallableHandlerType = Callable[[object], object]
-    """Callable handler accepting and returning object."""
-
     class Cache:
         """Cache utility functions for data normalization and sorting."""
 
@@ -314,13 +308,7 @@ class FlextUtilities:
             """Clear any caches on an object."""
             try:
                 # Common cache attribute names to check and clear
-                cache_attributes = [
-                    "_cache",
-                    "__cache__",
-                    "cache",
-                    "_cached_data",
-                    "_memoized",
-                ]
+                cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
 
                 cleared_count = 0
                 for attr_name in cache_attributes:
@@ -345,13 +333,7 @@ class FlextUtilities:
         @staticmethod
         def has_cache_attributes(obj: CachedObjectType) -> bool:
             """Check if object has any cache-related attributes."""
-            cache_attributes = [
-                "_cache",
-                "__cache__",
-                "cache",
-                "_cached_data",
-                "_memoized",
-            ]
+            cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
             return any(hasattr(obj, attr) for attr in cache_attributes)
 
         @staticmethod
@@ -587,13 +569,7 @@ class FlextUtilities:
             """
             try:
                 # Common cache attribute names to check and clear
-                cache_attributes = [
-                    "_cache",
-                    "__cache__",
-                    "cache",
-                    "_cached_data",
-                    "_memoized",
-                ]
+                cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
 
                 cleared_count = 0
                 for attr_name in cache_attributes:
@@ -626,13 +602,7 @@ class FlextUtilities:
                 True if object has cache attributes, False otherwise
 
             """
-            cache_attributes = [
-                "_cache",
-                "__cache__",
-                "cache",
-                "_cached_data",
-                "_memoized",
-            ]
+            cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
 
             return any(hasattr(obj, attr) for attr in cache_attributes)
 
@@ -877,18 +847,18 @@ class FlextUtilities:
 
         @staticmethod
         def generate_timestamp() -> str:
-            """Generate ISO format timestamp."""
-            return datetime.now(UTC).isoformat()
+            """Generate ISO format timestamp without microseconds."""
+            return datetime.now(UTC).replace(microsecond=0).isoformat()
 
         @staticmethod
         def generate_iso_timestamp() -> str:
-            """Generate ISO format timestamp."""
-            return datetime.now(UTC).isoformat()
+            """Generate ISO format timestamp without microseconds."""
+            return datetime.now(UTC).replace(microsecond=0).isoformat()
 
         @staticmethod
         def generate_correlation_id() -> str:
             """Generate a correlation ID for tracking."""
-            return f"corr_{str(uuid.uuid4())[:8]}"
+            return f"corr_{str(uuid.uuid4())[:FlextConstants.Utilities.SHORT_UUID_LENGTH]}"
 
         @staticmethod
         def generate_short_id(length: int = 8) -> str:
@@ -939,42 +909,42 @@ class FlextUtilities:
         @staticmethod
         def generate_correlation_id_with_context(context: str) -> str:
             """Generate a correlation ID with context prefix."""
-            return f"{context}_{str(uuid.uuid4())[:8]}"
+            return f"{context}_{str(uuid.uuid4())[:FlextConstants.Utilities.SHORT_UUID_LENGTH]}"
 
         @staticmethod
         def generate_batch_id(batch_size: int) -> str:
             """Generate a batch ID with size information."""
-            return f"batch_{batch_size}_{str(uuid.uuid4())[:8]}"
+            return f"batch_{batch_size}_{str(uuid.uuid4())[:FlextConstants.Utilities.SHORT_UUID_LENGTH]}"
 
         @staticmethod
         def generate_transaction_id() -> str:
             """Generate a transaction ID for distributed transactions."""
-            return f"txn_{str(uuid.uuid4())[:12]}"
+            return f"txn_{str(uuid.uuid4())[:FlextConstants.Utilities.LONG_UUID_LENGTH]}"
 
         @staticmethod
         def generate_saga_id() -> str:
             """Generate a saga ID for distributed transaction patterns."""
-            return f"saga_{str(uuid.uuid4())[:12]}"
+            return f"saga_{str(uuid.uuid4())[:FlextConstants.Utilities.LONG_UUID_LENGTH]}"
 
         @staticmethod
         def generate_event_id() -> str:
             """Generate an event ID for domain events."""
-            return f"evt_{str(uuid.uuid4())[:12]}"
+            return f"evt_{str(uuid.uuid4())[:FlextConstants.Utilities.LONG_UUID_LENGTH]}"
 
         @staticmethod
         def generate_command_id() -> str:
             """Generate a command ID for CQRS patterns."""
-            return f"cmd_{str(uuid.uuid4())[:12]}"
+            return f"cmd_{str(uuid.uuid4())[:FlextConstants.Utilities.LONG_UUID_LENGTH]}"
 
         @staticmethod
         def generate_query_id() -> str:
             """Generate a query ID for CQRS patterns."""
-            return f"qry_{str(uuid.uuid4())[:12]}"
+            return f"qry_{str(uuid.uuid4())[:FlextConstants.Utilities.LONG_UUID_LENGTH]}"
 
         @staticmethod
         def generate_aggregate_id(aggregate_type: str) -> str:
             """Generate an aggregate ID with type prefix."""
-            return f"{aggregate_type}_{str(uuid.uuid4())[:12]}"
+            return f"{aggregate_type}_{str(uuid.uuid4())[:FlextConstants.Utilities.LONG_UUID_LENGTH]}"
 
         @staticmethod
         def generate_entity_version() -> int:
@@ -984,7 +954,7 @@ class FlextUtilities:
                     datetime.now(UTC).timestamp()
                     * FlextConstants.Context.MILLISECONDS_PER_SECOND
                 )
-                % 1000000
+                % FlextConstants.Utilities.VERSION_MODULO
             )
 
         @staticmethod
@@ -1031,7 +1001,7 @@ class FlextUtilities:
         def clean_text(text: str) -> FlextResult[str]:
             """Clean text by removing extra whitespace and control characters."""
             # Remove control characters except tab and newline
-            cleaned = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]", "", text)
+            cleaned = re.sub(FlextConstants.Utilities.CONTROL_CHARS_PATTERN, "", text)
             # Normalize whitespace
             cleaned = re.sub(r"\s+", " ", cleaned).strip()
 
@@ -1040,7 +1010,7 @@ class FlextUtilities:
         @staticmethod
         def truncate_text(
             text: str,
-            max_length: int = FlextConstants.Utilities.DEFAULT_BATCH_SIZE,
+            max_length: int = FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
             suffix: str = "...",
         ) -> FlextResult[str]:
             """Truncate text to maximum length with suffix."""

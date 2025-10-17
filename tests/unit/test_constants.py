@@ -26,7 +26,6 @@ class TestFlextConstants:
         """Test network constants access."""
         assert FlextConstants.Network.MIN_PORT == 1
         assert FlextConstants.Network.MAX_PORT == 65535
-        assert FlextConstants.Network.DEFAULT_TIMEOUT == 30
 
     def test_validation_constants(self) -> None:
         """Test validation constants access."""
@@ -55,7 +54,6 @@ class TestFlextConstants:
         """Test default constants access."""
         assert FlextConstants.Defaults.TIMEOUT == 30
         assert FlextConstants.Defaults.PAGE_SIZE == 100
-        assert FlextConstants.Defaults.TIMEOUT_SECONDS == 30
 
     def test_utilities_constants(self) -> None:
         """Test utility constants access."""
@@ -218,7 +216,7 @@ class TestFlextConstants:
     def test_constants_completeness(self) -> None:
         """Test that all expected constant categories exist."""
         # Verify all major constant categories are present (used by flext-core only)
-        assert hasattr(FlextConstants, "Core")
+        # Core namespace was removed in Phase 8 - constants moved to class level (NAME, VERSION, ZERO, INITIAL_TIME)
         assert hasattr(FlextConstants, "Network")
         assert hasattr(FlextConstants, "Validation")
         assert hasattr(FlextConstants, "Errors")

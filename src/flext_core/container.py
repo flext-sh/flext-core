@@ -76,8 +76,7 @@ class FlextContainer(FlextProtocols.Configurable):
         - get_typed[T]() now returns FlextResult[T] instead of FlextResult[object]
         - _validate_service_type[T]() now returns FlextResult[T] instead of FlextResult[object]
         - get_typed_with_recovery[T]() now returns FlextResult[T] instead of FlextResult[object]
-        - PREFERRED: Use get_typed[T](name, type_cls) for type-safe service retrieval
-        - DEPRECATED: Direct use of get(name) for typed retrieval (loses type info)
+        - REQUIRED: Use get_typed[T](name, type_cls) for type-safe service retrieval
 
     Usage Example:
         >>> from flext_core import FlextContainer, FlextResult
@@ -180,7 +179,7 @@ class FlextContainer(FlextProtocols.Configurable):
                 getattr(
                     self._flext_config,
                     "timeout_seconds",
-                    FlextConstants.Container.TIMEOUT_SECONDS,
+                    FlextConstants.Defaults.TIMEOUT,
                 ),
             ),
         }

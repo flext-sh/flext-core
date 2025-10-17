@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import time
-from collections.abc import Callable, Generator, Mapping
+from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from typing import cast, override
 
@@ -26,6 +26,12 @@ from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
+
+# Module-level constant for default handler mode (avoids B008 lint error with cast in defaults)
+_DEFAULT_HANDLER_MODE: FlextConstants.Cqrs.HandlerModeSimple = cast(
+    "FlextConstants.Cqrs.HandlerModeSimple",
+    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+)
 
 
 class FlextDispatcher(FlextMixins):
@@ -110,12 +116,12 @@ class FlextDispatcher(FlextMixins):
         )
 
         # Circuit breaker state - failure counts per message type
-        self._circuit_breaker_failures: dict[str, int] = {}
+        self._circuit_breaker_failures: FlextTypes.Dict = {}
         self._circuit_breaker_threshold = self.config.circuit_breaker_threshold
 
         # Rate limiting state - sliding window with count, window_start, block_until
-        self._rate_limit_requests: dict[str, FlextTypes.FloatList] = {}
-        self._rate_limit_state: dict[str, FlextTypes.DispatcherRateLimiterState] = {}
+        self._rate_limit_requests: FlextTypes.Dict = {}
+        self._rate_limit_state: FlextTypes.Dict = {}
         self._rate_limit = self.config.rate_limit_max_requests
         self._rate_limit_window = self.config.rate_limit_window_seconds
         self._rate_limit_block_grace = max(1.0, 0.5 * self._rate_limit_window)
@@ -207,15 +213,11 @@ class FlextDispatcher(FlextMixins):
 
     def register_handler(
         self,
-        message_type_or_handler: str
-        | FlextHandlers[object, object]
-        | Callable[[object], object | FlextResult[object]],
-        handler: FlextHandlers[object, object]
-        | Callable[[object], object | FlextResult[object]]
-        | None = None,
+        message_type_or_handler: FlextTypes.MessageTypeOrHandlerType,
+        handler: FlextTypes.HandlerOrCallableType | None = None,
         *,
-        handler_mode: FlextConstants.HandlerModeSimple = "command",
-        handler_config: FlextTypes.Dict | None = None,
+        handler_mode: FlextConstants.Cqrs.HandlerModeSimple = _DEFAULT_HANDLER_MODE,
+        handler_config: FlextTypes.HandlerConfigurationType = None,
     ) -> FlextResult[FlextTypes.Dict]:
         """Register handler with support for both old and new API.
 
@@ -293,7 +295,7 @@ class FlextDispatcher(FlextMixins):
         command_type: type[object],
         handler: FlextHandlers[object, object],
         *,
-        handler_config: FlextTypes.Dict | None = None,
+        handler_config: FlextTypes.HandlerConfigurationType = None,
     ) -> FlextResult[FlextTypes.Dict]:
         """Register command handler using structured model internally.
 
@@ -320,7 +322,7 @@ class FlextDispatcher(FlextMixins):
         query_type: type[object],
         handler: FlextHandlers[object, object],
         *,
-        handler_config: FlextTypes.Dict | None = None,
+        handler_config: FlextTypes.HandlerConfigurationType = None,
     ) -> FlextResult[FlextTypes.Dict]:
         """Register query handler using structured model internally.
 
@@ -345,10 +347,10 @@ class FlextDispatcher(FlextMixins):
     def register_function(
         self,
         message_type: type[object],
-        handler_func: Callable[[object], object | FlextResult[object]],
+        handler_func: FlextTypes.HandlerCallableType,
         *,
-        handler_config: FlextTypes.Dict | None = None,
-        mode: FlextConstants.HandlerModeSimple = "command",
+        handler_config: FlextTypes.HandlerConfigurationType = None,
+        mode: FlextConstants.Cqrs.HandlerModeSimple = _DEFAULT_HANDLER_MODE,
     ) -> FlextResult[FlextTypes.Dict]:
         """Register function as handler using factory pattern.
 
@@ -392,9 +394,9 @@ class FlextDispatcher(FlextMixins):
 
     def create_handler_from_function(
         self,
-        handler_func: Callable[[object], object | FlextResult[object]],
-        handler_config: FlextTypes.Dict | None,
-        mode: FlextConstants.HandlerModeSimple,
+        handler_func: FlextTypes.HandlerCallableType,
+        handler_config: FlextTypes.HandlerConfigurationType,
+        mode: str,
     ) -> FlextResult[FlextHandlers[object, object]]:
         """Create handler from function using FlextHandlers constructor.
 
@@ -610,16 +612,17 @@ class FlextDispatcher(FlextMixins):
         current_time = time.time()
         state = self._rate_limit_state.get(message_type)
         if state is None:
-            new_state: FlextTypes.DispatcherRateLimiterState = {
-                "count": 0,
-                "window_start": current_time,
-                "block_until": 0.0,
-            }
+            # Use RateLimiterState Pydantic model (Phase 4.5)
+            new_state: FlextModels.RateLimiterState = FlextModels.RateLimiterState(
+                count=0,
+                window_start=current_time,
+                block_until=0.0,
+            )
             self._rate_limit_state[message_type] = new_state
             state = new_state
 
-        if current_time < state.get("block_until", 0.0):
-            retry_after = int(state.get("block_until", 0.0) - current_time)
+        if current_time < state.block_until:
+            retry_after = int(state.block_until - current_time)
             return FlextResult[object].fail(
                 f"Rate limit exceeded for message type '{message_type}' - blocked until recovery",
                 error_code=FlextConstants.Errors.OPERATION_ERROR,
@@ -633,15 +636,15 @@ class FlextDispatcher(FlextMixins):
             )
 
         if (
-            current_time - state.get("window_start", current_time)
+            current_time - state.window_start
             >= self._rate_limit_window
         ):
-            state["count"] = 0
-            state["window_start"] = current_time
-            state["block_until"] = 0.0
+            state.count = 0
+            state.window_start = current_time
+            state.block_until = 0.0
 
-        if state["count"] >= self._rate_limit:
-            state["block_until"] = (
+        if state.count >= self._rate_limit:
+            state.block_until = (
                 current_time + self._rate_limit_window + self._rate_limit_block_grace
             )
             retry_after = int(self._rate_limit_window + self._rate_limit_block_grace)
@@ -652,19 +655,19 @@ class FlextDispatcher(FlextMixins):
                     "message_type": message_type,
                     "limit": self._rate_limit,
                     "window_seconds": self._rate_limit_window,
-                    "current_count": state["count"],
+                    "current_count": state.count,
                     "retry_after": retry_after,
                     "reason": "rate_limit_exceeded",
                 },
             )
 
-        state["count"] += 1
-        if state["count"] >= self._rate_limit:
-            state["block_until"] = (
+        state.count += 1
+        if state.count >= self._rate_limit:
+            state.block_until = (
                 current_time + self._rate_limit_window + self._rate_limit_block_grace
             )
         else:
-            state["block_until"] = 0.0
+            state.block_until = 0.0
 
         requests_list = self._rate_limit_requests.setdefault(message_type, [])
         requests_list.append(current_time)
@@ -967,7 +970,7 @@ class FlextDispatcher(FlextMixins):
         """Get performance metrics for the dispatcher.
 
         Returns:
-            Dictionary containing performance metrics
+            FlextTypes.Dict: Dictionary containing performance metrics
 
         """
         # Basic metrics - can be extended with actual performance data

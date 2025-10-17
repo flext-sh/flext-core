@@ -942,7 +942,7 @@ class FlextExceptions:
             ValueError: If error type is not recognized
 
         """
-        error_classes: dict[str, type[FlextExceptions.BaseError]] = {
+        error_classes: FlextTypes.Dict = {
             "ValidationError": FlextExceptions.ValidationError,
             "ConfigurationError": FlextExceptions.ConfigurationError,
             "ConnectionError": FlextExceptions.ConnectionError,
@@ -1127,7 +1127,7 @@ class FlextExceptions:
         )
 
     # Metrics tracking for exception monitoring
-    _exception_counts: ClassVar[dict[str, int]] = {}
+    _exception_counts: ClassVar[FlextTypes.Dict] = {}
 
     @classmethod
     def record_exception(cls, exception_type: str) -> None:

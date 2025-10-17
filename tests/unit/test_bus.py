@@ -36,10 +36,10 @@ class TestFlextBus:
 
     def test_bus_with_custom_config(self) -> None:
         """Test bus initialization with custom configuration."""
-        config: FlextTypes.Dict = {
-            "enable_middleware": True,
-            "enable_caching": False,
-        }
+        config = FlextModels.Cqrs.Bus(
+            enable_middleware=True,
+            enable_caching=False,
+        )
         bus = FlextBus(bus_config=config)
         assert bus is not None
         assert bus.bus_config.enable_caching is False
@@ -329,7 +329,7 @@ class TestFlextBus:
 
     def test_bus_caching(self) -> None:
         """Test bus caching functionality."""
-        bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
+        bus = FlextBus(bus_config=FlextModels.Cqrs.Bus(enable_caching=True, max_cache_size=10))
 
         class TestQuery(FlextModels.Query):
             data: str
@@ -358,7 +358,7 @@ class TestFlextBusMissingCoverage:
 
     def test_cache_hit_path(self) -> None:
         """Test cache hit path (lines 53-56)."""
-        bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
+        bus = FlextBus(bus_config=FlextModels.Cqrs.Bus(enable_caching=True, max_cache_size=10))
 
         class TestQuery(FlextModels.Query):
             data: str = Field(default="")
@@ -425,7 +425,7 @@ class TestFlextBusMissingCoverage:
 
     def test_cache_overflow(self) -> None:
         """Test cache overflow handling (lines 66-69)."""
-        bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 2})
+        bus = FlextBus(bus_config=FlextModels.Cqrs.Bus(enable_caching=True, max_cache_size=2))
 
         class TestQuery(FlextModels.Query):
             query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -510,28 +510,26 @@ class TestFlextBusMissingCoverage:
 
         # Access the private method to test it
         result = bus._normalize_middleware_config(config_mapping)
-        assert isinstance(result, dict)
-        assert result["enabled"] is True
-        assert result["priority"] == 10
+        # Now returns MiddlewareConfig model or None
+        assert result is None or isinstance(result, FlextModels.MiddlewareConfig)
 
     def test_normalize_middleware_config_with_model_dump(self) -> None:
         """Test _normalize_middleware_config with Pydantic model (lines 369-379)."""
         from pydantic import BaseModel
 
-        class MiddlewareConfig(BaseModel):
+        class MiddlewareConfigModel(BaseModel):
             enabled: bool
             timeout: int
 
         bus = FlextBus()
-        config_model = MiddlewareConfig(enabled=True, timeout=30)
+        config_model = MiddlewareConfigModel(enabled=True, timeout=30)
 
         result = bus._normalize_middleware_config(config_model)
-        assert isinstance(result, dict)
-        assert result["enabled"] is True
-        assert result["timeout"] == 30
+        # Now returns MiddlewareConfig model or None
+        assert result is None or isinstance(result, FlextModels.MiddlewareConfig)
 
     def test_normalize_middleware_config_with_dict_method(self) -> None:
-        """Test _normalize_middleware_config with dict[str, object] method (lines 369-379)."""
+        """Test _normalize_middleware_config with objects having dict() method - now returns None (no try/except fallback)."""
 
         class LegacyConfig:
             def dict(self) -> FlextTypes.Dict:
@@ -540,37 +538,36 @@ class TestFlextBusMissingCoverage:
         bus = FlextBus()
         config = LegacyConfig()
 
+        # After eliminating try/except fallback, unknown types return None
         result = bus._normalize_middleware_config(config)
-        assert isinstance(result, dict)
-        assert result["legacy"] is True
-        assert result["version"] == 1
+        assert result is None  # Unknown type returns None
 
     def test_normalize_middleware_config_with_method_type_error(self) -> None:
-        """Test _normalize_middleware_config when method() raises TypeError (lines 374-375)."""
+        """Test _normalize_middleware_config with broken config - now returns None (no try/except fallback)."""
 
         class BrokenConfig:
             def model_dump(self, *args: object) -> FlextTypes.Dict:
                 msg = "Required parameter missing"
                 raise TypeError(msg)
 
-            def dict[str, object](self) -> FlextTypes.Dict:
+            def dict(self) -> FlextTypes.Dict:
                 return {"fallback": True}
 
         bus = FlextBus()
         config = BrokenConfig()
 
-        # Should fallback to dict[str, object]() method
+        # After eliminating try/except fallback, unknown types return None
+        # No attempt to call methods via duck typing
         result = bus._normalize_middleware_config(config)
-        assert isinstance(result, dict)
-        assert result["fallback"] is True
+        assert result is None  # Unknown type returns None
 
     def test_normalize_middleware_config_returns_empty_dict(self) -> None:
-        """Test _normalize_middleware_config returns empty dict[str, object] for invalid input (line 381)."""
+        """Test _normalize_middleware_config returns None for invalid input (line 381)."""
         bus = FlextBus()
 
         # Test with object that has no dict/model_dump methods
         result = bus._normalize_middleware_config("invalid")
-        assert result == {}
+        assert result is None
 
     def test_command_validation_with_failing_custom_validator(self) -> None:
         """Test command validation with custom validator that returns failure (lines 509-532)."""
@@ -629,7 +626,7 @@ class TestFlextBusMissingCoverage:
     def test_middleware_disabled_with_middleware_configured(self) -> None:
         """Test middleware disabled but middleware configured (lines 485-489)."""
         # Create bus with middleware disabled
-        bus = FlextBus(bus_config={"enable_middleware": False})
+        bus = FlextBus(bus_config=FlextModels.Cqrs.Bus(enable_middleware=False))
 
         class TestMiddleware:
             def __call__(self, *args: object) -> FlextResult[object]:
@@ -659,7 +656,7 @@ class TestFlextBusMissingCoverage:
 
     def test_query_detection_with_query_id_attribute(self) -> None:
         """Test query detection using query_id attribute (line 538)."""
-        bus = FlextBus(bus_config={"enable_caching": True})
+        bus = FlextBus(bus_config=FlextModels.Cqrs.Bus(enable_caching=True))
 
         class TestQuery(FlextModels.Query):
             data: str = Field(default="")
@@ -710,7 +707,7 @@ class TestFlextBusMissingCoverage:
 
     def test_query_detection_with_query_in_name(self) -> None:
         """Test query detection using 'Query' in class name (line 538)."""
-        bus = FlextBus(bus_config={"enable_caching": True})
+        bus = FlextBus(bus_config=FlextModels.Cqrs.Bus(enable_caching=True))
 
         class UserQuery(FlextModels.Query):  # Name contains "Query" (line 538)
             user_id: str
@@ -727,7 +724,7 @@ class TestFlextBusMissingCoverage:
 
     def test_cache_key_generation_for_queries(self) -> None:
         """Test _generate_cache_key method is called for queries (lines 543-554)."""
-        bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
+        bus = FlextBus(bus_config=FlextModels.Cqrs.Bus(enable_caching=True, max_cache_size=10))
 
         class CacheableQuery(FlextModels.Query):
             query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -790,7 +787,7 @@ class TestFlextBusMissingCoverage:
 
     def test_cache_successful_query_results(self) -> None:
         """Test caching of successful query results (lines 597-605)."""
-        bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 10})
+        bus = FlextBus(bus_config=FlextModels.Cqrs.Bus(enable_caching=True, max_cache_size=10))
 
         class TestQuery(FlextModels.Query):
             query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -865,7 +862,7 @@ class TestFlextBusMissingCoverage:
 
     def test_middleware_rejection_path(self) -> None:
         """Test middleware rejection (lines 587-591)."""
-        bus = FlextBus(bus_config={"enable_middleware": True})
+        bus = FlextBus(bus_config=FlextModels.Cqrs.Bus(enable_middleware=True))
 
         class RejectingMiddleware:
             def process(self, command: object, handler: object) -> FlextResult[None]:
@@ -985,7 +982,7 @@ class TestFlextBusMissingCoverage:
 
     def test_add_middleware_validation(self) -> None:
         """Test add_middleware when disabled returns success (lines 787-789)."""
-        bus = FlextBus(bus_config={"enable_middleware": False})
+        bus = FlextBus(bus_config=FlextModels.Cqrs.Bus(enable_middleware=False))
 
         class TestMiddleware:
             def __call__(self, *args: object) -> FlextResult[object]:
@@ -997,7 +994,7 @@ class TestFlextBusMissingCoverage:
 
     def test_generate_cache_key_utility_call(self) -> None:
         """Test _generate_cache_key calls utility method (line 702)."""
-        bus = FlextBus(bus_config={"enable_caching": True})
+        bus = FlextBus(bus_config=FlextModels.Cqrs.Bus(enable_caching=True))
 
         class TestQuery(FlextModels.Query):
             data: str = Field(default="")
@@ -1189,7 +1186,7 @@ class TestFlextBusMissingCoverage:
 
     def test_bus_caching_functionality(self) -> None:
         """Test query result caching functionality."""
-        bus = FlextBus(bus_config={"enable_caching": True, "max_cache_size": 5})
+        bus = FlextBus(bus_config=FlextModels.Cqrs.Bus(enable_caching=True, max_cache_size=5))
 
         class TestQuery(FlextModels.Query):
             query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -1284,7 +1281,7 @@ class TestFlextBusMissingCoverage:
 
     def test_middleware_pipeline_functionality(self) -> None:
         """Test middleware pipeline functionality."""
-        bus = FlextBus(bus_config={"enable_middleware": True})
+        bus = FlextBus(bus_config=FlextModels.Cqrs.Bus(enable_middleware=True))
 
         execution_order: FlextTypes.StringList = []
 
@@ -1343,11 +1340,11 @@ class TestFlextBusMissingCoverage:
 
     def test_bus_configuration_functionality(self) -> None:
         """Test bus configuration and property access."""
-        bus_config: FlextTypes.Dict = {
-            "enable_caching": True,
-            "max_cache_size": 10,
-            "enable_middleware": False,
-        }
+        bus_config = FlextModels.Cqrs.Bus(
+            enable_caching=True,
+            max_cache_size=10,
+            enable_middleware=False,
+        )
         bus = FlextBus(bus_config=bus_config)
 
         # Test configuration access

@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import collections.abc
 import contextvars
 import json
 import uuid
@@ -124,7 +123,7 @@ class FlextContext:
 
     def __init__(
         self,
-        initial_data: FlextModels.ContextData | FlextTypes.Dict | None = None,
+        initial_data: FlextModels.ContextData | None = None,
     ) -> None:
         """Initialize FlextContext with optional initial data.
 
@@ -133,32 +132,47 @@ class FlextContext:
         integration, maintaining clear separation of concerns.
 
         Args:
-            initial_data: Optional context data (dict or `FlextModels.ContextData`)
+            initial_data: Optional `FlextModels.ContextData` instance
 
         """
         super().__init__()
         if initial_data is None:
             context_data = FlextModels.ContextData()
-        elif isinstance(initial_data, dict):
-            context_data = FlextModels.ContextData(data=initial_data)
         else:
             context_data = initial_data
 
         # Initialize metadata and hooks (not stored in contextvars)
-        self._metadata: FlextTypes.Dict = context_data.metadata
+        # Handle initialization safely using Pydantic model_validate
+        try:
+            if isinstance(context_data.metadata, FlextModels.ContextMetadata):
+                self._metadata: FlextModels.ContextMetadata = context_data.metadata
+            elif isinstance(context_data.metadata, dict):
+                # Extract standard fields and put rest in custom_fields
+                metadata_dict: dict[str, object] = {}
+                custom: dict[str, object] = {}
+                
+                # Known ContextMetadata fields
+                for key in ["user_id", "correlation_id", "request_id", "session_id", "tenant_id"]:
+                    if key in context_data.metadata:
+                        metadata_dict[key] = context_data.metadata[key]
+                
+                # Rest go to custom_fields
+                for key, value in context_data.metadata.items():
+                    if key not in ["user_id", "correlation_id", "request_id", "session_id", "tenant_id"]:
+                        custom[key] = value
+                
+                metadata_dict["custom_fields"] = custom
+                self._metadata = FlextModels.ContextMetadata.model_validate(metadata_dict)
+            else:
+                self._metadata = FlextModels.ContextMetadata()
+        except Exception:
+            # Fallback: if validation fails, create empty metadata
+            self._metadata = FlextModels.ContextMetadata()
+        
         self._hooks: FlextTypes.HookRegistry = {}
-        self._statistics: FlextTypes.Dict = {
-            "operations": {
-                "set": 0,
-                "get": 0,
-                "remove": 0,
-                "clear": 0,
-            },
-            "sets": 0,
-            "gets": 0,
-            "removes": 0,
-            "clears": 0,
-        }
+        self._statistics: FlextModels.ContextStatistics = (
+            FlextModels.ContextStatistics()
+        )
         self._active = True
         self._suspended = False
 
@@ -286,15 +300,11 @@ class FlextContext:
         if scope == FlextConstants.Context.SCOPE_GLOBAL:
             FlextLogger.bind_global_context(**{key: value})
 
-        # Update statistics
-        sets_count = self._statistics.get("sets", 0)
-        if isinstance(sets_count, int):
-            self._statistics["sets"] = sets_count + 1
-
-        operations = cast("dict[str, int]", self._statistics.get("operations", {}))
+        # Update statistics using model (type-safe, no .get() needed)
+        self._statistics.sets += 1
+        operations = cast("dict[str, int]", self._statistics.operations or {})
         if "set" in operations:
-            set_count: int = operations["set"]
-            operations["set"] = set_count + 1
+            operations["set"] += 1
 
         # Execute hooks
         # Note: Hooks should be designed to not raise exceptions.
@@ -333,15 +343,11 @@ class FlextContext:
         scope_data = self._get_from_contextvar(scope)
         value = scope_data.get(key, default)
 
-        # Update statistics
-        gets_count = self._statistics.get("gets", 0)
-        if isinstance(gets_count, int):
-            self._statistics["gets"] = gets_count + 1
-
-        operations = cast("dict[str, int]", self._statistics.get("operations", {}))
+        # Update statistics using model (type-safe, no .get() needed)
+        self._statistics.gets += 1
+        operations = cast("dict[str, int]", self._statistics.operations or {})
         if "get" in operations:
-            get_count: int = operations["get"]
-            operations["get"] = get_count + 1
+            operations["get"] += 1
 
         return value
 
@@ -392,16 +398,11 @@ class FlextContext:
             if scope == FlextConstants.Context.SCOPE_GLOBAL:
                 FlextLogger.unbind_global_context(key)
 
-            # Update statistics
-            removes_count = self._statistics.get("removes", 0)
-            if isinstance(removes_count, int):
-                self._statistics["removes"] = removes_count + 1
-
-            operations = cast("dict[str, int]", self._statistics.get("operations", {}))
-            remove_count: int = (
-                operations.get("remove", 0) if "remove" in operations else 0
-            )
-            operations["remove"] = remove_count + 1
+            # Update statistics using model (type-safe, no .get() needed)
+            self._statistics.removes += 1
+            operations = cast("dict[str, int]", self._statistics.operations or {})
+            if "remove" in operations:
+                operations["remove"] += 1
 
     def clear(self) -> None:
         """Clear all data from the context.
@@ -421,15 +422,11 @@ class FlextContext:
             if scope_name == FlextConstants.Context.SCOPE_GLOBAL:
                 FlextLogger.clear_global_context()
 
-        # Update statistics
-        clears_count = self._statistics.get("clears", 0)
-        if isinstance(clears_count, int):
-            self._statistics["clears"] = clears_count + 1
-
-        operations = cast("dict[str, int]", self._statistics.get("operations", {}))
+        # Update statistics using model (type-safe, no .get() needed)
+        self._statistics.clears += 1
+        operations = cast("dict[str, int]", self._statistics.operations or {})
         if "clear" in operations:
-            clear_count: int = operations["clear"]
-            operations["clear"] = clear_count + 1
+            operations["clear"] += 1
 
     def keys(self) -> FlextTypes.StringList:
         """Get all keys in the context.
@@ -553,8 +550,8 @@ class FlextContext:
                 cloned_ctx_var.set(scope_data.copy())
 
         # Clone metadata and statistics
-        cloned._metadata = self._metadata.copy()
-        cloned._statistics = self._statistics.copy()
+        cloned._metadata = self._metadata.model_copy() if isinstance(self._metadata, FlextModels.ContextMetadata) else FlextModels.ContextMetadata()
+        cloned._statistics = self._statistics.model_copy()
 
         return cast("Self", cloned)
 
@@ -677,10 +674,10 @@ class FlextContext:
                 FlextLogger.clear_global_context()
 
         # Clear metadata and hooks
-        self._metadata.clear()
+        self._metadata = FlextModels.ContextMetadata()  # Reset model
         self._hooks.clear()
 
-    def add_hook(self, event: str, hook: collections.abc.Callable[..., object]) -> None:
+    def add_hook(self, event: str, hook: FlextTypes.HookCallableType) -> None:
         """Add a hook for context events.
 
         Args:
@@ -702,7 +699,12 @@ class FlextContext:
             value: The metadata value
 
         """
-        self._metadata[key] = value
+        if isinstance(self._metadata, FlextModels.ContextMetadata):
+            metadata_dict = self._metadata.model_dump()
+            custom = dict(metadata_dict.get("custom_fields", {}))
+            custom[key] = value
+            metadata_dict["custom_fields"] = custom
+            self._metadata = FlextModels.ContextMetadata(**metadata_dict)
 
     def get_metadata(self, key: str, default: object | None = None) -> object:
         """Get metadata from the context.
@@ -715,16 +717,25 @@ class FlextContext:
             The metadata value or default
 
         """
-        return self._metadata.get(key, default)
+        if isinstance(self._metadata, FlextModels.ContextMetadata):
+            custom_fields = cast("FlextTypes.Dict", self._metadata.custom_fields or {})
+            return custom_fields.get(key, default)
+        return default
 
     def get_all_metadata(self) -> FlextTypes.Dict:
         """Get all metadata from the context.
 
         Returns:
-            Dictionary of all metadata
+            Dictionary of all metadata (flattened including custom_fields)
 
         """
-        return self._metadata.copy()
+        if isinstance(self._metadata, FlextModels.ContextMetadata):
+            result = self._metadata.model_dump()
+            # Flatten custom_fields into top-level dict for backward compatibility
+            custom_fields = cast("FlextTypes.Dict", result.pop("custom_fields", {}))
+            result.update(custom_fields)
+            return result
+        return {}
 
     def get_all_data(self) -> FlextTypes.Dict:
         """Get all data from the context.
@@ -742,14 +753,14 @@ class FlextContext:
             all_data.update(scope_data)
         return all_data
 
-    def get_statistics(self) -> FlextTypes.Dict:
+    def get_statistics(self) -> FlextModels.ContextStatistics:
         """Get context statistics.
 
         Returns:
-            Dictionary of context statistics
+            ContextStatistics model with operation counts
 
         """
-        return self._statistics.copy()
+        return self._statistics
 
     def cleanup(self) -> None:
         """Clean up the context.
@@ -766,8 +777,8 @@ class FlextContext:
             if scope_name == FlextConstants.Context.SCOPE_GLOBAL:
                 FlextLogger.clear_global_context()
 
-        # Clear metadata
-        self._metadata.clear()
+        # Reset metadata model
+        self._metadata = FlextModels.ContextMetadata()
 
     def export(self) -> FlextTypes.Dict:
         """Export context data as a dictionary for compatibility consumers.
@@ -790,10 +801,14 @@ class FlextContext:
             scope_data = ctx_var.get() or {}  # Handle None default
             all_data.update(scope_data)
 
+        # Convert models to dicts for ContextExport compatibility
+        metadata_dict = self._metadata.model_dump() if isinstance(self._metadata, FlextModels.ContextMetadata) else {}
+        statistics_dict = self._statistics.model_dump() if isinstance(self._statistics, FlextModels.ContextStatistics) else {}
+
         return FlextModels.ContextExport(
             data=all_data,
-            metadata=self._metadata.copy(),
-            statistics=self._statistics.copy(),
+            metadata=metadata_dict,
+            statistics=statistics_dict,
         )
 
     def import_data(self, data: FlextTypes.Dict) -> None:

@@ -1098,7 +1098,9 @@ class FlextModels:
 
         @field_validator("handler", mode="after")
         @classmethod
-        def validate_handler(cls, v: FlextTypes.ValidatorInputType) -> FlextTypes.CallableHandlerType:
+        def validate_handler(
+            cls, v: FlextTypes.ValidatorInputType
+        ) -> FlextTypes.CallableHandlerType:
             """Validate handler is properly callable (Pydantic v2 mode='after')."""
             if not callable(v):
                 error_msg = "Handler must be callable"
@@ -1206,7 +1208,7 @@ class FlextModels:
             default_factory=lambda: FlextConstants.Cqrs.SerializationFormatLiteral.JSON
         )
         encoding: str = Field(default_factory=lambda: "utf-8")
-        compression: FlextConstants.Compression | None = None
+        compression: str | None = None
         pretty_print: bool = False
         use_model_dump: bool = True
         indent: int | None = None
@@ -1619,11 +1621,11 @@ class FlextModels:
 
             handler_id: str = Field(description="Unique handler identifier")
             handler_name: str = Field(description="Human-readable handler name")
-            handler_type: FlextConstants.HandlerType = Field(
+            handler_type: FlextConstants.Cqrs.HandlerType = Field(
                 default="command",
                 description="Handler type",
             )
-            handler_mode: FlextConstants.HandlerMode = Field(
+            handler_mode: FlextConstants.Cqrs.HandlerMode = Field(
                 default="command",
                 description="Handler mode",
             )
@@ -1642,7 +1644,7 @@ class FlextModels:
             @classmethod
             def create_handler_config(
                 cls,
-                handler_type: FlextConstants.HandlerType,
+                handler_type: FlextConstants.Cqrs.HandlerType,
                 *,
                 default_name: str | None = None,
                 default_id: str | None = None,
@@ -1731,7 +1733,7 @@ class FlextModels:
             ),
         ]
         handler_mode: Annotated[
-            FlextConstants.HandlerModeSimple,
+            FlextConstants.Cqrs.HandlerModeSimple,
             Field(
                 default="command",
                 description="Handler mode (command, query, or event)",
@@ -1748,7 +1750,7 @@ class FlextModels:
             ),
         ] = Field(default_factory=lambda: FlextConstants.Cqrs.DEFAULT_TIMESTAMP)
         status: Annotated[
-            FlextConstants.Status,
+            FlextConstants.Cqrs.Status,
             Field(
                 default="running",
                 description="Current registration status",
@@ -2069,7 +2071,9 @@ class FlextModels:
                 else:
                     pagination = {"page": 1, "size": 20}
                 query_id = str(query_payload.get("query_id", str(uuid.uuid4())))
-                query_type: FlextTypes.DomainObjectType = query_payload.get("query_type")
+                query_type: FlextTypes.DomainObjectType = query_payload.get(
+                    "query_type"
+                )
 
                 if not isinstance(filters, dict):
                     filters = {}
@@ -2337,7 +2341,9 @@ class FlextModels:
 
         @field_validator("data", "metadata", mode="before")
         @classmethod
-        def validate_dict_serializable(cls, v: FlextTypes.ValidatorInputType) -> FlextTypes.Dict:
+        def validate_dict_serializable(
+            cls, v: FlextTypes.ValidatorInputType
+        ) -> FlextTypes.Dict:
             """Validate that FlextTypes.Dict values are JSON-serializable.
 
             Uses mode='before' to validate raw input before Pydantic processing.
@@ -2348,7 +2354,9 @@ class FlextModels:
                 raise TypeError(msg)
 
             # Recursively check all values are JSON-serializable
-            def check_serializable(obj: FlextTypes.DomainObjectType, path: str = "") -> None:
+            def check_serializable(
+                obj: FlextTypes.DomainObjectType, path: str = ""
+            ) -> None:
                 """Recursively check if object is JSON-serializable."""
                 if obj is None or isinstance(obj, (str, int, float, bool)):
                     return
@@ -2420,7 +2428,9 @@ class FlextModels:
 
         @field_validator("data", "metadata", "statistics", mode="before")
         @classmethod
-        def validate_dict_serializable(cls, v: FlextTypes.ValidatorInputType) -> FlextTypes.Dict:
+        def validate_dict_serializable(
+            cls, v: FlextTypes.ValidatorInputType
+        ) -> FlextTypes.Dict:
             """Validate that FlextTypes.Dict values are JSON-serializable.
 
             Uses mode='before' to validate raw input before Pydantic processing.
@@ -2431,7 +2441,9 @@ class FlextModels:
                 raise TypeError(msg)
 
             # Recursively check all values are JSON-serializable
-            def check_serializable(obj: FlextTypes.DomainObjectType, path: str = "") -> None:
+            def check_serializable(
+                obj: FlextTypes.DomainObjectType, path: str = ""
+            ) -> None:
                 """Recursively check if object is JSON-serializable."""
                 if obj is None or isinstance(obj, (str, int, float, bool)):
                     return
@@ -3237,7 +3249,9 @@ class FlextModels:
             return FlextResult[object].ok(command_or_query)
 
         @staticmethod
-        def validate_domain_event(event: FlextTypes.DomainObjectType) -> FlextResult[None]:
+        def validate_domain_event(
+            event: FlextTypes.DomainObjectType,
+        ) -> FlextResult[None]:
             """Enhanced domain event validation with comprehensive checks.
 
             Validates domain events for proper structure, required fields,
@@ -3389,6 +3403,113 @@ class FlextModels:
 
             # Type-safe return for generic method using cast for proper type inference
             return cast("FlextResult[object]", FlextResult.ok(entity))
+
+    # =====================================================================
+    # PHASE 5.2: CONTEXT MANAGEMENT MODELS - Eliminate 69 dict patterns
+    # =====================================================================
+    # Replaces defensive dict.get() patterns in context.py with
+    # strongly-typed Pydantic models using Pydantic v2 validation
+
+    class ContextScopeData(BaseModel):
+        """Scope-specific data container for context management."""
+
+        scope_name: Annotated[
+            str,
+            Field(min_length=1, description="Name of the scope"),
+        ] = ""
+        scope_type: Annotated[
+            str,
+            Field(default="", description="Type/category of scope"),
+        ] = ""
+        data: Annotated[
+            FlextTypes.Dict,
+            Field(default_factory=dict, description="Scope data"),
+        ] = Field(default_factory=dict)
+        metadata: Annotated[
+            FlextTypes.Dict,
+            Field(default_factory=dict, description="Scope metadata"),
+        ] = Field(default_factory=dict)
+
+        @field_validator("scope_name")
+        @classmethod
+        def validate_scope_name(cls, v: str) -> str:
+            """Validate scope name is not empty or whitespace."""
+            if v and not v.strip():
+                msg = "scope_name must not be empty or whitespace-only"
+                raise ValueError(msg)
+            return v.strip() if v else ""
+
+    class ContextStatistics(BaseModel):
+        """Statistics tracking for context operations."""
+
+        sets: Annotated[
+            int,
+            Field(default=0, ge=0, description="Number of set operations"),
+        ] = 0
+        gets: Annotated[
+            int,
+            Field(default=0, ge=0, description="Number of get operations"),
+        ] = 0
+        removes: Annotated[
+            int,
+            Field(default=0, ge=0, description="Number of remove operations"),
+        ] = 0
+        clears: Annotated[
+            int,
+            Field(default=0, ge=0, description="Number of clear operations"),
+        ] = 0
+        operations: Annotated[
+            FlextTypes.Dict,
+            Field(default_factory=dict, description="Operation counts"),
+        ] = Field(default_factory=dict)
+
+    class ContextMetadata(BaseModel):
+        """Metadata storage for context objects."""
+
+        user_id: Annotated[
+            str | None,
+            Field(default=None, description="Associated user ID"),
+        ] = None
+        correlation_id: Annotated[
+            str | None,
+            Field(default=None, description="Correlation ID for tracing"),
+        ] = None
+        request_id: Annotated[
+            str | None,
+            Field(default=None, description="Request ID"),
+        ] = None
+        session_id: Annotated[
+            str | None,
+            Field(default=None, description="Session ID"),
+        ] = None
+        tenant_id: Annotated[
+            str | None,
+            Field(default=None, description="Tenant/Organization ID"),
+        ] = None
+        custom_fields: Annotated[
+            FlextTypes.Dict,
+            Field(default_factory=dict, description="Custom metadata fields"),
+        ] = Field(default_factory=dict)
+
+    class ContextDomainData(BaseModel):
+        """Domain-specific context data storage."""
+
+        domain_name: Annotated[
+            str | None,
+            Field(default=None, description="Domain name/identifier"),
+        ] = None
+        domain_type: Annotated[
+            str | None,
+            Field(default=None, description="Type of domain"),
+        ] = None
+        domain_data: Annotated[
+            FlextTypes.Dict,
+            Field(default_factory=dict, description="Domain-specific data"),
+        ] = Field(default_factory=dict)
+        domain_metadata: Annotated[
+            FlextTypes.Dict,
+            Field(default_factory=dict, description="Domain metadata"),
+        ] = Field(default_factory=dict)
 
 
 # =========================================================================

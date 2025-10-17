@@ -14,7 +14,6 @@ from __future__ import annotations
 import inspect
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from dataclasses import asdict, is_dataclass
 from typing import (
     cast,
@@ -37,6 +36,12 @@ from flext_core.typings import (
     ResultT,
 )
 from flext_core.utilities import FlextUtilities
+
+# Module-level constant for default handler type (avoids B008 lint error with cast in defaults)
+_DEFAULT_HANDLER_TYPE: FlextConstants.Cqrs.HandlerType = cast(
+    "FlextConstants.Cqrs.HandlerType",
+    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+)
 
 
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
@@ -314,11 +319,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         )
 
         self._config_model: FlextModels.Cqrs.Handler = config
-        self._execution_context = (
-            FlextModels.HandlerExecutionContext.create_for_handler(
-                handler_name=config.handler_name,
-                handler_mode=config.handler_mode,
-            )
+        self._execution_context = FlextModels.HandlerExecutionContext(
+            handler_name=config.handler_name,
+            handler_mode=config.handler_mode,
         )
         self._accepted_message_types = (
             FlextUtilities.TypeChecker.compute_accepted_message_types(type(self))
@@ -387,7 +390,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             str: Handler mode (command or query)
 
         """
-        # handler_mode is always defined as FlextConstants.HandlerModeSimple
+        # handler_mode is always defined as FlextConstants.HandlerMode.TypeSimple
         return self._config_model.handler_mode
 
     @property
@@ -414,7 +417,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         """
         return FlextHandlers._MessageValidator.validate_message(
             command,
-            operation="command",
+            operation=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
             revalidate_pydantic_messages=self._revalidate_pydantic_messages,
         )
 
@@ -432,7 +435,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         """
         return FlextHandlers._MessageValidator.validate_message(
             query,
-            operation="query",
+            operation=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
             revalidate_pydantic_messages=self._revalidate_pydantic_messages,
         )
 
@@ -457,9 +460,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             ...     pass
 
         """
-        if self.mode == "command":
+        if self.mode == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE:
             return self.validate_command(_data)
-        if self.mode == "query":
+        if self.mode == FlextConstants.Cqrs.QUERY_HANDLER_TYPE:
             return self.validate_query(_data)
         # For event and saga handlers, use generic validation
         return FlextHandlers._MessageValidator.validate_message(
@@ -632,11 +635,11 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     @classmethod
     def from_callable(
         cls,
-        callable_func: Callable[[object], object],
+        callable_func: FlextTypes.HandlerCallableType,
         handler_name: str | None = None,
-        handler_type: FlextConstants.HandlerModeSimple = "command",
+        handler_type: FlextConstants.Cqrs.HandlerType = _DEFAULT_HANDLER_TYPE,
         mode: str | None = None,
-        handler_config: FlextModels.Cqrs.Handler | FlextTypes.Dict | None = None,
+        handler_config: FlextModels.Cqrs.Handler | None = None,
     ) -> FlextHandlers[object, object]:
         """Create a handler from a callable function.
 
@@ -645,7 +648,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             handler_name: Name for the handler (defaults to function name)
             handler_type: Type of handler (command, query, etc.)
             mode: Handler mode (for compatibility)
-            handler_config: Optional handler configuration
+            handler_config: Optional handler configuration model (must be FlextModels.Cqrs.Handler)
 
         Returns:
             A FlextHandlers instance wrapping the callable
@@ -659,17 +662,18 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         )
 
         # Use mode if provided (compatibility), otherwise use handler_type
-        effective_type: FlextConstants.HandlerModeSimple = (
-            cast("FlextConstants.HandlerModeSimple", mode)
+        effective_type: FlextConstants.Cqrs.HandlerType = (
+            cast("FlextConstants.Cqrs.HandlerType", mode)
             if mode is not None
             else handler_type
         )
 
         # Validate mode/handler_type
-        if effective_type not in {"command", "query"}:
-            msg = (
-                f"Invalid handler mode: {effective_type}. Must be 'command' or 'query'"
-            )
+        if effective_type not in {
+            FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+        }:
+            msg = f"Invalid handler mode: {effective_type}. Must be '{FlextConstants.Cqrs.COMMAND_HANDLER_TYPE}' or '{FlextConstants.Cqrs.QUERY_HANDLER_TYPE}'"
             raise FlextExceptions.ValidationError(
                 message=msg,
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -677,25 +681,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         # Use provided config or create default
         if handler_config is not None:
-            if isinstance(handler_config, dict):
-                # Merge defaults with provided FlextTypes.Dict (dict values override defaults)
-                config_data: FlextTypes.Dict = {
-                    "handler_id": f"{resolved_handler_name}_{id(callable_func)}",
-                    "handler_name": resolved_handler_name,
-                    "handler_type": effective_type,
-                    "handler_mode": effective_type,
-                    **handler_config,
-                }
-                try:
-                    config = FlextModels.Cqrs.Handler.model_validate(config_data)
-                except Exception as e:
-                    msg = f"Invalid handler config: {e}"
-                    raise FlextExceptions.ValidationError(
-                        message=msg,
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    ) from e
-            else:
-                config = handler_config
+            config = handler_config
         else:
             try:
                 config = FlextModels.Cqrs.Handler(

@@ -1152,18 +1152,20 @@ class MessagingPatternsService(FlextService[FlextTypes.Dict]):
 
         # FlextRuntime configuration defaults for messaging
         print("FlextRuntime messaging defaults:")
-        print(f"  DEFAULT_TIMEOUT: {FlextConstants.Config.DEFAULT_TIMEOUT}")
+        print(f"  DEFAULT_TIMEOUT: {FlextConstants.Defaults.TIMEOUT}")
         print(f"  DEFAULT_MAX_WORKERS: {FlextConstants.Processing.DEFAULT_MAX_WORKERS}")
-        print(f"  DEFAULT_BATCH_SIZE: {FlextConstants.Processing.DEFAULT_BATCH_SIZE}")
+        print(
+            f"  DEFAULT_BATCH_SIZE: {FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE}"
+        )
         print(
             f"  DEFAULT_RETRY_ATTEMPTS: {FlextConstants.Reliability.MAX_RETRY_ATTEMPTS}"
         )
 
         # Message processing configuration
         processing_config: FlextTypes.Dict = {
-            "timeout": FlextConstants.Config.DEFAULT_TIMEOUT,
+            "timeout": FlextConstants.Defaults.TIMEOUT,
             "max_workers": FlextConstants.Processing.DEFAULT_MAX_WORKERS,
-            "batch_size": FlextConstants.Processing.DEFAULT_BATCH_SIZE,
+            "batch_size": FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
             "retry_attempts": FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
         }
 
