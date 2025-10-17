@@ -16,7 +16,6 @@ import threading
 import time
 from collections.abc import Callable
 from typing import (
-    TypeVar,
     cast,
     override,
 )
@@ -25,31 +24,10 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.mixins import FlextMixins
-from flext_core.models import FlextModels, MessageUnion
+from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
-
-# TypeVars for generic processor operations
-ProcessedDataT = TypeVar("ProcessedDataT")
-ProcessorResultT = TypeVar("ProcessorResultT")
-RegistryHandlerT = TypeVar("RegistryHandlerT")
-
-# Import BaseModel for type aliases
-from pydantic import BaseModel  # noqa: E402
-
-# Type aliases for processor input/output with semantic names
-type ProcessorInputType = (
-    BaseModel | dict[str, object] | str | int | float | bool | object
-)
-type ProcessorOutputType = (
-    BaseModel | dict[str, object] | str | int | float | bool | object | None
-)
-type MiddlewareType = Callable[[object], object]
-
-# Pydantic v2 discriminated union for type-safe CQRS messages in processors
-# Provides compile-time type safety for Command/Query/Event processing
-type ProcessorCqrsMessageType = MessageUnion
 
 
 class FlextProcessors(FlextMixins):
@@ -182,7 +160,9 @@ class FlextProcessors(FlextMixins):
     def register(
         self,
         name: str,
-        processor: Callable[[ProcessorInputType], ProcessorOutputType],
+        processor: Callable[
+            [FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType
+        ],
     ) -> FlextResult[None]:
         """Register a processor with the given name.
 
@@ -218,8 +198,8 @@ class FlextProcessors(FlextMixins):
         return FlextResult[None].ok(None)
 
     def process(
-        self, name: str, data: ProcessorInputType
-    ) -> FlextResult[ProcessorOutputType]:
+        self, name: str, data: FlextTypes.ProcessorInputType
+    ) -> FlextResult[FlextTypes.ProcessorOutputType]:
         """Process data using the named processor.
 
         Args:
@@ -301,9 +281,13 @@ class FlextProcessors(FlextMixins):
                     and hasattr(result, "error")
                 ):
                     # Cast to the expected return type for better type inference
-                    typed_result = cast("FlextResult[object]", result)
+                    typed_result = cast(
+                        "FlextResult[FlextTypes.ProcessorOutputType]", result
+                    )
                     if typed_result.is_success:
-                        result_value: object = typed_result.value
+                        result_value: FlextTypes.ProcessorOutputType = (
+                            typed_result.value
+                        )
                         self._cache[cache_key] = (result_value, time.time())
                         self._metrics["successful_processes"] = (
                             self._metrics.get("successful_processes", 0) + 1
@@ -353,7 +337,7 @@ class FlextProcessors(FlextMixins):
             })
             return FlextResult[object].fail(f"Processor execution error: {e}")
 
-    def add_middleware(self, middleware: MiddlewareType) -> None:
+    def add_middleware(self, middleware: FlextTypes.MiddlewareType) -> None:
         """Add middleware to the processing pipeline.
 
         Args:
@@ -369,7 +353,8 @@ class FlextProcessors(FlextMixins):
                 error_code="TYPE_ERROR",
             )
 
-    def get_metrics(self) -> dict[str, int]:
+    @property
+    def metrics(self) -> dict[str, int]:
         """Get processing metrics.
 
         Returns:
@@ -378,7 +363,17 @@ class FlextProcessors(FlextMixins):
         """
         return self._metrics.copy()
 
-    def get_audit_log(self) -> list[FlextTypes.Dict]:
+    def get_metrics(self) -> dict[str, int]:
+        """Get processing metrics (method accessor).
+
+        Returns:
+            dict[str, int]: Current metrics
+
+        """
+        return self.metrics
+
+    @property
+    def audit_log(self) -> list[FlextTypes.Dict]:
         """Get audit log of processing operations.
 
         Returns:
@@ -387,7 +382,8 @@ class FlextProcessors(FlextMixins):
         """
         return self._audit_log.copy()
 
-    def get_performance_metrics(self) -> FlextTypes.FloatDict:
+    @property
+    def performance_metrics(self) -> FlextTypes.FloatDict:
         """Get performance metrics.
 
         Returns:
@@ -431,7 +427,7 @@ class FlextProcessors(FlextMixins):
                     f"Batch processing failed: {result.error}",
                 )
 
-            result_value: object = result.value
+            result_value: FlextTypes.ProcessorOutputType = result.value
             results.append(result_value)
 
         return FlextResult[FlextTypes.List].ok(results)
@@ -503,7 +499,8 @@ class FlextProcessors(FlextMixins):
         self._registry.clear()
         self._metrics["clear_operations"] = self._metrics.get("clear_operations", 0) + 1
 
-    def get_statistics(self) -> FlextTypes.Dict:
+    @property
+    def statistics(self) -> FlextTypes.Dict:
         """Get comprehensive statistics.
 
         Returns:
@@ -613,17 +610,17 @@ class FlextProcessors(FlextMixins):
         """Minimal handler base returning modernization-compliant results."""
 
         def handle(
-            self, request: ProcessorInputType
-        ) -> FlextResult[ProcessorOutputType]:
+            self, request: FlextTypes.ProcessorInputType
+        ) -> FlextResult[FlextTypes.ProcessorOutputType]:
             """Handle a request.
 
             Returns:
-                FlextResult[ProcessorOutputType]: A successful FlextResult wrapping
+                FlextResult[FlextTypes.ProcessorOutputType]: A successful FlextResult wrapping
                 handler output.
 
             """
             result: str = f"Base handler processed: {request}"
-            return FlextResult[ProcessorOutputType].ok(result)
+            return FlextResult[FlextTypes.ProcessorOutputType].ok(result)
 
     class HandlerRegistry:
         """Registry managing named handler instances for dispatcher pilots.
@@ -679,7 +676,9 @@ class FlextProcessors(FlextMixins):
             self._handlers[registration.name] = registration.handler
             return FlextResult[None].ok(None)
 
-        def _validate_handler_interface(self, handler: object) -> bool:
+        def _validate_handler_interface(
+            self, handler: Callable[[object], object]
+        ) -> bool:
             """Validate handler implements standard handle() method.
 
             BREAKING CHANGE: No fallback to callable().
@@ -715,9 +714,11 @@ class FlextProcessors(FlextMixins):
                     f"Handler '{name}' not found",
                     error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
                 )
-            return FlextResult[object].ok(self._handlers[name])
+            return FlextResult[FlextTypes.ProcessorOutputType].ok(self._handlers[name])
 
-        def execute(self, name: str, request: object) -> FlextResult[object]:
+        def execute(
+            self, name: str, request: FlextTypes.ProcessorInputType
+        ) -> FlextResult[FlextTypes.ProcessorOutputType]:
             """Execute a handler by name using railway pattern.
 
             Returns:
@@ -725,23 +726,33 @@ class FlextProcessors(FlextMixins):
                 indicating handler not found or execution error.
 
             """
-            return self.get(name).flat_map(
-                lambda handler: self._execute_handler(handler, request, name),
-            )
+            def execute_handler(
+                handler: object,
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
+                # Cast to proper handler type for execution
+                handler_callable = cast(
+                    "Callable[[FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType]",
+                    handler,
+                )
+                return self._execute_handler(handler_callable, request, name)
+
+            return self.get(name).flat_map(execute_handler)
 
         def _execute_handler(
             self,
-            handler: object,
-            request: object,
+            handler: Callable[
+                [FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType
+            ],
+            request: FlextTypes.ProcessorInputType,
             name: str,
-        ) -> FlextResult[object]:
+        ) -> FlextResult[FlextTypes.ProcessorOutputType]:
             """Execute handler using standard handle() method.
 
             BREAKING CHANGE: No fallback to callable().
-            Requires handlers to implement handle(message) -> FlextResult[object].
+            Requires handlers to implement handle(message) -> FlextResult[FlextTypes.ProcessorOutputType].
 
             Returns:
-                FlextResult[object]: The result returned by the handler, or a
+                FlextResult[FlextTypes.ProcessorOutputType]: The result returned by the handler, or a
                 failed FlextResult with a ProcessingError on exception.
 
             """
@@ -764,18 +775,18 @@ class FlextProcessors(FlextMixins):
                         error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
                     )
 
-                result: object = handle_method(request)
+                result: FlextTypes.ProcessorOutputType = handle_method(request)
                 if isinstance(result, FlextResult):
-                    # Cast to FlextResult[object] to ensure type compatibility
-                    typed_result: FlextResult[object] = cast(
-                        "FlextResult[object]",
+                    # Cast to FlextResult[FlextTypes.ProcessorOutputType] to ensure type compatibility
+                    typed_result: FlextResult[FlextTypes.ProcessorOutputType] = cast(
+                        "FlextResult[FlextTypes.ProcessorOutputType]",
                         result,
                     )
                     return typed_result
-                return FlextResult[object].ok(result)
+                return FlextResult[FlextTypes.ProcessorOutputType].ok(result)
 
             except Exception as e:
-                return FlextResult[object].fail(
+                return FlextResult[FlextTypes.ProcessorOutputType].fail(
                     f"Handler execution failed: {e}",
                     error_code=FlextConstants.Errors.PROCESSING_ERROR,
                 )
@@ -963,7 +974,7 @@ class FlextProcessors(FlextMixins):
             """
             if validator:
 
-                def register_handler(_: object) -> FlextResult[None]:
+                def register_handler(_: None) -> FlextResult[None]:
                     return self.register(registration)
 
                 return validator(registration.handler).flat_map(register_handler)
@@ -991,16 +1002,32 @@ class FlextProcessors(FlextMixins):
             """Add a processing step."""
             self._steps.append(step)
 
-        def process(self, data: object) -> FlextResult[object]:
+        def process(
+            self, data: FlextTypes.ProcessorInputType
+        ) -> FlextResult[FlextTypes.ProcessorOutputType]:
             """Process data through pipeline using advanced railway pattern.
 
             Returns:
-                FlextResult[object]: Result of pipeline processing.
+                FlextResult[FlextTypes.ProcessorOutputType]: Result of pipeline processing.
 
             """
+            # Filter steps to only process callables
+            callable_steps = [
+                step
+                for step in self._steps
+                if callable(step)
+            ]
             return FlextResult.pipeline(
                 data,
-                *[self._process_step(step) for step in self._steps],
+                *[
+                    self._process_step(
+                        cast(
+                            "Callable[[object], FlextTypes.ProcessorOutputType]",
+                            step,
+                        )
+                    )
+                    for step in callable_steps
+                ],
             )
 
         def process_conditionally(
@@ -1171,31 +1198,39 @@ class FlextProcessors(FlextMixins):
 
         def _process_step(
             self,
-            step: object,
-        ) -> Callable[[ProcessorInputType], FlextResult[ProcessorOutputType]]:
+            step: Callable[
+                [FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType
+            ],
+        ) -> Callable[
+            [FlextTypes.ProcessorInputType], FlextResult[FlextTypes.ProcessorOutputType]
+        ]:
             """Convert pipeline step to FlextResult-returning function.
 
             Returns:
-                Callable[[ProcessorInputType], FlextResult[ProcessorOutputType]]: Adapter that wraps step execution.
+                Callable[[FlextTypes.ProcessorInputType], FlextResult[FlextTypes.ProcessorOutputType]]: Adapter that wraps step execution.
 
             """
 
             def step_processor(
-                current: ProcessorInputType,
-            ) -> FlextResult[ProcessorOutputType]:
-                return FlextResult[ProcessorOutputType].from_exception(
+                current: FlextTypes.ProcessorInputType,
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
+                return FlextResult[FlextTypes.ProcessorOutputType].from_exception(
                     lambda: self._execute_step(step, current),
                 )
 
             return step_processor
 
         def _execute_step(
-            self, step: object, current: ProcessorInputType
-        ) -> ProcessorOutputType:
+            self,
+            step: Callable[
+                [FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType
+            ],
+            current: FlextTypes.ProcessorInputType,
+        ) -> FlextTypes.ProcessorOutputType:
             """Execute a single pipeline step.
 
             Returns:
-                object: Result of step execution; may be a FlextResult unwrapped.
+                FlextTypes.ProcessorOutputType: Result of step execution; may be a FlextResult unwrapped.
 
             """
             # Handle callable steps
@@ -1210,9 +1245,13 @@ class FlextProcessors(FlextMixins):
                             operation="pipeline_step",
                         )
                     # result.is_success is True here
-                    step_result: object | None = cast(
-                        "object | None",
-                        getattr(cast("object", result), "value_or_none", None),
+                    step_result: FlextTypes.ProcessorOutputType | None = cast(
+                        "FlextTypes.ProcessorOutputType | None",
+                        getattr(
+                            cast("FlextResult[FlextTypes.ProcessorOutputType]", result),
+                            "value_or_none",
+                            None,
+                        ),
                     )
                     if step_result is None:
                         msg = "Pipeline step returned None despite success"
@@ -1222,7 +1261,7 @@ class FlextProcessors(FlextMixins):
                         )
                     return step_result
                 # result is not a FlextResult, return it directly
-                return cast("ProcessorOutputType", result)
+                return cast("FlextTypes.ProcessorOutputType", result)
 
             # Handle dictionary merging
             if isinstance(current, dict) and isinstance(step, dict):
@@ -1233,7 +1272,7 @@ class FlextProcessors(FlextMixins):
             return step
 
     @staticmethod
-    def is_handler_safe(handler: object) -> bool:
+    def is_handler_safe(handler: Callable[[object], object]) -> bool:
         """Check if handler implements standard handle() method.
 
         BREAKING CHANGE: No longer checks if handler is callable.
@@ -1271,20 +1310,20 @@ class FlextProcessors(FlextMixins):
                 return self.name
 
             def handle(
-                self, request: ProcessorInputType
-            ) -> FlextResult[ProcessorOutputType]:
+                self, request: FlextTypes.ProcessorInputType
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Handle request.
 
                 Returns:
-                    FlextResult[ProcessorOutputType]: Successful result wrapping output.
+                    FlextResult[FlextTypes.ProcessorOutputType]: Successful result wrapping output.
 
                 """
                 result = f"Handled by {self.name}: {request}"
-                return FlextResult[ProcessorOutputType].ok(result)
+                return FlextResult[FlextTypes.ProcessorOutputType].ok(result)
 
             def __call__(
-                self, request: ProcessorInputType
-            ) -> FlextResult[ProcessorOutputType]:
+                self, request: FlextTypes.ProcessorInputType
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Make handler callable by delegating to handle method."""
                 return self.handle(request)
 
@@ -1300,27 +1339,55 @@ class FlextProcessors(FlextMixins):
                 super().__init__()
                 self._handlers: FlextTypes.Dict = {}
 
-            def register(self, name: str, handler: object) -> None:
+            def register(
+                self,
+                name: str,
+                handler: Callable[
+                    [FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType
+                ],
+            ) -> None:
                 """Register handler."""
                 self._handlers[name] = handler
 
-            def get(self, name: str) -> object | None:
+            def get(
+                self, name: str
+            ) -> (
+                Callable[
+                    [FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType
+                ]
+                | None
+            ):
                 """Get handler by name.
 
                 Returns:
-                    object | None: The handler instance or None if not found.
+                    Callable[[FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType] | None: The handler instance or None if not found.
 
                 """
-                return self._handlers.get(name)
+                handler = self._handlers.get(name)
+                return cast(
+                    "Callable[[FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType] | None",
+                    handler,
+                )
 
-            def get_optional(self, name: str) -> object | None:
+            def get_optional(
+                self, name: str
+            ) -> (
+                Callable[
+                    [FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType
+                ]
+                | None
+            ):
                 """Get handler optionally, returning None if not found.
 
                 Returns:
-                    object | None: The handler instance or None when not present.
+                    Callable[[FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType] | None: The handler instance or None when not present.
 
                 """
-                return self._handlers.get(name)
+                handler = self._handlers.get(name)
+                return cast(
+                    "Callable[[FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType] | None",
+                    handler,
+                )
 
     class Patterns:
         """Handler patterns for examples."""
@@ -1335,17 +1402,22 @@ class FlextProcessors(FlextMixins):
                 self.name = name
                 self._handlers: FlextTypes.List = []
 
-            def add_handler(self, handler: object) -> None:
+            def add_handler(
+                self,
+                handler: Callable[
+                    [FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType
+                ],
+            ) -> None:
                 """Add handler to chain."""
                 self._handlers.append(handler)
 
             def handle(
-                self, request: ProcessorInputType
-            ) -> FlextResult[ProcessorOutputType]:
+                self, request: FlextTypes.ProcessorInputType
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Handle request by executing all handlers in chain.
 
                 Returns:
-                    FlextResult[ProcessorOutputType]: Result after processing through the chain.
+                    FlextResult[FlextTypes.ProcessorOutputType]: Result after processing through the chain.
 
                 """
                 result = request
@@ -1370,7 +1442,7 @@ class FlextProcessors(FlextMixins):
                                 result = handler_result.value
                             else:
                                 result = handler_result
-                return FlextResult[ProcessorOutputType].ok(result)
+                return FlextResult[FlextTypes.ProcessorOutputType].ok(result)
 
     class Protocols:
         """Handler protocols for examples."""
@@ -1385,12 +1457,12 @@ class FlextProcessors(FlextMixins):
                 self.name = name
 
             def handle(
-                self, request: ProcessorInputType
-            ) -> FlextResult[ProcessorOutputType]:
+                self, request: FlextTypes.ProcessorInputType
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Handle request in chain.
 
                 Returns:
-                    FlextResult[ProcessorOutputType]: Handler output wrapped in FlextResult.
+                    FlextResult[FlextTypes.ProcessorOutputType]: Handler output wrapped in FlextResult.
 
                 """
                 # Extract data from FlextResult if it's a FlextResult
@@ -1400,9 +1472,9 @@ class FlextProcessors(FlextMixins):
                     actual_request = request
 
                 result = f"Chain handled by {self.name}: {actual_request}"
-                return FlextResult[ProcessorOutputType].ok(result)
+                return FlextResult[FlextTypes.ProcessorOutputType].ok(result)
 
-            def can_handle(self, _message_type: ProcessorInputType) -> bool:
+            def can_handle(self, _message_type: FlextTypes.ProcessorInputType) -> bool:
                 """Check if handler can process this message type.
 
                 Args:
@@ -1415,21 +1487,21 @@ class FlextProcessors(FlextMixins):
                 return True
 
             def execute(
-                self, message: ProcessorInputType
-            ) -> FlextResult[ProcessorOutputType]:
+                self, message: FlextTypes.ProcessorInputType
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Execute the handler with the given message.
 
                 Args:
                     message: The input message to execute
 
                 Returns:
-                    FlextResult[ProcessorOutputType]: Execution result
+                    FlextResult[FlextTypes.ProcessorOutputType]: Execution result
 
                 """
                 return self.handle(message)
 
             def validate_command(
-                self, command: ProcessorInputType
+                self, command: FlextTypes.ProcessorInputType
             ) -> FlextResult[None]:
                 """Validate a command message using centralized validation.
 
@@ -1443,7 +1515,7 @@ class FlextProcessors(FlextMixins):
                 return FlextModels.Validation.validate_command(command)
 
             def validate_query(
-                self, query: ProcessorInputType
+                self, query: FlextTypes.ProcessorInputType
             ) -> FlextResult[None]:
                 """Validate a query message using centralized validation.
 

@@ -1204,7 +1204,7 @@ def demonstrate_complete_integration() -> None:
     inventory_result = container.get_typed("inventory", InventoryService)
     products: list[Product] = []
     if inventory_result.is_success:
-        inventory_service = cast("InventoryService", inventory_result.unwrap())
+        inventory_service = inventory_result.unwrap()
         for item in scenario_order["items"]:
             product_result = inventory_service.get_product(item["product_id"])
             if product_result.is_success:

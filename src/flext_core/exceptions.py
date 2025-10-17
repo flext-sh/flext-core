@@ -346,7 +346,7 @@ class FlextExceptions:
 
         def __str__(self) -> str:
             """String representation with error code and correlation ID."""
-            parts: FlextTypes.StringList = []
+            parts: list[str] = []
             if self.error_code:
                 parts.append(f"[{self.error_code}]")
             if self.correlation_id:

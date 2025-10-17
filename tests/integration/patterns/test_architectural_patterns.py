@@ -95,15 +95,19 @@ class TestCleanArchitecturePatterns:
                     CreateUserCommand,
                 )
 
-            def handle(self, request: object) -> FlextResult[str]:
+            def handle(
+                self, request: object
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Handle user creation.
 
                 Returns:
-                    FlextResult[str]: Success or failure result.
+                    FlextResult[FlextTypes.ProcessorOutputType]: Success or failure result.
 
                 """
                 if not isinstance(request, CreateUserCommand):
-                    return FlextResult[str].fail("Invalid command type")
+                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
+                        "Invalid command type"
+                    )
 
                 command = request
 
@@ -112,11 +116,13 @@ class TestCleanArchitecturePatterns:
                     email_obj = UserEmail.model_validate({"email": command.email})
                     email_validation = email_obj.validate_business_rules()
                     if email_validation.is_failure:
-                        return FlextResult[str].fail(
+                        return FlextResult[FlextTypes.ProcessorOutputType].fail(
                             f"Email validation failed: {email_validation.error}",
                         )
                 except Exception as e:
-                    return FlextResult[str].fail(f"Email creation failed: {e}")
+                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
+                        f"Email creation failed: {e}"
+                    )
 
                 # Create entity
                 user = User(
@@ -127,15 +133,17 @@ class TestCleanArchitecturePatterns:
                 user_result = user.validate_domain_rules()
 
                 if user_result.is_failure:
-                    return FlextResult[str].fail(
+                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
                         f"User validation failed: {user_result.error}",
                     )
 
-                return FlextResult[str].ok("User created successfully")
+                return FlextResult[FlextTypes.ProcessorOutputType].ok(
+                    "User created successfully"
+                )
 
         # Infrastructure Layer - Framework integration
         # Use FlextResult pattern for framework integration
-        FlextResult[str].ok("Framework initialized")
+        FlextResult[FlextTypes.ProcessorOutputType].ok("Framework initialized")
 
         # Test the full flow
         command = CreateUserCommand(name="John Doe", email="john@example.com")

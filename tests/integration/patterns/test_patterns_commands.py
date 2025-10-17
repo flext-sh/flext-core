@@ -104,7 +104,7 @@ class CreateUserCommandHandler(
         """Get command type this handler processes."""
         return "create_user"
 
-    def can_handle(self, message_type: object) -> bool:
+    def can_handle(self, message_type: type[object]) -> bool:
         """Check if can handle command."""
         return message_type == CreateUserCommand or str(message_type) == "create_user"
 
@@ -150,7 +150,7 @@ class UpdateUserCommandHandler(
         """Get command type this handler processes."""
         return "update_user"
 
-    def can_handle(self, message_type: object) -> bool:
+    def can_handle(self, message_type: type[object]) -> bool:
         """Check if can handle command."""
         return message_type == UpdateUserCommand or str(message_type) == "update_user"
 
@@ -186,7 +186,7 @@ class FailingCommandHandler(FlextCommandHandler[FailingCommand, None]):
         """Get command type this handler processes."""
         return "failing"
 
-    def can_handle(self, message_type: object) -> bool:
+    def can_handle(self, message_type: type[object]) -> bool:
         """Check if can handle command."""
         return message_type == FailingCommand or str(message_type) == "failing"
 

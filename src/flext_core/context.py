@@ -146,7 +146,7 @@ class FlextContext:
 
         # Initialize metadata and hooks (not stored in contextvars)
         self._metadata: FlextTypes.Dict = context_data.metadata
-        self._hooks: FlextTypes.Context.HookRegistry = {}
+        self._hooks: FlextTypes.HookRegistry = {}
         self._statistics: FlextTypes.Dict = {
             "operations": {
                 "set": 0,
@@ -301,8 +301,10 @@ class FlextContext:
         # If a hook raises an exception, it indicates a programming error
         # in the hook implementation that should be fixed by the caller.
         if "set" in self._hooks:
-            for hook in self._hooks["set"]:
-                hook(key, value)
+            hooks = self._hooks["set"]
+            if isinstance(hooks, list):
+                for hook in hooks:
+                    hook(key, value)
 
     def get(
         self,
@@ -512,12 +514,20 @@ class FlextContext:
                 # Merge into contextvar
                 ctx_var = self._get_or_create_scope_var(scope_name)
                 current = ctx_var.get() or {}  # Handle None default
-                updated = {**current, **scope_data}
+                current_dict = (
+                    dict(current) if current and isinstance(current, dict) else {}
+                )
+                scope_dict = (
+                    dict(scope_data)
+                    if scope_data and isinstance(scope_data, dict)
+                    else {}
+                )
+                updated = {**current_dict, **scope_dict}
                 ctx_var.set(updated)
 
                 # DELEGATION: Propagate global scope to FlextLogger
                 if scope_name == FlextConstants.Context.SCOPE_GLOBAL:
-                    FlextLogger.bind_global_context(**scope_data)
+                    FlextLogger.bind_global_context(**scope_dict)
         else:
             # Merge dictionary into global scope
             self._set_in_contextvar(FlextConstants.Context.SCOPE_GLOBAL, other)
@@ -548,7 +558,7 @@ class FlextContext:
 
         return cast("Self", cloned)
 
-    def get_all_scopes(self) -> FlextTypes.Context.ScopeRegistry:
+    def get_all_scopes(self) -> FlextTypes.ScopeRegistry:
         """Get all scopes.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -557,7 +567,7 @@ class FlextContext:
             Dictionary of all scopes with their data
 
         """
-        scopes: FlextTypes.Context.ScopeRegistry = {}
+        scopes: FlextTypes.ScopeRegistry = {}
         for scope_name, ctx_var in self._scope_vars.items():
             scope_data = ctx_var.get() or {}  # Handle None default
             if scope_data:  # Only include non-empty scopes
@@ -680,7 +690,9 @@ class FlextContext:
         """
         if event not in self._hooks:
             self._hooks[event] = []
-        self._hooks[event].append(hook)
+        hooks_list = self._hooks[event]
+        if isinstance(hooks_list, list):
+            hooks_list.append(hook)
 
     def set_metadata(self, key: str, value: object) -> None:
         """Set metadata for the context.
@@ -764,7 +776,7 @@ class FlextContext:
 
         """
         export_snapshot = self.export_snapshot()
-        return dict[str, object](export_snapshot.data)
+        return export_snapshot.data
 
     def export_snapshot(self) -> FlextModels.ContextExport:
         """Return typed export snapshot including metadata and statistics.

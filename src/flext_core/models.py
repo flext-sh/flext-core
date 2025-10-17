@@ -22,8 +22,10 @@ from datetime import UTC, datetime
 from typing import (
     Annotated,
     ClassVar,
+    Generic,
     Literal,
     Self,
+    TypeVar,
     cast,
     override,
 )
@@ -35,21 +37,30 @@ from pydantic import (
     Discriminator,
     Field,
     PrivateAttr,
-    ValidationError,
     computed_field,
     field_serializer,
     field_validator,
     model_validator,
 )
 
-from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core.typings import FlextTypes, T
+
+# =========================================================================
+# TYPE VARIABLES - Type variables for generic domain models
+# =========================================================================
+# TValidateAll is imported from typings and used for cross-field validation
+
+# =========================================================================
+# ALL MODULE-LEVEL TYPE ALIASES NOW IN FLEXTYPES
+# =========================================================================
+# All domain modeling type aliases moved to FlextTypes namespace
+# Access via: FlextTypes.PydanticContextType, FlextTypes.DomainObjectType, etc.
 
 
 class FlextModels:
@@ -175,7 +186,7 @@ class FlextModels:
 
     Error Handling:
     ===============
-    - FlextResult[T] wrapping for operations
+    - FlextResult[object] wrapping for operations
     - Validation errors caught in is_valid()
     - Business rule violations in invariants
     - Structured error information
@@ -236,7 +247,7 @@ class FlextModels:
 
     Integration with FLEXT Ecosystem:
     ==================================
-    - Service Layer: Services receive FlextResult[T] from models
+    - Service Layer: Services receive FlextResult[object] from models
     - Handler Layer: CQRS handlers process Commands/Queries
     - Bus Layer: Command/Event buses route through aggregates
     - Logger Integration: Automatic audit logging
@@ -510,8 +521,8 @@ class FlextModels:
 
         event_type: str
         aggregate_id: str
-        data: FlextTypes.Domain.EventPayload = Field(default_factory=dict)
-        metadata: FlextTypes.Domain.EventMetadata = Field(default_factory=dict)
+        data: FlextTypes.EventPayload = Field(default_factory=dict)
+        metadata: FlextTypes.EventMetadata = Field(default_factory=dict)
 
     class Entity(TimestampedModel, IdentifiableMixin, VersionableMixin):
         """Base class for domain entities with identity.
@@ -539,13 +550,13 @@ class FlextModels:
         domain_events: list[FlextModels.DomainEvent] = Field(default_factory=list)
 
         @override
-        def model_post_init(self, __context: object, /) -> None:
+        def model_post_init(self, __context: FlextTypes.PydanticContextType, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
             if self.updated_at is None:
                 self.updated_at = datetime.now(UTC)
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: FlextTypes.ComparableObjectType) -> bool:
             """Identity-based equality for entities."""
             if not isinstance(other, FlextModels.Entity):
                 return False
@@ -672,8 +683,8 @@ class FlextModels:
                     error_code=FlextConstants.Errors.DOMAIN_EVENT_ERROR,
                 )
 
-        @computed_field
         @property
+        @computed_field
         def uncommitted_events(self) -> list[FlextModels.DomainEvent]:
             """Get uncommitted domain events without clearing them.
 
@@ -811,7 +822,7 @@ class FlextModels:
                     )
                 if data is not None and not isinstance(data, dict):
                     return FlextResult[None].fail(
-                        f"Event {i}: data must be dict[str, object] or None",
+                        f"Event {i}: data must be FlextTypes.Dict or None",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 validated_events.append((event_name, data or {}))
@@ -886,7 +897,7 @@ class FlextModels:
         """Base class for value objects - immutable and compared by value."""
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other: FlextTypes.ComparableObjectType) -> bool:
             """Compare by value."""
             if not isinstance(other, self.__class__):
                 return False
@@ -915,7 +926,7 @@ class FlextModels:
                     )
 
         @override
-        def model_post_init(self, __context: object, /) -> None:
+        def model_post_init(self, __context: FlextTypes.PydanticContextType, /) -> None:
             """Run after model initialization."""
             super().model_post_init(__context)
             self.check_invariants()
@@ -936,17 +947,20 @@ class FlextModels:
 
         command_type: str = Field(
             default_factory=lambda: FlextConstants.Cqrs.DEFAULT_COMMAND_TYPE,
+            min_length=1,
             description="Command type identifier",
         )
         issuer_id: str | None = None
 
-        @field_validator("command_type")
+        @field_validator("command_type", mode="before")
         @classmethod
-        def validate_command(cls, v: str) -> str:
-            """Auto-set command type from class name if empty."""
+        def validate_command(cls, v: FlextTypes.ValidatorInputType) -> str:
+            """Auto-set command type from class name if empty (Pydantic v2 mode='before')."""
+            if isinstance(v, str):
+                return v if v.strip() else cls.__name__
             if not v:
                 return cls.__name__
-            return v
+            return str(v)
 
     class Metadata(FrozenStrictModel):
         """Immutable metadata model."""
@@ -965,7 +979,7 @@ class FlextModels:
         """
 
         data: T = Field(...)  # Required field, no default
-        metadata: FlextTypes.Domain.EventMetadata = Field(default_factory=dict)
+        metadata: FlextTypes.EventMetadata = Field(default_factory=dict)
         expires_at: datetime | None = None
         correlation_id: str | None = None
         source_service: str | None = None
@@ -981,9 +995,12 @@ class FlextModels:
     class Url(Value):
         """Enhanced URL value object."""
 
-        url: str
+        url: str = Field(
+            pattern=FlextConstants.Platform.PATTERN_URL,
+            description="HTTP/HTTPS URL with validation pattern",
+        )
 
-        @field_validator("url")
+        @field_validator("url", mode="after")
         @classmethod
         def _validate_url_format(cls, v: str) -> str:
             """Validate URL format using centralized FlextModels.Validation."""
@@ -1004,20 +1021,32 @@ class FlextModels:
         timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
         source: str | None = None
         operation: str | None = None
-        obj: object | None = None
+        obj: FlextTypes.OptionalDomainObjectType = None
 
     class ProcessingRequest(ArbitraryTypesModel):
         """Enhanced processing request with advanced validation."""
 
-        operation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+        operation_id: str = Field(
+            default_factory=lambda: str(uuid.uuid4()),
+            min_length=1,
+            description="Unique operation identifier",
+        )
         data: FlextTypes.Dict = Field(default_factory=dict)
         context: FlextTypes.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
-            default_factory=lambda: FlextConfig().timeout_seconds,
+            default_factory=lambda: __import__("flext_core.config")
+            .config.FlextConfig()
+            .timeout_seconds,
+            ge=1,
+            le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
             description="Operation timeout in seconds from FlextConfig",
         )
         retry_attempts: int = Field(
-            default_factory=lambda: FlextConfig().max_retry_attempts,
+            default_factory=lambda: __import__("flext_core.config")
+            .config.FlextConfig()
+            .max_retry_attempts,
+            ge=0,
+            le=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
             description="Maximum retry attempts from FlextConfig",
         )
         enable_validation: bool = True
@@ -1028,15 +1057,18 @@ class FlextModels:
             arbitrary_types_allowed=True,
         )
 
-        @field_validator("context")
+        @field_validator("context", mode="before")
         @classmethod
-        def validate_context(cls, v: FlextTypes.Dict) -> FlextTypes.Dict:
-            """Validate context has required fields."""
-            if "correlation_id" not in v:
-                v["correlation_id"] = str(uuid.uuid4())
-            if "timestamp" not in v:
-                v["timestamp"] = datetime.now(UTC).isoformat()
-            return v
+        def validate_context(cls, v: FlextTypes.ValidatorInputType) -> FlextTypes.Dict:
+            """Validate context has required fields (Pydantic v2 mode='before')."""
+            if not isinstance(v, dict):
+                v = {}
+            context: FlextTypes.Dict = dict(v)
+            if "correlation_id" not in context:
+                context["correlation_id"] = str(uuid.uuid4())
+            if "timestamp" not in context:
+                context["timestamp"] = datetime.now(UTC).isoformat()
+            return context
 
         def validate_processing_constraints(self) -> FlextResult[None]:
             """Validate constraints that should be checked during processing."""
@@ -1051,42 +1083,51 @@ class FlextModels:
     class HandlerRegistration(StrictArbitraryTypesModel):
         """Handler registration with advanced validation."""
 
-        name: str
-        handler: object
-        event_types: FlextTypes.StringList = Field(default_factory=list)
+        name: str = Field(min_length=1, description="Handler name")
+        handler: FlextTypes.CallableHandlerType
+        event_types: FlextTypes.StringList = Field(
+            default_factory=list,
+            description="Event types this handler processes",
+        )
         priority: int = Field(
             default_factory=lambda: FlextConstants.Cqrs.DEFAULT_PRIORITY,
-            ge=0,
-            le=100,
-            description="Priority level",
+            ge=FlextConstants.Cqrs.MIN_PRIORITY,
+            le=FlextConstants.Cqrs.MAX_PRIORITY,
+            description="Priority level for handler execution",
         )
 
-        @field_validator("handler")
+        @field_validator("handler", mode="after")
         @classmethod
-        def validate_handler(cls, v: object) -> Callable[[object], object]:
-            """Validate handler is properly callable."""
+        def validate_handler(cls, v: FlextTypes.ValidatorInputType) -> FlextTypes.CallableHandlerType:
+            """Validate handler is properly callable (Pydantic v2 mode='after')."""
             if not callable(v):
                 error_msg = "Handler must be callable"
                 raise FlextExceptions.TypeError(
                     message=error_msg,
                     error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
-            return cast("Callable[[object], object]", v)
+            return v
 
     class BatchProcessingConfig(StrictArbitraryTypesModel):
         """Enhanced batch processing configuration."""
 
         batch_size: int = Field(
-            default_factory=lambda: FlextConfig().max_batch_size,
+            default_factory=lambda: __import__("flext_core.config")
+            .config.FlextConfig()
+            .max_batch_size,
             description="Batch size from FlextConfig",
         )
         max_workers: int = Field(
-            default_factory=lambda: FlextConfig().max_workers,
+            default_factory=lambda: __import__("flext_core.config")
+            .config.FlextConfig()
+            .max_workers,
             le=FlextConstants.Config.MAX_WORKERS_THRESHOLD,
             description="Maximum workers from FlextConfig",
         )
         timeout_per_item: int = Field(
-            default_factory=lambda: FlextConfig().timeout_seconds,
+            default_factory=lambda: __import__("flext_core.config")
+            .config.FlextConfig()
+            .timeout_seconds,
             description="Timeout per item from FlextConfig",
         )
         continue_on_error: bool = True
@@ -1125,13 +1166,17 @@ class FlextModels:
         input_data: FlextTypes.Dict = Field(default_factory=dict)
         execution_context: FlextTypes.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
-            default_factory=lambda: FlextConfig().timeout_seconds,
+            default_factory=lambda: __import__("flext_core.config")
+            .config.FlextConfig()
+            .timeout_seconds,
             le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextConfig",
         )
         retry_on_failure: bool = True
         max_retries: int = Field(
-            default_factory=lambda: FlextConfig().max_retry_attempts,
+            default_factory=lambda: __import__("flext_core.config")
+            .config.FlextConfig()
+            .max_retry_attempts,
             description="Max retries from FlextConfig",
         )
         fallback_handlers: FlextTypes.StringList = Field(default_factory=list)
@@ -1139,7 +1184,7 @@ class FlextModels:
     class TimestampConfig(StrictArbitraryTypesModel):
         """Enhanced timestamp configuration."""
 
-        obj: object
+        obj: FlextTypes.DomainObjectType
         use_utc: bool = Field(default_factory=lambda: True)
         auto_update: bool = Field(default_factory=lambda: True)
         format: str = "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -1156,7 +1201,7 @@ class FlextModels:
     class SerializationRequest(StrictArbitraryTypesModel):
         """Enhanced serialization request."""
 
-        data: object
+        data: FlextTypes.DomainObjectType
         format: str = Field(
             default_factory=lambda: FlextConstants.Cqrs.SerializationFormatLiteral.JSON
         )
@@ -1171,31 +1216,38 @@ class FlextModels:
     class DomainServiceExecutionRequest(ArbitraryTypesModel):
         """Domain service execution request with advanced validation."""
 
-        service_name: str
-        method_name: str
+        service_name: str = Field(min_length=1, description="Service name")
+        method_name: str = Field(min_length=1, description="Method to execute")
         parameters: FlextTypes.Dict = Field(default_factory=dict)
         context: FlextTypes.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
-            default_factory=lambda: FlextConfig().timeout_seconds,
+            default_factory=lambda: __import__("flext_core.config")
+            .config.FlextConfig()
+            .timeout_seconds,
+            ge=1,
+            le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextConfig",
         )
         execution: bool = False
         enable_validation: bool = True
 
-        @field_validator("context")
+        @field_validator("context", mode="before")
         @classmethod
-        def validate_context(cls, v: FlextTypes.Dict) -> FlextTypes.Dict:
-            """Ensure context has required fields."""
-            if "trace_id" not in v:
-                v["trace_id"] = str(uuid.uuid4())
-            if "span_id" not in v:
-                v["span_id"] = str(uuid.uuid4())
-            return v
+        def validate_context(cls, v: FlextTypes.ValidatorInputType) -> FlextTypes.Dict:
+            """Ensure context has required fields (Pydantic v2 mode='before')."""
+            if not isinstance(v, dict):
+                v = {}
+            context: FlextTypes.Dict = dict(v)
+            if "trace_id" not in context:
+                context["trace_id"] = str(uuid.uuid4())
+            if "span_id" not in context:
+                context["span_id"] = str(uuid.uuid4())
+            return context
 
-        @field_validator("timeout_seconds")
+        @field_validator("timeout_seconds", mode="after")
         @classmethod
         def validate_timeout(cls, v: int) -> int:
-            """Validate timeout is reasonable."""
+            """Validate timeout is reasonable (Pydantic v2 mode='after')."""
             max_timeout_seconds = FlextConstants.Performance.MAX_TIMEOUT_SECONDS
             if v > max_timeout_seconds:
                 msg = f"Timeout cannot exceed {max_timeout_seconds} seconds"
@@ -1217,11 +1269,15 @@ class FlextModels:
         parallel_execution: bool = False
         stop_on_error: bool = True
         batch_size: int = Field(
-            default_factory=lambda: FlextConfig().max_batch_size,
+            default_factory=lambda: __import__("flext_core.config")
+            .config.FlextConfig()
+            .max_batch_size,
             description="Batch size from FlextConfig",
         )
         timeout_per_operation: int = Field(
-            default_factory=lambda: FlextConfig().timeout_seconds,
+            default_factory=lambda: __import__("flext_core.config")
+            .config.FlextConfig()
+            .timeout_seconds,
             description="Timeout per operation from FlextConfig",
         )
 
@@ -1230,7 +1286,11 @@ class FlextModels:
 
         service_name: str
         metric_types: Annotated[
-            list[Literal["performance", "errors", "throughput", "latency", "availability"]],
+            list[
+                Literal[
+                    "performance", "errors", "throughput", "latency", "availability"
+                ]
+            ],
             Field(
                 default_factory=lambda: ["performance", "errors", "throughput"],
                 description="Types of metrics to collect",
@@ -1247,7 +1307,9 @@ class FlextModels:
         """Domain service resource request."""
 
         service_name: str = "default_service"
-        resource_type: str = Field("default_resource", pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$")
+        resource_type: str = Field(
+            "default_resource", pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$"
+        )
         resource_id: str | None = None
         resource_limit: int = Field(1000, gt=0)
         action: str = Field(
@@ -1259,33 +1321,35 @@ class FlextModels:
     class OperationExecutionRequest(ArbitraryTypesModel):
         """Operation execution request."""
 
-        operation_name: str = Field(max_length=FlextConstants.Performance.MAX_OPERATION_NAME_LENGTH)
+        operation_name: str = Field(
+            max_length=FlextConstants.Performance.MAX_OPERATION_NAME_LENGTH,
+            min_length=1,
+            description="Operation name",
+        )
         operation_callable: Callable[..., object]
         arguments: FlextTypes.Dict = Field(default_factory=dict)
         keyword_arguments: FlextTypes.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
-            default_factory=lambda: FlextConfig().timeout_seconds,
+            default_factory=lambda: __import__("flext_core.config")
+            .config.FlextConfig()
+            .timeout_seconds,
+            ge=1,
+            le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextConfig",
         )
         retry_config: FlextTypes.Dict = Field(default_factory=dict)
 
-        @field_validator("operation_callable", mode="plain")
+        @field_validator("operation_callable", mode="after")
         @classmethod
-        def validate_operation_callable(cls, v: object) -> Callable[..., object]:
-            """Validate operation is callable."""
+        def validate_operation_callable(
+            cls, v: FlextTypes.ValidatorInputType
+        ) -> Callable[..., object]:
+            """Validate operation is callable (Pydantic v2 mode='after')."""
             if not callable(v):
                 error_msg = "Operation must be callable"
-                model_name = "OperationExecutionRequest"
-                raise ValidationError.from_exception_data(
-                    model_name,
-                    [
-                        {
-                            "type": "callable_type",
-                            "loc": ("operation_callable",),
-                            "input": v,
-                            "ctx": {"error": error_msg},
-                        }
-                    ],
+                raise FlextExceptions.TypeError(
+                    message=error_msg,
+                    error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
             return v
 
@@ -1293,28 +1357,49 @@ class FlextModels:
         """Retry configuration with advanced validation."""
 
         max_attempts: int = Field(
-            default_factory=lambda: FlextConfig().max_retry_attempts,
+            default_factory=lambda: __import__("flext_core.config")
+            .config.FlextConfig()
+            .max_retry_attempts,
+            ge=FlextConstants.Reliability.RETRY_COUNT_MIN,
+            le=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
             description="Maximum retry attempts from FlextConfig",
         )
         initial_delay_seconds: float = Field(
-            default=FlextConstants.Performance.DEFAULT_INITIAL_DELAY_SECONDS, gt=0
+            default=FlextConstants.Performance.DEFAULT_INITIAL_DELAY_SECONDS,
+            gt=0,
+            description="Initial delay between retries",
         )
         max_delay_seconds: float = Field(
-            default=FlextConstants.Performance.DEFAULT_MAX_DELAY_SECONDS, gt=0
+            default=FlextConstants.Performance.DEFAULT_MAX_DELAY_SECONDS,
+            gt=0,
+            description="Maximum delay between retries",
         )
         exponential_backoff: bool = True
         backoff_multiplier: float = Field(
-            default=FlextConstants.Performance.DEFAULT_BACKOFF_MULTIPLIER, ge=1.0
+            default=FlextConstants.Performance.DEFAULT_BACKOFF_MULTIPLIER,
+            ge=1.0,
+            description="Backoff multiplier for exponential backoff",
         )
         retry_on_exceptions: Annotated[
-            list[type[BaseException]], Field(default_factory=list)
+            list[type[BaseException]],
+            Field(
+                default_factory=list,
+                description="Exception types to retry on",
+            ),
         ]
-        retry_on_status_codes: Annotated[FlextTypes.List, Field(default_factory=list)]
+        retry_on_status_codes: Annotated[
+            FlextTypes.List,
+            Field(
+                default_factory=list,
+                max_length=100,
+                description="HTTP status codes to retry on",
+            ),
+        ]
 
-        @field_validator("retry_on_status_codes")
+        @field_validator("retry_on_status_codes", mode="after")
         @classmethod
         def validate_backoff_strategy(cls, v: FlextTypes.List) -> FlextTypes.List:
-            """Validate status codes are valid HTTP codes."""
+            """Validate status codes are valid HTTP codes (Pydantic v2 mode='after')."""
             validated_codes: FlextTypes.List = []
             for code in v:
                 try:
@@ -1362,16 +1447,25 @@ class FlextModels:
         enable_strict_mode: bool = Field(default_factory=lambda: True)
         max_validation_errors: int = Field(
             default_factory=lambda: FlextConstants.Cqrs.DEFAULT_MAX_VALIDATION_ERRORS,
+            ge=1,
+            le=100,
             description="Maximum validation errors",
         )
         validate_on_assignment: bool = True
         validate_on_read: bool = False
-        custom_validators: Annotated[FlextTypes.List, Field(default_factory=list)]
+        custom_validators: Annotated[
+            FlextTypes.List,
+            Field(
+                default_factory=list,
+                max_length=50,
+                description="Custom validator callables",
+            ),
+        ]
 
-        @field_validator("custom_validators")
+        @field_validator("custom_validators", mode="after")
         @classmethod
         def validate_additional_validators(cls, v: FlextTypes.List) -> FlextTypes.List:
-            """Validate custom validators are callable."""
+            """Validate custom validators are callable (Pydantic v2 mode='after')."""
             for validator in v:
                 if not callable(validator):
                     msg = "All validators must be callable"
@@ -1385,30 +1479,30 @@ class FlextModels:
         """Conditional execution request."""
 
         condition: Callable[[object], bool]
-        true_action: Callable[[object], object]
-        false_action: Callable[[object], object] | None = None
+        true_action: FlextTypes.CallableHandlerType
+        false_action: FlextTypes.CallableHandlerType | None = None
         context: FlextTypes.Dict = Field(default_factory=dict)
 
-        @field_validator("condition", "true_action", "false_action")
+        @field_validator("condition", "true_action", "false_action", mode="after")
         @classmethod
         def validate_condition(
-            cls, v: Callable[[object], object] | None
-        ) -> Callable[[object], object] | None:
-            """Validate callables."""
+            cls, v: FlextTypes.CallableHandlerType | None
+        ) -> FlextTypes.CallableHandlerType | None:
+            """Validate callables are properly defined (Pydantic v2 mode='after')."""
             return v
 
     class StateInitializationRequest(ArbitraryTypesModel):
         """State initialization request."""
 
-        data: object
+        data: FlextTypes.DomainObjectType
         state_key: str
-        initial_value: object
+        initial_value: FlextTypes.DomainObjectType
         ttl_seconds: int | None = None
         persistence_level: str = Field(
             default_factory=lambda: FlextConstants.Cqrs.PersistenceLevelLiteral.MEMORY
         )
         field_name: str = "state"
-        state: object
+        state: FlextTypes.DomainObjectType
 
         @model_validator(mode="after")
         def validate_state_value(self) -> Self:
@@ -1650,6 +1744,7 @@ class FlextModels:
                 default_factory=lambda: FlextConstants.Cqrs.DEFAULT_TIMESTAMP,
                 description="ISO 8601 registration timestamp",
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
+                pattern=r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[Z+\-][0-9:]*)?$",
             ),
         ] = Field(default_factory=lambda: FlextConstants.Cqrs.DEFAULT_TIMESTAMP)
         status: Annotated[
@@ -1661,19 +1756,21 @@ class FlextModels:
             ),
         ] = "running"
 
-        @field_validator("registration_id")
+        @field_validator("registration_id", mode="before")
         @classmethod
-        def validate_registration_id(cls, v: str) -> str:
-            """Validate registration_id is not empty."""
+        def validate_registration_id(cls, v: FlextTypes.ValidatorInputType) -> str:
+            """Validate registration_id is not empty (Pydantic v2 mode='before')."""
+            if not isinstance(v, str):
+                v = str(v)
             if not v or not v.strip():
                 msg = "Registration ID must not be empty"
                 raise ValueError(msg)
             return v.strip()
 
-        @field_validator("timestamp")
+        @field_validator("timestamp", mode="after")
         @classmethod
         def validate_timestamp_format(cls, v: str) -> str:
-            """Validate timestamp is in ISO 8601 format.
+            """Validate timestamp is in ISO 8601 format (Pydantic v2 mode='after').
 
             Allows empty strings for backward compatibility with FlextConstants.Cqrs.DEFAULT_TIMESTAMP.
             """
@@ -1888,7 +1985,7 @@ class FlextModels:
             FlextModels.Pagination | dict[str, int],
             Field(
                 default_factory=dict,
-                description="Pagination settings (Pagination object or dict[str, object] with page/size)",
+                description="Pagination settings (Pagination object or FlextTypes.Dict with page/size)",
                 examples=[
                     {"page": 1, "size": 20},
                     {"page": 5, "size": 100},
@@ -1921,7 +2018,7 @@ class FlextModels:
             if isinstance(v, FlextModels.Pagination):
                 return v
             if isinstance(v, dict):
-                # Extract page and size from dict[str, object] with proper type casting
+                # Extract page and size from FlextTypes.Dict with proper type casting
                 v_dict = cast("FlextTypes.Dict", v)
                 page_raw = v_dict.get("page", 1)
                 size_raw = v_dict.get("size", 20)
@@ -1958,7 +2055,7 @@ class FlextModels:
             """Validate and create Query from payload."""
             try:
                 # Extract the required fields with proper typing
-                filters: object = query_payload.get("filters", {})
+                filters: FlextTypes.DomainObjectType = query_payload.get("filters", {})
                 pagination_data = query_payload.get("pagination", {})
                 if isinstance(pagination_data, dict):
                     pagination_dict = cast("FlextTypes.Dict", pagination_data)
@@ -1972,17 +2069,17 @@ class FlextModels:
                 else:
                     pagination = {"page": 1, "size": 20}
                 query_id = str(query_payload.get("query_id", str(uuid.uuid4())))
-                query_type: object = query_payload.get("query_type")
+                query_type: FlextTypes.DomainObjectType = query_payload.get("query_type")
 
                 if not isinstance(filters, dict):
                     filters = {}
                 # Type casting for mypy - after validation, filters is guaranteed to be dict
                 filters_dict = cast("FlextTypes.Dict", filters)
-                # No need to validate pagination dict[str, object] - Pydantic validator handles conversion
+                # No need to validate pagination FlextTypes.Dict - Pydantic validator handles conversion
 
                 query = cls(
                     filters=filters_dict,
-                    pagination=pagination,  # Pydantic will convert dict[str, object] to Pagination
+                    pagination=pagination,  # Pydantic will convert FlextTypes.Dict to Pagination
                     query_id=query_id,
                     query_type=str(query_type) if query_type is not None else None,
                 )
@@ -2025,28 +2122,33 @@ class FlextModels:
             str,
             Field(
                 min_length=1,
-                description="Unique key for the context variable",
+                pattern=r"^[a-zA-Z_][a-zA-Z0-9_]*$",
+                description="Unique key for the context variable (alphanumeric + underscore)",
                 examples=["correlation_id", "service_name", "user_id"],
             ),
         ]
         previous_value: Annotated[
-            object | None,
+            FlextTypes.OptionalDomainObjectType,
             Field(
                 default=None,
                 description="Previous value before set operation",
             ),
         ] = None
 
-        @field_validator("key")
+        @field_validator("key", mode="before")
         @classmethod
-        def validate_key_not_empty(cls, v: str) -> str:
-            """Validate that key is not empty or whitespace-only."""
+        def validate_key_not_empty(cls, v: FlextTypes.ValidatorInputType) -> str:
+            """Validate that key is not empty or whitespace-only (Pydantic v2 mode='before')."""
+            if not isinstance(v, str):
+                v = str(v)
             if not v or not v.strip():
                 msg = "Key must not be empty or whitespace-only"
                 raise ValueError(msg)
             return v.strip()
 
-    class StructlogProxyContextVar[T]:
+    T = TypeVar("T")
+
+    class StructlogProxyContextVar(Generic[T]):
         """ContextVar-like proxy using structlog as backend (single source of truth).
 
         ARCHITECTURAL NOTE: This proxy delegates ALL operations to structlog's
@@ -2091,7 +2193,7 @@ class FlextModels:
                 Current value or default if not set
 
             """
-            # Get from structlog's contextvar dict[str, object] (single source of truth)
+            # Get from structlog's contextvar FlextTypes.Dict (single source of truth)
             import structlog.contextvars
 
             current_context = structlog.contextvars.get_contextvars()
@@ -2177,7 +2279,7 @@ class FlextModels:
             ),
         ]
         old_value: Annotated[
-            object | None,
+            FlextTypes.OptionalDomainObjectType,
             Field(
                 default=None,
                 description="Previous value before set operation",
@@ -2235,8 +2337,8 @@ class FlextModels:
 
         @field_validator("data", "metadata", mode="before")
         @classmethod
-        def validate_dict_serializable(cls, v: object) -> FlextTypes.Dict:
-            """Validate that dict[str, object] values are JSON-serializable.
+        def validate_dict_serializable(cls, v: FlextTypes.ValidatorInputType) -> FlextTypes.Dict:
+            """Validate that FlextTypes.Dict values are JSON-serializable.
 
             Uses mode='before' to validate raw input before Pydantic processing.
             Only allows basic JSON-serializable types: str, int, float, bool, list, dict, None.
@@ -2246,7 +2348,7 @@ class FlextModels:
                 raise TypeError(msg)
 
             # Recursively check all values are JSON-serializable
-            def check_serializable(obj: object, path: str = "") -> None:
+            def check_serializable(obj: FlextTypes.DomainObjectType, path: str = "") -> None:
                 """Recursively check if object is JSON-serializable."""
                 if obj is None or isinstance(obj, (str, int, float, bool)):
                     return
@@ -2318,8 +2420,8 @@ class FlextModels:
 
         @field_validator("data", "metadata", "statistics", mode="before")
         @classmethod
-        def validate_dict_serializable(cls, v: object) -> FlextTypes.Dict:
-            """Validate that dict[str, object] values are JSON-serializable.
+        def validate_dict_serializable(cls, v: FlextTypes.ValidatorInputType) -> FlextTypes.Dict:
+            """Validate that FlextTypes.Dict values are JSON-serializable.
 
             Uses mode='before' to validate raw input before Pydantic processing.
             Only allows basic JSON-serializable types: str, int, float, bool, list, dict, None.
@@ -2329,7 +2431,7 @@ class FlextModels:
                 raise TypeError(msg)
 
             # Recursively check all values are JSON-serializable
-            def check_serializable(obj: object, path: str = "") -> None:
+            def check_serializable(obj: FlextTypes.DomainObjectType, path: str = "") -> None:
                 """Recursively check if object is JSON-serializable."""
                 if obj is None or isinstance(obj, (str, int, float, bool)):
                     return
@@ -2446,8 +2548,8 @@ class FlextModels:
             """
             self._start_time = time_module.time()
 
-        @computed_field
         @property
+        @computed_field
         def execution_time_ms(self) -> float:
             """Get execution time in milliseconds.
 
@@ -2471,13 +2573,13 @@ class FlextModels:
             elapsed = time_module.time() - self._start_time
             return round(elapsed * 1000, 2)
 
-        @computed_field
         @property
+        @computed_field
         def metrics_state(self) -> FlextTypes.Dict:
             """Get current metrics state.
 
             Returns:
-                Dictionary containing metrics state (empty dict[str, object] if not set)
+                Dictionary containing metrics state (empty FlextTypes.Dict if not set)
 
             Examples:
                 >>> context = FlextModels.HandlerExecutionContext.create_for_handler(
@@ -2532,7 +2634,7 @@ class FlextModels:
         def create_for_handler(
             cls,
             handler_name: str,
-            handler_mode: str,
+            handler_mode: Literal["command", "query", "event", "operation", "saga"],
         ) -> Self:
             """Create execution context for a handler.
 
@@ -2663,7 +2765,7 @@ class FlextModels:
                 return FlextResult[str].fail(f"URL validation failed: {e}")
 
         @staticmethod
-        def validate_command(command: object) -> FlextResult[None]:
+        def validate_command(command: FlextTypes.DomainObjectType) -> FlextResult[None]:
             """Validate a command message using centralized validation patterns.
 
             Args:
@@ -2719,7 +2821,7 @@ class FlextModels:
             return FlextResult[str].ok(normalized)
 
         @staticmethod
-        def validate_query(query: object) -> FlextResult[None]:
+        def validate_query(query: FlextTypes.DomainObjectType) -> FlextResult[None]:
             """Validate a query message using centralized validation patterns.
 
             Args:
@@ -2753,10 +2855,10 @@ class FlextModels:
             return FlextResult[None].ok(None)
 
         @staticmethod
-        def validate_business_rules[T](
-            model: T,
-            *rules: Callable[[T], FlextResult[None]],
-        ) -> FlextResult[T]:
+        def validate_business_rules(
+            model: FlextTypes.DomainObjectType,
+            *rules: FlextTypes.ValidationRule,
+        ) -> FlextResult[object]:
             """Validate business rules with railway patterns.
 
             Args:
@@ -2764,7 +2866,7 @@ class FlextModels:
                 *rules: Business rule validation functions
 
             Returns:
-                FlextResult[T]: Validated model or accumulated errors
+                FlextResult[object]: Validated model or accumulated errors
 
             Example:
                 ```python
@@ -2781,15 +2883,15 @@ class FlextModels:
             for rule in rules:
                 result = rule(model)
                 if result.is_failure:
-                    return FlextResult[T].fail(result.error or "Validation failed")
+                    return FlextResult[object].fail(result.error or "Validation failed")
 
-            return FlextResult[T].ok(model)
+            return FlextResult[object].ok(model)
 
         @staticmethod
-        def validate_cross_fields[T](
-            model: T,
-            field_validators: dict[str, Callable[[T], FlextResult[None]]],
-        ) -> FlextResult[T]:
+        def validate_cross_fields(
+            model: FlextTypes.DomainObjectType,
+            field_validators: dict[str, FlextTypes.CrossFieldValidator],
+        ) -> FlextResult[object]:
             """Validate cross-field dependencies with railway patterns.
 
             Args:
@@ -2797,7 +2899,7 @@ class FlextModels:
                 field_validators: Field name to validator mapping
 
             Returns:
-                FlextResult[T]: Validated model or accumulated errors
+                FlextResult[object]: Validated model or accumulated errors
 
             Example:
                 ```python
@@ -2827,19 +2929,19 @@ class FlextModels:
             ]
 
             if errors:
-                return FlextResult[T].fail(
+                return FlextResult[object].fail(
                     f"Cross-field validation failed: {'; '.join(errors)}",
                     error_code="CROSS_FIELD_VALIDATION_FAILED",
                     error_data={"field_errors": errors},
                 )
 
-            return FlextResult[T].ok(model)
+            return FlextResult[object].ok(model)
 
         @staticmethod
-        def validate_performance[T: BaseModel](
-            model: T,
+        def validate_performance(
+            model: BaseModel,
             max_validation_time_ms: int | None = None,
-        ) -> FlextResult[T]:
+        ) -> FlextResult[BaseModel]:
             """Validate model with performance constraints.
 
             Args:
@@ -2847,7 +2949,7 @@ class FlextModels:
                 max_validation_time_ms: Maximum validation time in milliseconds
 
             Returns:
-                FlextResult[T]: Validated model or performance error
+                FlextResult[object]: Validated model or performance error
 
             Example:
                 ```python
@@ -2862,7 +2964,11 @@ class FlextModels:
                 timeout_ms = max_validation_time_ms
             else:
                 # Use global config instance for consistency
-                timeout_ms = FlextConfig.get_global_instance().validation_timeout_ms
+                timeout_ms = (
+                    __import__("flext_core.config")
+                    .config.FlextConfig.get_global_instance()
+                    .validation_timeout_ms
+                )
             start_time = time_module.time()
 
             try:
@@ -2870,25 +2976,25 @@ class FlextModels:
                 validation_time = (time_module.time() - start_time) * 1000
 
                 if validation_time > timeout_ms:
-                    return FlextResult[T].fail(
+                    return FlextResult[BaseModel].fail(
                         f"Validation too slow: {validation_time:.2f}ms > {timeout_ms}ms",
                         error_code="PERFORMANCE_VALIDATION_FAILED",
                         error_data={"validation_time_ms": validation_time},
                     )
 
-                return FlextResult[T].ok(validated_model)
+                return FlextResult[BaseModel].ok(validated_model)
             except Exception as e:
-                return FlextResult[T].fail(
+                return FlextResult[BaseModel].fail(
                     f"Validation failed: {e}",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
         @staticmethod
-        def validate_batch[T](
-            models: list[T],
-            *validators: Callable[[T], FlextResult[None]],
+        def validate_batch(
+            models: FlextTypes.ObjectList,
+            *validators: FlextTypes.ValidationRule,
             fail_fast: bool = True,
-        ) -> FlextResult[list[T]]:
+        ) -> FlextResult[FlextTypes.ObjectList]:
             """Validate a batch of models with railway patterns.
 
             Args:
@@ -2897,7 +3003,7 @@ class FlextModels:
                 fail_fast: Stop on first failure or accumulate all errors
 
             Returns:
-                FlextResult[list[T]]: All validated models or first failure
+                FlextResult[FlextTypes.ObjectList]: All validated models or first failure
 
             Example:
                 ```python
@@ -2912,44 +3018,52 @@ class FlextModels:
             """
             if fail_fast:
                 # Validate models one by one, stop on first failure
-                valid_models: list[T] = []
+                valid_models: FlextTypes.ObjectList = []
                 for model in models:
                     # Validate all rules for this model
                     for validator in validators:
                         result = validator(model)
                         if result.is_failure:
-                            return FlextResult[list[T]].fail(
+                            return FlextResult[FlextTypes.ObjectList].fail(
                                 result.error or "Validation failed"
                             )
 
                     valid_models.append(model)
 
-                return FlextResult[list[T]].ok(valid_models)
+                return FlextResult[FlextTypes.ObjectList].ok(valid_models)
             # Accumulate all errors
-            validated_models: list[T] = []
+            validated_models: FlextTypes.ObjectList = []
             all_errors: FlextTypes.StringList = []
 
             for model in models:
-                validation_result = FlextResult.validate_all(model, *validators)
+                # Use individual validation for models since validators may return object
+                validation_result: FlextResult[object] = FlextResult[object].ok(model)
+                for validator in validators:
+                    result = validator(model)
+                    if result.is_failure:
+                        validation_result = FlextResult[object].fail(
+                            result.error or "Validation failed"
+                        )
+                        break
                 if validation_result.is_success:
                     validated_models.append(model)
                 else:
                     all_errors.append(validation_result.error or "Validation failed")
 
             if all_errors:
-                return FlextResult[list[T]].fail(
+                return FlextResult[FlextTypes.ObjectList].fail(
                     f"Batch validation failed: {'; '.join(all_errors)}",
                     error_code="BATCH_VALIDATION_FAILED",
                     error_data={"error_count": len(all_errors), "errors": all_errors},
                 )
 
-            return FlextResult[list[T]].ok(validated_models)
+            return FlextResult[FlextTypes.ObjectList].ok(validated_models)
 
         @staticmethod
-        def validate_domain_invariants[T](
-            model: T,
-            invariants: list[Callable[[T], FlextResult[None]]],
-        ) -> FlextResult[T]:
+        def validate_domain_invariants(
+            model: FlextTypes.DomainObjectType,
+            invariants: list[FlextTypes.ValidationRule],
+        ) -> FlextResult[object]:
             """Validate domain invariants with railway patterns.
 
             Args:
@@ -2957,7 +3071,7 @@ class FlextModels:
                 invariants: List of domain invariant validation functions
 
             Returns:
-                FlextResult[T]: Validated model or first invariant violation
+                FlextResult[object]: Validated model or first invariant violation
 
             Example:
                 ```python
@@ -2975,18 +3089,18 @@ class FlextModels:
             for invariant in invariants:
                 result = invariant(model)
                 if result.is_failure:
-                    return FlextResult[T].fail(
+                    return FlextResult[object].fail(
                         f"Domain invariant violation: {result.error}",
                         error_code="DOMAIN_INVARIANT_VIOLATION",
                         error_data={"invariant_error": result.error},
                     )
-            return FlextResult[T].ok(model)
+            return FlextResult[object].ok(model)
 
         @staticmethod
-        def validate_aggregate_consistency_with_rules[T](
-            aggregate: T,
-            consistency_rules: dict[str, Callable[[T], FlextResult[None]]],
-        ) -> FlextResult[T]:
+        def validate_aggregate_consistency_with_rules(
+            aggregate: FlextTypes.DomainObjectType,
+            consistency_rules: dict[str, FlextTypes.CrossFieldValidator],
+        ) -> FlextResult[object]:
             """Validate aggregate consistency with railway patterns.
 
             Args:
@@ -2994,7 +3108,7 @@ class FlextModels:
                 consistency_rules: Dictionary of consistency rule validators
 
             Returns:
-                FlextResult[T]: Validated aggregate or consistency violation
+                FlextResult[object]: Validated aggregate or consistency violation
 
             Example:
                 ```python
@@ -3018,19 +3132,19 @@ class FlextModels:
                     violations.append(f"{rule_name}: {result.error}")
 
             if violations:
-                return FlextResult[T].fail(
+                return FlextResult[object].fail(
                     f"Aggregate consistency violations: {'; '.join(violations)}",
                     error_code="AGGREGATE_CONSISTENCY_VIOLATION",
                     error_data={"violations": violations},
                 )
 
-            return FlextResult[T].ok(aggregate)
+            return FlextResult[object].ok(aggregate)
 
         @staticmethod
-        def validate_event_sourcing[T](
-            event: T,
-            event_validators: dict[str, Callable[[T], FlextResult[None]]],
-        ) -> FlextResult[T]:
+        def validate_event_sourcing(
+            event: FlextTypes.DomainObjectType,
+            event_validators: dict[str, FlextTypes.CrossFieldValidator],
+        ) -> FlextResult[object]:
             """Validate event sourcing patterns with railway patterns.
 
             Args:
@@ -3038,7 +3152,7 @@ class FlextModels:
                 event_validators: Dictionary of event-specific validators
 
             Returns:
-                FlextResult[T]: Validated event or validation failure
+                FlextResult[object]: Validated event or validation failure
 
             Example:
                 ```python
@@ -3064,20 +3178,20 @@ class FlextModels:
             ]
 
             if errors:
-                return FlextResult[T].fail(
+                return FlextResult[object].fail(
                     f"Event validation failed: {'; '.join(errors)}",
                     error_code="EVENT_VALIDATION_FAILED",
                     error_data={"event_errors": errors},
                 )
 
-            return FlextResult[T].ok(event)
+            return FlextResult[object].ok(event)
 
         @staticmethod
-        def validate_cqrs_patterns[T](
-            command_or_query: T,
+        def validate_cqrs_patterns(
+            command_or_query: FlextTypes.DomainObjectType,
             pattern_type: str,
-            validators: list[Callable[[T], FlextResult[None]]],
-        ) -> FlextResult[T]:
+            validators: list[FlextTypes.ValidationRule],
+        ) -> FlextResult[object]:
             """Validate CQRS patterns with railway patterns.
 
             Args:
@@ -3086,7 +3200,7 @@ class FlextModels:
                 validators: List of pattern-specific validators
 
             Returns:
-                FlextResult[T]: Validated command/query or validation failure
+                FlextResult[object]: Validated command/query or validation failure
 
             Example:
                 ```python
@@ -3103,7 +3217,7 @@ class FlextModels:
 
             """
             if pattern_type not in {"command", "query"}:
-                return FlextResult[T].fail(
+                return FlextResult[object].fail(
                     f"Invalid pattern type: {pattern_type}. Must be 'command' or 'query'",
                     error_code="INVALID_PATTERN_TYPE",
                 )
@@ -3111,7 +3225,7 @@ class FlextModels:
             for validator in validators:
                 result = validator(command_or_query)
                 if result.is_failure:
-                    return FlextResult[T].fail(
+                    return FlextResult[object].fail(
                         f"CQRS {pattern_type} validation failed: {result.error}",
                         error_code=f"CQRS_{pattern_type.upper()}_VALIDATION_FAILED",
                         error_data={
@@ -3120,10 +3234,10 @@ class FlextModels:
                         },
                     )
 
-            return FlextResult[T].ok(command_or_query)
+            return FlextResult[object].ok(command_or_query)
 
         @staticmethod
-        def validate_domain_event(event: object) -> FlextResult[None]:
+        def validate_domain_event(event: FlextTypes.DomainObjectType) -> FlextResult[None]:
             """Enhanced domain event validation with comprehensive checks.
 
             Validates domain events for proper structure, required fields,
@@ -3180,9 +3294,9 @@ class FlextModels:
             return FlextResult[None].ok(None)
 
         @staticmethod
-        def validate_aggregate_consistency[T: FlextProtocols.HasInvariants](
-            aggregate: T,
-        ) -> FlextResult[T]:
+        def validate_aggregate_consistency(
+            aggregate: FlextTypes.DomainObjectType,
+        ) -> FlextResult[FlextTypes.DomainObjectType]:
             """Validate aggregate consistency and business invariants.
 
             Ensures aggregates maintain consistency boundaries and invariants
@@ -3192,11 +3306,11 @@ class FlextModels:
                 aggregate: The aggregate root to validate
 
             Returns:
-                FlextResult[T]: Validated aggregate or failure with details
+                FlextResult[object]: Validated aggregate or failure with details
 
             """
             if aggregate is None:
-                return FlextResult[T].fail(
+                return FlextResult[object].fail(
                     "Aggregate cannot be None",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
@@ -3206,7 +3320,7 @@ class FlextModels:
                 try:
                     aggregate.check_invariants()
                 except Exception as e:
-                    return FlextResult[T].fail(
+                    return FlextResult[object].fail(
                         f"Aggregate invariant violation: {e}",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -3215,15 +3329,17 @@ class FlextModels:
             if hasattr(aggregate, "domain_events"):
                 events = getattr(aggregate, "domain_events", [])
                 if len(events) > FlextConstants.Validation.MAX_UNCOMMITTED_EVENTS:
-                    return FlextResult[T].fail(
+                    return FlextResult[object].fail(
                         f"Too many uncommitted domain events: {len(events)} (max: {FlextConstants.Validation.MAX_UNCOMMITTED_EVENTS})",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
-            return FlextResult[T].ok(aggregate)
+            return FlextResult[object].ok(aggregate)
 
         @staticmethod
-        def validate_entity_relationships[T](entity: T) -> FlextResult[T]:
+        def validate_entity_relationships(
+            entity: FlextTypes.DomainObjectType,
+        ) -> FlextResult[FlextTypes.DomainObjectType]:
             """Validate entity relationships and references.
 
             Ensures entity references are valid and relationships are consistent.
@@ -3233,11 +3349,11 @@ class FlextModels:
                 entity: The entity to validate
 
             Returns:
-                FlextResult[T]: Validated entity or failure with details
+                FlextResult[object]: Validated entity or failure with details
 
             """
             if entity is None:
-                return FlextResult[T].fail(
+                return FlextResult[object].fail(
                     "Entity cannot be None",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
@@ -3247,7 +3363,7 @@ class FlextModels:
                 entity_id = getattr(entity, "id", "")
                 id_result = FlextModels.Validation.validate_entity_id(entity_id)
                 if id_result.is_failure:
-                    return FlextResult[T].fail(
+                    return FlextResult[object].fail(
                         f"Invalid entity ID: {id_result.error}",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -3256,7 +3372,7 @@ class FlextModels:
             if hasattr(entity, "version"):
                 version = getattr(entity, "version", 0)
                 if not isinstance(version, int) or version < 0:
-                    return FlextResult[T].fail(
+                    return FlextResult[object].fail(
                         "Entity version must be a non-negative integer",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -3266,13 +3382,13 @@ class FlextModels:
                 if hasattr(entity, timestamp_field):
                     timestamp = getattr(entity, timestamp_field)
                     if timestamp is not None and not isinstance(timestamp, datetime):
-                        return FlextResult[T].fail(
+                        return FlextResult[object].fail(
                             f"Entity {timestamp_field} must be a datetime or None",
                             error_code=FlextConstants.Errors.VALIDATION_ERROR,
                         )
 
             # Type-safe return for generic method using cast for proper type inference
-            return cast("FlextResult[T]", FlextResult.ok(entity))
+            return cast("FlextResult[object]", FlextResult.ok(entity))
 
 
 # =========================================================================

@@ -26,7 +26,10 @@ from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes, T
+from flext_core.typings import FactoryT, FlextTypes, T
+
+# Type variable for factory method is imported from typings (FactoryT)
+# All semantic type aliases now in FlextTypes - access via FlextTypes.ContainerServiceType, etc.
 
 
 class FlextContainer(FlextProtocols.Configurable):
@@ -284,10 +287,10 @@ class FlextContainer(FlextProtocols.Configurable):
         """
         return FlextModels.Validation.validate_service_name(name)
 
-    def register[T](
+    def register(
         self,
         name: str,
-        service: T,
+        service: object,
     ) -> FlextResult[None]:
         """Register a service in the FlextContainer with type preservation.
 
@@ -319,10 +322,10 @@ class FlextContainer(FlextProtocols.Configurable):
             lambda validated_name: self._store_service(validated_name, service),
         )
 
-    def _store_service[T](self, name: str, service: T) -> FlextResult[None]:
+    def _store_service(self, name: str, service: object) -> FlextResult[None]:
         """Store service in registry AND internal DI container with type preservation.
 
-        Stores in both tracking dict[str, object] (backward compatibility) and internal
+        Stores in both tracking FlextTypes.Dict (backward compatibility) and internal
         dependency-injector container (advanced DI features). Uses Object
         provider for existing service instances. Type T is preserved for static typing.
 
@@ -339,12 +342,12 @@ class FlextContainer(FlextProtocols.Configurable):
 
         provider_registered = False
         try:
-            # Store in tracking dict[str, object] (backward compatibility)
+            # Store in tracking FlextTypes.Dict (backward compatibility)
             self._services[name] = service
 
             # Store in internal DI container using Object provider
             # Object provider is for existing instances (singletons by nature)
-            provider = Object(cast("object", service))
+            provider = Object(service)
             cast("DynamicContainer", self._di_container).set_provider(name, provider)
             provider_registered = True
 
@@ -358,10 +361,10 @@ class FlextContainer(FlextProtocols.Configurable):
             self._services.pop(name, None)
             return FlextResult[None].fail(f"Service storage failed: {e}")
 
-    def register_factory[T](
+    def register_factory(
         self,
         name: str,
-        factory: Callable[[], T],
+        factory: Callable[[], FactoryT],
     ) -> FlextResult[None]:
         """Register service factory with type preservation.
 
@@ -376,14 +379,14 @@ class FlextContainer(FlextProtocols.Configurable):
             lambda validated_name: self._store_factory(validated_name, factory),
         )
 
-    def _store_factory[T](
+    def _store_factory(
         self,
         name: str,
-        factory: Callable[[], T],
+        factory: Callable[[], FactoryT],
     ) -> FlextResult[None]:
         """Store factory in registry AND internal DI container with type preservation.
 
-        Stores in both tracking dict[str, object] (backward compatibility) and internal
+        Stores in both tracking FlextTypes.Dict (backward compatibility) and internal
         dependency-injector container using Singleton provider with factory.
         This ensures factory is called once and result is cached (lazy singleton).
         Type T is preserved for static type checking.
@@ -405,7 +408,7 @@ class FlextContainer(FlextProtocols.Configurable):
 
         provider_registered = False
         try:
-            # Store in tracking dict[str, object] (backward compatibility)
+            # Store in tracking FlextTypes.Dict (backward compatibility)
             self._factories[name] = factory
 
             # Store in internal DI container using Singleton with factory
@@ -491,7 +494,7 @@ class FlextContainer(FlextProtocols.Configurable):
                 provider = getattr(self._di_container, name)
                 service = provider()
 
-                # Cache factory results in tracking dict[str, object] for compatibility
+                # Cache factory results in tracking FlextTypes.Dict for compatibility
                 if name in self._factories and name not in self._services:
                     self._services[name] = service
 
@@ -541,7 +544,7 @@ class FlextContainer(FlextProtocols.Configurable):
         except Exception as e:
             return FlextResult[object].fail(f"Factory '{name}' failed: {e}")
 
-    def get_typed[T](self, name: str, expected_type: type[T]) -> FlextResult[T]:
+    def get_typed(self, name: str, expected_type: type[T]) -> FlextResult[T]:
         """Get service with type validation and generic return type preservation.
 
         Retrieves a service and validates it matches the expected type.
@@ -559,7 +562,7 @@ class FlextContainer(FlextProtocols.Configurable):
             lambda service: self._validate_service_type(service, expected_type),
         )
 
-    def _validate_service_type[T](
+    def _validate_service_type(
         self,
         service: object,
         expected_type: type[T],
@@ -709,7 +712,7 @@ class FlextContainer(FlextProtocols.Configurable):
             service_result.error or "Service retrieval failed"
         )
 
-    def create_service[T](
+    def create_service(
         self,
         service_class: type[T],
         service_name: str | None = None,
@@ -764,7 +767,7 @@ class FlextContainer(FlextProtocols.Configurable):
         except Exception as e:
             return FlextResult[object].fail(f"Service creation failed: {e}")
 
-    def auto_wire[T](
+    def auto_wire(
         self,
         service_class: type[T],
     ) -> FlextResult[object]:
@@ -989,7 +992,7 @@ class FlextContainer(FlextProtocols.Configurable):
         """Create module-specific utilities with container integration.
 
         Returns:
-            FlextResult[FlextTypes.Dict]: Success with utilities dict[str, object] or failure with error.
+            FlextResult[FlextTypes.Dict]: Success with utilities FlextTypes.Dict or failure with error.
 
         """
         if not module_name:
@@ -1070,7 +1073,7 @@ class FlextContainer(FlextProtocols.Configurable):
         service: object = factory_result.unwrap()
         return self.register(name, service)
 
-    def get_typed_with_recovery[T](
+    def get_typed_with_recovery(
         self,
         name: str,
         expected_type: type[T],
@@ -1134,7 +1137,7 @@ class FlextContainer(FlextProtocols.Configurable):
     def validate_and_get(
         self,
         name: str,
-        validators: list[Callable[[object], FlextResult[object]]] | None = None,
+        validators: list[FlextTypes.ValidatorFunctionType] | None = None,
     ) -> FlextResult[object]:
         """Get service and validate using flow_through pattern.
 

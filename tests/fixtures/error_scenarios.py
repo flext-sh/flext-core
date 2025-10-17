@@ -7,10 +7,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes
 
-
-def get_test_error_scenarios() -> FlextTypes.NestedDict:
+def get_test_error_scenarios() -> dict[str, dict[str, object]]:
     """Provide common error scenarios for testing.
 
     Pre-defined error scenarios for testing error handling,

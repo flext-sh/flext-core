@@ -1046,8 +1046,8 @@ class MessagingPatternsService(FlextService[FlextTypes.Dict]):
         # Message constants for validation
         print("FlextConstants.Messages validation:")
         print(f"  TYPE_MISMATCH: {FlextConstants.Messages.TYPE_MISMATCH}")
-        print(f"  INVALID_INPUT: {FlextConstants.Messages.INVALID_INPUT}")
         print(f"  VALIDATION_FAILED: {FlextConstants.Messages.VALIDATION_FAILED}")
+        print(f"  REDACTED_SECRET: {FlextConstants.Messages.REDACTED_SECRET}")
 
         # Error codes for messaging
         print("\nFlextConstants.Errors for messaging:")
@@ -1063,7 +1063,7 @@ class MessagingPatternsService(FlextService[FlextTypes.Dict]):
 
         if not message_data.get("type"):
             logger.error(
-                FlextConstants.Messages.INVALID_INPUT,
+                FlextConstants.Messages.VALIDATION_FAILED,
                 extra={"error_code": FlextConstants.Errors.VALIDATION_ERROR},
             )
 

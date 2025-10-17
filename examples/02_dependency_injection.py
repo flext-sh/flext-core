@@ -785,11 +785,11 @@ class ComprehensiveDIService(FlextService[User]):
         else:
             print(f"❌ Failed to get database: {db_result.error}")
 
-        typed_result: FlextResult[object] = self.container.get_typed(
+        typed_result: FlextResult[DatabaseService] = self.container.get_typed(
             "database", DatabaseService
         )
         if typed_result.is_success:
-            db_typed = cast("DatabaseService", typed_result.unwrap())
+            db_typed = typed_result.unwrap()
             print(f"✅ Got typed database: {type(db_typed).__name__}")
             # Safe access to database stats
             stats = db_typed.get_stats()

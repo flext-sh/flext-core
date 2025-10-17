@@ -26,18 +26,13 @@ class TestFlextConstants:
         """Test network constants access."""
         assert FlextConstants.Network.MIN_PORT == 1
         assert FlextConstants.Network.MAX_PORT == 65535
-        assert FlextConstants.Network.TOTAL_TIMEOUT == 60
         assert FlextConstants.Network.DEFAULT_TIMEOUT == 30
 
     def test_validation_constants(self) -> None:
         """Test validation constants access."""
         assert FlextConstants.Validation.MIN_NAME_LENGTH == 2
         assert FlextConstants.Validation.MAX_NAME_LENGTH == 100
-        assert FlextConstants.Validation.MIN_SERVICE_NAME_LENGTH == 2
         assert FlextConstants.Validation.MAX_EMAIL_LENGTH == 254
-        assert FlextConstants.Validation.MIN_PERCENTAGE == 0.0
-        assert FlextConstants.Validation.MAX_PERCENTAGE == 100.0
-        assert FlextConstants.Validation.MIN_SECRET_KEY_LENGTH == 32
         assert FlextConstants.Validation.MIN_PHONE_DIGITS == 10
 
     def test_error_constants(self) -> None:
@@ -55,13 +50,6 @@ class TestFlextConstants:
     def test_messages_constants(self) -> None:
         """Test message constants access."""
         assert FlextConstants.Messages.TYPE_MISMATCH == "Type mismatch"
-        assert (
-            FlextConstants.Messages.SERVICE_NAME_EMPTY == "Service name cannot be empty"
-        )
-
-    def test_entities_constants(self) -> None:
-        """Test entity constants access."""
-        assert FlextConstants.Entities.ENTITY_ID_EMPTY == "Entity ID cannot be empty"
 
     def test_defaults_constants(self) -> None:
         """Test default constants access."""
@@ -69,17 +57,10 @@ class TestFlextConstants:
         assert FlextConstants.Defaults.PAGE_SIZE == 100
         assert FlextConstants.Defaults.TIMEOUT_SECONDS == 30
 
-    def test_limits_constants(self) -> None:
-        """Test limits constants access."""
-        assert FlextConstants.Limits.MAX_STRING_LENGTH == 1000
-        assert FlextConstants.Limits.MAX_LIST_SIZE == 10000
-        assert FlextConstants.Limits.MAX_FILE_SIZE == 10 * 1024 * 1024
-
     def test_utilities_constants(self) -> None:
         """Test utility constants access."""
-        assert FlextConstants.Utilities.SECONDS_PER_MINUTE == 60
-        assert FlextConstants.Utilities.SECONDS_PER_HOUR == 3600
-        assert FlextConstants.Utilities.BYTES_PER_KB == 1024
+        assert FlextConstants.Utilities.DEFAULT_ENCODING == "utf-8"
+        assert FlextConstants.Utilities.MAX_TIMEOUT_SECONDS == 3600
 
     def test_logging_constants(self) -> None:
         """Test logging constants access."""
@@ -96,25 +77,10 @@ class TestFlextConstants:
         assert FlextConstants.Config.LogLevel.ERROR == "ERROR"
         assert FlextConstants.Config.LogLevel.CRITICAL == "CRITICAL"
 
-    def test_config_source_enum(self) -> None:
-        """Test config source enum."""
-        assert FlextConstants.Config.ConfigSource.FILE.value == "file"
-        assert FlextConstants.Config.ConfigSource.ENVIRONMENT.value == "env"
-        assert FlextConstants.Config.ConfigSource.CLI.value == "cli"
-
-    def test_field_type_enum(self) -> None:
-        """Test field type enum."""
-        assert FlextConstants.Enums.FieldType.STRING.value == "string"
-        assert FlextConstants.Enums.FieldType.INTEGER.value == "integer"
-        assert FlextConstants.Enums.FieldType.FLOAT.value == "float"
-        assert FlextConstants.Enums.FieldType.BOOLEAN.value == "boolean"
-        assert FlextConstants.Enums.FieldType.DATETIME.value == "datetime"
-
     def test_platform_constants(self) -> None:
         """Test platform constants access."""
         assert FlextConstants.Platform.FLEXT_API_PORT == 8000
         assert FlextConstants.Platform.DEFAULT_HOST == "localhost"
-        assert FlextConstants.Platform.LOOPBACK_IP == "127.0.0.1"
 
     def test_validation_patterns_email(self) -> None:
         """Test email validation pattern."""
@@ -184,15 +150,10 @@ class TestFlextConstants:
         assert pattern.match("path/with<invalid>chars") is None
         assert pattern.match('path/with"quotes') is None
 
-    def test_observability_constants(self) -> None:
-        """Test observability constants access."""
-        assert FlextConstants.Observability.DEFAULT_LOG_LEVEL == "INFO"
-
     def test_performance_constants(self) -> None:
         """Test performance constants access."""
-        assert FlextConstants.Performance.DEFAULT_PAGE_SIZE == 10
-        assert FlextConstants.Performance.SUBPROCESS_TIMEOUT == 300
-        assert FlextConstants.Performance.SUBPROCESS_TIMEOUT_SHORT == 180
+        assert FlextConstants.Performance.MAX_TIMEOUT_SECONDS == 600
+        assert FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE == 1000
 
     def test_reliability_constants(self) -> None:
         """Test reliability constants access."""
@@ -202,8 +163,8 @@ class TestFlextConstants:
 
     def test_security_constants(self) -> None:
         """Test security constants access."""
-        assert FlextConstants.Security.MAX_JWT_EXPIRY_MINUTES == 43200
-        assert FlextConstants.Security.DEFAULT_JWT_EXPIRY_MINUTES == 60
+        assert FlextConstants.Security.JWT_DEFAULT_ALGORITHM == "HS256"
+        assert FlextConstants.Security.CREDENTIAL_BCRYPT_ROUNDS == 12
 
     def test_cqrs_constants(self) -> None:
         """Test CQRS constants access."""
@@ -214,7 +175,7 @@ class TestFlextConstants:
     def test_container_constants(self) -> None:
         """Test container constants access."""
         assert FlextConstants.Container.DEFAULT_WORKERS == 4
-        assert FlextConstants.Container.MIN_WORKERS == 1
+        assert FlextConstants.Container.MAX_CACHE_SIZE == 100
 
     def test_dispatcher_constants(self) -> None:
         """Test dispatcher constants access."""
@@ -250,28 +211,23 @@ class TestFlextConstants:
         assert isinstance(FlextConstants.Network.MAX_PORT, int)
 
         # Test float constants
-        assert isinstance(FlextConstants.Validation.MIN_PERCENTAGE, float)
-        assert isinstance(FlextConstants.Validation.MAX_PERCENTAGE, float)
+        assert isinstance(FlextConstants.Reliability.RETRY_BACKOFF_MAX, float)
 
         # Test list constants - removed environment references per requirements
 
     def test_constants_completeness(self) -> None:
         """Test that all expected constant categories exist."""
-        # Verify all major constant categories are present
+        # Verify all major constant categories are present (used by flext-core only)
         assert hasattr(FlextConstants, "Core")
         assert hasattr(FlextConstants, "Network")
         assert hasattr(FlextConstants, "Validation")
         assert hasattr(FlextConstants, "Errors")
         assert hasattr(FlextConstants, "Messages")
-        assert hasattr(FlextConstants, "Entities")
         assert hasattr(FlextConstants, "Defaults")
-        assert hasattr(FlextConstants, "Limits")
         assert hasattr(FlextConstants, "Utilities")
         assert hasattr(FlextConstants, "Config")
         assert hasattr(FlextConstants, "Logging")
-        assert hasattr(FlextConstants, "Enums")
         assert hasattr(FlextConstants, "Platform")
-        assert hasattr(FlextConstants, "Observability")
         assert hasattr(FlextConstants, "Performance")
         assert hasattr(FlextConstants, "Reliability")
         assert hasattr(FlextConstants, "Security")
@@ -279,6 +235,10 @@ class TestFlextConstants:
         assert hasattr(FlextConstants, "Container")
         assert hasattr(FlextConstants, "Dispatcher")
         assert hasattr(FlextConstants, "Mixins")
+        assert hasattr(FlextConstants, "Context")
+        assert hasattr(FlextConstants, "Processing")
+        assert hasattr(FlextConstants, "Http")
+        assert hasattr(FlextConstants, "Pagination")
 
     def test_constants_documentation(self) -> None:
         """Test that constants have proper documentation."""

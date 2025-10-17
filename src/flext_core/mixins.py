@@ -621,7 +621,7 @@ class FlextMixins:
 
     def _log_config_once(
         self,
-        config: dict[str, object],
+        config: FlextTypes.Dict,
         message: str = "Configuration loaded",
     ) -> None:
         """Log configuration ONCE without binding to context.
