@@ -301,7 +301,7 @@ class TestCleanArchitecturePatterns:
             user_id: str
             name: str
 
-        class UpdateUserHandler(FlextProcessors.Handler):
+        class UpdateUserHandler:
             """Handler for user update commands."""
 
             def handle(self, request: object) -> FlextResult[object]:
@@ -323,7 +323,7 @@ class TestCleanArchitecturePatterns:
 
             user_id: str
 
-        class GetUserHandler(FlextProcessors.Handler):
+        class GetUserHandler:
             """Handler for user queries."""
 
             def handle(self, request: object) -> FlextResult[object]:

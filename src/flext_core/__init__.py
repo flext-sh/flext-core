@@ -350,7 +350,7 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
-from flext_core.models import FlextModels
+from flext_core.models import FlextModels, MessageUnion
 from flext_core.processors import FlextProcessors
 from flext_core.protocols import FlextProtocols
 from flext_core.registry import FlextRegistry
@@ -425,6 +425,7 @@ __all__ = [
     "FlextUtilities",
     "K",
     "Message",
+    "MessageUnion",
     "P",
     "Query",
     "R",

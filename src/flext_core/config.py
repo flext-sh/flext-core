@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import ClassVar, Self, cast
+from typing import ClassVar, Literal, Self, cast
 
 from dependency_injector import providers
 from pydantic import (
@@ -282,11 +282,9 @@ class FlextConfig(BaseSettings):
     )
 
     # Extended logging configuration
-    log_verbosity: str = Field(
-        default=FlextConstants.Logging.VERBOSITY,
-        min_length=3,
-        max_length=20,
-        description="Logging verbosity level (compact, detailed, full)",
+    log_verbosity: Literal["compact", "detailed", "full"] = Field(
+        default=cast("Literal['compact', 'detailed', 'full']", FlextConstants.Logging.VERBOSITY),
+        description="Logging verbosity level",
     )
 
     include_context: bool = Field(
@@ -648,53 +646,31 @@ class FlextConfig(BaseSettings):
         msg = f"Expected float or str, got {type(v).__name__}"
         raise ValueError(msg)
 
-    @field_validator("database_url")
-    @classmethod
-    def validate_database_url(cls, v: str | None) -> str | None:
-        """Validate database URL format.
-
-        Allows None for optional database configuration.
-        Validates that non-None values follow standard URI scheme format.
-
-        Args:
-            v: Database URL or None
-
-        Returns:
-            str | None: Validated database URL
-
-        Raises:
-            ValueError: If database URL is invalid
-
-        """
-        if v is None:
-            return v
-        v_stripped = v.strip()
-        if not v_stripped:
-            return None
-        # Must start with valid URI scheme (e.g., postgresql://, mysql://, sqlite:)
-        if "://" not in v_stripped:
-            msg = "Invalid database URL: must contain URI scheme (e.g., postgresql://)"
-            raise ValueError(msg)
-        return v_stripped
-
-    @field_validator("log_verbosity")
+    @field_validator("log_verbosity", mode="before")
     @classmethod
     def validate_log_verbosity(cls, v: str) -> str:
-        """Validate log verbosity level.
+        """Normalize log verbosity level to lowercase.
 
-        Ensures verbosity is one of: compact, detailed, full.
+        Pydantic's Literal type will validate membership.
+        This validator normalizes case-insensitivity.
 
         Args:
-            v: Verbosity level
+            v: Verbosity level (case-insensitive)
 
         Returns:
-            str: Validated verbosity level (lowercase)
+            str: Normalized verbosity level (lowercase)
 
         Raises:
-            ValueError: If verbosity is invalid
+            ValueError: If verbosity is not a valid value
 
         """
-        return cls.validate_log_verbosity_field(v)
+        if isinstance(v, str):
+            v_lower = v.lower()
+            if v_lower in {"compact", "detailed", "full"}:
+                return v_lower
+            msg = f"Invalid log verbosity: {v}. Must be one of: compact, detailed, full"
+            raise ValueError(msg)
+        return v
 
     @field_validator("log_file")
     @classmethod
