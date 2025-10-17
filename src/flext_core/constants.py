@@ -297,14 +297,6 @@ class FlextConstants:
             msg = f"Constant path '{key}' not found in FlextConstants"
             raise AttributeError(msg) from e
 
-    class Core:
-        """Core identifiers and version information."""
-
-        NAME: Final[str] = "FLEXT"
-        VERSION: Final[str] = "0.9.9"  # Hardcoded to avoid circular import
-        ZERO: Final[int] = 0
-        INITIAL_TIME: Final[float] = 0.0
-
     class Network:
         """Network-related defaults and limits."""
 
@@ -331,6 +323,9 @@ class FlextConstants:
 
         # Phone number validation
         MIN_PHONE_DIGITS: Final[int] = 10  # Minimum phone number length
+        MAX_PHONE_DIGITS: Final[int] = (
+            20  # Maximum phone number length (international standard)
+        )
         MIN_USERNAME_LENGTH: Final[int] = 3  # Minimum username length for validation
         MAX_AGE: Final[int] = 150  # Maximum valid age for persons
         MIN_AGE: Final[int] = 0  # Minimum valid age for persons
@@ -463,6 +458,24 @@ class FlextConstants:
         DEFAULT_BATCH_SIZE: Final[int] = 1000
         MAX_TIMEOUT_SECONDS: Final[int] = 3600
 
+        # UUID and identifier generation constants
+        LONG_UUID_LENGTH: Final[int] = 12  # Length of UUID suffix for ID generation
+        SHORT_UUID_LENGTH: Final[int] = (
+            8  # Length of short UUID suffix for correlation IDs
+        )
+        VERSION_MODULO: Final[int] = 100  # Modulo value for version computation
+        CONTROL_CHARS_PATTERN: Final[str] = (
+            r"[\x00-\x1F\x7F]"  # Regex pattern for control characters
+        )
+
+        # Cache attribute names for mixin operations
+        CACHE_ATTRIBUTE_NAMES: Final[tuple[str, ...]] = (
+            "_cache",
+            "_ttl",
+            "_cached_at",
+            "_cached_value",
+        )
+
     class Config:
         """Configuration defaults and limits."""
 
@@ -561,6 +574,12 @@ class FlextConstants:
         # Field validation constraints
         DEFAULT_VERSION: Final[int] = 1
         MIN_VERSION: Final[int] = 1
+
+        # Pagination - defaults for page processing
+        DEFAULT_PAGE_SIZE: Final[int] = 10  # Default page size for processing
+
+        # Memory and resource thresholds
+        HIGH_MEMORY_THRESHOLD_BYTES: Final[int] = 1073741824  # 1 GB in bytes
 
         # Operation constraints
         MAX_TIMEOUT_SECONDS: Final[int] = 600
@@ -905,6 +924,15 @@ class FlextConstants:
             ACTIVE: Final[str] = "active"
             INACTIVE: Final[str] = "inactive"
 
+        # Type aliases for MyPy strict mode support
+        type Status = Literal[
+            "pending", "running", "completed", "failed", "compensating"
+        ]
+        type HandlerType = Literal["command", "query", "event", "saga"]
+        type HandlerMode = Literal["command", "query", "event", "saga"]
+        type HandlerModeSimple = Literal["command", "query"]
+        type Compression = Literal["none", "gzip", "bzip2", "lz4"]
+
         # Command/Query defaults
         DEFAULT_COMMAND_TYPE: Final[str] = (
             ""  # Empty string for unspecified command type
@@ -1154,54 +1182,6 @@ class FlextConstants:
         DEFAULT_MAX_WORKERS: Final[int] = 4  # Default maximum worker threads
         DEFAULT_BATCH_SIZE: Final[int] = 1000  # Default batch size for processing
         MAX_BATCH_SIZE: Final[int] = 10000  # Maximum batch size for validation
-
-    # Status literals - reference nested class attributes correctly
-    Status = Literal[
-        "pending",
-        "running",
-        "completed",
-        "failed",
-        "compensating",
-    ]
-
-    # Circuit breaker state literals - reference nested class attributes correctly
-    CircuitBreakerState = Literal[
-        "closed",
-        "open",
-        "half_open",
-    ]
-
-    # Model literal types - reference nested class attributes correctly
-    HandlerType = Literal[
-        "command",
-        "query",
-        "event",
-        "saga",
-    ]
-
-    HandlerMode = Literal[
-        "command",
-        "query",
-        "event",
-        "saga",
-    ]
-
-    HandlerModeSimple = Literal[
-        "command",
-        "query",
-    ]
-
-    Compression = Literal[
-        "none",
-        "gzip",
-        "bzip2",
-        "lz4",
-    ]
-
-    # Error handling literals (from FlextTypes.ErrorHandling)
-    ErrorCategory = Literal[
-        "validation", "network", "database", "auth", "system", "unknown"
-    ]
 
 
 __all__ = ["FlextConstants"]

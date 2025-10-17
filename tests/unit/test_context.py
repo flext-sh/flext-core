@@ -11,7 +11,7 @@ import threading
 import time
 from typing import cast
 
-from flext_core import FlextContext, FlextTypes
+from flext_core import FlextContext, FlextModels, FlextTypes
 
 
 class TestFlextContext:
@@ -25,7 +25,7 @@ class TestFlextContext:
 
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
-        initial_data: FlextTypes.Dict = {"user_id": "123", "session_id": "abc"}
+        initial_data = FlextModels.ContextData(data={"user_id": "123", "session_id": "abc"})
         context = FlextContext(initial_data)
         assert context is not None
         assert context.get("user_id") == "123"

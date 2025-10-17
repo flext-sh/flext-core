@@ -29,7 +29,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 from typing import (
     TYPE_CHECKING,
     ParamSpec,
@@ -127,23 +127,24 @@ class FlextTypes:
 
     type Dict = dict[str, object]
     type List = list[object]
-    type Mapping = dict[str, object]
-    type Sequence = list[object]
-    type Set = set[object]
-    type Tuple = tuple[object, ...]
     type StringList = list[str]
     type StringDict = dict[str, str]
     type IntList = list[int]
     type FloatList = list[float]
     type BoolList = list[bool]
     type ObjectList = list[object]
-    type DictList = list[dict[str, object]]
     type NestedDict = dict[str, dict[str, object]]
     type FloatDict = dict[str, float]
-    type SortableType = str | int | float
+    type BoolDict = dict[str, bool]
+    type IntDict = dict[str, int]
+    type JsonValue = dict[str, object] | list[object] | str | int | float | bool | None
+    type JsonDict = dict[str, JsonValue]
+    type Dicts = dict[str, dict[str, object]]
     type SerializableType = Dict | List | str | int | float | bool | None
-    type AsyncDict = dict[str, Awaitable[object]]
-    type AsyncList = list[Awaitable[object]]
+    type OutputFormat = str
+    type ConfigDict = dict[str, object]
+    type Mapping = dict[str, object]
+    type ProcessingStatus = str
 
     # =========================================================================
     # DOMAIN MODELING TYPES - Used in models.py (23+ uses)
@@ -155,17 +156,14 @@ class FlextTypes:
     type DomainObjectType = object
     type OptionalDomainObjectType = object | None
     type CallableHandlerType = Callable[..., object]
-    type CallableValidationType = Callable[..., object]
-    type EventPayload = dict[str, object]
+    type EventPayload = dict[str, object]  # Will be replaced with model in Phase 4.4
     type EventMetadata = dict[str, str | int | float]
 
     # =========================================================================
     # PROCESSOR TYPES - Used in processors.py (52-67 uses combined)
     # =========================================================================
 
-    type ProcessorInputType = (
-        object | dict[str, object] | str | int | float | bool
-    )
+    type ProcessorInputType = object | dict[str, object] | str | int | float | bool
     type ProcessorOutputType = (
         object | dict[str, object] | str | int | float | bool | None
     )
@@ -174,14 +172,13 @@ class FlextTypes:
     # HANDLER TYPES - Used in handlers.py, bus.py (13-14 uses combined)
     # =========================================================================
 
-    type HandlerRegistry = dict[str, list[Callable[[object], object]]]
     type BusHandlerType = Callable[..., object]
     type BusMessageType = object
-    type AcceptableMessageType = (
-        object | dict[str, object] | str | int | float | bool
-    )
+    type AcceptableMessageType = object | dict[str, object] | str | int | float | bool
     type MiddlewareType = Callable[[object], object]
-    type MiddlewareConfig = dict[str, object | int | str]
+    type MiddlewareConfig = dict[
+        str, object | int | str
+    ]  # Will be replaced with model in Phase 4.4
 
     # =========================================================================
     # LOGGING TYPES - Used in loggings.py (10-21 uses combined)
@@ -189,7 +186,6 @@ class FlextTypes:
 
     type LoggingContextValueType = object
     type LoggingArgType = object
-    type LoggingKwargsValueType = object
     type LoggingContextType = object
     type LoggingKwargsType = object
     type BoundLoggerType = object
@@ -204,7 +200,7 @@ class FlextTypes:
     type SerializableObjectType = object
     type GenericTypeArgument = object
     type LoggerContextType = object
-    type FactoryCallableType = object
+    type FactoryCallableType = Callable[[], object]
     type ContextualObjectType = object
 
     # =========================================================================
@@ -218,7 +214,6 @@ class FlextTypes:
     # VALIDATION TYPES - Used in models.py (1-7 uses)
     # =========================================================================
 
-    type ValidationPipeline = list[Callable[[object], object]]
     type ConfigValue = object
     type ValidationRule = Callable[[object], FlextResult[object]]
     type CrossFieldValidator = Callable[[object], FlextResult[object]]
@@ -228,13 +223,92 @@ class FlextTypes:
     # =========================================================================
 
     type HookRegistry = dict[str, list[Callable[..., object]]]
+    type HookCallableType = Callable[..., object]
     type ScopeRegistry = dict[str, dict[str, object]]
+    type PredicateType = Callable[[object], bool]
 
     # =========================================================================
     # DISPATCHER TYPES - Used in dispatcher.py
     # =========================================================================
 
-    type DispatcherRateLimiterState = dict[str, float | int]
+    type HandlerCallableType = Callable[[object], object | FlextResult[object]]
+    type MessageTypeOrHandlerType = str | object | HandlerCallableType
+    type HandlerOrCallableType = object | HandlerCallableType
+
+    # =========================================================================
+    # DECORATOR TYPES - Used in decorators.py
+    # =========================================================================
+
+    type DecoratorReturnType = Callable[[Callable[..., object]], Callable[..., object]]
+
+    # =========================================================================
+    # BUS TYPES - Complex handler patterns for bus.py
+    # =========================================================================
+
+    type HandlerConfigurationType = Dict | None
+
+    # =========================================================================
+    # CORE NESTED CLASS - For external projects (Core types)
+    # =========================================================================
+
+    class Core:
+        """Core domain types for external project extension.
+
+        Provides foundational types that external projects (FlextMeltanoTypes,
+        FlextOracleWmsTypes) can reference when building their own type systems.
+        """
+
+        # =====================================================================
+        # BASIC COLLECTION TYPES - Foundation for external projects
+        # =====================================================================
+
+        # Direct references to FlextTypes collection types
+        Dict = dict[str, object]  # Generic dict type
+        List = list[object]  # Generic list type
+        StringList = list[str]  # String list type
+        StringDict = dict[str, str]  # String-keyed string value dict
+        IntDict = dict[str, int]  # String-keyed int value dict
+        FloatDict = dict[str, float]  # String-keyed float value dict
+        BoolDict = dict[str, bool]  # String-keyed bool value dict
+        NestedDict = dict[str, dict[str, object]]  # Nested dict type
+
+        # =====================================================================
+        # CONFIGURATION AND VALIDATION TYPES - For domain models
+        # =====================================================================
+
+        ConfigValue = object  # Generic config value type
+        ValidationInput = object  # Generic validation input
+        ValidationResult = object  # Generic validation result
+        DomainValue = object  # Generic domain value
+        EntityId = str  # Standard entity identifier type
+
+        # =====================================================================
+        # JSON AND SERIALIZATION TYPES - For data exchange
+        # =====================================================================
+
+        JsonValue = (
+            dict[str, object] | list[object] | str | int | float | bool | None
+        )  # JSON-compatible type
+        JsonDict = dict[str, JsonValue]  # Dict with JSON values
+        SerializableValue = object  # Any serializable value
+
+        # =====================================================================
+        # DATA PROCESSING TYPES - For operations and transformations
+        # =====================================================================
+
+        RecordDict = dict[str, object]  # Record dictionary
+        FilterDict = dict[str, object]  # Filter configuration
+        ResultDict = dict[str, object]  # Result data
+        ContextDict = dict[str, object]  # Context data
+        EntityDict = dict[str, object]  # Entity representation
+
+        # =====================================================================
+        # COLLECTION VARIANTS - Multiple container types
+        # =====================================================================
+
+        RecordList = list[dict[str, object]]  # List of records
+        EntityList = list[dict[str, object]]  # List of entities
+        ResultList = list[dict[str, object]]  # List of results
 
 
 __all__: list[str] = [

@@ -116,6 +116,13 @@
             types-pexpect  = ">=4.9.0.20250516"
             types-pygments = ">=2.19.0.20250715"
 
+        [tool.pyright]
+            reportInvalidTypeForm = false
+
+            [[tool.pyright.executionEnvironments]]
+                root = "./"
+                reportInvalidTypeForm = false
+
     [tool.bandit]
         exclude_dirs = [
             ".archive",

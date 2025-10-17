@@ -49,14 +49,14 @@ def reset_container_singleton() -> Generator[None]:
     """
     # Clear singletons before test
     FlextContainer._global_instance = None
-    FlextConfig._instances.clear()
+    FlextConfig.reset_global_instance()  # Use new simplified singleton pattern
     FlextConfig._di_config_provider = None
 
     yield
 
     # Clear singletons after test
     FlextContainer._global_instance = None
-    FlextConfig._instances.clear()
+    FlextConfig.reset_global_instance()  # Use new simplified singleton pattern
     FlextConfig._di_config_provider = None
 
 

@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import datetime
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from typing import (
     Annotated,
     cast,
@@ -309,16 +309,24 @@ class FlextRegistry(FlextMixins):
         self._dispatcher = dispatcher
         self._registered_keys: set[str] = set()
 
-    def _safe_get_handler_mode(self, value: object) -> FlextConstants.HandlerModeSimple:
+    def _safe_get_handler_mode(self, value: object) -> str:
         """Safely extract and validate handler mode from FlextTypes.Dict value."""
         if value == FlextConstants.Cqrs.ModelLiteral.QUERY:
-            return "query"
+            return cast(
+                "str",
+                FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
+            )
         if value == FlextConstants.Cqrs.ModelLiteral.COMMAND:
-            return "command"
+            return cast(
+                "str",
+                FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            )
         # Default to command for invalid values
-        return "command"
+        return cast(
+            "str", FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
+        )
 
-    def _safe_get_status(self, value: object) -> FlextConstants.Status:
+    def _safe_get_status(self, value: object) -> str:
         """Safely extract and validate status from FlextTypes.Dict value."""
         if value == FlextConstants.Cqrs.ModelLiteral.ACTIVE:
             return "running"
@@ -360,7 +368,10 @@ class FlextRegistry(FlextMixins):
             return FlextResult[FlextModels.RegistrationDetails].ok(
                 FlextModels.RegistrationDetails(
                     registration_id=key,
-                    handler_mode="command",
+                    handler_mode=cast(
+                        "str",
+                        FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                    ),
                     timestamp="",  # Will be set by model if needed
                     status="running",
                 ),
@@ -374,10 +385,17 @@ class FlextRegistry(FlextMixins):
             reg_data = registration.value
             # Format timestamp without microseconds to match pattern
             default_timestamp = (
-                datetime.datetime.now(datetime.timezone.utc)
+                datetime.datetime.now(datetime.UTC)
                 .replace(microsecond=0)
                 .isoformat()
                 .replace("+00:00", "Z")
+            )
+            # Get timestamp from dispatcher or use default - ensure it matches pattern
+            dispatcher_timestamp = reg_data.get("timestamp", "")
+            timestamp_value = (
+                default_timestamp
+                if not dispatcher_timestamp
+                else str(dispatcher_timestamp)
             )
             reg_details = FlextModels.RegistrationDetails(
                 registration_id=str(reg_data.get("registration_id", key)),
@@ -387,9 +405,7 @@ class FlextRegistry(FlextMixins):
                         FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
                     ),
                 ),
-                timestamp=str(
-                    reg_data.get("timestamp", default_timestamp)
-                ),
+                timestamp=timestamp_value,
                 status=self._safe_get_status(
                     reg_data.get(
                         "status",
@@ -572,7 +588,7 @@ class FlextRegistry(FlextMixins):
             type[object],
             FlextHandlers[object, object]
             | tuple[
-                Callable[[object], object | FlextResult[object]],
+                FlextTypes.HandlerCallableType,
                 object | FlextResult[object],
             ]
             | FlextTypes.Dict
@@ -601,11 +617,14 @@ class FlextRegistry(FlextMixins):
                         # Create handler from function
                         handler_result = self._dispatcher.create_handler_from_function(
                             cast(
-                                "Callable[[object], object | FlextResult[object]]",
+                                "FlextTypes.HandlerCallableType",
                                 handler_func,
                             ),
                             cast("FlextTypes.Dict | None", handler_config),
-                            "command",
+                            cast(
+                                "str",
+                                FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                            ),
                         )
                         if handler_result.is_success:
                             handler = handler_result.value
@@ -614,7 +633,10 @@ class FlextRegistry(FlextMixins):
                             if register_result.is_success:
                                 reg_details = FlextModels.RegistrationDetails(
                                     registration_id=key,
-                                    handler_mode="command",
+                                    handler_mode=cast(
+                                        "str",
+                                        FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                                    ),
                                     timestamp="",
                                     status="running",
                                 )
@@ -634,7 +656,10 @@ class FlextRegistry(FlextMixins):
                         if register_result.is_success:
                             reg_details = FlextModels.RegistrationDetails(
                                 registration_id=key,
-                                handler_mode="command",
+                                handler_mode=cast(
+                                    "str",
+                                    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                                ),
                                 timestamp="",
                                 status="running",
                             )
@@ -648,7 +673,10 @@ class FlextRegistry(FlextMixins):
                     # Handle FlextTypes.Dict or other types
                     reg_details = FlextModels.RegistrationDetails(
                         registration_id=key,
-                        handler_mode="command",
+                        handler_mode=cast(
+                            "str",
+                            FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                        ),
                         timestamp="",
                         status="running",
                     )
@@ -689,7 +717,7 @@ class FlextRegistry(FlextMixins):
         self,
         entry: FlextHandlers[object, object]
         | tuple[
-            Callable[[object], object | FlextResult[object]],
+            FlextTypes.HandlerCallableType,
             object | FlextResult[object],
         ]
         | FlextTypes.Dict

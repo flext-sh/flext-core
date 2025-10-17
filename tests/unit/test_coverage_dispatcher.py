@@ -257,8 +257,9 @@ class TestRateLimiting:
         # Check rate limit state is tracked
         state = dispatcher._rate_limit_state.get("SimpleMessage")
         assert state is not None
-        assert "count" in state
-        assert "window_start" in state
+        # Now state is a RateLimiterState model, check for attributes
+        assert hasattr(state, "count")
+        assert hasattr(state, "window_start")
 
     def test_rate_limit_blocking(self) -> None:
         """Test rate limiting blocks after threshold."""
