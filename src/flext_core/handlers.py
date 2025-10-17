@@ -32,6 +32,10 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
+# Type alias for acceptable message types in handlers
+# Supports Pydantic models, dicts, primitives, dataclasses, and custom types
+type AcceptableMessageType = BaseModel | dict[str, object] | str | int | float | bool | object
+
 
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     """Base class for CQRS command and query handlers.
@@ -48,10 +52,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         - execute(message: T) -> FlextResult[R] - Execute handler with message
         - handle(message: T) -> FlextResult[R] - Abstract method for implementation
         - __call__(input_data: T) -> FlextResult[R] - Callable interface
-        - validate(data: object) -> FlextResult[None] - Validate input data
-        - validate_command(command: object) -> FlextResult[None] - Validate command
-        - validate_query(query: object) -> FlextResult[None] - Validate query
-        - can_handle(message_type: object) -> bool - Check handler capability
+        - validate(data: AcceptableMessageType) -> FlextResult[None] - Validate input data
+        - validate_command(command: AcceptableMessageType) -> FlextResult[None] - Validate command
+        - validate_query(query: AcceptableMessageType) -> FlextResult[None] - Validate query
+        - can_handle(message_type: type[T]) -> bool - Check handler capability
 
     Features:
     - Abstract base for command/query/event handlers
@@ -336,11 +340,11 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         # Default to False if not specified
         return False
 
-    def can_handle(self, message_type: type[MessageT_contra] | object) -> bool:
+    def can_handle(self, message_type: type[MessageT_contra]) -> bool:
         """Check if this handler can handle the given message type.
 
         Args:
-            message_type: The type of message to check (proper type instead of object)
+            message_type: The type of message to check (type-safe parameter)
 
         Returns:
             bool: True if this handler can handle the message type
@@ -394,11 +398,11 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         """
         return self._config_model
 
-    def validate_command(self, command: object) -> FlextResult[None]:
-        """Validate a command message with generic type support.
+    def validate_command(self, command: AcceptableMessageType) -> FlextResult[None]:
+        """Validate a command message with type-safe parameter.
 
         Args:
-            command: The command to validate (accepts any object type)
+            command: The command to validate (typed parameter)
 
         Returns:
             FlextResult indicating validation success or failure
@@ -410,11 +414,11 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             revalidate_pydantic_messages=self._revalidate_pydantic_messages,
         )
 
-    def validate_query(self, query: object) -> FlextResult[None]:
-        """Validate a query message with generic type support.
+    def validate_query(self, query: AcceptableMessageType) -> FlextResult[None]:
+        """Validate a query message with type-safe parameter.
 
         Args:
-            query: The query to validate (accepts any object type)
+            query: The query to validate (typed parameter)
 
         Returns:
             FlextResult indicating validation success or failure
@@ -543,7 +547,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         # Validate message can be handled
         message_type_obj: type[object] = type(message)
-        if not self.can_handle(message_type_obj):
+        if not self.can_handle(cast("type[MessageT_contra]", message_type_obj)):
             FlextHandlers.Metrics.log_handler_cannot_handle(
                 logger=self.logger,
                 error_message=f"Handler cannot handle message type {message_type}",
@@ -705,7 +709,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         class CallableHandler(FlextHandlers[CallableInputT, CallableOutputT]):
             def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
-                self.original_callable = callable_func
+                # Store callable as object - type variables are method-local, not class-scoped
+                self.original_callable: object = callable_func
 
             @override
             def handle(self, message: CallableInputT) -> FlextResult[CallableOutputT]:
@@ -718,7 +723,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     return FlextResult[CallableOutputT].fail(str(e))
 
             @override
-            def can_handle(self, message_type: type[CallableInputT] | object) -> bool:
+            def can_handle(self, message_type: type[CallableInputT]) -> bool:
                 """Override can_handle for callable wrappers to enable auto-discovery.
 
                 Callable wrappers created via from_callable may have method-local TypeVars

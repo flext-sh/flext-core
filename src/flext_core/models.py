@@ -22,6 +22,7 @@ from datetime import UTC, datetime
 from typing import (
     Annotated,
     ClassVar,
+    Literal,
     Self,
     cast,
     override,
@@ -31,6 +32,7 @@ from urllib.parse import ParseResult, urlparse
 from pydantic import (
     BaseModel,
     ConfigDict,
+    Discriminator,
     Field,
     PrivateAttr,
     ValidationError,
@@ -496,7 +498,15 @@ class FlextModels:
         """Base class for domain events.
 
         Uses IdentifiableMixin for id and TimestampableMixin for created_at.
+        Includes message_type discriminator for Pydantic v2 discriminated unions.
         """
+
+        # Pydantic v2 Discriminated Union discriminator field (immutable)
+        message_type: Literal["event"] = Field(
+            default="event",
+            frozen=True,
+            description="Message type discriminator for union routing - always 'event'",
+        )
 
         event_type: str
         aggregate_id: str
@@ -914,7 +924,15 @@ class FlextModels:
         """Base class for CQRS commands with validation.
 
         Uses IdentifiableMixin for id and TimestampableMixin for created_at.
+        Includes message_type discriminator for Pydantic v2 discriminated unions.
         """
+
+        # Pydantic v2 Discriminated Union discriminator field (immutable)
+        message_type: Literal["command"] = Field(
+            default="command",
+            frozen=True,
+            description="Message type discriminator for union routing - always 'command'",
+        )
 
         command_type: str = Field(
             default_factory=lambda: FlextConstants.Cqrs.DEFAULT_COMMAND_TYPE,
@@ -1064,6 +1082,7 @@ class FlextModels:
         )
         max_workers: int = Field(
             default_factory=lambda: FlextConfig().max_workers,
+            le=FlextConstants.Config.MAX_WORKERS_THRESHOLD,
             description="Maximum workers from FlextConfig",
         )
         timeout_per_item: int = Field(
@@ -1071,32 +1090,13 @@ class FlextModels:
             description="Timeout per item from FlextConfig",
         )
         continue_on_error: bool = True
-        data_items: Annotated[FlextTypes.List, Field(default_factory=list)]
-
-        @field_validator("data_items")
-        @classmethod
-        def validate_data_items(cls, v: FlextTypes.List) -> FlextTypes.List:
-            """Validate data items are not empty when provided."""
-            if len(v) > FlextConstants.Performance.BatchProcessing.MAX_ITEMS:
-                msg = f"Batch cannot exceed {FlextConstants.Performance.BatchProcessing.MAX_ITEMS} items"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
-            return v
-
-        @field_validator("max_workers")
-        @classmethod
-        def validate_max_workers(cls, v: int) -> int:
-            """Validate max workers is reasonable."""
-            max_workers_limit = FlextConstants.Config.MAX_WORKERS_THRESHOLD
-            if v > max_workers_limit:
-                msg = f"Max workers cannot exceed {max_workers_limit}"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
-            return v
+        data_items: Annotated[
+            FlextTypes.List,
+            Field(
+                default_factory=list,
+                max_length=FlextConstants.Performance.BatchProcessing.MAX_ITEMS,
+            ),
+        ]
 
         @model_validator(mode="after")
         def validate_batch(self) -> Self:
@@ -1121,11 +1121,12 @@ class FlextModels:
     class HandlerExecutionConfig(StrictArbitraryTypesModel):
         """Enhanced handler execution configuration."""
 
-        handler_name: str
+        handler_name: str = Field(pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$")
         input_data: FlextTypes.Dict = Field(default_factory=dict)
         execution_context: FlextTypes.Dict = Field(default_factory=dict)
         timeout_seconds: int = Field(
             default_factory=lambda: FlextConfig().timeout_seconds,
+            le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextConfig",
         )
         retry_on_failure: bool = True
@@ -1135,18 +1136,6 @@ class FlextModels:
         )
         fallback_handlers: FlextTypes.StringList = Field(default_factory=list)
 
-        @field_validator("handler_name")
-        @classmethod
-        def validate_handler_name(cls, v: str) -> str:
-            """Validate handler name format."""
-            if not re.match(r"^[a-zA-Z][a-zA-Z0-9_]*$", v):
-                msg = "Handler name must be valid identifier"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
-            return v
-
     class TimestampConfig(StrictArbitraryTypesModel):
         """Enhanced timestamp configuration."""
 
@@ -1155,26 +1144,14 @@ class FlextModels:
         auto_update: bool = Field(default_factory=lambda: True)
         format: str = "%Y-%m-%dT%H:%M:%S.%fZ"
         timezone: str | None = None
-        created_at_field: str = "created_at"
-        updated_at_field: str = "updated_at"
+        created_at_field: str = Field("created_at", pattern=r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+        updated_at_field: str = Field("updated_at", pattern=r"^[a-zA-Z_][a-zA-Z0-9_]*$")
         field_names: dict[str, str] = Field(
             default_factory=lambda: {
                 "created_at": "created_at",
                 "updated_at": "updated_at",
             }
         )
-
-        @field_validator("created_at_field", "updated_at_field")
-        @classmethod
-        def validate_field_names(cls, v: str) -> str:
-            """Validate field names are valid identifiers."""
-            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", v):
-                msg = f"Invalid field name: {v}"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
-            return v
 
     class SerializationRequest(StrictArbitraryTypesModel):
         """Enhanced serialization request."""
@@ -1232,7 +1209,11 @@ class FlextModels:
         """Domain service batch request."""
 
         service_name: str
-        operations: list[FlextTypes.Dict] = Field(default_factory=list)
+        operations: list[FlextTypes.Dict] = Field(
+            default_factory=list,
+            min_length=1,
+            max_length=FlextConstants.Performance.MAX_BATCH_OPERATIONS,
+        )
         parallel_execution: bool = False
         stop_on_error: bool = True
         batch_size: int = Field(
@@ -1244,32 +1225,17 @@ class FlextModels:
             description="Timeout per operation from FlextConfig",
         )
 
-        @field_validator("operations")
-        @classmethod
-        def validate_operations(cls, v: FlextTypes.List) -> FlextTypes.List:
-            """Validate operations FlextTypes.List."""
-            if not v:
-                msg = "Operations FlextTypes.List cannot be empty"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
-            max_batch_operations = FlextConstants.Performance.MAX_BATCH_OPERATIONS
-            if len(v) > max_batch_operations:
-                msg = f"Batch cannot exceed {max_batch_operations} operations"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
-            return v
-
     class DomainServiceMetricsRequest(ArbitraryTypesModel):
         """Domain service metrics request."""
 
         service_name: str
-        metric_types: FlextTypes.StringList = Field(
-            default_factory=lambda: ["performance", "errors", "throughput"]
-        )
+        metric_types: Annotated[
+            list[Literal["performance", "errors", "throughput", "latency", "availability"]],
+            Field(
+                default_factory=lambda: ["performance", "errors", "throughput"],
+                description="Types of metrics to collect",
+            ),
+        ]
         time_range_seconds: int = FlextConstants.Performance.DEFAULT_TIME_RANGE_SECONDS
         aggregation: str = Field(
             default_factory=lambda: FlextConstants.Cqrs.AggregationLiteral.AVG
@@ -1277,67 +1243,23 @@ class FlextModels:
         group_by: FlextTypes.StringList = Field(default_factory=list)
         filters: FlextTypes.Dict = Field(default_factory=dict)
 
-        @field_validator("metric_types")
-        @classmethod
-        def validate_prefix(cls, v: FlextTypes.List) -> FlextTypes.List:
-            """Validate metric types."""
-            valid_types = {
-                "performance",
-                "errors",
-                "throughput",
-                "latency",
-                "availability",
-            }
-            for metric_type in v:
-                if metric_type not in valid_types:
-                    msg = f"Invalid metric type: {metric_type}"
-                    raise FlextExceptions.ValidationError(
-                        message=msg,
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-            return v
-
     class DomainServiceResourceRequest(ArbitraryTypesModel):
         """Domain service resource request."""
 
         service_name: str = "default_service"
-        resource_type: str = "default_resource"
+        resource_type: str = Field("default_resource", pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$")
         resource_id: str | None = None
-        resource_limit: int = 1000
+        resource_limit: int = Field(1000, gt=0)
         action: str = Field(
             default_factory=lambda: FlextConstants.Cqrs.ActionLiteral.GET
         )
         data: FlextTypes.Dict = Field(default_factory=dict)
         filters: FlextTypes.Dict = Field(default_factory=dict)
 
-        @field_validator("resource_type")
-        @classmethod
-        def validate_resource_type(cls, v: str) -> str:
-            """Validate resource type format."""
-            if not re.match(r"^[a-zA-Z][a-zA-Z0-9_]*$", v):
-                msg = "Resource type must be valid identifier"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
-            return v
-
-        @field_validator("resource_limit")
-        @classmethod
-        def validate_resource_limit(cls, v: int) -> int:
-            """Validate resource limit is positive."""
-            if v <= FlextConstants.ZERO:
-                msg = "Resource limit must be positive"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
-            return v
-
     class OperationExecutionRequest(ArbitraryTypesModel):
         """Operation execution request."""
 
-        operation_name: str
+        operation_name: str = Field(max_length=FlextConstants.Performance.MAX_OPERATION_NAME_LENGTH)
         operation_callable: Callable[..., object]
         arguments: FlextTypes.Dict = Field(default_factory=dict)
         keyword_arguments: FlextTypes.Dict = Field(default_factory=dict)
@@ -1346,21 +1268,6 @@ class FlextModels:
             description="Timeout from FlextConfig",
         )
         retry_config: FlextTypes.Dict = Field(default_factory=dict)
-
-        @field_validator("operation_name")
-        @classmethod
-        def validate_operation_name(cls, v: str) -> str:
-            """Validate operation name format."""
-            max_operation_name_length = (
-                FlextConstants.Performance.MAX_OPERATION_NAME_LENGTH
-            )
-            if len(v) > max_operation_name_length:
-                msg = "Operation name too long"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
-            return v
 
         @field_validator("operation_callable", mode="plain")
         @classmethod
@@ -1558,20 +1465,10 @@ class FlextModels:
                 description="Maximum cache size",
             )
             implementation_path: str = Field(
-                default="flext_core.bus:FlextBus", description="Implementation path"
+                default="flext_core.bus:FlextBus",
+                pattern=r"^[^:]+:[^:]+$",
+                description="Implementation path (format: module:Class)",
             )
-
-            @field_validator("implementation_path")
-            @classmethod
-            def validate_implementation_path(cls, v: str) -> str:
-                """Validate implementation path format."""
-                if ":" not in v:
-                    error_msg = "implementation_path must be in 'module:Class' format"
-                    raise FlextExceptions.ValidationError(
-                        message=error_msg,
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-                return v
 
             @classmethod
             def create_bus_config(
@@ -1924,11 +1821,13 @@ class FlextModels:
 
         Represents a read-only query operation in the CQRS pattern, supporting
         filtering, pagination, and query tracking for data retrieval operations.
+        Includes message_type discriminator for Pydantic v2 discriminated unions.
 
         The model automatically converts dictionary pagination to Pagination
         instances and generates unique query IDs for tracking.
 
         Attributes:
+            message_type: Discriminator field for union routing (always 'query')
             filters: Dictionary of filter conditions (field: value pairs)
             pagination: Pagination settings (Pagination object or dict)
             query_id: Unique identifier for query tracking
@@ -1962,8 +1861,15 @@ class FlextModels:
             hide_input_in_errors=True,  # Security
             json_schema_extra={
                 "title": "Query",
-                "description": "Query model for CQRS query operations with pagination",
+                "description": "Query model for CQRS query operations with pagination and discriminator",
             },
+        )
+
+        # Pydantic v2 Discriminated Union discriminator field (immutable)
+        message_type: Literal["query"] = Field(
+            default="query",
+            frozen=True,
+            description="Message type discriminator for union routing - always 'query'",
         )
 
         filters: Annotated[
@@ -2506,7 +2412,7 @@ class FlextModels:
             ),
         ]
         handler_mode: Annotated[
-            str,
+            Literal["command", "query", "event", "operation", "saga"],
             Field(
                 min_length=1,
                 description="Mode of handler execution",
@@ -2524,16 +2430,6 @@ class FlextModels:
                 msg = "Handler name and mode must not be empty"
                 raise ValueError(msg)
             return v.strip()
-
-        @field_validator("handler_mode")
-        @classmethod
-        def validate_handler_mode(cls, v: str) -> str:
-            """Validate that handler mode is a recognized value."""
-            valid_modes = {"command", "query", "event", "operation", "saga"}
-            if v.lower() not in valid_modes:
-                msg = f"Handler mode must be one of {valid_modes}, got: {v}"
-                raise ValueError(msg)
-            return v.lower()
 
         def start_execution(self) -> None:
             """Start execution timing.
@@ -3379,6 +3275,36 @@ class FlextModels:
             return cast("FlextResult[T]", FlextResult.ok(entity))
 
 
+# =========================================================================
+# PYDANTIC V2 DISCRIMINATED UNION - Type-safe message routing
+# =========================================================================
+# Discriminated union for CQRS message types eliminating object types
+# Uses Pydantic v2's most innovative feature: discriminated unions with
+# Discriminator field for automatic routing based on message_type
+type MessageUnion = Annotated[
+    FlextModels.Command | FlextModels.Query | FlextModels.DomainEvent,
+    Discriminator("message_type"),
+]
+"""Pydantic v2 discriminated union for type-safe CQRS message routing.
+
+This union type enables automatic message type detection and routing
+based on the 'message_type' field discriminator, replacing all object
+types in message handling across the entire FLEXT ecosystem.
+
+Usage:
+    def process_message(message: MessageUnion) -> FlextResult[object]:
+        match message.message_type:
+            case "command":
+                return handle_command(message)
+            case "query":
+                return handle_query(message)
+            case "event":
+                return handle_event(message)
+
+Pydantic v2 automatically validates and routes messages to the correct
+type based on the discriminator field value.
+"""
+
 # Rebuild models after all classes are defined to resolve forward references
 FlextModels.DomainEvent.model_rebuild()
 FlextModels.Entity.model_rebuild()
@@ -3388,4 +3314,5 @@ FlextModels.Pagination.model_rebuild()
 
 __all__ = [
     "FlextModels",
+    "MessageUnion",
 ]

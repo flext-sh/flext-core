@@ -252,6 +252,7 @@ class FlextUtilities:
                     for item in set_component
                 }
                 return cast("T", normalized_set)
+            # Return primitives and other types directly
             return component
 
         @staticmethod
@@ -623,7 +624,7 @@ class FlextUtilities:
         def normalize_component(value: T) -> T:
             """Normalize arbitrary objects into cache-friendly deterministic structures."""
             if value is None or isinstance(value, (bool, int, float, str)):
-                return value
+                return cast("T", value)
 
             if isinstance(value, bytes):
                 return cast("T", ("bytes", value.hex()))
