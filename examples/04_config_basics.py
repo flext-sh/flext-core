@@ -639,9 +639,9 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         # HTTP configuration defaults
         if hasattr(FlextConstants, "Http"):
             print(
-                f"✅ HTTP Content-Type default: {FlextConstants.Http.DEFAULT_CONTENT_TYPE}"
+                f"✅ HTTP Status Min: {FlextConstants.Http.HTTP_STATUS_MIN}"
             )
-            print(f"✅ HTTP Accept header: {FlextConstants.Http.DEFAULT_ACCEPT}")
+            print(f"✅ HTTP Status Max: {FlextConstants.Http.HTTP_STATUS_MAX}")
 
     def demonstrate_flext_exceptions_integration(self) -> None:
         """Show FlextExceptions (Layer 2) with configuration error handling."""

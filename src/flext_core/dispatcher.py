@@ -115,9 +115,7 @@ class FlextDispatcher(FlextMixins):
 
         # Rate limiting state - sliding window with count, window_start, block_until
         self._rate_limit_requests: dict[str, FlextTypes.FloatList] = {}
-        self._rate_limit_state: dict[
-            str, FlextTypes.Reliability.DispatcherRateLimiterState
-        ] = {}
+        self._rate_limit_state: dict[str, FlextTypes.DispatcherRateLimiterState] = {}
         self._rate_limit = self.config.rate_limit_max_requests
         self._rate_limit_window = self.config.rate_limit_window_seconds
         self._rate_limit_block_grace = max(1.0, 0.5 * self._rate_limit_window)
@@ -612,7 +610,7 @@ class FlextDispatcher(FlextMixins):
         current_time = time.time()
         state = self._rate_limit_state.get(message_type)
         if state is None:
-            new_state: FlextTypes.Reliability.DispatcherRateLimiterState = {
+            new_state: FlextTypes.DispatcherRateLimiterState = {
                 "count": 0,
                 "window_start": current_time,
                 "block_until": 0.0,
@@ -865,7 +863,7 @@ class FlextDispatcher(FlextMixins):
             str(key): value for key, value in raw_metadata.items()
         }
 
-        return dict[str, object](normalized)
+        return normalized
 
     @contextmanager
     def _context_scope(

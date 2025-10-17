@@ -152,7 +152,7 @@ class TestFlextBus:
         assert result.error is not None
         assert "Handler failed" in result.error
 
-    def test_get_registered_handlers(self) -> None:
+    def test_registered_handlers(self) -> None:
         """Test getting registered handlers."""
         bus = FlextBus()
 
@@ -162,11 +162,11 @@ class TestFlextBus:
 
         handler = TestHandler()
         bus.register_handler("TestCommand", handler)
-        handlers = bus.get_registered_handlers()
+        handlers = bus.registered_handlers
         assert len(handlers) == 1
         assert "TestCommand" in handlers
 
-    def test_get_all_handlers(self) -> None:
+    def test_all_handlers(self) -> None:
         """Test getting all handlers."""
         bus = FlextBus()
 
@@ -176,7 +176,7 @@ class TestFlextBus:
 
         handler = TestHandler()
         bus.register_handler("TestCommand", handler)
-        handlers = bus.get_all_handlers()
+        handlers = bus.all_handlers
         assert len(handlers) == 1
         assert handler in handlers
 
@@ -277,15 +277,9 @@ class TestFlextBus:
             data: str
 
         class TestMiddleware:
-            def process(
-                self,
-                command: TestCommand,
-                handler: object,
-            ) -> FlextResult[None]:
+            def __call__(self, *args: object) -> FlextResult[object]:
                 # Log the middleware processing
-                _ = command  # Use command parameter to avoid unused argument warning
-                _ = handler  # Use handler parameter to avoid unused argument warning
-                return FlextResult[None].ok(None)
+                return FlextResult[object].ok(None)
 
         class TestHandler:
             def handle(self, command: TestCommand) -> FlextResult[str]:
@@ -512,7 +506,7 @@ class TestFlextBusMissingCoverage:
                 return len(self._data)
 
         bus = FlextBus()
-        config_mapping = CustomMapping({"enabled": True, "priority": 10})
+        config_mapping: FlextTypes.Dict = {"enabled": True, "priority": 10}
 
         # Access the private method to test it
         result = bus._normalize_middleware_config(config_mapping)
@@ -540,7 +534,7 @@ class TestFlextBusMissingCoverage:
         """Test _normalize_middleware_config with dict[str, object] method (lines 369-379)."""
 
         class LegacyConfig:
-            def dict[str, object](self) -> FlextTypes.Dict:
+            def dict(self) -> FlextTypes.Dict:
                 return {"legacy": True, "version": 1}
 
         bus = FlextBus()
@@ -638,9 +632,9 @@ class TestFlextBusMissingCoverage:
         bus = FlextBus(bus_config={"enable_middleware": False})
 
         class TestMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:
+            def __call__(self, *args: object) -> FlextResult[object]:
                 """Test middleware that returns failure to stop processing."""
-                return FlextResult[None].fail("Middleware disabled")
+                return FlextResult[object].fail("Middleware disabled")
 
         test_middleware = TestMiddleware()
 
@@ -986,7 +980,7 @@ class TestFlextBusMissingCoverage:
         assert result.is_success
 
         # Verify handler was registered with its handler_id
-        handlers = bus.get_registered_handlers()
+        handlers = bus.registered_handlers
         assert "custom_handler_123" in handlers
 
     def test_add_middleware_validation(self) -> None:
@@ -994,8 +988,8 @@ class TestFlextBusMissingCoverage:
         bus = FlextBus(bus_config={"enable_middleware": False})
 
         class TestMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:
-                return FlextResult[None].ok(None)
+            def __call__(self, *args: object) -> FlextResult[object]:
+                return FlextResult[object].ok(None)
 
         # Add middleware when disabled returns success (line 787-789)
         result = bus.add_middleware(TestMiddleware())
@@ -1182,12 +1176,12 @@ class TestFlextBusMissingCoverage:
 
         # Register handler
         bus.register_handler(TestCommand, TestHandler())
-        assert len(bus.get_all_handlers()) == 1
+        assert len(bus.all_handlers) == 1
 
         # Unregister handler
         result = bus.unregister_handler(TestCommand)
         assert result.is_success
-        assert len(bus.get_all_handlers()) == 0
+        assert len(bus.all_handlers) == 0
 
         # Try to unregister non-existent handler
         result = bus.unregister_handler(TestCommand)
@@ -1240,7 +1234,7 @@ class TestFlextBusMissingCoverage:
             event_type: str = ""
             aggregate_id: str = ""
             event_id: str = ""
-            data: FlextTypes.Domain.EventPayload = Field(default_factory=dict)
+            data: FlextTypes.EventPayload = Field(default_factory=dict)
 
         execution_count = 0
 

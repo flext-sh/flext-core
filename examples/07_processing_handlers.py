@@ -229,7 +229,9 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 super().__init__(name)
                 self.logger = FlextLogger.create_module_logger(__name__)
 
-            def handle(self, request: object) -> FlextResult[str]:
+            def handle(
+                self, request: FlextTypes.ProcessorInputType
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Validate and process the request."""
                 self.logger.info(f"Validating request in {self.name}")
                 data = cast("FlextTypes.Dict", request)
@@ -237,15 +239,21 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 # request is typed as FlextTypes.Dict
                 email_value = cast("str | None", data.get("email", None))
                 if not email_value:
-                    return FlextResult[str].fail("Email required")
+                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
+                        "Email required"
+                    )
 
                 # email_value is guaranteed to be str after cast and None check
 
                 if "@" not in email_value:
-                    return FlextResult[str].fail("Invalid email format")
+                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
+                        "Invalid email format"
+                    )
 
                 data["validated_at"] = str(time.time())
-                return FlextResult[str].ok(f"Validation passed for {data['email']}")
+                return FlextResult[FlextTypes.ProcessorOutputType].ok(
+                    f"Validation passed for {data['email']}"
+                )
 
         validator = ValidationHandler("EmailValidator")
 
@@ -253,7 +261,9 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             "email": self._user["email"],
             "name": self._user["name"],
         }
-        result: FlextResult[str] = validator.handle(valid_request)
+        result: FlextResult[FlextTypes.ProcessorOutputType] = validator.handle(
+            valid_request
+        )
         if result.is_success:
             print(f"✅ Validation passed: {result.unwrap()}")
 
@@ -261,7 +271,9 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
             "email": self._invalid_user["email"],
             "name": self._invalid_user["name"],
         }
-        result = validator.handle(invalid_request)
+        result: FlextResult[FlextTypes.ProcessorOutputType] = validator.handle(
+            invalid_request
+        )
         if result.is_failure:
             print(f"❌ Validation failed: {result.error}")
 
@@ -279,25 +291,35 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 super().__init__(name)
                 self.logger = FlextLogger.create_module_logger(__name__)
 
-            def handle(self, request: object) -> FlextResult[str]:
+            def handle(
+                self, request: FlextTypes.ProcessorInputType
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Check authentication."""
                 self.logger.info("Authenticating request")
 
                 if not isinstance(request, dict):
-                    return FlextResult[str].fail("Request must be a dictionary")
+                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
+                        "Request must be a dictionary"
+                    )
 
                 request_dict = cast("FlextTypes.Dict", request)
                 token_value = cast("str | None", request_dict.get("token", None))
                 if not token_value:
-                    return FlextResult[str].fail("Authentication required")
+                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
+                        "Authentication required"
+                    )
 
                 # token_value is guaranteed to be str after cast and None check
 
                 if token_value != "valid-token":
-                    return FlextResult[str].fail("Invalid token")
+                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
+                        "Invalid token"
+                    )
 
                 request["authenticated"] = True
-                return FlextResult[str].ok("Authentication successful")
+                return FlextResult[FlextTypes.ProcessorOutputType].ok(
+                    "Authentication successful"
+                )
 
         class AuthorizationHandler(FlextProcessors.Implementation.BasicHandler):
             """Authorize the request."""
@@ -307,7 +329,9 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 super().__init__(name)
                 self.logger = FlextLogger.create_module_logger(__name__)
 
-            def handle(self, request: object) -> FlextResult[str]:
+            def handle(
+                self, request: FlextTypes.ProcessorInputType
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Check authorization."""
                 self.logger.info("Authorizing request")
 
@@ -336,7 +360,9 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 super().__init__(name)
                 self.logger = FlextLogger.create_module_logger(__name__)
 
-            def handle(self, request: object) -> FlextResult[str]:
+            def handle(
+                self, request: FlextTypes.ProcessorInputType
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Process the business logic."""
                 self.logger.info("Processing request")
 
@@ -568,7 +594,7 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 handler = handler_result.unwrap()
                 return handler.handle(request)
 
-            def list_handlers(self) -> FlextTypes.StringList:
+            def list_handlers(self) -> list[str]:
                 """List all registered handlers."""
                 return list(self._handlers.keys())
 
@@ -579,7 +605,9 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
         class UpperCaseHandler(FlextProcessors.Implementation.BasicHandler):
             """Convert text to uppercase."""
 
-            def handle(self, request: object) -> FlextResult[str]:
+            def handle(
+                self, request: FlextTypes.ProcessorInputType
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Process text."""
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
@@ -591,7 +619,9 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
         class LowerCaseHandler(FlextProcessors.Implementation.BasicHandler):
             """Convert text to lowercase."""
 
-            def handle(self, request: object) -> FlextResult[str]:
+            def handle(
+                self, request: FlextTypes.ProcessorInputType
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Process text."""
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
@@ -603,7 +633,9 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
         class ReverseHandler(FlextProcessors.Implementation.BasicHandler):
             """Reverse text."""
 
-            def handle(self, request: object) -> FlextResult[str]:
+            def handle(
+                self, request: FlextTypes.ProcessorInputType
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Process text."""
                 if not isinstance(request, dict):
                     return FlextResult[str].fail("Request must be a dictionary")
@@ -666,7 +698,9 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 self._attempt = 0
                 self.logger = FlextLogger.create_module_logger(__name__)
 
-            def handle(self, request: object) -> FlextResult[str]:
+            def handle(
+                self, request: FlextTypes.ProcessorInputType
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Handle with retry logic."""
                 self._attempt += 1
                 _ = request  # Mark as used to avoid linting warning
@@ -698,7 +732,9 @@ class ProcessingPatternsService(FlextService[FlextTypes.Dict]):
                 self._is_open = False
                 self.logger = FlextLogger.create_module_logger(__name__)
 
-            def handle(self, request: object) -> FlextResult[str]:
+            def handle(
+                self, request: FlextTypes.ProcessorInputType
+            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Handle with circuit breaker."""
                 # Check if circuit is open
                 if self._is_open:

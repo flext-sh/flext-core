@@ -76,6 +76,12 @@ from dependency_injector import containers, providers
 from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes
 
+# =========================================================================
+# ALL SEMANTIC TYPE ALIASES NOW IN FLEXTYPES
+# =========================================================================
+# All runtime integration type aliases moved to FlextTypes namespace
+# Access via: FlextTypes.FlextTypes.ValidatableInputType, FlextTypes.FlextTypes.TypeHintSpecifier, etc.
+
 
 class FlextRuntime:
     """Runtime Utilities and External Library Integration Bridge (Layer 0.5).
@@ -199,7 +205,7 @@ class FlextRuntime:
     # =========================================================================
 
     @staticmethod
-    def is_valid_email(value: object) -> TypeGuard[str]:
+    def is_valid_email(value: FlextTypes.ValidatableInputType) -> TypeGuard[str]:
         """Type guard to check if value is a valid email string.
 
         Uses RFC 5322 simplified pattern from FlextConstants.Platform.PATTERN_EMAIL.
@@ -217,7 +223,7 @@ class FlextRuntime:
         return pattern.match(value) is not None
 
     @staticmethod
-    def is_valid_url(value: object) -> TypeGuard[str]:
+    def is_valid_url(value: FlextTypes.ValidatableInputType) -> TypeGuard[str]:
         """Type guard to check if value is a valid HTTP/HTTPS URL string.
 
         Uses URL pattern from FlextConstants.Platform.PATTERN_URL.
@@ -235,7 +241,7 @@ class FlextRuntime:
         return pattern.match(value) is not None
 
     @staticmethod
-    def is_valid_phone(value: object) -> TypeGuard[str]:
+    def is_valid_phone(value: FlextTypes.ValidatableInputType) -> TypeGuard[str]:
         """Type guard to check if value is a valid phone number string.
 
         Uses international format pattern from FlextConstants.Platform.PATTERN_PHONE_NUMBER.
@@ -253,7 +259,7 @@ class FlextRuntime:
         return pattern.match(value) is not None
 
     @staticmethod
-    def is_valid_uuid(value: object) -> TypeGuard[str]:
+    def is_valid_uuid(value: FlextTypes.ValidatableInputType) -> TypeGuard[str]:
         """Type guard to check if value is a valid UUID string.
 
         Supports both hyphenated and non-hyphenated formats.
@@ -272,20 +278,20 @@ class FlextRuntime:
         return pattern.match(value) is not None
 
     @staticmethod
-    def is_dict_like(value: object) -> TypeGuard[FlextTypes.Dict]:
+    def is_dict_like(value: FlextTypes.ValidatableInputType) -> TypeGuard[FlextTypes.Dict]:
         """Type guard to check if value is dict-like.
 
         Args:
             value: Value to check
 
         Returns:
-            True if value is a dict[str, object] or dict-like object, False otherwise
+            True if value is a FlextTypes.Dict or dict-like object, False otherwise
 
         """
         return isinstance(value, dict)
 
     @staticmethod
-    def is_list_like(value: object) -> TypeGuard[FlextTypes.List]:
+    def is_list_like(value: FlextTypes.ValidatableInputType) -> TypeGuard[FlextTypes.List]:
         """Type guard to check if value is list-like.
 
         Args:
@@ -298,7 +304,7 @@ class FlextRuntime:
         return isinstance(value, list)
 
     @staticmethod
-    def is_valid_json(value: object) -> TypeGuard[str]:
+    def is_valid_json(value: FlextTypes.ValidatableInputType) -> TypeGuard[str]:
         """Type guard to check if value is valid JSON string.
 
         Args:
@@ -317,7 +323,7 @@ class FlextRuntime:
             return False
 
     @staticmethod
-    def is_valid_path(value: object) -> TypeGuard[str]:
+    def is_valid_path(value: FlextTypes.ValidatableInputType) -> TypeGuard[str]:
         """Type guard to check if value is a valid file/directory path.
 
         Uses pattern from FlextConstants.Platform.PATTERN_PATH.
@@ -335,7 +341,7 @@ class FlextRuntime:
         return pattern.match(value) is not None
 
     @staticmethod
-    def is_valid_identifier(value: object) -> TypeGuard[str]:
+    def is_valid_identifier(value: FlextTypes.ValidatableInputType) -> TypeGuard[str]:
         """Type guard to check if value is a valid Python identifier.
 
         Args:
@@ -354,7 +360,9 @@ class FlextRuntime:
     # =========================================================================
 
     @staticmethod
-    def safe_get_attribute(obj: object, attr: str, default: object = None) -> object:
+    def safe_get_attribute(
+        obj: FlextTypes.SerializableObjectType, attr: str, default: FlextTypes.SerializableObjectType = None
+    ) -> FlextTypes.SerializableObjectType:
         """Safe attribute access without raising AttributeError.
 
         Args:
@@ -369,7 +377,7 @@ class FlextRuntime:
         return getattr(obj, attr, default)
 
     @staticmethod
-    def safe_serialize_to_dict(obj: object) -> FlextTypes.Dict | None:
+    def safe_serialize_to_dict(obj: FlextTypes.SerializableObjectType) -> FlextTypes.Dict | None:
         """Serialize object to dictionary without dependencies.
 
         Attempts multiple serialization strategies without importing
@@ -395,7 +403,7 @@ class FlextRuntime:
                     f"model_dump() serialization strategy failed: {e}"
                 )
 
-        # Strategy 2: Check for dict[str, object] method
+        # Strategy 2: Check for FlextTypes.Dict method
         if hasattr(obj, "dict") and callable(getattr(obj, "dict")):
             try:
                 dict_method = getattr(obj, "dict")
@@ -412,10 +420,10 @@ class FlextRuntime:
         if hasattr(obj, "__dict__"):
             try:
                 result = obj.__dict__
-                return dict[str, object](result)
+                return cast("FlextTypes.Dict", result)
             except Exception as e:  # pragma: no cover
                 # Silent fallback for serialization strategy - log at debug level
-                # Extremely rare: __dict__ exists but dict[str, object]() conversion fails
+                # Extremely rare: __dict__ exists but FlextTypes.Dict() conversion fails
                 logging.getLogger(__name__).debug(
                     f"__dict__ serialization strategy failed: {e}"
                 )
@@ -427,7 +435,7 @@ class FlextRuntime:
         return None
 
     @staticmethod
-    def is_optional_type(type_hint: object) -> bool:
+    def is_optional_type(type_hint: FlextTypes.TypeHintSpecifier) -> bool:
         """Check if type hint represents Optional[T] (Union[T, None] or T | None).
 
         Supports both Union[T, None] and Python 3.10+ syntax T | None.
@@ -455,7 +463,9 @@ class FlextRuntime:
             return False
 
     @staticmethod
-    def extract_generic_args(type_hint: object) -> tuple[object, ...]:
+    def extract_generic_args(
+        type_hint: FlextTypes.TypeHintSpecifier,
+    ) -> tuple[FlextTypes.GenericTypeArgument, ...]:
         """Extract generic type arguments from a type hint.
 
         Args:
@@ -486,7 +496,7 @@ class FlextRuntime:
                     "IntDict": (str, int),
                     "FloatDict": (str, float),
                     "BoolDict": (str, bool),
-                    "NestedDict": (str, object),  # Simplified
+                    "NestedDict": (str, object),
                 }
                 if type_name in type_mapping:
                     return type_mapping[type_name]
@@ -497,7 +507,7 @@ class FlextRuntime:
             return ()
 
     @staticmethod
-    def is_sequence_type(type_hint: object) -> bool:
+    def is_sequence_type(type_hint: FlextTypes.TypeHintSpecifier) -> bool:
         """Check if type hint represents a sequence type (list, tuple, etc.).
 
         Args:
@@ -551,7 +561,7 @@ class FlextRuntime:
 
     @staticmethod
     def level_based_context_filter(
-        _logger: object,
+        _logger: FlextTypes.LoggerContextType,
         method_name: str,
         event_dict: FlextTypes.Dict,
     ) -> FlextTypes.Dict:
@@ -636,9 +646,10 @@ class FlextRuntime:
         *,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[Callable[..., object]] | None = None,
-        wrapper_class_factory: object | None = None,
-        logger_factory: object | None = None,
+        additional_processors: Sequence[Callable[..., FlextTypes.GenericTypeArgument]]
+        | None = None,
+        wrapper_class_factory: FlextTypes.FactoryCallableType | None = None,
+        logger_factory: FlextTypes.FactoryCallableType | None = None,
         cache_logger_on_first_use: bool = True,
     ) -> None:
         """Configure structlog once using FLEXT defaults.
@@ -781,7 +792,7 @@ class FlextRuntime:
         @staticmethod
         def log_config_access(
             key: str,
-            value: object | None = None,
+            value: FlextTypes.SerializableObjectType | None = None,
             *,
             masked: bool = False,
         ) -> None:
@@ -812,11 +823,11 @@ class FlextRuntime:
 
         @staticmethod
         def attach_context_to_result(
-            result: object,
+            result: FlextTypes.ContextualObjectType,
             *,
             attach_correlation: bool = True,
             attach_service_name: bool = False,
-        ) -> object:
+        ) -> FlextTypes.ContextualObjectType:
             """Attach context metadata to FlextResult (future-proofing).
 
             Uses structlog directly to avoid circular imports.

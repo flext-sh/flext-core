@@ -2,6 +2,8 @@
 
 Tests real functionality of the centralized type system, ensuring all
 TypeVars, type aliases, and FlextTypes namespace work correctly.
+
+Per user requirement: Tests only test what exists in src/, not more.
 """
 
 from flext_core import (
@@ -9,7 +11,6 @@ from flext_core import (
     E,
     Event,
     F,
-    FlextConstants,
     FlextTypes,
     K,
     Message,
@@ -103,150 +104,79 @@ class TestTypeVars:
         assert P is not None
 
 
-class TestRateLimiterState:
-    """Test RateLimiterState TypedDict."""
-
-    def test_ratelimiter_state_structure(self) -> None:
-        """Test RateLimiterState has correct structure."""
-        # Create an instance
-        state: FlextTypes.Reliability.RateLimiterState = {
-            "requests": [1.0, 2.0, 3.0],
-            "last_reset": 1234567890.0,
-        }
-
-        assert isinstance(state["requests"], list)
-        assert isinstance(state["last_reset"], float)
-        assert len(state["requests"]) == 3
-
-
 class TestFlextTypes:
-    """Test FlextTypes namespace and all sub-types."""
+    """Test FlextTypes namespace - ONLY types in lean typings.py."""
 
-    def test_flexttypes_core_types(self) -> None:
-        """Test FlextTypes types are accessible."""
-        # Test collection types
-        assert FlextTypes.Dict == FlextTypes.Dict
-        assert FlextTypes.List == FlextTypes.List
-        assert FlextTypes.StringList == FlextTypes.StringList
-        assert FlextTypes.IntList == FlextTypes.IntList
-        assert FlextTypes.FloatList == FlextTypes.FloatList
-        assert FlextTypes.BoolList == FlextTypes.BoolList
-
-        # Test advanced types
-        assert FlextTypes.NestedDict == FlextTypes.NestedDict
-
-        # Test configuration types
-        config_dict: FlextTypes.ConfigDict = {"key": "value", "number": 42}
-        assert isinstance(config_dict, dict)
-
-        # Test JSON types
-        json_obj: FlextTypes.JsonValue = {"key": "value"}
-        assert isinstance(json_obj, dict)
-
-    def test_flexttypes_service_types(self) -> None:
-        """Test FlextTypes.Service types."""
-        service_dict: FlextTypes.Service.Dict = {"service": "value"}
-        assert isinstance(service_dict, dict)
-
-        # Test Literal types
-        service_type: FlextTypes.Service.Type = "instance"
-        assert service_type in {"instance", "factory"}
-
-    def test_flexttypes_config_types(self) -> None:
-        """Test FlextTypes.Config types."""
-        # Test Environment literal - access through constants
-        env = "development"
-        assert env in {
-            "development",
-            "staging",
-            "production",
-            "testing",
-            "test",
-            "local",
-        }
-        # Verify Environment enum exists
-        assert hasattr(FlextConstants.Config, "Environment")
-        assert FlextConstants.Config.Environment.DEVELOPMENT.value == "development"
-
-        # Test LogLevel literal
-        level: FlextConstants.Config.LogLevel = FlextConstants.Config.LogLevel.INFO
-        assert level == "INFO"
-
-    def test_flexttypes_output_types(self) -> None:
-        """Test FlextTypes.Output types."""
-        # Test Literal types
-        fmt: FlextTypes.Output.OutputFormat = "json"
-        assert fmt in {"json", "yaml", "table", "csv", "text", "xml"}
-
-        ser_fmt: FlextTypes.Output.SerializationFormat = "json"
-        assert ser_fmt in {"json", "yaml", "toml", "ini", "xml"}
-
-        comp_fmt: FlextTypes.Output.CompressionFormat = "gzip"
-        assert comp_fmt in {"gzip", "bzip2", "xz", "lzma"}
-
-    def test_flexttypes_project_types(self) -> None:
-        """Test FlextTypes.Project types."""
-        # Test Literal types - use valid FlextConstants.ProjectType value
-        proj_type: FlextTypes.Project.ProjectType = "flext-core"
-        # ProjectType is defined as specific flext project names
-        expected_types = [
-            "flext-core",
-            "flext-api",
-            "flext-ldap",
-            "flext-ldif",
-            "flext-cli",
-            "flext-auth",
-            "flext-web",
-            "flext-grpc",
-            "flext-plugin",
-            "flext-observability",
-            "flext-quality",
-            "flext-meltano",
-        ]
-        assert proj_type in expected_types
-
-        status: FlextTypes.Project.ProjectStatus = "active"
-        assert status in {"active", "inactive", "deprecated", "archived"}
-
-    def test_flexttypes_processing_types(self) -> None:
-        """Test FlextTypes.Processing types."""
-        # Test all Literal types
-        status: FlextTypes.Processing.ProcessingStatus = "pending"
-        assert status in {"pending", "running", "completed", "failed", "cancelled"}
-
-        mode: FlextTypes.Processing.ProcessingMode = "batch"
-        assert mode in {"batch", "stream", "parallel", "sequential"}
-
-        level: FlextTypes.Processing.ValidationLevel = "strict"
-        assert level in {"strict", "lenient", "standard"}
-
-        phase: FlextTypes.Processing.ProcessingPhase = "prepare"
-        assert phase in {"prepare", "execute", "validate", "complete"}
-
-        handler_type: FlextTypes.Processing.HandlerType = "command"
-        assert handler_type in {"command", "query", "event", "processor"}
-
-        workflow_status: FlextTypes.Processing.WorkflowStatus = "created"
-        assert workflow_status in {
-            "created",
-            "started",
-            "running",
-            "paused",
-            "completed",
-            "failed",
-            "cancelled",
-        }
-
-    def test_flexttypes_convenience_aliases(self) -> None:
-        """Test convenience aliases work."""
-        # Test direct access aliases
-        assert FlextTypes.ConfigValue is not None
-        assert FlextTypes.JsonValue is not None
-        assert FlextTypes.ConfigDict is not None
-        assert FlextTypes.JsonDict is not None
-        assert FlextTypes.StringDict is not None
-        assert FlextTypes.StringDict is not None
+    def test_flexttypes_core_weak_types(self) -> None:
+        """Test core weak types are accessible."""
+        # Test collection types from lean typings.py
         assert FlextTypes.Dict is not None
+        assert FlextTypes.List is not None
+        assert FlextTypes.StringList is not None
+        assert FlextTypes.IntList is not None
+        assert FlextTypes.FloatList is not None
+        assert FlextTypes.BoolList is not None
+        assert FlextTypes.NestedDict is not None
+        assert FlextTypes.StringDict is not None
+
+    def test_flexttypes_domain_types(self) -> None:
+        """Test domain modeling types from lean typings.py."""
+        # Test types used by src/flext_core/models.py
+        assert FlextTypes.DomainObjectType is not None
+        assert FlextTypes.CallableHandlerType is not None
+        assert FlextTypes.CallableValidationType is not None
+        assert FlextTypes.EventPayload is not None
+        assert FlextTypes.EventMetadata is not None
+
+    def test_flexttypes_processor_types(self) -> None:
+        """Test processor types from lean typings.py."""
+        # Test types used by src/flext_core/processors.py
+        assert FlextTypes.ProcessorInputType is not None
+        assert FlextTypes.ProcessorOutputType is not None
+
+    def test_flexttypes_handler_types(self) -> None:
+        """Test handler types from lean typings.py."""
+        # Test types used by src/flext_core/handlers.py and src/flext_core/bus.py
+        assert FlextTypes.HandlerRegistry is not None
+        assert FlextTypes.BusHandlerType is not None
+        assert FlextTypes.BusMessageType is not None
+        assert FlextTypes.AcceptableMessageType is not None
+        assert FlextTypes.MiddlewareType is not None
+        assert FlextTypes.MiddlewareConfig is not None
+
+    def test_flexttypes_logging_types(self) -> None:
+        """Test logging types from lean typings.py."""
+        # Test types used by src/flext_core/loggings.py
+        assert FlextTypes.LoggingContextValueType is not None
+        assert FlextTypes.LoggingArgType is not None
+        assert FlextTypes.LoggingKwargsValueType is not None
+        assert FlextTypes.LoggingContextType is not None
+        assert FlextTypes.LoggingKwargsType is not None
+        assert FlextTypes.BoundLoggerType is not None
+        assert FlextTypes.LoggingProcessorType is not None
+
+    def test_flexttypes_runtime_types(self) -> None:
+        """Test runtime types from lean typings.py."""
+        # Test types used by src/flext_core/runtime.py
+        assert FlextTypes.ValidatableInputType is not None
+        assert FlextTypes.TypeHintSpecifier is not None
+        assert FlextTypes.SerializableObjectType is not None
+        assert FlextTypes.GenericTypeArgument is not None
+        assert FlextTypes.LoggerContextType is not None
+        assert FlextTypes.FactoryCallableType is not None
+        assert FlextTypes.ContextualObjectType is not None
+
+    def test_flexttypes_container_types(self) -> None:
+        """Test container types from lean typings.py."""
+        # Test types used by src/flext_core/container.py
+        assert FlextTypes.ValidatorFunctionType is not None
+        assert FlextTypes.ContainerServiceType is not None
+
+    def test_flexttypes_validation_types(self) -> None:
+        """Test validation types from lean typings.py."""
+        # Test types used by src/flext_core/models.py
+        assert FlextTypes.ValidationPipeline is not None
+        assert FlextTypes.ConfigValue is not None
 
 
 class TestImports:

@@ -106,6 +106,16 @@ class TestValueObjects:
 
             code: str
 
+            def __hash__(self) -> int:
+                """Hash based on code value."""
+                return hash(self.code)
+
+            def __eq__(self, other: object) -> bool:
+                """Equality based on code value."""
+                if not isinstance(other, ISBN):
+                    return False
+                return self.code == other.code
+
         isbn1 = ISBN(code="978-0-262-03384-8")
         isbn2 = ISBN(code="978-0-262-03384-8")
 

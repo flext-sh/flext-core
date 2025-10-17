@@ -10,7 +10,7 @@ from __future__ import annotations
 from flext_core import FlextTypes
 
 
-def get_performance_threshold() -> FlextTypes.FloatDict:
+def get_performance_threshold() -> dict[str, float]:
     """Provide performance thresholds for testing.
 
     Performance threshold configuration for validating

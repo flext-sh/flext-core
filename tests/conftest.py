@@ -99,7 +99,7 @@ def sample_data() -> FlextTypes.Dict:
 
 
 @pytest.fixture
-def test_user_data() -> FlextTypes.Dict | FlextTypes.StringList | None:
+def test_user_data() -> dict[str, object] | list[str] | None:
     """Provide consistent user data for domain testing."""
     return get_test_user_data()
 
@@ -217,7 +217,7 @@ def test_constants() -> FlextTypes.Dict:
 
 
 @pytest.fixture
-def test_contexts() -> FlextTypes.NestedDict:
+def test_contexts() -> dict[str, dict[str, object]]:
     """Provide common test contexts for various scenarios."""
     return get_test_contexts()
 

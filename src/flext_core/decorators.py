@@ -174,7 +174,7 @@ class FlextDecorators:
         ...     @FlextDecorators.retry(
         ...         max_attempts=5, delay_seconds=1.0, backoff_strategy="exponential"
         ...     )
-        ...     def call_external_api(self, endpoint: str) -> dict[str, object]:
+        ...     def call_external_api(self, endpoint: str) -> FlextTypes.Dict:
         ...         # Automatically retries on failure with backoff
         ...         return requests.get(endpoint).json()
 
@@ -246,7 +246,7 @@ class FlextDecorators:
 
     3. Railway pattern error handling:
         >>> @FlextDecorators.railway(error_code="BUSINESS_ERROR")
-        ... def business_operation() -> dict[str, object]:
+        ... def business_operation() -> FlextTypes.Dict:
         ...     # Any exception becomes FlextResult.fail()
         ...     return process_business_logic()
         >>>
@@ -646,7 +646,7 @@ class FlextDecorators:
                 @FlextDecorators.retry(
                     max_attempts=5, delay_seconds=2.0, backoff_strategy="exponential"
                 )
-                def unreliable_operation(self) -> dict[str, object]:
+                def unreliable_operation(self) -> FlextTypes.Dict:
                     # Automatically retries on failure with exponential backoff
                     return self._make_api_call()
             ```
@@ -787,7 +787,7 @@ class FlextDecorators:
 
             class MyService:
                 @FlextDecorators.timeout(timeout_seconds=30.0)
-                def long_running_operation(self) -> dict[str, object]:
+                def long_running_operation(self) -> FlextTypes.Dict:
                     # Automatically raises TimeoutError if exceeds 30 seconds
                     return self._process_data()
             ```

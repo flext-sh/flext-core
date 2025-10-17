@@ -422,7 +422,7 @@ class FlextResult[T_co]:
             from flext_core import FlextResult
 
 
-            def risky_operation() -> dict[str, object]:
+            def risky_operation() -> FlextTypes.Dict:
                 return api.fetch_data()  # May raise exceptions
 
 
@@ -940,7 +940,7 @@ class FlextResult[T_co]:
             from flext_core import FlextResult
 
 
-            def expensive_default() -> dict[str, object]:
+            def expensive_default() -> FlextTypes.Dict:
                 # This only runs if result is failure
                 print("Computing expensive default...")
                 return {"default": True, "computed": True}
@@ -995,10 +995,10 @@ class FlextResult[T_co]:
             return FlextResult[T_co].fail(str(e))
 
     @classmethod
-    def from_exception[T](
-        cls: type[FlextResult[T]],
-        func: Callable[[], T],
-    ) -> FlextResult[T]:
+    def from_exception(
+        cls: type[FlextResult[object]],
+        func: Callable[[], object],
+    ) -> FlextResult[object]:
         """Create a result from a function that might raise exception."""
         try:
             return cls.ok(func())
@@ -1049,7 +1049,9 @@ class FlextResult[T_co]:
         return Some[T_co | None](self._data) if self.is_success else Nothing
 
     @classmethod
-    def from_maybe[T](cls: type[FlextResult[T]], maybe: object) -> FlextResult[T]:
+    def from_maybe(
+        cls: type[FlextResult[object]], maybe: object
+    ) -> FlextResult[object]:
         """Create FlextResult from returns.maybe.Maybe.
 
         Converts a Maybe monad from the returns library into a FlextResult,
@@ -1098,7 +1100,7 @@ class FlextResult[T_co]:
         if isinstance(maybe, Some):
             # Extract value using unwrap() - safely typed extraction
             # The cast is safe because isinstance check guarantees Some type
-            value: T = cast("T", maybe.unwrap())
+            value: object = cast("object", maybe.unwrap())
             return cls.ok(value)
 
         # It's Nothing or extraction failed
@@ -1133,7 +1135,7 @@ class FlextResult[T_co]:
     def collect_failures[TCollectFail](
         cls,
         results: list[FlextResult[TCollectFail]],
-    ) -> FlextTypes.StringList:
+    ) -> list[str]:
         """Collect error messages from failures."""
         return [r.error for r in results if r.is_failure and r.error]
 
@@ -1150,11 +1152,11 @@ class FlextResult[T_co]:
         cls,
         items: list[TBatch],
         processor: Callable[[TBatch], FlextResult[UBatch]],
-    ) -> tuple[list[UBatch], FlextTypes.StringList]:
+    ) -> tuple[list[UBatch], list[str]]:
         """Process batch and separate successes from failures."""
         results: list[FlextResult[UBatch]] = [processor(item) for item in items]
         successes: list[UBatch] = cls.collect_successes(results)
-        failures: FlextTypes.StringList = cls.collect_failures(results)
+        failures: list[str] = cls.collect_failures(results)
         return successes, failures
 
     @classmethod
@@ -1179,15 +1181,15 @@ class FlextResult[T_co]:
 
         Example:
             ```python
-            def fetch_data() -> dict[str, object]:
+            def fetch_data() -> FlextTypes.Dict:
                 return api.get_data()
 
 
             # Basic usage
-            result = FlextResult[FlextTypes.Dict].safe_call(fetch_data)
+            result = FlextResult["FlextTypes.Dict"].safe_call(fetch_data)
 
             # With error code
-            result = FlextResult[FlextTypes.Dict].safe_call(
+            result = FlextResult["FlextTypes.Dict"].safe_call(
                 fetch_data, error_code="API_ERROR"
             )
 
@@ -1312,7 +1314,7 @@ class FlextResult[T_co]:
     ) -> FlextResult[list[TAccumulate]]:
         """Accumulate all errors or return all successes."""
         successes: list[TAccumulate] = []
-        errors: FlextTypes.StringList = []
+        errors: list[str] = []
 
         for result in results:
             if result.is_success:
@@ -1351,7 +1353,7 @@ class FlextResult[T_co]:
             return FlextResult[list[UPar]].ok(fast_successes)
 
         successes: list[UPar] = []
-        errors: FlextTypes.StringList = []
+        errors: list[str] = []
         for result in results:
             if result.is_failure:
                 error_msg = result.error or "Operation failed"
@@ -1464,7 +1466,7 @@ class FlextResult[T_co]:
     @staticmethod
     def collect_all_errors[TCollectErr](
         *results: FlextResult[TCollectErr],
-    ) -> tuple[list[TCollectErr], FlextTypes.StringList]:
+    ) -> tuple[list[TCollectErr], list[str]]:
         """Collect all successful values and error messages from results.
 
         Args:
@@ -1487,7 +1489,7 @@ class FlextResult[T_co]:
 
         """
         successes: list[TCollectErr] = []
-        errors: FlextTypes.StringList = []
+        errors: list[str] = []
 
         for result in results:
             if result.is_success:
@@ -1551,8 +1553,8 @@ class FlextResult[T_co]:
         )
 
     @staticmethod
-    def _flatten_variadic_args(*items: object) -> FlextTypes.List:
-        flat: FlextTypes.List = []
+    def _flatten_variadic_args(*items: object) -> FlextTypes.ObjectList:
+        flat: FlextTypes.ObjectList = []
         for item in items:
             if FlextResult._is_flattenable_sequence(item) and isinstance(
                 item,
@@ -1702,6 +1704,6 @@ class FlextResult[T_co]:
         return cls(error="Unknown IOResult type")
 
 
-__all__: FlextTypes.StringList = [
+__all__ = [
     "FlextResult",
 ]

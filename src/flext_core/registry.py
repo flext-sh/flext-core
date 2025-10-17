@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 # pyright: basic
 from __future__ import annotations
 
+import datetime
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import (
     Annotated,
@@ -309,19 +310,19 @@ class FlextRegistry(FlextMixins):
         self._registered_keys: set[str] = set()
 
     def _safe_get_handler_mode(self, value: object) -> FlextConstants.HandlerModeSimple:
-        """Safely extract and validate handler mode from dict[str, object] value."""
-        if value == "query":
+        """Safely extract and validate handler mode from FlextTypes.Dict value."""
+        if value == FlextConstants.Cqrs.ModelLiteral.QUERY:
             return "query"
-        if value == "command":
+        if value == FlextConstants.Cqrs.ModelLiteral.COMMAND:
             return "command"
         # Default to command for invalid values
         return "command"
 
     def _safe_get_status(self, value: object) -> FlextConstants.Status:
-        """Safely extract and validate status from dict[str, object] value."""
-        if value == "active":
+        """Safely extract and validate status from FlextTypes.Dict value."""
+        if value == FlextConstants.Cqrs.ModelLiteral.ACTIVE:
             return "running"
-        if value == "inactive":
+        if value == FlextConstants.Cqrs.ModelLiteral.INACTIVE:
             return "completed"
         # Default to running for invalid values
         return "running"
@@ -369,8 +370,15 @@ class FlextRegistry(FlextMixins):
         registration = self._dispatcher.register_handler(handler)
         if registration.is_success:
             self._registered_keys.add(key)
-            # Convert dict[str, object] to RegistrationDetails
+            # Convert FlextTypes.Dict to RegistrationDetails
             reg_data = registration.value
+            # Format timestamp without microseconds to match pattern
+            default_timestamp = (
+                datetime.datetime.now(datetime.timezone.utc)
+                .replace(microsecond=0)
+                .isoformat()
+                .replace("+00:00", "Z")
+            )
             reg_details = FlextModels.RegistrationDetails(
                 registration_id=str(reg_data.get("registration_id", key)),
                 handler_mode=self._safe_get_handler_mode(
@@ -379,7 +387,9 @@ class FlextRegistry(FlextMixins):
                         FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
                     ),
                 ),
-                timestamp=str(reg_data.get("timestamp", "")),
+                timestamp=str(
+                    reg_data.get("timestamp", default_timestamp)
+                ),
                 status=self._safe_get_status(
                     reg_data.get(
                         "status",
@@ -435,7 +445,7 @@ class FlextRegistry(FlextMixins):
             self._dispatcher.register_handler(handler)
         )
         if registration_result.is_success:
-            # Convert dict[str, object] to RegistrationDetails
+            # Convert FlextTypes.Dict to RegistrationDetails
             reg_data = registration_result.value
             reg_details = FlextModels.RegistrationDetails(
                 registration_id=str(reg_data.get("registration_id", key)),
@@ -530,7 +540,7 @@ class FlextRegistry(FlextMixins):
                 continue
 
             self._registered_keys.add(key)
-            # Convert dict[str, object] to RegistrationDetails
+            # Convert FlextTypes.Dict to RegistrationDetails
             reg_data = registration.value
             reg_details = FlextModels.RegistrationDetails(
                 registration_id=str(reg_data.get("registration_id", key)),
@@ -635,7 +645,7 @@ class FlextRegistry(FlextMixins):
                                 f"Failed to register handler: {register_result.error}",
                             )
                 else:
-                    # Handle dict[str, object] or other types
+                    # Handle FlextTypes.Dict or other types
                     reg_details = FlextModels.RegistrationDetails(
                         registration_id=key,
                         handler_mode="command",
@@ -699,7 +709,7 @@ class FlextRegistry(FlextMixins):
             return f"{handler_name}::{type_name}"
         if isinstance(entry, FlextHandlers):
             return self._resolve_binding_key(entry, message_type)
-        # Handle dict[str, object] or other types
+        # Handle FlextTypes.Dict or other types
         return str(entry)
 
     def register(

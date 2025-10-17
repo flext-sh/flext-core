@@ -16,32 +16,21 @@ import inspect
 import time
 from collections import OrderedDict
 from collections.abc import Callable, Mapping
-from typing import TypeVar, cast
+from typing import cast
 
 from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
 from flext_core.mixins import FlextMixins
-from flext_core.models import FlextModels, MessageUnion
+from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-# Type variables for generic message handling
-MessageT = TypeVar("MessageT")  # Covariant message type
-ResultT = TypeVar("ResultT")  # Covariant result type
-
-# Type aliases for message routing - supports Commands, Queries, Events, Sagas
-# Accepts Pydantic models, dicts, primitives, and custom message types
-type BusMessageType = BaseModel | dict[str, object] | str | int | float | bool | object
-
-# Handler type - accepts any object with handle() method interface
-type BusHandlerType = object
-
-# Pydantic v2 discriminated union for type-safe CQRS messages
-# Provides compile-time type safety for Command/Query/Event routing
-type CqrsMessageUnion = MessageUnion
+# Type variables for generic message handling are imported from typings
+# (MessageT and ResultT)
+# All type aliases now in FlextTypes - access via FlextTypes.BusMessageType, etc.
 
 
 class FlextBus(
@@ -187,8 +176,8 @@ class FlextBus(
         self._handlers: FlextTypes.Dict = {}
 
         # Middleware pipeline - use parent's _middleware for callables only
-        # Middleware configurations stored separately - using FlextTypes.Handlers
-        self._middleware_configs: list[FlextTypes.Handlers.MiddlewareConfig] = []
+        # Middleware configurations stored separately - using FlextTypes
+        self._middleware_configs: list[FlextTypes.MiddlewareConfig] = []
         # Middleware instances cache
         self._middleware_instances: FlextTypes.Dict = {}
         # Execution counter
@@ -220,11 +209,8 @@ class FlextBus(
         if isinstance(bus_config, FlextModels.Cqrs.Bus):
             return bus_config
         if isinstance(bus_config, dict):
-            # Cast dict[str, object] to proper types for Bus model
-            config_dict = dict[str, object](
-                bus_config,
-            )  # Create a new dict[str, object] to avoid mutating the original
-            return FlextModels.Cqrs.Bus.model_validate(config_dict)
+            # bus_config is already dict, which matches FlextTypes.Dict type
+            return FlextModels.Cqrs.Bus.model_validate(bus_config)
         return FlextModels.Cqrs.Bus()
 
     @property
@@ -233,7 +219,9 @@ class FlextBus(
         return self._config_model
 
     @staticmethod
-    def _normalize_command_key(command_type_obj: BusMessageType | type[BusMessageType]) -> str:
+    def _normalize_command_key(
+        command_type_obj: object,
+    ) -> str:
         """Create a comparable key for command identifiers."""
         name_attr = getattr(command_type_obj, "__name__", None)
         if name_attr is not None:
@@ -242,7 +230,7 @@ class FlextBus(
 
     def _normalize_middleware_config(
         self,
-        middleware_config: FlextTypes.Dict | None,
+        middleware_config: object,
     ) -> FlextTypes.Dict:
         """Convert middleware configuration into a dictionary."""
         if middleware_config is None:
@@ -251,9 +239,12 @@ class FlextBus(
         if isinstance(middleware_config, dict):
             return middleware_config
 
+        if isinstance(middleware_config, BaseModel):
+            return middleware_config.model_dump()
+
         if isinstance(middleware_config, Mapping):
             # Cast to proper type for type checker
-            return dict[str, object](cast("Mapping[str, object]", middleware_config))
+            return cast("FlextTypes.Dict", dict(middleware_config))
 
         # For Pydantic models or objects with model_dump
         for attr_name in ("model_dump", "dict"):
@@ -264,13 +255,13 @@ class FlextBus(
                 except TypeError:
                     continue
                 if isinstance(result, Mapping):
-                    return dict[str, object](cast("Mapping[str, object]", result))
+                    return cast("FlextTypes.Dict", dict(result))
                 if isinstance(result, dict):
                     return cast("FlextTypes.Dict", result)
 
         return {}
 
-    def register_handler(self, *args: BusHandlerType | str | type[BusMessageType]) -> FlextResult[None]:
+    def register_handler(self, *args: object) -> FlextResult[None]:
         """Register a handler instance with required interface validation.
 
         Phase 6 Breaking Change: Handlers MUST implement handle() method.
@@ -294,8 +285,7 @@ class FlextBus(
             handle_method = getattr(handler, method_name, None)
             if not callable(handle_method):
                 return FlextResult[None].fail(
-                    f"Invalid handler: must have callable '{method_name}' method. "
-                    f"Handlers must implement handle(message) -> FlextResult[object]"
+                    f"Invalid handler: must have callable '{method_name}' method. Handlers must implement handle(message) -> FlextResult[object]"
                 )
 
             # Add to auto-discovery list
@@ -307,14 +297,18 @@ class FlextBus(
                 self._handlers[str(handler_id)] = handler
                 self.logger.info(
                     "Handler registered",
-                    handler_type=handler.__class__.__name__,
+                    handler_type=getattr(
+                        handler.__class__, "__name__", str(type(handler))
+                    ),
                     handler_id=str(handler_id),
                     total_handlers=len(self._handlers),
                 )
             else:
                 self.logger.info(
                     "Handler registered for auto-discovery",
-                    handler_type=handler.__class__.__name__,
+                    handler_type=getattr(
+                        handler.__class__, "__name__", str(type(handler))
+                    ),
                     total_handlers=len(self._auto_handlers),
                 )
             return FlextResult[None].ok(None)
@@ -336,8 +330,7 @@ class FlextBus(
             handle_method = getattr(handler, method_name, None)
             if not callable(handle_method):
                 return FlextResult[None].fail(
-                    f"Invalid handler for '{command_type_obj}': must have callable '{method_name}' method. "
-                    f"Handlers must implement handle(message) -> FlextResult[object]"
+                    f"Invalid handler for '{command_type_obj}': must have callable '{method_name}' method. Handlers must implement handle(message) -> FlextResult[object]"
                 )
 
             key = self._normalize_command_key(command_type_obj)
@@ -345,7 +338,7 @@ class FlextBus(
             self.logger.info(
                 "Handler registered for command type",
                 command_type=key,
-                handler_type=handler.__class__.__name__,
+                handler_type=getattr(handler.__class__, "__name__", str(type(handler))),
                 total_handlers=len(self._handlers),
             )
             return FlextResult[None].ok(None)
@@ -354,7 +347,9 @@ class FlextBus(
             f"register_handler takes 1 or 2 arguments but {len(args)} were given",
         )
 
-    def find_handler(self, command: BusMessageType) -> BusHandlerType | None:
+    def find_handler(
+        self, command: FlextTypes.BusMessageType
+    ) -> FlextTypes.BusHandlerType | None:
         """Locate the handler that can process the provided message.
 
         Args:
@@ -370,16 +365,16 @@ class FlextBus(
         # First, try to find handler by command type name in _handlers
         # (two-arg registration)
         if command_name in self._handlers:
-            return self._handlers[command_name]
+            return cast("FlextTypes.BusHandlerType", self._handlers[command_name])
 
         # Search auto-registered handlers (single-arg form)
         for handler in self._auto_handlers:
             can_handle_method = getattr(handler, "can_handle", None)
             if callable(can_handle_method) and can_handle_method(command_type):
-                return handler
+                return cast("FlextTypes.BusHandlerType", handler)
         return None
 
-    def execute(self, command: BusMessageType) -> FlextResult[object]:
+    def execute(self, command: FlextTypes.BusMessageType) -> FlextResult[object]:
         """Execute a command/query through middleware and the resolved handler.
 
         Args:
@@ -518,7 +513,9 @@ class FlextBus(
 
             return result
 
-    def process(self, command: BusMessageType, handler: BusHandlerType) -> object:
+    def process(
+        self, command: FlextTypes.BusMessageType, handler: FlextTypes.BusHandlerType
+    ) -> object:
         """Process command through middleware pipeline.
 
         Args:
@@ -539,8 +536,8 @@ class FlextBus(
 
     def _apply_middleware(
         self,
-        command: BusMessageType,
-        handler: BusHandlerType,
+        command: object,
+        handler: object,
     ) -> FlextResult[None]:
         """Run the configured middleware pipeline for the current message.
 
@@ -623,7 +620,11 @@ class FlextBus(
 
         return FlextResult[None].ok(None)
 
-    def _generate_cache_key(self, command: BusMessageType, command_type: type[BusMessageType]) -> str:
+    def _generate_cache_key(
+        self,
+        command: FlextTypes.BusMessageType,
+        command_type: type[FlextTypes.BusMessageType],
+    ) -> str:
         """Generate a deterministic cache key for the command.
 
         Args:
@@ -638,8 +639,8 @@ class FlextBus(
 
     def _execute_handler(
         self,
-        handler: BusHandlerType,
-        command: BusMessageType,
+        handler: object,
+        command: object,
     ) -> FlextResult[object]:
         """Execute the handler using standard handle() method.
 
@@ -682,7 +683,7 @@ class FlextBus(
 
     def add_middleware(
         self,
-        middleware: BusHandlerType,
+        middleware: FlextTypes.BusHandlerType,
         middleware_config: FlextTypes.Dict | None = None,
     ) -> FlextResult[None]:
         """Append middleware with validated configuration metadata.
@@ -744,6 +745,16 @@ class FlextBus(
         """
         return list(self._handlers.values())
 
+    @property
+    def all_handlers(self) -> FlextTypes.List:
+        """Property accessor for all registered handlers.
+
+        Returns:
+            FlextTypes.List: List of all registered handlers
+
+        """
+        return self.get_all_handlers()
+
     def unregister_handler(self, command_type: type | str) -> FlextResult[None]:
         """Remove a handler registration by type or name.
 
@@ -786,7 +797,8 @@ class FlextBus(
             f"Handler not found for command type: {command_type}"
         )
 
-    def get_registered_handlers(self) -> FlextTypes.Dict:
+    @property
+    def registered_handlers(self) -> FlextTypes.Dict:
         """Expose the handler registry keyed by command identifiers.
 
         Returns:
@@ -804,7 +816,7 @@ class FlextBus(
     # EVENT PUBLISHER PROTOCOL IMPLEMENTATION (Phase 4.3)
     # =========================================================================
 
-    def publish_event(self, event: BusMessageType) -> FlextResult[None]:
+    def publish_event(self, event: FlextTypes.BusMessageType) -> FlextResult[None]:
         """Publish a domain event.
 
         Args:
@@ -858,7 +870,9 @@ class FlextBus(
 
         return FlextResult[None].from_callable(publish_all)
 
-    def subscribe(self, event_type: str, handler: BusHandlerType) -> FlextResult[None]:
+    def subscribe(
+        self, event_type: str, handler: FlextTypes.BusHandlerType
+    ) -> FlextResult[None]:
         """Subscribe to an event type.
 
         Args:
@@ -878,7 +892,7 @@ class FlextBus(
     def unsubscribe(
         self,
         event_type: str,
-        _handler: BusHandlerType,
+        _handler: FlextTypes.BusHandlerType,
     ) -> FlextResult[None]:
         """Unsubscribe from an event type.
 
@@ -914,7 +928,7 @@ class FlextBus(
             FlextResult[None]: Success or failure result
 
         """
-        # Create a simple event dict[str, object] with name and data
+        # Create a simple event FlextTypes.Dict with name and data
         event: FlextTypes.Dict = {
             "event_name": event_name,
             "data": data,

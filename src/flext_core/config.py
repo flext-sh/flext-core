@@ -283,7 +283,9 @@ class FlextConfig(BaseSettings):
 
     # Extended logging configuration
     log_verbosity: Literal["compact", "detailed", "full"] = Field(
-        default=cast("Literal['compact', 'detailed', 'full']", FlextConstants.Logging.VERBOSITY),
+        default=cast(
+            "Literal['compact', 'detailed', 'full']", FlextConstants.Logging.VERBOSITY
+        ),
         description="Logging verbosity level",
     )
 
