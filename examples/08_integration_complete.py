@@ -39,7 +39,6 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextService,
-    FlextTypes,
 )
 
 
@@ -65,8 +64,8 @@ class RealisticDataDict(TypedDict):
     """Type definition for realistic combined data in integration examples."""
 
     order: RealisticOrderDict
-    api_response: FlextTypes.Dict
-    user_registration: FlextTypes.Dict
+    api_response: dict[str, object]
+    user_registration: dict[str, object]
 
 
 class UserDict(TypedDict):
@@ -140,13 +139,13 @@ class DemoScenarios:
         },
     }
 
-    _CONFIG: ClassVar[FlextTypes.Dict] = {
+    _CONFIG: ClassVar[dict[str, object]] = {
         "database_url": "sqlite:///:memory:",
         "api_timeout": 30,
         "retry": 3,
     }
 
-    _PAYLOAD: ClassVar[FlextTypes.Dict] = {
+    _PAYLOAD: ClassVar[dict[str, object]] = {
         "event": "order_processed",
         "order_id": "order-456",
         "metadata": {"source": "examples", "version": "1.0"},
@@ -163,7 +162,7 @@ class DemoScenarios:
         return deepcopy(DemoScenarios._REALISTIC)
 
     @staticmethod
-    def validation_data() -> FlextTypes.Dict:
+    def validation_data() -> dict[str, object]:
         """Get validation demo data."""
         return {
             "valid_emails": ["user@example.com"],
@@ -171,7 +170,7 @@ class DemoScenarios:
         }
 
     @staticmethod
-    def config(**overrides: object) -> FlextTypes.Dict:
+    def config(**overrides: object) -> dict[str, object]:
         """Create configuration dictionary with optional overrides."""
         value = deepcopy(DemoScenarios._CONFIG)
         value.update(overrides)
@@ -181,11 +180,11 @@ class DemoScenarios:
     def metadata(
         *,
         source: str = "examples",
-        tags: FlextTypes.StringList | None = None,
+        tags: list[str] | None = None,
         **extra: object,
-    ) -> FlextTypes.Dict:
+    ) -> dict[str, object]:
         """Create metadata dictionary for integration examples."""
-        data: FlextTypes.Dict = {
+        data: dict[str, object] = {
             "source": source,
             "component": "flext_core",
             "tags": tags or ["integration", "demo"],
@@ -194,13 +193,13 @@ class DemoScenarios:
         return data
 
     @staticmethod
-    def user(**overrides: object) -> FlextTypes.Dict:
+    def user(**overrides: object) -> dict[str, object]:
         """Create user data dictionary for integration examples."""
         user: UserDict = deepcopy(DemoScenarios._DATASET["users"][0])
         # Apply overrides manually to avoid TypedDict.update overload issues
         for key, value in overrides.items():
             setattr(user, key, value)
-        return cast("FlextTypes.Dict", user)
+        return cast("dict[str, object]", user)
 
     @staticmethod
     def users(count: int = 5) -> list[UserDict]:
@@ -208,7 +207,7 @@ class DemoScenarios:
         return [deepcopy(user) for user in DemoScenarios._DATASET["users"][:count]]
 
     @staticmethod
-    def payload(**overrides: object) -> FlextTypes.Dict:
+    def payload(**overrides: object) -> dict[str, object]:
         """Create event payload dictionary for integration examples."""
         payload = deepcopy(DemoScenarios._PAYLOAD)
         payload.update(overrides)
@@ -418,7 +417,7 @@ class Order(FlextModels.AggregateRoot):
 # ========== SERVICES (Using FlextService patterns) ==========
 
 
-class InventoryService(FlextService[FlextTypes.Dict]):
+class InventoryService(FlextService[dict[str, object]]):
     """Inventory management service with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
@@ -497,14 +496,14 @@ class InventoryService(FlextService[FlextTypes.Dict]):
             return FlextResult[Product].fail(f"Product not found: {product_id}")
         return FlextResult[Product].ok(product)
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute inventory operation."""
-        return FlextResult[FlextTypes.Dict].ok({"status": "inventory_service_ready"})
+        return FlextResult[dict[str, object]].ok({"status": "inventory_service_ready"})
 
     def process_operation(
         self,
         data: dict[str, str | int],
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Process inventory operation."""
         operation = data.get("operation")
 
@@ -514,7 +513,7 @@ class InventoryService(FlextService[FlextTypes.Dict]):
                 result = self.get_product(product_id)
                 if result.is_success:
                     product = result.unwrap()
-                    return FlextResult[FlextTypes.Dict].ok({
+                    return FlextResult[dict[str, object]].ok({
                         "product": {
                             "id": product.id,
                             "name": product.name,
@@ -522,15 +521,15 @@ class InventoryService(FlextService[FlextTypes.Dict]):
                             "stock": product.stock,
                         },
                     })
-                return FlextResult[FlextTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     result.error or UNKNOWN_ERROR_MSG,
                 )
-            return FlextResult[FlextTypes.Dict].fail("Invalid product ID type")
+            return FlextResult[dict[str, object]].fail("Invalid product ID type")
 
-        return FlextResult[FlextTypes.Dict].fail(f"Unknown operation: {operation}")
+        return FlextResult[dict[str, object]].fail(f"Unknown operation: {operation}")
 
 
-class PaymentService(FlextService[FlextTypes.Dict]):
+class PaymentService(FlextService[dict[str, object]]):
     """Payment processing service with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
@@ -573,7 +572,7 @@ class PaymentService(FlextService[FlextTypes.Dict]):
         self,
         order: Order,
         method: str,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Process payment for order."""
         self.logger.info(
             "Processing payment",
@@ -588,7 +587,7 @@ class PaymentService(FlextService[FlextTypes.Dict]):
         if method == "credit_card":
             # Simulate credit card processing
             time.sleep(0.1)  # Simulate API call
-            return FlextResult[FlextTypes.Dict].ok({
+            return FlextResult[dict[str, object]].ok({
                 "transaction_id": str(uuid4()),
                 "status": "approved",
                 "method": method,
@@ -598,20 +597,20 @@ class PaymentService(FlextService[FlextTypes.Dict]):
         if method == "paypal":
             # Simulate PayPal processing
             time.sleep(0.15)  # Simulate API call
-            return FlextResult[FlextTypes.Dict].ok({
+            return FlextResult[dict[str, object]].ok({
                 "transaction_id": str(uuid4()),
                 "status": "approved",
                 "method": method,
                 "amount": str(order.total.amount),
             })
 
-        return FlextResult[FlextTypes.Dict].fail(
+        return FlextResult[dict[str, object]].fail(
             f"Unsupported payment method: {method}",
         )
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute payment operation."""
-        return FlextResult[FlextTypes.Dict].ok({"status": "payment_service_ready"})
+        return FlextResult[dict[str, object]].ok({"status": "payment_service_ready"})
 
     def process_operation(
         self,
@@ -622,7 +621,7 @@ class PaymentService(FlextService[FlextTypes.Dict]):
         return FlextResult[dict[str, str | int]].ok({"status": "processed"})
 
 
-class OrderService(FlextService[FlextTypes.Dict]):
+class OrderService(FlextService[dict[str, object]]):
     """Order processing service with FlextMixins infrastructure - orchestrates the workflow.
 
     This service inherits from FlextService to demonstrate:
@@ -664,7 +663,7 @@ class OrderService(FlextService[FlextTypes.Dict]):
     def create_order(
         self,
         customer_id: str,
-        items: list[FlextTypes.Dict],
+        items: list[dict[str, object]],
     ) -> FlextResult[Order]:
         """Create and process an order."""
         # Create correlation ID for tracking
@@ -727,21 +726,21 @@ class OrderService(FlextService[FlextTypes.Dict]):
         self,
         order: Order,
         payment_method: str,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Submit order with payment processing."""
         self.logger.info("Submitting order", extra={"order_id": order.id})
 
         # Submit the order
         submit_result = order.submit()
         if submit_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 submit_result.error or UNKNOWN_ERROR_MSG,
             )
 
         # Get payment service
         payment_service_result = self.container.get_typed("payment", PaymentService)
         if payment_service_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail("Payment service not available")
+            return FlextResult[dict[str, object]].fail("Payment service not available")
         payment = cast("PaymentService", payment_service_result.unwrap())
 
         # Process payment
@@ -749,7 +748,7 @@ class OrderService(FlextService[FlextTypes.Dict]):
         if payment_result.is_failure:
             # Rollback order status
             order.status = "PAYMENT_FAILED"
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Payment failed: {payment_result.error}",
             )
 
@@ -784,7 +783,7 @@ class OrderService(FlextService[FlextTypes.Dict]):
             },
         )
 
-        result_data: FlextTypes.Dict = {
+        result_data: dict[str, object] = {
             "order_id": order.id,
             "status": order.status,
             "total": str(order.total.amount),
@@ -796,29 +795,29 @@ class OrderService(FlextService[FlextTypes.Dict]):
         )
         result_data["payment_status"] = str(payment_data.get("status", "unknown"))
 
-        return FlextResult[FlextTypes.Dict].ok(result_data)
+        return FlextResult[dict[str, object]].ok(result_data)
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute order operation."""
-        return FlextResult[FlextTypes.Dict].ok({"status": "order_service_ready"})
+        return FlextResult[dict[str, object]].ok({"status": "order_service_ready"})
 
     def process_operation(
         self,
-        data: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+        data: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         """Process order operation."""
         operation = data.get("operation")
 
         if operation == "create_and_submit":
             # Create order
             customer_id = str(data["customer_id"])
-            items = cast("list[FlextTypes.Dict]", data["items"])
+            items = cast("list[dict[str, object]]", data["items"])
             order_result = self.create_order(
                 customer_id,
                 items,
             )
             if order_result.is_failure:
-                return FlextResult[FlextTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     order_result.error or UNKNOWN_ERROR_MSG,
                 )
 
@@ -828,11 +827,11 @@ class OrderService(FlextService[FlextTypes.Dict]):
             payment_method = data.get("payment_method", "credit_card")
             if isinstance(payment_method, str):
                 return self.submit_order(order, payment_method)
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 "Invalid payment method type",
             )
 
-        return FlextResult[FlextTypes.Dict].fail(f"Unknown operation: {operation}")
+        return FlextResult[dict[str, object]].fail(f"Unknown operation: {operation}")
 
 
 # ========== HANDLER PIPELINE (Using FlextProcessors) ==========
@@ -847,36 +846,36 @@ class OrderValidationHandler:
         self.name = "OrderValidator"
         self.logger = FlextLogger.create_module_logger(__name__)
 
-    def handle(self, request: FlextTypes.Dict) -> FlextResult[FlextTypes.Dict]:
+    def handle(self, request: dict[str, object]) -> FlextResult[dict[str, object]]:
         """Validate order data."""
         self.logger.info("Validating order request")
 
         # Check required fields
         if not request.get("customer_id"):
-            return FlextResult[FlextTypes.Dict].fail("Customer ID required")
+            return FlextResult[dict[str, object]].fail("Customer ID required")
 
         if not request.get("items"):
-            return FlextResult[FlextTypes.Dict].fail("Order items required")
+            return FlextResult[dict[str, object]].fail("Order items required")
 
         # Validate items
         items_raw = request["items"]
         if not isinstance(items_raw, list):
-            return FlextResult[FlextTypes.Dict].fail("Order items must be a list")
-        items: list[FlextTypes.Dict] = cast("list[FlextTypes.Dict]", items_raw)
+            return FlextResult[dict[str, object]].fail("Order items must be a list")
+        items: list[dict[str, object]] = cast("list[dict[str, object]]", items_raw)
         for item in items:
-            item_dict: FlextTypes.Dict = item
+            item_dict: dict[str, object] = item
             if not item_dict.get("product_id"):
-                return FlextResult[FlextTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     "Product ID required for all items",
                 )
             quantity = item_dict.get("quantity")
             if not isinstance(quantity, int) or quantity <= 0:
-                return FlextResult[FlextTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     "Valid quantity required for all items",
                 )
 
         request["validated"] = True
-        return FlextResult[FlextTypes.Dict].ok(request)
+        return FlextResult[dict[str, object]].ok(request)
 
 
 class OrderEnrichmentHandler:
@@ -890,15 +889,15 @@ class OrderEnrichmentHandler:
 
     def handle(
         self,
-        request: FlextTypes.Dict,
+        request: dict[str, object],
         *,
         _debug: bool = False,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Add metadata to order."""
         self.logger.info("Enriching order request")
 
         if not request.get("validated"):
-            return FlextResult[FlextTypes.Dict].fail("Order must be validated first")
+            return FlextResult[dict[str, object]].fail("Order must be validated first")
 
         # Add metadata
         metadata: dict[str, str | float] = {
@@ -908,13 +907,13 @@ class OrderEnrichmentHandler:
             "correlation_id": str(uuid4()),
         }
 
-        # Create a new FlextTypes.Dict with the metadata added
-        enriched_request: FlextTypes.Dict = {
+        # Create a new dict[str, object] with the metadata added
+        enriched_request: dict[str, object] = {
             **request,
             "metadata": metadata,
         }
 
-        return FlextResult[FlextTypes.Dict].ok(enriched_request)
+        return FlextResult[dict[str, object]].ok(enriched_request)
 
 
 # ========== INTEGRATION DEMONSTRATION ==========
@@ -944,7 +943,7 @@ def demonstrate_new_flextresult_methods() -> None:
     # 1. from_callable - Safe Integration Layer Operations
     print("\n=== 1. from_callable: Safe Integration Operations ===")
 
-    def risky_order_creation(customer_id: str, items: list[FlextTypes.Dict]) -> Order:
+    def risky_order_creation(customer_id: str, items: list[dict[str, object]]) -> Order:
         """Order creation that might raise exceptions."""
         if not items:
             msg = "Cannot create empty order"
@@ -959,7 +958,7 @@ def demonstrate_new_flextresult_methods() -> None:
     order_result: FlextResult[Order] = FlextResult[Order].from_callable(
         lambda: risky_order_creation(
             customer_id,
-            cast("list[FlextTypes.Dict]", list(order_template.get("items", []))),
+            cast("list[dict[str, object]]", list(order_template.get("items", []))),
         ),
     )
     if order_result.is_success:
@@ -972,30 +971,30 @@ def demonstrate_new_flextresult_methods() -> None:
     print("\n=== 2. flow_through: Integration Pipeline Composition ===")
 
     def validate_order_data(
-        data: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+        data: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         """Validate order request data."""
         if not data.get("customer_id"):
-            return FlextResult[FlextTypes.Dict].fail("Customer ID required")
+            return FlextResult[dict[str, object]].fail("Customer ID required")
         if not data.get("items"):
-            return FlextResult[FlextTypes.Dict].fail("Items required")
-        return FlextResult[FlextTypes.Dict].ok(data)
+            return FlextResult[dict[str, object]].fail("Items required")
+        return FlextResult[dict[str, object]].ok(data)
 
     def check_inventory_availability(
-        data: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+        data: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         """Check all items are in stock."""
         # Simulate inventory check
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             **data,
             "inventory_status": "available",
         })
 
     def calculate_order_total(
-        data: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+        data: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         """Calculate total price with taxes."""
-        items = cast("list[FlextTypes.Dict]", data.get("items", []))
+        items = cast("list[dict[str, object]]", data.get("items", []))
         subtotal = sum(
             Decimal(str(item.get("price", 0))) * Decimal(str(item.get("quantity", 1)))
             for item in items
@@ -1003,31 +1002,31 @@ def demonstrate_new_flextresult_methods() -> None:
         tax = subtotal * Decimal("0.1")
         total = subtotal + tax
         result_dict = cast(
-            "FlextTypes.Dict",
+            "dict[str, object]",
             {**data, "subtotal": subtotal, "tax": tax, "total": total},
         )
-        return FlextResult[FlextTypes.Dict].ok(result_dict)
+        return FlextResult[dict[str, object]].ok(result_dict)
 
     def apply_promotions(
-        data: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+        data: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         """Apply promotional discounts."""
         total = Decimal(str(data.get("total", 0)))
         discount = total * Decimal("0.05") if total > 100 else Decimal(0)
         final_total = total - discount
         result_dict = cast(
-            "FlextTypes.Dict",
+            "dict[str, object]",
             {
                 **data,
                 "discount": discount,
                 "final_total": final_total,
             },
         )
-        return FlextResult[FlextTypes.Dict].ok(result_dict)
+        return FlextResult[dict[str, object]].ok(result_dict)
 
     # Flow through complete integration pipeline
     order_data = cast(
-        "FlextTypes.Dict",
+        "dict[str, object]",
         {
             "customer_id": str(REDACTED_LDAP_BIND_PASSWORD_user["email"]),
             "items": order_template.get("items", []),
@@ -1035,7 +1034,7 @@ def demonstrate_new_flextresult_methods() -> None:
         },
     )
     pipeline_result = (
-        FlextResult[FlextTypes.Dict]
+        FlextResult[dict[str, object]]
         .ok(order_data)
         .flow_through(
             validate_order_data,
@@ -1061,18 +1060,18 @@ def demonstrate_new_flextresult_methods() -> None:
 
     def try_primary_payment_gateway(
         _amount: Decimal,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Try primary payment processor."""
         # Simulate failure (amount parameter for demonstration purposes)
-        return FlextResult[FlextTypes.Dict].fail("Primary gateway timeout")
+        return FlextResult[dict[str, object]].fail("Primary gateway timeout")
 
     def fallback_to_secondary_gateway(
         error: str,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Fallback to secondary payment processor."""
         print(f"   ⚠️  Primary failed: {error}, using fallback...")
         # Simulate successful fallback
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "gateway": "secondary",
             "transaction_id": str(uuid4()),
             "status": "approved",
@@ -1093,14 +1092,16 @@ def demonstrate_new_flextresult_methods() -> None:
     # 4. alt - Service Discovery with Fallback
     print("\n=== 4. alt: Service Discovery with Fallback ===")
 
-    def get_premium_shipping_service() -> FlextResult[FlextTypes.Dict]:
+    def get_premium_shipping_service() -> FlextResult[dict[str, object]]:
         """Try to get premium shipping service."""
         # Simulate service unavailable
-        return FlextResult[FlextTypes.Dict].fail("Premium shipping service unavailable")
+        return FlextResult[dict[str, object]].fail(
+            "Premium shipping service unavailable"
+        )
 
-    def get_standard_shipping_service() -> FlextResult[FlextTypes.Dict]:
+    def get_standard_shipping_service() -> FlextResult[dict[str, object]]:
         """Get standard shipping service."""
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "service": "standard",
             "estimated_days": 5,
             "cost": Decimal("9.99"),
@@ -1120,7 +1121,7 @@ def demonstrate_new_flextresult_methods() -> None:
     # 5. value_or_call - Lazy Configuration Loading
     print("\n=== 5. value_or_call: Lazy Configuration Loading ===")
 
-    def load_custom_config() -> FlextTypes.Dict:
+    def load_custom_config() -> dict[str, object]:
         """Expensive configuration loading operation."""
         print("   ⚙️  Loading custom configuration from database...")
         time.sleep(0.1)  # Simulate expensive operation
@@ -1131,7 +1132,7 @@ def demonstrate_new_flextresult_methods() -> None:
         }
 
     # Config not found, lazy-load default
-    config_result: FlextResult[FlextTypes.Dict] = FlextResult[FlextTypes.Dict].fail(
+    config_result: FlextResult[dict[str, object]] = FlextResult[dict[str, object]].fail(
         "Config not in cache"
     )
 
@@ -1142,7 +1143,7 @@ def demonstrate_new_flextresult_methods() -> None:
     print(f"   Tax rate: {config.get('tax_rate')}")
 
     # When success, doesn't call the function
-    cached_config: FlextResult[FlextTypes.Dict] = FlextResult[FlextTypes.Dict].ok({
+    cached_config: FlextResult[dict[str, object]] = FlextResult[dict[str, object]].ok({
         "cached": True
     })
     result_config = cached_config.value_or_call(load_custom_config)  # Won't execute
@@ -1191,8 +1192,8 @@ def demonstrate_complete_integration() -> None:
     enrichment_handler = OrderEnrichmentHandler()
 
     def execute_pipeline(
-        request: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+        request: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         """Execute the processing pipeline."""
         # Chain handlers using railway pattern
         return validation_handler.handle(request).flat_map(enrichment_handler.handle)
@@ -1210,35 +1211,37 @@ def demonstrate_complete_integration() -> None:
             if product_result.is_success:
                 products.append(product_result.unwrap())
 
-    items_list: list[FlextTypes.Dict] = [
+    items_list: list[dict[str, object]] = [
         {
             "product_id": item["product_id"],
             "quantity": item.get("quantity", 1),
         }
         for item in scenario_order["items"]
     ]
-    order_request: FlextTypes.Dict = {
+    order_request: dict[str, object] = {
         "customer_id": scenario_order["customer_id"],
         "items": items_list,
         "payment_method": "credit_card",
     }
-    order_dict: FlextTypes.Dict = order_request
+    order_dict: dict[str, object] = order_request
     items_list_raw = order_dict["items"]
     first_product_id: str = "default_product_id"  # Initialize with fallback
     if not isinstance(items_list_raw, list):
         print("Items is not a list")
     else:
-        items_validated: list[FlextTypes.Dict] = cast(
-            "list[FlextTypes.Dict]", items_list_raw
+        items_validated: list[dict[str, object]] = cast(
+            "list[dict[str, object]]", items_list_raw
         )
         if items_validated:
-            first_item: FlextTypes.Dict = items_validated[0]
+            first_item: dict[str, object] = items_validated[0]
             first_product_id = str(first_item["product_id"])
 
     print(f"Customer: {order_dict['customer_id']}")
     items_raw = order_dict["items"]
     if isinstance(items_raw, list):
-        order_items: list[FlextTypes.Dict] = cast("list[FlextTypes.Dict]", items_raw)
+        order_items: list[dict[str, object]] = cast(
+            "list[dict[str, object]]", items_raw
+        )
         print(f"Items: {len(order_items)} products")
     else:
         print("Items is not a list")
@@ -1267,7 +1270,9 @@ def demonstrate_complete_integration() -> None:
         and isinstance(items_raw, list)
         and isinstance(payment_method, str)
     ):
-        enriched_items: list[FlextTypes.Dict] = cast("list[FlextTypes.Dict]", items_raw)
+        enriched_items: list[dict[str, object]] = cast(
+            "list[dict[str, object]]", items_raw
+        )
         result = order_service.process_operation({
             "operation": "create_and_submit",
             "customer_id": customer_id,
@@ -1275,7 +1280,7 @@ def demonstrate_complete_integration() -> None:
             "payment_method": payment_method,
         })
     else:
-        result = FlextResult[FlextTypes.Dict].fail("Invalid enriched data types")
+        result = FlextResult[dict[str, object]].fail("Invalid enriched data types")
 
     if result.is_success:
         order_data = result.unwrap()
@@ -1298,7 +1303,7 @@ def demonstrate_complete_integration() -> None:
     print("\n=== 6. Error Handling ===")
 
     # Try to order with insufficient stock
-    large_order: FlextTypes.Dict = {
+    large_order: dict[str, object] = {
         "customer_id": (
             user_pool[1]["id"] if len(user_pool) > 1 else scenario_order["customer_id"]
         ),
@@ -1325,8 +1330,8 @@ def demonstrate_complete_integration() -> None:
             and isinstance(items_raw, list)
             and isinstance(payment_method, str)
         ):
-            validation_items: list[FlextTypes.Dict] = cast(
-                "list[FlextTypes.Dict]", items_raw
+            validation_items: list[dict[str, object]] = cast(
+                "list[dict[str, object]]", items_raw
             )
             result = order_service.process_operation({
                 "operation": "create_and_submit",
@@ -1335,7 +1340,7 @@ def demonstrate_complete_integration() -> None:
                 "payment_method": payment_method,
             })
         else:
-            result = FlextResult[FlextTypes.Dict].fail(
+            result = FlextResult[dict[str, object]].fail(
                 "Invalid validation data types",
             )
 
@@ -1354,9 +1359,9 @@ def demonstrate_complete_integration() -> None:
     )
     simple_order = Order(customer_id=default_customer, domain_events=[])
     items_list_raw = scenario_order["items"]
-    # Convert TypedDict items to FlextTypes.Dict
+    # Convert TypedDict items to dict[str, object]
     items_list = [dict(item) for item in items_list_raw]
-    item_template: FlextTypes.Dict = items_list[0]
+    item_template: dict[str, object] = items_list[0]
     template_price = item_template.get("price", Decimal("10.00"))
     price_amount = Decimal(str(template_price))
     product = Product(
@@ -1480,20 +1485,20 @@ def demonstrate_flextcore_unified_access() -> None:
     print("\n=== 5. Railway Pattern via FlextConstants ===")
 
     def validate_order(
-        data: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+        data: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         if not data.get("customer_id"):
-            return FlextResult[FlextTypes.Dict].fail("Customer ID required")
-        return FlextResult[FlextTypes.Dict].ok(data)
+            return FlextResult[dict[str, object]].fail("Customer ID required")
+        return FlextResult[dict[str, object]].ok(data)
 
     def process_order(
-        data: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+        data: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         data["processed"] = True
-        return FlextResult[FlextTypes.Dict].ok(data)
+        return FlextResult[dict[str, object]].ok(data)
 
     # Compose operations
-    order_data: FlextTypes.Dict = {"customer_id": "CUST-001", "amount": 100}
+    order_data: dict[str, object] = {"customer_id": "CUST-001", "amount": 100}
     pipeline_result = validate_order(order_data).flat_map(process_order)
 
     if pipeline_result.is_success:
@@ -1595,7 +1600,7 @@ def demonstrate_flextcore_11_features() -> None:
     # request_id = ctx.get("request_id")
 
     # # Process order through pipeline
-    # order_input: FlextTypes.Dict = {
+    # order_input: dict[str, object] = {
     #     "customer_id": "CUST-001",
     #     "order_id": "ORD-001",
     #     "amount": 250.00,
@@ -1604,7 +1609,7 @@ def demonstrate_flextcore_11_features() -> None:
     # workflow_result = workflow(order_input)
 
     # if workflow_result.is_success:
-    #     completed_order = cast("FlextTypes.Dict", workflow_result.unwrap())
+    #     completed_order = cast("dict[str, object]", workflow_result.unwrap())
 
     #     # Publish success event with request correlation
     #     core.publish_event(

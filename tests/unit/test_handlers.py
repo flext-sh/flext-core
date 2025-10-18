@@ -21,7 +21,6 @@ from flext_core import (
     FlextMixins,
     FlextModels,
     FlextResult,
-    FlextTypes,
 )
 
 
@@ -310,15 +309,15 @@ class TestFlextHandlers:
         )
 
         # Create handler that accepts dict[str, object] messages
-        class DictHandler(FlextHandlers[FlextTypes.Dict, str]):
+        class DictHandler(FlextHandlers[dict[str, object], str]):
             def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
 
-            def handle(self, message: FlextTypes.Dict) -> FlextResult[str]:
+            def handle(self, message: dict[str, object]) -> FlextResult[str]:
                 return FlextResult[str].ok(f"processed_{message}")
 
         handler = DictHandler(config=config)
-        dict_message: FlextTypes.Dict = {
+        dict_message: dict[str, object] = {
             "command_id": "cmd_123",
             "data": "test_data",
         }
@@ -339,15 +338,15 @@ class TestFlextHandlers:
         )
 
         # Create handler that accepts dict[str, object] messages
-        class DictHandler(FlextHandlers[FlextTypes.Dict, str]):
+        class DictHandler(FlextHandlers[dict[str, object], str]):
             def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
 
-            def handle(self, message: FlextTypes.Dict) -> FlextResult[str]:
+            def handle(self, message: dict[str, object]) -> FlextResult[str]:
                 return FlextResult[str].ok(f"processed_{message}")
 
         handler = DictHandler(config=config)
-        dict_message: FlextTypes.Dict = {
+        dict_message: dict[str, object] = {
             "message_id": "msg_456",
             "data": "test_data",
         }

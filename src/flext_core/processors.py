@@ -85,7 +85,7 @@ class FlextProcessors(FlextMixins):
     """
 
     @override
-    def __init__(self, config: FlextTypes.Dict | None = None) -> None:
+    def __init__(self, config: dict[str, object] | None = None) -> None:
         """Initialize FlextProcessors with optional configuration.
 
         Args:
@@ -106,56 +106,61 @@ class FlextProcessors(FlextMixins):
             caching_enabled=True,
         )
 
-        self._registry: FlextTypes.Dict = {}
-        self._middleware: FlextTypes.List = []
-        self._processor_config: FlextTypes.Dict = config or {}
-        self._metrics: dict[str, int] = {}
-        self._audit_log: list[FlextTypes.Dict] = []
+        self._registry: dict[str, object] = {}
+        self._middleware: list[object] = []
+        self._audit_log: list[object] = []
         self._performance_metrics: FlextTypes.FloatDict = {}
-        self._circuit_breaker: dict[str, bool] = {}
-        self._rate_limiter: dict[str, dict[str, int | float]] = {}
+        self._circuit_breaker: dict[str, object] = {}
+        self._rate_limiter: dict[str, object] = {}
         self._cache: dict[str, tuple[object, float]] = {}
         self._lock = threading.Lock()  # Thread safety lock
+        self._metrics: dict[str, object] = {
+            "registrations": 0,
+            "successful_processes": 0,
+            "failed_processes": 0,
+            "clear_operations": 0,
+            "unregistrations": 0,
+        }
 
-        # Configuration with defaults from constants instead of hardcoded values
-        cache_ttl = self._processor_config.get(
-            "cache_ttl", FlextConstants.Defaults.DEFAULT_CACHE_TTL
-        )
-        self._cache_ttl = (
-            float(cache_ttl)
-            if isinstance(cache_ttl, (int, float, str))
-            else float(FlextConstants.Defaults.DEFAULT_CACHE_TTL)
-        )
+        # Initialize configuration with safe defaults
+        try:
+            if config is None or not isinstance(config, dict):
+                # Use default configuration values
+                self._cache_ttl = 3600.0
+                self._circuit_breaker_threshold = 5
+                self._rate_limit = 100
+                self._rate_limit_window = 60.0
+            else:
+                # Safe dict access with defaults
+                cache_ttl_val: object = config.get("cache_ttl", 3600.0)
+                if isinstance(cache_ttl_val, (int, float, str)):
+                    self._cache_ttl = float(cache_ttl_val)
+                else:
+                    self._cache_ttl = 3600.0
 
-        circuit_threshold = self._processor_config.get(
-            "circuit_breaker_threshold",
-            FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
-        )
-        self._circuit_breaker_threshold = (
-            int(circuit_threshold)
-            if isinstance(circuit_threshold, (int, float, str))
-            else FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD
-        )
+                cb_threshold_val: object = config.get("circuit_breaker_threshold", 5)
+                if isinstance(cb_threshold_val, (int, float, str)):
+                    self._circuit_breaker_threshold = int(float(cb_threshold_val))
+                else:
+                    self._circuit_breaker_threshold = 5
 
-        rate_limit = self._processor_config.get(
-            "rate_limit",
-            FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
-        )
-        self._rate_limit = (
-            int(rate_limit)
-            if isinstance(rate_limit, (int, float, str))
-            else FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
-        )
+                rate_limit_val: object = config.get("rate_limit", 100)
+                if isinstance(rate_limit_val, (int, float, str)):
+                    self._rate_limit = int(float(rate_limit_val))
+                else:
+                    self._rate_limit = 100
 
-        rate_window = self._processor_config.get(
-            "rate_limit_window",
-            FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
-        )
-        self._rate_limit_window = (
-            int(rate_window)
-            if isinstance(rate_window, (int, float, str))
-            else FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS
-        )
+                rate_window_val: object = config.get("rate_limit_window", 60.0)
+                if isinstance(rate_window_val, (int, float, str)):
+                    self._rate_limit_window = float(rate_window_val)
+                else:
+                    self._rate_limit_window = 60.0
+        except (ValueError, TypeError):
+            # Fallback: if validation fails, use defaults
+            self._cache_ttl = 3600.0
+            self._circuit_breaker_threshold = 5
+            self._rate_limit = 100
+            self._rate_limit_window = 60.0
 
     def register(
         self,
@@ -190,7 +195,9 @@ class FlextProcessors(FlextMixins):
             return FlextResult[None].fail(f"Processor '{name}' already registered")
 
         self._registry[name] = processor
-        self._metrics["registrations"] = self._metrics.get("registrations", 0) + 1
+        # Update metrics using dict access
+        metrics = cast("dict[str, int]", self._metrics)
+        metrics["registrations"] = metrics.get("registrations", 0) + 1
 
         self._log_with_context(
             "info", "Processor registered successfully", processor_name=name
@@ -225,33 +232,41 @@ class FlextProcessors(FlextMixins):
             self._log_with_context("error", "Processor not found", processor_name=name)
             return FlextResult[object].fail(f"Processor '{name}' not found")
 
-        processor = self._registry[name]
+        processor: object = self._registry[name]
 
-        # Check circuit breaker
-        if self._circuit_breaker.get(name, False):
+        # Check circuit breaker (simple boolean flag)
+        if cast("dict[str, bool]", self._circuit_breaker).get(name, False):
             return FlextResult[object].fail(
                 f"Circuit breaker open for processor '{name}'",
             )
 
-        # Check rate limit
+        # Check rate limit using simple dict
         now = time.time()
         rate_key = f"{name}_rate"
 
         with self._lock:
             if rate_key not in self._rate_limiter:
-                self._rate_limiter[rate_key] = {"count": 0, "window_start": now}
+                # Create simple rate limiter state dict
+                rate_limiter: dict[str, object] = self._rate_limiter
+                rate_limiter[rate_key] = {
+                    "count": 0,
+                    "window_start": now,
+                }
 
-            rate_data = self._rate_limiter[rate_key]
-            if now - rate_data["window_start"] > self._rate_limit_window:
+            rate_data = cast("dict[str, object]", self._rate_limiter.get(rate_key))
+            # Check if window has expired
+            window_start = cast("float", rate_data.get("window_start", now))
+            if now - window_start > self._rate_limit_window:
                 rate_data["count"] = 0
                 rate_data["window_start"] = now
 
-            if rate_data["count"] >= self._rate_limit:
+            count = cast("int", rate_data.get("count", 0))
+            if count >= self._rate_limit:
                 return FlextResult[object].fail(
                     f"Rate limit exceeded for processor '{name}'",
                 )
 
-            rate_data["count"] += 1
+            rate_data["count"] = count + 1
 
         # Check cache
         cache_key = f"{name}:{hash(str(data))}"
@@ -274,7 +289,7 @@ class FlextProcessors(FlextMixins):
             if callable(processor):
                 with self.track(f"process_{name}"):
                     result = processor(processed_data)
-                # Check if result is a FlextResult-like object (handle import issues)
+                # Check if result is a FlextResult-like object
                 if (
                     hasattr(result, "is_success")
                     and hasattr(result, "value")
@@ -289,52 +304,67 @@ class FlextProcessors(FlextMixins):
                             typed_result.value
                         )
                         self._cache[cache_key] = (result_value, time.time())
-                        self._metrics["successful_processes"] = (
-                            self._metrics.get("successful_processes", 0) + 1
+                        metrics = cast("dict[str, int]", self._metrics)
+                        metrics["successful_processes"] = (
+                            metrics.get("successful_processes", 0) + 1
                         )
-                        self._audit_log.append({
-                            "timestamp": time.time(),
-                            "processor": name,
-                            "status": "success",
-                            "data_hash": hash(str(data)),
-                        })
+                        self._audit_log.append(
+                            cast(
+                                "object",
+                                {
+                                    "timestamp": time.time(),
+                                    "processor": name,
+                                    "status": "success",
+                                    "data_hash": hash(str(data)),
+                                },
+                            )
+                        )
                         # Return the FlextResult directly, don't wrap it
                         return typed_result
                     # Cast to the expected return type for better type inference
                     typed_result = cast("FlextResult[object]", result)
-                    self._metrics["failed_processes"] = (
-                        self._metrics.get("failed_processes", 0) + 1
+                    metrics = cast("dict[str, int]", self._metrics)
+                    metrics["failed_processes"] = metrics.get("failed_processes", 0) + 1
+                    self._audit_log.append(
+                        cast(
+                            "object",
+                            {
+                                "timestamp": time.time(),
+                                "processor": name,
+                                "status": "failure",
+                                "error": typed_result.error,
+                                "data_hash": hash(str(data)),
+                            },
+                        )
                     )
-                    self._audit_log.append({
-                        "timestamp": time.time(),
-                        "processor": name,
-                        "status": "failure",
-                        "error": typed_result.error,
-                        "data_hash": hash(str(data)),
-                    })
 
                     return typed_result
 
                 # Wrap non-FlextResult in FlextResult
                 result_wrapped = FlextResult[object].ok(result)
                 self._cache[cache_key] = (result, time.time())
-                self._metrics["successful_processes"] = (
-                    self._metrics.get("successful_processes", 0) + 1
+                metrics = cast("dict[str, int]", self._metrics)
+                metrics["successful_processes"] = (
+                    metrics.get("successful_processes", 0) + 1
                 )
                 return result_wrapped
 
             return FlextResult[object].fail(f"Processor '{name}' is not callable")
         except Exception as e:
-            self._metrics["failed_processes"] = (
-                self._metrics.get("failed_processes", 0) + 1
+            metrics = cast("dict[str, int]", self._metrics)
+            metrics["failed_processes"] = metrics.get("failed_processes", 0) + 1
+            self._audit_log.append(
+                cast(
+                    "object",
+                    {
+                        "timestamp": time.time(),
+                        "processor": name,
+                        "status": "error",
+                        "error": str(e),
+                        "data_hash": hash(str(data)),
+                    },
+                )
             )
-            self._audit_log.append({
-                "timestamp": time.time(),
-                "processor": name,
-                "status": "error",
-                "error": str(e),
-                "data_hash": hash(str(data)),
-            })
             return FlextResult[object].fail(f"Processor execution error: {e}")
 
     def add_middleware(self, middleware: FlextTypes.MiddlewareType) -> None:
@@ -358,29 +388,40 @@ class FlextProcessors(FlextMixins):
         """Get processing metrics.
 
         Returns:
-            dict[str, int]: Current metrics
+            dict[str, int]: Current metrics as dictionary
 
         """
-        return self._metrics.copy()
+        # _metrics is already a dict, just return a copy
+        return cast("dict[str, int]", self._metrics.copy())
 
     def get_metrics(self) -> dict[str, int]:
         """Get processing metrics (method accessor).
 
         Returns:
-            dict[str, int]: Current metrics
+            dict[str, int]: Current metrics as dictionary
 
         """
         return self.metrics
 
     @property
-    def audit_log(self) -> list[FlextTypes.Dict]:
+    def audit_log(self) -> list[dict[str, object]]:
         """Get audit log of processing operations.
 
         Returns:
-            list[FlextTypes.Dict]: Audit log entries
+            list[dict[str, object]]: Audit log entries as dicts for backward compatibility
 
         """
-        return self._audit_log.copy()
+        # _audit_log is already a list of dicts, just return it
+        return cast("list[dict[str, object]]", self._audit_log)
+
+    def get_audit_log(self) -> list[dict[str, object]]:
+        """Get audit log (method accessor).
+
+        Returns:
+            list[dict[str, object]]: Audit log entries as dicts
+
+        """
+        return self.audit_log
 
     @property
     def performance_metrics(self) -> FlextTypes.FloatDict:
@@ -392,6 +433,15 @@ class FlextProcessors(FlextMixins):
         """
         return self._performance_metrics.copy()
 
+    def get_performance_metrics(self) -> FlextTypes.FloatDict:
+        """Get performance metrics (method accessor).
+
+        Returns:
+            FlextTypes.FloatDict: Performance metrics
+
+        """
+        return self.performance_metrics
+
     def is_circuit_breaker_open(self, name: str) -> bool:
         """Check if circuit breaker is open for a processor.
 
@@ -402,13 +452,15 @@ class FlextProcessors(FlextMixins):
             bool: True if circuit breaker is open
 
         """
-        return self._circuit_breaker.get(name, False)
+        # Circuit breakers stored as simple boolean flags in dict
+        cb_dict = cast("dict[str, bool]", self._circuit_breaker)
+        return cb_dict.get(name, False)
 
     def process_batch(
         self,
         name: str,
-        data_list: FlextTypes.List,
-    ) -> FlextResult[FlextTypes.List]:
+        data_list: list[object],
+    ) -> FlextResult[list[object]]:
         """Process a batch of data items.
 
         Args:
@@ -416,27 +468,27 @@ class FlextProcessors(FlextMixins):
             data_list: List of data items to process
 
         Returns:
-            FlextResult[FlextTypes.List]: List of processed results
+            FlextResult[list[object]]: List of processed results
 
         """
-        results: FlextTypes.List = []
+        results: list[object] = []
         for data in data_list:
             result = self.process(name, data)
             if result.is_failure:
-                return FlextResult[FlextTypes.List].fail(
+                return FlextResult[list[object]].fail(
                     f"Batch processing failed: {result.error}",
                 )
 
             result_value: FlextTypes.ProcessorOutputType = result.value
             results.append(result_value)
 
-        return FlextResult[FlextTypes.List].ok(results)
+        return FlextResult[list[object]].ok(results)
 
     def process_parallel(
         self,
         name: str,
-        data_list: FlextTypes.List,
-    ) -> FlextResult[FlextTypes.List]:
+        data_list: list[object],
+    ) -> FlextResult[list[object]]:
         """Process data items in parallel using ThreadPoolExecutor.
 
         Args:
@@ -444,18 +496,18 @@ class FlextProcessors(FlextMixins):
             data_list: List of data items to process
 
         Returns:
-            FlextResult[FlextTypes.List]: List of processed results from parallel execution
+            FlextResult[list[object]]: List of processed results from parallel execution
 
         """
         # Validate processor exists before parallel execution
         if name not in self._registry:
-            return FlextResult[FlextTypes.List].fail(f"Processor '{name}' not found")
+            return FlextResult[list[object]].fail(f"Processor '{name}' not found")
 
         # Use ThreadPoolExecutor for true parallel processing
         max_workers = min(
             len(data_list), 10
         )  # Cap at 10 workers to avoid resource exhaustion
-        results: FlextTypes.List = []
+        results: list[object] = []
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all tasks for parallel execution
@@ -469,25 +521,25 @@ class FlextProcessors(FlextMixins):
                     result = future.result()
                     if result.is_failure:
                         # Fail fast on first error
-                        return FlextResult[FlextTypes.List].fail(
+                        return FlextResult[list[object]].fail(
                             f"Parallel processing failed: {result.error}",
                         )
                     results.append(result.value)
                 except Exception as e:
-                    return FlextResult[FlextTypes.List].fail(
+                    return FlextResult[list[object]].fail(
                         f"Parallel processing error: {e}",
                     )
 
-        return FlextResult[FlextTypes.List].ok(results)
+        return FlextResult[list[object]].ok(results)
 
-    def get_processors(self, name: str) -> FlextTypes.List:
+    def get_processors(self, name: str) -> list[object]:
         """Get registered processors by name.
 
         Args:
             name: Processor name
 
         Returns:
-            FlextTypes.List: List of processors with the given name
+            list[object]: List of processors with the given name
 
         """
         if name in self._registry:
@@ -497,25 +549,40 @@ class FlextProcessors(FlextMixins):
     def clear_processors(self) -> None:
         """Clear all registered processors."""
         self._registry.clear()
-        self._metrics["clear_operations"] = self._metrics.get("clear_operations", 0) + 1
+        metrics = cast("dict[str, int]", self._metrics)
+        metrics["clear_operations"] = metrics.get("clear_operations", 0) + 1
 
     @property
-    def statistics(self) -> FlextTypes.Dict:
+    def statistics(self) -> dict[str, object]:
         """Get comprehensive statistics.
 
         Returns:
-            FlextTypes.Dict: Statistics dictionary
+            dict[str, object]: Statistics dictionary
 
         """
-        return {
-            "total_processors": len(self._registry),
-            "total_middleware": len(self._middleware),
-            "metrics": self._metrics.copy(),
-            "cache_size": len(self._cache),
-            "circuit_breakers_open": sum(
-                1 for is_open in self._circuit_breaker.values() if is_open
-            ),
-        }
+        # Count circuit breakers that are "open" (stored as True in dict)
+        cb_dict = cast("dict[str, bool]", self._circuit_breaker)
+        open_count = sum(1 for is_open in cb_dict.values() if is_open)
+
+        return cast(
+            "dict[str, object]",
+            {
+                "total_processors": len(self._registry),
+                "total_middleware": len(self._middleware),
+                "metrics": self.metrics,
+                "cache_size": len(self._cache),
+                "circuit_breakers_open": open_count,
+            },
+        )
+
+    def get_statistics(self) -> dict[str, object]:
+        """Get statistics (method accessor).
+
+        Returns:
+            dict[str, object]: Statistics dictionary
+
+        """
+        return self.statistics
 
     def cleanup(self) -> None:
         """Clean up resources and reset state."""
@@ -555,11 +622,11 @@ class FlextProcessors(FlextMixins):
 
         return FlextResult[None].ok(None)
 
-    def export_config(self) -> FlextTypes.Dict:
+    def export_config(self) -> dict[str, object]:
         """Export current configuration.
 
         Returns:
-            FlextTypes.Dict: Configuration dictionary
+            dict[str, object]: Configuration dictionary
 
         """
         return {
@@ -571,7 +638,7 @@ class FlextProcessors(FlextMixins):
             "middleware_count": len(self._middleware),
         }
 
-    def import_config(self, config: FlextTypes.Dict) -> FlextResult[None]:
+    def import_config(self, config: dict[str, object]) -> FlextResult[None]:
         """Import configuration.
 
         Args:
@@ -635,7 +702,7 @@ class FlextProcessors(FlextMixins):
         def __init__(self) -> None:
             """Initialize handler registry."""
             super().__init__()
-            self._handlers: FlextTypes.Dict = {}
+            self._handlers: dict[str, object] = {}
 
         def register(
             self,
@@ -726,6 +793,7 @@ class FlextProcessors(FlextMixins):
                 indicating handler not found or execution error.
 
             """
+
             def execute_handler(
                 handler: object,
             ) -> FlextResult[FlextTypes.ProcessorOutputType]:
@@ -900,11 +968,11 @@ class FlextProcessors(FlextMixins):
         def execute_batch(
             self,
             config: FlextModels.BatchProcessingConfig | object,
-        ) -> FlextResult[FlextTypes.List]:
+        ) -> FlextResult[list[object]]:
             """Execute multiple handlers using BatchProcessingConfig model.
 
             Returns:
-                FlextResult[FlextTypes.List]: List of handler results or a failed
+                FlextResult[list[object]]: List of handler results or a failed
                 FlextResult if validation or batch processing fails.
 
             """
@@ -912,7 +980,7 @@ class FlextProcessors(FlextMixins):
             if not isinstance(config, FlextModels.BatchProcessingConfig):
                 # For mock objects, validate they have required attributes
                 if not hasattr(config, "data_items"):
-                    return FlextResult[FlextTypes.List].fail(
+                    return FlextResult[list[object]].fail(
                         "Config must be BatchProcessingConfig or have data_items attribute",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -932,7 +1000,7 @@ class FlextProcessors(FlextMixins):
             # Validate batch size limits
             max_batch_size = FlextConfig.get_global_instance().max_batch_size
             if len(data_items) > max_batch_size:
-                return FlextResult[FlextTypes.List].fail(
+                return FlextResult[list[object]].fail(
                     f"Batch size {len(data_items)} exceeds maximum {max_batch_size}",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
@@ -950,7 +1018,7 @@ class FlextProcessors(FlextMixins):
                     handler_name, request_data = cast("tuple[str, object]", item)
                     handler_requests.append((handler_name, request_data))
                 else:
-                    return FlextResult[FlextTypes.List].fail(
+                    return FlextResult[list[object]].fail(
                         "Each data item must be a tuple of (handler_name, request_data)",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -989,14 +1057,14 @@ class FlextProcessors(FlextMixins):
             super().__init__()
             self._steps: list[
                 Callable[[object], FlextResult[object] | object]
-                | FlextTypes.Dict
+                | dict[str, object]
                 | object
             ] = []
 
         def add_step(
             self,
             step: Callable[[object], FlextResult[object] | object]
-            | FlextTypes.Dict
+            | dict[str, object]
             | object,
         ) -> None:
             """Add a processing step."""
@@ -1012,22 +1080,10 @@ class FlextProcessors(FlextMixins):
 
             """
             # Filter steps to only process callables
-            callable_steps = [
-                step
-                for step in self._steps
-                if callable(step)
-            ]
+            callable_steps = [step for step in self._steps if callable(step)]
             return FlextResult.pipeline(
                 data,
-                *[
-                    self._process_step(
-                        cast(
-                            "Callable[[object], FlextTypes.ProcessorOutputType]",
-                            step,
-                        )
-                    )
-                    for step in callable_steps
-                ],
+                *[self._process_step(step) for step in callable_steps],
             )
 
         def process_conditionally(
@@ -1042,7 +1098,7 @@ class FlextProcessors(FlextMixins):
 
             """
 
-            def process_data(data: FlextTypes.Dict) -> FlextResult[object]:
+            def process_data(data: dict[str, object]) -> FlextResult[object]:
                 return self.process(
                     FlextModels.ProcessingRequest(
                         data=data,
@@ -1051,7 +1107,7 @@ class FlextProcessors(FlextMixins):
                     ),
                 )
 
-            data_result = FlextResult[FlextTypes.Dict].ok(request.data)
+            data_result = FlextResult[dict[str, object]].ok(request.data)
             if data_result.is_success and condition(data_result.unwrap()):
                 return process_data(data_result.unwrap())
             return cast("FlextResult[object]", data_result)
@@ -1131,21 +1187,21 @@ class FlextProcessors(FlextMixins):
         def process_batch(
             self,
             config: FlextModels.BatchProcessingConfig | object,
-        ) -> FlextResult[FlextTypes.List]:
+        ) -> FlextResult[list[object]]:
             """Process batch of data using validated BatchProcessingConfig model.
 
             Args:
                 config: BatchProcessingConfig model with data items and processing options
 
             Returns:
-                FlextResult[FlextTypes.List]: List of processed data items or a failure.
+                FlextResult[list[object]]: List of processed data items or a failure.
 
             """
             # Validate config is a BatchProcessingConfig or has required attributes
             if not isinstance(config, FlextModels.BatchProcessingConfig):
                 # For mock objects, validate they have required attributes
                 if not hasattr(config, "data_items"):
-                    return FlextResult[FlextTypes.List].fail(
+                    return FlextResult[list[object]].fail(
                         "Config must be BatchProcessingConfig or have data_items attribute",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -1165,7 +1221,7 @@ class FlextProcessors(FlextMixins):
             # Validate batch size limits
             max_batch_size = FlextConfig.get_global_instance().max_batch_size
             if len(data_items) > max_batch_size:
-                return FlextResult[FlextTypes.List].fail(
+                return FlextResult[list[object]].fail(
                     f"Batch size {len(data_items)} exceeds maximum {max_batch_size}",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
@@ -1261,11 +1317,11 @@ class FlextProcessors(FlextMixins):
                         )
                     return step_result
                 # result is not a FlextResult, return it directly
-                return cast("FlextTypes.ProcessorOutputType", result)
+                return result
 
             # Handle dictionary merging
             if isinstance(current, dict) and isinstance(step, dict):
-                merged_dict: FlextTypes.Dict = {**current, **step}
+                merged_dict: dict[str, object] = {**current, **step}
                 return merged_dict
 
             # Replace current data
@@ -1337,7 +1393,7 @@ class FlextProcessors(FlextMixins):
             def __init__(self) -> None:
                 """Initialize handler registry."""
                 super().__init__()
-                self._handlers: FlextTypes.Dict = {}
+                self._handlers: dict[str, object] = {}
 
             def register(
                 self,
@@ -1400,7 +1456,7 @@ class FlextProcessors(FlextMixins):
                 """Initialize handler chain with name."""
                 super().__init__()
                 self.name = name
-                self._handlers: FlextTypes.List = []
+                self._handlers: list[object] = []
 
             def add_handler(
                 self,
@@ -1565,7 +1621,8 @@ class FlextProcessors(FlextMixins):
             return FlextResult[None].fail(f'Processor "{name}" not found')
 
         del self._registry[name]
-        self._metrics["unregistrations"] = self._metrics.get("unregistrations", 0) + 1
+        metrics = cast("dict[str, int]", self._metrics)
+        metrics["unregistrations"] = metrics.get("unregistrations", 0) + 1
 
         return FlextResult[None].ok(None)
 

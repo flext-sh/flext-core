@@ -215,11 +215,11 @@ class FlextLogger:
 
     # Scoped context tracking
     # Format: {scope_name: {context_key: context_value}}
-    _scoped_contexts: ClassVar[dict[str, FlextTypes.Dict]] = {}
+    _scoped_contexts: ClassVar[dict[str, dict[str, object]]] = {}
 
     # Level-based context tracking
     # Format: {log_level: {context_key: context_value}}
-    _level_contexts: ClassVar[dict[str, FlextTypes.Dict]] = {}
+    _level_contexts: ClassVar[dict[str, dict[str, object]]] = {}
 
     @staticmethod
     def _configure_structlog_if_needed(
@@ -320,10 +320,10 @@ class FlextLogger:
             return FlextResult[None].fail(f"Failed to clear global context: {e}")
 
     @classmethod
-    def get_global_context(cls) -> FlextTypes.Dict:
+    def get_global_context(cls) -> dict[str, object]:
         """Get current global context."""
         return cast(
-            "FlextTypes.Dict", FlextRuntime.structlog().contextvars.get_contextvars()
+            "dict[str, object]", FlextRuntime.structlog().contextvars.get_contextvars()
         )
 
     # =========================================================================
@@ -928,7 +928,7 @@ class FlextLogger:
 
         """
         try:
-            context: FlextTypes.Dict = {}
+            context: dict[str, object] = {}
             if operation:
                 context["operation"] = operation
 
@@ -1000,6 +1000,6 @@ class FlextLogger:
                 )
 
 
-__all__: FlextTypes.StringList = [
+__all__: list[str] = [
     "FlextLogger",
 ]

@@ -19,7 +19,6 @@ from typing import ClassVar, cast
 import structlog
 
 from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes
 
 
 class FlextExceptions:
@@ -286,7 +285,7 @@ class FlextExceptions:
             *,
             error_code: str | None = FlextConstants.Errors.UNKNOWN_ERROR,
             correlation_id: str | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: dict[str, object] | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
             **extra_kwargs: object,
@@ -354,7 +353,7 @@ class FlextExceptions:
             parts.append(self.message)
             return " ".join(parts)
 
-        def to_dict(self) -> FlextTypes.Dict:
+        def to_dict(self) -> dict[str, object]:
             """Convert exception to dictionary representation."""
             return {
                 "error_type": self.__class__.__name__,
@@ -442,7 +441,7 @@ class FlextExceptions:
             value: object | None = None,
             error_code: str | None = None,
             correlation_id: str | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: dict[str, object] | None = None,
         ) -> None:
             """Initialize validation error.
 
@@ -479,7 +478,7 @@ class FlextExceptions:
             config_source: str | None = None,
             error_code: str | None = None,
             correlation_id: str | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: dict[str, object] | None = None,
         ) -> None:
             """Initialize configuration error.
 
@@ -519,7 +518,7 @@ class FlextExceptions:
             timeout: float | None = None,
             error_code: str | None = None,
             correlation_id: str | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: dict[str, object] | None = None,
         ) -> None:
             """Initialize connection error.
 
@@ -561,7 +560,7 @@ class FlextExceptions:
             operation: str | None = None,
             error_code: str | None = None,
             correlation_id: str | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: dict[str, object] | None = None,
         ) -> None:
             """Initialize timeout error.
 
@@ -600,7 +599,7 @@ class FlextExceptions:
             user_id: str | None = None,
             error_code: str | None = None,
             correlation_id: str | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: dict[str, object] | None = None,
         ) -> None:
             """Initialize authentication error.
 
@@ -640,7 +639,7 @@ class FlextExceptions:
             permission: str | None = None,
             error_code: str | None = None,
             correlation_id: str | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: dict[str, object] | None = None,
         ) -> None:
             """Initialize authorization error.
 
@@ -682,7 +681,7 @@ class FlextExceptions:
             resource_id: str | None = None,
             error_code: str | None = None,
             correlation_id: str | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: dict[str, object] | None = None,
         ) -> None:
             """Initialize not found error.
 
@@ -722,7 +721,7 @@ class FlextExceptions:
             conflict_reason: str | None = None,
             error_code: str | None = None,
             correlation_id: str | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: dict[str, object] | None = None,
         ) -> None:
             """Initialize conflict error.
 
@@ -765,7 +764,7 @@ class FlextExceptions:
             retry_after: int | None = None,
             error_code: str | None = None,
             correlation_id: str | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: dict[str, object] | None = None,
         ) -> None:
             """Initialize rate limit error.
 
@@ -808,7 +807,7 @@ class FlextExceptions:
             reset_timeout: int | None = None,
             error_code: str | None = None,
             correlation_id: str | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: dict[str, object] | None = None,
         ) -> None:
             """Initialize circuit breaker error.
 
@@ -850,7 +849,7 @@ class FlextExceptions:
             actual_type: str | None = None,
             error_code: str | None = None,
             correlation_id: str | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: dict[str, object] | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
             **extra_kwargs: object,
@@ -896,7 +895,7 @@ class FlextExceptions:
             reason: str | None = None,
             error_code: str | None = None,
             correlation_id: str | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: dict[str, object] | None = None,
         ) -> None:
             """Initialize operation error.
 
@@ -942,7 +941,7 @@ class FlextExceptions:
             ValueError: If error type is not recognized
 
         """
-        error_classes: FlextTypes.Dict = {
+        error_classes: dict[str, type[FlextExceptions.BaseError]] = {
             "ValidationError": FlextExceptions.ValidationError,
             "ConfigurationError": FlextExceptions.ConfigurationError,
             "ConnectionError": FlextExceptions.ConnectionError,
@@ -992,8 +991,8 @@ class FlextExceptions:
             correlation_id: str | None = cast(
                 "str | None", kwargs.get("correlation_id")
             )
-            metadata: FlextTypes.Dict | None = cast(
-                "FlextTypes.Dict | None", kwargs.get("metadata")
+            metadata: dict[str, object] | None = cast(
+                "dict[str, object] | None", kwargs.get("metadata")
             )
             return FlextExceptions.ValidationError(
                 message,
@@ -1011,7 +1010,7 @@ class FlextExceptions:
             config_key: str | None = cast("str | None", kwargs.get("config_key"))
             config_source: str | None = cast("str | None", kwargs.get("config_source"))
             correlation_id = cast("str | None", kwargs.get("correlation_id"))
-            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
+            metadata = cast("dict[str, object] | None", kwargs.get("metadata"))
             return FlextExceptions.ConfigurationError(
                 message,
                 error_code=error_code,
@@ -1024,7 +1023,7 @@ class FlextExceptions:
             operation: str | None = cast("str | None", kwargs.get("operation"))
             reason: str | None = cast("str | None", kwargs.get("reason"))
             correlation_id = cast("str | None", kwargs.get("correlation_id"))
-            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
+            metadata = cast("dict[str, object] | None", kwargs.get("metadata"))
             return FlextExceptions.OperationError(
                 message,
                 error_code=error_code,
@@ -1038,7 +1037,7 @@ class FlextExceptions:
             port: int | None = cast("int | None", kwargs.get("port"))
             timeout: float | None = cast("float | None", kwargs.get("timeout"))
             correlation_id = cast("str | None", kwargs.get("correlation_id"))
-            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
+            metadata = cast("dict[str, object] | None", kwargs.get("metadata"))
             return FlextExceptions.ConnectionError(
                 message,
                 error_code=error_code,
@@ -1054,7 +1053,7 @@ class FlextExceptions:
             )
             operation = cast("str | None", kwargs.get("operation"))
             correlation_id = cast("str | None", kwargs.get("correlation_id"))
-            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
+            metadata = cast("dict[str, object] | None", kwargs.get("metadata"))
             return FlextExceptions.TimeoutError(
                 message,
                 error_code=error_code,
@@ -1068,7 +1067,7 @@ class FlextExceptions:
             resource: str | None = cast("str | None", kwargs.get("resource"))
             permission: str | None = cast("str | None", kwargs.get("permission"))
             correlation_id = cast("str | None", kwargs.get("correlation_id"))
-            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
+            metadata = cast("dict[str, object] | None", kwargs.get("metadata"))
             return FlextExceptions.AuthorizationError(
                 message,
                 error_code=error_code,
@@ -1082,7 +1081,7 @@ class FlextExceptions:
             auth_method: str | None = cast("str | None", kwargs.get("auth_method"))
             user_id = cast("str | None", kwargs.get("user_id"))
             correlation_id = cast("str | None", kwargs.get("correlation_id"))
-            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
+            metadata = cast("dict[str, object] | None", kwargs.get("metadata"))
             return FlextExceptions.AuthenticationError(
                 message,
                 error_code=error_code,
@@ -1095,7 +1094,7 @@ class FlextExceptions:
             resource_type: str | None = cast("str | None", kwargs.get("resource_type"))
             resource_id: str | None = cast("str | None", kwargs.get("resource_id"))
             correlation_id = cast("str | None", kwargs.get("correlation_id"))
-            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
+            metadata = cast("dict[str, object] | None", kwargs.get("metadata"))
             return FlextExceptions.NotFoundError(
                 message,
                 error_code=error_code,
@@ -1108,11 +1107,11 @@ class FlextExceptions:
             attribute_name: str | None = cast(
                 "str | None", kwargs.get("attribute_name")
             )
-            attribute_context: FlextTypes.Dict | None = cast(
-                "FlextTypes.Dict | None", kwargs.get("attribute_context")
+            attribute_context: dict[str, object] | None = cast(
+                "dict[str, object] | None", kwargs.get("attribute_context")
             )
             correlation_id = cast("str | None", kwargs.get("correlation_id"))
-            metadata = cast("FlextTypes.Dict | None", kwargs.get("metadata"))
+            metadata = cast("dict[str, object] | None", kwargs.get("metadata"))
             return FlextExceptions.AttributeAccessError(
                 message,
                 error_code=error_code,
@@ -1127,7 +1126,7 @@ class FlextExceptions:
         )
 
     # Metrics tracking for exception monitoring
-    _exception_counts: ClassVar[FlextTypes.Dict] = {}
+    _exception_counts: ClassVar[dict[str, int]] = {}
 
     @classmethod
     def record_exception(cls, exception_type: str) -> None:
@@ -1142,14 +1141,14 @@ class FlextExceptions:
         cls._exception_counts[exception_type] += 1
 
     @classmethod
-    def get_metrics(cls) -> FlextTypes.Dict:
+    def get_metrics(cls) -> dict[str, object]:
         """Get exception metrics.
 
         Returns:
             Dictionary containing exception counts and statistics
 
         """
-        total = sum(cls._exception_counts.values())
+        total = sum(cls._exception_counts.values(), 0)
         return {
             "total_exceptions": total,
             "exception_counts": cls._exception_counts.copy(),
@@ -1192,10 +1191,10 @@ class FlextExceptions:
             message: str,
             *,
             attribute_name: str | None = None,
-            attribute_context: FlextTypes.Dict | None = None,
+            attribute_context: dict[str, object] | None = None,
             error_code: str | None = None,
             correlation_id: str | None = None,
-            metadata: FlextTypes.Dict | None = None,
+            metadata: dict[str, object] | None = None,
         ) -> None:
             """Initialize attribute error.
 

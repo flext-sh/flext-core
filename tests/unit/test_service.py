@@ -14,7 +14,7 @@ from typing import cast
 import pytest
 from pydantic import Field, ValidationError
 
-from flext_core import FlextMixins, FlextModels, FlextResult, FlextService, FlextTypes
+from flext_core import FlextMixins, FlextModels, FlextResult, FlextService
 
 
 # Test Domain Service Implementations
@@ -140,15 +140,15 @@ class SampleExceptionService(FlextService[str]):
         return FlextResult[str].ok("Success")
 
 
-class ComplexTypeService(FlextService[FlextTypes.Dict]):
+class ComplexTypeService(FlextService[dict[str, object]]):
     """Test service with complex types for testing."""
 
-    data: FlextTypes.Dict = Field(default_factory=dict)
-    items: FlextTypes.List = Field(default_factory=list)
+    data: dict[str, object] = Field(default_factory=dict)
+    items: list[object] = Field(default_factory=list)
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute operation with complex types."""
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "data": self.data,
             "items": self.items,
         })
@@ -846,7 +846,7 @@ class TestServiceComprehensiveCoverage:
         assert "Invalid retry configuration" in result.error
 
     def test_execute_operation_no_timeout(self) -> None:
-        """Test execute_operation with timeout <= 0 (no timeout)."""
+        """Test execute_operation with minimal valid timeout."""
         service = SampleUserService()
 
         def test_operation() -> str:
@@ -855,7 +855,7 @@ class TestServiceComprehensiveCoverage:
         operation_request = FlextModels.OperationExecutionRequest(
             operation_name="test_no_timeout",
             operation_callable=test_operation,
-            timeout_seconds=0,  # No timeout
+            timeout_seconds=1,  # Minimum valid timeout (>=1 required by model)
         )
 
         result = service.execute_operation(operation_request)
@@ -1358,11 +1358,11 @@ class Executable:
         return FlextResult[object].ok("success")
 
 
-class BatchService(FlextService[FlextTypes.StringList]):
+class BatchService(FlextService[list[str]]):
     """Test service for batch processing."""
 
-    def execute(self) -> FlextResult[FlextTypes.StringList]:
-        return FlextResult[FlextTypes.StringList].ok([
+    def execute(self) -> FlextResult[list[str]]:
+        return FlextResult[list[str]].ok([
             "item1",
             "item2",
             "item3",
@@ -1430,7 +1430,7 @@ class BatchService(FlextService[FlextTypes.StringList]):
                 return FlextResult[str].ok("success")
 
         service = RetryService()
-        retry_config: FlextTypes.Dict = {
+        retry_config: dict[str, object] = {
             "max_attempts": 3,
             "retry_delay": 0.01,
             "backoff_multiplier": 0,  # Zero or negative should default to 1.0
@@ -1462,7 +1462,7 @@ class BatchService(FlextService[FlextTypes.StringList]):
                 return FlextResult[str].ok("success_after_retry")
 
         service = RetryNoFilterService()
-        retry_config: FlextTypes.Dict = {
+        retry_config: dict[str, object] = {
             "max_attempts": 3,
             "retry_delay": 0.01,
             # No exception_filters - should retry all exceptions

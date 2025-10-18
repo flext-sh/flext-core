@@ -18,7 +18,6 @@ from flext_core import (
     FlextModels,
     FlextRegistry,
     FlextResult,
-    FlextTypes,
 )
 
 
@@ -477,7 +476,7 @@ class TestFlextRegistry:
         assert "str" in key2
 
         # Test with dict[str, object] entry
-        dict_entry: FlextTypes.Dict = {"command_type": int}
+        dict_entry: dict[str, object] = {"command_type": int}
         key3 = registry._resolve_binding_key_from_entry(dict_entry, int)
         assert key3 is not None
 
@@ -651,7 +650,7 @@ class TestFlextRegistry:
         registry = FlextRegistry(FlextDispatcher())
 
         # Test with dict[str, object] entry (non-tuple, non-FlextHandlers)
-        dict_entry: FlextTypes.Dict = {"some_key": "some_value"}
+        dict_entry: dict[str, object] = {"some_key": "some_value"}
 
         key = registry._resolve_binding_key_from_entry(dict_entry, str)
         assert key is not None

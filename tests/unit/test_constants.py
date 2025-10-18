@@ -235,7 +235,7 @@ class TestFlextConstants:
         assert hasattr(FlextConstants, "Mixins")
         assert hasattr(FlextConstants, "Context")
         assert hasattr(FlextConstants, "Processing")
-        assert hasattr(FlextConstants, "Http")
+        assert hasattr(FlextConstants, "FlextWeb")
         assert hasattr(FlextConstants, "Pagination")
 
     def test_constants_documentation(self) -> None:

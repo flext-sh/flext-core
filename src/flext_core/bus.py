@@ -173,17 +173,17 @@ class FlextBus(
         self._config_model = self._create_config_model(bus_config)
 
         # Handler registry
-        self._handlers: FlextTypes.Dict = {}
+        self._handlers: dict[str, object] = {}
 
         # Middleware pipeline - use parent's _middleware for callables only
-        # Middleware configurations stored separately - using FlextTypes
-        self._middleware_configs: list[FlextTypes.MiddlewareConfig] = []
+        # Middleware configurations stored as dicts with id, type, enabled, order
+        self._middleware_configs: list[dict[str, object]] = []
         # Middleware instances cache
-        self._middleware_instances: FlextTypes.Dict = {}
+        self._middleware_instances: dict[str, object] = {}
         # Execution counter
         self._execution_count: int = FlextConstants.ZERO
         # Auto-discovery handlers (single-arg registration)
-        self._auto_handlers: FlextTypes.List = []
+        self._auto_handlers: list[object] = []
 
         # Cache configuration - use dedicated CqrsCache manager
         self._cache: FlextBus._Cache = FlextBus._Cache(
@@ -236,66 +236,42 @@ class FlextBus(
     def _normalize_middleware_config(
         self,
         middleware_config: object,
-    ) -> FlextModels.MiddlewareConfig | None:
-        """Convert middleware configuration into a MiddlewareConfig model.
-        
-        Accepts explicit types: dict, MiddlewareConfig, BaseModel, or Mapping types.
+    ) -> dict[str, object] | None:
+        """Convert middleware configuration into a dict model.
+
+        Accepts explicit types: dict, BaseModel, or Mapping types.
         No try/except fallbacks - only processes known types explicitly.
-        Creates validated MiddlewareConfig model for type safety.
-        
+        Returns dict with middleware_id, middleware_type, enabled, order.
+
         Args:
             middleware_config: Configuration to normalize
-            
+
         Returns:
-            MiddlewareConfig model or None if config is None
+            Dict with middleware config or None if config is None
 
         """
         if middleware_config is None:
             return None
 
-        # Already a MiddlewareConfig model - return as is
-        if isinstance(middleware_config, FlextModels.MiddlewareConfig):
+        # Already a dict - return as is
+        if isinstance(middleware_config, dict):
             return middleware_config
 
-        # Convert dict to model
-        if isinstance(middleware_config, dict):
-            try:
-                return FlextModels.MiddlewareConfig(
-                    middleware_id=middleware_config.get("middleware_id", ""),
-                    middleware_type=middleware_config.get("middleware_type", ""),
-                    enabled=middleware_config.get("enabled", True),
-                    order=middleware_config.get("order", 0),
-                )
-            except Exception:
-                return None
-
-        # Convert Pydantic BaseModel to dict first, then to model
+        # Convert Pydantic BaseModel to dict
         if isinstance(middleware_config, BaseModel):
             try:
-                config_dict = middleware_config.model_dump()
-                return FlextModels.MiddlewareConfig(
-                    middleware_id=config_dict.get("middleware_id", ""),
-                    middleware_type=config_dict.get("middleware_type", ""),
-                    enabled=config_dict.get("enabled", True),
-                    order=config_dict.get("order", 0),
-                )
+                return middleware_config.model_dump()
             except Exception:
                 return None
 
-        # Convert Mapping to model
+        # Convert Mapping to dict
         if isinstance(middleware_config, Mapping):
             try:
-                config_dict = dict(middleware_config)
-                return FlextModels.MiddlewareConfig(
-                    middleware_id=config_dict.get("middleware_id", ""),
-                    middleware_type=config_dict.get("middleware_type", ""),
-                    enabled=config_dict.get("enabled", True),
-                    order=config_dict.get("order", 0),
-                )
+                return dict(middleware_config)
             except Exception:
                 return None
 
-        # Unknown types: return None (not empty dict)
+        # Unknown types: return None
         return None
 
     def register_handler(self, *args: object) -> FlextResult[None]:
@@ -590,8 +566,8 @@ class FlextBus(
             return FlextResult[None].ok(None)
 
         # Sort middleware by order
-        def get_order(middleware_config: FlextModels.MiddlewareConfig) -> int:
-            order_value = middleware_config.order
+        def get_order(middleware_config: dict[str, object]) -> int:
+            order_value = middleware_config.get("order", 0)
             if isinstance(order_value, str):
                 try:
                     return int(order_value)
@@ -606,10 +582,10 @@ class FlextBus(
         sorted_middleware = sorted(self._middleware_configs, key=get_order)
 
         for middleware_config in sorted_middleware:
-            # Extract configuration values from model
-            middleware_id_value = middleware_config.middleware_id
-            middleware_type_value = middleware_config.middleware_type
-            enabled_value = middleware_config.enabled
+            # Extract configuration values from dict
+            middleware_id_value = middleware_config.get("middleware_id")
+            middleware_type_value = middleware_config.get("middleware_type")
+            enabled_value = middleware_config.get("enabled", True)
 
             # Skip disabled middleware
             if not enabled_value:
@@ -630,7 +606,7 @@ class FlextBus(
                 "Applying middleware",
                 middleware_id=middleware_id_value or "",
                 middleware_type=str(middleware_type_value),
-                order=middleware_config.order,
+                order=middleware_config.get("order", 0),
             )
 
             process_method = getattr(middleware, "process", None)
@@ -714,13 +690,13 @@ class FlextBus(
     def add_middleware(
         self,
         middleware: FlextTypes.BusHandlerType,
-        middleware_config: FlextTypes.Dict | FlextModels.MiddlewareConfig | None = None,
+        middleware_config: dict[str, object] | None = None,
     ) -> FlextResult[None]:
-        """Append middleware with validated configuration using MiddlewareConfig model.
+        """Append middleware with validated configuration.
 
         Args:
             middleware: The middleware instance to add
-            middleware_config: Configuration for the middleware (dict or MiddlewareConfig)
+            middleware_config: Configuration for the middleware (dict or None)
 
         Returns:
             FlextResult: Success or failure result
@@ -730,38 +706,37 @@ class FlextBus(
             # Middleware pipeline is disabled, skip adding
             return FlextResult[None].ok(None)
 
-        # Normalize config to MiddlewareConfig model
-        config_model = self._normalize_middleware_config(middleware_config)
-        
+        # Normalize config to dict
+        config_dict = self._normalize_middleware_config(middleware_config)
+
         # Resolve middleware_id: use config, middleware attribute, or generate
-        if config_model is not None and config_model.middleware_id:
-            middleware_id_str = config_model.middleware_id
+        if config_dict is not None and config_dict.get("middleware_id"):
+            middleware_id_str = str(config_dict.get("middleware_id"))
         else:
             middleware_id_str = getattr(
                 middleware,
                 "middleware_id",
                 f"mw_{len(self._middleware_configs)}",
             )
-        
+
         # Resolve middleware type: use config or get from middleware class
         middleware_type_str = (
-            config_model.middleware_type
-            if config_model is not None and config_model.middleware_type
+            str(config_dict.get("middleware_type"))
+            if config_dict is not None and config_dict.get("middleware_type")
             else type(middleware).__name__
         )
-        
-        # Create final MiddlewareConfig model with all resolved values
-        try:
-            final_config = FlextModels.MiddlewareConfig(
-                middleware_id=middleware_id_str,
-                middleware_type=middleware_type_str,
-                enabled=config_model.enabled if config_model is not None else True,
-                order=config_model.order if config_model is not None else len(self._middleware_configs),
-            )
-        except Exception as e:
-            return FlextResult[None].fail(
-                f"Failed to create middleware configuration: {e}"
-            )
+
+        # Create final middleware config dict with all resolved values
+        final_config: dict[str, object] = {
+            "middleware_id": middleware_id_str,
+            "middleware_type": middleware_type_str,
+            "enabled": config_dict.get("enabled", True)
+            if config_dict is not None
+            else True,
+            "order": config_dict.get("order", len(self._middleware_configs))
+            if config_dict is not None
+            else len(self._middleware_configs),
+        }
 
         # Store middleware config separately from callables
         self._middleware_configs.append(final_config)
@@ -770,28 +745,28 @@ class FlextBus(
 
         self.logger.info(
             "Middleware added to pipeline",
-            middleware_type=final_config.middleware_type,
-            middleware_id=final_config.middleware_id,
+            middleware_type=final_config.get("middleware_type", ""),
+            middleware_id=middleware_id_str,
             total_middleware=len(self._middleware_configs),
         )
 
         return FlextResult[None].ok(None)
 
-    def get_all_handlers(self) -> FlextTypes.List:
+    def get_all_handlers(self) -> list[object]:
         """Return all registered handler instances.
 
         Returns:
-            FlextTypes.List: List of all registered handlers
+            list[object]: List of all registered handlers
 
         """
         return list(self._handlers.values())
 
     @property
-    def all_handlers(self) -> FlextTypes.List:
+    def all_handlers(self) -> list[object]:
         """Property accessor for all registered handlers.
 
         Returns:
-            FlextTypes.List: List of all registered handlers
+            list[object]: List of all registered handlers
 
         """
         return self.get_all_handlers()
@@ -839,11 +814,11 @@ class FlextBus(
         )
 
     @property
-    def registered_handlers(self) -> FlextTypes.Dict:
+    def registered_handlers(self) -> dict[str, object]:
         """Expose the handler registry keyed by command identifiers.
 
         Returns:
-            FlextTypes.Dict: Dictionary of registered handlers
+            dict[str, object]: Dictionary of registered handlers
 
         """
         return {str(k): v for k, v in self._handlers.items()}
@@ -880,7 +855,7 @@ class FlextBus(
         except Exception as e:
             return FlextResult[None].fail(f"Event publishing error: {e}")
 
-    def publish_events(self, events: FlextTypes.List) -> FlextResult[None]:
+    def publish_events(self, events: list[object]) -> FlextResult[None]:
         """Publish multiple domain events.
 
         Uses FlextResult.from_callable() to eliminate try/except and
@@ -955,7 +930,7 @@ class FlextBus(
     def publish(
         self,
         event_name: str,
-        data: FlextTypes.Dict,
+        data: dict[str, object],
     ) -> FlextResult[None]:
         """Publish a named event with data.
 
@@ -969,8 +944,8 @@ class FlextBus(
             FlextResult[None]: Success or failure result
 
         """
-        # Create a simple event FlextTypes.Dict with name and data
-        event: FlextTypes.Dict = {
+        # Create a simple event dict[str, object] with name and data
+        event: dict[str, object] = {
             "event_name": event_name,
             "data": data,
             "timestamp": getattr(self, "_get_timestamp", lambda: "now")(),
@@ -980,6 +955,6 @@ class FlextBus(
 
 # Direct class access - no legacy aliases
 
-__all__: FlextTypes.StringList = [
+__all__: list[str] = [
     "FlextBus",
 ]

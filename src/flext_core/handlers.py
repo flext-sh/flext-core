@@ -210,7 +210,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             context_operation = operation or "unknown"
 
             if isinstance(message, (dict, str, int, float, bool)):
-                return cast("FlextTypes.Dict | str | int | float | bool", message)
+                return cast("dict[str, object] | str | int | float | bool", message)
 
             if message is None:
                 msg = f"Invalid message type for {operation_name}: NoneType"
@@ -236,7 +236,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 and hasattr(message, "__attrs_attrs__")
                 and hasattr(message, "__class__")
             ):
-                result: FlextTypes.Dict = {}
+                result: dict[str, object] = {}
                 for attr_field in attrs_fields:
                     field_name = attr_field.name
                     if hasattr(message, field_name):
@@ -250,7 +250,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     try:
                         result_data = method()
                         if isinstance(result_data, dict):
-                            return cast("FlextTypes.Dict", result_data)
+                            return cast("dict[str, object]", result_data)
                     except Exception as e:
                         FlextHandlers._internal_logger.debug(
                             f"Serialization method {method_name} failed: {type(e).__name__}"
@@ -263,9 +263,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 if isinstance(slots, str):
                     slot_names: tuple[str, ...] = (slots,)
                 elif isinstance(slots, (list, tuple)):
-                    slot_names = tuple(
-                        cast("FlextTypes.StringList | tuple[str, ...]", slots)
-                    )
+                    slot_names = tuple(cast("list[str] | tuple[str, ...]", slots))
                 else:
                     msg = f"Invalid __slots__ type for {operation_name}: {type(slots).__name__}"
                     raise FlextExceptions.TypeError(
@@ -506,7 +504,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
     def _run_pipeline(
         self,
-        message: MessageT_contra | FlextTypes.Dict,
+        message: MessageT_contra | dict[str, object],
         operation: str = "command",
     ) -> FlextResult[ResultT]:
         """Run the handler pipeline with message processing.
@@ -800,7 +798,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         ) -> None:
             """Log handler error event with structured logging."""
             if logger is not None:
-                kwargs: FlextTypes.Dict = {
+                kwargs: dict[str, object] = {
                     "handler_mode": handler_mode,
                     "message_type": message_type,
                     "message_id": message_id,
@@ -853,6 +851,6 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 logger.error("handler_cannot_handle", **kwargs)
 
 
-__all__: FlextTypes.StringList = [
+__all__: list[str] = [
     "FlextHandlers",
 ]

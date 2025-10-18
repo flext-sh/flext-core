@@ -32,14 +32,13 @@ from flext_core import (
     FlextExceptions,
     FlextResult,
     FlextService,
-    FlextTypes,
 )
 
 # Constants
 DEMO_EXCEPTION_MSG = "Demo exception raised: %s"
 
 
-class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
+class ComprehensiveExceptionService(FlextService[dict[str, object]]):
     """Service demonstrating ALL FlextExceptions patterns with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
@@ -103,7 +102,7 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
             },
         )
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute all FlextExceptions pattern demonstrations.
 
         Runs comprehensive exception handling demonstrations:
@@ -131,7 +130,7 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
         22. Deprecated patterns (for educational comparison)
 
         Returns:
-            FlextResult[FlextTypes.Dict]: Execution summary with demonstration results
+            FlextResult[dict[str, object]]: Execution summary with demonstration results
 
         """
         self.logger.info("Starting comprehensive FlextExceptions demonstration")
@@ -162,7 +161,7 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
             # Skip deprecated patterns as it's not defined
 
             summary = cast(
-                "FlextTypes.Dict",
+                "dict[str, object]",
                 {
                     "status": "completed",
                     "demonstrations": 21,
@@ -201,12 +200,12 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
                 extra={"summary": summary},
             )
 
-            return FlextResult[FlextTypes.Dict].ok(summary)
+            return FlextResult[dict[str, object]].ok(summary)
 
         except Exception as e:
             error_msg = f"FlextExceptions demonstration failed: {e}"
             self.logger.exception(error_msg, extra={"error_type": type(e).__name__})
-            return FlextResult[FlextTypes.Dict].fail(error_msg)
+            return FlextResult[dict[str, object]].fail(error_msg)
 
     # ========== BASE EXCEPTION ==========
 
@@ -746,10 +745,10 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
         # 1. from_callable - Safe Exception Handling
         print("\n=== 1. from_callable: Safe Exception Handling ===")
 
-        def risky_operation() -> FlextTypes.Dict:
+        def risky_operation() -> dict[str, object]:
             """Operation that might raise exceptions."""
             # Simulate a validation that might fail
-            user_data: FlextTypes.Dict = {
+            user_data: dict[str, object] = {
                 "email": "test@example.com",
                 "age": 25,
             }
@@ -765,7 +764,7 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
 
         # Safe execution without try/except
         result = cast(
-            "FlextResult[FlextTypes.Dict]",
+            "FlextResult[dict[str, object]]",
             FlextResult.from_callable(risky_operation),
         )
         if result.is_success:
@@ -778,52 +777,52 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
         print("\n=== 2. flow_through: Exception-Safe Pipeline ===")
 
         def validate_user_data(
-            data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Validate user data."""
             email = data.get("email", "")
             if not isinstance(email, str) or not email or "@" not in email:
-                return FlextResult[FlextTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     "Invalid email",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
-            return FlextResult[FlextTypes.Dict].ok(data)
+            return FlextResult[dict[str, object]].ok(data)
 
         def check_permissions(
-            data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Check user permissions."""
             # Simulate permission check
-            return FlextResult[FlextTypes.Dict].ok(data)
+            return FlextResult[dict[str, object]].ok(data)
 
         def enrich_with_context(
-            data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Enrich with additional context."""
-            enriched: FlextTypes.Dict = {
+            enriched: dict[str, object] = {
                 **data,
                 "validated_at": "2025-01-01",
                 "permission_level": "standard",
             }
-            return FlextResult[FlextTypes.Dict].ok(enriched)
+            return FlextResult[dict[str, object]].ok(enriched)
 
         def finalize_processing(
-            data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Finalize data processing."""
-            final: FlextTypes.Dict = {
+            final: dict[str, object] = {
                 **data,
                 "processing_complete": True,
             }
-            return FlextResult[FlextTypes.Dict].ok(final)
+            return FlextResult[dict[str, object]].ok(final)
 
         # Flow through pipeline with exception safety
-        user_input: FlextTypes.Dict = {
+        user_input: dict[str, object] = {
             "email": "user@example.com",
             "name": "Test User",
         }
         pipeline_result = (
-            FlextResult[FlextTypes.Dict]
+            FlextResult[dict[str, object]]
             .ok(user_input)
             .flow_through(
                 validate_user_data,
@@ -866,21 +865,21 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
         # 4. alt - Alternative Results
         print("\n=== 4. alt: Alternative Results ===")
 
-        def get_custom_config() -> FlextResult[FlextTypes.Dict]:
+        def get_custom_config() -> FlextResult[dict[str, object]]:
             """Try to get custom configuration."""
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 "Custom config not available",
                 error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
             )
 
-        def get_default_config() -> FlextResult[FlextTypes.Dict]:
+        def get_default_config() -> FlextResult[dict[str, object]]:
             """Provide default configuration."""
-            config: FlextTypes.Dict = {
+            config: dict[str, object] = {
                 "mode": "default",
                 "timeout": 30,
                 "retry_attempts": 3,
             }
-            return FlextResult[FlextTypes.Dict].ok(config)
+            return FlextResult[dict[str, object]].ok(config)
 
         # Try custom, fall back to default
         config_result = get_custom_config().alt(get_default_config())
@@ -894,7 +893,7 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
         # 5. value_or_call - Lazy Evaluation
         print("\n=== 5. value_or_call: Lazy Evaluation ===")
 
-        def create_expensive_resource() -> FlextTypes.Dict:
+        def create_expensive_resource() -> dict[str, object]:
             """Create resource (expensive operation)."""
             print("   ⚙️  Creating expensive resource...")
             return {
@@ -904,18 +903,20 @@ class ComprehensiveExceptionService(FlextService[FlextTypes.Dict]):
             }
 
         # Try to get existing resource, create if not available
-        resource_fail_result = FlextResult[FlextTypes.Dict].fail("No existing resource")
+        resource_fail_result = FlextResult[dict[str, object]].fail(
+            "No existing resource"
+        )
         resource = resource_fail_result.value_or_call(create_expensive_resource)
         print(f"✅ Resource acquired: {resource.get('resource_id', 'unknown')}")
         print(f"   Type: {resource.get('resource_type', 'unknown')}")
 
         # Try again with successful result (lazy function NOT called)
-        existing_resource: FlextTypes.Dict = {
+        existing_resource: dict[str, object] = {
             "resource_id": "EXIST-001",
             "resource_type": "cache",
             "initialized": True,
         }
-        resource_success_result = FlextResult[FlextTypes.Dict].ok(existing_resource)
+        resource_success_result = FlextResult[dict[str, object]].ok(existing_resource)
         resource_cached = resource_success_result.value_or_call(
             create_expensive_resource
         )

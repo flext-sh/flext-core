@@ -26,7 +26,6 @@ from flext_core.container import FlextContainer
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
 
 
 class FlextService[TDomainResult](
@@ -220,11 +219,11 @@ class FlextService[TDomainResult](
             # If validation raises an exception, the service is not valid
             return False
 
-    def get_service_info(self) -> FlextTypes.Dict:
+    def get_service_info(self) -> dict[str, object]:
         """Get service information and metadata (Domain.Service protocol).
 
         Returns:
-            FlextTypes.Dict: Service information dictionary with basic service type info.
+            dict[str, object]: Service information dictionary with basic service type info.
 
         """
         return {
@@ -565,9 +564,9 @@ class FlextService[TDomainResult](
             service: FlextService[
                 object
             ],  # Generic service - works with any TDomainResult
-        ) -> FlextTypes.Dict:
+        ) -> dict[str, object]:
             """Prepare execution context for a service."""
-            context: FlextTypes.Dict = {
+            context: dict[str, object] = {
                 "service_type": service.__class__.__name__,
                 "service_name": getattr(service, "_service_name", None),
                 "timestamp": datetime.now(UTC),
@@ -577,7 +576,7 @@ class FlextService[TDomainResult](
         @staticmethod
         def cleanup_execution_context(
             service: FlextService[object],
-            context: FlextTypes.Dict,  # Generic service
+            context: dict[str, object],  # Generic service
         ) -> None:
             """Clean up execution context after operation."""
             # Basic cleanup - could be extended for more complex operations
@@ -590,9 +589,9 @@ class FlextService[TDomainResult](
             service: FlextService[object],
             *,
             include_timestamps: bool = True,  # Generic service
-        ) -> FlextTypes.Dict:
+        ) -> dict[str, object]:
             """Extract metadata from a service instance."""
-            metadata: FlextTypes.Dict = {
+            metadata: dict[str, object] = {
                 "service_class": service.__class__.__name__,
                 "service_name": getattr(service, "_service_name", None),
                 "service_module": service.__class__.__module__,
@@ -608,12 +607,12 @@ class FlextService[TDomainResult](
         @staticmethod
         def format_service_info(
             _service: FlextService[object],
-            metadata: FlextTypes.Dict,  # Generic service
+            metadata: dict[str, object],  # Generic service
         ) -> str:
             """Format service information for display."""
             return f"Service: {metadata.get('service_type', 'Unknown')} ({metadata.get('service_name', 'unnamed')})"
 
 
-__all__: FlextTypes.StringList = [
+__all__: list[str] = [
     "FlextService",
 ]

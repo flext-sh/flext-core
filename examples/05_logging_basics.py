@@ -44,7 +44,7 @@ from flext_core import (
 class DemoScenarios:
     """Inline scenario helpers for logging demonstrations."""
 
-    _DATASET: ClassVar[dict[str, list[FlextTypes.Dict]]] = {
+    _DATASET: ClassVar[dict[str, list[dict[str, object]]]] = {
         "users": [
             {
                 "id": 1,
@@ -55,26 +55,26 @@ class DemoScenarios:
         ],
     }
 
-    _CONFIG: ClassVar[FlextTypes.Dict] = {
+    _CONFIG: ClassVar[dict[str, object]] = {
         "database_url": "sqlite:///:memory:",
         "api_timeout": 30,
         "retry": 3,
     }
 
-    _PROD_CONFIG: ClassVar[FlextTypes.Dict] = {
+    _PROD_CONFIG: ClassVar[dict[str, object]] = {
         "database_url": "postgresql://prod-db/flext",
         "api_timeout": 20,
         "retry": 5,
     }
 
-    _PAYLOAD: ClassVar[FlextTypes.Dict] = {
+    _PAYLOAD: ClassVar[dict[str, object]] = {
         "event": "user_logged_in",
         "user_id": "usr-123",
         "metadata": {"source": "examples", "version": "1.0"},
     }
 
     @staticmethod
-    def config(*, production: bool = False, **overrides: object) -> FlextTypes.Dict:
+    def config(*, production: bool = False, **overrides: object) -> dict[str, object]:
         """Create configuration dictionary with optional production overrides."""
         base = DemoScenarios._PROD_CONFIG if production else DemoScenarios._CONFIG
         value = deepcopy(base)
@@ -85,11 +85,11 @@ class DemoScenarios:
     def metadata(
         *,
         source: str = "examples",
-        tags: FlextTypes.StringList | None = None,
+        tags: list[str] | None = None,
         **extra: object,
-    ) -> FlextTypes.Dict:
+    ) -> dict[str, object]:
         """Create metadata dictionary for logging examples."""
-        data: FlextTypes.Dict = {
+        data: dict[str, object] = {
             "source": source,
             "component": "flext_core",
             "tags": tags or ["logging", "demo"],
@@ -98,21 +98,21 @@ class DemoScenarios:
         return data
 
     @staticmethod
-    def user(**overrides: object) -> FlextTypes.Dict:
+    def user(**overrides: object) -> dict[str, object]:
         """Get a demo user object with optional overrides."""
-        user: FlextTypes.Dict = deepcopy(DemoScenarios._DATASET["users"][0])
+        user: dict[str, object] = deepcopy(DemoScenarios._DATASET["users"][0])
         user.update(overrides)
         return user
 
     @staticmethod
-    def payload(**overrides: object) -> FlextTypes.Dict:
+    def payload(**overrides: object) -> dict[str, object]:
         """Get a demo payload object with optional overrides."""
         payload = deepcopy(DemoScenarios._PAYLOAD)
         payload.update(overrides)
         return payload
 
 
-class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
+class ComprehensiveLoggingService(FlextService[dict[str, object]]):
     """Service demonstrating ALL FlextLogger patterns with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
@@ -155,7 +155,7 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
             },
         )
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute all FlextLogger demonstrations and return summary.
 
         Demonstrates inherited logger property alongside other infrastructure
@@ -187,7 +187,7 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
             self.demonstrate_deprecated_patterns()
 
             # Summary using inherited logger and config
-            summary: FlextTypes.Dict = {
+            summary: dict[str, object] = {
                 "demonstrations_completed": 19,
                 "status": "completed",
                 "logged": "True",
@@ -209,12 +209,12 @@ class ComprehensiveLoggingService(FlextService[FlextTypes.Dict]):
                 extra={"demonstrations": summary["demonstrations_completed"]},
             )
 
-            return FlextResult[FlextTypes.Dict].ok(summary)
+            return FlextResult[dict[str, object]].ok(summary)
 
         except Exception as e:
             error_msg = f"Logging demonstration failed: {e}"
             self.logger.exception(error_msg)
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 error_msg, error_code=FlextConstants.Errors.VALIDATION_ERROR
             )
 

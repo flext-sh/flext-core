@@ -21,7 +21,6 @@ from flext_core import (
     FlextContext,
     FlextResult,
     FlextRuntime,
-    FlextTypes,
 )
 
 
@@ -278,7 +277,7 @@ class TestSerializationUtilities:
                 super().__init__()
                 self.data = "test"
 
-            def model_dump(self) -> FlextTypes.Dict:
+            def model_dump(self) -> dict[str, object]:
                 msg = "Intentional error"
                 raise RuntimeError(msg)
 
@@ -296,7 +295,7 @@ class TestSerializationUtilities:
                 super().__init__()
                 self.data = "test"
 
-            def dict[str, object](self) -> FlextTypes.Dict:
+            def dict[str, object](self) -> dict[str, object]:
                 msg = "Intentional error"
                 raise RuntimeError(msg)
 
@@ -331,7 +330,7 @@ class TestSerializationUtilities:
                 super().__init__()
                 self.data = "test"
 
-            def dict[str, object](self) -> FlextTypes.Dict:
+            def dict[str, object](self) -> dict[str, object]:
                 return {"data": self.data, "method": "dict"}
 
         obj = DictMethodWorking()
@@ -349,17 +348,17 @@ class TestTypeIntrospection:
         """Test is_optional_type with Optional type."""
         assert FlextRuntime.is_optional_type(str | None)
         assert FlextRuntime.is_optional_type(int | None)
-        assert FlextRuntime.is_optional_type(FlextTypes.StringList | None)
+        assert FlextRuntime.is_optional_type(list[str] | None)
 
     def test_is_optional_type_with_non_optional(self) -> None:
         """Test is_optional_type with non-Optional type."""
         assert not FlextRuntime.is_optional_type(str)
         assert not FlextRuntime.is_optional_type(int)
-        assert not FlextRuntime.is_optional_type(FlextTypes.StringList)
+        assert not FlextRuntime.is_optional_type(list[str])
 
     def test_extract_generic_args_with_generic(self) -> None:
         """Test extract_generic_args with generic types."""
-        args = FlextRuntime.extract_generic_args(FlextTypes.StringList)
+        args = FlextRuntime.extract_generic_args(list[str])
         assert args == (str,)
 
         args = FlextRuntime.extract_generic_args(dict[str, int])
@@ -375,7 +374,7 @@ class TestTypeIntrospection:
 
     def test_is_sequence_type_with_sequences(self) -> None:
         """Test is_sequence_type with sequence types."""
-        assert FlextRuntime.is_sequence_type(FlextTypes.StringList)
+        assert FlextRuntime.is_sequence_type(list[str])
         assert FlextRuntime.is_sequence_type(tuple[int, ...])
 
     def test_is_sequence_type_with_non_sequences(self) -> None:
@@ -469,8 +468,8 @@ class TestStructlogConfiguration:
 
         # Custom processor
         def custom_processor(
-            logger: object, method_name: str, event_dict: FlextTypes.Dict
-        ) -> FlextTypes.Dict:
+            logger: object, method_name: str, event_dict: dict[str, object]
+        ) -> dict[str, object]:
             event_dict["custom"] = True
             return event_dict
 
@@ -643,7 +642,7 @@ class TestContextIntegrationPatterns:
         FlextContext.Service.set_service_name("test-service")
 
         # Create result and attach context
-        result = FlextResult[FlextTypes.Dict].ok({"status": "success"})
+        result = FlextResult[dict[str, object]].ok({"status": "success"})
         result_with_ctx = FlextRuntime.Integration.attach_context_to_result(
             result,
             attach_correlation=True,

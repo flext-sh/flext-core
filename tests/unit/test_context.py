@@ -11,7 +11,7 @@ import threading
 import time
 from typing import cast
 
-from flext_core import FlextContext, FlextModels, FlextTypes
+from flext_core import FlextContext, FlextModels
 
 
 class TestFlextContext:
@@ -25,7 +25,9 @@ class TestFlextContext:
 
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
-        initial_data = FlextModels.ContextData(data={"user_id": "123", "session_id": "abc"})
+        initial_data = FlextModels.ContextData(
+            data={"user_id": "123", "session_id": "abc"}
+        )
         context = FlextContext(initial_data)
         assert context is not None
         assert context.get("user_id") == "123"
@@ -102,7 +104,7 @@ class TestFlextContext:
         """Test context with nested data structures."""
         context = FlextContext()
 
-        nested_data: FlextTypes.Dict = {
+        nested_data: dict[str, object] = {
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
@@ -190,7 +192,7 @@ class TestFlextContext:
     def test_context_thread_safety(self) -> None:
         """Test context thread safety."""
         context = FlextContext()
-        results: FlextTypes.StringList = []
+        results: list[str] = []
 
         def set_value(thread_id: int) -> None:
             context.set(f"thread_{thread_id}", f"value_{thread_id}")

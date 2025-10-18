@@ -401,7 +401,7 @@ class FlextProtocols:
             - ModelProtocol: Adds validation methods
         """
 
-        def model_dump(self, mode: str = "python") -> FlextTypes.Dict:
+        def model_dump(self, mode: str = "python") -> dict[str, object]:
             """Dump the model to a dictionary.
 
             Args:
@@ -425,7 +425,7 @@ class FlextProtocols:
         Inheritance: HasModelDump → HasModelFields
         """
 
-        model_fields: FlextTypes.Dict
+        model_fields: dict[str, object]
 
     @runtime_checkable
     class HasResultValue(Protocol):
@@ -508,7 +508,7 @@ class FlextProtocols:
         Note: Replaces duplicate Configurable in Infrastructure namespace.
         """
 
-        def configure(self, config: FlextTypes.Dict) -> FlextResult[None]:
+        def configure(self, config: dict[str, object]) -> FlextResult[None]:
             """Configure component with provided settings.
 
             Args:
@@ -672,11 +672,11 @@ class FlextProtocols:
             """
             ...
 
-        def get_service_info(self: object) -> FlextTypes.Dict:
+        def get_service_info(self: object) -> dict[str, object]:
             """Get service information and metadata.
 
             Returns:
-                FlextTypes.Dict: Service information dictionary
+                dict[str, object]: Service information dictionary
 
             """
             ...
@@ -833,24 +833,26 @@ class FlextProtocols:
         """
 
         def log(
-            self, level: str, message: str, context: FlextTypes.Dict | None = None
+            self, level: str, message: str, context: dict[str, object] | None = None
         ) -> None:
             """Log a message with optional context."""
             ...
 
-        def debug(self, message: str, context: FlextTypes.Dict | None = None) -> None:
+        def debug(self, message: str, context: dict[str, object] | None = None) -> None:
             """Log debug message."""
             ...
 
-        def info(self, message: str, context: FlextTypes.Dict | None = None) -> None:
+        def info(self, message: str, context: dict[str, object] | None = None) -> None:
             """Log info message."""
             ...
 
-        def warning(self, message: str, context: FlextTypes.Dict | None = None) -> None:
+        def warning(
+            self, message: str, context: dict[str, object] | None = None
+        ) -> None:
             """Log warning message."""
             ...
 
-        def error(self, message: str, context: FlextTypes.Dict | None = None) -> None:
+        def error(self, message: str, context: dict[str, object] | None = None) -> None:
             """Log error message."""
             ...
 
@@ -893,7 +895,7 @@ class FlextProtocols:
         Used in: plugin systems
         """
 
-        config: FlextTypes.Dict
+        config: dict[str, object]
         runtime_id: str
 
     @runtime_checkable
@@ -906,11 +908,15 @@ class FlextProtocols:
         Used in: monitoring and metrics collection
         """
 
-        def record_metric(self, name: str, value: float, tags: FlextTypes.Dict) -> None:
+        def record_metric(
+            self, name: str, value: float, tags: dict[str, object]
+        ) -> None:
             """Record a metric with optional tags."""
             ...
 
-        def log_event(self, level: str, message: str, context: FlextTypes.Dict) -> None:
+        def log_event(
+            self, level: str, message: str, context: dict[str, object]
+        ) -> None:
             """Log an event with context."""
             ...
 

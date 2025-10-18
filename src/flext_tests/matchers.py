@@ -14,7 +14,7 @@ from typing import (
     TypeVar,
 )
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 
 T_co = TypeVar("T_co", covariant=True)
 TKey = TypeVar("TKey")
@@ -28,7 +28,7 @@ class DataBuilder:
     def __init__(self) -> None:
         """Initialize test data builder."""
         super().__init__()
-        self._data: FlextTypes.Dict = {}
+        self._data: dict[str, object] = {}
 
     def with_users(self, count: int = 5) -> DataBuilder:
         """Add users to dataset."""
@@ -64,7 +64,7 @@ class DataBuilder:
         }
         return self
 
-    def build(self) -> FlextTypes.Dict:
+    def build(self) -> dict[str, object]:
         """Build the dataset."""
         return dict[str, object](self._data)
 
@@ -81,7 +81,7 @@ class FlextTestsMatchers:
         def __init__(self) -> None:
             """Initialize test data builder."""
             super().__init__()
-            self._data: FlextTypes.Dict = {}
+            self._data: dict[str, object] = {}
 
         def with_users(self, count: int = 5) -> FlextTestsMatchers.TestDataBuilder:
             """Add users to dataset."""
@@ -121,7 +121,7 @@ class FlextTestsMatchers:
             }
             return self
 
-        def build(self) -> FlextTypes.Dict:
+        def build(self) -> dict[str, object]:
             """Build the dataset."""
             return dict[str, object](self._data)
 

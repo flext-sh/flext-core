@@ -45,7 +45,7 @@ from flext_core import (
 class DemoScenarios:
     """Inline scenario helpers for dependency injection demonstrations."""
 
-    _DATASET: ClassVar[FlextTypes.Dict] = {
+    _DATASET: ClassVar[dict[str, object]] = {
         "users": [
             {
                 "id": 1,
@@ -63,47 +63,47 @@ class DemoScenarios:
         "services": ["database", "cache", "email"],
     }
 
-    _CONFIG: ClassVar[FlextTypes.Dict] = {
+    _CONFIG: ClassVar[dict[str, object]] = {
         "database_url": "sqlite:///:memory:",
         "api_timeout": 30,
         "retry": 3,
     }
 
-    _PROD_CONFIG: ClassVar[FlextTypes.Dict] = {
+    _PROD_CONFIG: ClassVar[dict[str, object]] = {
         "database_url": "postgresql://prod-db/flext",
         "api_timeout": 20,
         "retry": 5,
     }
 
-    _PAYLOAD: ClassVar[FlextTypes.Dict] = {
+    _PAYLOAD: ClassVar[dict[str, object]] = {
         "event": "user_registered",
         "user_id": "usr-123",
         "metadata": {"source": "examples", "version": "1.0"},
     }
 
     @staticmethod
-    def dataset() -> FlextTypes.Dict:
+    def dataset() -> dict[str, object]:
         """Get a copy of the demo dataset for dependency injection examples."""
         return deepcopy(DemoScenarios._DATASET)
 
     @staticmethod
-    def config(*, production: bool = False) -> FlextTypes.Dict:
+    def config(*, production: bool = False) -> dict[str, object]:
         """Get a copy of the demo configuration (production or development)."""
         base = DemoScenarios._PROD_CONFIG if production else DemoScenarios._CONFIG
         return deepcopy(base)
 
     @staticmethod
-    def user(**overrides: object) -> FlextTypes.Dict:
+    def user(**overrides: object) -> dict[str, object]:
         """Get a demo user object with optional overrides."""
-        dataset: FlextTypes.Dict = DemoScenarios._DATASET
+        dataset: dict[str, object] = DemoScenarios._DATASET
         users_raw = dataset["users"]
-        users_list: list[FlextTypes.Dict] = cast("list[FlextTypes.Dict]", users_raw)
+        users_list: list[dict[str, object]] = cast("list[dict[str, object]]", users_raw)
         user = deepcopy(users_list[0])
         user.update(overrides)
         return user
 
     @staticmethod
-    def service_batch(logger_name: str = "example_batch") -> FlextTypes.Dict:
+    def service_batch(logger_name: str = "example_batch") -> dict[str, object]:
         """Get a demo service batch configuration."""
         return {
             "logger": FlextLogger(logger_name),
@@ -112,7 +112,7 @@ class DemoScenarios:
         }
 
     @staticmethod
-    def payload(**overrides: object) -> FlextTypes.Dict:
+    def payload(**overrides: object) -> dict[str, object]:
         """Get a demo payload with optional overrides."""
         payload = deepcopy(DemoScenarios._PAYLOAD)
         payload.update(overrides)
@@ -129,16 +129,16 @@ class DatabaseServiceProtocol(Protocol):
         """Connect to database."""
         ...
 
-    def query(self, sql: str) -> FlextResult[list[FlextTypes.Dict]]:
+    def query(self, sql: str) -> FlextResult[list[dict[str, object]]]:
         """Execute query."""
         ...
 
     def query_with_params(
         self,
         sql: str,
-        params: FlextTypes.List,
+        params: list[object],
         command_type: type[object],
-    ) -> FlextResult[list[FlextTypes.Dict]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Execute parameterized query to prevent SQL injection."""
         ...
 
@@ -167,7 +167,7 @@ class EmailServiceProtocol(Protocol):
 class HasGetStats(Protocol):
     """Protocol for objects with get_stats method."""
 
-    def get_stats(self) -> FlextTypes.Dict:
+    def get_stats(self) -> dict[str, object]:
         """Return statistics dictionary."""
         ...
 
@@ -224,17 +224,17 @@ class DatabaseService(FlextService[None]):
         )
         return FlextResult[None].ok(None)
 
-    def query(self, sql: str) -> FlextResult[list[FlextTypes.Dict]]:
+    def query(self, sql: str) -> FlextResult[list[dict[str, object]]]:
         """Execute query with comprehensive error handling."""
         if not self.connected:
-            return FlextResult[list[FlextTypes.Dict]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 "Database not connected",
                 error_code=FlextConstants.Errors.CONNECTION_ERROR,
                 error_data={"connection_string": self._connection_string},
             )
 
         if not sql or not sql.strip():
-            return FlextResult[list[FlextTypes.Dict]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 "SQL query cannot be empty",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
@@ -248,41 +248,41 @@ class DatabaseService(FlextService[None]):
 
         # Simulate different responses based on query with enhanced data
         if "users" in sql.lower():
-            return FlextResult[list[FlextTypes.Dict]].ok([
+            return FlextResult[list[dict[str, object]]].ok([
                 {"id": 1, "name": "John Doe", "email": "john@example.com"},
                 {"id": 2, "name": "Jane Smith", "email": "jane@example.com"},
             ])
         if "count" in sql.lower():
-            return FlextResult[list[FlextTypes.Dict]].ok([{"count": 42}])
+            return FlextResult[list[dict[str, object]]].ok([{"count": 42}])
 
-        return FlextResult[list[FlextTypes.Dict]].ok([])
+        return FlextResult[list[dict[str, object]]].ok([])
 
     def query_with_params(
         self,
         sql: str,
-        params: FlextTypes.List,
+        params: list[object],
         command_type: type[object],
-    ) -> FlextResult[list[FlextTypes.Dict]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Execute parameterized query to prevent SQL injection."""
         if not self.connected:
-            return FlextResult[list[FlextTypes.Dict]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 "Database not connected",
                 error_code=FlextConstants.Errors.CONNECTION_ERROR,
                 error_data={"connection_string": self._connection_string},
             )
 
         if not sql or not sql.strip():
-            return FlextResult[list[FlextTypes.Dict]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 "SQL query cannot be empty",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
 
-        # Parameters are already validated as FlextTypes.List type in the protocol
+        # Parameters are already validated as list[object] type in the protocol
 
         # Validate command type
-        valid_command_types = (FlextTypes.Dict, FlextTypes.List, tuple)
+        valid_command_types = (dict[str, object], list[object], tuple)
         if command_type not in valid_command_types:
-            return FlextResult[list[FlextTypes.Dict]].fail(
+            return FlextResult[list[dict[str, object]]].fail(
                 "Invalid command type for query result",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
@@ -301,18 +301,18 @@ class DatabaseService(FlextService[None]):
 
         # Simulate different responses based on query with enhanced data
         if "users" in sql.lower():
-            user_data: list[FlextTypes.Dict] = [
+            user_data: list[dict[str, object]] = [
                 {"id": 1, "name": "John Doe", "email": "john@example.com"},
                 {"id": 2, "name": "Jane Smith", "email": "jane@example.com"},
             ]
-            return FlextResult[list[FlextTypes.Dict]].ok(user_data)
+            return FlextResult[list[dict[str, object]]].ok(user_data)
         if "count" in sql.lower():
-            count_data: FlextTypes.Dict = {"count": 42}
-            return FlextResult[list[FlextTypes.Dict]].ok([count_data])
+            count_data: dict[str, object] = {"count": 42}
+            return FlextResult[list[dict[str, object]]].ok([count_data])
 
-        return FlextResult[list[FlextTypes.Dict]].ok([])
+        return FlextResult[list[dict[str, object]]].ok([])
 
-    def get_stats(self) -> FlextTypes.Dict:
+    def get_stats(self) -> dict[str, object]:
         """Get database service statistics."""
         return {
             "connection_string": self._connection_string,
@@ -327,7 +327,7 @@ class CacheService(FlextService[object]):
     def __init__(self, max_size: int = 1000, ttl_seconds: int = 3600) -> None:
         """Initialize cache with size and TTL limits."""
         super().__init__()
-        self._cache: FlextTypes.Dict = {}
+        self._cache: dict[str, object] = {}
         self._metadata: FlextTypes.NestedDict = {}
         self.max_size = max_size
         self._ttl_seconds = ttl_seconds
@@ -447,7 +447,7 @@ class CacheService(FlextService[object]):
         del self._metadata[oldest_key]
         self.logger.debug("Cache evicted: %s", oldest_key)
 
-    def get_stats(self) -> FlextTypes.Dict:
+    def get_stats(self) -> dict[str, object]:
         """Get cache service statistics."""
         return {
             "max_size": self.max_size,
@@ -594,7 +594,7 @@ class UserRepository(FlextService[User]):
 
         return FlextResult[None].ok(None)
 
-    def get_stats(self) -> FlextTypes.Dict:
+    def get_stats(self) -> dict[str, object]:
         """Get repository statistics."""
         return {
             "cached_users": len(self._cache),
@@ -727,7 +727,7 @@ class ComprehensiveDIService(FlextService[User]):
         except Exception as e:
             self.logger.warning("Failed to log statistics: %s", e)
 
-    def get_service_stats(self) -> FlextTypes.Dict:
+    def get_service_stats(self) -> dict[str, object]:
         """Get comprehensive service statistics."""
         service_count = len(
             set(self.container.services.keys()) | set(self.container.factories.keys())
@@ -769,8 +769,8 @@ class ComprehensiveDIService(FlextService[User]):
         print("\n=== Service Resolution ===")
 
         dataset = self._dataset
-        users_list = cast("FlextTypes.List", dataset.get("users", []))
-        sample_user = cast("FlextTypes.Dict", users_list[0] if users_list else {})
+        users_list = cast("list[object]", dataset.get("users", []))
+        sample_user = cast("dict[str, object]", users_list[0] if users_list else {})
 
         db_result = self.container.get("database")
         if db_result.is_success:
@@ -822,13 +822,13 @@ class ComprehensiveDIService(FlextService[User]):
             if get_result.is_success:
                 cached_data = get_result.unwrap()
                 if isinstance(cached_data, dict):
-                    cached_dict = cast("FlextTypes.Dict", cached_data)
+                    cached_dict = cast("dict[str, object]", cached_data)
                     print(f"✅ Cache test: {cached_dict.get('email')}")
 
             cache_stats_func: object = getattr(cache, "get_stats", None)
             stats_raw: object = cache_stats_func() if callable(cache_stats_func) else {}
-            stats_dict: FlextTypes.Dict = (
-                cast("FlextTypes.Dict", stats_raw)
+            stats_dict: dict[str, object] = (
+                cast("dict[str, object]", stats_raw)
                 if isinstance(stats_raw, dict)
                 else {}
             )
@@ -855,7 +855,7 @@ class ComprehensiveDIService(FlextService[User]):
             services_list = services_result.unwrap()
             print(f"All services: {services_list}")
         else:
-            print(f"❌ Failed to FlextTypes.List services: {services_result.error}")
+            print(f"❌ Failed to list[object] services: {services_result.error}")
 
     # ========== AUTO-WIRING ==========
 
@@ -878,11 +878,11 @@ class ComprehensiveDIService(FlextService[User]):
                 db.connect()
 
                 users_list_result = self._dataset.get(
-                    "users", cast("list[FlextTypes.Dict]", [{}])
+                    "users", cast("list[dict[str, object]]", [{}])
                 )
-                users_list: FlextTypes.List = cast("FlextTypes.List", users_list_result)
+                users_list: list[object] = cast("list[object]", users_list_result)
                 user_id = str(
-                    cast("FlextTypes.Dict", users_list[0]).get("id", "user_1")
+                    cast("dict[str, object]", users_list[0]).get("id", "user_1")
                 )
                 user_result = repo.find_by_id(user_id)
                 if user_result.is_success:
@@ -898,7 +898,7 @@ class ComprehensiveDIService(FlextService[User]):
         print("\n=== Container Configuration ===")
 
         production_config = self._scenarios.config(production=True)
-        config: FlextTypes.Dict = {
+        config: dict[str, object] = {
             "services": {
                 "database": {
                     "connection_string": production_config.get(

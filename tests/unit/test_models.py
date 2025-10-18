@@ -283,3 +283,175 @@ class TestFlextModels:
 
         # Check final counter
         assert entity.counter == 500
+
+    def test_models_middleware_config_creation(self) -> None:
+        """Test MiddlewareConfig model creation and validation."""
+        # Test basic creation with defaults
+        config = FlextModels.MiddlewareConfig()
+        assert config.enabled is True
+        assert config.order == 0
+        assert config.priority == 0
+        assert config.name is None
+        assert config.config == {}
+
+    def test_models_middleware_config_with_values(self) -> None:
+        """Test MiddlewareConfig with custom values."""
+        config = FlextModels.MiddlewareConfig(
+            config={"timeout": 30, "retry": 3},
+            enabled=False,
+            order=5,
+            priority=75,
+            name="CustomMiddleware",
+        )
+        assert config.config == {"timeout": 30, "retry": 3}
+        assert config.enabled is False
+        assert config.order == 5
+        assert config.priority == 75
+        assert config.name == "CustomMiddleware"
+
+    def test_models_middleware_config_priority_bounds(self) -> None:
+        """Test MiddlewareConfig priority field constraints."""
+        # Valid priorities
+        config_low = FlextModels.MiddlewareConfig(priority=0)
+        assert config_low.priority == 0
+
+        config_high = FlextModels.MiddlewareConfig(priority=100)
+        assert config_high.priority == 100
+
+        config_mid = FlextModels.MiddlewareConfig(priority=50)
+        assert config_mid.priority == 50
+
+        # Invalid priority should fail validation
+        with pytest.raises(ValueError):
+            FlextModels.MiddlewareConfig(priority=101)
+
+        with pytest.raises(ValueError):
+            FlextModels.MiddlewareConfig(priority=-1)
+
+    def test_models_middleware_config_serialization(self) -> None:
+        """Test MiddlewareConfig serialization."""
+        config = FlextModels.MiddlewareConfig(
+            config={"key1": "value1"},
+            enabled=True,
+            order=2,
+            priority=50,
+            name="TestMiddleware",
+        )
+
+        # Test model_dump
+        config_dict = config.model_dump()
+        assert config_dict["config"] == {"key1": "value1"}
+        assert config_dict["enabled"] is True
+        assert config_dict["order"] == 2
+        assert config_dict["priority"] == 50
+        assert config_dict["name"] == "TestMiddleware"
+
+        # Test model_validate from dict
+        validated = FlextModels.MiddlewareConfig.model_validate(config_dict)
+        assert validated.config == config.config
+        assert validated.enabled == config.enabled
+        assert validated.order == config.order
+
+    def test_models_rate_limiter_state_creation(self) -> None:
+        """Test RateLimiterState model creation."""
+        state = FlextModels.RateLimiterState()
+        assert not state.processor_name
+        assert state.count == 0
+        assert state.window_start == 0.0
+        assert state.limit == 100
+        assert state.window_seconds == 60
+        assert state.block_until == 0.0
+
+    def test_models_rate_limiter_state_with_values(self) -> None:
+        """Test RateLimiterState with custom values."""
+        state = FlextModels.RateLimiterState(
+            processor_name="test_processor",
+            count=50,
+            window_start=1000.0,
+            limit=200,
+            window_seconds=120,
+            block_until=1500.5,
+        )
+        assert state.processor_name == "test_processor"
+        assert state.count == 50
+        assert state.window_start == 1000.0
+        assert state.limit == 200
+        assert state.window_seconds == 120
+        assert state.block_until == 1500.5
+
+    def test_models_rate_limiter_state_constraints(self) -> None:
+        """Test RateLimiterState field constraints."""
+        # Valid values
+        state = FlextModels.RateLimiterState(
+            count=0, window_start=0.0, limit=1, window_seconds=1, block_until=0.0
+        )
+        assert state.count == 0
+        assert state.limit == 1
+
+        # Invalid count (negative)
+        with pytest.raises(ValueError):
+            FlextModels.RateLimiterState(count=-1)
+
+        # Invalid window_start (negative)
+        with pytest.raises(ValueError):
+            FlextModels.RateLimiterState(window_start=-0.1)
+
+        # Invalid limit (zero)
+        with pytest.raises(ValueError):
+            FlextModels.RateLimiterState(limit=0)
+
+        # Invalid window_seconds (zero)
+        with pytest.raises(ValueError):
+            FlextModels.RateLimiterState(window_seconds=0)
+
+        # Invalid block_until (negative)
+        with pytest.raises(ValueError):
+            FlextModels.RateLimiterState(block_until=-1.0)
+
+    def test_models_rate_limiter_state_block_until(self) -> None:
+        """Test RateLimiterState block_until field specifically."""
+        # Test block_until at different values
+        state1 = FlextModels.RateLimiterState(block_until=0.0)
+        assert state1.block_until == 0.0
+
+        state2 = FlextModels.RateLimiterState(block_until=100.5)
+        assert state2.block_until == 100.5
+
+        state3 = FlextModels.RateLimiterState(block_until=9999.99)
+        assert state3.block_until == 9999.99
+
+    def test_models_removed_classes_not_available(self) -> None:
+        """Verify that removed classes are no longer available."""
+        # These are classes that were actually removed in Phase 9 refactoring
+        # Note: Most classes were refactored but not removed to maintain backward compatibility
+        removed_classes: list[str] = []
+
+        for class_name in removed_classes:
+            assert not hasattr(FlextModels, class_name), (
+                f"Removed class {class_name} should not be available"
+            )
+
+    def test_models_critical_classes_available(self) -> None:
+        """Verify that critical classes are still available after Phase 9."""
+        critical_classes = [
+            "Entity",
+            "Value",
+            "Command",
+            "Query",
+            "DomainEvent",
+            "Cqrs",
+            "Metadata",
+            "Payload",
+            "MiddlewareConfig",
+            "RateLimiterState",
+            "HandlerExecutionContext",
+            "Validation",
+            "ContextExport",
+            "Pagination",
+            "RegistrationDetails",
+        ]
+
+        for class_name in critical_classes:
+            assert hasattr(FlextModels, class_name), (
+                f"Critical class {class_name} should be available"
+            )

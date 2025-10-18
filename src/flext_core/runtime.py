@@ -280,14 +280,14 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: FlextTypes.ValidatableInputType,
-    ) -> TypeGuard[FlextTypes.Dict]:
+    ) -> TypeGuard[dict[str, object]]:
         """Type guard to check if value is dict-like.
 
         Args:
             value: Value to check
 
         Returns:
-            True if value is a FlextTypes.Dict or dict-like object, False otherwise
+            True if value is a dict[str, object] or dict-like object, False otherwise
 
         """
         return isinstance(value, dict)
@@ -295,7 +295,7 @@ class FlextRuntime:
     @staticmethod
     def is_list_like(
         value: FlextTypes.ValidatableInputType,
-    ) -> TypeGuard[FlextTypes.List]:
+    ) -> TypeGuard[list[object]]:
         """Type guard to check if value is list-like.
 
         Args:
@@ -385,7 +385,7 @@ class FlextRuntime:
     @staticmethod
     def safe_serialize_to_dict(
         obj: FlextTypes.SerializableObjectType,
-    ) -> FlextTypes.Dict | None:
+    ) -> dict[str, object] | None:
         """Serialize object to dictionary without dependencies.
 
         Attempts multiple serialization strategies without importing
@@ -404,20 +404,20 @@ class FlextRuntime:
                 model_dump_method = getattr(obj, "model_dump")
                 result = model_dump_method()
                 if isinstance(result, dict):
-                    return cast("FlextTypes.Dict", result)
+                    return cast("dict[str, object]", result)
             except Exception as e:
                 # Silent fallback for serialization strategy - log at debug level
                 logging.getLogger(__name__).debug(
                     f"model_dump() serialization strategy failed: {e}"
                 )
 
-        # Strategy 2: Check for FlextTypes.Dict method
+        # Strategy 2: Check for dict[str, object] method
         if hasattr(obj, "dict") and callable(getattr(obj, "dict")):
             try:
                 dict_method = getattr(obj, "dict")
                 result = dict_method()
                 if isinstance(result, dict):
-                    return cast("FlextTypes.Dict", result)
+                    return cast("dict[str, object]", result)
             except Exception as e:
                 # Silent fallback for serialization strategy - log at debug level
                 logging.getLogger(__name__).debug(
@@ -428,17 +428,17 @@ class FlextRuntime:
         if hasattr(obj, "__dict__"):
             try:
                 result = obj.__dict__
-                return cast("FlextTypes.Dict", result)
+                return cast("dict[str, object]", result)
             except Exception as e:  # pragma: no cover
                 # Silent fallback for serialization strategy - log at debug level
-                # Extremely rare: __dict__ exists but FlextTypes.Dict() conversion fails
+                # Extremely rare: __dict__ exists but dict[str, object]() conversion fails
                 logging.getLogger(__name__).debug(
                     f"__dict__ serialization strategy failed: {e}"
                 )
 
         # Strategy 4: Check if already dict
         if isinstance(obj, dict):
-            return cast("FlextTypes.Dict", obj)
+            return cast("dict[str, object]", obj)
 
         return None
 
@@ -493,7 +493,7 @@ class FlextRuntime:
             if hasattr(type_hint, "__name__"):
                 type_name = getattr(type_hint, "__name__", "")
                 # Handle common type aliases
-                type_mapping: FlextTypes.Dict = {
+                type_mapping: dict[str, tuple[FlextTypes.GenericTypeArgument, ...]] = {
                     "StringList": (str,),
                     "IntList": (int,),
                     "FloatList": (float,),
@@ -571,8 +571,8 @@ class FlextRuntime:
     def level_based_context_filter(
         _logger: FlextTypes.LoggerContextType,
         method_name: str,
-        event_dict: FlextTypes.Dict,
-    ) -> FlextTypes.Dict:
+        event_dict: dict[str, object],
+    ) -> dict[str, object]:
         """Filter context variables based on log level.
 
         Removes context variables that are restricted to specific log levels
@@ -618,7 +618,7 @@ class FlextRuntime:
         current_level = level_hierarchy.get(method_name.lower(), 20)  # Default to INFO
 
         # Process all keys in event_dict
-        filtered_dict: FlextTypes.Dict = {}
+        filtered_dict: dict[str, object] = {}
         for key, value in event_dict.items():
             # Check if this is a level-prefixed variable
             if key.startswith("_level_"):
@@ -685,7 +685,7 @@ class FlextRuntime:
 
         level_to_use = log_level if log_level is not None else logging.INFO
 
-        processors: FlextTypes.List = [
+        processors: list[object] = [
             module.contextvars.merge_contextvars,
             module.processors.add_log_level,
             # CRITICAL: Level-based context filter (must be after merge_contextvars and add_log_level)
@@ -704,7 +704,7 @@ class FlextRuntime:
             processors.append(module.processors.JSONRenderer())
 
         module.configure(
-            processors=cast("list[Callable[..., FlextTypes.Dict]]", processors),
+            processors=cast("list[Callable[..., dict[str, object]]]", processors),
             wrapper_class=cast(
                 "type[structlog.BoundLoggerBase] | None",
                 wrapper_class_factory
@@ -859,7 +859,7 @@ class FlextRuntime:
         def track_domain_event(
             event_name: str,
             aggregate_id: str | None = None,
-            event_data: FlextTypes.Dict | None = None,
+            event_data: dict[str, object] | None = None,
         ) -> None:
             """Track domain event with context correlation.
 

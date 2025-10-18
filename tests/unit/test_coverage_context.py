@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from flext_core import FlextContext, FlextModels, FlextTypes
+from flext_core import FlextContext, FlextModels
 
 
 class TestCorrelationDomain:
@@ -215,7 +215,7 @@ class TestRequestDomain:
         """Test request context manager with all metadata."""
         FlextContext.Utilities.clear_context()
 
-        metadata: FlextTypes.Dict = {"transaction_id": "txn_123", "amount": 99.99}
+        metadata: dict[str, object] = {"transaction_id": "txn_123", "amount": 99.99}
         with FlextContext.Request.request_context(
             user_id="user_456",
             operation_name="payment_processing",
@@ -280,7 +280,7 @@ class TestPerformanceDomain:
         """Test operation metadata getter and setter."""
         FlextContext.Utilities.clear_context()
 
-        metadata: FlextTypes.Dict = {"request_size": 1024, "response_code": 200}
+        metadata: dict[str, object] = {"request_size": 1024, "response_code": 200}
         FlextContext.Performance.set_operation_metadata(metadata)
 
         retrieved_metadata = FlextContext.Performance.get_operation_metadata()

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextConfig, FlextExceptions, FlextTypes
+from flext_core import FlextConfig, FlextExceptions
 
 
 class TestFlextConfig:
@@ -209,7 +209,7 @@ class TestFlextConfig:
     def test_config_thread_safety(self) -> None:
         """Test config thread safety."""
         config = FlextConfig()
-        results: FlextTypes.StringList = []
+        results: list[str] = []
 
         def set_value(thread_id: int) -> None:
             # Use Pydantic field assignment instead of non-existent set_value
@@ -272,9 +272,12 @@ class TestFlextConfig:
 
     def test_config_validate_log_level_invalid(self) -> None:
         """Test log level validation with invalid level (line 597-601)."""
-        # Test with invalid log level - FlextConfig wraps Pydantic errors with FlextExceptions
-        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
-            FlextConfig(log_level="INVALID")
+        # Test with invalid log level
+        # Pydantic v2 Literal type raises ValidationError with descriptive message
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError) as exc_info:
+            FlextConfig(log_level="INVALID")  # type: ignore[reportArgumentType]
 
         # Check that the error message is descriptive
         assert "log_level" in str(exc_info.value) or "INVALID" in str(exc_info.value)

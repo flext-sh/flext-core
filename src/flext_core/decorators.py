@@ -23,7 +23,7 @@ from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes, P, R, T
+from flext_core.typings import P, R, T
 
 
 class FlextDecorators:
@@ -53,7 +53,7 @@ class FlextDecorators:
        - Thread-safe via global container singleton
 
     2. **@log_operation**: Automatic operation logging with structured context
-       - Logs operation start/completion/failure automatically
+        return func(*args, **kwargs)
        - Structured logging with operation context binding
        - Defensive cleanup via context.suppress() to ensure unbinding
        - Integration with FlextLogger for context propagation
@@ -88,7 +88,7 @@ class FlextDecorators:
        - Essential for request tracing across services
        - No-op if correlation ID already set
 
-    8. **@combined**: Multiple decorators applied together
+        return func(*args, **kwargs)
        - Combines @inject, @log_operation, @track_performance, @railway
        - Single-line configuration for maximum automation
        - Correct wrapper ordering for proper exception propagation
@@ -122,7 +122,7 @@ class FlextDecorators:
     (function)
     ```
 
-    **Thread Safety**:
+        return func(*args, **kwargs)
     - All decorators use thread-safe FlextContainer.get_global()
     - Context binding is thread-safe via FlextContext.contextvars
     - FlextLogger context binding is thread-safe
@@ -168,13 +168,13 @@ class FlextDecorators:
         >>>
         >>> result = validate_email("user@example.com")
         >>> assert result.is_success
-
+        return func(*args, **kwargs)
     5. Automatic retry logic:
         >>> class ApiClient:
         ...     @FlextDecorators.retry(
         ...         max_attempts=5, delay_seconds=1.0, backoff_strategy="exponential"
         ...     )
-        ...     def call_external_api(self, endpoint: str) -> FlextTypes.Dict:
+        ...     def call_external_api(self, endpoint: str) -> dict[str, object]:
         ...         # Automatically retries on failure with backoff
         ...         return requests.get(endpoint).json()
 
@@ -206,7 +206,7 @@ class FlextDecorators:
         ...     ) -> FlextResult[Order]:
         ...         # All infrastructure automatic:
         ...         # - DI injection
-        ...         # - Logging
+        return func(*args, **kwargs)
         ...         # - Performance tracking
         ...         # - Railway pattern
         ...         return validator.validate(order_data).flat_map(repo.create)
@@ -246,7 +246,7 @@ class FlextDecorators:
 
     3. Railway pattern error handling:
         >>> @FlextDecorators.railway(error_code="BUSINESS_ERROR")
-        ... def business_operation() -> FlextTypes.Dict:
+        ... def business_operation() -> dict[str, object]:
         ...     # Any exception becomes FlextResult.fail()
         ...     return process_business_logic()
         >>>
@@ -260,7 +260,7 @@ class FlextDecorators:
         ...     FlextResult,
         ...     FlextLogger,
         ...     FlextContainer,
-        ... )
+        return func(*args, **kwargs)
         >>>
         >>> class ProductService:
         ...     def __init__(self):
@@ -299,7 +299,7 @@ class FlextDecorators:
     @staticmethod
     def inject(
         **dependencies: str,
-    ) -> FlextTypes.DecoratorReturnType:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically inject dependencies from FlextContainer.
 
         Automatically resolves and injects dependencies from the global
@@ -361,7 +361,7 @@ class FlextDecorators:
     @staticmethod
     def log_operation(
         operation_name: str | None = None,
-    ) -> FlextTypes.DecoratorReturnType:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically log operation execution with structured logging.
 
         Automatically logs operation start, completion, and failures with
@@ -410,8 +410,14 @@ class FlextDecorators:
                 else:
                     logger = FlextLogger(func.__module__)
 
+                # Ensure correlation ID exists for distributed tracing
+                FlextContext.Utilities.ensure_correlation_id()
+
+                # Set operation in FlextContext for automatic propagation
+                FlextContext.Request.set_operation_name(op_name)
+
                 # Bind operation context for structured logging
-                FlextLogger.bind_global_context(operation=op_name)
+                FlextLogger.bind_operation_context(operation=op_name)
 
                 try:
                     logger.info(
@@ -443,10 +449,10 @@ class FlextDecorators:
                     )
                     raise
                 finally:
-                    # CRITICAL: Unbind operation context (defensive cleanup)
+                    # CRITICAL: Clear operation context (defensive cleanup)
                     # Use suppress to ensure cleanup never fails
                     with suppress(Exception):
-                        FlextLogger.unbind_global_context("operation")
+                        FlextLogger.clear_scope("operation")
 
             return wrapper
 
@@ -455,7 +461,7 @@ class FlextDecorators:
     @staticmethod
     def track_performance(
         operation_name: str | None = None,
-    ) -> FlextTypes.DecoratorReturnType:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically track operation performance metrics.
 
         Tracks operation duration and logs performance metrics with structured
@@ -505,8 +511,14 @@ class FlextDecorators:
 
                 start_time = time.perf_counter()
 
+                # Ensure correlation ID exists for distributed tracing
+                FlextContext.Utilities.ensure_correlation_id()
+
+                # Set operation in FlextContext for automatic propagation
+                FlextContext.Request.set_operation_name(op_name)
+
                 # Bind operation context for structured logging
-                FlextLogger.bind_global_context(operation=op_name)
+                FlextLogger.bind_operation_context(operation=op_name)
 
                 try:
                     result = func(*args, **kwargs)
@@ -538,10 +550,10 @@ class FlextDecorators:
                     )
                     raise
                 finally:
-                    # CRITICAL: Unbind operation context (defensive cleanup)
+                    # CRITICAL: Clear operation context (defensive cleanup)
                     # Use suppress to ensure cleanup never fails
                     with suppress(Exception):
-                        FlextLogger.unbind_global_context("operation")
+                        FlextLogger.clear_scope("operation")
 
             return wrapper
 
@@ -618,7 +630,7 @@ class FlextDecorators:
         delay_seconds: float | None = None,
         backoff_strategy: str | None = None,
         error_code: str | None = None,
-    ) -> FlextTypes.DecoratorReturnType:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically retry failed operations with exponential backoff.
 
         Uses FlextConstants.Reliability for default values and
@@ -646,7 +658,7 @@ class FlextDecorators:
                 @FlextDecorators.retry(
                     max_attempts=5, delay_seconds=2.0, backoff_strategy="exponential"
                 )
-                def unreliable_operation(self) -> FlextTypes.Dict:
+                def unreliable_operation(self) -> dict[str, object]:
                     # Automatically retries on failure with exponential backoff
                     return self._make_api_call()
             ```
@@ -765,7 +777,7 @@ class FlextDecorators:
     def timeout(
         timeout_seconds: float | None = None,
         error_code: str | None = None,
-    ) -> FlextTypes.DecoratorReturnType:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to enforce operation timeout.
 
         Uses FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS for default
@@ -787,7 +799,7 @@ class FlextDecorators:
 
             class MyService:
                 @FlextDecorators.timeout(timeout_seconds=30.0)
-                def long_running_operation(self) -> FlextTypes.Dict:
+                def long_running_operation(self) -> dict[str, object]:
                     # Automatically raises TimeoutError if exceeds 30 seconds
                     return self._process_data()
             ```
@@ -854,12 +866,12 @@ class FlextDecorators:
     @staticmethod
     def combined(
         *,
-        inject_deps: FlextTypes.StringDict | None = None,
+        inject_deps: dict[str, str] | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         use_railway: bool = False,
         error_code: str | None = None,
-    ) -> FlextTypes.DecoratorReturnType:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Combined decorator applying multiple automation patterns at once.
 
         Combines @inject, @log_operation, @track_performance, and optionally
@@ -918,14 +930,14 @@ class FlextDecorators:
             # Apply dependency injection
             if inject_deps:
                 inject_result = FlextDecorators.inject(**inject_deps)(decorated)
-                decorated = inject_result
+                decorated = cast("Callable[..., R]", inject_result)
 
             # Apply performance tracking
             if track_perf:
                 perf_result = FlextDecorators.track_performance(
                     operation_name=operation_name
                 )(decorated)
-                decorated = perf_result
+                decorated = cast("Callable[..., R]", perf_result)
 
             # Apply operation logging (innermost wrapper)
             log_result = FlextDecorators.log_operation(operation_name=operation_name)(
@@ -938,7 +950,7 @@ class FlextDecorators:
     # Backward compatibility class methods (deprecated, use static methods directly)
 
     @staticmethod
-    def with_correlation() -> FlextTypes.DecoratorReturnType:
+    def with_correlation() -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to ensure correlation ID exists for operation tracking.
 
         Automatically ensures a correlation ID is present in the context,
@@ -982,7 +994,7 @@ class FlextDecorators:
     @staticmethod
     def with_context(
         **context_vars: str | int | bool | None,
-    ) -> FlextTypes.DecoratorReturnType:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to manage context lifecycle for an operation.
 
         Automatically binds context variables for the operation duration and
@@ -1039,7 +1051,7 @@ class FlextDecorators:
         operation_name: str | None = None,
         *,
         track_correlation: bool = True,
-    ) -> FlextTypes.DecoratorReturnType:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to track operation execution with FlextRuntime.Integration.
 
         Combines correlation ID management and structured logging using
@@ -1086,8 +1098,11 @@ class FlextDecorators:
                 if track_correlation:
                     FlextContext.Utilities.ensure_correlation_id()
 
+                # Set operation in FlextContext for automatic propagation
+                FlextContext.Request.set_operation_name(op_name)
+
                 # Bind operation name to context
-                FlextLogger.bind_global_context(operation=op_name)
+                FlextLogger.bind_operation_context(operation=op_name)
 
                 try:
                     # Call the actual function
@@ -1095,8 +1110,9 @@ class FlextDecorators:
                     return func(*args, **kwargs)
 
                 finally:
-                    # Unbind operation context
-                    FlextLogger.unbind_global_context("operation")
+                    # Clear operation context
+                    with suppress(Exception):
+                        FlextLogger.clear_scope("operation")
 
             return wrapper
 

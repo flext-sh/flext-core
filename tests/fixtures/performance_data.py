@@ -7,8 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes
-
 
 def get_performance_threshold() -> dict[str, float]:
     """Provide performance thresholds for testing.
@@ -29,7 +27,7 @@ def get_performance_threshold() -> dict[str, float]:
     }
 
 
-def get_benchmark_data() -> FlextTypes.Dict:
+def get_benchmark_data() -> dict[str, object]:
     """Provide standardized data for performance testing.
 
     Benchmark data factory for testing performance characteristics
