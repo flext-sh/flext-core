@@ -35,14 +35,13 @@ from flext_core import (
     FlextResult,
     FlextRuntime,
     FlextService,
-    FlextTypes,
 )
 
 
 class DemoScenarios:
     """Inline scenario helpers for configuration demonstrations."""
 
-    _CONFIG: ClassVar[FlextTypes.Dict] = {
+    _CONFIG: ClassVar[dict[str, object]] = {
         "database_url": "sqlite:///:memory:",
         "api_timeout": 30,
         "retry": 3,
@@ -50,7 +49,7 @@ class DemoScenarios:
     }
 
     @staticmethod
-    def config(**overrides: object) -> FlextTypes.Dict:
+    def config(**overrides: object) -> dict[str, object]:
         """Create configuration dictionary with optional overrides."""
         value = deepcopy(DemoScenarios._CONFIG)
         value.update(overrides)
@@ -60,11 +59,11 @@ class DemoScenarios:
     def metadata(
         *,
         source: str = "examples",
-        tags: FlextTypes.StringList | None = None,
+        tags: list[str] | None = None,
         **extra: object,
-    ) -> FlextTypes.Dict:
+    ) -> dict[str, object]:
         """Create metadata dictionary for configuration examples."""
-        data: FlextTypes.Dict = {
+        data: dict[str, object] = {
             "source": source,
             "component": "flext_core",
             "tags": tags or ["config", "demo"],
@@ -73,7 +72,7 @@ class DemoScenarios:
         return data
 
 
-class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
+class ComprehensiveConfigService(FlextService[dict[str, object]]):
     """Service demonstrating ALL FlextConfig patterns with FlextMixins infrastructure.
 
     This service inherits from FlextService to demonstrate:
@@ -115,7 +114,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
             },
         )
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute all FlextConfig demonstrations and return summary.
 
         Demonstrates inherited config property alongside other infrastructure
@@ -148,7 +147,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
             self.demonstrate_deprecated_patterns()
 
             # Summary using inherited config property
-            summary: FlextTypes.Dict = {
+            summary: dict[str, object] = {
                 "demonstrations_completed": 23,
                 "debug_mode": self.config.debug,
                 "log_level": self.config.log_level,
@@ -166,12 +165,12 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
                 extra={"demonstrations": summary["demonstrations_completed"]},
             )
 
-            return FlextResult[FlextTypes.Dict].ok(summary)
+            return FlextResult[dict[str, object]].ok(summary)
 
         except Exception as e:
             error_msg = f"Configuration demonstration failed: {e}"
             self.logger.exception(error_msg)
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 error_msg, error_code=FlextConstants.Errors.VALIDATION_ERROR
             )
 
@@ -220,7 +219,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         print(f"Console colors: {config.console_color_enabled}")
 
         # Access logging configuration directly from config attributes
-        log_config: FlextTypes.Dict = {
+        log_config: dict[str, object] = {
             "log_level": config.log_level,
             "json_output": config.json_output,
             "include_source": config.include_source,
@@ -242,7 +241,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         print(f"Database pool size: {config.database_pool_size}")
 
         # Direct attribute access (get_database_config removed)
-        db_config: FlextTypes.Dict = {
+        db_config: dict[str, object] = {
             "url": config.database_url,
             "pool_size": config.database_pool_size,
         }
@@ -289,7 +288,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         config = FlextConfig()
 
         # Direct attribute access (get_cqrs_bus_config removed)
-        cqrs_config: FlextTypes.Dict = {
+        cqrs_config: dict[str, object] = {
             "auto_context": config.dispatcher_auto_context,
             "timeout_seconds": config.dispatcher_timeout_seconds,
             "enable_metrics": config.dispatcher_enable_metrics,
@@ -329,7 +328,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         config = FlextConfig()
 
         # Direct attribute access (get_metadata removed)
-        metadata: FlextTypes.Dict = {
+        metadata: dict[str, object] = {
             "app_name": config.app_name,
             "version": config.version,
             "debug": config.debug,
@@ -347,7 +346,7 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         """Show environment variable loading."""
         print("\n=== Environment Variables ===")
 
-        base_env: FlextTypes.Dict = {
+        base_env: dict[str, object] = {
             "FLEXT_ENVIRONMENT": self._reference_config.get(
                 "environment",
                 "development",
@@ -637,9 +636,9 @@ class ComprehensiveConfigService(FlextService[FlextTypes.Dict]):
         print(f"✅ Timeout is positive: {timeout_ok}")
 
         # HTTP configuration defaults
-        if hasattr(FlextConstants, "Http"):
-            print(f"✅ HTTP Status Min: {FlextConstants.Http.HTTP_STATUS_MIN}")
-            print(f"✅ HTTP Status Max: {FlextConstants.Http.HTTP_STATUS_MAX}")
+        if hasattr(FlextConstants, "FlextWeb"):
+            print(f"✅ HTTP Status Min: {FlextConstants.FlextWeb.HTTP_STATUS_MIN}")
+            print(f"✅ HTTP Status Max: {FlextConstants.FlextWeb.HTTP_STATUS_MAX}")
 
     def demonstrate_flext_exceptions_integration(self) -> None:
         """Show FlextExceptions (Layer 2) with configuration error handling."""

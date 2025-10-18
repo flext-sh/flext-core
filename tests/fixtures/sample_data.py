@@ -10,10 +10,8 @@ from __future__ import annotations
 import math
 from datetime import UTC, datetime
 
-from flext_core import FlextTypes
 
-
-def get_sample_data() -> FlextTypes.Dict:
+def get_sample_data() -> dict[str, object]:
     """Provide deterministic sample data for tests.
 
     Enterprise-grade test data factory providing consistent, typed sample data
@@ -36,7 +34,7 @@ def get_sample_data() -> FlextTypes.Dict:
     }
 
 
-def get_test_user_data() -> FlextTypes.Dict | FlextTypes.StringList | None:
+def get_test_user_data() -> dict[str, object] | list[str] | None:
     """Provide consistent user data for domain testing.
 
     User data factory aligned with shared domain patterns

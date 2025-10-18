@@ -32,9 +32,12 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import (
     TYPE_CHECKING,
+    Annotated,
     ParamSpec,
     TypeVar,
 )
+
+from pydantic import Field
 
 if TYPE_CHECKING:
     from flext_core.result import FlextResult
@@ -309,6 +312,79 @@ class FlextTypes:
         RecordList = list[dict[str, object]]  # List of records
         EntityList = list[dict[str, object]]  # List of entities
         ResultList = list[dict[str, object]]  # List of results
+
+    class AnnotatedTypes:
+        """Pydantic v2 Annotated types with built-in validation constraints.
+
+        Provides reusable Annotated type definitions for common field patterns,
+        eliminating verbose Field() declarations and field_validator decorators.
+
+        Example:
+            from flext_core.typings import FlextTypes
+
+            class Command(BaseModel):
+                command_type: FlextTypes.AnnotatedTypes.CommandTypeStr
+                timeout_seconds: FlextTypes.AnnotatedTypes.TimeoutSeconds
+                priority: FlextTypes.AnnotatedTypes.PriorityInt
+
+        """
+
+        # =====================================================================
+        # STRING TYPES WITH LENGTH CONSTRAINTS
+        # =====================================================================
+
+        # Command and handler string types
+        CommandTypeStr = Annotated[str, Field(min_length=1, max_length=128)]
+        HandlerTypeStr = Annotated[str, Field(min_length=1, max_length=64)]
+        QueryStr = Annotated[str, Field(min_length=1, max_length=512)]
+
+        # Message and identification string types
+        MessageIdStr = Annotated[str, Field(min_length=1, max_length=256)]
+        CorrelationIdStr = Annotated[str, Field(min_length=1, max_length=256)]
+        TraceIdStr = Annotated[str, Field(min_length=1, max_length=128)]
+
+        # Generic payload strings (minimum length)
+        PayloadStr = Annotated[str, Field(min_length=1)]
+        DescriptionStr = Annotated[str, Field(min_length=1, max_length=1024)]
+
+        # =====================================================================
+        # NUMERIC TYPES WITH VALUE CONSTRAINTS
+        # =====================================================================
+
+        # Time-related fields
+        TimeoutSeconds = Annotated[int, Field(ge=1, le=3600)]
+        DelayMilliseconds = Annotated[int, Field(ge=0, le=300000)]
+        RetryAttempts = Annotated[int, Field(ge=0, le=10)]
+
+        # Priority and scoring
+        PriorityInt = Annotated[int, Field(ge=0, le=100)]
+        ScoreInt = Annotated[int, Field(ge=0, le=100)]
+        PercentageInt = Annotated[int, Field(ge=0, le=100)]
+
+        # Counters and sizes
+        PositiveInt = Annotated[int, Field(ge=1)]
+        NonNegativeInt = Annotated[int, Field(ge=0)]
+        CountInt = Annotated[int, Field(ge=0)]
+        SizeInt = Annotated[int, Field(ge=0)]
+
+        # Float constraints
+        Percentage = Annotated[float, Field(ge=0.0, le=100.0)]
+        Probability = Annotated[float, Field(ge=0.0, le=1.0)]
+
+        # =====================================================================
+        # BOOLEAN TYPES (for consistency and future constraints)
+        # =====================================================================
+
+        FlagBool = Annotated[
+            bool, Field(description="Feature flag or configuration flag")
+        ]
+
+        # =====================================================================
+        # COLLECTION TYPES (for consistency)
+        # =====================================================================
+
+        StringListType = Annotated[list[str], Field(min_length=1)]
+        ObjectListType = Annotated[list[object], Field(min_length=1)]
 
 
 __all__: list[str] = [

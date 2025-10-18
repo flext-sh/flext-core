@@ -47,7 +47,6 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextRuntime,
-    FlextTypes,
     FlextUtilities,
 )
 
@@ -120,7 +119,7 @@ def demonstrate_single_import_pattern() -> None:
     print(f"   📋 Validation Error Code: {validation_error}")
 
     # Type aliases
-    data: FlextTypes.Dict = {"key": "value"}
+    data: dict[str, object] = {"key": "value"}
     print(f"   📦 Type alias: {type(data).__name__}")
 
     # ========================================

@@ -132,7 +132,7 @@ class TestFlextContainer:
         container = FlextContainer()
 
         # Configure container
-        config: FlextTypes.Dict = {
+        config: dict[str, object] = {
             "max_workers": 8,
             "timeout_seconds": 60.0,
         }
@@ -148,7 +148,7 @@ class TestFlextContainer:
         container = FlextContainer()
 
         # Configure with invalid keys (should be ignored)
-        config: FlextTypes.Dict = {"invalid_key": "value", "max_workers": 4}
+        config: dict[str, object] = {"invalid_key": "value", "max_workers": 4}
         result = container.configure(config)
         assert result.is_success
 
@@ -159,7 +159,7 @@ class TestFlextContainer:
         """Test batch service registration."""
         container = FlextContainer()
 
-        services: FlextTypes.Dict = {
+        services: dict[str, object] = {
             "service1": {"key": "value1"},
             "service2": {"key": "value2"},
             "service3": {"key": "value3"},
@@ -181,7 +181,7 @@ class TestFlextContainer:
         # Pre-register a service
         container.register("service1", {"key": "original"})
 
-        services: FlextTypes.Dict = {
+        services: dict[str, object] = {
             "service1": {"key": "duplicate"},  # This should fail
             "service2": {"key": "value2"},
         }
@@ -196,7 +196,7 @@ class TestFlextContainer:
         get_result = container.get("service1")
         assert get_result.is_success
         assert isinstance(get_result.value, dict)
-        value = cast("FlextTypes.Dict", get_result.value)
+        value = cast("dict[str, object]", get_result.value)
         assert value["key"] == "original"
 
     def test_container_batch_register_empty(self) -> None:
@@ -250,7 +250,7 @@ class TestFlextContainer:
         """Test get or create service."""
         container = FlextContainer()
 
-        def factory() -> FlextTypes.StringDict:
+        def factory() -> dict[str, str]:
             return {"created": "by_factory"}
 
         # Service doesn't exist, should create using factory
@@ -294,11 +294,11 @@ class TestFlextContainer:
         assert len(services) == 2
 
         # Check service info with type casts for dict[str, object] access
-        service_names = [cast("FlextTypes.Dict", s)["name"] for s in services]
+        service_names = [cast("dict[str, object]", s)["name"] for s in services]
         assert "instance" in service_names
         assert "factory" in service_names
 
-        service_types = [cast("FlextTypes.Dict", s)["type"] for s in services]
+        service_types = [cast("dict[str, object]", s)["type"] for s in services]
         assert "instance" in service_types
         assert "factory" in service_types
 
@@ -322,7 +322,7 @@ class TestFlextContainer:
         container.register("test", "value")
 
         # Direct access pattern - build info dict[str, object] manually
-        info: FlextTypes.Dict = {
+        info: dict[str, object] = {
             "service_count": len(
                 set(container._services.keys()) | set(container._factories.keys())
             ),
@@ -356,7 +356,7 @@ class TestFlextContainer:
 
         call_count = 0
 
-        def counting_factory() -> FlextTypes.StringDict:
+        def counting_factory() -> dict[str, str]:
             nonlocal call_count
             call_count += 1
             return {"call_count": str(call_count)}
@@ -367,7 +367,7 @@ class TestFlextContainer:
         result1 = container.get("cached_service")
         assert result1.is_success
         assert isinstance(result1.value, dict)
-        value1 = cast("FlextTypes.Dict", result1.value)
+        value1 = cast("dict[str, object]", result1.value)
         assert value1["call_count"] == "1"
         assert call_count == 1
 
@@ -375,7 +375,7 @@ class TestFlextContainer:
         result2 = container.get("cached_service")
         assert result2.is_success
         assert isinstance(result2.value, dict)
-        value2 = cast("FlextTypes.Dict", result2.value)
+        value2 = cast("dict[str, object]", result2.value)
         assert value2["call_count"] == "1"  # Same instance, not recreated
         assert call_count == 1  # Factory not called again
 
@@ -496,7 +496,7 @@ class TestFlextContainer:
         container = FlextContainer()
 
         # Test batch register with invalid service name first
-        services: FlextTypes.Dict = {
+        services: dict[str, object] = {
             "": {"key": "empty_name"},  # Invalid name first
             "valid": {"key": "value"},
             "valid2": {"key": "value2"},
@@ -536,7 +536,7 @@ class TestFlextContainer:
         """Test exception handling when factory throws exception."""
         container = FlextContainer()
 
-        def failing_factory() -> FlextTypes.StringDict:
+        def failing_factory() -> dict[str, str]:
             error_msg = "Factory failed"
             raise RuntimeError(error_msg)
 
@@ -568,7 +568,7 @@ class TestFlextContainer:
     def test_container_configure_global(self) -> None:
         """Test global container configuration."""
         # Configure global container
-        config: FlextTypes.Dict = {"max_workers": 16, "timeout_seconds": 120.0}
+        config: dict[str, object] = {"max_workers": 16, "timeout_seconds": 120.0}
         global_container = FlextContainer()
         result = global_container.configure_container(config)
         assert result.is_success
@@ -616,10 +616,10 @@ class TestFlextContainer:
         """Test registering factory with duplicate name fails."""
         container = FlextContainer()
 
-        def factory1() -> FlextTypes.StringDict:
+        def factory1() -> dict[str, str]:
             return {"factory": "1"}
 
-        def factory2() -> FlextTypes.StringDict:
+        def factory2() -> dict[str, str]:
             return {"factory": "2"}
 
         # Register first factory
@@ -654,7 +654,7 @@ class TestFlextContainer:
 
         # Create services dict[str, object] with invalid entry that will cause exception
         # Using service name with invalid characters to trigger validation failure
-        services_with_invalid_key: FlextTypes.Dict = {
+        services_with_invalid_key: dict[str, object] = {
             "valid_service": "valid_value",
             "invalid.service": "invalid_key",  # Service name with dot will trigger validation failure
         }
@@ -793,7 +793,7 @@ class TestFlextContainer:
                 raise RuntimeError(msg)
 
         container._services = cast(
-            "FlextTypes.Dict",
+            "dict[str, object]",
             FailingDict(container._services),
         )
 
@@ -843,7 +843,7 @@ class TestFlextContainer:
 
         # Create config dict[str, object] that will cause exception during processing
         # Use invalid type that breaks the update logic
-        config: FlextTypes.Dict = {"invalid_key": object()}
+        config: dict[str, object] = {"invalid_key": object()}
 
         # Corrupt _user_overrides to trigger exception
         class FailingDict(UserDict[str, object]):
@@ -851,7 +851,7 @@ class TestFlextContainer:
                 msg = "Update failed"
                 raise RuntimeError(msg)
 
-        container._user_overrides = cast("FlextTypes.Dict", FailingDict())
+        container._user_overrides = cast("dict[str, object]", FailingDict())
 
         result = container.configure_container(config)
         assert result.is_failure

@@ -116,12 +116,12 @@ class FlextDispatcher(FlextMixins):
         )
 
         # Circuit breaker state - failure counts per message type
-        self._circuit_breaker_failures: FlextTypes.Dict = {}
+        self._circuit_breaker_failures: dict[str, object] = {}
         self._circuit_breaker_threshold = self.config.circuit_breaker_threshold
 
         # Rate limiting state - sliding window with count, window_start, block_until
-        self._rate_limit_requests: FlextTypes.Dict = {}
-        self._rate_limit_state: FlextTypes.Dict = {}
+        self._rate_limit_requests: dict[str, object] = {}
+        self._rate_limit_state: dict[str, object] = {}
         self._rate_limit = self.config.rate_limit_max_requests
         self._rate_limit_window = self.config.rate_limit_window_seconds
         self._rate_limit_block_grace = max(1.0, 0.5 * self._rate_limit_window)
@@ -134,7 +134,7 @@ class FlextDispatcher(FlextMixins):
         self._executor: concurrent.futures.ThreadPoolExecutor | None = None
 
     @property
-    def dispatcher_config(self) -> FlextTypes.Dict:
+    def dispatcher_config(self) -> dict[str, object]:
         """Access the dispatcher configuration."""
         return self.config.model_dump()
 
@@ -148,8 +148,8 @@ class FlextDispatcher(FlextMixins):
     # ------------------------------------------------------------------
     def register_handler_with_request(
         self,
-        request: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+        request: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         """Register handler using structured request model.
 
         Args:
@@ -164,13 +164,13 @@ class FlextDispatcher(FlextMixins):
             request.get("handler_mode")
             not in FlextConstants.Dispatcher.VALID_HANDLER_MODES
         ):
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 FlextConstants.Dispatcher.ERROR_INVALID_HANDLER_MODE,
             )
 
         # Validate handler is provided
         if request.get("handler") is None:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 FlextConstants.Dispatcher.ERROR_HANDLER_REQUIRED,
             )
 
@@ -185,12 +185,12 @@ class FlextDispatcher(FlextMixins):
         )
 
         if bus_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Bus registration failed: {bus_result.error}",
             )
 
         # Create registration details
-        details: FlextTypes.Dict = {
+        details: dict[str, object] = {
             "registration_id": request.get("registration_id"),
             "message_type_name": getattr(request.get("message_type"), "__name__", None)
             if request.get("message_type")
@@ -209,7 +209,7 @@ class FlextDispatcher(FlextMixins):
                 message_type=details.get("message_type_name"),
             )
 
-        return FlextResult[FlextTypes.Dict].ok(details)
+        return FlextResult[dict[str, object]].ok(details)
 
     def register_handler(
         self,
@@ -218,7 +218,7 @@ class FlextDispatcher(FlextMixins):
         *,
         handler_mode: FlextConstants.Cqrs.HandlerModeSimple = _DEFAULT_HANDLER_MODE,
         handler_config: FlextTypes.HandlerConfigurationType = None,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Register handler with support for both old and new API.
 
         Args:
@@ -243,13 +243,13 @@ class FlextDispatcher(FlextMixins):
                     mode=handler_mode,
                 )
                 if handler_result.is_failure:
-                    return FlextResult[FlextTypes.Dict].fail(
+                    return FlextResult[dict[str, object]].fail(
                         handler_result.error or "Handler creation failed",
                     )
                 resolved_handler = handler_result.value
 
             # Create structured request with message type
-            request: FlextTypes.Dict = {
+            request: dict[str, object] = {
                 "handler": resolved_handler,
                 "message_type": message_type_or_handler,
                 "handler_mode": handler_mode,
@@ -259,7 +259,7 @@ class FlextDispatcher(FlextMixins):
             # New API: register_handler(handler)
             # Ensure we have a handler, not a string
             if isinstance(message_type_or_handler, str):
-                return FlextResult[FlextTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     "Cannot register handler: message type string provided without handler",
                 )
 
@@ -275,7 +275,7 @@ class FlextDispatcher(FlextMixins):
                     mode=handler_mode,
                 )
                 if handler_result.is_failure:
-                    return FlextResult[FlextTypes.Dict].fail(
+                    return FlextResult[dict[str, object]].fail(
                         handler_result.error or "Handler creation failed",
                     )
                 resolved_handler = handler_result.value
@@ -296,7 +296,7 @@ class FlextDispatcher(FlextMixins):
         handler: FlextHandlers[object, object],
         *,
         handler_config: FlextTypes.HandlerConfigurationType = None,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Register command handler using structured model internally.
 
         Args:
@@ -308,7 +308,7 @@ class FlextDispatcher(FlextMixins):
             FlextResult with registration details or error
 
         """
-        request: FlextTypes.Dict = {
+        request: dict[str, object] = {
             "handler": handler,
             "message_type": command_type,
             "handler_mode": FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
@@ -323,7 +323,7 @@ class FlextDispatcher(FlextMixins):
         handler: FlextHandlers[object, object],
         *,
         handler_config: FlextTypes.HandlerConfigurationType = None,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Register query handler using structured model internally.
 
         Args:
@@ -335,7 +335,7 @@ class FlextDispatcher(FlextMixins):
             FlextResult with registration details or error
 
         """
-        request: FlextTypes.Dict = {
+        request: dict[str, object] = {
             "handler": handler,
             "message_type": query_type,
             "handler_mode": FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
@@ -351,7 +351,7 @@ class FlextDispatcher(FlextMixins):
         *,
         handler_config: FlextTypes.HandlerConfigurationType = None,
         mode: FlextConstants.Cqrs.HandlerModeSimple = _DEFAULT_HANDLER_MODE,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Register function as handler using factory pattern.
 
         Args:
@@ -366,7 +366,7 @@ class FlextDispatcher(FlextMixins):
         """
         # Validate mode
         if mode not in FlextConstants.Dispatcher.VALID_HANDLER_MODES:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 FlextConstants.Dispatcher.ERROR_INVALID_HANDLER_MODE,
             )
 
@@ -378,12 +378,12 @@ class FlextDispatcher(FlextMixins):
         )
 
         if handler_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Handler creation failed: {handler_result.error}",
             )
 
         # Register the created handler
-        request: FlextTypes.Dict = {
+        request: dict[str, object] = {
             "handler": handler_result.value,
             "message_type": message_type,
             "handler_mode": mode,
@@ -395,14 +395,14 @@ class FlextDispatcher(FlextMixins):
     def create_handler_from_function(
         self,
         handler_func: FlextTypes.HandlerCallableType,
-        handler_config: FlextTypes.HandlerConfigurationType,
+        handler_config: FlextTypes.HandlerConfigurationType,  # noqa: ARG002
         mode: str,
     ) -> FlextResult[FlextHandlers[object, object]]:
         """Create handler from function using FlextHandlers constructor.
 
         Args:
             handler_func: Function to wrap
-            handler_config: Optional configuration
+            handler_config: Optional configuration (reserved for future use)
             mode: Handler mode
 
         Returns:
@@ -413,8 +413,7 @@ class FlextDispatcher(FlextMixins):
             handler = FlextHandlers.from_callable(
                 callable_func=handler_func,
                 handler_name=getattr(handler_func, "__name__", "FunctionHandler"),
-                handler_type=mode,
-                handler_config=handler_config,
+                handler_type=cast("FlextConstants.Cqrs.HandlerModeSimple", mode),
             )
             return FlextResult[FlextHandlers[object, object]].ok(handler)
 
@@ -428,8 +427,8 @@ class FlextDispatcher(FlextMixins):
     # ------------------------------------------------------------------
     def dispatch_with_request(
         self,
-        request: FlextTypes.Dict,
-    ) -> FlextResult[FlextTypes.Dict]:
+        request: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
         """Dispatch using structured request model.
 
         Args:
@@ -448,7 +447,7 @@ class FlextDispatcher(FlextMixins):
 
         # Validate request
         if request.get("message") is None:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 FlextConstants.Dispatcher.ERROR_MESSAGE_REQUIRED,
             )
 
@@ -491,15 +490,17 @@ class FlextDispatcher(FlextMixins):
 
             # Update circuit breaker state
             if not execution_result.is_success:
-                self._circuit_breaker_failures[message_type] = (
-                    self._circuit_breaker_failures.get(message_type, 0) + 1
+                failure_count = cast(
+                    "int",
+                    self._circuit_breaker_failures.get(message_type, 0),
                 )
+                self._circuit_breaker_failures[message_type] = failure_count + 1
             else:
                 # Reset failures on success
                 self._circuit_breaker_failures[message_type] = 0
 
             if execution_result.is_success:
-                dispatch_result: FlextTypes.Dict = {
+                dispatch_result: dict[str, object] = {
                     "success": True,
                     "result": execution_result.value,
                     "error_message": None,
@@ -519,7 +520,7 @@ class FlextDispatcher(FlextMixins):
                         timeout_seconds=timeout_seconds,
                     )
 
-                return FlextResult[FlextTypes.Dict].ok(dispatch_result)
+                return FlextResult[dict[str, object]].ok(dispatch_result)
 
             dispatch_result = {
                 "success": False,
@@ -542,14 +543,14 @@ class FlextDispatcher(FlextMixins):
                     timeout_seconds=timeout_seconds,
                 )
 
-            return FlextResult[FlextTypes.Dict].ok(dispatch_result)
+            return FlextResult[dict[str, object]].ok(dispatch_result)
 
     def dispatch(
         self,
         message_or_type: object | str,
         data: object | None = None,
         *,
-        metadata: FlextTypes.Dict | None = None,
+        metadata: dict[str, object] | None = None,
         correlation_id: str | None = None,
         timeout_override: int | None = None,
     ) -> FlextResult[object]:
@@ -595,7 +596,8 @@ class FlextDispatcher(FlextMixins):
             message_type = type(message).__name__ if message else "unknown"
 
         # Check circuit breaker
-        failures = self._circuit_breaker_failures.get(message_type, 0)
+        failures_val = self._circuit_breaker_failures.get(message_type, 0)
+        failures = cast("int", failures_val)
         if failures >= self._circuit_breaker_threshold:
             return FlextResult[object].fail(
                 f"Circuit breaker is open for message type '{message_type}'",
@@ -610,19 +612,28 @@ class FlextDispatcher(FlextMixins):
 
         # Check rate limiting
         current_time = time.time()
-        state = self._rate_limit_state.get(message_type)
-        if state is None:
-            # Use RateLimiterState Pydantic model (Phase 4.5)
-            new_state: FlextModels.RateLimiterState = FlextModels.RateLimiterState(
-                count=0,
-                window_start=current_time,
-                block_until=0.0,
-            )
-            self._rate_limit_state[message_type] = new_state
-            state = new_state
+        state_obj: object = self._rate_limit_state.get(message_type)
+        state: dict[str, object] = (
+            cast("dict[str, object]", state_obj) if state_obj is not None else {}
+        )
 
-        if current_time < state.block_until:
-            retry_after = int(state.block_until - current_time)
+        if not state:
+            # Initialize new rate limiter state using simple dict
+            state = {
+                "count": 0,
+                "window_start": current_time,
+                "block_until": 0.0,
+            }
+            self._rate_limit_state[message_type] = state
+
+        # Access state dict values with safe type casting
+        block_until_val = state.get("block_until", 0.0)
+        block_until = (
+            float(block_until_val) if isinstance(block_until_val, (int, float)) else 0.0
+        )
+
+        if current_time < block_until:
+            retry_after = int(block_until - current_time)
             return FlextResult[object].fail(
                 f"Rate limit exceeded for message type '{message_type}' - blocked until recovery",
                 error_code=FlextConstants.Errors.OPERATION_ERROR,
@@ -635,18 +646,28 @@ class FlextDispatcher(FlextMixins):
                 },
             )
 
-        if (
-            current_time - state.window_start
-            >= self._rate_limit_window
-        ):
-            state.count = 0
-            state.window_start = current_time
-            state.block_until = 0.0
+        # Check if window has elapsed
+        window_start_val = state.get("window_start", current_time)
+        window_start = (
+            float(window_start_val)
+            if isinstance(window_start_val, (int, float))
+            else current_time
+        )
 
-        if state.count >= self._rate_limit:
-            state.block_until = (
+        if current_time - window_start >= self._rate_limit_window:
+            state["count"] = 0
+            state["window_start"] = current_time
+            state["block_until"] = 0.0
+
+        # Get count and check rate limit
+        count_val = state.get("count", 0)
+        count = int(count_val) if isinstance(count_val, int) else 0
+
+        if count >= self._rate_limit:
+            new_block_until = (
                 current_time + self._rate_limit_window + self._rate_limit_block_grace
             )
+            state["block_until"] = new_block_until
             retry_after = int(self._rate_limit_window + self._rate_limit_block_grace)
             return FlextResult[object].fail(
                 f"Rate limit exceeded for message type '{message_type}' - too many requests",
@@ -655,21 +676,24 @@ class FlextDispatcher(FlextMixins):
                     "message_type": message_type,
                     "limit": self._rate_limit,
                     "window_seconds": self._rate_limit_window,
-                    "current_count": state.count,
+                    "current_count": count,
                     "retry_after": retry_after,
                     "reason": "rate_limit_exceeded",
                 },
             )
 
-        state.count += 1
-        if state.count >= self._rate_limit:
-            state.block_until = (
+        # Increment count
+        new_count = count + 1
+        state["count"] = new_count
+        if new_count >= self._rate_limit:
+            state["block_until"] = (
                 current_time + self._rate_limit_window + self._rate_limit_block_grace
             )
         else:
-            state.block_until = 0.0
+            state["block_until"] = 0.0
 
-        requests_list = self._rate_limit_requests.setdefault(message_type, [])
+        requests_list_val = self._rate_limit_requests.setdefault(message_type, [])
+        requests_list = cast("list[object]", requests_list_val)
         requests_list.append(current_time)
         while len(requests_list) > self._rate_limit * 2:
             requests_list.pop(0)
@@ -699,7 +723,9 @@ class FlextDispatcher(FlextMixins):
 
         # Create structured request
         if metadata:
-            string_metadata: FlextTypes.Dict = {k: str(v) for k, v in metadata.items()}
+            string_metadata: dict[str, object] = {
+                k: str(v) for k, v in metadata.items()
+            }
             FlextModels.Metadata(attributes=string_metadata)
 
         # Execute dispatch with retry logic using bus directly
@@ -724,7 +750,7 @@ class FlextDispatcher(FlextMixins):
                 # Execute with timeout using shared ThreadPoolExecutor when enabled
                 def execute_with_context() -> FlextResult[object]:
                     if correlation_id is not None or timeout_override is not None:
-                        context_metadata: FlextTypes.Dict = {}
+                        context_metadata: dict[str, object] = {}
                         if timeout_override is not None:
                             context_metadata["timeout_override"] = timeout_override
 
@@ -765,9 +791,9 @@ class FlextDispatcher(FlextMixins):
                     return FlextResult[object].ok(bus_result.value)
 
                 # Track circuit breaker failure
-                self._circuit_breaker_failures[message_type] = (
-                    self._circuit_breaker_failures.get(message_type, 0) + 1
-                )
+                failure_count_val = self._circuit_breaker_failures.get(message_type, 0)
+                failure_count = cast("int", failure_count_val)
+                self._circuit_breaker_failures[message_type] = failure_count + 1
 
                 # Check if this is a temporary failure that should be retried
                 if attempt < max_retries - 1 and "Temporary failure" in str(
@@ -782,9 +808,11 @@ class FlextDispatcher(FlextMixins):
                 # attempt_duration = attempt_end_time - attempt_start_time  # Unused for now
 
                 # Track circuit breaker failure for exceptions
-                self._circuit_breaker_failures[message_type] = (
-                    self._circuit_breaker_failures.get(message_type, 0) + 1
+                except_failure_count_val = self._circuit_breaker_failures.get(
+                    message_type, 0
                 )
+                except_failure_count = cast("int", except_failure_count_val)
+                self._circuit_breaker_failures[message_type] = except_failure_count + 1
 
                 if attempt < max_retries - 1:
                     time.sleep(retry_delay)
@@ -818,7 +846,7 @@ class FlextDispatcher(FlextMixins):
     def _normalize_context_metadata(
         self,
         metadata: object | None,
-    ) -> FlextTypes.Dict | None:
+    ) -> dict[str, object] | None:
         """Normalize metadata payloads to plain dictionaries."""
         if metadata is None:
             return None
@@ -862,7 +890,7 @@ class FlextDispatcher(FlextMixins):
         if raw_metadata is None:
             return None
 
-        normalized: FlextTypes.Dict = {
+        normalized: dict[str, object] = {
             str(key): value for key, value in raw_metadata.items()
         }
 
@@ -871,7 +899,7 @@ class FlextDispatcher(FlextMixins):
     @contextmanager
     def _context_scope(
         self,
-        metadata: FlextTypes.Dict | None = None,
+        metadata: dict[str, object] | None = None,
         correlation_id: str | None = None,
     ) -> Generator[None]:
         """Manage execution context with optional metadata and correlation ID.
@@ -952,7 +980,7 @@ class FlextDispatcher(FlextMixins):
     def dispatch_batch(
         self,
         message_type: str,
-        messages: FlextTypes.List,
+        messages: list[object],
     ) -> list[FlextResult[object]]:
         """Dispatch multiple messages in batch.
 
@@ -966,11 +994,11 @@ class FlextDispatcher(FlextMixins):
         """
         return [self.dispatch(message_type, msg) for msg in messages]
 
-    def get_performance_metrics(self) -> FlextTypes.Dict:
+    def get_performance_metrics(self) -> dict[str, object]:
         """Get performance metrics for the dispatcher.
 
         Returns:
-            FlextTypes.Dict: Dictionary containing performance metrics
+            dict[str, object]: Dictionary containing performance metrics
 
         """
         # Basic metrics - can be extended with actual performance data

@@ -36,7 +36,6 @@ import pytest
 from flext_core import (
     FlextContainer,
     FlextResult,
-    FlextTypes,
     FlextUtilities,
     __version__,
 )
@@ -49,7 +48,7 @@ class FunctionalExternalService:
         """Initialize functional external service with processing state."""
         super().__init__()
         self.call_count = 0
-        self.processed_items: FlextTypes.StringList = []
+        self.processed_items: list[str] = []
         self.should_fail = False
         self.failure_message = "Service unavailable"
 
@@ -122,7 +121,7 @@ class TestLibraryIntegration:
     def test_all_exports_work(
         self,
         clean_container: FlextContainer,
-        sample_data: FlextTypes.Dict,
+        sample_data: dict[str, object],
     ) -> None:
         """Test comprehensive integration of core library exports.
 

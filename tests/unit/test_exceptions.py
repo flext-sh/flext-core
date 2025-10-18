@@ -11,7 +11,7 @@ import time
 
 import pytest
 
-from flext_core import FlextExceptions, FlextTypes
+from flext_core import FlextExceptions
 
 
 class TestFlextExceptions:
@@ -39,7 +39,7 @@ class TestFlextExceptions:
 
     def test_base_error_with_metadata(self) -> None:
         """Test BaseError with metadata."""
-        metadata: FlextTypes.Dict = {"field": "email", "value": "invalid"}
+        metadata: dict[str, object] = {"field": "email", "value": "invalid"}
         error = FlextExceptions.BaseError("Test error", metadata=metadata)
         assert error.metadata["field"] == "email"
         assert error.metadata["value"] == "invalid"
@@ -306,7 +306,7 @@ class TestFlextExceptions:
 
     def test_metadata_merge_with_kwargs(self) -> None:
         """Test that metadata and kwargs are properly merged."""
-        metadata: FlextTypes.Dict = {"existing": "value"}
+        metadata: dict[str, object] = {"existing": "value"}
         error = FlextExceptions.BaseError(
             "Test error", metadata=metadata, new_field="new_value"
         )
@@ -395,7 +395,7 @@ class TestFlextExceptionsComprehensive:
 
     def test_exception_with_metadata(self) -> None:
         """Test exceptions with additional metadata."""
-        metadata: FlextTypes.Dict = {"resource_id": "123", "user_id": "456"}
+        metadata: dict[str, object] = {"resource_id": "123", "user_id": "456"}
         not_found_exc = FlextExceptions.NotFoundError(
             "Resource not found", metadata=metadata
         )

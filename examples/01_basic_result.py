@@ -35,14 +35,13 @@ from flext_core import (
     FlextResult,
     FlextRuntime,
     FlextService,
-    FlextTypes,
 )
 
 
 class DemoScenarios:
     """Lightweight scenario data declared inline for demonstration."""
 
-    _DATASET: ClassVar[FlextTypes.Dict] = {
+    _DATASET: ClassVar[dict[str, object]] = {
         "users": [
             {
                 "id": 1,
@@ -65,11 +64,11 @@ class DemoScenarios:
         ],
         "configs": {"app_name": "Flext Demo", "version": "1.0.0"},
     }
-    _VALIDATION: ClassVar[FlextTypes.Dict] = {
+    _VALIDATION: ClassVar[dict[str, object]] = {
         "valid_emails": ["user@example.com", "contact@flext.dev"],
         "invalid_emails": ["invalid", "missing-at-symbol"],
     }
-    _REALISTIC: ClassVar[FlextTypes.Dict] = {
+    _REALISTIC: ClassVar[dict[str, object]] = {
         "order": {
             "customer_id": "cust-123",
             "order_id": "order-456",
@@ -98,55 +97,55 @@ class DemoScenarios:
             "plan": "standard",
         },
     }
-    _CONFIG: ClassVar[FlextTypes.Dict] = {
+    _CONFIG: ClassVar[dict[str, object]] = {
         "database_url": "sqlite:///:memory:",
         "api_timeout": 30,
         "retry": 3,
     }
-    _PAYLOAD: ClassVar[FlextTypes.Dict] = {
+    _PAYLOAD: ClassVar[dict[str, object]] = {
         "event": "user_registered",
         "user_id": "usr-123",
         "metadata": {"source": "examples", "version": "1.0"},
     }
 
     @staticmethod
-    def dataset() -> FlextTypes.Dict:
+    def dataset() -> dict[str, object]:
         """Get a copy of the demo dataset for testing and examples."""
         return deepcopy(DemoScenarios._DATASET)
 
     @staticmethod
-    def validation_data() -> FlextTypes.Dict:
+    def validation_data() -> dict[str, object]:
         """Get a copy of the demo validation data for testing and examples."""
         return deepcopy(DemoScenarios._VALIDATION)
 
     @staticmethod
-    def realistic_data() -> FlextTypes.Dict:
+    def realistic_data() -> dict[str, object]:
         """Get a simple realistic dataset for aggregate demonstrations."""
         return deepcopy(DemoScenarios._REALISTIC)
 
     @staticmethod
-    def config(**overrides: object) -> FlextTypes.Dict:
+    def config(**overrides: object) -> dict[str, object]:
         """Get a copy of the demo config for testing and examples."""
         value = deepcopy(DemoScenarios._CONFIG)
         value.update(overrides)
         return value
 
     @staticmethod
-    def user(**overrides: object) -> FlextTypes.Dict:
+    def user(**overrides: object) -> dict[str, object]:
         """Get a demo user object with optional overrides."""
-        users_list = cast("list[FlextTypes.Dict]", DemoScenarios._DATASET["users"])
+        users_list = cast("list[dict[str, object]]", DemoScenarios._DATASET["users"])
         user = deepcopy(users_list[0])
         user.update(overrides)
         return user
 
     @staticmethod
-    def users(count: int = 5) -> list[FlextTypes.Dict]:
+    def users(count: int = 5) -> list[dict[str, object]]:
         """Get a list of demo users (default: 5 users)."""
-        users_list = cast("list[FlextTypes.Dict]", DemoScenarios._DATASET["users"])
+        users_list = cast("list[dict[str, object]]", DemoScenarios._DATASET["users"])
         return [deepcopy(user) for user in users_list[:count]]
 
     @staticmethod
-    def service_batch(logger_name: str = "example_batch") -> FlextTypes.Dict:
+    def service_batch(logger_name: str = "example_batch") -> dict[str, object]:
         """Create a demo service batch with logger, config, and metrics."""
         return {
             "logger": FlextLogger.create_module_logger(logger_name),
@@ -155,7 +154,7 @@ class DemoScenarios:
         }
 
     @staticmethod
-    def payload(**overrides: object) -> FlextTypes.Dict:
+    def payload(**overrides: object) -> dict[str, object]:
         """Get a demo payload with optional overrides."""
         payload = deepcopy(DemoScenarios._PAYLOAD)
         payload.update(overrides)
@@ -165,11 +164,11 @@ class DemoScenarios:
     def metadata(
         *,
         source: str = "examples",
-        tags: FlextTypes.StringList | None = None,
+        tags: list[str] | None = None,
         **extra: object,
-    ) -> FlextTypes.Dict:
+    ) -> dict[str, object]:
         """Generate metadata for scenarios with optional tags and extra data."""
-        data: FlextTypes.Dict = {
+        data: dict[str, object] = {
             "source": source,
             "component": "flext_core",
             "tags": tags or ["scenario", "demo"],
@@ -188,15 +187,15 @@ class DemoScenarios:
         return FlextResult[object].fail(message)
 
     @staticmethod
-    def user_result(success: bool = True) -> FlextResult[FlextTypes.Dict]:
+    def user_result(success: bool = True) -> FlextResult[dict[str, object]]:
         """Get a demo user result (success or failure)."""
-        user = cast("list[FlextTypes.Dict]", DemoScenarios._DATASET["users"])[0]
+        user = cast("list[dict[str, object]]", DemoScenarios._DATASET["users"])[0]
         if success:
-            return FlextResult[FlextTypes.Dict].ok(user)
-        return FlextResult[FlextTypes.Dict].fail("User lookup failed")
+            return FlextResult[dict[str, object]].ok(user)
+        return FlextResult[dict[str, object]].fail("User lookup failed")
 
     @staticmethod
-    def error_scenario(error_type: str = "ValidationError") -> FlextTypes.Dict:
+    def error_scenario(error_type: str = "ValidationError") -> dict[str, object]:
         """Get a demo error scenario dictionary."""
         return {
             "error_type": error_type,
@@ -207,7 +206,7 @@ class DemoScenarios:
         }
 
 
-class ComprehensiveResultService(FlextService[FlextTypes.Dict]):
+class ComprehensiveResultService(FlextService[dict[str, object]]):
     """Service demonstrating ALL FlextResult patterns with FlextMixins infrastructure.
 
     This service now inherits from FlextService to demonstrate:
@@ -234,9 +233,9 @@ class ComprehensiveResultService(FlextService[FlextTypes.Dict]):
         """
         super().__init__()
         self._scenarios = DemoScenarios()
-        self._dataset: FlextTypes.Dict = self._scenarios.dataset()
-        self._validation: FlextTypes.Dict = self._scenarios.validation_data()
-        self._metadata: FlextTypes.Dict = self._scenarios.metadata(
+        self._dataset: dict[str, object] = self._scenarios.dataset()
+        self._validation: dict[str, object] = self._scenarios.validation_data()
+        self._metadata: dict[str, object] = self._scenarios.metadata(
             tags=["result", "demo"]
         )
 
@@ -249,7 +248,7 @@ class ComprehensiveResultService(FlextService[FlextTypes.Dict]):
             },
         )
 
-    def execute(self) -> FlextResult[FlextTypes.Dict]:
+    def execute(self) -> FlextResult[dict[str, object]]:
         """Execute all FlextResult demonstrations and return summary.
 
         This method satisfies the FlextService abstract interface while
@@ -281,7 +280,7 @@ class ComprehensiveResultService(FlextService[FlextTypes.Dict]):
             self.demonstrate_value_or_call()
             self.demonstrate_deprecated_patterns()
 
-            summary: FlextTypes.Dict = {
+            summary: dict[str, object] = {
                 "demonstrations_completed": 17,
                 "methods_covered": [
                     "FlextRuntime integration",
@@ -314,12 +313,12 @@ class ComprehensiveResultService(FlextService[FlextTypes.Dict]):
                 "FlextResult demonstration completed successfully", extra=summary
             )
 
-            return FlextResult[FlextTypes.Dict].ok(summary)
+            return FlextResult[dict[str, object]].ok(summary)
 
         except Exception as e:
             error_msg = f"Demonstration failed: {e}"
             self.logger.exception(error_msg)
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 error_msg, error_code="VALIDATION_ERROR"
             )
 
@@ -391,9 +390,9 @@ class ComprehensiveResultService(FlextService[FlextTypes.Dict]):
         print("\n=== Value Extraction ===")
 
         dataset = self._dataset
-        users_list = cast("FlextTypes.List", dataset["users"])
-        user_payload = cast("FlextTypes.Dict", users_list[0])
-        success = FlextResult[FlextTypes.Dict].ok(user_payload)
+        users_list = cast("list[object]", dataset["users"])
+        user_payload = cast("dict[str, object]", users_list[0])
+        success = FlextResult[dict[str, object]].ok(user_payload)
         failure = self._scenarios.result_failure("error")
 
         print(f".unwrap() on success: {success.unwrap()['email']}")
@@ -493,7 +492,7 @@ class ComprehensiveResultService(FlextService[FlextTypes.Dict]):
         """Operations on collections of FlextResult instances."""
         print("\n=== Collection Operations ===")
 
-        results: list[FlextResult[FlextTypes.Dict]] = [
+        results: list[FlextResult[dict[str, object]]] = [
             self._scenarios.user_result(success=True),
             self._scenarios.user_result(success=True),
             self._scenarios.user_result(success=True),
@@ -511,8 +510,8 @@ class ComprehensiveResultService(FlextService[FlextTypes.Dict]):
         print("\n=== Validation Chaining ===")
 
         validation_data = self._validation
-        sample_email = cast("FlextTypes.List", validation_data["valid_emails"])[0]
-        invalid_email = cast("FlextTypes.List", validation_data["invalid_emails"])[0]
+        sample_email = cast("list[object]", validation_data["valid_emails"])[0]
+        invalid_email = cast("list[object]", validation_data["invalid_emails"])[0]
 
         def validate_not_empty(value: object) -> FlextResult[str]:
             str_value = cast("str", value)

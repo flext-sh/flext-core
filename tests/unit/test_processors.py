@@ -16,7 +16,6 @@ from flext_core import (
     FlextModels,
     FlextProcessors,
     FlextResult,
-    FlextTypes,
 )
 
 
@@ -31,7 +30,7 @@ class TestFlextProcessors:
 
     def test_processors_with_custom_config(self) -> None:
         """Test processors initialization with custom configuration."""
-        config: FlextTypes.Dict = {"max_retries": 3, "timeout": 30}
+        config: dict[str, object] = {"max_retries": 3, "timeout": 30}
         processors = FlextProcessors(config=config)
         assert processors is not None
 
@@ -237,7 +236,7 @@ class TestFlextProcessors:
 
         processors.register("test_processor", test_processor)
 
-        data_list: FlextTypes.List = ["test1", "test2", "test3"]
+        data_list: list[object] = ["test1", "test2", "test3"]
         result = processors.process_batch("test_processor", data_list)
         assert result.is_success
         assert len(result.value) == 3
@@ -252,7 +251,7 @@ class TestFlextProcessors:
 
         processors.register("test_processor", test_processor)
 
-        data_list: FlextTypes.List = ["test1", "test2", "test3"]
+        data_list: list[object] = ["test1", "test2", "test3"]
 
         start_time = time.time()
         result = processors.process_parallel("test_processor", data_list)
@@ -563,7 +562,7 @@ class TestFlextProcessorsCriticalCoverage:
         processors = FlextProcessors()
 
         # Register a processor
-        def test_processor(data: FlextTypes.Dict) -> FlextTypes.Dict:
+        def test_processor(data: dict[str, object]) -> dict[str, object]:
             return {"processed": True, **data}
 
         processors.register("test", test_processor)
@@ -580,7 +579,7 @@ class TestFlextProcessorsCriticalCoverage:
         """Test that rate limiting blocks requests exceeding limit."""
         # Configure with very low rate limit
         config = cast(
-            "FlextTypes.Dict",
+            "dict[str, object]",
             {
                 "rate_limit": 2,  # Only 2 requests allowed
                 "rate_limit_window": 60,  # Per 60 seconds
@@ -589,7 +588,7 @@ class TestFlextProcessorsCriticalCoverage:
         processors = FlextProcessors(config)
 
         # Register processor
-        def counter(data: FlextTypes.Dict) -> FlextTypes.Dict:
+        def counter(data: dict[str, object]) -> dict[str, object]:
             count_val = data.get("count", 0)
             return {
                 "count": int(count_val) + 1 if isinstance(count_val, (int, str)) else 1
@@ -612,7 +611,7 @@ class TestFlextProcessorsCriticalCoverage:
     def test_cache_returns_cached_value_within_ttl(self) -> None:
         """Test that cache returns cached value when within TTL."""
         config = cast(
-            "FlextTypes.Dict",
+            "dict[str, object]",
             {
                 "cache_ttl": 10,  # 10 seconds TTL
             },
@@ -620,7 +619,7 @@ class TestFlextProcessorsCriticalCoverage:
         processors = FlextProcessors(config)
 
         # Register processor that returns timestamp
-        def timestamp_processor(_data: FlextTypes.Dict) -> FlextTypes.Dict:
+        def timestamp_processor(_data: dict[str, object]) -> dict[str, object]:
             return {"timestamp": time.time()}
 
         processors.register("timestamp", timestamp_processor)
@@ -628,12 +627,12 @@ class TestFlextProcessorsCriticalCoverage:
         # First call - should execute and cache
         result1 = processors.process("timestamp", {"test": "data"})
         assert result1.is_success
-        timestamp1 = cast("FlextTypes.Dict", result1.unwrap())["timestamp"]
+        timestamp1 = cast("dict[str, object]", result1.unwrap())["timestamp"]
 
         # Second call immediately - should return cached value
         result2 = processors.process("timestamp", {"test": "data"})
         assert result2.is_success
-        timestamp2 = cast("FlextTypes.Dict", result2.unwrap())["timestamp"]
+        timestamp2 = cast("dict[str, object]", result2.unwrap())["timestamp"]
 
         # Timestamps should be identical (from cache)
         assert timestamp1 == timestamp2
@@ -643,14 +642,14 @@ class TestFlextProcessorsCriticalCoverage:
         processors = FlextProcessors()
 
         # Add middleware that raises exception
-        def failing_middleware(_data: FlextTypes.Dict) -> FlextTypes.Dict:
+        def failing_middleware(_data: dict[str, object]) -> dict[str, object]:
             msg = "Middleware intentional failure"
             raise ValueError(msg)
 
         processors.add_middleware(failing_middleware)
 
         # Register simple processor
-        def simple_processor(d: FlextTypes.Dict) -> FlextTypes.Dict:
+        def simple_processor(d: dict[str, object]) -> dict[str, object]:
             return d
 
         processors.register("test", simple_processor)
@@ -666,11 +665,11 @@ class TestFlextProcessorsCriticalCoverage:
 
         # Register processor that returns FlextResult
         def result_processor(
-            data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             if data.get("fail"):
-                return FlextResult[FlextTypes.Dict].fail("Processor decided to fail")
-            return FlextResult[FlextTypes.Dict].ok({
+                return FlextResult[dict[str, object]].fail("Processor decided to fail")
+            return FlextResult[dict[str, object]].ok({
                 "processed": True,
                 **data,
             })
@@ -680,7 +679,7 @@ class TestFlextProcessorsCriticalCoverage:
         # Success case
         success_result = processors.process("result", {"fail": False})
         assert success_result.is_success
-        assert cast("FlextTypes.Dict", success_result.unwrap())["processed"] is True
+        assert cast("dict[str, object]", success_result.unwrap())["processed"] is True
 
         # Failure case - FlextResult failure is preserved
         failure_result = processors.process("result", {"fail": True})
@@ -703,14 +702,14 @@ class TestFlextProcessorsCriticalCoverage:
     def test_validation_failures(self) -> None:
         """Test processor validation failures."""
         # Test negative cache TTL
-        processors1 = FlextProcessors(cast("FlextTypes.Dict", {"cache_ttl": -1}))
+        processors1 = FlextProcessors(cast("dict[str, object]", {"cache_ttl": -1}))
         result1 = processors1.validate()
         assert result1.is_failure
         assert "Cache TTL must be non-negative" in cast("str", result1.error)
 
         # Test negative circuit breaker threshold
         processors2 = FlextProcessors(
-            cast("FlextTypes.Dict", {"circuit_breaker_threshold": -1})
+            cast("dict[str, object]", {"circuit_breaker_threshold": -1})
         )
         result2 = processors2.validate()
         assert result2.is_failure
@@ -719,7 +718,7 @@ class TestFlextProcessorsCriticalCoverage:
         )
 
         # Test negative rate limit
-        processors3 = FlextProcessors(cast("FlextTypes.Dict", {"rate_limit": -1}))
+        processors3 = FlextProcessors(cast("dict[str, object]", {"rate_limit": -1}))
         result3 = processors3.validate()
         assert result3.is_failure
         assert "Rate limit must be non-negative" in cast("str", result3.error)
@@ -730,11 +729,11 @@ class TestFlextProcessorsCriticalCoverage:
 
         # Register processor that fails on specific input
         def conditional_processor(
-            data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             if data.get("id") == 2:
-                return FlextResult[FlextTypes.Dict].fail("Failed on id=2")
-            return FlextResult[FlextTypes.Dict].ok({
+                return FlextResult[dict[str, object]].fail("Failed on id=2")
+            return FlextResult[dict[str, object]].ok({
                 "id": data["id"],
                 "processed": True,
             })
@@ -742,7 +741,7 @@ class TestFlextProcessorsCriticalCoverage:
         processors.register("conditional", conditional_processor)
 
         # Process list with failing item
-        items = cast("FlextTypes.List", [{"id": 1}, {"id": 2}, {"id": 3}])
+        items = cast("list[object]", [{"id": 1}, {"id": 2}, {"id": 3}])
         result = processors.process_parallel("conditional", items)
 
         assert result.is_failure
@@ -763,14 +762,14 @@ class TestFlextProcessorsCriticalCoverage:
 
             def handle(
                 self,
-                r: FlextTypes.Dict,
-            ) -> FlextResult[FlextTypes.Dict]:
-                return FlextResult[FlextTypes.Dict].ok({"result": r})
+                r: dict[str, object],
+            ) -> FlextResult[dict[str, object]]:
+                return FlextResult[dict[str, object]].ok({"result": r})
 
             def __call__(
                 self,
-                r: FlextTypes.Dict,
-            ) -> FlextResult[FlextTypes.Dict]:
+                r: dict[str, object],
+            ) -> FlextResult[dict[str, object]]:
                 """Make handler callable for model validation."""
                 return self.handle(r)
 
@@ -819,21 +818,21 @@ class TestFlextProcessorsCriticalCoverage:
         # Add steps to pipeline
         pipeline.add_step(
             lambda d: cast(
-                "FlextTypes.Dict",
-                {"step1": True, **cast("FlextTypes.Dict", d)},
+                "dict[str, object]",
+                {"step1": True, **cast("dict[str, object]", d)},
             )
         )
         pipeline.add_step(
             lambda d: cast(
-                "FlextTypes.Dict",
-                {"step2": True, **cast("FlextTypes.Dict", d)},
+                "dict[str, object]",
+                {"step2": True, **cast("dict[str, object]", d)},
             )
         )
 
         # Process data through pipeline
         result = pipeline.process({"input": "test"})
         assert result.is_success
-        data = cast("FlextTypes.Dict", result.unwrap())
+        data = cast("dict[str, object]", result.unwrap())
         # Data should have pipeline steps applied
         assert isinstance(data, dict)
         assert data.get("step1") is True
@@ -844,14 +843,14 @@ class TestFlextProcessorsCriticalCoverage:
         """Test pipeline timeout validation."""
         pipeline = FlextProcessors.Pipeline()
 
-        # Test timeout with valid value (0 = no timeout)
+        # Test timeout with minimum valid value (1 second)
         request_low = FlextModels.ProcessingRequest(
             data={"test": "data"},
             context={},
-            timeout_seconds=0,  # No timeout is valid
+            timeout_seconds=1,  # Minimum valid timeout (>=1 required)
         )
         result_low = pipeline.process_with_timeout(request_low)
-        # Should process successfully since 0 is valid (means no timeout)
+        # Should process successfully since 1 is the minimum valid timeout
         assert (
             result_low.is_success or result_low.is_failure
         )  # Either is OK, just check it processes
@@ -872,14 +871,16 @@ class TestFlextProcessorsCriticalCoverage:
         """Test pipeline fallback to secondary pipeline."""
         # Primary pipeline that fails
         primary = FlextProcessors.Pipeline()
-        primary.add_step(lambda _: FlextResult[FlextTypes.Dict].fail("Primary failed"))
+        primary.add_step(
+            lambda _: FlextResult[dict[str, object]].fail("Primary failed")
+        )
 
         # Fallback pipeline that succeeds
         fallback = FlextProcessors.Pipeline()
         fallback.add_step(
             lambda d: cast(
-                "FlextTypes.Dict",
-                {"fallback": True, **cast("FlextTypes.Dict", d)},
+                "dict[str, object]",
+                {"fallback": True, **cast("dict[str, object]", d)},
             )
         )
 
@@ -891,7 +892,7 @@ class TestFlextProcessorsCriticalCoverage:
 
         result = primary.process_with_fallback(request, fallback)
         assert result.is_success
-        assert cast("FlextTypes.Dict", result.unwrap())["fallback"] is True
+        assert cast("dict[str, object]", result.unwrap())["fallback"] is True
 
     def test_batch_processing_size_validation(self) -> None:
         """Test batch processing enforces size limits."""
@@ -913,8 +914,8 @@ class TestFlextProcessorsCriticalCoverage:
         pipeline = FlextProcessors.Pipeline()
         pipeline.add_step(
             lambda d: cast(
-                "FlextTypes.Dict",
-                {"validated": True, **cast("FlextTypes.Dict", d)},
+                "dict[str, object]",
+                {"validated": True, **cast("dict[str, object]", d)},
             )
         )
 

@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextProtocols, FlextResult, FlextTypes
+from flext_core import FlextProtocols, FlextResult
 
 
 class TestFlextProtocols:
@@ -105,14 +105,14 @@ class TestFlextProtocols:
         """Test that a class can implement Repository protocol."""
 
         class UserRepository:
-            def find_by_id(self, entity_id: str) -> FlextResult[FlextTypes.Dict]:
-                return FlextResult[FlextTypes.Dict].ok({
+            def find_by_id(self, entity_id: str) -> FlextResult[dict[str, object]]:
+                return FlextResult[dict[str, object]].ok({
                     "id": entity_id,
                     "name": "Test",
                 })
 
-            def save(self, entity: FlextTypes.Dict) -> FlextResult[FlextTypes.Dict]:
-                return FlextResult[FlextTypes.Dict].ok(entity)
+            def save(self, entity: dict[str, object]) -> FlextResult[dict[str, object]]:
+                return FlextResult[dict[str, object]].ok(entity)
 
             def delete(self, entity_id: str) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
@@ -131,8 +131,8 @@ class TestFlextProtocols:
         """Test that a class can implement Service protocol."""
 
         class UserService:
-            def execute(self, **kwargs: object) -> FlextResult[FlextTypes.Dict]:
-                return FlextResult[FlextTypes.Dict].ok({"status": "success"})
+            def execute(self, **kwargs: object) -> FlextResult[dict[str, object]]:
+                return FlextResult[dict[str, object]].ok({"status": "success"})
 
         service = UserService()
         assert hasattr(service, "execute")
@@ -199,8 +199,10 @@ class TestFlextProtocols:
         """Test that a class can implement Handler protocol."""
 
         class CreateUserHandler:
-            def handle(self, command: FlextTypes.Dict) -> FlextResult[FlextTypes.Dict]:
-                return FlextResult[FlextTypes.Dict].ok({"user_id": "123"})
+            def handle(
+                self, command: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
+                return FlextResult[dict[str, object]].ok({"user_id": "123"})
 
         handler = CreateUserHandler()
         assert hasattr(handler, "handle")
@@ -278,11 +280,13 @@ class TestFlextProtocols:
         class AdvancedService:
             """Service implementing multiple protocols."""
 
-            def execute(self, **kwargs: object) -> FlextResult[FlextTypes.Dict]:
-                return FlextResult[FlextTypes.Dict].ok({})
+            def execute(self, **kwargs: object) -> FlextResult[dict[str, object]]:
+                return FlextResult[dict[str, object]].ok({})
 
-            def handle(self, command: FlextTypes.Dict) -> FlextResult[FlextTypes.Dict]:
-                return FlextResult[FlextTypes.Dict].ok({})
+            def handle(
+                self, command: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
+                return FlextResult[dict[str, object]].ok({})
 
         service = AdvancedService()
         # Should implement both Service and Handler protocols

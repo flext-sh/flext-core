@@ -77,7 +77,7 @@ class FlextConstants:
     - **Dispatcher**: Message dispatcher modes and settings
     - **Pagination**: Pagination configuration constants
     - **Mixins**: Field names, status constants, default states
-    - **Http**: HTTP status codes, methods, content types, headers
+    - **FlextWeb**: HTTP status codes, methods, content types, headers
     - **Web**: Web application timeouts
     - **Batch**: Batch processing size constants
     - **Processing**: Processing pipeline constants
@@ -518,6 +518,7 @@ class FlextConstants:
         # Application constants
         FLEXT_API_PORT: Final[int] = 8000
         DEFAULT_HOST: Final[str] = "localhost"
+        DEFAULT_HTTP_PORT: Final[int] = 80
 
         # Common MIME types
         MIME_TYPE_JSON: Final[str] = "application/json"
@@ -542,6 +543,22 @@ class FlextConstants:
         )
         PATTERN_PATH: Final[str] = r'^[^<>"|?*\x00-\x1F]+$'
 
+        # File extensions
+        EXT_PYTHON: Final[str] = ".py"
+        EXT_YAML: Final[str] = ".yaml"
+        EXT_JSON: Final[str] = ".json"
+        EXT_TOML: Final[str] = ".toml"
+        EXT_XML: Final[str] = ".xml"
+        EXT_TXT: Final[str] = ".txt"
+        EXT_MD: Final[str] = ".md"
+
+        # Directory names
+        DIR_CONFIG: Final[str] = "config"
+        DIR_PLUGINS: Final[str] = "plugins"
+        DIR_LOGS: Final[str] = "logs"
+        DIR_DATA: Final[str] = "data"
+        DIR_TEMP: Final[str] = "temp"
+
     class Performance:
         """Performance thresholds and operational limits."""
 
@@ -553,6 +570,7 @@ class FlextConstants:
         # Operation limits
         MAX_RETRY_ATTEMPTS_LIMIT: Final[int] = 10
         DEFAULT_TIMEOUT_LIMIT: Final[int] = 300
+        MIN_CURRENT_STEP: Final[int] = 0
 
         # Timing and delays
         DEFAULT_BACKOFF_MULTIPLIER: Final[float] = 2.0
@@ -856,7 +874,7 @@ class FlextConstants:
             ACQUIRE: Final[str] = "acquire"
             RELEASE: Final[str] = "release"
             CHECK: Final[str] = "check"
-            LIST_OBJECTS: Final[str] = "FlextTypes.List"
+            LIST_OBJECTS: Final[str] = "list[object]"
 
             # Warning types
             WARN_NONE: Final[str] = "none"
@@ -1170,7 +1188,7 @@ class FlextConstants:
         ERROR_MISSING_TIMESTAMP_FIELDS = "Required timestamp fields missing"
         ERROR_INVALID_LOG_LEVEL = "Invalid log level"
 
-    class Http:
+    class FlextWeb:
         """HTTP protocol constants."""
 
         HTTP_STATUS_MIN: Final[int] = 100

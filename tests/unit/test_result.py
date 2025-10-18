@@ -120,13 +120,13 @@ class TestFlextResult:
         """Test railway-oriented composition."""
 
         def validate_input(
-            data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             if not data.get("value"):
-                return FlextResult[FlextTypes.Dict].fail("Missing value")
-            return FlextResult[FlextTypes.Dict].ok(data)
+                return FlextResult[dict[str, object]].fail("Missing value")
+            return FlextResult[dict[str, object]].ok(data)
 
-        def process_data(data: FlextTypes.Dict) -> FlextResult[int]:
+        def process_data(data: dict[str, object]) -> FlextResult[int]:
             return FlextResult[int].ok(cast("int", data["value"]) * 2)
 
         def format_result(value: int) -> FlextResult[str]:
@@ -157,7 +157,7 @@ class TestFlextResult:
 
     def test_result_value_property_dict(self) -> None:
         """Test .value property access on successful results with dict."""
-        result = FlextResult[FlextTypes.Dict].ok({"key": "value"})
+        result = FlextResult[dict[str, object]].ok({"key": "value"})
 
         # .value should return the wrapped dictionary
         assert result.value == {"key": "value"}
@@ -203,7 +203,7 @@ class TestFlextResult:
     def test_result_tap_method(self) -> None:
         """Test tap method."""
         result = FlextResult[str].ok("test")
-        tapped_values: FlextTypes.StringList = []
+        tapped_values: list[str] = []
 
         tapped = result.tap(tapped_values.append)
         assert tapped.is_success
@@ -213,7 +213,7 @@ class TestFlextResult:
     def test_result_tap_method_failure(self) -> None:
         """Test tap method on failure."""
         result = FlextResult[str].fail("error")
-        tapped_values: FlextTypes.StringList = []
+        tapped_values: list[str] = []
 
         tapped = result.tap(tapped_values.append)
         assert tapped.is_failure
@@ -510,7 +510,7 @@ class TestFlextResult:
 
     def test_result_accumulate_empty(self) -> None:
         """Test accumulate method with no results."""
-        result: FlextResult[FlextTypes.StringList] = FlextResult.accumulate_errors()
+        result: FlextResult[list[str]] = FlextResult.accumulate_errors()
         assert result.is_success
         assert result.value == []
 
@@ -844,8 +844,8 @@ class TestFlextResult:
 
     def test_result_with_resource_static_method(self) -> None:
         """Test with_resource static method."""
-        resources_created: FlextTypes.StringList = []
-        resources_cleaned: FlextTypes.StringList = []
+        resources_created: list[str] = []
+        resources_cleaned: list[str] = []
 
         def create_resource() -> str:
             resource = "test_resource"
@@ -1341,7 +1341,9 @@ class TestFlextResultAdditionalCoverage:
         assert isinstance(hash1, int)
 
         # Hash with complex data
-        result_dict: FlextResult[FlextTypes.Dict] = FlextResult[FlextTypes.Dict].ok({
+        result_dict: FlextResult[dict[str, object]] = FlextResult[
+            dict[str, object]
+        ].ok({
             "key": "value",
             "nested": {"a": 1},
         })
@@ -1349,7 +1351,7 @@ class TestFlextResultAdditionalCoverage:
         assert isinstance(hash2, int)
 
         # Hash with failure
-        failure: FlextResult[FlextTypes.Dict] = FlextResult[FlextTypes.Dict].fail(
+        failure: FlextResult[dict[str, object]] = FlextResult[dict[str, object]].fail(
             "error",
             error_code="ERR_001",
             error_data={"detail": "info"},
@@ -1671,11 +1673,15 @@ class TestFlextResultFinalCoverage:
     def test_equality_complex_data_structures(self) -> None:
         """Test __eq__ with complex nested data (lines 853-854, 861-862)."""
         # Test equality with nested dictionaries
-        data1: dict[str, FlextTypes.Dict] = {"nested": {"value": 42, "list": [1, 2, 3]}}
-        data2: dict[str, FlextTypes.Dict] = {"nested": {"value": 42, "list": [1, 2, 3]}}
+        data1: dict[str, dict[str, object]] = {
+            "nested": {"value": 42, "list": [1, 2, 3]}
+        }
+        data2: dict[str, dict[str, object]] = {
+            "nested": {"value": 42, "list": [1, 2, 3]}
+        }
 
-        result1 = FlextResult[dict[str, FlextTypes.Dict]].ok(data1)
-        result2 = FlextResult[dict[str, FlextTypes.Dict]].ok(data2)
+        result1 = FlextResult[dict[str, dict[str, object]]].ok(data1)
+        result2 = FlextResult[dict[str, dict[str, object]]].ok(data2)
 
         # Should be equal even with complex structures
         assert result1 == result2
@@ -2161,15 +2167,15 @@ class TestFromCallable:
     def test_from_callable_with_complex_operation(self) -> None:
         """Test from_callable with complex operation."""
 
-        def complex_operation() -> FlextTypes.Dict:
-            data: FlextTypes.Dict = {"processed": True, "count": 10}
+        def complex_operation() -> dict[str, object]:
+            data: dict[str, object] = {"processed": True, "count": 10}
             count_value = data["count"]
             if isinstance(count_value, int) and count_value > 5:
                 return data
             msg = "Count too low"
             raise ValueError(msg)
 
-        result = FlextResult[FlextTypes.Dict].from_callable(complex_operation)
+        result = FlextResult[dict[str, object]].from_callable(complex_operation)
 
         assert result.is_success
         assert result.value == {"processed": True, "count": 10}
@@ -2235,32 +2241,32 @@ class TestFlowThrough:
         """Test flow_through with complex data transformations."""
 
         def validate_dict(
-            data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             if "required_field" not in data:
-                return FlextResult[FlextTypes.Dict].fail("Missing required field")
-            return FlextResult[FlextTypes.Dict].ok(data)
+                return FlextResult[dict[str, object]].fail("Missing required field")
+            return FlextResult[dict[str, object]].ok(data)
 
         def enrich_data(
-            data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
-            enriched: FlextTypes.Dict = {**data, "enriched": True}
-            return FlextResult[FlextTypes.Dict].ok(enriched)
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
+            enriched: dict[str, object] = {**data, "enriched": True}
+            return FlextResult[dict[str, object]].ok(enriched)
 
         def transform_data(
-            data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
-            transformed: FlextTypes.Dict = {
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
+            transformed: dict[str, object] = {
                 **data,
                 "transformed": True,
             }
             # Count includes the count key itself
             transformed["count"] = len(transformed) + 1
-            return FlextResult[FlextTypes.Dict].ok(transformed)
+            return FlextResult[dict[str, object]].ok(transformed)
 
-        initial_data: FlextTypes.Dict = {"required_field": "value"}
+        initial_data: dict[str, object] = {"required_field": "value"}
         result = (
-            FlextResult[FlextTypes.Dict]
+            FlextResult[dict[str, object]]
             .ok(initial_data)
             .flow_through(validate_dict, enrich_data, transform_data)
         )
@@ -2401,10 +2407,10 @@ class TestIOInterop:
 
     def test_io_result_roundtrip_success(self) -> None:
         """Test roundtrip conversion success -> IOResult -> success."""
-        original = FlextResult[FlextTypes.Dict].ok({"key": "value"})
+        original = FlextResult[dict[str, object]].ok({"key": "value"})
         io_result = original.to_io_result()
-        recovered: FlextResult[FlextTypes.Dict] = cast(
-            "FlextResult[FlextTypes.Dict]",
+        recovered: FlextResult[dict[str, object]] = cast(
+            "FlextResult[dict[str, object]]",
             FlextResult.from_io_result(io_result),
         )
 
@@ -2643,30 +2649,30 @@ class TestIntegrationScenarios:
     def test_complex_data_transformation_pipeline(self) -> None:
         """Test complex data transformation using all new methods."""
 
-        def fetch_data() -> FlextTypes.Dict:
+        def fetch_data() -> dict[str, object]:
             return {"raw": True, "value": 100}
 
         def validate_data(
-            data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             if "value" not in data:
-                return FlextResult[FlextTypes.Dict].fail("Missing value")
-            return FlextResult[FlextTypes.Dict].ok(data)
+                return FlextResult[dict[str, object]].fail("Missing value")
+            return FlextResult[dict[str, object]].ok(data)
 
         def enrich_data(
-            data: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
-            enriched: FlextTypes.Dict = {**data, "enriched": True}
-            return FlextResult[FlextTypes.Dict].ok(enriched)
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
+            enriched: dict[str, object] = {**data, "enriched": True}
+            return FlextResult[dict[str, object]].ok(enriched)
 
         def error_fallback(
             error: str,
-        ) -> FlextResult[FlextTypes.Dict]:
-            return FlextResult[FlextTypes.Dict].ok({"fallback": True})
+        ) -> FlextResult[dict[str, object]]:
+            return FlextResult[dict[str, object]].ok({"fallback": True})
 
         # Complete pipeline
         result = (
-            FlextResult[FlextTypes.Dict]
+            FlextResult[dict[str, object]]
             .from_callable(fetch_data)
             .flow_through(validate_data, enrich_data)
             .lash(error_fallback)

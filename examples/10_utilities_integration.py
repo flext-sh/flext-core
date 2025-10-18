@@ -38,7 +38,6 @@ from flext_core import (
     FlextExceptions,
     FlextLogger,
     FlextResult,
-    FlextTypes,
 )
 
 logger = FlextLogger(__name__)
@@ -57,14 +56,14 @@ class MyService:
         self._max_retries = self._config.max_retry_attempts
         self._debug_mode = self._config.is_debug_enabled
 
-    def process_data(self, data: FlextTypes.Dict) -> FlextResult[FlextTypes.Dict]:
+    def process_data(self, data: dict[str, object]) -> FlextResult[dict[str, object]]:
         """Process data with configuration-driven validation."""
         # Use configuration-driven validation
         if len(data) > self._config.max_batch_size:
-            return FlextResult[FlextTypes.Dict].fail("Data batch too large")
+            return FlextResult[dict[str, object]].fail("Data batch too large")
 
         # Process with configuration-driven settings
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "processed": True,
             "config_used": self._debug_mode,
         })
@@ -99,17 +98,17 @@ class UserService:
             msg = f"Failed to register database service: {db_result.error}"
             raise FlextExceptions.ConfigurationError(msg)
 
-    def get_user(self, user_id: str) -> FlextResult[FlextTypes.Dict]:
+    def get_user(self, user_id: str) -> FlextResult[dict[str, object]]:
         """Get user with dependency injection and error handling."""
         # Retrieve service with error handling
         db_result = self._container.get("database")
         if db_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Database service unavailable: {db_result.error}"
             )
 
         db_service = db_result.unwrap()
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "user_id": user_id,
             "service": type(db_service).__name__,
         })
@@ -122,15 +121,15 @@ class EventService:
         """Initialize event service with bus integration."""
         super().__init__()
         self._bus = FlextBus()
-        self._events: list[FlextTypes.Dict] = []
+        self._events: list[dict[str, object]] = []
 
     def publish_event(
-        self, event_type: str, data: FlextTypes.Dict
+        self, event_type: str, data: dict[str, object]
     ) -> FlextResult[None]:
         """Publish event with proper error handling."""
         try:
             # FlextBus.publish_event takes a single event object
-            event: FlextTypes.Dict = {"type": event_type, **data}
+            event: dict[str, object] = {"type": event_type, **data}
             result = self._bus.publish_event(event)
             if result.is_failure:
                 return result
@@ -140,12 +139,12 @@ class EventService:
         except Exception as e:
             return FlextResult[None].fail(f"Failed to publish event: {e}")
 
-    def get_events(self) -> FlextResult[list[FlextTypes.Dict]]:
+    def get_events(self) -> FlextResult[list[dict[str, object]]]:
         """Get events with railway pattern."""
         if not self._events:
-            return FlextResult[list[FlextTypes.Dict]].fail("No events available")
+            return FlextResult[list[dict[str, object]]].fail("No events available")
 
-        return FlextResult[list[FlextTypes.Dict]].ok(self._events)
+        return FlextResult[list[dict[str, object]]].ok(self._events)
 
 
 class EventHandler:
@@ -156,7 +155,7 @@ class EventHandler:
         super().__init__()
         self._event_service = event_service
 
-    def handle_user_created(self, event_data: FlextTypes.Dict) -> FlextResult[None]:
+    def handle_user_created(self, event_data: dict[str, object]) -> FlextResult[None]:
         """Handle user created event with validation."""
         user_id = event_data.get("user_id")
         if not user_id:
@@ -173,14 +172,14 @@ class MessageService:
         """Initialize message service with dispatcher."""
         super().__init__()
         self._dispatcher = FlextDispatcher()
-        self._messages: list[FlextTypes.Dict] = []
+        self._messages: list[dict[str, object]] = []
 
-    def send_message(self, message: FlextTypes.Dict) -> FlextResult[str]:
+    def send_message(self, message: dict[str, object]) -> FlextResult[str]:
         """Send message with proper error handling."""
         try:
             message_id = f"msg_{len(self._messages)}"
             enhanced_message = cast(
-                "FlextTypes.Dict",
+                "dict[str, object]",
                 {**message, "id": message_id, "timestamp": "now"},
             )
 
@@ -192,12 +191,12 @@ class MessageService:
         except Exception as e:
             return FlextResult[str].fail(f"Failed to send message: {e}")
 
-    def get_messages(self) -> FlextResult[list[FlextTypes.Dict]]:
+    def get_messages(self) -> FlextResult[list[dict[str, object]]]:
         """Get messages with railway pattern."""
         if not self._messages:
-            return FlextResult[list[FlextTypes.Dict]].fail("No messages available")
+            return FlextResult[list[dict[str, object]]].fail("No messages available")
 
-        return FlextResult[list[FlextTypes.Dict]].ok(self._messages)
+        return FlextResult[list[dict[str, object]]].ok(self._messages)
 
 
 class MessageHandler:
@@ -208,19 +207,21 @@ class MessageHandler:
         super().__init__()
         self._message_service = message_service
 
-    def process_message(self, message: FlextTypes.Dict) -> FlextResult[FlextTypes.Dict]:
+    def process_message(
+        self, message: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Process message with validation."""
         msg_type = message.get("type")
         if not msg_type:
-            return FlextResult[FlextTypes.Dict].fail("Message missing type")
+            return FlextResult[dict[str, object]].fail("Message missing type")
 
         # Process based on type
         if msg_type == "greeting":
-            return FlextResult[FlextTypes.Dict].ok({
+            return FlextResult[dict[str, object]].ok({
                 "response": "Hello!",
                 "original": message,
             })
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "response": "Processed",
             "type": msg_type,
         })
@@ -264,7 +265,9 @@ class IntegratedService:
         # Register this service in the container
         self._container.register("integrated_service", self)
 
-    def process_request(self, request: FlextTypes.Dict) -> FlextResult[FlextTypes.Dict]:
+    def process_request(
+        self, request: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Process request with full flext-core integration."""
         # Log request with structured logging
         self.logger.info(
@@ -277,11 +280,11 @@ class IntegratedService:
 
         # Validate using configuration
         if len(str(request)) > self._config.validation_timeout_ms:
-            return FlextResult[FlextTypes.Dict].fail("Request too large")
+            return FlextResult[dict[str, object]].fail("Request too large")
 
         # Publish processing event
         event = cast(
-            "FlextTypes.Dict",
+            "dict[str, object]",
             {
                 "type": "request_processing",
                 "request_id": request.get("id", "unknown"),
@@ -297,13 +300,13 @@ class IntegratedService:
 
         # Process with dispatcher
         response = cast(
-            "FlextTypes.Dict", {"processed": True, "request_id": request.get("id")}
+            "dict[str, object]", {"processed": True, "request_id": request.get("id")}
         )
 
         # Send response through dispatcher
         dispatch_result = self._dispatcher.dispatch(
             cast(
-                "FlextTypes.Dict",
+                "dict[str, object]",
                 {
                     "type": "response",
                     "data": response,
@@ -313,13 +316,13 @@ class IntegratedService:
         )
 
         if dispatch_result.is_failure:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to dispatch response: {dispatch_result.error}"
             )
 
-        return FlextResult[FlextTypes.Dict].ok(response)
+        return FlextResult[dict[str, object]].ok(response)
 
-    def get_service_status(self) -> FlextResult[FlextTypes.Dict]:
+    def get_service_status(self) -> FlextResult[dict[str, object]]:
         """Get comprehensive service status with flext-core integration."""
         # Get component status
         config_status = "loaded" if self._config else "unavailable"
@@ -327,7 +330,7 @@ class IntegratedService:
         bus_status = "available" if self._bus else "unavailable"
         dispatcher_status = "available" if self._dispatcher else "unavailable"
 
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "service_name": "IntegratedService",
             "status": "running",
             "components": {

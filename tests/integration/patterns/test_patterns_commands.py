@@ -32,7 +32,7 @@ class CreateUserCommand(FlextModels.TimestampedModel):
     username: str
     email: str
 
-    def get_payload(self) -> FlextTypes.Dict:
+    def get_payload(self) -> dict[str, object]:
         """Get command payload."""
         return {
             "username": self.username,
@@ -54,9 +54,9 @@ class UpdateUserCommand(FlextModels.TimestampedModel):
     """Test command for updating users."""
 
     target_user_id: str
-    updates: FlextTypes.Dict
+    updates: dict[str, object]
 
-    def get_payload(self) -> FlextTypes.Dict:
+    def get_payload(self) -> dict[str, object]:
         """Get command payload."""
         return {
             "target_user_id": self.target_user_id,
@@ -75,7 +75,7 @@ class UpdateUserCommand(FlextModels.TimestampedModel):
 class FailingCommand(FlextModels.TimestampedModel):
     """Test command that always fails validation."""
 
-    def get_payload(self) -> FlextTypes.Dict:
+    def get_payload(self) -> dict[str, object]:
         """Get command payload."""
         return {}
 
@@ -85,7 +85,7 @@ class FailingCommand(FlextModels.TimestampedModel):
 
 
 class CreateUserCommandHandler(
-    FlextCommandHandler[CreateUserCommand, FlextTypes.Dict],
+    FlextCommandHandler[CreateUserCommand, dict[str, object]],
 ):
     """Test handler for CreateUserCommand."""
 
@@ -98,7 +98,7 @@ class CreateUserCommandHandler(
             handler_mode="command",
         )
         super().__init__(config=config)
-        self.created_users: list[FlextTypes.Dict] = []
+        self.created_users: list[dict[str, object]] = []
 
     def get_command_type(self) -> FlextCommandType:
         """Get command type this handler processes."""
@@ -111,27 +111,27 @@ class CreateUserCommandHandler(
     def handle(
         self,
         message: CreateUserCommand,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Handle the create user command."""
-        user_data: FlextTypes.Dict = {
+        user_data: dict[str, object] = {
             "id": f"user_{len(self.created_users) + 1}",
             "username": message.username,
             "email": message.email,
         }
         self.created_users.append(user_data)
 
-        return FlextResult[FlextTypes.Dict].ok(user_data)
+        return FlextResult[dict[str, object]].ok(user_data)
 
     def handle_command(
         self,
         command: CreateUserCommand,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Handle the create user command (alias for handle)."""
         return self.handle(command)
 
 
 class UpdateUserCommandHandler(
-    FlextCommandHandler[UpdateUserCommand, FlextTypes.Dict],
+    FlextCommandHandler[UpdateUserCommand, dict[str, object]],
 ):
     """Test handler for UpdateUserCommand."""
 
@@ -157,24 +157,24 @@ class UpdateUserCommandHandler(
     def handle(
         self,
         message: UpdateUserCommand,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Handle the update user command."""
         if message.target_user_id not in self.updated_users:
             self.updated_users[message.target_user_id] = {}
 
         self.updated_users[message.target_user_id].update(message.updates)
 
-        result_data: FlextTypes.Dict = {
+        result_data: dict[str, object] = {
             "target_user_id": message.target_user_id,
             "updated_fields": list(message.updates.keys()),
         }
 
-        return FlextResult[FlextTypes.Dict].ok(result_data)
+        return FlextResult[dict[str, object]].ok(result_data)
 
     def handle_command(
         self,
         command: UpdateUserCommand,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Handle the update user command (alias for handle)."""
         return self.handle(command)
 
@@ -336,7 +336,7 @@ class TestFlextCommandHandler:
 
     def test_can_handle_wrong_command_type(self) -> None:
         """Test can_handle with wrong command type."""
-        handler: FlextCommandHandler[CreateUserCommand, FlextTypes.Dict] = (
+        handler: FlextCommandHandler[CreateUserCommand, dict[str, object]] = (
             CreateUserCommandHandler()
         )
 
@@ -348,7 +348,7 @@ class TestFlextCommandHandler:
 
     def test_can_handle_non_command_object(self) -> None:
         """Test can_handle with non-command object."""
-        handler: FlextCommandHandler[CreateUserCommand, FlextTypes.Dict] = (
+        handler: FlextCommandHandler[CreateUserCommand, dict[str, object]] = (
             CreateUserCommandHandler()
         )
 
@@ -360,7 +360,7 @@ class TestFlextCommandHandler:
 
     def test_handle_command_success(self) -> None:
         """Test successful command handling."""
-        handler: FlextCommandHandler[CreateUserCommand, FlextTypes.Dict] = (
+        handler: FlextCommandHandler[CreateUserCommand, dict[str, object]] = (
             CreateUserCommandHandler()
         )
         command: CreateUserCommand = CreateUserCommand(
@@ -403,7 +403,7 @@ class TestFlextCommandHandler:
 
     def test_process_command_validation_failure(self) -> None:
         """Test processing with command validation failure."""
-        handler: FlextCommandHandler[CreateUserCommand, FlextTypes.Dict] = (
+        handler: FlextCommandHandler[CreateUserCommand, dict[str, object]] = (
             CreateUserCommandHandler()
         )
         command: CreateUserCommand = CreateUserCommand(
@@ -426,7 +426,7 @@ class TestFlextCommandHandler:
 
     def test_process_command_cannot_handle(self) -> None:
         """Test processing command that cannot be handled."""
-        handler: FlextCommandHandler[CreateUserCommand, FlextTypes.Dict] = (
+        handler: FlextCommandHandler[CreateUserCommand, dict[str, object]] = (
             CreateUserCommandHandler()
         )
         wrong_command: UpdateUserCommand = UpdateUserCommand(
@@ -464,7 +464,7 @@ class TestFlextCommandBus:
     def test_register_handler_success(self) -> None:
         """Test successful handler registration."""
         bus: FlextCommandBus = FlextCommandBus()
-        handler: FlextCommandHandler[CreateUserCommand, FlextTypes.Dict] = (
+        handler: FlextCommandHandler[CreateUserCommand, dict[str, object]] = (
             CreateUserCommandHandler()
         )
 
@@ -538,7 +538,7 @@ class TestFlextCommandBus:
             msg = f"Expected True, got {result.is_success}"
             raise AssertionError(msg)
         assert result.value is not None
-        user_data = cast("FlextTypes.Dict", result.value)
+        user_data = cast("dict[str, object]", result.value)
         if user_data["username"] != "alice":
             msg = f"Expected {'alice'}, got {user_data['username']}"
             raise AssertionError(msg)
@@ -650,11 +650,11 @@ class TestFlextCommandResults:
 
     def test_success_result_creation(self) -> None:
         """Test creating successful command result."""
-        result_data: FlextTypes.Dict = {"id": "123", "username": "test"}
+        result_data: dict[str, object] = {"id": "123", "username": "test"}
 
-        command_result: FlextResult[FlextTypes.Dict] = FlextResult[FlextTypes.Dict].ok(
-            result_data
-        )
+        command_result: FlextResult[dict[str, object]] = FlextResult[
+            dict[str, object]
+        ].ok(result_data)
 
         if not command_result.is_success:
             msg = f"Expected True, got {command_result.is_success}"
@@ -686,7 +686,7 @@ class TestFlextCommandResults:
         result_data = {"id": "123"}
 
         # FlextResult test - create successful result
-        command_result = FlextResult[FlextTypes.StringDict].ok(result_data)
+        command_result = FlextResult[dict[str, str]].ok(result_data)
 
         if not command_result.is_success:
             msg = f"Expected True, got {command_result.is_success}"
@@ -721,7 +721,7 @@ class TestCommandPatternIntegration:
             msg = f"Expected True, got {create_result.is_success}"
             raise AssertionError(msg)
         assert create_result.value is not None
-        user_data = cast("FlextTypes.Dict", create_result.value)
+        user_data = cast("dict[str, object]", create_result.value)
         assert user_data is not None
         user_id = cast("str", user_data["id"])
 
@@ -736,7 +736,7 @@ class TestCommandPatternIntegration:
             msg = f"Expected True, got {update_result.is_success}"
             raise AssertionError(msg)
         assert update_result.value is not None
-        update_data = cast("FlextTypes.Dict", update_result.value)
+        update_data = cast("dict[str, object]", update_result.value)
         if update_data["target_user_id"] != user_id:
             msg = f"Expected {user_id}, got {update_data['target_user_id']}"
             raise AssertionError(

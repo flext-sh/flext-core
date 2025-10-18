@@ -18,7 +18,6 @@ from flext_core import (
     FlextHandlers,
     FlextModels,
     FlextResult,
-    FlextTypes,
 )
 
 
@@ -122,7 +121,7 @@ class TestFlextDispatcherCoverage:
         assert registration_result.is_success
 
         # Test batch dispatch - returns list of FlextResult objects
-        messages: FlextTypes.List = ["msg1", "msg2", "msg3"]
+        messages: list[object] = ["msg1", "msg2", "msg3"]
         batch_results = dispatcher.dispatch_batch("batch_message", messages)
         assert isinstance(batch_results, list)
         # Check that at least some results are present
@@ -186,7 +185,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Test context creation and usage
-        context: FlextTypes.Dict = {"user_id": "123", "operation": "test"}
+        context: dict[str, object] = {"user_id": "123", "operation": "test"}
 
         # Create a context-aware handler with proper config
         class ContextHandler(FlextHandlers[object, object]):
@@ -703,7 +702,7 @@ class TestFlextDispatcherCoverage:
             """Simple identity handler for testing."""
             return x
 
-        invalid_request: FlextTypes.Dict = {
+        invalid_request: dict[str, object] = {
             "handler_mode": "invalid_mode",
             "message_type": "test",
             "handler": test_handler,
@@ -717,7 +716,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Test with no handler
-        invalid_request: FlextTypes.Dict = {
+        invalid_request: dict[str, object] = {
             "handler_mode": "command",
             "message_type": "test",
         }
@@ -730,7 +729,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Test with no message
-        invalid_request: FlextTypes.Dict = {
+        invalid_request: dict[str, object] = {
             "message_type": "test",
         }
 
@@ -896,7 +895,7 @@ class TestFlextDispatcherCoverage:
         dispatcher.register_handler("MetadataMessage", handler)
 
         # Test dispatch with various metadata
-        metadata_tests: list[FlextTypes.Dict] = [
+        metadata_tests: list[dict[str, object]] = [
             {"user_id": "123"},
             {"correlation_id": "corr_456"},
             {"trace_id": "trace_789", "span_id": "span_abc"},
@@ -931,7 +930,7 @@ class TestFlextDispatcherCoverage:
         dispatcher.register_handler("BatchError", handler)
 
         # Test batch with mixed success/failure
-        messages: FlextTypes.List = [
+        messages: list[object] = [
             "success1",
             "fail",
             "success2",

@@ -201,28 +201,28 @@ class TestCompleteFlextSystemIntegration:
 
         # Simulação de processamento de dados completo
         def processar_dados_usuario(
-            dados: FlextTypes.StringDict,
-        ) -> FlextResult[FlextTypes.StringDict]:
+            dados: dict[str, str],
+        ) -> FlextResult[dict[str, str]]:
             """Função que simula processamento completo usando todo o sistema.
 
             Returns:
-                FlextResult[FlextTypes.StringDict]: Resultado do processamento ou erro.
+                FlextResult[dict[str, str]]: Resultado do processamento ou erro.
 
             """
             # Validar entrada
             if not dados:
-                return FlextResult[FlextTypes.StringDict].fail(
+                return FlextResult[dict[str, str]].fail(
                     "Dados não fornecidos",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
             # Processar dados
-            dados_processados: FlextTypes.StringDict = {}
+            dados_processados: dict[str, str] = {}
 
             # FlextValidations was completely removed - using direct validation
             for key, value in dados.items():
                 if len(value.strip()) == 0:
-                    return FlextResult[FlextTypes.StringDict].fail(
+                    return FlextResult[dict[str, str]].fail(
                         f"Campo '{key}' não pode estar vazio",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -236,7 +236,7 @@ class TestCompleteFlextSystemIntegration:
             )
             dados_processados["processado_por"] = "sistema_flext"
 
-            return FlextResult[FlextTypes.StringDict].ok(dados_processados)
+            return FlextResult[dict[str, str]].ok(dados_processados)
 
         # Teste do processamento completo
         dados_teste = {"nome": "João", "email": "joao@exemplo.com"}

@@ -40,7 +40,6 @@ from flext_core import (
     FlextResult,
     FlextRuntime,
     FlextService,
-    FlextTypes,
 )
 
 
@@ -66,14 +65,14 @@ class RealisticDataDict(TypedDict):
     """TypedDict for realistic data structure."""
 
     order: RealisticOrderDict
-    api_response: FlextTypes.Dict
-    user_registration: FlextTypes.Dict
+    api_response: dict[str, object]
+    user_registration: dict[str, object]
 
 
 class DemoScenarios:
     """Inline scenario helpers for model demonstrations."""
 
-    _DATASET: ClassVar[FlextTypes.Dict] = {
+    _DATASET: ClassVar[dict[str, object]] = {
         "users": [
             {
                 "id": 1,
@@ -120,25 +119,25 @@ class DemoScenarios:
         },
     }
 
-    _CONFIG: ClassVar[FlextTypes.Dict] = {
+    _CONFIG: ClassVar[dict[str, object]] = {
         "database_url": "sqlite:///:memory:",
         "api_timeout": 30,
         "retry": 3,
     }
 
-    _PAYLOAD: ClassVar[FlextTypes.Dict] = {
+    _PAYLOAD: ClassVar[dict[str, object]] = {
         "event": "order_created",
         "order_id": "order-456",
         "metadata": {"source": "examples", "version": "1.0"},
     }
 
-    _VALIDATION: ClassVar[FlextTypes.Dict] = {
+    _VALIDATION: ClassVar[dict[str, object]] = {
         "valid_emails": ["user@example.com", "contact@flext.dev"],
         "invalid_emails": ["invalid", "missing-at"],
     }
 
     @staticmethod
-    def dataset() -> FlextTypes.Dict:
+    def dataset() -> dict[str, object]:
         """Get a copy of the demo dataset."""
         return deepcopy(DemoScenarios._DATASET)
 
@@ -148,7 +147,7 @@ class DemoScenarios:
         return deepcopy(DemoScenarios._REALISTIC)
 
     @staticmethod
-    def validation_data() -> FlextTypes.Dict:
+    def validation_data() -> dict[str, object]:
         """Get a copy of validation demo data."""
         return deepcopy(DemoScenarios._VALIDATION)
 
@@ -536,9 +535,9 @@ class ComprehensiveModelsService(FlextService[Order]):
         """
         super().__init__()
         self._scenarios = DemoScenarios
-        self._dataset: FlextTypes.Dict = self._scenarios.dataset()
+        self._dataset: dict[str, object] = self._scenarios.dataset()
         self._realistic: RealisticDataDict = self._scenarios.realistic_data()
-        self._validation: FlextTypes.Dict = self._scenarios.validation_data()
+        self._validation: dict[str, object] = self._scenarios.validation_data()
 
         # Demonstrate inherited logger (no manual instantiation needed!)
         self.logger.info(
@@ -591,7 +590,7 @@ class ComprehensiveModelsService(FlextService[Order]):
 
         validation_data = self._validation
         sample_email = cast(
-            "str", cast("FlextTypes.List", validation_data["valid_emails"])[0]
+            "str", cast("list[object]", validation_data["valid_emails"])[0]
         )
         email_result = Email.create_email(sample_email)
         if email_result.is_success:
@@ -750,7 +749,7 @@ class ComprehensiveModelsService(FlextService[Order]):
         """Show how aggregates maintain business invariants."""
         print("\n=== Business Invariants ===")
 
-        users_list = cast("list[FlextTypes.Dict]", self._dataset["users"])
+        users_list = cast("list[dict[str, object]]", self._dataset["users"])
         user_data = users_list[0]
 
         address = Address(
@@ -1002,7 +1001,7 @@ class ComprehensiveModelsService(FlextService[Order]):
         print("\n=== flow_through(): Domain Model Validation Pipeline ===")
 
         def create_customer(
-            data: FlextTypes.Dict,
+            data: dict[str, object],
         ) -> FlextResult[Customer]:
             """Step 1: Create customer."""
             email_result = Email.create_email(str(data.get("email", "")))
@@ -1046,12 +1045,12 @@ class ComprehensiveModelsService(FlextService[Order]):
         # Pipeline: create → validate → assign VIP
         validation_data = self._validation
         sample_email = cast(
-            "str", cast("FlextTypes.List", validation_data["valid_emails"])[0]
+            "str", cast("list[object]", validation_data["valid_emails"])[0]
         )
-        users_list = cast("list[FlextTypes.Dict]", self._dataset["users"])
+        users_list = cast("list[dict[str, object]]", self._dataset["users"])
         user_data = users_list[0]
 
-        initial_data: FlextTypes.Dict = {
+        initial_data: dict[str, object] = {
             "email": sample_email,
             "name": str(user_data["name"]),
         }

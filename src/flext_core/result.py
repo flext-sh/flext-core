@@ -35,7 +35,7 @@ from flext_core.typings import FlextTypes
 
 
 class FlextResult[T_co]:
-    """Type-safe result type implementing the railway pattern (Either monad).
+    """FlextResult[T_co] type-safe result type implementing the railway pattern (Either monad).
 
     Core Foundation Pattern: Railway-Oriented Programming
     ======================================================
@@ -194,7 +194,7 @@ class FlextResult[T_co]:
     # Internal storage using returns.Result as backend
     _result: Result[T_co, str]
     _error_code: str | None
-    _error_data: FlextTypes.Dict
+    _error_data: dict[str, object]
 
     # Legacy attributes for backward compatibility (synced from _result)
     _data: T_co | None
@@ -232,7 +232,7 @@ class FlextResult[T_co]:
         data: None = None,
         error: str,
         error_code: str | None = None,
-        error_data: FlextTypes.Dict | None = None,
+        error_data: dict[str, object] | None = None,
     ) -> None: ...
 
     def __init__(
@@ -241,7 +241,7 @@ class FlextResult[T_co]:
         data: T_co | None = None,
         error: str | None = None,
         error_code: str | None = None,
-        error_data: FlextTypes.Dict | None = None,
+        error_data: dict[str, object] | None = None,
     ) -> None:
         """Initialize result with either success data or error using returns.Result backend."""
         super().__init__()
@@ -311,7 +311,7 @@ class FlextResult[T_co]:
         return self._error_code
 
     @property
-    def error_data(self) -> FlextTypes.Dict:
+    def error_data(self) -> dict[str, object]:
         """Return the structured error metadata dictionary for observability."""
         return self._error_data
 
@@ -352,7 +352,7 @@ class FlextResult[T_co]:
         /,
         *,
         error_code: str | None = None,
-        error_data: FlextTypes.Dict | None = None,
+        error_data: dict[str, object] | None = None,
     ) -> Self:
         """Create a failed FlextResult with structured error information.
 
@@ -422,7 +422,7 @@ class FlextResult[T_co]:
             from flext_core import FlextResult
 
 
-            def risky_operation() -> FlextTypes.Dict:
+            def risky_operation() -> dict[str, object]:
                 return api.fetch_data()  # May raise exceptions
 
 
@@ -940,7 +940,7 @@ class FlextResult[T_co]:
             from flext_core import FlextResult
 
 
-            def expensive_default() -> FlextTypes.Dict:
+            def expensive_default() -> dict[str, object]:
                 # This only runs if result is failure
                 print("Computing expensive default...")
                 return {"default": True, "computed": True}
@@ -1181,15 +1181,15 @@ class FlextResult[T_co]:
 
         Example:
             ```python
-            def fetch_data() -> FlextTypes.Dict:
+            def fetch_data() -> dict[str, object]:
                 return api.get_data()
 
 
             # Basic usage
-            result = FlextResult["FlextTypes.Dict"].safe_call(fetch_data)
+            result = FlextResult["dict[str, object]"].safe_call(fetch_data)
 
             # With error code
-            result = FlextResult["FlextTypes.Dict"].safe_call(
+            result = FlextResult["dict[str, object]"].safe_call(
                 fetch_data, error_code="API_ERROR"
             )
 

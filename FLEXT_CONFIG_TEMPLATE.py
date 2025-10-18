@@ -363,7 +363,7 @@ SPDX-License-Identifier: MIT
 #             return FlextResult[None].fail(f"Failed to save configuration: {e}")
 #
 #     # Infrastructure protocol implementations
-#     def configure(self, config: FlextTypes.Dict) -> FlextResult[None]:
+#     def configure(self, config: dict[str, object]) -> FlextResult[None]:
 #         """Configure component with provided settings."""
 #         try:
 #             for key, value in config.items():
@@ -405,7 +405,7 @@ SPDX-License-Identifier: MIT
 #         return self.log_level
 #
 #     @computed_field
-#     def cache_config(self) -> FlextTypes.Dict:
+#     def cache_config(self) -> dict[str, object]:
 #         """Get cache configuration."""
 #         return {
 #             "ttl": self.cache_ttl,
@@ -414,7 +414,7 @@ SPDX-License-Identifier: MIT
 #         }
 #
 #     @computed_field
-#     def security_config(self) -> FlextTypes.Dict:
+#     def security_config(self) -> dict[str, object]:
 #         """Get security configuration."""
 #         return {
 #             "secret_key_configured": self.secret_key is not None,
@@ -422,7 +422,7 @@ SPDX-License-Identifier: MIT
 #         }
 #
 #     @computed_field
-#     def database_config(self) -> FlextTypes.Dict:
+#     def database_config(self) -> dict[str, object]:
 #         """Get database configuration."""
 #         return {
 #             "url": self.database_url,
@@ -436,7 +436,7 @@ SPDX-License-Identifier: MIT
 #         }
 #
 #     @computed_field
-#     def logging_config(self) -> FlextTypes.Dict:
+#     def logging_config(self) -> dict[str, object]:
 #         """Get logging configuration."""
 #         return {
 #             "level": self.effective_log_level,
@@ -446,7 +446,7 @@ SPDX-License-Identifier: MIT
 #         }
 #
 #     @computed_field
-#     def metadata_config(self) -> FlextTypes.Dict:
+#     def metadata_config(self) -> dict[str, object]:
 #         """Get application metadata."""
 #         return {
 #             "app_name": self.app_name,
@@ -460,7 +460,7 @@ SPDX-License-Identifier: MIT
 #     # [PROJECT-SPECIFIC COMPUTED FIELDS GO HERE]
 #     # Add your project-specific computed fields here
 #     # @computed_field
-#     # def [project_specific_config](self) -> FlextTypes.Dict:
+#     # def [project_specific_config](self) -> dict[str, object]:
 #     #     """Get [project]-specific configuration."""
 #     #     return {
 #     #         # Configuration logic here

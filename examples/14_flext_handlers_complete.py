@@ -35,7 +35,6 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextService,
-    FlextTypes,
 )
 
 
@@ -67,7 +66,7 @@ class GetUserQuery:
 
 @dataclass
 class ListUsersQuery:
-    """Query to FlextTypes.List users with pagination."""
+    """Query to list[object] users with pagination."""
 
     limit: int = 10
     offset: int = 0
@@ -322,7 +321,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     command_timeout=2000,
                     max_command_retries=1,
                     metadata={
-                        "description": "Handles user FlextTypes.List queries with pagination",
+                        "description": "Handles user list[object] queries with pagination",
                     },
                 )
                 super().__init__(config=config)
@@ -467,7 +466,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         """Show comprehensive error handling patterns."""
         print("\n=== Error Handling Patterns ===")
 
-        class ValidationHandler(FlextHandlers[FlextTypes.Dict, FlextTypes.Dict]):
+        class ValidationHandler(FlextHandlers[dict[str, object], dict[str, object]]):
             """Handler demonstrating various error scenarios."""
 
             def __init__(self) -> None:
@@ -485,14 +484,14 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
             def handle(
                 self,
-                message: FlextTypes.Dict,
-            ) -> FlextResult[FlextTypes.Dict]:
+                message: dict[str, object],
+            ) -> FlextResult[dict[str, object]]:
                 """Handle validation with comprehensive error handling."""
                 self._logger.info("Processing validation request")
 
                 # Required field validation
                 if not message.get("id"):
-                    return FlextResult[FlextTypes.Dict].fail(
+                    return FlextResult[dict[str, object]].fail(
                         "Missing required field: id",
                         error_code="MISSING_FIELD",
                         error_data={
@@ -503,7 +502,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
                 # Type validation
                 if not isinstance(message.get("amount"), (int, float)):
-                    return FlextResult[FlextTypes.Dict].fail(
+                    return FlextResult[dict[str, object]].fail(
                         "Invalid type for amount field",
                         error_code="TYPE_ERROR",
                         error_data={
@@ -516,28 +515,28 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 # Business rule validation
                 amount_value = message.get("amount", 0)
                 if not isinstance(amount_value, (int, float)):
-                    return FlextResult[FlextTypes.Dict].fail(
+                    return FlextResult[dict[str, object]].fail(
                         "Amount must be a number",
                         error_code="TYPE_ERROR",
                     )
 
                 amount: int | float = amount_value
                 if amount < 0:
-                    return FlextResult[FlextTypes.Dict].fail(
+                    return FlextResult[dict[str, object]].fail(
                         "Amount cannot be negative",
                         error_code="BUSINESS_RULE_VIOLATION",
                         error_data={"rule": "positive_amount", "value": amount},
                     )
 
                 # Success case
-                validated_data: FlextTypes.Dict = {
+                validated_data: dict[str, object] = {
                     "id": message["id"],
                     "amount": amount,
                     "validated_at": time.time(),
                     "status": "validated",
                 }
 
-                return FlextResult[FlextTypes.Dict].ok(validated_data)
+                return FlextResult[dict[str, object]].ok(validated_data)
 
         # Test error handling
         print("\n1. Error Handling Scenarios:")
@@ -578,7 +577,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         class ProcessOrderCommand:
             order_id: str
             customer_id: str
-            items: list[FlextTypes.Dict]
+            items: list[dict[str, object]]
             total_amount: Decimal
 
         class OrderValidationHandler(
@@ -638,7 +637,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             ) -> FlextResult[ProcessOrderCommand]:
                 """Enrich order with additional data."""
                 # Simulate enrichment by adding timestamps and IDs
-                enriched_items: list[FlextTypes.Dict] = []
+                enriched_items: list[dict[str, object]] = []
                 for item in message.items:
                     enriched_item = item.copy()
                     enriched_item["item_id"] = f"ITEM-{uuid4().hex[:8]}"
@@ -737,11 +736,11 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         # 1. from_callable - Safe Handler Execution
         print("\n=== 1. from_callable: Safe Handler Execution ===")
 
-        def risky_handler_operation() -> FlextTypes.Dict:
+        def risky_handler_operation() -> dict[str, object]:
             """Handler operation that might raise exceptions."""
             # Simulate command execution that might fail
             user_id = str(uuid4())
-            user_data: FlextTypes.Dict = {
+            user_data: dict[str, object] = {
                 "user_id": user_id,
                 "username": "newuser",
                 "email": "newuser@example.com",
@@ -757,7 +756,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             return user_data
 
         # Safe execution without try/except
-        handler_result = FlextResult[FlextTypes.Dict].from_callable(
+        handler_result = FlextResult[dict[str, object]].from_callable(
             risky_handler_operation
         )
         if handler_result.is_success:
@@ -771,54 +770,54 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         print("\n=== 2. flow_through: Handler Pipeline Composition ===")
 
         def validate_command(
-            cmd: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            cmd: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Validate command data."""
             username = cmd.get("username", "")
             if not isinstance(username, str) or not username or len(username) < 3:
-                return FlextResult[FlextTypes.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     "Username must be at least 3 characters",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
-            return FlextResult[FlextTypes.Dict].ok(cmd)
+            return FlextResult[dict[str, object]].ok(cmd)
 
         def check_authorization(
-            cmd: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            cmd: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Check if user is authorized for command."""
             # Simulate authorization check
-            return FlextResult[FlextTypes.Dict].ok(cmd)
+            return FlextResult[dict[str, object]].ok(cmd)
 
         def execute_command(
-            cmd: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            cmd: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Execute the actual command."""
-            executed: FlextTypes.Dict = {
+            executed: dict[str, object] = {
                 **cmd,
                 "executed_at": "2025-01-01T12:00:00Z",
                 "status": "success",
             }
-            return FlextResult[FlextTypes.Dict].ok(executed)
+            return FlextResult[dict[str, object]].ok(executed)
 
         def persist_result(
-            cmd: FlextTypes.Dict,
-        ) -> FlextResult[FlextTypes.Dict]:
+            cmd: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             """Persist command execution result."""
-            persisted: FlextTypes.Dict = {
+            persisted: dict[str, object] = {
                 **cmd,
                 "persisted": True,
                 "db_id": str(uuid4())[:8],
             }
-            return FlextResult[FlextTypes.Dict].ok(persisted)
+            return FlextResult[dict[str, object]].ok(persisted)
 
         # Flow through handler pipeline
-        command_input: FlextTypes.Dict = {
+        command_input: dict[str, object] = {
             "username": "testuser",
             "email": "test@example.com",
             "command_type": "CreateUser",
         }
         pipeline_result = (
-            FlextResult[FlextTypes.Dict]
+            FlextResult[dict[str, object]]
             .ok(command_input)
             .flow_through(
                 validate_command,
@@ -862,20 +861,20 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         # 4. alt - Alternative Handler Execution
         print("\n=== 4. alt: Alternative Handler Execution ===")
 
-        def get_cached_handler() -> FlextResult[FlextTypes.Dict]:
+        def get_cached_handler() -> FlextResult[dict[str, object]]:
             """Try to get cached handler result."""
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 "Cache miss", error_code=FlextConstants.Errors.OPERATION_ERROR
             )
 
-        def execute_fresh_handler() -> FlextResult[FlextTypes.Dict]:
+        def execute_fresh_handler() -> FlextResult[dict[str, object]]:
             """Execute fresh handler."""
-            handler_result: FlextTypes.Dict = {
+            handler_result: dict[str, object] = {
                 "handler_type": "fresh",
                 "execution_time": "10ms",
                 "result": "success",
             }
-            return FlextResult[FlextTypes.Dict].ok(handler_result)
+            return FlextResult[dict[str, object]].ok(handler_result)
 
         # Try cached, fall back to fresh execution
         handler_exec_result = get_cached_handler().alt(execute_fresh_handler())
@@ -889,7 +888,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         # 5. value_or_call - Lazy Handler Initialization
         print("\n=== 5. value_or_call: Lazy Handler Initialization ===")
 
-        def create_expensive_handler() -> FlextTypes.Dict:
+        def create_expensive_handler() -> dict[str, object]:
             """Create handler (expensive operation)."""
             print("   ⚙️  Initializing expensive handler...")
             return {
@@ -900,20 +899,20 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             }
 
         # Try to get existing handler, create if not available
-        handler_fail_result = FlextResult[FlextTypes.Dict].fail("No existing handler")
+        handler_fail_result = FlextResult[dict[str, object]].fail("No existing handler")
         handler = handler_fail_result.value_or_call(create_expensive_handler)
         print(f"✅ Handler acquired: {handler.get('handler_id', 'unknown')}")
         print(f"   Type: {handler.get('handler_type', 'unknown')}")
         print(f"   Memory: {handler.get('memory_mb', 0)}MB")
 
         # Try again with successful result (lazy function NOT called)
-        existing_handler: FlextTypes.Dict = {
+        existing_handler: dict[str, object] = {
             "handler_id": "EXIST-HANDLER-001",
             "handler_type": "cached_query",
             "initialized": True,
             "memory_mb": 64,
         }
-        handler_success_result = FlextResult[FlextTypes.Dict].ok(existing_handler)
+        handler_success_result = FlextResult[dict[str, object]].ok(existing_handler)
         handler_cached = handler_success_result.value_or_call(create_expensive_handler)
         print(
             f"✅ Existing handler used: {handler_cached.get('handler_id', 'unknown')}"

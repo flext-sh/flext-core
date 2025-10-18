@@ -143,13 +143,13 @@ class FlextContainer(FlextProtocols.Configurable):
         self._di_container = self.containers.DynamicContainer()
 
         # Core service storage with type safety (MAINTAINED for compatibility)
-        self._services: FlextTypes.Dict = {}
-        self._factories: FlextTypes.Dict = {}
+        self._services: dict[str, object] = {}
+        self._factories: dict[str, object] = {}
 
         # Note: _flext_config is now a property that always returns the current global config
         # This ensures the container stays in sync with config resets and upgrades
-        self._global_config: FlextTypes.Dict = self._create_container_config()
-        self._user_overrides: FlextTypes.Dict = {}
+        self._global_config: dict[str, object] = self._create_container_config()
+        self._user_overrides: dict[str, object] = {}
 
         # Sync FlextConfig to internal DI container
         self._sync_config_to_di()
@@ -171,7 +171,7 @@ class FlextContainer(FlextProtocols.Configurable):
         """
         return FlextConfig.get_global_instance()
 
-    def _create_container_config(self) -> FlextTypes.Dict:
+    def _create_container_config(self) -> dict[str, object]:
         """Create container configuration from FlextConfig defaults."""
         return {
             "max_workers": int(getattr(self._flext_config, "max_workers", 4)),
@@ -218,7 +218,7 @@ class FlextContainer(FlextProtocols.Configurable):
     # =========================================================================
 
     @override
-    def configure(self, config: FlextTypes.Dict) -> FlextResult[None]:
+    def configure(self, config: dict[str, object]) -> FlextResult[None]:
         """Configure component with provided settings - Configurable protocol implementation.
 
         Returns:
@@ -228,11 +228,11 @@ class FlextContainer(FlextProtocols.Configurable):
         return self.configure_container(config)
 
     @property
-    def services(self) -> FlextTypes.Dict:
+    def services(self) -> dict[str, object]:
         """Get registered services dictionary (read-only access for compatibility).
 
         Returns:
-            FlextTypes.Dict: Dictionary of registered service instances.
+            dict[str, object]: Dictionary of registered service instances.
 
         Note:
             This property provides read-only access to the internal services registry
@@ -242,11 +242,11 @@ class FlextContainer(FlextProtocols.Configurable):
         return self._services.copy()
 
     @property
-    def factories(self) -> FlextTypes.Dict:
+    def factories(self) -> dict[str, object]:
         """Get registered factories dictionary (read-only access for compatibility).
 
         Returns:
-            FlextTypes.Dict: Dictionary of registered factory functions.
+            dict[str, object]: Dictionary of registered factory functions.
 
         Note:
             This property provides read-only access to the internal factories registry
@@ -255,11 +255,11 @@ class FlextContainer(FlextProtocols.Configurable):
         """
         return self._factories.copy()
 
-    def get_config(self) -> FlextTypes.Dict:
+    def get_config(self) -> dict[str, object]:
         """Get current configuration - Configurable protocol implementation.
 
         Returns:
-            FlextTypes.Dict: Current container configuration
+            dict[str, object]: Current container configuration
 
         """
         self._refresh_global_config()
@@ -324,7 +324,7 @@ class FlextContainer(FlextProtocols.Configurable):
     def _store_service(self, name: str, service: object) -> FlextResult[None]:
         """Store service in registry AND internal DI container with type preservation.
 
-        Stores in both tracking FlextTypes.Dict (backward compatibility) and internal
+        Stores in both tracking dict[str, object] (backward compatibility) and internal
         dependency-injector container (advanced DI features). Uses Object
         provider for existing service instances. Type T is preserved for static typing.
 
@@ -341,7 +341,7 @@ class FlextContainer(FlextProtocols.Configurable):
 
         provider_registered = False
         try:
-            # Store in tracking FlextTypes.Dict (backward compatibility)
+            # Store in tracking dict[str, object] (backward compatibility)
             self._services[name] = service
 
             # Store in internal DI container using Object provider
@@ -385,7 +385,7 @@ class FlextContainer(FlextProtocols.Configurable):
     ) -> FlextResult[None]:
         """Store factory in registry AND internal DI container with type preservation.
 
-        Stores in both tracking FlextTypes.Dict (backward compatibility) and internal
+        Stores in both tracking dict[str, object] (backward compatibility) and internal
         dependency-injector container using Singleton provider with factory.
         This ensures factory is called once and result is cached (lazy singleton).
         Type T is preserved for static type checking.
@@ -407,7 +407,7 @@ class FlextContainer(FlextProtocols.Configurable):
 
         provider_registered = False
         try:
-            # Store in tracking FlextTypes.Dict (backward compatibility)
+            # Store in tracking dict[str, object] (backward compatibility)
             self._factories[name] = factory
 
             # Store in internal DI container using Singleton with factory
@@ -493,7 +493,7 @@ class FlextContainer(FlextProtocols.Configurable):
                 provider = getattr(self._di_container, name)
                 service = provider()
 
-                # Cache factory results in tracking FlextTypes.Dict for compatibility
+                # Cache factory results in tracking dict[str, object] for compatibility
                 if name in self._factories and name not in self._services:
                     self._services[name] = service
 
@@ -582,7 +582,7 @@ class FlextContainer(FlextProtocols.Configurable):
     # BATCH OPERATIONS - Efficient bulk service management
     # =========================================================================
 
-    def batch_register(self, services: FlextTypes.Dict) -> FlextResult[None]:
+    def batch_register(self, services: dict[str, object]) -> FlextResult[None]:
         """Register multiple services atomically with rollback on failure.
 
         Returns:
@@ -608,11 +608,11 @@ class FlextContainer(FlextProtocols.Configurable):
             self._restore_registry_snapshot(snapshot)
             return FlextResult[None].fail(f"Batch registration error: {e}")
 
-    def _create_registry_snapshot(self) -> FlextTypes.Dict:
+    def _create_registry_snapshot(self) -> dict[str, object]:
         """Create snapshot of current registry state for rollback.
 
         Returns:
-            FlextTypes.Dict: Snapshot containing services and factories.
+            dict[str, object]: Snapshot containing services and factories.
 
         """
         return {
@@ -622,7 +622,7 @@ class FlextContainer(FlextProtocols.Configurable):
 
     def _process_batch_registrations(
         self,
-        services: FlextTypes.Dict,
+        services: dict[str, object],
     ) -> FlextResult[None]:
         """Process batch registrations with proper error handling.
 
@@ -647,7 +647,7 @@ class FlextContainer(FlextProtocols.Configurable):
 
         return FlextResult[None].ok(None)
 
-    def _restore_registry_snapshot(self, snapshot: FlextTypes.Dict) -> None:
+    def _restore_registry_snapshot(self, snapshot: dict[str, object]) -> None:
         """Restore registry state from snapshot with type safety."""
         # Direct assignment - snapshot already has correct types
         services_snapshot = snapshot.get("services")
@@ -732,7 +732,7 @@ class FlextContainer(FlextProtocols.Configurable):
                 name = service_name
 
             # Try to resolve dependencies from container
-            dependencies: FlextTypes.Dict = {}
+            dependencies: dict[str, object] = {}
             signature = inspect.signature(service_class.__init__)
 
             for param_name, param in signature.parameters.items():
@@ -781,7 +781,7 @@ class FlextContainer(FlextProtocols.Configurable):
         """
         try:
             # Try to resolve dependencies from container
-            dependencies: FlextTypes.Dict = {}
+            dependencies: dict[str, object] = {}
             signature = inspect.signature(service_class.__init__)
 
             for param_name, param in signature.parameters.items():
@@ -846,20 +846,20 @@ class FlextContainer(FlextProtocols.Configurable):
             return False
         return validated_name in self._services or validated_name in self._factories
 
-    def list_services(self) -> FlextResult[FlextTypes.List]:
+    def list_services(self) -> FlextResult[list[object]]:
         """List all registered services with metadata.
 
         Returns:
-            FlextResult[FlextTypes.List]: Success with service list or failure with error.
+            FlextResult[list[object]]: Success with service list or failure with error.
 
         """
         # ISSUE: Duplicates get_service_names functionality - both methods iterate over same service collections
         try:
-            services: FlextTypes.List = []
+            services: list[object] = []
             for name in sorted(
                 set(self._services.keys()) | set(self._factories.keys()),
             ):
-                service_info: FlextTypes.Dict = {
+                service_info: dict[str, object] = {
                     FlextConstants.Mixins.FIELD_NAME: name,
                     FlextConstants.Mixins.FIELD_TYPE: "instance"
                     if name in self._services
@@ -869,9 +869,9 @@ class FlextContainer(FlextProtocols.Configurable):
                 # Ensure type compatibility by explicitly casting to object before append
                 services.append(cast("object", service_info))
 
-            return FlextResult[FlextTypes.List].ok(services)
+            return FlextResult[list[object]].ok(services)
         except Exception as e:
-            return FlextResult[FlextTypes.List].fail(
+            return FlextResult[list[object]].fail(
                 f"Failed to list services: {e}",
             )
 
@@ -880,11 +880,11 @@ class FlextContainer(FlextProtocols.Configurable):
         name: str,
         service: object,
         service_type: str,
-    ) -> FlextTypes.Dict:
+    ) -> dict[str, object]:
         """Build service information dictionary.
 
         Returns:
-            FlextTypes.Dict: Service information dictionary.
+            dict[str, object]: Service information dictionary.
 
         """
         try:
@@ -916,7 +916,7 @@ class FlextContainer(FlextProtocols.Configurable):
     # CONFIGURATION MANAGEMENT - FlextConfig integration
     # =========================================================================
 
-    def configure_container(self, config: FlextTypes.Dict) -> FlextResult[None]:
+    def configure_container(self, config: dict[str, object]) -> FlextResult[None]:
         """Configure container with validated settings.
 
         Returns:
@@ -943,7 +943,7 @@ class FlextContainer(FlextProtocols.Configurable):
     def _refresh_global_config(self) -> None:
         """Refresh the effective global configuration."""
         # Merge FlextConfig defaults with user overrides
-        merged: FlextTypes.Dict = {}
+        merged: dict[str, object] = {}
         for source in (self._create_container_config(), self._user_overrides):
             merged.update({
                 key: value for key, value in source.items() if value is not None
@@ -987,20 +987,20 @@ class FlextContainer(FlextProtocols.Configurable):
     def create_module_utilities(
         cls,
         module_name: str,
-    ) -> FlextResult[FlextTypes.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Create module-specific utilities with container integration.
 
         Returns:
-            FlextResult[FlextTypes.Dict]: Success with utilities FlextTypes.Dict or failure with error.
+            FlextResult[dict[str, object]]: Success with utilities dict[str, object] or failure with error.
 
         """
         if not module_name:
-            return FlextResult[FlextTypes.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 "Module name must be non-empty string",
             )
 
         container = cls.ensure_global_instance()
-        return FlextResult[FlextTypes.Dict].ok({
+        return FlextResult[dict[str, object]].ok({
             "container": container,
             "module": module_name,
             "logger": f"flext.{module_name}",

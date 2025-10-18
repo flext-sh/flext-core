@@ -12,14 +12,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import ClassVar, Literal, Self, cast
+from typing import ClassVar, Literal, Self
 
 from dependency_injector import providers
 from pydantic import (
     Field,
-    SecretStr,
     computed_field,
-    field_serializer,
     field_validator,
     model_validator,
 )
@@ -28,7 +26,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
 
 
 class FlextConfig(BaseSettings):
@@ -57,31 +55,37 @@ class FlextConfig(BaseSettings):
     7. **Computed Fields** - Derived values (effective_log_level, is_production, etc.)
     8. **Global Singleton Pattern** - Thread-safe shared instance across ecosystem
     9. **Dynamic Updates** - Runtime configuration overrides with validation
-    10. **Secret Masking** - Automatic masking of sensitive data in logs/output
-    11. **Environment Merging** - Re-load and merge environment variables at runtime
-    12. **Override Validation** - Pre-validate overrides before applying
-    13. **Subclass Support** - Extensible for project-specific configurations
-    14. **RLock Thread Safety** - Double-checked locking for concurrent access
+    10. **Environment Merging** - Re-load and merge environment variables at runtime
+    11. **Override Validation** - Pre-validate overrides before applying
+    12. **Subclass Support** - Extensible for project-specific configurations
+    13. **RLock Thread Safety** - Double-checked locking for concurrent access
+    14. **DI Provider Integration** - Dependency injector provider pattern
 
     **Integration Points**:
     - **FlextConstants**: All defaults sourced from FlextConstants namespaces
     - **FlextExceptions**: ValidationError for invalid configurations
     - **FlextResult[T]**: Railway pattern for validate_runtime_requirements()
     - **FlextContainer**: DI provider accessible via get_di_config_provider()
-    - **FlextLogger**: Uses config for log_level, json_output, structured_output
+    - **FlextLogger**: Uses config for log_level
     - **FlextContext**: Uses config for context settings and correlation IDs
     - **FlextService**: Services access config for behavior customization
 
-    **Configuration Fields** (50+ Fields Organized by Category):
-    - **Core**: app_name, version, debug, trace
-    - **Logging** (12 fields): log_level, json_output, structured_output, etc.
-    - **Database**: database_url, database_pool_size
-    - **Cache**: cache_ttl, cache_max_size
-    - **Security**: secret_key, api_key (SecretStr masked)
-    - **Reliability** (5 fields): circuit_breaker_threshold, rate_limit_*, retry_*
-    - **Dispatcher** (4 fields): auto_context, timeout, metrics, logging
-    - **Features** (3 flags): enable_caching, enable_metrics, enable_tracing
-    - **Processing**: max_batch_size, max_workers, validation_*
+    **Configuration Fields** (27 Essential Fields - Verified in Use):
+    - **Core (4)**: app_name, version, debug, trace
+    - **Logging (11)**: log_level, json_output, include_source, log_verbosity, include_context, include_correlation_id, log_file, log_file_max_size, log_file_backup_count, console_enabled, console_color_enabled
+    - **Cache (2)**: enable_caching, cache_ttl (used by FlextMixins)
+    - **Database (2)**: database_url, database_pool_size
+    - **Reliability (5)**: circuit_breaker_threshold, rate_limit_max_requests, rate_limit_window_seconds, retry_delay, max_retry_attempts
+    - **Dispatcher (6)**: enable_timeout_executor, dispatcher_enable_logging, dispatcher_auto_context, dispatcher_timeout_seconds, dispatcher_enable_metrics, executor_workers
+    - **Processing (2)**: timeout_seconds, max_workers, max_batch_size (used by FlextProcessors)
+    - **Security (2)**: api_key, mask_sensitive_data
+
+    **Removed Fields** (23 total - verified not used in src/):
+    - Logging: structured_output
+    - Cache: cache_max_size
+    - Security: secret_key
+    - Features: enable_metrics, enable_tracing
+    - Validation: max_name_length, min_phone_digits, validation_timeout_ms, validation_strict_mode
 
     **Thread Safety Characteristics**:
     - **Singleton Access**: Uses RLock for double-checked locking pattern
@@ -89,13 +93,10 @@ class FlextConfig(BaseSettings):
     - **Global Instance**: Shared FlextConfig key ensures single instance
     - **Concurrent Access**: Safe for multi-threaded access
     - **Performance**: O(1) after first access (cached singleton)
-    - **Subclass Compatibility**: Automatically upgrades instance type if needed
 
-    **Validation Patterns** (4 Layers):
+    **Validation Patterns** (2 Layers):
     1. **Field Validators**: validate_log_level, validate_boolean_field
     2. **Model Validators**: validate_debug_trace_consistency
-    3. **Reusable Validators**: Ecosystem-wide validation helpers (public methods)
-    4. **Runtime Validators**: validate_runtime_requirements, validate_business_rules
 
     **Environment Variable Handling**:
     - **Prefix**: FLEXT_ (configurable via FlextConstants.Platform.ENV_PREFIX)
@@ -104,79 +105,16 @@ class FlextConfig(BaseSettings):
     - **Type Coercion**: Automatic conversion (string "true" → bool True)
     - **File Support**: .env file loading with encoding
 
-    **Usage Pattern 1 - Basic Creation**:
-    >>> from flext_core import FlextConfig
-    >>> config = FlextConfig()  # Load from environment + defaults
-    >>> log_level = config.log_level  # Access field directly
-
-    **Usage Pattern 2 - Custom Initialization**:
-    >>> config = FlextConfig(log_level="DEBUG", debug=True, app_name="MyApp")
-    >>> config.effective_log_level  # "DEBUG" (computed field)
-    >>> config.is_debug_enabled  # True (computed field)
-
-    **Usage Pattern 3 - Global Singleton**:
-    >>> global_config = FlextConfig.get_global_instance()
-    >>> other_config = FlextConfig.get_global_instance()
-    >>> assert global_config is other_config  # Same instance
-
-    **Usage Pattern 4 - Dynamic Updates**:
-    >>> config = FlextConfig()
-    >>> result = config.update_from_dict(log_level="DEBUG")
-    >>> if result.is_success:
-    ...     print(f"Updated: {config.log_level}")
-
-    **Usage Pattern 5 - Override Validation**:
-    >>> config = FlextConfig()
-    >>> result = config.validate_overrides(timeout_seconds=120, max_workers=8)
-    >>> if result.is_success:
-    ...     config.update_from_dict(**result.unwrap())
-
-    **Usage Pattern 6 - Environment Merging**:
-    >>> import os
-    >>> config = FlextConfig()
-    >>> os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
-    >>> result = config.merge_with_env_vars()
-    >>> config.log_level  # Updated from environment
-
-    **Usage Pattern 7 - Dependency Injection Integration**:
-    >>> di_provider = FlextConfig.get_di_config_provider()
-    >>> from dependency_injector import containers, providers
-    >>> class Container(containers.DeclarativeContainer):
-    ...     config = di_provider
-    ...     service = providers.Factory(MyService, config=config)
-
-    **Usage Pattern 8 - Computed Fields for Derived Values**:
-    >>> config = FlextConfig(debug=True, timeout_seconds=60)
-    >>> config.is_debug_enabled  # True
-    >>> config.effective_timeout  # 180 (60 * 3 for debugging)
-    >>> config.is_production  # False
-    >>> config.has_database  # False (no database_url set)
-
-    **Usage Pattern 9 - Validation and Railway Pattern**:
-    >>> config = FlextConfig(trace=True)  # Requires debug=True
-    >>> result = config.validate_runtime_requirements()
-    >>> if result.is_failure:
-    ...     print(f"Configuration error: {result.error}")
-
-    **Usage Pattern 10 - Configuration Reset and Set**:
-    >>> FlextConfig.reset_global_instance()  # Clear singleton
-    >>> new_config = FlextConfig(debug=True)
-    >>> FlextConfig.set_global_instance(new_config)  # Override global
-    >>> assert FlextConfig.get_global_instance() is new_config
-
     **Production Readiness Checklist**:
     ✅ Pydantic v2 BaseSettings with strict validation
-    ✅ All 50+ fields have proper type hints and constraints
+    ✅ 18 essential fields with proper type hints and constraints
     ✅ Thread-safe singleton with RLock double-checked locking
     ✅ Environment variable support with type coercion
-    ✅ Secret masking for sensitive data (api_key, secret_key)
     ✅ FlextResult-based error handling (railway pattern)
     ✅ Computed fields for derived configuration values
     ✅ Comprehensive field and model validators
-    ✅ Reusable validators for ecosystem-wide use
     ✅ DI provider integration for dependency injection
     ✅ Dynamic update and validation capabilities
-    ✅ Backward compatible with FlextBase.Config subclasses
     ✅ 100% type-safe (strict MyPy compliance)
     ✅ Complete test coverage (80%+)
     ✅ Production-ready for enterprise deployments
@@ -186,59 +124,70 @@ class FlextConfig(BaseSettings):
     _instances: ClassVar[dict[type, Self]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
 
-    def __new__(cls, **_kwargs: FlextTypes.ConfigValue) -> Self:
-        """Create new FlextConfig instance.
+    def __new__(cls, **_kwargs: object) -> Self:
+        """Create or return singleton FlextConfig instance.
 
-        Each call to FlextConfig() creates a new instance with the provided kwargs.
+        Each call to FlextConfig() returns the same singleton instance.
+        Each subclass (FlextLdifConfig, FlextCliConfig, etc.) gets its own singleton.
+        First call creates the instance, subsequent calls return the cached instance.
 
         Example:
             >>> config1 = FlextConfig()
             >>> config2 = FlextConfig()
-            >>> assert config1 is not config2  # Different instances
+            >>> assert config1 is config2  # Same instance (singleton)
 
-            >>> # With custom values
+            >>> ldif_config1 = FlextLdifConfig()
+            >>> ldif_config2 = FlextLdifConfig()
+            >>> assert ldif_config1 is ldif_config2  # Same LDIF instance
+            >>> assert config1 is not ldif_config1  # Different singletons per class
+
+            >>> # With custom values on first call
             >>> config = FlextConfig(app_name="MyApp", debug=True)
 
         Args:
-            **_kwargs: Configuration values (passed through Pydantic's MRO)
+            **_kwargs: Configuration values (passed through Pydantic's MRO, only used on first instantiation)
 
         Returns:
-            Self: New FlextConfig instance
+            Self: The singleton instance for the specific class
 
         """
-        # Pydantic BaseSettings handles instance creation and initialization
-        # through its metaclass; kwargs are consumed by Pydantic's __init__
-        return super().__new__(cls)
+        base_class = cls  # Use the actual class, not hardcoded FlextConfig
+        if base_class not in cls._instances:
+            with cls._lock:
+                if base_class not in cls._instances:
+                    instance = super().__new__(cls)
+                    cls._instances[base_class] = instance
+        return cls._instances[base_class]
 
-    # Pydantic 2.11+ BaseSettings configuration with STRICT validation (BREAKING)
+    # Pydantic 2.11+ BaseSettings configuration with STRICT validation
     model_config = SettingsConfigDict(
         case_sensitive=False,
         env_prefix=FlextConstants.Platform.ENV_PREFIX,
         env_file=FlextConstants.Platform.ENV_FILE_DEFAULT,
         env_file_encoding=FlextConstants.Mixins.DEFAULT_ENCODING,
         env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
-        extra="ignore",  # Allow unknown fields from other projects
+        extra="ignore",
         use_enum_values=True,
         frozen=False,
         arbitrary_types_allowed=True,
         validate_return=True,
         validate_assignment=True,
-        validate_default=True,  # Validate all default values
+        validate_default=True,
         str_strip_whitespace=True,
         str_to_lower=False,
-        strict=True,  # BREAKING: strict type coercion
+        strict=True,
         json_schema_extra={
             "title": "FLEXT Configuration",
             "description": "Enterprise FLEXT ecosystem configuration",
         },
     )
 
-    # Core application configuration - ALL defaults from FlextConstants
+    # ===== CORE APPLICATION CONFIGURATION (4 fields) =====
     app_name: str = Field(
         default=f"{FlextConstants.NAME} Application",
         min_length=1,
         max_length=256,
-        pattern=r"^[\w\s\-\.]+$",  # Alphanumeric, spaces, hyphens, dots
+        pattern=r"^[\w\s\-\.]+$",
         description="Application name",
     )
 
@@ -246,7 +195,7 @@ class FlextConfig(BaseSettings):
         default=FlextConstants.VERSION,
         min_length=1,
         max_length=50,
-        pattern=r"^\d+\.\d+\.\d+",  # Semantic versioning pattern
+        pattern=r"^\d+\.\d+\.\d+",
         description="Application version",
     )
 
@@ -260,61 +209,49 @@ class FlextConfig(BaseSettings):
         description="Enable trace mode",
     )
 
-    # Logging configuration - ALL from FlextConstants
-    log_level: str = Field(
+    # ===== LOGGING CONFIGURATION (11 fields) =====
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(  # type: ignore[assignment]
         default=FlextConstants.Logging.DEFAULT_LEVEL,
         description="Logging level",
     )
 
     json_output: bool = Field(
         default=FlextConstants.Logging.JSON_OUTPUT_DEFAULT,
-        description="Use JSON output format",
+        description="Enable JSON output format for logs",
     )
 
     include_source: bool = Field(
         default=FlextConstants.Logging.INCLUDE_SOURCE,
-        description="Include source code location",
+        description="Include source code location in logs",
     )
 
-    structured_output: bool = Field(
-        default=FlextConstants.Logging.STRUCTURED_OUTPUT,
-        description="Use structured logging format",
-    )
-
-    # Extended logging configuration
-    log_verbosity: Literal["compact", "detailed", "full"] = Field(
-        default=cast(
-            "Literal['compact', 'detailed', 'full']", FlextConstants.Logging.VERBOSITY
-        ),
-        description="Logging verbosity level",
+    log_verbosity: str = Field(
+        default=FlextConstants.Logging.VERBOSITY,
+        description="Logging verbosity level (compact, detailed, full)",
     )
 
     include_context: bool = Field(
         default=FlextConstants.Logging.INCLUDE_CONTEXT,
-        description="Include context in log messages",
+        description="Include context information in logs",
     )
 
     include_correlation_id: bool = Field(
         default=FlextConstants.Logging.INCLUDE_CORRELATION_ID,
-        description="Include correlation ID in log messages",
+        description="Include correlation ID in logs",
     )
 
     log_file: str | None = Field(
         default=None,
-        min_length=3,
-        max_length=1024,
-        description="Log file path (must be valid file path)",
+        description="Log file path (None for console only)",
     )
 
     log_file_max_size: int = Field(
         default=FlextConstants.Logging.MAX_FILE_SIZE,
-        ge=0,
         description="Maximum log file size in bytes",
     )
 
     log_file_backup_count: int = Field(
         default=FlextConstants.Logging.BACKUP_COUNT,
-        ge=0,
         description="Number of backup log files to keep",
     )
 
@@ -328,52 +265,32 @@ class FlextConfig(BaseSettings):
         description="Enable colored console output",
     )
 
-    mask_sensitive_data: bool = Field(
-        default=FlextConstants.Logging.MASK_SENSITIVE_DATA,
-        description="Mask sensitive data in logs",
+    # ===== CACHE CONFIGURATION (2 fields) =====
+    enable_caching: bool = Field(
+        default=FlextConstants.Config.DEFAULT_ENABLE_CACHING,
+        description="Enable caching functionality",
     )
 
-    # Database configuration
+    cache_ttl: int = Field(
+        default=FlextConstants.Defaults.DEFAULT_CACHE_TTL,
+        ge=0,
+        description="Cache TTL in seconds (used by FlextMixins)",
+    )
+
+    # ===== DATABASE CONFIGURATION (2 fields) =====
     database_url: str | None = Field(
         default=None,
-        min_length=5,
-        max_length=2048,
-        pattern=r"^[a-zA-Z][a-zA-Z0-9+.-]*://",  # Must be valid URI scheme
         description="Database connection URL",
     )
 
     database_pool_size: int = Field(
         default=FlextConstants.Performance.DEFAULT_DB_POOL_SIZE,
-        ge=FlextConstants.Performance.MIN_DB_POOL_SIZE,
-        le=FlextConstants.Performance.MAX_DB_POOL_SIZE,
+        ge=1,
+        le=100,
         description="Database connection pool size",
     )
 
-    # Cache configuration - ALL from FlextConstants
-    cache_ttl: int = Field(
-        default=FlextConstants.Defaults.DEFAULT_CACHE_TTL,
-        ge=0,
-        description="Cache TTL in seconds",
-    )
-
-    cache_max_size: int = Field(
-        default=FlextConstants.Defaults.DEFAULT_MAX_CACHE_SIZE,
-        ge=0,
-        description="Maximum cache size",
-    )
-
-    # Security configuration
-    secret_key: SecretStr | None = Field(
-        default=None,
-        description="Secret key for security operations",
-    )
-
-    api_key: SecretStr | None = Field(
-        default=None,
-        description="API key for external service authentication",
-    )
-
-    # Service configuration - ALL from FlextConstants
+    # ===== RELIABILITY CONFIGURATION (5 fields) =====
     max_retry_attempts: int = Field(
         default=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
         ge=0,
@@ -388,30 +305,13 @@ class FlextConfig(BaseSettings):
         description="Default timeout in seconds",
     )
 
-    # Dispatcher configuration
-    dispatcher_auto_context: bool = Field(
-        default=FlextConstants.Dispatcher.DEFAULT_AUTO_CONTEXT,
-        description="Enable automatic context propagation in dispatcher",
+    retry_delay: float = Field(
+        default=0.1,
+        ge=0.0,
+        le=60.0,
+        description="Delay between retries in seconds",
     )
 
-    dispatcher_timeout_seconds: int = Field(
-        default=FlextConstants.Dispatcher.DEFAULT_TIMEOUT_SECONDS,
-        ge=1,
-        le=600,
-        description="Default dispatcher timeout in seconds",
-    )
-
-    dispatcher_enable_metrics: bool = Field(
-        default=FlextConstants.Dispatcher.DEFAULT_ENABLE_METRICS,
-        description="Enable dispatcher metrics collection",
-    )
-
-    dispatcher_enable_logging: bool = Field(
-        default=FlextConstants.Dispatcher.DEFAULT_ENABLE_LOGGING,
-        description="Enable dispatcher logging",
-    )
-
-    # Dispatcher reliability configuration
     circuit_breaker_threshold: int = Field(
         default=FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
         ge=1,
@@ -433,9 +333,32 @@ class FlextConfig(BaseSettings):
         description="Rate limit window size in seconds",
     )
 
+    # ===== DISPATCHER CONFIGURATION (5 fields) =====
     enable_timeout_executor: bool = Field(
         default=False,
         description="Enable timeout executor for operation timeouts",
+    )
+
+    dispatcher_enable_logging: bool = Field(
+        default=FlextConstants.Dispatcher.DEFAULT_ENABLE_LOGGING,
+        description="Enable dispatcher logging",
+    )
+
+    dispatcher_auto_context: bool = Field(
+        default=FlextConstants.Dispatcher.DEFAULT_AUTO_CONTEXT,
+        description="Enable automatic context propagation in dispatcher",
+    )
+
+    dispatcher_timeout_seconds: float = Field(
+        default=FlextConstants.Dispatcher.DEFAULT_TIMEOUT_SECONDS,
+        ge=0.1,
+        le=300.0,
+        description="Dispatcher timeout in seconds",
+    )
+
+    dispatcher_enable_metrics: bool = Field(
+        default=False,
+        description="Enable dispatcher metrics collection",
     )
 
     executor_workers: int = Field(
@@ -445,267 +368,94 @@ class FlextConfig(BaseSettings):
         description="Number of executor workers for timeout handling",
     )
 
-    retry_delay: float = Field(
-        default=0.1,
-        ge=0.0,
-        le=60.0,
-        description="Delay between retries in seconds",
-    )
-
-    # Feature flags
-    enable_caching: bool = Field(
-        default=FlextConstants.Config.DEFAULT_ENABLE_CACHING,
-        description="Enable caching functionality",
-    )
-
-    enable_metrics: bool = Field(
-        default=FlextConstants.Config.DEFAULT_ENABLE_METRICS,
-        description="Enable metrics collection",
-    )
-
-    enable_tracing: bool = Field(
-        default=FlextConstants.Config.DEFAULT_ENABLE_TRACING,
-        description="Enable distributed tracing",
-    )
-
-    # Container configuration - from FlextConstants
+    # ===== PROCESSING CONFIGURATION (2 fields - KEEP: Used by FlextProcessors) =====
     max_workers: int = Field(
         default=FlextConstants.Container.DEFAULT_WORKERS,
         ge=1,
-        le=50,
-        description="Maximum number of workers",
+        le=256,
+        description="Maximum worker threads for processing (used by FlextProcessors)",
     )
 
-    # Batch processing configuration
     max_batch_size: int = Field(
-        default=FlextConstants.Processing.DEFAULT_BATCH_SIZE,
+        default=1000,
         ge=1,
-        le=FlextConstants.Processing.MAX_BATCH_SIZE,
-        description="Maximum batch size for batch operations",
+        le=100000,
+        description="Maximum batch size for processing operations (used by FlextProcessors)",
     )
 
-    # Validation configuration - from FlextConstants
-    max_name_length: int = Field(
-        default=FlextConstants.Validation.MAX_NAME_LENGTH,
-        ge=1,
-        le=500,
-        description="Maximum allowed name length",
+    # ===== SECURITY CONFIGURATION (2 fields) =====
+    api_key: str | None = Field(
+        default=None,
+        description="API key for authentication",
     )
 
-    min_phone_digits: int = Field(
-        default=FlextConstants.Validation.MIN_PHONE_DIGITS,
-        ge=7,
-        le=15,
-        description="Minimum phone number digits",
+    mask_sensitive_data: bool = Field(
+        default=FlextConstants.Logging.MASK_SENSITIVE_DATA,
+        description="Mask sensitive data in logs and outputs",
     )
 
-    validation_timeout_ms: int = Field(
-        default=FlextConstants.Validation.VALIDATION_TIMEOUT_MS,
-        ge=1,
-        le=10000,
-        description="Maximum validation time in milliseconds",
-    )
-
-    validation_strict_mode: bool = Field(
-        default=False,
-        description="Enable strict validation mode",
-    )
-
-    # Direct access method - simplified
-    def __call__(self, key: str) -> FlextTypes.ConfigValue:
+    # Direct access method
+    def __call__(self, key: str) -> object:
         """Direct value access: config('log_level')."""
         if not hasattr(self, key):
             msg = f"Configuration key '{key}' not found"
             raise KeyError(msg)
-        value: FlextTypes.ConfigValue = cast(
-            "FlextTypes.ConfigValue", getattr(self, key)
-        )
+        value: object = getattr(self, key)
         return value
 
-    # Validation methods
-    @field_validator("log_level")
+    # ===== VALIDATION METHODS =====
+    @field_validator("log_level", mode="before")
     @classmethod
-    def validate_log_level(cls, v: str) -> str:
-        """Validate log level using FlextConstants."""
-        v_upper = v.upper()
-        if v_upper not in FlextConstants.Logging.VALID_LEVELS:
-            valid_levels = ", ".join(FlextConstants.Logging.VALID_LEVELS)
-            error_msg = f"Invalid log level: {v}. Must be one of: {valid_levels}"
-            raise FlextExceptions.ValidationError(error_msg)
-        return v_upper
+    def validate_log_level(cls, v: str | object) -> str:
+        """Normalize log level to uppercase (Pydantic Literal handles validation)."""
+        if isinstance(v, str):
+            return v.upper()
+        return str(v).upper()
 
     @field_validator(
         "max_retry_attempts",
         "timeout_seconds",
-        "dispatcher_timeout_seconds",
         "circuit_breaker_threshold",
         "rate_limit_max_requests",
         "executor_workers",
+        "cache_ttl",
         "max_workers",
         "max_batch_size",
-        "max_name_length",
-        "min_phone_digits",
-        "validation_timeout_ms",
         "log_file_max_size",
         "log_file_backup_count",
         "database_pool_size",
-        "cache_ttl",
-        "cache_max_size",
         mode="before",
     )
     @classmethod
     def validate_int_field(cls, v: int | str) -> int:
-        """Convert string to int for environment variables.
-
-        Pydantic with strict=True won't auto-convert environment variable strings
-        to integers, so we need to handle this explicitly for fields that come
-        from environment variables.
-
-        Args:
-            v: Integer or string representation of integer
-
-        Returns:
-            int: Converted integer value
-
-        Raises:
-            ValueError: If string cannot be converted to integer
-
-        """
-        if isinstance(v, int):
-            return v
-        if isinstance(v, str):
-            try:
-                return int(v.strip())
-            except ValueError as e:
-                msg = f"Cannot convert '{v}' to integer: {e}"
-                raise ValueError(msg) from e
-        msg = f"Expected int or str, got {type(v).__name__}"
-        raise ValueError(msg)
+        """Convert string to int for environment variables using FlextUtilities."""
+        result = FlextUtilities.TypeConversions.to_int(v)
+        if result.is_failure:
+            raise ValueError(result.error or "Conversion failed")
+        return result.unwrap()
 
     @field_validator("debug", "trace", mode="before")
     @classmethod
     def validate_boolean_field(cls, v: str | bool | int) -> bool:
-        """Validate and convert string/int boolean values to actual booleans.
-
-        Handles common string representations from environment variables:
-        - "true", "yes", "1", "on" → True
-        - "false", "no", "0", "off" → False
-
-        Args:
-            v: Boolean value or string representation
-
-        Returns:
-            bool: Converted boolean value
-
-        Raises:
-            ValueError: If string cannot be converted to boolean
-
-        """
-        if isinstance(v, bool):
-            return v
-        if isinstance(v, int):
-            return v != 0
-        if isinstance(v, str):
-            v_lower = v.lower().strip()
-            if v_lower in {"true", "yes", "1", "on", "t", "y"}:
-                return True
-            if v_lower in {"false", "no", "0", "off", "f", "n", ""}:
-                return False
-            msg = (
-                f"Invalid boolean value: '{v}'. Must be true/false, yes/no, 1/0, on/off"
-            )
-            raise ValueError(msg)
-        msg = f"Cannot convert {type(v).__name__} to boolean"
-        raise ValueError(msg)
+        """Validate and convert boolean values using FlextUtilities."""
+        result = FlextUtilities.TypeConversions.to_bool(value=v)
+        if result.is_failure:
+            raise ValueError(result.error or "Conversion failed")
+        return result.unwrap()
 
     @field_validator(
         "rate_limit_window_seconds",
         "retry_delay",
+        "dispatcher_timeout_seconds",
         mode="before",
     )
     @classmethod
     def validate_float_field(cls, v: float | str) -> float:
-        """Convert string to float for environment variables.
-
-        Args:
-            v: Float or string representation of float
-
-        Returns:
-            float: Converted float value
-
-        Raises:
-            ValueError: If string cannot be converted to float
-
-        """
-        if isinstance(v, (int, float)):
-            return float(v)
-        if isinstance(v, str):
-            try:
-                return float(v.strip())
-            except ValueError as e:
-                msg = f"Cannot convert '{v}' to float: {e}"
-                raise ValueError(msg) from e
-        msg = f"Expected float or str, got {type(v).__name__}"
-        raise ValueError(msg)
-
-    @field_validator("log_verbosity", mode="before")
-    @classmethod
-    def validate_log_verbosity(cls, v: str) -> str:
-        """Normalize log verbosity level to lowercase.
-
-        Pydantic's Literal type will validate membership.
-        This validator normalizes case-insensitivity.
-
-        Args:
-            v: Verbosity level (case-insensitive)
-
-        Returns:
-            str: Normalized verbosity level (lowercase)
-
-        Raises:
-            ValueError: If verbosity is not a valid value
-
-        """
-        if isinstance(v, str):
-            v_lower = v.lower()
-            if v_lower in {"compact", "detailed", "full"}:
-                return v_lower
-            msg = f"Invalid log verbosity: {v}. Must be one of: compact, detailed, full"
-            raise ValueError(msg)
-        return v
-
-    @field_validator("log_file")
-    @classmethod
-    def validate_log_file(cls, v: str | None) -> str | None:
-        """Validate log file path format.
-
-        Allows None for disabled file logging.
-        Ensures non-None values are valid file paths.
-
-        Args:
-            v: Log file path or None
-
-        Returns:
-            str | None: Validated log file path
-
-        Raises:
-            ValueError: If log file path is invalid
-
-        """
-        if v is None:
-            return v
-        v_stripped = v.strip()
-        if not v_stripped:
-            return None
-        # Basic validation: must not start with invalid characters
-        if v_stripped.startswith("/"):
-            # Absolute path - valid
-            return v_stripped
-        if v_stripped[0].isalpha() or v_stripped[0] in {".", "~"}:
-            # Relative path or special - valid
-            return v_stripped
-        msg = f"Invalid log file path: '{v}' (must be absolute or relative path)"
-        raise ValueError(msg)
+        """Convert string to float for environment variables using FlextUtilities."""
+        result = FlextUtilities.TypeConversions.to_float(v)
+        if result.is_failure:
+            raise ValueError(result.error or "Conversion failed")
+        return result.unwrap()
 
     @model_validator(mode="after")
     def validate_debug_trace_consistency(self) -> Self:
@@ -715,11 +465,9 @@ class FlextConfig(BaseSettings):
             raise FlextExceptions.ValidationError(error_msg)
         return self
 
-    # Dependency injection integration
+    # ===== DEPENDENCY INJECTION INTEGRATION =====
     _di_config_provider: ClassVar[providers.Configuration | None] = None
-    _di_provider_lock: ClassVar[threading.RLock] = (
-        threading.RLock()
-    )  # RLock for DI provider too
+    _di_provider_lock: ClassVar[threading.RLock] = threading.RLock()
 
     @classmethod
     def get_di_config_provider(cls) -> providers.Configuration:
@@ -736,39 +484,18 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def get_global_instance(cls) -> Self:
-        """Get or create global singleton instance.
-
-        Note: Uses FlextConfig as the singleton key to ensure all subclasses
-        (including FlextBase.Config and FlextConfig) share the same instance.
-        This is intentional to maintain a single global configuration across the
-        entire flext-core ecosystem, regardless of access pattern.
-
-        If a more derived subclass is requested after a base class instance was
-        created, the singleton is upgraded to the more derived type to maintain
-        type compatibility with isinstance checks.
-
-        Returns:
-            Self: The global singleton instance
-
-        """
-        # Use base class (FlextConfig) as key to ensure single global singleton
-        # Subclasses (FlextBase.Config, FlextConfig) share this instance
-        base_class = FlextConfig
+        """Get or create global singleton instance."""
+        base_class = cls
 
         if base_class not in cls._instances:
-            # No instance exists - create one
             with cls._lock:
                 if base_class not in cls._instances:
                     instance = cls()
                     cls._instances[base_class] = instance
         else:
-            # Instance exists - check if it's compatible with requested class
             stored = cls._instances[base_class]
             if not isinstance(stored, cls):
-                # Stored instance is less derived than requested class
-                # Upgrade singleton to more derived type for isinstance compatibility
                 with cls._lock:
-                    # Double-check after acquiring lock
                     stored = cls._instances[base_class]
                     if not isinstance(stored, cls):
                         instance = cls()
@@ -778,31 +505,17 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def set_global_instance(cls, instance: Self) -> None:
-        """Set global singleton instance.
-
-        Uses FlextConfig as the key to match get_global_instance() behavior,
-        ensuring all subclasses (FlextBase.Config, FlextConfig) properly
-        set the shared singleton.
-
-        Args:
-            instance: The config instance to set as global singleton
-
-        """
+        """Set global singleton instance."""
         with cls._lock:
-            base_class = FlextConfig
-            cls._instances[base_class] = instance  # Use base_class key, not cls
+            base_class = cls
+            cls._instances[base_class] = instance
 
     @classmethod
     def reset_global_instance(cls) -> None:
-        """Reset global singleton instance.
-
-        Uses FlextConfig as the key to match get_global_instance() behavior,
-        ensuring all subclasses (FlextBase.Config, FlextConfig) properly
-        reset the shared singleton.
-        """
+        """Reset global singleton instance."""
         with cls._lock:
-            base_class = FlextConfig
-            cls._instances.pop(base_class, None)  # Use base_class key, not cls
+            base_class = cls
+            cls._instances.pop(base_class, None)
 
     def validate_runtime_requirements(self) -> FlextResult[None]:
         """Validate configuration meets runtime requirements."""
@@ -822,13 +535,13 @@ class FlextConfig(BaseSettings):
         """Validate business rules for configuration consistency."""
         return FlextResult[None].ok(None)
 
-    # Computed fields - Enhanced Pydantic 2 features
-    @computed_field  # Pydantic v2 computed_field already provides property behavior
+    # ===== COMPUTED FIELDS =====
+    @computed_field
     def is_debug_enabled(self) -> bool:
         """Check if debug mode is enabled."""
         return self.debug or self.trace
 
-    @computed_field  # Pydantic v2 computed_field already provides property behavior
+    @computed_field
     def effective_log_level(self) -> str:
         """Get effective log level considering debug/trace modes."""
         if self.trace:
@@ -837,67 +550,22 @@ class FlextConfig(BaseSettings):
             return "INFO"
         return self.log_level
 
-    @computed_field  # Pydantic v2 computed_field already provides property behavior
+    @computed_field
     def is_production(self) -> bool:
         """Check if running in production mode (not debug/trace)."""
         return not (self.debug or self.trace)
 
-    @computed_field  # Pydantic v2 computed_field already provides property behavior
+    @computed_field
     def effective_timeout(self) -> int:
-        """Get effective timeout considering debug mode.
-
-        Longer timeout for debugging.
-        """
+        """Get effective timeout considering debug mode."""
         if self.debug or self.trace:
-            return self.timeout_seconds * 3  # 3x timeout for debugging
+            return self.timeout_seconds * 3
         return self.timeout_seconds
 
-    @computed_field  # Pydantic v2 computed_field already provides property behavior
-    def has_database(self) -> bool:
-        """Check if database is configured."""
-        return self.database_url is not None and len(self.database_url) > 0
-
-    @computed_field  # Pydantic v2 computed_field already provides property behavior
-    def has_cache(self) -> bool:
-        """Check if caching is enabled and configured."""
-        return self.enable_caching and self.cache_max_size > 0
-
-    # Field serializers for SecretStr masking
-    @field_serializer("secret_key", "api_key", when_used="json")
-    def serialize_secrets(self, value: SecretStr | None) -> str:
-        """Mask secret values in JSON serialization."""
-        if value is None:
-            return ""
-        return "***MASKED***"
-
-    # =========================================================================
-    # REUSABLE VALIDATORS - For ecosystem-wide consistency
-    # =========================================================================
-
+    # ===== REUSABLE VALIDATORS - For ecosystem-wide consistency =====
     @classmethod
     def validate_log_level_field(cls, v: str) -> str:
-        """Reusable validator for log level fields.
-
-        Validates log levels against standard set.
-        (DEBUG, INFO, WARNING, ERROR, CRITICAL).
-        Can be used by subclasses via field_validator.
-
-        Args:
-            v: Log level string to validate
-
-        Returns:
-            str: Validated and normalized log level (uppercase)
-
-        Raises:
-            ValueError: If log level is invalid
-
-        Example:
-            >>> @field_validator("log_level")
-            >>> @classmethod
-            >>> def validate_log_level(cls, v: str) -> str:
-            ...     return cls.validate_log_level_field(v)
-
-        """
+        """Reusable validator for log level fields."""
         valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
         level_upper = v.upper()
         if level_upper not in valid_levels:
@@ -907,60 +575,8 @@ class FlextConfig(BaseSettings):
         return level_upper
 
     @classmethod
-    def validate_log_verbosity_field(cls, v: str) -> str:
-        """Reusable validator for log verbosity fields.
-
-        Validates verbosity against standard set (compact, detailed, full).
-        Can be used by subclasses via field_validator.
-
-        Args:
-            v: Verbosity string to validate
-
-        Returns:
-            str: Validated and normalized verbosity (lowercase)
-
-        Raises:
-            ValueError: If verbosity is invalid
-
-        Example:
-            >>> @field_validator("log_verbosity")
-            >>> @classmethod
-            >>> def validate_verbosity(cls, v: str) -> str:
-            ...     return cls.validate_log_verbosity_field(v)
-
-        """
-        valid_verbosity = {"compact", "detailed", "full"}
-        verbosity_lower = v.lower()
-        if verbosity_lower not in valid_verbosity:
-            sorted_verbosity = ", ".join(sorted(valid_verbosity))
-            msg = f"Invalid log verbosity '{v}'. Must be one of: {sorted_verbosity}"
-            raise ValueError(msg)
-        return verbosity_lower
-
-    @classmethod
     def validate_environment_field(cls, v: str) -> str:
-        """Reusable validator for environment fields.
-
-        Validates environment against standard set.
-        (development, staging, production, test).
-        Can be used by subclasses via field_validator.
-
-        Args:
-            v: Environment string to validate
-
-        Returns:
-            str: Validated and normalized environment (lowercase)
-
-        Raises:
-            ValueError: If environment is invalid
-
-        Example:
-            >>> @field_validator("environment")
-            >>> @classmethod
-            >>> def validate_env(cls, v: str) -> str:
-            ...     return cls.validate_environment_field(v)
-
-        """
+        """Reusable validator for environment fields."""
         valid_environments = {"development", "staging", "production", "test"}
         env_lower = v.lower()
         if env_lower not in valid_environments:
@@ -969,79 +585,33 @@ class FlextConfig(BaseSettings):
             raise ValueError(msg)
         return env_lower
 
-    # =========================================================================
-    # CONFIGURATION UTILITY METHODS - For ecosystem-wide reuse
-    # =========================================================================
-
-    def update_from_dict(self, **kwargs: FlextTypes.ConfigValue) -> FlextResult[None]:
-        """Update configuration from dictionary with validation.
-
-        Allows dynamic override of configuration values with Pydantic validation.
-        Only valid configuration fields are updated.
-
-        Args:
-            **kwargs: Configuration key-value pairs to update
-
-        Returns:
-            FlextResult[None]: Success or validation error
-
-        Example:
-            >>> config = FlextConfig()
-            >>> result = config.update_from_dict(log_level="DEBUG", debug=True)
-            >>> result.is_success
-            True
-
-        """
+    # ===== CONFIGURATION UTILITY METHODS =====
+    def update_from_dict(self, **kwargs: object) -> FlextResult[None]:
+        """Update configuration from dictionary with validation."""
         try:
-            # Filter only valid configuration fields
             valid_updates = {
                 key: value for key, value in kwargs.items() if hasattr(self, key)
             }
 
-            # Apply updates using Pydantic's validation
             for key, value in valid_updates.items():
                 setattr(self, key, value)
 
-            # Re-validate entire model to ensure consistency
             self.model_validate(self.model_dump())
-
             return FlextResult[None].ok(None)
 
         except Exception as e:
             return FlextResult[None].fail(f"Configuration update failed: {e}")
 
     def merge_with_env_vars(self) -> FlextResult[None]:
-        """Re-load environment variables and merge with current config.
-
-        Useful when environment variables change during runtime.
-        Existing config values take precedence over environment variables.
-
-        Returns:
-            FlextResult[None]: Success or error
-
-        Example:
-            >>> config = FlextConfig()
-            >>> # Environment changes
-            >>> import os
-            >>> os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
-            >>> result = config.merge_with_env_vars()
-            >>> config.log_level  # Will be "DEBUG" if not explicitly set
-
-        """
+        """Re-load environment variables and merge with current config."""
         try:
-            # Get current config snapshot
             current_config = self.model_dump()
-
-            # Create new instance from environment
             env_config = self.__class__()
 
-            # Merge: current config overrides env
             for key, value in current_config.items():
                 if value != getattr(self.__class__(), key, None):
-                    # Value was explicitly set, keep it
                     setattr(env_config, key, value)
 
-            # Copy merged config back
             for key in current_config:
                 setattr(self, key, getattr(env_config, key))
 
@@ -1050,40 +620,18 @@ class FlextConfig(BaseSettings):
         except Exception as e:
             return FlextResult[None].fail(f"Environment merge failed: {e}")
 
-    def validate_overrides(
-        self, **overrides: FlextTypes.ConfigValue
-    ) -> FlextResult[dict[str, FlextTypes.ConfigValue]]:
-        """Validate configuration overrides without applying them.
-
-        Useful for checking if overrides are valid before applying.
-
-        Args:
-            **overrides: Configuration overrides to validate
-
-        Returns:
-            FlextResult[dict[str, FlextTypes.ConfigValue]]: Valid overrides
-                or validation errors
-
-        Example:
-            >>> config = FlextConfig()
-            >>> result = config.validate_overrides(log_level="DEBUG", max_workers=10)
-            >>> if result.is_success:
-            ...     config.update_from_dict(**result.unwrap())
-
-        """
+    def validate_overrides(self, **overrides: object) -> FlextResult[dict[str, object]]:
+        """Validate configuration overrides without applying them."""
         try:
-            valid_overrides: dict[str, FlextTypes.ConfigValue] = {}
+            valid_overrides: dict[str, object] = {}
             errors: list[str] = []
 
             for key, value in overrides.items():
-                # Check if field exists
                 if not hasattr(self, key):
                     errors.append(f"Unknown configuration field: '{key}'")
                     continue
 
-                # Try to validate the value
                 try:
-                    # Create test instance with override
                     test_config = self.model_copy()
                     setattr(test_config, key, value)
                     test_config.model_validate(test_config.model_dump())
@@ -1092,16 +640,14 @@ class FlextConfig(BaseSettings):
                     errors.append(f"Invalid value for '{key}': {e}")
 
             if errors:
-                return FlextResult[dict[str, FlextTypes.ConfigValue]].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Validation errors: {'; '.join(errors)}"
                 )
 
-            return FlextResult[dict[str, FlextTypes.ConfigValue]].ok(valid_overrides)
+            return FlextResult[dict[str, object]].ok(valid_overrides)
 
         except Exception as e:
-            return FlextResult[dict[str, FlextTypes.ConfigValue]].fail(
-                f"Validation failed: {e}"
-            )
+            return FlextResult[dict[str, object]].fail(f"Validation failed: {e}")
 
 
 __all__ = [

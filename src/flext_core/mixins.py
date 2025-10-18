@@ -21,7 +21,6 @@ from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
 
 
 class FlextMixins:
@@ -454,7 +453,7 @@ class FlextMixins:
         return self._get_or_create_logger()
 
     @contextmanager
-    def track(self, operation_name: str) -> Iterator[FlextTypes.Dict]:
+    def track(self, operation_name: str) -> Iterator[dict[str, object]]:
         """Track operation performance with automatic context integration."""
         with FlextContext.Performance.timed_operation(operation_name) as metrics:
             yield metrics
@@ -548,7 +547,7 @@ class FlextMixins:
 
     def _log_with_context(self, level: str, message: str, **extra: object) -> None:
         """Log message with automatic context data inclusion."""
-        context_data: FlextTypes.Dict = {
+        context_data: dict[str, object] = {
             "correlation_id": FlextContext.Correlation.get_correlation_id(),
             "operation": FlextContext.Request.get_operation_name(),
             **extra,
@@ -611,7 +610,7 @@ class FlextMixins:
 
         """
         # Build service context for logging
-        service_context: FlextTypes.Dict = {
+        service_context: dict[str, object] = {
             "service_name": self.__class__.__name__,
             "service_module": self.__class__.__module__,
             **context_data,
@@ -621,7 +620,7 @@ class FlextMixins:
 
     def _log_config_once(
         self,
-        config: FlextTypes.Dict,
+        config: dict[str, object],
         message: str = "Configuration loaded",
     ) -> None:
         """Log configuration ONCE without binding to context.

@@ -141,7 +141,7 @@ class FlextUtilities:
     - Runtime type compatibility checking (expected vs actual types)
     - Message type acceptance determination for handlers
     - Annotation extraction from method signatures
-    - Support for object, FlextTypes.Dict, and specific types
+    - Support for object, dict[str, object], and specific types
 
     **Command Execution** (Subprocess Management):
     - External command execution with timeout support
@@ -264,7 +264,7 @@ class FlextUtilities:
         ) -> object:
             """Normalize a component for consistent representation."""
             if isinstance(component, dict):
-                component_dict = cast("FlextTypes.Dict", component)
+                component_dict = cast("dict[str, object]", component)
                 return {
                     str(k): FlextUtilities.Cache.normalize_component(v)
                     for k, v in component_dict.items()
@@ -296,7 +296,7 @@ class FlextUtilities:
         def sort_dict_keys(data: SortableObjectType) -> SortableObjectType:
             """Sort dictionary keys for consistent representation."""
             if isinstance(data, dict):
-                data_dict = cast("FlextTypes.Dict", data)
+                data_dict = cast("dict[str, object]", data)
                 return {
                     k: FlextUtilities.Cache.sort_dict_keys(data_dict[k])
                     for k in sorted(data_dict.keys(), key=FlextUtilities.Cache.sort_key)
@@ -315,7 +315,7 @@ class FlextUtilities:
                     if hasattr(obj, attr_name):
                         cache_attr = getattr(obj, attr_name, None)
                         if cache_attr is not None:
-                            # Clear FlextTypes.Dict-like caches
+                            # Clear dict[str, object]-like caches
                             if hasattr(cache_attr, "clear") and callable(
                                 cache_attr.clear,
                             ):
@@ -513,7 +513,7 @@ class FlextUtilities:
 
         @staticmethod
         def validate_pipeline(
-            value: str, validators: FlextTypes.List
+            value: str, validators: list[object]
         ) -> FlextResult[None]:
             """Validate using a pipeline of validators."""
             for validator in validators:
@@ -576,7 +576,7 @@ class FlextUtilities:
                     if hasattr(obj, attr_name):
                         cache_attr = getattr(obj, attr_name, None)
                         if cache_attr is not None:
-                            # Clear FlextTypes.Dict-like caches
+                            # Clear dict[str, object]-like caches
                             if hasattr(cache_attr, "clear") and callable(
                                 cache_attr.clear,
                             ):
@@ -632,7 +632,7 @@ class FlextUtilities:
 
             if isinstance(value, FlextProtocols.HasModelDump):
                 try:
-                    dumped: FlextTypes.Dict = value.model_dump()
+                    dumped: dict[str, object] = value.model_dump()
                 except TypeError:
                     dumped = {}
                 normalized_dumped = FlextUtilities.Cache.normalize_component(dumped)
@@ -649,7 +649,7 @@ class FlextUtilities:
                 return ("dataclass", normalized_dict)
 
             if isinstance(value, Mapping):
-                # Return sorted FlextTypes.Dict for cache-friendly deterministic ordering
+                # Return sorted dict[str, object] for cache-friendly deterministic ordering
                 mapping_value = cast("Mapping[object, object]", value)
                 sorted_items = sorted(
                     mapping_value.items(),
@@ -684,8 +684,8 @@ class FlextUtilities:
 
             try:
                 # Cast to proper type for type checker
-                value_vars_dict: FlextTypes.Dict = cast(
-                    "FlextTypes.Dict",
+                value_vars_dict: dict[str, object] = cast(
+                    "dict[str, object]",
                     vars(value),
                 )
             except TypeError:
@@ -738,7 +738,7 @@ class FlextUtilities:
                 # For dictionaries, sort keys
                 if isinstance(command, dict):
                     dict_sorted_data = FlextUtilities.Cache.sort_dict_keys(
-                        cast("FlextTypes.Dict", command),
+                        cast("dict[str, object]", command),
                     )
                     return f"{cast('type', command_type).__name__}_{hash(str(dict_sorted_data))}"
 
@@ -770,14 +770,14 @@ class FlextUtilities:
             """Recursively sort dictionary keys for deterministic ordering.
 
             Args:
-                obj: Object to sort (FlextTypes.Dict, list, or other)
+                obj: Object to sort (dict[str, object], list, or other)
 
             Returns:
                 Object with sorted keys
 
             """
             if isinstance(obj, dict):
-                dict_obj: FlextTypes.Dict = cast("FlextTypes.Dict", obj)
+                dict_obj: dict[str, object] = cast("dict[str, object]", obj)
                 sorted_items: list[tuple[str, object]] = sorted(
                     cast("list[tuple[str, object]]", dict_obj.items()),
                     key=lambda x: str(x[0]),
@@ -787,7 +787,7 @@ class FlextUtilities:
                     for k, v in sorted_items
                 }
             if isinstance(obj, list):
-                obj_list: FlextTypes.List = cast("FlextTypes.List", obj)
+                obj_list: list[object] = cast("list[object]", obj)
                 return [FlextUtilities.Cache.sort_dict_keys(item) for item in obj_list]
             if isinstance(obj, tuple):
                 obj_tuple: tuple[object, ...] = cast("tuple[object, ...]", obj)
@@ -858,7 +858,7 @@ class FlextUtilities:
         @staticmethod
         def generate_correlation_id() -> str:
             """Generate a correlation ID for tracking."""
-            return f"corr_{str(uuid.uuid4())[:FlextConstants.Utilities.SHORT_UUID_LENGTH]}"
+            return f"corr_{str(uuid.uuid4())[: FlextConstants.Utilities.SHORT_UUID_LENGTH]}"
 
         @staticmethod
         def generate_short_id(length: int = 8) -> str:
@@ -909,42 +909,52 @@ class FlextUtilities:
         @staticmethod
         def generate_correlation_id_with_context(context: str) -> str:
             """Generate a correlation ID with context prefix."""
-            return f"{context}_{str(uuid.uuid4())[:FlextConstants.Utilities.SHORT_UUID_LENGTH]}"
+            return f"{context}_{str(uuid.uuid4())[: FlextConstants.Utilities.SHORT_UUID_LENGTH]}"
 
         @staticmethod
         def generate_batch_id(batch_size: int) -> str:
             """Generate a batch ID with size information."""
-            return f"batch_{batch_size}_{str(uuid.uuid4())[:FlextConstants.Utilities.SHORT_UUID_LENGTH]}"
+            return f"batch_{batch_size}_{str(uuid.uuid4())[: FlextConstants.Utilities.SHORT_UUID_LENGTH]}"
 
         @staticmethod
         def generate_transaction_id() -> str:
             """Generate a transaction ID for distributed transactions."""
-            return f"txn_{str(uuid.uuid4())[:FlextConstants.Utilities.LONG_UUID_LENGTH]}"
+            return (
+                f"txn_{str(uuid.uuid4())[: FlextConstants.Utilities.LONG_UUID_LENGTH]}"
+            )
 
         @staticmethod
         def generate_saga_id() -> str:
             """Generate a saga ID for distributed transaction patterns."""
-            return f"saga_{str(uuid.uuid4())[:FlextConstants.Utilities.LONG_UUID_LENGTH]}"
+            return (
+                f"saga_{str(uuid.uuid4())[: FlextConstants.Utilities.LONG_UUID_LENGTH]}"
+            )
 
         @staticmethod
         def generate_event_id() -> str:
             """Generate an event ID for domain events."""
-            return f"evt_{str(uuid.uuid4())[:FlextConstants.Utilities.LONG_UUID_LENGTH]}"
+            return (
+                f"evt_{str(uuid.uuid4())[: FlextConstants.Utilities.LONG_UUID_LENGTH]}"
+            )
 
         @staticmethod
         def generate_command_id() -> str:
             """Generate a command ID for CQRS patterns."""
-            return f"cmd_{str(uuid.uuid4())[:FlextConstants.Utilities.LONG_UUID_LENGTH]}"
+            return (
+                f"cmd_{str(uuid.uuid4())[: FlextConstants.Utilities.LONG_UUID_LENGTH]}"
+            )
 
         @staticmethod
         def generate_query_id() -> str:
             """Generate a query ID for CQRS patterns."""
-            return f"qry_{str(uuid.uuid4())[:FlextConstants.Utilities.LONG_UUID_LENGTH]}"
+            return (
+                f"qry_{str(uuid.uuid4())[: FlextConstants.Utilities.LONG_UUID_LENGTH]}"
+            )
 
         @staticmethod
         def generate_aggregate_id(aggregate_type: str) -> str:
             """Generate an aggregate ID with type prefix."""
-            return f"{aggregate_type}_{str(uuid.uuid4())[:FlextConstants.Utilities.LONG_UUID_LENGTH]}"
+            return f"{aggregate_type}_{str(uuid.uuid4())[: FlextConstants.Utilities.LONG_UUID_LENGTH]}"
 
         @staticmethod
         def generate_entity_version() -> int:
@@ -1077,6 +1087,19 @@ class FlextUtilities:
                 return FlextResult[int].ok(int(value))
             except (ValueError, TypeError) as e:
                 return FlextResult[int].fail(f"Integer conversion failed: {e}")
+
+        @staticmethod
+        def to_float(value: str | float | None) -> FlextResult[float]:
+            """Convert value to float using railway composition."""
+            if value is None:
+                return FlextResult[float].fail("Cannot convert None to float")
+
+            try:
+                if isinstance(value, float):
+                    return FlextResult[float].ok(value)
+                return FlextResult[float].ok(float(value))
+            except (ValueError, TypeError) as e:
+                return FlextResult[float].fail(f"Float conversion failed: {e}")
 
     class Reliability:
         """Reliability patterns for resilient operations."""
@@ -1225,7 +1248,7 @@ class FlextUtilities:
             return tuple(message_types)
 
         @classmethod
-        def _extract_generic_message_types(cls, handler_class: type) -> FlextTypes.List:
+        def _extract_generic_message_types(cls, handler_class: type) -> list[object]:
             """Extract message types from generic base annotations.
 
             Args:
@@ -1235,7 +1258,7 @@ class FlextUtilities:
                 List of message types from generic annotations
 
             """
-            message_types: FlextTypes.List = []
+            message_types: list[object] = []
             for base in getattr(handler_class, "__orig_bases__", ()) or ():
                 # Layer 0.5: Use FlextRuntime for type introspection
                 origin = get_origin(base)
@@ -1349,14 +1372,14 @@ class FlextUtilities:
             origin_type = get_origin(expected_type) or expected_type
             message_origin = get_origin(message_type) or message_type
 
-            # Special handling for FlextTypes.Dict types - FlextTypes.Dict should accept FlextTypes.Dict instances
-            if origin_type is FlextTypes.Dict or (
+            # Special handling for dict[str, object] types - dict[str, object] should accept dict[str, object] instances
+            if origin_type is dict[str, object] or (
                 hasattr(origin_type, "__name__")
                 and getattr(origin_type, "__name__", "") == "dict"
             ):
                 return True
 
-            if message_origin is FlextTypes.Dict or (
+            if message_origin is dict[str, object] or (
                 isinstance(message_type, type) and issubclass(message_type, dict)
             ):
                 return True
@@ -1453,7 +1476,7 @@ class FlextUtilities:
                 try:
                     # Cast to protocol with model_dump for type safety
                     pydantic_obj = cast("FlextProtocols.HasModelDump", obj)
-                    model_data: FlextTypes.Dict = pydantic_obj.model_dump()
+                    model_data: dict[str, object] = pydantic_obj.model_dump()
                     if parameter not in model_data:
                         msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
                         raise FlextExceptions.NotFoundError(msg, resource_id=parameter)
@@ -1565,11 +1588,11 @@ class FlextUtilities:
 
     @staticmethod
     def run_external_command(
-        cmd: FlextTypes.StringList,
+        cmd: list[str],
         *,
         capture_output: bool = True,
         check: bool = True,
-        env: FlextTypes.StringDict | None = None,
+        env: dict[str, str] | None = None,
         cwd: str | pathlib.Path | None = None,
         timeout: float | None = None,
         command_input: str | bytes | None = None,

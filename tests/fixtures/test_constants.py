@@ -7,10 +7,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes
 
-
-def get_test_constants() -> FlextTypes.Dict:
+def get_test_constants() -> dict[str, object]:
     """Provide centralized test constants for all tests.
 
     Centralized constants used across multiple test files to ensure

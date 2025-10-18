@@ -60,8 +60,8 @@ class TestFlextConfigSingletonIntegration:
         # Test that the config has expected attributes
         assert hasattr(config1, "app_name")
         assert hasattr(config1, "log_level")
-        assert hasattr(config1, "max_name_length")
-        assert hasattr(config1, "min_phone_digits")
+        assert hasattr(config1, "cache_ttl")
+        assert hasattr(config1, "max_workers")
 
     def test_config_in_flext_container(self) -> None:
         """Test that FlextContainer uses the global config singleton."""
@@ -177,7 +177,7 @@ class TestFlextConfigSingletonIntegration:
             assert config.app_name is not None
             assert config.log_level is not None
             assert config.max_workers is not None
-            assert config.enable_caching is not None
+            assert config.cache_ttl is not None
 
         finally:
             # Cleanup
@@ -231,7 +231,7 @@ class TestFlextConfigSingletonIntegration:
             assert config.app_name is not None
             assert config.debug is not None
             assert config.timeout_seconds is not None
-            assert config.validation_strict_mode is not None
+            assert config.max_batch_size is not None
 
         finally:
             # Cleanup
@@ -280,9 +280,9 @@ class TestFlextConfigSingletonIntegration:
                 "from-env-var",
                 "flext-app",
             }  # From env var or default
-            assert config.database_url in {
-                None,
-                "sqlite:///test.db",
+            assert config.cache_ttl in {
+                300,
+                600,
             }  # Use actual FlextConfig attribute
             assert config.max_retry_attempts in {
                 3,

@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextConfig, FlextContainer, FlextLogger, FlextResult, FlextTypes
+from flext_core import FlextConfig, FlextContainer, FlextLogger, FlextResult
 
 from .fixtures import (
     get_benchmark_data,
@@ -93,7 +93,7 @@ def clean_container() -> Generator[object]:
 
 
 @pytest.fixture
-def sample_data() -> FlextTypes.Dict:
+def sample_data() -> dict[str, object]:
     """Provide deterministic sample data for tests."""
     return get_sample_data()
 
@@ -211,7 +211,7 @@ def error_context() -> dict[str, str | None]:
 
 # Test Data Constants - Centralized test data and constants
 @pytest.fixture
-def test_constants() -> FlextTypes.Dict:
+def test_constants() -> dict[str, object]:
     """Provide centralized test constants for all tests."""
     return get_test_constants()
 

@@ -18,7 +18,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 
 # Type alias for test functions
 TestFunction = Callable[[object], None]
@@ -51,16 +51,14 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: FlextTypes.Dict) -> None:
+    def __init__(self, name: str, data: dict[str, object]) -> None:
         """Initialize mockscenario:."""
         super().__init__()
         self.name = name
         self.given: dict[str, str] = cast("dict[str, str]", data.get("given", {}))
         self.when: dict[str, str] = cast("dict[str, str]", data.get("when", {}))
         self.then: dict[str, str] = cast("dict[str, str]", data.get("then", {}))
-        self.tags: FlextTypes.StringList = cast(
-            "FlextTypes.StringList", data.get("tags", [])
-        )
+        self.tags: list[str] = cast("list[str]", data.get("tags", []))
         self.priority: str = str(data.get("priority", "normal"))
 
 
@@ -71,10 +69,10 @@ class GivenWhenThenBuilder:
         """Initialize givenwhenthenbuilder:."""
         super().__init__()
         self.name = name
-        self._given: FlextTypes.Dict = {}
-        self._when: FlextTypes.Dict = {}
-        self._then: FlextTypes.Dict = {}
-        self._tags: FlextTypes.StringList = []
+        self._given: dict[str, object] = {}
+        self._when: dict[str, object] = {}
+        self._then: dict[str, object] = {}
+        self._tags: list[str] = []
         self._priority = "normal"
 
     def given(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
@@ -152,8 +150,8 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize flexttestbuilder:."""
         super().__init__()
-        self._data: FlextTypes.Dict = {}
-        self._validation_rules: FlextTypes.Dict = {}
+        self._data: dict[str, object] = {}
+        self._validation_rules: dict[str, object] = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """with_id method.
@@ -219,11 +217,11 @@ class FlextTestBuilder:
         self._validation_rules = kwargs
         return self
 
-    def build(self) -> FlextTypes.Dict:
+    def build(self) -> dict[str, object]:
         """Build method.
 
         Returns:
-            FlextTypes.Dict: Copy of the built data.
+            dict[str, object]: Copy of the built data.
 
         """
         return self._data.copy()
@@ -236,9 +234,9 @@ class ParameterizedTestBuilder:
         """Initialize parameterizedtestbuilder:."""
         super().__init__()
         self.test_name = test_name
-        self._cases: list[FlextTypes.Dict] = []
-        self._success_cases: list[FlextTypes.Dict] = []
-        self._failure_cases: list[FlextTypes.Dict] = []
+        self._cases: list[dict[str, object]] = []
+        self._success_cases: list[dict[str, object]] = []
+        self._failure_cases: list[dict[str, object]] = []
 
     def add_case(self, **kwargs: object) -> ParameterizedTestBuilder:
         """add_case method.
@@ -252,7 +250,7 @@ class ParameterizedTestBuilder:
 
     def add_success_cases(
         self,
-        cases: list[FlextTypes.Dict],
+        cases: list[dict[str, object]],
     ) -> ParameterizedTestBuilder:
         """add_success_cases method.
 
@@ -265,7 +263,7 @@ class ParameterizedTestBuilder:
 
     def add_failure_cases(
         self,
-        cases: list[FlextTypes.Dict],
+        cases: list[dict[str, object]],
     ) -> ParameterizedTestBuilder:
         """add_failure_cases method.
 
@@ -276,11 +274,11 @@ class ParameterizedTestBuilder:
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[FlextTypes.Dict]:
+    def build(self) -> list[dict[str, object]]:
         """Build method.
 
         Returns:
-            list[FlextTypes.Dict]: Copy of the test cases.
+            list[dict[str, object]]: Copy of the test cases.
 
         """
         return self._cases.copy()
@@ -302,11 +300,11 @@ class ParameterizedTestBuilder:
         ]
         return success_params + failure_params
 
-    def build_test_ids(self) -> FlextTypes.StringList:
+    def build_test_ids(self) -> list[str]:
         """build_test_ids method.
 
         Returns:
-            FlextTypes.StringList: List of test IDs.
+            list[str]: List of test IDs.
 
         """
         return [
@@ -320,11 +318,11 @@ class AssertionBuilder:
 
     def __init__(
         self,
-        data: FlextTypes.List | FlextTypes.Dict | str | tuple[object, ...],
+        data: list[object] | dict[str, object] | str | tuple[object, ...],
     ) -> None:
         """Initialize assertionbuilder:."""
         super().__init__()
-        self.data: FlextTypes.List | FlextTypes.Dict | str | tuple[object, ...] = data
+        self.data: list[object] | dict[str, object] | str | tuple[object, ...] = data
         self._assertions: list[Callable[[], None]] = []
 
     def assert_equals(self, expected: object) -> AssertionBuilder:
@@ -354,7 +352,7 @@ class AssertionBuilder:
             if isinstance(self.data, (list, tuple, set, str)):
                 # Type-safe check for sequence types
                 if isinstance(self.data, (list, tuple, set)):
-                    container_data = cast("FlextTypes.List", self.data)
+                    container_data = cast("list[object]", self.data)
                     assert item in container_data
                 else:  # self.data is str
                     assert str(item) in self.data
@@ -384,7 +382,7 @@ class AssertionBuilder:
     def satisfies(
         self,
         condition: Callable[
-            [FlextTypes.List | FlextTypes.Dict | str | tuple[object, ...]],
+            [list[object] | dict[str, object] | str | tuple[object, ...]],
             bool,
         ],
         description: str = "",
@@ -494,7 +492,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: FlextTypes.Dict = {"name": "John", "age": 30, "active": True}
+        test_data: dict[str, object] = {"name": "John", "age": 30, "active": True}
 
         assertion_builder = (
             AssertionBuilder(test_data)
@@ -509,7 +507,7 @@ class TestAdvancedPatterns:
     @mark_test_pattern("mock_scenario")
     def test_mock_scenario_pattern(self) -> None:
         """Test mock scenario pattern."""
-        scenario_data: FlextTypes.Dict = {
+        scenario_data: dict[str, object] = {
             "given": {"user": "authenticated"},
             "when": {"action": "request_data"},
             "then": {"result": "success"},
