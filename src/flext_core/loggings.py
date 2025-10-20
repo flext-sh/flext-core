@@ -14,23 +14,13 @@ from __future__ import annotations
 import time
 import traceback
 import types
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
 from typing import Any, ClassVar, Self, cast
 
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes, T
-
-# =============================================================================
-# ALL TYPE ALIASES NOW IN FLEXTYPES
-# =============================================================================
-# All semantic type aliases moved to FlextTypes namespace for centralization
-# Access via: FlextTypes.LoggingContextValueType, FlextTypes.FlextTypes.LoggingArgType, etc.
-
-# =============================================================================
-# FLEXT LOGGER - THIN WRAPPER AROUND FlextRuntime.structlog()
-# =============================================================================
 
 
 class FlextLogger:
@@ -226,7 +216,8 @@ class FlextLogger:
         log_level: int | None = None,
         *,
         console_enabled: bool = True,
-        additional_processors: Sequence[FlextTypes.LoggingProcessorType] | None = None,
+        additional_processors: Sequence[Callable[..., FlextTypes.GenericTypeArgument]]
+        | None = None,
     ) -> None:
         """Configure FlextRuntime.structlog() with advanced processor chain.
 
@@ -261,7 +252,7 @@ class FlextLogger:
 
     @classmethod
     def bind_global_context(
-        cls, **context: FlextTypes.LoggingContextType
+        cls, **context: object
     ) -> FlextResult[None]:
         """Bind context globally using FlextRuntime.structlog() contextvars.
 
@@ -276,7 +267,9 @@ class FlextLogger:
 
         Example:
             >>> FlextLogger.bind_global_context(
-            ...     request_id="req-123", user_id="usr-456", correlation_id="cor-789"
+            ...     request_id="req-123",
+            ...     user_id="usr-456",
+            ...     correlation_id="cor-789",
             ... )
             >>> logger = FlextLogger(__name__)
             >>> logger.info("User action")  # Automatically includes bound context
@@ -323,7 +316,8 @@ class FlextLogger:
     def get_global_context(cls) -> dict[str, object]:
         """Get current global context."""
         return cast(
-            "dict[str, object]", FlextRuntime.structlog().contextvars.get_contextvars()
+            "dict[str, object]",
+            FlextRuntime.structlog().contextvars.get_contextvars(),
         )
 
     # =========================================================================
@@ -332,7 +326,7 @@ class FlextLogger:
 
     @classmethod
     def bind_application_context(
-        cls, **context: FlextTypes.LoggingContextType
+        cls, **context: object
     ) -> FlextResult[None]:
         """Bind application-level context (persists for entire app lifetime).
 
@@ -368,7 +362,7 @@ class FlextLogger:
 
     @classmethod
     def bind_request_context(
-        cls, **context: FlextTypes.LoggingContextType
+        cls, **context: object
     ) -> FlextResult[None]:
         """Bind request-level context (persists for single request/command).
 
@@ -383,7 +377,9 @@ class FlextLogger:
 
         Example:
             >>> FlextLogger.bind_request_context(
-            ...     correlation_id="flext-abc123", command="migrate", user_id="REDACTED_LDAP_BIND_PASSWORD"
+            ...     correlation_id="flext-abc123",
+            ...     command="migrate",
+            ...     user_id="REDACTED_LDAP_BIND_PASSWORD",
             ... )
             >>> # All logs for this request include request context
 
@@ -402,7 +398,7 @@ class FlextLogger:
 
     @classmethod
     def bind_operation_context(
-        cls, **context: FlextTypes.LoggingContextType
+        cls, **context: object
     ) -> FlextResult[None]:
         """Bind operation-level context (persists for single service operation).
 
@@ -470,7 +466,7 @@ class FlextLogger:
     @classmethod
     @contextmanager
     def scoped_context(
-        cls, scope: str, **context: FlextTypes.LoggingContextType
+        cls, scope: str, **context: object
     ) -> Iterator[None]:
         """Context manager for automatic scoped context cleanup.
 
@@ -525,7 +521,7 @@ class FlextLogger:
 
     @classmethod
     def bind_context_for_level(
-        cls, level: str, **context: FlextTypes.LoggingContextType
+        cls, level: str, **context: object
     ) -> FlextResult[None]:
         """Bind context that only appears at specific log level.
 
@@ -724,7 +720,7 @@ class FlextLogger:
         setattr(instance, "logger", bound_logger)
         return instance
 
-    def bind(self, **context: FlextTypes.LoggingContextType) -> FlextLogger:
+    def bind(self, **context: object) -> FlextLogger:
         """Bind additional context to the logger.
 
         Creates a new FlextLogger instance with additional context bound to the
@@ -752,7 +748,7 @@ class FlextLogger:
         self,
         message: str,
         *args: FlextTypes.LoggingArgType,
-        **kwargs: FlextTypes.LoggingKwargsType,
+        **kwargs: object,
     ) -> FlextResult[None]:
         """Log trace message - LoggerProtocol implementation."""
         try:
@@ -772,7 +768,7 @@ class FlextLogger:
         self,
         message: str,
         *args: FlextTypes.LoggingArgType,
-        **context: FlextTypes.LoggingContextType,
+        **context: object,
     ) -> FlextResult[None]:
         """Log debug message - LoggerProtocol implementation."""
         try:
@@ -789,7 +785,7 @@ class FlextLogger:
         self,
         message: str,
         *args: FlextTypes.LoggingArgType,
-        **context: FlextTypes.LoggingContextType,
+        **context: object,
     ) -> FlextResult[None]:
         """Log info message - LoggerProtocol implementation."""
         try:
@@ -806,7 +802,7 @@ class FlextLogger:
         self,
         message: str,
         *args: FlextTypes.LoggingArgType,
-        **context: FlextTypes.LoggingContextType,
+        **context: object,
     ) -> FlextResult[None]:
         """Log warning message - LoggerProtocol implementation."""
         try:
@@ -823,7 +819,7 @@ class FlextLogger:
         self,
         message: str,
         *args: FlextTypes.LoggingArgType,
-        **kwargs: FlextTypes.LoggingKwargsType,
+        **kwargs: object,
     ) -> FlextResult[None]:
         """Log error message - LoggerProtocol implementation."""
         try:
@@ -840,7 +836,7 @@ class FlextLogger:
         self,
         message: str,
         *args: FlextTypes.LoggingArgType,
-        **kwargs: FlextTypes.LoggingKwargsType,
+        **kwargs: object,
     ) -> FlextResult[None]:
         """Log critical message - LoggerProtocol implementation."""
         try:
@@ -859,7 +855,7 @@ class FlextLogger:
         *,
         exception: BaseException | None = None,
         exc_info: bool = True,
-        **kwargs: FlextTypes.LoggingKwargsType,
+        **kwargs: object,
     ) -> FlextResult[None]:
         """Log exception message with stack trace - LoggerProtocol implementation."""
         try:

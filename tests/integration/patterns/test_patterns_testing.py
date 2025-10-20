@@ -784,7 +784,11 @@ class TestRealWorldScenarios:
             database_url=st.text(),
             debug=st.booleans(),
             timeout_seconds=st.integers(min_value=1, max_value=300),
-            environment=st.sampled_from(["development", "staging", "production"]),
+            environment=st.sampled_from([
+                "development",
+                "staging",
+                "production",
+            ]),
         )
     )
     @settings()
@@ -804,7 +808,11 @@ class TestRealWorldScenarios:
         assert config["timeout_seconds"] > 0
 
         # Validate environment
-        assert config["environment"] in {"development", "staging", "production"}
+        assert config["environment"] in {
+            "development",
+            "staging",
+            "production",
+        }
 
         # Build test scenario for this configuration
         scenario = (

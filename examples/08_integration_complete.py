@@ -675,7 +675,8 @@ class OrderService(FlextService[dict[str, object]]):
         inventory_result = self.container.get_typed("inventory", InventoryService)
         if inventory_result.is_failure:
             return FlextResult[Order].fail("Inventory service not available")
-        inventory = cast("InventoryService", inventory_result.unwrap())
+        # No cast needed - get_typed guarantees type
+        inventory = inventory_result.unwrap()
 
         # Create order
         order = Order(customer_id=customer_id, domain_events=[])
@@ -741,7 +742,8 @@ class OrderService(FlextService[dict[str, object]]):
         payment_service_result = self.container.get_typed("payment", PaymentService)
         if payment_service_result.is_failure:
             return FlextResult[dict[str, object]].fail("Payment service not available")
-        payment = cast("PaymentService", payment_service_result.unwrap())
+        # No cast needed - get_typed guarantees type
+        payment = payment_service_result.unwrap()
 
         # Process payment
         payment_result = payment.process_payment(order, payment_method)
@@ -958,7 +960,10 @@ def demonstrate_new_flextresult_methods() -> None:
     order_result: FlextResult[Order] = FlextResult[Order].from_callable(
         lambda: risky_order_creation(
             customer_id,
-            cast("list[dict[str, object]]", list(order_template.get("items", []))),
+            cast(
+                "list[dict[str, object]]",
+                list(order_template.get("items", [])),
+            ),
         ),
     )
     if order_result.is_success:

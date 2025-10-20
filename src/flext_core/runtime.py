@@ -76,12 +76,6 @@ from dependency_injector import containers, providers
 from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes
 
-# =========================================================================
-# ALL SEMANTIC TYPE ALIASES NOW IN FLEXTYPES
-# =========================================================================
-# All runtime integration type aliases moved to FlextTypes namespace
-# Access via: FlextTypes.FlextTypes.ValidatableInputType, FlextTypes.FlextTypes.TypeHintSpecifier, etc.
-
 
 class FlextRuntime:
     """Runtime Utilities and External Library Integration Bridge (Layer 0.5).
@@ -205,7 +199,9 @@ class FlextRuntime:
     # =========================================================================
 
     @staticmethod
-    def is_valid_email(value: FlextTypes.ValidatableInputType) -> TypeGuard[str]:
+    def is_valid_email(
+        value: FlextTypes.ValidatableInputType,
+    ) -> TypeGuard[str]:
         """Type guard to check if value is a valid email string.
 
         Uses RFC 5322 simplified pattern from FlextConstants.Platform.PATTERN_EMAIL.
@@ -241,7 +237,9 @@ class FlextRuntime:
         return pattern.match(value) is not None
 
     @staticmethod
-    def is_valid_phone(value: FlextTypes.ValidatableInputType) -> TypeGuard[str]:
+    def is_valid_phone(
+        value: FlextTypes.ValidatableInputType,
+    ) -> TypeGuard[str]:
         """Type guard to check if value is a valid phone number string.
 
         Uses international format pattern from FlextConstants.Platform.PATTERN_PHONE_NUMBER.
@@ -259,7 +257,9 @@ class FlextRuntime:
         return pattern.match(value) is not None
 
     @staticmethod
-    def is_valid_uuid(value: FlextTypes.ValidatableInputType) -> TypeGuard[str]:
+    def is_valid_uuid(
+        value: FlextTypes.ValidatableInputType,
+    ) -> TypeGuard[str]:
         """Type guard to check if value is a valid UUID string.
 
         Supports both hyphenated and non-hyphenated formats.
@@ -308,7 +308,9 @@ class FlextRuntime:
         return isinstance(value, list)
 
     @staticmethod
-    def is_valid_json(value: FlextTypes.ValidatableInputType) -> TypeGuard[str]:
+    def is_valid_json(
+        value: FlextTypes.ValidatableInputType,
+    ) -> TypeGuard[str]:
         """Type guard to check if value is valid JSON string.
 
         Args:
@@ -327,7 +329,9 @@ class FlextRuntime:
             return False
 
     @staticmethod
-    def is_valid_path(value: FlextTypes.ValidatableInputType) -> TypeGuard[str]:
+    def is_valid_path(
+        value: FlextTypes.ValidatableInputType,
+    ) -> TypeGuard[str]:
         """Type guard to check if value is a valid file/directory path.
 
         Uses pattern from FlextConstants.Platform.PATTERN_PATH.
@@ -345,7 +349,9 @@ class FlextRuntime:
         return pattern.match(value) is not None
 
     @staticmethod
-    def is_valid_identifier(value: FlextTypes.ValidatableInputType) -> TypeGuard[str]:
+    def is_valid_identifier(
+        value: FlextTypes.ValidatableInputType,
+    ) -> TypeGuard[str]:
         """Type guard to check if value is a valid Python identifier.
 
         Args:
@@ -411,17 +417,17 @@ class FlextRuntime:
                     f"model_dump() serialization strategy failed: {e}"
                 )
 
-        # Strategy 2: Check for dict[str, object] method
-        if hasattr(obj, "dict") and callable(getattr(obj, "dict")):
+        # Strategy 2: Check for to_dict method
+        if hasattr(obj, "to_dict") and callable(getattr(obj, "to_dict")):
             try:
-                dict_method = getattr(obj, "dict")
-                result = dict_method()
+                to_dict_method = getattr(obj, "to_dict")
+                result = to_dict_method()
                 if isinstance(result, dict):
                     return cast("dict[str, object]", result)
             except Exception as e:
                 # Silent fallback for serialization strategy - log at debug level
                 logging.getLogger(__name__).debug(
-                    f"dict() serialization strategy failed: {e}"
+                    f"to_dict() serialization strategy failed: {e}"
                 )
 
         # Strategy 3: Check for __dict__ attribute

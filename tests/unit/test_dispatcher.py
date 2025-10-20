@@ -11,9 +11,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from typing import Literal, cast
+from typing import cast
 
 from flext_core import (
+    FlextConstants,
     FlextDispatcher,
     FlextHandlers,
     FlextModels,
@@ -58,8 +59,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="test_handler",
                     handler_name="TestHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -82,8 +83,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="simple_handler",
                     handler_name="SimpleHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -108,8 +109,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="batch_handler",
                     handler_name="BatchHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -140,8 +141,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="failing_handler",
                     handler_name="FailingHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -168,8 +169,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="handler",
                     handler_name="Handler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -193,8 +194,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="context_handler",
                     handler_name="ContextHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -223,8 +224,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="metrics_handler",
                     handler_name="MetricsHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -241,7 +242,6 @@ class TestFlextDispatcherCoverage:
             assert dispatch_result.is_success
 
         # Test metrics retrieval - use direct method
-        # TODO: Implement get_performance_metrics method in FlextDispatcher
         metrics = dispatcher.get_performance_metrics()
         assert isinstance(metrics, dict)
 
@@ -259,8 +259,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="valid_handler",
                     handler_name="ValidHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -281,8 +281,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="audit_handler",
                     handler_name="AuditHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -309,8 +309,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="retry_handler",
                     handler_name="RetryHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -342,8 +342,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="quick_handler",
                     handler_name="QuickHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -372,8 +372,8 @@ class TestFlextDispatcherCoverage:
                     config = FlextModels.Cqrs.Handler(
                         handler_id=f"test_handler_{handler_id}",
                         handler_name=f"TestHandler{handler_id}",
-                        handler_type="command",
-                        handler_mode="command",
+                        handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                        handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                     )
                     super().__init__(config=config)
                     # Store handler_id as a different attribute since handler_id is a property
@@ -403,8 +403,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="cleanup_handler",
                     handler_name="CleanupHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -417,7 +417,6 @@ class TestFlextDispatcherCoverage:
 
         # Test cleanup operations (if available)
         # This tests methods like clearing metrics, resetting state, etc.
-        # TODO: Implement get_performance_metrics method in FlextDispatcher
         metrics = dispatcher.get_performance_metrics()
         assert isinstance(metrics, dict)
 
@@ -440,8 +439,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="edge_handler",
                     handler_name="EdgeHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -467,8 +466,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="perf_handler",
                     handler_name="PerfHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -503,8 +502,7 @@ class TestFlextDispatcherCoverage:
         try:
             result = dispatcher.create_handler_from_function(
                 simple_function_handler,
-                handler_config={},
-                mode="command",
+                mode=FlextConstants.Cqrs.HandlerType.COMMAND,
             )
             assert result.is_success
         except (AttributeError, TypeError):
@@ -517,8 +515,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="complex_handler",
                     handler_name="ComplexHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
                 self.processed_count = 0
@@ -554,8 +552,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="create_user_command",
                     handler_name="CreateUserCommand",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -581,18 +579,21 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="get_user_query",
                     handler_name="GetUserQuery",
-                    handler_type="query",
-                    handler_mode="query",
+                    handler_type=FlextConstants.Cqrs.HandlerType.QUERY,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.QUERY,
                 )
                 super().__init__(config=config)
 
             def handle(self, message: object) -> FlextResult[object]:
-                return FlextResult[object].ok({"user_id": message, "name": "John"})
+                return FlextResult[object].ok({
+                    "user_id": message,
+                    "name": "John",
+                })
 
         handler = GetUserQuery()
 
         # Test register_query method
-        result = dispatcher.register_handler("GetUser", handler, handler_mode="query")
+        result = dispatcher.register_handler("GetUser", handler, handler_mode=FlextConstants.Cqrs.HandlerType.QUERY)
         assert result.is_success or result.is_failure  # Either outcome is valid
 
     def test_dispatcher_register_function(self) -> None:
@@ -605,7 +606,7 @@ class TestFlextDispatcherCoverage:
 
         # Test register_function method
         result = dispatcher.register_handler(
-            "ProcessData", process_data, handler_mode="command"
+            "ProcessData", process_data, handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND
         )
         assert result.is_success or result.is_failure  # Either outcome is valid
 
@@ -619,8 +620,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="test_cleanup",
                     handler_name="TestCleanup",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -660,8 +661,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="request_handler",
                     handler_name="RequestHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -693,7 +694,9 @@ class TestFlextDispatcherCoverage:
             # Method might have different signature
             pass
 
-    def test_dispatcher_register_handler_with_request_invalid_mode(self) -> None:
+    def test_dispatcher_register_handler_with_request_invalid_mode(
+        self,
+    ) -> None:
         """Test register_handler_with_request with invalid handler mode."""
         dispatcher = FlextDispatcher()
 
@@ -703,7 +706,7 @@ class TestFlextDispatcherCoverage:
             return x
 
         invalid_request: dict[str, object] = {
-            "handler_mode": "invalid_mode",
+            "handler_mode": cast("str", "invalid_mode"),  # Invalid mode for testing
             "message_type": "test",
             "handler": test_handler,
         }
@@ -756,15 +759,19 @@ class TestFlextDispatcherCoverage:
 
             class DynamicHandler(FlextHandlers[object, object]):
                 def __init__(self, handler_id: str, msg_type: str, mode: str) -> None:
-                    # Cast mode to Literal type for handler_type and handler_mode
-                    handler_literal = cast(
-                        "Literal['command', 'query', 'event', 'saga']", mode
+                    # Convert mode string to enum
+                    handler_type_enum = (
+                        FlextConstants.Cqrs.HandlerType.COMMAND
+                        if mode == "command"
+                        else FlextConstants.Cqrs.HandlerType.QUERY
+                        if mode == "query"
+                        else FlextConstants.Cqrs.HandlerType.EVENT
                     )
                     config = FlextModels.Cqrs.Handler(
                         handler_id=handler_id,
                         handler_name=f"Handler_{handler_id}",
-                        handler_type=handler_literal,
-                        handler_mode=handler_literal,
+                        handler_type=handler_type_enum,
+                        handler_mode=handler_type_enum,
                     )
                     super().__init__(config=config)
                     self.msg_type = msg_type
@@ -814,8 +821,8 @@ class TestFlextDispatcherCoverage:
                     config = FlextModels.Cqrs.Handler(
                         handler_id="none_handler",
                         handler_name="NoneHandler",
-                        handler_type="command",
-                        handler_mode="command",
+                        handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                        handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                     )
                     super().__init__(config=config)
 
@@ -843,8 +850,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="concurrent_handler",
                     handler_name="ConcurrentHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
                 self.count = 0
@@ -879,8 +886,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="metadata_handler",
                     handler_name="MetadataHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -916,8 +923,8 @@ class TestFlextDispatcherCoverage:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="batch_error_handler",
                     handler_name="BatchErrorHandler",
-                    handler_type="command",
-                    handler_mode="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 

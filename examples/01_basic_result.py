@@ -195,7 +195,9 @@ class DemoScenarios:
         return FlextResult[dict[str, object]].fail("User lookup failed")
 
     @staticmethod
-    def error_scenario(error_type: str = "ValidationError") -> dict[str, object]:
+    def error_scenario(
+        error_type: str = "ValidationError",
+    ) -> dict[str, object]:
         """Get a demo error scenario dictionary."""
         return {
             "error_type": error_type,
@@ -310,7 +312,8 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
             }
 
             self.logger.info(
-                "FlextResult demonstration completed successfully", extra=summary
+                "FlextResult demonstration completed successfully",
+                extra=summary,
             )
 
             return FlextResult[dict[str, object]].ok(summary)
@@ -335,7 +338,8 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
             print(f"✅ Valid email via FlextRuntime: {result.unwrap()}")
         else:
             result = FlextResult[str].fail(
-                "Invalid email", error_code=FlextConstants.Errors.VALIDATION_ERROR
+                "Invalid email",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
 
         # JSON validation with FlextRuntime
@@ -369,7 +373,8 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
 
         # Using FlextConstants for error codes
         failure = FlextResult[object].fail(
-            "Validation failed", error_code=FlextConstants.Errors.VALIDATION_ERROR
+            "Validation failed",
+            error_code=FlextConstants.Errors.VALIDATION_ERROR,
         )
         print(f"❌ .fail() with FlextConstants error code: {failure}")
 

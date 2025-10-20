@@ -20,7 +20,6 @@ class TestFlextConstants:
     def test_core_constants(self) -> None:
         """Test core constants access."""
         assert FlextConstants.NAME == "FLEXT"
-        assert FlextConstants.VERSION == "0.9.9"
 
     def test_network_constants(self) -> None:
         """Test network constants access."""
@@ -202,7 +201,6 @@ class TestFlextConstants:
         """Test that constants have correct types."""
         # Test string constants
         assert isinstance(FlextConstants.NAME, str)
-        assert isinstance(FlextConstants.VERSION, str)
 
         # Test integer constants
         assert isinstance(FlextConstants.Network.MIN_PORT, int)

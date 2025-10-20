@@ -8,9 +8,6 @@ All utilities are designed to work with FlextResult for consistent error
 handling and composability across ecosystem projects.
 """
 
-# pyright: reportUnknownArgumentType=false
-# ruff: E402, S404
-# nosec B404 - Required for shell command execution utilities
 from __future__ import annotations
 
 import contextvars
@@ -23,7 +20,7 @@ import pathlib
 import re
 import secrets
 import string
-import subprocess  # nosec B404
+import subprocess
 import threading
 import time
 import uuid
@@ -49,26 +46,8 @@ from flext_core.typings import FlextTypes
 _logger = logging.getLogger(__name__)
 
 # =========================================================================
-# MODULE-LEVEL TYPE ALIASES - Utility type specifications (Phase 9.8)
+# TYPE IMPORTS - All types now centralized in typings.py
 # =========================================================================
-
-type CachedObjectType = object
-"""Object type for cache operations and management."""
-
-type SortableObjectType = object
-"""Object type that can be sorted or normalized."""
-
-type GenericDetailsType = object
-"""Generic object for flexible parameter handling."""
-
-type MessageTypeSpecifier = object
-"""Message type identifier for handler type checking."""
-
-type TypeOriginSpecifier = object
-"""Type origin marker for generic type analysis."""
-
-type ParameterValueType = object
-"""Parameter value type for configuration parameters."""
 
 
 class FlextUtilities:
@@ -236,31 +215,12 @@ class FlextUtilities:
     ✅ Production-ready for enterprise deployments
     """
 
-    # SEMANTIC TYPE ALIASES - Domain-driven type specifications (Phase 9.5.2)
-    type CachedObjectType = object
-    """Object type for cache operations and management."""
-
-    type SortableObjectType = object
-    """Object type that can be sorted or normalized."""
-
-    type GenericDetailsType = object
-    """Generic object for flexible parameter handling."""
-
-    type MessageTypeSpecifier = object
-    """Message type identifier for handler type checking."""
-
-    type TypeOriginSpecifier = object
-    """Type origin marker for generic type analysis."""
-
-    type ParameterValueType = object
-    """Configuration parameter value from get/set operations."""
-
     class Cache:
         """Cache utility functions for data normalization and sorting."""
 
         @staticmethod
         def normalize_component(
-            component: GenericDetailsType,
+            component: FlextTypes.GenericDetailsType,
         ) -> object:
             """Normalize a component for consistent representation."""
             if isinstance(component, dict):
@@ -284,7 +244,7 @@ class FlextUtilities:
             return component
 
         @staticmethod
-        def sort_key(key: SortableObjectType) -> tuple[int, str]:
+        def sort_key(key: FlextTypes.SortableObjectType) -> tuple[int, str]:
             """Generate a sort key for consistent ordering."""
             if isinstance(key, str):
                 return (0, key.lower())
@@ -293,7 +253,7 @@ class FlextUtilities:
             return (2, str(key))
 
         @staticmethod
-        def sort_dict_keys(data: SortableObjectType) -> SortableObjectType:
+        def sort_dict_keys(data: FlextTypes.SortableObjectType) -> FlextTypes.SortableObjectType:
             """Sort dictionary keys for consistent representation."""
             if isinstance(data, dict):
                 data_dict = cast("dict[str, object]", data)
@@ -304,7 +264,7 @@ class FlextUtilities:
             return data
 
         @staticmethod
-        def clear_object_cache(obj: CachedObjectType) -> FlextResult[None]:
+        def clear_object_cache(obj: FlextTypes.CachedObjectType) -> FlextResult[None]:
             """Clear any caches on an object."""
             try:
                 # Common cache attribute names to check and clear
@@ -331,7 +291,7 @@ class FlextUtilities:
                 return FlextResult[None].fail(f"Failed to clear caches: {e}")
 
         @staticmethod
-        def has_cache_attributes(obj: CachedObjectType) -> bool:
+        def has_cache_attributes(obj: FlextTypes.CachedObjectType) -> bool:
             """Check if object has any cache-related attributes."""
             cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
             return any(hasattr(obj, attr) for attr in cache_attributes)
@@ -343,7 +303,26 @@ class FlextUtilities:
             return hashlib.sha256(key_data.encode()).hexdigest()
 
     class Validation:
-        """Unified validation patterns using railway composition."""
+        """Unified validation patterns using railway composition.
+
+        **MIGRATION TO PYDANTIC v2 FIELD CONSTRAINTS**:
+
+        Many validators here duplicate Pydantic Field constraints. For Pydantic models, use:
+
+        - `validate_string_not_empty` → `Field(min_length=1)`
+        - `validate_string_length` → `Field(min_length=X, max_length=Y)`
+        - `validate_string_pattern` → `Field(pattern=r"regex")`
+        - `validate_port` → `Field(ge=1, le=65535)`
+        - `validate_timeout_seconds` → `Field(gt=0, le=MAX)`
+        - `validate_retry_count` → `Field(ge=0, le=MAX)`
+        - `validate_positive_integer` → `Field(gt=0)`
+        - `validate_non_negative_integer` → `Field(ge=0)`
+        - `validate_log_level` → `Literal["DEBUG", ...]`
+
+        **Keep for runtime validation**: Complex validators (URL, email, file_path, host)
+
+        See: https://docs.pydantic.dev/2.12/api/fields/
+        """
 
         @staticmethod
         def validate_string_not_none(value: str | None) -> FlextResult[None]:
@@ -557,7 +536,7 @@ class FlextUtilities:
             return isinstance(value, str) and len(value.strip()) > 0
 
         @staticmethod
-        def clear_all_caches(obj: CachedObjectType) -> FlextResult[None]:
+        def clear_all_caches(obj: FlextTypes.CachedObjectType) -> FlextResult[None]:
             """Clear all caches on an object to prevent memory leaks.
 
             Args:
@@ -592,7 +571,7 @@ class FlextUtilities:
                 return FlextResult[None].fail(f"Failed to clear caches: {e}")
 
         @staticmethod
-        def has_cache_attributes(obj: CachedObjectType) -> bool:
+        def has_cache_attributes(obj: FlextTypes.CachedObjectType) -> bool:
             """Check if object has any cache-related attributes.
 
             Args:
@@ -766,7 +745,7 @@ class FlextUtilities:
                     return f"{cast('type', command_type).__name__}_{abs(hash(encoded_fallback))}"
 
         @staticmethod
-        def sort_dict_keys(obj: SortableObjectType) -> SortableObjectType:
+        def sort_dict_keys(obj: FlextTypes.SortableObjectType) -> FlextTypes.SortableObjectType:
             """Recursively sort dictionary keys for deterministic ordering.
 
             Args:
@@ -797,7 +776,7 @@ class FlextUtilities:
             return obj
 
         @staticmethod
-        def initialize(obj: CachedObjectType, field_name: str) -> None:
+        def initialize(obj: FlextTypes.CachedObjectType, field_name: str) -> None:
             """Initialize validation for object.
 
             Simplified implementation that directly sets the validation flag.
@@ -965,10 +944,10 @@ class FlextUtilities:
                     * FlextConstants.Context.MILLISECONDS_PER_SECOND
                 )
                 % FlextConstants.Utilities.VERSION_MODULO
-            )
+            ) + 1
 
         @staticmethod
-        def ensure_id(obj: CachedObjectType) -> None:
+        def ensure_id(obj: FlextTypes.CachedObjectType) -> None:
             """Ensure object has an ID using FlextUtilities and FlextConstants.
 
             Args:
@@ -1186,7 +1165,8 @@ class FlextUtilities:
                     # Calculate delay with exponential backoff
                     current_delay = delay_seconds * (backoff_multiplier**attempt)
                     current_delay = min(
-                        current_delay, FlextConstants.Reliability.RETRY_BACKOFF_MAX
+                        current_delay,
+                        FlextConstants.Reliability.RETRY_BACKOFF_MAX,
                     )
 
                     # Sleep before retry
@@ -1202,7 +1182,8 @@ class FlextUtilities:
                     # Calculate delay with exponential backoff
                     current_delay = delay_seconds * (backoff_multiplier**attempt)
                     current_delay = min(
-                        current_delay, FlextConstants.Reliability.RETRY_BACKOFF_MAX
+                        current_delay,
+                        FlextConstants.Reliability.RETRY_BACKOFF_MAX,
                     )
 
                     # Sleep before retry
@@ -1223,7 +1204,7 @@ class FlextUtilities:
         def compute_accepted_message_types(
             cls,
             handler_class: type,
-        ) -> tuple[MessageTypeSpecifier, ...]:
+        ) -> tuple[FlextTypes.MessageTypeSpecifier, ...]:
             """Compute message types accepted by a handler using cached introspection.
 
             Args:
@@ -1233,13 +1214,13 @@ class FlextUtilities:
                 Tuple of accepted message types
 
             """
-            message_types: list[MessageTypeSpecifier] = []
+            message_types: list[FlextTypes.MessageTypeSpecifier] = []
             generic_types = cls._extract_generic_message_types(handler_class)
             # Extend with extracted generic types
             message_types.extend(generic_types)
 
             if not message_types:
-                explicit_type: MessageTypeSpecifier = (
+                explicit_type: FlextTypes.MessageTypeSpecifier | None = (
                     cls._extract_message_type_from_handle(handler_class)
                 )
                 if explicit_type is not None:
@@ -1248,7 +1229,9 @@ class FlextUtilities:
             return tuple(message_types)
 
         @classmethod
-        def _extract_generic_message_types(cls, handler_class: type) -> list[object]:
+        def _extract_generic_message_types(
+            cls, handler_class: type
+        ) -> list[FlextTypes.MessageTypeSpecifier]:
             """Extract message types from generic base annotations.
 
             Args:
@@ -1258,7 +1241,7 @@ class FlextUtilities:
                 List of message types from generic annotations
 
             """
-            message_types: list[object] = []
+            message_types: list[FlextTypes.MessageTypeSpecifier] = []
             for base in getattr(handler_class, "__orig_bases__", ()) or ():
                 # Layer 0.5: Use FlextRuntime for type introspection
                 origin = get_origin(base)
@@ -1266,7 +1249,7 @@ class FlextUtilities:
                 if origin and origin.__name__ == "FlextHandlers":
                     # Use FlextRuntime.extract_generic_args() from Layer 0.5
                     args = FlextRuntime.extract_generic_args(base)
-                    if args:
+                    if args and isinstance(args[0], (type, str)):
                         message_types.append(args[0])
             return message_types
 
@@ -1274,7 +1257,7 @@ class FlextUtilities:
         def _extract_message_type_from_handle(
             cls,
             handler_class: type,
-        ) -> object:
+        ) -> FlextTypes.MessageTypeSpecifier | None:
             """Extract message type from handle method annotations when generics are absent.
 
             Args:
@@ -1321,8 +1304,8 @@ class FlextUtilities:
         @classmethod
         def can_handle_message_type(
             cls,
-            accepted_types: tuple[MessageTypeSpecifier, ...],
-            message_type: MessageTypeSpecifier,
+            accepted_types: tuple[FlextTypes.MessageTypeSpecifier, ...],
+            message_type: FlextTypes.MessageTypeSpecifier,
         ) -> bool:
             """Check if handler can process this message type.
 
@@ -1345,8 +1328,8 @@ class FlextUtilities:
         @classmethod
         def _evaluate_type_compatibility(
             cls,
-            expected_type: TypeOriginSpecifier,
-            message_type: MessageTypeSpecifier,
+            expected_type: FlextTypes.TypeOriginSpecifier,
+            message_type: FlextTypes.MessageTypeSpecifier,
         ) -> bool:
             """Evaluate compatibility between expected and actual message types.
 
@@ -1395,10 +1378,10 @@ class FlextUtilities:
         @classmethod
         def _handle_type_or_origin_check(
             cls,
-            expected_type: TypeOriginSpecifier,
-            message_type: TypeOriginSpecifier,
-            origin_type: TypeOriginSpecifier,
-            message_origin: TypeOriginSpecifier,
+            expected_type: FlextTypes.TypeOriginSpecifier,
+            message_type: FlextTypes.TypeOriginSpecifier,
+            origin_type: FlextTypes.TypeOriginSpecifier,
+            message_origin: FlextTypes.TypeOriginSpecifier,
         ) -> bool:
             """Handle type checking for types or objects with __origin__.
 
@@ -1424,8 +1407,8 @@ class FlextUtilities:
         @classmethod
         def _handle_instance_check(
             cls,
-            message_type: TypeOriginSpecifier,
-            origin_type: TypeOriginSpecifier,
+            message_type: FlextTypes.TypeOriginSpecifier,
+            origin_type: FlextTypes.TypeOriginSpecifier,
         ) -> bool:
             """Handle instance checking for non-type objects.
 
@@ -1448,7 +1431,7 @@ class FlextUtilities:
         """Configuration parameter access and manipulation utilities."""
 
         @staticmethod
-        def get_parameter(obj: object, parameter: str) -> ParameterValueType:
+        def get_parameter(obj: object, parameter: str) -> FlextTypes.ParameterValueType:
             """Get parameter value from a Pydantic configuration object.
 
             Simplified implementation using Pydantic's model_dump for safe access.
@@ -1495,7 +1478,7 @@ class FlextUtilities:
 
         @staticmethod
         def set_parameter(
-            obj: object, parameter: str, value: ParameterValueType
+            obj: object, parameter: str, value: FlextTypes.ParameterValueType
         ) -> bool:
             """Set parameter value on a Pydantic configuration object with validation.
 
@@ -1527,7 +1510,7 @@ class FlextUtilities:
                 return False
 
         @staticmethod
-        def get_singleton(singleton_class: type, parameter: str) -> ParameterValueType:
+        def get_singleton(singleton_class: type, parameter: str) -> FlextTypes.ParameterValueType:
             """Get parameter from a singleton configuration instance.
 
             Args:
@@ -1560,7 +1543,7 @@ class FlextUtilities:
         def set_singleton(
             singleton_class: type,
             parameter: str,
-            value: ParameterValueType,
+            value: FlextTypes.ParameterValueType,
         ) -> bool:
             """Set parameter on a singleton configuration instance with validation.
 

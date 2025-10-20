@@ -27,12 +27,6 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-# Module-level constant for default handler mode (avoids B008 lint error with cast in defaults)
-_DEFAULT_HANDLER_MODE: FlextConstants.Cqrs.HandlerModeSimple = cast(
-    "FlextConstants.Cqrs.HandlerModeSimple",
-    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-)
-
 
 class FlextDispatcher(FlextMixins):
     """High-level message dispatch orchestration with reliability patterns.
@@ -115,14 +109,27 @@ class FlextDispatcher(FlextMixins):
             supports_async=True,
         )
 
-        # Circuit breaker state - failure counts per message type
-        self._circuit_breaker_failures: dict[str, object] = {}
+        # Circuit breaker state - proper state machine per message type
+        self._circuit_breaker_failures: dict[str, int] = {}
         self._circuit_breaker_threshold = self.config.circuit_breaker_threshold
+        self._circuit_breaker_recovery_timeout = (
+            FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT
+        )
+        self._circuit_breaker_success_threshold = (
+            FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD
+        )
 
         # Rate limiting state - sliding window with count, window_start, block_until
         self._rate_limit_requests: dict[str, object] = {}
         self._rate_limit_state: dict[str, object] = {}
         self._rate_limit = self.config.rate_limit_max_requests
+
+        # Circuit breaker state machine data
+        self._circuit_breaker_states: dict[str, str] = {}  # state per message type
+        self._circuit_breaker_opened_at: dict[str, float] = {}  # when opened
+        self._circuit_breaker_success_counts: dict[
+            str, int
+        ] = {}  # success counts for recovery
         self._rate_limit_window = self.config.rate_limit_window_seconds
         self._rate_limit_block_grace = max(1.0, 0.5 * self._rate_limit_window)
 
@@ -216,7 +223,7 @@ class FlextDispatcher(FlextMixins):
         message_type_or_handler: FlextTypes.MessageTypeOrHandlerType,
         handler: FlextTypes.HandlerOrCallableType | None = None,
         *,
-        handler_mode: FlextConstants.Cqrs.HandlerModeSimple = _DEFAULT_HANDLER_MODE,
+        handler_mode: FlextConstants.Cqrs.HandlerModeSimple = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
         handler_config: FlextTypes.HandlerConfigurationType = None,
     ) -> FlextResult[dict[str, object]]:
         """Register handler with support for both old and new API.
@@ -239,7 +246,6 @@ class FlextDispatcher(FlextMixins):
             if callable(handler) and not isinstance(handler, FlextHandlers):
                 handler_result = self.create_handler_from_function(
                     handler_func=handler,
-                    handler_config=handler_config,
                     mode=handler_mode,
                 )
                 if handler_result.is_failure:
@@ -271,7 +277,6 @@ class FlextDispatcher(FlextMixins):
             ):
                 handler_result = self.create_handler_from_function(
                     handler_func=message_type_or_handler,
-                    handler_config=handler_config,
                     mode=handler_mode,
                 )
                 if handler_result.is_failure:
@@ -350,7 +355,7 @@ class FlextDispatcher(FlextMixins):
         handler_func: FlextTypes.HandlerCallableType,
         *,
         handler_config: FlextTypes.HandlerConfigurationType = None,
-        mode: FlextConstants.Cqrs.HandlerModeSimple = _DEFAULT_HANDLER_MODE,
+        mode: FlextConstants.Cqrs.HandlerModeSimple = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
     ) -> FlextResult[dict[str, object]]:
         """Register function as handler using factory pattern.
 
@@ -395,8 +400,8 @@ class FlextDispatcher(FlextMixins):
     def create_handler_from_function(
         self,
         handler_func: FlextTypes.HandlerCallableType,
-        handler_config: FlextTypes.HandlerConfigurationType,  # noqa: ARG002
-        mode: str,
+        _handler_config: FlextTypes.HandlerConfigurationType = None,
+        mode: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
     ) -> FlextResult[FlextHandlers[object, object]]:
         """Create handler from function using FlextHandlers constructor.
 
@@ -413,7 +418,7 @@ class FlextDispatcher(FlextMixins):
             handler = FlextHandlers.from_callable(
                 callable_func=handler_func,
                 handler_name=getattr(handler_func, "__name__", "FunctionHandler"),
-                handler_type=cast("FlextConstants.Cqrs.HandlerModeSimple", mode),
+                handler_type=mode,
             )
             return FlextResult[FlextHandlers[object, object]].ok(handler)
 
@@ -488,16 +493,11 @@ class FlextDispatcher(FlextMixins):
             message = request.get("message")
             message_type = type(message).__name__ if message else "unknown"
 
-            # Update circuit breaker state
-            if not execution_result.is_success:
-                failure_count = cast(
-                    "int",
-                    self._circuit_breaker_failures.get(message_type, 0),
-                )
-                self._circuit_breaker_failures[message_type] = failure_count + 1
+            # Update circuit breaker state machine
+            if execution_result.is_success:
+                self._record_circuit_breaker_success(message_type)
             else:
-                # Reset failures on success
-                self._circuit_breaker_failures[message_type] = 0
+                self._record_circuit_breaker_failure(message_type)
 
             if execution_result.is_success:
                 dispatch_result: dict[str, object] = {
@@ -595,19 +595,13 @@ class FlextDispatcher(FlextMixins):
             message = message_or_type
             message_type = type(message).__name__ if message else "unknown"
 
-        # Check circuit breaker
-        failures_val = self._circuit_breaker_failures.get(message_type, 0)
-        failures = cast("int", failures_val)
-        if failures >= self._circuit_breaker_threshold:
+        # Check circuit breaker state machine
+        cb_check = self._check_circuit_breaker_before_dispatch(message_type)
+        if cb_check.is_failure:
             return FlextResult[object].fail(
-                f"Circuit breaker is open for message type '{message_type}'",
-                error_code=FlextConstants.Errors.OPERATION_ERROR,
-                error_data={
-                    "message_type": message_type,
-                    "failure_count": failures,
-                    "threshold": self._circuit_breaker_threshold,
-                    "reason": "circuit_breaker_open",
-                },
+                cb_check.error,
+                error_code=cb_check.error_code,
+                error_data=cb_check.error_data,
             )
 
         # Check rate limiting
@@ -792,7 +786,7 @@ class FlextDispatcher(FlextMixins):
 
                 # Track circuit breaker failure
                 failure_count_val = self._circuit_breaker_failures.get(message_type, 0)
-                failure_count = cast("int", failure_count_val)
+                failure_count = failure_count_val
                 self._circuit_breaker_failures[message_type] = failure_count + 1
 
                 # Check if this is a temporary failure that should be retried
@@ -811,7 +805,7 @@ class FlextDispatcher(FlextMixins):
                 except_failure_count_val = self._circuit_breaker_failures.get(
                     message_type, 0
                 )
-                except_failure_count = cast("int", except_failure_count_val)
+                except_failure_count = except_failure_count_val
                 self._circuit_breaker_failures[message_type] = except_failure_count + 1
 
                 if attempt < max_retries - 1:
@@ -1005,6 +999,12 @@ class FlextDispatcher(FlextMixins):
         return {
             "total_dispatches": 0,  # Track actual dispatches (future enhancement)
             "circuit_breaker_failures": len(self._circuit_breaker_failures),
+            "circuit_breaker_states": len(self._circuit_breaker_states),
+            "circuit_breaker_open_count": sum(
+                1
+                for state in self._circuit_breaker_states.values()
+                if state == FlextConstants.Reliability.CircuitBreakerState.OPEN
+            ),
             "rate_limit_states": len(self._rate_limit_state),
             "executor_workers": self._executor_workers if self._executor else 0,
         }
@@ -1022,6 +1022,9 @@ class FlextDispatcher(FlextMixins):
 
             # Clear internal state
             self._circuit_breaker_failures.clear()
+            self._circuit_breaker_states.clear()
+            self._circuit_breaker_opened_at.clear()
+            self._circuit_breaker_success_counts.clear()
             self._rate_limit_requests.clear()
             self._rate_limit_state.clear()
             if self._executor is not None:
@@ -1030,6 +1033,126 @@ class FlextDispatcher(FlextMixins):
 
         except Exception as e:
             self._log_with_context("warning", "Cleanup failed", error=str(e))
+
+    # --------------------------------------------------------------------------
+    # Circuit Breaker State Machine Methods
+    # --------------------------------------------------------------------------
+
+    def _get_circuit_breaker_state(self, message_type: str) -> str:
+        """Get current circuit breaker state for message type."""
+        return self._circuit_breaker_states.get(
+            message_type, FlextConstants.Reliability.CircuitBreakerState.CLOSED
+        )
+
+    def _set_circuit_breaker_state(self, message_type: str, state: str) -> None:
+        """Set circuit breaker state for message type."""
+        self._circuit_breaker_states[message_type] = state
+
+    def _is_circuit_breaker_open(self, message_type: str) -> bool:
+        """Check if circuit breaker is open for message type."""
+        return (
+            self._get_circuit_breaker_state(message_type)
+            == FlextConstants.Reliability.CircuitBreakerState.OPEN
+        )
+
+    def _record_circuit_breaker_success(self, message_type: str) -> None:
+        """Record successful operation and update circuit breaker state."""
+        current_state = self._get_circuit_breaker_state(message_type)
+
+        if current_state == FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN:
+            # Increment success count in half-open state
+            success_count = (
+                self._circuit_breaker_success_counts.get(message_type, 0) + 1
+            )
+            self._circuit_breaker_success_counts[message_type] = success_count
+
+            # Check if we should transition to closed
+            if success_count >= self._circuit_breaker_success_threshold:
+                self._transition_circuit_breaker_to_closed(message_type)
+
+        elif current_state == FlextConstants.Reliability.CircuitBreakerState.CLOSED:
+            # Reset failure count on success
+            self._circuit_breaker_failures[message_type] = 0
+
+    def _record_circuit_breaker_failure(self, message_type: str) -> None:
+        """Record failed operation and update circuit breaker state."""
+        current_state = self._get_circuit_breaker_state(message_type)
+        current_failures = self._circuit_breaker_failures.get(message_type, 0) + 1
+        self._circuit_breaker_failures[message_type] = current_failures
+
+        if current_state == FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN:
+            # Immediately open on failure in half-open state
+            self._transition_circuit_breaker_to_open(message_type)
+
+        elif (
+            current_state == FlextConstants.Reliability.CircuitBreakerState.CLOSED
+            and current_failures >= self._circuit_breaker_threshold
+        ):
+            # Transition to open after threshold failures
+            self._transition_circuit_breaker_to_open(message_type)
+
+    def _should_attempt_circuit_breaker_reset(self, message_type: str) -> bool:
+        """Check if circuit breaker should attempt recovery."""
+        if self._is_circuit_breaker_open(message_type):
+            return False
+
+        opened_at = self._circuit_breaker_opened_at.get(message_type, 0.0)
+        return (time.time() - opened_at) >= self._circuit_breaker_recovery_timeout
+
+    def _attempt_circuit_breaker_reset(self, message_type: str) -> None:
+        """Attempt to reset circuit breaker to half-open state."""
+        if self._should_attempt_circuit_breaker_reset(message_type):
+            self._transition_circuit_breaker_to_half_open(message_type)
+
+    def _transition_circuit_breaker_to_closed(self, message_type: str) -> None:
+        """Transition circuit breaker to CLOSED state."""
+        self._set_circuit_breaker_state(
+            message_type, FlextConstants.Reliability.CircuitBreakerState.CLOSED
+        )
+        self._circuit_breaker_failures[message_type] = 0
+        self._circuit_breaker_success_counts[message_type] = 0
+        if message_type in self._circuit_breaker_opened_at:
+            del self._circuit_breaker_opened_at[message_type]
+
+    def _transition_circuit_breaker_to_open(self, message_type: str) -> None:
+        """Transition circuit breaker to OPEN state."""
+        self._set_circuit_breaker_state(
+            message_type, FlextConstants.Reliability.CircuitBreakerState.OPEN
+        )
+        self._circuit_breaker_opened_at[message_type] = time.time()
+        self._circuit_breaker_success_counts[message_type] = 0
+
+    def _transition_circuit_breaker_to_half_open(self, message_type: str) -> None:
+        """Transition circuit breaker to HALF_OPEN state for testing."""
+        self._set_circuit_breaker_state(
+            message_type,
+            FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN,
+        )
+        self._circuit_breaker_success_counts[message_type] = 0
+
+    def _check_circuit_breaker_before_dispatch(
+        self, message_type: str
+    ) -> FlextResult[None]:
+        """Check circuit breaker state before dispatching."""
+        # Attempt recovery if circuit breaker is open
+        self._attempt_circuit_breaker_reset(message_type)
+
+        if self._is_circuit_breaker_open(message_type):
+            failures = self._circuit_breaker_failures.get(message_type, 0)
+            return FlextResult[None].fail(
+                f"Circuit breaker is open for message type '{message_type}'",
+                error_code=FlextConstants.Errors.OPERATION_ERROR,
+                error_data={
+                    "message_type": message_type,
+                    "failure_count": failures,
+                    "threshold": self._circuit_breaker_threshold,
+                    "state": self._get_circuit_breaker_state(message_type),
+                    "opened_at": self._circuit_breaker_opened_at.get(message_type, 0.0),
+                    "reason": "circuit_breaker_open",
+                },
+            )
+
+        return FlextResult[None].ok(None)
 
 
 __all__ = ["FlextDispatcher"]

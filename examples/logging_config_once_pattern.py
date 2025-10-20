@@ -102,7 +102,10 @@ class MigrationService(FlextService[dict[str, object]]):
         self.logger.info("Processing batch 2 of 10")
         # Config does NOT repeat in these logs!
 
-        return FlextResult[dict[str, object]].ok({"migrated": 1000, "failed": 0})
+        return FlextResult[dict[str, object]].ok({
+            "migrated": 1000,
+            "failed": 0,
+        })
 
 
 def main() -> None:

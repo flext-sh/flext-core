@@ -525,7 +525,10 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     return FlextResult[dict[str, object]].fail(
                         "Amount cannot be negative",
                         error_code="BUSINESS_RULE_VIOLATION",
-                        error_data={"rule": "positive_amount", "value": amount},
+                        error_data={
+                            "rule": "positive_amount",
+                            "value": amount,
+                        },
                     )
 
                 # Success case
@@ -550,7 +553,10 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             print(f"    Error data: {missing_field_result.error_data}")
 
         # Test type error
-        type_error_result = validator.handle({"id": "TEST", "amount": "not_a_number"})
+        type_error_result = validator.handle({
+            "id": "TEST",
+            "amount": "not_a_number",
+        })
         if type_error_result.is_failure:
             print(f"  ❌ Type error: {type_error_result.error}")
             print(f"    Error code: {type_error_result.error_code}")

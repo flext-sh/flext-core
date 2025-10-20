@@ -33,11 +33,10 @@ from flext_core import (
 )
 from flext_tests.docker import FlextTestDocker
 from flext_tests.domains import FlextTestsDomains
-from flext_tests.matchers import DataBuilder, FlextTestsMatchers
+from flext_tests.matchers import FlextTestsMatchers
 from flext_tests.utilities import FlextTestsUtilities
 
 __all__ = [
-    "DataBuilder",
     "FlextBus",
     "FlextConfig",
     "FlextConstants",

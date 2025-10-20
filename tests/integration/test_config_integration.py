@@ -259,7 +259,10 @@ class TestFlextConfigSingletonIntegration:
             os.chdir(temp_dir)
 
             # 1. Create JSON config (lower priority)
-            json_config: dict[str, str | int] = {"app_name": "from-json", "port": 3000}
+            json_config: dict[str, str | int] = {
+                "app_name": "from-json",
+                "port": 3000,
+            }
             with Path("config.json").open("w", encoding="utf-8") as f:
                 json.dump(json_config, f)
 

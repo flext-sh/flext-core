@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
+import re
 import threading
 from collections.abc import Callable
 from contextlib import suppress
@@ -22,7 +23,6 @@ from dependency_injector.providers import Object, Singleton
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
-from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -218,8 +218,12 @@ class FlextContainer(FlextProtocols.Configurable):
     # =========================================================================
 
     @override
-    def configure(self, config: dict[str, object]) -> FlextResult[None]:
+    def configure(self, config: dict[str, object] | FlextConfig) -> FlextResult[None]:
         """Configure component with provided settings - Configurable protocol implementation.
+
+        Args:
+            config: Either a dict for backward compatibility or FlextConfig instance.
+                   Using FlextConfig is preferred.
 
         Returns:
             FlextResult[None]: Configuration result
@@ -280,11 +284,33 @@ class FlextContainer(FlextProtocols.Configurable):
     def _validate_service_name(self, name: str) -> FlextResult[str]:
         """Validate and normalize service name using centralized validation.
 
+        Service names must:
+        - Not be empty
+        - Contain only alphanumeric, underscore, hyphen, colon, or space characters
+        - Colons are allowed for namespacing (e.g., "logger:module_name")
+        - Spaces are allowed for handler names (e.g., "Pre-built Handler")
+
         Returns:
             FlextResult[str]: Success with validated name or failure with error.
 
         """
-        return FlextModels.Validation.validate_service_name(name)
+        if not name or not name.strip():
+            return FlextResult[str].fail(
+                "Service name cannot be empty",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+
+        normalized_name = name.strip()
+
+        # Check for invalid characters (allow alphanumeric, _, -, :, and space)
+        if not re.match(r'^[a-zA-Z0-9_:\- ]+$', normalized_name):
+            return FlextResult[str].fail(
+                f"Service name '{normalized_name}' contains invalid characters. "
+                f"Only alphanumeric, underscore, hyphen, colon, and space are allowed.",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+
+        return FlextResult[str].ok(normalized_name)
 
     def register(
         self,
@@ -504,7 +530,9 @@ class FlextContainer(FlextProtocols.Configurable):
 
             # Integration: Track service not found
             FlextRuntime.Integration.track_service_resolution(
-                name, resolved=False, error_message=f"Service '{name}' not found"
+                name,
+                resolved=False,
+                error_message=f"Service '{name}' not found",
             )
 
             return FlextResult[object].fail(f"Service '{name}' not found")
@@ -838,7 +866,7 @@ class FlextContainer(FlextProtocols.Configurable):
             bool: True if service is registered, False otherwise.
 
         """
-        normalized = FlextModels.Validation.validate_service_name(name)
+        normalized = self._validate_service_name(name)
         if normalized.is_failure:
             return False
         validated_name = normalized.value_or_none
@@ -916,19 +944,30 @@ class FlextContainer(FlextProtocols.Configurable):
     # CONFIGURATION MANAGEMENT - FlextConfig integration
     # =========================================================================
 
-    def configure_container(self, config: dict[str, object]) -> FlextResult[None]:
+    def configure_container(self, config: dict[str, object] | FlextConfig) -> FlextResult[None]:
         """Configure container with validated settings.
+
+        Args:
+            config: Either a dict for backward compatibility or FlextConfig instance.
+                   Using FlextConfig is preferred.
 
         Returns:
             FlextResult[None]: Success if configured or failure with error.
 
         """
         try:
-            # Only allow specific configuration keys
-            allowed_keys = {"max_workers", "timeout_seconds"}
-            processed_config = {
-                key: value for key, value in config.items() if key in allowed_keys
-            }
+            # Convert FlextConfig to dict if needed
+            if isinstance(config, FlextConfig):
+                processed_config = {
+                    "max_workers": config.max_workers,
+                    "timeout_seconds": config.timeout_seconds,
+                }
+            else:
+                # Only allow specific configuration keys
+                allowed_keys = {"max_workers", "timeout_seconds"}
+                processed_config = {
+                    key: value for key, value in config.items() if key in allowed_keys
+                }
 
             # Update user overrides
             self._user_overrides.update(processed_config)

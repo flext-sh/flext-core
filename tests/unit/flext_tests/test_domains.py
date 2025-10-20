@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_tests.domains import FlextTestsDomains
 
 
@@ -107,12 +109,13 @@ class TestFlextTestsDomains:
 
     def test_api_response_data_error(self) -> None:
         """Test api_response_data with error status."""
-        response = FlextTestsDomains.api_response_data(status="error")
+        response: dict[str, object] = FlextTestsDomains.api_response_data(status="error")
 
         assert response["status"] == "error"
         assert "error" in response
-        assert response["error"]["code"] == "TEST_ERROR"
-        assert response["error"]["message"] == "Test error message"
+        error_obj = cast("dict[str, object]", response["error"])
+        assert error_obj["code"] == "TEST_ERROR"
+        assert error_obj["message"] == "Test error message"
 
     def test_api_response_data_custom_fields(self) -> None:
         """Test api_response_data with custom field overrides."""

@@ -350,7 +350,7 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
-from flext_core.models import FlextModels, MessageUnion
+from flext_core.models import FlextModels
 from flext_core.processors import FlextProcessors
 from flext_core.protocols import FlextProtocols
 from flext_core.registry import FlextRegistry
@@ -358,17 +358,44 @@ from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
 from flext_core.typings import (
+    # Pydantic native types (direct exports)
+    UUID1,
+    UUID3,
+    UUID4,
+    UUID5,
+    AnyUrl,
+    AwareDatetime,
+    # TypeVars
     Command,
+    DirectoryPath,
     E,
+    EmailStr,
     Event,
     F,
+    FilePath,
+    FileUrl,
+    # FlextTypes - domain-specific complex types
     FlextTypes,
+    FutureDate,
+    HttpUrl,
     K,
     Message,
+    NaiveDatetime,
+    NegativeFloat,
+    NegativeInt,
+    NewPath,
+    NonNegativeFloat,
+    NonNegativeInt,
+    NonPositiveFloat,
+    NonPositiveInt,
     P,
+    PastDate,
+    PositiveFloat,
+    PositiveInt,
     Query,
     R,
     ResultT,
+    SecretStr,
     T,
     T1_co,
     T2_co,
@@ -395,14 +422,32 @@ from flext_core.typings import (
     U,
     V,
     W,
+    confloat,
+    conint,
+    conlist,
+    conset,
+    constr,
 )
 from flext_core.utilities import FlextUtilities
 
 __all__ = [
+    # Pydantic native types
+    "UUID1",
+    "UUID3",
+    "UUID4",
+    "UUID5",
+    "AnyUrl",
+    "AwareDatetime",
+    # TypeVars
     "Command",
+    "DirectoryPath",
     "E",
+    "EmailStr",
     "Event",
     "F",
+    "FilePath",
+    "FileUrl",
+    # FLEXT Core Classes
     "FlextBus",
     "FlextConfig",
     "FlextConstants",
@@ -423,13 +468,26 @@ __all__ = [
     "FlextService",
     "FlextTypes",
     "FlextUtilities",
+    "FutureDate",
+    "HttpUrl",
     "K",
     "Message",
-    "MessageUnion",
+    "NaiveDatetime",
+    "NegativeFloat",
+    "NegativeInt",
+    "NewPath",
+    "NonNegativeFloat",
+    "NonNegativeInt",
+    "NonPositiveFloat",
+    "NonPositiveInt",
     "P",
+    "PastDate",
+    "PositiveFloat",
+    "PositiveInt",
     "Query",
     "R",
     "ResultT",
+    "SecretStr",
     "T",
     "T1_co",
     "T2_co",
@@ -456,6 +514,12 @@ __all__ = [
     "U",
     "V",
     "W",
+    # Version
     "__version__",
     "__version_info__",
+    "confloat",
+    "conint",
+    "conlist",
+    "conset",
+    "constr",
 ]

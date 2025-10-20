@@ -242,7 +242,8 @@ class MessagingPatternsService(FlextService[dict[str, object]]):
             }
 
             self.logger.info(
-                "Messaging patterns demonstration completed successfully", extra=summary
+                "Messaging patterns demonstration completed successfully",
+                extra=summary,
             )
 
             return FlextResult[dict[str, object]].ok(summary)
@@ -361,7 +362,10 @@ class MessagingPatternsService(FlextService[dict[str, object]]):
         print("\n✅ Payment command created")
         print(f"Correlation: {process_payment_command.metadata['correlation_id']}")
 
-        self._message_queue.extend([create_order_command, process_payment_command])
+        self._message_queue.extend([
+            create_order_command,
+            process_payment_command,
+        ])
 
     # ========== QUERY PATTERNS ==========
 
@@ -930,7 +934,10 @@ class MessagingPatternsService(FlextService[dict[str, object]]):
 
         # Create initial message
         initial_msg = FlextModels.Payload[dict[str, object]](
-            data={"command": "ProcessOrder", "order_id": self._order["order_id"]},
+            data={
+                "command": "ProcessOrder",
+                "order_id": self._order["order_id"],
+            },
             metadata={**self._safe_metadata},
         )
 
@@ -1068,7 +1075,10 @@ class MessagingPatternsService(FlextService[dict[str, object]]):
 
         logger.info(
             "Message validated successfully",
-            extra={"message_type": message_data["type"], "validation_status": "passed"},
+            extra={
+                "message_type": message_data["type"],
+                "validation_status": "passed",
+            },
         )
 
         print("✅ FlextConstants.Messages integration demonstrated")

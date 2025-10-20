@@ -15,9 +15,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from typing import (
-    ClassVar,
     Final,
-    Literal,
 )
 
 
@@ -109,6 +107,40 @@ class FlextConstants:
     - Type-safe literals support strict type checking
     - All components reference single source of truth
     - Reduces configuration drift and inconsistencies
+
+    **Constants Organization Standards (FLEXT Standardization Plan)**:
+    All FLEXT projects MUST follow these patterns for constants organization:
+
+    1. **Constants Organization**:
+       - ALL constants MUST be inside the main constants class (no module-level constants)
+       - Use nested classes for logical grouping (e.g., class Errors:)
+       - Layer 0 purity: Only constants, no functions or behavior
+
+    2. **Inheritance Pattern**:
+       - All domain constants MUST extend FlextConstants directly
+       - Use composition for domain relationships: Reference other domain constants
+       - Example: class FlextLdapConstants(FlextConstants): with LdifConstants = FlextLdifConstants
+
+    3. **Declaration Style**:
+       - Use Final[Type] for ALL immutable constants
+       - Use ClassVar[Type] only for special cases (rare)
+       - Always specify explicit types - no implicit typing
+       - Use StrEnum for string enumerations
+
+    4. **Composition Pattern**:
+       - Reference core constants via composition when extending functionality
+       - Example: CoreErrors = FlextConstants.Errors for easy access
+       - Use inheritance for domain-specific extensions
+
+    5. **Import Pattern**:
+       - Import only FlextConstants from flext_core
+       - Additional imports only for StrEnum, Literal, etc.
+       - NO wildcard imports
+
+    6. **Documentation Pattern**:
+       - Comprehensive class docstrings with usage examples
+       - Section headers for different constant groups
+       - Type hints in comments where helpful
 
     **Usage Patterns**:
 
@@ -243,7 +275,6 @@ class FlextConstants:
 
     """Core identifiers."""
     NAME: Final[str] = "FLEXT"
-    VERSION: Final[str] = "0.9.9"  # Hardcoded to avoid circular import
 
     # Semantic zero and initial values
     ZERO: Final[int] = 0
@@ -635,6 +666,32 @@ class FlextConstants:
 
         # Circuit breaker constants
         DEFAULT_CIRCUIT_BREAKER_THRESHOLD: Final[int] = 5
+        DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT: Final[int] = 60  # seconds
+        DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD: Final[int] = 3  # successes to close
+
+        class CircuitBreakerState(StrEnum):
+            """Circuit breaker state machine states.
+
+            Modern enum-based implementation for type-safe state management.
+            Replaces string literals with proper enum for validation and IDE support.
+            """
+
+            CLOSED = "closed"  # Normal operation - requests allowed
+            OPEN = "open"  # Failing - requests blocked
+            HALF_OPEN = "half_open"  # Testing recovery - limited requests
+
+            @classmethod
+            def validate(cls, value: str) -> bool:
+                """Validate if value is a valid circuit breaker state.
+
+                Args:
+                    value: State value to validate
+
+                Returns:
+                    bool: True if valid state, False otherwise
+
+                """
+                return value in cls.__members__.values()
 
     class Security:
         """Security and authentication constants."""
@@ -699,262 +756,241 @@ class FlextConstants:
     class Cqrs:
         """CQRS pattern constants and configuration."""
 
-        # CQRS handler type constants
-        DEFAULT_HANDLER_TYPE: Final[str] = "command"
-        COMMAND_HANDLER_TYPE: Final[str] = "command"
-        QUERY_HANDLER_TYPE: Final[str] = "query"
-        EVENT_HANDLER_TYPE: Final[str] = "event"
-        SAGA_HANDLER_TYPE: Final[str] = "saga"
+        # CQRS handler type StrEnum for type safety
+        class HandlerType(StrEnum):
+            """CQRS handler type enumeration for type-safe handler identification."""
 
-        # CQRS handler type literals for type annotations
-        class HandlerTypeLiteral:
-            """CQRS handler type literals for type annotations."""
+            COMMAND = "command"
+            QUERY = "query"
+            EVENT = "event"
+            SAGA = "saga"
 
-            COMMAND: Final[str] = "command"
-            QUERY: Final[str] = "query"
-            EVENT: Final[str] = "event"
-            SAGA: Final[str] = "saga"
+        # Handler type constants using StrEnum values
+        DEFAULT_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
+        COMMAND_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
+        QUERY_HANDLER_TYPE: HandlerType = HandlerType.QUERY
+        EVENT_HANDLER_TYPE: HandlerType = HandlerType.EVENT
+        SAGA_HANDLER_TYPE: HandlerType = HandlerType.SAGA
 
-        # Processing mode literals for type annotations
-        class ProcessingModeLiteral:
-            """Processing mode literals for type annotations."""
+        # Processing mode StrEnum
+        class ProcessingMode(StrEnum):
+            """Processing mode enumeration for type-safe mode identification."""
 
-            BATCH: Final[str] = "batch"
-            STREAM: Final[str] = "stream"
-            PARALLEL: Final[str] = "parallel"
-            SEQUENTIAL: Final[str] = "sequential"
+            BATCH = "batch"
+            STREAM = "stream"
+            PARALLEL = "parallel"
+            SEQUENTIAL = "sequential"
 
-        # Processing status literals for type annotations
-        class ProcessingStatusLiteral:
-            """Processing status literals for type annotations."""
+        # Processing status StrEnum
+        class ProcessingStatus(StrEnum):
+            """Processing status enumeration for type-safe status tracking."""
 
-            PENDING: Final[str] = "pending"
-            RUNNING: Final[str] = "running"
-            COMPLETED: Final[str] = "completed"
-            FAILED: Final[str] = "failed"
-            CANCELLED: Final[str] = "cancelled"
+            PENDING = "pending"
+            RUNNING = "running"
+            COMPLETED = "completed"
+            FAILED = "failed"
+            CANCELLED = "cancelled"
 
-        # Validation level literals for type annotations
-        class ValidationLevelLiteral:
-            """Validation level literals for type annotations."""
+        # Validation level StrEnum
+        class ValidationLevel(StrEnum):
+            """Validation level enumeration for type-safe validation modes."""
 
-            STRICT: Final[str] = "strict"
-            LENIENT: Final[str] = "lenient"
-            STANDARD: Final[str] = "standard"
+            STRICT = "strict"
+            LENIENT = "lenient"
+            STANDARD = "standard"
 
-        # Processing phase literals for type annotations
-        class ProcessingPhaseLiteral:
-            """Processing phase literals for type annotations."""
+        # Processing phase StrEnum
+        class ProcessingPhase(StrEnum):
+            """Processing phase enumeration for type-safe phase tracking."""
 
-            PREPARE: Final[str] = "prepare"
-            EXECUTE: Final[str] = "execute"
-            VALIDATE: Final[str] = "validate"
-            COMPLETE: Final[str] = "complete"
+            PREPARE = "prepare"
+            EXECUTE = "execute"
+            VALIDATE = "validate"
+            COMPLETE = "complete"
 
-        # Model-specific literal types (moved from models.py)
-        class BindTypeLiteral:
-            """Bind type literals for model annotations."""
+        # Bind type StrEnum
+        class BindType(StrEnum):
+            """Bind type enumeration for type-safe bind operations."""
 
-            TEMPORARY: Final[str] = "temporary"
-            PERMANENT: Final[str] = "permanent"
+            TEMPORARY = "temporary"
+            PERMANENT = "permanent"
 
-        class MergeStrategyLiteral:
-            """Merge strategy literals for model annotations."""
+        # Merge strategy StrEnum
+        class MergeStrategy(StrEnum):
+            """Merge strategy enumeration for type-safe merge operations."""
 
-            REPLACE: Final[str] = "replace"
-            UPDATE: Final[str] = "update"
-            MERGE_DEEP: Final[str] = "merge_deep"
+            REPLACE = "replace"
+            UPDATE = "update"
+            MERGE_DEEP = "merge_deep"
 
-        class StatusLiteral:
-            """Common status literals for model annotations."""
+        # Status StrEnum
+        class Status(StrEnum):
+            """Common status enumeration for type-safe status tracking."""
 
-            PENDING: Final[str] = "pending"
-            RUNNING: Final[str] = "running"
-            COMPLETED: Final[str] = "completed"
-            FAILED: Final[str] = "failed"
-            COMPENSATING: Final[str] = "compensating"
+            PENDING = "pending"
+            RUNNING = "running"
+            COMPLETED = "completed"
+            FAILED = "failed"
+            COMPENSATING = "compensating"
 
-        class HealthStatusLiteral:
-            """Health status literals for monitoring."""
+        # Health status StrEnum
+        class HealthStatus(StrEnum):
+            """Health status enumeration for monitoring."""
 
-            HEALTHY: Final[str] = "healthy"
-            DEGRADED: Final[str] = "degraded"
-            UNHEALTHY: Final[str] = "unhealthy"
+            HEALTHY = "healthy"
+            DEGRADED = "degraded"
+            UNHEALTHY = "unhealthy"
 
-        class TokenTypeLiteral:
-            """Token type literals for authentication."""
+        # Token type StrEnum
+        class TokenType(StrEnum):
+            """Token type enumeration for authentication."""
 
-            BEARER: Final[str] = "bearer"
-            API_KEY: Final[str] = "api_key"
-            JWT: Final[str] = "jwt"
+            BEARER = "bearer"
+            API_KEY = "api_key"
+            JWT = "jwt"
 
-        class CircuitBreakerStateLiteral:
-            """Circuit breaker state literals."""
+        # Notification status StrEnum
+        class NotificationStatus(StrEnum):
+            """Notification status enumeration."""
 
-            CLOSED: Final[str] = "closed"
-            OPEN: Final[str] = "open"
-            HALF_OPEN: Final[str] = "half_open"
+            PENDING = "pending"
+            SENT = "sent"
+            FAILED = "failed"
 
-        class NotificationStatusLiteral:
-            """Notification status literals."""
+        # Token status StrEnum
+        class TokenStatus(StrEnum):
+            """Token status enumeration."""
 
-            PENDING: Final[str] = "pending"
-            SENT: Final[str] = "sent"
-            FAILED: Final[str] = "failed"
+            PENDING = "pending"
+            RUNNING = "running"
+            COMPLETED = "completed"
+            FAILED = "failed"
 
-        class TokenStatusLiteral:
-            """Token status literals."""
+        # Circuit breaker status StrEnum
+        class CircuitBreakerStatus(StrEnum):
+            """Circuit breaker status enumeration."""
 
-            PENDING: Final[str] = "pending"
-            RUNNING: Final[str] = "running"
-            COMPLETED: Final[str] = "completed"
-            FAILED: Final[str] = "failed"
+            IDLE = "idle"
+            RUNNING = "running"
+            COMPLETED = "completed"
+            FAILED = "failed"
 
-        class CircuitBreakerStatusLiteral:
-            """Circuit breaker status literals."""
+        # Batch status StrEnum
+        class BatchStatus(StrEnum):
+            """Batch processing status enumeration."""
 
-            IDLE: Final[str] = "idle"
-            RUNNING: Final[str] = "running"
-            COMPLETED: Final[str] = "completed"
-            FAILED: Final[str] = "failed"
+            PENDING = "pending"
+            PROCESSING = "processing"
+            COMPLETED = "completed"
+            FAILED = "failed"
 
-        class BatchStatusLiteral:
-            """Batch processing status literals."""
+        # Export status StrEnum
+        class ExportStatus(StrEnum):
+            """Export status enumeration."""
 
-            PENDING: Final[str] = "pending"
-            PROCESSING: Final[str] = "processing"
-            COMPLETED: Final[str] = "completed"
-            FAILED: Final[str] = "failed"
+            PENDING = "pending"
+            PROCESSING = "processing"
+            COMPLETED = "completed"
+            FAILED = "failed"
 
-        class ExportStatusLiteral:
-            """Export status literals."""
+        # Operation status StrEnum
+        class OperationStatus(StrEnum):
+            """Operation status enumeration."""
 
-            PENDING: Final[str] = "pending"
-            PROCESSING: Final[str] = "processing"
-            COMPLETED: Final[str] = "completed"
-            FAILED: Final[str] = "failed"
+            SUCCESS = "success"
+            FAILURE = "failure"
+            PARTIAL = "partial"
 
-        class OperationStatusLiteral:
-            """Operation status literals."""
+        # Serialization format StrEnum
+        class SerializationFormat(StrEnum):
+            """Serialization format enumeration."""
 
-            SUCCESS: Final[str] = "success"
-            FAILURE: Final[str] = "failure"
-            PARTIAL: Final[str] = "partial"
+            JSON = "json"
+            YAML = "yaml"
+            TOML = "toml"
+            MSGPACK = "msgpack"
 
-        class SerializationFormatLiteral:
-            """Serialization format literals."""
+        # Compression StrEnum
+        class Compression(StrEnum):
+            """Compression type enumeration."""
 
-            JSON: Final[str] = "json"
-            YAML: Final[str] = "yaml"
-            TOML: Final[str] = "toml"
-            MSGPACK: Final[str] = "msgpack"
+            NONE = "none"
+            GZIP = "gzip"
+            BZIP2 = "bzip2"
+            LZ4 = "lz4"
 
-        class CompressionLiteral:
-            """Compression type literals."""
+        # Aggregation StrEnum
+        class Aggregation(StrEnum):
+            """Aggregation function enumeration."""
 
-            NONE: Final[str] = "none"
-            GZIP: Final[str] = "gzip"
-            BZIP2: Final[str] = "bzip2"
-            LZ4: Final[str] = "lz4"
+            SUM = "sum"
+            AVG = "avg"
+            MIN = "min"
+            MAX = "max"
+            COUNT = "count"
 
-        class ModelLiteral:
-            """Model-related literal types."""
+        # Action StrEnum
+        class Action(StrEnum):
+            """Action type enumeration."""
 
-            # Handler types
-            COMMAND: Final[str] = "command"
-            QUERY: Final[str] = "query"
-            EVENT: Final[str] = "event"
-            SAGA: Final[str] = "saga"
+            GET = "get"
+            CREATE = "create"
+            UPDATE = "update"
+            DELETE = "delete"
+            LIST = "list"
 
-            # Status types
-            ACTIVE: Final[str] = "active"
-            INACTIVE: Final[str] = "inactive"
+        # Persistence level StrEnum
+        class PersistenceLevel(StrEnum):
+            """Persistence level enumeration."""
 
-            # Action types
-            ACQUIRE: Final[str] = "acquire"
-            RELEASE: Final[str] = "release"
-            CHECK: Final[str] = "check"
-            LIST_OBJECTS: Final[str] = "list[object]"
+            MEMORY = "memory"
+            DISK = "disk"
+            DISTRIBUTED = "distributed"
 
-            # Warning types
-            WARN_NONE: Final[str] = "none"
-            WARN_WARN: Final[str] = "warn"
-            WARN_ERROR: Final[str] = "error"
+        # Target format StrEnum
+        class TargetFormat(StrEnum):
+            """Target format enumeration."""
 
-            # Mode types
-            VALIDATION: Final[str] = "validation"
-            SERIALIZATION: Final[str] = "serialization"
+            FULL = "full"
+            COMPACT = "compact"
+            MINIMAL = "minimal"
 
-        class AggregationLiteral:
-            """Aggregation function literals."""
+        # Warning level StrEnum
+        class WarningLevel(StrEnum):
+            """Warning level enumeration."""
 
-            SUM: Final[str] = "sum"
-            AVG: Final[str] = "avg"
-            MIN: Final[str] = "min"
-            MAX: Final[str] = "max"
-            COUNT: Final[str] = "count"
+            NONE = "none"
+            WARN = "warn"
+            ERROR = "error"
 
-        class ActionLiteral:
-            """Action type literals."""
+        # Output format StrEnum
+        class OutputFormat(StrEnum):
+            """Output format enumeration."""
 
-            GET: Final[str] = "get"
-            CREATE: Final[str] = "create"
-            UPDATE: Final[str] = "update"
-            DELETE: Final[str] = "delete"
-            LIST: Final[str] = "list"
+            DICT = "dict"
+            JSON = "json"
 
-        class PersistenceLevelLiteral:
-            """Persistence level literals."""
+        # Mode StrEnum
+        class Mode(StrEnum):
+            """Mode enumeration for various operations."""
 
-            MEMORY: Final[str] = "memory"
-            DISK: Final[str] = "disk"
-            DISTRIBUTED: Final[str] = "distributed"
+            VALIDATION = "validation"
+            SERIALIZATION = "serialization"
 
-        class TargetFormatLiteral:
-            """Target format literals."""
+        # Registration status StrEnum
+        class RegistrationStatus(StrEnum):
+            """Registration status enumeration."""
 
-            FULL: Final[str] = "full"
-            COMPACT: Final[str] = "compact"
-            MINIMAL: Final[str] = "minimal"
+            ACTIVE = "active"
+            INACTIVE = "inactive"
 
-        class WarningLevelLiteral:
-            """Warning level literals."""
-
-            NONE: Final[str] = "none"
-            WARN: Final[str] = "warn"
-            ERROR: Final[str] = "error"
-
-        class OutputFormatLiteral:
-            """Output format literals."""
-
-            DICT: Final[str] = "dict"
-            JSON: Final[str] = "json"
-
-        class ModeLiteral:
-            """Mode literals for various operations."""
-
-            VALIDATION: Final[str] = "validation"
-            SERIALIZATION: Final[str] = "serialization"
-
-        class RegistrationStatusLiteral:
-            """Registration status literals."""
-
-            ACTIVE: Final[str] = "active"
-            INACTIVE: Final[str] = "inactive"
-
-        # Type aliases for MyPy strict mode support
-        type Status = Literal[
-            "pending", "running", "completed", "failed", "compensating"
-        ]
-        type HandlerType = Literal["command", "query", "event", "saga"]
-        type HandlerMode = Literal["command", "query", "event", "saga"]
-        type HandlerModeSimple = Literal["command", "query"]
-        type Compression = Literal["none", "gzip", "bzip2", "lz4"]
+        # Type aliases using StrEnum classes (ModelLiteral removed - use StrEnum directly)
+        # HandlerModeSimple is a subset of HandlerType for simple command/query operations
+        # Since Python doesn't support enum subsets natively, we use the full HandlerType
+        type HandlerModeSimple = HandlerType
 
         # Command/Query defaults
-        DEFAULT_COMMAND_TYPE: Final[str] = (
-            ""  # Empty string for unspecified command type
-        )
+        DEFAULT_COMMAND_TYPE: Final[str] = "generic_command"
         DEFAULT_TIMESTAMP: Final[str] = ""  # Empty string for uninitialized timestamps
         DEFAULT_PRIORITY: Final[int] = 0  # Default priority level
         MAX_PRIORITY: Final[int] = 100  # Maximum priority value
@@ -1165,8 +1201,20 @@ class FlextConstants:
         DEFAULT_ENSURE_ASCII = False
 
         # Boolean string representations
-        BOOL_TRUE_STRINGS: ClassVar[set[str]] = {"true", "1", "yes", "on", "enabled"}
-        BOOL_FALSE_STRINGS: ClassVar[set[str]] = {"false", "0", "no", "off", "disabled"}
+        BOOL_TRUE_STRINGS: Final[frozenset[str]] = frozenset({
+            "true",
+            "1",
+            "yes",
+            "on",
+            "enabled",
+        })
+        BOOL_FALSE_STRINGS: Final[frozenset[str]] = frozenset({
+            "false",
+            "0",
+            "no",
+            "off",
+            "disabled",
+        })
         STRING_TRUE = "true"
         STRING_FALSE = "false"
 

@@ -64,11 +64,11 @@ __version_info__ = tuple(
     int(part) if part.isdigit() else part for part in __version__.split(".")
 )
 __title__ = _metadata["Name"]
-__description__ = _metadata["Summary"]
-__author__ = _metadata["Author"]
-__author_email__ = _metadata["Author-Email"]
-__license__ = _metadata["License"]
-__url__ = _metadata["Home-Page"]
+__description__ = _metadata.get("Summary", "")
+__author__ = _metadata.get("Author", "")
+__author_email__ = _metadata.get("Author-Email", "")
+__license__ = _metadata.get("License", "")
+__url__ = _metadata.get("Home-Page", "")
 
 __all__ = [
     "__author__",

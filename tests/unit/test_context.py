@@ -331,8 +331,8 @@ class TestFlextContext:
         context.remove("key1")
 
         stats = context.get_statistics()
-        if "operations" in stats:
-            operations = cast("dict[str, int]", stats["operations"])
+        if hasattr(stats, "operations") and stats.operations:
+            operations = cast("dict[str, int]", stats.operations)
             # Use cast to handle dynamic typing from context statistics
             set_count: int = operations.get("set", 0)
             get_count: int = operations.get("get", 0)

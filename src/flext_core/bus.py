@@ -28,10 +28,6 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-# Type variables for generic message handling are imported from typings
-# (MessageT and ResultT)
-# All type aliases now in FlextTypes - access via FlextTypes.BusMessageType, etc.
-
 
 class FlextBus(
     FlextProtocols.CommandBus,
@@ -527,7 +523,9 @@ class FlextBus(
             return result
 
     def process(
-        self, command: FlextTypes.BusMessageType, handler: FlextTypes.BusHandlerType
+        self,
+        command: FlextTypes.BusMessageType,
+        handler: FlextTypes.BusHandlerType,
     ) -> object:
         """Process command through middleware pipeline.
 
@@ -612,6 +610,20 @@ class FlextBus(
             process_method = getattr(middleware, "process", None)
             if callable(process_method):
                 result = process_method(command, handler)
+                if isinstance(result, FlextResult):
+                    result_typed = cast("FlextResult[object]", result)
+                    if result_typed.is_failure:
+                        self.logger.info(
+                            "Middleware rejected command",
+                            middleware_type=str(middleware_type_value),
+                            error=result_typed.error or "Unknown error",
+                        )
+                        return FlextResult[None].fail(
+                            str(result_typed.error or "Middleware rejected command"),
+                        )
+            elif callable(middleware):
+                # Fallback for callable middleware objects (like test middleware)
+                result = middleware(command)
                 if isinstance(result, FlextResult):
                     result_typed = cast("FlextResult[object]", result)
                     if result_typed.is_failure:

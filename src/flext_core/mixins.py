@@ -706,7 +706,12 @@ class FlextMixins:
             # Categorize data by log level
             # NOTE: 'config', 'configuration', 'settings' removed - use _log_config_once() instead
             debug_keys = {"schema", "params"}
-            error_keys = {"stack_trace", "exception", "traceback", "error_details"}
+            error_keys = {
+                "stack_trace",
+                "exception",
+                "traceback",
+                "error_details",
+            }
 
             # Separate data by level
             debug_data = {k: v for k, v in operation_data.items() if k in debug_keys}

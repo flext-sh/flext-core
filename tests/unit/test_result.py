@@ -652,7 +652,9 @@ class TestFlextResult:
         def success_func() -> int:
             return 42
 
-        success_result: FlextResult[int] = FlextResult[int].from_exception(success_func)
+        success_result: FlextResult[int] = cast(
+            "FlextResult[int]", FlextResult.from_exception(success_func)
+        )
         assert success_result.is_success
         assert success_result.value == 42
 
@@ -661,7 +663,9 @@ class TestFlextResult:
             error_message = "Something went wrong"
             raise ValueError(error_message)
 
-        failure_result: FlextResult[int] = FlextResult[int].from_exception(failing_func)
+        failure_result: FlextResult[int] = cast(
+            "FlextResult[int]", FlextResult.from_exception(failing_func)
+        )
         assert failure_result.is_failure
         assert failure_result.error is not None
         assert "Something went wrong" in failure_result.error
@@ -2313,9 +2317,7 @@ class TestMaybeInterop:
     def test_from_maybe_nothing(self) -> None:
         """Test creating result from Nothing."""
         maybe = Nothing
-        result: FlextResult[object] = cast(
-            "FlextResult[object]", FlextResult.from_maybe(maybe)
-        )
+        result = FlextResult.from_maybe(maybe)
 
         assert result.is_failure
         assert result.error == "No value in Maybe"
@@ -2324,9 +2326,7 @@ class TestMaybeInterop:
         """Test roundtrip conversion success -> maybe -> success."""
         original = FlextResult[int].ok(42)
         maybe = original.to_maybe()
-        recovered: FlextResult[int] = cast(
-            "FlextResult[int]", FlextResult.from_maybe(maybe)
-        )
+        recovered = FlextResult.from_maybe(maybe)
 
         assert recovered.is_success
         assert recovered.value == 42
@@ -2373,7 +2373,7 @@ class TestIOInterop:
 
     def test_to_io_result_success(self) -> None:
         """Test converting successful result to IOSuccess."""
-        result = FlextResult[str].ok("test_value")
+        result = FlextResult.ok("test_value")
         io_result = result.to_io_result()
 
         assert isinstance(io_result, IOSuccess)

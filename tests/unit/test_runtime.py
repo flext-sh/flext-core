@@ -330,7 +330,7 @@ class TestSerializationUtilities:
                 super().__init__()
                 self.data = "test"
 
-            def dict[str, object](self) -> dict[str, object]:
+            def to_dict(self) -> dict[str, object]:
                 return {"data": self.data, "method": "dict"}
 
         obj = DictMethodWorking()
@@ -768,7 +768,9 @@ class TestContextIntegrationPatterns:
         # Verify correlation ID was NOT generated
         assert FlextContext.Correlation.get_correlation_id() is None
 
-    def test_integration_lazy_imports_prevent_circular_dependencies(self) -> None:
+    def test_integration_lazy_imports_prevent_circular_dependencies(
+        self,
+    ) -> None:
         """Test that Integration nested class uses lazy imports correctly."""
         # This test verifies the pattern works by importing FlextRuntime first
 

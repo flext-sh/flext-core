@@ -10,22 +10,22 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
+from flext_tests.matchers import FlextTestsMatchers
 
 from flext_core import FlextResult
-from flext_tests.matchers import DataBuilder, FlextTestsMatchers
 
 
 class TestDataBuilder:
-    """Test suite for DataBuilder class."""
+    """Test suite for TestDataBuilder nested class."""
 
     def test_init(self) -> None:
-        """Test DataBuilder initialization."""
-        builder = DataBuilder()
-        assert isinstance(builder, DataBuilder)
+        """Test TestDataBuilder initialization."""
+        builder = FlextTestsMatchers.TestDataBuilder()
+        assert isinstance(builder, FlextTestsMatchers.TestDataBuilder)
 
     def test_with_users_default(self) -> None:
         """Test with_users with default count."""
-        builder = DataBuilder()
+        builder = FlextTestsMatchers.TestDataBuilder()
         result = builder.with_users()
 
         assert result is builder  # Returns self for chaining
@@ -44,7 +44,7 @@ class TestDataBuilder:
 
     def test_with_users_custom_count(self) -> None:
         """Test with_users with custom count."""
-        builder = DataBuilder()
+        builder = FlextTestsMatchers.TestDataBuilder()
         builder.with_users(count=3)
         data = builder.build()
 
@@ -54,14 +54,14 @@ class TestDataBuilder:
 
     def test_with_configs_development(self) -> None:
         """Test with_configs in development mode."""
-        builder = DataBuilder()
+        builder = FlextTestsMatchers.TestDataBuilder()
         result = builder.with_configs(production=False)
 
         assert result is builder
         data = builder.build()
 
         assert "configs" in data
-        config = data["configs"]
+        config = cast("dict[str, object]", data["configs"])
         assert config["environment"] == "development"
         assert config["debug"] is True
         assert config["database_url"] == "postgresql://localhost/testdb"
@@ -70,41 +70,45 @@ class TestDataBuilder:
 
     def test_with_configs_production(self) -> None:
         """Test with_configs in production mode."""
-        builder = DataBuilder()
+        builder = FlextTestsMatchers.TestDataBuilder()
         builder.with_configs(production=True)
         data = builder.build()
 
-        config = data["configs"]
+        config = cast("dict[str, object]", data["configs"])
         assert config["environment"] == "production"
         assert config["debug"] is False
 
     def test_with_validation_fields_default(self) -> None:
         """Test with_validation_fields with default count."""
-        builder = DataBuilder()
+        builder = FlextTestsMatchers.TestDataBuilder()
         result = builder.with_validation_fields()
 
         assert result is builder
         data = builder.build()
 
         assert "validation_fields" in data
-        fields = data["validation_fields"]
+        fields = cast("dict[str, object]", data["validation_fields"])
 
-        assert len(fields["valid_emails"]) == 5
-        assert fields["valid_emails"][0] == "user0@example.com"
-        assert len(fields["invalid_emails"]) == 3
+        valid_emails = cast("list[str]", fields["valid_emails"])
+        assert len(valid_emails) == 5
+        assert valid_emails[0] == "user0@example.com"
+        invalid_emails = cast("list[str]", fields["invalid_emails"])
+        assert len(invalid_emails) == 3
         assert fields["valid_hostnames"] == ["example.com", "localhost"]
 
     def test_with_validation_fields_custom_count(self) -> None:
         """Test with_validation_fields with custom count."""
-        builder = DataBuilder()
+        builder = FlextTestsMatchers.TestDataBuilder()
         builder.with_validation_fields(count=3)
         data = builder.build()
 
-        assert len(data["validation_fields"]["valid_emails"]) == 3
+        validation_fields = cast("dict[str, object]", data["validation_fields"])
+        valid_emails = cast("list[str]", validation_fields["valid_emails"])
+        assert len(valid_emails) == 3
 
     def test_build_empty(self) -> None:
         """Test build with no data added."""
-        builder = DataBuilder()
+        builder = FlextTestsMatchers.TestDataBuilder()
         data = builder.build()
 
         assert isinstance(data, dict)
@@ -112,7 +116,7 @@ class TestDataBuilder:
 
     def test_build_full_dataset(self) -> None:
         """Test build with all data types added."""
-        builder = DataBuilder()
+        builder = FlextTestsMatchers.TestDataBuilder()
         builder.with_users(2).with_configs(production=True).with_validation_fields(2)
         data = builder.build()
 

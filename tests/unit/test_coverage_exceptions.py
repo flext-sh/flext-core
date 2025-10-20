@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import (
     FlextConstants,
     FlextExceptions,
@@ -182,6 +184,8 @@ class TestFlextExceptionsHierarchy:
         )
         assert "Attribute not found" in str(error)
         assert error.attribute_name == "missing_field"
+        assert error.attribute_context is not None
+        # No cast needed - attribute_context is already dict[str, object]
         assert error.attribute_context["class"] == "User"
 
 
@@ -196,7 +200,7 @@ class TestExceptionIntegration:
         except FlextExceptions.ValidationError as e:
             result = FlextResult[None].fail(str(e))
             assert result.is_failure
-            assert "Test error" in result.error
+            assert result.error is not None and "Test error" in result.error
 
     def test_exception_in_railway_pattern(self) -> None:
         """Test exception handling in railway pattern."""
@@ -227,7 +231,7 @@ class TestExceptionIntegration:
             # Wrap in another exception
             result = FlextResult[None].fail(f"Error in user creation: {e}")
             assert result.is_failure
-            assert "Validation failed" in result.error
+            assert result.error is not None and "Validation failed" in result.error
 
 
 class TestExceptionEdgeCases:
@@ -353,7 +357,9 @@ class TestExceptionContext:
 
         # Verify message is preserved through conversion
         result = FlextResult[None].fail(str(error))
-        assert original_msg in result.error or "Original error" in result.error
+        assert result.error is not None and (
+            original_msg in result.error or "Original error" in result.error
+        )
 
 
 class TestExceptionSerialization:
@@ -377,9 +383,10 @@ class TestExceptionSerialization:
             "Operation failed",
             operation="INSERT",
         ).with_context(user_id="123", timestamp=1234567890)
-        error_dict = error.to_dict()
-        assert error_dict["metadata"]["user_id"] == "123"
-        assert error_dict["metadata"]["operation"] == "INSERT"
+        error_dict: dict[str, object] = error.to_dict()
+        metadata = cast("dict[str, object]", error_dict["metadata"])
+        assert metadata["user_id"] == "123"
+        assert metadata["operation"] == "INSERT"
 
 
 class TestExceptionFactory:
@@ -448,10 +455,11 @@ class TestExceptionMetrics:
         FlextExceptions.record_exception("ValidationError")
         FlextExceptions.record_exception("ConfigurationError")
 
-        metrics = FlextExceptions.get_metrics()
+        metrics: dict[str, object] = FlextExceptions.get_metrics()
         assert metrics["total_exceptions"] == 3
-        assert metrics["exception_counts"]["ValidationError"] == 2
-        assert metrics["exception_counts"]["ConfigurationError"] == 1
+        exception_counts = cast("dict[str, object]", metrics["exception_counts"])
+        assert exception_counts["ValidationError"] == 2
+        assert exception_counts["ConfigurationError"] == 1
         assert metrics["unique_exception_types"] == 2
 
     def test_clear_metrics(self) -> None:

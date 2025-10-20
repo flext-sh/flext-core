@@ -1,26 +1,18 @@
-"""Layer 0: Centralized Type System Foundation for FLEXT Ecosystem.
+"""Layer 0: Thin Layer Type System Using Pydantic Native Types.
 
 **ARCHITECTURE LAYER 0** - Pure Constants (Zero Dependencies)
 
-This module provides ONLY types actually used by src/flext_core modules:
-- ALL TypeVars at module level (Python 3.13+ native support)
-- FlextTypes class with ONLY types used by core 23 modules
-- NO nested classes, NO redundant aliases, NO ecosystem-only types
-- ~200-250 lines total (~80% reduction from 1,193)
+This module provides a THIN LAYER over Pydantic's native type system:
+- TypeVars at module level (Python 3.13+ native support)
+- FlextTypes class with ONLY domain-specific complex types
+- Direct use of Pydantic constrained types (PositiveInt, EmailStr, etc.)
+- NO unnecessary type aliases - use Python native types directly
 
-**Core Philosophy**:
-✅ KEEP: TypeVars (40+ types)
-✅ KEEP: Types used in src/flext_core/ (Dict, List, HandlerRegistry, etc.)
-❌ REMOVE: Unused types (no ecosystem types)
-❌ REMOVE: Nested classes (FlextTypes.Service, FlextTypes.Reliability, etc.)
-❌ REMOVE: Redundant aliases
-✅ USE: FlextConstants enums directly (no aliases)
-
-**TypeVar System** (40+ specialized types):
-- All at module level: `from flext_core.typings import T, T_co, T_contra`
-- **Covariant** (_co): Output types
-- **Contravariant** (_contra): Input types
-- **Invariant** (no suffix): Strict matching
+**THIN LAYER PRINCIPLE**:
+- Remove: type Dict = dict[str, object] → Use dict[str, object] directly
+- Remove: type StringList = list[str] → Use list[str] directly
+- Add: Only domain-specific types not covered by Pydantic
+- Use: Pydantic native types (PositiveInt, EmailStr, HttpUrl, etc.)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -32,138 +24,188 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import (
     TYPE_CHECKING,
-    Annotated,
     ParamSpec,
     TypeVar,
 )
 
-from pydantic import Field
+# Pydantic native types for direct use
+from pydantic import (
+    # UUID types
+    UUID1,
+    UUID3,
+    UUID4,
+    UUID5,
+    AnyUrl,
+    AwareDatetime,
+    DirectoryPath,
+    # Network types
+    EmailStr,
+    # File system types
+    FilePath,
+    FileUrl,
+    FutureDate,
+    HttpUrl,
+    NaiveDatetime,
+    NegativeFloat,
+    NegativeInt,
+    NewPath,
+    NonNegativeFloat,
+    NonNegativeInt,
+    NonPositiveFloat,
+    NonPositiveInt,
+    # Date types
+    PastDate,
+    PositiveFloat,
+    # Numeric constraints
+    PositiveInt,
+    # Security types
+    SecretStr,
+    confloat,
+    conint,
+    conlist,
+    conset,
+    constr,
+)
 
 if TYPE_CHECKING:
     from flext_core.result import FlextResult
 
+
 # =============================================================================
-# LAYER 0: TYPEVARS - ALL loose at module level (Python 3.13+)
+# CORE TYPEVARS - Python 3.13+ Native (PEP 696 defaults)
 # =============================================================================
 
 # Core invariant TypeVars
-T = TypeVar("T")
-E = TypeVar("E")
-F = TypeVar("F")
-K = TypeVar("K")
+T = TypeVar("T", default=object)
+E = TypeVar("E", default=object)
+F = TypeVar("F", default=object)
+K = TypeVar("K", default=object)
 P = ParamSpec("P")
-R = TypeVar("R")
-U = TypeVar("U")
-V = TypeVar("V")
-W = TypeVar("W")
+R = TypeVar("R", default=object)
+U = TypeVar("U", default=object)
+V = TypeVar("V", default=object)
+W = TypeVar("W", default=object)
 
 # Covariant TypeVars (_co suffix)
-T_co = TypeVar("T_co", covariant=True)
-T1_co = TypeVar("T1_co", covariant=True)
-T2_co = TypeVar("T2_co", covariant=True)
-T3_co = TypeVar("T3_co", covariant=True)
-TAggregate_co = TypeVar("TAggregate_co", covariant=True)
-TCacheValue_co = TypeVar("TCacheValue_co", covariant=True)
-TDomainEvent_co = TypeVar("TDomainEvent_co", covariant=True)
-TEntity_co = TypeVar("TEntity_co", covariant=True)
-TResult_co = TypeVar("TResult_co", covariant=True)
-TState_co = TypeVar("TState_co", covariant=True)
-TValue_co = TypeVar("TValue_co", covariant=True)
-TValueObject_co = TypeVar("TValueObject_co", covariant=True)
-T_Service_co = TypeVar("T_Service_co", covariant=True)
-TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True)
+T_co = TypeVar("T_co", covariant=True, default=object)
+T1_co = TypeVar("T1_co", covariant=True, default=object)
+T2_co = TypeVar("T2_co", covariant=True, default=object)
+T3_co = TypeVar("T3_co", covariant=True, default=object)
+TAggregate_co = TypeVar("TAggregate_co", covariant=True, default=object)
+TCacheValue_co = TypeVar("TCacheValue_co", covariant=True, default=object)
+TDomainEvent_co = TypeVar("TDomainEvent_co", covariant=True, default=object)
+TEntity_co = TypeVar("TEntity_co", covariant=True, default=object)
+TResult_co = TypeVar("TResult_co", covariant=True, default=object)
+TState_co = TypeVar("TState_co", covariant=True, default=object)
+TValue_co = TypeVar("TValue_co", covariant=True, default=object)
+TValueObject_co = TypeVar("TValueObject_co", covariant=True, default=object)
+T_Service_co = TypeVar("T_Service_co", covariant=True, default=object)
+TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True, default=object)
 
 # Contravariant TypeVars (_contra suffix)
-T_contra = TypeVar("T_contra", contravariant=True)
-TCacheKey_contra = TypeVar("TCacheKey_contra", contravariant=True)
-TCommand_contra = TypeVar("TCommand_contra", contravariant=True)
-TConfigKey_contra = TypeVar("TConfigKey_contra", contravariant=True)
-TEvent_contra = TypeVar("TEvent_contra", contravariant=True)
-TInput_contra = TypeVar("TInput_contra", contravariant=True)
-TItem_contra = TypeVar("TItem_contra", contravariant=True)
-TQuery_contra = TypeVar("TQuery_contra", contravariant=True)
-TResult_contra = TypeVar("TResult_contra", contravariant=True)
-TUtil_contra = TypeVar("TUtil_contra", contravariant=True)
-T_Validator_contra = TypeVar("T_Validator_contra", contravariant=True)
-T_Repository_contra = TypeVar("T_Repository_contra", contravariant=True)
-TInput_Handler_contra = TypeVar("TInput_Handler_contra", contravariant=True)
-MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
+T_contra = TypeVar("T_contra", contravariant=True, default=object)
+TCacheKey_contra = TypeVar("TCacheKey_contra", contravariant=True, default=object)
+TCommand_contra = TypeVar("TCommand_contra", contravariant=True, default=object)
+TConfigKey_contra = TypeVar("TConfigKey_contra", contravariant=True, default=object)
+TEvent_contra = TypeVar("TEvent_contra", contravariant=True, default=object)
+TInput_contra = TypeVar("TInput_contra", contravariant=True, default=object)
+TItem_contra = TypeVar("TItem_contra", contravariant=True, default=object)
+TQuery_contra = TypeVar("TQuery_contra", contravariant=True, default=object)
+TResult_contra = TypeVar("TResult_contra", contravariant=True, default=object)
+TUtil_contra = TypeVar("TUtil_contra", contravariant=True, default=object)
+T_Validator_contra = TypeVar("T_Validator_contra", contravariant=True, default=object)
+T_Repository_contra = TypeVar("T_Repository_contra", contravariant=True, default=object)
+TInput_Handler_contra = TypeVar(
+    "TInput_Handler_contra", contravariant=True, default=object
+)
+MessageT_contra = TypeVar("MessageT_contra", contravariant=True, default=object)
 
 # Invariant advanced TypeVars
-T_ResultProtocol = TypeVar("T_ResultProtocol")
-CallableInputT = TypeVar("CallableInputT")
-CallableOutputT = TypeVar("CallableOutputT")
+T_ResultProtocol = TypeVar("T_ResultProtocol", default=object)
+CallableInputT = TypeVar("CallableInputT", default=object)
+CallableOutputT = TypeVar("CallableOutputT", default=object)
 
 # Domain-specific TypeVars
-Command = TypeVar("Command")
-Event = TypeVar("Event")
-Message = TypeVar("Message")
-Query = TypeVar("Query")
-ResultT = TypeVar("ResultT")
+Command = TypeVar("Command", default=object)
+Event = TypeVar("Event", default=object)
+Message = TypeVar("Message", default=object)
+Query = TypeVar("Query", default=object)
+ResultT = TypeVar("ResultT", default=object)
 
 # Module-level TypeVars (for compatibility)
-MessageT = TypeVar("MessageT")
-FactoryT = TypeVar("FactoryT")
-TValidateAll = TypeVar("TValidateAll")
+MessageT = TypeVar("MessageT", default=object)
+FactoryT = TypeVar("FactoryT", default=object)
+TValidateAll = TypeVar("TValidateAll", default=object)
 
 # TypeVars for generic processor operations
-ProcessedDataT = TypeVar("ProcessedDataT")
-ProcessorResultT = TypeVar("ProcessorResultT")
-RegistryHandlerT = TypeVar("RegistryHandlerT")
+ProcessedDataT = TypeVar("ProcessedDataT", default=object)
+ProcessorResultT = TypeVar("ProcessorResultT", default=object)
+RegistryHandlerT = TypeVar("RegistryHandlerT", default=object)
 
 
 # =============================================================================
-# LAYER 1: FLEXTYPES - ONLY types used by src/flext_core modules
+# FLEXT TYPES - THIN LAYER (Domain-Specific Complex Types Only)
 # =============================================================================
 
 
 class FlextTypes:
-    """Types used by src/flext_core modules - LEAN, NO nesting.
+    """THIN LAYER over Pydantic types - domain-specific complex types ONLY.
 
-    This class contains ONLY types that are actually used in src/flext_core/
-    modules. No ecosystem-specific types, no nested namespaces.
+    This class contains ONLY domain-specific types that are NOT covered by
+    Pydantic's native type system. For standard validation, use Pydantic
+    types directly:
+
+    **USE PYDANTIC DIRECTLY** (not FlextTypes):
+    - PositiveInt, NegativeInt, NonNegativeInt
+    - PositiveFloat, NegativeFloat, NonPositiveFloat
+    - EmailStr, HttpUrl, AnyUrl
+    - SecretStr, UUID4
+    - FilePath, DirectoryPath
+    - constr(min_length=1), conint(gt=0, lt=100)
+    - conlist(str, min_length=1, max_length=10)
+
+    **USE PYTHON NATIVE** (not FlextTypes):
+    - dict[str, object] instead of FlextTypes.Dict
+    - list[str] instead of FlextTypes.StringList
+    - dict[str, str] instead of FlextTypes.StringDict
+
+    **ONLY IN FLEXT TYPES**:
+    - FlextResult-specific types
+    - Railway pattern types
+    - CQRS/Event Sourcing types
+    - Complex handler/callable signatures
     """
 
     # =========================================================================
-    # CORE WEAK TYPES - Foundation (most frequently used)
+    # JSON TYPES - Python native with JSON compatibility
     # =========================================================================
 
-    type Dict = dict[str, object]
-    type List = list[object]
-    type StringList = list[str]
-    type StringDict = dict[str, str]
-    type IntList = list[int]
-    type FloatList = list[float]
-    type BoolList = list[bool]
-    type ObjectList = list[object]
-    type NestedDict = dict[str, dict[str, object]]
-    type FloatDict = dict[str, float]
-    type BoolDict = dict[str, bool]
-    type IntDict = dict[str, int]
+    # Use these ONLY when you need the union type - otherwise use dict/list
+    # Using object for dict/list values to avoid Pydantic recursion issues
+    # while maintaining type compatibility with nested JSON structures
     type JsonValue = dict[str, object] | list[object] | str | int | float | bool | None
     type JsonDict = dict[str, JsonValue]
-    type Dicts = dict[str, dict[str, object]]
-    type SerializableType = Dict | List | str | int | float | bool | None
-    type OutputFormat = str
-    type ConfigDict = dict[str, object]
-    type Mapping = dict[str, object]
-    type ProcessingStatus = str
 
     # =========================================================================
-    # DOMAIN MODELING TYPES - Used in models.py (23+ uses)
+    # FLEXT RESULT TYPES - Railway pattern (domain-specific)
     # =========================================================================
 
-    type PydanticContextType = object
-    type ComparableObjectType = object
-    type ValidatorInputType = object
-    type DomainObjectType = object
-    type OptionalDomainObjectType = object | None
+    type FlextResultType[T] = FlextResult[T]
+    type ValidationRule[T] = Callable[[T], FlextResult[bool]]
+    type CrossFieldValidator[T] = Callable[[T], FlextResult[bool]]
+
+    # =========================================================================
+    # HANDLER TYPES - CQRS/Bus patterns (domain-specific)
+    # =========================================================================
+
+    type HandlerCallable[T, M] = Callable[[M], FlextResult[T] | T]
     type CallableHandlerType = Callable[..., object]
-    type EventPayload = dict[str, object]  # Will be replaced with model in Phase 4.4
-    type EventMetadata = dict[str, str | int | float]
+    type BusHandlerType = Callable[..., object]
+    type MiddlewareType = Callable[[object], object]
+    type MiddlewareConfig = dict[str, object]
 
     # =========================================================================
-    # PROCESSOR TYPES - Used in processors.py (52-67 uses combined)
+    # PROCESSOR TYPES - Data processing (domain-specific)
     # =========================================================================
 
     type ProcessorInputType = object | dict[str, object] | str | int | float | bool
@@ -172,241 +214,132 @@ class FlextTypes:
     )
 
     # =========================================================================
-    # HANDLER TYPES - Used in handlers.py, bus.py (13-14 uses combined)
+    # FACTORY TYPES - Dependency injection (domain-specific)
     # =========================================================================
 
-    type BusHandlerType = Callable[..., object]
-    type BusMessageType = object
-    type AcceptableMessageType = object | dict[str, object] | str | int | float | bool
-    type MiddlewareType = Callable[[object], object]
-    type MiddlewareConfig = dict[
-        str, object | int | str
-    ]  # Will be replaced with model in Phase 4.4
-
-    # =========================================================================
-    # LOGGING TYPES - Used in loggings.py (10-21 uses combined)
-    # =========================================================================
-
-    type LoggingContextValueType = object
-    type LoggingArgType = object
-    type LoggingContextType = object
-    type LoggingKwargsType = object
-    type BoundLoggerType = object
-    type LoggingProcessorType = Callable[..., object]
-
-    # =========================================================================
-    # RUNTIME TYPES - Used in runtime.py (4-15 uses combined)
-    # =========================================================================
-
-    type ValidatableInputType = object
-    type TypeHintSpecifier = object
-    type SerializableObjectType = object
-    type GenericTypeArgument = object
-    type LoggerContextType = object
     type FactoryCallableType = Callable[[], object]
-    type ContextualObjectType = object
 
     # =========================================================================
-    # CONTAINER TYPES - Used in container.py (1-2 uses)
+    # PREDICATE TYPES - Business rules (domain-specific)
     # =========================================================================
 
-    type ValidatorFunctionType = Callable[[object], object]
-    type ContainerServiceType = object
-
-    # =========================================================================
-    # VALIDATION TYPES - Used in models.py (1-7 uses)
-    # =========================================================================
-
-    type ConfigValue = object
-    type ValidationRule = Callable[[object], FlextResult[object]]
-    type CrossFieldValidator = Callable[[object], FlextResult[object]]
-
-    # =========================================================================
-    # CONTEXT TYPES - Used in context.py
-    # =========================================================================
-
-    type HookRegistry = dict[str, list[Callable[..., object]]]
-    type HookCallableType = Callable[..., object]
-    type ScopeRegistry = dict[str, dict[str, object]]
     type PredicateType = Callable[[object], bool]
 
     # =========================================================================
-    # DISPATCHER TYPES - Used in dispatcher.py
-    # =========================================================================
-
-    type HandlerCallableType = Callable[[object], object | FlextResult[object]]
-    type MessageTypeOrHandlerType = str | object | HandlerCallableType
-    type HandlerOrCallableType = object | HandlerCallableType
-
-    # =========================================================================
-    # DECORATOR TYPES - Used in decorators.py
+    # DECORATOR TYPES - Cross-cutting concerns (domain-specific)
     # =========================================================================
 
     type DecoratorReturnType = Callable[[Callable[..., object]], Callable[..., object]]
 
     # =========================================================================
-    # BUS TYPES - Complex handler patterns for bus.py
+    # UTILITY TYPES - FlextUtilities domain-specific types
     # =========================================================================
 
-    type HandlerConfigurationType = Dict | None
+    type GenericDetailsType = dict[str, object] | object
+    type SortableObjectType = dict[str, object] | object
+    type CachedObjectType = object
+    type SerializableType = object | dict[str, object] | list[object] | str | int | float | bool | None
+    type SerializableObjectType = object | dict[str, object] | list[object] | str | int | float | bool | None
+    type TypeOriginSpecifier = type | str
+    type ParameterValueType = object
+    type IntList = list[int]
+    type FloatList = list[float]
+    type BoolList = list[bool]
+    type ObjectList = list[object]
+    type FloatDict = dict[str, float]
+    type NestedDict = dict[str, dict[str, object]]
+    type GenericTypeArgument = type | str | object
+    type TypeHintSpecifier = type | str | None
+    type ValidatableInputType = object
+    type ContextualObjectType = object
+    type ContainerServiceType = object
 
     # =========================================================================
-    # CORE NESTED CLASS - For external projects (Core types)
+    # BUS/HANDLER TYPES - Extended CQRS/Event Sourcing types
     # =========================================================================
 
-    class Core:
-        """Core domain types for external project extension.
+    type BusMessageType = object | dict[str, object]
+    type MessageTypeSpecifier = type | str
+    type MessageTypeOrHandlerType = type | str | Callable[..., object]
+    type HandlerOrCallableType = Callable[..., object] | object
+    type HandlerConfigurationType = dict[str, object] | None
+    type HandlerCallableType = Callable[..., object]
+    type AcceptableMessageType = object | dict[str, object]
 
-        Provides foundational types that external projects (FlextMeltanoTypes,
-        FlextOracleWmsTypes) can reference when building their own type systems.
-        """
+    # =========================================================================
+    # LOGGING TYPES - FlextLogger domain-specific types
+    # =========================================================================
 
-        # =====================================================================
-        # BASIC COLLECTION TYPES - Foundation for external projects
-        # =====================================================================
+    type LoggingContextType = dict[str, object]
+    type LoggingContextValueType = object | str | int | float | bool | None
+    type LoggerContextType = dict[str, object]
+    type LoggingProcessorType = Callable[[object, str, dict[str, object]], None]
+    type LoggingArgType = object
+    type LoggingKwargsType = dict[str, object]
+    type BoundLoggerType = object  # structlog.BoundLogger type
 
-        # Direct references to FlextTypes collection types
-        Dict = dict[str, object]  # Generic dict type
-        List = list[object]  # Generic list type
-        StringList = list[str]  # String list type
-        StringDict = dict[str, str]  # String-keyed string value dict
-        IntDict = dict[str, int]  # String-keyed int value dict
-        FloatDict = dict[str, float]  # String-keyed float value dict
-        BoolDict = dict[str, bool]  # String-keyed bool value dict
-        NestedDict = dict[str, dict[str, object]]  # Nested dict type
+    # =========================================================================
+    # HOOK/REGISTRY TYPES - Plugin/Extension system types
+    # =========================================================================
 
-        # =====================================================================
-        # CONFIGURATION AND VALIDATION TYPES - For domain models
-        # =====================================================================
+    type HookCallableType = Callable[..., object]
+    type HookRegistry = dict[str, list[Callable[..., object]]]
+    type ScopeRegistry = dict[str, object]
 
-        ConfigValue = object  # Generic config value type
-        ValidationInput = object  # Generic validation input
-        ValidationResult = object  # Generic validation result
-        DomainValue = object  # Generic domain value
-        EntityId = str  # Standard entity identifier type
+    # =========================================================================
+    # VALIDATOR TYPES - Validation framework types
+    # =========================================================================
 
-        # =====================================================================
-        # JSON AND SERIALIZATION TYPES - For data exchange
-        # =====================================================================
-
-        JsonValue = (
-            dict[str, object] | list[object] | str | int | float | bool | None
-        )  # JSON-compatible type
-        JsonDict = dict[str, JsonValue]  # Dict with JSON values
-        SerializableValue = object  # Any serializable value
-
-        # =====================================================================
-        # DATA PROCESSING TYPES - For operations and transformations
-        # =====================================================================
-
-        RecordDict = dict[str, object]  # Record dictionary
-        FilterDict = dict[str, object]  # Filter configuration
-        ResultDict = dict[str, object]  # Result data
-        ContextDict = dict[str, object]  # Context data
-        EntityDict = dict[str, object]  # Entity representation
-
-        # =====================================================================
-        # COLLECTION VARIANTS - Multiple container types
-        # =====================================================================
-
-        RecordList = list[dict[str, object]]  # List of records
-        EntityList = list[dict[str, object]]  # List of entities
-        ResultList = list[dict[str, object]]  # List of results
-
-    class AnnotatedTypes:
-        """Pydantic v2 Annotated types with built-in validation constraints.
-
-        Provides reusable Annotated type definitions for common field patterns,
-        eliminating verbose Field() declarations and field_validator decorators.
-
-        Example:
-            from flext_core.typings import FlextTypes
-
-            class Command(BaseModel):
-                command_type: FlextTypes.AnnotatedTypes.CommandTypeStr
-                timeout_seconds: FlextTypes.AnnotatedTypes.TimeoutSeconds
-                priority: FlextTypes.AnnotatedTypes.PriorityInt
-
-        """
-
-        # =====================================================================
-        # STRING TYPES WITH LENGTH CONSTRAINTS
-        # =====================================================================
-
-        # Command and handler string types
-        CommandTypeStr = Annotated[str, Field(min_length=1, max_length=128)]
-        HandlerTypeStr = Annotated[str, Field(min_length=1, max_length=64)]
-        QueryStr = Annotated[str, Field(min_length=1, max_length=512)]
-
-        # Message and identification string types
-        MessageIdStr = Annotated[str, Field(min_length=1, max_length=256)]
-        CorrelationIdStr = Annotated[str, Field(min_length=1, max_length=256)]
-        TraceIdStr = Annotated[str, Field(min_length=1, max_length=128)]
-
-        # Generic payload strings (minimum length)
-        PayloadStr = Annotated[str, Field(min_length=1)]
-        DescriptionStr = Annotated[str, Field(min_length=1, max_length=1024)]
-
-        # =====================================================================
-        # NUMERIC TYPES WITH VALUE CONSTRAINTS
-        # =====================================================================
-
-        # Time-related fields
-        TimeoutSeconds = Annotated[int, Field(ge=1, le=3600)]
-        DelayMilliseconds = Annotated[int, Field(ge=0, le=300000)]
-        RetryAttempts = Annotated[int, Field(ge=0, le=10)]
-
-        # Priority and scoring
-        PriorityInt = Annotated[int, Field(ge=0, le=100)]
-        ScoreInt = Annotated[int, Field(ge=0, le=100)]
-        PercentageInt = Annotated[int, Field(ge=0, le=100)]
-
-        # Counters and sizes
-        PositiveInt = Annotated[int, Field(ge=1)]
-        NonNegativeInt = Annotated[int, Field(ge=0)]
-        CountInt = Annotated[int, Field(ge=0)]
-        SizeInt = Annotated[int, Field(ge=0)]
-
-        # Float constraints
-        Percentage = Annotated[float, Field(ge=0.0, le=100.0)]
-        Probability = Annotated[float, Field(ge=0.0, le=1.0)]
-
-        # =====================================================================
-        # BOOLEAN TYPES (for consistency and future constraints)
-        # =====================================================================
-
-        FlagBool = Annotated[
-            bool, Field(description="Feature flag or configuration flag")
-        ]
-
-        # =====================================================================
-        # COLLECTION TYPES (for consistency)
-        # =====================================================================
-
-        StringListType = Annotated[list[str], Field(min_length=1)]
-        ObjectListType = Annotated[list[object], Field(min_length=1)]
+    type ValidatorFunctionType = Callable[[object], FlextResult[bool]]
 
 
 __all__: list[str] = [
+    "UUID1",
+    "UUID3",
+    "UUID4",
+    "UUID5",
+    "AnyUrl",
+    "AwareDatetime",
+    # TypeVars
     "CallableInputT",
     "CallableOutputT",
     "Command",
+    "DirectoryPath",
     "E",
+    "EmailStr",
     "Event",
     "F",
     "FactoryT",
+    "FilePath",
+    "FileUrl",
+    # FlextTypes
     "FlextTypes",
+    "FutureDate",
+    "HttpUrl",
     "K",
     "Message",
     "MessageT",
     "MessageT_contra",
+    "NaiveDatetime",
+    "NegativeFloat",
+    "NegativeInt",
+    "NewPath",
+    "NonNegativeFloat",
+    "NonNegativeInt",
+    "NonPositiveFloat",
+    "NonPositiveInt",
     "P",
+    "PastDate",
+    "PositiveFloat",
+    # Pydantic native types (re-exported for convenience)
+    "PositiveInt",
     "ProcessedDataT",
     "ProcessorResultT",
     "Query",
     "R",
     "RegistryHandlerT",
     "ResultT",
+    "SecretStr",
     "T",
     "T1_co",
     "T2_co",
@@ -440,4 +373,9 @@ __all__: list[str] = [
     "U",
     "V",
     "W",
+    "confloat",
+    "conint",
+    "conlist",
+    "conset",
+    "constr",
 ]

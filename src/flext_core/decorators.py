@@ -172,7 +172,9 @@ class FlextDecorators:
     5. Automatic retry logic:
         >>> class ApiClient:
         ...     @FlextDecorators.retry(
-        ...         max_attempts=5, delay_seconds=1.0, backoff_strategy="exponential"
+        ...         max_attempts=5,
+        ...         delay_seconds=1.0,
+        ...         backoff_strategy="exponential",
         ...     )
         ...     def call_external_api(self, endpoint: str) -> dict[str, object]:
         ...         # Automatically retries on failure with backoff
@@ -656,7 +658,9 @@ class FlextDecorators:
 
             class MyService:
                 @FlextDecorators.retry(
-                    max_attempts=5, delay_seconds=2.0, backoff_strategy="exponential"
+                    max_attempts=5,
+                    delay_seconds=2.0,
+                    backoff_strategy="exponential",
                 )
                 def unreliable_operation(self) -> dict[str, object]:
                     # Automatically retries on failure with exponential backoff
@@ -894,7 +898,10 @@ class FlextDecorators:
 
             class OrderService:
                 @FlextDecorators.combined(
-                    inject_deps={"repo": OrderRepository, "validator": OrderValidator},
+                    inject_deps={
+                        "repo": OrderRepository,
+                        "validator": OrderValidator,
+                    },
                     operation_name="create_order",
                     track_perf=True,
                     use_railway=True,
@@ -930,14 +937,14 @@ class FlextDecorators:
             # Apply dependency injection
             if inject_deps:
                 inject_result = FlextDecorators.inject(**inject_deps)(decorated)
-                decorated = cast("Callable[..., R]", inject_result)
+                decorated = inject_result
 
             # Apply performance tracking
             if track_perf:
                 perf_result = FlextDecorators.track_performance(
                     operation_name=operation_name
                 )(decorated)
-                decorated = cast("Callable[..., R]", perf_result)
+                decorated = perf_result
 
             # Apply operation logging (innermost wrapper)
             log_result = FlextDecorators.log_operation(operation_name=operation_name)(

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import threading
 import time
+from collections.abc import Callable
 from typing import cast
 
 from flext_core import (
@@ -16,6 +17,7 @@ from flext_core import (
     FlextModels,
     FlextProcessors,
     FlextResult,
+    FlextTypes,
 )
 
 
@@ -48,7 +50,8 @@ class TestFlextProcessors:
         """Test processor registration with invalid parameters."""
         processors = FlextProcessors()
 
-        result = processors.register("", None)
+        # Test with empty name
+        result = processors.register("", lambda x: x)
         assert result.is_failure
 
     def test_processors_unregister_processor(self) -> None:
@@ -565,7 +568,7 @@ class TestFlextProcessorsCriticalCoverage:
         def test_processor(data: dict[str, object]) -> dict[str, object]:
             return {"processed": True, **data}
 
-        processors.register("test", test_processor)
+        processors.register("test", cast("Callable[[object], object]", test_processor))
 
         # Manually open circuit breaker
         processors._circuit_breaker["test"] = True
@@ -594,7 +597,7 @@ class TestFlextProcessorsCriticalCoverage:
                 "count": int(count_val) + 1 if isinstance(count_val, (int, str)) else 1
             }
 
-        processors.register("counter", counter)
+        processors.register("counter", cast("Callable[[object], object]", counter))
 
         # First 2 requests should succeed
         result1 = processors.process("counter", {"count": 0})
@@ -622,7 +625,10 @@ class TestFlextProcessorsCriticalCoverage:
         def timestamp_processor(_data: dict[str, object]) -> dict[str, object]:
             return {"timestamp": time.time()}
 
-        processors.register("timestamp", timestamp_processor)
+        processors.register(
+            "timestamp",
+            cast("Callable[[object], object]", timestamp_processor),
+        )
 
         # First call - should execute and cache
         result1 = processors.process("timestamp", {"test": "data"})
@@ -646,13 +652,17 @@ class TestFlextProcessorsCriticalCoverage:
             msg = "Middleware intentional failure"
             raise ValueError(msg)
 
-        processors.add_middleware(failing_middleware)
+        processors.add_middleware(
+            cast("Callable[[object], object]", failing_middleware)
+        )
 
         # Register simple processor
         def simple_processor(d: dict[str, object]) -> dict[str, object]:
             return d
 
-        processors.register("test", simple_processor)
+        processors.register(
+            "test", cast("Callable[[object], object]", simple_processor)
+        )
 
         # Processing should fail due to middleware error
         result = processors.process("test", {"data": "test"})
@@ -674,7 +684,9 @@ class TestFlextProcessorsCriticalCoverage:
                 **data,
             })
 
-        processors.register("result", result_processor)
+        processors.register(
+            "result", cast("Callable[[object], object]", result_processor)
+        )
 
         # Success case
         success_result = processors.process("result", {"fail": False})
@@ -738,7 +750,13 @@ class TestFlextProcessorsCriticalCoverage:
                 "processed": True,
             })
 
-        processors.register("conditional", conditional_processor)
+        processors.register(
+            "conditional",
+            cast(
+                "Callable[[FlextTypes.ProcessorInputType], object]",
+                conditional_processor,
+            ),
+        )
 
         # Process list with failing item
         items = cast("list[object]", [{"id": 1}, {"id": 2}, {"id": 3}])

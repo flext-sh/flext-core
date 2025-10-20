@@ -16,6 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import cast
 
 from flext_core import FlextContext, FlextModels
 
@@ -215,7 +216,10 @@ class TestRequestDomain:
         """Test request context manager with all metadata."""
         FlextContext.Utilities.clear_context()
 
-        metadata: dict[str, object] = {"transaction_id": "txn_123", "amount": 99.99}
+        metadata: dict[str, object] = {
+            "transaction_id": "txn_123",
+            "amount": 99.99,
+        }
         with FlextContext.Request.request_context(
             user_id="user_456",
             operation_name="payment_processing",
@@ -280,7 +284,10 @@ class TestPerformanceDomain:
         """Test operation metadata getter and setter."""
         FlextContext.Utilities.clear_context()
 
-        metadata: dict[str, object] = {"request_size": 1024, "response_code": 200}
+        metadata: dict[str, object] = {
+            "request_size": 1024,
+            "response_code": 200,
+        }
         FlextContext.Performance.set_operation_metadata(metadata)
 
         retrieved_metadata = FlextContext.Performance.get_operation_metadata()
@@ -313,7 +320,8 @@ class TestPerformanceDomain:
         # After context exit, duration should be calculated
         assert "end_time" in metadata
         assert "duration_seconds" in metadata
-        assert metadata["duration_seconds"] >= 0
+        duration = cast("float", metadata["duration_seconds"])
+        assert duration >= 0
 
     def test_timed_operation_duration_calculation(self) -> None:
         """Test timed operation calculates duration correctly."""

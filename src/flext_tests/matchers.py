@@ -22,53 +22,6 @@ TValue = TypeVar("TValue")
 TConfigValue = TypeVar("TConfigValue", bound=object)
 
 
-class DataBuilder:
-    """Builder for test datasets (renamed to avoid pytest collection)."""
-
-    def __init__(self) -> None:
-        """Initialize test data builder."""
-        super().__init__()
-        self._data: dict[str, object] = {}
-
-    def with_users(self, count: int = 5) -> DataBuilder:
-        """Add users to dataset."""
-        self._data["users"] = [
-            {
-                "id": f"USER-{i}",
-                "name": f"User {i}",
-                "email": f"user{i}@example.com",
-                "age": 20 + i,
-            }
-            for i in range(count)
-        ]
-        return self
-
-    def with_configs(self, *, production: bool = False) -> DataBuilder:
-        """Add configuration to dataset."""
-        self._data["configs"] = {
-            "environment": "production" if production else "development",
-            "debug": not production,
-            "database_url": "postgresql://localhost/testdb",
-            "api_timeout": 30,
-            "max_connections": 10,
-        }
-        return self
-
-    def with_validation_fields(self, count: int = 5) -> DataBuilder:
-        """Add validation fields to dataset."""
-        self._data["validation_fields"] = {
-            "valid_emails": [f"user{i}@example.com" for i in range(count)],
-            "invalid_emails": ["invalid", "no-at-sign.com", ""],
-            "valid_hostnames": ["example.com", "localhost"],
-            "invalid_hostnames": ["invalid..hostname", ""],
-        }
-        return self
-
-    def build(self) -> dict[str, object]:
-        """Build the dataset."""
-        return dict[str, object](self._data)
-
-
 class FlextTestsMatchers:
     """Custom test matchers for FLEXT ecosystem.
 

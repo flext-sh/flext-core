@@ -277,7 +277,8 @@ class TestFlextConfig:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            FlextConfig(log_level="INVALID")  # type: ignore[reportArgumentType]
+            # Test with invalid log level using model_validate to bypass strict typing
+            FlextConfig.model_validate({"log_level": "INVALID"})
 
         # Check that the error message is descriptive
         assert "log_level" in str(exc_info.value) or "INVALID" in str(exc_info.value)
@@ -415,7 +416,12 @@ class TestFlextConfig:
 
         finally:
             # Cleanup
-            for key in ["DEBUG", "LOG_LEVEL", "FLEXT_DEBUG", "FLEXT_LOG_LEVEL"]:
+            for key in [
+                "DEBUG",
+                "LOG_LEVEL",
+                "FLEXT_DEBUG",
+                "FLEXT_LOG_LEVEL",
+            ]:
                 if key in os.environ:
                     del os.environ[key]
 
