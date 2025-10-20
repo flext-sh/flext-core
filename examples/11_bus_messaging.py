@@ -388,7 +388,10 @@ class BusMessagingService(FlextService[dict[str, object]]):
                 self.logger.info(
                     "Completed: %s",
                     message_type,
-                    extra={"duration": duration, "success": bool(result.is_success)},
+                    extra={
+                        "duration": duration,
+                        "success": bool(result.is_success),
+                    },
                 )
                 return result
 
@@ -544,7 +547,7 @@ class BusMessagingService(FlextService[dict[str, object]]):
         print(f"\nFound handler for Command1: {handler is not None}")
 
         # Get registered handler types
-        registered = bus.registered_handlers()
+        registered = bus.registered_handlers
         print(f"\nRegistered message types: {registered}")
 
         # Unregister handler
@@ -614,7 +617,8 @@ class BusMessagingService(FlextService[dict[str, object]]):
             return []
 
         query_handler = FlextHandlers.from_callable(
-            callable_func=search_wrapper, handler_type="query"
+            callable_func=search_wrapper,
+            handler_type=FlextConstants.Cqrs.HandlerType.QUERY,
         )
 
         bus.register_handler(SearchQuery, query_handler)

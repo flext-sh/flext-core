@@ -111,7 +111,9 @@ class TestFlextExceptions:
     def test_timeout_error(self) -> None:
         """Test TimeoutError exception type."""
         error = FlextExceptions.TimeoutError(
-            "Operation timeout", timeout_seconds=30.0, operation="database_query"
+            "Operation timeout",
+            timeout_seconds=30.0,
+            operation="database_query",
         )
         assert isinstance(error, FlextExceptions.BaseError)
         assert error.message == "Operation timeout"
@@ -177,7 +179,9 @@ class TestFlextExceptions:
     def test_circuit_breaker_error(self) -> None:
         """Test CircuitBreakerError exception type."""
         error = FlextExceptions.CircuitBreakerError(
-            "Circuit breaker open", service_name="payment_service", failure_count=5
+            "Circuit breaker open",
+            service_name="payment_service",
+            failure_count=5,
         )
         assert isinstance(error, FlextExceptions.BaseError)
         assert error.message == "Circuit breaker open"

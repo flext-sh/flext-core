@@ -12,9 +12,6 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
 """
-
-# Expected: Internal IO monad implementation details.
-# pyright: reportPrivateUsage=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
 from __future__ import annotations
 
 import types
@@ -27,11 +24,7 @@ from returns.result import Failure, Result, Success, safe
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
-from flext_core.typings import FlextTypes
-
-# =============================================================================
-# FLEXT RESULT
-# =============================================================================
+from flext_core.typings import FlextTypes, T_co
 
 
 class FlextResult[T_co]:
@@ -562,14 +555,20 @@ class FlextResult[T_co]:
             return FlextResult[U].fail(
                 f"Transformation error: {e}",
                 error_code=FlextConstants.Errors.EXCEPTION_ERROR,
-                error_data={"exception_type": type(e).__name__, "exception": str(e)},
+                error_data={
+                    "exception_type": type(e).__name__,
+                    "exception": str(e),
+                },
             )
         except Exception as e:
             # Use FLEXT Core structured error handling for all other exceptions
             return FlextResult[U].fail(
                 f"Transformation failed: {e}",
                 error_code=FlextConstants.Errors.MAP_ERROR,
-                error_data={"exception_type": type(e).__name__, "exception": str(e)},
+                error_data={
+                    "exception_type": type(e).__name__,
+                    "exception": str(e),
+                },
             )
 
     def flat_map[U](self, func: Callable[[T_co], FlextResult[U]]) -> FlextResult[U]:
@@ -593,19 +592,31 @@ class FlextResult[T_co]:
             # Return the FlextResult directly (already in our format)
             return result_u
 
-        except (TypeError, ValueError, AttributeError, IndexError, KeyError) as e:
+        except (
+            TypeError,
+            ValueError,
+            AttributeError,
+            IndexError,
+            KeyError,
+        ) as e:
             # Use FLEXT Core structured error handling
             return FlextResult[U].fail(
                 f"Chained operation failed: {e}",
                 error_code=FlextConstants.Errors.BIND_ERROR,
-                error_data={"exception_type": type(e).__name__, "exception": str(e)},
+                error_data={
+                    "exception_type": type(e).__name__,
+                    "exception": str(e),
+                },
             )
         except Exception as e:
             # Handle other unexpected exceptions
             return FlextResult[U].fail(
                 f"Flat map operation failed: {e}",
                 error_code=FlextConstants.Errors.BIND_ERROR,
-                error_data={"exception_type": type(e).__name__, "exception": str(e)},
+                error_data={
+                    "exception_type": type(e).__name__,
+                    "exception": str(e),
+                },
             )
 
     def __bool__(self) -> bool:
@@ -754,7 +765,11 @@ class FlextResult[T_co]:
                         # Skip logging to avoid circular dependency
                         # Unable to hash object attributes, using fallback
                         # For complex objects, use a combination of type and memory ID
-                        return hash((True, type(self._data).__name__, id(self._data)))
+                        return hash((
+                            True,
+                            type(self._data).__name__,
+                            id(self._data),
+                        ))
 
                 # For complex objects, use a combination of type and memory ID
                 return hash((True, type(self._data).__name__, id(self._data)))

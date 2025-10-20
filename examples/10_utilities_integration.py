@@ -134,7 +134,11 @@ class EventService:
             if result.is_failure:
                 return result
 
-            self._events.append({"type": event_type, "data": data, "timestamp": "now"})
+            self._events.append({
+                "type": event_type,
+                "data": data,
+                "timestamp": "now",
+            })
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Failed to publish event: {e}")
@@ -279,7 +283,7 @@ class IntegratedService:
         )
 
         # Validate using configuration
-        if len(str(request)) > self._config.validation_timeout_ms:
+        if len(str(request)) > 1000:  # Simple length check for example
             return FlextResult[dict[str, object]].fail("Request too large")
 
         # Publish processing event
@@ -300,7 +304,8 @@ class IntegratedService:
 
         # Process with dispatcher
         response = cast(
-            "dict[str, object]", {"processed": True, "request_id": request.get("id")}
+            "dict[str, object]",
+            {"processed": True, "request_id": request.get("id")},
         )
 
         # Send response through dispatcher
@@ -374,7 +379,10 @@ def run_integration_examples() -> None:
     # Example 4: Message routing
     print("\n4. Message Routing:")
     message_service = MessageService()
-    msg_result = message_service.send_message({"type": "greeting", "content": "Hello"})
+    msg_result = message_service.send_message({
+        "type": "greeting",
+        "content": "Hello",
+    })
     print(f"   Message dispatching: {msg_result.is_success}")
 
     print("\n✅ All integration examples completed successfully!")

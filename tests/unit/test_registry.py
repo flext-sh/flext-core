@@ -13,6 +13,7 @@ from collections.abc import Callable
 from typing import cast
 
 from flext_core import (
+    FlextConstants,
     FlextDispatcher,
     FlextHandlers,
     FlextModels,
@@ -29,7 +30,9 @@ class ConcreteTestHandler(FlextHandlers[object, object]):
         return FlextResult[object].ok(f"processed_{message}")
 
 
-def create_test_handler(handler_id: str = "test_handler") -> ConcreteTestHandler:
+def create_test_handler(
+    handler_id: str = "test_handler",
+) -> ConcreteTestHandler:
     """DEPRECATED: Create handlers directly in tests.
 
     Migration:
@@ -178,9 +181,9 @@ class TestFlextRegistry:
         summary.registered.append(
             FlextModels.RegistrationDetails(
                 registration_id="test1",
-                handler_mode="command",
+                handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 timestamp="2025-01-01T00:00:00Z",
-                status="running",
+                status=FlextConstants.Cqrs.Status.RUNNING,
             ),
         )
         summary.errors.append("test_error")
@@ -218,12 +221,12 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Test valid modes
-        assert registry._safe_get_handler_mode("command") == "command"
-        assert registry._safe_get_handler_mode("query") == "query"
+        assert registry._safe_get_handler_mode("command") == FlextConstants.Cqrs.HandlerType.COMMAND
+        assert registry._safe_get_handler_mode("query") == FlextConstants.Cqrs.HandlerType.QUERY
 
         # Test invalid mode (should default to command)
-        assert registry._safe_get_handler_mode("invalid") == "command"
-        assert registry._safe_get_handler_mode(None) == "command"
+        assert registry._safe_get_handler_mode("invalid") == FlextConstants.Cqrs.HandlerType.COMMAND
+        assert registry._safe_get_handler_mode(None) == FlextConstants.Cqrs.HandlerType.COMMAND
 
     def test_registry_safe_get_status(self) -> None:
         """Test safe status extraction with mapping to FlextConstants.Status."""
@@ -302,8 +305,16 @@ class TestFlextRegistry:
         # Verify registration details
         reg_details = result.value
         assert reg_details.registration_id is not None
-        assert reg_details.handler_mode in {"command", "query"}
-        assert reg_details.status in {"running", "completed", "pending", "failed"}
+        assert reg_details.handler_mode in {
+            FlextConstants.Cqrs.HandlerType.COMMAND,
+            FlextConstants.Cqrs.HandlerType.QUERY,
+        }
+        assert reg_details.status in {
+            "running",
+            "completed",
+            "pending",
+            "failed",
+        }
 
     def test_registry_error_handling(self) -> None:
         """Test registry error handling."""
@@ -338,9 +349,9 @@ class TestFlextRegistry:
         summary.registered.append(
             FlextModels.RegistrationDetails(
                 registration_id="test1",
-                handler_mode="command",
+                handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                 timestamp="2025-01-01T00:00:00Z",
-                status="running",
+                status=FlextConstants.Cqrs.Status.RUNNING,
             ),
         )
 
@@ -454,7 +465,9 @@ class TestFlextRegistry:
         key2 = registry._resolve_binding_key(handler, object)
         assert key2 is not None
 
-    def test_registry_resolve_binding_key_from_entry_comprehensive(self) -> None:
+    def test_registry_resolve_binding_key_from_entry_comprehensive(
+        self,
+    ) -> None:
         """Test _resolve_binding_key_from_entry all paths (lines 556-564, 568)."""
         registry = FlextRegistry(FlextDispatcher())
         handler = create_test_handler("entry_handler")
@@ -494,7 +507,7 @@ class TestFlextRegistry:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="bad_handler",
                     handler_name="BadHandler",
-                    handler_type="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -523,7 +536,7 @@ class TestFlextRegistry:
                 config = FlextModels.Cqrs.Handler(
                     handler_id="failing_handler",
                     handler_name="FailingHandler",
-                    handler_type="command",
+                    handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
                 )
                 super().__init__(config=config)
 
@@ -600,7 +613,10 @@ class TestFlextRegistry:
         def handler_func(cmd: object) -> object:
             return cmd
 
-        config_dict = {"handler_id": "tuple_handler", "handler_name": "Tuple Handler"}
+        config_dict = {
+            "handler_id": "tuple_handler",
+            "handler_name": "Tuple Handler",
+        }
 
         # Create function map with tuple entry - cast str to type[object] for key compatibility
         function_map: dict[type[object], tuple[object, ...]] = {
@@ -807,9 +823,9 @@ class TestFlextRegistry:
         # Test after adding registrations
         reg_details = FlextModels.RegistrationDetails(
             registration_id="test_reg",
-            handler_mode="command",
+            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
             timestamp="2025-01-01T00:00:00Z",
-            status="running",
+            status=FlextConstants.Cqrs.Status.RUNNING,
         )
         summary.registered.append(reg_details)
         summary.skipped.append("skipped_handler")
@@ -853,7 +869,12 @@ class TestFlextRegistry:
                 Callable[[object], object | FlextResult[object]],
                 object | FlextResult[object],
             ],
-        ] = {ValidMessageType: (test_function, FlextResult[object].ok("default"))}
+        ] = {
+            ValidMessageType: (
+                test_function,
+                FlextResult[object].ok("default"),
+            )
+        }
         result_valid_map = registry.register_function_map(valid_map)
         assert result_valid_map.is_success
 
@@ -911,7 +932,12 @@ class TestFlextRegistry:
                 Callable[[object], object | FlextResult[object]],
                 object | FlextResult[object],
             ],
-        ] = {TestMessageType: (failing_function, {"handler_name": "test_handler"})}
+        ] = {
+            TestMessageType: (
+                failing_function,
+                {"handler_name": "test_handler"},
+            )
+        }
         result_failing = registry.register_function_map(failing_map)
         # Registry handles function failures gracefully
         assert (
@@ -962,7 +988,8 @@ class TestFlextRegistry:
 
         # Create handler and register it
         config = FlextModels.Cqrs.Handler(
-            handler_id="integration_handler", handler_name="Integration Handler"
+            handler_id="integration_handler",
+            handler_name="Integration Handler",
         )
 
         class IntegrationHandler(FlextHandlers[object, object]):

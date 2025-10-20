@@ -85,12 +85,14 @@ class FlextProcessors(FlextMixins):
     """
 
     @override
-    def __init__(self, config: dict[str, object] | None = None) -> None:
+    def __init__(self, config: dict[str, object] | FlextConfig | None = None) -> None:
         """Initialize FlextProcessors with optional configuration.
 
         Args:
-            config: Optional configuration dictionary for processors.
-                   If not provided, uses constants for default values.
+            config: Optional configuration. Can be:
+                   - FlextConfig instance (preferred)
+                   - dict for backward compatibility
+                   - None to use global singleton FlextConfig
 
         """
         super().__init__()
@@ -122,45 +124,33 @@ class FlextProcessors(FlextMixins):
             "unregistrations": 0,
         }
 
-        # Initialize configuration with safe defaults
-        try:
-            if config is None or not isinstance(config, dict):
-                # Use default configuration values
-                self._cache_ttl = 3600.0
-                self._circuit_breaker_threshold = 5
-                self._rate_limit = 100
-                self._rate_limit_window = 60.0
-            else:
-                # Safe dict access with defaults
-                cache_ttl_val: object = config.get("cache_ttl", 3600.0)
-                if isinstance(cache_ttl_val, (int, float, str)):
-                    self._cache_ttl = float(cache_ttl_val)
-                else:
-                    self._cache_ttl = 3600.0
+        # Initialize configuration
+        if config is None:
+            # Use global FlextConfig singleton
+            flext_config = FlextConfig()
+            self._cache_ttl = float(flext_config.cache_ttl)
+            self._circuit_breaker_threshold = flext_config.circuit_breaker_threshold
+            self._rate_limit = flext_config.rate_limit_max_requests
+            self._rate_limit_window = float(flext_config.rate_limit_window_seconds)
+        elif isinstance(config, FlextConfig):
+            # Use provided FlextConfig instance
+            self._cache_ttl = float(config.cache_ttl)
+            self._circuit_breaker_threshold = config.circuit_breaker_threshold
+            self._rate_limit = config.rate_limit_max_requests
+            self._rate_limit_window = float(config.rate_limit_window_seconds)
+        else:
+            # Backward compatibility: handle dict config
+            cache_ttl = config.get("cache_ttl", 3600.0)
+            self._cache_ttl = float(cache_ttl) if isinstance(cache_ttl, (int, float, str)) else 3600.0
 
-                cb_threshold_val: object = config.get("circuit_breaker_threshold", 5)
-                if isinstance(cb_threshold_val, (int, float, str)):
-                    self._circuit_breaker_threshold = int(float(cb_threshold_val))
-                else:
-                    self._circuit_breaker_threshold = 5
+            cb_threshold = config.get("circuit_breaker_threshold", 5)
+            self._circuit_breaker_threshold = int(cb_threshold) if isinstance(cb_threshold, (int, float, str)) else 5
 
-                rate_limit_val: object = config.get("rate_limit", 100)
-                if isinstance(rate_limit_val, (int, float, str)):
-                    self._rate_limit = int(float(rate_limit_val))
-                else:
-                    self._rate_limit = 100
+            rate_limit = config.get("rate_limit", 100)
+            self._rate_limit = int(rate_limit) if isinstance(rate_limit, (int, float, str)) else 100
 
-                rate_window_val: object = config.get("rate_limit_window", 60.0)
-                if isinstance(rate_window_val, (int, float, str)):
-                    self._rate_limit_window = float(rate_window_val)
-                else:
-                    self._rate_limit_window = 60.0
-        except (ValueError, TypeError):
-            # Fallback: if validation fails, use defaults
-            self._cache_ttl = 3600.0
-            self._circuit_breaker_threshold = 5
-            self._rate_limit = 100
-            self._rate_limit_window = 60.0
+            rate_window = config.get("rate_limit_window", 60.0)
+            self._rate_limit_window = float(rate_window) if isinstance(rate_window, (int, float, str)) else 60.0
 
     def register(
         self,
@@ -638,39 +628,37 @@ class FlextProcessors(FlextMixins):
             "middleware_count": len(self._middleware),
         }
 
-    def import_config(self, config: dict[str, object]) -> FlextResult[None]:
-        """Import configuration.
+    def import_config(self, config: dict[str, object] | FlextConfig) -> FlextResult[None]:
+        """Import configuration from FlextConfig or dict.
 
         Args:
-            config: Configuration dictionary
+            config: Either FlextConfig instance (preferred) or dict for backward compatibility
 
         Returns:
             FlextResult[None]: Success if import succeeded, failure otherwise
 
         """
         try:
-            if "cache_ttl" in config:
-                cache_ttl = config["cache_ttl"]
-                if isinstance(cache_ttl, (int, float, str)):
-                    self._cache_ttl = float(cache_ttl)
+            if isinstance(config, FlextConfig):
+                self._cache_ttl = float(config.cache_ttl)
+                self._circuit_breaker_threshold = config.circuit_breaker_threshold
+                self._rate_limit = config.rate_limit_max_requests
+                self._rate_limit_window = float(config.rate_limit_window_seconds)
+            else:
+                # Backward compatibility: handle dict config
+                cache_ttl = config.get("cache_ttl", 3600.0)
+                self._cache_ttl = float(cache_ttl) if isinstance(cache_ttl, (int, float, str)) else 3600.0
 
-            if "circuit_breaker_threshold" in config:
-                circuit_threshold = config["circuit_breaker_threshold"]
-                if isinstance(circuit_threshold, (int, float, str)):
-                    self._circuit_breaker_threshold = int(circuit_threshold)
+                cb_threshold = config.get("circuit_breaker_threshold", 5)
+                self._circuit_breaker_threshold = int(cb_threshold) if isinstance(cb_threshold, (int, float, str)) else 5
 
-            if "rate_limit" in config:
-                rate_limit = config["rate_limit"]
-                if isinstance(rate_limit, (int, float, str)):
-                    self._rate_limit = int(rate_limit)
+                rate_limit = config.get("rate_limit", 100)
+                self._rate_limit = int(rate_limit) if isinstance(rate_limit, (int, float, str)) else 100
 
-            if "rate_limit_window" in config:
-                rate_window = config["rate_limit_window"]
-                if isinstance(rate_window, (int, float, str)):
-                    self._rate_limit_window = int(rate_window)
-
+                rate_window = config.get("rate_limit_window", 60.0)
+                self._rate_limit_window = float(rate_window) if isinstance(rate_window, (int, float, str)) else 60.0
             return FlextResult[None].ok(None)
-        except (ValueError, TypeError) as e:
+        except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[None].fail(f"Configuration import error: {e}")
 
     class Handler:
@@ -1258,7 +1246,8 @@ class FlextProcessors(FlextMixins):
                 [FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType
             ],
         ) -> Callable[
-            [FlextTypes.ProcessorInputType], FlextResult[FlextTypes.ProcessorOutputType]
+            [FlextTypes.ProcessorInputType],
+            FlextResult[FlextTypes.ProcessorOutputType],
         ]:
             """Convert pipeline step to FlextResult-returning function.
 
@@ -1304,7 +1293,10 @@ class FlextProcessors(FlextMixins):
                     step_result: FlextTypes.ProcessorOutputType | None = cast(
                         "FlextTypes.ProcessorOutputType | None",
                         getattr(
-                            cast("FlextResult[FlextTypes.ProcessorOutputType]", result),
+                            cast(
+                                "FlextResult[FlextTypes.ProcessorOutputType]",
+                                result,
+                            ),
                             "value_or_none",
                             None,
                         ),
@@ -1399,7 +1391,8 @@ class FlextProcessors(FlextMixins):
                 self,
                 name: str,
                 handler: Callable[
-                    [FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType
+                    [FlextTypes.ProcessorInputType],
+                    FlextTypes.ProcessorOutputType,
                 ],
             ) -> None:
                 """Register handler."""
@@ -1409,7 +1402,8 @@ class FlextProcessors(FlextMixins):
                 self, name: str
             ) -> (
                 Callable[
-                    [FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType
+                    [FlextTypes.ProcessorInputType],
+                    FlextTypes.ProcessorOutputType,
                 ]
                 | None
             ):
@@ -1429,7 +1423,8 @@ class FlextProcessors(FlextMixins):
                 self, name: str
             ) -> (
                 Callable[
-                    [FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType
+                    [FlextTypes.ProcessorInputType],
+                    FlextTypes.ProcessorOutputType,
                 ]
                 | None
             ):
@@ -1461,7 +1456,8 @@ class FlextProcessors(FlextMixins):
             def add_handler(
                 self,
                 handler: Callable[
-                    [FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType
+                    [FlextTypes.ProcessorInputType],
+                    FlextTypes.ProcessorOutputType,
                 ],
             ) -> None:
                 """Add handler to chain."""
@@ -1559,7 +1555,7 @@ class FlextProcessors(FlextMixins):
             def validate_command(
                 self, command: FlextTypes.ProcessorInputType
             ) -> FlextResult[None]:
-                """Validate a command message using centralized validation.
+                """Validate a command message.
 
                 Args:
                     command: The command to validate
@@ -1568,12 +1564,17 @@ class FlextProcessors(FlextMixins):
                     FlextResult[None]: Success if valid, failure with error details
 
                 """
-                return FlextModels.Validation.validate_command(command)
+                if command is None:
+                    return FlextResult[None].fail(
+                        "Command cannot be None",
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
+                return FlextResult[None].ok(None)
 
             def validate_query(
                 self, query: FlextTypes.ProcessorInputType
             ) -> FlextResult[None]:
-                """Validate a query message using centralized validation.
+                """Validate a query message.
 
                 Args:
                     query: The query to validate
@@ -1582,7 +1583,12 @@ class FlextProcessors(FlextMixins):
                     FlextResult[None]: Success if valid, failure with error details
 
                 """
-                return FlextModels.Validation.validate_query(query)
+                if query is None:
+                    return FlextResult[None].fail(
+                        "Query cannot be None",
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
+                return FlextResult[None].ok(None)
 
             @property
             def handler_name(self) -> str:

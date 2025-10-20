@@ -381,7 +381,9 @@ class TestServiceIntegrationPatterns:
         clean_container.register("user_service", user_service)
         clean_container.register("notification_service", notification_service)
 
-        def user_notification_workflow(workflow_user_id: str) -> FlextResult[str]:
+        def user_notification_workflow(
+            workflow_user_id: str,
+        ) -> FlextResult[str]:
             # Simulate service composition workflow
             user_service_result = clean_container.get("user_service")
             notification_service_result = clean_container.get("notification_service")
@@ -396,7 +398,8 @@ class TestServiceIntegrationPatterns:
                 "FunctionalUserService", user_service_result.value
             )
             retrieved_notification_service = cast(
-                "FunctionalNotificationService", notification_service_result.value
+                "FunctionalNotificationService",
+                notification_service_result.value,
             )
 
             # Get user data first

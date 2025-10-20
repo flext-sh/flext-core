@@ -115,12 +115,12 @@ class HandlerFactory:
                         "Request must be a dictionary"
                     )
 
-                request_dict = cast("dict[str, object]", request)
+                # No cast needed - isinstance guarantees type
                 return (
                     FlextResult[FlextTypes.ProcessorOutputType].ok(
-                        f"Validation passed for {request_dict}"
+                        f"Validation passed for {request}"
                     )
-                    if self._validator(request_dict)
+                    if self._validator(request)
                     else FlextResult[FlextTypes.ProcessorOutputType].fail(
                         self._error_msg
                     )
@@ -147,8 +147,8 @@ class HandlerFactory:
                         "Request must be a dictionary"
                     )
 
-                request_dict = cast("dict[str, object]", request)
-                transformed = self._transformer(request_dict)
+                # No cast needed - isinstance guarantees type
+                transformed = self._transformer(request)
                 return FlextResult[FlextTypes.ProcessorOutputType].ok(
                     f"Transformed: {transformed}"
                 )
@@ -184,7 +184,12 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
             "ProcessingPatternsService initialized with inherited infrastructure",
             extra={
                 "service_type": "FlextProcessors & Handler Patterns demonstration",
-                "handler_types": ["BasicHandler", "Pipeline", "Strategy", "Registry"],
+                "handler_types": [
+                    "BasicHandler",
+                    "Pipeline",
+                    "Strategy",
+                    "Registry",
+                ],
                 "processing_patterns": True,
             },
         )
@@ -570,8 +575,8 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                         "Request must be a dictionary"
                     )
 
-                request_dict = cast("dict[str, object]", request)
-                text_value = cast("str", request_dict.get("text", ""))
+                # No cast needed - isinstance guarantees type
+                text_value = cast("str", request.get("text", ""))
                 return FlextResult[FlextTypes.ProcessorOutputType].ok(
                     f"Uppercase: {text_value.upper()}"
                 )
@@ -588,8 +593,8 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                         "Request must be a dictionary"
                     )
 
-                request_dict = cast("dict[str, object]", request)
-                text_value = cast("str", request_dict.get("text", ""))
+                # No cast needed - isinstance guarantees type
+                text_value = cast("str", request.get("text", ""))
                 return FlextResult[FlextTypes.ProcessorOutputType].ok(
                     f"Lowercase: {text_value.lower()}"
                 )
@@ -606,8 +611,8 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                         "Request must be a dictionary"
                     )
 
-                request_dict = cast("dict[str, object]", request)
-                text_raw = request_dict.get("text", "")
+                # No cast needed - isinstance guarantees type
+                text_raw = request.get("text", "")
                 text_value: str = (
                     text_raw if isinstance(text_raw, str) else str(text_raw)
                 )
@@ -720,9 +725,8 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
                         "Request must be a dictionary"
                     )
 
-                # Simulate processing
-                request_dict = cast("dict[str, object]", request)
-                force_fail_value = cast("bool", request_dict.get("force_fail", False))
+                # Simulate processing - isinstance guarantees type
+                force_fail_value = cast("bool", request.get("force_fail", False))
                 should_fail = bool(force_fail_value)
 
                 if should_fail:

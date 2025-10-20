@@ -9,7 +9,14 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextBus, FlextHandlers, FlextModels, FlextResult, FlextTypes
+from flext_core import (
+    FlextBus,
+    FlextConstants,
+    FlextHandlers,
+    FlextModels,
+    FlextResult,
+    FlextTypes,
+)
 
 # =============================================================================
 # Import required classes for CQRS patterns
@@ -94,8 +101,8 @@ class CreateUserCommandHandler(
         config = FlextModels.Cqrs.Handler(
             handler_id="create_user_handler",
             handler_name="Create User Handler",
-            handler_type="command",
-            handler_mode="command",
+            handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         super().__init__(config=config)
         self.created_users: list[dict[str, object]] = []
@@ -140,8 +147,8 @@ class UpdateUserCommandHandler(
         config = FlextModels.Cqrs.Handler(
             handler_id="update_user_handler",
             handler_name="Update User Handler",
-            handler_type="command",
-            handler_mode="command",
+            handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         super().__init__(config=config)
         self.updated_users: FlextTypes.NestedDict = {}

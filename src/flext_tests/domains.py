@@ -191,3 +191,63 @@ class FlextTestsDomains:
         }
         user.update(overrides)
         return user
+
+    @staticmethod
+    def batch_users(
+        count: int = 5, **user_overrides: str | bool
+    ) -> list[dict[str, str | bool]]:
+        """Create a batch of test users.
+
+        Args:
+            count: Number of users to create
+            **user_overrides: Common overrides for all users
+
+        Returns:
+            List of user dictionaries
+
+        """
+        users = []
+        for i in range(count):
+            user_overrides_copy = user_overrides.copy()
+            user_overrides_copy["username"] = f"testuser{i}"
+            user_overrides_copy["email"] = f"testuser{i}@example.com"
+            users.append(FlextTestsDomains.create_user(**user_overrides_copy))
+        return users
+
+    @staticmethod
+    def invalid_email_cases() -> list[tuple[str, bool]]:
+        """Get invalid email test cases.
+
+        Returns:
+            List of (email, is_valid) tuples - all marked as invalid
+
+        """
+        return [
+            ("invalid-email", False),
+            ("@example.com", False),
+            ("test@", False),
+            ("", False),
+            ("test@.com", False),
+            ("test..test@example.com", False),
+            ("test@example..com", False),
+        ]
+
+    @staticmethod
+    def valid_ages() -> list[int]:
+        """Get valid age test cases.
+
+        Returns:
+            List of valid ages
+
+        """
+        return [18, 25, 30, 45, 65, 80, 99]
+
+    @staticmethod
+    def invalid_ages() -> list[int]:
+        """Get invalid age test cases.
+
+        Returns:
+            List of invalid ages
+
+        """
+        return [-5, 0, 17, 151, 200]

@@ -163,3 +163,74 @@ class FlextTestsUtilities:
 
             """
             return f"{prefix}_{uuid.uuid4().hex[:8]}"
+
+    @staticmethod
+    def create_test_data(
+        size: int = 10,
+        prefix: str = "test",
+        data_type: str = "generic",
+    ) -> dict[str, object]:
+        """Create test data dictionary.
+
+        Args:
+            size: Size of the data
+            prefix: Prefix for keys
+            data_type: Type of data to create
+
+        Returns:
+            Test data dictionary
+
+        """
+        data: dict[str, object] = {
+            "id": str(uuid.uuid4()),
+            "name": f"{prefix}_{data_type}",
+            "size": size,
+            "created_at": "2025-01-01T00:00:00Z",
+        }
+
+        if data_type == "user":
+            data.update({
+                "email": f"{prefix}@example.com",
+                "active": True,
+            })
+        elif data_type == "config":
+            data.update({
+                "enabled": True,
+                "timeout": 30,
+            })
+
+        return data
+
+    @staticmethod
+    def create_api_response(
+        *,
+        success: bool = True,
+        data: object | None = None,
+        error_message: str | None = None,
+    ) -> dict[str, object]:
+        """Create API response test data.
+
+        Args:
+            success: Whether the response should be successful
+            data: Response data
+            error_message: Error message for failed responses
+
+        Returns:
+            API response dictionary
+
+        """
+        response: dict[str, object] = {
+            "status": "success" if success else "error",
+            "timestamp": "2025-01-01T00:00:00Z",
+            "request_id": str(uuid.uuid4()),
+        }
+
+        if success:
+            response["data"] = data
+        else:
+            response["error"] = {
+                "code": "TEST_ERROR",
+                "message": error_message or "Test error",
+            }
+
+        return response

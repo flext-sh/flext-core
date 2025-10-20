@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import ClassVar, Literal, Self
+from typing import ClassVar, Self, SupportsFloat, SupportsIndex, cast
 
 from dependency_injector import providers
 from pydantic import (
@@ -23,10 +23,18 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
-from flext_core.utilities import FlextUtilities
+
+# NOTE: Pydantic v2 BaseSettings handles environment variable type coercion automatically.
+# No custom validators needed - Pydantic uses lax validation mode for env vars:
+# - "true"/"1"/"yes"/"on" → bool True (case-insensitive)
+# - "false"/"0"/"no"/"off" → bool False
+# - "123" → int 123 (automatic whitespace stripping)
+# - "1.5" → float 1.5
+# See: https://docs.pydantic.dev/2.12/concepts/conversion_table/
 
 
 class FlextConfig(BaseSettings):
@@ -94,9 +102,10 @@ class FlextConfig(BaseSettings):
     - **Concurrent Access**: Safe for multi-threaded access
     - **Performance**: O(1) after first access (cached singleton)
 
-    **Validation Patterns** (2 Layers):
-    1. **Field Validators**: validate_log_level, validate_boolean_field
-    2. **Model Validators**: validate_debug_trace_consistency
+    **Validation Patterns** (Pydantic v2 Direct):
+    1. **Type Coercion**: Pydantic v2 handles str→int, str→float, str→bool automatically
+    2. **BeforeValidator**: log_level uppercasing via Annotated type
+    3. **Model Validators**: validate_debug_trace_consistency (cross-field validation)
 
     **Environment Variable Handling**:
     - **Prefix**: FLEXT_ (configurable via FlextConstants.Platform.ENV_PREFIX)
@@ -160,6 +169,8 @@ class FlextConfig(BaseSettings):
         return cls._instances[base_class]
 
     # Pydantic 2.11+ BaseSettings configuration with STRICT validation
+    # BeforeValidator handles environment variable type coercion explicitly
+    # use_enum_values=False: Keep enum instances for strict mode compatibility
     model_config = SettingsConfigDict(
         case_sensitive=False,
         env_prefix=FlextConstants.Platform.ENV_PREFIX,
@@ -167,7 +178,7 @@ class FlextConfig(BaseSettings):
         env_file_encoding=FlextConstants.Mixins.DEFAULT_ENCODING,
         env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
         extra="ignore",
-        use_enum_values=True,
+        use_enum_values=False,
         frozen=False,
         arbitrary_types_allowed=True,
         validate_return=True,
@@ -175,7 +186,9 @@ class FlextConfig(BaseSettings):
         validate_default=True,
         str_strip_whitespace=True,
         str_to_lower=False,
-        strict=True,
+        # NOTE: strict=False allows field validators to coerce environment variable strings
+        # This is REQUIRED for bool fields (debug, trace) to handle "false" strings from .env
+        strict=False,
         json_schema_extra={
             "title": "FLEXT Configuration",
             "description": "Enterprise FLEXT ecosystem configuration",
@@ -192,13 +205,14 @@ class FlextConfig(BaseSettings):
     )
 
     version: str = Field(
-        default=FlextConstants.VERSION,
+        default=__version__,
         min_length=1,
         max_length=50,
         pattern=r"^\d+\.\d+\.\d+",
         description="Application version",
     )
 
+    # Pydantic v2 functional validators for environment variable coercion in strict mode
     debug: bool = Field(
         default=False,
         description="Enable debug mode",
@@ -210,8 +224,8 @@ class FlextConfig(BaseSettings):
     )
 
     # ===== LOGGING CONFIGURATION (11 fields) =====
-    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(  # type: ignore[assignment]
-        default=FlextConstants.Logging.DEFAULT_LEVEL,
+    log_level: FlextConstants.Config.LogLevel = Field(
+        default=FlextConstants.Config.LogLevel.INFO,
         description="Logging level",
     )
 
@@ -404,58 +418,77 @@ class FlextConfig(BaseSettings):
         return value
 
     # ===== VALIDATION METHODS =====
+    # ===== FIELD VALIDATORS (Pydantic v2 native) =====
+
+    @field_validator("debug", "trace", mode="before")
+    @classmethod
+    def coerce_bool_from_env(cls, v: object) -> bool:
+        """Coerce environment variable strings to bool (strict mode compatible)."""
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.lower() in {"true", "1", "yes", "on"}
+        if isinstance(v, int):
+            return v != 0
+        return bool(v)
+
     @field_validator("log_level", mode="before")
     @classmethod
-    def validate_log_level(cls, v: str | object) -> str:
-        """Normalize log level to uppercase (Pydantic Literal handles validation)."""
-        if isinstance(v, str):
-            return v.upper()
-        return str(v).upper()
+    def uppercase_log_level(cls, v: object) -> FlextConstants.Config.LogLevel:
+        """Convert log level to uppercase and validate against LogLevel enum."""
+        if isinstance(v, FlextConstants.Config.LogLevel):
+            return v
+        # Convert string to uppercase and return enum member
+        level_str = str(v).upper() if v is not None else "INFO"
+        return FlextConstants.Config.LogLevel(level_str)
 
     @field_validator(
+        "log_file_max_size",
+        "log_file_backup_count",
+        "cache_ttl",
+        "database_pool_size",
         "max_retry_attempts",
         "timeout_seconds",
         "circuit_breaker_threshold",
         "rate_limit_max_requests",
         "executor_workers",
-        "cache_ttl",
         "max_workers",
         "max_batch_size",
-        "log_file_max_size",
-        "log_file_backup_count",
-        "database_pool_size",
         mode="before",
     )
     @classmethod
-    def validate_int_field(cls, v: int | str) -> int:
-        """Convert string to int for environment variables using FlextUtilities."""
-        result = FlextUtilities.TypeConversions.to_int(v)
-        if result.is_failure:
-            raise ValueError(result.error or "Conversion failed")
-        return result.unwrap()
-
-    @field_validator("debug", "trace", mode="before")
-    @classmethod
-    def validate_boolean_field(cls, v: str | bool | int) -> bool:
-        """Validate and convert boolean values using FlextUtilities."""
-        result = FlextUtilities.TypeConversions.to_bool(value=v)
-        if result.is_failure:
-            raise ValueError(result.error or "Conversion failed")
-        return result.unwrap()
+    def coerce_int_from_env(cls, v: object) -> int:
+        """Coerce environment variable strings to int (strict mode compatible)."""
+        if isinstance(v, int):
+            return v
+        if isinstance(v, str):
+            return int(v.strip())
+        # For other types, attempt conversion (may raise ValueError)
+        if hasattr(v, '__index__'):
+            return int(cast("SupportsIndex", v))
+        msg = f"Cannot convert {type(v).__name__} to int"
+        raise ValueError(msg)
 
     @field_validator(
-        "rate_limit_window_seconds",
         "retry_delay",
+        "rate_limit_window_seconds",
         "dispatcher_timeout_seconds",
         mode="before",
     )
     @classmethod
-    def validate_float_field(cls, v: float | str) -> float:
-        """Convert string to float for environment variables using FlextUtilities."""
-        result = FlextUtilities.TypeConversions.to_float(v)
-        if result.is_failure:
-            raise ValueError(result.error or "Conversion failed")
-        return result.unwrap()
+    def coerce_float_from_env(cls, v: object) -> float:
+        """Coerce environment variable strings to float (strict mode compatible)."""
+        if isinstance(v, float):
+            return v
+        if isinstance(v, (int, str)):
+            return float(v)
+        # For other types, attempt conversion (may raise ValueError)
+        if hasattr(v, '__float__'):
+            return float(cast("SupportsFloat", v))
+        msg = f"Cannot convert {type(v).__name__} to float"
+        raise ValueError(msg)
+
+    # ===== MODEL VALIDATORS =====
 
     @model_validator(mode="after")
     def validate_debug_trace_consistency(self) -> Self:
@@ -518,12 +551,10 @@ class FlextConfig(BaseSettings):
             cls._instances.pop(base_class, None)
 
     def validate_runtime_requirements(self) -> FlextResult[None]:
-        """Validate configuration meets runtime requirements."""
-        try:
-            self.validate_log_level(self.log_level)
-        except FlextExceptions.ValidationError as e:
-            return FlextResult[None].fail(str(e))
+        """Validate configuration meets runtime requirements.
 
+        Pydantic v2 validates log_level automatically via Literal type.
+        """
         if self.trace and not self.debug:
             return FlextResult[None].fail(
                 "Trace mode requires debug mode to be enabled",
@@ -542,12 +573,12 @@ class FlextConfig(BaseSettings):
         return self.debug or self.trace
 
     @computed_field
-    def effective_log_level(self) -> str:
+    def effective_log_level(self) -> FlextConstants.Config.LogLevel:
         """Get effective log level considering debug/trace modes."""
         if self.trace:
-            return "DEBUG"
+            return FlextConstants.Config.LogLevel.DEBUG
         if self.debug:
-            return "INFO"
+            return FlextConstants.Config.LogLevel.INFO
         return self.log_level
 
     @computed_field
@@ -562,28 +593,8 @@ class FlextConfig(BaseSettings):
             return self.timeout_seconds * 3
         return self.timeout_seconds
 
-    # ===== REUSABLE VALIDATORS - For ecosystem-wide consistency =====
-    @classmethod
-    def validate_log_level_field(cls, v: str) -> str:
-        """Reusable validator for log level fields."""
-        valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
-        level_upper = v.upper()
-        if level_upper not in valid_levels:
-            sorted_levels = ", ".join(sorted(valid_levels))
-            msg = f"Invalid log level '{v}'. Must be one of: {sorted_levels}"
-            raise ValueError(msg)
-        return level_upper
-
-    @classmethod
-    def validate_environment_field(cls, v: str) -> str:
-        """Reusable validator for environment fields."""
-        valid_environments = {"development", "staging", "production", "test"}
-        env_lower = v.lower()
-        if env_lower not in valid_environments:
-            sorted_envs = ", ".join(sorted(valid_environments))
-            msg = f"Invalid environment '{v}'. Must be one of: {sorted_envs}"
-            raise ValueError(msg)
-        return env_lower
+    # Pydantic v2 provides type-safe validation via Literal types and BeforeValidator
+    # Removed unused "reusable validators" - Pydantic handles validation directly
 
     # ===== CONFIGURATION UTILITY METHODS =====
     def update_from_dict(self, **kwargs: object) -> FlextResult[None]:
@@ -648,6 +659,10 @@ class FlextConfig(BaseSettings):
 
         except Exception as e:
             return FlextResult[dict[str, object]].fail(f"Validation failed: {e}")
+
+
+# Rebuild the model to resolve forward references (BeforeValidator in Annotated types)
+FlextConfig.model_rebuild()
 
 
 __all__ = [

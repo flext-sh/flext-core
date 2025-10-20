@@ -398,7 +398,10 @@ class FlextService[TDomainResult](
                     if not should_retry or attempt >= max_attempts - 1:
                         self.logger.exception(
                             f"Operation execution failed: {request.operation_name}",
-                            extra={"error": str(e), "error_type": type(e).__name__},
+                            extra={
+                                "error": str(e),
+                                "error_type": type(e).__name__,
+                            },
                         )
                         return FlextResult[TDomainResult].fail(
                             f"Operation {request.operation_name} failed: {e}"
@@ -412,7 +415,10 @@ class FlextService[TDomainResult](
 
                     self.logger.warning(
                         f"Operation {request.operation_name} failed (attempt {attempt + 1}/{max_attempts}), retrying in {delay}s",
-                        extra={"error": str(e), "error_type": type(e).__name__},
+                        extra={
+                            "error": str(e),
+                            "error_type": type(e).__name__,
+                        },
                     )
 
                     time.sleep(delay)

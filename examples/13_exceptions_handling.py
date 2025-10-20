@@ -348,7 +348,7 @@ class ComprehensiveExceptionService(FlextService[dict[str, object]]):
         except FlextExceptions.OperationError as e:
             print(f"✅ OperationError: {e}")
             print(f"   Operation: {e.operation}")
-            print(f"   Reason: {e.reason}")
+            print(f"   Failure Reason: {e.reason}")
 
     # ========== TIMEOUT ERRORS ==========
 
@@ -433,22 +433,23 @@ class ComprehensiveExceptionService(FlextService[dict[str, object]]):
     # ========== TYPE ERRORS ==========
 
     def demonstrate_type_errors(self) -> None:
-        """Show type validation error patterns."""
-        print("\n=== Type Errors ===")
+        """Show type validation error patterns using ValidationError."""
+        print("\n=== Type Errors (using ValidationError) ===")
 
-        # Type mismatch error
+        # Type mismatch error - use ValidationError for business logic validation
         try:
             msg = "Type mismatch in parameter"
-            raise FlextExceptions.TypeError(
+            raise FlextExceptions.ValidationError(
                 msg,
-                expected_type="str",
-                actual_type="int",
-                context={"parameter": "user_id", "value": 123},
+                field="user_id",
+                value=123,
+                metadata={"expected_type": "str", "actual_type": "int"},
             )
-        except FlextExceptions.TypeError as e:
-            print(f"✅ TypeError: {e}")
-            print(f"   Expected: {e.expected_type}")
-            print(f"   Actual: {e.actual_type}")
+        except FlextExceptions.ValidationError as e:
+            print(f"✅ ValidationError (type mismatch): {e}")
+            print(f"   Field: {e.field}")
+            print(f"   Value: {e.value}")
+            print(f"   Metadata: {e.metadata}")
 
     # ========== CRITICAL ERRORS ==========
 
@@ -513,7 +514,10 @@ class ComprehensiveExceptionService(FlextService[dict[str, object]]):
             raise FlextExceptions.AttributeAccessError(
                 msg,
                 attribute_name="missing_attr",
-                attribute_context={"object": "User", "available": ["name", "email"]},
+                attribute_context={
+                    "object": "User",
+                    "available": ["name", "email"],
+                },
             )
         except FlextExceptions.AttributeAccessError as e:
             print(f"✅ AttributeError: {e}")

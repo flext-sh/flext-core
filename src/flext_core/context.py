@@ -743,9 +743,7 @@ class FlextContext:
 
         """
         if isinstance(self._metadata, FlextModels.ContextMetadata):
-            custom_fields = cast(
-                "dict[str, object]", self._metadata.custom_fields or {}
-            )
+            custom_fields = self._metadata.custom_fields or {}
             return custom_fields.get(key, default)
         return default
 
@@ -1298,7 +1296,9 @@ class FlextContext:
             return FlextContext.Variables.Performance.OPERATION_START_TIME.get()
 
         @staticmethod
-        def set_operation_start_time(start_time: datetime | None = None) -> None:
+        def set_operation_start_time(
+            start_time: datetime | None = None,
+        ) -> None:
             """Set operation start time in context."""
             if start_time is None:
                 start_time = datetime.now(UTC)

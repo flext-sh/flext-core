@@ -5,9 +5,6 @@
     ]
 
 [project]
-    authors = [
-        { name = "FLEXT Team", email = "team@flext.sh" },
-    ]
     classifiers = [
         "Development Status :: 5 - Production/Stable",
         "Framework :: Pydantic :: 2",
@@ -19,15 +16,15 @@
         "Programming Language :: Python :: 3.13",
         "Topic :: Software Development :: Libraries :: Application Frameworks",
         "Typing :: Typed",
-    ] 
+    ]
     dependencies = [
         "dependency-injector>=4.41.0",
+        "orjson (>=3.11.3)",
         "pydantic-settings>=2.10.1",
         "pydantic>=2.11.7",
         "pyyaml>=6.0.2",
         "returns>=0.26.0",
         "structlog>=25.4.0",
-        "orjson (>=3.11.3)",
     ]
     description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
     keywords = [
@@ -38,15 +35,26 @@
         "modern",
         "solid",
     ]
-    license = { text = "MIT" }
-    maintainers = [
-        { name = "FLEXT Team", email = "team@flext.sh" },
-    ]
     name = "flext-core"
     readme = "README.md"
     requires-python = ">=3.13,<3.14"
-    urls = { Homepage = "https://github.com/flext-sh/flext-core", Repository = "https://github.com/flext-sh/flext-core", Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md" }
     version = "0.9.9"
+
+    [[project.authors]]
+        email = "team@flext.sh"
+        name = "FLEXT Team"
+
+    [[project.maintainers]]
+        email = "team@flext.sh"
+        name = "FLEXT Team"
+
+    [project.license]
+        text = "MIT"
+
+    [project.urls]
+        Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
+        Homepage = "https://github.com/flext-sh/flext-core"
+        Repository = "https://github.com/flext-sh/flext-core"
 
     [project.optional-dependencies]
         dev = [
@@ -84,6 +92,7 @@
         ]
         typings = [
             "django-stubs>=5.2.2",
+            "types-docker>=7.1.0",
             "types-ldap3>=2.9.13.20250622",
             "types-protobuf>=6.30.2.20250703",
             "types-psutil>=7.0.0",
@@ -97,103 +106,42 @@
         ]
 
 [tool]
+    [tool.deptry]
+        known_first_party = [
+            "flext_core",
+            "flext_tests",
+        ]
+
     [tool.poetry]
         packages = [
             { include = "flext_core", from = "src" },
             { include = "flext_tests", from = "src" },
         ]
 
-        [tool.poetry.group.dev.dependencies]
-            click        = "^8.3.0"
-            docker       = "^7.1.0"
-            pyrefly      = "^0.34.0"
-            pytest       = "^8.4.0"
-            rich         = "^14.1.0"
-            types-pyyaml = "^6.0.12.20250822"
+        [tool.poetry.group]
 
-        [tool.poetry.group.typings.dependencies]
-            types-colorama = ">=0.4.15.20240311"
-            types-pexpect  = ">=4.9.0.20250516"
-            types-pygments = ">=2.19.0.20250715"
+		    [tool.poetry.group.dev.dependencies]
+		        click = "^8.3.0"
+		        docker = "^7.1.0"
+		        pyrefly = "^0.34.0"
+		        pytest = "^8.4.0"
+		        rich = "^14.1.0"
+		        types-pyyaml = "^6.0.12.20250822"
 
-        [tool.pyright]
-            reportInvalidTypeForm = false
-
-            [[tool.pyright.executionEnvironments]]
-                root = "./"
-                reportInvalidTypeForm = false
-
-    [tool.bandit]
-        exclude_dirs = [
-            ".archive",
-            ".git",
-            ".mypy_cache",
-            ".pyrefly_cache",
-            ".pytest_cache",
-            ".ruff_cache",
-            ".venv",
-            "__pycache__",
-            "archive",
-            "build",
-            "dist",
-            "htmlcov",
-            "reports",
-            "tests",
-            "src/flext_tests",
-            "tests",
-            "venv",
-        ]
-        skips = [
-            "B101",
-            "B104",
-            "B105",
-            "B311",
-            "B404",
-            "B601",
-            "B603",
-        ]
-
-    [tool.coverage]
-        extend = "../.coverage-shared.toml"
-
-    [tool.deptry]
-        exclude = [
-            ".archive",
-            ".git",
-            ".meltano",
-            ".mypy_cache",
-            ".pyrefly_cache",
-            ".pytest_cache",
-            ".ruff_cache",
-            ".venv",
-            "__pycache__",
-            "build",
-            "dist",
-            "htmlcov",
-            "node_modules",
-            "reports",
-            "tests",
-            "tests",
-            "vendor",
-            "venv",
-        ]
-        known_first_party = [
-            "flext_core",
-            "flext_tests",
-        ]
-        pep621_dev_dependency_groups = [
-            "dev",
-            "security",
-            "test",
-            "typings",
-        ]
+		    [tool.poetry.group.typings.dependencies]
+		        types-colorama = ">=0.4.15.20240311"
+		        types-pexpect = ">=4.9.0.20250516"
+		        types-pygments = ">=2.19.0.20250715"
 
     [tool.pytest.ini_options]
         addopts = [
-            "--maxfail=1000000",
+            "--cov-report=term-missing",
+            "--cov=src/",
             "--strict-config",
             "--strict-markers",
             "--tb=short",
+            "-p no:sugar",
+            "-q",
             "-ra",
         ]
         filterwarnings = [
@@ -252,54 +200,4 @@
         [tool.ruff.lint.isort]
             known-first-party = [
                 "flext_core",
-                "flext_tests",
             ]
-
-	[tool.mypy]
-		python_version = "3.13"
-		strict = true
-		warn_return_any = true
-		warn_unused_configs = true
-		# Pydantic v2 @computed_field + @property pattern is valid (Pydantic 2.11+)
-		# MyPy has known limitations with this pattern, but pyrefly handles it correctly
-
-	[tool.pyrefly]
-		# NOTE: Pyrefly (MyPy successor) with Pydantic plugin properly handles:
-		#   - @computed_field + @property pattern (Pydantic 2.11+)
-		#   - dict[str, object] type annotations (legitimate generic usage)
-		#   - Field validators and serializers with proper type inference
-		permissive-ignores = true
-		project-excludes = [
-		    "**/.git",
-		    "**/.cache",
-		    "**/.claude",
-		    "**/__pycache__",
-		    "**/*.venv",
-		    "**/*dist",
-		    "**/*mypy_cache",
-		    "**/*pytest_cache",
-		    "**/*ruff_cache",
-		    "**/*venv/**",
-		    "**/node_modules/**",
-		    "**/*.pb2.py",
-		    "**/*.pb2_grpc.py",
-		    "**/build/**",
-		    "**/examples/**",
-		]
-		python-version = "3.13"
-
-		# SubConfig: Disable unknown-name error for all models.py files
-		# This handles forward references to classes defined later in the same file
-		[[tool.pyrefly.sub-config]]
-			matches = "**/*models.py"
-			[tool.pyrefly.sub-config.errors]
-				unknown-name = false
-
-		# SubConfig: Relax some checks for test files
-		# Tests often use dynamic typing and string operations that are valid in test context
-		[[tool.pyrefly.sub-config]]
-			matches = "**/tests/**/*.py"
-			[tool.pyrefly.sub-config.errors]
-				index-error = false
-				unsupported-operation = false
-				import-error = false

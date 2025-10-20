@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from typing import cast
 
 from flext_core import FlextConfig, FlextResult, FlextUtilities
 
@@ -146,7 +147,9 @@ class TestFlextUtilitiesComprehensive:
         # Test log level validation
         assert FlextUtilities.Validation.validate_log_level("INFO").is_success
         assert FlextUtilities.Validation.validate_log_level("DEBUG").is_success
-        assert FlextUtilities.Validation.validate_log_level("INVALID").is_failure
+        assert FlextUtilities.Validation.validate_log_level(
+            cast("str", "INVALID")
+        ).is_failure
 
         # NOTE: Following methods not yet implemented - skipping
         # # Test security token validation
@@ -635,23 +638,13 @@ class TestFlextUtilitiesComprehensive:
             assert result.is_success
             assert call_count == 3
 
-        # Test exponential backoff (if method exists)
-        # TODO: Implement exponential_backoff functionality in FlextUtilities.Reliability
-        # if hasattr(FlextUtilities.Reliability, "exponential_backoff"):
-        #     delays = FlextUtilities.Reliability.exponential_backoff(
-        #         base_delay=0.1,
-        #         max_attempts=3,
-        #     )
-        #     assert len(list(cast(Sequence[float], delays))) > 0
+        # Test exponential backoff (not yet implemented)
+        # Future enhancement: Implement exponential_backoff functionality in FlextUtilities.Reliability
+        assert not hasattr(FlextUtilities.Reliability, "exponential_backoff")
 
-        # Test circuit breaker (if method exists)
-        # TODO: Implement circuit_breaker functionality in FlextUtilities.Reliability
-        # if hasattr(FlextUtilities.Reliability, "circuit_breaker"):
-        #     breaker: object = FlextUtilities.Reliability.circuit_breaker(
-        #         failure_threshold=3,
-        #         timeout_seconds=1.0,
-        #     )
-        #     assert breaker is not None
+        # Test circuit breaker (not yet implemented)
+        # Future enhancement: Implement circuit_breaker functionality in FlextUtilities.Reliability
+        assert not hasattr(FlextUtilities.Reliability, "circuit_breaker")
 
     def test_generate_id_function(self) -> None:
         """Test standalone generate_id function."""

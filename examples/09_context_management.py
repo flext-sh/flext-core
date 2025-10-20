@@ -128,7 +128,8 @@ class ContextManagementService(FlextService[dict[str, object]]):
             }
 
             self.logger.info(
-                "FlextContext demonstration completed successfully", extra=summary
+                "FlextContext demonstration completed successfully",
+                extra=summary,
             )
 
             return FlextResult[dict[str, object]].ok(summary)
@@ -632,7 +633,10 @@ class ContextManagementService(FlextService[dict[str, object]]):
         ) -> FlextResult[dict[str, object]]:
             """Add correlation ID from context."""
             correlation_id = FlextContext.Correlation.get_correlation_id()
-            enriched: dict[str, object] = {**data, "correlation_id": correlation_id}
+            enriched: dict[str, object] = {
+                **data,
+                "correlation_id": correlation_id,
+            }
             return FlextResult[dict[str, object]].ok(enriched)
 
         def add_service_metadata(

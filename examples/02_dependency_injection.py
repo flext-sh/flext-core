@@ -1039,7 +1039,9 @@ class ComprehensiveDIService(FlextService[User]):
         """Show pipeline composition for service initialization."""
         print("\n=== flow_through(): Service Initialization Pipeline ===")
 
-        def connect_database(db: DatabaseService) -> FlextResult[DatabaseService]:
+        def connect_database(
+            db: DatabaseService,
+        ) -> FlextResult[DatabaseService]:
             """Connect to database."""
             result = db.connect()
             if result.is_failure:
@@ -1048,7 +1050,9 @@ class ComprehensiveDIService(FlextService[User]):
                 )
             return FlextResult[DatabaseService].ok(db)
 
-        def validate_database(db: DatabaseService) -> FlextResult[DatabaseService]:
+        def validate_database(
+            db: DatabaseService,
+        ) -> FlextResult[DatabaseService]:
             """Validate database is ready."""
             if not db.connected:
                 return FlextResult[DatabaseService].fail("Database not connected")

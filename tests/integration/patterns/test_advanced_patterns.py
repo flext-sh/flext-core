@@ -465,7 +465,10 @@ class TestAdvancedPatterns:
             ParameterizedTestBuilder("email_validation")
             .add_success_cases(
                 [
-                    {"email": "valid@example.com", "input": "valid@example.com"},
+                    {
+                        "email": "valid@example.com",
+                        "input": "valid@example.com",
+                    },
                     {
                         "email": "user.name@domain.co.uk",
                         "input": "user.name@domain.co.uk",
@@ -492,7 +495,11 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: dict[str, object] = {"name": "John", "age": 30, "active": True}
+        test_data: dict[str, object] = {
+            "name": "John",
+            "age": 30,
+            "active": True,
+        }
 
         assertion_builder = (
             AssertionBuilder(test_data)

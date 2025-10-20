@@ -250,7 +250,12 @@ class TestCleanArchitecturePatterns:
                         return FlextResult[None].fail(str(total_validation.error))
 
                 # Business rules
-                if self.status not in {"pending", "confirmed", "shipped", "delivered"}:
+                if self.status not in {
+                    "pending",
+                    "confirmed",
+                    "shipped",
+                    "delivered",
+                }:
                     return FlextResult[None].fail("Invalid order status")
 
                 return FlextResult[None].ok(None)

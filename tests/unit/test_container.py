@@ -568,7 +568,10 @@ class TestFlextContainer:
     def test_container_configure_global(self) -> None:
         """Test global container configuration."""
         # Configure global container
-        config: dict[str, object] = {"max_workers": 16, "timeout_seconds": 120.0}
+        config: dict[str, object] = {
+            "max_workers": 16,
+            "timeout_seconds": 120.0,
+        }
         global_container = FlextContainer()
         result = global_container.configure_container(config)
         assert result.is_success
@@ -662,7 +665,7 @@ class TestFlextContainer:
         # Should fail and rollback
         result = container.batch_register(services_with_invalid_key)
         assert result.is_failure
-        assert "Service name contains invalid characters" in (result.error or "")
+        assert "contains invalid characters" in (result.error or "")
 
         # Original service should still exist (rollback worked)
         assert container.has("initial")

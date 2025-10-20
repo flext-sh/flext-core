@@ -280,7 +280,7 @@ class TestExecuteContextCleanup:
         service = FailingCleanupService()
         result = service.execute_with_context_cleanup()
         assert result.is_failure
-        assert "execution failed" in result.error or result.error is None
+        assert result.error is None or "execution failed" in result.error
 
 
 class TestExecuteFullValidation:
@@ -468,7 +468,9 @@ class TestConditionalExecution:
         assert result.is_success
         assert result.value == "false_action_result"
 
-    def test_execute_conditionally_false_condition_no_false_action(self) -> None:
+    def test_execute_conditionally_false_condition_no_false_action(
+        self,
+    ) -> None:
         """Test conditional execution with false condition and no false action."""
 
         class NoActionService(FlextService[str]):
@@ -632,7 +634,10 @@ class TestServiceGenericType:
             """Service returning dict."""
 
             def execute(self) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok({"key": "value", "count": 42})
+                return FlextResult[dict[str, object]].ok({
+                    "key": "value",
+                    "count": 42,
+                })
 
         service = DictService()
         result = service.execute()

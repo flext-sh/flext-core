@@ -108,7 +108,11 @@ class TestFlextLogger:
         """Test logging with performance metrics."""
         logger = FlextLogger("test_logger")
 
-        performance = {"duration_ms": 150.5, "memory_mb": 64.2, "cpu_percent": 25.8}
+        performance = {
+            "duration_ms": 150.5,
+            "memory_mb": 64.2,
+            "cpu_percent": 25.8,
+        }
 
         result = logger.info("Test message", performance=performance)
         assert result.is_success
@@ -158,7 +162,11 @@ class TestFlextLogger:
         """Test logging with boolean data."""
         logger = FlextLogger("test_logger")
 
-        boolean_data = {"is_active": True, "is_verified": False, "has_permission": True}
+        boolean_data = {
+            "is_active": True,
+            "is_verified": False,
+            "has_permission": True,
+        }
 
         result = logger.info("Test message", **boolean_data)
         assert result.is_success

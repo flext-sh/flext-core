@@ -15,7 +15,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import (
+    FlextConstants,
     FlextDispatcher,
     FlextHandlers,
     FlextModels,
@@ -67,7 +70,7 @@ class TestHandlerRegistration:
         result = dispatcher.register_handler(
             "TestMessage",
             simple_handler,
-            handler_mode="command",
+            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         assert result.is_success
         assert "registration_id" in result.value or "status" in result.value
@@ -79,7 +82,7 @@ class TestHandlerRegistration:
         handler = FlextHandlers.from_callable(
             callable_func=lambda msg: "handled",
             handler_name="test_handler",
-            handler_type="command",
+            handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
 
         result = dispatcher.register_handler("TestMessage", handler)
@@ -92,7 +95,7 @@ class TestHandlerRegistration:
         handler = FlextHandlers.from_callable(
             callable_func=lambda cmd: "command_handled",
             handler_name="cmd_handler",
-            handler_type="command",
+            handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
 
         result = dispatcher.register_command(SimpleMessage, handler)
@@ -105,7 +108,7 @@ class TestHandlerRegistration:
         handler = FlextHandlers.from_callable(
             callable_func=lambda q: {"result": "query_answer"},
             handler_name="query_handler",
-            handler_type="query",
+            handler_type=FlextConstants.Cqrs.HandlerType.QUERY,
         )
 
         result = dispatcher.register_query(SimpleMessage, handler)
@@ -121,7 +124,7 @@ class TestHandlerRegistration:
         result = dispatcher.register_function(
             SimpleMessage,
             handler_func,
-            mode="command",
+            mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         assert result.is_success
 
@@ -135,7 +138,7 @@ class TestHandlerRegistration:
         result = dispatcher.register_function(
             SimpleMessage,
             handler_func,
-            mode="invalid_mode",
+            mode=cast("FlextConstants.Cqrs.HandlerModeSimple", "invalid_mode"),
         )
         assert result.is_failure
 
@@ -170,7 +173,9 @@ class TestMessageDispatch:
         dispatcher.register_function(SimpleMessage, handler_func)
 
         messages = [SimpleMessage(value=f"msg{i}") for i in range(3)]
-        results = dispatcher.dispatch_batch("SimpleMessage", messages)
+        results = dispatcher.dispatch_batch(
+            "SimpleMessage", cast("list[object]", messages)
+        )
 
         assert len(results) == 3
         assert all(isinstance(r, FlextResult) for r in results)
@@ -324,7 +329,7 @@ class TestContextManagement:
         """Test context scope is properly managed."""
         dispatcher = FlextDispatcher()
 
-        metadata = {"user_id": "123", "operation": "test"}
+        metadata = cast("dict[str, object]", {"user_id": "123", "operation": "test"})
         correlation_id = "corr-123"
 
         def handler_func(msg: object) -> str:
@@ -427,7 +432,7 @@ class TestDispatcherErrorHandling:
         result = dispatcher.register_function(
             SimpleMessage,
             handler_func,
-            mode="INVALID",
+            mode=cast("FlextConstants.Cqrs.HandlerModeSimple", "INVALID"),
         )
         assert result.is_failure
 
@@ -454,8 +459,7 @@ class TestHandlerCreation:
 
         result = dispatcher.create_handler_from_function(
             handler_func,
-            handler_config=None,
-            mode="command",
+            mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
 
         assert result.is_success
@@ -470,8 +474,7 @@ class TestHandlerCreation:
 
         result = dispatcher.create_handler_from_function(
             handler_func,
-            handler_config=None,
-            mode="INVALID",
+            mode=cast("FlextConstants.Cqrs.HandlerModeSimple", "INVALID"),
         )
 
         assert result.is_failure
@@ -486,8 +489,7 @@ class TestHandlerCreation:
         # Valid handler should succeed
         result = dispatcher.create_handler_from_function(
             valid_handler,
-            handler_config=None,
-            mode="command",
+            mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
 
         assert result.is_success

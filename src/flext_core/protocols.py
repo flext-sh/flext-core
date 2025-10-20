@@ -833,7 +833,10 @@ class FlextProtocols:
         """
 
         def log(
-            self, level: str, message: str, context: dict[str, object] | None = None
+            self,
+            level: str,
+            message: str,
+            context: dict[str, object] | None = None,
         ) -> None:
             """Log a message with optional context."""
             ...

@@ -37,12 +37,6 @@ from flext_core.typings import (
 )
 from flext_core.utilities import FlextUtilities
 
-# Module-level constant for default handler type (avoids B008 lint error with cast in defaults)
-_DEFAULT_HANDLER_TYPE: FlextConstants.Cqrs.HandlerType = cast(
-    "FlextConstants.Cqrs.HandlerType",
-    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-)
-
 
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     """Base class for CQRS command and query handlers.
@@ -129,7 +123,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                             validation_result_obj = validation_method()
                             if isinstance(validation_result_obj, FlextResult):
                                 validation_result: FlextResult[object] = cast(
-                                    "FlextResult[object]", validation_result_obj
+                                    "FlextResult[object]",
+                                    validation_result_obj,
                                 )
                                 if validation_result.is_failure:
                                     return FlextResult[None].fail(
@@ -635,7 +630,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         cls,
         callable_func: FlextTypes.HandlerCallableType,
         handler_name: str | None = None,
-        handler_type: FlextConstants.Cqrs.HandlerType = _DEFAULT_HANDLER_TYPE,
+        handler_type: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
         mode: str | None = None,
         handler_config: FlextModels.Cqrs.Handler | None = None,
     ) -> FlextHandlers[object, object]:

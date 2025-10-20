@@ -13,8 +13,11 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from flext_tests.docker import FlextTestDocker
 
-from flext_tests.docker import ContainerInfo, ContainerStatus, FlextTestDocker
+# Access nested classes
+ContainerInfo = FlextTestDocker.ContainerInfo
+ContainerStatus = FlextTestDocker.ContainerStatus
 
 
 class TestContainerStatus:
@@ -193,7 +196,7 @@ class TestFlextTestDocker:
             result = docker_manager.mark_container_dirty("test_container")
 
             assert result.is_failure
-            assert "Save failed" in result.error
+            assert result.error is not None and "Save failed" in result.error
 
     def test_mark_container_clean_success(
         self, docker_manager: FlextTestDocker
@@ -218,7 +221,7 @@ class TestFlextTestDocker:
             result = docker_manager.mark_container_clean("test_container")
 
             assert result.is_failure
-            assert "Save failed" in result.error
+            assert result.error is not None and "Save failed" in result.error
 
     def test_is_container_dirty(self, docker_manager: FlextTestDocker) -> None:
         """Test checking if container is dirty."""
@@ -294,7 +297,10 @@ class TestFlextTestDocker:
         )
 
         assert result.is_success
-        assert docker_manager._service_dependencies["test_service"] == ["dep1", "dep2"]
+        assert docker_manager._service_dependencies["test_service"] == [
+            "dep1",
+            "dep2",
+        ]
 
     def test_get_running_services(self, docker_manager: FlextTestDocker) -> None:
         """Test get_running_services method."""
@@ -456,7 +462,7 @@ class TestFlextTestDocker:
             result = docker_manager.start_container("test_container")
 
             assert result.is_failure
-            assert "Failed to start container" in result.error
+            assert result.error is not None and "Failed to start container" in result.error
 
     def test_build_image(self, docker_manager: FlextTestDocker) -> None:
         """Test build_image method."""
@@ -490,7 +496,7 @@ class TestFlextTestDocker:
             result = docker_manager.remove_container("test_container")
 
             assert result.is_failure
-            assert "Container test_container not found" in result.error
+            assert result.error is not None and "Container test_container not found" in result.error
 
     def test_remove_image_success(self, docker_manager: FlextTestDocker) -> None:
         """Test remove_image successfully."""

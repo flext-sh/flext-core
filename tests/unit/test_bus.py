@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable
 from typing import cast
 
 from pydantic import Field
@@ -309,10 +309,8 @@ class TestFlextBus:
         handler = FlextHandlers.from_callable(
             callable_func=simple_handler,
             handler_name="simple_handler",
-            handler_type=cast(
-                "FlextConstants.Cqrs.HandlerType",
-                FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-            ),
+            # No cast needed - constant is already correct type
+            handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
         )
         assert handler is not None
 
@@ -325,10 +323,8 @@ class TestFlextBus:
         handler = FlextHandlers.from_callable(
             callable_func=query_handler,
             handler_name="query_handler",
-            handler_type=cast(
-                "FlextConstants.Cqrs.HandlerType",
-                FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
-            ),
+            # No cast needed - constant is already correct type
+            handler_type=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
         )
         assert handler is not None
 
@@ -500,22 +496,6 @@ class TestFlextBusMissingCoverage:
 
     def test_normalize_middleware_config_with_mapping(self) -> None:
         """Test _normalize_middleware_config with Mapping (lines 361-363)."""
-        from collections.abc import Mapping as ABCMapping
-
-        class CustomMapping(ABCMapping[str, object]):
-            def __init__(self, data: dict[str, object]) -> None:
-                super().__init__()
-                self._data = data
-
-            def __getitem__(self, key: str) -> object:
-                return self._data[key]
-
-            def __iter__(self) -> Iterator[str]:
-                return iter(self._data)
-
-            def __len__(self) -> int:
-                return len(self._data)
-
         bus = FlextBus()
         config_mapping: dict[str, object] = {"enabled": True, "priority": 10}
 
@@ -1072,10 +1052,8 @@ class TestFlextBusMissingCoverage:
         handler1 = FlextHandlers.from_callable(
             callable_func=simple_func,
             handler_name="simple_func",
-            handler_type=cast(
-                "FlextConstants.Cqrs.HandlerType",
-                FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-            ),
+            # No cast needed - constant is already correct type
+            handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
         )
         assert handler1 is not None
 
@@ -1086,10 +1064,8 @@ class TestFlextBusMissingCoverage:
         handler2 = FlextHandlers.from_callable(
             callable_func=query_func,
             handler_name="query_func",
-            handler_type=cast(
-                "FlextConstants.Cqrs.HandlerType",
-                FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
-            ),
+            # No cast needed - constant is already correct type
+            handler_type=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
         )
         assert handler2 is not None
 
@@ -1259,10 +1235,10 @@ class TestFlextBusMissingCoverage:
         execution_count = 0
 
         class TestEventHandler:
-            def __call__(self, event: TestEvent) -> object:
+            def handle(self, event: TestEvent) -> FlextResult[object]:
                 nonlocal execution_count
                 execution_count += 1
-                return FlextResult[None].ok(None)
+                return FlextResult[object].ok(None)
 
         # Subscribe to event
         result = bus.subscribe("TestEvent", TestEventHandler())
@@ -1299,7 +1275,9 @@ class TestFlextBusMissingCoverage:
         assert execution_count == 3
 
         # Unsubscribe from event
-        result = bus.unsubscribe("TestEvent", TestEventHandler())
+        result = bus.unsubscribe(
+            "TestEvent", cast("Callable[..., object]", TestEventHandler())
+        )
         assert result.is_success
 
     def test_middleware_pipeline_functionality(self) -> None:

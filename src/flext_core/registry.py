@@ -9,14 +9,12 @@ SPDX-License-Identifier: MIT
 
 """
 
-# pyright: basic
 from __future__ import annotations
 
 import datetime
 from collections.abc import Iterable, Mapping, Sequence
 from typing import (
     Annotated,
-    Literal,
     cast,
 )
 
@@ -204,13 +202,14 @@ class FlextRegistry(FlextMixins):
 
         Examples:
             >>> from pydantic import Field
+            >>> from flext_core import FlextConstants
             >>> summary = FlextRegistry.Summary(
             ...     registered=[
             ...         FlextModels.RegistrationDetails(
             ...             registration_id="reg-001",
             ...             handler_mode="command",
             ...             timestamp="2025-01-01T00:00:00Z",
-            ...             status="running",
+            ...             status=FlextConstants.Cqrs.Status.RUNNING,
             ...         )
             ...     ],
             ...     skipped=["CreateUserCommand"],
@@ -310,43 +309,25 @@ class FlextRegistry(FlextMixins):
         self._dispatcher = dispatcher
         self._registered_keys: set[str] = set()
 
-    def _safe_get_handler_mode(self, value: object) -> Literal["command", "query"]:
+    def _safe_get_handler_mode(self, value: object) -> FlextConstants.Cqrs.HandlerType:
         """Safely extract and validate handler mode from dict[str, object] value."""
-        if value == FlextConstants.Cqrs.ModelLiteral.QUERY:
-            return cast(
-                "FlextConstants.Cqrs.HandlerModeSimple",
-                FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
-            )
-        if value == FlextConstants.Cqrs.ModelLiteral.COMMAND:
-            return cast(
-                "FlextConstants.Cqrs.HandlerModeSimple",
-                FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-            )
+        if value == FlextConstants.Cqrs.HandlerType.QUERY:
+            return FlextConstants.Cqrs.QUERY_HANDLER_TYPE
+        if value == FlextConstants.Cqrs.HandlerType.COMMAND:
+            return FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
         # Default to command for invalid values
-        return cast(
-            "FlextConstants.Cqrs.HandlerModeSimple",
-            FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-        )
+        return FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
 
     def _safe_get_status(
         self, value: object
-    ) -> Literal["pending", "running", "completed", "failed", "compensating"]:
+    ) -> FlextConstants.Cqrs.Status:
         """Safely extract and validate status from dict[str, object] value."""
-        if value == FlextConstants.Cqrs.ModelLiteral.ACTIVE:
-            return cast(
-                "FlextConstants.Cqrs.Status",
-                FlextConstants.Cqrs.StatusLiteral.RUNNING,
-            )
-        if value == FlextConstants.Cqrs.ModelLiteral.INACTIVE:
-            return cast(
-                "FlextConstants.Cqrs.Status",
-                FlextConstants.Cqrs.StatusLiteral.COMPLETED,
-            )
+        if value == FlextConstants.Cqrs.RegistrationStatus.ACTIVE:
+            return FlextConstants.Cqrs.Status.RUNNING
+        if value == FlextConstants.Cqrs.RegistrationStatus.INACTIVE:
+            return FlextConstants.Cqrs.Status.COMPLETED
         # Default to running for invalid values
-        return cast(
-            "FlextConstants.Cqrs.Status",
-            FlextConstants.Cqrs.StatusLiteral.RUNNING,
-        )
+        return FlextConstants.Cqrs.Status.RUNNING
 
     # ------------------------------------------------------------------
     # Public API
@@ -381,15 +362,9 @@ class FlextRegistry(FlextMixins):
             return FlextResult[FlextModels.RegistrationDetails].ok(
                 FlextModels.RegistrationDetails(
                     registration_id=key,
-                    handler_mode=cast(
-                        "FlextConstants.Cqrs.HandlerModeSimple",
-                        FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                    ),
+                    handler_mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
                     timestamp="",  # Will be set by model if needed
-                    status=cast(
-                        "FlextConstants.Cqrs.Status",
-                        FlextConstants.Cqrs.StatusLiteral.RUNNING,
-                    ),
+                    status=FlextConstants.Cqrs.Status.RUNNING,
                 ),
             )
 
@@ -637,7 +612,7 @@ class FlextRegistry(FlextMixins):
                                 handler_func,
                             ),
                             cast("dict[str, object] | None", handler_config),
-                            "command",
+                            FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
                         )
                         if handler_result.is_success:
                             handler = handler_result.value
@@ -646,15 +621,9 @@ class FlextRegistry(FlextMixins):
                             if register_result.is_success:
                                 reg_details = FlextModels.RegistrationDetails(
                                     registration_id=key,
-                                    handler_mode=cast(
-                                        "FlextConstants.Cqrs.HandlerModeSimple",
-                                        FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                                    ),
+                                    handler_mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
                                     timestamp="",
-                                    status=cast(
-                                        "FlextConstants.Cqrs.Status",
-                                        FlextConstants.Cqrs.StatusLiteral.RUNNING,
-                                    ),
+                                    status=FlextConstants.Cqrs.Status.RUNNING,
                                 )
                                 summary.registered.append(reg_details)
                                 self._registered_keys.add(key)
@@ -672,15 +641,9 @@ class FlextRegistry(FlextMixins):
                         if register_result.is_success:
                             reg_details = FlextModels.RegistrationDetails(
                                 registration_id=key,
-                                handler_mode=cast(
-                                    "FlextConstants.Cqrs.HandlerModeSimple",
-                                    FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                                ),
+                                handler_mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
                                 timestamp="",
-                                status=cast(
-                                    "FlextConstants.Cqrs.Status",
-                                    FlextConstants.Cqrs.StatusLiteral.RUNNING,
-                                ),
+                                status=FlextConstants.Cqrs.Status.RUNNING,
                             )
                             summary.registered.append(reg_details)
                             self._registered_keys.add(key)
@@ -692,15 +655,9 @@ class FlextRegistry(FlextMixins):
                     # Handle dict[str, object] or other types
                     reg_details = FlextModels.RegistrationDetails(
                         registration_id=key,
-                        handler_mode=cast(
-                            "FlextConstants.Cqrs.HandlerModeSimple",
-                            FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                        ),
+                        handler_mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
                         timestamp="",
-                        status=cast(
-                            "FlextConstants.Cqrs.Status",
-                            FlextConstants.Cqrs.StatusLiteral.RUNNING,
-                        ),
+                        status=FlextConstants.Cqrs.Status.RUNNING,
                     )
                     summary.registered.append(reg_details)
                     self._registered_keys.add(key)
