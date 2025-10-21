@@ -77,7 +77,7 @@ class FlextDecorators:
        - Integration with FlextLogger for retry tracking
 
     6. **@timeout**: Automatic operation timeout enforcement
-       - Uses FlextConstants.Defaults.TIMEOUT
+       - Uses FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS
        - Checks timeout after operation completion
        - Raises FlextExceptions.TimeoutError on violation
        - Tracks duration even on exceptions for accurate timeout detection
@@ -790,7 +790,7 @@ class FlextDecorators:
 
         Args:
             timeout_seconds: Timeout in seconds (default:
-                FlextConstants.Defaults.TIMEOUT)
+                FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS)
             error_code: Optional error code for timeout
 
         Returns:
@@ -817,7 +817,7 @@ class FlextDecorators:
         max_duration = (
             timeout_seconds
             if timeout_seconds is not None
-            else FlextConstants.Defaults.TIMEOUT
+            else FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS
         )
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:

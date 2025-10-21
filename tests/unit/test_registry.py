@@ -173,7 +173,7 @@ class TestFlextRegistry:
         summary = FlextRegistry.Summary()
 
         # Test initial state
-        assert summary.is_success is True
+        assert summary.is_success
         assert summary.successful_registrations == 0
         assert summary.failed_registrations == 0
 
@@ -189,7 +189,7 @@ class TestFlextRegistry:
         summary.errors.append("test_error")
 
         # Test updated state
-        assert summary.is_success is False
+        assert not summary.is_success
         assert summary.successful_registrations == 1
         assert summary.failed_registrations == 1
 
@@ -221,12 +221,24 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Test valid modes
-        assert registry._safe_get_handler_mode("command") == FlextConstants.Cqrs.HandlerType.COMMAND
-        assert registry._safe_get_handler_mode("query") == FlextConstants.Cqrs.HandlerType.QUERY
+        assert (
+            registry._safe_get_handler_mode("command")
+            == FlextConstants.Cqrs.HandlerType.COMMAND
+        )
+        assert (
+            registry._safe_get_handler_mode("query")
+            == FlextConstants.Cqrs.HandlerType.QUERY
+        )
 
         # Test invalid mode (should default to command)
-        assert registry._safe_get_handler_mode("invalid") == FlextConstants.Cqrs.HandlerType.COMMAND
-        assert registry._safe_get_handler_mode(None) == FlextConstants.Cqrs.HandlerType.COMMAND
+        assert (
+            registry._safe_get_handler_mode("invalid")
+            == FlextConstants.Cqrs.HandlerType.COMMAND
+        )
+        assert (
+            registry._safe_get_handler_mode(None)
+            == FlextConstants.Cqrs.HandlerType.COMMAND
+        )
 
     def test_registry_safe_get_status(self) -> None:
         """Test safe status extraction with mapping to FlextConstants.Status."""
@@ -337,7 +349,7 @@ class TestFlextRegistry:
         assert len(summary.errors) == 0
 
         # Test properties
-        assert summary.is_success is True
+        assert summary.is_success
         assert summary.successful_registrations == 0
         assert summary.failed_registrations == 0
 
@@ -362,7 +374,7 @@ class TestFlextRegistry:
         summary.errors.append("registration_error")
 
         # Test properties
-        assert summary.is_success is False  # Has errors
+        assert not summary.is_success  # Has errors
         assert summary.successful_registrations == 1
         assert summary.failed_registrations == 1
         assert len(summary.skipped) == 1
@@ -801,19 +813,25 @@ class TestFlextRegistry:
         assert result3.value.successful_registrations == 1
 
         # Combined result should have 3 total registrations
-        assert (
-            result1.value.successful_registrations
-            + result2.value.successful_registrations
-            + result3.value.successful_registrations
-            == 3
-        )
+        summary1: FlextRegistry.Summary = result1.unwrap()
+        summary2: FlextRegistry.Summary = result2.unwrap()
+        summary3: FlextRegistry.Summary = result3.unwrap()
+
+        # Get the registration counts
+        from typing import cast
+
+        count1 = cast("int", summary1.successful_registrations)
+        count2 = cast("int", summary2.successful_registrations)
+        count3 = cast("int", summary3.successful_registrations)
+
+        assert count1 + count2 + count3 == 3
 
     def test_registry_summary_functionality(self) -> None:
         """Test Summary class properties and methods."""
         summary = FlextRegistry.Summary()
 
         # Test initial state
-        assert summary.is_success is True
+        assert summary.is_success
         assert summary.successful_registrations == 0
         assert summary.failed_registrations == 0
         assert len(summary.registered) == 0
@@ -831,7 +849,7 @@ class TestFlextRegistry:
         summary.skipped.append("skipped_handler")
         summary.errors.append("error_message")
 
-        assert summary.is_success is False  # Has errors
+        assert not summary.is_success  # Has errors
         assert summary.successful_registrations == 1
         assert summary.failed_registrations == 1
         assert len(summary.registered) == 1

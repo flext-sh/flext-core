@@ -1328,9 +1328,9 @@ class FlextModels:
         operation_callable: Callable[..., object]
         arguments: dict[str, object] = Field(default_factory=dict)
         keyword_arguments: dict[str, object] = Field(default_factory=dict)
-        timeout_seconds: int = Field(
+        timeout_seconds: float = Field(
             default_factory=lambda: _get_config().timeout_seconds,
-            ge=1,
+            gt=0,
             le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextConfig",
         )

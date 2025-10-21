@@ -335,7 +335,7 @@ class FlextContext:
             hooks = self._hooks["set"]
             if isinstance(hooks, list):
                 for hook in hooks:
-                    hook(key, value)
+                    hook({"key": key, "value": value})
 
     def get(
         self,

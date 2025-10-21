@@ -508,7 +508,7 @@ class FlextConstants:
         )
 
     class Config:
-        """Configuration defaults and limits."""
+        """Configuration defaults and limits (renamed from Config to improve naming clarity)."""
 
         MAX_WORKERS_THRESHOLD: Final[int] = 50
 
@@ -537,6 +537,9 @@ class FlextConstants:
             PRODUCTION = "production"
             TESTING = "testing"
             LOCAL = "local"
+
+    # Alias for clarity - this is NOT Pydantic code, despite the Config name
+    Configuration = Config
 
     class Platform:
         """Platform-specific constants for HTTP, database, and file types."""

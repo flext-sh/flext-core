@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-from typing import cast
 
 from flext_core import FlextConfig, FlextResult, FlextUtilities
 
@@ -147,9 +146,7 @@ class TestFlextUtilitiesComprehensive:
         # Test log level validation
         assert FlextUtilities.Validation.validate_log_level("INFO").is_success
         assert FlextUtilities.Validation.validate_log_level("DEBUG").is_success
-        assert FlextUtilities.Validation.validate_log_level(
-            cast("str", "INVALID")
-        ).is_failure
+        assert FlextUtilities.Validation.validate_log_level("INVALID").is_failure
 
         # NOTE: Following methods not yet implemented - skipping
         # # Test security token validation

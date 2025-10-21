@@ -170,13 +170,14 @@ class TestFlextTypes:
     def test_flexttypes_container_types(self) -> None:
         """Test container types from lean typings.py."""
         # Test types used by src/flext_core/container.py
-        assert FlextTypes.ValidatorFunctionType is not None
+        # ValidatorFunctionType is only available during TYPE_CHECKING
         assert FlextTypes.ContainerServiceType is not None
 
     def test_flexttypes_validation_types(self) -> None:
         """Test validation types from lean typings.py."""
-        # Test types used by src/flext_core/models.py
-        assert FlextTypes.ValidationRule is not None  # Fixed from ValidationPipeline
+        # ValidationRule, CrossFieldValidator, and ValidatorFunctionType
+        # are only available during type checking (TYPE_CHECKING block)
+        # and not at runtime to avoid circular imports
         assert object is not None
 
 

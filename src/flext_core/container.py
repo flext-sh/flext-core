@@ -179,7 +179,7 @@ class FlextContainer(FlextProtocols.Configurable):
                 getattr(
                     self._flext_config,
                     "timeout_seconds",
-                    FlextConstants.Defaults.TIMEOUT,
+                    FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS,
                 ),
             ),
         }
@@ -303,7 +303,7 @@ class FlextContainer(FlextProtocols.Configurable):
         normalized_name = name.strip()
 
         # Check for invalid characters (allow alphanumeric, _, -, :, and space)
-        if not re.match(r'^[a-zA-Z0-9_:\- ]+$', normalized_name):
+        if not re.match(r"^[a-zA-Z0-9_:\- ]+$", normalized_name):
             return FlextResult[str].fail(
                 f"Service name '{normalized_name}' contains invalid characters. "
                 f"Only alphanumeric, underscore, hyphen, colon, and space are allowed.",
@@ -944,7 +944,9 @@ class FlextContainer(FlextProtocols.Configurable):
     # CONFIGURATION MANAGEMENT - FlextConfig integration
     # =========================================================================
 
-    def configure_container(self, config: dict[str, object] | FlextConfig) -> FlextResult[None]:
+    def configure_container(
+        self, config: dict[str, object] | FlextConfig
+    ) -> FlextResult[None]:
         """Configure container with validated settings.
 
         Args:
@@ -957,20 +959,28 @@ class FlextContainer(FlextProtocols.Configurable):
         """
         try:
             # Convert FlextConfig to dict if needed
+            executor_config: dict[str, object]
             if isinstance(config, FlextConfig):
-                processed_config = {
+                executor_config = {
                     "max_workers": config.max_workers,
                     "timeout_seconds": config.timeout_seconds,
                 }
             else:
                 # Only allow specific configuration keys
                 allowed_keys = {"max_workers", "timeout_seconds"}
-                processed_config = {
-                    key: value for key, value in config.items() if key in allowed_keys
-                }
+                executor_config_dict: dict[str, object] = {}
+                for key, value in config.items():
+                    if key in allowed_keys:
+                        if key == "timeout_seconds" and isinstance(value, (int, float)):
+                            executor_config_dict[key] = float(value)
+                        elif key == "max_workers" and isinstance(value, (int, str)):
+                            executor_config_dict[key] = int(value)
+                        else:
+                            executor_config_dict[key] = value
+                executor_config = executor_config_dict
 
             # Update user overrides
-            self._user_overrides.update(processed_config)
+            self._user_overrides.update(executor_config)
 
             # Update global config
             self._refresh_global_config()
@@ -981,12 +991,14 @@ class FlextContainer(FlextProtocols.Configurable):
 
     def _refresh_global_config(self) -> None:
         """Refresh the effective global configuration."""
-        # Merge FlextConfig defaults with user overrides
-        merged: dict[str, object] = {}
-        for source in (self._create_container_config(), self._user_overrides):
-            merged.update({
-                key: value for key, value in source.items() if value is not None
-            })
+        # Start with user overrides (these take precedence)
+        merged: dict[str, object] = dict(self._user_overrides)
+
+        # Add defaults only for keys not already set by user
+        for key, value in self._create_container_config().items():
+            if key not in merged and value is not None:
+                merged[key] = value
+
         self._global_config = merged
 
     # =========================================================================
@@ -1215,7 +1227,7 @@ class FlextContainer(FlextProtocols.Configurable):
                             f"Validator must return FlextResult, got {type(result)}"
                         )
 
-                    validator_result: FlextResult[object] = result
+                    validator_result = result
 
                     # Check if validation failed
                     if validator_result.is_failure:

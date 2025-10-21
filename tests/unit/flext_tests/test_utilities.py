@@ -82,6 +82,7 @@ class TestFlextTestsUtilities:
 
         class TestObject:
             def __init__(self) -> None:
+                super().__init__()
                 self.attribute = "original"
 
         obj = TestObject()
@@ -102,7 +103,7 @@ class TestFlextTestsUtilities:
 
         with FlextTestsUtilities.test_context(obj, "new_attr", "new_value"):
             assert hasattr(obj, "new_attr")
-            assert obj.new_attr == "new_value"
+            assert getattr(obj, "new_attr") == "new_value"
 
         # Should remove the attribute
         assert not hasattr(obj, "new_attr")
@@ -112,6 +113,7 @@ class TestFlextTestsUtilities:
 
         class TestObject:
             def __init__(self) -> None:
+                super().__init__()
                 self.temp_attr = "temp"
 
         obj = TestObject()
@@ -132,6 +134,7 @@ class TestFlextTestsUtilities:
 
         class TestObject:
             def __init__(self) -> None:
+                super().__init__()
                 self.attribute = "original"
 
         obj = TestObject()

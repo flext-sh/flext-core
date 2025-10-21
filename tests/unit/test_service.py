@@ -1063,11 +1063,14 @@ class TestServiceComprehensiveCoverage:
         service = TestService()
 
         # Create operation with model_construct to bypass validation and set invalid data
+        invalid_kwargs = cast(
+            "dict[str, object]", 123
+        )  # Invalid type to test error handling
         operation = FlextModels.OperationExecutionRequest.model_construct(
             operation_name="test_operation",
             operation_callable=service.test_operation,
             arguments={},
-            keyword_arguments=123,  # Invalid type to test error handling
+            keyword_arguments=invalid_kwargs,
         )
 
         result = service.execute_operation(operation)
@@ -1417,7 +1420,7 @@ class BatchService(FlextService[list[str]]):
         """Test execute_operation sets backoff_multiplier to 1.0 if <= 0 (line 423)."""
 
         class RetryService(FlextService[str]):
-            attempt = 0
+            attempt: int = 0
 
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("default")
@@ -1449,7 +1452,7 @@ class BatchService(FlextService[list[str]]):
         """Test retry logic when no exception filters specified (line 479)."""
 
         class RetryNoFilterService(FlextService[str]):
-            attempt = 0
+            attempt: int = 0
 
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("default")

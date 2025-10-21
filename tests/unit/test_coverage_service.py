@@ -19,8 +19,6 @@ from __future__ import annotations
 
 from typing import cast
 
-import pytest
-
 from flext_core import (
     FlextContainer,
     FlextModels,
@@ -107,6 +105,8 @@ class TestServiceRegistration:
                 return FlextResult[str].ok("registered")
 
         # Service should be registered by __init_subclass__
+        # Explicitly reference the class to satisfy linter
+        assert RegisteredService is not None
         container = FlextContainer.get_global()
         registration_result = container.get("RegisteredService")
         assert registration_result.is_success
@@ -120,8 +120,15 @@ class TestAbstractMethodEnforcement:
         # This test verifies the ABC pattern is enforced
 
         # Trying to instantiate FlextService directly fails (it's abstract)
-        with pytest.raises(TypeError):
-            FlextService[str]()
+        # Note: This tests the ABC enforcement at runtime
+        try:
+            # This should raise TypeError due to missing execute() implementation
+            # Use type: ignore to suppress mypy warning about abstract class instantiation
+            _ = FlextService[str]()  # type: ignore[abstract]
+            msg = "Should have raised TypeError"
+            raise AssertionError(msg)
+        except TypeError:
+            pass  # Expected behavior
 
     def test_concrete_service_must_implement_execute(self) -> None:
         """Test that concrete services must implement execute()."""

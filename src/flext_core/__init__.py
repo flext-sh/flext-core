@@ -357,15 +357,13 @@ from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
-from flext_core.typings import (
-    # Pydantic native types (direct exports)
+from flext_core.typings import (  # Pydantic native types (direct exports); TypeVars; FlextTypes - domain-specific complex types; Domain-specific Annotated types (Pydantic v2)
     UUID1,
     UUID3,
     UUID4,
     UUID5,
     AnyUrl,
     AwareDatetime,
-    # TypeVars
     Command,
     DirectoryPath,
     E,
@@ -374,27 +372,30 @@ from flext_core.typings import (
     F,
     FilePath,
     FileUrl,
-    # FlextTypes - domain-specific complex types
     FlextTypes,
     FutureDate,
     HttpUrl,
     K,
+    LogLevel,
     Message,
     NaiveDatetime,
     NegativeFloat,
     NegativeInt,
     NewPath,
+    NonEmptyStr,
     NonNegativeFloat,
     NonNegativeInt,
     NonPositiveFloat,
     NonPositiveInt,
     P,
     PastDate,
+    PortNumber,
     PositiveFloat,
     PositiveInt,
     Query,
     R,
     ResultT,
+    RetryCount,
     SecretStr,
     T,
     T1_co,
@@ -410,6 +411,7 @@ from flext_core.typings import (
     TDomainEvent_co,
     TEntity_co,
     TEvent_contra,
+    TimeoutSeconds,
     TInput_contra,
     TItem_contra,
     TQuery_contra,
@@ -431,11 +433,11 @@ from flext_core.typings import (
 from flext_core.utilities import FlextUtilities
 
 __all__ = [
-    # Pydantic native types
     "UUID1",
     "UUID3",
     "UUID4",
     "UUID5",
+    # Pydantic native types
     "AnyUrl",
     "AwareDatetime",
     # TypeVars
@@ -468,25 +470,30 @@ __all__ = [
     "FlextService",
     "FlextTypes",
     "FlextUtilities",
+    # Domain-specific Annotated types (Pydantic v2)
     "FutureDate",
     "HttpUrl",
     "K",
+    "LogLevel",
     "Message",
     "NaiveDatetime",
     "NegativeFloat",
     "NegativeInt",
     "NewPath",
+    "NonEmptyStr",
     "NonNegativeFloat",
     "NonNegativeInt",
     "NonPositiveFloat",
     "NonPositiveInt",
     "P",
     "PastDate",
+    "PortNumber",
     "PositiveFloat",
     "PositiveInt",
     "Query",
     "R",
     "ResultT",
+    "RetryCount",
     "SecretStr",
     "T",
     "T1_co",
@@ -511,6 +518,7 @@ __all__ = [
     "TValue_co",
     "T_co",
     "T_contra",
+    "TimeoutSeconds",
     "U",
     "V",
     "W",

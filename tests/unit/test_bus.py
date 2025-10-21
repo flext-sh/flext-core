@@ -196,7 +196,7 @@ class TestFlextBus:
         command = TestCommand(data="test_data")
         found_handler = bus.find_handler(command)
         assert found_handler is not None
-        assert found_handler == handler
+        assert found_handler is handler
 
     def test_bus_error_handling(self) -> None:
         """Test bus error handling mechanisms."""
@@ -1240,8 +1240,10 @@ class TestFlextBusMissingCoverage:
                 execution_count += 1
                 return FlextResult[object].ok(None)
 
+        handler_instance = TestEventHandler()
+
         # Subscribe to event
-        result = bus.subscribe("TestEvent", TestEventHandler())
+        result = bus.subscribe("TestEvent", handler_instance)  # type: ignore[arg-type]
         assert result.is_success
 
         # Publish event
@@ -1276,7 +1278,7 @@ class TestFlextBusMissingCoverage:
 
         # Unsubscribe from event
         result = bus.unsubscribe(
-            "TestEvent", cast("Callable[..., object]", TestEventHandler())
+            "TestEvent", cast("Callable[..., object]", handler_instance)
         )
         assert result.is_success
 

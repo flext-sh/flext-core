@@ -22,8 +22,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from types import UnionType
 from typing import (
     TYPE_CHECKING,
+    Annotated,
     ParamSpec,
     TypeVar,
 )
@@ -38,9 +40,8 @@ from pydantic import (
     AnyUrl,
     AwareDatetime,
     DirectoryPath,
-    # Network types
     EmailStr,
-    # File system types
+    Field,
     FilePath,
     FileUrl,
     FutureDate,
@@ -53,12 +54,9 @@ from pydantic import (
     NonNegativeInt,
     NonPositiveFloat,
     NonPositiveInt,
-    # Date types
     PastDate,
     PositiveFloat,
-    # Numeric constraints
     PositiveInt,
-    # Security types
     SecretStr,
     confloat,
     conint,
@@ -69,7 +67,6 @@ from pydantic import (
 
 if TYPE_CHECKING:
     from flext_core.result import FlextResult
-
 
 # =============================================================================
 # CORE TYPEVARS - Python 3.13+ Native (PEP 696 defaults)
@@ -189,18 +186,21 @@ class FlextTypes:
     # =========================================================================
     # FLEXT RESULT TYPES - Railway pattern (domain-specific)
     # =========================================================================
+    # Note: Using TYPE_CHECKING to avoid runtime circular imports
 
-    type FlextResultType[T] = FlextResult[T]
-    type ValidationRule[T] = Callable[[T], FlextResult[bool]]
-    type CrossFieldValidator[T] = Callable[[T], FlextResult[bool]]
+    if TYPE_CHECKING:
+        type FlextResultType[T] = FlextResult[T]
+        type ValidationRule[T] = Callable[[T], FlextResult[bool]]
+        type CrossFieldValidator[T] = Callable[[T], FlextResult[bool]]
+        type ValidatorFunctionType = Callable[[object], FlextResult[bool]]
 
     # =========================================================================
     # HANDLER TYPES - CQRS/Bus patterns (domain-specific)
     # =========================================================================
 
-    type HandlerCallable[T, M] = Callable[[M], FlextResult[T] | T]
-    type CallableHandlerType = Callable[..., object]
-    type BusHandlerType = Callable[..., object]
+    type HandlerCallable[T, M] = Callable[[M], T]
+    type CallableHandlerType = Callable[[object], object]
+    type BusHandlerType = Callable[[object], object]
     type MiddlewareType = Callable[[object], object]
     type MiddlewareConfig = dict[str, object]
 
@@ -229,7 +229,9 @@ class FlextTypes:
     # DECORATOR TYPES - Cross-cutting concerns (domain-specific)
     # =========================================================================
 
-    type DecoratorReturnType = Callable[[Callable[..., object]], Callable[..., object]]
+    type DecoratorReturnType = Callable[
+        [Callable[[object], object]], Callable[[object], object]
+    ]
 
     # =========================================================================
     # UTILITY TYPES - FlextUtilities domain-specific types
@@ -238,9 +240,14 @@ class FlextTypes:
     type GenericDetailsType = dict[str, object] | object
     type SortableObjectType = dict[str, object] | object
     type CachedObjectType = object
-    type SerializableType = object | dict[str, object] | list[object] | str | int | float | bool | None
-    type SerializableObjectType = object | dict[str, object] | list[object] | str | int | float | bool | None
-    type TypeOriginSpecifier = type | str
+    type SerializableType = (
+        object | dict[str, object] | list[object] | str | int | float | bool | None
+    )
+    type SerializableObjectType = (
+        object | dict[str, object] | list[object] | str | int | float | bool | None
+    )
+    # Accepts plain types, generic aliases (e.g., dict[str, object]), and string references
+    type TypeOriginSpecifier = object
     type ParameterValueType = object
     type IntList = list[int]
     type FloatList = list[float]
@@ -249,7 +256,7 @@ class FlextTypes:
     type FloatDict = dict[str, float]
     type NestedDict = dict[str, dict[str, object]]
     type GenericTypeArgument = type | str | object
-    type TypeHintSpecifier = type | str | None
+    type TypeHintSpecifier = type | str | UnionType | None
     type ValidatableInputType = object
     type ContextualObjectType = object
     type ContainerServiceType = object
@@ -259,11 +266,12 @@ class FlextTypes:
     # =========================================================================
 
     type BusMessageType = object | dict[str, object]
-    type MessageTypeSpecifier = type | str
-    type MessageTypeOrHandlerType = type | str | Callable[..., object]
-    type HandlerOrCallableType = Callable[..., object] | object
+    # Accepts plain types, generic aliases (e.g., dict[str, object]), and string references
+    type MessageTypeSpecifier = object
+    type MessageTypeOrHandlerType = type | str | Callable[[object], object]
+    type HandlerOrCallableType = Callable[[object], object] | object
     type HandlerConfigurationType = dict[str, object] | None
-    type HandlerCallableType = Callable[..., object]
+    type HandlerCallableType = Callable[[object], object]
     type AcceptableMessageType = object | dict[str, object]
 
     # =========================================================================
@@ -282,15 +290,70 @@ class FlextTypes:
     # HOOK/REGISTRY TYPES - Plugin/Extension system types
     # =========================================================================
 
-    type HookCallableType = Callable[..., object]
-    type HookRegistry = dict[str, list[Callable[..., object]]]
+    type HookCallableType = Callable[[object], object]
+    type HookRegistry = dict[str, list[Callable[[object], object]]]
     type ScopeRegistry = dict[str, object]
 
     # =========================================================================
     # VALIDATOR TYPES - Validation framework types
     # =========================================================================
+    # Note: Validator types defined above with FlextResult types in TYPE_CHECKING block
 
-    type ValidatorFunctionType = Callable[[object], FlextResult[bool]]
+
+# =============================================================================
+# PYDANTIC V2 DOMAIN-SPECIFIC ANNOTATED TYPES
+# =============================================================================
+# These are reusable constraint types for common enterprise validation patterns
+# Reference: Pydantic v2 Annotated and Field constraints
+# https://docs.pydantic.dev/latest/concepts/fields/#field-constraints
+
+# Network/Port validation
+PortNumber = Annotated[
+    int,
+    Field(
+        ge=0,
+        le=65535,
+        description="Network port number (0-65535)",
+    ),
+]
+
+# Timeout validation
+TimeoutSeconds = Annotated[
+    float,
+    Field(
+        gt=0,
+        le=3600,
+        description="Timeout in seconds (max 1 hour)",
+    ),
+]
+
+# Retry count validation
+RetryCount = Annotated[
+    int,
+    Field(
+        ge=0,
+        le=10,
+        description="Retry attempts (0-10)",
+    ),
+]
+
+# Non-empty string validation
+NonEmptyStr = Annotated[
+    str,
+    Field(
+        min_length=1,
+        description="Non-empty string",
+    ),
+]
+
+# Log level enumeration
+LogLevel = Annotated[
+    str,
+    Field(
+        pattern="^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$",
+        description="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    ),
+]
 
 
 __all__: list[str] = [
@@ -298,9 +361,10 @@ __all__: list[str] = [
     "UUID3",
     "UUID4",
     "UUID5",
+    # Pydantic native types (re-exported for convenience)
     "AnyUrl",
     "AwareDatetime",
-    # TypeVars
+    # TypeVars (domain-specific for FlextCore architecture)
     "CallableInputT",
     "CallableOutputT",
     "Command",
@@ -312,11 +376,12 @@ __all__: list[str] = [
     "FactoryT",
     "FilePath",
     "FileUrl",
-    # FlextTypes
+    # Pydantic v2 Domain-Specific Annotated Types
     "FlextTypes",
     "FutureDate",
     "HttpUrl",
     "K",
+    "LogLevel",
     "Message",
     "MessageT",
     "MessageT_contra",
@@ -324,14 +389,15 @@ __all__: list[str] = [
     "NegativeFloat",
     "NegativeInt",
     "NewPath",
+    "NonEmptyStr",
     "NonNegativeFloat",
     "NonNegativeInt",
     "NonPositiveFloat",
     "NonPositiveInt",
     "P",
     "PastDate",
+    "PortNumber",
     "PositiveFloat",
-    # Pydantic native types (re-exported for convenience)
     "PositiveInt",
     "ProcessedDataT",
     "ProcessorResultT",
@@ -339,6 +405,7 @@ __all__: list[str] = [
     "R",
     "RegistryHandlerT",
     "ResultT",
+    "RetryCount",
     "SecretStr",
     "T",
     "T1_co",
@@ -370,6 +437,7 @@ __all__: list[str] = [
     "T_Validator_contra",
     "T_co",
     "T_contra",
+    "TimeoutSeconds",
     "U",
     "V",
     "W",

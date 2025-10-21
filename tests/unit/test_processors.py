@@ -822,7 +822,7 @@ class TestFlextProcessorsCriticalCoverage:
         with pytest.raises(Exception) as exc_info:
             FlextModels.HandlerRegistration(
                 name="unsafe",
-                handler=UnsafeHandler(),
+                handler=UnsafeHandler(),  # type: ignore[arg-type]
             )
         # Validation should catch unsafe handler
         assert "callable" in str(exc_info.value).lower() or "TYPE_ERROR" in str(
