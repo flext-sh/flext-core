@@ -265,8 +265,8 @@ class TestFlextContainer:
         # Service now exists, should return existing
         result2: FlextResult[object] = container.get_or_create("test_service", factory)
         assert result2.is_success
-        value: dict[str, object] = result.value
-        assert result2.value is value
+        existing_value: dict[str, object] = result.value
+        assert result2.value is existing_value
 
     def test_container_get_or_create_no_factory(self) -> None:
         """Test get or create without factory."""

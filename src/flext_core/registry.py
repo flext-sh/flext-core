@@ -318,9 +318,7 @@ class FlextRegistry(FlextMixins):
         # Default to command for invalid values
         return FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
 
-    def _safe_get_status(
-        self, value: object
-    ) -> FlextConstants.Cqrs.Status:
+    def _safe_get_status(self, value: object) -> FlextConstants.Cqrs.Status:
         """Safely extract and validate status from dict[str, object] value."""
         if value == FlextConstants.Cqrs.RegistrationStatus.ACTIVE:
             return FlextConstants.Cqrs.Status.RUNNING

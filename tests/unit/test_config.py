@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from flext_core import FlextConfig, FlextExceptions
+from flext_core.constants import FlextConstants
 
 
 class TestFlextConfig:
@@ -332,16 +333,20 @@ class TestFlextConfig:
     def test_config_effective_log_level(self) -> None:
         """Test effective log level using direct fields."""
         # Test normal case - use log_level directly
-        config = FlextConfig(log_level="INFO")
-        assert config.log_level == "INFO"
+        config = FlextConfig(log_level=FlextConstants.Config.LogLevel.INFO)
+        assert config.log_level == FlextConstants.Config.LogLevel.INFO
 
         # Test with debug enabled - log_level unchanged
-        debug_config = FlextConfig(log_level="INFO", debug=True)
-        assert debug_config.log_level == "INFO"
+        debug_config = FlextConfig(
+            log_level=FlextConstants.Config.LogLevel.INFO, debug=True
+        )
+        assert debug_config.log_level == FlextConstants.Config.LogLevel.INFO
         assert debug_config.debug is True
 
         # Test with trace enabled - check both fields directly
-        trace_config = FlextConfig(log_level="INFO", debug=True, trace=True)
+        trace_config = FlextConfig(
+            log_level=FlextConstants.Config.LogLevel.INFO, debug=True, trace=True
+        )
         assert trace_config.trace is True
         # When trace is enabled, application should use DEBUG level
         assert trace_config.log_level == "INFO"  # Field value unchanged

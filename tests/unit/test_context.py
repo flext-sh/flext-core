@@ -294,9 +294,10 @@ class TestFlextContext:
 
         hook_called = False
 
-        def test_hook(_key: str, _value: object) -> None:
+        def test_hook(_arg: object) -> object:
             nonlocal hook_called
             hook_called = True
+            return _arg
 
         context.add_hook("set", test_hook)
         context.set("test_key", "test_value")

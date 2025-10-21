@@ -570,11 +570,11 @@ class FlextBus(
                 try:
                     return int(order_value)
                 except ValueError:
-                    return FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
+                    return FlextConstants.Config.DEFAULT_MIDDLEWARE_ORDER
             return (
                 int(order_value)
                 if isinstance(order_value, int)
-                else FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
+                else FlextConstants.Config.DEFAULT_MIDDLEWARE_ORDER
             )
 
         sorted_middleware = sorted(self._middleware_configs, key=get_order)

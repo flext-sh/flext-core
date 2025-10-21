@@ -106,8 +106,8 @@ class TestCompleteFlextSystemIntegration:
     def _test_constants_system(self) -> None:
         """Test hierarchical constants system."""
         # Testar acesso às constantes hierárquicas
-        timeout_default = FlextConstants.Defaults.TIMEOUT
-        assert isinstance(timeout_default, int)
+        timeout_default = FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS
+        assert isinstance(timeout_default, (int, float))
         assert timeout_default > 0
 
         # Constantes de erro

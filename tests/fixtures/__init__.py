@@ -32,21 +32,22 @@ from flext_core import (
     FlextTypes,
     FlextUtilities,
 )
-from tests.fixtures.error_scenarios import (
+
+from .error_scenarios import (  # type: ignore[import-untyped]
     get_test_error_scenarios,
 )
-from tests.fixtures.performance_data import (
+from .performance_data import (  # type: ignore[import-untyped]
     get_benchmark_data,
     get_performance_threshold,
 )
-from tests.fixtures.sample_data import (
+from .sample_data import (  # type: ignore[import-untyped]
     get_error_context,
     get_sample_data,
     get_test_user_data,
 )
-from tests.fixtures.test_constants import get_test_constants
-from tests.fixtures.test_contexts import get_test_contexts
-from tests.fixtures.test_payloads import get_test_payloads
+from .test_constants import get_test_constants  # type: ignore[import-untyped]
+from .test_contexts import get_test_contexts  # type: ignore[import-untyped]
+from .test_payloads import get_test_payloads  # type: ignore[import-untyped]
 
 __all__ = [
     "FlextBus",

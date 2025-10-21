@@ -251,9 +251,7 @@ class FlextLogger:
     # =========================================================================
 
     @classmethod
-    def bind_global_context(
-        cls, **context: object
-    ) -> FlextResult[None]:
+    def bind_global_context(cls, **context: object) -> FlextResult[None]:
         """Bind context globally using FlextRuntime.structlog() contextvars.
 
         Context is automatically included in all subsequent log messages
@@ -325,9 +323,7 @@ class FlextLogger:
     # =========================================================================
 
     @classmethod
-    def bind_application_context(
-        cls, **context: object
-    ) -> FlextResult[None]:
+    def bind_application_context(cls, **context: object) -> FlextResult[None]:
         """Bind application-level context (persists for entire app lifetime).
 
         Application context persists for the entire application lifetime and is
@@ -361,9 +357,7 @@ class FlextLogger:
             return FlextResult[None].fail(f"Failed to bind application context: {e}")
 
     @classmethod
-    def bind_request_context(
-        cls, **context: object
-    ) -> FlextResult[None]:
+    def bind_request_context(cls, **context: object) -> FlextResult[None]:
         """Bind request-level context (persists for single request/command).
 
         Request context persists for a single CLI command or API request.
@@ -397,9 +391,7 @@ class FlextLogger:
             return FlextResult[None].fail(f"Failed to bind request context: {e}")
 
     @classmethod
-    def bind_operation_context(
-        cls, **context: object
-    ) -> FlextResult[None]:
+    def bind_operation_context(cls, **context: object) -> FlextResult[None]:
         """Bind operation-level context (persists for single service operation).
 
         Operation context persists for a single service operation.
@@ -465,9 +457,7 @@ class FlextLogger:
 
     @classmethod
     @contextmanager
-    def scoped_context(
-        cls, scope: str, **context: object
-    ) -> Iterator[None]:
+    def scoped_context(cls, scope: str, **context: object) -> Iterator[None]:
         """Context manager for automatic scoped context cleanup.
 
         Automatically binds context for the operation duration and clears it
@@ -520,9 +510,7 @@ class FlextLogger:
     # =========================================================================
 
     @classmethod
-    def bind_context_for_level(
-        cls, level: str, **context: object
-    ) -> FlextResult[None]:
+    def bind_context_for_level(cls, level: str, **context: object) -> FlextResult[None]:
         """Bind context that only appears at specific log level.
 
         Context variables are tracked and will be filtered by the

@@ -599,7 +599,8 @@ class TestAdvancedPatterns:
 
         assert len(scenarios) == 3
         assert scenarios[0].name == "scenario_0"
-        assert scenarios[1].given["value"] == 1
+        value = scenarios[1].given.get("value")
+        assert isinstance(value, int) and value == 1
         assert scenarios[2].when["operation"] == "op_2"
 
     def test_nested_builder_patterns(self) -> None:

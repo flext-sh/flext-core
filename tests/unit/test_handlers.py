@@ -65,7 +65,9 @@ class TestFlextHandlers:
         )
         handlers = ConcreteTestHandler(config=config)
         assert handlers is not None
-        assert handlers._config_model.handler_type == FlextConstants.Cqrs.HandlerType.QUERY
+        assert (
+            handlers._config_model.handler_type == FlextConstants.Cqrs.HandlerType.QUERY
+        )
 
     def test_handlers_handle_success(self) -> None:
         """Test successful handler execution."""
@@ -104,8 +106,14 @@ class TestFlextHandlers:
 
         assert handler._config_model.handler_id == "test_handler_5"
         assert handler._config_model.handler_name == "Test Handler 5"
-        assert handler._config_model.handler_type == FlextConstants.Cqrs.HandlerType.COMMAND
-        assert handler._config_model.handler_mode == FlextConstants.Cqrs.HandlerType.COMMAND
+        assert (
+            handler._config_model.handler_type
+            == FlextConstants.Cqrs.HandlerType.COMMAND
+        )
+        assert (
+            handler._config_model.handler_mode
+            == FlextConstants.Cqrs.HandlerType.COMMAND
+        )
 
     def test_handlers_execution_context(self) -> None:
         """Test handler execution context creation."""
@@ -178,8 +186,14 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
 
-        assert handler._config_model.handler_type == FlextConstants.Cqrs.HandlerType.COMMAND
-        assert handler._config_model.handler_mode == FlextConstants.Cqrs.HandlerType.COMMAND
+        assert (
+            handler._config_model.handler_type
+            == FlextConstants.Cqrs.HandlerType.COMMAND
+        )
+        assert (
+            handler._config_model.handler_mode
+            == FlextConstants.Cqrs.HandlerType.COMMAND
+        )
 
     def test_handlers_query_type(self) -> None:
         """Test handlers with query type."""
@@ -191,8 +205,12 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
 
-        assert handler._config_model.handler_type == FlextConstants.Cqrs.HandlerType.QUERY
-        assert handler._config_model.handler_mode == FlextConstants.Cqrs.HandlerType.QUERY
+        assert (
+            handler._config_model.handler_type == FlextConstants.Cqrs.HandlerType.QUERY
+        )
+        assert (
+            handler._config_model.handler_mode == FlextConstants.Cqrs.HandlerType.QUERY
+        )
 
     def test_handlers_event_type(self) -> None:
         """Test handlers with event type."""
@@ -204,8 +222,12 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
 
-        assert handler._config_model.handler_type == FlextConstants.Cqrs.HandlerType.EVENT
-        assert handler._config_model.handler_mode == FlextConstants.Cqrs.HandlerType.EVENT
+        assert (
+            handler._config_model.handler_type == FlextConstants.Cqrs.HandlerType.EVENT
+        )
+        assert (
+            handler._config_model.handler_mode == FlextConstants.Cqrs.HandlerType.EVENT
+        )
 
     def test_handlers_saga_type(self) -> None:
         """Test handlers with saga type."""
@@ -217,8 +239,12 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
 
-        assert handler._config_model.handler_type == FlextConstants.Cqrs.HandlerType.SAGA
-        assert handler._config_model.handler_mode == FlextConstants.Cqrs.HandlerType.SAGA
+        assert (
+            handler._config_model.handler_type == FlextConstants.Cqrs.HandlerType.SAGA
+        )
+        assert (
+            handler._config_model.handler_mode == FlextConstants.Cqrs.HandlerType.SAGA
+        )
 
     def test_handlers_with_metadata(self) -> None:
         """Test handlers with metadata configuration."""
@@ -749,7 +775,9 @@ class TestFlextHandlers:
 
         callable_obj = CallableObject()
 
-        handler = FlextHandlers.from_callable(callable_obj, handler_type=FlextConstants.Cqrs.HandlerType.COMMAND)
+        handler = FlextHandlers.from_callable(
+            callable_obj, handler_type=FlextConstants.Cqrs.HandlerType.COMMAND
+        )
 
         # Should default to "unknown_handler" when no __name__ attribute
         assert handler.handler_name == "unknown_handler"

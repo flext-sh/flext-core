@@ -27,6 +27,7 @@ from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
+from flext_core.typings import TimeoutSeconds
 
 # NOTE: Pydantic v2 BaseSettings handles environment variable type coercion automatically.
 # No custom validators needed - Pydantic uses lax validation mode for env vars:
@@ -312,10 +313,10 @@ class FlextConfig(BaseSettings):
         description="Maximum retry attempts",
     )
 
-    timeout_seconds: int = Field(
-        default=FlextConstants.Defaults.TIMEOUT,
-        ge=1,
-        le=FlextConstants.Performance.DEFAULT_TIMEOUT_LIMIT,
+    timeout_seconds: float = Field(
+        default=float(FlextConstants.Defaults.TIMEOUT),
+        ge=0.1,
+        le=300.0,
         description="Default timeout in seconds",
     )
 
@@ -461,6 +462,8 @@ class FlextConfig(BaseSettings):
         """Coerce environment variable strings to int (strict mode compatible)."""
         if isinstance(v, int):
             return v
+        if isinstance(v, float):
+            return int(v)
         if isinstance(v, str):
             return int(v.strip())
         # For other types, attempt conversion (may raise ValueError)

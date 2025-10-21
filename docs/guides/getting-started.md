@@ -35,26 +35,7 @@ make install
 
 ```bash
 # Quick verification
-python -c "from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities; print('✅ FLEXT-Core ready')"
+python -c "import flext_core; print('✅ FLEXT-Core ready')"
 
 # Check version
 python -c "from flext_core import __version__; print(f'FLEXT-Core {__version__}')"
@@ -67,26 +48,7 @@ python -c "from flext_core import __version__; print(f'FLEXT-Core {__version__}'
 Handle errors without exceptions using the Result monad:
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
 from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
 
 def divide(a: int, b: int) -> FlextResult[float]:
     """Division with explicit error handling."""
@@ -116,26 +78,7 @@ result = (
 Manage dependencies with the global singleton container:
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import FlextContainer, FlextLogger
 
 # Get global container instance
 container = FlextContainer.get_global()
@@ -156,26 +99,7 @@ if logger_result.is_success:
 Create domain entities with Pydantic v2 validation:
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
 from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
 
 # Entity - has identity
 class User(FlextModels.Entity):
@@ -210,26 +134,13 @@ print(f"User: {user.name} ({user.email})")
 Encapsulate business logic in domain services:
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import FlextService, FlextLogger, FlextResult, FlextModels
+
+# Reuse User class from previous example
+class User(FlextModels.Entity):
+    name: str
+    email: str
+    age: int
 
 class UserService(FlextService):
     """User domain service."""
@@ -273,26 +184,7 @@ else:
 Manage application configuration with multiple sources:
 
 ```python
-from flext_core import FlextBus
 from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
 
 # Define configuration schema
 class AppConfig(FlextConfig):
@@ -315,26 +207,7 @@ config = AppConfig()
 Use structured logging with context propagation:
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import FlextLogger, FlextResult
 
 # Create logger
 logger = FlextLogger(__name__)
@@ -343,8 +216,12 @@ logger = FlextLogger(__name__)
 logger.info("Application started")
 logger.info("User login", extra={"user_id": "user_123", "ip": "192.168.1.1"})
 
-# Log errors
-# Log errors with Result pattern
+# Log errors with Result pattern (using divide function from Example 1)
+def divide(a: float, b: float) -> FlextResult[float]:
+    if b == 0:
+        return FlextResult[float].fail("Division by zero")
+    return FlextResult[float].ok(a / b)
+
 result = divide(10, 0)
 if not result.is_success:
     logger.error("Calculation failed", extra={"error": result.error})
@@ -355,26 +232,13 @@ if not result.is_success:
 Here's a complete example combining all concepts:
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import (
+    FlextModels,
+    FlextService,
+    FlextLogger,
+    FlextResult,
+    FlextContainer,
+)
 
 # 1. Define domain model
 class Product(FlextModels.Entity):

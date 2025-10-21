@@ -652,9 +652,7 @@ class TestFlextResult:
         def success_func() -> int:
             return 42
 
-        success_result: FlextResult[int] = cast(
-            "FlextResult[int]", FlextResult.from_exception(success_func)
-        )
+        success_result = FlextResult.from_exception(success_func)
         assert success_result.is_success
         assert success_result.value == 42
 
@@ -663,9 +661,7 @@ class TestFlextResult:
             error_message = "Something went wrong"
             raise ValueError(error_message)
 
-        failure_result: FlextResult[int] = cast(
-            "FlextResult[int]", FlextResult.from_exception(failing_func)
-        )
+        failure_result = FlextResult.from_exception(failing_func)
         assert failure_result.is_failure
         assert failure_result.error is not None
         assert "Something went wrong" in failure_result.error
@@ -2307,9 +2303,7 @@ class TestMaybeInterop:
     def test_from_maybe_some(self) -> None:
         """Test creating result from Some."""
         maybe = Some("test_value")
-        result: FlextResult[str] = cast(
-            "FlextResult[str]", FlextResult.from_maybe(maybe)
-        )
+        result = FlextResult.from_maybe(maybe)
 
         assert result.is_success
         assert result.value == "test_value"
@@ -2326,20 +2320,18 @@ class TestMaybeInterop:
         """Test roundtrip conversion success -> maybe -> success."""
         original = FlextResult[int].ok(42)
         maybe = original.to_maybe()
-        recovered = FlextResult.from_maybe(maybe)
+        recovered_result = FlextResult.from_maybe(maybe)
 
-        assert recovered.is_success
-        assert recovered.value == 42
+        assert recovered_result.is_success
+        assert recovered_result.value == 42
 
     def test_maybe_roundtrip_failure(self) -> None:
         """Test roundtrip conversion failure -> maybe -> failure."""
         original = FlextResult[int].fail("error")
         maybe = original.to_maybe()
-        recovered: FlextResult[int] = cast(
-            "FlextResult[int]", FlextResult.from_maybe(maybe)
-        )
+        recovered_result = FlextResult.from_maybe(maybe)
 
-        assert recovered.is_failure
+        assert recovered_result.is_failure
 
 
 class TestIOInterop:
@@ -2597,17 +2589,13 @@ class TestIntegrationScenarios:
         maybe = original.to_maybe()
 
         # Convert back to Result
-        from_maybe: FlextResult[str] = cast(
-            "FlextResult[str]", FlextResult.from_maybe(maybe)
-        )
+        from_maybe = FlextResult.from_maybe(maybe)
 
         # Convert to IOResult
         io_result = from_maybe.to_io_result()
 
         # Convert back to Result
-        final: FlextResult[str] = cast(
-            "FlextResult[str]", FlextResult.from_io_result(io_result)
-        )
+        final: FlextResult[str] = FlextResult.from_io_result(io_result)
 
         assert final.is_success
         assert final.value == "test"

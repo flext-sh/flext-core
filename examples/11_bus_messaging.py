@@ -461,13 +461,46 @@ class BusMessagingService(FlextService[dict[str, object]]):
                 return stats
 
         # Add middleware to bus
+        # Note: FlextBus middleware expects Callable[[object], object]
+        # So we use factory pattern to create middleware handlers
+
         logging_middleware = LoggingMiddleware()
-        validation_middleware = ValidationMiddleware()
         performance_middleware = PerformanceMiddleware()
 
-        bus.add_middleware(logging_middleware)
-        bus.add_middleware(validation_middleware)
-        bus.add_middleware(performance_middleware)
+        # Create wrapper functions that match the expected signature
+        def logging_handler(message: object) -> object:
+            """Logging middleware handler."""
+            logging_middleware.logger.info(
+                "message_received", message_type=type(message).__name__
+            )
+            return message
+
+        def validation_handler(message: object) -> object:
+            """Validation middleware handler."""
+            if hasattr(message, "__dataclass_fields__"):
+                fields = getattr(message, "__dataclass_fields__", {})
+                for field_name in fields:
+                    if not hasattr(message, field_name):
+                        logging_middleware.logger.warning(
+                            "missing_field", field=field_name
+                        )
+            return message
+
+        def performance_handler(message: object) -> object:
+            """Performance middleware handler."""
+            start = time.time()
+            result = message  # Process message
+            duration = time.time() - start
+            message_type = type(message).__name__
+            metrics = performance_middleware._metrics  # noqa: SLF001
+            if message_type not in metrics:
+                metrics[message_type] = []
+            metrics[message_type].append(duration)
+            return result
+
+        bus.add_middleware(logging_handler)
+        bus.add_middleware(validation_handler)
+        bus.add_middleware(performance_handler)
         print("✅ Middleware added: Logging, Validation, Performance")
 
         # Test with messages

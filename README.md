@@ -6,13 +6,13 @@
 [![Documentation](https://img.shields.io/badge/docs-organized-blue.svg)](./docs/)
 [![GitHub](https://img.shields.io/badge/github-flext--core-black.svg)](https://github.com/flext/flext-core)
 
-**Foundation library** for the FLEXT ecosystem providing railway-oriented programming, dependency injection, domain-driven design patterns, and comprehensive type safety with Python 3.13+.
+Foundation library for the FLEXT ecosystem providing railway-oriented programming patterns, dependency injection container, domain-driven design patterns, and type safety with Python 3.13+.
 
-> **✅ Status**: v0.9.9 Release Candidate · 76% test coverage · 1,206 passing tests · 0 test failures · Zero linting violations · **Foundation for 32+ FLEXT projects**
+> **⚠️ Status**: v0.9.9 Release Candidate · 74% test coverage · 1502 passing tests · 2 test failures · 4 linting violations · 14 type checking errors · **Foundation for 32+ FLEXT projects**
 
 ## 📚 Documentation
 
-**Complete documentation available in [./docs/](./docs/)** - Comprehensive guides, API reference, and examples
+**Documentation available in [./docs/](./docs/)** - Implementation guides, API reference, and working examples
 
 - **[🚀 Getting Started](./docs/guides/getting-started.md)** - Installation and basic usage
 - **[🏗️ Architecture](./docs/architecture/overview.md)** - System design and patterns
@@ -23,16 +23,16 @@
 
 ## 🎯 Mission & Role in FLEXT Ecosystem
 
-### **Foundation for Enterprise Data Integration**
+### **Foundation Library for Data Integration**
 
-FLEXT-Core serves as the **architectural foundation** for the entire FLEXT enterprise data integration platform, providing essential patterns and infrastructure that power 32+ specialized projects across the ecosystem.
+FLEXT-Core provides patterns and infrastructure used by 32+ specialized projects across the FLEXT ecosystem for data integration and system operations.
 
 ### **Core Responsibilities**
 
-1. **🏗️ Railway-Oriented Programming** - `FlextResult[T]` for comprehensive error handling
-2. **💉 Dependency Injection** - `FlextContainer` for clean, testable architectures
-3. **🎯 Domain-Driven Design** - Rich entities, value objects, and domain services
-4. **🔒 Type Safety** - Python 3.13+ with comprehensive typing and Pydantic v2
+1. **🏗️ Railway-Oriented Programming** - `FlextResult[T]` for error handling without exceptions
+2. **💉 Dependency Injection** - `FlextContainer` singleton for service management
+3. **🎯 Domain-Driven Design** - Entity and value object patterns with domain services
+4. **🔒 Type Safety** - Python 3.13+ with strict type annotations and Pydantic v2
 5. **📊 Configuration Management** - Environment-aware settings with validation
 6. **🔍 Logging Infrastructure** - Structured logging with multiple output formats
 7. **🚌 Event-Driven Architecture** - Message bus and event dispatching
@@ -45,9 +45,9 @@ FLEXT-Core provides the **architectural patterns** that all FLEXT projects inher
 | Project Type         | Projects                           | Integration Pattern                        |
 | -------------------- | ---------------------------------- | ------------------------------------------ |
 | **Core Libraries**   | flext-api, flext-auth, flext-grpc  | Direct inheritance of foundation patterns  |
-| **Infrastructure**   | flext-ldap, flext-db-oracle        | Railway patterns for enterprise operations |
+| **Infrastructure**   | flext-ldap, flext-db-oracle        | Railway patterns for LDAP and database operations |
 | **Data Integration** | flext-meltano, Singer taps/targets | Configuration and processing patterns      |
-| **Enterprise Tools** | flext-quality, flext-observability | Logging and monitoring integration         |
+| **Quality & Observability** | flext-quality, flext-observability | Logging and monitoring integration         |
 
 ### **Foundation Patterns Used Across Ecosystem**
 
@@ -158,36 +158,16 @@ bus.publish(UserCreatedEvent(user_id="123"))
 The new Layer 0 architecture provides a solid foundation with zero internal dependencies:
 
 ```python
-# Layer 0: Pure Python foundation (no flext_core imports)
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+# Layer 0: Foundation layer - constants, types, protocols (no external dependencies)
+from flext_core import FlextConstants, FlextTypes, FlextProtocols
 
-# Error codes for exception categorization (50+ codes)
+# Access 50+ error codes for exception handling
 error_code = FlextConstants.Errors.VALIDATION_FAILED
-
-# Configuration defaults
-timeout = FlextConstants.Config.DEFAULT_TIMEOUT
-
-# Validation patterns (used by runtime.py)
+timeout = FlextConstants.Configuration.DEFAULT_TIMEOUT
 email_pattern = FlextConstants.Validation.EMAIL_PATTERN
+
+# Type system with 50+ TypeVars for generic programming
+from flext_core.typings import T, T_co, T_contra
 ```
 
 **Key Features**:
@@ -205,34 +185,16 @@ email_pattern = FlextConstants.Validation.EMAIL_PATTERN
 The runtime bridge exposes external libraries while maintaining proper dependency hierarchy:
 
 ```python
-# Layer 0.5: External library connectors
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
+# Layer 0.5: Runtime bridge - external library integration
 from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
 
-# Type guards using Layer 0 patterns
+# Type guards and validation using Layer 0 patterns
 if FlextRuntime.is_valid_email(email):
     process_email(email)
 
 # Serialization utilities
 json_data = FlextRuntime.serialize_to_json(data)
+structured_logs = FlextRuntime.get_structured_logger(__name__)
 ```
 
 **Key Features**:
@@ -245,21 +207,22 @@ json_data = FlextRuntime.serialize_to_json(data)
 
 ### Quality Achievements
 
-**Test Coverage**: 76% (1,206 tests passing, 0 failures) - **Target**: 79%
+**Test Coverage**: 74% (1502 tests passing, 2 failures) - **Target**: 79% - 2 handler-related test failures under investigation
 
 **Module Coverage Breakdown**:
 
-- **Foundation Layer**: 92%+ (result.py 92%, container.py 81%, typings.py 100%, constants.py 98%)
-- **Domain Layer**: 62% (models.py 55%, service.py 67%, mixins.py 84%, utilities.py 66%)
-- **Application Layer**: 65% (bus.py 91%, handlers.py 78%, dispatcher.py 54%, processors.py 64%)
-- **Infrastructure Layer**: 76% (config.py 68%, loggings.py 66%, context.py 72%, registry.py 91%)
+- **Foundation Layer**: 95%+ (result.py 91%, container.py 81%, typings.py 100%, constants.py 96%, protocols.py 100%)
+- **Domain Layer**: 68% (models.py 57%, service.py 87%, mixins.py 84%, utilities.py 73%)
+- **Application Layer**: 77% (bus.py 83%, handlers.py 77%, dispatcher.py 72%, processors.py 63%, registry.py 92%)
+- **Infrastructure Layer**: 82% (config.py 72%, loggings.py 80%, context.py 94%, decorators.py 84%, exceptions.py 82%)
+- **Runtime Bridge**: 98% (runtime.py 98%)
 
 **Quality Gates Status**:
 
-- ✅ **Ruff Linting**: Zero violations
-- ✅ **Type Checking**: Zero errors (Pyrefly strict mode)
-- ✅ **Test Suite**: 1,206 tests passing, 0 failures
-- ⚠️ **Coverage**: 76% (target 79% for 1.0.0)
+- ⚠️ **Ruff Linting**: 1 violation (PGH003 in test file) - needs fixes
+- ⚠️ **Type Checking**: 14 errors (Pyrefly strict mode) - needs investigation and fixes
+- ⚠️ **Test Suite**: 1502 tests passing, 2 failures (handler dict message tests under investigation)
+- ⚠️ **Coverage**: 74% (target 79% for 1.0.0)
 
 ---
 
@@ -352,9 +315,9 @@ class CreateOrderHandler(FlextHandlers.CommandHandler[CreateOrderCommand, Order]
         # - handler_class: "CreateOrderHandler"
 ```
 
-#### **3. Helper Method for Complete Automation**
+#### **3. Helper Method for Context Enrichment**
 
-`FlextService.execute_with_context_enrichment()` provides complete automation:
+`FlextService.execute_with_context_enrichment()` provides structured context management with automatic setup and cleanup:
 
 ```python
 class OrderService(FlextService[Order]):
@@ -391,12 +354,14 @@ class OrderService(FlextService[Order]):
 
 ### **Examples**
 
-See `examples/automation_showcase.py` for complete working examples demonstrating:
+See `examples/15_automation_showcase.py` for complete working examples demonstrating:
 
 - Basic service with automatic context enrichment
 - Payment service with correlation ID tracking
 - Order service using context enrichment helper method
 
+Additional examples available in `examples/` directory (00-14: basic patterns through advanced integration)
+
 ---
 
 ## 🚀 1.0.0 Release Roadmap
@@ -405,24 +370,24 @@ See `examples/automation_showcase.py` for complete working examples demonstratin
 
 ### Why 1.0.0 Matters
 
-FLEXT-Core serves as the **foundation for 32+ dependent packages** in the FLEXT ecosystem. The 1.0.0 release represents our commitment to:
+FLEXT-Core serves as the **foundation for 32+ dependent packages** in the FLEXT ecosystem. The 1.0.0 release targets:
 
-- **🔒 API Stability**: Zero breaking changes throughout the 1.x series
-- **⚡ ABI Compatibility**: Locked dependency versions prevent ecosystem breakage
-- **🏭 Production Readiness**: Enterprise-grade quality with comprehensive testing
-- **🛠️ Long-term Support**: Minimum 2 minor version deprecation cycle
+- **🔒 API Stability**: No breaking changes throughout the 1.x series (📋 Planned for 1.0.0)
+- **⚡ ABI Compatibility**: Locked dependency versions to prevent ecosystem breakage (📋 Planned for 1.0.0)
+- **🏭 Quality Standards**: Zero linting violations, zero type checking errors, 79%+ test coverage (📋 Target for 1.0.0)
+- **🛠️ Deprecation Strategy**: Minimum 2 minor version cycle before removing deprecated features (📋 Planned for 1.0.0)
 
 ### Release Timeline (5 Weeks)
 
 #### Phase 1: API Stabilization & Documentation (Weeks 1-2) ✅
 
-- ✅ **ABI Finalization**: Dependency versions locked, semantic versioning strategy defined
-- ✅ **API Guarantees**: Comprehensive stability documentation (VERSIONING.md, API_STABILITY.md)
+- ✅ **ABI Finalization**: Dependency versions locked, semantic versioning defined
+- ✅ **API Documentation**: Stability guarantees documented (VERSIONING.md, API_STABILITY.md)
 - 🔄 **Documentation**: README.md roadmap, CLAUDE.md guidelines, migration guide (in progress)
 
 #### Phase 2: Quality Assurance & Ecosystem Testing (Weeks 2-3)
 
-- Test coverage enhancement (75% → 79%+ target)
+- Test coverage enhancement (74% → 79%+ target)
 - Security audit with pip-audit and vulnerability scanning
 - Top 5 dependent project validation (flext-api, flext-cli, flext-ldap, flext-auth, flext-web)
 - Backward compatibility verification
@@ -442,48 +407,6 @@ FLEXT-Core serves as the **foundation for 32+ dependent packages** in the FLEXT 
 - Release candidate testing
 
 ---
-
-## 🚀 1.0.0 Release Roadmap
-
-**Target Date**: October 2025 | **Current**: v0.9.9 Release Candidate
-
-### Why 1.0.0 Matters
-
-FLEXT-Core serves as the **foundation for 32+ dependent packages** in the FLEXT ecosystem. The 1.0.0 release represents our commitment to:
-
-- **API Stability**: Zero breaking changes throughout the 1.x series
-- **ABI Compatibility**: Locked dependency versions prevent ecosystem breakage
-- **Production Readiness**: Enterprise-grade quality with comprehensive testing
-- **Long-term Support**: Minimum 2 minor version deprecation cycle
-
-### Release Timeline (5 Weeks)
-
-#### Phase 1: API Stabilization & Documentation (Weeks 1-2) ✅
-
-- ✅ **ABI Finalization**: Dependency versions locked, semantic versioning strategy defined
-- ✅ **API Guarantees**: Comprehensive stability documentation (VERSIONING.md, API_STABILITY.md)
-- 🔄 **Documentation**: README.md roadmap, CLAUDE.md guidelines, migration guide (in progress)
-
-#### Phase 2: Quality Assurance & Ecosystem Testing (Weeks 2-3)
-
-- Test coverage enhancement (75% → 79%+ target)
-- Security audit with pip-audit and vulnerability scanning
-- Top 5 dependent project validation (flext-api, flext-cli, flext-ldap, flext-auth, flext-web)
-- Backward compatibility verification
-
-#### Phase 3: Performance & Optimization (Weeks 3-4)
-
-- Performance baseline establishment
-- Critical path optimization (FlextResult, FlextContainer)
-- Memory usage profiling and optimization
-- Benchmark suite implementation
-
-#### Phase 4: Release Preparation (Week 4)
-
-- Release artifact creation (CHANGELOG.md, migration documentation)
-- CI/CD pipeline for automated releases
-- Documentation review and finalization
-- Release candidate testing
 
 #### Phase 5: 1.0.0 Launch & Ecosystem Migration (Week 5)
 
@@ -516,7 +439,7 @@ See [VERSIONING.md](VERSIONING.md) and [API_STABILITY.md](API_STABILITY.md) for 
 
 ## Core Features
 
-**Production-Ready Foundation**:
+**Core Modules** (v0.9.9):
 
 - ✅ **FlextResult[T]** - Railway-oriented programming with dual `.value`/`.data` access for ABI stability
 - ✅ **FlextContainer** - Singleton dependency injection with typed service keys and lifecycle management
@@ -526,14 +449,14 @@ See [VERSIONING.md](VERSIONING.md) and [API_STABILITY.md](API_STABILITY.md) for 
 - ✅ **FlextBus** - Command/Query/Event bus with middleware pipeline and caching
 - ✅ **FlextContext** - Request/operation context with correlation IDs and metadata
 - ✅ **FlextDispatcher** - Unified command/query dispatcher with registry support
-- ✅ **FlextTypes** - Comprehensive type system with 50+ TypeVars and type aliases
+- ✅ **FlextTypes** - Type system with 50+ TypeVars, protocols, and domain-specific types
 
-**Quality Metrics**:
+**Quality Metrics** (v0.9.9):
 
-- **Ruff**: Zero violations
-- **PyRight/MyPy**: Zero errors (strict mode)
-- **Coverage**: 76% (target 79% for 1.0.0)
-- **Tests**: 1,206 passing (unit + integration + patterns)
+- **Ruff**: 1 violation (PGH003) - needs fixes
+- **Pyrefly/MyPy**: 14 errors (strict mode) - under investigation
+- **Coverage**: 74% (target 79% for 1.0.0)
+- **Tests**: 1502 passing (unit + integration + patterns), 2 failures
 
 ---
 
@@ -543,9 +466,9 @@ See [VERSIONING.md](VERSIONING.md) and [API_STABILITY.md](API_STABILITY.md) for 
 
 - `FlextResult[T]` - Monadic error handling with railway-oriented composition
 - `FlextContainer` - Dependency injection singleton with typed service resolution
-- `FlextExceptions` - Comprehensive exception hierarchy with error codes
-- `FlextConstants` - Centralized constants and enumerations
-- `FlextTypes` - Complete type system (TypeVars, Protocols, Aliases)
+- `FlextExceptions` - Exception hierarchy with error codes and error message formatting
+- `FlextConstants` - Centralized constants, validation patterns, and enumerations
+- `FlextTypes` - Type system with 50+ TypeVars, runtime protocols, and type aliases
 
 **Domain Layer**:
 
@@ -580,51 +503,13 @@ cd flext-core
 make setup
 
 # Verify installation
-python -c "from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities; print('✅ FLEXT-Core v0.9.9 ready')"
+python -c "from flext_core import FlextResult, FlextContainer, FlextModels; print('✅ FLEXT-Core v0.9.9 ready')"
 ```
 
 ## Quick Start Example
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import FlextResult, FlextContainer, FlextModels, FlextService
 
 # 1. Railway Pattern - Error handling without exceptions
 def validate_email(email: str) -> FlextResult[str]:
@@ -760,11 +645,11 @@ pytest --cov=src --cov-report=term-missing
 ### Quality Standards
 
 - **Python**: 3.13+ (required)
-- **Linting**: Ruff (ZERO violations)
-- **Type Checking**: MyPy strict mode + PyRight (ZERO errors in src/)
+- **Linting**: Ruff (1 violation: PGH003 in test file)
+- **Type Checking**: MyPy strict mode + PyRight (14 errors in strict mode)
 - **Line Length**: 79 characters (PEP 8 strict)
-- **Coverage**: Current 76%, target 79% for 1.0.0
-- **Tests**: 1,206 passing (unit + integration + patterns)
+- **Coverage**: Current 74%, target 79% for 1.0.0
+- **Tests**: 1502 passing, 2 failures (unit + integration + patterns)
 
 ---
 
@@ -806,38 +691,6 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
 ---
 
-## Roadmap to 1.0.0
-
-### Current Status (v0.9.9)
-
-- ✅ Core API stable and production-ready
-- ✅ Zero QA violations (Ruff + Pyrefly + Pyright)
-- ✅ 1,206 tests passing
-- ⚠️ Coverage at 76% (targeting 79% for 1.0.0)
-
-### 1.0.0 Requirements
-
-1. **Coverage**: Reach 79% minimum (currently 76%)
-   - Priority: models (55%), dispatcher (54%), processors (64%)
-   - Need 3% more coverage to reach target
-   - Add functional tests for error paths and edge cases
-2. **API Stability**: Maintain backward compatibility
-   - Keep dual `.value`/`.data` access on FlextResult
-   - Preserve container singleton pattern
-   - No breaking changes to public API
-3. **Documentation**: Complete API reference
-   - Document all public classes and methods
-   - Add usage examples for each module
-   - Update architecture documentation
-
-### Timeline
-
-- **Target**: October 2025
-- **Focus**: Quality over features
-- **Commitment**: Zero breaking changes in 1.x series
-
----
-
 ## Contributing
 
 ### Before Submitting PR
@@ -866,12 +719,13 @@ make test        # All tests must pass
 
 ## Documentation
 
-- **[📚 Complete Documentation](./docs-new/)**: Comprehensive guides and API reference
-- **Getting Started**: [`docs-new/guides/getting-started.md`](./docs-new/guides/getting-started.md)
-- **Architecture**: [`docs-new/architecture/overview.md`](./docs-new/architecture/overview.md)
-- **API Reference**: [`docs-new/api-reference/`](./docs-new/api-reference/)
-- **Development**: [`docs-new/development/contributing.md`](./docs-new/development/contributing.md)
-- **Standards**: [`docs-new/standards/`](./docs-new/standards/)
+- **[📚 Documentation](./docs/)**: Getting started guide, architecture documentation, and API reference
+- **Getting Started**: [`docs/guides/getting-started.md`](./docs/guides/getting-started.md)
+- **Architecture**: [`docs/architecture/overview.md`](./docs/architecture/overview.md)
+- **API Reference**: [`docs/api-reference/`](./docs/api-reference/)
+- **Development**: [`docs/development/contributing.md`](./docs/development/contributing.md)
+- **Standards**: [`docs/standards/`](./docs/standards/)
+- **Pydantic v2 Modernization**: [`docs/pydantic-v2-modernization/README.md`](./docs/pydantic-v2-modernization/README.md)
 
 ---
 
@@ -883,12 +737,47 @@ make test        # All tests must pass
 
 ---
 
+## 🔗 Cross-Reference Navigation
+
+### By Use Case
+
+| Need                      | Quick Link                                              | Related                        |
+|---------------------------|--------------------------------------------------------|--------------------------------|
+| **Get Started**           | [Getting Started Guide](./docs/guides/getting-started.md) | [Architecture](./docs/architecture/overview.md) |
+| **Error Handling**        | [Railway Patterns](./docs/guides/railway-oriented-programming.md) | [FlextResult API](./docs/api-reference/foundation.md) |
+| **Dependency Injection**  | [DI Advanced](./docs/guides/dependency-injection-advanced.md) | [FlextContainer API](./docs/api-reference/foundation.md) |
+| **Data Models**           | [DDD Guide](./docs/guides/domain-driven-design.md) | [FlextModels API](./docs/api-reference/domain.md) |
+| **Configuration**         | [Getting Started](./docs/guides/getting-started.md) | [FlextConfig API](./docs/api-reference/infrastructure.md) |
+| **Development**           | [Standards](./docs/standards/development.md) | [Contributing](./docs/development/contributing.md) |
+
+### By Layer
+
+- **Layer 0 (Constants)**: [Foundation API](./docs/api-reference/foundation.md) → constants.py, typings.py, protocols.py
+- **Layer 0.5 (Runtime)**: [Foundation API](./docs/api-reference/foundation.md) → runtime.py
+- **Layer 1 (Foundation)**: [Foundation API](./docs/api-reference/foundation.md) → FlextResult, FlextContainer, FlextExceptions
+- **Layer 2 (Domain)**: [Domain API](./docs/api-reference/domain.md) → FlextModels, FlextService, FlextMixins, FlextUtilities
+- **Layer 3 (Application)**: [Application API](./docs/api-reference/application.md) → FlextHandlers, FlextBus, FlextDispatcher, FlextProcessors
+- **Layer 4 (Infrastructure)**: [Infrastructure API](./docs/api-reference/infrastructure.md) → FlextConfig, FlextLogger, FlextContext
+
+### By Feature Status
+
+- **✅ Implemented (v0.9.9)**: All core modules, FlextResult, FlextContainer, FlextModels, FlextService context enrichment
+- **🔄 In Progress**: Ecosystem compliance testing, coverage improvements
+- **📋 Planned (v1.0.0)**: Additional integration patterns, extended example suite
+
+### Documentation Index
+
+- **[docs/INDEX.md](./docs/INDEX.md)** - Master navigation with 4-level learning paths
+- **[docs/pydantic-v2-modernization/README.md](./docs/pydantic-v2-modernization/README.md)** - Migration patterns and best practices
+
+---
+
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details
 
 ---
 
-**FLEXT-Core v0.9.9** - Production-ready foundation for the FLEXT ecosystem powering 32+ dependent packages with railway-oriented programming, dependency injection, and domain-driven design patterns.
+**FLEXT-Core v0.9.9** - Foundation library for the FLEXT ecosystem serving 32+ dependent packages with railway-oriented programming patterns, dependency injection, and domain-driven design.
 
-**On the road to 1.0.0** (October 2025) with guaranteed API stability, locked dependencies, and comprehensive ecosystem testing. See [VERSIONING.md](VERSIONING.md) and [API_STABILITY.md](API_STABILITY.md) for our stability commitment.
+**Version 1.0.0 target** (October 2025) with guaranteed API stability, locked dependencies, and ecosystem testing across all dependent projects. See [VERSIONING.md](VERSIONING.md) and [API_STABILITY.md](API_STABILITY.md) for stability guarantees.

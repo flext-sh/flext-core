@@ -307,7 +307,9 @@ class FlextTestDocker:
         """Get status of all containers."""
         return FlextResult[dict[str, FlextTestDocker.ContainerInfo]].ok({})
 
-    def get_container_status(self, container_name: str) -> FlextResult[FlextTestDocker.ContainerInfo]:
+    def get_container_status(
+        self, container_name: str
+    ) -> FlextResult[FlextTestDocker.ContainerInfo]:
         """Get container status."""
         return self.get_container_info(container_name)
 
@@ -757,7 +759,9 @@ class FlextTestDocker:
             "stopped": True,
         })
 
-    def get_container_info(self, name: str) -> FlextResult[FlextTestDocker.ContainerInfo]:
+    def get_container_info(
+        self, name: str
+    ) -> FlextResult[FlextTestDocker.ContainerInfo]:
         """Get container information."""
         try:
             client = self.get_client()
@@ -788,10 +792,14 @@ class FlextTestDocker:
                 ),
             )
         except NotFound:
-            return FlextResult[FlextTestDocker.ContainerInfo].fail(f"Container {name} not found")
+            return FlextResult[FlextTestDocker.ContainerInfo].fail(
+                f"Container {name} not found"
+            )
         except DockerException as e:
             self.logger.exception("Failed to get container info")
-            return FlextResult[FlextTestDocker.ContainerInfo].fail(f"Failed to get container info: {e}")
+            return FlextResult[FlextTestDocker.ContainerInfo].fail(
+                f"Failed to get container info: {e}"
+            )
 
     def build_image(
         self,
@@ -846,7 +854,9 @@ class FlextTestDocker:
             )
         except DockerException as e:
             self.logger.exception("Failed to run container")
-            return FlextResult[FlextTestDocker.ContainerInfo].fail(f"Failed to run container: {e}")
+            return FlextResult[FlextTestDocker.ContainerInfo].fail(
+                f"Failed to run container: {e}"
+            )
 
     def remove_container(self, name: str, *, force: bool = False) -> FlextResult[str]:
         """Remove a Docker container."""
@@ -1073,7 +1083,8 @@ class FlextTestDocker:
             status = docker_control.get_container_status(container_name)
             if (
                 status.is_success
-                and status.value.status.value == FlextTestDocker.ContainerStatus.RUNNING.value
+                and status.value.status.value
+                == FlextTestDocker.ContainerStatus.RUNNING.value
             ):
                 yield container_name
                 return
@@ -1094,7 +1105,8 @@ class FlextTestDocker:
             status = docker_control.get_container_status(container_name)
             if (
                 status.is_success
-                and status.value.status.value == FlextTestDocker.ContainerStatus.RUNNING.value
+                and status.value.status.value
+                == FlextTestDocker.ContainerStatus.RUNNING.value
             ):
                 yield container_name
                 return
@@ -1116,7 +1128,8 @@ class FlextTestDocker:
             status = docker_control.get_container_status(container_name)
             if (
                 status.is_success
-                and status.value.status.value == FlextTestDocker.ContainerStatus.RUNNING.value
+                and status.value.status.value
+                == FlextTestDocker.ContainerStatus.RUNNING.value
             ):
                 yield container_name
                 return
@@ -1138,7 +1151,8 @@ class FlextTestDocker:
             status = docker_control.get_container_status(container_name)
             if (
                 status.is_success
-                and status.value.status.value == FlextTestDocker.ContainerStatus.RUNNING.value
+                and status.value.status.value
+                == FlextTestDocker.ContainerStatus.RUNNING.value
             ):
                 yield container_name
                 return

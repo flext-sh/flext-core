@@ -371,7 +371,7 @@ class TestTypeChecker:
 
     def test_can_handle_message_type_empty_accepted(self) -> None:
         """Test type checking with no accepted types."""
-        accepted: tuple[object, ...] = ()
+        accepted: tuple[type | str, ...] = ()
         assert (
             FlextUtilities.TypeChecker.can_handle_message_type(accepted, str) is False
         )

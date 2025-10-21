@@ -444,7 +444,7 @@ class FlextRuntime:
 
         # Strategy 4: Check if already dict
         if isinstance(obj, dict):
-            return cast("dict[str, object]", obj)
+            return obj
 
         return None
 

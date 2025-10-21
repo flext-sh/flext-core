@@ -141,16 +141,26 @@ class FlextProcessors(FlextMixins):
         else:
             # Backward compatibility: handle dict config
             cache_ttl = config.get("cache_ttl", 3600.0)
-            self._cache_ttl = float(cache_ttl) if isinstance(cache_ttl, (int, float, str)) else 3600.0
+            self._cache_ttl = (
+                float(cache_ttl) if isinstance(cache_ttl, (int, float, str)) else 3600.0
+            )
 
             cb_threshold = config.get("circuit_breaker_threshold", 5)
-            self._circuit_breaker_threshold = int(cb_threshold) if isinstance(cb_threshold, (int, float, str)) else 5
+            self._circuit_breaker_threshold = (
+                int(cb_threshold) if isinstance(cb_threshold, (int, float, str)) else 5
+            )
 
             rate_limit = config.get("rate_limit", 100)
-            self._rate_limit = int(rate_limit) if isinstance(rate_limit, (int, float, str)) else 100
+            self._rate_limit = (
+                int(rate_limit) if isinstance(rate_limit, (int, float, str)) else 100
+            )
 
             rate_window = config.get("rate_limit_window", 60.0)
-            self._rate_limit_window = float(rate_window) if isinstance(rate_window, (int, float, str)) else 60.0
+            self._rate_limit_window = (
+                float(rate_window)
+                if isinstance(rate_window, (int, float, str))
+                else 60.0
+            )
 
     def register(
         self,
@@ -628,7 +638,9 @@ class FlextProcessors(FlextMixins):
             "middleware_count": len(self._middleware),
         }
 
-    def import_config(self, config: dict[str, object] | FlextConfig) -> FlextResult[None]:
+    def import_config(
+        self, config: dict[str, object] | FlextConfig
+    ) -> FlextResult[None]:
         """Import configuration from FlextConfig or dict.
 
         Args:
@@ -647,16 +659,32 @@ class FlextProcessors(FlextMixins):
             else:
                 # Backward compatibility: handle dict config
                 cache_ttl = config.get("cache_ttl", 3600.0)
-                self._cache_ttl = float(cache_ttl) if isinstance(cache_ttl, (int, float, str)) else 3600.0
+                self._cache_ttl = (
+                    float(cache_ttl)
+                    if isinstance(cache_ttl, (int, float, str))
+                    else 3600.0
+                )
 
                 cb_threshold = config.get("circuit_breaker_threshold", 5)
-                self._circuit_breaker_threshold = int(cb_threshold) if isinstance(cb_threshold, (int, float, str)) else 5
+                self._circuit_breaker_threshold = (
+                    int(cb_threshold)
+                    if isinstance(cb_threshold, (int, float, str))
+                    else 5
+                )
 
                 rate_limit = config.get("rate_limit", 100)
-                self._rate_limit = int(rate_limit) if isinstance(rate_limit, (int, float, str)) else 100
+                self._rate_limit = (
+                    int(rate_limit)
+                    if isinstance(rate_limit, (int, float, str))
+                    else 100
+                )
 
                 rate_window = config.get("rate_limit_window", 60.0)
-                self._rate_limit_window = float(rate_window) if isinstance(rate_window, (int, float, str)) else 60.0
+                self._rate_limit_window = (
+                    float(rate_window)
+                    if isinstance(rate_window, (int, float, str))
+                    else 60.0
+                )
             return FlextResult[None].ok(None)
         except (ValueError, TypeError, AttributeError) as e:
             return FlextResult[None].fail(f"Configuration import error: {e}")
@@ -891,6 +919,14 @@ class FlextProcessors(FlextMixins):
                 "timeout_seconds",
                 FlextConstants.Defaults.OPERATION_TIMEOUT_SECONDS,
             )
+
+            # Ensure timeout_seconds is not None and is an integer
+            if timeout_seconds is None:
+                timeout_seconds = FlextConstants.Defaults.OPERATION_TIMEOUT_SECONDS
+
+            # Convert to int if it's not already
+            if not isinstance(timeout_seconds, int):
+                timeout_seconds = int(timeout_seconds)
 
             # Validate timeout bounds
             if timeout_seconds < FlextConstants.Container.MIN_TIMEOUT_SECONDS:

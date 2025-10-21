@@ -52,7 +52,7 @@ class TestFlextConstants:
     def test_defaults_constants(self) -> None:
         """Test default constants access."""
         assert FlextConstants.Defaults.TIMEOUT == 30
-        assert FlextConstants.Defaults.PAGE_SIZE == 100
+        assert FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS == 30
 
     def test_utilities_constants(self) -> None:
         """Test utility constants access."""
@@ -255,7 +255,7 @@ class TestFlextConstants:
         assert validation_error == "VALIDATION_ERROR"
 
         # Test another nested path
-        default_timeout = FlextConstants.Defaults.TIMEOUT
+        default_timeout = FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS
         assert default_timeout == 30
 
         # Test deep nested path

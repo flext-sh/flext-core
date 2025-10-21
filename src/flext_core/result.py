@@ -12,6 +12,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
 """
+
 from __future__ import annotations
 
 import types
@@ -24,7 +25,6 @@ from returns.result import Failure, Result, Success, safe
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
-from flext_core.typings import FlextTypes, T_co
 
 
 class FlextResult[T_co]:
@@ -1011,14 +1011,15 @@ class FlextResult[T_co]:
 
     @classmethod
     def from_exception(
-        cls: type[FlextResult[object]],
+        cls,
         func: Callable[[], object],
     ) -> FlextResult[object]:
         """Create a result from a function that might raise exception."""
         try:
-            return cls.ok(func())
+            result = func()
+            return FlextResult[object].ok(result)
         except (TypeError, ValueError, AttributeError, RuntimeError) as e:
-            return cls.fail(str(e))
+            return FlextResult[object].fail(str(e))
 
     # =========================================================================
     # MAYBE INTEROP - Convert between FlextResult and returns.maybe.Maybe
@@ -1064,9 +1065,7 @@ class FlextResult[T_co]:
         return Some[T_co | None](self._data) if self.is_success else Nothing
 
     @classmethod
-    def from_maybe(
-        cls: type[FlextResult[object]], maybe: object
-    ) -> FlextResult[object]:
+    def from_maybe(cls, maybe: object) -> FlextResult[object]:
         """Create FlextResult from returns.maybe.Maybe.
 
         Converts a Maybe monad from the returns library into a FlextResult,
@@ -1115,11 +1114,11 @@ class FlextResult[T_co]:
         if isinstance(maybe, Some):
             # Extract value using unwrap() - safely typed extraction
             # The cast is safe because isinstance check guarantees Some type
-            value: object = cast("object", maybe.unwrap())
-            return cls.ok(value)
+            value = maybe.unwrap()
+            return FlextResult[object].ok(value)
 
         # It's Nothing or extraction failed
-        return cls.fail("No value in Maybe")
+        return FlextResult[object].fail("No value in Maybe")
 
     @classmethod
     def sequence[T](cls, results: list[FlextResult[T]]) -> FlextResult[list[T]]:
@@ -1568,8 +1567,8 @@ class FlextResult[T_co]:
         )
 
     @staticmethod
-    def _flatten_variadic_args(*items: object) -> FlextTypes.ObjectList:
-        flat: FlextTypes.ObjectList = []
+    def _flatten_variadic_args(*items: object) -> list[object]:
+        flat: list[object] = []
         for item in items:
             if FlextResult._is_flattenable_sequence(item) and isinstance(
                 item,

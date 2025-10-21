@@ -11,26 +11,7 @@ This section covers **Layer 2** (Domain) classes that implement Domain-Driven De
 The `FlextModels` module provides base classes for implementing Domain-Driven Design patterns with Pydantic v2.
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
 from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
 from typing import List
 from decimal import Decimal
 
@@ -49,7 +30,7 @@ class User(FlextModels.Entity):
             raise ValueError("Invalid email format")
 
 # Value Object - Immutable value-based objects
-class Address(FlextModels.ValueObject):
+class Address(FlextModels.Value):
     """Address value object."""
     street: str
     city: str
@@ -85,7 +66,7 @@ class Order(FlextModels.AggregateRoot):
 **Key Classes:**
 
 - `FlextModels.Entity` - Base class for entities with identity
-- `FlextModels.ValueObject` - Base class for immutable value objects
+- `FlextModels.Value` - Base class for immutable value objects
 - `FlextModels.AggregateRoot` - Base class for aggregate roots
 
 ### FlextService - Domain Service Base
@@ -93,26 +74,7 @@ class Order(FlextModels.AggregateRoot):
 Base class for domain services that encapsulate business logic.
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import FlextService, FlextResult
 
 class UserService(FlextService):
     """Domain service for user operations."""
@@ -173,26 +135,7 @@ class OrderService(FlextService):
 FlextService now provides automatic context management methods:
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import FlextService, FlextTypes, FlextResult
 
 class PaymentService(FlextService[FlextTypes.Dict]):
     """Service with automatic context enrichment."""
@@ -261,27 +204,8 @@ See `examples/automation_showcase.py` for complete working examples.
 Domain events for decoupled communication between domain objects.
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
 from datetime import datetime
+from decimal import Decimal
 
 class UserCreatedEvent(DomainEvent):
     """Event raised when user is created."""
@@ -319,26 +243,7 @@ Each mixin ships with ready-to-use behavior:
 - `FlextMixins.Versioned` performs optimistic locking by auto-incrementing the `version` field whenever state changes.
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
+from flext_core import FlextModels, FlextMixins
 
 class AuditableEntity(FlextModels.Entity, FlextMixins.Auditable):
     """Entity with audit timestamps managed automatically."""
@@ -371,25 +276,7 @@ class VersionedEntity(FlextModels.Entity, FlextMixins.Versioned):
 Utility functions for common domain operations.
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
+from decimal import Decimal
 from flext_core import FlextUtilities
 
 # Validation helpers
@@ -423,36 +310,17 @@ camel = FlextUtilities.String.to_camel_case("hello_world")  # "helloWorld"
 ### Complete Domain Model Example
 
 ```python
-from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities
 from typing import List
 from decimal import Decimal
 from datetime import datetime
+from flext_core import FlextModels, FlextService, FlextResult
 
 # Value Objects
-class Money(FlextModels.ValueObject):
+class Money(FlextModels.Value):
     amount: Decimal
     currency: str
 
-class Address(FlextModels.ValueObject):
+class Address(FlextModels.Value):
     street: str
     city: str
     postal_code: str

@@ -295,7 +295,7 @@ class TestSerializationUtilities:
                 super().__init__()
                 self.data = "test"
 
-            def dict[str, object](self) -> dict[str, object]:
+            def dict(self) -> dict[str, object]:
                 msg = "Intentional error"
                 raise RuntimeError(msg)
 

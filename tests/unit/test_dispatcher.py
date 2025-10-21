@@ -593,7 +593,9 @@ class TestFlextDispatcherCoverage:
         handler = GetUserQuery()
 
         # Test register_query method
-        result = dispatcher.register_handler("GetUser", handler, handler_mode=FlextConstants.Cqrs.HandlerType.QUERY)
+        result = dispatcher.register_handler(
+            "GetUser", handler, handler_mode=FlextConstants.Cqrs.HandlerType.QUERY
+        )
         assert result.is_success or result.is_failure  # Either outcome is valid
 
     def test_dispatcher_register_function(self) -> None:
@@ -606,7 +608,9 @@ class TestFlextDispatcherCoverage:
 
         # Test register_function method
         result = dispatcher.register_handler(
-            "ProcessData", process_data, handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND
+            "ProcessData",
+            process_data,
+            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         assert result.is_success or result.is_failure  # Either outcome is valid
 
@@ -706,7 +710,7 @@ class TestFlextDispatcherCoverage:
             return x
 
         invalid_request: dict[str, object] = {
-            "handler_mode": cast("str", "invalid_mode"),  # Invalid mode for testing
+            "handler_mode": "invalid_mode",  # Invalid mode for testing
             "message_type": "test",
             "handler": test_handler,
         }

@@ -160,7 +160,7 @@ class ContextManagementService(FlextService[dict[str, object]]):
         print(f"  Correlation ID (with default): {correlation_id}")
 
         # Get all variables (manually collect them)
-        all_vars: dict[str, str | None] = {
+        all_vars = {
             "user_id": FlextContext.Variables.Request.USER_ID.get(),
             "request_id": FlextContext.Variables.Request.REQUEST_ID.get(),
             "service_name": FlextContext.Variables.Service.SERVICE_NAME.get(),

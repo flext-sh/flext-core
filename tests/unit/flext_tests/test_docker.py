@@ -44,9 +44,7 @@ class TestContainerInfo:
         )
 
         assert info.name == "test_container"
-        assert (
-            info.status == ContainerStatus.RUNNING.value
-        )  # Pydantic stores enum as value
+        assert info.status == ContainerStatus.RUNNING.value
         assert info.ports == {"8080/tcp": "8080"}
         assert info.image == "nginx:latest"
         assert not info.container_id
@@ -462,7 +460,9 @@ class TestFlextTestDocker:
             result = docker_manager.start_container("test_container")
 
             assert result.is_failure
-            assert result.error is not None and "Failed to start container" in result.error
+            assert (
+                result.error is not None and "Failed to start container" in result.error
+            )
 
     def test_build_image(self, docker_manager: FlextTestDocker) -> None:
         """Test build_image method."""
@@ -496,7 +496,10 @@ class TestFlextTestDocker:
             result = docker_manager.remove_container("test_container")
 
             assert result.is_failure
-            assert result.error is not None and "Container test_container not found" in result.error
+            assert (
+                result.error is not None
+                and "Container test_container not found" in result.error
+            )
 
     def test_remove_image_success(self, docker_manager: FlextTestDocker) -> None:
         """Test remove_image successfully."""

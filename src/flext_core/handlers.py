@@ -16,6 +16,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import asdict, is_dataclass
 from typing import (
+    Literal,
     cast,
     override,
 )
@@ -150,7 +151,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     validation_error = FlextExceptions.ValidationError(
                         f"Pydantic revalidation failed: {e}",
                         field="pydantic_model",
-                        value=str(message)[: FlextConstants.Defaults.MAX_MESSAGE_LENGTH]
+                        value=str(message)[: FlextConstants.Reliability.MAX_MESSAGE_LENGTH]
                         if hasattr(message, "__str__")
                         else "unknown",
                         correlation_id=f"pydantic_validation_{int(time.time() * 1000)}",
@@ -312,9 +313,17 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         )
 
         self._config_model: FlextModels.Cqrs.Handler = config
+        handler_mode_value = (
+            config.handler_mode.value
+            if hasattr(config.handler_mode, "value")
+            else str(config.handler_mode)
+        )
         self._execution_context = FlextModels.HandlerExecutionContext(
             handler_name=config.handler_name,
-            handler_mode=config.handler_mode,
+            handler_mode=cast(
+                "Literal['command', 'query', 'event', 'operation', 'saga']",
+                handler_mode_value,
+            ),
         )
         self._accepted_message_types = (
             FlextUtilities.TypeChecker.compute_accepted_message_types(type(self))
