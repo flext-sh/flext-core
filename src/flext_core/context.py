@@ -20,7 +20,6 @@ from datetime import UTC, datetime
 from typing import (
     Final,
     Self,
-    cast,
 )
 
 from flext_core.constants import FlextConstants
@@ -323,9 +322,13 @@ class FlextContext:
 
         # Update statistics using model (type-safe, no .get() needed)
         self._statistics.sets += 1
-        operations = cast("dict[str, int]", self._statistics.operations or {})
-        if "set" in operations:
-            operations["set"] += 1
+        if (
+            self._statistics.operations is not None
+            and "set" in self._statistics.operations
+        ):
+            value = self._statistics.operations["set"]
+            if isinstance(value, int):
+                self._statistics.operations["set"] = value + 1
 
         # Execute hooks
         # Note: Hooks should be designed to not raise exceptions.
@@ -366,9 +369,13 @@ class FlextContext:
 
         # Update statistics using model (type-safe, no .get() needed)
         self._statistics.gets += 1
-        operations = cast("dict[str, int]", self._statistics.operations or {})
-        if "get" in operations:
-            operations["get"] += 1
+        if (
+            self._statistics.operations is not None
+            and "get" in self._statistics.operations
+        ):
+            get_value = self._statistics.operations["get"]
+            if isinstance(get_value, int):
+                self._statistics.operations["get"] = get_value + 1
 
         return value
 
@@ -421,9 +428,13 @@ class FlextContext:
 
             # Update statistics using model (type-safe, no .get() needed)
             self._statistics.removes += 1
-            operations = cast("dict[str, int]", self._statistics.operations or {})
-            if "remove" in operations:
-                operations["remove"] += 1
+            if (
+                self._statistics.operations is not None
+                and "remove" in self._statistics.operations
+            ):
+                remove_value = self._statistics.operations["remove"]
+                if isinstance(remove_value, int):
+                    self._statistics.operations["remove"] = remove_value + 1
 
     def clear(self) -> None:
         """Clear all data from the context.
@@ -445,9 +456,13 @@ class FlextContext:
 
         # Update statistics using model (type-safe, no .get() needed)
         self._statistics.clears += 1
-        operations = cast("dict[str, int]", self._statistics.operations or {})
-        if "clear" in operations:
-            operations["clear"] += 1
+        if (
+            self._statistics.operations is not None
+            and "clear" in self._statistics.operations
+        ):
+            clear_value = self._statistics.operations["clear"]
+            if isinstance(clear_value, int):
+                self._statistics.operations["clear"] = clear_value + 1
 
     def keys(self) -> list[str]:
         """Get all keys in the context.
@@ -552,7 +567,7 @@ class FlextContext:
 
         return self
 
-    def clone(self) -> Self:
+    def clone(self) -> FlextContext:
         """Create a clone of this context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -578,7 +593,7 @@ class FlextContext:
         )
         cloned._statistics = self._statistics.model_copy()
 
-        return cast("Self", cloned)
+        return cloned
 
     def get_all_scopes(self) -> FlextTypes.ScopeRegistry:
         """Get all scopes.
@@ -651,12 +666,10 @@ class FlextContext:
 
         # Handle both old flat format and new scoped format
         if isinstance(data, dict):
-            data_values = cast("dict[str, object]", data).values()
+            data_values = data.values()
             if all(isinstance(v, dict) for v in data_values):
                 # New scoped format - restore all scopes
-                for scope_name, scope_data in cast(
-                    "dict[str, dict[str, object]]", data
-                ).items():
+                for scope_name, scope_data in data.items():
                     context._set_in_contextvar(scope_name, scope_data)
             else:
                 # Old flat format - put everything in global scope
@@ -757,7 +770,7 @@ class FlextContext:
         if isinstance(self._metadata, FlextModels.ContextMetadata):
             result = self._metadata.model_dump()
             # Flatten custom_fields into top-level dict for backward compatibility
-            custom_fields = cast("dict[str, object]", result.pop("custom_fields", {}))
+            custom_fields = result.pop("custom_fields", {})
             result.update(custom_fields)
             return result
         return {}
@@ -832,10 +845,9 @@ class FlextContext:
         if isinstance(self._metadata, FlextModels.ContextMetadata):
             metadata_dict = self._metadata.model_dump()
             # Flatten custom_fields into top-level (matching get_all_metadata behavior)
-            custom_fields = cast(
-                "dict[str, object]", metadata_dict.pop("custom_fields", {})
-            )
-            metadata_dict.update(custom_fields)
+            custom_fields = metadata_dict.pop("custom_fields", {})
+            if isinstance(custom_fields, dict):
+                metadata_dict.update(custom_fields)
 
         statistics_dict = (
             self._statistics.model_dump()
@@ -965,7 +977,8 @@ class FlextContext:
         @staticmethod
         def get_correlation_id() -> str | None:
             """Get current correlation ID."""
-            return FlextContext.Variables.Correlation.CORRELATION_ID.get()
+            value = FlextContext.Variables.Correlation.CORRELATION_ID.get()
+            return value if isinstance(value, str) else None
 
         @staticmethod
         def set_correlation_id(correlation_id: str) -> None:
@@ -995,7 +1008,8 @@ class FlextContext:
         @staticmethod
         def get_parent_correlation_id() -> str | None:
             """Get parent correlation ID."""
-            return FlextContext.Variables.Correlation.PARENT_CORRELATION_ID.get()
+            value = FlextContext.Variables.Correlation.PARENT_CORRELATION_ID.get()
+            return value if isinstance(value, str) else None
 
         @staticmethod
         def set_parent_correlation_id(parent_id: str) -> None:
@@ -1064,7 +1078,7 @@ class FlextContext:
         def inherit_correlation() -> Generator[str | None]:
             """Inherit or create correlation ID."""
             existing_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
-            if existing_id:
+            if isinstance(existing_id, str):
                 # Use existing correlation
                 yield existing_id
             else:
@@ -1082,7 +1096,8 @@ class FlextContext:
         @staticmethod
         def get_service_name() -> str | None:
             """Get current service name."""
-            return FlextContext.Variables.Service.SERVICE_NAME.get()
+            value = FlextContext.Variables.Service.SERVICE_NAME.get()
+            return value if isinstance(value, str) else None
 
         @staticmethod
         def set_service_name(service_name: str) -> None:
@@ -1095,7 +1110,8 @@ class FlextContext:
         @staticmethod
         def get_service_version() -> str | None:
             """Get current service version."""
-            return FlextContext.Variables.Service.SERVICE_VERSION.get()
+            value = FlextContext.Variables.Service.SERVICE_VERSION.get()
+            return value if isinstance(value, str) else None
 
         @staticmethod
         def set_service_version(version: str) -> None:
@@ -1194,7 +1210,7 @@ class FlextContext:
         @staticmethod
         def get_user_id() -> str | None:
             """Get current user ID."""
-            return FlextContext.Variables.Request.USER_ID.get()
+            return FlextContext.Variables.Request.USER_ID.get()  # type: ignore[return-value]
 
         @staticmethod
         def set_user_id(user_id: str) -> None:
@@ -1207,7 +1223,7 @@ class FlextContext:
         @staticmethod
         def get_operation_name() -> str | None:
             """Get the current operation name from context."""
-            return FlextContext.Variables.Performance.OPERATION_NAME.get()
+            return FlextContext.Variables.Performance.OPERATION_NAME.get()  # type: ignore[return-value]
 
         @staticmethod
         def set_operation_name(operation_name: str) -> None:
@@ -1220,7 +1236,7 @@ class FlextContext:
         @staticmethod
         def get_request_id() -> str | None:
             """Get current request ID from context."""
-            return FlextContext.Variables.Request.REQUEST_ID.get()
+            return FlextContext.Variables.Request.REQUEST_ID.get()  # type: ignore[return-value]
 
         @staticmethod
         def set_request_id(request_id: str) -> None:
@@ -1293,7 +1309,7 @@ class FlextContext:
         @staticmethod
         def get_operation_start_time() -> datetime | None:
             """Get operation start time from context."""
-            return FlextContext.Variables.Performance.OPERATION_START_TIME.get()
+            return FlextContext.Variables.Performance.OPERATION_START_TIME.get()  # type: ignore[return-value]
 
         @staticmethod
         def set_operation_start_time(
@@ -1307,7 +1323,7 @@ class FlextContext:
         @staticmethod
         def get_operation_metadata() -> dict[str, object] | None:
             """Get operation metadata from context."""
-            return FlextContext.Variables.Performance.OPERATION_METADATA.get()
+            return FlextContext.Variables.Performance.OPERATION_METADATA.get()  # type: ignore[return-value]
 
         @staticmethod
         def set_operation_metadata(metadata: dict[str, object]) -> None:
@@ -1317,8 +1333,9 @@ class FlextContext:
         @staticmethod
         def add_operation_metadata(key: str, value: object) -> None:
             """Add single metadata entry to operation context."""
-            current_metadata = (
-                FlextContext.Variables.Performance.OPERATION_METADATA.get() or {}
+            metadata_value = FlextContext.Variables.Performance.OPERATION_METADATA.get()
+            current_metadata: dict[str, object] = (
+                metadata_value if isinstance(metadata_value, dict) else {}
             )
             current_metadata[key] = value
             FlextContext.Variables.Performance.OPERATION_METADATA.set(current_metadata)
@@ -1479,10 +1496,12 @@ class FlextContext:
         @staticmethod
         def ensure_correlation_id() -> str:
             """Ensure correlation ID exists, creating one if needed."""
-            correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
-            if not correlation_id:
-                correlation_id = FlextContext.Correlation.generate_correlation_id()
-            return correlation_id
+            correlation_id_value = (
+                FlextContext.Variables.Correlation.CORRELATION_ID.get()
+            )
+            if isinstance(correlation_id_value, str) and correlation_id_value:
+                return correlation_id_value
+            return FlextContext.Correlation.generate_correlation_id()
 
         @staticmethod
         def has_correlation_id() -> bool:

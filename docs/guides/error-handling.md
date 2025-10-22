@@ -358,14 +358,13 @@ if result.is_failure:
 
 print(f"Result: {result.unwrap()}")  # "Fallback operation succeeded"
 
-# Or use recover pattern
-result = (
-    risky_operation()
-    .or_else(lambda e: {
-        print(f"Failed with: {e}, trying fallback...")
-        return fallback_operation()
-    })
-)
+# Or use lash pattern (error handling with FlextResult)
+def handle_failure(error: str) -> FlextResult[str]:
+    """Handle failure with fallback."""
+    print(f"Failed with: {error}, trying fallback...")
+    return fallback_operation()
+
+result = risky_operation().lash(handle_failure)
 ```
 
 ### Pattern 5: Batch Operations

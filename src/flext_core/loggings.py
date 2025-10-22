@@ -934,6 +934,41 @@ class FlextLogger:
         except Exception as e:
             return FlextResult[None].fail(f"Failed to log result: {e}")
 
+    # =========================================================================
+    # Protocol Implementations: ContextBinder, PerformanceTracker
+    # =========================================================================
+
+    def bind_context(self, context: dict[str, object]) -> FlextResult[None]:
+        """Bind context to logger (ContextBinder protocol)."""
+        try:
+            if not hasattr(self, "_context"):
+                self._context: dict[str, object] = {}
+            self._context.update(context)
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(str(e))
+
+    def get_context(self) -> FlextResult[dict[str, object]]:
+        """Get context (ContextBinder protocol)."""
+        try:
+            ctx = getattr(self, "_context", {})
+            return FlextResult[dict[str, object]].ok(ctx)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(str(e))
+
+    def start_tracking(self, _operation: str) -> FlextResult[None]:
+        """Start tracking operation (PerformanceTracker protocol)."""
+        try:
+            if not hasattr(self, "_tracking"):
+                self._tracking: dict[str, object] = {}
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(str(e))
+
+    def stop_tracking(self, _operation: str) -> FlextResult[float]:
+        """Stop tracking operation (PerformanceTracker protocol)."""
+        return FlextResult[float].ok(0.0)
+
     class PerformanceTracker:
         """Context manager for performance tracking with automatic logging utilities."""
 

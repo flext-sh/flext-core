@@ -570,11 +570,11 @@ class FlextBus(
                 try:
                     return int(order_value)
                 except ValueError:
-                    return FlextConstants.Config.DEFAULT_MIDDLEWARE_ORDER
+                    return FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
             return (
                 int(order_value)
                 if isinstance(order_value, int)
-                else FlextConstants.Config.DEFAULT_MIDDLEWARE_ORDER
+                else FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
             )
 
         sorted_middleware = sorted(self._middleware_configs, key=get_order)
@@ -964,8 +964,41 @@ class FlextBus(
         }
         return self.publish_event(event)
 
+    # Direct class access - no legacy aliases
 
-# Direct class access - no legacy aliases
+    # =========================================================================
+    # Protocol Implementations: CacheManager, MiddlewareChain, EventPublisher
+    # =========================================================================
+
+    def get_cached(self, key: str) -> FlextResult[object]:
+        """Get cached value (CacheManager protocol)."""
+        try:
+            cache = getattr(self, "_cache", {})
+            if key in cache:
+                return FlextResult[object].ok(cache[key])
+            return FlextResult[object].fail("Not cached")
+        except Exception as e:
+            return FlextResult[object].fail(str(e))
+
+    def set_cached(self, key: str, value: object) -> FlextResult[None]:
+        """Set cached value (CacheManager protocol)."""
+        try:
+            if not hasattr(self, "_cache"):
+                self._cache = FlextBus._Cache()
+            self._cache.put(key, FlextResult[object].ok(value))
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(str(e))
+
+    def clear_cache(self) -> FlextResult[None]:
+        """Clear cache (CacheManager protocol)."""
+        try:
+            if hasattr(self, "_cache"):
+                self._cache.clear()
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(str(e))
+
 
 __all__: list[str] = [
     "FlextBus",

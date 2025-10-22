@@ -33,7 +33,6 @@ from flext_core import (
     FlextExceptions,
     FlextLogger,
     FlextResult,
-    FlextRuntime,
     FlextService,
 )
 
@@ -591,10 +590,9 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         print(f"  DEFAULT_TIMEOUT: {FlextConstants.Defaults.TIMEOUT}s")
         print(f"  DEFAULT_MAX_WORKERS: {FlextConstants.Processing.DEFAULT_MAX_WORKERS}")
 
-        # Validate configuration values using FlextRuntime type guards
+        # Database URL is validated by Pydantic v2 HttpUrl type
         if config.database_url:
-            is_valid_url = FlextRuntime.is_valid_url(config.database_url)
-            print(f"✅ Database URL validation: {is_valid_url}")
+            print(f"✅ Database URL: {config.database_url} (validated by Pydantic v2)")
 
         # Log level validation
         is_valid_log_level = config.log_level in FlextConstants.Logging.VALID_LEVELS

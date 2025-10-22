@@ -147,7 +147,7 @@ class FlextConstants:
     1. Direct namespace access:
         >>> from flext_core import FlextConstants
         >>> error = FlextConstants.Errors.VALIDATION_ERROR
-        >>> timeout = FlextConstants.Config.DEFAULT_TIMEOUT
+        >>> timeout = FlextConstants.Settings.DEFAULT_TIMEOUT
 
     2. Dynamic access via __getitem__:
         >>> const = FlextConstants["Errors.VALIDATION_ERROR"]
@@ -158,8 +158,8 @@ class FlextConstants:
         >>> def process_error(code: FlextConstants.ErrorCategory) -> None: ...
 
     4. StrEnum access for configuration:
-        >>> env = FlextConstants.Config.Environment.PRODUCTION
-        >>> log_level = FlextConstants.Config.LogLevel.INFO
+        >>> env = FlextConstants.Settings.Environment.PRODUCTION
+        >>> log_level = FlextConstants.Settings.LogLevel.INFO
 
     5. Error code patterns:
         >>> validation_errors = [
@@ -217,7 +217,7 @@ class FlextConstants:
         ... ]
 
     2. Configuration profile constants:
-        >>> if env == FlextConstants.Config.Environment.PRODUCTION:
+        >>> if env == FlextConstants.Settings.Environment.PRODUCTION:
         ...     timeout = FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS
 
     3. Validation limit application:
@@ -235,7 +235,7 @@ class FlextConstants:
         ... ]
 
     6. Platform-specific constant selection:
-        >>> if FlextConstants.Config.Environment.DEVELOPMENT:
+        >>> if FlextConstants.Settings.Environment.DEVELOPMENT:
         ...     log_level = FlextConstants.Logging.DEFAULT_LEVEL_DEVELOPMENT
         ... else:
         ...     log_level = FlextConstants.Logging.DEFAULT_LEVEL_PRODUCTION
@@ -266,7 +266,7 @@ class FlextConstants:
         >>>
         >>> # Use in configuration
         >>> timeout = FlextConstants.Network.DEFAULT_TIMEOUT
-        >>> env = FlextConstants.Config.Environment.PRODUCTION
+        >>> env = FlextConstants.Settings.Environment.PRODUCTION
         >>>
         >>> # Use in error handling
         >>> if result.error == FlextConstants.Errors.VALIDATION_ERROR:
@@ -297,7 +297,7 @@ class FlextConstants:
         Example:
             >>> FlextConstants.Errors.VALIDATION_ERROR
             'VALIDATION_ERROR'
-            >>> FlextConstants.Config.DEFAULT_TIMEOUT
+            >>> FlextConstants.Settings.DEFAULT_TIMEOUT
             30
 
         """
@@ -507,8 +507,8 @@ class FlextConstants:
             "_cached_value",
         )
 
-    class Config:
-        """Configuration defaults and limits (renamed from Config to improve naming clarity)."""
+    class Settings:
+        """Configuration defaults and limits (clear naming to avoid Pydantic v1 Config confusion)."""
 
         MAX_WORKERS_THRESHOLD: Final[int] = 50
 
@@ -537,9 +537,6 @@ class FlextConstants:
             PRODUCTION = "production"
             TESTING = "testing"
             LOCAL = "local"
-
-    # Alias for clarity - this is NOT Pydantic code, despite the Config name
-    Configuration = Config
 
     class Platform:
         """Platform-specific constants for HTTP, database, and file types."""

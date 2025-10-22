@@ -33,8 +33,6 @@ from flext_core.typings import (
     CallableInputT,
     CallableOutputT,
     FlextTypes,
-    MessageT_contra,
-    ResultT,
 )
 from flext_core.utilities import FlextUtilities
 
@@ -151,7 +149,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     validation_error = FlextExceptions.ValidationError(
                         f"Pydantic revalidation failed: {e}",
                         field="pydantic_model",
-                        value=str(message)[: FlextConstants.Reliability.MAX_MESSAGE_LENGTH]
+                        value=str(message)[: FlextConstants.Defaults.MAX_MESSAGE_LENGTH]
                         if hasattr(message, "__str__")
                         else "unknown",
                         correlation_id=f"pydantic_validation_{int(time.time() * 1000)}",
@@ -731,6 +729,110 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 return True
 
         return CallableHandler(config=config)
+
+    # =========================================================================
+    # Protocol Implementation: MessageValidator, MetricsCollector, ExecutionContextManager
+    # =========================================================================
+
+    def validate_message(self, message: MessageT_contra) -> FlextResult[None]:
+        """Validate message (MessageValidator protocol).
+
+        Part of MessageValidator protocol implementation.
+
+        Args:
+            message: Message to validate
+
+        Returns:
+            FlextResult[None]: Validation success or error
+
+        """
+        return self.validate(message)
+
+    def record_metric(self, name: str, value: float) -> FlextResult[None]:
+        """Record metric (MetricsCollector protocol).
+
+        Part of MetricsCollector protocol implementation.
+
+        Args:
+            name: Metric name
+            value: Metric value
+
+        Returns:
+            FlextResult[None]: Success or error
+
+        """
+        try:
+            if not hasattr(self, "_metrics"):
+                self._metrics: dict[str, float] = {}
+            self._metrics[name] = value
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(
+                f"Metric recording failed: {e}",
+                error_code="METRICS_ERROR",
+            )
+
+    def get_metrics(self) -> FlextResult[dict[str, object]]:
+        """Get metrics (MetricsCollector protocol).
+
+        Part of MetricsCollector protocol implementation.
+
+        Returns:
+            FlextResult[dict]: Metrics dictionary or error
+
+        """
+        try:
+            metrics = getattr(self, "_metrics", {})
+            return FlextResult[dict[str, object]].ok(metrics)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Metrics retrieval failed: {e}",
+                error_code="METRICS_ERROR",
+            )
+
+    def push_context(self, context: dict[str, object]) -> FlextResult[None]:
+        """Push context (ExecutionContextManager protocol).
+
+        Part of ExecutionContextManager protocol implementation.
+
+        Args:
+            context: Context dictionary
+
+        Returns:
+            FlextResult[None]: Success or error
+
+        """
+        try:
+            if not hasattr(self, "_context_stack"):
+                self._context_stack: list[dict[str, object]] = []
+            self._context_stack.append(context)
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(
+                f"Context push failed: {e}",
+                error_code="CONTEXT_ERROR",
+            )
+
+    def pop_context(self) -> FlextResult[None]:
+        """Pop context (ExecutionContextManager protocol).
+
+        Part of ExecutionContextManager protocol implementation.
+
+        Returns:
+            FlextResult[None]: Success or error
+
+        """
+        try:
+            if not hasattr(self, "_context_stack"):
+                self._context_stack = []
+            if self._context_stack:
+                self._context_stack.pop()
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(
+                f"Context pop failed: {e}",
+                error_code="CONTEXT_ERROR",
+            )
 
     class Metrics:
         """Metrics logging utilities for handlers."""

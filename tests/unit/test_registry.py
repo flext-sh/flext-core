@@ -817,13 +817,12 @@ class TestFlextRegistry:
         summary2: FlextRegistry.Summary = result2.unwrap()
         summary3: FlextRegistry.Summary = result3.unwrap()
 
-        # Get the registration counts
+        # Verify total registrations across all results
         from typing import cast
 
         count1 = cast("int", summary1.successful_registrations)
         count2 = cast("int", summary2.successful_registrations)
         count3 = cast("int", summary3.successful_registrations)
-
         assert count1 + count2 + count3 == 3
 
     def test_registry_summary_functionality(self) -> None:

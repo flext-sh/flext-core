@@ -43,10 +43,7 @@ from flext_core.result import FlextResult
 from flext_core.typings import (
     FlextTypes,
     T_Repository_contra,
-    T_ResultProtocol,
-    T_Service_co,
     TInput_Handler_contra,
-    TResult_Handler_co,
 )
 
 
@@ -384,8 +381,70 @@ class FlextProtocols:
     """
 
     # =========================================================================
-    # FOUNDATION LAYER - Core protocols used within flext-core
+    # FOUNDATION LAYER (Layer 0) - Core protocols used within flext-core
     # =========================================================================
+
+    @runtime_checkable
+    class Monad(Protocol):
+        """Protocol for monadic types enabling functional composition.
+
+        Monads provide bind/flat_map operations for composable error handling.
+        FlextResult[T] implements this protocol for railway-oriented patterns.
+
+        Used in: result.py (FlextResult monad operations)
+
+        Composition Example:
+            result = FlextResult[User].ok(user)
+            composed = (
+                result
+                .flat_map(save_to_db)
+                .map(format_response)
+                .map_error(handle_error)
+            )
+        """
+
+        @abstractmethod
+        def bind(self, func: Callable[[object], object]) -> object:
+            """Monadic bind operation (flat_map equivalent).
+
+            Args:
+                func: Function returning a monad
+
+            Returns:
+                Monad[T]: Result of applying function to wrapped value
+
+            """
+            ...
+
+        @abstractmethod
+        def flat_map(self, func: Callable[[object], object]) -> object:
+            """Monadic flat_map operation (bind equivalent).
+
+            Args:
+                func: Function returning a monad
+
+            Returns:
+                Monad[T]: Result of applying function to wrapped value
+
+            """
+            ...
+
+        @abstractmethod
+        def map(self, func: Callable[[object], object]) -> object:
+            """Functor map operation (transform wrapped value).
+
+            Args:
+                func: Function transforming wrapped value
+
+            Returns:
+                Monad[T]: Monad with transformed value
+
+            """
+            ...
+
+        def filter(self, predicate: Callable[[object], bool]) -> object:
+            """Filter monad based on predicate (optional)."""
+            ...
 
     @runtime_checkable
     class HasModelDump(Protocol):
@@ -472,29 +531,114 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class HasTimestamps(Protocol):
-        """Protocol for objects with timestamp attributes.
+    class TypeValidator(Protocol):
+        """Protocol for type validation with constraints.
 
-        Provides standardized timestamp tracking for audit and versioning.
-        Used for entities that need creation/modification timestamps.
+        Provides type-safe validation with constraints for generic types.
+        Used by FlextContainer for runtime type checking.
 
-        Used in: models with timestamp fields
+        Used in: container.py (type validation in get_typed)
         """
 
-        created_at: str | int | float
-        updated_at: str | int | float
+        @abstractmethod
+        def validate_type(
+            self, value: object, expected_type: type
+        ) -> FlextResult[object]:
+            """Validate value matches expected type.
+
+            Args:
+                value: Value to validate
+                expected_type: Expected type for validation
+
+            Returns:
+                FlextResult[T]: Validated value or error
+
+            """
+            ...
+
+        @abstractmethod
+        def is_valid_type(self, value: object, expected_type: type) -> bool:
+            """Check if value is valid for expected type.
+
+            Args:
+                value: Value to check
+                expected_type: Expected type
+
+            Returns:
+                bool: True if valid, False otherwise
+
+            """
+            ...
 
     @runtime_checkable
-    class HasHandlerType(Protocol):
-        """Protocol for handlers with type identification.
+    class ServiceRegistry(Protocol):
+        """Protocol for service registry with typed access.
 
-        Allows handlers to declare their type (command/query) for routing
-        and middleware processing.
+        Provides type-safe service registration and retrieval with
+        support for factory functions and dependency injection.
 
-        Used in: handler implementations
+        Used in: container.py (FlextContainer service management)
         """
 
-        handler_type: str
+        @abstractmethod
+        def register_service(self, name: str, service: object) -> FlextResult[None]:
+            """Register service with given name.
+
+            Args:
+                name: Service identifier
+                service: Service instance
+
+            Returns:
+                FlextResult[None]: Success or registration error
+
+            """
+            ...
+
+        @abstractmethod
+        def get_service(self, name: str) -> FlextResult[object]:
+            """Retrieve registered service.
+
+            Args:
+                name: Service identifier
+
+            Returns:
+                FlextResult[T]: Service instance or error
+
+            """
+            ...
+
+        @abstractmethod
+        def has_service(self, name: str) -> bool:
+            """Check if service is registered.
+
+            Args:
+                name: Service identifier
+
+            Returns:
+                bool: True if registered
+
+            """
+            ...
+
+    @runtime_checkable
+    class FactoryProvider(Protocol):
+        """Protocol for factory functions creating instances.
+
+        Provides factory-based service creation with lazy instantiation.
+        Used by FlextContainer for factory registration patterns.
+
+        Used in: container.py (register_factory, factory retrieval)
+        """
+
+        @abstractmethod
+        def create_instance(self) -> FlextResult[object]:
+            """Create new instance using factory.
+
+            Returns:
+                FlextResult[T]: Created instance or error
+
+            """
+            ...
 
     @runtime_checkable
     class Configurable(Protocol):
@@ -521,109 +665,11 @@ class FlextProtocols:
             ...
 
     # =========================================================================
-    # CIRCULAR IMPORT PREVENTION PROTOCOLS
-    # =========================================================================
-    # These protocols prevent circular dependencies between core modules
-    # by providing interfaces without importing concrete implementations.
-
-    @runtime_checkable
-    class ResultProtocol(Protocol, Generic[T_ResultProtocol]):
-        """Protocol for FlextResult-like types (prevents circular imports).
-
-        Defines the interface for result types without importing the concrete
-        FlextResult class, preventing circular dependencies between config,
-        models, utilities, and result modules.
-
-        Note: For internal use only. Domain libraries should use FlextResult directly.
-        """
-
-        @property
-        def is_success(self) -> bool:
-            """Check if result represents success."""
-            ...
-
-        @property
-        def is_failure(self) -> bool:
-            """Check if result represents failure."""
-            ...
-
-        @property
-        def value(self) -> T_ResultProtocol:
-            """Get the success value (may raise if failure)."""
-            ...
-
-        @property
-        def error(self) -> str | None:
-            """Get the error message if failure, None otherwise."""
-            ...
-
-        def unwrap(self) -> T_ResultProtocol:
-            """Extract value, raising exception if failure."""
-            ...
-
-        def unwrap_or(self, default: T_ResultProtocol) -> T_ResultProtocol:
-            """Extract value or return default if failure."""
-            ...
-
-    @runtime_checkable
-    class ConfigProtocol(Protocol):
-        """Protocol for FlextConfig-like types (prevents circular imports).
-
-        Defines the interface for configuration objects without importing the
-        concrete FlextConfig class, preventing circular dependencies.
-
-        Note: For internal use only. Domain libraries should use FlextConfig directly.
-        """
-
-        @property
-        def debug(self) -> bool:
-            """Check if debug mode is enabled."""
-            ...
-
-        @property
-        def log_level(self) -> str:
-            """Get logging level."""
-            ...
-
-    @runtime_checkable
-    class ModelProtocol(HasModelDump, Protocol):
-        """Protocol for domain model types (prevents circular imports).
-
-        Extends HasModelDump with validation and JSON serialization.
-        Prevents circular dependencies between models, config, and utilities.
-
-        Inheritance: HasModelDump → ModelProtocol
-
-        Note: For internal use only. Domain libraries should use FlextModels directly.
-        """
-
-        def validate(self) -> object:
-            """Validate model business rules.
-
-            Returns:
-                FlextResult[None]: Success if valid, failure with error details
-
-            """
-            ...
-
-        def model_dump_json(self, **kwargs: object) -> str:
-            """Dump model to JSON string (Pydantic compatibility).
-
-            Args:
-                **kwargs: Additional serialization options
-
-            Returns:
-                JSON string representation of the model
-
-            """
-            ...
-
-    # =========================================================================
-    # DOMAIN LAYER - Service and Repository protocols
+    # DOMAIN LAYER (Layer 1) - Service and Repository protocols
     # =========================================================================
 
     @runtime_checkable
-    class Service(Protocol, Generic[T_Service_co]):
+    class Service(Protocol):
         """Base domain service protocol.
 
         Provides the foundation for all domain services in the FLEXT ecosystem.
@@ -640,7 +686,7 @@ class FlextProtocols:
             """Execute the main domain operation.
 
             Returns:
-                FlextResult[T_Service_co]: Success with domain result or failure
+                FlextResult[object]: Success with domain result or failure
 
             """
             ...
@@ -714,12 +760,121 @@ class FlextProtocols:
             """Enumerate entities for modernization-aligned queries."""
             ...
 
+    @runtime_checkable
+    class ExecutableService(Protocol):
+        """Protocol for services with enhanced execution capabilities.
+
+        Extends Service protocol with execution context management,
+        timeout support, and error handling patterns.
+
+        Used in: service.py (FlextService enhanced execution)
+        """
+
+        @abstractmethod
+        def execute_operation(self) -> FlextResult[object]:
+            """Execute operation with full validation and context.
+
+            Returns:
+                FlextResult[T]: Operation result with rich error context
+
+            """
+            ...
+
+        @abstractmethod
+        def execute_with_validation(self) -> FlextResult[object]:
+            """Execute with comprehensive business rule validation.
+
+            Returns:
+                FlextResult[T]: Result or validation error
+
+            """
+            ...
+
+    @runtime_checkable
+    class ContextAware(Protocol):
+        """Protocol for context-aware domain operations.
+
+        Enables services to manage execution context including user,
+        correlation IDs, and operation metadata.
+
+        Used in: service.py (FlextService context management)
+        """
+
+        @abstractmethod
+        def with_correlation_id(self, correlation_id: str) -> FlextResult[None]:
+            """Set correlation ID for distributed tracing.
+
+            Args:
+                correlation_id: Unique trace identifier
+
+            Returns:
+                FlextResult[None]: Success or context error
+
+            """
+            ...
+
+        @abstractmethod
+        def with_user_context(self, user_id: str) -> FlextResult[None]:
+            """Set user context for audit trail.
+
+            Args:
+                user_id: User identifier
+
+            Returns:
+                FlextResult[None]: Success or context error
+
+            """
+            ...
+
+        @abstractmethod
+        def get_context(self: object) -> dict[str, object]:
+            """Retrieve current execution context.
+
+            Returns:
+                dict: Context dictionary with all identifiers
+
+            """
+            ...
+
+    @runtime_checkable
+    class TimeoutSupport(Protocol):
+        """Protocol for operations with timeout enforcement.
+
+        Enables services to execute operations with timeout constraints
+        and cancellation support.
+
+        Used in: service.py (FlextService timeout handling)
+        """
+
+        @abstractmethod
+        def with_timeout(self, seconds: float) -> FlextResult[None]:
+            """Set execution timeout in seconds.
+
+            Args:
+                seconds: Timeout duration
+
+            Returns:
+                FlextResult[None]: Success or configuration error
+
+            """
+            ...
+
+        @abstractmethod
+        def get_remaining_time(self: object) -> float:
+            """Get remaining execution time.
+
+            Returns:
+                float: Seconds remaining before timeout
+
+            """
+            ...
+
     # =========================================================================
-    # APPLICATION LAYER - Command/Query patterns
+    # APPLICATION LAYER (Layer 2) - Command/Query patterns
     # =========================================================================
 
     @runtime_checkable
-    class Handler(Protocol, Generic[TInput_Handler_contra, TResult_Handler_co]):
+    class Handler(Protocol, Generic[TInput_Handler_contra]):
         """Application handler protocol for CQRS patterns.
 
         Used in: handlers.py (FlextHandlers implementation)
@@ -736,7 +891,7 @@ class FlextProtocols:
                 message: The input message to process
 
             Returns:
-                FlextResult[TResult_Handler_co]: Success with result or failure
+                FlextResult[object]: Success with result or failure
 
             """
             ...
@@ -819,111 +974,787 @@ class FlextProtocols:
             """Process command/query through middleware chain."""
             ...
 
-    # =========================================================================
-    # INFRASTRUCTURE LAYER - External integrations
-    # =========================================================================
-
     @runtime_checkable
-    class LoggerProtocol(Protocol):
-        """Infrastructure logging protocol.
+    class MessageValidator(Protocol):
+        """Protocol for command/query message validation.
 
-        Provides standardized logging interface for infrastructure components.
+        Provides comprehensive validation for CQRS messages before
+        execution. Used by handlers to validate input.
 
-        Used in: infrastructure logging implementations
+        Used in: handlers.py (FlextHandlers message validation)
         """
 
-        def log(
+        @abstractmethod
+        def validate_message(self, message: object) -> FlextResult[None]:
+            """Validate message structure and content.
+
+            Args:
+                message: Message to validate
+
+            Returns:
+                FlextResult[None]: Success or validation error details
+
+            """
+            ...
+
+        @abstractmethod
+        def get_validation_errors(self: object) -> list[str]:
+            """Get detailed validation error messages.
+
+            Returns:
+                list[str]: List of validation error descriptions
+
+            """
+            ...
+
+    @runtime_checkable
+    class MetricsCollector(Protocol):
+        """Protocol for collecting handler execution metrics.
+
+        Tracks handler performance including execution time, error rates,
+        and success rates for observability.
+
+        Used in: handlers.py (FlextHandlers metrics collection)
+        """
+
+        @abstractmethod
+        def record_execution(
             self,
-            level: str,
-            message: str,
-            context: dict[str, object] | None = None,
-        ) -> None:
-            """Log a message with optional context."""
+            handler_name: str,
+            duration_ms: float,
+            *,
+            success: bool,
+        ) -> FlextResult[None]:
+            """Record handler execution metrics.
+
+            Args:
+                handler_name: Name of executed handler
+                duration_ms: Execution time in milliseconds
+                success: Whether execution succeeded
+
+            Returns:
+                FlextResult[None]: Success or recording error
+
+            """
             ...
 
-        def debug(self, message: str, context: dict[str, object] | None = None) -> None:
-            """Log debug message."""
-            ...
+        @abstractmethod
+        def get_metrics(self: object) -> dict[str, object]:
+            """Get collected metrics summary.
 
-        def info(self, message: str, context: dict[str, object] | None = None) -> None:
-            """Log info message."""
-            ...
+            Returns:
+                dict: Metrics including execution counts and durations
 
-        def warning(
-            self, message: str, context: dict[str, object] | None = None
-        ) -> None:
-            """Log warning message."""
-            ...
-
-        def error(self, message: str, context: dict[str, object] | None = None) -> None:
-            """Log error message."""
+            """
             ...
 
     @runtime_checkable
-    class Connection(Protocol):
-        """Generic connection protocol for external systems.
+    class ExecutionContextManager(Protocol):
+        """Protocol for managing handler execution context.
 
-        Base protocol for database, LDAP, API, and other connections.
-        Domain libraries extend with specific connection operations.
+        Manages execution context lifecycle including correlation IDs,
+        user context, and operation tracking.
 
-        Domain Extensions:
-            - FlextLdapProtocols.Ldap.LdapConnectionProtocol
-            - Database connection protocols
-            - API client connection protocols
+        Used in: handlers.py (FlextHandlers context management)
         """
 
-        def test_connection(self: object) -> object:
-            """Test connection to external system."""
+        @abstractmethod
+        def setup_context(self) -> FlextResult[None]:
+            """Set up execution context before handler execution.
+
+            Returns:
+                FlextResult[None]: Success or setup error
+
+            """
             ...
 
-        def get_connection_string(self: object) -> str:
-            """Get connection string for external system."""
+        @abstractmethod
+        def cleanup_context(self) -> FlextResult[None]:
+            """Clean up execution context after handler execution.
+
+            Returns:
+                FlextResult[None]: Success or cleanup error
+
+            """
             ...
 
-        def close_connection(self: object) -> object:
-            """Close connection to external system."""
+    @runtime_checkable
+    class CacheManager(Protocol):
+        """Protocol for handler execution result caching.
+
+        Manages caching of handler results with TTL and invalidation
+        support for performance optimization.
+
+        Used in: bus.py (FlextBus command result caching)
+        """
+
+        @abstractmethod
+        def put(self, key: str, value: object, ttl_seconds: int) -> FlextResult[None]:
+            """Store value in cache with TTL.
+
+            Args:
+                key: Cache key identifier
+                value: Value to cache
+                ttl_seconds: Time to live in seconds
+
+            Returns:
+                FlextResult[None]: Success or cache error
+
+            """
+            ...
+
+        @abstractmethod
+        def get(self, key: str) -> FlextResult[object | None]:
+            """Retrieve value from cache.
+
+            Args:
+                key: Cache key identifier
+
+            Returns:
+                FlextResult[T | None]: Cached value or None if expired
+
+            """
+            ...
+
+        @abstractmethod
+        def invalidate(self, key: str) -> FlextResult[None]:
+            """Invalidate cache entry.
+
+            Args:
+                key: Cache key identifier
+
+            Returns:
+                FlextResult[None]: Success or invalidation error
+
+            """
+            ...
+
+    @runtime_checkable
+    class MiddlewareChain(Protocol):
+        """Protocol for composable middleware pipeline.
+
+        Provides middleware composition and execution chain management
+        for processing commands/queries.
+
+        Used in: bus.py (FlextBus middleware processing)
+        """
+
+        @abstractmethod
+        def add_middleware(
+            self, middleware: FlextProtocols.Middleware
+        ) -> FlextResult[None]:
+            """Add middleware to processing chain.
+
+            Args:
+                middleware: Middleware to add
+
+            Returns:
+                FlextResult[None]: Success or chain error
+
+            """
+            ...
+
+        @abstractmethod
+        def execute_chain(
+            self,
+            command_or_query: object,
+            final_handler: Callable[[object], FlextResult[object]],
+        ) -> FlextResult[object]:
+            """Execute full middleware chain.
+
+            Args:
+                command_or_query: Message to process
+                final_handler: Final handler in chain
+
+            Returns:
+                FlextResult: Result from processing chain
+
+            """
+            ...
+
+    @runtime_checkable
+    class RegistrationTracker(Protocol):
+        """Protocol for tracking handler registrations.
+
+        Tracks handler registration changes, updates, and provides
+        registration history for debugging and auditing.
+
+        Used in: registry.py (FlextRegistry tracking)
+        """
+
+        @abstractmethod
+        def on_registered(
+            self, message_type: type, handler: object
+        ) -> FlextResult[None]:
+            """Track handler registration event.
+
+            Args:
+                message_type: Message type being handled
+                handler: Registered handler
+
+            Returns:
+                FlextResult[None]: Success or tracking error
+
+            """
+            ...
+
+        @abstractmethod
+        def get_registration_history(
+            self: object,
+        ) -> list[dict[str, object]]:
+            """Get registration event history.
+
+            Returns:
+                list: Registration events with timestamps
+
+            """
             ...
 
     # =========================================================================
-    # EXTENSIONS LAYER - Additional protocols for ecosystem extensions
+    # INFRASTRUCTURE LAYER (Layer 3-4) - External integrations
     # =========================================================================
 
     @runtime_checkable
-    class PluginContext(Protocol):
-        """Protocol for plugin execution contexts.
+    class CircuitBreaker(Protocol):
+        """Protocol for circuit breaker resilience pattern.
 
-        Provides context information for plugin execution, including
-        configuration, runtime state, and execution metadata.
+        Implements circuit breaker pattern to prevent cascading failures
+        by stopping requests to failing services.
 
-        Used in: plugin systems
+        Used in: dispatcher.py (FlextDispatcher resilience)
         """
 
-        config: dict[str, object]
-        runtime_id: str
+        @abstractmethod
+        def call(self, operation: Callable[[], object]) -> FlextResult[object]:
+            """Execute operation through circuit breaker.
+
+            Args:
+                operation: Callable to execute
+
+            Returns:
+                FlextResult: Result or circuit breaker error
+
+            """
+            ...
+
+        @abstractmethod
+        def get_state(self: object) -> str:
+            """Get circuit breaker state (closed/open/half-open).
+
+            Returns:
+                str: Current state name
+
+            """
+            ...
 
     @runtime_checkable
-    class Observability(Protocol):
-        """Protocol for observability implementations.
+    class RateLimiter(Protocol):
+        """Protocol for rate limiting operations.
 
-        Provides standardized interfaces for metrics, logging, and monitoring
-        across the FLEXT ecosystem.
+        Enforces rate limits on operations to prevent overload and
+        ensure fair resource sharing.
 
-        Used in: monitoring and metrics collection
+        Used in: dispatcher.py (FlextDispatcher rate limiting)
         """
 
+        @abstractmethod
+        def allow_request(self) -> FlextResult[bool]:
+            """Check if request is allowed under rate limit.
+
+            Returns:
+                FlextResult[bool]: True if allowed, False if rate limited
+
+            """
+            ...
+
+        @abstractmethod
+        def get_remaining_quota(self: object) -> int:
+            """Get remaining requests in current period.
+
+            Returns:
+                int: Remaining request quota
+
+            """
+            ...
+
+    @runtime_checkable
+    class RetryPolicy(Protocol):
+        """Protocol for retry policy configuration.
+
+        Configures retry behavior including max attempts, backoff
+        strategies, and retry conditions.
+
+        Used in: dispatcher.py (FlextDispatcher retry logic)
+        """
+
+        @abstractmethod
+        def should_retry(self, attempt: int, error: object) -> bool:
+            """Determine if operation should be retried.
+
+            Args:
+                attempt: Attempt number
+                error: Exception that occurred
+
+            Returns:
+                bool: True if should retry
+
+            """
+            ...
+
+        @abstractmethod
+        def get_delay_ms(self, attempt: int) -> float:
+            """Get delay before next retry in milliseconds.
+
+            Args:
+                attempt: Attempt number
+
+            Returns:
+                float: Delay in milliseconds
+
+            """
+            ...
+
+    @runtime_checkable
+    class TimeoutEnforcer(Protocol):
+        """Protocol for enforcing operation timeouts.
+
+        Enforces strict timeout constraints on operations to prevent
+        indefinite hangs and resource exhaustion.
+
+        Used in: dispatcher.py (FlextDispatcher timeout enforcement)
+        """
+
+        @abstractmethod
+        def execute_with_timeout(
+            self, operation: Callable[[], object], timeout_ms: float
+        ) -> FlextResult[object]:
+            """Execute operation with timeout constraint.
+
+            Args:
+                operation: Callable to execute
+                timeout_ms: Timeout in milliseconds
+
+            Returns:
+                FlextResult: Result or timeout error
+
+            """
+            ...
+
+        @abstractmethod
+        def get_timeout_errors(self: object) -> list[str]:
+            """Get list of recent timeout errors.
+
+            Returns:
+                list[str]: Timeout error messages
+
+            """
+            ...
+
+    @runtime_checkable
+    class ObservabilityCollector(Protocol):
+        """Protocol for collecting operation metrics and traces.
+
+        Collects metrics, traces, and performance data for observability
+        across distributed systems.
+
+        Used in: dispatcher.py (FlextDispatcher observability)
+        """
+
+        @abstractmethod
+        def start_trace(self, operation_name: str) -> str:
+            """Start operation trace.
+
+            Args:
+                operation_name: Name of operation
+
+            Returns:
+                str: Trace identifier
+
+            """
+            ...
+
+        @abstractmethod
         def record_metric(
-            self, name: str, value: float, tags: dict[str, object]
-        ) -> None:
-            """Record a metric with optional tags."""
+            self, metric_name: str, value: float, tags: dict[str, str] | None
+        ) -> FlextResult[None]:
+            """Record metric value with tags.
+
+            Args:
+                metric_name: Metric identifier
+                value: Metric value
+                tags: Optional metric tags
+
+            Returns:
+                FlextResult[None]: Success or collection error
+
+            """
             ...
 
-        def log_event(
-            self, level: str, message: str, context: dict[str, object]
-        ) -> None:
-            """Log an event with context."""
+    @runtime_checkable
+    class BatchProcessor(Protocol):
+        """Protocol for batch processing operations.
+
+        Processes items in batches for performance optimization and
+        efficient resource utilization.
+
+        Used in: dispatcher.py, registry.py (batch operations)
+        """
+
+        @abstractmethod
+        def process_batch(self, items: list[object]) -> FlextResult[list[object]]:
+            """Process batch of items.
+
+            Args:
+                items: Items to process
+
+            Returns:
+                FlextResult[list[T]]: Processed items or error
+
+            """
+            ...
+
+        @abstractmethod
+        def get_batch_size(self: object) -> int:
+            """Get optimal batch size.
+
+            Returns:
+                int: Batch size
+
+            """
+            ...
+
+    @runtime_checkable
+    class EventPublisher(Protocol):
+        """Protocol for publishing events.
+
+        Publishes domain events for event-driven architecture and
+        inter-service communication.
+
+        Used in: bus.py (FlextBus event publishing)
+        """
+
+        @abstractmethod
+        def publish_event(self, event: object) -> FlextResult[None]:
+            """Publish domain event.
+
+            Args:
+                event: Event to publish
+
+            Returns:
+                FlextResult[None]: Success or publishing error
+
+            """
+            ...
+
+        @abstractmethod
+        def subscribe(
+            self, event_type: type, handler: Callable[[object], object]
+        ) -> FlextResult[None]:
+            """Subscribe to event type.
+
+            Args:
+                event_type: Type of event to subscribe to
+                handler: Event handler callable
+
+            Returns:
+                FlextResult[None]: Success or subscription error
+
+            """
+            ...
+
+    @runtime_checkable
+    class ConfigurationValidator(Protocol):
+        """Protocol for configuration validation.
+
+        Validates configuration settings and ensures they meet
+        constraints and requirements.
+
+        Used in: config.py (FlextConfig validation)
+        """
+
+        @abstractmethod
+        def validate_config(self, config: dict[str, object]) -> FlextResult[None]:
+            """Validate configuration dictionary.
+
+            Args:
+                config: Configuration to validate
+
+            Returns:
+                FlextResult[None]: Success or validation error
+
+            """
+            ...
+
+        @abstractmethod
+        def get_validation_rules(self: object) -> dict[str, object]:
+            """Get validation rules.
+
+            Returns:
+                dict: Validation rules for each config key
+
+            """
+            ...
+
+    @runtime_checkable
+    class DynamicUpdater(Protocol):
+        """Protocol for dynamic configuration updates.
+
+        Supports runtime configuration updates without restarting
+        services, enabling hot-reload patterns.
+
+        Used in: config.py (FlextConfig dynamic updates)
+        """
+
+        @abstractmethod
+        def update_config(self, key: str, value: object) -> FlextResult[None]:
+            """Update configuration dynamically.
+
+            Args:
+                key: Configuration key
+                value: New value
+
+            Returns:
+                FlextResult[None]: Success or update error
+
+            """
+            ...
+
+        @abstractmethod
+        def get_update_history(
+            self: object,
+        ) -> list[dict[str, object]]:
+            """Get configuration update history.
+
+            Returns:
+                list: Update events with timestamps
+
+            """
+            ...
+
+    @runtime_checkable
+    class SingletonProvider(Protocol):
+        """Protocol for singleton pattern implementation.
+
+        Provides singleton pattern with lazy initialization and
+        thread-safe instance management.
+
+        Used in: config.py (FlextConfig singleton pattern)
+        """
+
+        @abstractmethod
+        def get_instance(self) -> FlextResult[object]:
+            """Get singleton instance.
+
+            Returns:
+                FlextResult[T]: Singleton instance or error
+
+            """
+            ...
+
+        @abstractmethod
+        def reset_instance(self) -> FlextResult[None]:
+            """Reset singleton instance (testing only).
+
+            Returns:
+                FlextResult[None]: Success or reset error
+
+            """
+            ...
+
+    @runtime_checkable
+    class ContextBinder(Protocol):
+        """Protocol for binding context to logs.
+
+        Binds contextual information (correlation IDs, user info) to
+        all log messages for distributed tracing.
+
+        Used in: loggings.py (FlextLogger context binding)
+        """
+
+        @abstractmethod
+        def bind_context(self, context: dict[str, object]) -> FlextResult[None]:
+            """Bind context dictionary to logger.
+
+            Args:
+                context: Context to bind
+
+            Returns:
+                FlextResult[None]: Success or binding error
+
+            """
+            ...
+
+        @abstractmethod
+        def get_bound_context(self: object) -> dict[str, object]:
+            """Get currently bound context.
+
+            Returns:
+                dict: Bound context data
+
+            """
+            ...
+
+    @runtime_checkable
+    class PerformanceTracker(Protocol):
+        """Protocol for tracking performance metrics.
+
+        Tracks performance metrics including latencies, throughput,
+        and resource utilization.
+
+        Used in: loggings.py (FlextLogger performance tracking)
+        """
+
+        @abstractmethod
+        def record_latency(
+            self, operation_name: str, duration_ms: float
+        ) -> FlextResult[None]:
+            """Record operation latency.
+
+            Args:
+                operation_name: Name of operation
+                duration_ms: Duration in milliseconds
+
+            Returns:
+                FlextResult[None]: Success or recording error
+
+            """
+            ...
+
+        @abstractmethod
+        def get_performance_stats(self: object) -> dict[str, object]:
+            """Get performance statistics summary.
+
+            Returns:
+                dict: Performance metrics (avg, min, max, p95, p99)
+
+            """
+            ...
+
+    # =========================================================================
+    # USED PROTOCOLS - Actually referenced in real code
+    # =========================================================================
+
+    @runtime_checkable
+    class Command(Protocol):
+        """Protocol for CQRS command objects.
+
+        Commands represent intent to change system state. Implementations
+        must define command type and optional validation.
+
+        Used in: CommandBus, Dispatcher, all command handlers
+        """
+
+        command_type: str
+
+        def get_command_metadata(self: object) -> dict[str, object]:
+            """Get command metadata for routing and tracing."""
+            ...
+
+    @runtime_checkable
+    class Decorator(Protocol):
+        """Protocol for decorator pattern implementations.
+
+        Decorators wrap objects to add behavior. Must implement component
+        interface while delegating to wrapped object.
+
+        Used in: Cross-cutting concerns, aspect-oriented patterns
+        """
+
+        wrapped_component: object
+
+        def decorate(self: object, component: object) -> object:
+            """Decorate a component."""
+            ...
+
+    @runtime_checkable
+    class Constants(Protocol):
+        """Protocol for constants holder objects.
+
+        Centralizes application constants. Satisfy FlextConstants
+        structural interface for type-safe constant access.
+
+        Used in: Configuration, domain constants
+        """
+
+        def get_constant(self: object, name: str) -> object:
+            """Retrieve constant by name."""
+            ...
+
+    @runtime_checkable
+    class Logger(Protocol):
+        """Protocol for logger implementations.
+
+        Logger satisfies both this protocol and LoggerProtocol.
+        Provides structured logging with context propagation.
+
+        Used in: All logging operations
+        """
+
+        def get_logger_name(self: object) -> str:
+            """Get logger name/identifier."""
+            ...
+
+        def set_log_level(self: object, level: str) -> None:
+            """Set logging level dynamically."""
+            ...
+
+        def get_log_level(self: object) -> str:
+            """Get current logging level."""
+            ...
+
+    @runtime_checkable
+    class HandlerRegistry(Protocol):
+        """Protocol for handler registry implementations.
+
+        Registry maintains handlers for commands/queries. Enables
+        dynamic handler registration and discovery.
+
+        Used in: CommandBus, Dispatcher, plugin systems
+        """
+
+        def register(
+            self: object, message_type: type, handler: object
+        ) -> FlextTypes.FlextResultType[None]:
+            """Register handler for message type."""
+            ...
+
+        def get_handler(
+            self: object, message_type: type
+        ) -> FlextTypes.FlextResultType[object]:
+            """Get handler for message type."""
+            ...
+
+        def list_handlers(self: object) -> dict[type, object]:
+            """List all registered handlers."""
             ...
 
 
 __all__ = [
     "FlextProtocols",  # Main hierarchical protocol architecture
 ]
+
+# =========================================================================
+# PROTOCOL SUMMARY - 40+ protocols across 5 layers
+# =========================================================================
+# Layer 0: Foundation (9 protocols)
+#   - Monad[T], HasModelDump, HasModelFields, HasResultValue, HasValidateCommand
+#   - HasInvariants, Configurable, TypeValidator[T], ServiceRegistry[T]
+#   - FactoryProvider[T]
+#
+# Layer 1: Domain (5 protocols)
+#   - Service[T_co], Repository[T_contra], ExecutableService[T_co]
+#   - ContextAware, TimeoutSupport
+#
+# Layer 2: Application (10 protocols)
+#   - Handler[TInput, TOutput], CommandBus, Middleware
+#   - MessageValidator, MetricsCollector, ExecutionContextManager
+#   - CacheManager[T_co], MiddlewareChain, RegistrationTracker
+#
+# Layer 3-4: Infrastructure (16 protocols)
+#   - CircuitBreaker, RateLimiter, RetryPolicy, TimeoutEnforcer
+#   - ObservabilityCollector, BatchProcessor[T_co], EventPublisher
+#   - ConfigurationValidator, DynamicUpdater[T_co], SingletonProvider[T_co]
+#   - ContextBinder, PerformanceTracker
+#
+# Cross-layer/Utility (6 protocols)
+#   - Command, Decorator, Constants, Logger, HandlerRegistry

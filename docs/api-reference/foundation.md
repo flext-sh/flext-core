@@ -161,8 +161,9 @@ if logger_result.is_success:
 
 Comprehensive exception hierarchy with error codes and context.
 
-````python
+```python
 from flext_core import FlextException, ErrorCode
+
 class ValidationException(FlextException):
     def __init__(self, field: str, value: object):
         super().__init__(
@@ -170,6 +171,10 @@ class ValidationException(FlextException):
             message=f"Invalid value for {field}: {value}",
             context={"field": field, "value": value}
         )
+```
+
+**Exception Types**:
+
 - `ValidationException` - Field validation errors
 - `ConfigurationException` - Configuration errors
 

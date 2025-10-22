@@ -440,8 +440,13 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
         print("if '@' in email and '.' in email:")
         print("    # Manual validation logic...")
 
-        print("\n✅ CORRECT WAY (FlextUtilities):")
-        print("result = FlextUtilities.Validation.validate_email(email)")
+        print("\n✅ CORRECT WAY (Pydantic v2):")
+        print("from pydantic import EmailStr, TypeAdapter")
+        print("adapter = TypeAdapter(EmailStr)")
+        print("try:")
+        print("    validated = adapter.validate_python(email)")
+        print("except ValidationError as e:")
+        print("    # Handle validation error")
 
         print(
             "\nManual ID generation is DEPRECATED! Use FlextUtilities generators.",

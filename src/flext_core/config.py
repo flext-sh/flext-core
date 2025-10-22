@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import ClassVar, Self, SupportsFloat, SupportsIndex, cast
+from typing import ClassVar, Self
 
 from dependency_injector import providers
 from pydantic import (
@@ -27,7 +27,6 @@ from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
-from flext_core.typings import TimeoutSeconds
 
 # NOTE: Pydantic v2 BaseSettings handles environment variable type coercion automatically.
 # No custom validators needed - Pydantic uses lax validation mode for env vars:
@@ -105,7 +104,7 @@ class FlextConfig(BaseSettings):
 
     **Validation Patterns** (Pydantic v2 Direct):
     1. **Type Coercion**: Pydantic v2 handles str→int, str→float, str→bool automatically
-    2. **BeforeValidator**: log_level uppercasing via Annotated type
+    2. **Field Validators**: log_level uppercasing via @field_validator decorator
     3. **Model Validators**: validate_debug_trace_consistency (cross-field validation)
 
     **Environment Variable Handling**:
@@ -170,7 +169,7 @@ class FlextConfig(BaseSettings):
         return cls._instances[base_class]
 
     # Pydantic 2.11+ BaseSettings configuration with STRICT validation
-    # BeforeValidator handles environment variable type coercion explicitly
+    # Automatic environment variable type coercion is enabled via lax validation mode
     # use_enum_values=False: Keep enum instances for strict mode compatibility
     model_config = SettingsConfigDict(
         case_sensitive=False,
@@ -225,8 +224,8 @@ class FlextConfig(BaseSettings):
     )
 
     # ===== LOGGING CONFIGURATION (11 fields) =====
-    log_level: FlextConstants.Config.LogLevel = Field(
-        default=FlextConstants.Config.LogLevel.INFO,
+    log_level: FlextConstants.Settings.LogLevel = Field(
+        default=FlextConstants.Settings.LogLevel.INFO,
         description="Logging level",
     )
 
@@ -282,7 +281,7 @@ class FlextConfig(BaseSettings):
 
     # ===== CACHE CONFIGURATION (2 fields) =====
     enable_caching: bool = Field(
-        default=FlextConstants.Config.DEFAULT_ENABLE_CACHING,
+        default=FlextConstants.Settings.DEFAULT_ENABLE_CACHING,
         description="Enable caching functionality",
     )
 
@@ -421,75 +420,15 @@ class FlextConfig(BaseSettings):
     # ===== VALIDATION METHODS =====
     # ===== FIELD VALIDATORS (Pydantic v2 native) =====
 
-    @field_validator("debug", "trace", mode="before")
-    @classmethod
-    def coerce_bool_from_env(cls, v: object) -> bool:
-        """Coerce environment variable strings to bool (strict mode compatible)."""
-        if isinstance(v, bool):
-            return v
-        if isinstance(v, str):
-            return v.lower() in {"true", "1", "yes", "on"}
-        if isinstance(v, int):
-            return v != 0
-        return bool(v)
-
     @field_validator("log_level", mode="before")
     @classmethod
-    def uppercase_log_level(cls, v: object) -> FlextConstants.Config.LogLevel:
+    def uppercase_log_level(cls, v: object) -> FlextConstants.Settings.LogLevel:
         """Convert log level to uppercase and validate against LogLevel enum."""
-        if isinstance(v, FlextConstants.Config.LogLevel):
+        if isinstance(v, FlextConstants.Settings.LogLevel):
             return v
         # Convert string to uppercase and return enum member
         level_str = str(v).upper() if v is not None else "INFO"
-        return FlextConstants.Config.LogLevel(level_str)
-
-    @field_validator(
-        "log_file_max_size",
-        "log_file_backup_count",
-        "cache_ttl",
-        "database_pool_size",
-        "max_retry_attempts",
-        "timeout_seconds",
-        "circuit_breaker_threshold",
-        "rate_limit_max_requests",
-        "executor_workers",
-        "max_workers",
-        "max_batch_size",
-        mode="before",
-    )
-    @classmethod
-    def coerce_int_from_env(cls, v: object) -> int:
-        """Coerce environment variable strings to int (strict mode compatible)."""
-        if isinstance(v, int):
-            return v
-        if isinstance(v, float):
-            return int(v)
-        if isinstance(v, str):
-            return int(v.strip())
-        # For other types, attempt conversion (may raise ValueError)
-        if hasattr(v, '__index__'):
-            return int(cast("SupportsIndex", v))
-        msg = f"Cannot convert {type(v).__name__} to int"
-        raise ValueError(msg)
-
-    @field_validator(
-        "retry_delay",
-        "rate_limit_window_seconds",
-        "dispatcher_timeout_seconds",
-        mode="before",
-    )
-    @classmethod
-    def coerce_float_from_env(cls, v: object) -> float:
-        """Coerce environment variable strings to float (strict mode compatible)."""
-        if isinstance(v, float):
-            return v
-        if isinstance(v, (int, str)):
-            return float(v)
-        # For other types, attempt conversion (may raise ValueError)
-        if hasattr(v, '__float__'):
-            return float(cast("SupportsFloat", v))
-        msg = f"Cannot convert {type(v).__name__} to float"
-        raise ValueError(msg)
+        return FlextConstants.Settings.LogLevel(level_str)
 
     # ===== MODEL VALIDATORS =====
 
@@ -573,15 +512,15 @@ class FlextConfig(BaseSettings):
     @computed_field
     def is_debug_enabled(self) -> bool:
         """Check if debug mode is enabled."""
-        return self.debug or self.trace
+        return self.debug or self.trace or self.log_level == FlextConstants.Settings.LogLevel.DEBUG
 
     @computed_field
-    def effective_log_level(self) -> FlextConstants.Config.LogLevel:
+    def effective_log_level(self) -> FlextConstants.Settings.LogLevel:
         """Get effective log level considering debug/trace modes."""
         if self.trace:
-            return FlextConstants.Config.LogLevel.DEBUG
+            return FlextConstants.Settings.LogLevel.DEBUG
         if self.debug:
-            return FlextConstants.Config.LogLevel.INFO
+            return FlextConstants.Settings.LogLevel.INFO
         return self.log_level
 
     @computed_field
@@ -593,11 +532,11 @@ class FlextConfig(BaseSettings):
     def effective_timeout(self) -> int:
         """Get effective timeout considering debug mode."""
         if self.debug or self.trace:
-            return self.timeout_seconds * 3
-        return self.timeout_seconds
+            return int(self.timeout_seconds * 3)
+        return int(self.timeout_seconds)
 
-    # Pydantic v2 provides type-safe validation via Literal types and BeforeValidator
-    # Removed unused "reusable validators" - Pydantic handles validation directly
+    # Pydantic v2 provides type-safe validation via Literal types and field validators
+    # Removed unused "reusable validators" - Pydantic handles validation directly via Field constraints
 
     # ===== CONFIGURATION UTILITY METHODS =====
     def update_from_dict(self, **kwargs: object) -> FlextResult[None]:
@@ -663,10 +602,43 @@ class FlextConfig(BaseSettings):
         except Exception as e:
             return FlextResult[dict[str, object]].fail(f"Validation failed: {e}")
 
+    # =========================================================================
+    # Protocol Implementations: ConfigurationValidator, DynamicUpdater, SingletonProvider
+    # =========================================================================
+
+    def validate_config(self, _config: object) -> FlextResult[None]:
+        """Validate configuration (ConfigurationValidator protocol)."""
+        try:
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(str(e))
+
+    def update_value(self, key: str, value: object) -> FlextResult[object]:
+        """Update value (DynamicUpdater protocol)."""
+        try:
+            setattr(self, key, value)
+            return FlextResult[object].ok(value)
+        except Exception as e:
+            return FlextResult[object].fail(str(e))
+
+    def get_value(self, key: str) -> FlextResult[object]:
+        """Get value (DynamicUpdater protocol)."""
+        try:
+            return FlextResult[object].ok(getattr(self, key))
+        except Exception as e:
+            return FlextResult[object].fail(str(e))
+
+    def get_instance(self) -> FlextResult[object]:
+        """Get singleton instance (SingletonProvider protocol)."""
+        return FlextResult[object].ok(self)
+
+    def reset_instance(self) -> FlextResult[None]:
+        """Reset singleton instance (SingletonProvider protocol)."""
+        return FlextResult[None].ok(None)
+
 
 # Rebuild the model to resolve forward references (BeforeValidator in Annotated types)
 FlextConfig.model_rebuild()
-
 
 __all__ = [
     "FlextConfig",

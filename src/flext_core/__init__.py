@@ -87,10 +87,10 @@ FLEXT Core provides the foundation for 32+ dependent projects through:
   - Aliases: Command, Query, Event, Message, ResultT
   - Features: Generic type constraints for type safety
 
-  FlextUtilities - Validation and conversion helpers (Layer 2)
+  FlextUtilities - ID generation and data normalization helpers (Layer 2)
   - Structural typing: Satisfies FlextProtocols.Utility
-  - Methods: validate_email(), validate_url(), convert_*, ensure_*
-  - Features: Comprehensive validation library, type-safe conversions
+  - Methods: validate_pipeline(), Generators (14+ ID/timestamp methods)
+  - Features: Validator composition, deterministic ID generation
 
 **Service Base Class**:
   FlextService - Domain service base with context enrichment (Layer 2)
@@ -202,11 +202,11 @@ USAGE EXAMPLES
 
 **Example 1: Railway-Oriented Error Handling**:
     >>> from flext_core import FlextResult
-    >>> def validate_email(email: str) -> FlextResult[str]:
-    ...     if "@" not in email:
-    ...         return FlextResult[str].fail("Invalid email")
+    >>> from pydantic import EmailStr
+    >>> def validate_user_email(email: EmailStr) -> FlextResult[str]:
+    ...     # Pydantic v2 EmailStr validates format natively
     ...     return FlextResult[str].ok(email)
-    >>> result = validate_email("user@example.com")
+    >>> result = validate_user_email("user@example.com")
     >>> if result.is_success:
     ...     email = result.unwrap()
 
@@ -357,7 +357,7 @@ from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
-from flext_core.typings import (  # Pydantic native types (direct exports); TypeVars; FlextTypes - domain-specific complex types; Domain-specific Annotated types (Pydantic v2)
+from flext_core.typings import (  # Pydantic native types (direct exports); TypeVars; FlextTypes - domain-specific complex types
     UUID1,
     UUID3,
     UUID4,
@@ -374,6 +374,8 @@ from flext_core.typings import (  # Pydantic native types (direct exports); Type
     FileUrl,
     FlextTypes,
     FutureDate,
+    # Domain validation types (Phase 3 - Annotated constraints)
+    HostName,
     HttpUrl,
     K,
     LogLevel,
@@ -472,6 +474,8 @@ __all__ = [
     "FlextUtilities",
     # Domain-specific Annotated types (Pydantic v2)
     "FutureDate",
+    # Domain validation types (Phase 3 - Annotated constraints)
+    "HostName",
     "HttpUrl",
     "K",
     "LogLevel",

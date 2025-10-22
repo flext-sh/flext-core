@@ -413,7 +413,7 @@ class TestFlextConfigSingletonIntegration:
             # Note: FlextConfig uses singleton, so we use direct instantiation for this test
             config_explicit = FlextConfig(
                 app_name="from-init",
-                log_level=FlextConstants.Config.LogLevel.ERROR,
+                log_level=FlextConstants.Settings.LogLevel.ERROR,
                 debug=True,
                 timeout_seconds=90,
             )
@@ -438,18 +438,18 @@ class TestFlextConfigSingletonIntegration:
             assert config_explicit.log_level == "ERROR"  # Configured level
             assert (
                 config_explicit.effective_log_level
-                == FlextConstants.Config.LogLevel.INFO
+                == FlextConstants.Settings.LogLevel.INFO
             )  # Debug mode forces INFO
             assert config_explicit.is_debug_enabled
             assert config_explicit.trace is False  # Trace mode disabled
 
             # Test with debug=False to verify log_level is respected
             config_no_debug = FlextConfig(
-                log_level=FlextConstants.Config.LogLevel.WARNING, debug=False
+                log_level=FlextConstants.Settings.LogLevel.WARNING, debug=False
             )
             assert (
                 config_no_debug.effective_log_level
-                == FlextConstants.Config.LogLevel.WARNING
+                == FlextConstants.Settings.LogLevel.WARNING
             )
             assert not config_no_debug.is_debug_enabled
 

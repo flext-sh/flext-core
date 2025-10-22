@@ -1119,9 +1119,11 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
             print(f"✅ Valid handler type: {handler_type}")
 
         # Path validation for handler configuration files
+        # (Now handled by Pydantic v2 FilePath/DirectoryPath types)
         config_path = "/etc/flext/handlers.yaml"
-        if FlextRuntime.is_valid_path(config_path):  # config_path is a string literal
-            print(f"✅ Valid config path: {config_path}")
+        print(
+            f"✅ Config path: {config_path} (validation via Pydantic v2 FilePath/DirectoryPath)"
+        )
 
     def demonstrate_deprecated_patterns(self) -> None:
         """Show deprecated processing patterns."""

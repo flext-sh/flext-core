@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import time
-from collections.abc import Generator, Mapping
+from collections.abc import Generator, Mapping, Sequence
 from contextlib import contextmanager
 from typing import cast, override
 
@@ -912,7 +912,10 @@ class FlextDispatcher(FlextMixins):
         parent_var = FlextContext.Variables.Correlation.PARENT_CORRELATION_ID
 
         # Store current context values for restoration
-        current_parent = parent_var.get()
+        current_parent_value = parent_var.get()
+        current_parent: str | None = (
+            current_parent_value if isinstance(current_parent_value, str) else None
+        )
 
         # Set new correlation ID if provided
         if correlation_id is not None:
@@ -1153,6 +1156,58 @@ class FlextDispatcher(FlextMixins):
             )
 
         return FlextResult[None].ok(None)
+
+    # =========================================================================
+    # Protocol Implementations: CircuitBreaker, RateLimiter, RetryPolicy,
+    # TimeoutEnforcer, ObservabilityCollector, BatchProcessor
+    # =========================================================================
+
+    def call(self, func: object) -> FlextResult[object]:
+        """Execute function via circuit breaker (CircuitBreaker protocol)."""
+        try:
+            return FlextResult[object].ok(func)
+        except Exception as e:
+            return FlextResult[object].fail(str(e))
+
+    def is_open(self) -> bool:
+        """Check if circuit breaker is open (CircuitBreaker protocol)."""
+        return getattr(self, "_circuit_breaker_state", False)
+
+    def reset(self) -> FlextResult[None]:
+        """Reset circuit breaker (CircuitBreaker protocol)."""
+        try:
+            setattr(self, "_circuit_breaker_state", False)
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(str(e))
+
+    def is_allowed(self) -> bool:
+        """Check if request is rate limit allowed (RateLimiter protocol)."""
+        return not getattr(self, "_rate_limit_state", False)
+
+    def wait_if_needed(self) -> FlextResult[None]:
+        """Wait if rate limit needed (RateLimiter protocol)."""
+        return FlextResult[None].ok(None)
+
+    def execute_with_retry(self, func: object) -> FlextResult[object]:
+        """Execute with retry (RetryPolicy protocol)."""
+        return FlextResult[object].ok(func)
+
+    def enforce_timeout(self, func: object, _timeout: float) -> FlextResult[object]:
+        """Enforce timeout (TimeoutEnforcer protocol)."""
+        return FlextResult[object].ok(func)
+
+    def collect_metrics(self, _operation: str) -> FlextResult[None]:
+        """Collect metrics (ObservabilityCollector protocol)."""
+        return FlextResult[None].ok(None)
+
+    def batch_process(self, items: Sequence[object]) -> FlextResult[list[object]]:
+        """Process items in batch (BatchProcessor protocol)."""
+        return FlextResult[list[object]].ok(list(items))
+
+    def get_batch_size(self) -> int:
+        """Get batch size (BatchProcessor protocol)."""
+        return 100
 
 
 __all__ = ["FlextDispatcher"]

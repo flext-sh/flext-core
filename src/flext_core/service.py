@@ -618,6 +618,87 @@ class FlextService[TDomainResult](
             """Format service information for display."""
             return f"Service: {metadata.get('service_type', 'Unknown')} ({metadata.get('service_name', 'unnamed')})"
 
+    # =========================================================================
+    # Protocol Implementation: ExecutableService[T]
+    # =========================================================================
+
+    def execute_service(self) -> FlextResult[TDomainResult]:
+        """Execute service (ExecutableService protocol).
+
+        Part of ExecutableService[T] protocol implementation.
+        Delegates to execute() method.
+
+        Returns:
+            FlextResult[T]: Service execution result
+
+        """
+        return self.execute()
+
+    # =========================================================================
+    # Protocol Implementation: ContextAware
+    # =========================================================================
+
+    def set_context(self, context: dict[str, object]) -> FlextResult[None]:
+        """Set context (ContextAware protocol).
+
+        Part of ContextAware protocol implementation.
+        Sets the execution context for the service.
+
+        Args:
+            context: Context dictionary
+
+        Returns:
+            FlextResult[None]: Success or context setting error
+
+        """
+        try:
+            self._context = context
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(
+                f"Context setting failed: {e}",
+                error_code="CONTEXT_ERROR",
+                error_data={"exception": str(e)},
+            )
+
+    # =========================================================================
+    # Protocol Implementation: TimeoutSupport
+    # =========================================================================
+
+    def with_timeout(self, timeout_seconds: float) -> FlextResult[TDomainResult]:
+        """Execute with timeout (TimeoutSupport protocol).
+
+        Part of TimeoutSupport protocol implementation.
+        Delegates to execute_with_timeout() method.
+
+        Args:
+            timeout_seconds: Timeout in seconds
+
+        Returns:
+            FlextResult[T]: Service execution result
+
+        """
+        return self.execute_with_timeout(timeout_seconds)
+
+    def get_timeout(self) -> FlextResult[float]:
+        """Get current timeout (TimeoutSupport protocol).
+
+        Part of TimeoutSupport protocol implementation.
+
+        Returns:
+            FlextResult[float]: Current timeout value or error
+
+        """
+        try:
+            timeout = getattr(self, "_timeout", 30.0)
+            return FlextResult[float].ok(timeout)
+        except Exception as e:
+            return FlextResult[float].fail(
+                f"Timeout retrieval failed: {e}",
+                error_code="TIMEOUT_ERROR",
+                error_data={"exception": str(e)},
+            )
+
 
 __all__: list[str] = [
     "FlextService",

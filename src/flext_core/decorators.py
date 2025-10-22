@@ -160,13 +160,13 @@ class FlextDecorators:
         ...         return self._generate(params)
 
     4. Railway pattern wrapping:
+        >>> from pydantic import EmailStr
         >>> @FlextDecorators.railway(error_code="VALIDATION_ERROR")
-        ... def validate_email(email: str) -> str:
-        ...     if "@" not in email:
-        ...         raise ValueError("Invalid email")
+        ... def process_user_email(email: EmailStr) -> str:
+        ...     # Pydantic v2 EmailStr validates email format natively
         ...     return email.lower()
         >>>
-        >>> result = validate_email("user@example.com")
+        >>> result = process_user_email("user@example.com")
         >>> assert result.is_success
         return func(*args, **kwargs)
     5. Automatic retry logic:
@@ -582,17 +582,19 @@ class FlextDecorators:
             from flext_core import FlextDecorators, FlextResult
 
 
+            from pydantic import EmailStr
+
+
             @FlextDecorators.railway(error_code="VALIDATION_ERROR")
-            def validate_email(email: str) -> str:
-                # object exception automatically becomes FlextResult.fail()
-                # object success automatically becomes FlextResult.ok()
-                if "@" not in email:
-                    raise ValueError("Invalid email format")
+            def process_user_email(email: EmailStr) -> str:
+                # Pydantic v2 EmailStr validates format natively
+                # Exception automatically becomes FlextResult.fail()
+                # Success automatically becomes FlextResult.ok()
                 return email.lower()
 
 
             # Returns FlextResult[str] automatically
-            result = validate_email("user@example.com")
+            result = process_user_email("user@example.com")
             assert result.is_success
             ```
 

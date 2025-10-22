@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConfig, FlextResult, FlextUtilities
+from flext_core import FlextConfig, FlextResult
 
 
 class TestPhase2FinalCoveragePush:
@@ -36,16 +36,13 @@ class TestPhase2FinalCoveragePush:
     def test_flext_result_chaining_operations(self) -> None:
         """Test FlextResult chaining with multiple operations."""
         # Test successful chaining
-        result = (
-            FlextResult[str].ok("hello")
-            .map(str.upper)
-            .map(lambda x: f"{x}!")
-        )
+        result = FlextResult[str].ok("hello").map(str.upper).map(lambda x: f"{x}!")
         assert result.is_success
         assert result.value == "HELLO!"
 
     def test_flext_result_flat_map_chaining(self) -> None:
         """Test FlextResult flat_map chaining."""
+
         def double_string(s: str) -> FlextResult[str]:
             """Double the string or fail."""
             if len(s) > 10:
@@ -53,21 +50,21 @@ class TestPhase2FinalCoveragePush:
             return FlextResult[str].ok(s + s)
 
         result = (
-            FlextResult[str].ok("hi")
-            .flat_map(double_string)
-            .flat_map(double_string)
+            FlextResult[str].ok("hi").flat_map(double_string).flat_map(double_string)
         )
         assert result.is_success
         assert result.value == "hihihihi"
 
     def test_flext_result_error_propagation(self) -> None:
         """Test FlextResult error propagation in chain."""
+
         def failing_op(s: str) -> FlextResult[str]:
             """Operation that fails."""
             return FlextResult[str].fail("operation failed")
 
         result = (
-            FlextResult[str].ok("input")
+            FlextResult[str]
+            .ok("input")
             .flat_map(failing_op)
             .map(str.upper)  # Should not execute
         )
@@ -87,13 +84,6 @@ class TestPhase2FinalCoveragePush:
         assert config.app_name == "complete_test"
         assert config.max_retry_attempts == 5
         assert config.timeout_seconds == 60.0
-
-    def test_utilities_is_non_empty_string(self) -> None:
-        """Test utilities non-empty string check."""
-        assert FlextUtilities.Validation.is_non_empty_string("hello") is True
-        assert FlextUtilities.Validation.is_non_empty_string("") is False
-        assert FlextUtilities.Validation.is_non_empty_string("   ") is False
-        assert FlextUtilities.Validation.is_non_empty_string(None) is False
 
     def test_config_json_serialization(self) -> None:
         """Test config JSON serialization and deserialization."""

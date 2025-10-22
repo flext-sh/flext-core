@@ -41,7 +41,7 @@ These production-ready classes exist but are **NOT documented** in DDD guide:
 
 4. **FlextModels.Command** - Line 954 ❌
    - **Purpose**: CQRS command pattern
-   - **Base**: `StrictArbitraryTypesModel, IdentifiableMixin, TimestampableMixin`
+   - **Base**: `ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin`
    - **Features**: Has `id`, `created_at`, `message_type` discriminator
    - **Missing From**: DDD guide completely
    - **Impact**: HIGH - CQRS is part of DDD patterns
@@ -174,7 +174,7 @@ class AggregateRoot(Entity):
 
 **Implementation**:
 ```python
-class Command(StrictArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
+class Command(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
     """Base class for CQRS commands with validation."""
 
     message_type: Literal["command"] = Field(

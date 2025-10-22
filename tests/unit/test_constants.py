@@ -68,11 +68,11 @@ class TestFlextConstants:
 
     def test_logging_levels_enum(self) -> None:
         """Test logging levels enum."""
-        assert FlextConstants.Config.LogLevel.DEBUG == "DEBUG"
-        assert FlextConstants.Config.LogLevel.INFO == "INFO"
-        assert FlextConstants.Config.LogLevel.WARNING == "WARNING"
-        assert FlextConstants.Config.LogLevel.ERROR == "ERROR"
-        assert FlextConstants.Config.LogLevel.CRITICAL == "CRITICAL"
+        assert FlextConstants.Settings.LogLevel.DEBUG == "DEBUG"
+        assert FlextConstants.Settings.LogLevel.INFO == "INFO"
+        assert FlextConstants.Settings.LogLevel.WARNING == "WARNING"
+        assert FlextConstants.Settings.LogLevel.ERROR == "ERROR"
+        assert FlextConstants.Settings.LogLevel.CRITICAL == "CRITICAL"
 
     def test_platform_constants(self) -> None:
         """Test platform constants access."""
@@ -221,7 +221,7 @@ class TestFlextConstants:
         assert hasattr(FlextConstants, "Messages")
         assert hasattr(FlextConstants, "Defaults")
         assert hasattr(FlextConstants, "Utilities")
-        assert hasattr(FlextConstants, "Config")
+        assert hasattr(FlextConstants, "Settings")
         assert hasattr(FlextConstants, "Logging")
         assert hasattr(FlextConstants, "Platform")
         assert hasattr(FlextConstants, "Performance")

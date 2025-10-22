@@ -333,19 +333,19 @@ class TestFlextConfig:
     def test_config_effective_log_level(self) -> None:
         """Test effective log level using direct fields."""
         # Test normal case - use log_level directly
-        config = FlextConfig(log_level=FlextConstants.Config.LogLevel.INFO)
-        assert config.log_level == FlextConstants.Config.LogLevel.INFO
+        config = FlextConfig(log_level=FlextConstants.Settings.LogLevel.INFO)
+        assert config.log_level == FlextConstants.Settings.LogLevel.INFO
 
         # Test with debug enabled - log_level unchanged
         debug_config = FlextConfig(
-            log_level=FlextConstants.Config.LogLevel.INFO, debug=True
+            log_level=FlextConstants.Settings.LogLevel.INFO, debug=True
         )
-        assert debug_config.log_level == FlextConstants.Config.LogLevel.INFO
+        assert debug_config.log_level == FlextConstants.Settings.LogLevel.INFO
         assert debug_config.debug is True
 
         # Test with trace enabled - check both fields directly
         trace_config = FlextConfig(
-            log_level=FlextConstants.Config.LogLevel.INFO, debug=True, trace=True
+            log_level=FlextConstants.Settings.LogLevel.INFO, debug=True, trace=True
         )
         assert trace_config.trace is True
         # When trace is enabled, application should use DEBUG level

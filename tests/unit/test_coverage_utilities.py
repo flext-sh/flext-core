@@ -16,101 +16,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import math
-
 import pytest
 
 from flext_core import FlextResult, FlextUtilities
-
-
-class TestValidation:
-    """Test FlextUtilities.Validation namespace."""
-
-    def test_validate_string_not_empty(self) -> None:
-        """Test string non-empty validation."""
-        result = FlextUtilities.Validation.validate_string_not_empty("hello")
-        assert result.is_success
-
-        result = FlextUtilities.Validation.validate_string_not_empty("")
-        assert result.is_failure
-
-    def test_validate_string_length(self) -> None:
-        """Test string length validation."""
-        result = FlextUtilities.Validation.validate_string_length(
-            "hello", min_length=1, max_length=10
-        )
-        assert result.is_success
-
-        result = FlextUtilities.Validation.validate_string_length(
-            "hello", min_length=10
-        )
-        assert result.is_failure
-
-    def test_validate_url(self) -> None:
-        """Test URL validation."""
-        result = FlextUtilities.Validation.validate_url("https://example.com")
-        assert result.is_success
-
-        result = FlextUtilities.Validation.validate_url("invalid-url")
-        assert result.is_failure
-
-    def test_validate_email(self) -> None:
-        """Test email validation."""
-        result = FlextUtilities.Validation.validate_email("user@example.com")
-        assert result.is_success
-        assert result.value == "user@example.com"
-
-        result = FlextUtilities.Validation.validate_email("invalid-email")
-        assert result.is_failure
-
-    def test_validate_port(self) -> None:
-        """Test port validation."""
-        result = FlextUtilities.Validation.validate_port(8080)
-        assert result.is_success
-        assert result.value == 8080
-
-        result = FlextUtilities.Validation.validate_port("invalid")
-        assert result.is_failure
-
-    def test_validate_timeout_seconds(self) -> None:
-        """Test timeout seconds validation."""
-        result = FlextUtilities.Validation.validate_timeout_seconds(30.0)
-        assert result.is_success
-
-        result = FlextUtilities.Validation.validate_timeout_seconds(-1.0)
-        assert result.is_failure
-
-    def test_validate_retry_count(self) -> None:
-        """Test retry count validation."""
-        result = FlextUtilities.Validation.validate_retry_count(3)
-        assert result.is_success
-
-        result = FlextUtilities.Validation.validate_retry_count(-1)
-        assert result.is_failure
-
-    def test_validate_file_path(self) -> None:
-        """Test file path validation."""
-        result = FlextUtilities.Validation.validate_file_path("/tmp/test.txt")
-        assert result.is_success
-
-        result = FlextUtilities.Validation.validate_file_path("")
-        assert result.is_failure
-
-    def test_validate_positive_integer(self) -> None:
-        """Test positive integer validation."""
-        result = FlextUtilities.Validation.validate_positive_integer(42)
-        assert result.is_success
-
-        result = FlextUtilities.Validation.validate_positive_integer(-1)
-        assert result.is_failure
-
-    def test_validate_non_negative_integer(self) -> None:
-        """Test non-negative integer validation."""
-        result = FlextUtilities.Validation.validate_non_negative_integer(0)
-        assert result.is_success
-
-        result = FlextUtilities.Validation.validate_non_negative_integer(-1)
-        assert result.is_failure
 
 
 class TestTypeGuards:
@@ -213,54 +121,6 @@ class TestTextProcessor:
 
         result = FlextUtilities.TextProcessor.safe_string("")
         assert not result
-
-
-class TestTypeConversions:
-    """Test FlextUtilities.TypeConversions namespace."""
-
-    def test_to_bool_from_string(self) -> None:
-        """Test boolean conversion from string."""
-        result = FlextUtilities.TypeConversions.to_bool(value="true")
-        assert result.is_success
-        assert result.value is True
-
-        result = FlextUtilities.TypeConversions.to_bool(value="false")
-        assert result.is_success
-        assert result.value is False
-
-    def test_to_bool_from_int(self) -> None:
-        """Test boolean conversion from int."""
-        result = FlextUtilities.TypeConversions.to_bool(value=1)
-        assert result.is_success
-        assert result.value is True
-
-    def test_to_bool_from_bool(self) -> None:
-        """Test boolean conversion from bool."""
-        result = FlextUtilities.TypeConversions.to_bool(value=True)
-        assert result.is_success
-        assert result.value is True
-
-    def test_to_bool_invalid(self) -> None:
-        """Test boolean conversion with invalid value."""
-        result = FlextUtilities.TypeConversions.to_bool(value="invalid")
-        assert result.is_failure
-
-    def test_to_int_from_string(self) -> None:
-        """Test integer conversion from string."""
-        result = FlextUtilities.TypeConversions.to_int("42")
-        assert result.is_success
-        assert result.value == 42
-
-    def test_to_int_from_float(self) -> None:
-        """Test integer conversion from float."""
-        result = FlextUtilities.TypeConversions.to_int(math.pi)
-        assert result.is_success
-        assert result.value == 3
-
-    def test_to_int_invalid(self) -> None:
-        """Test integer conversion with invalid value."""
-        result = FlextUtilities.TypeConversions.to_int("not-an-int")
-        assert result.is_failure
 
 
 class TestCache:
@@ -454,7 +314,5 @@ __all__ = [
     "TestReliability",
     "TestTextProcessor",
     "TestTypeChecker",
-    "TestTypeConversions",
     "TestTypeGuards",
-    "TestValidation",
 ]
