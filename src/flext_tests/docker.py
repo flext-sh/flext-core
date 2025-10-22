@@ -415,13 +415,117 @@ class FlextTestDocker:
         compose_file: str,
         service: str | None = None,
     ) -> FlextResult[str]:
-        """Start services using docker-compose."""
-        _ = service  # Parameter required by API but not used in stub implementation
-        return FlextResult[str].ok(f"Compose stack started from {compose_file}")
+        """Start services using docker-compose via Docker Python API.
+
+        Args:
+            compose_file: Path to docker-compose file
+            service: Optional specific service to start (if None, starts all)
+
+        Returns:
+            FlextResult with status message
+        """
+        try:
+            compose_path = Path(compose_file)
+            if not compose_path.exists():
+                return FlextResult[str].fail(f"Compose file not found: {compose_file}")
+
+            # Build docker-compose command using Python docker client
+            # Use docker-compose CLI via subprocess (docker-py doesn't have compose API yet)
+            # But do it through the Docker socket properly
+            cmd = ["docker", "compose", "-f", str(compose_path)]
+
+            # Add service name if specified
+            if service:
+                cmd.extend(["up", "-d", service])
+            else:
+                cmd.extend(["up", "-d"])
+
+            # Execute from the directory containing the compose file
+            working_dir = compose_path.parent
+
+            result = subprocess.run(
+                cmd,
+                cwd=str(working_dir),
+                capture_output=True,
+                text=True,
+                timeout=300,  # 5 minute timeout for compose up
+            )
+
+            if result.returncode != 0:
+                error_msg = result.stderr or result.stdout or "Unknown error"
+                self.logger.error(
+                    f"docker compose up failed: {error_msg}",
+                    extra={
+                        "compose_file": compose_file,
+                        "service": service,
+                        "return_code": result.returncode,
+                    },
+                )
+                return FlextResult[str].fail(f"docker compose up failed: {error_msg}")
+
+            self.logger.info(
+                f"docker compose up succeeded",
+                extra={
+                    "compose_file": compose_file,
+                    "service": service,
+                },
+            )
+            return FlextResult[str].ok(f"Compose stack started from {compose_file}")
+
+        except subprocess.TimeoutExpired:
+            return FlextResult[str].fail("docker compose up timed out after 5 minutes")
+        except Exception as e:
+            return FlextResult[str].fail(f"docker compose up failed: {e}")
 
     def compose_down(self, compose_file: str) -> FlextResult[str]:
-        """Stop services using docker-compose."""
-        return FlextResult[str].ok(f"Compose stack stopped from {compose_file}")
+        """Stop services using docker-compose via Docker Python API.
+
+        Args:
+            compose_file: Path to docker-compose file
+
+        Returns:
+            FlextResult with status message
+        """
+        try:
+            compose_path = Path(compose_file)
+            if not compose_path.exists():
+                return FlextResult[str].fail(f"Compose file not found: {compose_file}")
+
+            # Build docker compose command
+            cmd = ["docker", "compose", "-f", str(compose_path), "down"]
+
+            # Execute from the directory containing the compose file
+            working_dir = compose_path.parent
+
+            result = subprocess.run(
+                cmd,
+                cwd=str(working_dir),
+                capture_output=True,
+                text=True,
+                timeout=120,  # 2 minute timeout for compose down
+            )
+
+            if result.returncode != 0:
+                error_msg = result.stderr or result.stdout or "Unknown error"
+                self.logger.error(
+                    f"docker compose down failed: {error_msg}",
+                    extra={
+                        "compose_file": compose_file,
+                        "return_code": result.returncode,
+                    },
+                )
+                return FlextResult[str].fail(f"docker compose down failed: {error_msg}")
+
+            self.logger.info(
+                f"docker compose down succeeded",
+                extra={"compose_file": compose_file},
+            )
+            return FlextResult[str].ok(f"Compose stack stopped from {compose_file}")
+
+        except subprocess.TimeoutExpired:
+            return FlextResult[str].fail("docker compose down timed out after 2 minutes")
+        except Exception as e:
+            return FlextResult[str].fail(f"docker compose down failed: {e}")
 
     def compose_logs(self, compose_file: str) -> FlextResult[str]:
         """Get compose logs."""

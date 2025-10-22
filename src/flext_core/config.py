@@ -512,7 +512,11 @@ class FlextConfig(BaseSettings):
     @computed_field
     def is_debug_enabled(self) -> bool:
         """Check if debug mode is enabled."""
-        return self.debug or self.trace or self.log_level == FlextConstants.Settings.LogLevel.DEBUG
+        return (
+            self.debug
+            or self.trace
+            or self.log_level == FlextConstants.Settings.LogLevel.DEBUG
+        )
 
     @computed_field
     def effective_log_level(self) -> FlextConstants.Settings.LogLevel:

@@ -2086,7 +2086,7 @@ class FlextModels:
             """
             super().__init__()
             self._key = key
-            self._default = default
+            self._default: T | None = default
 
         def get(self) -> T | None:
             """Get current value from structlog context.
@@ -2104,7 +2104,7 @@ class FlextModels:
 
             structlog_context = structlog.contextvars.get_contextvars()
             if not structlog_context:
-                return self._default
+                return cast("T | None", self._default)
             # Cast from structlog's untyped storage to our Generic[T] contract
             return cast("T | None", structlog_context.get(self._key, self._default))
 
