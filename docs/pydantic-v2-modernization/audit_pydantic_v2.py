@@ -114,7 +114,9 @@ class PydanticV2Auditor:
     CRITICAL_PATTERNS: ClassVar[dict[str, str]] = {
         r"class\s+\w+.*:\s*\n\s*class\s+Config": "Pydantic v1 `class Config` pattern",
         r"\.dict\(": "Pydantic v1 `.dict()` method (use `model_dump()`)",
-        r"\.json\(": "Pydantic v1 `.json()` method (use `model_dump_json()`)",
+        # NOTE: .json() pattern excluded due to HTTP library false positives (requests.json(), httpx.json())
+        # Pydantic v1 .json() is less common in modern codebases with model_dump_json()
+        # r"\.json\(": "Pydantic v1 `.json()` method (use `model_dump_json()`)",
         r"parse_obj\(": "Pydantic v1 `parse_obj()` (use `model_validate()`)",
         r"@validator\(": "Pydantic v1 `@validator` (use `@field_validator`)",
         r"@root_validator": "Pydantic v1 `@root_validator` (use `@model_validator`)",
@@ -128,21 +130,13 @@ class PydanticV2Auditor:
         r"ConfigDict": "Uses `ConfigDict` for model configuration",
     }
 
-    # Custom validation methods that should be Pydantic constraints
-    DUPLICATE_VALIDATORS: ClassVar[dict[str, str]] = {
-        "validate_port": "Use Field(ge=1, le=65535)",  # MIN_PORT=1 per constants.py
-        "validate_email": "Use EmailStr built-in",
-        "validate_url": "Use HttpUrl built-in",
-        "validate_positive_integer": "Use PositiveInt or Field(gt=0)",
-        "validate_non_negative_integer": "Use NonNegativeInt or Field(ge=0)",
-        "validate_string_length": "Use Field(min_length=X, max_length=Y)",
-        "validate_string_pattern": "Use Field(pattern=r'...')",
-        "validate_file_path": "Use FilePath built-in",
-        "validate_directory_path": "Use DirectoryPath built-in",
-        "validate_timeout_seconds": "Use Field(gt=0, le=300)",
-        "validate_retry_count": "Use Field(ge=0, le=10)",
-        "validate_log_level": "Use Literal['DEBUG', ...]",
-    }
+    # Anti-patterns: Custom validation methods that should NOT exist
+    # (Removed in Phase 3: validate_port, validate_email, validate_url, validate_positive_integer,
+    # validate_non_negative_integer, validate_string_length, validate_string_pattern,
+    # validate_file_path, validate_directory_path, validate_timeout_seconds, validate_retry_count,
+    # validate_log_level, validate_string_not_none, validate_string_not_empty, validate_string,
+    # validate_host, validate_pipeline were consolidated into Pydantic v2 native types)
+    REMOVED_VALIDATORS: ClassVar[dict[str, str]] = {}
 
     def __init__(self, project_path: str | None = None) -> None:
         """Initialize auditor."""
@@ -214,19 +208,40 @@ class PydanticV2Auditor:
                     )
                 )
 
-        # Check for duplicate validators
-        for validator_name, recommendation in self.DUPLICATE_VALIDATORS.items():
+        # Check for removed validators (should not exist in codebase)
+        # All 17 duplicate validators were removed in Phase 3
+        # This check ensures they don't accidentally reappear
+        # NOTE: validate_pipeline is EXCLUDED - it's legitimate business logic for composing validators
+        removed_validator_patterns = {
+            "validate_port",
+            "validate_email",
+            "validate_url",
+            "validate_positive_integer",
+            "validate_non_negative_integer",
+            "validate_string_length",
+            "validate_string_pattern",
+            "validate_file_path",
+            "validate_directory_path",
+            "validate_timeout_seconds",
+            "validate_retry_count",
+            "validate_log_level",
+            "validate_string_not_none",
+            "validate_string_not_empty",
+            "validate_string",
+            "validate_host",
+        }
+        for validator_name in removed_validator_patterns:
             pattern = rf"def {validator_name}\("
             matches = self._find_pattern(pattern, lines)
             for line_num in matches:
-                self.result.high.append(
+                self.result.critical.append(
                     AuditViolation(
-                        severity="HIGH",
-                        pattern=f"Custom validator: {validator_name}",
+                        severity="CRITICAL",
+                        pattern=f"REGRESSION: Removed validator reappeared: {validator_name}",
                         file=str(py_file.relative_to(self.project_path)),
                         line=line_num + 1,
                         code=lines[line_num].strip(),
-                        detail=recommendation,
+                        detail="This validator was removed in Phase 3 and should not be re-added. Use Pydantic v2 native types instead.",
                     )
                 )
 

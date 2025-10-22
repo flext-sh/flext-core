@@ -20,11 +20,10 @@ import pathlib
 import re
 import secrets
 import string
-import subprocess
+import subprocess  # nosec B404 - subprocess is used for legitimate process management
 import threading
 import time
 import uuid
-import warnings
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, is_dataclass
 from datetime import UTC, datetime
@@ -73,12 +72,11 @@ class FlextUtilities:
     3. **Generators**: ID, UUID, timestamp, correlation ID generation
     4. **Correlation**: Distributed tracing and correlation utilities
     5. **TextProcessor**: Text cleaning, truncation, safe string conversion
-    6. **TypeConversions**: Type conversion (str→bool, str→int) with validation
-    7. **TypeGuards**: Runtime type checking (is_string_non_empty, etc.)
-    8. **Reliability**: Timeout and retry patterns with exponential backoff
-    9. **TypeChecker**: Runtime type introspection for CQRS handlers
-    10. **Configuration**: Parameter access/manipulation for Pydantic models
-    11. **External Command Execution**: Subprocess management with FlextResult
+    6. **TypeGuards**: Runtime type checking (is_string_non_empty, etc.)
+    7. **Reliability**: Timeout and retry patterns with exponential backoff
+    8. **TypeChecker**: Runtime type introspection for CQRS handlers
+    9. **Configuration**: Parameter access/manipulation for Pydantic models
+    10. **External Command Execution**: Subprocess management with FlextResult
 
     **Integration Points**:
     - **FlextConstants**: All defaults and validation ranges from FlextConstants
@@ -137,23 +135,19 @@ class FlextUtilities:
     - contextvars support for thread-local context propagation (timeout operations)
     - O(1) operation time for most utilities
 
-    **Usage Pattern 1 - Input Validation**:
-    >>> from flext_core import FlextUtilities
-    >>> result = FlextUtilities.Validation.validate_email("user@example.com")
+    **Usage Pattern 1 - Validation Pipeline**:
+    >>> from flext_core import FlextUtilities, FlextResult
+    >>> validators = []  # Add validator functions as needed
+    >>> result = FlextUtilities.Validation.validate_pipeline("value", validators)
     >>> if result.is_success:
-    ...     print("Valid email")
+    ...     print("Validation passed")
 
     **Usage Pattern 2 - ID Generation**:
     >>> id = FlextUtilities.Generators.generate_id()
     >>> corr_id = FlextUtilities.Generators.generate_correlation_id()
     >>> entity_id = FlextUtilities.Generators.generate_entity_id()
 
-    **Usage Pattern 3 - Type Conversion with FlextResult**:
-    >>> result = FlextUtilities.TypeConversions.to_bool(value="true")
-    >>> if result.is_success:
-    ...     bool_value = result.unwrap()
-
-    **Usage Pattern 4 - Cache Key Generation**:
+    **Usage Pattern 3 - Cache Key Generation**:
     >>> from pydantic import BaseModel
     >>> class UserCommand(BaseModel):
     ...     user_id: str
@@ -308,308 +302,11 @@ class FlextUtilities:
     class Validation:
         """Unified validation patterns using railway composition.
 
-        **MIGRATION TO PYDANTIC v2 FIELD CONSTRAINTS**:
-
-        Many validators here duplicate Pydantic Field constraints. For Pydantic models, use:
-
-        - `validate_string_not_empty` → `Field(min_length=1)`
-        - `validate_string_length` → `Field(min_length=X, max_length=Y)`
-        - `validate_string_pattern` → `Field(pattern=r"regex")`
-        - `validate_port` → `Field(ge=1, le=65535)`
-        - `validate_timeout_seconds` → `Field(gt=0, le=MAX)`
-        - `validate_retry_count` → `Field(ge=0, le=MAX)`
-        - `validate_positive_integer` → `Field(gt=0)`
-        - `validate_non_negative_integer` → `Field(ge=0)`
-        - `validate_log_level` → `Literal["DEBUG", ...]`
-
-        **Keep for runtime validation**: Complex validators (URL, email, file_path, host)
+        Use for composite/pipeline validation and complex business logic validators.
+        For field validation, use Pydantic Field constraints directly.
 
         See: https://docs.pydantic.dev/2.12/api/fields/
         """
-
-        @staticmethod
-        def validate_string_not_none(value: str | None) -> FlextResult[None]:
-            """Validate that a string value is not None.
-
-            .. deprecated::
-                Use proper Optional[str] type hints and Field validation instead.
-            """
-            warnings.warn(
-                "validate_string_not_none is deprecated, use proper Optional[str] "
-                "type hints and Field validation instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if value is None:
-                return FlextResult[None].fail("Value cannot be None")
-            if not isinstance(value, str):
-                return FlextResult[None].fail("Value must be a string")
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def validate_string_not_empty(value: str) -> FlextResult[None]:
-            """Validate that a string value is not empty.
-
-            .. deprecated::
-                Use NonEmptyStr Annotated type from flext_core instead.
-            """
-            warnings.warn(
-                "validate_string_not_empty is deprecated, use NonEmptyStr "
-                "Annotated type from flext_core instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if not value:
-                return FlextResult[None].fail("String cannot be empty")
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def validate_string_length(
-            value: str, min_length: int = 0, max_length: int | None = None
-        ) -> FlextResult[None]:
-            """Validate string length constraints.
-
-            .. deprecated::
-                Use Field(min_length=X, max_length=Y) from pydantic instead.
-            """
-            warnings.warn(
-                "validate_string_length is deprecated, use Field(min_length=X, "
-                "max_length=Y) from pydantic instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if len(value) < min_length:
-                return FlextResult[None].fail(f"String too short (min: {min_length})")
-            if max_length is not None and len(value) > max_length:
-                return FlextResult[None].fail(f"String too long (max: {max_length})")
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def validate_string_pattern(
-            value: str, pattern: str | None
-        ) -> FlextResult[None]:
-            """Validate string against a regex pattern.
-
-            .. deprecated::
-                Use Field(pattern=r'...') from pydantic instead.
-            """
-            warnings.warn(
-                "validate_string_pattern is deprecated, use Field(pattern=r'...') "
-                "from pydantic instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if pattern is None:
-                return FlextResult[None].ok(None)
-
-            try:
-                if not re.match(pattern, value):
-                    return FlextResult[None].fail(
-                        f"String does not match pattern: {pattern}"
-                    )
-                return FlextResult[None].ok(None)
-            except re.error as e:
-                return FlextResult[None].fail(f"Invalid regex pattern: {e}")
-
-        @staticmethod
-        def validate_string(
-            value: str,
-            min_length: int | None = None,
-            max_length: int | None = None,
-            pattern: str | None = None,
-        ) -> FlextResult[None]:
-            """Validate string with comprehensive checks.
-
-            .. deprecated::
-                Use Pydantic field validators or Annotated types instead
-                (Field with constraints, NonEmptyStr, etc.).
-            """
-            warnings.warn(
-                "validate_string is deprecated, use Pydantic field validators or "
-                "Annotated types (Field with constraints, NonEmptyStr, etc.) instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if not value.strip():
-                return FlextResult[None].fail(
-                    "String cannot be empty or whitespace-only"
-                )
-
-            if min_length is not None and len(value) < min_length:
-                return FlextResult[None].fail(
-                    f"String length {len(value)} is less than minimum {min_length}"
-                )
-
-            if max_length is not None and len(value) > max_length:
-                return FlextResult[None].fail(
-                    f"String length {len(value)} exceeds maximum {max_length}"
-                )
-
-            if pattern is not None:
-                try:
-                    if not re.match(pattern, value):
-                        return FlextResult[None].fail(
-                            "String does not match required pattern"
-                        )
-                except re.error:
-                    return FlextResult[None].fail(f"Invalid regex pattern: {pattern}")
-
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def validate_url(value: str) -> FlextResult[None]:
-            """Validate URL format.
-
-            .. deprecated::
-                Use HttpUrl or AnyUrl from pydantic instead.
-            """
-            warnings.warn(
-                "validate_url is deprecated, use HttpUrl or AnyUrl from pydantic instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if not value.startswith(("http://", "https://")):
-                return FlextResult[None].fail("URL must start with http:// or https://")
-            if " " in value:
-                return FlextResult[None].fail("URL cannot contain spaces")
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def validate_port(value: int | str) -> FlextResult[int]:
-            """Validate port number.
-
-            .. deprecated::
-                Use PortNumber Annotated type or Field(ge=0, le=65535) instead.
-            """
-            warnings.warn(
-                "validate_port is deprecated, use PortNumber Annotated type or "
-                "Field(ge=0, le=65535) from pydantic instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            try:
-                port = int(value)
-                if (
-                    port < FlextConstants.Network.MIN_PORT
-                    or port > FlextConstants.Network.MAX_PORT
-                ):
-                    return FlextResult[int].fail(
-                        f"Port must be between {FlextConstants.Network.MIN_PORT} and {FlextConstants.Network.MAX_PORT}"
-                    )
-                return FlextResult[int].ok(port)
-            except (ValueError, TypeError):
-                return FlextResult[int].fail("Port must be a valid integer")
-
-        @staticmethod
-        def validate_host(value: str) -> FlextResult[None]:
-            """Validate host format."""
-            if not value.strip():
-                return FlextResult[None].fail("Host cannot be empty")
-            if " " in value:
-                return FlextResult[None].fail("Host cannot contain spaces")
-            # Basic validation - could be enhanced
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def validate_email(value: str) -> FlextResult[str]:
-            """Validate email format.
-
-            .. deprecated::
-                Use EmailStr from pydantic instead.
-            """
-            warnings.warn(
-                "validate_email is deprecated, use EmailStr from pydantic instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if "@" not in value or "." not in value:
-                return FlextResult[str].fail("Invalid email format")
-            return FlextResult[str].ok(value)
-
-        @staticmethod
-        def validate_timeout_seconds(value: float) -> FlextResult[None]:
-            """Validate timeout seconds.
-
-            .. deprecated::
-                Use TimeoutSeconds Annotated type from flext_core instead.
-            """
-            warnings.warn(
-                "validate_timeout_seconds is deprecated, use TimeoutSeconds "
-                "Annotated type from flext_core instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if value <= 0:
-                return FlextResult[None].fail("Timeout must be positive")
-            if value > FlextConstants.Performance.MAX_TIMEOUT_SECONDS:
-                return FlextResult[None].fail(
-                    f"Timeout cannot exceed {FlextConstants.Performance.MAX_TIMEOUT_SECONDS} seconds"
-                )
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def validate_retry_count(value: int) -> FlextResult[None]:
-            """Validate retry count.
-
-            .. deprecated::
-                Use RetryCount Annotated type from flext_core instead.
-            """
-            warnings.warn(
-                "validate_retry_count is deprecated, use RetryCount Annotated "
-                "type from flext_core instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if value < 0:
-                return FlextResult[None].fail("Retry count cannot be negative")
-            if value > FlextConstants.Performance.MAX_RETRY_ATTEMPTS_LIMIT:
-                return FlextResult[None].fail(
-                    f"Retry count cannot exceed {FlextConstants.Performance.MAX_RETRY_ATTEMPTS_LIMIT}"
-                )
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def validate_log_level(value: str) -> FlextResult[None]:
-            """Validate log level.
-
-            .. deprecated::
-                Use LogLevel Annotated type from flext_core instead.
-            """
-            warnings.warn(
-                "validate_log_level is deprecated, use LogLevel Annotated type "
-                "from flext_core instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if value not in FlextConstants.Logging.VALID_LEVELS:
-                return FlextResult[None].fail(f"Invalid log level: {value}")
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def validate_file_path(value: str) -> FlextResult[None]:
-            """Validate file path.
-
-            .. deprecated::
-                Use FilePath from pydantic instead.
-            """
-            warnings.warn(
-                "validate_file_path is deprecated, use FilePath from pydantic instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if not value.strip():
-                return FlextResult[None].fail("File path cannot be empty")
-            if (
-                "<" in value
-                or ">" in value
-                or "|" in value
-                or "?" in value
-                or "*" in value
-            ):
-                return FlextResult[None].fail("File path contains invalid characters")
-            if "\x00" in value:
-                return FlextResult[None].fail("File path contains null characters")
-            return FlextResult[None].ok(None)
 
         @staticmethod
         def validate_pipeline(
@@ -627,64 +324,6 @@ class FlextUtilities:
                     except Exception as e:
                         return FlextResult[None].fail(f"Validator failed: {e}")
             return FlextResult[None].ok(None)
-
-        @staticmethod
-        def validate_positive_integer(value: int) -> FlextResult[None]:
-            """Validate that value is a positive integer.
-
-            .. deprecated::
-                Use PositiveInt from pydantic instead.
-            """
-            warnings.warn(
-                "validate_positive_integer is deprecated, use PositiveInt "
-                "from pydantic instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if not isinstance(value, int) or value <= 0:
-                return FlextResult[None].fail("Value must be a positive integer")
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def validate_non_negative_integer(value: int) -> FlextResult[None]:
-            """Validate that value is a non-negative integer.
-
-            .. deprecated::
-                Use NonNegativeInt from pydantic instead.
-            """
-            warnings.warn(
-                "validate_non_negative_integer is deprecated, use NonNegativeInt "
-                "from pydantic instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if not isinstance(value, int) or value < 0:
-                return FlextResult[None].fail("Value must be a non-negative integer")
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def validate_directory_path(value: str) -> FlextResult[None]:
-            """Validate directory path exists.
-
-            .. deprecated::
-                Use DirectoryPath from pydantic instead.
-            """
-            warnings.warn(
-                "validate_directory_path is deprecated, use DirectoryPath from "
-                "pydantic instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if not pathlib.Path(value).exists():
-                return FlextResult[None].fail(f"Directory does not exist: {value}")
-            if not pathlib.Path(value).is_dir():
-                return FlextResult[None].fail(f"Path is not a directory: {value}")
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def is_non_empty_string(value: str | None) -> bool:
-            """Check if value is a non-empty string."""
-            return isinstance(value, str) and len(value.strip()) > 0
 
         @staticmethod
         def clear_all_caches(obj: FlextTypes.CachedObjectType) -> FlextResult[None]:
@@ -1180,58 +819,6 @@ class FlextUtilities:
             if not text:
                 return default
             return text.strip()
-
-    class TypeConversions:
-        """Type conversion utilities using railway composition.
-
-        This class handles type conversions (str->bool, str->int), while "Conversion" handles table formatting.
-        """
-
-        @staticmethod
-        def to_bool(*, value: str | bool | int | None) -> FlextResult[bool]:
-            """Convert value to boolean using railway composition."""
-            if isinstance(value, bool):
-                return FlextResult[bool].ok(value)
-
-            if isinstance(value, str):
-                lower_value = value.lower().strip()
-                if lower_value in {"true", "1", "yes", "on", "enabled"}:
-                    return FlextResult[bool].ok(True)
-                if lower_value in {"false", "0", "no", "off", "disabled", ""}:
-                    return FlextResult[bool].ok(False)
-                return FlextResult[bool].fail(f"Cannot convert '{value}' to boolean")
-
-            if isinstance(value, int):
-                return FlextResult[bool].ok(bool(value))
-
-            # value is None case
-            return FlextResult[bool].ok(False)
-
-        @staticmethod
-        def to_int(value: str | float | None) -> FlextResult[int]:
-            """Convert value to integer using railway composition."""
-            if value is None:
-                return FlextResult[int].fail("Cannot convert None to integer")
-
-            try:
-                if isinstance(value, int):
-                    return FlextResult[int].ok(value)
-                return FlextResult[int].ok(int(value))
-            except (ValueError, TypeError) as e:
-                return FlextResult[int].fail(f"Integer conversion failed: {e}")
-
-        @staticmethod
-        def to_float(value: str | float | None) -> FlextResult[float]:
-            """Convert value to float using railway composition."""
-            if value is None:
-                return FlextResult[float].fail("Cannot convert None to float")
-
-            try:
-                if isinstance(value, float):
-                    return FlextResult[float].ok(value)
-                return FlextResult[float].ok(float(value))
-            except (ValueError, TypeError) as e:
-                return FlextResult[float].fail(f"Float conversion failed: {e}")
 
     class Reliability:
         """Reliability patterns for resilient operations."""

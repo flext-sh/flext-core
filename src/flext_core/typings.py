@@ -21,11 +21,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import socket
 from collections.abc import Callable
 from types import UnionType
 from typing import (
     TYPE_CHECKING,
     Annotated,
+    Literal,
     ParamSpec,
     TypeVar,
 )
@@ -37,6 +39,7 @@ from pydantic import (
     UUID3,
     UUID4,
     UUID5,
+    AfterValidator,
     AnyUrl,
     AwareDatetime,
     DirectoryPath,
@@ -174,6 +177,51 @@ class FlextTypes:
     """
 
     # =========================================================================
+    # DOMAIN VALIDATION TYPES - Annotated constraints (Phase 3 - Best Practices)
+    # =========================================================================
+
+    # Network types with Pydantic v2 constraints
+    type PortNumber = Annotated[
+        int,
+        Field(ge=1, le=65535, description="Network port (1-65535)"),
+    ]
+
+    type TimeoutSeconds = Annotated[
+        float,
+        Field(gt=0, le=300, description="Timeout in seconds (max 5 min)"),
+    ]
+
+    type RetryCount = Annotated[
+        int,
+        Field(ge=0, le=10, description="Retry attempts (0-10)"),
+    ]
+
+    # String types with constraints
+    type NonEmptyStr = Annotated[
+        str,
+        Field(min_length=1, description="Non-empty string"),
+    ]
+
+    type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
+    # Complex validators (with AfterValidator for DNS checks)
+    @staticmethod
+    def _validate_hostname(value: str) -> str:
+        """Validate hostname can be resolved via DNS."""
+        try:
+            socket.gethostbyname(value)
+            return value
+        except socket.gaierror as e:
+            msg = f"Cannot resolve hostname '{value}': {e}"
+            raise ValueError(msg) from e
+
+    type HostName = Annotated[
+        str,
+        Field(min_length=1, max_length=253, description="Valid hostname"),
+        AfterValidator(_validate_hostname),
+    ]
+
+    # =========================================================================
     # JSON TYPES - Python native with JSON compatibility
     # =========================================================================
 
@@ -299,61 +347,21 @@ class FlextTypes:
     # =========================================================================
     # Note: Validator types defined above with FlextResult types in TYPE_CHECKING block
 
+    # =========================================================================
+
 
 # =============================================================================
-# PYDANTIC V2 DOMAIN-SPECIFIC ANNOTATED TYPES
+# MODULE-LEVEL EXPORTS - Domain validation types for convenient importing
 # =============================================================================
-# These are reusable constraint types for common enterprise validation patterns
-# Reference: Pydantic v2 Annotated and Field constraints
-# https://docs.pydantic.dev/latest/concepts/fields/#field-constraints
+# These are re-exported from FlextTypes for direct import:
+# from flext_core import PortNumber, TimeoutSeconds, RetryCount, NonEmptyStr, LogLevel, HostName
 
-# Network/Port validation
-PortNumber = Annotated[
-    int,
-    Field(
-        ge=0,
-        le=65535,
-        description="Network port number (0-65535)",
-    ),
-]
-
-# Timeout validation
-TimeoutSeconds = Annotated[
-    float,
-    Field(
-        gt=0,
-        le=3600,
-        description="Timeout in seconds (max 1 hour)",
-    ),
-]
-
-# Retry count validation
-RetryCount = Annotated[
-    int,
-    Field(
-        ge=0,
-        le=10,
-        description="Retry attempts (0-10)",
-    ),
-]
-
-# Non-empty string validation
-NonEmptyStr = Annotated[
-    str,
-    Field(
-        min_length=1,
-        description="Non-empty string",
-    ),
-]
-
-# Log level enumeration
-LogLevel = Annotated[
-    str,
-    Field(
-        pattern="^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$",
-        description="Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
-    ),
-]
+PortNumber = FlextTypes.PortNumber
+TimeoutSeconds = FlextTypes.TimeoutSeconds
+RetryCount = FlextTypes.RetryCount
+NonEmptyStr = FlextTypes.NonEmptyStr
+LogLevel = FlextTypes.LogLevel
+HostName = FlextTypes.HostName
 
 
 __all__: list[str] = [
@@ -376,9 +384,10 @@ __all__: list[str] = [
     "FactoryT",
     "FilePath",
     "FileUrl",
-    # Pydantic v2 Domain-Specific Annotated Types
     "FlextTypes",
     "FutureDate",
+    # Domain validation types (Phase 3 - Annotated constraints)
+    "HostName",
     "HttpUrl",
     "K",
     "LogLevel",

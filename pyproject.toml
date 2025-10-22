@@ -133,6 +133,9 @@
 		        types-pexpect = ">=4.9.0.20250516"
 		        types-pygments = ">=2.19.0.20250715"
 
+    [tool.pyrefly]
+        python_version = "3.13"
+
     [tool.pytest.ini_options]
         addopts = [
             "--cov-report=term-missing",

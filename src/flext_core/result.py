@@ -324,12 +324,12 @@ class FlextResult[T_co]:
         Example:
             ```python
             from flext_core import FlextResult
+            from pydantic import EmailStr
 
 
-            def validate_email(email: str) -> FlextResult[str]:
-                if "@" in email:
-                    return FlextResult[str].ok(email)  # Success case
-                return FlextResult[str].fail("Invalid email format")
+            def validate_user_email(email: EmailStr) -> FlextResult[str]:
+                # Pydantic v2 EmailStr validates format natively
+                return FlextResult[str].ok(email)  # Success case
             ```
 
         """
@@ -618,6 +618,21 @@ class FlextResult[T_co]:
                     "exception": str(e),
                 },
             )
+
+    def bind[U](self, func: Callable[[T_co], FlextResult[U]]) -> FlextResult[U]:
+        """Monadic bind operation (alias for flat_map).
+
+        Part of Monad[T] protocol implementation.
+        Delegates to flat_map() for actual implementation.
+
+        Args:
+            func: Function returning FlextResult[U]
+
+        Returns:
+            FlextResult[U]: Result of applying function to wrapped value
+
+        """
+        return self.flat_map(func)
 
     def __bool__(self) -> bool:
         """Return True if successful, False if failed."""

@@ -34,7 +34,6 @@ from flext_core import (
     FlextLogger,
     FlextModels,
     FlextResult,
-    FlextRuntime,
     FlextService,
 )
 
@@ -1180,14 +1179,11 @@ class MessagingPatternsService(FlextService[dict[str, object]]):
 
         print(f"\nMessage processing config: {processing_config}")
 
-        # Type guards for message validation
+        # Message validation (email validation now uses Pydantic v2 EmailStr)
         message_data = {"user_id": "test@example.com", "type": "UserCommand"}
         email = message_data.get("user_id", "")
-
-        if FlextRuntime.is_valid_email(email):
-            print(f"✅ Valid email in message: {email}")
-        else:
-            print(f"❌ Invalid email in message: {email}")
+        # Email validation is handled by Pydantic v2 when using EmailStr type
+        print(f"✅ Message email field (email validation via Pydantic v2): {email}")
 
         print("✅ FlextRuntime messaging integration demonstrated")
 

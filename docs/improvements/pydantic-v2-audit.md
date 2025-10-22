@@ -268,7 +268,7 @@ $ grep -n "Discriminator" src/flext_core/models.py
 **Additional Evidence**:
 ```python
 # From models.py - Command class with Literal type
-class Command(StrictArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
+class Command(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
     message_type: Literal["command"] = Field(
         default="command",
         frozen=True,

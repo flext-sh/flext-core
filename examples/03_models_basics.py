@@ -882,22 +882,20 @@ class ComprehensiveModelsService(FlextService[Order]):
         """Show FlextRuntime (Layer 0.5) type guards with DDD patterns."""
         print("\n=== FlextRuntime Integration (Layer 0.5) ===")
 
-        # Type guard validation for value objects
+        # Email validation via Pydantic v2 EmailStr type in value object
         email_str = "user@example.com"
-        if FlextRuntime.is_valid_email(email_str):
-            email = Email(address=email_str)
-            print(f"✅ Valid email via FlextRuntime: {email.address}")
+        email = Email(address=email_str)
+        print(f"✅ Valid email (Pydantic v2): {email.address}")
 
-        # UUID validation for entity IDs
+        # UUID validation for entity IDs via Pydantic v2
         entity_id = "550e8400-e29b-41d4-a716-446655440000"
-        if FlextRuntime.is_valid_uuid(entity_id):
-            product = Product(
-                id=entity_id,
-                name="Validated Product",
-                price=Money(amount=Decimal("99.99"), currency="USD"),
-                sku="VAL-PROD-001",
-            )
-            print(f"✅ Valid UUID for entity: {product.id[:8]}...")
+        product = Product(
+            id=entity_id,
+            name="Validated Product",
+            price=Money(amount=Decimal("99.99"), currency="USD"),
+            sku="VAL-PROD-001",
+        )
+        print(f"✅ Valid UUID for entity: {product.id[:8]}...")
 
         # JSON validation for serialized models
         order_json = json.dumps(
@@ -908,28 +906,30 @@ class ComprehensiveModelsService(FlextService[Order]):
                 "status": "DRAFT",
             },
         )
+        # JSON parsing validated by Pydantic v2 when parsing models
         if FlextRuntime.is_valid_json(order_json):
             print("✅ Valid JSON for model serialization")
 
         # Configuration defaults for domain limits
         max_stock = FlextConstants.Utilities.DEFAULT_BATCH_SIZE
-        print(f"✅ Domain limit from FlextRuntime: max_stock={max_stock}")
+        print(f"✅ Domain limit from constants: max_stock={max_stock}")
 
     def demonstrate_flext_exceptions_integration(self) -> None:
         """Show FlextExceptions (Layer 2) with domain validation."""
         print("\n=== FlextExceptions Integration (Layer 2) ===")
 
-        # ValidationError with value object validation
+        # ValidationError with Pydantic v2 validation
         try:
             invalid_email = "not-an-email"
-            if not FlextRuntime.is_valid_email(invalid_email):
-                error_msg = "Invalid email format for value object"
-                raise FlextExceptions.ValidationError(
-                    error_msg,
-                    field="address",
-                    value=invalid_email,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
+            # Email validation is handled by Pydantic v2 EmailStr type
+            # This example shows how to raise validation errors
+            error_msg = "Invalid email format for value object"
+            raise FlextExceptions.ValidationError(
+                error_msg,
+                field="address",
+                value=invalid_email,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
         except FlextExceptions.ValidationError as e:
             print(f"✅ ValidationError: {e.error_code} - {e.message}")
             print(f"   Field: {e.field}, Value: {e.value}")

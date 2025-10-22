@@ -15,7 +15,7 @@ import pytest
 from flext_core import FlextConstants, FlextLogger
 
 # Alias for the LogLevel enum
-FlextLogLevel = FlextConstants.Config.LogLevel
+FlextLogLevel = FlextConstants.Settings.LogLevel
 
 # Constants
 EXPECTED_BULK_SIZE = 2

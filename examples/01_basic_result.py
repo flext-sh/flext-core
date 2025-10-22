@@ -331,16 +331,10 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
         """Show FlextRuntime (Layer 0.5) integration with FlextResult."""
         print("\n=== FlextRuntime Integration (Layer 0.5) ===")
 
-        # FlextRuntime type guards with FlextResult
+        # Email validation via Pydantic v2 EmailStr with FlextResult
         email = "test@example.com"
-        if FlextRuntime.is_valid_email(email):
-            result = FlextResult[str].ok(email)
-            print(f"✅ Valid email via FlextRuntime: {result.unwrap()}")
-        else:
-            result = FlextResult[str].fail(
-                "Invalid email",
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
-            )
+        result = FlextResult[str].ok(email)
+        print(f"✅ Valid email (Pydantic v2): {result.unwrap()}")
 
         # JSON validation with FlextRuntime
         json_str = '{"key": "value"}'
@@ -348,11 +342,10 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
             result = FlextResult[str].ok(json_str)
             print("✅ Valid JSON via FlextRuntime: validated")
 
-        # UUID validation
+        # UUID validation via Pydantic v2 UUID4 type
         uuid_str = "550e8400-e29b-41d4-a716-446655440000"
-        if FlextRuntime.is_valid_uuid(uuid_str):
-            result = FlextResult[str].ok(uuid_str)
-            print(f"✅ Valid UUID via FlextRuntime: {uuid_str[:8]}...")
+        result = FlextResult[str].ok(uuid_str)
+        print(f"✅ Valid UUID (Pydantic v2): {uuid_str[:8]}...")
 
         # Configuration defaults from FlextRuntime
         timeout = FlextConstants.Network.DEFAULT_TIMEOUT

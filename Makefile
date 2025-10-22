@@ -58,10 +58,15 @@ setup: install-dev ## Complete project setup
 # =============================================================================
 
 .PHONY: validate
-validate: lint type-check security test ## Run all quality gates (MANDATORY ORDER)
+validate: lint type-check security audit-pydantic-v2 test ## Run all quality gates (MANDATORY ORDER)
 
 .PHONY: check
 check: lint type-check ## Quick health check
+
+.PHONY: audit-pydantic-v2
+audit-pydantic-v2: ## Audit Pydantic v2 compliance
+	@echo "🔍 Auditing Pydantic v2 compliance..."
+	@python ../scripts/audit_pydantic_v2.py --project .
 
 .PHONY: lint
 lint: ## Run linting (ZERO TOLERANCE)

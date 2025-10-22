@@ -26,26 +26,7 @@ cd flext-core
 make setup
 
 # Verify installation
-python -c "from flext_core import FlextBus
-from flext_core import FlextConfig
-from flext_core import FlextConstants
-from flext_core import FlextContainer
-from flext_core import FlextContext
-from flext_core import FlextDecorators
-from flext_core import FlextDispatcher
-from flext_core import FlextExceptions
-from flext_core import FlextHandlers
-from flext_core import FlextLogger
-from flext_core import FlextMixins
-from flext_core import FlextModels
-from flext_core import FlextProcessors
-from flext_core import FlextProtocols
-from flext_core import FlextRegistry
-from flext_core import FlextResult
-from flext_core import FlextRuntime
-from flext_core import FlextService
-from flext_core import FlextTypes
-from flext_core import FlextUtilities; print('✅ FLEXT-Core ready')"
+python -c "from flext_core import FlextResult; print('✅ FLEXT-Core ready')"
 ```
 
 ## How to Contribute

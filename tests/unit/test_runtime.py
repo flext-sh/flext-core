@@ -27,48 +27,6 @@ from flext_core import (
 class TestTypeGuards:
     """Test FlextRuntime type guard utilities."""
 
-    def test_is_valid_email_valid_cases(self) -> None:
-        """Test is_valid_email with valid email addresses."""
-        assert FlextRuntime.is_valid_email("test@example.com")
-        assert FlextRuntime.is_valid_email("user.name+tag@example.co.uk")
-        assert FlextRuntime.is_valid_email("valid_email@domain.com")
-        assert FlextRuntime.is_valid_email("test.email@sub.domain.com")
-
-    def test_is_valid_email_invalid_cases(self) -> None:
-        """Test is_valid_email with invalid email addresses."""
-        assert not FlextRuntime.is_valid_email("invalid.email")
-        assert not FlextRuntime.is_valid_email("@example.com")
-        assert not FlextRuntime.is_valid_email("test@")
-        assert not FlextRuntime.is_valid_email("test @example.com")
-        assert not FlextRuntime.is_valid_email("")
-
-    def test_is_valid_email_non_string_types(self) -> None:
-        """Test is_valid_email returns False for non-string types."""
-        assert not FlextRuntime.is_valid_email(123)
-        assert not FlextRuntime.is_valid_email(None)
-        assert not FlextRuntime.is_valid_email(["test@example.com"])
-        assert not FlextRuntime.is_valid_email({"email": "test@example.com"})
-
-    def test_is_valid_url_valid_cases(self) -> None:
-        """Test is_valid_url with valid URLs."""
-        assert FlextRuntime.is_valid_url("https://github.com")
-        assert FlextRuntime.is_valid_url("http://localhost:8000")
-        assert FlextRuntime.is_valid_url("https://example.com/path?query=1")
-        assert FlextRuntime.is_valid_url("https://sub.domain.example.com")
-
-    def test_is_valid_url_invalid_cases(self) -> None:
-        """Test is_valid_url with invalid URLs."""
-        assert not FlextRuntime.is_valid_url("not-a-url")
-        assert not FlextRuntime.is_valid_url("ftp://invalid.com")
-        assert not FlextRuntime.is_valid_url("just text")
-        assert not FlextRuntime.is_valid_url("")
-
-    def test_is_valid_url_non_string_types(self) -> None:
-        """Test is_valid_url returns False for non-string types."""
-        assert not FlextRuntime.is_valid_url(123)
-        assert not FlextRuntime.is_valid_url(None)
-        assert not FlextRuntime.is_valid_url(["https://github.com"])
-
     def test_is_valid_phone_valid_cases(self) -> None:
         """Test is_valid_phone with valid phone numbers."""
         assert FlextRuntime.is_valid_phone("+5511987654321")
@@ -87,27 +45,6 @@ class TestTypeGuards:
         """Test is_valid_phone returns False for non-string types."""
         assert not FlextRuntime.is_valid_phone(5511987654321)
         assert not FlextRuntime.is_valid_phone(None)
-
-    def test_is_valid_uuid_valid_cases(self) -> None:
-        """Test is_valid_uuid with valid UUIDs."""
-        assert FlextRuntime.is_valid_uuid("550e8400-e29b-41d4-a716-446655440000")
-        assert FlextRuntime.is_valid_uuid(
-            "550e8400e29b41d4a716446655440000"
-        )  # Without hyphens
-        assert FlextRuntime.is_valid_uuid("123e4567-E89B-12D3-A456-426614174000")
-        assert FlextRuntime.is_valid_uuid("123e4567E89B12D3A456426614174000")
-
-    def test_is_valid_uuid_invalid_cases(self) -> None:
-        """Test is_valid_uuid with invalid UUIDs."""
-        assert not FlextRuntime.is_valid_uuid("invalid-uuid")
-        assert not FlextRuntime.is_valid_uuid("550e8400-e29b-41d4")  # Too short
-        assert not FlextRuntime.is_valid_uuid("not-a-uuid-at-all")
-        assert not FlextRuntime.is_valid_uuid("")
-
-    def test_is_valid_uuid_non_string_types(self) -> None:
-        """Test is_valid_uuid returns False for non-string types."""
-        assert not FlextRuntime.is_valid_uuid(123)
-        assert not FlextRuntime.is_valid_uuid(None)
 
     def test_is_dict_like_valid_cases(self) -> None:
         """Test is_dict_like with dict-like objects."""
@@ -154,24 +91,6 @@ class TestTypeGuards:
         assert not FlextRuntime.is_valid_json({"key": "value"})
         assert not FlextRuntime.is_valid_json([1, 2, 3])
         assert not FlextRuntime.is_valid_json(None)
-
-    def test_is_valid_path_valid_cases(self) -> None:
-        """Test is_valid_path with valid file paths."""
-        assert FlextRuntime.is_valid_path("/home/user/file.txt")
-        assert FlextRuntime.is_valid_path("C:\\Users\\file.txt")
-        assert FlextRuntime.is_valid_path("relative/path/file.py")
-        assert FlextRuntime.is_valid_path("./local/file.txt")
-
-    def test_is_valid_path_invalid_cases(self) -> None:
-        """Test is_valid_path with invalid file paths."""
-        assert not FlextRuntime.is_valid_path("path/with<invalid>chars")
-        assert not FlextRuntime.is_valid_path('path/with"quotes')
-        assert not FlextRuntime.is_valid_path("path/with|pipe")
-
-    def test_is_valid_path_non_string_types(self) -> None:
-        """Test is_valid_path returns False for non-string types."""
-        assert not FlextRuntime.is_valid_path(123)
-        assert not FlextRuntime.is_valid_path(None)
 
     def test_is_valid_identifier_valid_cases(self) -> None:
         """Test is_valid_identifier with valid Python identifiers."""
@@ -500,15 +419,11 @@ class TestRuntimeIntegrationWithConstants:
     def test_type_guards_use_constants_patterns(self) -> None:
         """Test that type guards use patterns from FlextConstants."""
         # Verify the patterns are accessible
-        assert hasattr(FlextConstants.Platform, "PATTERN_EMAIL")
-        assert hasattr(FlextConstants.Platform, "PATTERN_URL")
         assert hasattr(FlextConstants.Platform, "PATTERN_PHONE_NUMBER")
-        assert hasattr(FlextConstants.Platform, "PATTERN_UUID")
-        assert hasattr(FlextConstants.Platform, "PATTERN_PATH")
 
         # Verify type guards work with these patterns
-        test_email = "test@example.com"
-        assert FlextRuntime.is_valid_email(test_email)
+        test_phone = "+5511987654321"
+        assert FlextRuntime.is_valid_phone(test_phone)
 
     def test_layer_hierarchy_respected(self) -> None:
         """Test that Layer 0.5 (runtime) imports from Layer 0 (constants) only."""

@@ -1256,6 +1256,181 @@ class FlextContainer(FlextProtocols.Configurable):
             f"total_registered={total_registered})"
         )
 
+    # =========================================================================
+    # Protocol Implementation: TypeValidator[T]
+    # =========================================================================
+
+    def validate_type(
+        self, value: object, expected_type: type[object]
+    ) -> FlextResult[object]:
+        """Validate value matches expected type (TypeValidator protocol).
+
+        Part of TypeValidator[T] protocol implementation.
+
+        Args:
+            value: Value to validate
+            expected_type: Expected type for validation
+
+        Returns:
+            FlextResult[object]: Validated value or error
+
+        """
+        return self._validate_service_type(value, expected_type)
+
+    def is_valid_type(self, value: object, expected_type: type[object]) -> bool:
+        """Check if value is valid for expected type (TypeValidator protocol).
+
+        Part of TypeValidator[T] protocol implementation.
+
+        Args:
+            value: Value to check
+            expected_type: Expected type
+
+        Returns:
+            bool: True if valid, False otherwise
+
+        """
+        try:
+            result = self._validate_service_type(value, expected_type)
+            return result.is_success
+        except Exception:
+            return False
+
+    # =========================================================================
+    # Protocol Implementation: ServiceRegistry[T]
+    # =========================================================================
+
+    def register_service(self, name: str, service: object) -> FlextResult[None]:
+        """Register service (ServiceRegistry protocol).
+
+        Part of ServiceRegistry[T] protocol implementation.
+
+        Args:
+            name: Service identifier
+            service: Service instance
+
+        Returns:
+            FlextResult[None]: Success or registration error
+
+        """
+        return self.register(name, service)
+
+    def get_service(self, name: str) -> FlextResult[object]:
+        """Retrieve registered service (ServiceRegistry protocol).
+
+        Part of ServiceRegistry[T] protocol implementation.
+
+        Args:
+            name: Service identifier
+
+        Returns:
+            FlextResult[object]: Service instance or error
+
+        """
+        return self.get(name)
+
+    def has_service(self, name: str) -> bool:
+        """Check if service is registered (ServiceRegistry protocol).
+
+        Part of ServiceRegistry[T] protocol implementation.
+
+        Args:
+            name: Service identifier
+
+        Returns:
+            bool: True if registered
+
+        """
+        return self.has(name)
+
+    # =========================================================================
+    # Protocol Implementation: FactoryProvider[T]
+    # =========================================================================
+
+    def create_instance(self) -> FlextResult[object]:
+        """Create new instance using factory (FactoryProvider protocol).
+
+        Part of FactoryProvider[T] protocol implementation.
+        Creates instance from registered factory.
+
+        Returns:
+            FlextResult[object]: Created instance or error
+
+        """
+        try:
+            # Get any registered factory and invoke it
+            if not self._factories:
+                return FlextResult[object].fail(
+                    "No factories registered",
+                    error_code="FACTORY_NOT_FOUND",
+                )
+
+            # Use first factory found
+            factory_name = next(iter(self._factories.keys()))
+            factory = self._factories[factory_name]
+
+            if callable(factory):
+                instance = factory()
+                return FlextResult[object].ok(instance)
+
+            return FlextResult[object].fail(
+                f"Factory {factory_name} is not callable",
+                error_code="FACTORY_NOT_CALLABLE",
+            )
+        except Exception as e:
+            return FlextResult[object].fail(
+                f"Factory creation failed: {e}",
+                error_code="FACTORY_ERROR",
+                error_data={"exception": str(e)},
+            )
+
+    # =========================================================================
+    # Protocol Implementation: SingletonProvider[T]
+    # =========================================================================
+
+    def get_instance(self) -> FlextResult[object]:
+        """Get singleton instance (SingletonProvider protocol).
+
+        Part of SingletonProvider[T] protocol implementation.
+        Returns the global singleton instance.
+
+        Returns:
+            FlextResult[object]: Singleton instance or error
+
+        """
+        try:
+            with self._global_lock:
+                if self._global_instance is None:
+                    self._global_instance = FlextContainer()
+                return FlextResult[object].ok(self._global_instance)
+        except Exception as e:
+            return FlextResult[object].fail(
+                f"Singleton retrieval failed: {e}",
+                error_code="SINGLETON_ERROR",
+                error_data={"exception": str(e)},
+            )
+
+    def reset_instance(self) -> FlextResult[None]:
+        """Reset singleton instance (SingletonProvider protocol).
+
+        Part of SingletonProvider[T] protocol implementation.
+        Resets the global singleton for testing purposes only.
+
+        Returns:
+            FlextResult[None]: Success or reset error
+
+        """
+        try:
+            with self._global_lock:
+                self._global_instance = None
+                return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(
+                f"Singleton reset failed: {e}",
+                error_code="SINGLETON_RESET_ERROR",
+                error_data={"exception": str(e)},
+            )
+
 
 __all__ = [
     "FlextContainer",

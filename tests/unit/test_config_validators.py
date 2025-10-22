@@ -13,84 +13,10 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextConfig, FlextExceptions
-from flext_core.typings import RetryCount, TimeoutSeconds
-
-
-class MockTypeWithFloat:
-    """Mock type that supports __float__()."""
-
-    def __float__(self) -> float:
-        """Return float value."""
-        return 42.5
-
-
-class MockTypeWithIndex:
-    """Mock type that supports __index__()."""
-
-    def __index__(self) -> int:
-        """Return int value."""
-        return 42
-
-
-class MockTypeInvalid:
-    """Mock type that doesn't support conversion."""
 
 
 class TestConfigValidatorErrorPaths:
     """Test error paths in FlextConfig validators."""
-
-    def test_coerce_int_from_env_with_float(self) -> None:
-        """Test coerce_int_from_env with float input."""
-        config = FlextConfig(
-            max_retry_attempts=RetryCount(5),  # type: ignore[arg-type]
-        )
-        assert config.max_retry_attempts == 5
-
-    def test_coerce_int_from_env_with_string(self) -> None:
-        """Test coerce_int_from_env with string input."""
-        config = FlextConfig(
-            max_retry_attempts=RetryCount(10),
-        )
-        assert config.max_retry_attempts == 10
-
-    def test_coerce_int_from_env_with_index_type(self) -> None:
-        """Test coerce_int_from_env with __index__ type."""
-        mock_index = MockTypeWithIndex()
-        # This path is tested through the validator
-        result = FlextConfig.coerce_int_from_env(mock_index)
-        assert result == 42
-
-    def test_coerce_int_from_env_with_invalid_type(self) -> None:
-        """Test coerce_int_from_env with invalid type raises error."""
-        invalid = MockTypeInvalid()
-        with pytest.raises(ValueError, match="Cannot convert"):
-            FlextConfig.coerce_int_from_env(invalid)
-
-    def test_coerce_float_from_env_with_int(self) -> None:
-        """Test coerce_float_from_env with int input."""
-        config = FlextConfig(
-            timeout_seconds=TimeoutSeconds(30),
-        )
-        assert config.timeout_seconds == 30.0
-
-    def test_coerce_float_from_env_with_string(self) -> None:
-        """Test coerce_float_from_env with string input."""
-        config = FlextConfig(
-            timeout_seconds=TimeoutSeconds(45.5),
-        )
-        assert config.timeout_seconds == 45.5
-
-    def test_coerce_float_from_env_with_float_type(self) -> None:
-        """Test coerce_float_from_env with __float__ type."""
-        mock_float = MockTypeWithFloat()
-        result = FlextConfig.coerce_float_from_env(mock_float)
-        assert result == 42.5
-
-    def test_coerce_float_from_env_with_invalid_type(self) -> None:
-        """Test coerce_float_from_env with invalid type raises error."""
-        invalid = MockTypeInvalid()
-        with pytest.raises(ValueError, match="Cannot convert"):
-            FlextConfig.coerce_float_from_env(invalid)
 
     def test_validate_debug_trace_consistency_valid(self) -> None:
         """Test validate_debug_trace_consistency with valid config."""
@@ -199,27 +125,27 @@ class TestConfigValidatorEdgeCases:
 
     def test_config_with_timeout_seconds_at_boundary(self) -> None:
         """Test TimeoutSeconds at boundary values."""
-        # Min boundary: > 0
-        config_min = FlextConfig(timeout_seconds=TimeoutSeconds(0.001))
-        assert config_min.timeout_seconds > 0
+        # Min boundary: >= 0.1 (per config.py constraint)
+        config_min = FlextConfig(timeout_seconds=0.1)
+        assert config_min.timeout_seconds >= 0.1
 
-        # Max boundary: <= 3600
-        config_max = FlextConfig(timeout_seconds=TimeoutSeconds(3600))
-        assert config_max.timeout_seconds == 3600
+        # Max boundary: <= 300 (per config.py constraint)
+        config_max = FlextConfig(timeout_seconds=300.0)
+        assert config_max.timeout_seconds == 300.0
 
     def test_config_with_retry_count_at_boundary(self) -> None:
         """Test RetryCount at boundary values."""
         # Min boundary: >= 0
-        config_min = FlextConfig(max_retry_attempts=RetryCount(0))
+        config_min = FlextConfig(max_retry_attempts=0)
         assert config_min.max_retry_attempts == 0
 
         # Max boundary: <= 10
-        config_max = FlextConfig(max_retry_attempts=RetryCount(10))
+        config_max = FlextConfig(max_retry_attempts=10)
         assert config_max.max_retry_attempts == 10
 
     def test_config_timeout_seconds_coercion_from_int(self) -> None:
         """Test timeout_seconds can be coerced from int."""
-        config = FlextConfig(timeout_seconds=60)  # type: ignore[arg-type]
+        config = FlextConfig(timeout_seconds=60)
         assert isinstance(config.timeout_seconds, float)
         assert config.timeout_seconds == 60.0
 
@@ -230,17 +156,17 @@ class TestConfigValidatorEdgeCases:
 
     def test_config_float_field_dispatcher_timeout(self) -> None:
         """Test dispatcher_timeout_seconds coercion."""
-        config = FlextConfig(dispatcher_timeout_seconds=TimeoutSeconds(15.5))
+        config = FlextConfig(dispatcher_timeout_seconds=15.5)
         assert config.dispatcher_timeout_seconds == 15.5
 
     def test_config_float_field_rate_limit_window(self) -> None:
         """Test rate_limit_window_seconds coercion."""
-        config = FlextConfig(rate_limit_window_seconds=TimeoutSeconds(60))
+        config = FlextConfig(rate_limit_window_seconds=60)
         assert config.rate_limit_window_seconds == 60.0
 
     def test_config_float_field_retry_delay(self) -> None:
         """Test retry_delay coercion."""
-        config = FlextConfig(retry_delay=TimeoutSeconds(1.5))
+        config = FlextConfig(retry_delay=1.5)
         assert config.retry_delay == 1.5
 
 
@@ -269,9 +195,9 @@ class TestConfigValidationMethods:
     def test_config_with_timeout_and_retry_coercion(self) -> None:
         """Test both timeout and retry coercion together."""
         config = FlextConfig(
-            timeout_seconds=60,  # type: ignore[arg-type]
+            timeout_seconds=60,
             max_retry_attempts="3",  # type: ignore[arg-type]
-            dispatcher_timeout_seconds=90,  # type: ignore[arg-type]
+            dispatcher_timeout_seconds=90,
         )
         assert config.timeout_seconds == 60.0
         assert config.max_retry_attempts == 3
@@ -280,7 +206,7 @@ class TestConfigValidationMethods:
     def test_config_float_coercion_multiple_fields(self) -> None:
         """Test float coercion across multiple fields."""
         config = FlextConfig(
-            rate_limit_window_seconds=30,  # type: ignore[arg-type]
+            rate_limit_window_seconds=30,
             retry_delay=1.5,
         )
         assert config.rate_limit_window_seconds == 30.0
@@ -289,8 +215,8 @@ class TestConfigValidationMethods:
     def test_config_model_dump_preserves_types(self) -> None:
         """Test model_dump preserves field types."""
         config = FlextConfig(
-            max_retry_attempts=RetryCount(5),
-            timeout_seconds=TimeoutSeconds(45),
+            max_retry_attempts=5,
+            timeout_seconds=45,
         )
         dumped = config.model_dump()
         assert dumped["max_retry_attempts"] == 5
@@ -299,10 +225,10 @@ class TestConfigValidationMethods:
     def test_config_field_validator_on_multiple_fields(self) -> None:
         """Test field validator applies to all specified fields."""
         config = FlextConfig(
-            retry_delay=10,  # type: ignore[arg-type]
-            rate_limit_window_seconds=60,  # type: ignore[arg-type]
-            timeout_seconds=30,  # type: ignore[arg-type]
-            dispatcher_timeout_seconds=15,  # type: ignore[arg-type]
+            retry_delay=10,
+            rate_limit_window_seconds=60,
+            timeout_seconds=30,
+            dispatcher_timeout_seconds=15,
         )
         assert isinstance(config.retry_delay, float)
         assert isinstance(config.rate_limit_window_seconds, float)

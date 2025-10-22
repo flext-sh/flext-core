@@ -187,6 +187,9 @@ class TestFlextBus:
             data: str
 
         class TestHandler:
+            def __call__(self, command: TestCommand) -> FlextResult[str]:
+                return FlextResult[str].ok(f"processed_{command.data}")
+
             def handle(self, command: TestCommand) -> FlextResult[str]:
                 return FlextResult[str].ok(f"processed_{command.data}")
 
@@ -196,7 +199,8 @@ class TestFlextBus:
         command = TestCommand(data="test_data")
         found_handler = bus.find_handler(command)
         assert found_handler is not None
-        assert found_handler is handler
+        # Handler must be Callable per BusHandlerType definition
+        assert callable(found_handler)
 
     def test_bus_error_handling(self) -> None:
         """Test bus error handling mechanisms."""

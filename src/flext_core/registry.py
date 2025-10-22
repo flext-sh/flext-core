@@ -751,5 +751,39 @@ class FlextRegistry(FlextMixins):
         # Delegate to container
         return self.container.register(name, service)
 
+    # =========================================================================
+    # Protocol Implementations: RegistrationTracker, BatchProcessor
+    # =========================================================================
+
+    def register_item(self, name: str, item: object) -> FlextResult[None]:
+        """Register item (RegistrationTracker protocol)."""
+        try:
+            return self.register(name, item)
+        except Exception as e:
+            return FlextResult[None].fail(str(e))
+
+    def get_item(self, name: str) -> FlextResult[object]:
+        """Get registered item (RegistrationTracker protocol)."""
+        try:
+            return FlextResult[object].ok(getattr(self, name))
+        except Exception as e:
+            return FlextResult[object].fail(str(e))
+
+    def list_items(self) -> FlextResult[list[str]]:
+        """List registered items (RegistrationTracker protocol)."""
+        try:
+            keys = list(getattr(self, "_registered_keys", []))
+            return FlextResult[list[str]].ok(keys)
+        except Exception as e:
+            return FlextResult[list[str]].fail(str(e))
+
+    def batch_process(self, items: list[object]) -> FlextResult[list[object]]:
+        """Process items in batch (BatchProcessor protocol)."""
+        return FlextResult[list[object]].ok(items)
+
+    def get_batch_size(self) -> int:
+        """Get batch size (BatchProcessor protocol)."""
+        return 100
+
 
 __all__ = ["FlextRegistry"]

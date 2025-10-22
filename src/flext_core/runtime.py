@@ -45,7 +45,7 @@ Satisfies FlextProtocols.Runtime through method signatures and capabilities:
 ✅ Complete ecosystem logging foundation
 
 **Usage Patterns**:
-1. **Type Guards**: Use is_valid_email(), is_valid_url() for pattern validation
+1. **Type Guards**: Use is_valid_phone(), is_valid_json() for pattern validation
 2. **Serialization**: Use safe_serialize_to_dict() for object conversion
 3. **Type Introspection**: Use is_optional_type(), extract_generic_args()
 4. **Structured Logging**: Use configure_structlog() once at startup
@@ -94,15 +94,11 @@ class FlextRuntime:
     - Serialization utilities follow stdlib patterns
     - No inheritance from @runtime_checkable protocols
 
-    **Type Guard Utilities** (8+ pattern-based validators):
-    1. **is_valid_email()** - RFC 5322 simplified pattern validation
-    2. **is_valid_url()** - HTTP/HTTPS URL pattern validation
-    3. **is_valid_phone()** - International phone number validation
-    4. **is_valid_uuid()** - UUID format validation (hyphenated/non-hyphenated)
-    5. **is_valid_path()** - File/directory path validation
-    6. **is_valid_json()** - JSON string validation via json.loads()
-    7. **is_valid_identifier()** - Python identifier validation
-    8. **is_dict_like()** / **is_list_like()** - Collection type checking
+    **Type Guard Utilities** (5+ pattern-based validators):
+    1. **is_valid_phone()** - International phone number validation
+    2. **is_valid_json()** - JSON string validation via json.loads()
+    3. **is_valid_identifier()** - Python identifier validation
+    4. **is_dict_like()** / **is_list_like()** - Collection type checking
 
     **Serialization Utilities** (Safe multi-strategy conversion):
     1. **safe_serialize_to_dict()** - Multi-strategy object serialization
@@ -150,7 +146,7 @@ class FlextRuntime:
     10. **Zero Circular Imports** - Foundation + bridge layers only
 
     **Production Readiness Checklist**:
-    ✅ 8+ type guard utilities using FlextConstants patterns
+    ✅ 5+ type guard utilities using FlextConstants patterns
     ✅ Safe serialization with 4 fallback strategies
     ✅ Type introspection without circular imports
     ✅ Structured logging configuration with FLEXT defaults
@@ -164,7 +160,7 @@ class FlextRuntime:
     ✅ Zero external module circular dependencies
 
     **Usage Patterns**:
-    1. **Type Validation**: `if FlextRuntime.is_valid_email(value): ...`
+    1. **Type Validation**: `if FlextRuntime.is_valid_phone(value): ...`
     2. **Safe Serialization**: `dict_result = FlextRuntime.safe_serialize_to_dict(obj)`
     3. **Optional Detection**: `is_opt = FlextRuntime.is_optional_type(type_hint)`
     4. **Logging Setup**: `FlextRuntime.configure_structlog(console_renderer=True)`
@@ -188,53 +184,15 @@ class FlextRuntime:
     _structlog_configured: bool = False
 
     # Log level constants using FlextConstants (production-ready, not test-only)
-    LOG_LEVEL_DEBUG: str = FlextConstants.Config.LogLevel.DEBUG
-    LOG_LEVEL_INFO: str = FlextConstants.Config.LogLevel.INFO
-    LOG_LEVEL_WARNING: str = FlextConstants.Config.LogLevel.WARNING
-    LOG_LEVEL_ERROR: str = FlextConstants.Config.LogLevel.ERROR
-    LOG_LEVEL_CRITICAL: str = FlextConstants.Config.LogLevel.CRITICAL
+    LOG_LEVEL_DEBUG: str = FlextConstants.Settings.LogLevel.DEBUG
+    LOG_LEVEL_INFO: str = FlextConstants.Settings.LogLevel.INFO
+    LOG_LEVEL_WARNING: str = FlextConstants.Settings.LogLevel.WARNING
+    LOG_LEVEL_ERROR: str = FlextConstants.Settings.LogLevel.ERROR
+    LOG_LEVEL_CRITICAL: str = FlextConstants.Settings.LogLevel.CRITICAL
 
     # =========================================================================
     # TYPE GUARD UTILITIES (Uses regex patterns from FlextConstants)
     # =========================================================================
-
-    @staticmethod
-    def is_valid_email(
-        value: FlextTypes.ValidatableInputType,
-    ) -> TypeGuard[str]:
-        """Type guard to check if value is a valid email string.
-
-        Uses RFC 5322 simplified pattern from FlextConstants.Platform.PATTERN_EMAIL.
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value is a valid email string, False otherwise
-
-        """
-        if not isinstance(value, str):
-            return False
-        pattern = re.compile(FlextConstants.Platform.PATTERN_EMAIL)
-        return pattern.match(value) is not None
-
-    @staticmethod
-    def is_valid_url(value: FlextTypes.ValidatableInputType) -> TypeGuard[str]:
-        """Type guard to check if value is a valid HTTP/HTTPS URL string.
-
-        Uses URL pattern from FlextConstants.Platform.PATTERN_URL.
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value is a valid URL string, False otherwise
-
-        """
-        if not isinstance(value, str):
-            return False
-        pattern = re.compile(FlextConstants.Platform.PATTERN_URL, re.IGNORECASE)
-        return pattern.match(value) is not None
 
     @staticmethod
     def is_valid_phone(
@@ -254,27 +212,6 @@ class FlextRuntime:
         if not isinstance(value, str):
             return False
         pattern = re.compile(FlextConstants.Platform.PATTERN_PHONE_NUMBER)
-        return pattern.match(value) is not None
-
-    @staticmethod
-    def is_valid_uuid(
-        value: FlextTypes.ValidatableInputType,
-    ) -> TypeGuard[str]:
-        """Type guard to check if value is a valid UUID string.
-
-        Supports both hyphenated and non-hyphenated formats.
-        Uses pattern from FlextConstants.Platform.PATTERN_UUID.
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value is a valid UUID string, False otherwise
-
-        """
-        if not isinstance(value, str):
-            return False
-        pattern = re.compile(FlextConstants.Platform.PATTERN_UUID)
         return pattern.match(value) is not None
 
     @staticmethod
@@ -327,26 +264,6 @@ class FlextRuntime:
             return True
         except (json.JSONDecodeError, ValueError):
             return False
-
-    @staticmethod
-    def is_valid_path(
-        value: FlextTypes.ValidatableInputType,
-    ) -> TypeGuard[str]:
-        """Type guard to check if value is a valid file/directory path.
-
-        Uses pattern from FlextConstants.Platform.PATTERN_PATH.
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value is a valid path string, False otherwise
-
-        """
-        if not isinstance(value, str):
-            return False
-        pattern = re.compile(FlextConstants.Platform.PATTERN_PATH)
-        return pattern.match(value) is not None
 
     @staticmethod
     def is_valid_identifier(

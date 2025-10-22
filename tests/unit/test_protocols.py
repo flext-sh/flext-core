@@ -41,29 +41,6 @@ class TestFlextProtocols:
         assert hasattr(container, "value")
         assert container.value == "test"
 
-    def test_has_timestamps_protocol(self) -> None:
-        """Test HasTimestamps protocol definition."""
-        protocol = FlextProtocols.HasTimestamps
-        assert protocol is not None
-        # For runtime-checkable protocols, check for protocol attributes
-        assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
-        )
-
-    def test_has_timestamps_implementation(self) -> None:
-        """Test that a class can implement HasTimestamps."""
-        import time
-
-        class TimestampedEntity:
-            def __init__(self) -> None:
-                super().__init__()
-                self.created_at = time.time()
-                self.updated_at = time.time()
-
-        entity = TimestampedEntity()
-        assert hasattr(entity, "created_at")
-        assert hasattr(entity, "updated_at")
-
     def test_has_model_fields_protocol(self) -> None:
         """Test HasModelFields protocol definition."""
         protocol = FlextProtocols.HasModelFields
@@ -76,15 +53,6 @@ class TestFlextProtocols:
     def test_has_model_dump_protocol(self) -> None:
         """Test HasModelDump protocol definition."""
         protocol = FlextProtocols.HasModelDump
-        assert protocol is not None
-        # For runtime-checkable protocols, check for protocol attributes
-        assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
-        )
-
-    def test_has_handler_type_protocol(self) -> None:
-        """Test HasHandlerType protocol definition."""
-        protocol = FlextProtocols.HasHandlerType
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
@@ -149,42 +117,6 @@ class TestFlextProtocols:
             protocol, "__annotations__"
         )
 
-    def test_connection_protocol(self) -> None:
-        """Test Connection protocol definition."""
-        protocol = FlextProtocols.Connection
-        assert protocol is not None
-        # For runtime-checkable protocols, check for protocol attributes
-        assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
-        )
-
-    def test_connection_implementation(self) -> None:
-        """Test that a class can implement Connection protocol."""
-
-        class DatabaseConnection:
-            def connect(self) -> FlextResult[None]:
-                return FlextResult[None].ok(None)
-
-            def disconnect(self) -> FlextResult[None]:
-                return FlextResult[None].ok(None)
-
-            def is_connected(self) -> bool:
-                return True
-
-        conn = DatabaseConnection()
-        assert hasattr(conn, "connect")
-        assert hasattr(conn, "disconnect")
-        assert hasattr(conn, "is_connected")
-
-    def test_logger_protocol(self) -> None:
-        """Test LoggerProtocol definition."""
-        protocol = FlextProtocols.LoggerProtocol
-        assert protocol is not None
-        # For runtime-checkable protocols, check for protocol attributes
-        assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
-        )
-
     # Application Protocols Tests
     def test_handler_protocol(self) -> None:
         """Test Handler protocol definition."""
@@ -237,34 +169,6 @@ class TestFlextProtocols:
             protocol, "__annotations__"
         )
 
-    # Extensions Protocols Tests
-    def test_plugin_protocol(self) -> None:
-        """Test PluginContext protocol definition."""
-        protocol = FlextProtocols.PluginContext
-        assert protocol is not None
-        # For runtime-checkable protocols, check for protocol attributes
-        assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
-        )
-
-    def test_plugin_context_protocol(self) -> None:
-        """Test PluginContext protocol definition."""
-        protocol = FlextProtocols.PluginContext
-        assert protocol is not None
-        # For runtime-checkable protocols, check for protocol attributes
-        assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
-        )
-
-    def test_observability_protocol(self) -> None:
-        """Test Observability protocol definition."""
-        protocol = FlextProtocols.Observability
-        assert protocol is not None
-        # For runtime-checkable protocols, check for protocol attributes
-        assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
-        )
-
     def test_extensions_middleware_protocol(self) -> None:
         """Test Extensions Middleware protocol definition."""
         protocol = FlextProtocols.Middleware
@@ -311,10 +215,8 @@ class TestFlextProtocols:
         """Test that all foundation protocols are accessible."""
         expected_protocols = [
             "HasResultValue",
-            "HasTimestamps",
             "HasModelFields",
             "HasModelDump",
-            "HasHandlerType",
         ]
         for proto_name in expected_protocols:
             assert hasattr(FlextProtocols, proto_name)
@@ -327,7 +229,7 @@ class TestFlextProtocols:
 
     def test_all_infrastructure_protocols_available(self) -> None:
         """Test that all infrastructure protocols are accessible."""
-        expected_protocols = ["Configurable", "Connection", "LoggerProtocol"]
+        expected_protocols = ["Configurable"]
         for proto_name in expected_protocols:
             assert hasattr(FlextProtocols, proto_name)
 
@@ -349,7 +251,6 @@ class TestFlextProtocols:
     def test_all_extensions_protocols_available(self) -> None:
         """Test that all extensions protocols are accessible."""
         expected_protocols = [
-            "PluginContext",
             "Middleware",
         ]
         for proto_name in expected_protocols:
