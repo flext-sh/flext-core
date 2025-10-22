@@ -21,7 +21,7 @@
         "dependency-injector>=4.41.0",
         "orjson (>=3.11.3)",
         "pydantic-settings>=2.10.1",
-        "pydantic>=2.11.7",
+        "pydantic[email] (>=2.12.3,<3.0.0)",
         "pyyaml>=6.0.2",
         "returns>=0.26.0",
         "structlog>=25.4.0",

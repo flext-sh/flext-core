@@ -187,7 +187,7 @@ class AdvancedFieldConfig(BaseModel):
     balance: Decimal = Field(decimal_places=2, max_digits=10)
 
     # List constraints
-    tags: Annotated[list[str], Field(min_items=1, max_items=10)]
+    tags: Annotated[list[str], Field(min_length=1, max_length=10)]
 
     # Dict constraints
     metadata: Annotated[dict[str, str], Field(max_length=5)]
