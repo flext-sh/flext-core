@@ -423,11 +423,10 @@ class FlextTestDocker:
 
         Returns:
             FlextResult with status message
+
         """
         try:
             compose_path = Path(compose_file)
-            if not compose_path.exists():
-                return FlextResult[str].fail(f"Compose file not found: {compose_file}")
 
             # Build docker-compose command using Python docker client
             # Use docker-compose CLI via subprocess (docker-py doesn't have compose API yet)
@@ -445,6 +444,7 @@ class FlextTestDocker:
 
             result = subprocess.run(
                 cmd,
+                check=False,
                 cwd=str(working_dir),
                 capture_output=True,
                 text=True,
@@ -464,7 +464,7 @@ class FlextTestDocker:
                 return FlextResult[str].fail(f"docker compose up failed: {error_msg}")
 
             self.logger.info(
-                f"docker compose up succeeded",
+                "docker compose up succeeded",
                 extra={
                     "compose_file": compose_file,
                     "service": service,
@@ -485,11 +485,10 @@ class FlextTestDocker:
 
         Returns:
             FlextResult with status message
+
         """
         try:
             compose_path = Path(compose_file)
-            if not compose_path.exists():
-                return FlextResult[str].fail(f"Compose file not found: {compose_file}")
 
             # Build docker compose command
             cmd = ["docker", "compose", "-f", str(compose_path), "down"]
@@ -499,6 +498,7 @@ class FlextTestDocker:
 
             result = subprocess.run(
                 cmd,
+                check=False,
                 cwd=str(working_dir),
                 capture_output=True,
                 text=True,
@@ -517,13 +517,15 @@ class FlextTestDocker:
                 return FlextResult[str].fail(f"docker compose down failed: {error_msg}")
 
             self.logger.info(
-                f"docker compose down succeeded",
+                "docker compose down succeeded",
                 extra={"compose_file": compose_file},
             )
             return FlextResult[str].ok(f"Compose stack stopped from {compose_file}")
 
         except subprocess.TimeoutExpired:
-            return FlextResult[str].fail("docker compose down timed out after 2 minutes")
+            return FlextResult[str].fail(
+                "docker compose down timed out after 2 minutes"
+            )
         except Exception as e:
             return FlextResult[str].fail(f"docker compose down failed: {e}")
 

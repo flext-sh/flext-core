@@ -30,6 +30,7 @@ from typing import (
     override,
 )
 
+import structlog.contextvars
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -2100,11 +2101,9 @@ class FlextModels:
                 Type safety is ensured by FlextContext using typed variables.
 
             """
-            import structlog.contextvars
-
             structlog_context = structlog.contextvars.get_contextvars()
             if not structlog_context:
-                return cast("T | None", self._default)
+                return self._default
             # Cast from structlog's untyped storage to our Generic[T] contract
             return cast("T | None", structlog_context.get(self._key, self._default))
 
