@@ -21,10 +21,11 @@
         "dependency-injector>=4.41.0",
         "orjson (>=3.11.3)",
         "pydantic-settings>=2.10.1",
-        "pydantic[email] (>=2.12.3,<3.0.0)",
+        "pydantic (>=2.12.3)",
         "pyyaml>=6.0.2",
         "returns>=0.26.0",
         "structlog>=25.4.0",
+        "pydantic-core (>=2.41.4)",
     ]
     description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
     keywords = [
@@ -125,13 +126,15 @@
 		        docker = "^7.1.0"
 		        pyrefly = "^0.34.0"
 		        pytest = "^8.4.0"
-		        rich = "^14.1.0"
+		        python-on-whales = "^0.78.0"
+		        rich = "=14.2.0"
 		        types-pyyaml = "^6.0.12.20250822"
 
 		    [tool.poetry.group.typings.dependencies]
 		        types-colorama = ">=0.4.15.20240311"
 		        types-pexpect = ">=4.9.0.20250516"
 		        types-pygments = ">=2.19.0.20250715"
+    types-pysocks = "^1.7.1.20251001"
 
     [tool.pyrefly]
         python_version = "3.13"
