@@ -16,16 +16,18 @@ import inspect
 import json
 import logging
 import operator
+import os
 import pathlib
 import re
 import secrets
+import shutil
 import string
 import subprocess  # nosec B404 - subprocess is used for legitimate process management
 import threading
 import time
 import uuid
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict, dataclass, is_dataclass
 from datetime import UTC, datetime
 from typing import (
     cast,
@@ -44,6 +46,33 @@ from flext_core.typings import FlextTypes
 
 # Module logger for exception tracking
 _logger = logging.getLogger(__name__)
+
+
+# =========================================================================
+# COMPLETION PROCESS WRAPPER - Replacing subprocess.CompletedProcess
+# =========================================================================
+
+
+@dataclass(frozen=True)
+class _CompletedProcessWrapper:
+    """Wrapper replacing subprocess.CompletedProcess for command execution results.
+
+    This class provides the same interface as subprocess.CompletedProcess
+    without requiring the subprocess module in return types.
+
+    Attributes:
+        returncode: The exit code of the process
+        stdout: Standard output from the process (empty string if not captured)
+        stderr: Standard error output from the process (empty string if not captured)
+        args: The command that was executed as a list of strings
+
+    """
+
+    returncode: int
+    stdout: str
+    stderr: str
+    args: list[str]
+
 
 # =========================================================================
 # TYPE IMPORTS - All types now centralized in typings.py
@@ -1342,8 +1371,10 @@ class FlextUtilities:
         timeout: float | None = None,
         command_input: str | bytes | None = None,
         text: bool | None = None,
-    ) -> FlextResult[subprocess.CompletedProcess[str]]:
+    ) -> FlextResult[_CompletedProcessWrapper]:
         """Execute external command with proper error handling using FlextResult pattern.
+
+        Uses threading-based timeout handling instead of subprocess TimeoutExpired.
 
         Args:
             cmd: Command to execute as list of strings
@@ -1352,11 +1383,11 @@ class FlextUtilities:
             env: Environment variables dictionary for the command
             cwd: Working directory for the command
             timeout: Command timeout in seconds
-            input: Input to send to the command
+            command_input: Input to send to the command
             text: Whether to decode stdout/stderr as text (Python 3.7+)
 
         Returns:
-            FlextResult containing CompletedProcess on success or error details on failure
+            FlextResult containing _CompletedProcessWrapper on success or error details on failure
 
         Example:
             ```python
@@ -1364,7 +1395,7 @@ class FlextUtilities:
                 ["python", "script.py"], capture_output=True, timeout=60.0
             )
             if result.is_success:
-                process = result.value
+                process = result.unwrap()
                 print(f"Exit code: {process.returncode}")
                 print(f"Output: {process.stdout}")
             ```
@@ -1374,56 +1405,130 @@ class FlextUtilities:
             # Validate command for security - ensure all parts are safe strings
             # This prevents shell injection since we use list form, not shell=True
             if not cmd or not all(part for part in cmd):
-                return FlextResult[subprocess.CompletedProcess[str]].fail(
+                return FlextResult[_CompletedProcessWrapper].fail(
                     "Command must be a non-empty list of strings",
                     error_code="INVALID_COMMAND",
                 )
 
-            # Execute subprocess.run with explicit parameters to avoid overload issues
-            # S603: Command is validated above to ensure it's a safe list of strings
-            result = subprocess.run(  # nosec B603
-                cmd,
-                capture_output=capture_output,
-                check=check,
-                env=env,
-                cwd=cwd,
-                timeout=timeout,
-                input=command_input,
-                text=text if text is not None else True,
-            )
+            # Check if command executable exists using shutil.which
+            if not shutil.which(cmd[0]):
+                return FlextResult[_CompletedProcessWrapper].fail(
+                    f"Command not found: {cmd[0]}",
+                    error_code="COMMAND_NOT_FOUND",
+                    error_data={"cmd": cmd, "executable": cmd[0]},
+                )
 
-            return FlextResult[subprocess.CompletedProcess[str]].ok(result)
+            # Store original working directory for restoration
+            original_cwd = pathlib.Path.cwd()
 
-        except subprocess.CalledProcessError as e:
-            return FlextResult[subprocess.CompletedProcess[str]].fail(
-                f"Command failed with exit code {e.returncode}",
-                error_code="COMMAND_FAILED",
-                error_data={
-                    "cmd": cmd,
-                    "returncode": e.returncode,
-                    "stdout": e.stdout,
-                    "stderr": e.stderr,
-                },
-            )
-        except subprocess.TimeoutExpired as e:
-            return FlextResult[subprocess.CompletedProcess[str]].fail(
-                f"Command timed out after {timeout} seconds",
-                error_code="COMMAND_TIMEOUT",
-                error_data={
-                    "cmd": cmd,
-                    "timeout": timeout,
-                    "stdout": e.stdout,
-                    "stderr": e.stderr,
-                },
-            )
+            try:
+                # Change to target directory if specified
+                if cwd:
+                    os.chdir(str(cwd))
+
+                # Prepare environment variables
+                exec_env = os.environ.copy()
+                if env:
+                    exec_env.update(env)
+
+                # S603: Command is validated above to ensure it's a safe list of strings
+                process = subprocess.Popen(  # nosec B603
+                    cmd,
+                    stdout=subprocess.PIPE if capture_output else None,
+                    stderr=subprocess.PIPE if capture_output else None,
+                    stdin=subprocess.PIPE if command_input is not None else None,
+                    env=exec_env,
+                    text=text if text is not None else True,
+                )
+
+                # Containers for thread results
+                result_container: list[tuple[str, str] | None] = [None]
+                exception_container: list[Exception | str | None] = [None]
+
+                def communicate_thread() -> None:
+                    """Execute communicate in a separate thread."""
+                    try:
+                        stdout, stderr = process.communicate(input=command_input)
+                        result_container[0] = (stdout or "", stderr or "")
+                    except Exception as e:
+                        exception_container[0] = e
+
+                # Execute communication in thread for timeout handling
+                thread = threading.Thread(target=communicate_thread)
+                thread.daemon = False
+                thread.start()
+
+                # Wait for process with timeout
+                thread.join(timeout=timeout)
+
+                # Check if thread is still running (timeout occurred)
+                if thread.is_alive():
+                    try:
+                        process.kill()
+                    except (OSError, ProcessLookupError):
+                        pass  # Process already terminated
+
+                    return FlextResult[_CompletedProcessWrapper].fail(
+                        f"Command timed out after {timeout} seconds",
+                        error_code="COMMAND_TIMEOUT",
+                        error_data={"cmd": cmd, "timeout": timeout},
+                    )
+
+                # Check for exceptions from thread
+                if exception_container[0] is not None:
+                    exc = exception_container[0]
+                    return FlextResult[_CompletedProcessWrapper].fail(
+                        f"Command execution failed: {exc!s}",
+                        error_code="COMMAND_ERROR",
+                        error_data={"cmd": cmd, "error": str(exc)},
+                    )
+
+                # Get process results
+                if result_container[0] is None:
+                    return FlextResult[_CompletedProcessWrapper].fail(
+                        "Process completed but no output captured",
+                        error_code="COMMAND_ERROR",
+                        error_data={"cmd": cmd},
+                    )
+
+                stdout_text, stderr_text = result_container[0]
+                returncode = process.returncode if process.returncode is not None else 1
+
+                # Create wrapper result
+                wrapper = _CompletedProcessWrapper(
+                    returncode=returncode,
+                    stdout=stdout_text,
+                    stderr=stderr_text,
+                    args=cmd,
+                )
+
+                # Check exit code if requested
+                if check and returncode != 0:
+                    return FlextResult[_CompletedProcessWrapper].fail(
+                        f"Command failed with exit code {returncode}",
+                        error_code="COMMAND_FAILED",
+                        error_data={
+                            "cmd": cmd,
+                            "returncode": returncode,
+                            "stdout": stdout_text,
+                            "stderr": stderr_text,
+                        },
+                    )
+
+                return FlextResult[_CompletedProcessWrapper].ok(wrapper)
+
+            finally:
+                # Always restore original working directory
+                os.chdir(original_cwd)
+
         except FileNotFoundError:
-            return FlextResult[subprocess.CompletedProcess[str]].fail(
+            return FlextResult[_CompletedProcessWrapper].fail(
                 f"Command not found: {cmd[0]}",
                 error_code="COMMAND_NOT_FOUND",
                 error_data={"cmd": cmd, "executable": cmd[0]},
             )
         except Exception as e:
-            return FlextResult[subprocess.CompletedProcess[str]].fail(
+            return FlextResult[_CompletedProcessWrapper].fail(
                 f"Unexpected error running command: {e!s}",
                 error_code="COMMAND_ERROR",
                 error_data={"cmd": cmd, "error": str(e)},

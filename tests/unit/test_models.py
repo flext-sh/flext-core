@@ -520,6 +520,7 @@ class TestFlextModels:
 
         # Should fail invariant check when called manually
         from flext_core import FlextExceptions
+
         with pytest.raises(FlextExceptions.ValidationError, match="Invariant violated"):
             failing_aggregate.check_invariants()
 
@@ -604,7 +605,9 @@ class TestFlextModels:
         assert query.filters == {"active": "true"}
         assert query.message_type == "query"
 
-    @pytest.mark.skip(reason="Pydantic descriptor proxy issue with mark_events_as_committed method")
+    @pytest.mark.skip(
+        reason="Pydantic descriptor proxy issue with mark_events_as_committed method"
+    )
     def test_aggregate_root_mark_events_as_committed(self) -> None:
         """Test mark_events_as_committed method."""
 
@@ -624,14 +627,16 @@ class TestFlextModels:
         # result = aggregate.mark_events_as_committed()
         # assert result.is_success
 
-    @pytest.mark.skip(reason="Pydantic descriptor proxy issue with mark_events_as_committed method")
+    @pytest.mark.skip(
+        reason="Pydantic descriptor proxy issue with mark_events_as_committed method"
+    )
     def test_aggregate_root_mark_events_empty(self) -> None:
         """Test mark_events_as_committed with no events."""
 
         class TestAggregate(FlextModels.AggregateRoot):
             name: str
 
-        aggregate = TestAggregate(name="test")
+        TestAggregate(name="test")
 
         # Mark events with no events - currently failing due to Pydantic issues
         # result = aggregate.mark_events_as_committed()

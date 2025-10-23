@@ -21,7 +21,11 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import (
+    BaseSettings,
+    EnvSettingsSource,
+    SettingsConfigDict,
+)
 
 from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
@@ -35,6 +39,88 @@ from flext_core.result import FlextResult
 # - "123" → int 123 (automatic whitespace stripping)
 # - "1.5" → float 1.5
 # See: https://docs.pydantic.dev/2.12/concepts/conversion_table/
+
+
+class NestedPrefixEnvSettingsSource(EnvSettingsSource):
+    """Custom EnvSettingsSource for nested config with prefix translation.
+
+    **GENERIC PATTERN** for composed configuration with different prefixes.
+
+    **Problem**: Parent config uses PARENT_PREFIX_*, nested config expects NESTED_PREFIX_*
+    Example: client-a_OUD_MIG_LDAP_* → FlextLdapConfig expects FLEXT_LDAP_*
+
+    **Solution**: Translate environment variables from parent prefix to nested prefix
+    for a specific nested field.
+
+    **Usage in settings_customise_sources()**:
+    ```python
+    @classmethod
+    def settings_customise_sources(cls, settings_cls, init_settings, env_settings, ...):
+        # Map client-a_OUD_MIG_LDAP_* → FLEXT_LDAP_* for ldap_config field
+        nested_ldap = NestedPrefixEnvSettingsSource(
+            settings_cls=FlextLdapConfig,
+            parent_prefix="client-a_OUD_MIG_",
+            nested_prefix="FLEXT_",
+            field_mapping={"ldap_": "ldap_"},  # Both use ldap_ after prefix
+            env_file=env_file_path,
+        )
+        return (init_settings, {"ldap_config": nested_ldap}, env_settings, ...)
+    ```
+    """
+
+    def __init__(
+        self,
+        settings_cls: type[BaseSettings],
+        parent_prefix: str,
+        nested_prefix: str,
+        field_mapping: dict[str, str] | None = None,
+        env_file: str | None = None,
+        env_file_encoding: str = "utf-8",
+        *,
+        case_sensitive: bool = False,
+    ) -> None:
+        """Initialize nested prefix environment settings source.
+
+        Args:
+            settings_cls: Nested config class (e.g., FlextLdapConfig)
+            parent_prefix: Parent config env prefix (e.g., "client-a_OUD_MIG_")
+            nested_prefix: Nested config env prefix (e.g., "FLEXT_")
+            field_mapping: Optional field name mapping (default: identity mapping)
+            env_file: Optional .env file path
+            env_file_encoding: Encoding for .env file
+            case_sensitive: Case sensitivity for env var names
+
+        """
+        self.parent_prefix = parent_prefix.upper()
+        self.nested_prefix = nested_prefix.upper()
+        self.field_mapping = field_mapping or {}
+
+        # Initialize parent EnvSettingsSource with nested config settings
+        super().__init__(
+            settings_cls=settings_cls,
+            env_file=env_file,
+            env_file_encoding=env_file_encoding,
+            case_sensitive=case_sensitive,
+            env_prefix=nested_prefix,  # Use nested prefix for Pydantic
+        )
+
+    def prepare_field_value(
+        self,
+        field_name: str,
+        field: object,
+        value: object,
+        value_is_complex: bool,
+    ) -> object:
+        """Prepare field value with prefix translation.
+
+        Translates PARENT_PREFIX_FIELD → NESTED_PREFIX_FIELD for env var lookup.
+        """
+        # Get the actual field name after any mapping
+        mapped_field = self.field_mapping.get(field_name, field_name)
+
+        # For display/logging, use the parent prefix form
+        # But Pydantic will look for nested prefix form internally
+        return super().prepare_field_value(mapped_field, field, value, value_is_complex)
 
 
 class FlextConfig(BaseSettings):
@@ -646,4 +732,5 @@ FlextConfig.model_rebuild()
 
 __all__ = [
     "FlextConfig",
+    "NestedPrefixEnvSettingsSource",
 ]

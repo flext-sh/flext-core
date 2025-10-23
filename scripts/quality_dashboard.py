@@ -16,12 +16,13 @@ Output:
 
 import argparse
 import json
-import subprocess  # noqa: S404 - Legitimate subprocess usage for process management
 import sys
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+from flext_core import FlextUtilities
 
 
 @dataclass
@@ -53,20 +54,26 @@ def run_command(cmd: list[str], cwd: Path) -> tuple[int, str]:
         Tuple of (exit_code, output)
 
     """
-    try:
-        result = subprocess.run(
-            cmd,
-            check=False,
-            cwd=cwd,
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        return result.returncode, result.stdout + result.stderr
-    except subprocess.TimeoutExpired:
-        return 1, "Command timed out"
-    except Exception as e:
-        return 1, str(e)
+    # CONVERTED: Use FlextUtilities instead of subprocess.run()
+    result = FlextUtilities.run_external_command(
+        cmd,
+        check=False,
+        cwd=str(cwd),
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+    if result.is_failure:
+        # Detect timeout errors
+        error_msg = result.error.lower()
+        if "timed out" in error_msg:
+            return 1, "Command timed out"
+        return 1, result.error
+
+    # Success - extract returncode and output
+    proc = result.unwrap()
+    return proc.returncode, proc.stdout + proc.stderr
 
 
 def collect_metrics(project_path: Path) -> ProjectMetrics:
