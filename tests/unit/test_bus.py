@@ -1247,7 +1247,7 @@ class TestFlextBusMissingCoverage:
         handler_instance = TestEventHandler()
 
         # Subscribe to event
-        result = bus.subscribe("TestEvent", handler_instance)  # type: ignore[arg-type]
+        result = bus.subscribe("TestEvent", handler_instance)
         assert result.is_success
 
         # Publish event

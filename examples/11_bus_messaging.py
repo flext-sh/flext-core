@@ -492,7 +492,7 @@ class BusMessagingService(FlextService[dict[str, object]]):
             result = message  # Process message
             duration = time.time() - start
             message_type = type(message).__name__
-            metrics = performance_middleware._metrics  # noqa: SLF001
+            metrics = performance_middleware._metrics
             if message_type not in metrics:
                 metrics[message_type] = []
             metrics[message_type].append(duration)

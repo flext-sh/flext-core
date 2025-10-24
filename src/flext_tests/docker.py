@@ -34,7 +34,7 @@ from rich.table import Table
 try:
     from python_on_whales import docker as pow_docker
 except ImportError:
-    pow_docker = None  # type: ignore[assignment]
+    pow_docker = None
 
 from flext_core import (
     FlextLogger,

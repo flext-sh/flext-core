@@ -1210,7 +1210,7 @@ class FlextContext:
         @staticmethod
         def get_user_id() -> str | None:
             """Get current user ID."""
-            return FlextContext.Variables.Request.USER_ID.get()  # type: ignore[return-value]
+            return FlextContext.Variables.Request.USER_ID.get()
 
         @staticmethod
         def set_user_id(user_id: str) -> None:
@@ -1223,7 +1223,7 @@ class FlextContext:
         @staticmethod
         def get_operation_name() -> str | None:
             """Get the current operation name from context."""
-            return FlextContext.Variables.Performance.OPERATION_NAME.get()  # type: ignore[return-value]
+            return FlextContext.Variables.Performance.OPERATION_NAME.get()
 
         @staticmethod
         def set_operation_name(operation_name: str) -> None:
@@ -1236,7 +1236,7 @@ class FlextContext:
         @staticmethod
         def get_request_id() -> str | None:
             """Get current request ID from context."""
-            return FlextContext.Variables.Request.REQUEST_ID.get()  # type: ignore[return-value]
+            return FlextContext.Variables.Request.REQUEST_ID.get()
 
         @staticmethod
         def set_request_id(request_id: str) -> None:
@@ -1309,7 +1309,7 @@ class FlextContext:
         @staticmethod
         def get_operation_start_time() -> datetime | None:
             """Get operation start time from context."""
-            return FlextContext.Variables.Performance.OPERATION_START_TIME.get()  # type: ignore[return-value]
+            return FlextContext.Variables.Performance.OPERATION_START_TIME.get()
 
         @staticmethod
         def set_operation_start_time(
@@ -1323,7 +1323,7 @@ class FlextContext:
         @staticmethod
         def get_operation_metadata() -> dict[str, object] | None:
             """Get operation metadata from context."""
-            return FlextContext.Variables.Performance.OPERATION_METADATA.get()  # type: ignore[return-value]
+            return FlextContext.Variables.Performance.OPERATION_METADATA.get()
 
         @staticmethod
         def set_operation_metadata(metadata: dict[str, object]) -> None:

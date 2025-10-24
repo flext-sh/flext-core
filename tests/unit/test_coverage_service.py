@@ -124,7 +124,7 @@ class TestAbstractMethodEnforcement:
         try:
             # This should raise TypeError due to missing execute() implementation
             # Use type: ignore to suppress mypy warning about abstract class instantiation
-            _ = FlextService[str]()  # type: ignore[abstract]
+            _ = FlextService[str]()
             msg = "Should have raised TypeError"
             raise AssertionError(msg)
         except TypeError:
