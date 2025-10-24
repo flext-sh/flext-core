@@ -959,7 +959,10 @@ class TestFlextDispatcherCoverage:
     def test_circuit_breaker_protocol_call(self) -> None:
         """Test CircuitBreaker.call protocol method."""
         dispatcher = FlextDispatcher()
-        func = lambda: "test"  # noqa: E731
+
+        def func() -> str:
+            return "test"
+
         result = dispatcher.call(func)
         assert result.is_success
         assert result.value is not None
@@ -991,14 +994,20 @@ class TestFlextDispatcherCoverage:
     def test_retry_policy_protocol_execute_with_retry(self) -> None:
         """Test RetryPolicy.execute_with_retry protocol method."""
         dispatcher = FlextDispatcher()
-        func = lambda: "test"  # noqa: E731
+
+        def func() -> str:
+            return "test"
+
         result = dispatcher.execute_with_retry(func)
         assert result.is_success or result.is_failure
 
     def test_timeout_enforcer_protocol_enforce_timeout(self) -> None:
         """Test TimeoutEnforcer.enforce_timeout protocol method."""
         dispatcher = FlextDispatcher()
-        func = lambda: "test"  # noqa: E731
+
+        def func() -> str:
+            return "test"
+
         result = dispatcher.enforce_timeout(func, 30.0)
         assert result.is_success or result.is_failure
 
@@ -1078,13 +1087,13 @@ class TestFlextDispatcherCoverage:
             error_msg = "Mocked error"
             raise ValueError(error_msg)
 
-        FlextResult.ok = mock_ok  # type: ignore[assignment, method-assign]
+        FlextResult.ok = mock_ok
         try:
             result = dispatcher.call(lambda: "test")
             # Should catch exception and return fail
             assert result.is_failure
         finally:
-            FlextResult.ok = original_ok  # type: ignore[method-assign]
+            FlextResult.ok = original_ok
 
     def test_circuit_breaker_protocol_reset_with_exception(self) -> None:
         """Test CircuitBreaker.reset exception handling."""

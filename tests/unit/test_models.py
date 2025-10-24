@@ -495,7 +495,7 @@ class TestFlextModels:
 
         # Disable automatic invariant checking for this test
         original_post_init = TestAggregate.model_post_init
-        TestAggregate.model_post_init = lambda self, ctx: None  # type: ignore
+        TestAggregate.model_post_init = lambda self, ctx: None
 
         try:
             aggregate = TestAggregate(name="test", value=10)
@@ -514,7 +514,7 @@ class TestFlextModels:
             ]
 
         # Disable automatic invariant checking
-        FailingAggregate.model_post_init = lambda self, ctx: None  # type: ignore
+        FailingAggregate.model_post_init = lambda self, ctx: None
 
         failing_aggregate = FailingAggregate(name="test")
 
@@ -547,7 +547,7 @@ class TestFlextModels:
         with pytest.raises(
             Exception
         ):  # Should raise ValidationError or FrozenInstanceError
-            value1.value = 100  # type: ignore
+            value1.value = 100
 
     def test_command_creation_with_mixins(self) -> None:
         """Test Command creation with all mixins."""
@@ -681,7 +681,7 @@ class TestFlextModels:
         assert result.is_success
 
         # Test invalid input type
-        result = aggregate.add_domain_events_bulk("not a list")  # type: ignore
+        result = aggregate.add_domain_events_bulk("not a list")
         assert result.is_failure
         assert "Events must be a list" in result.error
 
@@ -691,12 +691,12 @@ class TestFlextModels:
         assert "name must be non-empty string" in result.error
 
         # Test invalid data type
-        result = aggregate.add_domain_events_bulk([("event", "not a dict")])  # type: ignore
+        result = aggregate.add_domain_events_bulk([("event", "not a dict")])
         assert result.is_failure
         assert "data must be dict" in result.error
 
         # Test None data (should be converted to empty dict)
-        result = aggregate.add_domain_events_bulk([("event", None)])  # type: ignore
+        result = aggregate.add_domain_events_bulk([("event", None)])
         assert result.is_success
 
     def test_aggregate_root_bulk_domain_events_limit(self) -> None:

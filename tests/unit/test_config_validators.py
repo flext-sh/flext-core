@@ -151,7 +151,7 @@ class TestConfigValidatorEdgeCases:
 
     def test_config_retry_attempts_coercion_from_string(self) -> None:
         """Test retry_attempts can be coerced from string."""
-        config = FlextConfig(max_retry_attempts="5")  # type: ignore[arg-type]
+        config = FlextConfig(max_retry_attempts="5")
         assert config.max_retry_attempts == 5
 
     def test_config_float_field_dispatcher_timeout(self) -> None:
@@ -196,7 +196,7 @@ class TestConfigValidationMethods:
         """Test both timeout and retry coercion together."""
         config = FlextConfig(
             timeout_seconds=60,
-            max_retry_attempts="3",  # type: ignore[arg-type]
+            max_retry_attempts="3",
             dispatcher_timeout_seconds=90,
         )
         assert config.timeout_seconds == 60.0
