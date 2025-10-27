@@ -27,6 +27,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable, Mapping, Sequence
+from contextlib import suppress
 from dataclasses import asdict, dataclass, is_dataclass
 from datetime import UTC, datetime
 from typing import (
@@ -313,7 +314,7 @@ class FlextUtilities:
                                 cleared_count += 1
 
                 return FlextResult[None].ok(None)
-            except Exception as e:
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                 return FlextResult[None].fail(f"Failed to clear caches: {e}")
 
         @staticmethod
@@ -350,7 +351,13 @@ class FlextUtilities:
                         )
                         if result.is_failure:
                             return result
-                    except Exception as e:
+                    except (
+                        AttributeError,
+                        TypeError,
+                        ValueError,
+                        RuntimeError,
+                        KeyError,
+                    ) as e:
                         return FlextResult[None].fail(f"Validator failed: {e}")
             return FlextResult[None].ok(None)
 
@@ -386,7 +393,7 @@ class FlextUtilities:
                                 cleared_count += 1
 
                 return FlextResult[None].ok(None)
-            except Exception as e:
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                 return FlextResult[None].fail(f"Failed to clear caches: {e}")
 
         @staticmethod
@@ -410,7 +417,7 @@ class FlextUtilities:
             try:
                 json_bytes = orjson.dumps(value, option=orjson.OPT_SORT_KEYS)
                 return json_bytes.decode(FlextConstants.Utilities.DEFAULT_ENCODING)
-            except Exception as e:
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                 # Use proper logger instead of root logger
                 logger = logging.getLogger(__name__)
                 logger.debug("orjson dumps failed: %s", e)
@@ -545,7 +552,7 @@ class FlextUtilities:
                 command_hash = hash(command_str)
                 return f"{cast('type', command_type).__name__}_{command_hash}"
 
-            except Exception:
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
                 # Fallback to string representation if anything fails
                 command_str_fallback: str = (
                     str(command) if command is not None else "None"
@@ -868,7 +875,13 @@ class FlextUtilities:
             def run_operation() -> None:
                 try:
                     result_container[0] = operation()
-                except Exception as e:
+                except (
+                    AttributeError,
+                    TypeError,
+                    ValueError,
+                    RuntimeError,
+                    KeyError,
+                ) as e:
                     exception_container[0] = e
 
             # Copy current context to the new thread
@@ -941,7 +954,13 @@ class FlextUtilities:
                     # Sleep before retry
                     time.sleep(current_delay)
 
-                except Exception as e:
+                except (
+                    AttributeError,
+                    TypeError,
+                    ValueError,
+                    RuntimeError,
+                    KeyError,
+                ) as e:
                     last_error = str(e)
 
                     # Don't delay on the last attempt
@@ -1244,7 +1263,7 @@ class FlextUtilities:
                 return obj[parameter]
 
             # Check for Pydantic model with model_dump method
-            if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
+            if hasattr(obj, "model_dump") and callable(obj.model_dump):
                 try:
                     # Cast to protocol with model_dump for type safety
                     pydantic_obj = cast("FlextProtocols.HasModelDump", obj)
@@ -1253,7 +1272,13 @@ class FlextUtilities:
                         msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
                         raise FlextExceptions.NotFoundError(msg, resource_id=parameter)
                     return model_data[parameter]
-                except Exception as e:
+                except (
+                    AttributeError,
+                    TypeError,
+                    ValueError,
+                    RuntimeError,
+                    KeyError,
+                ) as e:
                     # Log and continue to fallback - object may not be Pydantic model
                     _logger.debug(f"Failed to get parameter from model_dump: {e}")
 
@@ -1294,7 +1319,7 @@ class FlextUtilities:
                 setattr(obj, parameter, value)
                 return True
 
-            except Exception:
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
                 # Validation error or attribute error returns False
                 return False
 
@@ -1317,9 +1342,7 @@ class FlextUtilities:
 
             """
             if hasattr(singleton_class, "get_global_instance"):
-                get_global_instance_method = getattr(
-                    singleton_class, "get_global_instance"
-                )
+                get_global_instance_method = singleton_class.get_global_instance
                 if callable(get_global_instance_method):
                     instance = get_global_instance_method()
                     if isinstance(instance, FlextProtocols.HasModelDump):
@@ -1348,9 +1371,7 @@ class FlextUtilities:
 
             """
             if hasattr(singleton_class, "get_global_instance"):
-                get_global_instance_method = getattr(
-                    singleton_class, "get_global_instance"
-                )
+                get_global_instance_method = singleton_class.get_global_instance
                 if callable(get_global_instance_method):
                     instance = get_global_instance_method()
                     if isinstance(instance, FlextProtocols.HasModelDump):
@@ -1450,7 +1471,13 @@ class FlextUtilities:
                     try:
                         stdout, stderr = process.communicate(input=command_input)
                         result_container[0] = (stdout or "", stderr or "")
-                    except Exception as e:
+                    except (
+                        AttributeError,
+                        TypeError,
+                        ValueError,
+                        RuntimeError,
+                        KeyError,
+                    ) as e:
                         exception_container[0] = e
 
                 # Execute communication in thread for timeout handling
@@ -1463,10 +1490,8 @@ class FlextUtilities:
 
                 # Check if thread is still running (timeout occurred)
                 if thread.is_alive():
-                    try:
-                        process.kill()
-                    except (OSError, ProcessLookupError):
-                        pass  # Process already terminated
+                    with suppress(OSError, ProcessLookupError):
+                        process.kill()  # Process may already be terminated
 
                     return FlextResult[_CompletedProcessWrapper].fail(
                         f"Command timed out after {timeout} seconds",
@@ -1527,7 +1552,7 @@ class FlextUtilities:
                 error_code="COMMAND_NOT_FOUND",
                 error_data={"cmd": cmd, "executable": cmd[0]},
             )
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[_CompletedProcessWrapper].fail(
                 f"Unexpected error running command: {e!s}",
                 error_code="COMMAND_ERROR",

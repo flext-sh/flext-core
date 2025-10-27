@@ -2027,17 +2027,17 @@ class TestFlextResultFinalPush:
         assert recovered.unwrap() == 42
 
     def test_recover_exception_handling(self) -> None:
-        """Test recover with TypeError/ValueError handling (lines 953-954)."""
+        """Test recover re-raises exceptions from recovery function (lines 825-836)."""
 
         def recovery_type_error(error: str) -> int:
             msg = "Type error in recovery"
             raise TypeError(msg)
 
         result = FlextResult[int].fail("Original error")
-        recovered = result.recover(recovery_type_error)
 
-        assert recovered.is_failure
-        assert "Type error in recovery" in str(recovered.error)
+        # recover() re-raises exceptions, it doesn't catch them
+        with pytest.raises(TypeError, match="Type error in recovery"):
+            result.recover(recovery_type_error)
 
 
 class TestFlextResultFinalCoveragePush:
@@ -2389,7 +2389,7 @@ class TestIOInterop:
 
     def test_from_io_result_failure(self) -> None:
         """Test creating result from IOFailure."""
-        io_failure = IOFailure("io_error")
+        io_failure: IOFailure[object] = IOFailure("io_error")
         result: FlextResult[object] = cast(
             "FlextResult[object]", FlextResult.from_io_result(io_failure)
         )
@@ -2543,13 +2543,15 @@ class TestRailwayMethods:
 
     def test_value_or_call_exception_handling(self) -> None:
         """Test value_or_call when default computation raises exception."""
+        from flext_core import FlextExceptions
+
         result = FlextResult[int].fail("error")
 
         def failing_default() -> int:
             msg = "Default computation failed"
             raise ValueError(msg)
 
-        with pytest.raises(Exception):  # BaseError from FlextResult
+        with pytest.raises(FlextExceptions.BaseError):
             result.value_or_call(failing_default)
 
 

@@ -173,7 +173,7 @@ class TestFlextRegistry:
         summary = FlextRegistry.Summary()
 
         # Test initial state
-        assert summary.is_success
+        assert summary
         assert summary.successful_registrations == 0
         assert summary.failed_registrations == 0
 
@@ -189,7 +189,7 @@ class TestFlextRegistry:
         summary.errors.append("test_error")
 
         # Test updated state
-        assert not summary.is_success
+        assert not summary
         assert summary.successful_registrations == 1
         assert summary.failed_registrations == 1
 
@@ -349,7 +349,7 @@ class TestFlextRegistry:
         assert len(summary.errors) == 0
 
         # Test properties
-        assert summary.is_success
+        assert summary
         assert summary.successful_registrations == 0
         assert summary.failed_registrations == 0
 
@@ -374,7 +374,7 @@ class TestFlextRegistry:
         summary.errors.append("registration_error")
 
         # Test properties
-        assert not summary.is_success  # Has errors
+        assert not summary  # Has errors
         assert summary.successful_registrations == 1
         assert summary.failed_registrations == 1
         assert len(summary.skipped) == 1
@@ -830,7 +830,7 @@ class TestFlextRegistry:
         summary = FlextRegistry.Summary()
 
         # Test initial state
-        assert summary.is_success
+        assert summary
         assert summary.successful_registrations == 0
         assert summary.failed_registrations == 0
         assert len(summary.registered) == 0
@@ -848,7 +848,7 @@ class TestFlextRegistry:
         summary.skipped.append("skipped_handler")
         summary.errors.append("error_message")
 
-        assert not summary.is_success  # Has errors
+        assert not summary  # Has errors
         assert summary.successful_registrations == 1
         assert summary.failed_registrations == 1
         assert len(summary.registered) == 1

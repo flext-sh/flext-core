@@ -276,6 +276,7 @@ class TestEdgeCases:
 
         class DecoratedObj:
             def __init__(self) -> None:
+                super().__init__()
                 self._cache: dict[str, object] = {}
 
         obj = DecoratedObj()
@@ -286,6 +287,7 @@ class TestEdgeCases:
 
         class CachedObj:
             def __init__(self) -> None:
+                super().__init__()
                 self._cache = {"key": "value"}
 
         obj = CachedObj()
@@ -393,6 +395,7 @@ class TestEdgeCases:
 
         class CachedObj:
             def __init__(self) -> None:
+                super().__init__()
                 self._cache = {"key1": "value1", "key2": "value2"}
 
         obj = CachedObj()
@@ -417,6 +420,7 @@ class TestEdgeCases:
 
         class MockConfig:
             def __init__(self) -> None:
+                super().__init__()
                 self.custom_param: str | None = None
 
         config = MockConfig()

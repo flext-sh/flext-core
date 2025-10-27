@@ -132,7 +132,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                                     )
                     except Exception as e:
-                        # Skip if it's a Pydantic field validator - validation will proceed below
+                        # VALIDATION HIERARCHY - User data validation (HIGH)
+                        # Validation methods on user data can raise any exception
+                        # Safe behavior: log and continue with next validation
                         FlextHandlers._internal_logger.debug(
                             f"Skipping validation method {validation_method_name}: {type(e).__name__}"
                         )
@@ -146,6 +148,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     message.__class__.model_validate(message.model_dump(mode="python"))
                     return FlextResult[None].ok(None)
                 except Exception as e:
+                    # VALIDATION HIERARCHY - Pydantic model revalidation (HIGH)
+                    # User model_validate() can raise any exception
+                    # Safe behavior: capture validation error with full context
                     validation_error = FlextExceptions.ValidationError(
                         f"Pydantic revalidation failed: {e}",
                         field="pydantic_model",
@@ -168,6 +173,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             try:
                 cls._build_serializable_message_payload(message, operation=operation)
             except Exception as exc:
+                # VALIDATION HIERARCHY - Message serialization (HIGH)
+                # User message serialization can raise any exception
+                # Safe behavior: check exception type and respond appropriately
                 if isinstance(exc, FlextExceptions.TypeError):
                     return FlextResult[None].fail(
                         str(exc),
@@ -246,6 +254,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                         if isinstance(result_data, dict):
                             return cast("dict[str, object]", result_data)
                     except Exception as e:
+                        # VALIDATION HIERARCHY - User data serialization (HIGH)
+                        # User model_dump(), dict() methods can raise any exception
+                        # Safe behavior: log and try next serialization method
                         FlextHandlers._internal_logger.debug(
                             f"Serialization method {method_name} failed: {type(e).__name__}"
                         )
@@ -599,6 +610,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             )
             return result
         except Exception as e:
+            # VALIDATION HIERARCHY - User handler execution (CRITICAL)
+            # User-registered handlers can raise any exception
+            # Safe behavior: capture error, log metrics, return failure result
             execution_time_ms = (time.time() - start_time) * 1000
             exception_type = type(e).__name__
             FlextHandlers.Metrics.log_handler_error(
@@ -691,6 +705,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     handler_mode=effective_type,
                 )
             except Exception as e:
+                # VALIDATION HIERARCHY - Handler config creation (MEDIUM)
+                # Model creation can raise validation exceptions
+                # Safe behavior: re-raise as ValidationError with context
                 msg = f"Failed to create handler config: {e}"
                 raise FlextExceptions.ValidationError(
                     message=msg,
@@ -714,6 +731,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                         cast("CallableOutputT", result)
                     )
                 except Exception as e:
+                    # VALIDATION HIERARCHY - User callable execution (CRITICAL)
+                    # User-provided callable can raise any exception
+                    # Safe behavior: wrap exception in FlextResult.fail()
                     return FlextResult[CallableOutputT].fail(str(e))
 
             @override
@@ -767,6 +787,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             self._metrics[name] = value
             return FlextResult[None].ok(None)
         except Exception as e:
+            # VALIDATION HIERARCHY - Metrics recording (MEDIUM)
+            # Dict operations with user data can raise any exception
+            # Safe behavior: wrap in FlextResult with error code
             return FlextResult[None].fail(
                 f"Metric recording failed: {e}",
                 error_code="METRICS_ERROR",
@@ -785,6 +808,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             metrics = getattr(self, "_metrics", {})
             return FlextResult[dict[str, object]].ok(metrics)
         except Exception as e:
+            # VALIDATION HIERARCHY - Metrics retrieval (MEDIUM)
+            # Getattr operations can raise unexpected exceptions
+            # Safe behavior: wrap in FlextResult with error code
             return FlextResult[dict[str, object]].fail(
                 f"Metrics retrieval failed: {e}",
                 error_code="METRICS_ERROR",
@@ -808,6 +834,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             self._context_stack.append(context)
             return FlextResult[None].ok(None)
         except Exception as e:
+            # VALIDATION HIERARCHY - Context push (MEDIUM)
+            # List operations with user data can raise any exception
+            # Safe behavior: wrap in FlextResult with error code
             return FlextResult[None].fail(
                 f"Context push failed: {e}",
                 error_code="CONTEXT_ERROR",
@@ -829,6 +858,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 self._context_stack.pop()
             return FlextResult[None].ok(None)
         except Exception as e:
+            # VALIDATION HIERARCHY - Context pop (MEDIUM)
+            # List operations can raise unexpected exceptions
+            # Safe behavior: wrap in FlextResult with error code
             return FlextResult[None].fail(
                 f"Context pop failed: {e}",
                 error_code="CONTEXT_ERROR",

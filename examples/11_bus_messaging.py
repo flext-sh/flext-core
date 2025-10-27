@@ -448,6 +448,12 @@ class BusMessagingService(FlextService[dict[str, object]]):
 
                 return result
 
+            def add_metric(self, message_type: str, duration: float) -> None:
+                """Add a metric measurement (public API)."""
+                if message_type not in self._metrics:
+                    self._metrics[message_type] = []
+                self._metrics[message_type].append(duration)
+
             def get_stats(self) -> dict[str, FlextTypes.FloatDict]:
                 """Get performance statistics."""
                 stats: dict[str, FlextTypes.FloatDict] = {}
@@ -492,10 +498,8 @@ class BusMessagingService(FlextService[dict[str, object]]):
             result = message  # Process message
             duration = time.time() - start
             message_type = type(message).__name__
-            metrics = performance_middleware._metrics
-            if message_type not in metrics:
-                metrics[message_type] = []
-            metrics[message_type].append(duration)
+            # Use public API to add metrics
+            performance_middleware.add_metric(message_type, duration)
             return result
 
         bus.add_middleware(logging_handler)

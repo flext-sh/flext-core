@@ -46,13 +46,9 @@ Satisfies FlextProtocols.Runtime through method signatures and capabilities:
 
 **Usage Patterns**:
 1. **Type Guards**: Use is_valid_phone(), is_valid_json() for pattern validation
-2. **Serialization**: Use safe_serialize_to_dict() for object conversion
-3. **Type Introspection**: Use is_optional_type(), extract_generic_args()
 4. **Structured Logging**: Use configure_structlog() once at startup
 5. **Service Integration**: Use FlextRuntime.Integration.track_service_resolution()
 6. **Domain Events**: Use FlextRuntime.Integration.track_domain_event()
-7. **Config Access**: Use FlextRuntime.Integration.log_config_access()
-8. **Service Setup**: Use FlextRuntime.Integration.setup_service_infrastructure()
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -101,7 +97,6 @@ class FlextRuntime:
     4. **is_dict_like()** / **is_list_like()** - Collection type checking
 
     **Serialization Utilities** (Safe multi-strategy conversion):
-    1. **safe_serialize_to_dict()** - Multi-strategy object serialization
        - Strategy 1: Pydantic v2 model_dump()
        - Strategy 2: Legacy Pydantic dict()
        - Strategy 3: Object __dict__ attribute
@@ -110,7 +105,6 @@ class FlextRuntime:
     3. All strategies fail gracefully with logging, never raise exceptions
 
     **Type Introspection** (Typing module utilities):
-    1. **is_optional_type()** - Detect Optional[T] (Union[T, None] or T | None)
     2. **extract_generic_args()** - Extract type arguments from generics
     3. **is_sequence_type()** - Detect sequence types via collections.abc
 
@@ -129,9 +123,6 @@ class FlextRuntime:
     FlextRuntime.Integration provides optional helpers for service layer:
     1. **track_service_resolution()** - Service resolution tracking
     2. **track_domain_event()** - Domain event emission with correlation
-    3. **log_config_access()** - Configuration access logging (with masking)
-    4. **attach_context_to_result()** - Future-proof result context attachment
-    5. **setup_service_infrastructure()** - Complete service setup with context
 
     **Core Features** (10 runtime capabilities):
     1. **Type Safety** - TypeGuard utilities for pattern validation
@@ -161,13 +152,9 @@ class FlextRuntime:
 
     **Usage Patterns**:
     1. **Type Validation**: `if FlextRuntime.is_valid_phone(value): ...`
-    2. **Safe Serialization**: `dict_result = FlextRuntime.safe_serialize_to_dict(obj)`
-    3. **Optional Detection**: `is_opt = FlextRuntime.is_optional_type(type_hint)`
     4. **Logging Setup**: `FlextRuntime.configure_structlog(console_renderer=True)`
     5. **Service Tracking**: `FlextRuntime.Integration.track_service_resolution(name)`
     6. **Event Logging**: `FlextRuntime.Integration.track_domain_event(event_name)`
-    7. **Config Logging**: `FlextRuntime.Integration.log_config_access(key, masked=True)`
-    8. **Service Setup**: `FlextRuntime.Integration.setup_service_infrastructure(service_name="api")`
 
     **Design Principles**:
     - Circular import prevention through foundation + bridge layers only
@@ -306,94 +293,6 @@ class FlextRuntime:
         return getattr(obj, attr, default)
 
     @staticmethod
-    def safe_serialize_to_dict(
-        obj: FlextTypes.SerializableObjectType,
-    ) -> dict[str, object] | None:
-        """Serialize object to dictionary without dependencies.
-
-        Attempts multiple serialization strategies without importing
-        FlextModels or other flext_core modules.
-
-        Args:
-            obj: Object to serialize
-
-        Returns:
-            Dictionary representation or None if serialization fails
-
-        """
-        # Strategy 1: Check for model_dump method (Pydantic)
-        if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
-            try:
-                model_dump_method = getattr(obj, "model_dump")
-                result = model_dump_method()
-                if isinstance(result, dict):
-                    return cast("dict[str, object]", result)
-            except Exception as e:
-                # Silent fallback for serialization strategy - log at debug level
-                logging.getLogger(__name__).debug(
-                    f"model_dump() serialization strategy failed: {e}"
-                )
-
-        # Strategy 2: Check for to_dict method
-        if hasattr(obj, "to_dict") and callable(getattr(obj, "to_dict")):
-            try:
-                to_dict_method = getattr(obj, "to_dict")
-                result = to_dict_method()
-                if isinstance(result, dict):
-                    return cast("dict[str, object]", result)
-            except Exception as e:
-                # Silent fallback for serialization strategy - log at debug level
-                logging.getLogger(__name__).debug(
-                    f"to_dict() serialization strategy failed: {e}"
-                )
-
-        # Strategy 3: Check for __dict__ attribute
-        if hasattr(obj, "__dict__"):
-            try:
-                result = obj.__dict__
-                return cast("dict[str, object]", result)
-            except Exception as e:  # pragma: no cover
-                # Silent fallback for serialization strategy - log at debug level
-                # Extremely rare: __dict__ exists but dict[str, object]() conversion fails
-                logging.getLogger(__name__).debug(
-                    f"__dict__ serialization strategy failed: {e}"
-                )
-
-        # Strategy 4: Check if already dict
-        if isinstance(obj, dict):
-            return obj
-
-        return None
-
-    @staticmethod
-    def is_optional_type(type_hint: FlextTypes.TypeHintSpecifier) -> bool:
-        """Check if type hint represents Optional[T] (Union[T, None] or T | None).
-
-        Supports both Union[T, None] and Python 3.10+ syntax T | None.
-
-        Args:
-            type_hint: Type hint to check
-
-        Returns:
-            True if type hint is Optional, False otherwise
-
-        """
-        try:
-            # Get the origin (e.g., Union for Union[T, None] or T | None)
-            origin = typing.get_origin(type_hint)
-            # Python 3.10+ uses types.UnionType for X | Y syntax
-            # typing.Union is used for Union[X, Y] syntax
-            if origin is typing.Union or str(type(type_hint).__name__) == "UnionType":
-                # Get the args (e.g., (T, NoneType) for Union[T, None])
-                args = typing.get_args(type_hint)
-                # Check if None is one of the args
-                return type(None) in args
-            return False
-        except Exception:  # pragma: no cover
-            # Defensive: typing module failures are extremely rare
-            return False
-
-    @staticmethod
     def extract_generic_args(
         type_hint: FlextTypes.TypeHintSpecifier,
     ) -> tuple[FlextTypes.GenericTypeArgument, ...]:
@@ -433,7 +332,13 @@ class FlextRuntime:
                     return type_mapping[type_name]
 
             return ()
-        except Exception:  # pragma: no cover
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            RuntimeError,
+            KeyError,
+        ):  # pragma: no cover
             # Defensive: typing module failures are extremely rare
             return ()
 
@@ -471,7 +376,13 @@ class FlextRuntime:
                     return True
 
             return False
-        except Exception:  # pragma: no cover
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            RuntimeError,
+            KeyError,
+        ):  # pragma: no cover
             # Defensive: typing/issubclass failures are extremely rare
             return False
 
@@ -506,7 +417,7 @@ class FlextRuntime:
         don't meet the required log level.
 
         Args:
-            logger: Logger instance (unused, required by structlog protocol)
+            _logger: Logger instance (unused, required by structlog protocol)
             method_name: Log method name ('debug', 'info', 'warning', 'error', etc.)
             event_dict: Event dictionary with context variables
 
@@ -719,64 +630,6 @@ class FlextRuntime:
                     error=error_message,
                     correlation_id=correlation_id,
                 )
-
-        @staticmethod
-        def log_config_access(
-            key: str,
-            value: FlextTypes.SerializableObjectType | None = None,
-            *,
-            masked: bool = False,
-        ) -> None:
-            """Log configuration access with context correlation.
-
-            Uses structlog directly to avoid circular imports.
-
-            Args:
-                key: Configuration key being accessed
-                value: Configuration value (will be masked if sensitive)
-                masked: Whether to mask the value in logs (for secrets)
-
-            """
-            # Get correlation_id directly from structlog
-            context_vars = structlog.contextvars.get_contextvars()
-            correlation_id = context_vars.get("correlation_id")
-
-            # Use structlog directly
-            logger = structlog.get_logger(__name__)
-            log_value = "***MASKED***" if masked else value
-
-            logger.debug(
-                "Configuration accessed",
-                config_key=key,
-                config_value=log_value,
-                correlation_id=correlation_id,
-            )
-
-        @staticmethod
-        def attach_context_to_result(
-            result: FlextTypes.ContextualObjectType,
-            *,
-            attach_correlation: bool = True,
-            attach_service_name: bool = False,
-        ) -> FlextTypes.ContextualObjectType:
-            """Attach context metadata to FlextResult (future-proofing).
-
-            Uses structlog directly to avoid circular imports.
-
-            Args:
-                result: FlextResult instance
-                attach_correlation: Whether to read correlation ID
-                attach_service_name: Whether to read service name
-
-            Returns:
-                Result (currently unchanged, context available via structlog)
-
-            """
-            # Read from structlog contextvars directly
-            context_vars = structlog.contextvars.get_contextvars()
-            _ = context_vars.get("correlation_id") if attach_correlation else None
-            _ = context_vars.get("service_name") if attach_service_name else None
-            return result
 
         @staticmethod
         def track_domain_event(

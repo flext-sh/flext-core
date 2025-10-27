@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextResult, FlextUtilities
+from flext_core import FlextExceptions, FlextResult, FlextUtilities
 
 
 class TestTypeGuards:
@@ -259,7 +259,7 @@ class TestConfiguration:
                 return {"timeout": 30}
 
         config = MockConfig()
-        with pytest.raises(Exception):
+        with pytest.raises(FlextExceptions.NotFoundError):
             FlextUtilities.Configuration.get_parameter(config, "missing")
 
 

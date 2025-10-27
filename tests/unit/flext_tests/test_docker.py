@@ -712,8 +712,11 @@ class TestDockerComposeWithPythonOnWhales:
         assert "import subprocess" not in module_source
         assert "from subprocess import" not in module_source
 
-        # SHOULD have python-on-whales import
-        assert "from python_on_whales import docker as pow_docker" in module_source
+        # SHOULD have python-on-whales import (accepts both single and multi-line formats)
+        assert "from python_on_whales import docker as pow_docker" in module_source or (
+            "from python_on_whales import" in module_source
+            and "docker as pow_docker" in module_source
+        )
 
     def test_compose_operations_use_flext_result_pattern(
         self, docker_manager_with_fixtures: FlextTestDocker

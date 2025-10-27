@@ -377,8 +377,10 @@ class FlextContainer(FlextProtocols.Configurable):
             provider_registered = True
 
             return FlextResult[None].ok(None)
-        except Exception as e:
+        except (TypeError, AttributeError, ValueError) as e:
             # Rollback on failure - only delete if we successfully registered it
+            # TypeError/AttributeError: set_provider() or delattr() failures
+            # ValueError: Validation or constraint violations
             # We successfully called set_provider, so the attribute should exist
             # If it doesn't, something unexpected happened but rollback continues
             if provider_registered and hasattr(self._di_container, name):
@@ -443,8 +445,10 @@ class FlextContainer(FlextProtocols.Configurable):
             provider_registered = True
 
             return FlextResult[None].ok(None)
-        except Exception as e:
+        except (TypeError, AttributeError, ValueError) as e:
             # Rollback on failure - only delete if we successfully registered it
+            # TypeError/AttributeError: set_provider() or delattr() failures
+            # ValueError: Validation or constraint violations
             self._factories.pop(name, None)
             # We successfully called set_provider, so the attribute should exist
             # If it doesn't, something unexpected happened but rollback continues
@@ -536,7 +540,11 @@ class FlextContainer(FlextProtocols.Configurable):
             )
 
             return FlextResult[object].fail(f"Service '{name}' not found")
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, KeyError, RuntimeError) as e:
+            # TypeError/ValueError/RuntimeError: Factory invocation or provider callable failures
+            # AttributeError: Attribute access on provider object
+            # KeyError: Dict access on internal structures
+            # RuntimeError: Runtime failures from factory execution
             # Preserve factory error messages for compatibility
             error_msg = (
                 f"Factory '{name}' failed: {e}"
@@ -568,7 +576,10 @@ class FlextContainer(FlextProtocols.Configurable):
             self._services[name] = service
 
             return FlextResult[object].ok(service)
-        except Exception as e:
+        except (KeyError, TypeError, ValueError) as e:
+            # KeyError: Factory not found in _factories dict
+            # TypeError: Factory not callable or wrong number of arguments
+            # ValueError: Factory validation or constraint violations
             return FlextResult[object].fail(f"Factory '{name}' failed: {e}")
 
     def get_typed(self, name: str, expected_type: type[T]) -> FlextResult[T]:
@@ -631,7 +642,10 @@ class FlextContainer(FlextProtocols.Configurable):
                 )
 
             return FlextResult[None].ok(None)
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, KeyError) as e:
+            # TypeError/AttributeError: Registration processing failures
+            # ValueError: Validation violations
+            # KeyError: Dict access failures during batch processing
             # Restore snapshot on exception
             self._restore_registry_snapshot(snapshot)
             return FlextResult[None].fail(f"Batch registration error: {e}")
@@ -791,7 +805,11 @@ class FlextContainer(FlextProtocols.Configurable):
 
             return FlextResult[object].ok(service)
 
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, KeyError) as e:
+            # TypeError: Service class instantiation with wrong arguments
+            # ValueError: Validation or constraint violations
+            # AttributeError: Missing attributes on service class or dependency
+            # KeyError: Dependency resolution failures
             return FlextResult[object].fail(f"Service creation failed: {e}")
 
     def auto_wire(
@@ -833,7 +851,12 @@ class FlextContainer(FlextProtocols.Configurable):
 
             return FlextResult[object].ok(service)
 
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, KeyError, RuntimeError) as e:
+            # TypeError: Service class instantiation with wrong arguments
+            # ValueError: Validation or constraint violations
+            # AttributeError: Missing attributes on service class or dependency
+            # KeyError: Dependency resolution failures
+            # RuntimeError: Runtime failures during service instantiation
             return FlextResult[object].fail(f"Auto-wiring failed: {e}")
 
     # =========================================================================
@@ -856,7 +879,11 @@ class FlextContainer(FlextProtocols.Configurable):
             # Reset DI container to clear all providers
             self._di_container = self.containers.DynamicContainer()
             return FlextResult[None].ok(None)
-        except Exception as e:
+        except (TypeError, AttributeError, ValueError, RuntimeError) as e:
+            # TypeError: DynamicContainer instantiation failures
+            # AttributeError: Clear() method failures or attribute access issues
+            # ValueError: Validation or constraint violations
+            # RuntimeError: Runtime failures during clearing
             return FlextResult[None].fail(f"Failed to clear container: {e}")
 
     def has(self, name: str) -> bool:
@@ -898,7 +925,12 @@ class FlextContainer(FlextProtocols.Configurable):
                 services.append(cast("object", service_info))
 
             return FlextResult[list[object]].ok(services)
-        except Exception as e:
+        except (TypeError, AttributeError, ValueError, KeyError, RuntimeError) as e:
+            # TypeError: Type casting or collection operation failures
+            # AttributeError: FlextConstants access failures
+            # ValueError: Constraint violations
+            # KeyError: Dict operation failures
+            # RuntimeError: Runtime failures during service listing
             return FlextResult[list[object]].fail(
                 f"Failed to list services: {e}",
             )
@@ -928,8 +960,11 @@ class FlextContainer(FlextProtocols.Configurable):
                 "is_callable": callable(service),
                 "id": id(service),
             }
-        except Exception:
+        except (TypeError, AttributeError, RuntimeError):
             # Fallback for problematic services
+            # TypeError: Type/callable inspection failures
+            # AttributeError: Missing attributes on service class or module
+            # RuntimeError: Runtime failures during introspection
             return {
                 FlextConstants.Mixins.FIELD_NAME: name,
                 FlextConstants.Mixins.FIELD_TYPE: service_type,
@@ -986,7 +1021,12 @@ class FlextContainer(FlextProtocols.Configurable):
             self._refresh_global_config()
 
             return FlextResult[None].ok(None)
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError, KeyError, RuntimeError) as e:
+            # TypeError: Type conversion or dict operation failures
+            # ValueError: Constraint violations or invalid values
+            # AttributeError: FlextConfig attribute access failures
+            # KeyError: Dict key access failures
+            # RuntimeError: Runtime failures during configuration
             return FlextResult[None].fail(f"Container configuration failed: {e}")
 
     def _refresh_global_config(self) -> None:
@@ -1293,7 +1333,9 @@ class FlextContainer(FlextProtocols.Configurable):
         try:
             result = self._validate_service_type(value, expected_type)
             return result.is_success
-        except Exception:
+        except (TypeError, AttributeError):
+            # TypeError: Type validation failures
+            # AttributeError: Attribute access failures during validation
             return False
 
     # =========================================================================
@@ -1377,7 +1419,10 @@ class FlextContainer(FlextProtocols.Configurable):
                 f"Factory {factory_name} is not callable",
                 error_code="FACTORY_NOT_CALLABLE",
             )
-        except Exception as e:
+        except (TypeError, ValueError, KeyError) as e:
+            # TypeError: Factory invocation failures or type errors
+            # ValueError: Validation or constraint violations
+            # KeyError: Dict access failures when finding factories
             return FlextResult[object].fail(
                 f"Factory creation failed: {e}",
                 error_code="FACTORY_ERROR",
@@ -1403,7 +1448,10 @@ class FlextContainer(FlextProtocols.Configurable):
                 if self._global_instance is None:
                     self._global_instance = FlextContainer()
                 return FlextResult[object].ok(self._global_instance)
-        except Exception as e:
+        except (TypeError, RuntimeError, AttributeError) as e:
+            # TypeError: FlextContainer instantiation failures
+            # RuntimeError: Lock acquisition or threading failures
+            # AttributeError: Instance attribute access failures
             return FlextResult[object].fail(
                 f"Singleton retrieval failed: {e}",
                 error_code="SINGLETON_ERROR",
@@ -1424,7 +1472,9 @@ class FlextContainer(FlextProtocols.Configurable):
             with self._global_lock:
                 self._global_instance = None
                 return FlextResult[None].ok(None)
-        except Exception as e:
+        except (RuntimeError, AttributeError) as e:
+            # RuntimeError: Lock acquisition or threading failures
+            # AttributeError: Instance attribute access failures
             return FlextResult[None].fail(
                 f"Singleton reset failed: {e}",
                 error_code="SINGLETON_RESET_ERROR",

@@ -66,7 +66,7 @@ class TestCoverageFinalPush:
     def test_result_context_manager_failure(self) -> None:
         """Test result context manager with failure."""
         r = FlextResult[str].fail("error")
-        with pytest.raises(Exception):
+        with pytest.raises(FlextExceptions.BaseError):
             with r:
                 pass
 

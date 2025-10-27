@@ -1244,6 +1244,10 @@ class TestFlextBusMissingCoverage:
                 execution_count += 1
                 return FlextResult[object].ok(None)
 
+            def __call__(self, event: object) -> object:
+                result = self.handle(cast("TestEvent", event))
+                return result.unwrap()
+
         handler_instance = TestEventHandler()
 
         # Subscribe to event

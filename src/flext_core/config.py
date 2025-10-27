@@ -23,14 +23,11 @@ from pydantic import (
 )
 from pydantic_settings import (
     BaseSettings,
-    EnvSettingsSource,
     SettingsConfigDict,
 )
 
 from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
-from flext_core.exceptions import FlextExceptions
-from flext_core.result import FlextResult
 
 # NOTE: Pydantic v2 BaseSettings handles environment variable type coercion automatically.
 # No custom validators needed - Pydantic uses lax validation mode for env vars:
@@ -39,88 +36,6 @@ from flext_core.result import FlextResult
 # - "123" → int 123 (automatic whitespace stripping)
 # - "1.5" → float 1.5
 # See: https://docs.pydantic.dev/2.12/concepts/conversion_table/
-
-
-class NestedPrefixEnvSettingsSource(EnvSettingsSource):
-    """Custom EnvSettingsSource for nested config with prefix translation.
-
-    **GENERIC PATTERN** for composed configuration with different prefixes.
-
-    **Problem**: Parent config uses PARENT_PREFIX_*, nested config expects NESTED_PREFIX_*
-    Example: ALGAR_OUD_MIG_LDAP_* → FlextLdapConfig expects FLEXT_LDAP_*
-
-    **Solution**: Translate environment variables from parent prefix to nested prefix
-    for a specific nested field.
-
-    **Usage in settings_customise_sources()**:
-    ```python
-    @classmethod
-    def settings_customise_sources(cls, settings_cls, init_settings, env_settings, ...):
-        # Map ALGAR_OUD_MIG_LDAP_* → FLEXT_LDAP_* for ldap_config field
-        nested_ldap = NestedPrefixEnvSettingsSource(
-            settings_cls=FlextLdapConfig,
-            parent_prefix="ALGAR_OUD_MIG_",
-            nested_prefix="FLEXT_",
-            field_mapping={"ldap_": "ldap_"},  # Both use ldap_ after prefix
-            env_file=env_file_path,
-        )
-        return (init_settings, {"ldap_config": nested_ldap}, env_settings, ...)
-    ```
-    """
-
-    def __init__(
-        self,
-        settings_cls: type[BaseSettings],
-        parent_prefix: str,
-        nested_prefix: str,
-        field_mapping: dict[str, str] | None = None,
-        env_file: str | None = None,
-        env_file_encoding: str = "utf-8",
-        *,
-        case_sensitive: bool = False,
-    ) -> None:
-        """Initialize nested prefix environment settings source.
-
-        Args:
-            settings_cls: Nested config class (e.g., FlextLdapConfig)
-            parent_prefix: Parent config env prefix (e.g., "ALGAR_OUD_MIG_")
-            nested_prefix: Nested config env prefix (e.g., "FLEXT_")
-            field_mapping: Optional field name mapping (default: identity mapping)
-            env_file: Optional .env file path
-            env_file_encoding: Encoding for .env file
-            case_sensitive: Case sensitivity for env var names
-
-        """
-        self.parent_prefix = parent_prefix.upper()
-        self.nested_prefix = nested_prefix.upper()
-        self.field_mapping = field_mapping or {}
-
-        # Initialize parent EnvSettingsSource with nested config settings
-        super().__init__(
-            settings_cls=settings_cls,
-            env_file=env_file,
-            env_file_encoding=env_file_encoding,
-            case_sensitive=case_sensitive,
-            env_prefix=nested_prefix,  # Use nested prefix for Pydantic
-        )
-
-    def prepare_field_value(
-        self,
-        field_name: str,
-        field: object,
-        value: object,
-        value_is_complex: bool,
-    ) -> object:
-        """Prepare field value with prefix translation.
-
-        Translates PARENT_PREFIX_FIELD → NESTED_PREFIX_FIELD for env var lookup.
-        """
-        # Get the actual field name after any mapping
-        mapped_field = self.field_mapping.get(field_name, field_name)
-
-        # For display/logging, use the parent prefix form
-        # But Pydantic will look for nested prefix form internally
-        return super().prepare_field_value(mapped_field, field, value, value_is_complex)
 
 
 class FlextConfig(BaseSettings):
@@ -134,7 +49,6 @@ class FlextConfig(BaseSettings):
 
     **Protocol Compliance** (Structural Typing):
     Satisfies FlextProtocols.Configurable through method signatures:
-    - `validate_business_rules() -> FlextResult[None]`
     - `model_dump() -> dict` (from Pydantic BaseSettings)
     - Direct field access for configuration values
     - isinstance(config, FlextProtocols.Configurable) returns True
@@ -145,7 +59,6 @@ class FlextConfig(BaseSettings):
     3. **Environment Variable Support** - Prefix-based configuration (FLEXT_*)
     4. **Configuration Files** - JSON, YAML, TOML support via BaseSettings
     5. **Centralized Validation** - Field validators with business rule consistency
-    6. **FlextResult Error Handling** - Railway pattern for all operations
     7. **Computed Fields** - Derived values (effective_log_level, is_production, etc.)
     8. **Global Singleton Pattern** - Thread-safe shared instance across ecosystem
     9. **Dynamic Updates** - Runtime configuration overrides with validation
@@ -157,8 +70,6 @@ class FlextConfig(BaseSettings):
 
     **Integration Points**:
     - **FlextConstants**: All defaults sourced from FlextConstants namespaces
-    - **FlextExceptions**: ValidationError for invalid configurations
-    - **FlextResult[T]**: Railway pattern for validate_runtime_requirements()
     - **FlextContainer**: DI provider accessible via get_di_config_provider()
     - **FlextLogger**: Uses config for log_level
     - **FlextContext**: Uses config for context settings and correlation IDs
@@ -191,7 +102,6 @@ class FlextConfig(BaseSettings):
     **Validation Patterns** (Pydantic v2 Direct):
     1. **Type Coercion**: Pydantic v2 handles str→int, str→float, str→bool automatically
     2. **Field Validators**: log_level uppercasing via @field_validator decorator
-    3. **Model Validators**: validate_debug_trace_consistency (cross-field validation)
 
     **Environment Variable Handling**:
     - **Prefix**: FLEXT_ (configurable via FlextConstants.Platform.ENV_PREFIX)
@@ -494,6 +404,12 @@ class FlextConfig(BaseSettings):
         description="Mask sensitive data in logs and outputs",
     )
 
+    # ===== EXCEPTION HANDLING CONFIGURATION (1 field) =====
+    exception_failure_level: str = Field(
+        default=FlextConstants.Exceptions.FAILURE_LEVEL_DEFAULT,
+        description="Exception handling failure level (strict, warn, permissive)",
+    )
+
     # Direct access method
     def __call__(self, key: str) -> object:
         """Direct value access: config('log_level')."""
@@ -516,14 +432,17 @@ class FlextConfig(BaseSettings):
         level_str = str(v).upper() if v is not None else "INFO"
         return FlextConstants.Settings.LogLevel(level_str)
 
-    # ===== MODEL VALIDATORS =====
-
     @model_validator(mode="after")
-    def validate_debug_trace_consistency(self) -> Self:
-        """Validate debug and trace mode consistency."""
+    def validate_trace_requires_debug(self) -> Self:
+        """Validate trace mode requires debug mode (Pydantic v2)."""
         if self.trace and not self.debug:
-            error_msg = "Trace mode requires debug mode to be enabled"
-            raise FlextExceptions.ValidationError(error_msg)
+            from flext_core.exceptions import FlextExceptions
+
+            msg = "Trace mode requires debug mode"
+            raise FlextExceptions.ValidationError(
+                message=msg,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
         return self
 
     # ===== DEPENDENCY INJECTION INTEGRATION =====
@@ -578,22 +497,6 @@ class FlextConfig(BaseSettings):
             base_class = cls
             cls._instances.pop(base_class, None)
 
-    def validate_runtime_requirements(self) -> FlextResult[None]:
-        """Validate configuration meets runtime requirements.
-
-        Pydantic v2 validates log_level automatically via Literal type.
-        """
-        if self.trace and not self.debug:
-            return FlextResult[None].fail(
-                "Trace mode requires debug mode to be enabled",
-            )
-
-        return FlextResult[None].ok(None)
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rules for configuration consistency."""
-        return FlextResult[None].ok(None)
-
     # ===== COMPUTED FIELDS =====
     @computed_field
     def is_debug_enabled(self) -> bool:
@@ -625,112 +528,7 @@ class FlextConfig(BaseSettings):
             return int(self.timeout_seconds * 3)
         return int(self.timeout_seconds)
 
-    # Pydantic v2 provides type-safe validation via Literal types and field validators
-    # Removed unused "reusable validators" - Pydantic handles validation directly via Field constraints
-
-    # ===== CONFIGURATION UTILITY METHODS =====
-    def update_from_dict(self, **kwargs: object) -> FlextResult[None]:
-        """Update configuration from dictionary with validation."""
-        try:
-            valid_updates = {
-                key: value for key, value in kwargs.items() if hasattr(self, key)
-            }
-
-            for key, value in valid_updates.items():
-                setattr(self, key, value)
-
-            self.model_validate(self.model_dump())
-            return FlextResult[None].ok(None)
-
-        except Exception as e:
-            return FlextResult[None].fail(f"Configuration update failed: {e}")
-
-    def merge_with_env_vars(self) -> FlextResult[None]:
-        """Re-load environment variables and merge with current config."""
-        try:
-            current_config = self.model_dump()
-            env_config = self.__class__()
-
-            for key, value in current_config.items():
-                if value != getattr(self.__class__(), key, None):
-                    setattr(env_config, key, value)
-
-            for key in current_config:
-                setattr(self, key, getattr(env_config, key))
-
-            return FlextResult[None].ok(None)
-
-        except Exception as e:
-            return FlextResult[None].fail(f"Environment merge failed: {e}")
-
-    def validate_overrides(self, **overrides: object) -> FlextResult[dict[str, object]]:
-        """Validate configuration overrides without applying them."""
-        try:
-            valid_overrides: dict[str, object] = {}
-            errors: list[str] = []
-
-            for key, value in overrides.items():
-                if not hasattr(self, key):
-                    errors.append(f"Unknown configuration field: '{key}'")
-                    continue
-
-                try:
-                    test_config = self.model_copy()
-                    setattr(test_config, key, value)
-                    test_config.model_validate(test_config.model_dump())
-                    valid_overrides[key] = value
-                except Exception as e:
-                    errors.append(f"Invalid value for '{key}': {e}")
-
-            if errors:
-                return FlextResult[dict[str, object]].fail(
-                    f"Validation errors: {'; '.join(errors)}"
-                )
-
-            return FlextResult[dict[str, object]].ok(valid_overrides)
-
-        except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Validation failed: {e}")
-
-    # =========================================================================
-    # Protocol Implementations: ConfigurationValidator, DynamicUpdater, SingletonProvider
-    # =========================================================================
-
-    def validate_config(self, _config: object) -> FlextResult[None]:
-        """Validate configuration (ConfigurationValidator protocol)."""
-        try:
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(str(e))
-
-    def update_value(self, key: str, value: object) -> FlextResult[object]:
-        """Update value (DynamicUpdater protocol)."""
-        try:
-            setattr(self, key, value)
-            return FlextResult[object].ok(value)
-        except Exception as e:
-            return FlextResult[object].fail(str(e))
-
-    def get_value(self, key: str) -> FlextResult[object]:
-        """Get value (DynamicUpdater protocol)."""
-        try:
-            return FlextResult[object].ok(getattr(self, key))
-        except Exception as e:
-            return FlextResult[object].fail(str(e))
-
-    def get_instance(self) -> FlextResult[object]:
-        """Get singleton instance (SingletonProvider protocol)."""
-        return FlextResult[object].ok(self)
-
-    def reset_instance(self) -> FlextResult[None]:
-        """Reset singleton instance (SingletonProvider protocol)."""
-        return FlextResult[None].ok(None)
-
-
-# Rebuild the model to resolve forward references (BeforeValidator in Annotated types)
-FlextConfig.model_rebuild()
 
 __all__ = [
     "FlextConfig",
-    "NestedPrefixEnvSettingsSource",
 ]

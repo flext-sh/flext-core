@@ -19,7 +19,7 @@ import types
 from collections.abc import Callable, Iterator, Sequence
 from typing import Never, Self, cast, overload, override
 
-from returns.io import IO, IOFailure, IOSuccess
+from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success, safe
 
@@ -550,18 +550,12 @@ class FlextResult[T_co]:
                 error_data=self._error_data,
             )
 
-        except (ValueError, TypeError, AttributeError) as e:
-            # Handle specific transformation exceptions with structured error data
-            return FlextResult[U].fail(
-                f"Transformation error: {e}",
-                error_code=FlextConstants.Errors.EXCEPTION_ERROR,
-                error_data={
-                    "exception_type": type(e).__name__,
-                    "exception": str(e),
-                },
-            )
         except Exception as e:
-            # Use FLEXT Core structured error handling for all other exceptions
+            # VALIDATION HIERARCHY - User callable exception handling (CRITICAL)
+            # Level 1: Specific known exceptions (TypeError, AttributeError)
+            # Level 2: Common application exceptions (ValueError, RuntimeError, etc.)
+            # Level 3: Catch-all for custom exceptions from user functions
+            # Framework code executing user callables MUST catch all exception types
             return FlextResult[U].fail(
                 f"Transformation failed: {e}",
                 error_code=FlextConstants.Errors.MAP_ERROR,
@@ -592,24 +586,12 @@ class FlextResult[T_co]:
             # Return the FlextResult directly (already in our format)
             return result_u
 
-        except (
-            TypeError,
-            ValueError,
-            AttributeError,
-            IndexError,
-            KeyError,
-        ) as e:
-            # Use FLEXT Core structured error handling
-            return FlextResult[U].fail(
-                f"Chained operation failed: {e}",
-                error_code=FlextConstants.Errors.BIND_ERROR,
-                error_data={
-                    "exception_type": type(e).__name__,
-                    "exception": str(e),
-                },
-            )
         except Exception as e:
-            # Handle other unexpected exceptions
+            # VALIDATION HIERARCHY - User callable exception handling
+            # Level 1: Specific known exceptions (TypeError, ValueError, KeyError)
+            # Level 2: Common application exceptions (RuntimeError, IndexError)
+            # Level 3: Catch-all for custom exceptions from user functions
+            # Framework code executing user callables MUST catch all exception types
             return FlextResult[U].fail(
                 f"Flat map operation failed: {e}",
                 error_code=FlextConstants.Errors.BIND_ERROR,
@@ -749,7 +731,8 @@ class FlextResult[T_co]:
                     self_data_str: str = str(self_data_obj)
                     other_data_str: str = str(other_data_obj)
                     data_equal = self_data_str == other_data_str
-                except Exception:
+                except (TypeError, ValueError, AttributeError):
+                    # User data __str__() or comparison may raise exceptions
                     data_equal = False
 
             error_equal: bool = bool(self._error == other._error)
@@ -758,6 +741,11 @@ class FlextResult[T_co]:
 
             return data_equal and error_equal and code_equal and data_dict_equal
         except Exception:
+            # VALIDATION HIERARCHY - User data comparison (HIGH PRIORITY)
+            # User data __eq__(), __str__() methods can raise any exception
+            # Level 1: Known exceptions (TypeError, ValueError, AttributeError, KeyError)
+            # Level 2: User data custom exceptions (__eq__ can raise anything)
+            # Safe default: return False if any exception during comparison
             return False
 
     @override
@@ -769,24 +757,34 @@ class FlextResult[T_co]:
             try:
                 return hash((True, self._data))
             except TypeError:
-                # REAL SOLUTION: Proper handling of non-hashable data
+                # Data is not hashable - use alternative hashing strategy
+                # Proper handling of non-hashable data
                 # Use type-safe approach based on data characteristics
                 if hasattr(self._data, "__dict__"):
                     # For objects with __dict__, hash their attributes
                     try:
                         attrs = tuple(sorted(self._data.__dict__.items()))
                         return hash((True, attrs))
-                    except (TypeError, AttributeError):
-                        # Skip logging to avoid circular dependency
-                        # Unable to hash object attributes, using fallback
-                        # For complex objects, use a combination of type and memory ID
+                    except (TypeError, ValueError):
+                        # Attributes not hashable or sortable, use fallback
+                        # Unable to hash object attributes, using type+id fallback
                         return hash((
                             True,
                             type(self._data).__name__,
                             id(self._data),
                         ))
+                    except Exception:
+                        # VALIDATION HIERARCHY - User data hashing (HIGH PRIORITY)
+                        # Accessing/sorting user __dict__ attributes can raise any exception
+                        # Safe fallback: use type name and object identity
+                        return hash((True, type(self._data).__name__, id(self._data)))
 
                 # For complex objects, use a combination of type and memory ID
+                return hash((True, type(self._data).__name__, id(self._data)))
+            except Exception:
+                # VALIDATION HIERARCHY - User data hashing (HIGH PRIORITY)
+                # Hashing any user data can raise unexpected exceptions
+                # Safe fallback: use type name and object identity
                 return hash((True, type(self._data).__name__, id(self._data)))
         else:
             # For failure, hash the error message and code
@@ -813,7 +811,11 @@ class FlextResult[T_co]:
             return self
         try:
             return cast("Self", func())
-        except (TypeError, ValueError, AttributeError) as e:
+        except Exception as e:
+            # VALIDATION HIERARCHY - User callable exception handling (CRITICAL)
+            # Level 1: Known internal exceptions (TypeError, AttributeError)
+            # Level 2: Common application exceptions (ValueError, RuntimeError)
+            # Level 3: Catch-all for custom exceptions from user functions
             return cast("Self", FlextResult[T_co].fail(str(e)))
 
     def unwrap_or(self, default: T_co) -> T_co:
@@ -833,16 +835,17 @@ class FlextResult[T_co]:
         )
 
     def recover(self, func: Callable[[str], T_co]) -> FlextResult[T_co]:
-        """Recover from failure by applying func to error."""
+        """Recover from failure by applying func to error.
+
+        Note: If the recovery function raises an exception, it is re-raised.
+        Recovery functions that might fail should handle their own exceptions.
+        """
         if self.is_success:
             return self
-        try:
-            if self._error is not None:
-                recovered_data: T_co = func(self._error)
-                return FlextResult[T_co].ok(recovered_data)
-            return FlextResult[T_co].fail("No error to recover from")
-        except (TypeError, ValueError, AttributeError) as e:
-            return FlextResult[T_co].fail(str(e))
+        if self._error is not None:
+            recovered_data: T_co = func(self._error)
+            return FlextResult[T_co].ok(recovered_data)
+        return FlextResult[T_co].fail("No error to recover from")
 
     def tap(self, func: Callable[[T_co], None]) -> FlextResult[T_co]:
         """Execute side effect function on success with non-None data, return self.
@@ -909,6 +912,10 @@ class FlextResult[T_co]:
         try:
             return func(error_msg)
         except Exception as e:
+            # VALIDATION HIERARCHY - User callable exception handling (CRITICAL)
+            # Level 1: Known internal exceptions (TypeError, AttributeError)
+            # Level 2: Common application exceptions (ValueError, RuntimeError)
+            # Level 3: Catch-all for custom exceptions from user functions
             return FlextResult[T_co].fail(f"Lash operation failed: {e}")
 
     def alt(self, default_result: FlextResult[T_co]) -> FlextResult[T_co]:
@@ -1021,7 +1028,7 @@ class FlextResult[T_co]:
             if predicate(cast("T_co", self._data)):
                 return self
             return FlextResult[T_co].fail(error_msg)
-        except (TypeError, ValueError, AttributeError) as e:
+        except Exception as e:
             return FlextResult[T_co].fail(str(e))
 
     @classmethod
@@ -1033,7 +1040,7 @@ class FlextResult[T_co]:
         try:
             result = func()
             return FlextResult[object].ok(result)
-        except (TypeError, ValueError, AttributeError, RuntimeError) as e:
+        except Exception as e:
             return FlextResult[object].fail(str(e))
 
     # =========================================================================
@@ -1691,7 +1698,7 @@ class FlextResult[T_co]:
             raise ValueError(msg)
         return IO(self._data)
 
-    def to_io_result(self) -> object:
+    def to_io_result(self) -> IOResult[object, object]:
         """Convert FlextResult to returns.io.IOResult for impure operations."""
         if self.is_success:
             return IOSuccess(self._data)
@@ -1700,37 +1707,60 @@ class FlextResult[T_co]:
 
     @classmethod
     def from_io_result[T](
-        cls: type[FlextResult[T]], io_result: object
+        cls: type[FlextResult[T]], io_result: IOResult[object, object]
     ) -> FlextResult[T]:
-        """Create FlextResult from returns.io.IOResult."""
-        if isinstance(io_result, IOSuccess):
-            # Unwrap the IO value using the internal _inner_value
-            try:
-                success_obj = io_result._inner_value
-                # Unwrap the Success object to get the actual value
-                value = success_obj.unwrap()
-                # Create FlextResult properly using the constructor
-                return cls(data=value)
-            except AttributeError:
-                # If _inner_value access fails, we cannot safely unwrap the IO value
-                # This is an edge case that should not occur in normal usage
-                return cls(error="Failed to unwrap IO success value")
-        if isinstance(io_result, IOFailure):
-            # Get the failure reason from the IO
-            try:
-                failure_obj = io_result._inner_value
-                # For failures, we need to get the failure value using .failure()
-                if hasattr(failure_obj, "failure"):
-                    # It's a Failure object, get the failure value
-                    error_value = failure_obj.failure()
-                    error_msg = str(error_value)
-                else:
-                    error_msg = str(failure_obj)
-                return cls(error=error_msg)
-            except AttributeError:
-                # Fallback: convert IO directly to string
-                return cls(error=str(io_result))
-        return cls(error="Unknown IOResult type")
+        """Create FlextResult from returns.io.IOResult using public API.
+
+        IOResult behavior:
+        - IOSuccess(value).map(f) → f(value) is called, extracts success value
+        - IOFailure(error).alt(f) → f(error) is called, extracts error value
+        Only ONE of the two callbacks executes based on success/failure state.
+        """
+        # Track which path was taken using separate lists
+        extracted_success: list[object] = []
+        extracted_failure: list[object] = []
+
+        def extract_success(result: object) -> object:
+            """Extract value from IOSuccess via map()."""
+            extracted_success.append(result)
+            return result
+
+        def extract_failure(result: object) -> object:
+            """Extract error from IOFailure via alt()."""
+            extracted_failure.append(result)
+            return result
+
+        # Chain map() and alt() - only ONE callback executes
+        # IOSuccess and IOFailure both inherit from IOResult which has both map() and alt()
+        io_result.map(extract_success).alt(extract_failure)
+
+        # Check success path (IOSuccess.map() was called)
+        if extracted_success:
+            value = extracted_success[0]
+
+            # Handle Success[T] wrapper (uncommon, but possible)
+            if isinstance(value, Success):
+                value = value.unwrap()
+
+            # Return success with extracted value
+            return cls(data=cast("T", value))
+
+        # Check failure path (IOFailure.alt() was called)
+        if extracted_failure:
+            error_value = extracted_failure[0]
+
+            # Handle Failure wrapper (uncommon, but possible)
+            if isinstance(error_value, Failure):
+                error_value = error_value.failure()
+
+            # Convert error to string
+            error_msg = (
+                str(error_value) if error_value is not None else "Operation failed"
+            )
+            return cls(error=error_msg)
+
+        # Neither callback executed - unexpected IOResult state
+        return cls(error="Failed to extract from IOResult")
 
 
 __all__ = [

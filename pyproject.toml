@@ -107,6 +107,23 @@
         ]
 
 [tool]
+    [tool.coverage.report]
+        precision = 2
+        fail_under = 79
+        omit = [
+            "*/flext_tests/*",
+            "*/dependency_injector/*.pxd",
+            "*/dependency_injector/*.pyx",
+        ]
+
+    [tool.coverage.run]
+        source = ["src/flext_core"]
+        omit = [
+            "*/flext_tests/*",
+            "*/dependency_injector/*.pxd",
+            "*/dependency_injector/*.pyx",
+        ]
+
     [tool.deptry]
         known_first_party = [
             "flext_core",
@@ -134,10 +151,7 @@
 		        types-colorama = ">=0.4.15.20240311"
 		        types-pexpect = ">=4.9.0.20250516"
 		        types-pygments = ">=2.19.0.20250715"
-    types-pysocks = "^1.7.1.20251001"
-
-    [tool.pyrefly]
-        python_version = "3.13"
+                types-pysocks = "^1.7.1.20251001"
 
     [tool.pytest.ini_options]
         addopts = [

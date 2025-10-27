@@ -811,9 +811,9 @@ class TestFlextProcessorsCriticalCoverage:
     def test_handler_registry_unsafe_handler_rejected(self) -> None:
         """Test that unsafe handlers are rejected."""
 
-        # Create handler without handle method and not callable
+        # Create handler that is not callable (missing __call__ method)
         class UnsafeHandler:
-            pass
+            """Handler without __call__ - not callable."""
 
         # HandlerRegistration validates handler at creation time
         # So we need to catch the exception

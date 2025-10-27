@@ -103,7 +103,7 @@ class TestFlextTestsUtilities:
 
         with FlextTestsUtilities.test_context(obj, "new_attr", "new_value"):
             assert hasattr(obj, "new_attr")
-            assert getattr(obj, "new_attr") == "new_value"
+            assert obj.new_attr == "new_value"
 
         # Should remove the attribute
         assert not hasattr(obj, "new_attr")

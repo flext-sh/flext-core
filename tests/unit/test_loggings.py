@@ -458,7 +458,7 @@ class TestFlextLogger:
         # Each call creates a new instance
         assert logger1 is not logger2
         # But they should have the same name
-        assert logger1._name == logger2._name == "test_logger"
+        assert logger1.name == logger2.name == "test_logger"
 
     def test_logger_logging_with_singleton_reset(self) -> None:
         """Test logging with different instances."""

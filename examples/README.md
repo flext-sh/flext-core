@@ -60,7 +60,6 @@ These examples show specialized patterns and processing:
 
 - **Purpose**: Handler pipelines and strategy patterns
 - **Concepts**: Chain of responsibility, strategy pattern, registry, error recovery
-- **Key Classes**: `FlextProcessors.Implementation.BasicHandler`
 - **Run**: `python examples/07_processing_handlers.py`
 
 ### Integration Example (08)

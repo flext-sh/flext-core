@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 import math
 from typing import cast
+from unittest.mock import patch
 
 from flext_core import (
     FlextConstants,
@@ -1081,19 +1082,14 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Mock FlextResult.ok to raise exception and test except clause
-        original_ok = FlextResult.ok
-
         def mock_ok(_value: object) -> FlextResult[object]:
             error_msg = "Mocked error"
             raise ValueError(error_msg)
 
-        FlextResult.ok = mock_ok
-        try:
+        with patch.object(FlextResult, "ok", side_effect=mock_ok):
             result = dispatcher.call(lambda: "test")
             # Should catch exception and return fail
             assert result.is_failure
-        finally:
-            FlextResult.ok = original_ok
 
     def test_circuit_breaker_protocol_reset_with_exception(self) -> None:
         """Test CircuitBreaker.reset exception handling."""

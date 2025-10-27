@@ -32,7 +32,7 @@ def mark_test_pattern(
 
     def decorator(func: Callable[..., None]) -> Callable[..., None]:
         # Use hasattr/setattr for dynamic attribute setting to avoid PyRight error
-        setattr(func, "_test_pattern", pattern)
+        func._test_pattern = pattern
         return func
 
     return decorator

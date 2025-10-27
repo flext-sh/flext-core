@@ -125,6 +125,7 @@ class FlextDispatcher(FlextMixins):
         self._rate_limit = self.config.rate_limit_max_requests
 
         # Circuit breaker state machine data
+        self._circuit_breaker_state: bool = False  # overall circuit breaker state
         self._circuit_breaker_states: dict[str, str] = {}  # state per message type
         self._circuit_breaker_opened_at: dict[str, float] = {}  # when opened
         self._circuit_breaker_success_counts: dict[
@@ -407,7 +408,7 @@ class FlextDispatcher(FlextMixins):
 
         Args:
             handler_func: Function to wrap
-            handler_config: Optional configuration (reserved for future use)
+            _handler_config: Optional configuration (reserved for future use)
             mode: Handler mode
 
         Returns:
@@ -770,7 +771,7 @@ class FlextDispatcher(FlextMixins):
                         return FlextResult[object].fail(
                             f"Operation timeout after {timeout_seconds} seconds",
                         )
-                    except RuntimeError:
+                    except Exception:
                         # Executor was shut down; reinitialize and retry immediately
                         self._executor = None
                         continue
@@ -1176,7 +1177,7 @@ class FlextDispatcher(FlextMixins):
     def reset(self) -> FlextResult[None]:
         """Reset circuit breaker (CircuitBreaker protocol)."""
         try:
-            setattr(self, "_circuit_breaker_state", False)
+            self._circuit_breaker_state = False
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(str(e))
