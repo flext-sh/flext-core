@@ -128,7 +128,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == env.PYTHON_VERSION
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-results-${{ matrix.os }}-py${{ matrix.python-version }}
           path: reports/
@@ -166,7 +166,7 @@ jobs:
           python -c "import flext_core; print(flext_core.__version__)"
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: dist
           path: dist/
@@ -196,7 +196,7 @@ jobs:
           poetry run make docs
 
       - name: Upload documentation
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: documentation
           path: site/

@@ -37,7 +37,7 @@ jobs:
           poetry run pip-audit --ignore-vuln PYSEC-2022-42969
 
       - name: Upload audit results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pip-audit-results
           path: reports/pip-audit.json
@@ -67,7 +67,7 @@ jobs:
           poetry run bandit -r src/ --severity-level medium
 
       - name: Upload Bandit results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bandit-results
           path: reports/bandit.json
@@ -128,7 +128,7 @@ jobs:
           semgrep --config=auto src/
 
       - name: Upload Semgrep results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: semgrep-results
           path: reports/semgrep.json
