@@ -223,7 +223,15 @@ class FlextBus(
     def _normalize_command_key(
         command_type_obj: object,
     ) -> str:
-        """Create a comparable key for command identifiers."""
+        """Create a comparable key for command identifiers.
+
+        Args:
+            command_type_obj: Object to create key from
+
+        Returns:
+            Normalized string key for command type
+
+        """
         name_attr = getattr(command_type_obj, "__name__", None)
         if name_attr is not None:
             return str(name_attr)
@@ -257,14 +265,16 @@ class FlextBus(
         if isinstance(middleware_config, BaseModel):
             try:
                 return middleware_config.model_dump()
-            except Exception:
+            except (ValueError, TypeError):
+                # Pydantic v2: model_dump() can raise ValueError or TypeError
                 return None
 
         # Convert Mapping to dict
         if isinstance(middleware_config, Mapping):
             try:
                 return dict(middleware_config)
-            except Exception:
+            except (TypeError, ValueError):
+                # TypeError: not iterable; ValueError: invalid mapping
                 return None
 
         # Unknown types: return None
@@ -447,9 +457,10 @@ class FlextBus(
                                     or "Command validation failed",
                                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                                 )
-                    except Exception as e:
-                        # If calling without parameters fails, it's likely a
-                        # Pydantic field validator - skip custom validation
+                    except (TypeError, AttributeError) as e:
+                        # TypeError: validator() doesn't accept 0 parameters
+                        # AttributeError: 'field' attribute missing
+                        # Likely a Pydantic field validator - skip custom validation
                         self.logger.debug("Skipping Pydantic field validator: %s", e)
 
             is_query = hasattr(command, "query_id") or "Query" in command_type.__name__
@@ -693,7 +704,10 @@ class FlextBus(
                 return result
             # Wrap non-FlextResult return values
             return FlextResult[object].ok(result)
-        except Exception as e:
+        except (TypeError, AttributeError, ValueError) as e:
+            # TypeError: method signature mismatch
+            # AttributeError: missing method attribute
+            # ValueError: handler validation failed
             return FlextResult[object].fail(
                 f"Handler execution failed: {e}",
                 error_code=FlextConstants.Errors.COMMAND_PROCESSING_FAILED,
@@ -864,7 +878,10 @@ class FlextBus(
                 )
 
             return FlextResult[None].ok(None)
-        except Exception as e:
+        except (TypeError, AttributeError, ValueError) as e:
+            # TypeError: invalid event type
+            # AttributeError: missing event attribute
+            # ValueError: event validation failed
             return FlextResult[None].fail(f"Event publishing error: {e}")
 
     def publish_events(self, events: list[object]) -> FlextResult[None]:
@@ -914,7 +931,10 @@ class FlextBus(
         try:
             # Use existing register_handler mechanism
             return self.register_handler(event_type, handler)
-        except Exception as e:
+        except (TypeError, AttributeError, ValueError) as e:
+            # TypeError: invalid handler type
+            # AttributeError: handler missing required attributes
+            # ValueError: handler validation failed
             return FlextResult[None].fail(f"Event subscription error: {e}")
 
     def unsubscribe(
@@ -926,7 +946,7 @@ class FlextBus(
 
         Args:
             event_type: Type of event to unsubscribe from
-            handler: Handler to remove (reserved for future use)
+            _handler: Handler to remove (reserved for future use)
 
         Returns:
             FlextResult[None]: Success or error result
@@ -935,7 +955,10 @@ class FlextBus(
         try:
             # Use existing unregister_handler mechanism which returns FlextResult
             return self.unregister_handler(event_type)
-        except Exception as e:
+        except (TypeError, KeyError, AttributeError) as e:
+            # TypeError: invalid event_type
+            # KeyError: event_type not registered
+            # AttributeError: handler missing attributes
             self.logger.exception("Event unsubscription error")
             return FlextResult[None].fail(f"Event unsubscription error: {e}")
 
@@ -977,7 +1000,10 @@ class FlextBus(
             if key in cache:
                 return FlextResult[object].ok(cache[key])
             return FlextResult[object].fail("Not cached")
-        except Exception as e:
+        except (AttributeError, TypeError, KeyError) as e:
+            # AttributeError: _cache object missing attributes
+            # TypeError: invalid cache access
+            # KeyError: cache key not found (defensive)
             return FlextResult[object].fail(str(e))
 
     def set_cached(self, key: str, value: object) -> FlextResult[None]:
@@ -987,7 +1013,10 @@ class FlextBus(
                 self._cache = FlextBus._Cache()
             self._cache.put(key, FlextResult[object].ok(value))
             return FlextResult[None].ok(None)
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError) as e:
+            # AttributeError: _cache missing put() method
+            # TypeError: invalid argument types to put()
+            # ValueError: cache put failed
             return FlextResult[None].fail(str(e))
 
     def clear_cache(self) -> FlextResult[None]:
@@ -996,7 +1025,9 @@ class FlextBus(
             if hasattr(self, "_cache"):
                 self._cache.clear()
             return FlextResult[None].ok(None)
-        except Exception as e:
+        except (AttributeError, TypeError) as e:
+            # AttributeError: _cache missing clear() method
+            # TypeError: invalid argument to clear()
             return FlextResult[None].fail(str(e))
 
 

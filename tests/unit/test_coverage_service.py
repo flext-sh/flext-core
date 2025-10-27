@@ -19,6 +19,8 @@ from __future__ import annotations
 
 from typing import cast
 
+import pytest
+
 from flext_core import (
     FlextContainer,
     FlextModels,
@@ -121,14 +123,8 @@ class TestAbstractMethodEnforcement:
 
         # Trying to instantiate FlextService directly fails (it's abstract)
         # Note: This tests the ABC enforcement at runtime
-        try:
-            # This should raise TypeError due to missing execute() implementation
-            # Use type: ignore to suppress mypy warning about abstract class instantiation
-            _ = FlextService[str]()
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError:
-            pass  # Expected behavior
+        with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+            FlextService[str]()
 
     def test_concrete_service_must_implement_execute(self) -> None:
         """Test that concrete services must implement execute()."""

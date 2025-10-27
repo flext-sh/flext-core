@@ -19,9 +19,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import time
 import warnings
-from collections.abc import Callable
 from copy import deepcopy
 from typing import ClassVar, cast
 
@@ -29,11 +27,9 @@ from flext_core import (
     FlextConstants,
     FlextExceptions,
     FlextLogger,
-    FlextProcessors,
     FlextResult,
     FlextRuntime,
     FlextService,
-    FlextTypes,
 )
 
 
@@ -88,72 +84,6 @@ class DemoScenarios:
             "tags": tags or ["processors", "demo"],
             **extra,
         }
-
-
-# Advanced handler factory pattern using Python 3.13+ features
-class HandlerFactory:
-    """Factory for creating optimized handlers with reduced boilerplate."""
-
-    @staticmethod
-    def create_validation_handler(
-        validator: Callable[[dict[str, object]], bool],
-        error_msg: str = "Validation failed",
-    ) -> type[FlextProcessors.Implementation.BasicHandler]:
-        """Create a validation handler with minimal boilerplate."""
-
-        class ValidationHandler(FlextProcessors.Implementation.BasicHandler):
-            def __init__(self, handler_name: str) -> None:
-                super().__init__(handler_name)
-                self._validator = validator
-                self._error_msg = error_msg
-
-            def handle(
-                self, request: FlextTypes.ProcessorInputType
-            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
-                if not isinstance(request, dict):
-                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
-                        "Request must be a dictionary"
-                    )
-
-                # No cast needed - isinstance guarantees type
-                return (
-                    FlextResult[FlextTypes.ProcessorOutputType].ok(
-                        f"Validation passed for {request}"
-                    )
-                    if self._validator(request)
-                    else FlextResult[FlextTypes.ProcessorOutputType].fail(
-                        self._error_msg
-                    )
-                )
-
-        return ValidationHandler
-
-    @staticmethod
-    def create_transform_handler(
-        transformer: Callable[[dict[str, object]], dict[str, object]],
-    ) -> type[FlextProcessors.Implementation.BasicHandler]:
-        """Create a transformation handler with minimal boilerplate."""
-
-        class TransformHandler(FlextProcessors.Implementation.BasicHandler):
-            def __init__(self, handler_name: str) -> None:
-                super().__init__(handler_name)
-                self._transformer = transformer
-
-            def handle(
-                self, request: FlextTypes.ProcessorInputType
-            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
-                if not isinstance(request, dict):
-                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
-                        "Request must be a dictionary"
-                    )
-
-                # No cast needed - isinstance guarantees type
-                transformed = self._transformer(request)
-                return FlextResult[FlextTypes.ProcessorOutputType].ok(
-                    f"Transformed: {transformed}"
-                )
-
-        return TransformHandler
 
 
 class ProcessingPatternsService(FlextService[dict[str, object]]):
@@ -216,10 +146,6 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
 
             # Advanced patterns
             self.demonstrate_strategy_pattern()
-            self.demonstrate_registry_pattern()
-
-            # Professional patterns
-            self.demonstrate_error_recovery()
 
             # NEW: FlextResult v0.9.9+ methods for handlers
             self.demonstrate_from_callable_handlers()
@@ -275,32 +201,35 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
             email = data.get("email")
             return bool(email and "@" in str(email))
 
-        validation_handler = HandlerFactory.create_validation_handler(
-            email_validator,
-            "Invalid email format",
-        )
+        # NOTE: HandlerFactory API is deprecated/removed
+        # validation_handler = HandlerFactory.create_validation_handler(
+        #     email_validator,
+        #     "Invalid email format",
+        # )
+        # validator = validation_handler("EmailValidator")
 
-        validator = validation_handler("EmailValidator")
+        # Simplified example without factory
+        print("⚠️  HandlerFactory examples temporarily disabled (API updated)")
 
-        valid_request: dict[str, object] = {
-            "email": self._user["email"],
-            "name": self._user["name"],
-        }
-        valid_result: FlextResult[FlextTypes.ProcessorOutputType] = validator.handle(
-            valid_request
-        )
-        if valid_result.is_success:
-            print(f"✅ Validation passed: {valid_result.unwrap()}")
+        # valid_request: dict[str, object] = {
+        #     "email": self._user["email"],
+        #     "name": self._user["name"],
+        # }
+        # valid_result: FlextResult[FlextTypes.ProcessorOutputType] = validator.handle(
+        #     valid_request
+        # )
+        # if valid_result.is_success:
+        #     print(f"✅ Validation passed: {valid_result.unwrap()}")
 
-        invalid_request: dict[str, object] = {
-            "email": self._invalid_user["email"],
-            "name": self._invalid_user["name"],
-        }
-        invalid_result: FlextResult[FlextTypes.ProcessorOutputType] = validator.handle(
-            invalid_request
-        )
-        if invalid_result.is_failure:
-            print(f"❌ Validation failed: {invalid_result.error}")
+        # invalid_request: dict[str, object] = {
+        #     "email": self._invalid_user["email"],
+        #     "name": self._invalid_user["name"],
+        # }
+        # invalid_result: FlextResult[FlextTypes.ProcessorOutputType] = validator.handle(
+        #     invalid_request
+        # )
+        # if invalid_result.is_failure:
+        #     print(f"❌ Validation failed: {invalid_result.error}")
 
     # ========== HANDLER PIPELINE ==========
 
@@ -308,89 +237,92 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         """Show chain of responsibility pattern with handler pipeline."""
         print("\n=== Handler Pipeline ===")
 
+        # NOTE: HandlerFactory API is deprecated/removed
+        print("⚠️  HandlerFactory pipeline examples temporarily disabled (API updated)")
+
         # Using factory pattern for all pipeline handlers
-        def auth_validator(data: dict[str, object]) -> bool:
-            """Authentication validation logic."""
-            token = data.get("token")
-            return bool(token and token == "valid-token")
+        # def auth_validator(data: dict[str, object]) -> bool:
+        #     """Authentication validation logic."""
+        #     token = data.get("token")
+        #     return bool(token and token == "valid-token")
 
-        authentication_handler = HandlerFactory.create_validation_handler(
-            auth_validator,
-            "Invalid token",
-        )
+        # authentication_handler = HandlerFactory.create_validation_handler(
+        #     auth_validator,
+        #     "Invalid token",
+        # )
 
-        def authz_validator(data: dict[str, object]) -> bool:
-            """Authorization validation logic."""
-            return bool(data.get("authenticated") and data.get("role") == "REDACTED_LDAP_BIND_PASSWORD")
+        # def authz_validator(data: dict[str, object]) -> bool:
+        #     """Authorization validation logic."""
+        #     return bool(data.get("authenticated") and data.get("role") == "REDACTED_LDAP_BIND_PASSWORD")
 
-        authorization_handler = HandlerFactory.create_validation_handler(
-            authz_validator,
-            "Insufficient permissions",
-        )
+        # authorization_handler = HandlerFactory.create_validation_handler(
+        #     authz_validator,
+        #     "Insufficient permissions",
+        # )
 
-        def process_transformer(data: dict[str, object]) -> dict[str, object]:
-            """Processing transformation logic."""
-            return {
-                **data,
-                "processed": True,
-                "result": "Operation completed successfully",
-                "timestamp": str(time.time()),
-            }
+        # def process_transformer(data: dict[str, object]) -> dict[str, object]:
+        #     """Processing transformation logic."""
+        #     return {
+        #         **data,
+        #         "processed": True,
+        #         "result": "Operation completed successfully",
+        #         "timestamp": str(time.time()),
+        #     }
 
-        processing_handler = HandlerFactory.create_transform_handler(
-            process_transformer,
-        )
+        # processing_handler = HandlerFactory.create_transform_handler(
+        #     process_transformer,
+        # )
 
-        auth_handler = authentication_handler("Authenticator")
-        authz_handler = authorization_handler("Authorizer")
-        process_handler = processing_handler("Processor")
+        # auth_handler = authentication_handler("Authenticator")
+        # authz_handler = authorization_handler("Authorizer")
+        # process_handler = processing_handler("Processor")
 
-        def execute_pipeline(
-            request: dict[str, object],
-        ) -> FlextResult[FlextTypes.ProcessorOutputType]:
-            """Execute the handler pipeline."""
-            result = auth_handler.handle(request)
-            if result.is_failure:
-                return result
+        # def execute_pipeline(
+        #     request: dict[str, object],
+        # ) -> FlextResult[FlextTypes.ProcessorOutputType]:
+        #     """Execute the handler pipeline."""
+        #     result = auth_handler.handle(request)
+        #     if result.is_failure:
+        #         return result
 
-            result = authz_handler.handle(request)
-            if result.is_failure:
-                return result
+        #     result = authz_handler.handle(request)
+        #     if result.is_failure:
+        #         return result
 
-            return process_handler.handle(request)
+        #     return process_handler.handle(request)
 
-        print("\n1. Valid request through pipeline:")
-        valid_request: dict[str, object] = {
-            "token": self._REDACTED_LDAP_BIND_PASSWORD_user["token"],
-            "role": self._REDACTED_LDAP_BIND_PASSWORD_user["role"],
-            "action": "delete_user",
-            "user": self._REDACTED_LDAP_BIND_PASSWORD_user,
-        }
-        result = execute_pipeline(valid_request)
-        if result.is_success:
-            print(f"✅ Pipeline success: {result.unwrap()}")
+        # print("\n1. Valid request through pipeline:")
+        # valid_request: dict[str, object] = {
+        #     "token": self._REDACTED_LDAP_BIND_PASSWORD_user["token"],
+        #     "role": self._REDACTED_LDAP_BIND_PASSWORD_user["role"],
+        #     "action": "delete_user",
+        #     "user": self._REDACTED_LDAP_BIND_PASSWORD_user,
+        # }
+        # result = execute_pipeline(valid_request)
+        # if result.is_success:
+        #     print(f"✅ Pipeline success: {result.unwrap()}")
 
-        print("\n2. Request with invalid token:")
-        invalid_token: dict[str, object] = {
-            "token": "invalid",
-            "role": self._REDACTED_LDAP_BIND_PASSWORD_user["role"],
-            "action": "delete_user",
-            "user": self._REDACTED_LDAP_BIND_PASSWORD_user,
-        }
-        result = execute_pipeline(invalid_token)
-        if result.is_failure:
-            print(f"❌ Pipeline failed at auth: {result.error}")
+        # print("\n2. Request with invalid token:")
+        # invalid_token: dict[str, object] = {
+        #     "token": "invalid",
+        #     "role": self._REDACTED_LDAP_BIND_PASSWORD_user["role"],
+        #     "action": "delete_user",
+        #     "user": self._REDACTED_LDAP_BIND_PASSWORD_user,
+        # }
+        # result = execute_pipeline(invalid_token)
+        # if result.is_failure:
+        #     print(f"❌ Pipeline failed at auth: {result.error}")
 
-        print("\n3. Request with insufficient permissions:")
-        insufficient: dict[str, object] = {
-            "token": self._REDACTED_LDAP_BIND_PASSWORD_user["token"],
-            "role": self._invalid_user.get("role", "user"),
-            "action": "delete_user",
-            "user": self._invalid_user,
-        }
-        result = execute_pipeline(insufficient)
-        if result.is_failure:
-            print(f"❌ Pipeline failed at authz: {result.error}")
+        # print("\n3. Request with insufficient permissions:")
+        # insufficient: dict[str, object] = {
+        #     "token": self._REDACTED_LDAP_BIND_PASSWORD_user["token"],
+        #     "role": self._invalid_user.get("role", "user"),
+        #     "action": "delete_user",
+        #     "user": self._invalid_user,
+        # }
+        # result = execute_pipeline(insufficient)
+        # if result.is_failure:
+        #     print(f"❌ Pipeline failed at authz: {result.error}")
 
     # ========== STRATEGY PATTERN ==========
 
@@ -484,316 +416,6 @@ class ProcessingPatternsService(FlextService[dict[str, object]]):
         bank_result = processor.process("bank_transfer", amount)
         if bank_result.is_success:
             print(f"✅ Bank transfer pending: {bank_result.unwrap()['status']}")
-
-    # ========== REGISTRY PATTERN ==========
-
-    def demonstrate_registry_pattern(self) -> None:
-        """Show handler registry for dynamic discovery."""
-        print("\n=== Registry Pattern ===")
-
-        # Handler registry
-        class HandlerRegistry:
-            """Registry for dynamic handler management."""
-
-            def __init__(self) -> None:
-                """Initialize registry."""
-                super().__init__()
-                self._handlers: dict[
-                    str, FlextProcessors.Implementation.BasicHandler
-                ] = {}
-                self.logger = FlextLogger.create_module_logger(__name__)
-
-            def register(
-                self,
-                name: str,
-                handler: FlextProcessors.Implementation.BasicHandler,
-            ) -> FlextResult[bool]:
-                """Register a handler."""
-                if name in self._handlers:
-                    return FlextResult[bool].fail(f"Handler {name} already registered")
-
-                self._handlers[name] = handler
-                self.logger.info("Registered handler: %s", name)
-                return FlextResult[bool].ok(True)
-
-            def unregister(self, name: str) -> FlextResult[bool]:
-                """Unregister a handler."""
-                if name not in self._handlers:
-                    return FlextResult[bool].fail(f"Handler {name} not found")
-
-                del self._handlers[name]
-                self.logger.info("Unregistered handler: %s", name)
-                return FlextResult[bool].ok(True)
-
-            def get(
-                self,
-                name: str,
-            ) -> FlextResult[FlextProcessors.Implementation.BasicHandler]:
-                """Get a handler by name."""
-                handler = self._handlers.get(name)
-                if not handler:
-                    return FlextResult[
-                        FlextProcessors.Implementation.BasicHandler
-                    ].fail(f"Handler {name} not found")
-
-                return FlextResult[FlextProcessors.Implementation.BasicHandler].ok(
-                    handler,
-                )
-
-            def execute(
-                self,
-                name: str,
-                request: dict[str, object],
-            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
-                """Execute a handler by name."""
-                handler_result = self.get(name)
-                if handler_result.is_failure:
-                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
-                        handler_result.error or "Handler not found",
-                    )
-
-                handler = handler_result.unwrap()
-                return handler.handle(request)
-
-            def list_handlers(self) -> list[str]:
-                """List all registered handlers."""
-                return list(self._handlers.keys())
-
-        # Create registry and handlers
-        registry = HandlerRegistry()
-
-        # Register various handlers
-        class UpperCaseHandler(FlextProcessors.Implementation.BasicHandler):
-            """Convert text to uppercase."""
-
-            def handle(
-                self, request: FlextTypes.ProcessorInputType
-            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
-                """Process text."""
-                if not isinstance(request, dict):
-                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
-                        "Request must be a dictionary"
-                    )
-
-                # No cast needed - isinstance guarantees type
-                text_value = cast("str", request.get("text", ""))
-                return FlextResult[FlextTypes.ProcessorOutputType].ok(
-                    f"Uppercase: {text_value.upper()}"
-                )
-
-        class LowerCaseHandler(FlextProcessors.Implementation.BasicHandler):
-            """Convert text to lowercase."""
-
-            def handle(
-                self, request: FlextTypes.ProcessorInputType
-            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
-                """Process text."""
-                if not isinstance(request, dict):
-                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
-                        "Request must be a dictionary"
-                    )
-
-                # No cast needed - isinstance guarantees type
-                text_value = cast("str", request.get("text", ""))
-                return FlextResult[FlextTypes.ProcessorOutputType].ok(
-                    f"Lowercase: {text_value.lower()}"
-                )
-
-        class ReverseHandler(FlextProcessors.Implementation.BasicHandler):
-            """Reverse text."""
-
-            def handle(
-                self, request: FlextTypes.ProcessorInputType
-            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
-                """Process text."""
-                if not isinstance(request, dict):
-                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
-                        "Request must be a dictionary"
-                    )
-
-                # No cast needed - isinstance guarantees type
-                text_raw = request.get("text", "")
-                text_value: str = (
-                    text_raw if isinstance(text_raw, str) else str(text_raw)
-                )
-                return FlextResult[FlextTypes.ProcessorOutputType].ok(
-                    f"Reversed: {text_value[::-1]}"
-                )
-
-        # Register handlers
-        registry.register("uppercase", UpperCaseHandler("UpperCase"))
-        registry.register("lowercase", LowerCaseHandler("LowerCase"))
-        registry.register("reverse", ReverseHandler("Reverse"))
-
-        print(f"Registered handlers: {registry.list_handlers()}")
-
-        # Dynamic handler execution
-        test_request: dict[str, object] = {"text": "Hello FLEXT"}
-
-        print("\n1. Uppercase handler:")
-        result = registry.execute("uppercase", test_request)
-        if result.is_success:
-            print(f"✅ {result.unwrap()}")
-
-        print("\n2. Lowercase handler:")
-        result = registry.execute("lowercase", test_request)
-        if result.is_success:
-            print(f"✅ {result.unwrap()}")
-
-        print("\n3. Reverse handler:")
-        result = registry.execute("reverse", test_request)
-        if result.is_success:
-            print(f"✅ {result.unwrap()}")
-
-        print("\n4. Unknown handler:")
-        result = registry.execute("unknown", test_request)
-        if result.is_failure:
-            print(f"❌ {result.error}")
-
-        # Unregister and retry
-        registry.unregister("reverse")
-        print(f"\nHandlers after unregister: {registry.list_handlers()}")
-
-    # ========== ERROR RECOVERY ==========
-
-    def demonstrate_error_recovery(self) -> None:
-        """Show error recovery in processing pipelines."""
-        print("\n=== Error Recovery Patterns ===")
-
-        # Handler with retry logic
-        class RetryableHandler(FlextProcessors.Implementation.BasicHandler):
-            """Handler that can retry on failure."""
-
-            def __init__(self, name: str, max_retries: int = 3) -> None:
-                """Initialize with retry configuration."""
-                super().__init__(name)
-                self._max_retries = max_retries
-                self._attempt = 0
-                self.logger = FlextLogger.create_module_logger(__name__)
-
-            def handle(
-                self, request: FlextTypes.ProcessorInputType
-            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
-                """Handle with retry logic."""
-                self._attempt += 1
-                _ = request  # Mark as used to avoid linting warning
-
-                # Simulate intermittent failure
-                if self._attempt < self._max_retries:
-                    self.logger.warning(
-                        f"Attempt {self._attempt} failed",
-                        extra={"handler": self.name},
-                    )
-                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
-                        f"Attempt {self._attempt} failed"
-                    )
-
-                # Success on final attempt
-                self.logger.info(
-                    f"Success on attempt {self._attempt}",
-                    extra={"handler": self.name},
-                )
-                return FlextResult[FlextTypes.ProcessorOutputType].ok(
-                    f"Success on attempt {self._attempt}"
-                )
-
-        # Circuit breaker pattern
-        class CircuitBreakerHandler(FlextProcessors.Implementation.BasicHandler):
-            """Handler with circuit breaker pattern."""
-
-            def __init__(self, name: str, threshold: int = 3) -> None:
-                """Initialize with circuit breaker settings."""
-                super().__init__(name)
-                self._failure_count = 0
-                self._threshold = threshold
-                self._is_open = False
-                self.logger = FlextLogger.create_module_logger(__name__)
-
-            def handle(
-                self, request: FlextTypes.ProcessorInputType
-            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
-                """Handle with circuit breaker."""
-                # Check if circuit is open
-                if self._is_open:
-                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
-                        "Circuit breaker is open"
-                    )
-
-                # Convert object to dict[str, object] for processing
-                if not isinstance(request, dict):
-                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
-                        "Request must be a dictionary"
-                    )
-
-                # Simulate processing - isinstance guarantees type
-                force_fail_value = cast("bool", request.get("force_fail", False))
-                should_fail = bool(force_fail_value)
-
-                if should_fail:
-                    self._failure_count += 1
-                    if self._failure_count >= self._threshold:
-                        self._is_open = True
-                        self.logger.error(
-                            "Circuit breaker opened",
-                            extra={"failures": self._failure_count},
-                        )
-                    return FlextResult[FlextTypes.ProcessorOutputType].fail(
-                        "Processing failed"
-                    )
-
-                # Reset on success
-                self._failure_count = 0
-                return FlextResult[FlextTypes.ProcessorOutputType].ok(
-                    "Processing successful"
-                )
-
-            def reset(self) -> None:
-                """Reset circuit breaker."""
-                self._is_open = False
-                self._failure_count = 0
-                self.logger.info("Circuit breaker reset")
-
-        # Test retry handler
-        print("\n1. Retry Handler:")
-        retry_handler = RetryableHandler("RetryHandler", max_retries=3)
-
-        # Keep trying until success
-        for i in range(3):
-            result = retry_handler.handle({"data": "test"})
-            if result.is_success:
-                print(f"✅ Success: {result.unwrap()}")
-                break
-            print(f"⚠️ Retry {i + 1}: {result.error}")
-
-        # Test circuit breaker
-        print("\n2. Circuit Breaker Handler:")
-        breaker = CircuitBreakerHandler("BreakerHandler", threshold=2)
-
-        # Successful request
-        result = breaker.handle({"data": "test", "force_fail": False})
-        print(
-            f"Request 1: {'✅' if result.is_success else '❌'} {result.unwrap() if result.is_success else result.error}",
-        )
-
-        # Failing requests trigger circuit breaker
-        for i in range(3):
-            result = breaker.handle({"data": "test", "force_fail": True})
-            print(
-                f"Request {i + 2}: {'✅' if result.is_success else '❌'} {result.error if result.is_failure else ''}",
-            )
-
-        # Circuit is now open
-        result = breaker.handle({"data": "test", "force_fail": False})
-        print(f"Request 5 (circuit open): ❌ {result.error}")
-
-        # Reset and retry
-        breaker.reset()
-        result = breaker.handle({"data": "test", "force_fail": False})
-        print(
-            f"Request 6 (after reset): {'✅' if result.is_success else '❌'} Success after reset",
-        )
-
-    # ========== DEPRECATED PATTERNS ==========
 
     # ========== NEW FlextResult METHODS (v0.9.9+) ==========
 
@@ -1190,10 +812,6 @@ def main() -> None:
 
     # Advanced patterns
     service.demonstrate_strategy_pattern()
-    service.demonstrate_registry_pattern()
-
-    # Professional patterns
-    service.demonstrate_error_recovery()
 
     # NEW: FlextResult v0.9.9+ methods for handlers
     service.demonstrate_from_callable_handlers()

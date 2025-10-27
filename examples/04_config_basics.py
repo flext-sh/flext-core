@@ -769,7 +769,6 @@ def demonstrate_flextcore_config_access() -> None:
     print("\n=== 5. Infrastructure with Custom Config ===")
     custom_config = FlextConfig()
 
-    # Note: setup_service_infrastructure method not available in current version
     # Service would typically get config injected via DI container
     container = FlextContainer.get_global()
     container.register("config", custom_config)

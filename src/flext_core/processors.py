@@ -25,7 +25,6 @@ from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
-from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
@@ -52,7 +51,6 @@ class FlextProcessors(FlextMixins):
     Nested Protocol Implementations:
         - FlextProcessors.Pipeline - Advanced processing pipeline with monadic composition
         - FlextProcessors.HandlerRegistry - Handler registry with FlextProtocols.Handler support
-        - FlextProcessors.Protocols.ChainableHandler - Example Handler protocol implementation
 
     Features:
     - Message processing with middleware pipeline implementing protocol patterns
@@ -686,7 +684,7 @@ class FlextProcessors(FlextMixins):
                     else 60.0
                 )
             return FlextResult[None].ok(None)
-        except (ValueError, TypeError, AttributeError) as e:
+        except Exception as e:
             return FlextResult[None].fail(f"Configuration import error: {e}")
 
     class Handler:
@@ -991,7 +989,7 @@ class FlextProcessors(FlextMixins):
 
         def execute_batch(
             self,
-            config: FlextModels.BatchProcessingConfig | object,
+            config: FlextModels.BatchProcessingConfig,
         ) -> FlextResult[list[object]]:
             """Execute multiple handlers using BatchProcessingConfig model.
 
@@ -1001,25 +999,8 @@ class FlextProcessors(FlextMixins):
 
             """
             # Validate config is a BatchProcessingConfig or has required attributes
-            if not isinstance(config, FlextModels.BatchProcessingConfig):
-                # For mock objects, validate they have required attributes
-                if not hasattr(config, "data_items"):
-                    return FlextResult[list[object]].fail(
-                        "Config must be BatchProcessingConfig or have data_items attribute",
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-                # Type narrowing for mock objects
-                if not hasattr(config, "data_items"):
-                    error_msg = "Config object must have data_items attribute"
-                    raise FlextExceptions.TypeError(
-                        message=error_msg,
-                        error_code="TYPE_ERROR",
-                    )
-                data_items = getattr(config, "data_items")
-                continue_on_error = getattr(config, "continue_on_error", True)
-            else:
-                data_items = getattr(config, "data_items")
-                continue_on_error = config.continue_on_error
+            data_items = config.data_items
+            continue_on_error = config.continue_on_error
 
             # Validate batch size limits
             max_batch_size = FlextConfig.get_global_instance().max_batch_size
@@ -1236,10 +1217,12 @@ class FlextProcessors(FlextMixins):
                         message=error_msg,
                         error_code="TYPE_ERROR",
                     )
-                data_items = getattr(config, "data_items")
+                # Cast is safe here because we've validated hasattr above
+                config_with_data = cast("FlextModels.BatchProcessingConfig", config)
+                data_items = config_with_data.data_items
                 continue_on_error = getattr(config, "continue_on_error", True)
             else:
-                data_items = getattr(config, "data_items")
+                data_items = config.data_items
                 continue_on_error = config.continue_on_error
 
             # Validate batch size limits
@@ -1410,241 +1393,6 @@ class FlextProcessors(FlextMixins):
             ) -> FlextResult[FlextTypes.ProcessorOutputType]:
                 """Make handler callable by delegating to handle method."""
                 return self.handle(request)
-
-    class Management:
-        """Handler management utilities."""
-
-        class HandlerRegistry:
-            """Handler registry for examples."""
-
-            @override
-            def __init__(self) -> None:
-                """Initialize handler registry."""
-                super().__init__()
-                self._handlers: dict[str, object] = {}
-
-            def register(
-                self,
-                name: str,
-                handler: Callable[
-                    [FlextTypes.ProcessorInputType],
-                    FlextTypes.ProcessorOutputType,
-                ],
-            ) -> None:
-                """Register handler."""
-                self._handlers[name] = handler
-
-            def get(
-                self, name: str
-            ) -> (
-                Callable[
-                    [FlextTypes.ProcessorInputType],
-                    FlextTypes.ProcessorOutputType,
-                ]
-                | None
-            ):
-                """Get handler by name.
-
-                Returns:
-                    Callable[[FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType] | None: The handler instance or None if not found.
-
-                """
-                handler = self._handlers.get(name)
-                return cast(
-                    "Callable[[FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType] | None",
-                    handler,
-                )
-
-            def get_optional(
-                self, name: str
-            ) -> (
-                Callable[
-                    [FlextTypes.ProcessorInputType],
-                    FlextTypes.ProcessorOutputType,
-                ]
-                | None
-            ):
-                """Get handler optionally, returning None if not found.
-
-                Returns:
-                    Callable[[FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType] | None: The handler instance or None when not present.
-
-                """
-                handler = self._handlers.get(name)
-                return cast(
-                    "Callable[[FlextTypes.ProcessorInputType], FlextTypes.ProcessorOutputType] | None",
-                    handler,
-                )
-
-    class Patterns:
-        """Handler patterns for examples."""
-
-        class HandlerChain:
-            """Handler chain for examples."""
-
-            @override
-            def __init__(self, name: str) -> None:
-                """Initialize handler chain with name."""
-                super().__init__()
-                self.name = name
-                self._handlers: list[object] = []
-
-            def add_handler(
-                self,
-                handler: Callable[
-                    [FlextTypes.ProcessorInputType],
-                    FlextTypes.ProcessorOutputType,
-                ],
-            ) -> None:
-                """Add handler to chain."""
-                self._handlers.append(handler)
-
-            def handle(
-                self, request: FlextTypes.ProcessorInputType
-            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
-                """Handle request by executing all handlers in chain.
-
-                Returns:
-                    FlextResult[FlextTypes.ProcessorOutputType]: Result after processing through the chain.
-
-                """
-                result = request
-                for handler in self._handlers:
-                    handle_method_name = FlextConstants.Mixins.METHOD_HANDLE
-                    if hasattr(handler, handle_method_name):
-                        handle_method = getattr(handler, handle_method_name, None)
-                        if handle_method is not None:
-                            handler_result: FlextResult[object] = handle_method(result)
-                            if (
-                                hasattr(handler_result, "is_success")
-                                and not handler_result.is_success
-                            ):
-                                return FlextResult[object].fail(
-                                    f"Handler failed: {handler_result.error}",
-                                )
-                            # Extract the actual data from FlextResult if it's a FlextResult
-                            if hasattr(handler_result, "value") and hasattr(
-                                handler_result,
-                                "is_success",
-                            ):
-                                result = handler_result.value
-                            else:
-                                result = handler_result
-                return FlextResult[FlextTypes.ProcessorOutputType].ok(result)
-
-    class Protocols:
-        """Handler protocols for examples."""
-
-        class ChainableHandler:
-            """Chainable handler for examples - Application.Handler protocol implementation."""
-
-            @override
-            def __init__(self, name: str) -> None:
-                """Initialize chainable handler with name."""
-                super().__init__()
-                self.name = name
-
-            def handle(
-                self, request: FlextTypes.ProcessorInputType
-            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
-                """Handle request in chain.
-
-                Returns:
-                    FlextResult[FlextTypes.ProcessorOutputType]: Handler output wrapped in FlextResult.
-
-                """
-                # Extract data from FlextResult if it's a FlextResult
-                if isinstance(request, FlextProtocols.HasResultValue):
-                    actual_request = request.value
-                else:
-                    actual_request = request
-
-                result = f"Chain handled by {self.name}: {actual_request}"
-                return FlextResult[FlextTypes.ProcessorOutputType].ok(result)
-
-            def can_handle(self, _message_type: FlextTypes.ProcessorInputType) -> bool:
-                """Check if handler can process this message type.
-
-                Args:
-                    _message_type: The message type to check (unused in generic handler)
-
-                Returns:
-                    bool: True since this is a generic example handler
-
-                """
-                return True
-
-            def execute(
-                self, message: FlextTypes.ProcessorInputType
-            ) -> FlextResult[FlextTypes.ProcessorOutputType]:
-                """Execute the handler with the given message.
-
-                Args:
-                    message: The input message to execute
-
-                Returns:
-                    FlextResult[FlextTypes.ProcessorOutputType]: Execution result
-
-                """
-                return self.handle(message)
-
-            def validate_command(
-                self, command: FlextTypes.ProcessorInputType
-            ) -> FlextResult[None]:
-                """Validate a command message.
-
-                Args:
-                    command: The command to validate
-
-                Returns:
-                    FlextResult[None]: Success if valid, failure with error details
-
-                """
-                if command is None:
-                    return FlextResult[None].fail(
-                        "Command cannot be None",
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-                return FlextResult[None].ok(None)
-
-            def validate_query(
-                self, query: FlextTypes.ProcessorInputType
-            ) -> FlextResult[None]:
-                """Validate a query message.
-
-                Args:
-                    query: The query to validate
-
-                Returns:
-                    FlextResult[None]: Success if valid, failure with error details
-
-                """
-                if query is None:
-                    return FlextResult[None].fail(
-                        "Query cannot be None",
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-                return FlextResult[None].ok(None)
-
-            @property
-            def handler_name(self) -> str:
-                """Get the handler name.
-
-                Returns:
-                    str: Handler name
-
-                """
-                return self.name
-
-            @property
-            def mode(self) -> str:
-                """Get the handler mode (command/query).
-
-                Returns:
-                    str: Handler mode
-
-                """
-                return "command"
 
     def unregister(self, name: str) -> FlextResult[None]:
         """Unregister a processor by name.

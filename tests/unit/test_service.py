@@ -169,10 +169,10 @@ class TestDomainServicesFixed:
         """Test that service is immutable (frozen)."""
         service = SampleUserService()
 
-        # Test that assignment to frozen field raises ValidationError
-        with pytest.raises(ValidationError):
-            # Use setattr to bypass type checking for this test
-            setattr(service, "new_field", "not_allowed")
+        # Test that assignment raises error on frozen model (Pydantic raises AttributeError for property without setter)
+        with pytest.raises((ValidationError, AttributeError)):
+            # Try to modify property on frozen model
+            service.new_field = "not_allowed"
 
     def test_execute_method_abstract(self) -> None:
         """Test that execute method is abstract."""

@@ -28,8 +28,6 @@ from flext_core import (
     FlextConstants,
     FlextContainer,
     FlextLogger,
-    FlextModels,
-    FlextProcessors,
 )
 
 
@@ -74,31 +72,6 @@ class TestFlextConfigSingletonIntegration:
 
         # Container should have reference to global config
         assert container._flext_config is global_config
-
-    def test_config_in_processors(self) -> None:
-        """Test that processors use global config."""
-        # Get global config using singleton API
-        global_config = FlextConfig.get_global_instance()
-
-        # Test with available FlextProcessors classes - use direct instantiation
-        handler_registry = FlextProcessors.HandlerRegistry()
-        pipeline = FlextProcessors.Pipeline()
-
-        # These should work with the current API
-        assert handler_registry is not None
-        assert pipeline is not None
-
-        # Test basic handler functionality
-        basic_handler = FlextProcessors.Implementation.BasicHandler("test-handler")
-        registration = FlextModels.HandlerRegistration(
-            name="test",
-            handler=basic_handler,
-        )
-        register_result = handler_registry.register(registration)
-        assert register_result.is_success
-
-        # Verify global config is accessible
-        assert global_config.app_name is not None
 
     def test_environment_variable_override(self) -> None:
         """Test that environment variables override default config."""
@@ -440,7 +413,8 @@ class TestFlextConfigSingletonIntegration:
                 config_explicit.effective_log_level
                 == FlextConstants.Settings.LogLevel.INFO
             )  # Debug mode forces INFO
-            assert config_explicit.is_debug_enabled
+            debug_enabled_explicit: bool = config_explicit.is_debug_enabled  # type: ignore[assignment]
+            assert debug_enabled_explicit
             assert config_explicit.trace is False  # Trace mode disabled
 
             # Test with debug=False to verify log_level is respected
@@ -451,7 +425,8 @@ class TestFlextConfigSingletonIntegration:
                 config_no_debug.effective_log_level
                 == FlextConstants.Settings.LogLevel.WARNING
             )
-            assert not config_no_debug.is_debug_enabled
+            debug_enabled_no_debug: bool = config_no_debug.is_debug_enabled  # type: ignore[assignment]
+            assert not debug_enabled_no_debug
 
             # === VALIDATION: Precedence Order Summary ===
             # Precedence (highest to lowest):

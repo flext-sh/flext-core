@@ -453,8 +453,6 @@ class FlextProtocols:
         Base protocol for Pydantic-like model serialization. Extended by other
         protocols to add additional capabilities.
 
-        Used in: utilities.py (safe_serialize_to_dict, model_dump)
-
         Extensions:
             - HasModelFields: Adds model_fields attribute
             - ModelProtocol: Adds validation methods
@@ -478,8 +476,6 @@ class FlextProtocols:
 
         Extends HasModelDump with model_fields attribute for Pydantic models.
         Inherits model_dump method from parent protocol.
-
-        Used in: utilities.py (safe_serialize_to_dict)
 
         Inheritance: HasModelDump → HasModelFields
         """

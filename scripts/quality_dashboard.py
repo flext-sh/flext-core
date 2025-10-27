@@ -65,11 +65,12 @@ def run_command(cmd: list[str], cwd: Path) -> tuple[int, str]:
     )
 
     if result.is_failure:
-        # Detect timeout errors
-        error_msg = result.error.lower()
+        # Detect timeout errors (handle potential None error)
+        error = result.error or "Unknown error"
+        error_msg = error.lower()
         if "timed out" in error_msg:
             return 1, "Command timed out"
-        return 1, result.error
+        return 1, error
 
     # Success - extract returncode and output
     proc = result.unwrap()

@@ -262,6 +262,21 @@ class FlextRegistry(FlextMixins):
             return not self.errors
 
         @computed_field
+        def is_failure(self) -> bool:
+            """Indicate whether the batch registration had errors.
+
+            Returns:
+                True if any errors occurred, False otherwise
+
+            Examples:
+                >>> summary = FlextRegistry.Summary(errors=["error1"])
+                >>> summary.is_failure
+                True
+
+            """
+            return bool(self.errors)
+
+        @computed_field
         def successful_registrations(self) -> int:
             """Number of successful registrations.
 
@@ -290,6 +305,15 @@ class FlextRegistry(FlextMixins):
 
             """
             return len(self.errors)
+
+        def __bool__(self) -> bool:
+            """Boolean representation - False when there are errors, True otherwise.
+
+            Returns:
+                False if any errors occurred (is_failure), True if successful
+
+            """
+            return not self.errors
 
     def __init__(self, dispatcher: FlextDispatcher) -> None:
         """Initialize the registry with a FlextDispatcher instance."""
@@ -660,7 +684,7 @@ class FlextRegistry(FlextMixins):
                     summary.registered.append(reg_details)
                     self._registered_keys.add(key)
 
-            except Exception as e:
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                 error_msg = f"Failed to register handler for {message_type}: {e}"
                 summary.errors.append(error_msg)
                 continue
@@ -759,14 +783,14 @@ class FlextRegistry(FlextMixins):
         """Register item (RegistrationTracker protocol)."""
         try:
             return self.register(name, item)
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[None].fail(str(e))
 
     def get_item(self, name: str) -> FlextResult[object]:
         """Get registered item (RegistrationTracker protocol)."""
         try:
             return FlextResult[object].ok(getattr(self, name))
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[object].fail(str(e))
 
     def list_items(self) -> FlextResult[list[str]]:
@@ -774,7 +798,7 @@ class FlextRegistry(FlextMixins):
         try:
             keys = list(getattr(self, "_registered_keys", []))
             return FlextResult[list[str]].ok(keys)
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[list[str]].fail(str(e))
 
     def batch_process(self, items: list[object]) -> FlextResult[list[object]]:

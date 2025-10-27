@@ -37,7 +37,7 @@ from flext_core import FlextResult
 result: FlextResult[str] = FlextResult[str].ok("Hello, World!")
 
 # Generic type inference
-result = FlextResult.ok("data")  # Type: FlextResult[str]
+result = FlextResult.ok("data")
 
 # None is valid success (for void operations)
 result = FlextResult[None].ok(None)  # Represents successful completion

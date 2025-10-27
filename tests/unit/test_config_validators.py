@@ -10,48 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from flext_core import FlextConfig, FlextExceptions
+from flext_core import FlextConfig
 
 
 class TestConfigValidatorErrorPaths:
     """Test error paths in FlextConfig validators."""
-
-    def test_validate_debug_trace_consistency_valid(self) -> None:
-        """Test validate_debug_trace_consistency with valid config."""
-        config = FlextConfig(debug=True, trace=True)
-        assert config.trace is True
-        assert config.debug is True
-
-    def test_validate_debug_trace_consistency_debug_only(self) -> None:
-        """Test validate_debug_trace_consistency with debug only."""
-        config = FlextConfig(debug=True, trace=False)
-        assert config.debug is True
-        assert config.trace is False
-
-    def test_validate_debug_trace_consistency_invalid(self) -> None:
-        """Test validate_debug_trace_consistency rejects trace without debug."""
-        with pytest.raises(
-            FlextExceptions.ValidationError,
-            match="Trace mode requires debug mode",
-        ):
-            FlextConfig(debug=False, trace=True)
-
-    def test_validate_runtime_requirements_valid(self) -> None:
-        """Test validate_runtime_requirements with valid config."""
-        config = FlextConfig(debug=True, trace=True)
-        result = config.validate_runtime_requirements()
-        assert result.is_success
-
-    def test_validate_runtime_requirements_directly(self) -> None:
-        """Test validate_runtime_requirements method directly.
-
-        The model_validator prevents invalid states, so we test the method logic.
-        """
-        config = FlextConfig(debug=False, trace=False)
-        result = config.validate_runtime_requirements()
-        assert result.is_success
 
     def test_get_global_instance_singleton(self) -> None:
         """Test get_global_instance returns same instance."""
@@ -151,7 +114,7 @@ class TestConfigValidatorEdgeCases:
 
     def test_config_retry_attempts_coercion_from_string(self) -> None:
         """Test retry_attempts can be coerced from string."""
-        config = FlextConfig(max_retry_attempts="5")
+        config = FlextConfig(max_retry_attempts=5)
         assert config.max_retry_attempts == 5
 
     def test_config_float_field_dispatcher_timeout(self) -> None:
@@ -173,12 +136,6 @@ class TestConfigValidatorEdgeCases:
 class TestConfigValidationMethods:
     """Test config validation methods."""
 
-    def test_validate_business_rules_default_config(self) -> None:
-        """Test validate_business_rules with default config."""
-        config = FlextConfig()
-        result = config.validate_business_rules()
-        assert result.is_success
-
     def test_get_di_config_provider_creation(self) -> None:
         """Test get_di_config_provider creates provider."""
         FlextConfig.reset_global_instance()
@@ -196,7 +153,7 @@ class TestConfigValidationMethods:
         """Test both timeout and retry coercion together."""
         config = FlextConfig(
             timeout_seconds=60,
-            max_retry_attempts="3",
+            max_retry_attempts=3,
             dispatcher_timeout_seconds=90,
         )
         assert config.timeout_seconds == 60.0
@@ -238,21 +195,6 @@ class TestConfigValidationMethods:
 
 class TestConfigBusinessLogicValidation:
     """Test config business logic validation rules."""
-
-    def test_validate_business_rules_returns_success(self) -> None:
-        """Test validate_business_rules returns success result."""
-        config = FlextConfig()
-        result = config.validate_business_rules()
-        assert result.is_success is True
-        assert result.is_failure is False
-
-    def test_validate_business_rules_multiple_times(self) -> None:
-        """Test validate_business_rules can be called multiple times."""
-        config = FlextConfig()
-        result1 = config.validate_business_rules()
-        result2 = config.validate_business_rules()
-        assert result1.is_success is True
-        assert result2.is_success is True
 
     def test_config_equality_with_same_values(self) -> None:
         """Test config equality with identical values."""

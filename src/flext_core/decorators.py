@@ -403,7 +403,7 @@ class FlextDecorators:
                 args_tuple = cast("tuple[object, ...]", args)
                 first_arg: object = args_tuple[0] if args_tuple else None
                 if first_arg is not None and hasattr(first_arg, "logger"):
-                    potential_logger = getattr(first_arg, "logger")
+                    potential_logger = first_arg.logger
                     logger = (
                         potential_logger
                         if isinstance(potential_logger, FlextLogger)
@@ -439,7 +439,13 @@ class FlextDecorators:
                         },
                     )
                     return result
-                except Exception as e:
+                except (
+                    AttributeError,
+                    TypeError,
+                    ValueError,
+                    RuntimeError,
+                    KeyError,
+                ) as e:
                     logger.exception(
                         f"{op_name}_failed",
                         extra={
@@ -502,7 +508,7 @@ class FlextDecorators:
                 args_tuple = cast("tuple[object, ...]", args)
                 first_arg: object = args_tuple[0] if args_tuple else None
                 if first_arg is not None and hasattr(first_arg, "logger"):
-                    potential_logger = getattr(first_arg, "logger")
+                    potential_logger = first_arg.logger
                     logger = (
                         potential_logger
                         if isinstance(potential_logger, FlextLogger)
@@ -536,7 +542,13 @@ class FlextDecorators:
                         },
                     )
                     return result
-                except Exception as e:
+                except (
+                    AttributeError,
+                    TypeError,
+                    ValueError,
+                    RuntimeError,
+                    KeyError,
+                ) as e:
                     duration = time.perf_counter() - start_time
 
                     logger.exception(
@@ -617,7 +629,13 @@ class FlextDecorators:
                     # Wrap successful result
                     return FlextResult[T].ok(result)
 
-                except Exception as e:
+                except (
+                    AttributeError,
+                    TypeError,
+                    ValueError,
+                    RuntimeError,
+                    KeyError,
+                ) as e:
                     # Convert exception to FlextResult failure
                     return FlextResult[T].fail(
                         str(e),
@@ -690,7 +708,7 @@ class FlextDecorators:
                 args_tuple = cast("tuple[object, ...]", args)
                 first_arg = args_tuple[0] if args_tuple else None
                 if first_arg is not None and hasattr(first_arg, "logger"):
-                    potential_logger = getattr(first_arg, "logger")
+                    potential_logger = first_arg.logger
                     logger = (
                         potential_logger
                         if isinstance(potential_logger, FlextLogger)
@@ -718,7 +736,13 @@ class FlextDecorators:
 
                         return func(*args, **kwargs)
 
-                    except Exception as e:
+                    except (
+                        AttributeError,
+                        TypeError,
+                        ValueError,
+                        RuntimeError,
+                        KeyError,
+                    ) as e:
                         last_exception = e
 
                         logger.warning(
@@ -847,7 +871,13 @@ class FlextDecorators:
                 except FlextExceptions.TimeoutError:
                     # Re-raise timeout errors
                     raise
-                except Exception as e:
+                except (
+                    AttributeError,
+                    TypeError,
+                    ValueError,
+                    RuntimeError,
+                    KeyError,
+                ) as e:
                     # Check duration even on exception
                     duration = time.perf_counter() - start_time
                     if duration > max_duration:

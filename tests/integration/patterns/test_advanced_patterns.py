@@ -39,7 +39,7 @@ def mark_test_pattern(pattern: str) -> Callable[[object], object]:
 
         """
         # Use setattr to dynamically assign the pattern attribute
-        setattr(func, "_test_pattern", pattern)
+        func._test_pattern = pattern
         return func
 
     return decorator

@@ -248,7 +248,6 @@ class TestServiceIntegrationPatterns:
         acceptable performance thresholds for enterprise workloads.
 
         Args:
-            configured_container: Pre-configured container with services
             mock_external_service: Functional external service
             performance_threshold: Performance threshold configuration
             benchmark_data: Benchmark data sets
@@ -312,7 +311,6 @@ class TestServiceIntegrationPatterns:
         integration layers while maintaining proper error context.
 
         Args:
-            configured_container: Pre-configured container with services
             mock_external_service: Functional external service
             error_context: Error context fixture
 

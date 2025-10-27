@@ -191,7 +191,7 @@ class FlextMixins:
     **1. Container Unavailability Handling**:
     try:
         logger = container.get("logger")
-    except Exception:
+    except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
         # Fallback: create logger without DI
         logger = FlextLogger(__name__)
 
@@ -291,7 +291,7 @@ class FlextMixins:
                     result = self._do_process(payment_id, amount)
                     self.logger.info("Payment processed", status="success")
                     return FlextResult.ok(result)
-                except Exception as e:
+                except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                     self.logger.error(
                         "Payment failed",
                         error=str(e),
@@ -475,7 +475,7 @@ class FlextMixins:
         """Register self in global container for service discovery."""
         try:
             return self.container.register(service_name, self)
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             # If already registered, return success (for test compatibility)
             if "already registered" in str(e).lower():
                 return FlextResult[None].ok(None)
@@ -538,7 +538,7 @@ class FlextMixins:
 
             return logger
 
-        except Exception:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             # Fallback: create logger without DI if container unavailable
             logger = FlextLogger(logger_name)
             with cls._cache_lock:

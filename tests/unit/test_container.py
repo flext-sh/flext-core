@@ -944,7 +944,7 @@ class TestDIContainerInitialization:
 
         # Config should be a Configuration provider
         di_container = container._di_container
-        config_provider = getattr(di_container, "config")
+        config_provider = di_container.config
         assert config_provider.__class__.__name__ == "Configuration"
 
 
@@ -968,7 +968,7 @@ class TestServiceRegistrationSync:
         assert hasattr(container._di_container, "test_service")
 
         # Verify DI provider returns same instance (Singleton pattern)
-        provider = getattr(container._di_container, "test_service")
+        provider = container._di_container.test_service
         assert provider() is test_service
 
     def test_register_factory_dual_storage(self) -> None:
@@ -992,7 +992,7 @@ class TestServiceRegistrationSync:
         assert hasattr(container._di_container, "test_factory")
 
         # Verify DI provider caches factory result (lazy singleton pattern)
-        provider = getattr(container._di_container, "test_factory")
+        provider = container._di_container.test_factory
         instance1 = provider()
         instance2 = provider()
         assert instance1 is instance2  # Same instance (cached)
@@ -1135,7 +1135,7 @@ class TestFlextConfigSync:
         container = FlextContainer()
 
         # Access the config provider
-        config_provider = getattr(container._di_container, "config")
+        config_provider = container._di_container.config
 
         # Verify config values are synced
         # Note: Config provider sync is incomplete - values return None
@@ -1161,7 +1161,7 @@ class TestFlextConfigSync:
 
         assert hasattr(container._di_container, "config")
         di_container = container._di_container
-        config_provider = getattr(di_container, "config")
+        config_provider = di_container.config
         assert config_provider.__class__.__name__ == "Configuration"
 
 

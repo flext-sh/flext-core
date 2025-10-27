@@ -19,22 +19,24 @@ from datetime import UTC
 from enum import Enum
 from pathlib import Path
 from types import ModuleType
-from typing import Any, ClassVar, cast
+from typing import ClassVar, cast
 
 import click
 import docker
 import pytest
 from docker import DockerClient
 from docker.errors import DockerException, NotFound
-from rich.console import Console
-from rich.table import Table
+from docker.models.containers import Container
 
 # subprocess only used for command execution in containers, not docker-compose
-
-try:
-    from python_on_whales import docker as pow_docker
-except ImportError:
-    pow_docker = None
+# Import python_on_whales - docker is a pre-instantiated DockerClient instance
+# Type stubs are in ~/flext/typings/python_on_whales/
+from python_on_whales import (
+    DockerClient as PowDockerClient,
+    docker as pow_docker,
+)
+from rich.console import Console
+from rich.table import Table
 
 from flext_core import (
     FlextLogger,
@@ -273,11 +275,15 @@ class FlextTestDocker:
             # (don't use manual stop/remove - let compose manage the lifecycle)
 
             # Get container config from SHARED_CONTAINERS or registered private configs
-            config = None
+            # SHARED_CONTAINERS has str|int values, _container_configs has str values
+            config: dict[str, str | int] | None = None
             if container_name in self.SHARED_CONTAINERS:
                 config = self.SHARED_CONTAINERS[container_name]
             elif container_name in self._container_configs:
-                config = self._container_configs[container_name]
+                # Cast is safe: dict[str, str] is compatible with dict[str, str | int]
+                config = cast(
+                    "dict[str, str | int]", self._container_configs[container_name]
+                )
 
             if config:
                 # Ensure compose_file is str for Path operation
@@ -530,15 +536,13 @@ class FlextTestDocker:
                 compose_path = self.workspace_root / compose_path
 
             # Use python-on-whales for docker-compose operations
-            if pow_docker is None:
-                return FlextResult[str].fail(
-                    "python-on-whales not installed. Install with: pip install python-on-whales"
-                )
-
-            # Cast for type checking - pow_docker is not None at this point
-            docker_client: Any = cast("object", pow_docker)
+            # pow_docker is a pre-instantiated PowDockerClient from python_on_whales
+            docker_client: PowDockerClient = pow_docker
 
             try:
+                # Capture exceptions from thread
+                thread_exceptions: list[Exception] = []
+
                 # Run docker compose up with timeout
                 def run_compose_up() -> None:
                     # Set compose file in client config
@@ -558,7 +562,6 @@ class FlextTestDocker:
                             original_compose_files
                         )
 
-                # Execute with timeout using threading
                 thread = threading.Thread(target=run_compose_up, daemon=False)
                 thread.start()
                 thread.join(timeout=300)  # 5 minute timeout
@@ -567,6 +570,10 @@ class FlextTestDocker:
                     return FlextResult[str].fail(
                         "docker compose up timed out after 5 minutes"
                     )
+
+                # Check for exceptions from thread
+                if thread_exceptions:
+                    raise thread_exceptions[0]
 
                 self.logger.info(
                     "docker compose up succeeded",
@@ -609,32 +616,36 @@ class FlextTestDocker:
                 compose_path = self.workspace_root / compose_path
 
             # Use python-on-whales for docker-compose operations
-            if pow_docker is None:
-                return FlextResult[str].fail(
-                    "python-on-whales not installed. Install with: pip install python-on-whales"
-                )
-
-            # Cast for type checking - pow_docker is not None at this point
-            docker_client: Any = cast("object", pow_docker)
+            # pow_docker is a pre-instantiated PowDockerClient from python_on_whales
+            docker_client: PowDockerClient = pow_docker
 
             try:
+                # Capture exceptions from thread
+                thread_exceptions: list[Exception] = []
+
                 # Run docker compose down with --volumes flag (removes containers AND volumes)
                 def run_compose_down() -> None:
-                    # Set compose file in client config
-                    original_compose_files = docker_client.client_config.compose_files
                     try:
-                        # Configure the compose file for this operation
-                        docker_client.client_config.compose_files = [str(compose_path)]
-
-                        # Use down with volumes=True to remove containers AND their volumes
-                        docker_client.compose.down(volumes=True)
-                    finally:
-                        # Restore original compose files
-                        docker_client.client_config.compose_files = (
-                            original_compose_files
+                        # Set compose file in client config
+                        original_compose_files = (
+                            docker_client.client_config.compose_files
                         )
+                        try:
+                            # Configure the compose file for this operation
+                            docker_client.client_config.compose_files = [
+                                str(compose_path)
+                            ]
+                            # Use down with volumes=True to remove containers AND their volumes
+                            docker_client.compose.down(volumes=True)
+                        finally:
+                            # Restore original compose files
+                            docker_client.client_config.compose_files = (
+                                original_compose_files
+                            )
+                    except Exception as e:
+                        # Store exception for main thread to handle
+                        thread_exceptions.append(e)
 
-                # Execute with timeout using threading
                 thread = threading.Thread(target=run_compose_down, daemon=False)
                 thread.start()
                 thread.join(timeout=120)  # 2 minute timeout
@@ -643,6 +654,10 @@ class FlextTestDocker:
                     return FlextResult[str].fail(
                         "docker compose down timed out after 2 minutes"
                     )
+
+                # Check for exceptions from thread
+                if thread_exceptions:
+                    raise thread_exceptions[0]
 
                 self.logger.info(
                     "docker compose down succeeded",
@@ -1548,7 +1563,7 @@ class FlextTestDocker:
             _container = client.containers.get(container_name)
 
             start_time = time.time()
-            elapsed = 0
+            elapsed: float = 0.0
             check_count = 0
 
             while elapsed < max_wait:
@@ -1807,7 +1822,7 @@ class FlextTestDocker:
 
             # First try to get the container to confirm it exists
             try:
-                container = client.containers.get(container_name)
+                container: Container = client.containers.get(container_name)
                 was_running = container.attrs.get("State", {}).get("Running", False)
                 state = container.attrs.get("State", {})
                 health = state.get("Health", {})
@@ -1836,6 +1851,7 @@ class FlextTestDocker:
                         f"force killing: {e}",
                         extra={"container": container_name},
                     )
+                    # Force kill container
                     container.kill(signal="SIGKILL")
                     self.logger.warning(
                         f"Force killed container {container_name}",

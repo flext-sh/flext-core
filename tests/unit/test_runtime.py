@@ -14,12 +14,10 @@ import logging
 
 import structlog
 from dependency_injector import containers, providers
-from pydantic import BaseModel
 
 from flext_core import (
     FlextConstants,
     FlextContext,
-    FlextResult,
     FlextRuntime,
 )
 
@@ -142,138 +140,9 @@ class TestSerializationUtilities:
         obj = TestObj()
         assert FlextRuntime.safe_get_attribute(obj, "missing") is None
 
-    def test_safe_serialize_to_dict_pydantic_model(self) -> None:
-        """Test safe_serialize_to_dict with Pydantic model."""
-
-        class TestModel(BaseModel):
-            name: str
-            value: int
-
-        model = TestModel(name="test", value=42)
-        result = FlextRuntime.safe_serialize_to_dict(model)
-
-        assert result is not None
-        assert result["name"] == "test"
-        assert result["value"] == 42
-
-    def test_safe_serialize_to_dict_dict_attribute(self) -> None:
-        """Test safe_serialize_to_dict with object having __dict__."""
-
-        class TestObj:
-            def __init__(self) -> None:
-                super().__init__()
-                self.name = "test"
-                self.value = 42
-
-        obj = TestObj()
-        result = FlextRuntime.safe_serialize_to_dict(obj)
-
-        assert result is not None
-        assert result["name"] == "test"
-        assert result["value"] == 42
-
-    def test_safe_serialize_to_dict_already_dict(self) -> None:
-        """Test safe_serialize_to_dict with already dict[str, object] object."""
-        original = {"key": "value"}
-        result = FlextRuntime.safe_serialize_to_dict(original)
-
-        assert result is not None
-        assert result["key"] == "value"
-
-    def test_safe_serialize_to_dict_unsupported_type(self) -> None:
-        """Test safe_serialize_to_dict with unsupported type returns None."""
-        result = FlextRuntime.safe_serialize_to_dict(123)
-        assert result is None
-
-        result = FlextRuntime.safe_serialize_to_dict("string")
-        assert result is None
-
-    def test_safe_serialize_to_dict_model_dump_exception(self) -> None:
-        """Test safe_serialize_to_dict with model_dump raising exception falls back to __dict__."""
-
-        class BrokenModel:
-            def __init__(self) -> None:
-                super().__init__()
-                self.data = "test"
-
-            def model_dump(self) -> dict[str, object]:
-                msg = "Intentional error"
-                raise RuntimeError(msg)
-
-        obj = BrokenModel()
-        result = FlextRuntime.safe_serialize_to_dict(obj)
-        # Should fall through to __dict__ strategy
-        assert result is not None
-        assert result.get("data") == "test"
-
-    def test_safe_serialize_to_dict_dict_method_exception(self) -> None:
-        """Test safe_serialize_to_dict with dict[str, object]() method raising exception falls back to __dict__."""
-
-        class BrokenDict:
-            def __init__(self) -> None:
-                super().__init__()
-                self.data = "test"
-
-            def dict(self) -> dict[str, object]:
-                msg = "Intentional error"
-                raise RuntimeError(msg)
-
-        obj = BrokenDict()
-        result = FlextRuntime.safe_serialize_to_dict(obj)
-        # Should fall through to __dict__ strategy
-        assert result is not None
-        assert result.get("data") == "test"
-
-    def test_safe_serialize_to_dict_dict_method_returns_non_dict(self) -> None:
-        """Test safe_serialize_to_dict when dict[str, object]() returns non-dict value."""
-
-        class NonDictReturn:
-            def __init__(self) -> None:
-                super().__init__()
-                self.data = "test"
-
-            def dict(self) -> object:
-                return "not a dict"
-
-        obj = NonDictReturn()
-        result = FlextRuntime.safe_serialize_to_dict(obj)
-        # Should fall through to __dict__ strategy
-        assert result is not None
-        assert result.get("data") == "test"
-
-    def test_safe_serialize_to_dict_dict_method_returns_dict(self) -> None:
-        """Test safe_serialize_to_dict when dict[str, object]() returns dict[str, object] successfully."""
-
-        class DictMethodWorking:
-            def __init__(self) -> None:
-                super().__init__()
-                self.data = "test"
-
-            def to_dict(self) -> dict[str, object]:
-                return {"data": self.data, "method": "dict"}
-
-        obj = DictMethodWorking()
-        result = FlextRuntime.safe_serialize_to_dict(obj)
-        # Should return result from dict[str, object]() method
-        assert result is not None
-        assert result["data"] == "test"
-        assert result["method"] == "dict"
-
 
 class TestTypeIntrospection:
     """Test FlextRuntime type introspection utilities."""
-
-    def test_is_optional_type_with_optional(self) -> None:
-        """Test is_optional_type with Optional type."""
-        assert FlextRuntime.is_optional_type(str | None)
-        assert FlextRuntime.is_optional_type(int | None)
-        assert FlextRuntime.is_optional_type(list[str] | None)
-
-    def test_is_optional_type_with_non_optional(self) -> None:
-        """Test is_optional_type with non-Optional type."""
-        assert not FlextRuntime.is_optional_type(str)
-        assert not FlextRuntime.is_optional_type(int)
-        assert not FlextRuntime.is_optional_type(list[str])
 
     def test_extract_generic_args_with_generic(self) -> None:
         """Test extract_generic_args with generic types."""
@@ -302,14 +171,6 @@ class TestTypeIntrospection:
         # Note: str is actually a sequence type in Python (subclass of Sequence)
         assert FlextRuntime.is_sequence_type(str)
         assert not FlextRuntime.is_sequence_type(int)
-
-    def test_is_optional_type_with_exception(self) -> None:
-        """Test is_optional_type with invalid input causing exception."""
-        # Test with None - should not crash
-        assert not FlextRuntime.is_optional_type(None)
-
-        # Test with invalid type hint
-        assert not FlextRuntime.is_optional_type("not a type")
 
     def test_extract_generic_args_with_exception(self) -> None:
         """Test extract_generic_args with invalid input causing exception."""
@@ -493,99 +354,6 @@ class TestContextIntegrationPatterns:
 
         assert FlextContext.Correlation.get_correlation_id() is None
 
-    def test_log_config_access_unmasked(self) -> None:
-        """Test log_config_access without masking."""
-        FlextRuntime.configure_structlog()
-
-        # Set correlation ID
-        correlation_id = FlextContext.Utilities.ensure_correlation_id()
-
-        # Log config access without masking
-        FlextRuntime.Integration.log_config_access(
-            "app_name", value="flext-core", masked=False
-        )
-
-        # Verify correlation ID persists
-        assert FlextContext.Correlation.get_correlation_id() == correlation_id
-
-    def test_log_config_access_masked(self) -> None:
-        """Test log_config_access with value masking for secrets."""
-        FlextRuntime.configure_structlog()
-
-        # Set correlation ID
-        correlation_id = FlextContext.Utilities.ensure_correlation_id()
-
-        # Log config access with masking (for secrets)
-        FlextRuntime.Integration.log_config_access(
-            "database_password",
-            value="super_secret_password",
-            masked=True,
-        )
-
-        # Verify correlation ID persists
-        assert FlextContext.Correlation.get_correlation_id() == correlation_id
-
-    def test_log_config_access_no_value(self) -> None:
-        """Test log_config_access without providing value."""
-        FlextRuntime.configure_structlog()
-
-        # Should not raise error without value
-        FlextRuntime.Integration.log_config_access("some_key", masked=False)
-
-    def test_attach_context_to_result_basic(self) -> None:
-        """Test attach_context_to_result basic usage."""
-        FlextRuntime.configure_structlog()
-
-        # Set correlation ID
-        FlextContext.Utilities.ensure_correlation_id()
-
-        # Create result and attach context
-        result = FlextResult[str].ok("test_data")
-        result_with_ctx = FlextRuntime.Integration.attach_context_to_result(
-            result,
-            attach_correlation=True,
-        )
-
-        # Currently returns result unchanged (future-proofing pattern)
-        assert result_with_ctx is result
-
-    def test_attach_context_to_result_with_service_name(self) -> None:
-        """Test attach_context_to_result with service name."""
-        FlextRuntime.configure_structlog()
-
-        # Set service context
-        FlextContext.Service.set_service_name("test-service")
-
-        # Create result and attach context
-        result = FlextResult[dict[str, object]].ok({"status": "success"})
-        result_with_ctx = FlextRuntime.Integration.attach_context_to_result(
-            result,
-            attach_correlation=True,
-            attach_service_name=True,
-        )
-
-        # Currently returns result unchanged (future-proofing pattern)
-        assert result_with_ctx is result
-
-    def test_attach_context_to_result_no_correlation(self) -> None:
-        """Test attach_context_to_result without correlation ID."""
-        import structlog
-
-        FlextRuntime.configure_structlog()
-
-        # Clear correlation using structlog
-        structlog.contextvars.unbind_contextvars("correlation_id")
-
-        # Create result
-        result = FlextResult[str].ok("test")
-
-        # Should not raise error without correlation
-        result_with_ctx = FlextRuntime.Integration.attach_context_to_result(
-            result,
-            attach_correlation=False,
-        )
-        assert result_with_ctx is result
-
     def test_track_domain_event_with_aggregate(self) -> None:
         """Test track_domain_event with aggregate ID."""
         FlextRuntime.configure_structlog()
@@ -698,8 +466,6 @@ class TestContextIntegrationPatterns:
 
         # The integration methods should exist on the nested class
         assert hasattr(FlextRuntime.Integration, "track_service_resolution")
-        assert hasattr(FlextRuntime.Integration, "log_config_access")
-        assert hasattr(FlextRuntime.Integration, "attach_context_to_result")
         assert hasattr(FlextRuntime.Integration, "track_domain_event")
         assert hasattr(FlextRuntime.Integration, "setup_service_infrastructure")
 
@@ -712,11 +478,6 @@ class TestContextIntegrationPatterns:
 
         # These should work with keyword arguments
         FlextRuntime.Integration.track_service_resolution("test", resolved=True)
-        FlextRuntime.Integration.log_config_access("key", masked=False)
-        FlextRuntime.Integration.setup_service_infrastructure(
-            service_name="test",
-            enable_context_correlation=True,
-        )
 
         # This test verifies keyword-only pattern at runtime
 
@@ -729,7 +490,6 @@ class TestContextIntegrationPatterns:
 
         # Use integration methods - they should all see the same context
         FlextRuntime.Integration.track_service_resolution("service1", resolved=True)
-        FlextRuntime.Integration.log_config_access("config1", masked=False)
         FlextRuntime.Integration.track_domain_event("Event1")
 
         # Correlation ID should remain consistent (single source of truth)

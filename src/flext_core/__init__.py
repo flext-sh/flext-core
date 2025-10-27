@@ -340,7 +340,7 @@ from __future__ import annotations
 
 from flext_core.__version__ import __version__, __version_info__
 from flext_core.bus import FlextBus
-from flext_core.config import FlextConfig, NestedPrefixEnvSettingsSource
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
@@ -483,7 +483,6 @@ __all__ = [
     "NaiveDatetime",
     "NegativeFloat",
     "NegativeInt",
-    "NestedPrefixEnvSettingsSource",
     "NewPath",
     "NonEmptyStr",
     "NonNegativeFloat",

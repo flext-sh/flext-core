@@ -163,27 +163,26 @@ class FlextContext:
                     if key in context_data.metadata:
                         metadata_dict[key] = context_data.metadata[key]
 
-                # Rest go to custom_fields
-                custom: dict[str, object] = {
-                    key: value
-                    for key, value in context_data.metadata.items()
-                    if key
-                    not in [
-                        "user_id",
-                        "correlation_id",
-                        "request_id",
-                        "session_id",
-                        "tenant_id",
-                    ]
-                }
-
-                metadata_dict["custom_fields"] = custom
+                # Create ContextMetadata with known fields only (no custom_fields)
                 self._metadata = FlextModels.ContextMetadata.model_validate(
                     metadata_dict
                 )
+
+                # Directly update custom_fields dict to avoid deprecation warning
+                # Extract unknown fields and add them to custom_fields
+                known_fields = {
+                    "user_id",
+                    "correlation_id",
+                    "request_id",
+                    "session_id",
+                    "tenant_id",
+                }
+                for key, value in context_data.metadata.items():
+                    if key not in known_fields:
+                        self._metadata.custom_fields[key] = value
             else:
                 self._metadata = FlextModels.ContextMetadata()
-        except Exception:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             # Fallback: if validation fails, create empty metadata
             self._metadata = FlextModels.ContextMetadata()
 
@@ -738,11 +737,9 @@ class FlextContext:
 
         """
         if isinstance(self._metadata, FlextModels.ContextMetadata):
-            metadata_dict = self._metadata.model_dump()
-            custom = dict(metadata_dict.get("custom_fields", {}))
-            custom[key] = value
-            metadata_dict["custom_fields"] = custom
-            self._metadata = FlextModels.ContextMetadata(**metadata_dict)
+            # Directly update custom_fields dict to avoid deprecation warning
+            # and object recreation
+            self._metadata.custom_fields[key] = value
 
     def get_metadata(self, key: str, default: object | None = None) -> object:
         """Get metadata from the context.

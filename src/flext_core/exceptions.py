@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import contextvars
 import logging
 import time
 import uuid
@@ -258,6 +259,125 @@ class FlextExceptions:
         ...         return FlextResult[dict].fail(str(e), error_code="OPERATION_ERROR")
     """
 
+    # =========================================================================
+    # HIERARCHICAL EXCEPTION CONFIGURATION SYSTEM (Nested in FlextExceptions)
+    # =========================================================================
+
+    class Configuration:
+        """Hierarchical exception handling configuration for FlextExceptions.
+
+        Supports 4-level hierarchy for fine-grained exception handling control:
+        1. Call Level (highest priority) - Temporary override for specific operation
+        2. Container Level - Inherits from library automatically
+        3. Library Level - Per-exception-type configuration
+        4. Global Level (lowest priority) - Default from FlextConfig
+
+        This nested class maintains the hierarchical system while keeping
+        FlextExceptions as the only public class per module.
+        """
+
+        # Module-level state for hierarchical exception configuration
+        # Global default (lowest priority) - now loaded from FlextConfig
+        _global_failure_level: ClassVar[
+            FlextConstants.Exceptions.FailureLevel | None
+        ] = None
+
+        # Library-level: library_name -> {exception_type: FailureLevel}
+        _library_exception_levels: ClassVar[
+            dict[str, dict[type[Exception], FlextConstants.Exceptions.FailureLevel]]
+        ] = {}
+
+        # Container-level: container_id -> FailureLevel
+        _container_exception_levels: ClassVar[
+            dict[str, FlextConstants.Exceptions.FailureLevel]
+        ] = {}
+
+        # Call-level: thread-local storage for temporary overrides
+        _call_level_context: ClassVar[
+            contextvars.ContextVar[FlextConstants.Exceptions.FailureLevel | None]
+        ] = contextvars.ContextVar("exception_mode", default=None)
+
+        @classmethod
+        def set_global_level(
+            cls, level: FlextConstants.Exceptions.FailureLevel
+        ) -> None:
+            """Set global failure level (lowest priority)."""
+            cls._global_failure_level = level
+
+        @classmethod
+        def _get_global_failure_level(cls) -> FlextConstants.Exceptions.FailureLevel:
+            """Get global failure level from FlextConfig (Pydantic 2 Settings handles env vars)."""
+            if cls._global_failure_level is not None:
+                return cls._global_failure_level
+
+            try:
+                # Runtime import to avoid circular dependency
+                from flext_core.config import FlextConfig
+
+                # Get from FlextConfig singleton (Pydantic Settings handles environment variables)
+                config = FlextConfig.get_global_instance()
+                level_str = config.exception_failure_level
+                cls._global_failure_level = FlextConstants.Exceptions.FailureLevel(
+                    level_str.lower()
+                )
+                return cls._global_failure_level
+            except (ImportError, AttributeError, ValueError, TypeError):
+                # Fallback to default if config is not available or invalid
+                cls._global_failure_level = (
+                    FlextConstants.Exceptions.FailureLevel.STRICT
+                )
+                return cls._global_failure_level
+
+        @classmethod
+        def register_library_exception_level(
+            cls,
+            library_name: str,
+            exception_type: type[Exception],
+            level: FlextConstants.Exceptions.FailureLevel,
+        ) -> None:
+            """Register exception handling level for specific exception type in library."""
+            if library_name not in cls._library_exception_levels:
+                cls._library_exception_levels[library_name] = {}
+            cls._library_exception_levels[library_name][exception_type] = level
+
+        @classmethod
+        def set_container_level(
+            cls,
+            container_id: str,
+            level: FlextConstants.Exceptions.FailureLevel,
+        ) -> None:
+            """Set container-level failure level."""
+            cls._container_exception_levels[container_id] = level
+
+        @classmethod
+        def get_effective_level(
+            cls,
+            library_name: str | None = None,
+            container_id: str | None = None,
+            exception_type: type[Exception] | None = None,
+        ) -> FlextConstants.Exceptions.FailureLevel:
+            """Resolve effective failure level using hierarchy: Call > Container > Library > Global."""
+            # 1. Call level (highest priority)
+            call_level = cls._call_level_context.get()
+            if call_level is not None:
+                return call_level
+
+            # 2. Container level
+            if container_id and container_id in cls._container_exception_levels:
+                return cls._container_exception_levels[container_id]
+
+            # 3. Library level (per exception type)
+            if (
+                library_name
+                and exception_type
+                and library_name in cls._library_exception_levels
+                and exception_type in cls._library_exception_levels[library_name]
+            ):
+                return cls._library_exception_levels[library_name][exception_type]
+
+            # 4. Global default (lowest priority) - from FlextConfig (Pydantic Settings)
+            return cls._get_global_failure_level()
+
     class BaseError(Exception):
         """Base exception class for all FLEXT exceptions with structured logging.
 
@@ -402,9 +522,7 @@ class FlextExceptions:
             """
             self.__cause__ = cause
             if hasattr(cause, "correlation_id"):
-                self.metadata["parent_correlation_id"] = getattr(
-                    cause, "correlation_id"
-                )
+                self.metadata["parent_correlation_id"] = cause.correlation_id
 
             # Log exception chaining
             try:

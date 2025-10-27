@@ -215,7 +215,7 @@ class FlextService[TDomainResult](
             business_rules = self.validate_business_rules()
             config = self.validate_config()
             return business_rules.is_success and config.is_success
-        except Exception:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             # If validation raises an exception, the service is not valid
             return False
 
@@ -360,12 +360,9 @@ class FlextService[TDomainResult](
                                 *filtered_args,
                                 **request.keyword_arguments,
                             )
-                            try:
-                                result = future.result(timeout=request.timeout_seconds)
-                            except concurrent.futures.TimeoutError:
-                                return FlextResult[TDomainResult].fail(
-                                    f"Operation {request.operation_name} timed out after {request.timeout_seconds} seconds"
-                                )
+                            # Let TimeoutError and other exceptions propagate to outer except
+                            # so retry logic can handle them
+                            result = future.result(timeout=request.timeout_seconds)
                     else:
                         # Execute the operation without timeout
                         if not callable(request.operation_callable):
@@ -396,15 +393,28 @@ class FlextService[TDomainResult](
                     )
 
                     if not should_retry or attempt >= max_attempts - 1:
+                        # Create better error message based on exception type
+                        error_msg = str(e) or ""
+                        if isinstance(
+                            e,
+                            (TimeoutError, concurrent.futures.TimeoutError),
+                        ):
+                            error_msg = (
+                                "Operation timed out"
+                                f" after {request.timeout_seconds} seconds"
+                            )
+                        elif not error_msg:
+                            error_msg = type(e).__name__
+
                         self.logger.exception(
                             f"Operation execution failed: {request.operation_name}",
                             extra={
-                                "error": str(e),
+                                "error": error_msg,
                                 "error_type": type(e).__name__,
                             },
                         )
                         return FlextResult[TDomainResult].fail(
-                            f"Operation {request.operation_name} failed: {e}"
+                            f"Operation {request.operation_name} failed: {error_msg}"
                         )
 
                     # Calculate delay for retry
@@ -438,7 +448,7 @@ class FlextService[TDomainResult](
         """Execute operation with full validation including business rules and config.
 
         Args:
-            request: Domain service execution request
+            _request: Domain service execution request (unused, for protocol compatibility)
 
         Returns:
             FlextResult[TDomainResult]: Success with operation result or failure with validation/execution error
@@ -475,7 +485,7 @@ class FlextService[TDomainResult](
         # Evaluate condition
         try:
             condition_met = bool(request.condition(self))
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[TDomainResult].fail(f"Condition evaluation failed: {e}")
 
         if not condition_met:
@@ -499,7 +509,13 @@ class FlextService[TDomainResult](
                         "TDomainResult", request.false_action
                     )
                     return FlextResult[TDomainResult].ok(false_action_value)
-                except Exception as e:
+                except (
+                    AttributeError,
+                    TypeError,
+                    ValueError,
+                    RuntimeError,
+                    KeyError,
+                ) as e:
                     return FlextResult[TDomainResult].fail(
                         f"False action execution failed: {e}"
                     )
@@ -523,7 +539,7 @@ class FlextService[TDomainResult](
                     "TDomainResult", request.true_action
                 )
                 return FlextResult[TDomainResult].ok(true_action_value)
-            except Exception as e:
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                 return FlextResult[TDomainResult].fail(
                     f"True action execution failed: {e}"
                 )
@@ -654,7 +670,7 @@ class FlextService[TDomainResult](
         try:
             self._context = context
             return FlextResult[None].ok(None)
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[None].fail(
                 f"Context setting failed: {e}",
                 error_code="CONTEXT_ERROR",
@@ -692,7 +708,7 @@ class FlextService[TDomainResult](
         try:
             timeout = getattr(self, "_timeout", 30.0)
             return FlextResult[float].ok(timeout)
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[float].fail(
                 f"Timeout retrieval failed: {e}",
                 error_code="TIMEOUT_ERROR",

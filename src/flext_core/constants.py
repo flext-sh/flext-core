@@ -18,6 +18,8 @@ from typing import (
     Final,
 )
 
+from pydantic import ConfigDict
+
 
 class FlextConstants:
     """Foundation constants for the FLEXT ecosystem.
@@ -457,6 +459,24 @@ class FlextConstants:
         )
         NONEXISTENT_ERROR: Final[str] = "NONEXISTENT_ERROR"
 
+    class Exceptions:
+        """Exception handling configuration and failure levels."""
+
+        class FailureLevel(StrEnum):
+            """Exception handling strictness levels for hierarchical exception system.
+
+            - STRICT: Specific exceptions required, broad catching forbidden
+            - WARN: Allow broad catching but log warnings when used
+            - PERMISSIVE: Allow broad catching silently
+            """
+
+            STRICT = "strict"
+            WARN = "warn"
+            PERMISSIVE = "permissive"
+
+        # Default failure level (Layer 0 constant)
+        FAILURE_LEVEL_DEFAULT: Final[str] = FailureLevel.PERMISSIVE
+
     class Messages:
         """User-facing message templates."""
 
@@ -537,6 +557,39 @@ class FlextConstants:
             PRODUCTION = "production"
             TESTING = "testing"
             LOCAL = "local"
+
+    class ModelConfig:
+        """Pydantic model configuration defaults for FlextModels.
+
+        Centralized source of truth for all Pydantic ConfigDict settings
+        used across FlextModels nested classes. Provides a complete BASE dict
+        that can be unpacked with ** operator, allowing classes to override
+        only what they need.
+
+        Usage in FlextModels:
+            model_config = ConfigDict(
+                **FlextConstants.ModelConfig.BASE,
+                frozen=True,  # Override only what's different
+                json_schema_extra={...},
+            )
+        """
+
+        # Complete base configuration - unpack with **
+        # Note: frozen is excluded so classes can set it as needed
+        # Using ConfigDict type directly for type-safe unpacking
+        BASE: Final[ConfigDict] = ConfigDict(
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            strict=True,
+            str_strip_whitespace=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            extra="forbid",
+            ser_json_timedelta="iso8601",
+            ser_json_bytes="base64",
+            hide_input_in_errors=True,
+        )
 
     class Platform:
         """Platform-specific constants for HTTP, database, and file types."""
