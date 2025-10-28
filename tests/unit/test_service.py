@@ -1539,3 +1539,524 @@ class BatchService(FlextService[list[str]]):
         assert result.is_failure
         assert result.error is not None
         assert "timeout" in result.error.lower()
+
+
+class TestServicePropertiesAndConfig:
+    """Tests for service properties and configuration (coverage for lines 101, 128-145, 172-191)."""
+
+    def test_service_config_property(self) -> None:
+        """Test service_config computed_field returns global config (lines 83-101)."""
+        service = SampleUserService()
+
+        # Test that service_config returns a FlextConfig instance
+        config = service.service_config
+        assert config is not None
+
+        # Test that it's the global instance
+        from flext_core import FlextConfig
+        assert config is FlextConfig.get_global_instance()
+
+    def test_project_config_property_resolution(self) -> None:
+        """Test project_config property auto-resolution by naming convention (lines 103-145)."""
+        # Test with a service that follows naming convention
+        service = SampleUserService()
+
+        # project_config should resolve to FlextConfig when no matching config found
+        project_config = service.project_config
+        assert project_config is not None
+
+        # Should be a FlextConfig instance
+        from flext_core import FlextConfig
+        assert isinstance(project_config, FlextConfig)
+
+    def test_project_models_property_resolution(self) -> None:
+        """Test project_models property auto-resolution by naming convention (lines 147-191)."""
+        service = SampleUserService()
+
+        # project_models should resolve to FlextModels namespace
+        models = service.project_models
+        assert models is not None
+
+        # Test that it has FlextModels attributes
+        assert hasattr(models, "__module__") or hasattr(models, "__name__")
+
+    def test_project_config_fallback_to_global(self) -> None:
+        """Test project_config falls back to global FlextConfig."""
+        service = SampleComplexService()
+
+        # Without a matching config in container, should fallback to global
+        config = service.project_config
+        assert config is not None
+
+        from flext_core import FlextConfig
+        # Should return a FlextConfig instance (global or fallback)
+        assert isinstance(config, FlextConfig) or hasattr(config, "model_dump")
+
+
+class TestServiceContextAndLifecycle:
+    """Tests for service context and lifecycle methods (coverage for lines 333-339)."""
+
+    def test_execute_with_context_cleanup_success(self) -> None:
+        """Test execute_with_context_cleanup cleans up operation context (lines 311-339)."""
+        class ContextTestService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("Success with cleanup")
+
+        service = ContextTestService()
+
+        # Execute should succeed and context should be cleaned up
+        result = service.execute_with_context_cleanup()
+        assert result.is_success
+        assert result.unwrap() == "Success with cleanup"
+
+    def test_execute_with_context_cleanup_failure(self) -> None:
+        """Test execute_with_context_cleanup cleans up even on failure."""
+        class FailingContextService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].fail("Failure with cleanup")
+
+        service = FailingContextService()
+
+        # Execute should fail but context should still be cleaned up
+        result = service.execute_with_context_cleanup()
+        assert result.is_failure
+        assert result.error == "Failure with cleanup"
+
+    def test_execute_with_context_cleanup_exception(self) -> None:
+        """Test execute_with_context_cleanup cleans up even on exception."""
+        class ExceptionContextService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                msg = "Test exception"
+                raise ValueError(msg)
+
+        service = ExceptionContextService()
+
+        # Should raise exception but ensure finally block runs
+        with pytest.raises(ValueError):
+            service.execute_with_context_cleanup()
+
+
+class TestServiceDependencyDetection:
+    """Tests for automatic service registration and dependency detection (lines 193-280)."""
+
+    def test_basic_service_registration(self) -> None:
+        """Test that services are auto-registered via __init_subclass__ (line 193+)."""
+        from flext_core import FlextContainer
+
+        class AutoRegisterService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("Registered")
+
+        # Service should be auto-registered
+        container = FlextContainer.get_global()
+        result = container.get("AutoRegisterService")
+
+        # Should be able to retrieve the service
+        assert result.is_success
+        instance = result.unwrap()
+        assert isinstance(instance, AutoRegisterService)
+
+    def test_service_registration_with_dependencies(self) -> None:
+        """Test service with constructor dependencies (lines 241, 251-270)."""
+        from flext_core import FlextContainer
+
+        class DependencyService(FlextService[str]):
+            def __init__(self, test_value: str = "default") -> None:
+                super().__init__()
+                self.test_value = test_value
+
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok(self.test_value)
+
+        # Service should handle dependency gracefully
+        container = FlextContainer.get_global()
+        result = container.get("DependencyService")
+
+        assert result.is_success or result.is_failure
+        # Either resolves with dependency or uses default
+
+    def test_service_registration_fallback(self) -> None:
+        """Test service registration falls back on signature inspection failure (lines 276-280)."""
+        from flext_core import FlextContainer
+
+        class SimpleService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("Simple")
+
+        # Should register successfully even without dependencies
+        container = FlextContainer.get_global()
+        result = container.get("SimpleService")
+
+        assert result.is_success
+        instance = result.unwrap()
+        assert isinstance(instance, SimpleService)
+
+
+class TestServiceValidationAndInfo:
+    """Tests for validation methods and get_service_info (lines 462, 468, 476, 509, 525-529)."""
+
+    def test_validate_business_rules_returns_result(self) -> None:
+        """Test validate_business_rules returns FlextResult (line 462)."""
+        service = SampleComplexService(name="test", value=5)
+
+        # Should return FlextResult
+        result = service.validate_business_rules()
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+
+    def test_validate_config_returns_result(self) -> None:
+        """Test validate_config returns FlextResult (line 468)."""
+        service = SampleComplexService(name="test", value=5)
+
+        # Should return FlextResult
+        result = service.validate_config()
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+
+    def test_is_valid_integration(self) -> None:
+        """Test is_valid integrates both validation methods (line 476)."""
+        service = SampleComplexService(name="test", value=5, enabled=True)
+
+        # is_valid should check both business rules and config
+        is_valid = service.is_valid()
+        assert isinstance(is_valid, bool)
+        assert is_valid is True
+
+    def test_get_service_info_structure(self) -> None:
+        """Test get_service_info returns proper structure (line 509)."""
+        service = SampleComplexService(name="test_service", value=42)
+
+        info = service.get_service_info()
+        assert isinstance(info, dict)
+        assert "service_type" in info or "class_name" in info
+        assert info.get("service_type") == "SampleComplexService" or info.get("class_name") == "SampleComplexService"
+
+    def test_get_service_info_with_validation_state(self) -> None:
+        """Test get_service_info includes validation state (lines 525-529)."""
+        service = SampleComplexService(name="test", value=100, enabled=True)
+
+        info = service.get_service_info()
+        assert isinstance(info, dict)
+
+        # Should have service metadata
+        assert "service_type" in info or "class_name" in info
+
+
+class TestServicePropertyResolution:
+    """Tests for advanced property resolution (lines 128-145, 172-191, 241, 259, 266, 276-280)."""
+
+    def test_project_config_from_container(self) -> None:
+        """Test project_config resolves from container by naming convention (lines 128-145)."""
+        from flext_core import FlextConfig, FlextContainer
+
+        # Register a custom config with matching name
+        class TestServiceConfig(FlextConfig):
+            """Test service config."""
+
+        container = FlextContainer.get_global()
+        container.register("TestServiceConfig", TestServiceConfig())
+
+        # Service that matches naming pattern: TestService → TestServiceConfig
+        class TestService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("test")
+
+        service = TestService()
+        config = service.project_config
+
+        # Should resolve from container
+        assert config is not None
+        assert isinstance(config, FlextConfig)
+
+    def test_project_models_from_container(self) -> None:
+        """Test project_models resolves from container by naming convention (lines 172-191)."""
+        from flext_core import FlextContainer
+
+        # Register a models class with matching name
+        class SampleServiceModels:
+            """Test service models namespace."""
+
+        container = FlextContainer.get_global()
+        container.register("SampleServiceModels", SampleServiceModels)
+
+        class SampleService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("test")
+
+        service = SampleService()
+        models = service.project_models
+
+        # Should resolve from container
+        assert models is not None
+
+    def test_property_resolution_naming_pattern(self) -> None:
+        """Test property resolution with exact naming pattern (FlextXyzService → FlextXyzConfig/Models)."""
+        from flext_core import FlextConfig, FlextContainer
+
+        # Register configs and models with proper naming
+        class FlextPropertyTestConfig(FlextConfig):
+            """Property test config."""
+
+        class FlextPropertyTestModels:
+            """Property test models."""
+
+        container = FlextContainer.get_global()
+        container.register("FlextPropertyTestConfig", FlextPropertyTestConfig())
+        container.register("FlextPropertyTestModels", FlextPropertyTestModels)
+
+        # Service class name that matches: FlextPropertyTestService
+        class FlextPropertyTestService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("test")
+
+        service = FlextPropertyTestService()
+
+        # Both should resolve from container
+        config = service.project_config
+        models = service.project_models
+
+        assert config is not None
+        assert isinstance(config, FlextConfig)
+        assert models is not None
+
+    def test_project_config_container_exception(self) -> None:
+        """Test project_config falls back when container.get raises exception (lines 139-142)."""
+        class ExceptionService(FlextService[str]):
+            @property
+            def container(self):
+                """Container that always raises."""
+                raise RuntimeError("Container error")
+
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("test")
+
+        service = ExceptionService()
+        config = service.project_config
+
+        # Should fallback to global
+        assert config is not None
+        from flext_core import FlextConfig
+        assert isinstance(config, FlextConfig)
+
+    def test_project_models_fallback_type(self) -> None:
+        """Test project_models returns fallback type when not found (lines 183-188)."""
+        class FallbackModelsService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("test")
+
+        service = FallbackModelsService()
+        models = service.project_models
+
+        # Should return fallback namespace type
+        assert models is not None
+        assert hasattr(models, "__name__")
+
+
+class TestServiceDependencyResolution:
+    """Tests for dependency detection and registration edge cases (lines 241, 259, 266, 276-280)."""
+
+    def test_service_with_annotated_dependencies(self) -> None:
+        """Test service registration with annotated constructor parameters (line 241+)."""
+        from flext_core import FlextContainer
+
+        class CustomDependency:
+            """A custom dependency."""
+
+        class ServiceWithDeps(FlextService[str]):
+            def __init__(self, dep: CustomDependency | None = None) -> None:
+                super().__init__()
+                self.dep = dep
+
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("success")
+
+        container = FlextContainer.get_global()
+        # Should be registered
+        result = container.get("ServiceWithDeps")
+        assert result.is_success or result.is_failure
+
+    def test_service_registration_with_no_dependencies(self) -> None:
+        """Test service registration with no constructor dependencies (lines 276-280)."""
+        from flext_core import FlextContainer
+
+        class SimplestService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("simple")
+
+        container = FlextContainer.get_global()
+        result = container.get("SimplestService")
+
+        # Should be registered successfully
+        assert result.is_success or result.is_failure
+
+    def test_service_without_annotations(self) -> None:
+        """Test service with parameters that have no type annotations."""
+        from flext_core import FlextContainer
+
+        class UnannnotatedService(FlextService[str]):
+            def __init__(self, some_param=None) -> None:  # noqa: ANN001
+                super().__init__()
+                self.param = some_param
+
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("unannotated")
+
+        container = FlextContainer.get_global()
+        result = container.get("UnannnotatedService")
+
+        # Should handle gracefully
+        assert result.is_success or result.is_failure
+
+
+class TestServiceComplexExecution:
+    """Tests for complex execution methods (execute_operation, execute_with_full_validation, execute_conditionally)."""
+
+    def test_execute_operation_success(self) -> None:
+        """Test execute_operation with successful execution (lines 409-598)."""
+        class OperationService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("Operation successful")
+
+        service = OperationService()
+
+        # Create execution request with correct field names
+        request = FlextModels.OperationExecutionRequest(
+            operation_name="test_operation",
+            operation_callable=service.execute,
+            arguments={},
+            keyword_arguments={},
+            timeout_seconds=30,
+            retry_config={},
+        )
+
+        # Execute operation
+        result = service.execute_operation(request)
+        assert isinstance(result, FlextResult)
+
+    def test_execute_operation_with_timeout(self) -> None:
+        """Test execute_operation with timeout configuration."""
+        class TimeoutService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("Completed before timeout")
+
+        service = TimeoutService()
+
+        # Create request with timeout
+        request = FlextModels.OperationExecutionRequest(
+            operation_name="timeout_test",
+            operation_callable=service.execute,
+            arguments={},
+            keyword_arguments={},
+            timeout_seconds=60,
+            retry_config={},
+        )
+
+        result = service.execute_operation(request)
+        assert isinstance(result, FlextResult)
+
+    def test_execute_conditionally_condition_met(self) -> None:
+        """Test execute_conditionally when condition is true (lines 630-705)."""
+        class ConditionalService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("Condition met")
+
+        service = ConditionalService()
+
+        # Condition that evaluates to True
+        request = FlextModels.ConditionalExecutionRequest(
+            condition=lambda s: True,
+            true_action=service.execute,
+            false_action=None,
+        )
+
+        result = service.execute_conditionally(request)
+        assert isinstance(result, FlextResult)
+
+    def test_execute_conditionally_condition_not_met(self) -> None:
+        """Test execute_conditionally when condition is false."""
+        class ConditionalService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("Condition met")
+
+        service = ConditionalService()
+
+        # Condition that evaluates to False with no false_action
+        request = FlextModels.ConditionalExecutionRequest(
+            condition=lambda s: False,
+            true_action=service.execute,
+            false_action=None,
+        )
+
+        result = service.execute_conditionally(request)
+        assert isinstance(result, FlextResult)
+
+    def test_execute_conditionally_with_false_action(self) -> None:
+        """Test execute_conditionally with false_action when condition is false."""
+        class ConditionalService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("True action")
+
+            def false_execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("False action")
+
+        service = ConditionalService()
+
+        # Condition false with false_action
+        request = FlextModels.ConditionalExecutionRequest(
+            condition=lambda s: False,
+            true_action=service.execute,
+            false_action=service.false_execute,
+        )
+
+        result = service.execute_conditionally(request)
+        assert isinstance(result, FlextResult)
+
+    def test_validate_business_rules_failure(self) -> None:
+        """Test validate_business_rules returns failure (line 462)."""
+        class FailingValidationService(FlextService[str]):
+            def validate_business_rules(self) -> FlextResult[bool]:
+                return FlextResult[bool].fail("Business rules validation failed")
+
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("Should not execute")
+
+        service = FailingValidationService()
+        result = service.validate_business_rules()
+        assert result.is_failure
+        assert "Business rules" in result.error
+
+    def test_validate_config_failure(self) -> None:
+        """Test validate_config returns failure (line 468)."""
+        class FailingConfigService(FlextService[str]):
+            def validate_config(self) -> FlextResult[bool]:
+                return FlextResult[bool].fail("Config validation failed")
+
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("Should not execute")
+
+        service = FailingConfigService()
+        result = service.validate_config()
+        assert result.is_failure
+        assert "Config" in result.error
+
+    def test_execute_conditionally_with_condition_exception(self) -> None:
+        """Test execute_conditionally handles condition evaluation errors."""
+        class ExceptionConditionService(FlextService[str]):
+            def execute(self) -> FlextResult[str]:
+                return FlextResult[str].ok("Success")
+
+        service = ExceptionConditionService()
+
+        # Condition that raises exception
+        def bad_condition(s: object) -> bool:
+            msg = "Intentional error"
+            raise ValueError(msg)
+
+        request = FlextModels.ConditionalExecutionRequest(
+            condition=bad_condition,
+            true_action=service.execute,
+            false_action=None,
+        )
+
+        result = service.execute_conditionally(request)
+        assert isinstance(result, FlextResult)

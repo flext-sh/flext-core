@@ -192,6 +192,18 @@ class FlextProcessors(FlextMixins):
             )
             return FlextResult[None].fail(f"Processor '{name}' already registered")
 
+        # Phase 4 Enhancement: Validate processor protocol (from FlextMixins)
+        # Ensure processor is callable (satisfies basic processor interface)
+        if not callable(processor):
+            self._log_with_context(
+                "error",
+                "Processor registration failed: processor not callable",
+                processor_name=name,
+            )
+            return FlextResult[None].fail(
+                f"Processor '{name}' must be callable"
+            )
+
         self._registry[name] = processor
         # Update metrics using dict access
         metrics = cast("dict[str, int]", self._metrics)

@@ -18,8 +18,11 @@
         "Typing :: Typed",
     ]
     dependencies = [
+        "cachetools>=5.3.0",
         "dependency-injector>=4.41.0",
+        "limits>=3.6.0",
         "orjson (>=3.11.3)",
+        "pybreaker>=0.8.0",
         "pydantic-settings>=2.10.1",
         "pydantic (>=2.12.3)",
         "pyyaml>=6.0.2",

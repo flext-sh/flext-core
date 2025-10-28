@@ -31,6 +31,10 @@ from contextlib import suppress
 from dataclasses import asdict, dataclass, is_dataclass
 from datetime import UTC, datetime
 from typing import (
+    TYPE_CHECKING,
+    Generic,
+    Self,
+    TypeVar,
     cast,
     get_origin,
     get_type_hints,
@@ -45,8 +49,185 @@ from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
+if TYPE_CHECKING:
+    from flext_core.loggings import FlextLogger
+
 # Module logger for exception tracking
 _logger = logging.getLogger(__name__)
+
+# TypeVar for FlextValidationPipeline
+T_Pipeline = TypeVar("T_Pipeline")
+"""Type variable for validation pipeline input/output."""
+
+
+# =========================================================================
+# VALIDATION PIPELINE - Composable validators with railway pattern
+# =========================================================================
+
+
+class FlextValidationPipeline(Generic[T_Pipeline]):
+    """Composable validation pipeline with railway-oriented error handling.
+
+    Enables elegant composition of validation rules using fluent interface:
+    - Chaining multiple validators with automatic error propagation
+    - Short-circuit on first failure (no further validators run)
+    - Optional error aggregation mode (collect all errors)
+    - Reusable pipeline instances
+
+    **Features**:
+    - Fluent interface: `pipeline.add_validator(...).add_validator(...)`
+    - Railway pattern: Automatic short-circuiting on first failure
+    - Type-safe: Generic over input type T
+    - Reusable: Create once, execute many times
+    - Error aggregation: Optional mode to collect all validation errors
+
+    Usage:
+        >>> from flext_core import FlextValidationPipeline, FlextResult
+
+        >>> # Create validation pipeline
+        >>> pipeline = (
+        ...     FlextValidationPipeline()
+        ...     .add_validator(validate_schema)
+        ...     .add_validator(validate_dns)
+        ...     .add_validator(validate_attributes)
+        ... )
+
+        >>> # Execute validation - short-circuits on first failure
+        >>> result = pipeline.validate(data)
+        >>> if result.is_success:
+        ...     print("All validations passed!")
+        ... else:
+        ...     print(f"Validation failed: {result.error}")
+
+        >>> # Reuse pipeline multiple times
+        >>> result1 = pipeline.validate(data1)
+        >>> result2 = pipeline.validate(data2)
+    """
+
+    def __init__(self, aggregate_errors: bool = False) -> None:
+        """Initialize validation pipeline.
+
+        Args:
+            aggregate_errors: If True, collect all validation errors instead
+                            of short-circuiting on first failure. Default: False
+
+        """
+        self._validators: list[Callable[[T_Pipeline], FlextResult[T_Pipeline]]] = []
+        self._aggregate_errors = aggregate_errors
+
+    def add_validator(
+        self, validator: Callable[[T_Pipeline], FlextResult[T_Pipeline]]
+    ) -> Self:
+        """Add validator to pipeline.
+
+        Args:
+            validator: Callable that takes input T and returns FlextResult[T].
+                     Must follow railway pattern (return FlextResult).
+
+        Returns:
+            Self: Returns self for fluent chaining
+
+        """
+        self._validators.append(validator)
+        return self
+
+    def validate(self, data: T_Pipeline) -> FlextResult[T_Pipeline]:
+        """Execute validation pipeline on data.
+
+        Runs all validators in order, with behavior determined by aggregate_errors:
+        - aggregate_errors=False: Short-circuit on first failure
+        - aggregate_errors=True: Run all validators, collect errors
+
+        Args:
+            data: Input data to validate
+
+        Returns:
+            FlextResult[T]: Success with original data or failure with error(s)
+
+        """
+        if not self._validators:
+            # No validators - pass through
+            return FlextResult[T_Pipeline].ok(data)
+
+        if self._aggregate_errors:
+            return self._validate_with_aggregation(data)
+        return self._validate_with_short_circuit(data)
+
+    def _validate_with_short_circuit(self, data: T_Pipeline) -> FlextResult[T_Pipeline]:
+        """Execute validation with short-circuit on first failure.
+
+        Args:
+            data: Input data to validate
+
+        Returns:
+            FlextResult[T]: Success or failure on first error
+
+        """
+        result: FlextResult[T_Pipeline] = FlextResult.ok(data)
+
+        for validator in self._validators:
+            result = result.flat_map(validator)
+            if result.is_failure:
+                return result  # Short-circuit - stop further validation
+
+        return result
+
+    def _validate_with_aggregation(self, data: T_Pipeline) -> FlextResult[T_Pipeline]:
+        """Execute validation and aggregate all errors.
+
+        Args:
+            data: Input data to validate
+
+        Returns:
+            FlextResult[T]: Success if all validators pass, or failure with
+                          aggregated error messages joined by '; '
+
+        """
+        errors: list[str] = []
+        current_data = data
+
+        for validator in self._validators:
+            result = validator(current_data)
+            if result.is_failure:
+                error_msg = str(result.error)
+                errors.append(error_msg)
+            else:
+                # Continue with validated data
+                current_data = result.unwrap()
+
+        if errors:
+            # Join all errors with semicolon separator
+            aggregated_error = "; ".join(errors)
+            return FlextResult[T_Pipeline].fail(aggregated_error)
+        return FlextResult[T_Pipeline].ok(current_data)
+
+    def clear(self) -> Self:
+        """Clear all validators from pipeline.
+
+        Returns:
+            Self: Returns self for fluent chaining
+
+        """
+        self._validators.clear()
+        return self
+
+    def count(self) -> int:
+        """Get number of validators in pipeline.
+
+        Returns:
+            int: Number of validators added
+
+        """
+        return len(self._validators)
+
+    def is_empty(self) -> bool:
+        """Check if pipeline has no validators.
+
+        Returns:
+            bool: True if no validators added
+
+        """
+        return len(self._validators) == 0
 
 
 # =========================================================================
@@ -620,6 +801,275 @@ class FlextUtilities:
 
             """
             setattr(obj, field_name, True)
+
+        @staticmethod
+        def validate_required_string(
+            value: str | None,
+            context: str = "Field",
+        ) -> FlextResult[str]:
+            """Validate that a string is not None, empty, or whitespace-only.
+
+            This is the most commonly repeated validation pattern across flext-ldap,
+            flext-ldif, flext-meltano, and other projects. Consolidation eliminates
+            300+ LOC of duplication.
+
+            Args:
+                value: The string to validate (may be None or contain whitespace)
+                context: Context for error message (e.g., "Password", "DN", "Username")
+
+            Returns:
+                FlextResult[str]: Success with stripped value, or failure with error
+
+            """
+            if value is None or not value.strip():
+                return FlextResult[str].fail(f"{context} cannot be empty")
+            return FlextResult[str].ok(value.strip())
+
+        @staticmethod
+        def validate_choice(
+            value: str,
+            valid_choices: set[str],
+            context: str = "Value",
+            *,
+            case_sensitive: bool = False,
+        ) -> FlextResult[str]:
+            """Validate value is in set of valid choices (enum validation).
+
+            Common pattern in flext-ldap (scope, operation), flext-meltano (plugin type),
+            and other projects. Consolidation provides consistent error messages.
+
+            Args:
+                value: The value to validate against choices
+                valid_choices: Set of valid string choices
+                context: Context for error message (e.g., "LDAP scope", "Operation")
+                case_sensitive: Whether to perform case-sensitive comparison
+
+            Returns:
+                FlextResult[str]: Success with value (original case), or failure
+
+            """
+            # Prepare values for comparison
+            check_value = value if case_sensitive else value.lower()
+            check_choices = (
+                valid_choices if case_sensitive else {c.lower() for c in valid_choices}
+            )
+
+            # Validate
+            if check_value not in check_choices:
+                choices_str = ", ".join(sorted(valid_choices))
+                return FlextResult[str].fail(
+                    f"Invalid {context}: {value}. Must be one of {choices_str}"
+                )
+
+            return FlextResult[str].ok(value)
+
+        @staticmethod
+        def validate_length(
+            value: str,
+            min_length: int | None = None,
+            max_length: int | None = None,
+            context: str = "Value",
+        ) -> FlextResult[str]:
+            """Validate string length within bounds.
+
+            This pattern is repeated 6+ times across flext-ldap (passwords, DN, etc),
+            flext-ldif, flext-meltano, flext-target-ldif, and algar-oud-mig.
+            Consolidation ensures consistent boundary checking.
+
+            Args:
+                value: The string to validate
+                min_length: Minimum allowed length (inclusive), or None for no minimum
+                max_length: Maximum allowed length (inclusive), or None for no maximum
+                context: Context for error message (e.g., "Password", "DN component")
+
+            Returns:
+                FlextResult[str]: Success with value, or failure with clear bounds
+
+            """
+            if min_length is not None and len(value) < min_length:
+                return FlextResult[str].fail(
+                    f"{context} must be at least {min_length} characters"
+                )
+            if max_length is not None and len(value) > max_length:
+                return FlextResult[str].fail(
+                    f"{context} must be no more than {max_length} characters"
+                )
+            return FlextResult[str].ok(value)
+
+        @staticmethod
+        def validate_pattern(
+            value: str,
+            pattern: str,
+            context: str = "Value",
+        ) -> FlextResult[str]:
+            r"""Validate value matches regex pattern.
+
+            This pattern is repeated 5+ times across flext-ldap (DN, filter, attribute),
+            flext-ldif (RFC compliance), flext-target-ldif, and others.
+            Consolidation centralizes pattern definitions.
+
+            Args:
+                value: The string to validate
+                pattern: Regex pattern (as string, will be compiled internally)
+                context: Context for error message (e.g., "DN", "Attribute name")
+
+            Returns:
+                FlextResult[str]: Success with value, or failure with pattern context
+
+            """
+            if not re.match(pattern, value):
+                return FlextResult[str].fail(f"{context} format is invalid: {value}")
+            return FlextResult[str].ok(value)
+
+        @staticmethod
+        def validate_uri(
+            uri: str | None,
+            allowed_schemes: list[str] | None = None,
+            context: str = "URI",
+        ) -> FlextResult[str]:
+            """Validate URI format and optionally check scheme.
+
+            Common in flext-ldap (server_uri validation), flext-meltano, and other
+            projects that need to validate connection strings.
+
+            Args:
+                uri: The URI string to validate (may be None)
+                allowed_schemes: List of allowed URI schemes (e.g., ["ldap", "ldaps"])
+                               If None, any scheme is allowed
+                context: Context for error message (e.g., "LDAP server URI")
+
+            Returns:
+                FlextResult[str]: Success with stripped URI, or failure
+
+            """
+            # Validate non-empty
+            if not uri or not uri.strip():
+                return FlextResult[str].fail(f"{context} cannot be empty")
+
+            uri_stripped = uri.strip()
+
+            # Validate scheme if specified
+            if allowed_schemes and not any(
+                uri_stripped.startswith(f"{scheme}://") for scheme in allowed_schemes
+            ):
+                schemes_str = ", ".join(allowed_schemes)
+                return FlextResult[str].fail(
+                    f"{context} must start with one of {schemes_str}"
+                )
+
+            return FlextResult[str].ok(uri_stripped)
+
+        @staticmethod
+        def validate_port_number(
+            port: int | None,
+            context: str = "Port",
+        ) -> FlextResult[int]:
+            """Validate port number is in valid range (1-65535).
+
+            Common pattern in flext-ldap, flext-meltano, and other projects that
+            manage server connections.
+
+            Args:
+                port: The port number to validate (may be None)
+                context: Context for error message (e.g., "LDAP port")
+
+            Returns:
+                FlextResult[int]: Success with port number, or failure
+
+            """
+            if port is None:
+                return FlextResult[int].fail(f"{context} cannot be None")
+
+            if not (1 <= port <= 65535):
+                return FlextResult[int].fail(
+                    f"{context} must be between 1 and 65535, got {port}"
+                )
+
+            return FlextResult[int].ok(port)
+
+        @staticmethod
+        def validate_non_negative(
+            value: int | None,
+            context: str = "Value",
+        ) -> FlextResult[int]:
+            """Validate integer is non-negative (>= 0).
+
+            Common pattern for timeout_seconds, retry_count, size_limit, and other
+            configuration values that must be non-negative.
+
+            Args:
+                value: The integer to validate (may be None)
+                context: Context for error message (e.g., "Timeout seconds")
+
+            Returns:
+                FlextResult[int]: Success with value, or failure
+
+            """
+            if value is None:
+                return FlextResult[int].fail(f"{context} cannot be None")
+
+            if value < 0:
+                return FlextResult[int].fail(
+                    f"{context} must be non-negative, got {value}"
+                )
+
+            return FlextResult[int].ok(value)
+
+        @staticmethod
+        def validate_positive(
+            value: int | None,
+            context: str = "Value",
+        ) -> FlextResult[int]:
+            """Validate integer is positive (> 0).
+
+            Useful for retry_count, max_retries, and other values requiring at least 1.
+
+            Args:
+                value: The integer to validate (may be None)
+                context: Context for error message (e.g., "Max retries")
+
+            Returns:
+                FlextResult[int]: Success with value, or failure
+
+            """
+            if value is None:
+                return FlextResult[int].fail(f"{context} cannot be None")
+
+            if value <= 0:
+                return FlextResult[int].fail(f"{context} must be positive, got {value}")
+
+            return FlextResult[int].ok(value)
+
+        @staticmethod
+        def validate_range(
+            value: int,
+            min_value: int | None = None,
+            max_value: int | None = None,
+            context: str = "Value",
+        ) -> FlextResult[int]:
+            """Validate integer is within specified range.
+
+            General-purpose range validation for any integer field.
+
+            Args:
+                value: The integer to validate
+                min_value: Minimum allowed value (inclusive), or None for no minimum
+                max_value: Maximum allowed value (inclusive), or None for no maximum
+                context: Context for error message
+
+            Returns:
+                FlextResult[int]: Success with value, or failure
+
+            """
+            if min_value is not None and value < min_value:
+                return FlextResult[int].fail(
+                    f"{context} must be at least {min_value}, got {value}"
+                )
+            if max_value is not None and value > max_value:
+                return FlextResult[int].fail(
+                    f"{context} must be at most {max_value}, got {value}"
+                )
+            return FlextResult[int].ok(value)
 
     class TypeGuards:
         """Type guard utilities for runtime type checking."""
@@ -1235,6 +1685,188 @@ class FlextUtilities:
             except TypeError:
                 return True
 
+    class Metrics:
+        """Metrics logging utilities for CQRS handlers (merged from metrics.py).
+
+        Provides structured logging methods for handler lifecycle events and metrics
+        collection. Previously a standalone FlextMetrics class, now integrated into
+        FlextUtilities for better organization.
+
+        All methods are static and require a FlextLogger instance to be passed,
+        allowing flexible integration with different logging configurations.
+        """
+
+        @staticmethod
+        def log_handler_start(
+            logger: FlextLogger | None,
+            handler_mode: str,
+            message_type: str,
+            message_id: str,
+        ) -> None:
+            """Log handler start event with structured logging.
+
+            Args:
+                logger: FlextLogger instance, or None to skip logging
+                handler_mode: Handler mode (e.g., "command", "query")
+                message_type: Type of message being processed
+                message_id: Unique identifier for the message
+
+            """
+            if logger is not None:
+                logger.info(
+                    "starting_handler_pipeline",
+                    handler_mode=handler_mode,
+                    message_type=message_type,
+                    message_id=message_id,
+                )
+
+        @staticmethod
+        def log_handler_processing(
+            logger: FlextLogger | None,
+            handler_mode: str,
+            message_type: str,
+            message_id: str,
+        ) -> None:
+            """Log handler processing event with structured logging.
+
+            Args:
+                logger: FlextLogger instance, or None to skip logging
+                handler_mode: Handler mode (e.g., "command", "query")
+                message_type: Type of message being processed
+                message_id: Unique identifier for the message
+
+            """
+            if logger is not None:
+                logger.debug(
+                    "processing_message",
+                    handler_mode=handler_mode,
+                    message_type=message_type,
+                    message_id=message_id,
+                )
+
+        @staticmethod
+        def log_handler_completion(
+            logger: FlextLogger | None,
+            handler_mode: str,
+            message_type: str,
+            message_id: str,
+            execution_time_ms: float,
+            *,
+            success: bool,
+        ) -> None:
+            """Log handler completion event with structured logging.
+
+            Args:
+                logger: FlextLogger instance, or None to skip logging
+                handler_mode: Handler mode (e.g., "command", "query")
+                message_type: Type of message being processed
+                message_id: Unique identifier for the message
+                execution_time_ms: Execution time in milliseconds
+                success: Whether the handler succeeded
+
+            """
+            # Always use info() for both success and failure
+            if logger is not None:
+                logger.info(
+                    "handler_pipeline_completed",
+                    handler_mode=handler_mode,
+                    message_type=message_type,
+                    message_id=message_id,
+                    execution_time_ms=execution_time_ms,
+                    success=success,
+                )
+
+        @staticmethod
+        def log_handler_error(
+            logger: FlextLogger | None,
+            handler_mode: str,
+            message_type: str,
+            message_id: str,
+            execution_time_ms: float | None = None,
+            exception_type: str | None = None,
+            error_code: str | None = None,
+            correlation_id: str | None = None,
+        ) -> None:
+            """Log handler error event with structured logging.
+
+            Args:
+                logger: FlextLogger instance, or None to skip logging
+                handler_mode: Handler mode (e.g., "command", "query")
+                message_type: Type of message being processed
+                message_id: Unique identifier for the message
+                execution_time_ms: Execution time in milliseconds (optional)
+                exception_type: Type of exception that occurred (optional)
+                error_code: Error code from failed result (optional)
+                correlation_id: Correlation ID for tracing (optional)
+
+            """
+            if logger is not None:
+                kwargs: dict[str, object] = {
+                    "handler_mode": handler_mode,
+                    "message_type": message_type,
+                    "message_id": message_id,
+                }
+                if execution_time_ms is not None:
+                    kwargs["execution_time_ms"] = execution_time_ms
+                if exception_type is not None:
+                    kwargs["exception_type"] = exception_type
+                if error_code is not None:
+                    kwargs["error_code"] = error_code
+                if correlation_id is not None:
+                    kwargs["correlation_id"] = correlation_id
+
+                logger.error("handler_critical_failure", **kwargs)
+
+        @staticmethod
+        def log_mode_validation_error(
+            logger: FlextLogger | None,
+            error_message: str,
+            expected_mode: str | None = None,
+            actual_mode: str | None = None,
+        ) -> None:
+            """Log mode validation error with structured logging.
+
+            Args:
+                logger: FlextLogger instance, or None to skip logging
+                error_message: Description of the validation error
+                expected_mode: Expected handler mode (optional)
+                actual_mode: Actual handler mode provided (optional)
+
+            """
+            if logger is not None:
+                kwargs = {"error_message": error_message}
+                if expected_mode is not None:
+                    kwargs["expected_mode"] = expected_mode
+                if actual_mode is not None:
+                    kwargs["actual_mode"] = actual_mode
+
+                logger.error("invalid_handler_mode", **kwargs)
+
+        @staticmethod
+        def log_handler_cannot_handle(
+            logger: FlextLogger | None,
+            error_message: str,
+            handler_name: str | None = None,
+            message_type: str | None = None,
+        ) -> None:
+            """Log handler cannot handle message type with structured logging.
+
+            Args:
+                logger: FlextLogger instance, or None to skip logging
+                error_message: Description of the error
+                handler_name: Name of the handler (optional)
+                message_type: Type of message the handler cannot handle (optional)
+
+            """
+            if logger is not None:
+                kwargs = {"error_message": error_message}
+                if handler_name is not None:
+                    kwargs["handler_name"] = handler_name
+                if message_type is not None:
+                    kwargs["message_type"] = message_type
+
+                logger.error("handler_cannot_handle", **kwargs)
+
     class Configuration:
         """Configuration parameter access and manipulation utilities."""
 
@@ -1560,6 +2192,17 @@ class FlextUtilities:
             )
 
 
+# Module-level aliases for backward compatibility
+# FlextValidations is now integrated into FlextUtilities.Validation
+FlextValidations = FlextUtilities.Validation
+
+# FlextMetrics is now integrated into FlextUtilities.Metrics
+FlextMetrics = FlextUtilities.Metrics
+
+
 __all__ = [
+    "FlextMetrics",
     "FlextUtilities",
+    "FlextValidationPipeline",
+    "FlextValidations",
 ]

@@ -28,9 +28,6 @@ from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FactoryT, FlextTypes, T
 
-# Type variable for factory method is imported from typings (FactoryT)
-# All semantic type aliases now in FlextTypes - access via FlextTypes.ContainerServiceType, etc.
-
 
 class FlextContainer(FlextProtocols.Configurable):
     """Type-safe dependency injection container for service management.

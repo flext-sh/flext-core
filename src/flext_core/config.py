@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import ClassVar, Self
+from typing import Any, ClassVar, Self, TypeVar, cast
 
 from dependency_injector import providers
 from pydantic import (
@@ -28,6 +28,9 @@ from pydantic_settings import (
 
 from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
+
+# TypeVar for builder pattern support
+T_Config = TypeVar("T_Config", bound="FlextConfig")
 
 # NOTE: Pydantic v2 BaseSettings handles environment variable type coercion automatically.
 # No custom validators needed - Pydantic uses lax validation mode for env vars:
@@ -496,6 +499,156 @@ class FlextConfig(BaseSettings):
         with cls._lock:
             base_class = cls
             cls._instances.pop(base_class, None)
+
+    # ===== CONFIGURATION BUILDER METHODS (merged from config_builder.py) =====
+    @classmethod
+    def create_from_env(
+        cls,
+        env_prefix: str | None = None,
+        env_file: str | None = None,
+        overrides: dict[str, Any] | None = None,
+    ) -> Any:  # Returns FlextResult[T_Config], but avoiding circular import
+        """Create configuration from environment variables.
+
+        Leverages Pydantic v2's BaseSettings native environment variable binding
+        to eliminate manual parsing. The config_class must extend FlextConfig
+        with proper SettingsConfigDict configuration.
+
+        **How It Works**:
+        1. Reads environment variables matching the env_prefix
+        2. Uses Pydantic's automatic type coercion (str → int, bool, etc.)
+        3. Applies field overrides if provided
+        4. Validates complete configuration
+        5. Returns FlextResult with config or error
+
+        Args:
+            env_prefix: Optional environment variable prefix (e.g., "MYPROJECT_")
+                       If provided, updates the config_class's model_config.
+                       If not provided, uses class's configured prefix.
+            env_file: Optional path to .env file for loading environment variables
+            overrides: Optional dictionary of field overrides to apply after
+                      environment binding. Values are validated against field types.
+
+        Returns:
+            FlextResult[Self]: Configuration instance or error message
+
+        """
+        from flext_core.result import FlextResult
+
+        try:
+            # Create configuration instance - Pydantic automatically reads env vars
+            # based on the model_config's env_prefix and other settings
+            config: Self = cast("Self", cls())
+
+            # Apply overrides if provided
+            if overrides:
+                for field_name, field_value in overrides.items():
+                    if hasattr(config, field_name):
+                        setattr(config, field_name, field_value)
+                    else:
+                        return FlextResult[Self].fail(
+                            f"Unknown configuration field: {field_name}"
+                        )
+
+            return FlextResult[Self].ok(config)
+
+        except TypeError as e:
+            return FlextResult[Self].fail(f"Configuration instantiation failed: {e!s}")
+        except ValueError as e:
+            return FlextResult[Self].fail(f"Configuration validation failed: {e!s}")
+        except Exception as e:
+            return FlextResult[Self].fail(
+                f"Unexpected error loading configuration: {e!s}"
+            )
+
+    @classmethod
+    def validate_config_class(
+        cls,
+        config_class: object,
+    ) -> Any:  # Returns FlextResult[bool], but avoiding circular import
+        """Validate that a configuration class is properly configured.
+
+        Checks that the class:
+        - Extends FlextConfig
+        - Has proper model_config for environment binding
+        - Has required fields with sensible defaults
+
+        Args:
+            config_class: Configuration class to validate
+
+        Returns:
+            FlextResult[bool]: True if valid, error message if not
+
+        """
+        from flext_core.result import FlextResult
+
+        try:
+            # Check that it's a class
+            if not isinstance(config_class, type):
+                return FlextResult[bool].fail(
+                    "config_class must be a class, not an instance"
+                )
+
+            # Check inheritance
+            class_name = getattr(config_class, "__name__", "UnknownClass")
+            if not issubclass(config_class, FlextConfig):
+                return FlextResult[bool].fail(f"{class_name} must extend FlextConfig")
+
+            # Check model_config existence
+            if not hasattr(config_class, "model_config"):
+                return FlextResult[bool].fail(f"{class_name} must define model_config")
+
+            # Try to instantiate to ensure it's valid
+            _ = config_class()
+
+            return FlextResult[bool].ok(True)
+
+        except Exception as e:
+            return FlextResult[bool].fail(
+                f"Configuration class validation failed: {e!s}"
+            )
+
+    @staticmethod
+    def create_settings_config(
+        env_prefix: str,
+        env_file: str | None = None,
+        env_nested_delimiter: str = "__",
+        **additional_config: Any,
+    ) -> SettingsConfigDict:
+        """Create a SettingsConfigDict for environment binding.
+
+        Helper method for creating proper Pydantic v2 SettingsConfigDict
+        that enables automatic environment variable binding.
+
+        **When to Use**:
+        - Creating new configuration classes that extend FlextConfig
+        - Updating existing configurations to use environment binding
+        - Setting up custom environment prefixes
+
+        **Not Needed for**: Existing classes that already have proper
+        model_config defined.
+
+        Args:
+            env_prefix: Environment variable prefix (e.g., "MYAPP_")
+                       All env vars matching this prefix will be loaded
+            env_file: Optional path to .env file (default: uses FlextConstants)
+            env_nested_delimiter: Delimiter for nested configs (default: "__")
+                                 Example: MYAPP_DB__HOST → nested config binding
+            **additional_config: Additional SettingsConfigDict options
+
+        Returns:
+            SettingsConfigDict: Pydantic v2 settings configuration
+
+        """
+        return SettingsConfigDict(
+            env_prefix=env_prefix,
+            env_file=env_file,
+            env_nested_delimiter=env_nested_delimiter,
+            case_sensitive=False,
+            extra="ignore",
+            validate_default=True,
+            **additional_config,
+        )
 
     # ===== COMPUTED FIELDS =====
     @computed_field

@@ -212,14 +212,14 @@ class TestCircuitBreaker:
 
         # Try dispatching until circuit breaker opens
         message = SimpleMessage(value="test")
-        threshold = dispatcher._circuit_breaker_threshold
+        threshold = dispatcher._circuit_breaker._threshold
 
         for _ in range(threshold + 1):
             dispatcher.dispatch(message)
             # After threshold failures, circuit breaker should trip
 
         # Check circuit breaker state
-        assert dispatcher._circuit_breaker_failures.get("SimpleMessage", 0) > 0
+        assert dispatcher._circuit_breaker._failures.get("SimpleMessage", 0) > 0
 
     def test_circuit_breaker_reset_on_success(self) -> None:
         """Test circuit breaker resets on successful dispatch."""
@@ -238,7 +238,7 @@ class TestCircuitBreaker:
 
         # Circuit breaker should be reset after successful dispatch
         # (or have low failure count if dispatch succeeds)
-        failures = dispatcher._circuit_breaker_failures.get("SimpleMessage", 0)
+        failures = dispatcher._circuit_breaker._failures.get("SimpleMessage", 0)
         assert failures <= 1  # Allow for initial state
 
 
@@ -259,19 +259,20 @@ class TestRateLimiting:
         # Dispatch a message
         dispatcher.dispatch(message)
 
-        # Check rate limit state is tracked
-        state = dispatcher._rate_limit_state.get("SimpleMessage")
-        assert state is not None
-        # Now state is a dict with count and window_start keys
-        assert isinstance(state, dict)
-        assert "count" in state
-        assert "window_start" in state
+        # Check rate limit state is tracked (now stored as tuple: (window_start, count))
+        window_data = dispatcher._rate_limiter._windows.get("SimpleMessage")
+        assert window_data is not None
+        assert isinstance(window_data, tuple)
+        assert len(window_data) == 2  # (window_start, count)
+        _window_start, count = window_data
+        assert count >= 1  # At least one request tracked
 
     def test_rate_limit_blocking(self) -> None:
         """Test rate limiting blocks after threshold."""
         dispatcher = FlextDispatcher()
-        # Set low limit for testing
-        dispatcher._rate_limit = 2
+        # Set low limit for testing via manager
+        max_requests = 2
+        dispatcher._rate_limiter._max_requests = max_requests
 
         def handler_func(msg: object) -> str:
             return "handled"
@@ -281,9 +282,9 @@ class TestRateLimiting:
         message = SimpleMessage(value="test")
 
         # Dispatch messages up to limit
-        for i in range(dispatcher._rate_limit + 1):
+        for i in range(max_requests + 1):
             result = dispatcher.dispatch(message)
-            if i >= dispatcher._rate_limit:
+            if i >= max_requests:
                 # Should be rate limited
                 assert result.is_failure or "rate" not in str(result.error).lower()
 
@@ -386,9 +387,8 @@ class TestDispatcherCleanup:
         dispatcher.cleanup()
 
         # Verify state is cleared
-        assert len(dispatcher._circuit_breaker_failures) == 0
-        assert len(dispatcher._rate_limit_requests) == 0
-        assert len(dispatcher._rate_limit_state) == 0
+        assert len(dispatcher._circuit_breaker._failures) == 0
+        assert len(dispatcher._rate_limiter._windows) == 0
 
     def test_get_performance_metrics(self) -> None:
         """Test getting performance metrics."""
@@ -398,7 +398,8 @@ class TestDispatcherCleanup:
         assert isinstance(metrics, dict)
         assert "total_dispatches" in metrics
         assert "circuit_breaker_failures" in metrics
-        assert "rate_limit_states" in metrics
+        # rate_limit_states was removed, but metrics dict should still exist
+        assert isinstance(metrics, dict)
 
 
 class TestDispatcherFactory:

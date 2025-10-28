@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import time
-from collections.abc import Generator, Mapping, Sequence
+from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from typing import cast, override
 
@@ -77,6 +77,393 @@ class FlextDispatcher(FlextMixins):
         >>> assert callable(dispatcher.dispatch)
     """
 
+    class CircuitBreakerManager:
+        """Manages circuit breaker state machine per message type.
+
+        Handles state transitions (CLOSED → OPEN → HALF_OPEN → CLOSED) with
+        configurable thresholds and recovery timeouts.
+        """
+
+        def __init__(
+            self,
+            threshold: int,
+            recovery_timeout: float,
+            success_threshold: int,
+        ) -> None:
+            """Initialize circuit breaker manager.
+
+            Args:
+                threshold: Failure count before opening circuit
+                recovery_timeout: Seconds before attempting recovery
+                success_threshold: Successes needed to close from half-open
+
+            """
+            self._failures: dict[str, int] = {}
+            self._states: dict[str, str] = {}
+            self._opened_at: dict[str, float] = {}
+            self._success_counts: dict[str, int] = {}
+            self._threshold = threshold
+            self._recovery_timeout = recovery_timeout
+            self._success_threshold = success_threshold
+
+        def get_state(self, message_type: str) -> str:
+            """Get current state for message type."""
+            return self._states.get(
+                message_type, FlextConstants.Reliability.CircuitBreakerState.CLOSED
+            )
+
+        def set_state(self, message_type: str, state: str) -> None:
+            """Set state for message type."""
+            self._states[message_type] = state
+
+        def is_open(self, message_type: str) -> bool:
+            """Check if circuit breaker is open for message type."""
+            return (
+                self.get_state(message_type)
+                == FlextConstants.Reliability.CircuitBreakerState.OPEN
+            )
+
+        def record_success(self, message_type: str) -> None:
+            """Record successful operation and update state."""
+            current_state = self.get_state(message_type)
+
+            if (
+                current_state
+                == FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN
+            ):
+                success_count = self._success_counts.get(message_type, 0) + 1
+                self._success_counts[message_type] = success_count
+
+                if success_count >= self._success_threshold:
+                    self.transition_to_closed(message_type)
+
+            elif current_state == FlextConstants.Reliability.CircuitBreakerState.CLOSED:
+                self._failures[message_type] = 0
+
+        def record_failure(self, message_type: str) -> None:
+            """Record failed operation and update state."""
+            current_state = self.get_state(message_type)
+            current_failures = self._failures.get(message_type, 0) + 1
+            self._failures[message_type] = current_failures
+
+            if (
+                current_state
+                == FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN
+                or (
+                    current_state
+                    == FlextConstants.Reliability.CircuitBreakerState.CLOSED
+                    and current_failures >= self._threshold
+                )
+            ):
+                self.transition_to_open(message_type)
+
+        def transition_to_state(self, message_type: str, new_state: str) -> None:
+            """Transition to specified state."""
+            self.set_state(message_type, new_state)
+            if new_state == FlextConstants.Reliability.CircuitBreakerState.CLOSED:
+                self._failures[message_type] = 0
+                self._success_counts[message_type] = 0
+                if message_type in self._opened_at:
+                    del self._opened_at[message_type]
+            elif new_state == FlextConstants.Reliability.CircuitBreakerState.OPEN:
+                self._opened_at[message_type] = time.time()
+                self._success_counts[message_type] = 0
+            elif new_state == FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN:
+                self._success_counts[message_type] = 0
+
+        def transition_to_closed(self, message_type: str) -> None:
+            """Transition to CLOSED state."""
+            self.transition_to_state(
+                message_type, FlextConstants.Reliability.CircuitBreakerState.CLOSED
+            )
+
+        def transition_to_open(self, message_type: str) -> None:
+            """Transition to OPEN state."""
+            self.transition_to_state(
+                message_type, FlextConstants.Reliability.CircuitBreakerState.OPEN
+            )
+
+        def transition_to_half_open(self, message_type: str) -> None:
+            """Transition to HALF_OPEN state."""
+            self.transition_to_state(
+                message_type, FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN
+            )
+
+        def attempt_reset(self, message_type: str) -> None:
+            """Attempt recovery if circuit is open."""
+            if self.is_open(message_type):
+                opened_at = self._opened_at.get(message_type, 0.0)
+                if (time.time() - opened_at) >= self._recovery_timeout:
+                    self.transition_to_half_open(message_type)
+
+        def check_before_dispatch(self, message_type: str) -> FlextResult[None]:
+            """Check if dispatch is allowed."""
+            self.attempt_reset(message_type)
+
+            if self.is_open(message_type):
+                failures = self._failures.get(message_type, 0)
+                return FlextResult[None].fail(
+                    f"Circuit breaker is open for message type '{message_type}'",
+                    error_code=FlextConstants.Errors.OPERATION_ERROR,
+                    error_data={
+                        "message_type": message_type,
+                        "failure_count": failures,
+                        "threshold": self._threshold,
+                        "state": self.get_state(message_type),
+                        "opened_at": self._opened_at.get(message_type, 0.0),
+                        "reason": "circuit_breaker_open",
+                    },
+                )
+
+            return FlextResult[None].ok(None)
+
+        def get_failure_count(self, message_type: str) -> int:
+            """Get current failure count."""
+            return self._failures.get(message_type, 0)
+
+        def cleanup(self) -> None:
+            """Clear all state."""
+            self._failures.clear()
+            self._states.clear()
+            self._opened_at.clear()
+            self._success_counts.clear()
+
+        def get_metrics(self) -> dict[str, object]:
+            """Get circuit breaker metrics."""
+            return {
+                "failures": len(self._failures),
+                "states": len(self._states),
+                "open_count": sum(
+                    1
+                    for state in self._states.values()
+                    if state == FlextConstants.Reliability.CircuitBreakerState.OPEN
+                ),
+            }
+
+    class TimeoutEnforcer:
+        """Manages timeout enforcement and thread pool execution."""
+
+        def __init__(
+            self,
+            *,
+            use_timeout_executor: bool,
+            executor_workers: int,
+        ) -> None:
+            """Initialize timeout enforcer.
+
+            Args:
+                use_timeout_executor: Whether to use timeout executor
+                executor_workers: Number of executor worker threads
+
+            """
+            self._use_timeout_executor = use_timeout_executor
+            self._executor_workers = max(executor_workers, 1)
+            self._executor: concurrent.futures.ThreadPoolExecutor | None = None
+
+        def should_use_executor(self) -> bool:
+            """Check if timeout executor should be used.
+
+            Returns:
+                True if executor is enabled
+
+            """
+            return self._use_timeout_executor
+
+        def reset_executor(self) -> None:
+            """Reset executor (after shutdown)."""
+            self._executor = None
+
+        def resolve_workers(self) -> int:
+            """Get the configured worker count.
+
+            Returns:
+                Maximum number of workers for executor
+
+            """
+            return self._executor_workers
+
+        def ensure_executor(self) -> concurrent.futures.ThreadPoolExecutor:
+            """Create the shared executor on demand (lazy initialization).
+
+            Returns:
+                ThreadPoolExecutor instance
+
+            """
+            if self._executor is None:
+                self._executor = concurrent.futures.ThreadPoolExecutor(
+                    max_workers=self._executor_workers,
+                    thread_name_prefix="flext-dispatcher",
+                )
+            return self._executor
+
+        def get_executor_status(self) -> dict[str, object]:
+            """Get executor status information.
+
+            Returns:
+                Dict with executor status and worker count
+
+            """
+            return {
+                "executor_active": self._executor is not None,
+                "executor_workers": self._executor_workers if self._executor else 0,
+            }
+
+        def cleanup(self) -> None:
+            """Cleanup executor resources."""
+            if self._executor is not None:
+                self._executor.shutdown(wait=False, cancel_futures=True)
+                self._executor = None
+
+    class RateLimiterManager:
+        """Manages rate limiting with simplified sliding window implementation."""
+
+        def __init__(self, max_requests: int, window_seconds: float) -> None:
+            """Initialize rate limiter manager.
+
+            Args:
+                max_requests: Maximum requests allowed per window
+                window_seconds: Time window in seconds for rate limiting
+
+            """
+            self._max_requests = max_requests
+            self._window_seconds = window_seconds
+            # Track window start time and request count per message type
+            self._windows: dict[str, tuple[float, int]] = {}
+
+        def check_rate_limit(self, message_type: str) -> FlextResult[None]:
+            """Check if rate limit is exceeded for message type.
+
+            Args:
+                message_type: The message type to check
+
+            Returns:
+                FlextResult[None]: Success if within limit, failure if exceeded
+
+            """
+            current_time = time.time()
+            window_start, count = self._windows.get(message_type, (current_time, 0))
+
+            # Reset window if elapsed
+            if current_time - window_start >= self._window_seconds:
+                window_start = current_time
+                count = 0
+
+            # Check if limit exceeded
+            if count >= self._max_requests:
+                return FlextResult[None].fail(
+                    f"Rate limit exceeded for message type '{message_type}' - too many requests",
+                    error_code=FlextConstants.Errors.OPERATION_ERROR,
+                    error_data={
+                        "message_type": message_type,
+                        "limit": self._max_requests,
+                        "window_seconds": self._window_seconds,
+                        "retry_after": int(
+                            self._window_seconds - (current_time - window_start)
+                        ),
+                        "reason": "rate_limit_exceeded",
+                    },
+                )
+
+            # Update window tracking and increment count
+            self._windows[message_type] = (window_start, count + 1)
+            return FlextResult[None].ok(None)
+
+        def cleanup(self) -> None:
+            """Clear all rate limit windows."""
+            self._windows.clear()
+
+    class RetryPolicy:
+        """Manages retry logic with configurable attempts and delays."""
+
+        def __init__(self, max_attempts: int, retry_delay: float) -> None:
+            """Initialize retry policy manager.
+
+            Args:
+                max_attempts: Maximum retry attempts allowed
+                retry_delay: Delay in seconds between retry attempts
+
+            """
+            self._max_attempts = max(max_attempts, 1)
+            self._retry_delay = max(retry_delay, 0.0)
+            # Track attempt counts per message type
+            self._attempts: dict[str, int] = {}
+
+        def should_retry(self, current_attempt: int) -> bool:
+            """Check if we should retry the operation.
+
+            Args:
+                current_attempt: The current attempt number (0-based)
+
+            Returns:
+                True if we should retry, False if we've exhausted attempts
+
+            """
+            return current_attempt < self._max_attempts - 1
+
+        def is_retriable_error(self, error: str | None) -> bool:
+            """Check if an error is retriable.
+
+            Args:
+                error: Error message to check
+
+            Returns:
+                True if error indicates a transient failure
+
+            """
+            if error is None:
+                return False
+
+            retriable_patterns = (
+                "Temporary failure",
+                "timeout",
+                "transient",
+                "temporarily unavailable",
+                "try again",
+            )
+            return any(
+                pattern.lower() in error.lower() for pattern in retriable_patterns
+            )
+
+        def get_retry_delay(self) -> float:
+            """Get delay between retry attempts.
+
+            Returns:
+                Delay in seconds
+
+            """
+            return self._retry_delay
+
+        def get_max_attempts(self) -> int:
+            """Get maximum retry attempts.
+
+            Returns:
+                Maximum number of attempts allowed
+
+            """
+            return self._max_attempts
+
+        def record_attempt(self, message_type: str) -> None:
+            """Record an attempt for tracking purposes.
+
+            Args:
+                message_type: The message type being processed
+
+            """
+            self._attempts[message_type] = self._attempts.get(message_type, 0) + 1
+
+        def reset(self, message_type: str) -> None:
+            """Reset attempt tracking for a message type.
+
+            Args:
+                message_type: The message type to reset
+
+            """
+            self._attempts.pop(message_type, None)
+
+        def cleanup(self) -> None:
+            """Clear all attempt tracking."""
+            self._attempts.clear()
+
     @override
     def __init__(
         self,
@@ -109,37 +496,30 @@ class FlextDispatcher(FlextMixins):
             supports_async=True,
         )
 
-        # Circuit breaker state - proper state machine per message type
-        self._circuit_breaker_failures: dict[str, int] = {}
-        self._circuit_breaker_threshold = self.config.circuit_breaker_threshold
-        self._circuit_breaker_recovery_timeout = (
-            FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT
-        )
-        self._circuit_breaker_success_threshold = (
-            FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD
+        # Initialize circuit breaker manager
+        self._circuit_breaker = self.CircuitBreakerManager(
+            threshold=self.config.circuit_breaker_threshold,
+            recovery_timeout=FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT,
+            success_threshold=FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD,
         )
 
-        # Rate limiting state - sliding window with count, window_start, block_until
-        self._rate_limit_requests: dict[str, object] = {}
-        self._rate_limit_state: dict[str, object] = {}
-        self._rate_limit = self.config.rate_limit_max_requests
+        # Rate limiting - simplified sliding window implementation via manager
+        self._rate_limiter = self.RateLimiterManager(
+            max_requests=self.config.rate_limit_max_requests,
+            window_seconds=self.config.rate_limit_window_seconds,
+        )
 
-        # Circuit breaker state machine data
-        self._circuit_breaker_state: bool = False  # overall circuit breaker state
-        self._circuit_breaker_states: dict[str, str] = {}  # state per message type
-        self._circuit_breaker_opened_at: dict[str, float] = {}  # when opened
-        self._circuit_breaker_success_counts: dict[
-            str, int
-        ] = {}  # success counts for recovery
-        self._rate_limit_window = self.config.rate_limit_window_seconds
-        self._rate_limit_block_grace = max(1.0, 0.5 * self._rate_limit_window)
+        # Timeout enforcement and executor management via manager
+        self._timeout_enforcer = self.TimeoutEnforcer(
+            use_timeout_executor=self.config.enable_timeout_executor,
+            executor_workers=self.config.executor_workers,  # type: ignore[arg-type]
+        )
 
-        # Timeout handling configuration
-        self._use_timeout_executor = self.config.enable_timeout_executor
-
-        # Thread pool for timeout handling (lazy initialization)
-        self._executor_workers = self._resolve_executor_workers()
-        self._executor: concurrent.futures.ThreadPoolExecutor | None = None
+        # Retry policy management via manager
+        self._retry_policy = self.RetryPolicy(
+            max_attempts=self.config.max_retry_attempts,
+            retry_delay=self.config.retry_delay,
+        )
 
     @property
     def dispatcher_config(self) -> dict[str, object]:
@@ -180,6 +560,16 @@ class FlextDispatcher(FlextMixins):
         if request.get("handler") is None:
             return FlextResult[dict[str, object]].fail(
                 FlextConstants.Dispatcher.ERROR_HANDLER_REQUIRED,
+            )
+
+        # Add Phase 4 enhancement: Protocol validation before registration
+        handler_obj = request.get("handler")
+        protocol_validation = FlextMixins.ProtocolValidation.validate_protocol_compliance(
+            handler_obj, "Handler"
+        )
+        if protocol_validation.is_failure:
+            return FlextResult[dict[str, object]].fail(
+                f"Handler protocol validation failed: {protocol_validation.error}",
             )
 
         # Register with bus
@@ -242,18 +632,13 @@ class FlextDispatcher(FlextMixins):
         # Support both old API (message_type, handler) and new API (handler only)
         if isinstance(message_type_or_handler, str) and handler is not None:
             # Old API: register_handler(message_type, handler)
-            # Convert callable to FlextHandlers if needed
-            resolved_handler = handler
-            if callable(handler) and not isinstance(handler, FlextHandlers):
-                handler_result = self.create_handler_from_function(
-                    handler_func=handler,
-                    mode=handler_mode,
+            # Ensure handler is FlextHandlers instance (use helper to eliminate duplication)
+            ensure_result = self._ensure_handler(handler, mode=handler_mode)
+            if ensure_result.is_failure:
+                return FlextResult[dict[str, object]].fail(
+                    ensure_result.error or "Handler creation failed",
                 )
-                if handler_result.is_failure:
-                    return FlextResult[dict[str, object]].fail(
-                        handler_result.error or "Handler creation failed",
-                    )
-                resolved_handler = handler_result.value
+            resolved_handler = ensure_result.value
 
             # Create structured request with message type
             request: dict[str, object] = {
@@ -270,21 +655,13 @@ class FlextDispatcher(FlextMixins):
                     "Cannot register handler: message type string provided without handler",
                 )
 
-            # Convert callable to FlextHandlers if needed
-            resolved_handler = message_type_or_handler
-            if callable(message_type_or_handler) and not isinstance(
-                message_type_or_handler,
-                FlextHandlers,
-            ):
-                handler_result = self.create_handler_from_function(
-                    handler_func=message_type_or_handler,
-                    mode=handler_mode,
+            # Ensure handler is FlextHandlers instance (use helper to eliminate duplication)
+            ensure_result = self._ensure_handler(message_type_or_handler, mode=handler_mode)
+            if ensure_result.is_failure:
+                return FlextResult[dict[str, object]].fail(
+                    ensure_result.error or "Handler creation failed",
                 )
-                if handler_result.is_failure:
-                    return FlextResult[dict[str, object]].fail(
-                        handler_result.error or "Handler creation failed",
-                    )
-                resolved_handler = handler_result.value
+            resolved_handler = ensure_result.value
 
             # Create structured request
             request = {
@@ -428,6 +805,40 @@ class FlextDispatcher(FlextMixins):
                 f"Handler creation failed: {error}",
             )
 
+    def _ensure_handler(
+        self,
+        handler: object,
+        mode: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+    ) -> FlextResult[FlextHandlers[object, object]]:
+        """Ensure handler is a FlextHandlers instance, converting from callable if needed.
+
+        Private helper to eliminate duplication in handler registration.
+
+        Args:
+            handler: Handler instance or callable to convert
+            mode: Handler operation mode (command/query)
+
+        Returns:
+            FlextResult with FlextHandlers instance or error
+
+        """
+        # If already FlextHandlers, return success
+        if isinstance(handler, FlextHandlers):
+            return FlextResult[FlextHandlers[object, object]].ok(handler)
+
+        # If callable, convert to FlextHandlers
+        if callable(handler):
+            return self.create_handler_from_function(
+                handler_func=handler,
+                mode=mode,
+            )
+
+        # Invalid handler type
+        return FlextResult[FlextHandlers[object, object]].fail(
+            f"Handler must be FlextHandlers instance or callable, "
+            f"got {type(handler).__name__}",
+        )
+
     # ------------------------------------------------------------------
     # Dispatch execution using structured models
     # ------------------------------------------------------------------
@@ -496,9 +907,9 @@ class FlextDispatcher(FlextMixins):
 
             # Update circuit breaker state machine
             if execution_result.is_success:
-                self._record_circuit_breaker_success(message_type)
+                self._circuit_breaker.record_success(message_type)
             else:
-                self._record_circuit_breaker_failure(message_type)
+                self._circuit_breaker.record_failure(message_type)
 
             if execution_result.is_success:
                 dispatch_result: dict[str, object] = {
@@ -545,6 +956,119 @@ class FlextDispatcher(FlextMixins):
                 )
 
             return FlextResult[dict[str, object]].ok(dispatch_result)
+
+    def _check_pre_dispatch_conditions(
+        self,
+        message_type: str,
+    ) -> FlextResult[None]:
+        """Check all pre-dispatch conditions (circuit breaker, rate limiting).
+
+        Orchestrates multiple validation checks in sequence. Returns first failure
+        encountered, or success if all checks pass.
+
+        Args:
+            message_type: Message type string for reliability pattern checks
+
+        Returns:
+            FlextResult[None]: Success if all checks pass, failure if any check fails
+
+        """
+        # Check circuit breaker state
+        cb_check = self._circuit_breaker.check_before_dispatch(message_type)
+        if cb_check.is_failure:
+            return FlextResult[None].fail(
+                cb_check.error,
+                error_code=cb_check.error_code,
+                error_data=cb_check.error_data,
+            )
+
+        # Check rate limiting
+        rate_limit_check = self._rate_limiter.check_rate_limit(message_type)
+        if rate_limit_check.is_failure:
+            return FlextResult[None].fail(
+                rate_limit_check.error,
+                error_code=rate_limit_check.error_code,
+                error_data=rate_limit_check.error_data,
+            )
+
+        return FlextResult[None].ok(None)
+
+    def _execute_with_timeout(
+        self,
+        execute_func: Callable[[], FlextResult[object]],
+        timeout_seconds: float,
+        timeout_override: int | None = None,
+    ) -> FlextResult[object]:
+        """Execute a function with timeout enforcement using executor or direct execution.
+
+        Handles timeout errors gracefully. If executor is shutdown, reinitializes it.
+        This helper encapsulates the timeout orchestration logic.
+
+        Args:
+            execute_func: Callable that returns FlextResult[object]
+            timeout_seconds: Timeout in seconds
+            timeout_override: Optional timeout override (forces executor usage)
+
+        Returns:
+            FlextResult[object]: Execution result or timeout error
+
+        """
+        use_executor = (
+            self._timeout_enforcer.should_use_executor()
+            or timeout_override is not None
+        )
+
+        if use_executor:
+            executor = self._timeout_enforcer.ensure_executor()
+            future: concurrent.futures.Future[FlextResult[object]] | None = None
+            try:
+                future = executor.submit(execute_func)
+                return future.result(timeout=timeout_seconds)
+            except concurrent.futures.TimeoutError:
+                # Cancel the future and return timeout error
+                if future is not None:
+                    future.cancel()
+                return FlextResult[object].fail(
+                    f"Operation timeout after {timeout_seconds} seconds",
+                )
+            except Exception:
+                # Executor was shut down; reinitialize and retry immediately
+                self._timeout_enforcer.reset_executor()
+                # Return retriable error so caller can retry
+                return FlextResult[object].fail(
+                    "Executor was shutdown, retry requested",
+                )
+        else:
+            return execute_func()
+
+    def _should_retry_on_error(
+        self,
+        attempt: int,
+        error_message: str | None = None,
+    ) -> bool:
+        """Check if an error should trigger a retry attempt.
+
+        Encapsulates retry eligibility logic and handles retry delay.
+
+        Args:
+            attempt: Current attempt number (0-indexed)
+            error_message: Error message (for retriable error checking)
+
+        Returns:
+            True if should retry (delay applied), False if should not retry
+
+        """
+        # Check retry policy eligibility
+        if not self._retry_policy.should_retry(attempt):
+            return False
+
+        # For FlextResult errors, check if error is retriable
+        if error_message is not None and not self._retry_policy.is_retriable_error(error_message):
+            return False
+
+        # Delay before retry
+        time.sleep(self._retry_policy.get_retry_delay())
+        return True
 
     def dispatch(
         self,
@@ -596,102 +1120,14 @@ class FlextDispatcher(FlextMixins):
             message = message_or_type
             message_type = type(message).__name__ if message else "unknown"
 
-        # Check circuit breaker state machine
-        cb_check = self._check_circuit_breaker_before_dispatch(message_type)
-        if cb_check.is_failure:
+        # Check pre-dispatch conditions (circuit breaker + rate limiting)
+        conditions_check = self._check_pre_dispatch_conditions(message_type)
+        if conditions_check.is_failure:
             return FlextResult[object].fail(
-                cb_check.error,
-                error_code=cb_check.error_code,
-                error_data=cb_check.error_data,
+                conditions_check.error,
+                error_code=conditions_check.error_code,
+                error_data=conditions_check.error_data,
             )
-
-        # Check rate limiting
-        current_time = time.time()
-        state_obj: object = self._rate_limit_state.get(message_type)
-        state: dict[str, object] = (
-            cast("dict[str, object]", state_obj) if state_obj is not None else {}
-        )
-
-        if not state:
-            # Initialize new rate limiter state using simple dict
-            state = {
-                "count": 0,
-                "window_start": current_time,
-                "block_until": 0.0,
-            }
-            self._rate_limit_state[message_type] = state
-
-        # Access state dict values with safe type casting
-        block_until_val = state.get("block_until", 0.0)
-        block_until = (
-            float(block_until_val) if isinstance(block_until_val, (int, float)) else 0.0
-        )
-
-        if current_time < block_until:
-            retry_after = int(block_until - current_time)
-            return FlextResult[object].fail(
-                f"Rate limit exceeded for message type '{message_type}' - blocked until recovery",
-                error_code=FlextConstants.Errors.OPERATION_ERROR,
-                error_data={
-                    "message_type": message_type,
-                    "limit": self._rate_limit,
-                    "window_seconds": self._rate_limit_window,
-                    "retry_after": retry_after,
-                    "reason": "rate_limit_blocked",
-                },
-            )
-
-        # Check if window has elapsed
-        window_start_val = state.get("window_start", current_time)
-        window_start = (
-            float(window_start_val)
-            if isinstance(window_start_val, (int, float))
-            else current_time
-        )
-
-        if current_time - window_start >= self._rate_limit_window:
-            state["count"] = 0
-            state["window_start"] = current_time
-            state["block_until"] = 0.0
-
-        # Get count and check rate limit
-        count_val = state.get("count", 0)
-        count = int(count_val) if isinstance(count_val, int) else 0
-
-        if count >= self._rate_limit:
-            new_block_until = (
-                current_time + self._rate_limit_window + self._rate_limit_block_grace
-            )
-            state["block_until"] = new_block_until
-            retry_after = int(self._rate_limit_window + self._rate_limit_block_grace)
-            return FlextResult[object].fail(
-                f"Rate limit exceeded for message type '{message_type}' - too many requests",
-                error_code=FlextConstants.Errors.OPERATION_ERROR,
-                error_data={
-                    "message_type": message_type,
-                    "limit": self._rate_limit,
-                    "window_seconds": self._rate_limit_window,
-                    "current_count": count,
-                    "retry_after": retry_after,
-                    "reason": "rate_limit_exceeded",
-                },
-            )
-
-        # Increment count
-        new_count = count + 1
-        state["count"] = new_count
-        if new_count >= self._rate_limit:
-            state["block_until"] = (
-                current_time + self._rate_limit_window + self._rate_limit_block_grace
-            )
-        else:
-            state["block_until"] = 0.0
-
-        requests_list_val = self._rate_limit_requests.setdefault(message_type, [])
-        requests_list = cast("list[object]", requests_list_val)
-        requests_list.append(current_time)
-        while len(requests_list) > self._rate_limit * 2:
-            requests_list.pop(0)
 
         # Create message object
         if isinstance(message_or_type, str) and data is not None:
@@ -723,14 +1159,10 @@ class FlextDispatcher(FlextMixins):
             }
             FlextModels.Metadata(attributes=string_metadata)
 
-        # Execute dispatch with retry logic using bus directly
-        max_retries = self.config.max_retry_attempts
-        retry_delay = self.config.retry_delay
-
-        # start_time = time.time()  # Unused for now
+        # Execute dispatch with retry logic via RetryPolicy manager
+        max_retries = self._retry_policy.get_max_attempts()
 
         for attempt in range(max_retries):
-            # attempt_start_time = time.time()  # Unused for now
             try:
                 # Get timeout from config
                 timeout_seconds = float(
@@ -754,87 +1186,45 @@ class FlextDispatcher(FlextMixins):
                     else:
                         return self._bus.execute(message)
 
-                use_executor = (
-                    self._use_timeout_executor or timeout_override is not None
+                # Execute with timeout enforcement (handles executor/threading logic)
+                bus_result = self._execute_with_timeout(
+                    execute_with_context,
+                    timeout_seconds,
+                    timeout_override,
                 )
 
-                if use_executor:
-                    executor = self._ensure_executor()
-                    future: concurrent.futures.Future[FlextResult[object]] | None = None
-                    try:
-                        future = executor.submit(execute_with_context)
-                        bus_result = future.result(timeout=timeout_seconds)
-                    except concurrent.futures.TimeoutError:
-                        # Cancel the future and return timeout error
-                        if future is not None:
-                            future.cancel()
-                        return FlextResult[object].fail(
-                            f"Operation timeout after {timeout_seconds} seconds",
-                        )
-                    except Exception:
-                        # Executor was shut down; reinitialize and retry immediately
-                        self._executor = None
-                        continue
-                else:
-                    bus_result = execute_with_context()
-                # attempt_end_time = time.time()  # Unused for now
-                # attempt_duration = attempt_end_time - attempt_start_time  # Unused for now
+                # Handle executor shutdown retry case
+                if (bus_result.is_failure and
+                    "Executor was shutdown" in (bus_result.error or "")):
+                    continue
 
                 if bus_result.is_success:
-                    # Reset circuit breaker failures on success
-                    self._circuit_breaker_failures[message_type] = 0
+                    # Record success in circuit breaker
+                    self._circuit_breaker.record_success(message_type)
                     return FlextResult[object].ok(bus_result.value)
 
                 # Track circuit breaker failure
-                failure_count_val = self._circuit_breaker_failures.get(message_type, 0)
-                failure_count = failure_count_val
-                self._circuit_breaker_failures[message_type] = failure_count + 1
+                self._circuit_breaker.record_failure(message_type)
 
-                # Check if this is a temporary failure that should be retried
-                if attempt < max_retries - 1 and "Temporary failure" in str(
-                    bus_result.error,
-                ):
-                    time.sleep(retry_delay)
+                # Check if should retry (encapsulates retry policy and delay logic)
+                if self._should_retry_on_error(attempt, bus_result.error):
                     continue
 
                 return FlextResult[object].fail(bus_result.error or "Dispatch failed")
             except Exception as e:
-                # attempt_end_time = time.time()  # Unused for now
-                # attempt_duration = attempt_end_time - attempt_start_time  # Unused for now
-
                 # Track circuit breaker failure for exceptions
-                except_failure_count_val = self._circuit_breaker_failures.get(
-                    message_type, 0
-                )
-                except_failure_count = except_failure_count_val
-                self._circuit_breaker_failures[message_type] = except_failure_count + 1
+                self._circuit_breaker.record_failure(message_type)
 
-                if attempt < max_retries - 1:
-                    time.sleep(retry_delay)
+                # Check if should retry (for exceptions, no error message check)
+                if self._should_retry_on_error(attempt):
                     continue
                 return FlextResult[object].fail(f"Dispatch error: {e}")
 
         # Record final failure
-        # end_time = time.time()  # Unused for now
-        # total_duration = end_time - start_time  # Unused for now
         return FlextResult[object].fail("Max retries exceeded")
 
     # ------------------------------------------------------------------
     # Private helper methods
-    # ------------------------------------------------------------------
-    def _resolve_executor_workers(self) -> int:
-        """Determine worker count for the shared dispatcher executor."""
-        return max(self.config.executor_workers, 1)
-
-    def _ensure_executor(self) -> concurrent.futures.ThreadPoolExecutor:
-        """Create the shared executor on demand."""
-        if self._executor is None:
-            self._executor = concurrent.futures.ThreadPoolExecutor(
-                max_workers=self._executor_workers,
-                thread_name_prefix="flext-dispatcher",
-            )
-        return self._executor
-
     # ------------------------------------------------------------------
     # Context management
     # ------------------------------------------------------------------
@@ -999,18 +1389,14 @@ class FlextDispatcher(FlextMixins):
             dict[str, object]: Dictionary containing performance metrics
 
         """
-        # Basic metrics - can be extended with actual performance data
+        # Get metrics from circuit breaker manager
+        cb_metrics = self._circuit_breaker.get_metrics()
         return {
             "total_dispatches": 0,  # Track actual dispatches (future enhancement)
-            "circuit_breaker_failures": len(self._circuit_breaker_failures),
-            "circuit_breaker_states": len(self._circuit_breaker_states),
-            "circuit_breaker_open_count": sum(
-                1
-                for state in self._circuit_breaker_states.values()
-                if state == FlextConstants.Reliability.CircuitBreakerState.OPEN
-            ),
-            "rate_limit_states": len(self._rate_limit_state),
-            "executor_workers": self._executor_workers if self._executor else 0,
+            "circuit_breaker_failures": cb_metrics["failures"],
+            "circuit_breaker_states": cb_metrics["states"],
+            "circuit_breaker_open_count": cb_metrics["open_count"],
+            **self._timeout_enforcer.get_executor_status(),
         }
 
     def cleanup(self) -> None:
@@ -1025,190 +1411,13 @@ class FlextDispatcher(FlextMixins):
                 self._bus.clear_handlers()
 
             # Clear internal state
-            self._circuit_breaker_failures.clear()
-            self._circuit_breaker_states.clear()
-            self._circuit_breaker_opened_at.clear()
-            self._circuit_breaker_success_counts.clear()
-            self._rate_limit_requests.clear()
-            self._rate_limit_state.clear()
-            if self._executor is not None:
-                self._executor.shutdown(wait=False, cancel_futures=True)
-                self._executor = None
+            self._circuit_breaker.cleanup()
+            self._rate_limiter.cleanup()
+            self._timeout_enforcer.cleanup()
+            self._retry_policy.cleanup()
 
         except Exception as e:
             self._log_with_context("warning", "Cleanup failed", error=str(e))
-
-    # --------------------------------------------------------------------------
-    # Circuit Breaker State Machine Methods
-    # --------------------------------------------------------------------------
-
-    def _get_circuit_breaker_state(self, message_type: str) -> str:
-        """Get current circuit breaker state for message type."""
-        return self._circuit_breaker_states.get(
-            message_type, FlextConstants.Reliability.CircuitBreakerState.CLOSED
-        )
-
-    def _set_circuit_breaker_state(self, message_type: str, state: str) -> None:
-        """Set circuit breaker state for message type."""
-        self._circuit_breaker_states[message_type] = state
-
-    def _is_circuit_breaker_open(self, message_type: str) -> bool:
-        """Check if circuit breaker is open for message type."""
-        return (
-            self._get_circuit_breaker_state(message_type)
-            == FlextConstants.Reliability.CircuitBreakerState.OPEN
-        )
-
-    def _record_circuit_breaker_success(self, message_type: str) -> None:
-        """Record successful operation and update circuit breaker state."""
-        current_state = self._get_circuit_breaker_state(message_type)
-
-        if current_state == FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN:
-            # Increment success count in half-open state
-            success_count = (
-                self._circuit_breaker_success_counts.get(message_type, 0) + 1
-            )
-            self._circuit_breaker_success_counts[message_type] = success_count
-
-            # Check if we should transition to closed
-            if success_count >= self._circuit_breaker_success_threshold:
-                self._transition_circuit_breaker_to_closed(message_type)
-
-        elif current_state == FlextConstants.Reliability.CircuitBreakerState.CLOSED:
-            # Reset failure count on success
-            self._circuit_breaker_failures[message_type] = 0
-
-    def _record_circuit_breaker_failure(self, message_type: str) -> None:
-        """Record failed operation and update circuit breaker state."""
-        current_state = self._get_circuit_breaker_state(message_type)
-        current_failures = self._circuit_breaker_failures.get(message_type, 0) + 1
-        self._circuit_breaker_failures[message_type] = current_failures
-
-        if current_state == FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN:
-            # Immediately open on failure in half-open state
-            self._transition_circuit_breaker_to_open(message_type)
-
-        elif (
-            current_state == FlextConstants.Reliability.CircuitBreakerState.CLOSED
-            and current_failures >= self._circuit_breaker_threshold
-        ):
-            # Transition to open after threshold failures
-            self._transition_circuit_breaker_to_open(message_type)
-
-    def _should_attempt_circuit_breaker_reset(self, message_type: str) -> bool:
-        """Check if circuit breaker should attempt recovery."""
-        if self._is_circuit_breaker_open(message_type):
-            return False
-
-        opened_at = self._circuit_breaker_opened_at.get(message_type, 0.0)
-        return (time.time() - opened_at) >= self._circuit_breaker_recovery_timeout
-
-    def _attempt_circuit_breaker_reset(self, message_type: str) -> None:
-        """Attempt to reset circuit breaker to half-open state."""
-        if self._should_attempt_circuit_breaker_reset(message_type):
-            self._transition_circuit_breaker_to_half_open(message_type)
-
-    def _transition_circuit_breaker_to_closed(self, message_type: str) -> None:
-        """Transition circuit breaker to CLOSED state."""
-        self._set_circuit_breaker_state(
-            message_type, FlextConstants.Reliability.CircuitBreakerState.CLOSED
-        )
-        self._circuit_breaker_failures[message_type] = 0
-        self._circuit_breaker_success_counts[message_type] = 0
-        if message_type in self._circuit_breaker_opened_at:
-            del self._circuit_breaker_opened_at[message_type]
-
-    def _transition_circuit_breaker_to_open(self, message_type: str) -> None:
-        """Transition circuit breaker to OPEN state."""
-        self._set_circuit_breaker_state(
-            message_type, FlextConstants.Reliability.CircuitBreakerState.OPEN
-        )
-        self._circuit_breaker_opened_at[message_type] = time.time()
-        self._circuit_breaker_success_counts[message_type] = 0
-
-    def _transition_circuit_breaker_to_half_open(self, message_type: str) -> None:
-        """Transition circuit breaker to HALF_OPEN state for testing."""
-        self._set_circuit_breaker_state(
-            message_type,
-            FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN,
-        )
-        self._circuit_breaker_success_counts[message_type] = 0
-
-    def _check_circuit_breaker_before_dispatch(
-        self, message_type: str
-    ) -> FlextResult[None]:
-        """Check circuit breaker state before dispatching."""
-        # Attempt recovery if circuit breaker is open
-        self._attempt_circuit_breaker_reset(message_type)
-
-        if self._is_circuit_breaker_open(message_type):
-            failures = self._circuit_breaker_failures.get(message_type, 0)
-            return FlextResult[None].fail(
-                f"Circuit breaker is open for message type '{message_type}'",
-                error_code=FlextConstants.Errors.OPERATION_ERROR,
-                error_data={
-                    "message_type": message_type,
-                    "failure_count": failures,
-                    "threshold": self._circuit_breaker_threshold,
-                    "state": self._get_circuit_breaker_state(message_type),
-                    "opened_at": self._circuit_breaker_opened_at.get(message_type, 0.0),
-                    "reason": "circuit_breaker_open",
-                },
-            )
-
-        return FlextResult[None].ok(None)
-
-    # =========================================================================
-    # Protocol Implementations: CircuitBreaker, RateLimiter, RetryPolicy,
-    # TimeoutEnforcer, ObservabilityCollector, BatchProcessor
-    # =========================================================================
-
-    def call(self, func: object) -> FlextResult[object]:
-        """Execute function via circuit breaker (CircuitBreaker protocol)."""
-        try:
-            return FlextResult[object].ok(func)
-        except Exception as e:
-            return FlextResult[object].fail(str(e))
-
-    def is_open(self) -> bool:
-        """Check if circuit breaker is open (CircuitBreaker protocol)."""
-        return getattr(self, "_circuit_breaker_state", False)
-
-    def reset(self) -> FlextResult[None]:
-        """Reset circuit breaker (CircuitBreaker protocol)."""
-        try:
-            self._circuit_breaker_state = False
-            return FlextResult[None].ok(None)
-        except Exception as e:
-            return FlextResult[None].fail(str(e))
-
-    def is_allowed(self) -> bool:
-        """Check if request is rate limit allowed (RateLimiter protocol)."""
-        return not getattr(self, "_rate_limit_state", False)
-
-    def wait_if_needed(self) -> FlextResult[None]:
-        """Wait if rate limit needed (RateLimiter protocol)."""
-        return FlextResult[None].ok(None)
-
-    def execute_with_retry(self, func: object) -> FlextResult[object]:
-        """Execute with retry (RetryPolicy protocol)."""
-        return FlextResult[object].ok(func)
-
-    def enforce_timeout(self, func: object, _timeout: float) -> FlextResult[object]:
-        """Enforce timeout (TimeoutEnforcer protocol)."""
-        return FlextResult[object].ok(func)
-
-    def collect_metrics(self, _operation: str) -> FlextResult[None]:
-        """Collect metrics (ObservabilityCollector protocol)."""
-        return FlextResult[None].ok(None)
-
-    def batch_process(self, items: Sequence[object]) -> FlextResult[list[object]]:
-        """Process items in batch (BatchProcessor protocol)."""
-        return FlextResult[list[object]].ok(list(items))
-
-    def get_batch_size(self) -> int:
-        """Get batch size (BatchProcessor protocol)."""
-        return 100
 
 
 __all__ = ["FlextDispatcher"]

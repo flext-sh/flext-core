@@ -356,7 +356,7 @@ from flext_core.protocols import FlextProtocols
 from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.service import FlextService
+from flext_core.service import FlextService, service_factory
 from flext_core.typings import (  # Pydantic native types (direct exports); TypeVars; FlextTypes - domain-specific complex types
     UUID1,
     UUID3,
@@ -432,7 +432,12 @@ from flext_core.typings import (  # Pydantic native types (direct exports); Type
     conset,
     constr,
 )
-from flext_core.utilities import FlextUtilities
+from flext_core.utilities import (
+    FlextMetrics,
+    FlextUtilities,
+    FlextValidationPipeline,
+    FlextValidations,
+)
 
 __all__ = [
     "UUID1",
@@ -462,6 +467,7 @@ __all__ = [
     "FlextExceptions",
     "FlextHandlers",
     "FlextLogger",
+    "FlextMetrics",
     "FlextMixins",
     "FlextModels",
     "FlextProcessors",
@@ -472,6 +478,8 @@ __all__ = [
     "FlextService",
     "FlextTypes",
     "FlextUtilities",
+    "FlextValidationPipeline",
+    "FlextValidations",
     # Domain-specific Annotated types (Pydantic v2)
     "FutureDate",
     # Domain validation types (Phase 3 - Annotated constraints)
@@ -534,4 +542,5 @@ __all__ = [
     "conlist",
     "conset",
     "constr",
+    "service_factory",
 ]

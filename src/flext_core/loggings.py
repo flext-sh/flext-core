@@ -844,20 +844,48 @@ class FlextLogger:
         exc_info: bool = True,
         **kwargs: object,
     ) -> FlextResult[None]:
-        """Log exception message with stack trace - LoggerProtocol implementation."""
+        """Log exception message with stack trace - LoggerProtocol implementation.
+
+        Stack traces are conditionally included based on FlextConfig.log_level:
+        - DEBUG mode: Full formatted stack trace included
+        - INFO mode and above: Only exception type and message
+
+        Args:
+            message: Error message
+            exception: Optional exception object to format
+            exc_info: Include current exception info if no exception provided
+            **kwargs: Additional context
+
+        """
         try:
-            # If a specific exception is provided, format its traceback
+            # Check FlextConfig to determine if we should include stack traces
+            # Stack traces are only shown in DEBUG mode (from FlextConfig.log_level)
+            try:
+                # Avoid circular import: lazy import FlextConfig
+                from flext_core.config import FlextConfig
+
+                config = FlextConfig.get_global_instance()
+                # Include stack trace only if log_level is DEBUG or lower
+                include_stack_trace = config.log_level.upper() == "DEBUG"
+            except Exception:
+                # If config access fails, default to including stack traces
+                include_stack_trace = True
+
+            # Include exception type and message always
             if exception is not None:
-                kwargs["stack_trace"] = "".join(
-                    traceback.format_exception(
-                        type(exception), exception, exception.__traceback__
-                    )
-                )
                 kwargs["exception_type"] = type(exception).__name__
                 kwargs["exception_message"] = str(exception)
+                # Only include full stack trace if config allows (DEBUG mode)
+                if include_stack_trace:
+                    kwargs["stack_trace"] = "".join(
+                        traceback.format_exception(
+                            type(exception), exception, exception.__traceback__
+                        )
+                    )
             # Otherwise, if exc_info is True, get current exception info
-            elif exc_info:
+            elif exc_info and include_stack_trace:
                 kwargs["stack_trace"] = traceback.format_exc()
+
             self.logger.error(message, **cast("dict[str, Any]", kwargs))
             return FlextResult[None].ok(None)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:

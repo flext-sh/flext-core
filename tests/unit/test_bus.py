@@ -464,13 +464,15 @@ class TestFlextBusMissingCoverage:
 
     def test_cache_clear(self) -> None:
         """Test cache clear functionality (line 73)."""
-        cache = FlextBus._Cache(max_size=10)
+        from cachetools import LRUCache
+
+        cache: LRUCache[str, FlextResult[object]] = LRUCache(maxsize=10)
 
         # Add items to cache
         result1: FlextResult[object] = FlextResult[object].ok("test1")
         result2: FlextResult[object] = FlextResult[object].ok("test2")
-        cache.put("key1", result1)
-        cache.put("key2", result2)
+        cache["key1"] = result1
+        cache["key2"] = result2
 
         # Verify items are cached
         assert cache.get("key1") is not None
@@ -1374,12 +1376,14 @@ class TestFlextBusMissingCoverage:
 
     def test_cache_functionality(self) -> None:
         """Test cache functionality directly."""
-        cache = FlextBus._Cache(max_size=3)
+        from cachetools import LRUCache
+
+        cache: LRUCache[str, FlextResult[object]] = LRUCache(maxsize=3)
 
         # Test cache operations
-        cache.put("key1", FlextResult[object].ok("value1"))
-        cache.put("key2", FlextResult[object].ok("value2"))
-        cache.put("key3", FlextResult[object].ok("value3"))
+        cache["key1"] = FlextResult[object].ok("value1")
+        cache["key2"] = FlextResult[object].ok("value2")
+        cache["key3"] = FlextResult[object].ok("value3")
 
         # Test cache retrieval
         result1 = cache.get("key1")
@@ -1387,11 +1391,11 @@ class TestFlextBusMissingCoverage:
         assert result1.unwrap() == "value1"
 
         # Test cache size
-        assert cache.size() == 3
+        assert len(cache) == 3
 
         # Test cache eviction (add 4th item, should evict least recently used)
-        cache.put("key4", FlextResult[object].ok("value4"))
-        assert cache.size() == 3
+        cache["key4"] = FlextResult[object].ok("value4")
+        assert len(cache) == 3
 
         # key2 should be evicted (least recently used)
         result2_again = cache.get("key2")
@@ -1403,7 +1407,7 @@ class TestFlextBusMissingCoverage:
 
         # Test cache clear
         cache.clear()
-        assert cache.size() == 0
+        assert len(cache) == 0
 
     def test_error_handling_scenarios(self) -> None:
         """Test various error handling scenarios."""
