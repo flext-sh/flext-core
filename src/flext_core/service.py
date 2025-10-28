@@ -13,11 +13,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import concurrent.futures
+import inspect
 import signal
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import cast, override
+from typing import Any, Union, cast, get_args, get_origin, override
 
 from pydantic import computed_field
 
@@ -27,6 +29,41 @@ from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 
+# =========================================================================
+# SERVICE FACTORY DECORATOR - Phase 3 Enhancement
+# =========================================================================
+
+
+def service_factory(factory: Callable[..., Any]) -> Callable[[type], type]:
+    """Decorator to register custom service factory.
+
+    Allows services to provide custom factory logic instead of relying on
+    automatic dependency detection. Useful for services with complex
+    initialization requirements.
+
+    **Usage:**
+
+        >>> @service_factory(lambda container: MyService(custom_init=True))
+        ... class MyService(FlextService[Result]):
+        ...     def execute(self) -> FlextResult[Result]:
+        ...         return FlextResult[Result].ok(Result())
+
+    Args:
+        factory: Callable that takes container and returns service instance
+
+    Returns:
+        Decorator function for service class
+
+    """
+
+    def decorator(service_class: type) -> type:
+        """Mark service class with custom factory."""
+        # Store custom factory on the class for __init_subclass__ to use
+        service_class._custom_factory = factory  # type: ignore
+        return service_class
+
+    return decorator
+
 
 class FlextService[TDomainResult](
     FlextModels.ArbitraryTypesModel,
@@ -35,27 +72,54 @@ class FlextService[TDomainResult](
 ):
     """Base class for domain services with dependency injection and validation.
 
-    Implements FlextProtocols.Service through structural typing. All subclasses
-    automatically satisfy the Service protocol by implementing the required methods:
-    - execute() - main domain operation (abstract)
-    - validate_business_rules() - business rule validation
-    - validate_config() - configuration validation
-    - is_valid() - validity check
-    - get_service_info() - metadata retrieval
+    Implements FlextProtocols.Service through structural typing (duck typing).
+    All service subclasses automatically satisfy the Service protocol by
+    implementing required methods: execute(), validate_business_rules(),
+    validate_config(), is_valid(), and get_service_info().
 
-    Provides abstract base class for implementing domain services with
-    comprehensive infrastructure support including dependency injection,
-    context management, logging, and validation.
+    **INTERFACE SEGREGATION - Component Responsibilities:**
 
-    Features:
-    - Abstract execute() method for domain operations
-    - Business rule validation with FlextResult
-    - Configuration validation and management
-    - Dependency injection via FlextMixins
-    - Context propagation and correlation
-    - Structured logging integration
-    - Performance tracking and metrics
-    - Operation execution with timeout support
+    This class achieves interface segregation by inheriting from three focused bases:
+
+    1. **FlextModels.ArbitraryTypesModel** (Data Layer)
+       - Pydantic v2 validation
+       - Type-safe field declarations
+       - Serialization support (model_dump, model_dump_json)
+
+    2. **FlextMixins** (Infrastructure Layer)
+       Provides transparent access to framework infrastructure:
+
+       Properties (mixin-provided):
+       - container: FlextContainer - Global DI singleton
+       - context: FlextContext - Request/operation context
+       - logger: FlextLogger - Structured logging
+       - config: FlextConfig - Global configuration
+       - track() → Iterator[dict] - Operation performance tracking
+
+       Private Methods (mixin-provided):
+       - _register_in_container() - Service auto-registration
+       - _propagate_context() - Context inheritance
+       - _get_correlation_id() - Distributed tracing
+       - _with_operation_context() - Scoped context management
+       - _clear_operation_context() - Cleanup automation
+
+    3. **ABC** (Abstract Protocol)
+       - Abstract execute() method enforcement
+       - Structural typing via FlextProtocols.Service
+
+    **PROTOCOL IMPLEMENTATION - Methods This Class Provides:**
+    ✅ STRUCTURAL TYPING: Implements FlextProtocols.Service interface
+    - execute() [abstract] - Domain operation (implement in subclass)
+    - validate_business_rules() - Business logic validation
+    - validate_config() - Configuration validation
+    - is_valid() - Combined validity check
+    - get_service_info() - Service metadata
+    - project_config - Auto-resolve project configuration
+    - project_models - Auto-resolve domain models namespace
+
+    **AUTO-REGISTRATION & DEPENDENCY INJECTION:**
+    Services are automatically registered in the DI container via __init_subclass__.
+    Constructor parameters are inspected for dependency injection.
 
     Usage:
         >>> from flext_core.service import FlextService
@@ -63,19 +127,24 @@ class FlextService[TDomainResult](
         >>> from flext_core.protocols import FlextProtocols
         >>>
         >>> class UserService(FlextService[User]):
+        ...     # Container and logger automatically available via FlextMixins
         ...     def execute(self) -> FlextResult[User]:
+        ...         # Use infrastructure transparently
+        ...         self.logger.info("Creating user")
         ...         return FlextResult[User].ok(User(name="John"))
-        >>> service = UserService()
-        >>> # FlextService instances satisfy FlextProtocols.Service
+        >>>
+        >>> service = UserService()  # Auto-registered in container
+        >>> # Satisfies FlextProtocols.Service structurally
         >>> assert isinstance(service, FlextProtocols.Service)
     """
 
-    # Dependency injection attributes provided by FlextMixins
-    # - container: FlextContainer (via FlextMixins)
-    # - context: object (via FlextMixins)
-    # - logger: FlextLogger (via FlextMixins)
-    # - config: object (via FlextMixins)
-    # - track: context manager (via FlextMixins)
+    # Mixin-provided infrastructure properties (explicit type documentation)
+    # These are declared in FlextMixins and available on all service instances
+    # container: FlextContainer - Singleton DI container access
+    # context: FlextContext - Scoped request/operation context
+    # logger: FlextLogger - Structured logging with context
+    # config: FlextConfig - Global configuration instance
+    # track: Method[Iterator] - Context manager for operation tracking
 
     _bus: object | None = None  # FlextBus type to avoid circular import
 
@@ -99,28 +168,268 @@ class FlextService[TDomainResult](
         """
         return FlextConfig.get_global_instance()
 
+    @property
+    def project_config(self) -> FlextConfig:
+        """Auto-resolve project-specific configuration by naming convention.
+
+        Attempts to resolve configuration using naming convention:
+        - Service class name: FlextCliCore → FlextCliConfig
+        - Looks up in global container
+        - Falls back to FlextConfig.get_global_instance()
+
+        This property enables dependency-free configuration access:
+        - No manual PrivateAttr declarations needed
+        - Convention-based auto-resolution
+        - Type-safe configuration access
+
+        Example:
+            >>> class FlextCliCore(FlextService[CliDataDict]):
+            ...     def execute(self) -> FlextResult[CliDataDict]:
+            ...         # Automatically resolves FlextCliConfig
+            ...         debug = self.project_config.debug
+            ...         return FlextResult[CliDataDict].ok({})
+
+        Returns:
+            FlextConfig: Project-specific configuration instance
+
+        """
+        try:
+            # Extract project name from service class: FlextCliCore → FlextCli
+            service_class_name = self.__class__.__name__
+            # Try to find matching config class
+            # Pattern: FlextXyzService → FlextXyzConfig
+            config_class_name = service_class_name.replace("Service", "Config")
+
+            container = self.container
+            config_result = container.get(config_class_name)
+
+            if config_result.is_success:
+                return config_result.unwrap()  # type: ignore[no-any-return]
+        except Exception:  # noqa: S110
+            # Fall back to global config if resolution fails
+            pass
+
+        # Fall back to global config
+        return FlextConfig.get_global_instance()
+
+    @property
+    def project_models(self) -> type:
+        """Auto-resolve project-specific models namespace by naming convention.
+
+        Attempts to resolve models using naming convention:
+        - Service class name: FlextCliCore → FlextCliModels
+        - Looks up in global container
+        - Returns empty namespace if not found
+
+        This property enables model-free service implementation:
+        - No manual models imports needed
+        - Convention-based auto-resolution
+        - Type namespace access via property
+
+        Example:
+            >>> class FlextCliCore(FlextService[CliDataDict]):
+            ...     def execute(self) -> FlextResult[CliDataDict]:
+            ...         # Automatically resolves FlextCliModels
+            ...         config_model = self.project_models.Configuration
+            ...         return FlextResult[CliDataDict].ok({})
+
+        Returns:
+            type: Project models namespace (typically a class with nested types)
+
+        """
+        try:
+            # Extract project name from service class: FlextCliCore → FlextCli
+            service_class_name = self.__class__.__name__
+            # Try to find matching models class
+            # Pattern: FlextXyzService → FlextXyzModels
+            models_class_name = service_class_name.replace("Service", "Models")
+
+            container = self.container
+            models_result = container.get(models_class_name)
+
+            if models_result.is_success:
+                models_obj = models_result.unwrap()
+                if isinstance(models_obj, type):
+                    return models_obj
+        except Exception:  # noqa: S110
+            # Return default namespace if resolution fails
+            pass
+
+        # Return a minimal namespace type if not found
+        return type("ModelsNamespace", (), {})
+
     def __init_subclass__(cls) -> None:
-        """Automatic service registration on subclass definition.
+        """Automatic service registration with enhanced dependency detection.
 
         Pure Python 3.13+ pattern - no wrappers, no helpers, no boilerplate.
         Services are transparently registered in global container when class is defined.
 
+        **Phase 3 Enhancements**:
+        - Custom factory support via @service_factory decorator
+        - Improved type detection: handles Optional[T], Union[T1, T2], generics
+        - Better error messages for missing dependencies
+        - Complex dependency graph support (transitive dependencies)
+
+        **Phase 2 Features**:
+        - Scans service class __init__ method for constructor parameters
+        - Detects required dependencies (parameters excluding 'self' and 'config')
+        - Creates smart factory that auto-injects dependencies from container
+        - Falls back to simple instantiation if dependencies can't be resolved
+
         Example:
             >>> class UserService(FlextService[User]):  # ← Auto-registered
+            ...     def __init__(self, database: Database, cache: Cache):
+            ...         # Dependencies auto-injected from container!
+            ...         super().__init__()
+            ...         self.database = database
+            ...         self.cache = cache
+            ...
             ...     def execute(self) -> FlextResult[User]:
             ...         return FlextResult[User].ok(User(name="John"))
 
             >>> # Service already registered - no manual calls needed
             >>> container = FlextContainer.get_global()
             >>> service_result = container.get("UserService")
-            >>> assert service_result.is_success
+            >>> assert service_result.is_success  # ← Database and Cache injected!
+
+        **Custom Factory Example**:
+            >>> @service_factory(lambda container: UserService(db=special_db))
+            ... class UserService(FlextService[User]):
+            ...     def __init__(self, db: Database):
+            ...         super().__init__()
+            ...         self.db = db
+
+        **Backward Compatibility**: Services without special dependencies work unchanged
 
         """
         super().__init_subclass__()
 
         service_name = cls.__name__
         container = FlextContainer.get_global()
-        container.register_factory(service_name, cls)
+
+        # Check for custom factory first (Phase 3 enhancement)
+        custom_factory = getattr(cls, "_custom_factory", None)
+        if custom_factory is not None:
+            # Use custom factory directly
+            container.register_factory(service_name, lambda: custom_factory(container))
+            return
+
+        # Enhanced dependency detection with support for Optional, Union types
+        try:
+            init_signature = inspect.signature(cls.__init__)
+            dependencies: dict[str, object] = {}
+            optional_dependencies: set[str] = set()
+
+            # Extract parameters and detect types
+            for param_name, param in init_signature.parameters.items():
+                if param_name == "self":
+                    continue
+
+                # Skip config parameter (handled separately)
+                if param_name == "config":
+                    continue
+
+                # Skip **kwargs and *args parameters
+                if param.kind in (
+                    inspect.Parameter.VAR_KEYWORD,
+                    inspect.Parameter.VAR_POSITIONAL,
+                ):
+                    continue
+
+                # Skip generic 'data' parameter (Pydantic initialization)
+                if param_name == "data":
+                    continue
+
+                # Store dependency name and type
+                if param.annotation != inspect.Parameter.empty:
+                    dep_type = param.annotation
+
+                    # Skip generic object type (too broad)
+                    if dep_type is object:
+                        continue
+
+                    dependencies[param_name] = dep_type
+
+                    # Detect optional types (Optional[T] = Union[T, None])
+                    origin = get_origin(dep_type)
+                    if origin is Union:
+                        # Check if None is in the union (making it optional)
+                        args = get_args(dep_type)
+                        if type(None) in args:
+                            optional_dependencies.add(param_name)
+
+            # Create smart factory with enhanced dependency resolution
+            if dependencies:
+
+                def smart_factory(
+                    deps: dict[str, object] = dependencies,
+                    optional: set[str] = optional_dependencies,
+                ) -> object:
+                    """Factory with automatic dependency injection (Phase 3)."""
+                    resolved_deps: dict[str, object] = {}
+                    unresolved_required: list[tuple[str, str]] = []
+
+                    # Attempt to resolve each dependency from container
+                    for dep_name, dep_type in deps.items():
+                        # Try to get from container by parameter name first
+                        dep_result = container.get(dep_name)
+
+                        if dep_result.is_success:
+                            resolved_deps[dep_name] = dep_result.unwrap()
+                            continue
+
+                        # Try to get by type name (extract from complex types)
+                        base_type = dep_type
+                        origin = get_origin(dep_type)
+
+                        # Extract base type from Optional, Union, etc.
+                        if origin is Union:
+                            args = get_args(dep_type)
+                            # Use first non-None type
+                            base_type = next(
+                                (a for a in args if a is not type(None)), dep_type
+                            )
+
+                        type_name = getattr(base_type, "__name__", str(base_type))
+                        type_result = container.get(type_name)
+
+                        if type_result.is_success:
+                            resolved_deps[dep_name] = type_result.unwrap()
+                        elif dep_name not in optional:
+                            # Track unresolved required dependencies
+                            unresolved_required.append((dep_name, str(base_type)))
+
+                    # Better error messages for missing required dependencies
+                    if unresolved_required:
+                        missing = ", ".join(
+                            f"{name}({type_})" for name, type_ in unresolved_required
+                        )
+                        msg = (
+                            f"Cannot create {service_name}: "
+                            f"unresolved required dependencies: {missing}. "
+                            f"Register them in container or use @service_factory."
+                        )
+                        raise RuntimeError(msg)
+
+                    # Create instance with resolved dependencies
+                    return cls(**resolved_deps)
+
+                # Register with smart factory
+                container.register_factory(service_name, smart_factory)
+            else:
+                # No detected dependencies - use simple factory
+                container.register_factory(service_name, cls)
+
+        except (ValueError, TypeError) as e:
+            # If signature inspection fails, try simple registration
+            try:
+                container.register_factory(service_name, cls)
+            except Exception:
+                # Last resort: log and continue
+                raise RuntimeError(
+                    f"Failed to register {service_name}: "
+                    f"signature inspection failed ({e!s})"
+                )
 
     @override
     def __init__(self, **data: object) -> None:

@@ -208,9 +208,8 @@ class TestResultCoverageSurgical:
     def test_result_enter_exit_failure(self) -> None:
         """Test context manager with failure raises."""
         r = FlextResult[str].fail("error")
-        with pytest.raises(FlextExceptions.BaseError):
-            with r:
-                pass
+        with pytest.raises(FlextExceptions.BaseError), r:
+            pass
 
     def test_result_getitem_zero_success(self) -> None:
         """Test r[0] returns data on success."""

@@ -34,28 +34,32 @@ from flext_core.typings import (
     CallableOutputT,
     FlextTypes,
 )
-from flext_core.utilities import FlextUtilities
+from flext_core.utilities import FlextMetrics, FlextUtilities
 
 
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     """Base class for CQRS command and query handlers.
 
-    Implements FlextProtocols.Handler through structural typing. All handler
-    subclasses automatically satisfy the Handler protocol by implementing the
-    required methods: handle(), validate(), and __call__().
+    Implements FlextProtocols.Handler[MessageT_contra] through structural typing.
+    All handler subclasses automatically satisfy the Handler protocol by
+    implementing the required methods: handle(), validate(), __call__(),
+    can_handle(), execute(), validate_command(), and validate_query().
 
     Provides the foundation for implementing CQRS handlers with validation,
     execution context, metrics collection, and configuration management.
     Supports commands, queries, events, and sagas with type safety.
 
     Protocol Compliance:
-        - execute(message: T) -> FlextResult[R] - Execute handler with message
-        - handle(message: T) -> FlextResult[R] - Abstract method for implementation
-        - __call__(input_data: T) -> FlextResult[R] - Callable interface
-        - validate(data: FlextTypes.AcceptableMessageType) -> FlextResult[None] - Validate input data
+        ✅ STRUCTURAL TYPING: Implements FlextProtocols.Handler[MessageT_contra]
+
+        Implemented Protocol Methods:
+        - handle(message: MessageT_contra) -> object - Abstract method for subclasses
+        - execute(message: MessageT_contra) -> object - Execute handler with message
+        - __call__(input_data: MessageT_contra) -> object - Callable interface
+        - validate(data: FlextTypes.AcceptableMessageType) -> FlextResult[None] - Validate input
         - validate_command(command: FlextTypes.AcceptableMessageType) -> FlextResult[None] - Validate command
         - validate_query(query: FlextTypes.AcceptableMessageType) -> FlextResult[None] - Validate query
-        - can_handle(message_type: type[T]) -> bool - Check handler capability
+        - can_handle(message_type: object) -> bool - Check handler capability
 
     Features:
     - Abstract base for command/query/event handlers
@@ -77,8 +81,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         ...         return FlextResult[User].ok(User(name=command.name))
         >>>
         >>> handler = CreateUserHandler(config=...)
-        >>> # FlextHandlers instances satisfy FlextProtocols.Handler protocol
-        >>> assert isinstance(handler, FlextProtocols.Handler)
+        >>> # FlextHandlers explicitly implements FlextProtocols.Handler
+        >>> assert isinstance(handler, FlextProtocols.Handler)  # ✅ Protocol satisfied
+        >>> assert handler.can_handle(CreateUserCommand)  # ✅ Handler validation
+        >>> result = handler.execute(CreateUserCommand(name="Alice"))  # ✅ Execution
     """
 
     # Class-level logger for internal operations (not for subclass use)
@@ -112,64 +118,137 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
             """
             # Check for custom validation methods first
+            custom_validation = cls._validate_custom_method(message, operation)
+            if custom_validation is not None:
+                return custom_validation
+
+            # Validate Pydantic models
+            pydantic_validation = cls._validate_pydantic_model(
+                message, operation, revalidate_pydantic_messages
+            )
+            if pydantic_validation is not None:
+                return pydantic_validation
+
+            # Validate message serialization for non-Pydantic objects
+            return cls._validate_message_serialization(message, operation)
+
+        @classmethod
+        def _validate_custom_method(
+            cls,
+            message: object,
+            operation: str,
+        ) -> FlextResult[None] | None:
+            """Check for and execute custom validation method.
+
+            Args:
+                message: The message object to validate
+                operation: The operation name
+
+            Returns:
+                FlextResult error if custom validation failed, None if no validation or success
+
+            """
             validation_method_name = f"validate_{operation}"
-            if hasattr(message, validation_method_name):
-                validation_method = getattr(message, validation_method_name)
-                if callable(validation_method):
-                    try:
-                        sig = inspect.signature(validation_method)
-                        if len(sig.parameters) == 0:
-                            validation_result_obj = validation_method()
-                            if isinstance(validation_result_obj, FlextResult):
-                                validation_result: FlextResult[object] = cast(
-                                    "FlextResult[object]",
-                                    validation_result_obj,
-                                )
-                                if validation_result.is_failure:
-                                    return FlextResult[None].fail(
-                                        validation_result.error
-                                        or f"{operation} validation failed",
-                                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                                    )
-                    except Exception as e:
-                        # VALIDATION HIERARCHY - User data validation (HIGH)
-                        # Validation methods on user data can raise any exception
-                        # Safe behavior: log and continue with next validation
-                        FlextHandlers._internal_logger.debug(
-                            f"Skipping validation method {validation_method_name}: {type(e).__name__}"
-                        )
+            if not hasattr(message, validation_method_name):
+                return None
 
-            # If message is a Pydantic model, assume validated unless revalidation requested
-            if isinstance(message, BaseModel):
-                if not revalidate_pydantic_messages:
-                    return FlextResult[None].ok(None)
+            validation_method = getattr(message, validation_method_name)
+            if not callable(validation_method):
+                return None
 
-                try:
-                    message.__class__.model_validate(message.model_dump(mode="python"))
-                    return FlextResult[None].ok(None)
-                except Exception as e:
-                    # VALIDATION HIERARCHY - Pydantic model revalidation (HIGH)
-                    # User model_validate() can raise any exception
-                    # Safe behavior: capture validation error with full context
-                    validation_error = FlextExceptions.ValidationError(
-                        f"Pydantic revalidation failed: {e}",
-                        field="pydantic_model",
-                        value=str(message)[: FlextConstants.Defaults.MAX_MESSAGE_LENGTH]
-                        if hasattr(message, "__str__")
-                        else "unknown",
-                        correlation_id=f"pydantic_validation_{int(time.time() * 1000)}",
-                        metadata={
-                            "validation_details": f"pydantic_exception: {e!s}, model_class: {message.__class__.__name__}, revalidated: True",
-                            "context": f"operation: {operation}, message_type: {type(message).__name__}, validation_type: pydantic_revalidation",
-                        },
-                    )
+            try:
+                sig = inspect.signature(validation_method)
+                if len(sig.parameters) != 0:
+                    return None
+
+                validation_result_obj = validation_method()
+                if not isinstance(validation_result_obj, FlextResult):
+                    return None
+
+                validation_result: FlextResult[object] = cast(
+                    "FlextResult[object]",
+                    validation_result_obj,
+                )
+                if validation_result.is_failure:
                     return FlextResult[None].fail(
-                        str(validation_error),
-                        error_code=validation_error.error_code,
-                        error_data={"exception_context": str(validation_error)},
+                        validation_result.error or f"{operation} validation failed",
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
+            except Exception as e:
+                # VALIDATION HIERARCHY - User data validation (HIGH)
+                # Validation methods on user data can raise any exception
+                # Safe behavior: log and continue with next validation
+                FlextHandlers._internal_logger.debug(
+                    f"Skipping validation method {validation_method_name}: {type(e).__name__}"
+                )
 
-            # For non-Pydantic objects, ensure serializable representation can be constructed
+            return None
+
+        @classmethod
+        def _validate_pydantic_model(
+            cls,
+            message: object,
+            operation: str,
+            revalidate: bool,
+        ) -> FlextResult[None] | None:
+            """Validate Pydantic models.
+
+            Args:
+                message: The message object
+                operation: The operation name
+                revalidate: Whether to revalidate Pydantic models
+
+            Returns:
+                FlextResult error if validation failed, None if not a Pydantic model
+
+            """
+            if not isinstance(message, BaseModel):
+                return None
+
+            if not revalidate:
+                return FlextResult[None].ok(None)
+
+            try:
+                message.__class__.model_validate(message.model_dump(mode="python"))
+                return FlextResult[None].ok(None)
+            except Exception as e:
+                # VALIDATION HIERARCHY - Pydantic model revalidation (HIGH)
+                # User model_validate() can raise any exception
+                # Safe behavior: capture validation error with full context
+                validation_error = FlextExceptions.ValidationError(
+                    f"Pydantic revalidation failed: {e}",
+                    field="pydantic_model",
+                    value=str(message)[: FlextConstants.Defaults.MAX_MESSAGE_LENGTH]
+                    if hasattr(message, "__str__")
+                    else "unknown",
+                    correlation_id=f"pydantic_validation_{int(time.time() * 1000)}",
+                    metadata={
+                        "validation_details": f"pydantic_exception: {e!s}, model_class: {message.__class__.__name__}, revalidated: True",
+                        "context": f"operation: {operation}, message_type: {type(message).__name__}, validation_type: pydantic_revalidation",
+                    },
+                )
+                return FlextResult[None].fail(
+                    str(validation_error),
+                    error_code=validation_error.error_code,
+                    error_data={"exception_context": str(validation_error)},
+                )
+
+        @classmethod
+        def _validate_message_serialization(
+            cls,
+            message: object,
+            operation: str,
+        ) -> FlextResult[None]:
+            """Validate message serialization for non-Pydantic objects.
+
+            Args:
+                message: The message object
+                operation: The operation name
+
+            Returns:
+                FlextResult: Success if serializable, failure otherwise
+
+            """
             try:
                 cls._build_serializable_message_payload(message, operation=operation)
             except Exception as exc:
@@ -356,16 +435,21 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         # Default to False if not specified
         return False
 
-    def can_handle(self, message_type: type[object]) -> bool:
+    def can_handle(self, message_type: object) -> bool:
         """Check if this handler can handle the given message type.
 
+        Implements FlextProtocols.Handler.can_handle() with type checking.
+
         Args:
-            message_type: The type of message to check (type-safe parameter)
+            message_type: The type of message to check
 
         Returns:
             bool: True if this handler can handle the message type
 
         """
+        # Cast to type for internal checking
+        if not isinstance(message_type, type):
+            return False
         return FlextUtilities.TypeChecker.can_handle_message_type(
             self._accepted_message_types, message_type
         )
@@ -546,7 +630,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         message_type: str = str(type(message).__name__)
 
         # Log start
-        FlextHandlers.Metrics.log_handler_start(
+        FlextMetrics.log_handler_start(
             self.logger,
             self.mode,
             message_type,
@@ -555,7 +639,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         # Validate operation matches handler mode
         if operation != self.mode:
-            FlextHandlers.Metrics.log_mode_validation_error(
+            FlextMetrics.log_mode_validation_error(
                 logger=self.logger,
                 error_message=f"Handler with mode '{self.mode}' cannot execute {operation} pipelines",
                 expected_mode=self.mode,
@@ -568,7 +652,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         # Validate message can be handled
         message_type_obj: type[object] = type(message)
         if not self.can_handle(cast("type[MessageT_contra]", message_type_obj)):
-            FlextHandlers.Metrics.log_handler_cannot_handle(
+            FlextMetrics.log_handler_cannot_handle(
                 logger=self.logger,
                 error_message=f"Handler cannot handle message type {message_type}",
                 handler_name=self.handler_name,
@@ -579,7 +663,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             )
 
         # Validate message
-        FlextHandlers.Metrics.log_handler_processing(
+        FlextMetrics.log_handler_processing(
             self.logger,
             self.mode,
             message_type,
@@ -600,7 +684,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         try:
             result = self.handle(cast("MessageT_contra", message))
             execution_time_ms = (time.time() - start_time) * 1000
-            FlextHandlers.Metrics.log_handler_completion(
+            FlextMetrics.log_handler_completion(
                 self.logger,
                 self.mode,
                 message_type,
@@ -615,7 +699,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             # Safe behavior: capture error, log metrics, return failure result
             execution_time_ms = (time.time() - start_time) * 1000
             exception_type = type(e).__name__
-            FlextHandlers.Metrics.log_handler_error(
+            FlextMetrics.log_handler_error(
                 self.logger,
                 self.mode,
                 message_type,
@@ -623,7 +707,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 execution_time_ms=execution_time_ms,
                 exception_type=exception_type,
             )
-            FlextHandlers.Metrics.log_handler_completion(
+            FlextMetrics.log_handler_completion(
                 self.logger,
                 self.mode,
                 message_type,
@@ -865,128 +949,6 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 f"Context pop failed: {e}",
                 error_code="CONTEXT_ERROR",
             )
-
-    class Metrics:
-        """Metrics logging utilities for handlers."""
-
-        @staticmethod
-        def log_handler_start(
-            logger: FlextLogger | None,
-            handler_mode: str,
-            message_type: str,
-            message_id: str,
-        ) -> None:
-            """Log handler start event with structured logging."""
-            if logger is not None:
-                logger.info(
-                    "starting_handler_pipeline",
-                    handler_mode=handler_mode,
-                    message_type=message_type,
-                    message_id=message_id,
-                )
-
-        @staticmethod
-        def log_handler_processing(
-            logger: FlextLogger | None,
-            handler_mode: str,
-            message_type: str,
-            message_id: str,
-        ) -> None:
-            """Log handler processing event with structured logging."""
-            if logger is not None:
-                logger.debug(
-                    "processing_message",
-                    handler_mode=handler_mode,
-                    message_type=message_type,
-                    message_id=message_id,
-                )
-
-        @staticmethod
-        def log_handler_completion(
-            logger: FlextLogger | None,
-            handler_mode: str,
-            message_type: str,
-            message_id: str,
-            execution_time_ms: float,
-            *,  # keyword-only arguments
-            success: bool,
-        ) -> None:
-            """Log handler completion event with structured logging."""
-            # Always use info() for both success and failure
-            if logger is not None:
-                logger.info(
-                    "handler_pipeline_completed",
-                    handler_mode=handler_mode,
-                    message_type=message_type,
-                    message_id=message_id,
-                    execution_time_ms=execution_time_ms,
-                    success=success,
-                )
-
-        @staticmethod
-        def log_handler_error(
-            logger: FlextLogger | None,
-            handler_mode: str,
-            message_type: str,
-            message_id: str,
-            execution_time_ms: float | None = None,
-            exception_type: str | None = None,
-            error_code: str | None = None,
-            correlation_id: str | None = None,
-        ) -> None:
-            """Log handler error event with structured logging."""
-            if logger is not None:
-                kwargs: dict[str, object] = {
-                    "handler_mode": handler_mode,
-                    "message_type": message_type,
-                    "message_id": message_id,
-                }
-                if execution_time_ms is not None:
-                    kwargs["execution_time_ms"] = (
-                        execution_time_ms  # Keep as float - tests expect this
-                    )
-                if exception_type is not None:
-                    kwargs["exception_type"] = exception_type
-                if error_code is not None:
-                    kwargs["error_code"] = error_code
-                if correlation_id is not None:
-                    kwargs["correlation_id"] = correlation_id
-
-                logger.error("handler_critical_failure", **kwargs)
-
-        @staticmethod
-        def log_mode_validation_error(
-            logger: FlextLogger | None,
-            error_message: str,
-            expected_mode: str | None = None,
-            actual_mode: str | None = None,
-        ) -> None:
-            """Log mode validation error with structured logging."""
-            if logger is not None:
-                kwargs = {"error_message": error_message}
-                if expected_mode is not None:
-                    kwargs["expected_mode"] = expected_mode
-                if actual_mode is not None:
-                    kwargs["actual_mode"] = actual_mode
-
-                logger.error("invalid_handler_mode", **kwargs)
-
-        @staticmethod
-        def log_handler_cannot_handle(
-            logger: FlextLogger | None,
-            error_message: str,
-            handler_name: str | None = None,
-            message_type: str | None = None,
-        ) -> None:
-            """Log handler cannot handle message type with structured logging."""
-            if logger is not None:
-                kwargs = {"error_message": error_message}
-                if handler_name is not None:
-                    kwargs["handler_name"] = handler_name
-                if message_type is not None:
-                    kwargs["message_type"] = message_type
-
-                logger.error("handler_cannot_handle", **kwargs)
 
 
 __all__: list[str] = [

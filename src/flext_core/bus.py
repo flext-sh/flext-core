@@ -14,10 +14,10 @@ from __future__ import annotations
 
 import inspect
 import time
-from collections import OrderedDict
 from collections.abc import Callable, Mapping
 from typing import cast
 
+from cachetools import LRUCache
 from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
@@ -68,7 +68,6 @@ class FlextBus(
         - Distributed tracing with correlation IDs
 
     Nested Protocol Implementations:
-        - FlextBus._Cache - Private LRU cache manager for query result caching
         - Event Publisher Protocol - publish_event, subscribe, unsubscribe methods
         - Middleware Pipeline - FlextProtocols.Middleware support for all middleware
 
@@ -97,64 +96,6 @@ class FlextBus(
         True  # Bus instances satisfy CommandBus protocol via structural typing
     """
 
-    class _Cache:
-        """Private cache manager for command/query result caching."""
-
-        def __init__(
-            self, max_size: int = FlextConstants.Container.MAX_CACHE_SIZE
-        ) -> None:
-            """Initialize cache manager.
-
-            Args:
-                max_size: Maximum number of cached results
-
-            """
-            super().__init__()
-            # Use OrderedDict runtime type with explicit annotation
-            self._cache: OrderedDict[str, FlextResult[object]] = OrderedDict()
-            self._max_size = max_size
-
-        def get(self, key: str) -> FlextResult[object] | None:
-            """Get cached result by key.
-
-            Args:
-                key: Cache key
-
-            Returns:
-                Cached result or None if not found
-
-            """
-            result = self._cache.get(key)
-            if result is not None:
-                self._cache.move_to_end(key)
-            return result
-
-        def put(self, key: str, result: FlextResult[object]) -> None:
-            """Store result in cache.
-
-            Args:
-                key: Cache key
-                result: Result to cache
-
-            """
-            self._cache[key] = result
-            self._cache.move_to_end(key)
-            while len(self._cache) > self._max_size:
-                self._cache.popitem(last=False)
-
-        def clear(self) -> None:
-            """Clear all cached results."""
-            self._cache.clear()
-
-        def size(self) -> int:
-            """Get current cache size.
-
-            Returns:
-                Number of cached items
-
-            """
-            return len(self._cache)
-
     def __init__(
         self,
         bus_config: FlextModels.Cqrs.Bus | None = None,
@@ -181,9 +122,9 @@ class FlextBus(
         # Auto-discovery handlers (single-arg registration)
         self._auto_handlers: list[object] = []
 
-        # Cache configuration - use dedicated CqrsCache manager
-        self._cache: FlextBus._Cache = FlextBus._Cache(
-            max_size=self._config_model.max_cache_size
+        # Cache configuration - use LRUCache from cachetools
+        self._cache: LRUCache[str, FlextResult[object]] = LRUCache(
+            maxsize=self._config_model.max_cache_size
         )
 
         # Timing
@@ -300,12 +241,9 @@ class FlextBus(
 
             # BREAKING CHANGE (Phase 6): Require standard handle() method
             # Enforces type-safe handler interface across entire ecosystem
-            method_name = FlextConstants.Mixins.METHOD_HANDLE
-            handle_method = getattr(handler, method_name, None)
-            if not callable(handle_method):
-                return FlextResult[None].fail(
-                    f"Invalid handler: must have callable '{method_name}' method. Handlers must implement handle(message) -> FlextResult[object]"
-                )
+            validation_result = self._validate_handler_interface(handler)
+            if validation_result.is_failure:
+                return validation_result
 
             # Add to auto-discovery list
             self._auto_handlers.append(handler)
@@ -345,12 +283,12 @@ class FlextBus(
                 return FlextResult[None].fail("Command type cannot be empty")
 
             # BREAKING CHANGE (Phase 6): Validate handler interface
-            method_name = FlextConstants.Mixins.METHOD_HANDLE
-            handle_method = getattr(handler, method_name, None)
-            if not callable(handle_method):
-                return FlextResult[None].fail(
-                    f"Invalid handler for '{command_type_obj}': must have callable '{method_name}' method. Handlers must implement handle(message) -> FlextResult[object]"
-                )
+            validation_result = self._validate_handler_interface(
+                handler,
+                handler_context=f"handler for '{command_type_obj}'",
+            )
+            if validation_result.is_failure:
+                return validation_result
 
             key = self._normalize_command_key(command_type_obj)
             self._handlers[key] = handler
@@ -365,6 +303,32 @@ class FlextBus(
         return FlextResult[None].fail(
             f"register_handler takes 1 or 2 arguments but {len(args)} were given",
         )
+
+    def _validate_handler_interface(
+        self,
+        handler: object,
+        handler_context: str = "handler",
+    ) -> FlextResult[None]:
+        """Validate that handler has required handle() interface.
+
+        Private helper to eliminate duplication in register_handler validation.
+
+        Args:
+            handler: Handler object to validate
+            handler_context: Context string for error messages (e.g., "handler", "command_type handler")
+
+        Returns:
+            FlextResult[None]: Success if valid, failure if handler missing handle() method
+
+        """
+        method_name = FlextConstants.Mixins.METHOD_HANDLE
+        handle_method = getattr(handler, method_name, None)
+        if not callable(handle_method):
+            return FlextResult[None].fail(
+                f"Invalid {handler_context}: must have callable '{method_name}' method. "
+                f"Handlers must implement handle(message) -> FlextResult[object]"
+            )
+        return FlextResult[None].ok(None)
 
     def find_handler(
         self, command: FlextTypes.BusMessageType
@@ -420,65 +384,18 @@ class FlextBus(
 
             self._execution_count = int(self._execution_count) + 1
 
-            # Validate command if it has custom validation method
-            # (not Pydantic field validator)
-            if isinstance(command, FlextProtocols.HasValidateCommand):
-                validation_method = command.validate_command
-                # Check if it's a custom validation method (callable without parameters)
-                # and returns a FlextResult (not a Pydantic field validator)
-                if callable(validation_method):
-                    try:
-                        # Try to call without parameters to see if custom method
-                        sig = inspect.signature(validation_method)
-                        # Allow 0 parameters (staticmethod) or 1 parameter
-                        # (instance method with self)
-                        if len(sig.parameters) <= 1:
-                            validation_result: object = validation_method()
-                            if (
-                                hasattr(validation_result, "is_failure")
-                                and hasattr(validation_result, "error")
-                                and getattr(validation_result, "is_failure", False)
-                            ):
-                                self.logger.warning(
-                                    "Command validation failed",
-                                    command_type=command_type.__name__,
-                                    validation_error=getattr(
-                                        validation_result,
-                                        "error",
-                                        "Unknown validation error",
-                                    ),
-                                )
-                                return FlextResult[object].fail(
-                                    getattr(
-                                        validation_result,
-                                        "error",
-                                        "Command validation failed",
-                                    )
-                                    or "Command validation failed",
-                                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                                )
-                    except (TypeError, AttributeError) as e:
-                        # TypeError: validator() doesn't accept 0 parameters
-                        # AttributeError: 'field' attribute missing
-                        # Likely a Pydantic field validator - skip custom validation
-                        self.logger.debug("Skipping Pydantic field validator: %s", e)
+            # Validate command
+            validation_error = self._validate_command(command, command_type)
+            if validation_error is not None:
+                return validation_error
 
-            is_query = hasattr(command, "query_id") or "Query" in command_type.__name__
-
-            should_consider_cache = self._config_model.enable_caching and is_query
-            cache_key: str | None = None
-            if should_consider_cache:
-                # Generate a more deterministic cache key
-                cache_key = self._generate_cache_key(command, command_type)
-                cached_result: FlextResult[object] | None = self._cache.get(cache_key)
-                if cached_result is not None:
-                    self.logger.debug(
-                        "Returning cached query result",
-                        command_type=command_type.__name__,
-                        cache_key=cache_key,
-                    )
-                    # cached_result is already FlextResult[object]
-                    return cached_result
+            # Check cache for query results
+            is_query = self._is_query(command, command_type)
+            cached_result = self._check_cache_for_result(
+                command, command_type, is_query
+            )
+            if cached_result is not None:
+                return cached_result
 
             self.logger.debug(
                 "execute_command",
@@ -491,10 +408,9 @@ class FlextBus(
                 execution_count=self._execution_count,
             )
 
-            # Prefer auto-discovery among single-arg handlers for compatibility
+            # Resolve handler
             handler = self.find_handler(command)
             if handler is None:
-                # If still no handler, report
                 handler_names = [h.__class__.__name__ for h in self._auto_handlers]
                 self.logger.error(
                     "No handler found",
@@ -516,22 +432,159 @@ class FlextBus(
                     error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
                 )
 
-            # Execute the handler with timing
-            self._start_time = time.time()
-            result: FlextResult[object] = self._execute_handler(handler, command)
-            elapsed = time.time() - self._start_time
+            # Execute handler and cache results
+            return self._execute_and_cache(handler, command, command_type, is_query)
 
-            # Cache successful query results
-            if result.is_success and should_consider_cache and cache_key is not None:
-                self._cache.put(cache_key, result)
-                self.logger.debug(
-                    "Cached query result",
+    def _validate_command(
+        self,
+        command: FlextTypes.BusMessageType,
+        command_type: type[FlextTypes.BusMessageType],
+    ) -> FlextResult[object] | None:
+        """Validate command if it has custom validation method.
+
+        Args:
+            command: The command to validate
+            command_type: The type of the command
+
+        Returns:
+            FlextResult error if validation failed, None if valid or no validator
+
+        """
+        # Validate command if it has custom validation method
+        # (not Pydantic field validator)
+        if not isinstance(command, FlextProtocols.HasValidateCommand):
+            return None
+
+        validation_method = command.validate_command
+        if not callable(validation_method):
+            return None
+
+        try:
+            # Try to call without parameters to see if custom method
+            sig = inspect.signature(validation_method)
+            # Allow 0 parameters (staticmethod) or 1 parameter (instance method)
+            if len(sig.parameters) > 1:
+                return None
+
+            validation_result: object = validation_method()
+            if (
+                hasattr(validation_result, "is_failure")
+                and hasattr(validation_result, "error")
+                and getattr(validation_result, "is_failure", False)
+            ):
+                self.logger.warning(
+                    "Command validation failed",
                     command_type=command_type.__name__,
-                    cache_key=cache_key,
-                    execution_time=elapsed,
+                    validation_error=getattr(
+                        validation_result,
+                        "error",
+                        "Unknown validation error",
+                    ),
                 )
+                return FlextResult[object].fail(
+                    getattr(
+                        validation_result,
+                        "error",
+                        "Command validation failed",
+                    )
+                    or "Command validation failed",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+        except (TypeError, AttributeError) as e:
+            # TypeError: validator() doesn't accept 0 parameters
+            # AttributeError: 'field' attribute missing
+            # Likely a Pydantic field validator - skip custom validation
+            self.logger.debug("Skipping Pydantic field validator: %s", e)
 
-            return result
+        return None
+
+    def _is_query(
+        self,
+        command: FlextTypes.BusMessageType,
+        command_type: type[FlextTypes.BusMessageType],
+    ) -> bool:
+        """Determine if command is a query (cacheable).
+
+        Args:
+            command: The command object
+            command_type: The type of the command
+
+        Returns:
+            bool: True if command is a query
+
+        """
+        return hasattr(command, "query_id") or "Query" in command_type.__name__
+
+    def _check_cache_for_result(
+        self,
+        command: FlextTypes.BusMessageType,
+        command_type: type[FlextTypes.BusMessageType],
+        is_query: bool,
+    ) -> FlextResult[object] | None:
+        """Check cache for query result and return if found.
+
+        Args:
+            command: The command object
+            command_type: The type of the command
+            is_query: Whether command is a query
+
+        Returns:
+            Cached FlextResult if found, None if not cacheable or not cached
+
+        """
+        should_consider_cache = self._config_model.enable_caching and is_query
+        if not should_consider_cache:
+            return None
+
+        cache_key = self._generate_cache_key(command, command_type)
+        cached_result: FlextResult[object] | None = self._cache.get(cache_key)
+        if cached_result is not None:
+            self.logger.debug(
+                "Returning cached query result",
+                command_type=command_type.__name__,
+                cache_key=cache_key,
+            )
+            return cached_result
+
+        return None
+
+    def _execute_and_cache(
+        self,
+        handler: object,
+        command: FlextTypes.BusMessageType,
+        command_type: type[FlextTypes.BusMessageType],
+        is_query: bool,
+    ) -> FlextResult[object]:
+        """Execute handler and cache result if applicable.
+
+        Args:
+            handler: The handler to execute
+            command: The command to execute
+            command_type: The type of the command
+            is_query: Whether command is a query
+
+        Returns:
+            Execution result
+
+        """
+        # Execute the handler with timing
+        self._start_time = time.time()
+        result: FlextResult[object] = self._execute_handler(handler, command)
+        elapsed = time.time() - self._start_time
+
+        # Cache successful query results
+        should_cache = self._config_model.enable_caching and is_query
+        if result.is_success and should_cache:
+            cache_key = self._generate_cache_key(command, command_type)
+            self._cache[cache_key] = result
+            self.logger.debug(
+                "Cached query result",
+                command_type=command_type.__name__,
+                cache_key=cache_key,
+                execution_time=elapsed,
+            )
+
+        return result
 
     def process(
         self,
@@ -1010,8 +1063,8 @@ class FlextBus(
         """Set cached value (CacheManager protocol)."""
         try:
             if not hasattr(self, "_cache"):
-                self._cache = FlextBus._Cache()
-            self._cache.put(key, FlextResult[object].ok(value))
+                self._cache = LRUCache(maxsize=self._config_model.max_cache_size)
+            self._cache[key] = FlextResult[object].ok(value)
             return FlextResult[None].ok(None)
         except (AttributeError, TypeError, ValueError) as e:
             # AttributeError: _cache missing put() method

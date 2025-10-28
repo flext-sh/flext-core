@@ -38,7 +38,7 @@ class FlextCoreAPIAnalyzer(ast.NodeVisitor):
                 "file": self.current_file,
                 "line": node.lineno,
                 "type": "class",
-                "nested_classes": []
+                "nested_classes": [],
             })
 
         # Store current class for nested classes
@@ -63,7 +63,7 @@ class FlextCoreAPIAnalyzer(ast.NodeVisitor):
                 "is_property": any(
                     isinstance(d, ast.Name) and d.id == "property"
                     for d in node.decorator_list
-                )
+                ),
             })
 
         self.generic_visit(node)
@@ -95,10 +95,13 @@ class WorkspaceAPIUsageAnalyzer:
                             "file": str(py_file.relative_to(FLEXT_CORE_ROOT)),
                             "type": "main_class",
                             "methods": [
-                                m.name for m in node.body
-                                if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))
+                                m.name
+                                for m in node.body
+                                if isinstance(
+                                    m, (ast.FunctionDef, ast.AsyncFunctionDef)
+                                )
                                 and not m.name.startswith("_")
-                            ]
+                            ],
                         }
                         break
             except Exception as e:
@@ -112,7 +115,9 @@ class WorkspaceAPIUsageAnalyzer:
             for api_name in self.api_definitions:
                 if api_name in content:
                     self.usage_count[api_name] += content.count(api_name)
-                    self.usage_files[api_name].add(str(filepath.relative_to(WORKSPACE_ROOT)))
+                    self.usage_files[api_name].add(
+                        str(filepath.relative_to(WORKSPACE_ROOT))
+                    )
         except (OSError, UnicodeDecodeError) as e:
             # Skip files that can't be read - log at debug level
             print(f"Warning: Could not read {filepath}: {e}", file=sys.stderr)
@@ -143,13 +148,9 @@ class WorkspaceAPIUsageAnalyzer:
         """Generate analysis report."""
         total_apis = len(self.api_definitions)
         unused_apis = [
-            api for api in self.api_definitions
-            if self.usage_count[api] == 0
+            api for api in self.api_definitions if self.usage_count[api] == 0
         ]
-        used_apis = [
-            api for api in self.api_definitions
-            if self.usage_count[api] > 0
-        ]
+        used_apis = [api for api in self.api_definitions if self.usage_count[api] > 0]
 
         # Sort by usage count
         used_apis.sort(key=lambda x: self.usage_count[x], reverse=True)
@@ -165,7 +166,7 @@ class WorkspaceAPIUsageAnalyzer:
                 {
                     "name": api,
                     "definition": self.api_definitions[api],
-                    "recommendation": "Can be deprecated or removed"
+                    "recommendation": "Can be deprecated or removed",
                 }
                 for api in unused_apis
             ],
@@ -174,7 +175,7 @@ class WorkspaceAPIUsageAnalyzer:
                     "name": api,
                     "usage_count": self.usage_count[api],
                     "file_count": len(self.usage_files[api]),
-                    "definition": self.api_definitions[api]
+                    "definition": self.api_definitions[api],
                 }
                 for api in used_apis[:20]
             ],
@@ -182,10 +183,10 @@ class WorkspaceAPIUsageAnalyzer:
                 api: {
                     "definition": self.api_definitions[api],
                     "usage_count": self.usage_count[api],
-                    "files_using": list(self.usage_files[api])[:5]
+                    "files_using": list(self.usage_files[api])[:5],
                 }
                 for api in sorted(self.api_definitions.keys())
-            }
+            },
         }
 
 
@@ -222,7 +223,9 @@ def main() -> None:
     # Print top used APIs
     print("✅ Top 10 Most Used APIs:")
     for i, api in enumerate(report["top_used_apis"][:10], 1):
-        print(f"   {i}. {api['name']}: {api['usage_count']} usages in {api['file_count']} files")
+        print(
+            f"   {i}. {api['name']}: {api['usage_count']} usages in {api['file_count']} files"
+        )
     print()
 
     # Save report

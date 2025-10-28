@@ -12,9 +12,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from typing import ClassVar, cast
+from typing import ClassVar, TypeVar, cast
 
 from flext_core.config import FlextConfig
 from flext_core.container import FlextContainer
@@ -762,6 +762,346 @@ class FlextMixins:
 
         # Clear FlextContext operation name
         FlextContext.Request.set_operation_name("")
+
+    class Validation:
+        """Unified validation patterns using railway-oriented programming.
+
+        This nested class provides centralized validation helpers for composable
+        error handling using FlextResult monad. Supports validation chains with
+        railway-oriented programming (ROP) patterns.
+
+        **Architecture**: Layer 2 Domain Layer - Reusable validation patterns
+
+        **Pattern**: All validators return FlextResult[None] to indicate success/failure.
+        Validation chains compose using flat_map for monadic composition.
+
+        **Example**:
+
+            ```python
+            from flext_core import FlextMixins, FlextResult
+
+            def validate_name(value: str) -> FlextResult[None]:
+                if not value:
+                    return FlextResult.fail("Name required")
+                return FlextResult.ok(None)
+
+            def validate_email(value: str) -> FlextResult[None]:
+                if "@" not in value:
+                    return FlextResult.fail("Valid email required")
+                return FlextResult.ok(None)
+
+            # Chain validators using ROP pattern
+            user_data = {"name": "John", "email": "john@example.com"}
+
+            result = FlextMixins.Validation.validate_with_result(
+                user_data,
+                [
+                    lambda d: validate_name(d["name"]),
+                    lambda d: validate_email(d["email"]),
+                ]
+            )
+
+            if result.is_success:
+                processed_data = result.unwrap()
+            else:
+                error_message = result.error
+            ```
+
+        """
+
+        T = TypeVar("T")
+
+        @staticmethod
+        def validate_with_result(
+            data: FlextMixins.Validation.T,
+            validators: list[
+                Callable[[FlextMixins.Validation.T], FlextResult[None]]
+            ],
+        ) -> FlextResult[FlextMixins.Validation.T]:
+            """Chain multiple validators using railway-oriented programming.
+
+            Applies validators sequentially using monadic composition with
+            flat_map. If any validator fails, stops immediately and returns
+            the error. Success means all validators passed.
+
+            Args:
+                data: The data to validate (any type T)
+                validators: List of validator functions, each returning
+                           FlextResult[None] to indicate pass/fail
+
+            Returns:
+                FlextResult[T]: Success with original data if all validators pass,
+                              or failure with error message from first failure
+
+            **Success Path**:
+            All validators return FlextResult[None].ok(None) → Returns FlextResult[T].ok(data)
+
+            **Failure Path**:
+            Any validator returns FlextResult[None].fail(msg) → Returns FlextResult[T].fail(msg)
+
+            """
+            result: FlextResult[FlextMixins.Validation.T] = FlextResult.ok(data)
+
+            for validator in validators:
+                # Bind validator to default argument to avoid loop variable capture
+                result = result.flat_map(
+                    lambda d, v=validator: v(d).map(lambda _: d)
+                )
+
+            return result
+
+    class ResultHelpers:
+        """Helper utilities for monadic result operations and composition.
+
+        This nested class provides advanced helpers for working with FlextResult
+        monads, supporting functional composition patterns throughout the FLEXT
+        ecosystem.
+
+        **Architecture**: Layer 2 Domain Layer - Monadic operation helpers
+
+        **Example**:
+
+            ```python
+            from flext_core import FlextMixins, FlextResult
+
+            results = [
+                FlextResult[int].ok(1),
+                FlextResult[int].ok(2),
+                FlextResult[int].ok(3),
+            ]
+
+            # Sequence: convert list of Results into Result of list
+            combined = FlextMixins.ResultHelpers.sequence(results)
+
+            if combined.is_success:
+                values = combined.unwrap()  # [1, 2, 3]
+            ```
+
+        """
+
+        T = TypeVar("T")
+
+        @staticmethod
+        def sequence(
+            results: list[FlextResult[FlextMixins.ResultHelpers.T]],
+        ) -> FlextResult[list[FlextMixins.ResultHelpers.T]]:
+            """Convert list of Results into Result of list.
+
+            Combines multiple FlextResult instances. If any fails, returns first
+            failure. Success means all results succeeded.
+
+            Args:
+                results: List of FlextResult instances
+
+            Returns:
+                FlextResult[list[T]]: Success with list of values, or first failure
+
+            """
+            values: list[FlextMixins.ResultHelpers.T] = []
+
+            for result in results:
+                if result.is_failure:
+                    return FlextResult.fail(result.error)
+                values.append(result.unwrap())
+
+            return FlextResult[list["FlextMixins.ResultHelpers.T"]].ok(values)
+
+        @staticmethod
+        def validate_all(
+            items: list[FlextMixins.ResultHelpers.T],
+            validator: Callable[
+                [FlextMixins.ResultHelpers.T], FlextResult[None]
+            ],
+        ) -> FlextResult[list[FlextMixins.ResultHelpers.T]]:
+            """Validate all items using single validator function.
+
+            Applies validator to every item. If any fails, stops immediately.
+            Success means all items passed validation.
+
+            Args:
+                items: List of items to validate
+                validator: Function returning FlextResult[None]
+
+            Returns:
+                FlextResult[list[T]]: Success with items, or first failure
+
+            """
+            for item in items:
+                validation_result = validator(item)
+                if validation_result.is_failure:
+                    return FlextResult.fail(validation_result.error)
+
+            return FlextResult[list["FlextMixins.ResultHelpers.T"]].ok(items)
+
+        @staticmethod
+        def compose_with_first_success(
+            results: list[FlextResult[object]],
+            default_value: object | None = None,
+        ) -> FlextResult[object]:
+            """Compose multiple results, returning first success or default.
+
+            Useful when trying multiple operations and wanting first success.
+            Falls back to default_value if all fail.
+
+            Args:
+                results: List of FlextResult instances
+                default_value: Value to return if all fail (default: None)
+
+            Returns:
+                FlextResult: First success or default value
+
+            """
+            for result in results:
+                if result.is_success:
+                    return FlextResult[object].ok(result.unwrap())
+
+            if default_value is not None:
+                return FlextResult[object].ok(default_value)
+
+            return FlextResult[object].fail(
+                "All operations failed and no default value provided"
+            )
+
+    class ProtocolValidation:
+        """Type-safe protocol compliance validation utilities.
+
+        Provides methods for runtime checking whether objects satisfy
+        specific protocol interfaces. Used during component registration,
+        dependency injection, and architectural validation.
+
+        Part of Phase 2.4: Protocol Enforcement Enhancements.
+        """
+
+        @staticmethod
+        def is_handler(obj: object) -> bool:
+            """Check if object satisfies FlextProtocols.Handler protocol.
+
+            Validates that object implements all required handler methods with
+            correct signatures for CQRS patterns.
+
+            Args:
+                obj: Object to validate against Handler protocol
+
+            Returns:
+                bool: True if object satisfies Handler protocol
+
+            """
+            # Import here to avoid circular imports
+            from flext_core.protocols import FlextProtocols
+
+            return isinstance(obj, FlextProtocols.Handler)
+
+        @staticmethod
+        def is_service(obj: object) -> bool:
+            """Check if object satisfies FlextProtocols.Service protocol.
+
+            Validates that object implements all required service methods:
+            execute, validate_business_rules, validate_config, is_valid,
+            and get_service_info.
+
+            Args:
+                obj: Object to validate against Service protocol
+
+            Returns:
+                bool: True if object satisfies Service protocol
+
+            """
+            # Import here to avoid circular imports
+            from flext_core.protocols import FlextProtocols
+
+            return isinstance(obj, FlextProtocols.Service)
+
+        @staticmethod
+        def is_command_bus(obj: object) -> bool:
+            """Check if object satisfies FlextProtocols.CommandBus protocol.
+
+            Validates that object implements command bus methods:
+            register_handler, execute, add_middleware.
+
+            Args:
+                obj: Object to validate against CommandBus protocol
+
+            Returns:
+                bool: True if object satisfies CommandBus protocol
+
+            """
+            # Import here to avoid circular imports
+            from flext_core.protocols import FlextProtocols
+
+            return isinstance(obj, FlextProtocols.CommandBus)
+
+        @staticmethod
+        def validate_protocol_compliance(
+            obj: object,
+            protocol_name: str,
+        ) -> FlextResult[None]:
+            """Validate object compliance with named protocol.
+
+            Provides detailed error message if object doesn't satisfy protocol.
+
+            Args:
+                obj: Object to validate
+                protocol_name: Name of protocol (e.g., "Handler", "Service", "CommandBus")
+
+            Returns:
+                FlextResult[None]: Success if compliant, failure with error message
+
+            """
+            # Import here to avoid circular imports
+            from flext_core.protocols import FlextProtocols
+
+            protocol_map = {
+                "Handler": FlextProtocols.Handler,
+                "Service": FlextProtocols.Service,
+                "CommandBus": FlextProtocols.CommandBus,
+                "Repository": FlextProtocols.Repository,
+                "Configurable": FlextProtocols.Configurable,
+            }
+
+            if protocol_name not in protocol_map:
+                return FlextResult.fail(
+                    f"Unknown protocol: {protocol_name}. "
+                    f"Supported: {', '.join(protocol_map.keys())}"
+                )
+
+            protocol = protocol_map[protocol_name]
+            if isinstance(obj, protocol):
+                return FlextResult.ok(None)
+
+            return FlextResult.fail(
+                f"Object {type(obj).__name__} does not satisfy "
+                f"protocol {protocol_name}. "
+                f"Verify all required methods are implemented."
+            )
+
+        @staticmethod
+        def validate_processor_protocol(obj: object) -> FlextResult[None]:
+            """Validate object satisfies processor protocol.
+
+            Checks that processor has required methods: process() and validate().
+
+            Args:
+                obj: Object to validate as processor
+
+            Returns:
+                FlextResult[None]: Success if processor is valid, failure with message
+
+            """
+            required_methods = ["process", "validate"]
+
+            for method_name in required_methods:
+                if not hasattr(obj, method_name):
+                    return FlextResult.fail(
+                        f"Processor {type(obj).__name__} missing required "
+                        f"method '{method_name}()'. "
+                        f"Processors must implement: {', '.join(required_methods)}"
+                    )
+                if not callable(getattr(obj, method_name)):
+                    return FlextResult.fail(
+                        f"Processor {type(obj).__name__}.{method_name} is not callable"
+                    )
+
+            return FlextResult.ok(None)
 
 
 __all__ = [
