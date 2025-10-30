@@ -124,7 +124,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
             # Validate Pydantic models
             pydantic_validation = cls._validate_pydantic_model(
-                message, operation, revalidate_pydantic_messages
+                message, operation, revalidate=revalidate_pydantic_messages
             )
             if pydantic_validation is not None:
                 return pydantic_validation
@@ -189,6 +189,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             cls,
             message: object,
             operation: str,
+            *,
             revalidate: bool,
         ) -> FlextResult[None] | None:
             """Validate Pydantic models.
@@ -821,7 +822,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     return FlextResult[CallableOutputT].fail(str(e))
 
             @override
-            def can_handle(self, message_type: type[object]) -> bool:
+            def can_handle(self, message_type: object) -> bool:
                 """Override can_handle for callable wrappers to enable auto-discovery.
 
                 Callable wrappers created via from_callable may have method-local TypeVars

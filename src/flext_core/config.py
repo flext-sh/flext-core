@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import Any, ClassVar, Self, TypeVar, cast
+from typing import Any, ClassVar, Self, TypeVar
 
 from dependency_injector import providers
 from pydantic import (
@@ -504,8 +504,8 @@ class FlextConfig(BaseSettings):
     @classmethod
     def create_from_env(
         cls,
-        env_prefix: str | None = None,
-        env_file: str | None = None,
+        _env_prefix: str | None = None,
+        _env_file: str | None = None,
         overrides: dict[str, Any] | None = None,
     ) -> Any:  # Returns FlextResult[T_Config], but avoiding circular import
         """Create configuration from environment variables.
@@ -522,10 +522,10 @@ class FlextConfig(BaseSettings):
         5. Returns FlextResult with config or error
 
         Args:
-            env_prefix: Optional environment variable prefix (e.g., "MYPROJECT_")
-                       If provided, updates the config_class's model_config.
-                       If not provided, uses class's configured prefix.
-            env_file: Optional path to .env file for loading environment variables
+            _env_prefix: Optional environment variable prefix (e.g., "MYPROJECT_")
+                        If provided, updates the config_class's model_config.
+                        If not provided, uses class's configured prefix.
+            _env_file: Optional path to .env file for loading environment variables
             overrides: Optional dictionary of field overrides to apply after
                       environment binding. Values are validated against field types.
 
@@ -538,7 +538,7 @@ class FlextConfig(BaseSettings):
         try:
             # Create configuration instance - Pydantic automatically reads env vars
             # based on the model_config's env_prefix and other settings
-            config: Self = cast("Self", cls())
+            config = cls()
 
             # Apply overrides if provided
             if overrides:

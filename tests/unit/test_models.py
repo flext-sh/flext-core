@@ -15,7 +15,10 @@ from unittest.mock import patch
 import pytest
 from pydantic import Field, field_validator
 
-from flext_core import FlextModels
+from flext_core import (
+    FlextConstants,
+    FlextModels,
+)
 
 
 # Test fixture classes defined at module level for proper Pydantic resolution
@@ -811,3 +814,234 @@ class TestFlextModels:
         json_data = event.model_dump_json()
         assert '"event_type":"test_event"' in json_data
         assert '"aggregate_id":"aggregate-123"' in json_data
+
+    def test_command_model_creation(self) -> None:
+        """Test Command model creation with correct fields."""
+        # Command has: message_type, command_type, issuer_id (+ id, created_at from mixins)
+        command = FlextModels.Command(
+            command_type="CreateOrder", issuer_id="issuer-123"
+        )
+
+        assert command.command_type == "CreateOrder"
+        assert command.issuer_id == "issuer-123"
+        assert command.message_type == "command"
+        assert command.id is not None
+        assert command.created_at is not None
+
+    def test_metadata_model_creation(self) -> None:
+        """Test Metadata model creation with correct fields."""
+        # Metadata has: created_by, created_at, modified_by, modified_at, tags, attributes
+        meta = FlextModels.Metadata(
+            created_by="user-123",
+            modified_by="user-456",
+            tags=["important", "urgent"],
+            attributes={"priority": "high"},
+        )
+
+        assert meta.created_by == "user-123"
+        assert meta.modified_by == "user-456"
+        assert len(meta.tags) == 2
+        assert meta.attributes["priority"] == "high"
+
+    def test_payload_model_creation(self) -> None:
+        """Test Payload model creation with required data field."""
+        # Payload[T] has: data (required), metadata, expires_at, correlation_id, source_service, message_type
+        payload = FlextModels.Payload(
+            data={"order_id": "123"}, correlation_id="corr-abc"
+        )
+
+        assert payload.data == {"order_id": "123"}
+        assert payload.correlation_id == "corr-abc"
+        assert payload.message_type is None
+
+    def test_processing_request_model_creation(self) -> None:
+        """Test ProcessingRequest model with correct fields."""
+        # ProcessingRequest has: operation_id, data, context, timeout_seconds, retry_attempts, enable_validation
+        request = FlextModels.ProcessingRequest(
+            data={"input": "data"}, enable_validation=True
+        )
+
+        assert request.data == {"input": "data"}
+        assert request.enable_validation is True
+        assert request.operation_id is not None
+
+    def test_handler_registration_model_creation(self) -> None:
+        """Test HandlerRegistration model with correct fields."""
+
+        # HandlerRegistration has: name, handler (callable), event_types, priority
+        def dummy_handler() -> None:
+            pass
+
+        reg = FlextModels.HandlerRegistration(
+            name="TestHandler",
+            handler=dummy_handler,
+            event_types=["CreateUser"],
+            priority=5,
+        )
+
+        assert reg.name == "TestHandler"
+        assert callable(reg.handler)
+        assert "CreateUser" in reg.event_types
+
+    def test_batch_processing_config_model(self) -> None:
+        """Test BatchProcessingConfig model with correct fields."""
+        # BatchProcessingConfig has: batch_size, max_workers, timeout_per_item, continue_on_error, data_items
+        config = FlextModels.BatchProcessingConfig(
+            batch_size=100, continue_on_error=True, data_items=[1, 2, 3]
+        )
+
+        assert config.batch_size == 100
+        assert config.continue_on_error is True
+        assert len(config.data_items) == 3
+
+    def test_handler_execution_config_model(self) -> None:
+        """Test HandlerExecutionConfig model with correct fields."""
+        # HandlerExecutionConfig has: handler_name, input_data, execution_context, timeout_seconds, retry_on_failure, max_retries, fallback_handlers
+        config = FlextModels.HandlerExecutionConfig(
+            handler_name="my_handler",
+            input_data={"key": "value"},
+            retry_on_failure=True,
+        )
+
+        assert config.handler_name == "my_handler"
+        assert config.input_data == {"key": "value"}
+        assert config.retry_on_failure is True
+
+    def test_retry_configuration_model(self) -> None:
+        """Test RetryConfiguration model with correct fields."""
+        # RetryConfiguration has: max_attempts (le=3), initial_delay_seconds, max_delay_seconds, exponential_backoff, backoff_multiplier, retry_on_exceptions, retry_on_status_codes
+        retry = FlextModels.RetryConfiguration(
+            max_attempts=3,
+            initial_delay_seconds=1000,
+            max_delay_seconds=30000,
+            backoff_multiplier=2.0,
+        )
+
+        assert retry.max_attempts == 3
+        assert retry.initial_delay_seconds == 1000
+        assert retry.backoff_multiplier == 2.0
+
+    def test_validation_configuration_model(self) -> None:
+        """Test ValidationConfiguration model with correct fields."""
+        # ValidationConfiguration has: enable_strict_mode, max_validation_errors, validate_on_assignment, validate_on_read, custom_validators
+        val_config = FlextModels.ValidationConfiguration(
+            enable_strict_mode=True, validate_on_assignment=True, validate_on_read=False
+        )
+
+        assert val_config.enable_strict_mode is True
+        assert val_config.validate_on_assignment is True
+
+    def test_conditional_execution_request_model(self) -> None:
+        """Test ConditionalExecutionRequest model with correct fields."""
+
+        # ConditionalExecutionRequest has: condition (callable), true_action (callable), false_action (callable), context
+        def condition_func(v: object) -> bool:
+            return True
+
+        def true_func() -> None:
+            pass
+
+        cond_req = FlextModels.ConditionalExecutionRequest(
+            condition=condition_func, true_action=true_func, context={"test": "value"}
+        )
+
+        assert callable(cond_req.condition)
+        assert callable(cond_req.true_action)
+        assert cond_req.context["test"] == "value"
+
+    def test_state_initialization_request_model(self) -> None:
+        """Test StateInitializationRequest model with correct fields."""
+        # StateInitializationRequest has: data, state_key, initial_value, ttl_seconds, persistence_level, field_name, state
+        state_init = FlextModels.StateInitializationRequest(
+            data="state_data",
+            state_key="key-123",
+            initial_value="initial",
+            state="initialized",
+        )
+
+        assert state_init.state_key == "key-123"
+        assert state_init.initial_value == "initial"
+        assert state_init.state == "initialized"
+
+    def test_cqrs_handler_model_creation(self) -> None:
+        """Test Cqrs.Handler model creation."""
+        # Cqrs.Handler has: handler_id, handler_name, handler_type, handler_mode, command_timeout, max_command_retries, metadata
+        handler_config = FlextModels.Cqrs.Handler(
+            handler_id="handler-123",
+            handler_name="CreateUserHandler",
+            handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+        )
+
+        assert handler_config.handler_id == "handler-123"
+        assert handler_config.handler_name == "CreateUserHandler"
+
+    def test_pagination_model_creation(self) -> None:
+        """Test Pagination model with correct fields."""
+        # Pagination has: page, size (plus computed offset and limit)
+        paging = FlextModels.Pagination(page=1, size=20)
+
+        assert paging.page == 1
+        assert paging.size == 20
+        assert paging.offset == 0  # Computed field
+
+    def test_query_model_creation(self) -> None:
+        """Test Query model with validators."""
+        # Query has: message_type, filters, pagination, query_id, query_type
+        query = FlextModels.Query(
+            filters={"user_id": "user-456"},
+            pagination={"page": 1, "size": 20},
+            query_type="GetOrdersByUser",
+        )
+
+        assert query.filters["user_id"] == "user-456"
+        assert query.query_type == "GetOrdersByUser"
+        assert isinstance(query.pagination, FlextModels.Pagination)
+
+    def test_context_data_model_creation(self) -> None:
+        """Test ContextData model with validators."""
+        # ContextData has: data (dict), metadata (dict) with JSON-serializable validation
+        ctx = FlextModels.ContextData(
+            data={"request_id": "req-456", "user_id": "user-123"},
+            metadata={"source": "api"},
+        )
+
+        assert ctx.data["request_id"] == "req-456"
+        assert ctx.metadata["source"] == "api"
+
+    def test_context_export_model_creation(self) -> None:
+        """Test ContextExport model creation."""
+        # ContextExport has: data, metadata, statistics (all dicts) with JSON-serializable validation
+        export = FlextModels.ContextExport(
+            data={"key": "value"},
+            metadata={"version": "1.0"},
+            statistics={"sets": 10, "gets": 20},
+        )
+
+        assert export.data["key"] == "value"
+        assert export.statistics["sets"] == 10
+
+    def test_handler_execution_context_model(self) -> None:
+        """Test HandlerExecutionContext model creation."""
+        # HandlerExecutionContext has: handler_name, handler_mode (+ private attributes for timing)
+        context = FlextModels.HandlerExecutionContext.create_for_handler(
+            handler_name="ProcessOrderCommand", handler_mode="command"
+        )
+
+        assert context.handler_name == "ProcessOrderCommand"
+        assert context.handler_mode == "command"
+        # Verify model can be created and has required fields
+        assert isinstance(context, FlextModels.HandlerExecutionContext)
+
+    def test_registration_details_model(self) -> None:
+        """Test RegistrationDetails model creation."""
+        # RegistrationDetails has: registration_id, handler_mode, timestamp, status
+        details = FlextModels.RegistrationDetails(
+            registration_id="reg-123",
+            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+            timestamp="2025-01-01T00:00:00Z",
+            status="running",
+        )
+
+        assert details.registration_id == "reg-123"
+        assert details.status == "running"

@@ -39,6 +39,7 @@ except ValueError as e:
 ```
 
 **Why it's wrong**:
+
 - Exceptions are for exceptional (unexpected) conditions, not business logic
 - Multiple exception types make error handling verbose
 - Stack traces pollute logs
@@ -68,6 +69,7 @@ else:
 ```
 
 **Benefits**:
+
 - Clear success/failure semantics
 - Composable with `flat_map`
 - No exception overhead
@@ -91,6 +93,7 @@ def load_config() -> dict:
 ```
 
 **Why it's wrong**:
+
 - Problems go unnoticed in production
 - Debugging becomes impossible
 - Cascading failures downstream
@@ -121,6 +124,7 @@ def load_config() -> FlextResult[dict]:
 ```
 
 **Benefits**:
+
 - Errors are visible
 - Error context is preserved
 - Downstream code can react
@@ -172,6 +176,7 @@ def process_data(data: Any) -> Any:
 ```
 
 **Why it's wrong**:
+
 - Type checker can't validate
 - IDE autocomplete doesn't work
 - Errors only discovered at runtime
@@ -280,6 +285,7 @@ from flext_core.config import FlextConfig  # result is lower than config
 ```
 
 **Why it's wrong**:
+
 - Creates import order dependencies
 - Breaks code organization
 - Hard to understand dependencies
@@ -329,6 +335,7 @@ from flext_core.models import FlextModels, DomainModel, ValueObject
 ```
 
 **Why it's wrong**:
+
 - Breaks modularity principle
 - Makes dependencies unclear
 - Hard to find where things are defined
@@ -385,6 +392,7 @@ class FlextMeltano:
 ```
 
 **Why it's wrong**:
+
 - Hard to understand
 - Hard to test
 - Hard to reuse
@@ -437,6 +445,7 @@ def service_b():
 ```
 
 **Why it's wrong**:
+
 - Defeats singleton pattern
 - Each container has its own services
 - Different code paths get different instances
@@ -472,6 +481,7 @@ service = container.get("non_existent").unwrap()  # CRASH!
 ```
 
 **Why it's wrong**:
+
 - Code assumes service exists
 - Runtime crashes on missing service
 - No error context
@@ -583,6 +593,7 @@ if money1 == money2:
 ```
 
 **Why it's wrong**:
+
 - Value semantics require immutability
 - Modification breaks equality
 - Shared references cause problems
@@ -630,6 +641,7 @@ def connect_database():
 ```
 
 **Why it's wrong**:
+
 - Can't change per environment
 - Secrets in source code
 - Hard to deploy to different environments
@@ -665,6 +677,7 @@ def connect_database():
 ```
 
 Usage:
+
 ```bash
 # Development
 DB_HOSTING=localhost DB_PORT=5432 DB_DATABASE=flext_dev \
@@ -727,6 +740,7 @@ except ValidationError as e:
 ## Summary: Anti-Pattern Checklist
 
 ### Error Handling
+
 - ✅ Use `FlextResult` for business logic errors
 - ✅ Include error codes and metadata
 - ✅ Never swallow errors silently
@@ -734,6 +748,7 @@ except ValidationError as e:
 - ❌ Don't ignore error information
 
 ### Type Safety
+
 - ✅ Use specific types, not `Any`
 - ✅ Use `get_typed()` for container retrieval
 - ✅ Add type hints to all parameters
@@ -741,6 +756,7 @@ except ValidationError as e:
 - ❌ Don't lose type information
 
 ### Architecture
+
 - ✅ Respect layer hierarchy (downward only)
 - ✅ One class per module with `Flext` prefix
 - ✅ Import from `__init__.py`, not internal modules
@@ -748,6 +764,7 @@ except ValidationError as e:
 - ❌ Don't create god objects
 
 ### Dependency Injection
+
 - ✅ Use `FlextContainer.get_global()`
 - ✅ Check `FlextResult` before using services
 - ✅ Register services during initialization
@@ -755,6 +772,7 @@ except ValidationError as e:
 - ❌ Don't assume service exists
 
 ### Models
+
 - ✅ Use `FlextModels` for DDD patterns
 - ✅ Wrap validation in `FlextResult`
 - ✅ Make value objects immutable
@@ -762,6 +780,7 @@ except ValidationError as e:
 - ❌ Don't validate without error handling
 
 ### Configuration
+
 - ✅ Use `pydantic_settings.BaseSettings`
 - ✅ Validate configuration on load
 - ✅ Use environment variables
@@ -780,4 +799,3 @@ except ValidationError as e:
 ---
 
 **Updated**: 2025-10-21 | **Version**: 0.9.9 | **Based on**: Actual FLEXT ecosystem patterns and lessons learned
-

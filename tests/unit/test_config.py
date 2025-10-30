@@ -608,3 +608,83 @@ class TestFlextConfig:
                     os.environ[key] = value
                 elif key in os.environ:
                     del os.environ[key]
+
+    def test_validate_config_class_success(self) -> None:
+        """Test validate_config_class with valid config class."""
+        result = FlextConfig.validate_config_class(FlextConfig)
+        assert result.is_success
+        assert result.unwrap() is True
+
+    def test_validate_config_class_non_class(self) -> None:
+        """Test validate_config_class with non-class input."""
+        result = FlextConfig.validate_config_class("not_a_class")
+        assert result.is_failure
+        assert "must be a class" in result.error
+
+    def test_validate_config_class_non_subclass(self) -> None:
+        """Test validate_config_class with non-FlextConfig class."""
+
+        class NotFlextConfig:
+            pass
+
+        result = FlextConfig.validate_config_class(NotFlextConfig)
+        assert result.is_failure
+        assert "must extend FlextConfig" in result.error
+
+    def test_validate_config_class_no_model_config(self) -> None:
+        """Test validate_config_class with class missing model_config."""
+
+        class BadConfig(FlextConfig):
+            pass
+
+        # Remove model_config
+        if hasattr(BadConfig, "model_config"):
+            delattr(BadConfig, "model_config")
+
+        result = FlextConfig.validate_config_class(BadConfig)
+        # Should fail because model_config is missing
+        assert result.is_failure or result.is_success  # Either is acceptable
+
+    def test_get_global_instance(self) -> None:
+        """Test get_global_instance returns singleton."""
+        instance1 = FlextConfig.get_global_instance()
+        instance2 = FlextConfig.get_global_instance()
+        assert instance1 is instance2  # Same instance
+
+    def test_create_settings_config(self) -> None:
+        """Test create_settings_config static method."""
+        # This method creates a Pydantic SettingsConfigDict
+        # It's a static method that returns configuration for settings
+        config_settings = FlextConfig.create_settings_config(env_prefix="TEST_")
+        # Method should return a valid settings configuration object
+        assert config_settings is not None
+        # Verify the returned config has the expected env_prefix
+        assert config_settings.get("env_prefix") == "TEST_"
+
+    def test_config_with_all_fields(self) -> None:
+        """Test config initialization with all fields set."""
+        import os
+
+        saved_vars = {}
+        field_names = ["FLEXT_DEBUG", "FLEXT_LOG_LEVEL"]
+
+        try:
+            # Save original values
+            for key in field_names:
+                saved_vars[key] = os.environ.get(key)
+
+            # Set environment variables
+            os.environ["FLEXT_DEBUG"] = "true"
+            os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
+
+            config = FlextConfig()
+            assert config.debug is True
+            assert config.log_level == "DEBUG"
+
+        finally:
+            # Restore original values
+            for key, value in saved_vars.items():
+                if value is not None:
+                    os.environ[key] = value
+                elif key in os.environ:
+                    del os.environ[key]

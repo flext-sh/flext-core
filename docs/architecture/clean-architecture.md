@@ -29,6 +29,7 @@ FLEXT-Core implements **Clean Architecture** principles with a strict 5-layer hi
 ## CRITICAL RULE: Unidirectional Dependencies
 
 **Dependencies flow INWARD ONLY:**
+
 - Layer 4 can import from Layers 3, 2, 1, 0.5, 0
 - Layer 3 can import from Layers 2, 1, 0.5, 0
 - Layer 2 can import from Layers 1, 0.5, 0
@@ -54,6 +55,7 @@ import requests  # NO! (Layer 0 has zero dependencies)
 **Purpose:** Immutable constants, type definitions, protocols - no external dependencies.
 
 **Files:**
+
 - `constants.py` - 50+ error codes, validation patterns
 - `typings.py` - 50+ TypeVars, type aliases
 - `protocols.py` - Runtime-checkable interfaces
@@ -76,6 +78,7 @@ class FlextConstants:
 **Purpose:** Bridge to external libraries WITHOUT importing Layer 1+.
 
 **Files:**
+
 - `runtime.py` - structlog, dependency_injector integration
 
 **Rule:** Can import external libraries, but NOT other flext_core layers.
@@ -94,6 +97,7 @@ from flext_core.constants import FlextConstants  # ✅ Layer 0 only
 **Purpose:** Core reusable primitives that depend only on Layers 0.5 and 0.
 
 **Files:**
+
 - `result.py` - FlextResult[T] monad
 - `container.py` - Dependency injection singleton
 - `exceptions.py` - Exception hierarchy
@@ -114,6 +118,7 @@ class FlextResult:
 **Purpose:** Business logic, domain entities, validation rules.
 
 **Files:**
+
 - `models.py` - Entity, Value, AggregateRoot base classes
 - `service.py` - Domain service base class
 - `mixins.py` - Reusable domain behaviors
@@ -141,6 +146,7 @@ class UserService(FlextService):
 **Purpose:** Application orchestration - command handlers, query handlers, event processors.
 
 **Files:**
+
 - `handlers.py` - Message handler registry
 - `bus.py` - Central message bus
 - `dispatcher.py` - Unified dispatcher
@@ -171,6 +177,7 @@ class CreateUserHandler:
 **Purpose:** Configuration, logging, context management, external integrations.
 
 **Files:**
+
 - `config.py` - FlextConfig (Pydantic Settings)
 - `loggings.py` - FlextLogger (structlog)
 - `context.py` - FlextContext (correlation IDs, tracing)
@@ -413,6 +420,7 @@ class FlextResult:
 ## Summary
 
 FLEXT-Core Clean Architecture:
+
 - ✅ 5-layer strict hierarchy with unidirectional dependencies
 - ✅ Each layer has clear responsibility
 - ✅ Independent testability at each layer

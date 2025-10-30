@@ -9,6 +9,7 @@ FlextModels provides domain-driven design (DDD) patterns through semantic base c
 ### Domain-Driven Design (DDD)
 
 DDD is an approach to software development that emphasizes:
+
 1. **Ubiquitous Language**: Domain experts and developers use the same terminology
 2. **Bounded Contexts**: Clear boundaries around domain concepts
 3. **Entity Invariants**: Objects protect their own business rules
@@ -854,7 +855,7 @@ if result.is_success:
 
 ## Best Practices
 
-### 1. Protect Invariants in __init__
+### 1. Protect Invariants in **init**
 
 ```python
 # ✅ CORRECT - Validate in constructor
@@ -929,4 +930,3 @@ def add_to_cart(cart, item):
 ---
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_models.py` for 200+ test cases demonstrating DDD patterns with FlextModels.
-

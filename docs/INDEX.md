@@ -9,27 +9,32 @@
 ## 🎯 Quick Navigation
 
 ### For First-Time Users
+
 1. **[Getting Started Guide](./guides/getting-started.md)** - Installation and basic usage
 2. **[Architecture Overview](./architecture/overview.md)** - System design and layer hierarchy
 3. **[Quick Examples](../examples/)** - Working code samples (00-15)
 
 ### For Developers
+
 - **[Railway-Oriented Programming](./guides/railway-oriented-programming.md)** - Error handling patterns
 - **[Dependency Injection Advanced](./guides/dependency-injection-advanced.md)** - Service management
 - **[Domain-Driven Design](./guides/domain-driven-design.md)** - Entity and value object patterns
 - **[Best Practices & Anti-Patterns](./guides/anti-patterns-best-practices.md)** - Common mistakes and solutions
 
 ### For API Reference
+
 - **[Foundation Layers (0, 0.5, 1)](./api-reference/foundation.md)** - Core types and utilities
 - **[Domain Layer (2)](./api-reference/domain.md)** - Models, services, and domain patterns
 - **[Application Layer (3)](./api-reference/application.md)** - Handlers, bus, and dispatchers
 - **[Infrastructure Layer (4)](./api-reference/infrastructure.md)** - Config, logging, context
 
 ### For Standards & Development
+
 - **[Development Standards](./standards/development.md)** - Code quality, testing, and quality gates
 - **[Contributing Guide](./development/contributing.md)** - How to contribute to FLEXT-Core
 
 ### For Modernization
+
 - **[Pydantic v2 Modernization Plan](./pydantic-v2-modernization/README.md)** - 9-part plan (9 parts + 8 appendices)
   - Status: Planning Complete, Execution Pending
   - Timeline: 3 weeks for ecosystem migration
@@ -97,33 +102,39 @@ docs/
 ## 🏗️ Architecture Layers
 
 ### Layer 0: Pure Constants (Zero Dependencies)
+
 - **Module**: `FlextConstants` - 50+ error codes, validation patterns, configuration defaults
 - **Module**: `FlextTypes` - Type system with 50+ TypeVars, protocols, type aliases
 - **Module**: `FlextProtocols` - Runtime-checkable interfaces
 - **Docs**: [Foundation API Reference](./api-reference/foundation.md)
 
 ### Layer 0.5: Runtime Bridge (External Libraries)
+
 - **Module**: `FlextRuntime` - Type guards, serialization, logging utilities
 - **Provides**: Structured logging, JSON serialization, email/URL validation
 - **Docs**: [Foundation API Reference](./api-reference/foundation.md)
 
 ### Layer 1: Foundation (Core Patterns)
+
 - **Module**: `FlextResult[T]` - Railway pattern for error handling
 - **Module**: `FlextContainer` - Dependency injection singleton
 - **Module**: `FlextExceptions` - Exception hierarchy with error codes
 - **Docs**: [Foundation API Reference](./api-reference/foundation.md), [Railway Patterns](./guides/railway-oriented-programming.md)
 
 ### Layer 2: Domain (Business Logic)
+
 - **Modules**: `FlextModels`, `FlextService`, `FlextMixins`, `FlextUtilities`
 - **Patterns**: DDD entities, value objects, domain services
 - **Docs**: [Domain API Reference](./api-reference/domain.md), [DDD Guide](./guides/domain-driven-design.md)
 
 ### Layer 3: Application (Use Cases)
+
 - **Modules**: `FlextHandlers`, `FlextBus`, `FlextDispatcher`, `FlextRegistry`, `FlextProcessors`
 - **Patterns**: CQRS handlers, event bus, message processing
 - **Docs**: [Application API Reference](./api-reference/application.md)
 
 ### Layer 4: Infrastructure (External Resources)
+
 - **Modules**: `FlextConfig`, `FlextLogger`, `FlextContext`, `FlextDecorators`
 - **Patterns**: Configuration management, structured logging, context tracking
 - **Docs**: [Infrastructure API Reference](./api-reference/infrastructure.md)
@@ -133,11 +144,13 @@ docs/
 ## 🔄 Modernization Initiatives
 
 ### Pydantic v2 Modernization (📋 Planned)
+
 **Status**: Plan complete, awaiting execution  
 **Timeline**: 3 weeks (foundation first, then ecosystem)  
 **Impact**: 33 FLEXT projects, improved performance, reduced code duplication
 
 **Key Deliverables**:
+
 - 9-part comprehensive modernization plan
 - 8 appendices with API reference, examples, troubleshooting
 - Automated audit script and migration tools
@@ -151,12 +164,14 @@ docs/
 ## 📖 Learning Path
 
 ### Beginner Path (4-6 hours)
+
 1. [Getting Started](./guides/getting-started.md)
 2. [Railway-Oriented Programming](./guides/railway-oriented-programming.md)
 3. [Foundation API Reference](./api-reference/foundation.md)
 4. Examples 01-03: Basic patterns
 
 ### Intermediate Path (8-12 hours)
+
 1. [Dependency Injection Advanced](./guides/dependency-injection-advanced.md)
 2. [Domain-Driven Design](./guides/domain-driven-design.md)
 3. [Domain API Reference](./api-reference/domain.md)
@@ -164,6 +179,7 @@ docs/
 5. Examples 04-08: Intermediate patterns
 
 ### Advanced Path (12-16 hours)
+
 1. [Best Practices & Anti-Patterns](./guides/anti-patterns-best-practices.md)
 2. [Infrastructure API Reference](./api-reference/infrastructure.md)
 3. [Architecture Overview](./architecture/overview.md)
@@ -171,6 +187,7 @@ docs/
 5. [Integration Patterns](./architecture/INTEGRATION_PATTERNS.md)
 
 ### Contributing Path (4-6 hours)
+
 1. [Development Standards](./standards/development.md)
 2. [Contributing Guide](./development/contributing.md)
 3. [Anti-Patterns Guide](./guides/anti-patterns-best-practices.md)
@@ -180,6 +197,7 @@ docs/
 ## 🔍 Cross-References
 
 ### By Feature
+
 - **Error Handling**: [Railway Patterns](./guides/railway-oriented-programming.md) → [Foundation API](./api-reference/foundation.md)
 - **Dependency Injection**: [DI Guide](./guides/dependency-injection-advanced.md) → [Domain API](./api-reference/domain.md)
 - **Data Models**: [DDD Guide](./guides/domain-driven-design.md) → [Domain API](./api-reference/domain.md)
@@ -187,6 +205,7 @@ docs/
 - **Testing**: [Development Standards](./standards/development.md) → [Contributing](./development/contributing.md)
 
 ### By Use Case
+
 - **Building a Service**: Getting Started → DI Guide → DDD Guide → Examples 02, 04-07
 - **Creating a Handler**: Getting Started → Application API → Examples 07, 14
 - **Configuring App**: Getting Started → Infrastructure API → Examples 04

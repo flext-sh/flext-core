@@ -6,7 +6,7 @@ Reusable templates for creating consistent FLEXT-Core documentation.
 
 Use for new feature documentation (guides/ directory).
 
-```markdown
+````markdown
 # [Feature Name] Guide
 
 [One sentence: What is this and why use it?]
@@ -16,6 +16,7 @@ Use for new feature documentation (guides/ directory).
 [2-3 paragraphs explaining the feature]
 
 **Key Features:**
+
 - Feature 1
 - Feature 2
 - Feature 3
@@ -29,6 +30,7 @@ from flext_core import [Import]
 
 # Your example here
 ```
+````
 
 ### Common Patterns
 
@@ -51,6 +53,7 @@ from flext_core import [Import]
 [Description]
 
 **Usage:**
+
 ```python
 # Example
 ```
@@ -60,6 +63,7 @@ from flext_core import [Import]
 [Description]
 
 **Usage:**
+
 ```python
 # Example
 ```
@@ -109,7 +113,8 @@ from flext_core import [Import]
 - [Related Guide 1](link)
 - [Related Guide 2](link)
 - [API Reference](link)
-```
+
+````
 
 ## API Reference Template
 
@@ -143,9 +148,10 @@ Use for API documentation (api-reference/ directory).
 from flext_core import [Import]
 
 # Example usage
-```
+````
 
 **See Also:**
+
 - `related_method()`: [Why related]
 
 ### Properties
@@ -157,16 +163,17 @@ from flext_core import [Import]
 **Description:** [What represents?]
 
 **Example:**
+
 ```python
 obj.property_name  # Access property
 ```
 
 ## Quality Metrics
 
-| Component | Coverage | Status | Description |
-|-----------|----------|--------|-------------|
-| `file1.py` | XX% | ✅/🔄 | Description |
-| `file2.py` | XX% | ✅/🔄 | Description |
+| Component  | Coverage | Status | Description |
+| ---------- | -------- | ------ | ----------- |
+| `file1.py` | XX%      | ✅/🔄  | Description |
+| `file2.py` | XX%      | ✅/🔄  | Description |
 
 ## Usage Examples
 
@@ -182,7 +189,8 @@ obj.property_name  # Access property
 
 - [Related API Reference](link)
 - [How-To Guide](link)
-```
+
+````
 
 ## Troubleshooting Template
 
@@ -208,14 +216,16 @@ Use for troubleshooting guides (guides/troubleshooting.md or similar).
 **Solution 1: [Approach Name]**
 ```bash
 # Commands or code
-```
+````
 
 **Solution 2: [Approach Name]**
+
 ```bash
 # Commands or code
 ```
 
 **When to check:**
+
 - When X happens
 - When Y is configured as Z
 
@@ -226,7 +236,8 @@ Use for troubleshooting guides (guides/troubleshooting.md or similar).
 ### Issue: [Problem Description]
 
 [Same format as above]
-```
+
+````
 
 ## Architecture Decision Record (ADR) Template
 
@@ -262,13 +273,13 @@ Use for architecture/decisions.md.
 ### Related Decisions
 - [Related ADR](link)
 - [Related pattern](link)
-```
+````
 
 ## Best Practices Guide Template
 
 Use for comprehensive guide on patterns/best practices.
 
-```markdown
+````markdown
 # [Topic] Best Practices
 
 [Intro: Why is this important?]
@@ -281,6 +292,7 @@ Use for comprehensive guide on patterns/best practices.
 # ✅ CORRECT
 # Example showing best practice
 ```
+````
 
 ```python
 # ❌ WRONG
@@ -312,6 +324,7 @@ Use for comprehensive guide on patterns/best practices.
 ```
 
 **Fix:**
+
 ```python
 # ✅ CORRECT - How to fix it
 ```
@@ -319,7 +332,8 @@ Use for comprehensive guide on patterns/best practices.
 ## Summary
 
 [Key takeaways]
-```
+
+````
 
 ## Quick Reference Card Template
 
@@ -331,9 +345,10 @@ Use for cheat sheets or quick reference.
 ## Installation
 ```bash
 pip install flext-core
-```
+````
 
 ## Basic Setup
+
 ```python
 from flext_core import [Import]
 
@@ -343,28 +358,31 @@ from flext_core import [Import]
 ## Common Tasks
 
 ### Task 1
+
 ```python
 # Code
 ```
 
 ### Task 2
+
 ```python
 # Code
 ```
 
 ## Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| Problem 1 | Fix 1 |
-| Problem 2 | Fix 2 |
+| Issue     | Solution |
+| --------- | -------- |
+| Problem 1 | Fix 1    |
+| Problem 2 | Fix 2    |
 
 ## Resources
 
 - [Full Guide](link)
 - [API Reference](link)
 - [Examples](link)
-```
+
+````
 
 ## Configuration Documentation Template
 
@@ -386,7 +404,7 @@ Use for documenting configuration options.
 [section]
 key1 = "value"
 key2 = 123
-```
+````
 
 ### Method 2: Environment Variables
 
@@ -437,7 +455,8 @@ config = [Component](
 ```toml
 # Full working configuration
 ```
-```
+
+````
 
 ## Comparison/Alternatives Template
 
@@ -458,7 +477,7 @@ Use when comparing similar features.
 
 ```python
 # Example usage
-```
+````
 
 ## [Feature B] Details
 
@@ -477,7 +496,8 @@ Use when comparing similar features.
 - Choose [Feature A] if you need [criteria]
 - Choose [Feature B] if you need [criteria]
 - Choose [Feature C] if you need [criteria]
-```
+
+````
 
 ## Implementation Guide Template
 
@@ -498,9 +518,10 @@ Use for step-by-step implementation instructions.
 
 ```python
 # Code for step 1
-```
+````
 
 **Verify:**
+
 ```bash
 # How to verify this step worked
 ```
@@ -514,6 +535,7 @@ Use for step-by-step implementation instructions.
 ```
 
 **Verify:**
+
 ```bash
 # How to verify this step worked
 ```
@@ -535,6 +557,7 @@ Run the following to verify complete implementation:
 ```
 
 Expected output:
+
 ```
 [Expected output]
 ```
@@ -547,6 +570,7 @@ Expected output:
 
 - [Next feature](link)
 - [Related topic](link)
+
 ```
 
 ## Tips for Using Templates
@@ -569,3 +593,4 @@ See [Configuration Guide](../guides/configuration.md) as a real example of the F
 - Update existing templates based on feedback
 - Keep examples current and working
 - Review template usage quarterly
+```

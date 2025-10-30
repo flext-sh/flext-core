@@ -39,7 +39,9 @@ class TestDispatcherBasics:
         """Test creating dispatcher instance."""
         dispatcher = FlextDispatcher()
         assert dispatcher is not None
-        assert dispatcher.bus is not None
+        assert hasattr(dispatcher, "execute")  # Layer 1: CQRS routing
+        assert hasattr(dispatcher, "dispatch")  # Layer 2: Reliability patterns
+        assert hasattr(dispatcher, "process")  # Layer 3: Advanced processing
 
     def test_dispatcher_config_access(self) -> None:
         """Test accessing dispatcher configuration."""

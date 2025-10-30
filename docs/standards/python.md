@@ -407,25 +407,27 @@ make validate  # In flext-core directory
 
 ## Common Violations and Fixes
 
-| Violation | Issue | Fix |
-|-----------|-------|-----|
-| `Type is: Any` | Using Any type | Use specific type or TypeVar |
-| `Unused import` | Dead code | Remove unused import |
-| `Line too long` | Exceeds 79 chars | Break into multiple lines |
-| `Missing return type` | Incomplete annotation | Add `-> ReturnType` |
-| `Bare except` | Too broad | Catch specific exception |
-| `Mutable argument` | Default arg mutation | Use None, copy data |
-| `Missing docstring` | Undocumented | Add Google-style docstring |
+| Violation             | Issue                 | Fix                          |
+| --------------------- | --------------------- | ---------------------------- |
+| `Type is: Any`        | Using Any type        | Use specific type or TypeVar |
+| `Unused import`       | Dead code             | Remove unused import         |
+| `Line too long`       | Exceeds 79 chars      | Break into multiple lines    |
+| `Missing return type` | Incomplete annotation | Add `-> ReturnType`          |
+| `Bare except`         | Too broad             | Catch specific exception     |
+| `Mutable argument`    | Default arg mutation  | Use None, copy data          |
+| `Missing docstring`   | Undocumented          | Add Google-style docstring   |
 
 ## Philosophy
 
 **FLEXT-Core enforces strict standards not for perfectionism, but for:**
+
 - ✅ **Maintainability**: Consistent code is easy to understand
 - ✅ **Reliability**: Type safety catches errors early
 - ✅ **Scalability**: 32+ dependent projects rely on this
 - ✅ **Quality**: Zero compromise on production readiness
 
 **Standards apply to:**
+
 - ✅ `src/` - All source code
 - ✅ `tests/` - All test code
 - ✅ Every pull request

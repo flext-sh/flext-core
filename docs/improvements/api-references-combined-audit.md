@@ -13,16 +13,19 @@
 ### ❌ Critical Issues Found
 
 **Issue 1: Systematic Import Duplication** (CRITICAL - affects all 4 files)
+
 - **448 import lines** across 4 files (26% average waste)
 - Same pattern as getting-started.md
 - **Total across all docs: 590 imports** (getting-started + API refs)
 
 **Issue 2: Incorrect Class Name** (CRITICAL - causes NameError)
+
 - domain.md uses `FlextModels.ValueObject`
 - **Actual class**: `FlextModels.Value` (models.py:917)
 - **Impact**: Code examples won't run - NameError
 
 **Issue 3: Outdated API Examples** (HIGH - may not reflect actual API)
+
 - Need verification against source
 - Some methods may not exist as shown
 
@@ -32,13 +35,13 @@
 
 ### Quantitative Breakdown
 
-| File | Total Lines | Import Lines | Import % | Waste |
-|------|-------------|--------------|----------|-------|
-| foundation.md | 373 | 142 | 38% | ~110 lines |
-| domain.md | 527 | 121 | 23% | ~95 lines |
-| application.md | 425 | 102 | 24% | ~80 lines |
-| infrastructure.md | 394 | 83 | 21% | ~65 lines |
-| **TOTAL** | **1,719** | **448** | **26%** | **~350 lines** |
+| File              | Total Lines | Import Lines | Import % | Waste          |
+| ----------------- | ----------- | ------------ | -------- | -------------- |
+| foundation.md     | 373         | 142          | 38%      | ~110 lines     |
+| domain.md         | 527         | 121          | 23%      | ~95 lines      |
+| application.md    | 425         | 102          | 24%      | ~80 lines      |
+| infrastructure.md | 394         | 83           | 21%      | ~65 lines      |
+| **TOTAL**         | **1,719**   | **448**      | **26%**  | **~350 lines** |
 
 **Combined with getting-started.md**: 590 total import lines across 5 documents
 
@@ -82,6 +85,7 @@ from flext_core import FlextUtilities
 **Status**: ⚠️ Import bloat
 
 **Content Coverage**:
+
 - ✅ FlextConstants - Mentioned
 - ✅ FlextTypes - Mentioned
 - ✅ FlextProtocols - Mentioned
@@ -91,6 +95,7 @@ from flext_core import FlextUtilities
 - ✅ FlextExceptions - Covered
 
 **Issues**:
+
 - **Import duplication**: Every example imports all 20 modules
 - **Minimal examples**: Could expand FlextResult methods
 - **Missing line references**: No source line numbers
@@ -117,6 +122,7 @@ from flext_core import FlextConstants
 **Status**: ❌ CRITICAL - Factual error + Import bloat
 
 **Content Coverage**:
+
 - ✅ FlextModels - Covered
 - ✅ FlextService - Covered
 - ❌ FlextMixins - Not documented
@@ -132,12 +138,14 @@ class Address(FlextModels.ValueObject):
 ```
 
 **Source Code Reality** (models.py:917):
+
 ```python
 class Value(FrozenStrictModel):
     """Base class for value objects - immutable and compared by value."""
 ```
 
 **Correct Usage**:
+
 ```python
 # ✅ CORRECT - Actual class name
 class Address(FlextModels.Value):
@@ -146,6 +154,7 @@ class Address(FlextModels.Value):
 ```
 
 **Occurrences of Error**:
+
 - Line 33: `class Address(FlextModels.ValueObject)`
 - Line 69: Reference to `FlextModels.ValueObject`
 - Line 432: `class Money(FlextModels.ValueObject)`
@@ -162,6 +171,7 @@ class Address(FlextModels.Value):
 **Status**: ⚠️ Import bloat
 
 **Content Coverage**:
+
 - ✅ FlextBus - Covered
 - ✅ FlextDispatcher - Covered
 - ✅ FlextHandlers - Covered
@@ -170,6 +180,7 @@ class Address(FlextModels.Value):
 - ❌ FlextDecorators - Not documented
 
 **Issues**:
+
 - Import duplication in every example
 - Some methods need verification against source
 - Missing FlextProcessors documentation
@@ -185,12 +196,14 @@ class Address(FlextModels.Value):
 **Status**: ⚠️ Import bloat (but least affected)
 
 **Content Coverage**:
+
 - ✅ FlextConfig - Covered
 - ✅ FlextLogger - Covered
 - ✅ FlextContext - Covered
 - ❌ Some FlextConfig methods may not match actual API
 
 **Issues**:
+
 - Import duplication (though fewer examples)
 - FlextConfig API needs verification (get(), get_section() methods)
 - Missing some advanced FlextLogger features
@@ -204,9 +217,11 @@ class Address(FlextModels.Value):
 ### Issue 1: Layer Dependency Claims
 
 **foundation.md** says:
+
 > "Layer 0: Pure Constants (FlextConstants, FlextTypes, FlextProtocols) - zero dependencies"
 
 **Reality** (from source verification):
+
 - FlextConstants: imports from typing ✅
 - FlextTypes: imports from typing, returns ✅
 - FlextProtocols: imports from typing, Protocol ✅
@@ -216,6 +231,7 @@ class Address(FlextModels.Value):
 ### Issue 2: FlextModels Class Names
 
 **Inconsistency**:
+
 - domain.md: Uses `FlextModels.ValueObject` ❌
 - DDD guide: Uses `FlextModels.Value` ✅
 - Source code: Defines `FlextModels.Value` ✅
@@ -225,9 +241,11 @@ class Address(FlextModels.Value):
 ### Issue 3: Import Pattern Inconsistency
 
 **foundation.md, application.md, infrastructure.md**:
+
 - All examples: Import all 20 modules
 
 **domain.md**:
+
 - Some examples: Import all 20 modules
 - FlextModels example (lines 13-16): Imports only needed modules ✅
 
@@ -240,25 +258,30 @@ class Address(FlextModels.Value):
 ### What's Documented
 
 **Layer 0** (foundation.md):
+
 - ✅ FlextConstants - Basic mention
 - ✅ FlextTypes - Basic mention
 - ✅ FlextProtocols - Basic mention
 
 **Layer 0.5** (foundation.md):
+
 - ✅ FlextRuntime - Brief mention
 
 **Layer 1** (foundation.md):
+
 - ✅ FlextResult - Well covered
 - ✅ FlextContainer - Well covered
 - ✅ FlextExceptions - Brief mention
 
 **Layer 2** (domain.md):
+
 - ✅ FlextModels - Covered (with error)
 - ✅ FlextService - Covered
 - ❌ FlextMixins - Not documented
 - ❌ FlextUtilities - Not documented
 
 **Layer 3** (application.md):
+
 - ✅ FlextBus - Covered
 - ✅ FlextHandlers - Covered
 - ✅ FlextDispatcher - Covered
@@ -267,6 +290,7 @@ class Address(FlextModels.Value):
 - ❌ FlextDecorators - Not documented
 
 **Layer 4** (infrastructure.md):
+
 - ✅ FlextConfig - Covered
 - ✅ FlextLogger - Covered
 - ✅ FlextContext - Covered
@@ -274,6 +298,7 @@ class Address(FlextModels.Value):
 ### What's Missing
 
 **Not Documented Anywhere**:
+
 1. FlextMixins (Layer 2)
 2. FlextUtilities (Layer 2)
 3. FlextDecorators (Layer 3)
@@ -288,11 +313,13 @@ class Address(FlextModels.Value):
 ### FlextModels.Value ✅ → ❌
 
 **Documented** (domain.md:33):
+
 ```python
 class Address(FlextModels.ValueObject):  # ❌ WRONG
 ```
 
 **Source** (models.py:917):
+
 ```python
 class Value(FrozenStrictModel):  # ✅ CORRECT
 ```
@@ -302,6 +329,7 @@ class Value(FrozenStrictModel):  # ✅ CORRECT
 ### FlextBus ✅
 
 **Documented** (application.md:12):
+
 ```python
 bus = FlextBus()
 @bus.command_handler
@@ -314,6 +342,7 @@ class CreateUserHandler:
 ### FlextConfig ⚠️
 
 **Documented** (infrastructure.md:14-22):
+
 ```python
 config = FlextConfig(
     config_files=['config.toml', 'secrets.env'],
@@ -323,6 +352,7 @@ database_url = config.get('database.url')
 ```
 
 **Source** (config.py:39):
+
 ```python
 class FlextConfig(BaseSettings):
     # Uses Pydantic BaseSettings, not dict-like get() interface
@@ -339,6 +369,7 @@ class FlextConfig(BaseSettings):
 **1. Fix FlextModels.ValueObject → FlextModels.Value** (domain.md)
 
 Change 4 occurrences:
+
 ```python
 # Lines 33, 69, 432, 436
 # FROM:
@@ -369,6 +400,7 @@ from flext_core import FlextConfig, FlextLogger  # Not all 20 modules
 **3. Verify FlextConfig API** (infrastructure.md)
 
 Check if FlextConfig actually has:
+
 - `get()` method
 - `get_section()` method
 - Dictionary-like interface
@@ -380,6 +412,7 @@ If not, update examples to use actual Pydantic BaseSettings API.
 **4. Add Missing Modules**
 
 Document:
+
 - FlextMixins (IdentifiableMixin, TimestampableMixin, VersionableMixin)
 - FlextUtilities (validation utilities)
 - FlextDecorators (cross-cutting concerns)
@@ -388,6 +421,7 @@ Document:
 **5. Add Source Line References**
 
 Like other guides:
+
 ```markdown
 ### FlextResult.ok() - Line 313
 
@@ -403,6 +437,7 @@ Systematically check each documented method exists in source with correct signat
 **7. Add Complete Method Lists**
 
 Each class should have:
+
 - All classmethods
 - All instance methods
 - All properties
@@ -411,12 +446,14 @@ Each class should have:
 **8. Add Cross-References**
 
 Link between API ref files:
+
 - FlextResult used in FlextService examples → link to foundation.md
 - FlextModels used in FlextService → link within domain.md
 
 **9. Add Examples from examples/ Directory**
 
 Reference actual runnable examples:
+
 ```markdown
 **See**: `examples/03_models_basics.py` for complete working code
 ```
@@ -426,6 +463,7 @@ Reference actual runnable examples:
 **10. Add Performance Notes**
 
 Document performance characteristics:
+
 - FlextResult has zero overhead
 - FlextContainer singleton is thread-safe
 - FlextLogger structured format
@@ -433,6 +471,7 @@ Document performance characteristics:
 **11. Add Version History**
 
 Note when features were added:
+
 - v0.9.9: FlextConfig with SettingsConfigDict
 - v0.9.8: get_typed() method added
 
@@ -440,15 +479,16 @@ Note when features were added:
 
 ## Accuracy Assessment
 
-| File | Content Accuracy | API Accuracy | Import Accuracy | Overall |
-|------|------------------|--------------|-----------------|---------|
-| foundation.md | 85% | 80% | 20% | 62% |
-| domain.md | 70% ❌ | 60% ❌ | 20% | 50% ❌ |
-| application.md | 80% | 75% | 20% | 58% |
-| infrastructure.md | 75% | 70% ⚠️ | 20% | 55% |
-| **AVERAGE** | **78%** | **71%** | **20%** | **56%** |
+| File              | Content Accuracy | API Accuracy | Import Accuracy | Overall |
+| ----------------- | ---------------- | ------------ | --------------- | ------- |
+| foundation.md     | 85%              | 80%          | 20%             | 62%     |
+| domain.md         | 70% ❌           | 60% ❌       | 20%             | 50% ❌  |
+| application.md    | 80%              | 75%          | 20%             | 58%     |
+| infrastructure.md | 75%              | 70% ⚠️       | 20%             | 55%     |
+| **AVERAGE**       | **78%**          | **71%**      | **20%**         | **56%** |
 
 **Critical Issues**:
+
 - domain.md: WRONG class name (ValueObject vs Value)
 - All files: 80% import waste
 - infrastructure.md: Possibly wrong FlextConfig API
@@ -460,12 +500,14 @@ Note when features were added:
 **Score**: 6/10 - INCOMPLETE
 
 **Covered**:
+
 - ✅ Core foundation (FlextResult, FlextContainer)
 - ✅ Domain models (FlextModels, FlextService)
 - ✅ Application layer (FlextBus, FlextHandlers, FlextDispatcher)
 - ✅ Infrastructure (FlextConfig, FlextLogger, FlextContext)
 
 **Missing**:
+
 - ❌ Complete method listings
 - ❌ FlextMixins documentation
 - ❌ FlextUtilities documentation
@@ -480,13 +522,13 @@ Note when features were added:
 
 ## Comparison: API Refs vs Guides
 
-| Aspect | Guides (avg) | API Refs (avg) | Difference |
-|--------|--------------|----------------|------------|
-| Import waste | 5% | 26% | **5× worse** |
-| Factual errors | 0 | 1 critical | ❌ API refs have errors |
-| Source verification | 100% | ~70% | ⚠️ API refs less verified |
-| Line references | Yes | No | ⚠️ API refs missing |
-| Completeness | 60% | 80% | ✅ API refs more complete |
+| Aspect              | Guides (avg) | API Refs (avg) | Difference                |
+| ------------------- | ------------ | -------------- | ------------------------- |
+| Import waste        | 5%           | 26%            | **5× worse**              |
+| Factual errors      | 0            | 1 critical     | ❌ API refs have errors   |
+| Source verification | 100%         | ~70%           | ⚠️ API refs less verified |
+| Line references     | Yes          | No             | ⚠️ API refs missing       |
+| Completeness        | 60%          | 80%            | ✅ API refs more complete |
 
 **Conclusion**: API references are MORE complete but LESS accurate than guides.
 
@@ -497,6 +539,7 @@ Note when features were added:
 ### User Impact: CRITICAL
 
 **Problems Created**:
+
 1. **Code Won't Run**: FlextModels.ValueObject causes NameError
 2. **Bad Practices**: Users copy 20-import pattern
 3. **Confusion**: FlextConfig API may not match reality
@@ -508,6 +551,7 @@ Note when features were added:
 ### Documentation Quality: POOR
 
 **Metrics**:
+
 - **56% overall quality** (vs 85%+ for guides)
 - **26% import waste** (448 of 1,719 lines)
 - **1 critical factual error** (FlextModels.ValueObject)
@@ -520,6 +564,7 @@ Note when features were added:
 The API Reference documentation has **critical quality issues** that make it **less reliable** than the guides:
 
 **Key Findings**:
+
 - ❌ **Critical Error**: `FlextModels.ValueObject` doesn't exist (should be `Value`)
 - ❌ **Systematic Import Bloat**: 448 import lines, 80% unnecessary
 - ⚠️ **Possible API Errors**: FlextConfig interface needs verification
@@ -531,6 +576,7 @@ The API Reference documentation has **critical quality issues** that make it **l
 **Status**: ❌ NOT PRODUCTION READY - Critical fixes required before v1.0.0
 
 **Recommendation**:
+
 1. **IMMEDIATE**: Fix ValueObject → Value (critical bug)
 2. **URGENT**: Verify FlextConfig API is correct
 3. **HIGH**: Remove import duplication
@@ -540,4 +586,3 @@ The API Reference documentation has **critical quality issues** that make it **l
 ---
 
 **Next**: Audit INDEX.md and README.md (entry point documents)
-

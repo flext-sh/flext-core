@@ -32,7 +32,6 @@ from dataclasses import asdict, dataclass, is_dataclass
 from datetime import UTC, datetime
 from typing import (
     TYPE_CHECKING,
-    Generic,
     Self,
     TypeVar,
     cast,
@@ -48,6 +47,10 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
+
+# Module constants for networking
+MAX_PORT_NUMBER: int = 65535  # IANA standard maximum port (2^16 - 1)
+MIN_PORT_NUMBER: int = 1  # Minimum valid port number
 
 if TYPE_CHECKING:
     from flext_core.loggings import FlextLogger
@@ -65,7 +68,7 @@ T_Pipeline = TypeVar("T_Pipeline")
 # =========================================================================
 
 
-class FlextValidationPipeline(Generic[T_Pipeline]):
+class FlextValidationPipeline[T_Pipeline]:
     """Composable validation pipeline with railway-oriented error handling.
 
     Enables elegant composition of validation rules using fluent interface:
@@ -104,7 +107,7 @@ class FlextValidationPipeline(Generic[T_Pipeline]):
         >>> result2 = pipeline.validate(data2)
     """
 
-    def __init__(self, aggregate_errors: bool = False) -> None:
+    def __init__(self, *, aggregate_errors: bool = False) -> None:
         """Initialize validation pipeline.
 
         Args:
@@ -980,9 +983,9 @@ class FlextUtilities:
             if port is None:
                 return FlextResult[int].fail(f"{context} cannot be None")
 
-            if not (1 <= port <= 65535):
+            if not (MIN_PORT_NUMBER <= port <= MAX_PORT_NUMBER):
                 return FlextResult[int].fail(
-                    f"{context} must be between 1 and 65535, got {port}"
+                    f"{context} must be between {MIN_PORT_NUMBER} and {MAX_PORT_NUMBER}, got {port}"
                 )
 
             return FlextResult[int].ok(port)

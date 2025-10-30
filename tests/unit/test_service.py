@@ -9,7 +9,7 @@ import operator
 import signal
 import time
 from collections.abc import Callable
-from typing import cast
+from typing import Never, cast
 
 import pytest
 from pydantic import Field, ValidationError
@@ -1554,6 +1554,7 @@ class TestServicePropertiesAndConfig:
 
         # Test that it's the global instance
         from flext_core import FlextConfig
+
         assert config is FlextConfig.get_global_instance()
 
     def test_project_config_property_resolution(self) -> None:
@@ -1567,6 +1568,7 @@ class TestServicePropertiesAndConfig:
 
         # Should be a FlextConfig instance
         from flext_core import FlextConfig
+
         assert isinstance(project_config, FlextConfig)
 
     def test_project_models_property_resolution(self) -> None:
@@ -1589,6 +1591,7 @@ class TestServicePropertiesAndConfig:
         assert config is not None
 
         from flext_core import FlextConfig
+
         # Should return a FlextConfig instance (global or fallback)
         assert isinstance(config, FlextConfig) or hasattr(config, "model_dump")
 
@@ -1598,6 +1601,7 @@ class TestServiceContextAndLifecycle:
 
     def test_execute_with_context_cleanup_success(self) -> None:
         """Test execute_with_context_cleanup cleans up operation context (lines 311-339)."""
+
         class ContextTestService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Success with cleanup")
@@ -1611,6 +1615,7 @@ class TestServiceContextAndLifecycle:
 
     def test_execute_with_context_cleanup_failure(self) -> None:
         """Test execute_with_context_cleanup cleans up even on failure."""
+
         class FailingContextService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].fail("Failure with cleanup")
@@ -1624,6 +1629,7 @@ class TestServiceContextAndLifecycle:
 
     def test_execute_with_context_cleanup_exception(self) -> None:
         """Test execute_with_context_cleanup cleans up even on exception."""
+
         class ExceptionContextService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 msg = "Test exception"
@@ -1729,7 +1735,10 @@ class TestServiceValidationAndInfo:
         info = service.get_service_info()
         assert isinstance(info, dict)
         assert "service_type" in info or "class_name" in info
-        assert info.get("service_type") == "SampleComplexService" or info.get("class_name") == "SampleComplexService"
+        assert (
+            info.get("service_type") == "SampleComplexService"
+            or info.get("class_name") == "SampleComplexService"
+        )
 
     def test_get_service_info_with_validation_state(self) -> None:
         """Test get_service_info includes validation state (lines 525-529)."""
@@ -1821,11 +1830,13 @@ class TestServicePropertyResolution:
 
     def test_project_config_container_exception(self) -> None:
         """Test project_config falls back when container.get raises exception (lines 139-142)."""
+
         class ExceptionService(FlextService[str]):
             @property
-            def container(self):
+            def container(self) -> Never:
                 """Container that always raises."""
-                raise RuntimeError("Container error")
+                msg = "Container error"
+                raise RuntimeError(msg)
 
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
@@ -1836,10 +1847,12 @@ class TestServicePropertyResolution:
         # Should fallback to global
         assert config is not None
         from flext_core import FlextConfig
+
         assert isinstance(config, FlextConfig)
 
     def test_project_models_fallback_type(self) -> None:
         """Test project_models returns fallback type when not found (lines 183-188)."""
+
         class FallbackModelsService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
@@ -1894,7 +1907,7 @@ class TestServiceDependencyResolution:
         from flext_core import FlextContainer
 
         class UnannnotatedService(FlextService[str]):
-            def __init__(self, some_param=None) -> None:  # noqa: ANN001
+            def __init__(self, some_param=None) -> None:
                 super().__init__()
                 self.param = some_param
 
@@ -1913,6 +1926,7 @@ class TestServiceComplexExecution:
 
     def test_execute_operation_success(self) -> None:
         """Test execute_operation with successful execution (lines 409-598)."""
+
         class OperationService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Operation successful")
@@ -1935,6 +1949,7 @@ class TestServiceComplexExecution:
 
     def test_execute_operation_with_timeout(self) -> None:
         """Test execute_operation with timeout configuration."""
+
         class TimeoutService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Completed before timeout")
@@ -1956,6 +1971,7 @@ class TestServiceComplexExecution:
 
     def test_execute_conditionally_condition_met(self) -> None:
         """Test execute_conditionally when condition is true (lines 630-705)."""
+
         class ConditionalService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Condition met")
@@ -1974,6 +1990,7 @@ class TestServiceComplexExecution:
 
     def test_execute_conditionally_condition_not_met(self) -> None:
         """Test execute_conditionally when condition is false."""
+
         class ConditionalService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Condition met")
@@ -1992,6 +2009,7 @@ class TestServiceComplexExecution:
 
     def test_execute_conditionally_with_false_action(self) -> None:
         """Test execute_conditionally with false_action when condition is false."""
+
         class ConditionalService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("True action")
@@ -2013,9 +2031,10 @@ class TestServiceComplexExecution:
 
     def test_validate_business_rules_failure(self) -> None:
         """Test validate_business_rules returns failure (line 462)."""
+
         class FailingValidationService(FlextService[str]):
-            def validate_business_rules(self) -> FlextResult[bool]:
-                return FlextResult[bool].fail("Business rules validation failed")
+            def validate_business_rules(self) -> FlextResult[None]:
+                return FlextResult[None].fail("Business rules validation failed")
 
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Should not execute")
@@ -2027,9 +2046,10 @@ class TestServiceComplexExecution:
 
     def test_validate_config_failure(self) -> None:
         """Test validate_config returns failure (line 468)."""
+
         class FailingConfigService(FlextService[str]):
-            def validate_config(self) -> FlextResult[bool]:
-                return FlextResult[bool].fail("Config validation failed")
+            def validate_config(self) -> FlextResult[None]:
+                return FlextResult[None].fail("Config validation failed")
 
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Should not execute")
@@ -2041,6 +2061,7 @@ class TestServiceComplexExecution:
 
     def test_execute_conditionally_with_condition_exception(self) -> None:
         """Test execute_conditionally handles condition evaluation errors."""
+
         class ExceptionConditionService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Success")

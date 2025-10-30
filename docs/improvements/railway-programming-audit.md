@@ -76,6 +76,7 @@ These **production-ready methods** exist in source but are **NOT documented**:
    - **Missing From**: Railway guide
    - **Impact**: HIGH - Essential for batch operations
    - **Example Needed**:
+
    ```python
    results = [FlextResult.ok(1), FlextResult.ok(2), FlextResult.ok(3)]
    combined = FlextResult.sequence(results)
@@ -155,6 +156,7 @@ These are mentioned but need source verification:
 ### 🔍 Instance Methods & Properties Not Documented
 
 Need to search for:
+
 - Properties: `is_success`, `is_failure`, `value`, `error`, `error_code`, `error_data`
 - Instance methods: `unwrap()`, `unwrap_or()`, `map_error()`, `recover()`, `tap()`
 - Operators: `__or__`, `__bool__`, `__iter__`
@@ -164,6 +166,7 @@ Need to search for:
 ## Incorrect Facts Found
 
 ### None Found ✅
+
 All documented information appears to be accurate. The issue is **incompleteness**, not incorrectness.
 
 ---
@@ -222,6 +225,7 @@ All documented information appears to be accurate. The issue is **incompleteness
 ## Recommended Structure Changes
 
 ### Current Structure
+
 ```markdown
 1. Core Concept
 2. Creating Results
@@ -236,6 +240,7 @@ All documented information appears to be accurate. The issue is **incompleteness
 ```
 
 ### Recommended Structure
+
 ```markdown
 1. Core Concept ✅ (keep as is)
 2. Creating Results ✅ (keep as is)
@@ -316,6 +321,7 @@ All documented information appears to be accurate. The issue is **incompleteness
 ## Source Code Verification
 
 ### Verified Line Numbers ✅
+
 - ok() - Line 313
 - fail() - Line 343
 - from_callable() - Line 395
@@ -338,6 +344,7 @@ All documented information appears to be accurate. The issue is **incompleteness
 - from_io_result() - Line 1689
 
 ### Verified Instance Methods ✅
+
 - flow_through() - Line 465 ✅
 - unwrap() - Line 811 ✅
 - recover() - Line 821 ✅
@@ -347,6 +354,7 @@ All documented information appears to be accurate. The issue is **incompleteness
 - with_resource() - Line 1384 ✅
 
 ### Still Need to Find
+
 - map_error() - Search needed (might be in a different form)
 
 ---
@@ -354,6 +362,7 @@ All documented information appears to be accurate. The issue is **incompleteness
 ## Conclusion
 
 The Railway-Oriented Programming guide is **accurate but significantly incomplete**. It documents only **7 of 20+ critical methods**. The missing methods represent essential patterns for:
+
 - Batch processing
 - Error aggregation
 - Partial success handling
@@ -367,4 +376,3 @@ The Railway-Oriented Programming guide is **accurate but significantly incomplet
 ---
 
 **Next**: Continue verification of instance methods and create improved version of the guide.
-

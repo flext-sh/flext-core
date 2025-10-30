@@ -42,12 +42,12 @@ FLEXT-Core provides patterns and infrastructure used by 32+ specialized projects
 
 FLEXT-Core provides the **architectural patterns** that all FLEXT projects inherit:
 
-| Project Type         | Projects                           | Integration Pattern                        |
-| -------------------- | ---------------------------------- | ------------------------------------------ |
-| **Core Libraries**   | flext-api, flext-auth, flext-grpc  | Direct inheritance of foundation patterns  |
-| **Infrastructure**   | flext-ldap, flext-db-oracle        | Railway patterns for LDAP and database operations |
-| **Data Integration** | flext-meltano, Singer taps/targets | Configuration and processing patterns      |
-| **Quality & Observability** | flext-quality, flext-observability | Logging and monitoring integration         |
+| Project Type                | Projects                           | Integration Pattern                               |
+| --------------------------- | ---------------------------------- | ------------------------------------------------- |
+| **Core Libraries**          | flext-api, flext-auth, flext-grpc  | Direct inheritance of foundation patterns         |
+| **Infrastructure**          | flext-ldap, flext-db-oracle        | Railway patterns for LDAP and database operations |
+| **Data Integration**        | flext-meltano, Singer taps/targets | Configuration and processing patterns             |
+| **Quality & Observability** | flext-quality, flext-observability | Logging and monitoring integration                |
 
 ### **Foundation Patterns Used Across Ecosystem**
 
@@ -741,14 +741,14 @@ make test        # All tests must pass
 
 ### By Use Case
 
-| Need                      | Quick Link                                              | Related                        |
-|---------------------------|--------------------------------------------------------|--------------------------------|
-| **Get Started**           | [Getting Started Guide](./docs/guides/getting-started.md) | [Architecture](./docs/architecture/overview.md) |
-| **Error Handling**        | [Railway Patterns](./docs/guides/railway-oriented-programming.md) | [FlextResult API](./docs/api-reference/foundation.md) |
-| **Dependency Injection**  | [DI Advanced](./docs/guides/dependency-injection-advanced.md) | [FlextContainer API](./docs/api-reference/foundation.md) |
-| **Data Models**           | [DDD Guide](./docs/guides/domain-driven-design.md) | [FlextModels API](./docs/api-reference/domain.md) |
-| **Configuration**         | [Getting Started](./docs/guides/getting-started.md) | [FlextConfig API](./docs/api-reference/infrastructure.md) |
-| **Development**           | [Standards](./docs/standards/development.md) | [Contributing](./docs/development/contributing.md) |
+| Need                     | Quick Link                                                        | Related                                                   |
+| ------------------------ | ----------------------------------------------------------------- | --------------------------------------------------------- |
+| **Get Started**          | [Getting Started Guide](./docs/guides/getting-started.md)         | [Architecture](./docs/architecture/overview.md)           |
+| **Error Handling**       | [Railway Patterns](./docs/guides/railway-oriented-programming.md) | [FlextResult API](./docs/api-reference/foundation.md)     |
+| **Dependency Injection** | [DI Advanced](./docs/guides/dependency-injection-advanced.md)     | [FlextContainer API](./docs/api-reference/foundation.md)  |
+| **Data Models**          | [DDD Guide](./docs/guides/domain-driven-design.md)                | [FlextModels API](./docs/api-reference/domain.md)         |
+| **Configuration**        | [Getting Started](./docs/guides/getting-started.md)               | [FlextConfig API](./docs/api-reference/infrastructure.md) |
+| **Development**          | [Standards](./docs/standards/development.md)                      | [Contributing](./docs/development/contributing.md)        |
 
 ### By Layer
 

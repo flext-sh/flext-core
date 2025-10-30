@@ -178,18 +178,17 @@ class ValidationException(FlextException):
 - `ValidationException` - Field validation errors
 - `ConfigurationException` - Configuration errors
 
-
 ## Quality Metrics
 
-| Layer | Module          | Coverage | Status       | Description                    |
-| ----- | --------------- | -------- | ------------ | ------------------------------ |
-| **0** | `constants.py`  | 100%     | ✅ Complete  | 50+ error codes, validation patterns |
-| **0** | `typings.py`    | 100%     | ✅ Complete  | 50+ TypeVars, type aliases     |
-| **0** | `protocols.py`  | 99%      | ✅ Stable    | Runtime-checkable interfaces   |
-| **0.5** | `runtime.py`  | N/A      | ✅ Stable    | External library bridge        |
-| **1** | `result.py`     | 95%      | ✅ Stable    | Railway pattern implementation |
-| **1** | `container.py`  | 99%      | ✅ Stable    | Dependency injection container |
-| **1** | `exceptions.py` | 62%      | 🔄 Improving | Exception hierarchy            |
+| Layer   | Module          | Coverage | Status       | Description                          |
+| ------- | --------------- | -------- | ------------ | ------------------------------------ |
+| **0**   | `constants.py`  | 100%     | ✅ Complete  | 50+ error codes, validation patterns |
+| **0**   | `typings.py`    | 100%     | ✅ Complete  | 50+ TypeVars, type aliases           |
+| **0**   | `protocols.py`  | 99%      | ✅ Stable    | Runtime-checkable interfaces         |
+| **0.5** | `runtime.py`    | N/A      | ✅ Stable    | External library bridge              |
+| **1**   | `result.py`     | 95%      | ✅ Stable    | Railway pattern implementation       |
+| **1**   | `container.py`  | 99%      | ✅ Stable    | Dependency injection container       |
+| **1**   | `exceptions.py` | 62%      | 🔄 Improving | Exception hierarchy                  |
 
 ## Usage Examples
 
@@ -238,4 +237,7 @@ if service_result.is_success:
 ```
 
 This foundation layer provides the essential building blocks for robust, maintainable Python applications with type safety and clean error handling.
-````
+
+```
+
+```

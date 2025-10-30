@@ -12,20 +12,24 @@ FLEXT-Core documentation follows strict standards for clarity, accuracy, and mai
 - **Best Practices**: Do's and don'ts
 - **Common Issues**: Troubleshooting guide
 
-```markdown
+````markdown
 # Feature Name
 
 ## Overview
+
 One paragraph explaining what this feature does and why use it.
 
 ## Basic Usage
+
 ```python
 # Working example
 ```
+````
 
 ## API Reference
 
 ### Method Name
+
 - **Parameters**: What it takes
 - **Returns**: What it gives back
 - **Example**: How to use it
@@ -33,16 +37,20 @@ One paragraph explaining what this feature does and why use it.
 ## Best Practices
 
 ### ✅ DO
+
 - Recommend this approach
 
 ### ❌ DON'T
+
 - Avoid this approach
 
 ## Common Issues
 
 ### Issue: Something breaks
+
 **Solution**: How to fix it
-```
+
+````
 
 ## Code Examples
 
@@ -63,7 +71,7 @@ if result.is_success:
     print(f"Result: {result.unwrap()}")
 else:
     print(f"Error: {result.error}")
-```
+````
 
 ### Import Cleanup
 
@@ -132,11 +140,13 @@ Always use proper code fence language:
 
 ```markdown
 # Unordered
+
 - Item 1
 - Item 2
 - Item 3
 
 # Ordered
+
 1. First step
 2. Second step
 3. Third step
@@ -146,7 +156,7 @@ Always use proper code fence language:
 
 ```markdown
 - **Bold** for important terms
-- *Italics* for stress/emphasis
+- _Italics_ for stress/emphasis
 - `Code` for inline code references
 ```
 
@@ -154,7 +164,7 @@ Always use proper code fence language:
 
 ```markdown
 | Header 1 | Header 2 | Header 3 |
-|----------|----------|----------|
+| -------- | -------- | -------- |
 | Value 1  | Value 2  | Value 3  |
 | Value 4  | Value 5  | Value 6  |
 ```
@@ -172,10 +182,12 @@ Always use proper code fence language:
 
 ```markdown
 # ✅ CORRECT - Verified claim
+
 FlextResult has three methods: ok(), fail(), and unwrap().
 (Then show all three working)
 
 # ❌ WRONG - Unverified claim
+
 FlextResult makes your code 100% bug-free.
 (This is false and unsupported)
 ```
@@ -193,6 +205,7 @@ Keep documentation fresh and accurate.
 ### Short Format (< 1000 words)
 
 Use when documenting:
+
 - Single feature
 - Basic usage
 - Quick reference
@@ -208,6 +221,7 @@ Use when documenting:
 ### Medium Format (1000-3000 words)
 
 Use when documenting:
+
 - Feature with variations
 - Integration patterns
 - Common workflows
@@ -229,6 +243,7 @@ Use when documenting:
 ### Long Format (3000+ words)
 
 Use for comprehensive guides:
+
 - Complete framework overview
 - Architecture guide
 - Migration guide
@@ -239,14 +254,16 @@ Use for comprehensive guides:
 ## Introduction (200 words)
 
 ## Fundamentals (800 words)
-  - Concept 1
-  - Concept 2
-  - Concept 3
+
+- Concept 1
+- Concept 2
+- Concept 3
 
 ## Patterns (1000 words)
-  - Pattern 1
-  - Pattern 2
-  - Pattern 3
+
+- Pattern 1
+- Pattern 2
+- Pattern 3
 
 ## Best Practices (800 words)
 
@@ -261,8 +278,11 @@ Use consistent status indicators:
 
 ```markdown
 # ✅ Complete - Ready for production
+
 # 🔄 In Progress - Being worked on
+
 # ⚠️ Partial - Incomplete, use with caution
+
 # ❌ Deprecated - Don't use, see alternative
 ```
 
@@ -272,11 +292,13 @@ Link to related content properly:
 
 ```markdown
 # ✅ CORRECT
+
 See [Getting Started](../guides/getting-started.md) for installation.
 
 For advanced patterns, check [Architecture Patterns](./patterns.md).
 
 # ❌ WRONG
+
 See the getting started guide (file is located in docs/guides/)
 ```
 
@@ -284,27 +306,33 @@ See the getting started guide (file is located in docs/guides/)
 
 ### For Functions/Methods
 
-```markdown
+````markdown
 ### method_name(param1: Type1, param2: Type2) -> ReturnType
 
 **Description**: One sentence explaining purpose.
 
 **Parameters:**
+
 - `param1` (Type1): What is this parameter?
 - `param2` (Type2): What is this parameter?
 
 **Returns:**
+
 - (ReturnType): What does it return?
 
 **Example:**
+
 ```python
 # Working example
 ```
+````
 
 **Raises/Errors:**
+
 - Error1: When this happens
 - Error2: When that happens
-```
+
+````
 
 ### For Classes
 
@@ -318,7 +346,7 @@ See the getting started guide (file is located in docs/guides/)
 **Usage:**
 ```python
 # Basic usage example
-```
+````
 
 ### Methods
 
@@ -340,9 +368,11 @@ Each method documented as above.
 
 ```markdown
 # ✅ CORRECT
+
 FlextResult[T] returns either Ok(value) or Fail(error).
 
 # ❌ VAGUE
+
 FlextResult is cool and handles errors.
 ```
 
@@ -350,9 +380,11 @@ FlextResult is cool and handles errors.
 
 ```markdown
 # ✅ CORRECT (1 sentence)
+
 Use ValidationMiddleware to validate incoming messages before processing.
 
 # ❌ VERBOSE (Too much)
+
 The ValidationMiddleware is a powerful tool that you can use in your
 application to validate incoming messages. When a message arrives at your
 bus, the middleware will check if it's valid. If it's not valid, it will
@@ -363,9 +395,11 @@ fail the message...
 
 ```markdown
 # ✅ CORRECT - Clear action
+
 To enable debug logging, set `LOG_LEVEL=DEBUG` before running.
 
 # ❌ VAGUE - No action
+
 There is a debug mode available.
 ```
 
@@ -373,9 +407,11 @@ There is a debug mode available.
 
 ```markdown
 # ✅ ACTIVE
+
 You can register services with the container.
 
 # ❌ PASSIVE
+
 Services can be registered with the container.
 ```
 
@@ -497,6 +533,7 @@ Use these as inspiration when writing FLEXT-Core documentation.
 ## Summary
 
 FLEXT-Core documentation standards:
+
 - ✅ Verify everything before publishing
 - ✅ Include examples with every feature
 - ✅ Keep imports minimal in examples
