@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import time as time_module
 import uuid
-import warnings
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import (
@@ -274,7 +273,7 @@ class FlextModels:
 
         model_config = ConfigDict(
             **FlextConstants.ModelConfig.BASE,
-            json_schema_extra={  # type: ignore[misc]  # BASE doesn't contain json_schema_extra
+            json_schema_extra={
                 "title": "IdentifiableMixin",
                 "description": "Mixin providing unique identifier fields",
             },
@@ -296,7 +295,7 @@ class FlextModels:
 
         model_config = ConfigDict(
             **FlextConstants.ModelConfig.BASE,
-            json_schema_extra={  # type: ignore[misc]  # BASE doesn't contain json_schema_extra
+            json_schema_extra={
                 "title": "TimestampableMixin",
                 "description": "Mixin providing timestamp fields and serialization",
             },
@@ -403,8 +402,8 @@ class FlextModels:
 
         model_config = ConfigDict(
             **FlextConstants.ModelConfig.BASE,
-            frozen=True,  # type: ignore[misc]  # BASE doesn't contain frozen
-            json_schema_extra={  # type: ignore[misc]  # BASE doesn't contain json_schema_extra
+            frozen=True,
+            json_schema_extra={
                 "title": "FrozenStrictModel",
                 "description": "Immutable base model with strict validation and frozen state",
             },
@@ -1566,11 +1565,8 @@ class FlextModels:
         @field_validator("timestamp", mode="after")
         @classmethod
         def validate_timestamp_format(cls, v: str) -> str:
-            """Validate timestamp is in ISO 8601 format (Pydantic v2 mode='after').
-
-            Allows empty strings for backward compatibility with FlextConstants.Cqrs.DEFAULT_TIMESTAMP.
-            """
-            # Allow empty strings (backward compatibility with DEFAULT_TIMESTAMP)
+            """Validate timestamp is in ISO 8601 format (Pydantic v2 mode='after')."""
+            # Allow empty strings for default values
             if not v or not v.strip():
                 return v
 
@@ -2986,7 +2982,7 @@ class FlextModels:
         @field_validator("data", mode="before")
         @classmethod
         def _validate_data(cls, v: object) -> dict[str, object]:
-            """Validate scope data, supporting backward compatibility.
+            """Validate scope data.
 
             Args:
                 v: Value to validate
@@ -2994,26 +2990,15 @@ class FlextModels:
             Returns:
                 Validated dict[str, object]
 
-            Warns:
-                DeprecationWarning: If raw dict is passed
-
             """
             if isinstance(v, dict):
-                warnings.warn(
-                    (
-                        "Passing dict for data is deprecated. "
-                        "Use ContextScopeData directly."
-                    ),
-                    DeprecationWarning,
-                    stacklevel=3,
-                )
                 return v
             return {} if v is None else cast("dict[str, object]", v)
 
         @field_validator("metadata", mode="before")
         @classmethod
         def _validate_metadata(cls, v: object) -> dict[str, object]:
-            """Validate scope metadata, supporting backward compatibility.
+            """Validate scope metadata.
 
             Args:
                 v: Value to validate
@@ -3021,19 +3006,8 @@ class FlextModels:
             Returns:
                 Validated dict[str, object]
 
-            Warns:
-                DeprecationWarning: If raw dict is passed
-
             """
             if isinstance(v, dict):
-                warnings.warn(
-                    (
-                        "Passing dict for metadata is deprecated. "
-                        "Use ContextScopeData directly."
-                    ),
-                    DeprecationWarning,
-                    stacklevel=3,
-                )
                 return v
             return {} if v is None else cast("dict[str, object]", v)
 
@@ -3092,10 +3066,7 @@ class FlextModels:
         @field_validator("operations", mode="before")
         @classmethod
         def _validate_operations(cls, v: object) -> dict[str, object]:
-            """Validate operations, supporting backward compatibility.
-
-            Supports both dict and proper model initialization with
-            deprecation warning for dict usage.
+            """Validate operations.
 
             Args:
                 v: Value to validate (dict or model state)
@@ -3103,19 +3074,8 @@ class FlextModels:
             Returns:
                 Validated dict[str, object]
 
-            Warns:
-                DeprecationWarning: If dict is passed directly
-
             """
             if isinstance(v, dict):
-                warnings.warn(
-                    (
-                        "Passing dict for operations is deprecated. "
-                        "Use ContextStatistics directly with individual fields."
-                    ),
-                    DeprecationWarning,
-                    stacklevel=3,
-                )
                 return v
             return {} if v is None else cast("dict[str, object]", v)
 
@@ -3211,10 +3171,7 @@ class FlextModels:
         @field_validator("custom_fields", mode="before")
         @classmethod
         def _validate_custom_fields(cls, v: object) -> dict[str, object]:
-            """Validate custom_fields, converting dict to typed model.
-
-            Supports backward compatibility: accepts dict[str, object]
-            but converts to proper model with deprecation warning.
+            """Validate custom_fields.
 
             Args:
                 v: Value to validate (dict or proper model state)
@@ -3222,19 +3179,8 @@ class FlextModels:
             Returns:
                 Validated dict[str, object]
 
-            Warns:
-                DeprecationWarning: If dict is passed directly
-
             """
             if isinstance(v, dict):
-                warnings.warn(
-                    (
-                        "Passing dict for custom_fields is deprecated. "
-                        "Use ContextMetadata directly with individual fields."
-                    ),
-                    DeprecationWarning,
-                    stacklevel=3,
-                )
                 return v
             return {} if v is None else cast("dict[str, object]", v)
 

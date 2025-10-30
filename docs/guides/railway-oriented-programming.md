@@ -23,6 +23,7 @@ When an operation fails, execution automatically switches to the failure track a
 ## FlextResult[T]: The Railway Implementation
 
 `FlextResult[T]` is FLEXT's railway-oriented result type. It wraps either:
+
 - **Success**: `FlextResult[T].ok(data: T)` - wraps successful data
 - **Failure**: `FlextResult[T].fail(error: str)` - wraps error information
 
@@ -841,4 +842,3 @@ except Exception:
 ---
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_result.py` for 250+ test cases demonstrating all FlextResult patterns and edge cases.
-

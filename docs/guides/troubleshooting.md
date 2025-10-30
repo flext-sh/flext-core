@@ -7,11 +7,13 @@ Systematic troubleshooting guide for common issues in FLEXT-Core applications.
 ### ImportError: cannot import name 'FlextResult'
 
 **Symptom:**
+
 ```
 ImportError: cannot import name 'FlextResult' from 'flext_core'
 ```
 
 **Possible Causes:**
+
 1. **FLEXT-Core not installed**
 2. **Python version too old** (requires 3.13+)
 3. **Wrong import path** (importing from internal module)
@@ -30,6 +32,7 @@ pip install --upgrade flext-core
 ```
 
 **Correct import:**
+
 ```python
 # ✅ CORRECT
 from flext_core import FlextResult
@@ -41,6 +44,7 @@ from flext_core.result import FlextResult  # Don't do this!
 ### ModuleNotFoundError: No module named 'flext_core'
 
 **Symptom:**
+
 ```
 ModuleNotFoundError: No module named 'flext_core'
 ```
@@ -61,6 +65,7 @@ python -c "import flext_core; print(flext_core.__version__)"
 ### PYTHONPATH Issues
 
 **Symptom:**
+
 ```
 ModuleNotFoundError when running from project root
 ```
@@ -84,6 +89,7 @@ PYTHONPATH=src pytest tests/
 ### MyPy/Pyrefly: Cannot find implementation of 'FlextResult'
 
 **Symptom:**
+
 ```
 error: Cannot find implementation of 'FlextResult'
 ```
@@ -108,6 +114,7 @@ explicit_package_bases = true
 ### Type Error: 'FlextResult[int]' has no attribute 'value'
 
 **Symptom:**
+
 ```
 TypeError: 'FlextResult[int]' has no attribute 'value'
 error: 'FlextResult' object has no attribute 'value'
@@ -130,6 +137,7 @@ value2 = result.data    # 42
 ### Type Error: Cannot instantiate 'FlextResult' directly
 
 **Symptom:**
+
 ```
 TypeError: Cannot instantiate generic class FlextResult without type parameters
 ```
@@ -152,6 +160,7 @@ result: FlextResult[int] = FlextResult.ok(42)
 ### AttributeError: 'FlextModels' object has no attribute 'ValueObject'
 
 **Symptom:**
+
 ```
 AttributeError: type object 'FlextModels' has no attribute 'ValueObject'
 ```
@@ -173,6 +182,7 @@ class Address(FlextModels.Value):
 ### FlextContainer: Service not registered
 
 **Symptom:**
+
 ```
 FlextResult[NoneType].fail("Service 'logger' not registered")
 ```
@@ -201,6 +211,7 @@ else:
 ### Circular Dependency in Dependency Injection
 
 **Symptom:**
+
 ```
 RuntimeError: Circular dependency detected
 ```
@@ -232,6 +243,7 @@ def create_logger_b():
 ### ValidationError: field required
 
 **Symptom:**
+
 ```
 pydantic.ValidationError: 1 validation error for User
 name
@@ -261,6 +273,7 @@ except ValueError as e:
 ### ValidationError: Value error, Invalid email format
 
 **Symptom:**
+
 ```
 ValidationError: 1 validation error for User
 email
@@ -294,6 +307,7 @@ except ValueError as e:
 ### Configuration not loading from file
 
 **Symptom:**
+
 ```
 Config value not found or returns None
 ```
@@ -324,6 +338,7 @@ api_key = config.get('api.key', required=True)
 ### Environment variables not expanding
 
 **Symptom:**
+
 ```
 Config value is literal string like "${API_KEY}" instead of actual value
 ```
@@ -342,6 +357,7 @@ python main.py
 ```
 
 **Python code:**
+
 ```python
 from flext_core import FlextConfig
 import os
@@ -359,6 +375,7 @@ api_key = config.get('api.key')  # Will expand from environment
 ### Database connection timeout
 
 **Symptom:**
+
 ```
 TimeoutError: Connection timeout
 ```
@@ -393,6 +410,7 @@ else:
 ### External API call fails
 
 **Symptom:**
+
 ```
 requests.ConnectionError: Failed to establish connection
 ```
@@ -436,6 +454,7 @@ result = call_external_api("https://api.example.com/data")
 ### Logs not appearing
 
 **Symptom:**
+
 ```
 Logging messages not showing up
 ```
@@ -463,6 +482,7 @@ os.environ['LOG_LEVEL'] = 'DEBUG'
 ### Logging causes performance issues
 
 **Symptom:**
+
 ```
 Application runs slowly with logging enabled
 ```
@@ -496,6 +516,7 @@ logger.info("Processing completed")
 ### Pytest: Module not found in tests
 
 **Symptom:**
+
 ```
 ModuleNotFoundError: No module named 'myapp'
 ```
@@ -515,6 +536,7 @@ pythonpath = ["src"]
 ### Fixture scope issues
 
 **Symptom:**
+
 ```
 Fixture 'database' not found
 ```
@@ -547,6 +569,7 @@ def database():  # Only available in this file!
 ### Test isolation issues
 
 **Symptom:**
+
 ```
 Tests fail when run together but pass individually
 ```
@@ -586,6 +609,7 @@ def test_use():
 ### Application runs slowly
 
 **Symptom:**
+
 ```
 Requests take longer than expected
 ```
@@ -640,6 +664,7 @@ def profile_operation():
 ### Memory usage increasing
 
 **Symptom:**
+
 ```
 Application memory usage keeps growing
 ```
@@ -710,16 +735,16 @@ logger.debug("Debug logging enabled")
 
 ## Common Solutions Summary
 
-| Issue | Solution |
-|-------|----------|
-| ImportError: FlextResult not found | Use `from flext_core import FlextResult` |
-| Module not found in tests | Set `PYTHONPATH=src` before running |
-| Type error: missing type parameter | Use `FlextResult[T]` with type `T` |
-| AttributeError: ValueObject not found | Use `FlextModels.Value` instead |
-| Service not registered | Call `container.register()` first |
-| Config value None | Check file exists and value is in config |
-| Tests fail together | Use fixtures to isolate state |
-| Slow performance | Profile with `cProfile` to find bottleneck |
+| Issue                                 | Solution                                   |
+| ------------------------------------- | ------------------------------------------ |
+| ImportError: FlextResult not found    | Use `from flext_core import FlextResult`   |
+| Module not found in tests             | Set `PYTHONPATH=src` before running        |
+| Type error: missing type parameter    | Use `FlextResult[T]` with type `T`         |
+| AttributeError: ValueObject not found | Use `FlextModels.Value` instead            |
+| Service not registered                | Call `container.register()` first          |
+| Config value None                     | Check file exists and value is in config   |
+| Tests fail together                   | Use fixtures to isolate state              |
+| Slow performance                      | Profile with `cProfile` to find bottleneck |
 
 ## Additional Resources
 

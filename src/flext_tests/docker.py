@@ -545,22 +545,45 @@ class FlextTestDocker:
 
                 # Run docker compose up with timeout
                 def run_compose_up() -> None:
-                    # Set compose file in client config
-                    original_compose_files = docker_client.client_config.compose_files
                     try:
-                        # Configure the compose file for this operation
-                        docker_client.client_config.compose_files = [str(compose_path)]
+                        # Set compose file in client config
+                        original_compose_files = (
+                            docker_client.client_config.compose_files
+                        )
+                        try:
+                            # Configure the compose file for this operation
+                            docker_client.client_config.compose_files = [
+                                str(compose_path)
+                            ]
 
-                        services = [service] if service else []
-                        docker_client.compose.up(
-                            services=services,
-                            detach=True,
-                        )
-                    finally:
-                        # Restore original compose files
-                        docker_client.client_config.compose_files = (
-                            original_compose_files
-                        )
+                            # First, clean up any existing containers from previous runs
+                            # This is necessary because --force-recreate doesn't remove stopped containers
+                            try:
+                                docker_client.compose.down(
+                                    remove_orphans=True,
+                                    volumes=True,
+                                )
+                            except Exception:
+                                # Ignore errors if compose stack doesn't exist yet
+                                pass
+
+                            # Now start the services
+                            services = [service] if service else []
+                            docker_client.compose.up(
+                                services=services,
+                                detach=True,
+                                # Don't use force_recreate since we already cleaned up
+                                recreate=True,
+                                remove_orphans=True,
+                            )
+                        finally:
+                            # Restore original compose files
+                            docker_client.client_config.compose_files = (
+                                original_compose_files
+                            )
+                    except Exception as e:
+                        # Capture exception for main thread
+                        thread_exceptions.append(e)
 
                 thread = threading.Thread(target=run_compose_up, daemon=False)
                 thread.start()
@@ -636,7 +659,11 @@ class FlextTestDocker:
                                 str(compose_path)
                             ]
                             # Use down with volumes=True to remove containers AND their volumes
-                            docker_client.compose.down(volumes=True)
+                            # Also remove orphans to clean up any leftover containers
+                            docker_client.compose.down(
+                                volumes=True,
+                                remove_orphans=True,  # Clean up orphaned containers
+                            )
                         finally:
                             # Restore original compose files
                             docker_client.client_config.compose_files = (

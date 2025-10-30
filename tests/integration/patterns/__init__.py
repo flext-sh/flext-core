@@ -15,7 +15,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import (
-    FlextBus as FlextBus,
     FlextConfig as FlextConfig,
     FlextConstants as FlextConstants,
     FlextContainer as FlextContainer,
@@ -27,7 +26,6 @@ from flext_core import (
     FlextLogger as FlextLogger,
     FlextMixins as FlextMixins,
     FlextModels as FlextModels,
-    FlextProcessors as FlextProcessors,
     FlextProtocols as FlextProtocols,
     FlextRegistry as FlextRegistry,
     FlextResult as FlextResult,

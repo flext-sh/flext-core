@@ -5,11 +5,13 @@ Comprehensive guide to testing FLEXT-Core applications with pytest, fixtures, an
 ## Overview
 
 FLEXT-Core applications use **pytest** for testing with emphasis on:
+
 - **Domain logic testing**: Business rules and patterns
 - **Integration testing**: Service interactions
 - **Unit testing**: Individual components with clear separation
 
 **Key principles:**
+
 - Railway-oriented patterns make testing straightforward
 - FlextResult enables deterministic testing
 - No mocking for happy path - use real implementations
@@ -20,6 +22,7 @@ FLEXT-Core applications use **pytest** for testing with emphasis on:
 ### Project Configuration
 
 **pyproject.toml:**
+
 ```toml
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -363,6 +366,7 @@ class TestUserRegistration:
 ### Shared Fixtures
 
 **tests/fixtures/conftest.py:**
+
 ```python
 import pytest
 from flext_core import FlextContainer, FlextLogger
@@ -390,6 +394,7 @@ def reset_container():
 ### Factory Pattern for Test Data
 
 **tests/fixtures/factories.py:**
+
 ```python
 from flext_core import FlextModels
 
@@ -642,6 +647,7 @@ def test_withdraw():
 ## Summary
 
 FLEXT-Core testing:
+
 - ✅ Use pytest for all testing
 - ✅ Test domain logic thoroughly
 - ✅ Use FlextResult to test both success and failure paths

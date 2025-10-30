@@ -32,40 +32,12 @@ from typing import (
     TypeVar,
 )
 
-# Pydantic native types for direct use
+# Pydantic utilities - ONLY validators and Field (NOT re-exporting types)
+# Users should import specialized types directly from pydantic:
+#   from pydantic import EmailStr, PositiveInt, HttpUrl, etc.
 from pydantic import (
-    # UUID types
-    UUID1,
-    UUID3,
-    UUID4,
-    UUID5,
     AfterValidator,
-    AnyUrl,
-    AwareDatetime,
-    DirectoryPath,
-    EmailStr,
     Field,
-    FilePath,
-    FileUrl,
-    FutureDate,
-    HttpUrl,
-    NaiveDatetime,
-    NegativeFloat,
-    NegativeInt,
-    NewPath,
-    NonNegativeFloat,
-    NonNegativeInt,
-    NonPositiveFloat,
-    NonPositiveInt,
-    PastDate,
-    PositiveFloat,
-    PositiveInt,
-    SecretStr,
-    confloat,
-    conint,
-    conlist,
-    conset,
-    constr,
 )
 
 if TYPE_CHECKING:
@@ -365,49 +337,25 @@ HostName = FlextTypes.HostName
 
 
 __all__: list[str] = [
-    "UUID1",
-    "UUID3",
-    "UUID4",
-    "UUID5",
-    # Pydantic native types (re-exported for convenience)
-    "AnyUrl",
-    "AwareDatetime",
     # TypeVars (domain-specific for FlextCore architecture)
     "CallableInputT",
     "CallableOutputT",
     "Command",
-    "DirectoryPath",
     "E",
-    "EmailStr",
     "Event",
     "F",
     "FactoryT",
-    "FilePath",
-    "FileUrl",
     "FlextTypes",
-    "FutureDate",
     # Domain validation types (Phase 3 - Annotated constraints)
     "HostName",
-    "HttpUrl",
     "K",
     "LogLevel",
     "Message",
     "MessageT",
     "MessageT_contra",
-    "NaiveDatetime",
-    "NegativeFloat",
-    "NegativeInt",
-    "NewPath",
     "NonEmptyStr",
-    "NonNegativeFloat",
-    "NonNegativeInt",
-    "NonPositiveFloat",
-    "NonPositiveInt",
     "P",
-    "PastDate",
     "PortNumber",
-    "PositiveFloat",
-    "PositiveInt",
     "ProcessedDataT",
     "ProcessorResultT",
     "Query",
@@ -415,7 +363,6 @@ __all__: list[str] = [
     "RegistryHandlerT",
     "ResultT",
     "RetryCount",
-    "SecretStr",
     "T",
     "T1_co",
     "T2_co",
@@ -450,9 +397,4 @@ __all__: list[str] = [
     "U",
     "V",
     "W",
-    "confloat",
-    "conint",
-    "conlist",
-    "conset",
-    "constr",
 ]

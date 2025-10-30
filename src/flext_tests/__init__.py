@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import (
-    FlextBus,
     FlextConfig,
     FlextConstants,
     FlextContainer,
@@ -22,7 +21,6 @@ from flext_core import (
     FlextLogger,
     FlextMixins,
     FlextModels,
-    FlextProcessors,
     FlextProtocols,
     FlextRegistry,
     FlextResult,
@@ -37,7 +35,6 @@ from flext_tests.matchers import FlextTestsMatchers
 from flext_tests.utilities import FlextTestsUtilities
 
 __all__ = [
-    "FlextBus",
     "FlextConfig",
     "FlextConstants",
     "FlextContainer",
@@ -49,7 +46,6 @@ __all__ = [
     "FlextLogger",
     "FlextMixins",
     "FlextModels",
-    "FlextProcessors",
     "FlextProtocols",
     "FlextRegistry",
     "FlextResult",

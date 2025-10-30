@@ -59,7 +59,9 @@ def service_factory(factory: Callable[..., Any]) -> Callable[[type], type]:
     def decorator(service_class: type) -> type:
         """Mark service class with custom factory."""
         # Store custom factory on the class for __init_subclass__ to use
-        service_class._custom_factory = factory  # type: ignore
+        # SLF001: Intentional private attribute assignment for decorator pattern
+        # Cast to Any to allow dynamic attribute assignment on type objects
+        cast("Any", service_class)._custom_factory = factory
         return service_class
 
     return decorator
@@ -204,8 +206,8 @@ class FlextService[TDomainResult](
             config_result = container.get(config_class_name)
 
             if config_result.is_success:
-                return config_result.unwrap()  # type: ignore[no-any-return]
-        except Exception:  # noqa: S110
+                return config_result.unwrap()
+        except Exception:
             # Fall back to global config if resolution fails
             pass
 
@@ -251,7 +253,7 @@ class FlextService[TDomainResult](
                 models_obj = models_result.unwrap()
                 if isinstance(models_obj, type):
                     return models_obj
-        except Exception:  # noqa: S110
+        except Exception:
             # Return default namespace if resolution fails
             pass
 
@@ -330,10 +332,10 @@ class FlextService[TDomainResult](
                     continue
 
                 # Skip **kwargs and *args parameters
-                if param.kind in (
+                if param.kind in {
                     inspect.Parameter.VAR_KEYWORD,
                     inspect.Parameter.VAR_POSITIONAL,
-                ):
+                }:
                     continue
 
                 # Skip generic 'data' parameter (Pydantic initialization)
@@ -424,12 +426,13 @@ class FlextService[TDomainResult](
             # If signature inspection fails, try simple registration
             try:
                 container.register_factory(service_name, cls)
-            except Exception:
+            except Exception as inner_e:
                 # Last resort: log and continue
-                raise RuntimeError(
+                msg = (
                     f"Failed to register {service_name}: "
                     f"signature inspection failed ({e!s})"
                 )
+                raise RuntimeError(msg) from inner_e
 
     @override
     def __init__(self, **data: object) -> None:

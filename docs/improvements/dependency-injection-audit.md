@@ -91,6 +91,7 @@ All documented methods exist and line numbers are accurate:
 ### 1. Add More Advanced Patterns
 
 Document these additional patterns (all methods exist):
+
 - Service composition with auto_wire
 - Conditional registration (already shown but could expand)
 - Service lifecycle hooks (if they exist)
@@ -98,8 +99,10 @@ Document these additional patterns (all methods exist):
 ### 2. Clarify Breaking Changes
 
 The guide mentions v0.9.9 breaking changes but could be clearer:
+
 ```markdown
 BREAKING CHANGES (Phase 4 - v0.9.9):
+
 - register[T]() now uses generic type T instead of object
 - register_factory[T]() now uses Callable[[], T] instead of Callable[[], object]
 - get_typed[T]() now returns FlextResult[T] instead of FlextResult[object]
@@ -110,6 +113,7 @@ Add migration guide from v0.9.8 to v0.9.9.
 ### 3. Add Performance Considerations
 
 Document when to use:
+
 - `register()` vs `register_factory()` - factory for expensive objects
 - Singleton vs transient services
 - Batch operations for startup performance
@@ -117,6 +121,7 @@ Document when to use:
 ### 4. Cross-Reference Examples
 
 Guide mentions examples but could directly reference:
+
 - `examples/02_dependency_injection.py` - Complete DI demonstration
 - Integration examples showing DI in action
 
@@ -145,6 +150,7 @@ Registering services?
 ### 2. Common Pitfalls
 
 Expand the anti-patterns section:
+
 - Not checking FlextResult (already documented ✅)
 - Creating multiple containers (already documented ✅)
 - **NEW**: Circular dependencies in auto_wire
@@ -154,6 +160,7 @@ Expand the anti-patterns section:
 ### 3. Testing Patterns
 
 Expand testing section with:
+
 - Mock service substitution
 - Test container isolation
 - Fixture setup patterns
@@ -164,11 +171,13 @@ Expand testing section with:
 ## Cross-Reference Verification
 
 ### Internal Links ✅
+
 - ✅ Links to Railway-Oriented Programming work
 - ✅ Links to Architecture Overview work
 - ✅ Links to API Reference work
 
 ### External References
+
 - ⚠️ Link to CLAUDE.md could be more specific (which section?)
 - ✅ Examples reference is generic but works
 
@@ -191,6 +200,7 @@ Expand testing section with:
 **Score**: 8/10 - Very good, minor gaps
 
 **Covered**:
+
 - ✅ Core DI patterns
 - ✅ Type-safe retrieval
 - ✅ Factory patterns
@@ -199,6 +209,7 @@ Expand testing section with:
 - ✅ Best practices
 
 **Could Add**:
+
 - Performance considerations
 - Migration guide for v0.9.9
 - Decision tree for method selection
@@ -210,16 +221,19 @@ Expand testing section with:
 ## Recommendations
 
 ### High Priority
+
 1. Add source line references (like railway guide)
 2. Add decision tree for method selection
 3. Expand anti-patterns with circular dependency warnings
 
 ### Medium Priority
+
 4. Add performance considerations section
 5. Create v0.9.8 → v0.9.9 migration guide
 6. Expand testing patterns section
 
 ### Low Priority
+
 7. Add more real-world examples
 8. Create comparison table of all methods
 9. Add troubleshooting section
@@ -233,4 +247,3 @@ The Dependency Injection guide is **highly accurate and well-written**. Unlike t
 **Status**: ✅ PRODUCTION READY with minor enhancements recommended
 
 **Next**: Audit Domain-Driven Design guide
-

@@ -28,6 +28,7 @@ result = (
 ```
 
 **Benefits:**
+
 - ✅ Composable error handling
 - ✅ No exception throwing
 - ✅ Type-safe error propagation
@@ -54,6 +55,7 @@ if logger_result.is_success:
 ```
 
 **Benefits:**
+
 - ✅ Loose coupling between components
 - ✅ Easy testing with mocked dependencies
 - ✅ Singleton management
@@ -85,6 +87,7 @@ class OrderService(FlextService):
 ```
 
 **Benefits:**
+
 - ✅ Clear business logic organization
 - ✅ Reusable domain concepts
 - ✅ Business rule validation
@@ -124,6 +127,7 @@ class GetUserHandler:
 ```
 
 **Benefits:**
+
 - ✅ Clear intent (read vs write)
 - ✅ Optimized query models
 - ✅ Scalable read/write separation
@@ -158,6 +162,7 @@ class EmailNotificationSubscriber:
 ```
 
 **Benefits:**
+
 - ✅ Decoupled components
 - ✅ Async processing support
 - ✅ Audit trail of important events
@@ -198,6 +203,7 @@ class UserService(FlextService):
 ```
 
 **Benefits:**
+
 - ✅ Domain independent of infrastructure
 - ✅ Easy to swap implementations
 - ✅ Testable with mock repositories
@@ -235,6 +241,7 @@ class UserService:
 ```
 
 **Benefits:**
+
 - ✅ Improved performance
 - ✅ Reduced database queries
 - ✅ Consistent data access
@@ -286,6 +293,7 @@ else:
 ```
 
 **Benefits:**
+
 - ✅ Clear validation flow
 - ✅ Fails fast on first error
 - ✅ Composable validators
@@ -325,6 +333,7 @@ bus.add_middleware(AuthenticationMiddleware())
 ```
 
 **Benefits:**
+
 - ✅ Separation of concerns
 - ✅ Reusable middleware
 - ✅ Clear execution order
@@ -347,6 +356,7 @@ class UserService:
 ```
 
 **When acceptable:**
+
 - Bootstrap code (application startup)
 - Legacy code migration
 - When true DI would be too complex
@@ -378,6 +388,7 @@ logger = LoggerAdapter(external)
 ```
 
 **Benefits:**
+
 - ✅ Integrate incompatible libraries
 - ✅ Hide external API differences
 - ✅ Maintain consistent interface
@@ -406,6 +417,7 @@ if result.is_success:
 ```
 
 **Benefits:**
+
 - ✅ Encapsulates object creation
 - ✅ Easy to add new types
 - ✅ Centralized creation logic
@@ -413,6 +425,7 @@ if result.is_success:
 ## Summary
 
 Key patterns in FLEXT-Core:
+
 - ✅ **Railway-Oriented**: Error composition with FlextResult
 - ✅ **Dependency Injection**: Service management with FlextContainer
 - ✅ **Domain-Driven Design**: Business logic organization

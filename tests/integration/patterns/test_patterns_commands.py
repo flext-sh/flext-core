@@ -10,7 +10,6 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import (
-    FlextBus,
     FlextConstants,
     FlextHandlers,
     FlextModels,
@@ -27,7 +26,6 @@ FlextCommandId = str
 FlextCommandType = str
 
 FlextCommandHandler = FlextHandlers
-FlextCommandBus = FlextBus
 
 # TEST COMMAND IMPLEMENTATIONS
 # =============================================================================
@@ -111,7 +109,7 @@ class CreateUserCommandHandler(
         """Get command type this handler processes."""
         return "create_user"
 
-    def can_handle(self, message_type: type[object]) -> bool:
+    def can_handle(self, message_type: object) -> bool:
         """Check if can handle command."""
         return message_type == CreateUserCommand or str(message_type) == "create_user"
 
@@ -157,7 +155,7 @@ class UpdateUserCommandHandler(
         """Get command type this handler processes."""
         return "update_user"
 
-    def can_handle(self, message_type: type[object]) -> bool:
+    def can_handle(self, message_type: object) -> bool:
         """Check if can handle command."""
         return message_type == UpdateUserCommand or str(message_type) == "update_user"
 
@@ -193,7 +191,7 @@ class FailingCommandHandler(FlextCommandHandler[FailingCommand, None]):
         """Get command type this handler processes."""
         return "failing"
 
-    def can_handle(self, message_type: type[object]) -> bool:
+    def can_handle(self, message_type: object) -> bool:
         """Check if can handle command."""
         return message_type == FailingCommand or str(message_type) == "failing"
 
@@ -457,201 +455,6 @@ class TestFlextCommandHandler:
             )
 
 
-class TestFlextCommandBus:
-    """Test FlextCommandBus functionality."""
-
-    def test_command_bus_creation(self) -> None:
-        """Test creating command bus."""
-        bus = FlextCommandBus()
-
-        if len(bus.get_all_handlers()) != 0:
-            msg = f"Expected {0}, got {len(bus.get_all_handlers())}"
-            raise AssertionError(msg)
-
-    def test_register_handler_success(self) -> None:
-        """Test successful handler registration."""
-        bus: FlextCommandBus = FlextCommandBus()
-        handler: FlextCommandHandler[CreateUserCommand, dict[str, object]] = (
-            CreateUserCommandHandler()
-        )
-
-        bus.register_handler(handler)
-
-        if len(bus.get_all_handlers()) != 1:
-            msg = f"Expected {1}, got {len(bus.get_all_handlers())}"
-            raise AssertionError(msg)
-
-    def test_register_invalid_handler(self) -> None:
-        """Test registering invalid handler."""
-        bus = FlextCommandBus()
-
-        # Register a string that will fail - should return failure result
-        result = bus.register_handler("not_a_handler")
-
-        # Verify the result is a failure
-        assert result.is_failure
-        assert result.error
-        assert result.error is not None
-        assert "Invalid handler" in result.error
-
-        # Verify no handlers were registered
-        assert len(bus.get_all_handlers()) == 0
-
-    def test_create_simple_handler_wrapper_behaviour(self) -> None:
-        """Ensure the simple handler factory wraps callables consistently."""
-        bus = FlextCommandBus()
-
-        def simple_callable(command: object) -> object:
-            if isinstance(command, CreateUserCommand):
-                return command.username.upper()
-            return ""
-
-        handler = FlextHandlers.from_callable(simple_callable)
-        register_result = bus.register_handler(handler)
-        assert register_result.is_success
-
-        command = CreateUserCommand(username="carol", email="carol@example.com")
-        execution_result = bus.execute(command)
-        assert execution_result.is_success
-        assert execution_result.unwrap() == "CAROL"
-
-        def prebuilt_result(_: object) -> object:
-            return FlextResult[str].ok("from-result")
-
-        passthrough_handler = FlextHandlers.from_callable(prebuilt_result)
-        passthrough_outcome = passthrough_handler.handle(command)
-        assert passthrough_outcome.is_success
-        assert passthrough_outcome.unwrap() == "from-result"
-
-        def failing_callable(_: object) -> object:
-            msg = "callable boom"
-            raise RuntimeError(msg)
-
-        failing_handler = FlextHandlers.from_callable(failing_callable)
-        failure_outcome = failing_handler.handle(command)
-        assert failure_outcome.is_failure
-        assert "callable boom" in (failure_outcome.error or "")
-
-    def test_execute_command_success(self) -> None:
-        """Test successful command execution."""
-        bus = FlextCommandBus()
-        handler = CreateUserCommandHandler()
-        bus.register_handler(handler)
-
-        command = CreateUserCommand(username="alice", email="alice@example.com")
-        result = bus.execute(command)
-
-        if not result.is_success:
-            msg = f"Expected True, got {result.is_success}"
-            raise AssertionError(msg)
-        assert result.value is not None
-        user_data = cast("dict[str, object]", result.value)
-        if user_data["username"] != "alice":
-            msg = f"Expected {'alice'}, got {user_data['username']}"
-            raise AssertionError(msg)
-
-    def test_execute_command_no_handler(self) -> None:
-        """Test executing command with no registered handler."""
-        bus = FlextCommandBus()
-        command = CreateUserCommand(username="bob", email="bob@example.com")
-
-        result = bus.execute(command)
-
-        if not (result.is_failure):
-            msg = f"Expected True, got {result.is_failure}"
-            raise AssertionError(msg)
-        assert result.error is not None
-        assert result.error
-        if "no handler found" not in (result.error or "").lower():
-            msg = f"Expected {'no handler found'} in {(result.error or '').lower()}"
-            raise AssertionError(
-                msg,
-            )
-
-    def test_execute_command_validation_failure(self) -> None:
-        """Test executing invalid command."""
-        bus = FlextCommandBus()
-        handler = CreateUserCommandHandler()
-        bus.register_handler(handler)
-
-        command = CreateUserCommand(username="", email="")  # Invalid command
-        result = bus.execute(command)
-
-        if not (result.is_failure):
-            msg = f"Expected True, got {result.is_failure}"
-            raise AssertionError(msg)
-
-    def test_find_handler_for_command(self) -> None:
-        """Test finding handler for command."""
-        bus = FlextCommandBus()
-        handler = CreateUserCommandHandler()
-        bus.register_handler(handler)
-
-        command = CreateUserCommand(username="test", email="test@example.com")
-        found_handler = bus.find_handler(command)
-
-        if found_handler != handler:
-            msg = f"Expected {handler}, got {found_handler}"
-            raise AssertionError(msg)
-
-    def test_find_handler_not_found(self) -> None:
-        """Test finding handler when none exists."""
-        bus = FlextCommandBus()
-        command = CreateUserCommand(username="test", email="test@example.com")
-
-        found_handler = bus.find_handler(command)
-
-        assert found_handler is None
-
-    def test_get_all_handlers(self) -> None:
-        """Test getting all registered handlers."""
-        bus = FlextCommandBus()
-        handler1 = CreateUserCommandHandler()
-        handler2 = UpdateUserCommandHandler()
-
-        bus.register_handler(handler1)
-        bus.register_handler(handler2)
-
-        all_handlers = bus.get_all_handlers()
-
-        if len(all_handlers) != EXPECTED_BULK_SIZE:
-            msg = f"Expected {2}, got {len(all_handlers)}"
-            raise AssertionError(msg)
-        if handler1 not in all_handlers:
-            msg = f"Expected {handler1} in {all_handlers}"
-            raise AssertionError(msg)
-        assert handler2 in all_handlers
-
-    def test_create_simple_handler_wrapper(self) -> None:
-        """Ensure create_simple_handler wraps callables consistently."""
-
-        def simple_callable(command: object) -> object:
-            if isinstance(command, CreateUserCommand):
-                return f"user:{command.username}"
-            return ""
-
-        command = CreateUserCommand(username="wrapped", email="wrap@example.com")
-        handler = FlextHandlers.from_callable(simple_callable)
-        result = handler.handle(command)
-
-        if not result.is_success:
-            msg = f"Expected True, got {result.is_success}"
-            raise AssertionError(msg)
-        assert result.value == "user:wrapped"
-
-        def failing_callable(
-            _command: object,
-        ) -> object:  # pragma: no cover - raising path
-            msg = "boom from callable"
-            raise RuntimeError(msg)
-
-        failing_handler = FlextHandlers.from_callable(failing_callable)
-        failure_result = failing_handler.handle(command)
-
-        assert failure_result.is_failure
-        assert "boom from callable" in (failure_result.error or "")
-
-
 class TestFlextCommandResults:
     """Test FlextCommandResults functionality."""
 
@@ -702,175 +505,3 @@ class TestFlextCommandResults:
         if command_result.error_data == {}:
             # Test passes - metadata would be empty for successful results
             pass
-
-
-class TestCommandPatternIntegration:
-    """Integration tests for command pattern."""
-
-    def test_complete_command_flow(self) -> None:
-        """Test complete command execution flow."""
-        # Setup command bus with handlers
-        bus = FlextCommandBus()
-        create_handler = CreateUserCommandHandler()
-        update_handler = UpdateUserCommandHandler()
-
-        bus.register_handler(create_handler)
-        bus.register_handler(update_handler)
-
-        # Execute create user command
-        create_command = CreateUserCommand(
-            username="john_doe",
-            email="john@example.com",
-        )
-        create_result = bus.execute(create_command)
-
-        if not create_result.is_success:
-            msg = f"Expected True, got {create_result.is_success}"
-            raise AssertionError(msg)
-        assert create_result.value is not None
-        user_data = cast("dict[str, object]", create_result.value)
-        assert user_data is not None
-        user_id = cast("str", user_data["id"])
-
-        # Execute update user command
-        update_command = UpdateUserCommand(
-            target_user_id=user_id,
-            updates={"email": "newemail@example.com"},
-        )
-        update_result = bus.execute(update_command)
-
-        if not update_result.is_success:
-            msg = f"Expected True, got {update_result.is_success}"
-            raise AssertionError(msg)
-        assert update_result.value is not None
-        update_data = cast("dict[str, object]", update_result.value)
-        if update_data["target_user_id"] != user_id:
-            msg = f"Expected {user_id}, got {update_data['target_user_id']}"
-            raise AssertionError(
-                msg,
-            )
-
-    def test_multiple_command_types(self) -> None:
-        """Test handling multiple command types."""
-        bus: FlextCommandBus = FlextCommandBus()
-
-        # Register different handlers
-        create_handler: CreateUserCommandHandler = CreateUserCommandHandler()
-        update_handler: UpdateUserCommandHandler = UpdateUserCommandHandler()
-
-        bus.register_handler(create_handler)
-        bus.register_handler(update_handler)
-
-        # Execute different command types
-        commands: list[FlextModels.TimestampedModel] = [
-            CreateUserCommand(
-                username="user1",
-                email="user1@example.com",
-            ),
-            CreateUserCommand(
-                username="user2",
-                email="user2@example.com",
-            ),
-            UpdateUserCommand(
-                target_user_id="user1",
-                updates={"status": "active"},
-            ),
-            UpdateUserCommand(
-                target_user_id="user2",
-                updates={"bio": "Developer"},
-            ),
-        ]
-
-        results: list[FlextResult[object]] = []
-        for command in commands:
-            cmd: FlextModels.TimestampedModel = command  # Type annotation for clarity
-            result = bus.execute(cmd)
-            results.append(result)
-
-        # Verify all commands executed successfully
-        if not all(result.is_success for result in results):
-            msg = (
-                f"Expected {all(result.is_success for result in results)} in {results}"
-            )
-            raise AssertionError(
-                msg,
-            )
-        if len(create_handler.created_users) != EXPECTED_BULK_SIZE:
-            msg = f"Expected {2}, got {len(create_handler.created_users)}"
-            raise AssertionError(
-                msg,
-            )
-        assert len(update_handler.updated_users) == EXPECTED_BULK_SIZE
-
-    def test_command_validation_and_processing_chain(self) -> None:
-        """Test command validation and processing chain."""
-        bus = FlextCommandBus()
-        handler = CreateUserCommandHandler()
-        bus.register_handler(handler)
-
-        # Test with valid command
-        valid_command = CreateUserCommand(
-            username="valid_user",
-            email="valid@example.com",
-        )
-        result = bus.execute(valid_command)
-        if not result.is_success:
-            msg = f"Expected True, got {result.is_success}"
-            raise AssertionError(msg)
-
-        # Test with invalid command (validation should fail)
-        invalid_command = CreateUserCommand(username="", email="invalid")
-        result = bus.execute(invalid_command)
-        if not (result.is_failure):
-            msg = f"Expected True, got {result.is_failure}"
-            raise AssertionError(msg)
-
-        # Verify handler state is consistent
-        if len(handler.created_users) != 1:  # Only valid command processed:
-            msg = f"Expeced {1} # Only valid command processed, got {len(handler.created_users)}"
-            raise AssertionError(
-                msg,
-            )
-
-    def test_command_bus_handler_management(self) -> None:
-        """Test command bus handler management features."""
-        bus = FlextCommandBus()
-
-        # Initially empty
-        if len(bus.get_all_handlers()) != 0:
-            msg = f"Expected {0}, got {len(bus.get_all_handlers())}"
-            raise AssertionError(msg)
-
-        # Add handlers
-        handler1 = CreateUserCommandHandler()
-        handler2 = UpdateUserCommandHandler()
-
-        bus.register_handler(handler1)
-        bus.register_handler(handler2)
-
-        # Verify handlers are registered
-        all_handlers = bus.get_all_handlers()
-        if len(all_handlers) != EXPECTED_BULK_SIZE:
-            msg = f"Expected {2}, got {len(all_handlers)}"
-            raise AssertionError(msg)
-
-        # Test finding specific handlers
-        create_command = CreateUserCommand(username="test", email="test@example.com")
-        found_handler = bus.find_handler(create_command)
-        if found_handler != handler1:
-            msg = f"Expected {handler1}, got {found_handler}"
-            raise AssertionError(msg)
-
-        update_command = UpdateUserCommand(
-            target_user_id="123",
-            updates={"name": "updated"},
-        )
-        found_handler = bus.find_handler(update_command)
-        if found_handler != handler2:
-            msg = f"Expected {handler2}, got {found_handler}"
-            raise AssertionError(msg)
-
-        # Test handler not found
-        failing_command = FailingCommand()
-        found_handler = bus.find_handler(failing_command)
-        assert found_handler is None

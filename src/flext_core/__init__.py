@@ -27,14 +27,13 @@ FLEXT Core provides the foundation for 32+ dependent projects through:
   - Integration: Global container accessible from any layer
 
 **CQRS & Event-Driven Architecture**:
-  FlextBus - Command/Query bus with event publishing (Layer 3)
-  - Structural typing: Satisfies FlextProtocols.CommandBus via methods
-  - Methods: execute_command(), execute_query(), publish_event()
-  - Features: Handler registration, middleware pipeline, caching
-
-  FlextDispatcher - Unified command/query dispatch orchestration (Layer 3)
+  FlextDispatcher - Unified command/query dispatch orchestration (Layer 1-3)
+  - Layer 1: CQRS routing with command/query handler registration
+  - Layer 2: Reliability patterns (circuit breaker, rate limiting, retry, timeout)
+  - Layer 3: Advanced processing (batch, parallel, fallback execution)
   - Structural typing: Satisfies FlextProtocols.CommandDispatcher
-  - Reliability patterns: Circuit breaker, rate limiting, retry, timeout
+  - Methods: execute(), dispatch(), register_handler(), process_batch(),
+    process_parallel()
 
   FlextHandlers - CQRS handler registry (Layer 3)
   - Structural typing: Satisfies FlextProtocols.HandlerRegistry
@@ -155,10 +154,8 @@ Layer Hierarchy (Clean Architecture):
     └─ FlextContext (Request Context)
 
   Layer 3: Application
-    ├─ FlextBus (CQRS Event Bus)
-    ├─ FlextDispatcher (Unified Dispatch)
+    ├─ FlextDispatcher (Unified CQRS Dispatch - Layers 1-3)
     ├─ FlextHandlers (Handler Registry)
-    ├─ FlextProcessors (Message Processing)
     └─ FlextDecorators (Cross-Cutting Concerns)
 
   Layer 2: Domain
@@ -228,12 +225,15 @@ USAGE EXAMPLES
     ...     email: Email
     >>> user = User(id="1", name="John", email=Email(address="john@example.com"))
 
-**Example 4: CQRS Pattern**:
-    >>> from flext_core import FlextBus, FlextResult
-    >>> bus = FlextBus()
-    >>> def handle_user_created(event: dict) -> FlextResult[None]:
-    ...     return FlextResult[None].ok(None)
-    >>> bus.subscribe("UserCreated", handle_user_created)
+**Example 4: CQRS Pattern with Dispatcher**:
+    >>> from flext_core import FlextDispatcher, FlextResult
+    >>> dispatcher = FlextDispatcher()
+    >>> class CreateUserCommand:
+    ...     name: str
+    >>> def handle_create_user(cmd: CreateUserCommand) -> FlextResult[dict]:
+    ...     return FlextResult[dict].ok({"user_id": "123"})
+    >>> dispatcher.register_handler(CreateUserCommand, handle_create_user)
+    >>> result = dispatcher.dispatch(CreateUserCommand(name="Alice"))
 
 **Example 5: Service Base Class**:
     >>> from flext_core import FlextService, FlextResult
@@ -339,7 +339,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core.__version__ import __version__, __version_info__
-from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
@@ -351,54 +350,32 @@ from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
-from flext_core.processors import FlextProcessors
 from flext_core.protocols import FlextProtocols
 from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService, service_factory
-from flext_core.typings import (  # Pydantic native types (direct exports); TypeVars; FlextTypes - domain-specific complex types
-    UUID1,
-    UUID3,
-    UUID4,
-    UUID5,
-    AnyUrl,
-    AwareDatetime,
+from flext_core.typings import (  # TypeVars; FlextTypes - domain-specific types
+    # Note: Pydantic types (UUID1-5, EmailStr, HttpUrl, etc.) are no longer
+    # re-exported. Users should import directly from pydantic: from pydantic
+    # import EmailStr, PositiveInt, HttpUrl
     Command,
-    DirectoryPath,
     E,
-    EmailStr,
     Event,
     F,
-    FilePath,
-    FileUrl,
     FlextTypes,
-    FutureDate,
     # Domain validation types (Phase 3 - Annotated constraints)
     HostName,
-    HttpUrl,
     K,
     LogLevel,
     Message,
-    NaiveDatetime,
-    NegativeFloat,
-    NegativeInt,
-    NewPath,
     NonEmptyStr,
-    NonNegativeFloat,
-    NonNegativeInt,
-    NonPositiveFloat,
-    NonPositiveInt,
     P,
-    PastDate,
     PortNumber,
-    PositiveFloat,
-    PositiveInt,
     Query,
     R,
     ResultT,
     RetryCount,
-    SecretStr,
     T,
     T1_co,
     T2_co,
@@ -426,11 +403,6 @@ from flext_core.typings import (  # Pydantic native types (direct exports); Type
     U,
     V,
     W,
-    confloat,
-    conint,
-    conlist,
-    conset,
-    constr,
 )
 from flext_core.utilities import (
     FlextMetrics,
@@ -440,24 +412,14 @@ from flext_core.utilities import (
 )
 
 __all__ = [
-    "UUID1",
-    "UUID3",
-    "UUID4",
-    "UUID5",
-    # Pydantic native types
-    "AnyUrl",
-    "AwareDatetime",
-    # TypeVars
+    # FLEXT Core Classes
+    "CallableInputT",
+    "CallableOutputT",
     "Command",
-    "DirectoryPath",
     "E",
-    "EmailStr",
     "Event",
     "F",
-    "FilePath",
-    "FileUrl",
-    # FLEXT Core Classes
-    "FlextBus",
+    "FactoryT",
     "FlextConfig",
     "FlextConstants",
     "FlextContainer",
@@ -470,7 +432,6 @@ __all__ = [
     "FlextMetrics",
     "FlextMixins",
     "FlextModels",
-    "FlextProcessors",
     "FlextProtocols",
     "FlextRegistry",
     "FlextResult",
@@ -480,33 +441,22 @@ __all__ = [
     "FlextUtilities",
     "FlextValidationPipeline",
     "FlextValidations",
-    # Domain-specific Annotated types (Pydantic v2)
-    "FutureDate",
-    # Domain validation types (Phase 3 - Annotated constraints)
     "HostName",
-    "HttpUrl",
     "K",
     "LogLevel",
     "Message",
-    "NaiveDatetime",
-    "NegativeFloat",
-    "NegativeInt",
-    "NewPath",
+    "MessageT",
+    "MessageT_contra",
     "NonEmptyStr",
-    "NonNegativeFloat",
-    "NonNegativeInt",
-    "NonPositiveFloat",
-    "NonPositiveInt",
     "P",
-    "PastDate",
     "PortNumber",
-    "PositiveFloat",
-    "PositiveInt",
+    "ProcessedDataT",
+    "ProcessorResultT",
     "Query",
     "R",
+    "RegistryHandlerT",
     "ResultT",
     "RetryCount",
-    "SecretStr",
     "T",
     "T1_co",
     "T2_co",
@@ -519,28 +469,29 @@ __all__ = [
     "TDomainEvent_co",
     "TEntity_co",
     "TEvent_contra",
+    "TInput_Handler_contra",
     "TInput_contra",
     "TItem_contra",
     "TQuery_contra",
+    "TResult_Handler_co",
     "TResult_co",
     "TResult_contra",
     "TState_co",
     "TUtil_contra",
+    "TValidateAll",
     "TValueObject_co",
     "TValue_co",
+    "T_Repository_contra",
+    "T_ResultProtocol",
+    "T_Service_co",
+    "T_Validator_contra",
     "T_co",
     "T_contra",
     "TimeoutSeconds",
     "U",
     "V",
     "W",
-    # Version
     "__version__",
     "__version_info__",
-    "confloat",
-    "conint",
-    "conlist",
-    "conset",
-    "constr",
     "service_factory",
 ]

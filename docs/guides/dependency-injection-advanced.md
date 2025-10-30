@@ -674,4 +674,3 @@ Layer 0: FlextConstants, FlextTypes
 ---
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_container.py` for 180+ test cases demonstrating container patterns and edge cases.
-

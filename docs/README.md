@@ -10,6 +10,7 @@ domain-driven design patterns, and comprehensive type safety with Python 3.13+.
 > **✨ New in v0.9.9**: Enhanced 5-layer architecture (Layers 0, 0.5, 1, 2, 3, 4) with zero-dependency constants layer and runtime bridge. See [CLAUDE.md](../CLAUDE.md) for AI-assisted development workflow with Serena MCP integration.
 >
 > **📚 New Comprehensive Guides** (October 2025):
+>
 > - **[Railway-Oriented Programming](./guides/railway-oriented-programming.md)** - FlextResult[T] patterns with real examples
 > - **[Advanced Dependency Injection](./guides/dependency-injection-advanced.md)** - FlextContainer type-safe patterns
 > - **[Domain-Driven Design](./guides/domain-driven-design.md)** - FlextModels with practical examples

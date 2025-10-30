@@ -332,6 +332,7 @@ A: Yes, but prefer FlextResult for business errors. Custom exceptions for framew
 
 **Q: Where do I put my code?**
 A: Follow clean architecture layers:
+
 - **Domain**: Business logic (models, services, validation)
 - **Application**: Use cases (commands, queries, handlers)
 - **Infrastructure**: External dependencies (databases, APIs, config)
@@ -357,19 +358,19 @@ make validate
 
 ## Quick Reference
 
-| Task | Code |
-|------|------|
-| **Return Success** | `FlextResult[T].ok(value)` |
-| **Return Error** | `FlextResult[T].fail("error message")` |
-| **Check Success** | `result.is_success` |
-| **Extract Value** | `result.unwrap()` |
-| **Get Error** | `result.error` |
-| **Transform Value** | `result.map(lambda x: x * 2)` |
-| **Chain Operations** | `result.flat_map(next_operation)` |
-| **Register Service** | `container.register("name", service)` |
-| **Get Service** | `container.get("name")` |
-| **Create Entity** | `User(id="1", name="Alice")` |
-| **Create Value Object** | `Email(address="alice@example.com")` |
+| Task                    | Code                                   |
+| ----------------------- | -------------------------------------- |
+| **Return Success**      | `FlextResult[T].ok(value)`             |
+| **Return Error**        | `FlextResult[T].fail("error message")` |
+| **Check Success**       | `result.is_success`                    |
+| **Extract Value**       | `result.unwrap()`                      |
+| **Get Error**           | `result.error`                         |
+| **Transform Value**     | `result.map(lambda x: x * 2)`          |
+| **Chain Operations**    | `result.flat_map(next_operation)`      |
+| **Register Service**    | `container.register("name", service)`  |
+| **Get Service**         | `container.get("name")`                |
+| **Create Entity**       | `User(id="1", name="Alice")`           |
+| **Create Value Object** | `Email(address="alice@example.com")`   |
 
 ## Getting Help
 

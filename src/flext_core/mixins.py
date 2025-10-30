@@ -14,12 +14,14 @@ from __future__ import annotations
 import threading
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from functools import partial
 from typing import ClassVar, TypeVar, cast
 
 from flext_core.config import FlextConfig
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.loggings import FlextLogger
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 
 
@@ -780,15 +782,18 @@ class FlextMixins:
             ```python
             from flext_core import FlextMixins, FlextResult
 
+
             def validate_name(value: str) -> FlextResult[None]:
                 if not value:
                     return FlextResult.fail("Name required")
                 return FlextResult.ok(None)
 
+
             def validate_email(value: str) -> FlextResult[None]:
                 if "@" not in value:
                     return FlextResult.fail("Valid email required")
                 return FlextResult.ok(None)
+
 
             # Chain validators using ROP pattern
             user_data = {"name": "John", "email": "john@example.com"}
@@ -798,7 +803,7 @@ class FlextMixins:
                 [
                     lambda d: validate_name(d["name"]),
                     lambda d: validate_email(d["email"]),
-                ]
+                ],
             )
 
             if result.is_success:
@@ -814,9 +819,7 @@ class FlextMixins:
         @staticmethod
         def validate_with_result(
             data: FlextMixins.Validation.T,
-            validators: list[
-                Callable[[FlextMixins.Validation.T], FlextResult[None]]
-            ],
+            validators: list[Callable[[FlextMixins.Validation.T], FlextResult[None]]],
         ) -> FlextResult[FlextMixins.Validation.T]:
             """Chain multiple validators using railway-oriented programming.
 
@@ -843,10 +846,15 @@ class FlextMixins:
             result: FlextResult[FlextMixins.Validation.T] = FlextResult.ok(data)
 
             for validator in validators:
-                # Bind validator to default argument to avoid loop variable capture
-                result = result.flat_map(
-                    lambda d, v=validator: v(d).map(lambda _: d)
-                )
+                # Create helper function with proper closure to validate and preserve data
+                def validate_and_preserve(
+                    data: FlextMixins.Validation.T,
+                    v: Callable[[FlextMixins.Validation.T], FlextResult[None]],
+                ) -> FlextResult[FlextMixins.Validation.T]:
+                    return v(data).map(lambda _: data)
+
+                # Use partial to bind validator while passing data through flat_map
+                result = result.flat_map(partial(validate_and_preserve, v=validator))
 
             return result
 
@@ -904,14 +912,12 @@ class FlextMixins:
                     return FlextResult.fail(result.error)
                 values.append(result.unwrap())
 
-            return FlextResult[list["FlextMixins.ResultHelpers.T"]].ok(values)
+            return FlextResult[list[FlextMixins.ResultHelpers.T]].ok(values)
 
         @staticmethod
         def validate_all(
             items: list[FlextMixins.ResultHelpers.T],
-            validator: Callable[
-                [FlextMixins.ResultHelpers.T], FlextResult[None]
-            ],
+            validator: Callable[[FlextMixins.ResultHelpers.T], FlextResult[None]],
         ) -> FlextResult[list[FlextMixins.ResultHelpers.T]]:
             """Validate all items using single validator function.
 
@@ -931,7 +937,7 @@ class FlextMixins:
                 if validation_result.is_failure:
                     return FlextResult.fail(validation_result.error)
 
-            return FlextResult[list["FlextMixins.ResultHelpers.T"]].ok(items)
+            return FlextResult[list[FlextMixins.ResultHelpers.T]].ok(items)
 
         @staticmethod
         def compose_with_first_success(
@@ -986,9 +992,6 @@ class FlextMixins:
                 bool: True if object satisfies Handler protocol
 
             """
-            # Import here to avoid circular imports
-            from flext_core.protocols import FlextProtocols
-
             return isinstance(obj, FlextProtocols.Handler)
 
         @staticmethod
@@ -1006,9 +1009,6 @@ class FlextMixins:
                 bool: True if object satisfies Service protocol
 
             """
-            # Import here to avoid circular imports
-            from flext_core.protocols import FlextProtocols
-
             return isinstance(obj, FlextProtocols.Service)
 
         @staticmethod
@@ -1025,9 +1025,6 @@ class FlextMixins:
                 bool: True if object satisfies CommandBus protocol
 
             """
-            # Import here to avoid circular imports
-            from flext_core.protocols import FlextProtocols
-
             return isinstance(obj, FlextProtocols.CommandBus)
 
         @staticmethod
@@ -1047,9 +1044,6 @@ class FlextMixins:
                 FlextResult[None]: Success if compliant, failure with error message
 
             """
-            # Import here to avoid circular imports
-            from flext_core.protocols import FlextProtocols
-
             protocol_map = {
                 "Handler": FlextProtocols.Handler,
                 "Service": FlextProtocols.Service,

@@ -18,7 +18,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import (
-    FlextBus,
     FlextConfig,
     FlextConstants,
     FlextContainer,
@@ -29,7 +28,6 @@ from flext_core import (
     FlextLogger,
     FlextMixins,
     FlextModels,
-    FlextProcessors,
     FlextProtocols,
     FlextRegistry,
     FlextResult,
@@ -176,7 +174,6 @@ class TestBackwardCompatibility:
         assert FlextModels is not None
         assert FlextService is not None
         assert FlextLogger is not None
-        assert FlextBus is not None
         assert FlextConfig is not None
         assert FlextConstants is not None
         assert FlextContext is not None
@@ -184,7 +181,6 @@ class TestBackwardCompatibility:
         assert FlextExceptions is not None
         assert FlextHandlers is not None
         assert FlextMixins is not None
-        assert FlextProcessors is not None
         assert FlextProtocols is not None
         assert FlextRegistry is not None
         assert FlextTypes is not None

@@ -17,6 +17,7 @@ FLEXT projects use **pure Pydantic v2 patterns** (no v1 compatibility layer):
 7. Use `computed_field` for derived properties
 
 **Important**: Do NOT use old Pydantic v1 patterns:
+
 - ❌ `.dict()` → Use `.model_dump()`
 - ❌ `.json()` → Use `.model_dump_json()`
 - ❌ `.parse_obj()` → Use `.model_validate()`
@@ -556,6 +557,7 @@ else:
 ## Best Practices
 
 1. **Use `Field()` for documentation**
+
    ```python
    # Good - includes description and example
    name: str = Field(description="User name", example="Alice")
@@ -565,6 +567,7 @@ else:
    ```
 
 2. **Validate in `@field_validator`**
+
    ```python
    # Good - validation is explicit
    @field_validator("age")
@@ -579,6 +582,7 @@ else:
    ```
 
 3. **Use ConfigDict for strict validation**
+
    ```python
    # Good - strict configuration
    model_config = ConfigDict(validate_assignment=True, extra="forbid")
@@ -590,6 +594,7 @@ else:
    ```
 
 4. **Use computed_field for derived properties**
+
    ```python
    # Good - automatically included in serialization
    @computed_field
@@ -606,6 +611,7 @@ else:
 ## Checklists
 
 ### Model Configuration
+
 - ✅ Use `ConfigDict` instead of `class Config`
 - ✅ Set `extra="forbid"` to reject unknown fields
 - ✅ Set `validate_assignment=True` for runtime validation
@@ -613,6 +619,7 @@ else:
 - ❌ Don't use old Pydantic v1 Config class
 
 ### Field Validation
+
 - ✅ Use `@field_validator` for field-level validation
 - ✅ Use `@model_validator` for cross-field validation
 - ✅ Include `description` and `example` in Field()
@@ -620,6 +627,7 @@ else:
 - ❌ Don't use exceptions for validation failures
 
 ### Serialization
+
 - ✅ Use `model_dump()` instead of `.dict()`
 - ✅ Use `model_dump_json()` instead of `.json()`
 - ✅ Use `model_validate()` instead of `.parse_obj()`
@@ -638,4 +646,3 @@ else:
 **Example from FLEXT**: See `src/flext_core/config.py` (423 lines) for comprehensive Pydantic v2 usage patterns in production code.
 
 **Updated**: 2025-10-21 | **Version**: 0.9.9 | **Pydantic**: v2.12.3+
-

@@ -7,6 +7,7 @@ Comprehensive guide to managing application configuration with FlextConfig in FL
 **FlextConfig** provides a layered configuration system that supports multiple sources (environment variables, files, programmatic overrides) with type-safe access and validation.
 
 **Key Features:**
+
 - Multiple configuration sources (files, environment variables, programmatic)
 - Type-safe configuration with Pydantic v2 validation
 - Environment-specific configurations
@@ -79,6 +80,7 @@ if database_config:
 ### TOML Configuration
 
 **config.toml:**
+
 ```toml
 [application]
 name = "myapp"
@@ -112,6 +114,7 @@ smtp_user = "${EMAIL_SMTP_USER}"
 ### Environment File (.env)
 
 **.env:**
+
 ```env
 # Database secrets
 DATABASE_PASSWORD=secure_password_here
@@ -160,6 +163,7 @@ database_url = config.get('database.url')
 ### Development vs Production
 
 **config.development.toml:**
+
 ```toml
 [application]
 debug = true
@@ -172,6 +176,7 @@ url = "sqlite:///./dev.db"
 ```
 
 **config.production.toml:**
+
 ```toml
 [application]
 debug = false
@@ -266,6 +271,7 @@ logger.info("Connecting to database", extra={
 ### Environment Variable Substitution
 
 **config.toml:**
+
 ```toml
 [database]
 # Environment variables in config automatically expand
@@ -278,6 +284,7 @@ api_secret = "${API_SECRET}"
 ```
 
 **Python code:**
+
 ```python
 from flext_core import FlextConfig
 
@@ -497,6 +504,7 @@ except ValueError as e:
 ## Summary
 
 FlextConfig provides:
+
 - ✅ Multiple configuration sources with priority hierarchy
 - ✅ Type-safe access with Pydantic validation
 - ✅ Environment-specific configurations

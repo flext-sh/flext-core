@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable
 from types import SimpleNamespace
 from typing import cast
@@ -784,3 +785,409 @@ class TestFlextHandlers:
         result = handler.handle("test")
         assert result.is_success
         assert result.value == "callable_object_test"
+
+    # =================================================================
+    # COMPREHENSIVE MESSAGE VALIDATION TESTS - Fill coverage gaps
+    # =================================================================
+
+    def test_handlers_validate_command(self) -> None:
+        """Test validate_command method."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_validate_command",
+            handler_name="Test Validate Command",
+            handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        result = handler.validate_command("test_message")
+        assert result.is_success
+
+    def test_handlers_validate_query(self) -> None:
+        """Test validate_query method."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_validate_query",
+            handler_name="Test Validate Query",
+            handler_type=FlextConstants.Cqrs.HandlerType.QUERY,
+            handler_mode=FlextConstants.Cqrs.HandlerType.QUERY,
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        result = handler.validate_query("test_query")
+        assert result.is_success
+
+    def test_handlers_execute_method(self) -> None:
+        """Test execute method (Layer 1 interface)."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_execute",
+            handler_name="Test Execute",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        result = handler.execute("test_message")
+        assert result.is_success
+        assert result.value == "processed_test_message"
+
+    def test_handlers_callable_interface(self) -> None:
+        """Test __call__ method (callable interface)."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_callable",
+            handler_name="Test Callable",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        result = handler("test_message")
+        assert result.is_success
+        assert result.value == "processed_test_message"
+
+    def test_handlers_can_handle_method(self) -> None:
+        """Test can_handle method."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_can_handle",
+            handler_name="Test Can Handle",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        # Test with type object
+        assert isinstance(handler.can_handle(str), bool)
+
+    def test_handlers_mode_property(self) -> None:
+        """Test mode property."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_mode_property",
+            handler_name="Test Mode Property",
+            handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        assert handler.mode == FlextConstants.Cqrs.HandlerType.COMMAND
+
+    def test_handlers_validate_generic_command(self) -> None:
+        """Test validate method for command handler."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_validate_generic_cmd",
+            handler_name="Test Validate Generic Cmd",
+            handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        result = handler.validate("test_message")
+        assert result.is_success
+
+    def test_handlers_validate_generic_query(self) -> None:
+        """Test validate method for query handler."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_validate_generic_query",
+            handler_name="Test Validate Generic Query",
+            handler_type=FlextConstants.Cqrs.HandlerType.QUERY,
+            handler_mode=FlextConstants.Cqrs.HandlerType.QUERY,
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        result = handler.validate("test_query")
+        assert result.is_success
+
+    def test_handlers_validate_generic_event(self) -> None:
+        """Test validate method for event handler."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_validate_generic_event",
+            handler_name="Test Validate Generic Event",
+            handler_type=FlextConstants.Cqrs.HandlerType.EVENT,
+            handler_mode=FlextConstants.Cqrs.HandlerType.EVENT,
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        result = handler.validate("test_event")
+        assert result.is_success
+
+    def test_handlers_validate_generic_saga(self) -> None:
+        """Test validate method for saga handler."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_validate_generic_saga",
+            handler_name="Test Validate Generic Saga",
+            handler_type=FlextConstants.Cqrs.HandlerType.SAGA,
+            handler_mode=FlextConstants.Cqrs.HandlerType.SAGA,
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        result = handler.validate("test_saga")
+        assert result.is_success
+
+    def test_handlers_validate_message_protocol(self) -> None:
+        """Test validate_message protocol method."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_validate_message_protocol",
+            handler_name="Test Validate Message Protocol",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        result = handler.validate_message("test_message")
+        assert result.is_success
+
+    def test_handlers_record_metric(self) -> None:
+        """Test record_metric protocol method."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_record_metric",
+            handler_name="Test Record Metric",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        result = handler.record_metric("test_metric", 42.0)
+        assert result.is_success
+
+    def test_handlers_get_metrics(self) -> None:
+        """Test get_metrics protocol method."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_get_metrics",
+            handler_name="Test Get Metrics",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        # First record a metric
+        handler.record_metric("test_metric", 42.0)
+
+        # Then retrieve metrics
+        result = handler.get_metrics()
+        assert result.is_success
+        metrics = result.value
+        assert isinstance(metrics, dict)
+        assert metrics.get("test_metric") == 42.0
+
+    def test_handlers_push_context(self) -> None:
+        """Test push_context protocol method."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_push_context",
+            handler_name="Test Push Context",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        context = {"user_id": "123", "operation": "test"}
+        result = handler.push_context(context)
+        assert result.is_success
+
+    def test_handlers_pop_context(self) -> None:
+        """Test pop_context protocol method."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_pop_context",
+            handler_name="Test Pop Context",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        # Push context first
+        handler.push_context({"test": "data"})
+
+        # Then pop it
+        result = handler.pop_context()
+        assert result.is_success
+
+    def test_handlers_pop_context_empty_stack(self) -> None:
+        """Test pop_context when stack is empty."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_pop_context_empty",
+            handler_name="Test Pop Context Empty",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        # Pop without pushing
+        result = handler.pop_context()
+        assert result.is_success
+
+    def test_handlers_message_with_none_raises_validation_error(self) -> None:
+        """Test message validation with None value."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_none_message",
+            handler_name="Test None Message",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        # None should fail serialization validation
+        result = handler.validate(None)
+        assert result.is_failure
+
+    def test_handlers_message_validation_with_custom_method(self) -> None:
+        """Test message validation with custom validate_command method."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_custom_validation",
+            handler_name="Test Custom Validation",
+            handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+        )
+
+        class CustomValidationHandler(FlextHandlers[object, str]):
+            def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
+                super().__init__(config=config)
+
+            def handle(self, message: object) -> FlextResult[str]:
+                return FlextResult[str].ok("success")
+
+        handler = CustomValidationHandler(config=config)
+
+        # Create a message with custom validation
+        class MessageWithValidation:
+            def __init__(self, value: str) -> None:
+                self.value = value
+
+            def validate_command(self) -> FlextResult[None]:
+                if len(self.value) > 0:
+                    return FlextResult[None].ok(None)
+                return FlextResult[None].fail("Value too short")
+
+        msg = MessageWithValidation("test")
+        result = handler.validate_command(msg)
+        assert result.is_success
+
+    def test_handlers_pydantic_model_validation(self) -> None:
+        """Test Pydantic model validation."""
+        from pydantic import BaseModel
+
+        class TestMessage(BaseModel):
+            value: str
+
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_pydantic_validation",
+            handler_name="Test Pydantic Validation",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        msg = TestMessage(value="test")
+        result = handler.validate(msg)
+        assert result.is_success
+
+    def test_handlers_dict_message_validation(self) -> None:
+        """Test dict message validation."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_dict_message",
+            handler_name="Test Dict Message",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        msg_dict = {"key": "value", "number": 42}
+        result = handler.validate(msg_dict)
+        assert result.is_success
+
+    def test_handlers_int_message_validation(self) -> None:
+        """Test int message validation."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_int_message",
+            handler_name="Test Int Message",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        result = handler.validate(42)
+        assert result.is_success
+
+    def test_handlers_float_message_validation(self) -> None:
+        """Test float message validation."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_float_message",
+            handler_name="Test Float Message",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        result = handler.validate(math.pi)
+        assert result.is_success
+
+    def test_handlers_bool_message_validation(self) -> None:
+        """Test bool message validation."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_bool_message",
+            handler_name="Test Bool Message",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        result = handler.validate(True)
+        assert result.is_success
+
+    def test_handlers_dataclass_message_validation(self) -> None:
+        """Test dataclass message validation."""
+        from dataclasses import dataclass
+
+        @dataclass
+        class DataClassMessage:
+            value: str
+            number: int
+
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_dataclass_message",
+            handler_name="Test Dataclass Message",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        msg = DataClassMessage(value="test", number=42)
+        result = handler.validate(msg)
+        assert result.is_success
+
+    def test_handlers_slots_message_validation(self) -> None:
+        """Test __slots__ message validation."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_slots_message",
+            handler_name="Test Slots Message",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        class SlotsMessage:
+            __slots__ = ("number", "value")
+
+            def __init__(self, value: str, number: int) -> None:
+                self.value = value
+                self.number = number
+
+        msg = SlotsMessage(value="test", number=42)
+        result = handler.validate(msg)
+        assert result.is_success
+
+    def test_handlers_dict_with_method_message_validation(self) -> None:
+        """Test message with dict() method validation."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_dict_method_message",
+            handler_name="Test Dict Method Message",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        class DictMethodMessage:
+            def __init__(self, value: str) -> None:
+                self.value = value
+
+            def dict(self) -> dict[str, object]:
+                return {"value": self.value}
+
+        msg = DictMethodMessage(value="test")
+        result = handler.validate(msg)
+        assert result.is_success
+
+    def test_handlers_as_dict_method_message_validation(self) -> None:
+        """Test message with as_dict() method validation."""
+        config = FlextModels.Cqrs.Handler(
+            handler_id="test_as_dict_message",
+            handler_name="Test As Dict Message",
+        )
+        handler = ConcreteTestHandler(config=config)
+
+        class AsDictMessage:
+            def __init__(self, value: str) -> None:
+                self.value = value
+
+            def as_dict(self) -> dict[str, object]:
+                return {"value": self.value}
+
+        msg = AsDictMessage(value="test")
+        result = handler.validate(msg)
+        assert result.is_success
+
+    def test_handlers_from_callable_invalid_config_creation(self) -> None:
+        """Test from_callable with invalid config creation."""
+
+        def handler_func(message: str) -> str:
+            return f"handled_{message}"
+
+        # This should handle gracefully if config creation fails
+        handler = FlextHandlers.from_callable(
+            cast("Callable[[object], object]", handler_func),
+            handler_name="test_func",
+            handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
+        )
+
+        assert handler is not None
+        assert handler.handler_name == "test_func"

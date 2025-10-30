@@ -5,6 +5,7 @@ Comprehensive guide to error handling strategies in FLEXT-Core using the railway
 ## Overview
 
 FLEXT-Core provides **functional error handling** through `FlextResult[T]` instead of exceptions. This enables:
+
 - Composable error handling through monadic operations
 - Type-safe error propagation
 - Predictable error flows
@@ -17,6 +18,7 @@ FLEXT-Core provides **functional error handling** through `FlextResult[T]` inste
 ### FlextResult[T] - The Foundation
 
 `FlextResult[T]` is a monad that represents either:
+
 - **Success**: Contains a value of type `T`
 - **Failure**: Contains an error message
 
@@ -78,6 +80,7 @@ value = result.value  # 42
 ### The Railway Pattern
 
 Think of your program as a railway with two tracks:
+
 - **Success track**: Happy path
 - **Failure track**: Error path
 
@@ -546,6 +549,7 @@ def risky_operation() -> FlextResult[str]:
 ## Summary
 
 Error handling in FLEXT-Core:
+
 - ✅ Use `FlextResult[T]` for all fallible operations
 - ✅ Chain operations with `flat_map()` and `map()`
 - ✅ Handle errors at application boundaries
