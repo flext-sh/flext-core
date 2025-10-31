@@ -210,7 +210,6 @@ class FlextService[TDomainResult](
         except Exception as e:
             # Fall back to global config if resolution fails
             self.logger.debug(f"Config resolution failed, using global instance: {e}")
-            pass
 
         # Fall back to global config
         return FlextConfig.get_global_instance()
@@ -257,7 +256,6 @@ class FlextService[TDomainResult](
         except Exception as e:
             # Return default namespace if resolution fails
             self.logger.debug(f"Models resolution failed, using default namespace: {e}")
-            pass
 
         # Return a minimal namespace type if not found
         return type("ModelsNamespace", (), {})
