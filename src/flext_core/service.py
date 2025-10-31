@@ -207,8 +207,9 @@ class FlextService[TDomainResult](
 
             if config_result.is_success:
                 return config_result.unwrap()
-        except Exception:
+        except Exception as e:
             # Fall back to global config if resolution fails
+            self.logger.debug(f"Config resolution failed, using global instance: {e}")
             pass
 
         # Fall back to global config
@@ -253,8 +254,9 @@ class FlextService[TDomainResult](
                 models_obj = models_result.unwrap()
                 if isinstance(models_obj, type):
                     return models_obj
-        except Exception:
+        except Exception as e:
             # Return default namespace if resolution fails
+            self.logger.debug(f"Models resolution failed, using default namespace: {e}")
             pass
 
         # Return a minimal namespace type if not found
