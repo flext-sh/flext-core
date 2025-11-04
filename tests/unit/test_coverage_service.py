@@ -23,6 +23,7 @@ import pytest
 
 from flext_core import (
     FlextContainer,
+    FlextExceptions,
     FlextModels,
     FlextResult,
     FlextService,
@@ -661,4 +662,222 @@ __all__ = [
     "TestServiceInstantiation",
     "TestServiceRegistration",
     "TestValidationMethods",
+    "TestV2PropertyCoverage",
+    "TestV2AutoCoverage",
 ]
+
+
+# ============================================================================
+# V2 Pattern Coverage Tests
+# ============================================================================
+
+
+class TestV2PropertyCoverage:
+    """Test V2 Property pattern coverage."""
+
+    def test_v2_property_with_value_object(self) -> None:
+        """V2 Property: Works with value objects."""
+
+        class ValueService(FlextService[SimpleResult]):
+            """Service returning value object."""
+
+            def execute(self) -> FlextResult[SimpleResult]:
+                return FlextResult.ok(SimpleResult(value="v2_property"))
+
+        service = ValueService()
+
+        # V2 Property: Direct access
+        result = service.result
+        assert isinstance(result, SimpleResult)
+        assert result.value == "v2_property"
+
+    def test_v2_property_with_dict_result(self) -> None:
+        """V2 Property: Works with dict results."""
+
+        class DictService(FlextService[dict[str, object]]):
+            """Service returning dict."""
+
+            def execute(self) -> FlextResult[dict[str, object]]:
+                return FlextResult.ok({"status": "success", "count": 10})
+
+        service = DictService()
+
+        # V2 Property: Direct dict access
+        result = service.result
+        assert isinstance(result, dict)
+        assert result["status"] == "success"
+        assert result["count"] == 10
+
+    def test_v2_property_maintains_execute_for_railway(self) -> None:
+        """V2 Property: execute() still available for railway pattern."""
+
+        class RailwayService(FlextService[int]):
+            """Service for railway pattern."""
+
+            value: int
+
+            def execute(self) -> FlextResult[int]:
+                if self.value < 0:
+                    return FlextResult.fail("Must be positive")
+                return FlextResult.ok(self.value * 2)
+
+        service = RailwayService(value=5)
+
+        # V1 Railway pattern still works
+        result = service.execute()
+        assert result.is_success
+        assert result.unwrap() == 10
+
+        # V2 Property for happy path
+        value = service.result
+        assert value == 10
+
+    def test_v2_property_failure_raises_exception(self) -> None:
+        """V2 Property: Failure raises exception."""
+
+        class FailingService(FlextService[str]):
+            """Service that fails."""
+
+            def execute(self) -> FlextResult[str]:
+                return FlextResult.fail("Intentional failure")
+
+        service = FailingService()
+
+        # V2 Property: Exception on failure
+        with pytest.raises(FlextExceptions.BaseError) as exc_info:
+            service.result  # noqa: B018
+
+        assert "failure" in str(exc_info.value).lower()
+
+    def test_v2_property_with_none_result(self) -> None:
+        """V2 Property: Works with None results."""
+
+        class NoneService(FlextService[None]):
+            """Service returning None."""
+
+            def execute(self) -> FlextResult[None]:
+                return FlextResult.ok(None)
+
+        service = NoneService()
+
+        # V2 Property: Returns None
+        result = service.result
+        assert result is None
+
+
+class TestV2AutoCoverage:
+    """Test V2 Auto (auto_execute = True) pattern coverage."""
+
+    def test_v2_auto_returns_value_on_instantiation(self) -> None:
+        """V2 Auto: Returns value directly on instantiation."""
+
+        class AutoService(FlextService[str]):
+            """Service with auto_execute."""
+
+            auto_execute = True
+
+            def execute(self) -> FlextResult[str]:
+                return FlextResult.ok("auto_result")
+
+        # V2 Auto: Instantiation returns value
+        result = AutoService()
+
+        assert isinstance(result, str)
+        assert not isinstance(result, AutoService)
+        assert result == "auto_result"
+
+    def test_v2_auto_with_value_object(self) -> None:
+        """V2 Auto: Works with value objects."""
+
+        class AutoValueService(FlextService[SimpleResult]):
+            """Auto service returning value object."""
+
+            auto_execute = True
+
+            def execute(self) -> FlextResult[SimpleResult]:
+                return FlextResult.ok(SimpleResult(value="auto_vo"))
+
+        # V2 Auto: Returns value object directly
+        result = AutoValueService()
+
+        assert isinstance(result, SimpleResult)
+        assert result.value == "auto_vo"
+
+    def test_v2_auto_with_dict_result(self) -> None:
+        """V2 Auto: Works with dict results."""
+
+        class AutoDictService(FlextService[dict[str, int]]):
+            """Auto service returning dict."""
+
+            auto_execute = True
+
+            def execute(self) -> FlextResult[dict[str, int]]:
+                return FlextResult.ok({"a": 1, "b": 2})
+
+        # V2 Auto: Returns dict directly
+        result = AutoDictService()
+
+        assert isinstance(result, dict)
+        assert result["a"] == 1
+        assert result["b"] == 2
+
+    def test_v2_auto_failure_raises_on_instantiation(self) -> None:
+        """V2 Auto: Failure raises exception on instantiation."""
+
+        class AutoFailingService(FlextService[str]):
+            """Auto service that fails."""
+
+            auto_execute = True
+
+            def execute(self) -> FlextResult[str]:
+                return FlextResult.fail("Auto failure")
+
+        # V2 Auto: Exception on instantiation
+        with pytest.raises(FlextExceptions.BaseError) as exc_info:
+            AutoFailingService()
+
+        assert "failure" in str(exc_info.value).lower()
+
+    def test_v2_auto_with_parameters(self) -> None:
+        """V2 Auto: Works with parameters."""
+
+        class AutoParameterService(FlextService[int]):
+            """Auto service with parameters."""
+
+            auto_execute = True
+            value: int
+
+            def execute(self) -> FlextResult[int]:
+                return FlextResult.ok(self.value * 3)
+
+        # V2 Auto: With parameters
+        result = AutoParameterService(value=7)
+
+        assert isinstance(result, int)
+        assert result == 21  # 7 * 3
+
+    def test_v2_auto_false_behaves_like_v1(self) -> None:
+        """V2 Auto: auto_execute = False behaves like V1."""
+
+        class ManualService(FlextService[str]):
+            """Service with explicit auto_execute = False."""
+
+            auto_execute = False
+
+            def execute(self) -> FlextResult[str]:
+                return FlextResult.ok("manual")
+
+        # Returns service instance (V1 behavior)
+        service = ManualService()
+
+        assert isinstance(service, ManualService)
+        assert not isinstance(service, str)
+
+        # Can use V1 pattern
+        result = service.execute()
+        assert result.is_success
+        assert result.unwrap() == "manual"
+
+        # Can use V2 Property pattern
+        value = service.result
+        assert value == "manual"

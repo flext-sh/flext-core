@@ -354,7 +354,7 @@ from flext_core.protocols import FlextProtocols
 from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.service import FlextService, service_factory
+from flext_core.service import FlextService
 from flext_core.typings import (  # TypeVars; FlextTypes - domain-specific types
     # Note: Pydantic types (UUID1-5, EmailStr, HttpUrl, etc.) are no longer
     # re-exported. Users should import directly from pydantic: from pydantic

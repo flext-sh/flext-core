@@ -184,7 +184,7 @@ class TestFlextConstants:
         """Test mixins constants access."""
         assert FlextConstants.Mixins.FIELD_CREATED_AT == "created_at"
         assert FlextConstants.Mixins.FIELD_UPDATED_AT == "updated_at"
-        assert FlextConstants.Mixins.FIELD_ID == "id"
+        assert FlextConstants.Mixins.FIELD_ID == "unique_id"
 
     def test_constants_immutability(self) -> None:
         """Test that constants are immutable (Final)."""

@@ -266,7 +266,7 @@ class FlextMixins:
                 try:
                     self._with_operation_context(
                         "process_item",
-                        item_id=item.id,
+                        item_id=item.unique_id,
                     )
                     self._process_single_item(item)
                 finally:
@@ -746,7 +746,7 @@ class FlextMixins:
                     for item in items:
                         try:
                             self._with_operation_context(
-                                "process_item", item_id=item.id
+                                "process_item", item_id=item.unique_id
                             )
                             self._process_single_item(item)
                         finally:

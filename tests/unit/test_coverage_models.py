@@ -138,7 +138,7 @@ class TestEntities:
 
         person = Person(name="Alice", age=30)
         assert person.name == "Alice"
-        assert person.id is not None
+        assert person.unique_id is not None
         assert person.created_at is not None
         assert person.updated_at is not None
 
@@ -155,7 +155,7 @@ class TestEntities:
         account2 = Account(name="Checking", balance=100.0)
 
         # Different IDs = not equal (identity-based)
-        assert account1.id != account2.id
+        assert account1.unique_id != account2.unique_id
         assert account1 != account2
 
     def test_entity_lifecycle_tracking(self) -> None:
@@ -214,7 +214,7 @@ class TestEntities:
         assert isinstance(product_dict, dict)
         assert product_dict["name"] == "Widget"
         assert product_dict["price"] == 19.99
-        assert "id" in product_dict
+        assert "unique_id" in product_dict
         assert "created_at" in product_dict
         assert "updated_at" in product_dict
 
@@ -231,12 +231,12 @@ class TestEntities:
         item2 = Item(name="Book", quantity=5)
 
         # Different IDs, so not equal (identity-based)
-        assert item1.id != item2.id
+        assert item1.unique_id != item2.unique_id
         assert item1 != item2
 
         # Same ID comparison (simulate via id check)
         item3 = Item(name="Book", quantity=5)
-        item3.id = item1.id
+        item3.unique_id = item1.unique_id
         assert item3 == item1
 
 
@@ -254,7 +254,7 @@ class TestAggregateRoots:
 
         order = Order(order_number="ORD-001", status="pending")
         assert order.order_number == "ORD-001"
-        assert order.id is not None
+        assert order.unique_id is not None
 
     def test_aggregate_root_invariants(self) -> None:
         """Test aggregate root enforces invariants."""
@@ -296,7 +296,7 @@ class TestCommands:
 
         cmd = CreateUserCommand(email="user@example.com", username="alice")
         assert cmd.email == "user@example.com"
-        assert cmd.id is not None
+        assert cmd.unique_id is not None
 
     def test_command_mutation_behavior(self) -> None:
         """Test command mutation behavior with validate_assignment."""
@@ -413,7 +413,7 @@ class TestDomainEvents:
         assert event.aggregate_id == "USER-001"
         assert event.data["user_id"] == "USER-001"
         assert event.data["email"] == "user@example.com"
-        assert event.id is not None
+        assert event.unique_id is not None
         assert event.created_at is not None
 
     def test_domain_event_equality(self) -> None:
@@ -431,7 +431,7 @@ class TestDomainEvents:
         )
 
         # Different instances with same data should have different IDs
-        assert event1.id != event2.id
+        assert event1.unique_id != event2.unique_id
         assert event1.event_type == event2.event_type
         assert event1.aggregate_id == event2.aggregate_id
 
@@ -461,7 +461,7 @@ class TestDomainEvents:
             data={"amount": 99.99},
         )
         # Events are causally ordered by ID and timestamp
-        assert event.id is not None
+        assert event.unique_id is not None
         assert event.created_at is not None
 
 
@@ -568,7 +568,7 @@ class TestModelSerialization:
 
         assert dumped["title"] == "Complete tests"
         assert dumped["completed"] is False
-        assert "id" in dumped
+        assert "unique_id" in dumped
 
     def test_command_serialization(self) -> None:
         """Test command serialization."""

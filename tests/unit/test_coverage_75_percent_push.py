@@ -372,13 +372,13 @@ class TestEdgeCases:
         """Test ensuring ID on object without pre-existing ID."""
 
         class TestObj:
-            id: str = ""
+            unique_id: str = ""
 
         obj = TestObj()
-        assert not obj.id
+        assert not obj.unique_id
         FlextUtilities.Generators.ensure_id(obj)
         # ID should be generated if empty
-        assert obj.id  # Should be non-empty
+        assert obj.unique_id  # Should be non-empty
 
     def test_initialize_boolean_field(self) -> None:
         """Test initializing boolean field."""
