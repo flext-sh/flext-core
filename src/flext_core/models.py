@@ -267,8 +267,13 @@ class FlextModels:
     class IdentifiableMixin(BaseModel):
         """Mixin for models with unique identifiers.
 
-        Provides the `id` field using UuidField pattern with explicit default.
+        Provides the `unique_id` field using UuidField pattern with explicit default.
         Used by Entity, Command, DomainEvent, Saga, and other identifiable models.
+
+        Note:
+            Field renamed from 'id' to 'unique_id' to avoid conflicts with common
+            domain model fields named 'id'.
+
         """
 
         model_config = ConfigDict(
@@ -279,7 +284,7 @@ class FlextModels:
             },
         )
 
-        id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+        unique_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
     class TimestampableMixin(BaseModel):
         """Mixin for models with creation and update timestamps.
@@ -439,7 +444,7 @@ class FlextModels:
         """Base class for domain entities with identity.
 
         Combines TimestampedModel, IdentifiableMixin, and VersionableMixin to provide:
-        - id: Unique identifier (from IdentifiableMixin)
+        - unique_id: Unique identifier (from IdentifiableMixin)
         - created_at/updated_at: Timestamps (from TimestampedModel)
         - version: Optimistic locking (from VersionableMixin)
         - domain_events: Event sourcing support
@@ -471,12 +476,12 @@ class FlextModels:
             """Identity-based equality for entities."""
             if not isinstance(other, FlextModels.Entity):
                 return False
-            return self.id == other.id
+            return self.unique_id == other.unique_id
 
         @override
         def __hash__(self) -> int:
             """Identity-based hash for entities."""
-            return hash(self.id)
+            return hash(self.unique_id)
 
         def add_domain_event(
             self, event_name: str, data: dict[str, object]
@@ -528,7 +533,7 @@ class FlextModels:
                 # Create domain event with validation
                 domain_event = FlextModels.DomainEvent(
                     event_type=event_name,
-                    aggregate_id=self.id,
+                    aggregate_id=self.unique_id,
                     data=data or {},
                 )
 
@@ -548,7 +553,7 @@ class FlextModels:
                 # Integration: Track domain event via FlextRuntime
                 FlextRuntime.Integration.track_domain_event(
                     event_name=event_name,
-                    aggregate_id=self.id,
+                    aggregate_id=self.unique_id,
                     event_data=data,
                 )
 
@@ -556,9 +561,9 @@ class FlextModels:
                 self._get_logger().debug(
                     "Domain event added",
                     event_type=event_name,
-                    aggregate_id=self.id,
+                    aggregate_id=self.unique_id,
                     aggregate_type=self.__class__.__name__,
-                    event_id=domain_event.id,
+                    event_id=domain_event.unique_id,
                     data_keys=list(data.keys()) if data else [],
                 )
 
@@ -574,7 +579,7 @@ class FlextModels:
                                 "Domain event handler executed",
                                 event_type=event_name,
                                 handler=handler_method_name,
-                                aggregate_id=self.id,
+                                aggregate_id=self.unique_id,
                             )
                         except (
                             AttributeError,
@@ -641,7 +646,7 @@ class FlextModels:
                     event_types = [e.event_type for e in events]
                     self._get_logger().info(
                         "Domain events committed",
-                        aggregate_id=self.id,
+                        aggregate_id=self.unique_id,
                         aggregate_type=self.__class__.__name__,
                         event_count=len(events),
                         event_types=event_types,
@@ -676,7 +681,7 @@ class FlextModels:
                 domain_events = list(events)
                 self._get_logger().debug(
                     "Domain events cleared",
-                    aggregate_id=self.id,
+                    aggregate_id=self.unique_id,
                     aggregate_type=self.__class__.__name__,
                     event_count=len(domain_events),
                     event_types=[e.event_type for e in domain_events]
@@ -748,7 +753,7 @@ class FlextModels:
                 for event_name, data in validated_events:
                     domain_event = FlextModels.DomainEvent(
                         event_type=event_name,
-                        aggregate_id=self.id,
+                        aggregate_id=self.unique_id,
                         data=data,
                     )
                     self.domain_events.append(domain_event)
@@ -759,7 +764,7 @@ class FlextModels:
                 # Log bulk operation
                 self._get_logger().info(
                     "Bulk domain events added",
-                    aggregate_id=self.id,
+                    aggregate_id=self.unique_id,
                     aggregate_type=self.__class__.__name__,
                     event_count=len(validated_events),
                     event_types=[name for name, _ in validated_events],
@@ -2802,7 +2807,7 @@ class FlextModels:
                 )
 
             # Check required attributes
-            required_attrs = ["event_type", "aggregate_id", "id", "created_at"]
+            required_attrs = ["event_type", "aggregate_id", "unique_id", "created_at"]
             missing_attrs = [
                 attr for attr in required_attrs if not hasattr(event, attr)
             ]

@@ -1181,7 +1181,7 @@ class FlextConstants:
         """Constants for mixin operations."""
 
         # Field Names
-        FIELD_ID = "id"
+        FIELD_ID = "unique_id"
         FIELD_NAME = "name"
         FIELD_TYPE = "type"
         FIELD_STATUS = "status"

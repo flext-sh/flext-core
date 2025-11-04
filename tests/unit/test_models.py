@@ -82,7 +82,7 @@ class TestFlextModels:
         )
         assert entity.name == "Test User"
         assert entity.email == "test@example.com"
-        assert entity.id is not None  # Entity should have auto-generated ID
+        assert entity.unique_id is not None  # Entity should have auto-generated ID
 
         # Test validation - should work with valid email (exclude extra fields from base Entity class and computed fields)
         entity_dict = entity.model_dump(
@@ -149,7 +149,7 @@ class TestFlextModels:
         assert command.command_type == "test_command"
         assert command.data == "test_data"
         assert command.created_at is not None  # Timestamp from TimestampableMixin
-        assert command.id is not None  # ID from IdentifiableMixin
+        assert command.unique_id is not None  # ID from IdentifiableMixin
 
     def test_models_metadata_creation(self) -> None:
         """Test metadata model creation."""
@@ -325,9 +325,9 @@ class TestFlextModels:
         class TestEntity(FlextModels.Entity):
             name: str
 
-        entity1 = TestEntity(name="test", id="123")
-        entity2 = TestEntity(name="test", id="123")
-        entity3 = TestEntity(name="test", id="456")
+        entity1 = TestEntity(name="test", unique_id="123")
+        entity2 = TestEntity(name="test", unique_id="123")
+        entity3 = TestEntity(name="test", unique_id="456")
 
         # Same ID should be equal
         assert entity1 == entity2
@@ -366,7 +366,7 @@ class TestFlextModels:
         event = entity.domain_events[0]
         assert event.event_type == "test_event"
         assert event.data == {"data": "value"}
-        assert event.aggregate_id == entity.id
+        assert event.aggregate_id == entity.unique_id
 
         # Clear events
         cleared_events = entity.clear_domain_events()
@@ -477,7 +477,7 @@ class TestFlextModels:
         aggregate = TestAggregate(name="test")
 
         # Should have Entity properties
-        assert hasattr(aggregate, "id")
+        assert hasattr(aggregate, "unique_id")
         assert hasattr(aggregate, "version")
         assert hasattr(aggregate, "created_at")
 
@@ -576,8 +576,8 @@ class TestFlextModels:
         command = TestCommand(action="create", target="user")
 
         # Should have IdentifiableMixin properties
-        assert hasattr(command, "id")
-        assert command.id is not None
+        assert hasattr(command, "unique_id")
+        assert command.unique_id is not None
 
         # Should have TimestampableMixin properties
         assert hasattr(command, "created_at")
@@ -596,8 +596,8 @@ class TestFlextModels:
         )
 
         # Should have IdentifiableMixin properties
-        assert hasattr(event, "id")
-        assert event.id is not None
+        assert hasattr(event, "unique_id")
+        assert event.unique_id is not None
 
         # Should have TimestampableMixin properties
         assert hasattr(event, "created_at")
@@ -806,7 +806,7 @@ class TestFlextModels:
         assert event.event_type == "test_event"
         assert event.aggregate_id == "aggregate-123"
         assert event.data == {"key": "value"}
-        assert event.id is not None
+        assert event.unique_id is not None
         assert event.created_at is not None
         assert event.message_type == "event"
 
@@ -825,7 +825,7 @@ class TestFlextModels:
         assert command.command_type == "CreateOrder"
         assert command.issuer_id == "issuer-123"
         assert command.message_type == "command"
-        assert command.id is not None
+        assert command.unique_id is not None
         assert command.created_at is not None
 
     def test_metadata_model_creation(self) -> None:

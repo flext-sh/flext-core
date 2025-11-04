@@ -284,11 +284,11 @@ class TestFlextUtilitiesComprehensive:
         """Test FlextUtilities.Generators.ensure_id static method."""
 
         class TestObj:
-            id: str = ""
+            unique_id: str = ""
 
         obj = TestObj()
         FlextUtilities.Generators.ensure_id(obj)
-        assert obj.id  # Non-empty string is truthy
+        assert obj.unique_id  # Non-empty string is truthy
 
     def test_configuration_get_parameter(self) -> None:
         """Test FlextUtilities.Configuration.get_parameter static method."""

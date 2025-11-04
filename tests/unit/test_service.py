@@ -40,13 +40,13 @@ class SampleComplexService(FlextService[object]):
     """Sample service with complex validation and operations used in tests."""
 
     name: str = "default_name"
-    value: int = 0
+    amount: int = 0  # Renamed from 'value' to avoid conflict with @computed_field value
     enabled: bool = True
 
     def __init__(
         self,
         name: str = "default_name",
-        value: int = 0,
+        amount: int = 0,  # Renamed from 'value'
         *,
         enabled: bool = True,
         **_data: object,
@@ -55,7 +55,7 @@ class SampleComplexService(FlextService[object]):
         # Pass field values to parent constructor
         super().__init__(**_data)
         self.name = name
-        self.value = value
+        self.amount = amount
         self.enabled = enabled
 
     def validate_business_rules(self) -> FlextResult[None]:
@@ -67,10 +67,10 @@ class SampleComplexService(FlextService[object]):
         """
         if not self.name:
             return FlextResult[None].fail("Name is required")
-        if self.value < 0:
+        if self.amount < 0:
             return FlextResult[None].fail("Value must be non-negative")
-        if not self.enabled and self.value > 0:
-            return FlextResult[None].fail("Cannot have value when disabled")
+        if not self.enabled and self.amount > 0:
+            return FlextResult[None].fail("Cannot have amount when disabled")
         return FlextResult[None].ok(None)
 
     def validate_config(self) -> FlextResult[None]:
@@ -82,7 +82,7 @@ class SampleComplexService(FlextService[object]):
         """
         if len(self.name) > 50:
             return FlextResult[None].fail("Name too long")
-        if self.value > 1000:
+        if self.amount > 1000:
             return FlextResult[None].fail("Value too large")
         return FlextResult[None].ok(None)
 
@@ -90,14 +90,14 @@ class SampleComplexService(FlextService[object]):
         """Execute complex operation."""
         if not self.name:
             return FlextResult[object].fail("Name is required")
-        if self.value < 0:
+        if self.amount < 0:
             return FlextResult[object].fail("Value must be non-negative")
         if len(self.name) > 50:
             return FlextResult[object].fail("Name too long")
-        if self.value > 1000:
+        if self.amount > 1000:
             return FlextResult[object].fail("Value too large")
 
-        return FlextResult[object].ok(f"Processed: {self.name} with value {self.value}")
+        return FlextResult[object].ok(f"Processed: {self.name} with amount {self.amount}")
 
 
 class SampleFailingService(FlextService[None]):
@@ -198,7 +198,7 @@ class TestDomainServicesFixed:
 
     def test_is_valid_success(self) -> None:
         """Test is_valid with success."""
-        service = SampleComplexService(name="test", value=10, enabled=True)
+        service = SampleComplexService(name="test", amount=10, enabled=True)
 
         result = service.is_valid()
         assert result is True
@@ -225,7 +225,7 @@ class TestDomainServicesFixed:
 
     def test_validate_business_rules_custom_success(self) -> None:
         """Test validate_business_rules with custom success."""
-        service = SampleComplexService(name="valid_name", value=10, enabled=True)
+        service = SampleComplexService(name="valid_name", amount=10, enabled=True)
 
         result = service.validate_business_rules()
         assert result.is_success
@@ -234,7 +234,7 @@ class TestDomainServicesFixed:
         """Test validate_business_rules with custom failure."""
         service = SampleComplexService(
             name="",
-            value=10,
+            amount=10,
             enabled=True,
         )  # Empty name should fail
 
@@ -247,7 +247,7 @@ class TestDomainServicesFixed:
         """Test validate_business_rules with multiple conditions."""
         service = SampleComplexService(
             name="",
-            value=-1,
+            amount=-1,
             enabled=False,
         )  # Invalid name and value
 
@@ -264,7 +264,7 @@ class TestDomainServicesFixed:
 
     def test_validate_config_custom_success(self) -> None:
         """Test validate_config with custom success."""
-        service = SampleComplexService(name="test", value=10, enabled=True)
+        service = SampleComplexService(name="test", amount=10, enabled=True)
 
         result = service.validate_config()
         assert result.is_success
@@ -272,7 +272,7 @@ class TestDomainServicesFixed:
     def test_validate_config_custom_failure(self) -> None:
         """Test validate_config with custom failure."""
         long_name = "a" * 300  # Too long name
-        service = SampleComplexService(name=long_name, value=10, enabled=True)
+        service = SampleComplexService(name=long_name, amount=10, enabled=True)
 
         result = service.validate_config()
         assert result.is_failure
@@ -294,7 +294,7 @@ class TestDomainServicesFixed:
 
         result = service.execute_operation(operation_request)
         assert result.is_success is True
-        # The result should be the return value of operator.add (5 + 3 = 8)
+        # The result should be the return amount of operator.add (5 + 3 = 8)
         assert result.unwrap() == 8
 
     def test_execute_operation_with_kwargs(self) -> None:
@@ -313,7 +313,7 @@ class TestDomainServicesFixed:
 
         result = service.execute_operation(operation_request)
         assert result.is_success is True
-        # The result should be the return value of test_operation
+        # The result should be the return amount of test_operation
         assert result.unwrap() == "test: 20"
 
     def test_execute_operation_config_validation_failure(self) -> None:
@@ -321,7 +321,7 @@ class TestDomainServicesFixed:
         test_operation = operator.add
 
         long_name = "a" * 300  # Too long name should fail config validation
-        service = SampleComplexService(name=long_name, value=10, enabled=True)
+        service = SampleComplexService(name=long_name, amount=10, enabled=True)
 
         operation_request = FlextModels.OperationExecutionRequest(
             operation_name="add_numbers",
@@ -529,7 +529,7 @@ class TestDomainServicesFixed:
         """Test complex service execution success."""
         test_operation = operator.add
 
-        service = SampleComplexService(name="test", value=10, enabled=True)
+        service = SampleComplexService(name="test", amount=10, enabled=True)
 
         operation_request = FlextModels.OperationExecutionRequest(
             operation_name="add_numbers",
@@ -538,7 +538,7 @@ class TestDomainServicesFixed:
         )
         result = service.execute_operation(operation_request)
         assert result.is_success
-        # The result should be the return value of operator.add (15 + 25 = 40)
+        # The result should be the return amount of operator.add (15 + 25 = 40)
         assert result.unwrap() == 40
 
     def test_complex_service_execution_business_rule_failure(self) -> None:
@@ -547,7 +547,7 @@ class TestDomainServicesFixed:
 
         service = SampleComplexService(
             name="",
-            value=10,
+            amount=10,
             enabled=True,
         )  # Empty name should fail business rules
 
@@ -566,7 +566,7 @@ class TestDomainServicesFixed:
         test_operation = operator.add
 
         long_name = "a" * 300  # Too long name should fail config validation
-        service = SampleComplexService(name=long_name, value=10, enabled=True)
+        service = SampleComplexService(name=long_name, amount=10, enabled=True)
 
         operation_request = FlextModels.OperationExecutionRequest(
             operation_name="add_numbers",
@@ -614,7 +614,7 @@ class TestDomainServicesFixed:
         with pytest.raises(ValidationError, match="extra_field"):
             SampleComplexService(
                 name="test",
-                value=10,
+                amount=10,
                 enabled=True,
                 extra_field="not_allowed",
             )
@@ -789,13 +789,13 @@ class TestServiceComprehensiveCoverage:
         assert result.unwrap() == "args: ()"
 
     def test_execute_operation_args_single_value(self) -> None:
-        """Test execute_operation with single value args."""
+        """Test execute_operation with single amount args."""
         service = SampleUserService()
 
         def test_operation(*args: object) -> str:
             return f"args: {args}"
 
-        # Test with single value as args
+        # Test with single amount as args
         operation_request = FlextModels.OperationExecutionRequest(
             operation_name="test_single_args",
             operation_callable=test_operation,
@@ -1703,7 +1703,7 @@ class TestServiceValidationAndInfo:
 
     def test_validate_business_rules_returns_result(self) -> None:
         """Test validate_business_rules returns FlextResult (line 462)."""
-        service = SampleComplexService(name="test", value=5)
+        service = SampleComplexService(name="test", amount=5)
 
         # Should return FlextResult
         result = service.validate_business_rules()
@@ -1712,7 +1712,7 @@ class TestServiceValidationAndInfo:
 
     def test_validate_config_returns_result(self) -> None:
         """Test validate_config returns FlextResult (line 468)."""
-        service = SampleComplexService(name="test", value=5)
+        service = SampleComplexService(name="test", amount=5)
 
         # Should return FlextResult
         result = service.validate_config()
@@ -1721,7 +1721,7 @@ class TestServiceValidationAndInfo:
 
     def test_is_valid_integration(self) -> None:
         """Test is_valid integrates both validation methods (line 476)."""
-        service = SampleComplexService(name="test", value=5, enabled=True)
+        service = SampleComplexService(name="test", amount=5, enabled=True)
 
         # is_valid should check both business rules and config
         is_valid = service.is_valid()
@@ -1730,7 +1730,7 @@ class TestServiceValidationAndInfo:
 
     def test_get_service_info_structure(self) -> None:
         """Test get_service_info returns proper structure (line 509)."""
-        service = SampleComplexService(name="test_service", value=42)
+        service = SampleComplexService(name="test_service", amount=42)
 
         info = service.get_service_info()
         assert isinstance(info, dict)
@@ -1742,7 +1742,7 @@ class TestServiceValidationAndInfo:
 
     def test_get_service_info_with_validation_state(self) -> None:
         """Test get_service_info includes validation state (lines 525-529)."""
-        service = SampleComplexService(name="test", value=100, enabled=True)
+        service = SampleComplexService(name="test", amount=100, enabled=True)
 
         info = service.get_service_info()
         assert isinstance(info, dict)

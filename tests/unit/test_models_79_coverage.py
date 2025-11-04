@@ -24,8 +24,8 @@ class TestFlextModelsEntity:
             name: str
             email: str
 
-        user = User(id="user-1", name="Alice", email="alice@example.com")
-        assert user.id == "user-1"
+        user = User(unique_id="user-1", name="Alice", email="alice@example.com")
+        assert user.unique_id == "user-1"
         assert user.name == "Alice"
         assert user.email == "alice@example.com"
 
@@ -35,9 +35,9 @@ class TestFlextModelsEntity:
         class User(FlextModels.Entity):
             name: str
 
-        user1 = User(id="user-1", name="Alice")
-        user2 = User(id="user-1", name="Bob")  # Different name, same ID
-        user3 = User(id="user-2", name="Alice")
+        user1 = User(unique_id="user-1", name="Alice")
+        user2 = User(unique_id="user-1", name="Bob")  # Different name, same ID
+        user3 = User(unique_id="user-2", name="Alice")
 
         assert user1 == user2  # Same ID
         assert user1 != user3  # Different ID
@@ -48,7 +48,7 @@ class TestFlextModelsEntity:
         class Order(FlextModels.Entity):
             total: Decimal
 
-        order = Order(id="order-1", total=Decimal("99.99"))
+        order = Order(unique_id="order-1", total=Decimal("99.99"))
         initial_version = order.version
         assert initial_version >= 0
 
@@ -94,8 +94,8 @@ class TestFlextModelsAggregateRoot:
             owner_name: str
             balance: Decimal
 
-        account = Account(id="acc-1", owner_name="Alice", balance=Decimal("1000.00"))
-        assert account.id == "acc-1"
+        account = Account(unique_id="acc-1", owner_name="Alice", balance=Decimal("1000.00"))
+        assert account.unique_id == "acc-1"
         assert account.owner_name == "Alice"
         assert account.balance == Decimal("1000.00")
 
@@ -105,7 +105,7 @@ class TestFlextModelsAggregateRoot:
         class BankAccount(FlextModels.AggregateRoot):
             balance: Decimal
 
-        account = BankAccount(id="acc-1", balance=Decimal("1000.00"))
+        account = BankAccount(unique_id="acc-1", balance=Decimal("1000.00"))
 
         # Add domain event
         result = account.add_domain_event("MoneyDeposited", {"amount": 100})
@@ -117,7 +117,7 @@ class TestFlextModelsAggregateRoot:
         class Order(FlextModels.AggregateRoot):
             total: Decimal
 
-        order = Order(id="order-1", total=Decimal("99.99"))
+        order = Order(unique_id="order-1", total=Decimal("99.99"))
 
         # Add event with valid empty dict
         result = order.add_domain_event("OrderPlaced", {})
@@ -129,7 +129,7 @@ class TestFlextModelsAggregateRoot:
         class Order(FlextModels.AggregateRoot):
             status: str
 
-        order = Order(id="order-1", status="pending")
+        order = Order(unique_id="order-1", status="pending")
 
         # Add event
         result = order.add_domain_event("OrderCreated", {"timestamp": "2025-01-01"})
@@ -220,7 +220,7 @@ class TestFlextModelsEdgeCases:
             address: Address
 
         addr = Address(street="123 Main", city="Springfield")
-        person = Person(id="p-1", name="Homer", address=addr)
+        person = Person(unique_id="p-1", name="Homer", address=addr)
         assert person.address.city == "Springfield"
 
     def test_aggregate_root_with_nested_entities(self) -> None:
@@ -233,7 +233,7 @@ class TestFlextModelsEdgeCases:
         class ShoppingCart(FlextModels.AggregateRoot):
             customer_id: str
 
-        cart = ShoppingCart(id="cart-1", customer_id="cust-1")
+        cart = ShoppingCart(unique_id="cart-1", customer_id="cust-1")
         # Aggregate roots typically contain collections of value objects
         assert cart.customer_id == "cust-1"
 
@@ -291,7 +291,7 @@ class TestFlextModelsIntegration:
         assert cmd.user_id == "user-1"
 
         # Create entity
-        user = User(id="user-1", name="Alice")
+        user = User(unique_id="user-1", name="Alice")
         assert user.name == "Alice"
 
         # Create query
@@ -306,7 +306,7 @@ class TestFlextModelsIntegration:
             items_count: int
 
         # Create aggregate
-        order = Order(id="order-1", status="new", items_count=0)
+        order = Order(unique_id="order-1", status="new", items_count=0)
         assert order.status == "new"
 
         # Add domain event
