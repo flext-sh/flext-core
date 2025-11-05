@@ -201,7 +201,7 @@ class TestPattern2V2Property:
     def test_v2_property_failure_raises(self) -> None:
         """V2 Property: .result raises exception on failure."""
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            GetUserService(user_id="invalid").result  # noqa: B018
+            GetUserService(user_id="invalid").result
 
         assert "not found" in str(exc_info.value).lower()
 
@@ -495,10 +495,10 @@ class TestPattern8ErrorHandling:
     def test_error_handling_try_except_v2_property_failure(self) -> None:
         """Error Handling: try/except catches failure."""
         try:
-            GetUserService(user_id="invalid").result  # noqa: B018
+            GetUserService(user_id="invalid").result
             pytest.fail("Should raise exception")
         except FlextExceptions.BaseError as e:
-            assert "not found" in str(e).lower()  # noqa: PT017
+            assert "not found" in str(e).lower()
 
     def test_error_handling_try_except_v2_auto(self) -> None:
         """Error Handling: try/except with V2 Auto."""
@@ -595,7 +595,7 @@ class TestPattern10MultipleOperations:
     def test_multiple_operations_invalid(self) -> None:
         """Multiple Operations: Invalid operation fails."""
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            MultiOperationService(operation="invalid", value=5).result  # noqa: B018
+            MultiOperationService(operation="invalid", value=5).result
 
         assert "Unknown operation" in str(exc_info.value)
 
@@ -604,13 +604,13 @@ class TestPattern10MultipleOperations:
         pipeline = (
             MultiOperationService(operation="double", value=5)
             .execute()
-            .map(lambda data: data["result"])  # noqa: FURB118
+            .map(lambda data: data["result"])
             .flat_map(
                 lambda result: MultiOperationService(
                     operation="square", value=result
                 ).execute()
             )
-            .map(lambda data: data["result"])  # noqa: FURB118
+            .map(lambda data: data["result"])
         )
 
         assert pipeline.is_success

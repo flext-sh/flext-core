@@ -178,7 +178,7 @@ class TestV1VsV2Property:
         service = ValidationService(value=-1)
 
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            service.result  # noqa: B018
+            service.result
 
         assert "positive" in str(exc_info.value).lower()
 
@@ -232,7 +232,7 @@ class TestV1VsV2Property:
         service = ComplexV1Service(items=[], multiplier=2)
 
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            service.result  # noqa: B018
+            service.result
 
         assert "empty" in str(exc_info.value).lower()
 
@@ -389,7 +389,7 @@ class TestV1V2Interoperability:
         # V2 Property: Raises exception
         v2_property_service = ValidationService(value=-1)
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            v2_property_service.result  # noqa: B018
+            v2_property_service.result
         assert "positive" in str(exc_info.value).lower()
 
         # V2 Auto: Raises exception
