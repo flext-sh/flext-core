@@ -745,7 +745,7 @@ class TestV2PropertyCoverage:
 
         # V2 Property: Exception on failure
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            service.result  # noqa: B018
+            service.result
 
         assert "failure" in str(exc_info.value).lower()
 
