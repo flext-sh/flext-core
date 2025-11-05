@@ -29,7 +29,6 @@ from pydantic_settings import (
 from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
 
-# TypeVar for builder pattern support
 T_Config = TypeVar("T_Config", bound="FlextConfig")
 
 # NOTE: Pydantic v2 BaseSettings handles environment variable type coercion automatically.
@@ -118,7 +117,7 @@ class FlextConfig(BaseSettings):
     ✅ 18 essential fields with proper type hints and constraints
     ✅ Thread-safe singleton with RLock double-checked locking
     ✅ Environment variable support with type coercion
-    ✅ FlextResult-based error handling (railway pattern)
+    ✅ Standard Python exceptions (ValueError for validation)
     ✅ Computed fields for derived configuration values
     ✅ Comprehensive field and model validators
     ✅ DI provider integration for dependency injection
@@ -439,13 +438,8 @@ class FlextConfig(BaseSettings):
     def validate_trace_requires_debug(self) -> Self:
         """Validate trace mode requires debug mode (Pydantic v2)."""
         if self.trace and not self.debug:
-            from flext_core.exceptions import FlextExceptions
-
             msg = "Trace mode requires debug mode"
-            raise FlextExceptions.ValidationError(
-                message=msg,
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
-            )
+            raise ValueError(msg)
         return self
 
     # ===== DEPENDENCY INJECTION INTEGRATION =====
@@ -500,72 +494,11 @@ class FlextConfig(BaseSettings):
             base_class = cls
             cls._instances.pop(base_class, None)
 
-    # ===== CONFIGURATION BUILDER METHODS (merged from config_builder.py) =====
-    @classmethod
-    def create_from_env(
-        cls,
-        _env_prefix: str | None = None,
-        _env_file: str | None = None,
-        overrides: dict[str, Any] | None = None,
-    ) -> Any:  # Returns FlextResult[T_Config], but avoiding circular import
-        """Create configuration from environment variables.
-
-        Leverages Pydantic v2's BaseSettings native environment variable binding
-        to eliminate manual parsing. The config_class must extend FlextConfig
-        with proper SettingsConfigDict configuration.
-
-        **How It Works**:
-        1. Reads environment variables matching the env_prefix
-        2. Uses Pydantic's automatic type coercion (str → int, bool, etc.)
-        3. Applies field overrides if provided
-        4. Validates complete configuration
-        5. Returns FlextResult with config or error
-
-        Args:
-            _env_prefix: Optional environment variable prefix (e.g., "MYPROJECT_")
-                        If provided, updates the config_class's model_config.
-                        If not provided, uses class's configured prefix.
-            _env_file: Optional path to .env file for loading environment variables
-            overrides: Optional dictionary of field overrides to apply after
-                      environment binding. Values are validated against field types.
-
-        Returns:
-            FlextResult[Self]: Configuration instance or error message
-
-        """
-        from flext_core.result import FlextResult
-
-        try:
-            # Create configuration instance - Pydantic automatically reads env vars
-            # based on the model_config's env_prefix and other settings
-            config = cls()
-
-            # Apply overrides if provided
-            if overrides:
-                for field_name, field_value in overrides.items():
-                    if hasattr(config, field_name):
-                        setattr(config, field_name, field_value)
-                    else:
-                        return FlextResult[Self].fail(
-                            f"Unknown configuration field: {field_name}"
-                        )
-
-            return FlextResult[Self].ok(config)
-
-        except TypeError as e:
-            return FlextResult[Self].fail(f"Configuration instantiation failed: {e!s}")
-        except ValueError as e:
-            return FlextResult[Self].fail(f"Configuration validation failed: {e!s}")
-        except Exception as e:
-            return FlextResult[Self].fail(
-                f"Unexpected error loading configuration: {e!s}"
-            )
-
     @classmethod
     def validate_config_class(
         cls,
         config_class: object,
-    ) -> Any:  # Returns FlextResult[bool], but avoiding circular import
+    ) -> tuple[bool, str | None]:
         """Validate that a configuration class is properly configured.
 
         Checks that the class:
@@ -577,36 +510,32 @@ class FlextConfig(BaseSettings):
             config_class: Configuration class to validate
 
         Returns:
-            FlextResult[bool]: True if valid, error message if not
+            tuple[bool, str | None]: (is_valid, error_message)
+                - (True, None) if valid
+                - (False, error_message) if invalid
 
         """
-        from flext_core.result import FlextResult
-
         try:
             # Check that it's a class
             if not isinstance(config_class, type):
-                return FlextResult[bool].fail(
-                    "config_class must be a class, not an instance"
-                )
+                return (False, "config_class must be a class, not an instance")
 
             # Check inheritance
             class_name = getattr(config_class, "__name__", "UnknownClass")
             if not issubclass(config_class, FlextConfig):
-                return FlextResult[bool].fail(f"{class_name} must extend FlextConfig")
+                return (False, f"{class_name} must extend FlextConfig")
 
             # Check model_config existence
             if not hasattr(config_class, "model_config"):
-                return FlextResult[bool].fail(f"{class_name} must define model_config")
+                return (False, f"{class_name} must define model_config")
 
             # Try to instantiate to ensure it's valid
             _ = config_class()
 
-            return FlextResult[bool].ok(True)
+            return (True, None)
 
         except Exception as e:
-            return FlextResult[bool].fail(
-                f"Configuration class validation failed: {e!s}"
-            )
+            return (False, f"Configuration class validation failed: {e!s}")
 
     @staticmethod
     def create_settings_config(

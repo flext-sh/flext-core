@@ -97,7 +97,9 @@ class SampleComplexService(FlextService[object]):
         if self.amount > 1000:
             return FlextResult[object].fail("Value too large")
 
-        return FlextResult[object].ok(f"Processed: {self.name} with amount {self.amount}")
+        return FlextResult[object].ok(
+            f"Processed: {self.name} with amount {self.amount}"
+        )
 
 
 class SampleFailingService(FlextService[None]):

@@ -135,56 +135,8 @@ class FlextContext:
 
         """
         super().__init__()
-        if initial_data is None:
-            context_data = FlextModels.ContextData()
-        elif isinstance(initial_data, dict):
-            # Wrap dict in ContextData
-            context_data = FlextModels.ContextData(data=initial_data)
-        else:
-            context_data = initial_data
-
-        # Initialize metadata and hooks (not stored in contextvars)
-        # Handle initialization safely using Pydantic model_validate
-        try:
-            if isinstance(context_data.metadata, FlextModels.ContextMetadata):
-                self._metadata: FlextModels.ContextMetadata = context_data.metadata
-            elif isinstance(context_data.metadata, dict):
-                # Extract standard fields and put rest in custom_fields
-                metadata_dict: dict[str, object] = {}
-
-                # Known ContextMetadata fields
-                for key in [
-                    "user_id",
-                    "correlation_id",
-                    "request_id",
-                    "session_id",
-                    "tenant_id",
-                ]:
-                    if key in context_data.metadata:
-                        metadata_dict[key] = context_data.metadata[key]
-
-                # Create ContextMetadata with known fields only (no custom_fields)
-                self._metadata = FlextModels.ContextMetadata.model_validate(
-                    metadata_dict
-                )
-
-                # Directly update custom_fields dict to avoid deprecation warning
-                # Extract unknown fields and add them to custom_fields
-                known_fields = {
-                    "user_id",
-                    "correlation_id",
-                    "request_id",
-                    "session_id",
-                    "tenant_id",
-                }
-                for key, value in context_data.metadata.items():
-                    if key not in known_fields:
-                        self._metadata.custom_fields[key] = value
-            else:
-                self._metadata = FlextModels.ContextMetadata()
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-            # Fallback: if validation fails, create empty metadata
-            self._metadata = FlextModels.ContextMetadata()
+        context_data = self._normalize_initial_data(initial_data)
+        self._metadata = self._initialize_metadata_from_data(context_data)
 
         self._hooks: FlextTypes.HookRegistry = {}
         self._statistics: FlextModels.ContextStatistics = (
@@ -220,6 +172,71 @@ class FlextContext:
             self._set_in_contextvar(
                 FlextConstants.Context.SCOPE_GLOBAL, context_data.data
             )
+
+    def _normalize_initial_data(
+        self, initial_data: FlextModels.ContextData | dict[str, object] | None
+    ) -> FlextModels.ContextData:
+        """Normalize initial data to FlextModels.ContextData format."""
+        if initial_data is None:
+            return FlextModels.ContextData()
+        if isinstance(initial_data, dict):
+            return FlextModels.ContextData(data=initial_data)
+        return initial_data
+
+    def _initialize_metadata_from_data(
+        self, context_data: FlextModels.ContextData
+    ) -> FlextModels.ContextMetadata:
+        """Initialize metadata from context data with proper error handling."""
+        try:
+            if isinstance(context_data.metadata, FlextModels.ContextMetadata):
+                return context_data.metadata
+            if isinstance(context_data.metadata, dict):
+                return self._handle_dict_metadata(context_data.metadata)
+            return FlextModels.ContextMetadata()
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
+            # Fallback: if validation fails, create empty metadata
+            return FlextModels.ContextMetadata()
+
+    def _handle_dict_metadata(
+        self, metadata_dict: dict[str, object]
+    ) -> FlextModels.ContextMetadata:
+        """Handle metadata initialization from dict."""
+        known_fields = self._extract_known_fields(metadata_dict)
+        metadata = FlextModels.ContextMetadata.model_validate(known_fields)
+        self._extract_unknown_fields(metadata, metadata_dict)
+        return metadata
+
+    def _extract_known_fields(
+        self, metadata_dict: dict[str, object]
+    ) -> dict[str, object]:
+        """Extract known metadata fields from dict."""
+        known_field_names = {
+            "user_id",
+            "correlation_id",
+            "request_id",
+            "session_id",
+            "tenant_id",
+        }
+        return {
+            key: metadata_dict[key] for key in known_field_names if key in metadata_dict
+        }
+
+    def _extract_unknown_fields(
+        self,
+        metadata: FlextModels.ContextMetadata,
+        metadata_dict: dict[str, object],
+    ) -> None:
+        """Extract unknown metadata fields and add to custom_fields."""
+        known_fields = {
+            "user_id",
+            "correlation_id",
+            "request_id",
+            "session_id",
+            "tenant_id",
+        }
+        for key, value in metadata_dict.items():
+            if key not in known_fields:
+                metadata.custom_fields[key] = value
 
     # =========================================================================
     # PRIVATE HELPERS - Context variable management and FlextLogger delegation

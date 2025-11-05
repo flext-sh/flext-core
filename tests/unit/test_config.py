@@ -611,15 +611,16 @@ class TestFlextConfig:
 
     def test_validate_config_class_success(self) -> None:
         """Test validate_config_class with valid config class."""
-        result = FlextConfig.validate_config_class(FlextConfig)
-        assert result.is_success
-        assert result.unwrap() is True
+        is_valid, error = FlextConfig.validate_config_class(FlextConfig)
+        assert is_valid is True
+        assert error is None
 
     def test_validate_config_class_non_class(self) -> None:
         """Test validate_config_class with non-class input."""
-        result = FlextConfig.validate_config_class("not_a_class")
-        assert result.is_failure
-        assert "must be a class" in result.error
+        is_valid, error = FlextConfig.validate_config_class("not_a_class")
+        assert is_valid is False
+        assert error is not None
+        assert "must be a class" in error
 
     def test_validate_config_class_non_subclass(self) -> None:
         """Test validate_config_class with non-FlextConfig class."""
@@ -627,9 +628,10 @@ class TestFlextConfig:
         class NotFlextConfig:
             pass
 
-        result = FlextConfig.validate_config_class(NotFlextConfig)
-        assert result.is_failure
-        assert "must extend FlextConfig" in result.error
+        is_valid, error = FlextConfig.validate_config_class(NotFlextConfig)
+        assert is_valid is False
+        assert error is not None
+        assert "must extend FlextConfig" in error
 
     def test_validate_config_class_no_model_config(self) -> None:
         """Test validate_config_class with class missing model_config."""
@@ -641,9 +643,10 @@ class TestFlextConfig:
         if hasattr(BadConfig, "model_config"):
             delattr(BadConfig, "model_config")
 
-        result = FlextConfig.validate_config_class(BadConfig)
-        # Should fail because model_config is missing
-        assert result.is_failure or result.is_success  # Either is acceptable
+        is_valid, error = FlextConfig.validate_config_class(BadConfig)
+        # Should fail because model_config is missing (or pass if it inherits from parent)
+        assert isinstance(is_valid, bool)
+        assert error is None or isinstance(error, str)
 
     def test_get_global_instance(self) -> None:
         """Test get_global_instance returns singleton."""

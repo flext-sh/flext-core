@@ -174,7 +174,8 @@ class TestV1Compatibility:
         """V1: Railway pattern composition with map/flat_map."""
         # V1: Execute and compose with monadic methods
         result = (
-            GetUserService(user_id="111").execute()
+            GetUserService(user_id="111")
+            .execute()
             .map(lambda user: user.name)
             .map(lambda name: name.upper())
             .map(lambda name: f"Hello, {name}!")

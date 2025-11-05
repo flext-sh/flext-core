@@ -34,7 +34,7 @@ from flext_core.typings import (
     CallableOutputT,
     FlextTypes,
 )
-from flext_core.utilities import FlextMetrics, FlextUtilities
+from flext_core.utilities import FlextUtilities
 
 
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
@@ -291,17 +291,13 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             operation_name = operation or "message"
             context_operation = operation or "unknown"
 
+            # Try different message types in order
             if isinstance(message, (dict, str, int, float, bool)):
                 return cast("dict[str, object] | str | int | float | bool", message)
 
             if message is None:
-                msg = f"Invalid message type for {operation_name}: NoneType"
-                raise FlextExceptions.TypeError(
-                    msg,
-                    expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
-                    actual_type="NoneType",
-                    context=f"operation: {context_operation}, message_type: NoneType, validation_type: serializable_check",
-                    correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+                cls._raise_invalid_message_type(
+                    operation_name, context_operation, "NoneType"
                 )
 
             if isinstance(message, BaseModel):
@@ -311,6 +307,32 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 return asdict(message)
 
             # Handle attrs classes
+            attrs_result = cls._try_attrs_serialization(message)
+            if attrs_result is not None:
+                return attrs_result
+
+            # Try common serialization methods
+            common_result = cls._try_common_serialization_methods(
+                message, operation_name, context_operation
+            )
+            if common_result is not None:
+                return common_result
+
+            # Handle __slots__
+            slots_result = cls._try_slots_serialization(message)
+            if slots_result is not None:
+                return slots_result
+
+            if hasattr(message, "__dict__"):
+                return vars(message)
+
+            cls._raise_invalid_message_type(
+                operation_name, context_operation, type(message).__name__
+            )
+
+        @classmethod
+        def _try_attrs_serialization(cls, message: object) -> dict[str, object] | None:
+            """Try to serialize attrs class."""
             attrs_fields = getattr(message, "__attrs_attrs__", None)
             if (
                 attrs_fields is not None
@@ -324,8 +346,13 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     if hasattr(message, field_name):
                         result[field_name] = getattr(message, field_name)
                 return result
+            return None
 
-            # Try common serialization methods
+        @classmethod
+        def _try_common_serialization_methods(
+            cls, message: object, operation: str, context: str
+        ) -> dict[str, object] | None:
+            """Try common serialization methods."""
             for method_name in ("model_dump", "dict", "as_dict"):
                 method = getattr(message, method_name, None)
                 if callable(method):
@@ -334,49 +361,51 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                         if isinstance(result_data, dict):
                             return cast("dict[str, object]", result_data)
                     except Exception as e:
-                        # VALIDATION HIERARCHY - User data serialization (HIGH)
-                        # User model_dump(), dict() methods can raise any exception
-                        # Safe behavior: log and try next serialization method
                         FlextHandlers._internal_logger.debug(
                             f"Serialization method {method_name} failed: {type(e).__name__}"
                         )
                         continue
+            return None
 
-            # Handle __slots__
+        @classmethod
+        def _try_slots_serialization(cls, message: object) -> dict[str, object] | None:
+            """Try to serialize object with __slots__."""
             slots = getattr(message, "__slots__", None)
-            if slots:
-                if isinstance(slots, str):
-                    slot_names: tuple[str, ...] = (slots,)
-                elif isinstance(slots, (list, tuple)):
-                    slot_names = tuple(cast("list[str] | tuple[str, ...]", slots))
-                else:
-                    msg = f"Invalid __slots__ type for {operation_name}: {type(slots).__name__}"
-                    raise FlextExceptions.TypeError(
-                        msg,
-                        expected_type="str, list, or tuple",
-                        actual_type=type(slots).__name__,
-                        context=f"operation: {context_operation}, message_type: {type(message).__name__}, validation_type: serializable_check, __slots__: {slots!r}",
-                        correlation_id=f"message_serialization_{int(time.time() * 1000)}",
-                    )
+            if not slots:
+                return None
 
-                def get_slot_value(slot_name: str) -> object:
-                    return getattr(message, slot_name)
+            if isinstance(slots, str):
+                slot_names: tuple[str, ...] = (slots,)
+            elif isinstance(slots, (list, tuple)):
+                slot_names = tuple(cast("list[str] | tuple[str, ...]", slots))
+            else:
+                raise FlextExceptions.TypeError(
+                    f"Invalid __slots__ type: {type(slots).__name__}",
+                    expected_type="str, list, or tuple",
+                    actual_type=type(slots).__name__,
+                    context=f"message_type: {type(message).__name__}, __slots__: {slots!r}",
+                    correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+                )
 
-                return {
-                    slot_name: get_slot_value(slot_name)
-                    for slot_name in slot_names
-                    if hasattr(message, slot_name)
-                }
+            def get_slot_value(slot_name: str) -> object:
+                return getattr(message, slot_name)
 
-            if hasattr(message, "__dict__"):
-                return vars(message)
+            return {
+                slot_name: get_slot_value(slot_name)
+                for slot_name in slot_names
+                if hasattr(message, slot_name)
+            }
 
-            msg = f"Invalid message type for {operation_name}: {type(message).__name__}"
+        @classmethod
+        def _raise_invalid_message_type(
+            cls, operation: str, context: str, actual_type: str
+        ) -> None:
+            """Raise TypeError for invalid message type."""
             raise FlextExceptions.TypeError(
-                msg,
+                f"Invalid message type for {operation}: {actual_type}",
                 expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
-                actual_type=type(message).__name__,
-                context=f"operation: {context_operation}, message_type: {type(message).__name__}, validation_type: serializable_check",
+                actual_type=actual_type,
+                context=f"operation: {context}, message_type: {actual_type}, validation_type: serializable_check",
                 correlation_id=f"message_serialization_{int(time.time() * 1000)}",
             )
 
@@ -616,36 +645,21 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         """
         # Extract message ID
-        message_id: str = "unknown"
         if isinstance(message, dict):
-            message_id = (
+            (
                 str(message.get(f"{operation}_id", "unknown"))
                 or str(message.get("message_id", "unknown"))
                 or "unknown"
             )
         elif hasattr(message, f"{operation}_id"):
-            message_id = str(getattr(message, f"{operation}_id", "unknown"))
+            str(getattr(message, f"{operation}_id", "unknown"))
         elif hasattr(message, "message_id"):
-            message_id = str(getattr(message, "message_id", "unknown"))
+            str(getattr(message, "message_id", "unknown"))
 
         message_type: str = str(type(message).__name__)
 
-        # Log start
-        FlextMetrics.log_handler_start(
-            self.logger,
-            self.mode,
-            message_type,
-            message_id,
-        )
-
         # Validate operation matches handler mode
         if operation != self.mode:
-            FlextMetrics.log_mode_validation_error(
-                logger=self.logger,
-                error_message=f"Handler with mode '{self.mode}' cannot execute {operation} pipelines",
-                expected_mode=self.mode,
-                actual_mode=operation,
-            )
             return FlextResult[ResultT].fail(
                 f"Handler with mode '{self.mode}' cannot execute {operation} pipelines"
             )
@@ -653,23 +667,11 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         # Validate message can be handled
         message_type_obj: type[object] = type(message)
         if not self.can_handle(cast("type[MessageT_contra]", message_type_obj)):
-            FlextMetrics.log_handler_cannot_handle(
-                logger=self.logger,
-                error_message=f"Handler cannot handle message type {message_type}",
-                handler_name=self.handler_name,
-                message_type=message_type,
-            )
             return FlextResult[ResultT].fail(
                 f"Handler cannot handle message type {message_type}"
             )
 
         # Validate message
-        FlextMetrics.log_handler_processing(
-            self.logger,
-            self.mode,
-            message_type,
-            message_id,
-        )
         validation_result = (
             self.validate_command(cast("object", message))
             if operation == "command"
@@ -681,41 +683,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             )
 
         # Execute handler
-        start_time = time.time()
         try:
-            result = self.handle(cast("MessageT_contra", message))
-            execution_time_ms = (time.time() - start_time) * 1000
-            FlextMetrics.log_handler_completion(
-                self.logger,
-                self.mode,
-                message_type,
-                message_id,
-                execution_time_ms,
-                success=result.is_success,
-            )
-            return result
+            return self.handle(cast("MessageT_contra", message))
         except Exception as e:
             # VALIDATION HIERARCHY - User handler execution (CRITICAL)
             # User-registered handlers can raise any exception
-            # Safe behavior: capture error, log metrics, return failure result
-            execution_time_ms = (time.time() - start_time) * 1000
-            exception_type = type(e).__name__
-            FlextMetrics.log_handler_error(
-                self.logger,
-                self.mode,
-                message_type,
-                message_id,
-                execution_time_ms=execution_time_ms,
-                exception_type=exception_type,
-            )
-            FlextMetrics.log_handler_completion(
-                self.logger,
-                self.mode,
-                message_type,
-                message_id,
-                execution_time_ms,
-                success=False,
-            )
+            # Safe behavior: capture error, return failure result
             return FlextResult[ResultT].fail(f"Critical handler failure: {e!s}")
 
     @abstractmethod

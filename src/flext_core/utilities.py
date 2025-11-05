@@ -10,50 +10,38 @@ handling and composability across ecosystem projects.
 
 from __future__ import annotations
 
-import contextvars
-import hashlib
-import inspect
-import json
 import logging
-import operator
 import os
 import pathlib
-import re
-import secrets
 import shutil
-import string
 import subprocess  # nosec B404 - subprocess is used for legitimate process management
 import threading
-import time
-import uuid
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable
 from contextlib import suppress
-from dataclasses import asdict, dataclass, is_dataclass
-from datetime import UTC, datetime
+from dataclasses import dataclass
 from typing import (
-    TYPE_CHECKING,
     Self,
     TypeVar,
-    cast,
-    get_origin,
-    get_type_hints,
 )
 
-import orjson
-
-from flext_core.constants import FlextConstants
-from flext_core.exceptions import FlextExceptions
-from flext_core.protocols import FlextProtocols
+from flext_core._utilities import (
+    FlextUtilitiesCache,
+    FlextUtilitiesConfiguration,
+    FlextUtilitiesDataMapper,
+    FlextUtilitiesGenerators,
+    FlextUtilitiesReliability,
+    FlextUtilitiesStringParser,
+    FlextUtilitiesTextProcessor,
+    FlextUtilitiesTypeChecker,
+    FlextUtilitiesTypeGuards,
+    FlextUtilitiesValidation,
+)
 from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
 
 # Module constants for networking
 MAX_PORT_NUMBER: int = 65535  # IANA standard maximum port (2^16 - 1)
 MIN_PORT_NUMBER: int = 1  # Minimum valid port number
 
-if TYPE_CHECKING:
-    from flext_core.loggings import FlextLogger
 
 # Module logger for exception tracking
 _logger = logging.getLogger(__name__)
@@ -424,1599 +412,23 @@ class FlextUtilities:
     ✅ Production-ready for enterprise deployments
     """
 
-    class Cache:
-        """Cache utility functions for data normalization and sorting."""
+    # =========================================================================
+    # NAMESPACE ALIASES - Maintain backward compatibility
+    # =========================================================================
+    # These aliases maintain the FlextUtilities.Cache.method() API while
+    # delegating to extracted classes in _utilities/ for modularity
+
+    Cache = FlextUtilitiesCache
+    Validation = FlextUtilitiesValidation
+    TypeGuards = FlextUtilitiesTypeGuards
+    Generators = FlextUtilitiesGenerators
+    TextProcessor = FlextUtilitiesTextProcessor
+    Reliability = FlextUtilitiesReliability
+    TypeChecker = FlextUtilitiesTypeChecker
+    Configuration = FlextUtilitiesConfiguration
+    StringParser = FlextUtilitiesStringParser
+    DataMapper = FlextUtilitiesDataMapper
 
-        @staticmethod
-        def normalize_component(
-            component: FlextTypes.GenericDetailsType,
-        ) -> object:
-            """Normalize a component for consistent representation."""
-            if isinstance(component, dict):
-                component_dict = component
-                return {
-                    str(k): FlextUtilities.Cache.normalize_component(v)
-                    for k, v in component_dict.items()
-                }
-            if isinstance(component, (list, tuple)):
-                sequence = cast("Sequence[object]", component)
-                return [
-                    FlextUtilities.Cache.normalize_component(item) for item in sequence
-                ]
-            if isinstance(component, set):
-                set_component = cast("set[object]", component)
-                return {
-                    FlextUtilities.Cache.normalize_component(item)
-                    for item in set_component
-                }
-            # Return primitives and other types directly
-            return component
-
-        @staticmethod
-        def sort_key(key: FlextTypes.SortableObjectType) -> tuple[int, str]:
-            """Generate a sort key for consistent ordering."""
-            if isinstance(key, str):
-                return (0, key.lower())
-            if isinstance(key, (int, float)):
-                return (1, str(key))
-            return (2, str(key))
-
-        @staticmethod
-        def sort_dict_keys(
-            data: FlextTypes.SortableObjectType,
-        ) -> FlextTypes.SortableObjectType:
-            """Sort dictionary keys for consistent representation."""
-            if isinstance(data, dict):
-                data_dict = data
-                return {
-                    k: FlextUtilities.Cache.sort_dict_keys(data_dict[k])
-                    for k in sorted(data_dict.keys(), key=FlextUtilities.Cache.sort_key)
-                }
-            return data
-
-        @staticmethod
-        def clear_object_cache(obj: FlextTypes.CachedObjectType) -> FlextResult[None]:
-            """Clear any caches on an object."""
-            try:
-                # Common cache attribute names to check and clear
-                cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
-
-                cleared_count = 0
-                for attr_name in cache_attributes:
-                    if hasattr(obj, attr_name):
-                        cache_attr = getattr(obj, attr_name, None)
-                        if cache_attr is not None:
-                            # Clear dict[str, object]-like caches
-                            if hasattr(cache_attr, "clear") and callable(
-                                cache_attr.clear,
-                            ):
-                                cache_attr.clear()
-                                cleared_count += 1
-                            # Reset to None for simple cached values
-                            else:
-                                setattr(obj, attr_name, None)
-                                cleared_count += 1
-
-                return FlextResult[None].ok(None)
-            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-                return FlextResult[None].fail(f"Failed to clear caches: {e}")
-
-        @staticmethod
-        def has_cache_attributes(obj: FlextTypes.CachedObjectType) -> bool:
-            """Check if object has any cache-related attributes."""
-            cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
-            return any(hasattr(obj, attr) for attr in cache_attributes)
-
-        @staticmethod
-        def generate_cache_key(*args: object, **kwargs: object) -> str:
-            """Generate a cache key from arguments."""
-            key_data = str(args) + str(sorted(kwargs.items()))
-            return hashlib.sha256(key_data.encode()).hexdigest()
-
-    class Validation:
-        """Unified validation patterns using railway composition.
-
-        Use for composite/pipeline validation and complex business logic validators.
-        For field validation, use Pydantic Field constraints directly.
-
-        See: https://docs.pydantic.dev/2.12/api/fields/
-        """
-
-        @staticmethod
-        def validate_pipeline(
-            value: str, validators: list[object]
-        ) -> FlextResult[None]:
-            """Validate using a pipeline of validators."""
-            for validator in validators:
-                if callable(validator):
-                    try:
-                        result: FlextResult[None] = cast(
-                            "FlextResult[None]", validator(value)
-                        )
-                        if result.is_failure:
-                            return result
-                    except (
-                        AttributeError,
-                        TypeError,
-                        ValueError,
-                        RuntimeError,
-                        KeyError,
-                    ) as e:
-                        return FlextResult[None].fail(f"Validator failed: {e}")
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def clear_all_caches(obj: FlextTypes.CachedObjectType) -> FlextResult[None]:
-            """Clear all caches on an object to prevent memory leaks.
-
-            Args:
-                obj: Object to clear caches on
-
-            Returns:
-                FlextResult indicating success or failure
-
-            """
-            try:
-                # Common cache attribute names to check and clear
-                cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
-
-                cleared_count = 0
-                for attr_name in cache_attributes:
-                    if hasattr(obj, attr_name):
-                        cache_attr = getattr(obj, attr_name, None)
-                        if cache_attr is not None:
-                            # Clear dict[str, object]-like caches
-                            if hasattr(cache_attr, "clear") and callable(
-                                cache_attr.clear,
-                            ):
-                                cache_attr.clear()
-                                cleared_count += 1
-                            # Reset to None for simple cached values
-                            else:
-                                setattr(obj, attr_name, None)
-                                cleared_count += 1
-
-                return FlextResult[None].ok(None)
-            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-                return FlextResult[None].fail(f"Failed to clear caches: {e}")
-
-        @staticmethod
-        def has_cache_attributes(obj: FlextTypes.CachedObjectType) -> bool:
-            """Check if object has any cache-related attributes.
-
-            Args:
-                obj: Object to check for cache attributes
-
-            Returns:
-                True if object has cache attributes, False otherwise
-
-            """
-            cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
-
-            return any(hasattr(obj, attr) for attr in cache_attributes)
-
-        @staticmethod
-        def sort_key(value: FlextTypes.SerializableType) -> str:
-            """Return a deterministic string for ordering normalized cache components."""
-            try:
-                json_bytes = orjson.dumps(value, option=orjson.OPT_SORT_KEYS)
-                return json_bytes.decode(FlextConstants.Utilities.DEFAULT_ENCODING)
-            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-                # Use proper logger instead of root logger
-                logger = logging.getLogger(__name__)
-                logger.debug("orjson dumps failed: %s", e)
-            # Fallback to standard library json with sorted keys
-            return json.dumps(value, sort_keys=True, default=str)
-
-        @staticmethod
-        def normalize_component(
-            value: object,
-        ) -> object:
-            """Normalize arbitrary objects into cache-friendly deterministic structures."""
-            if value is None or isinstance(value, (bool, int, float, str)):
-                return value
-
-            if isinstance(value, bytes):
-                return ("bytes", value.hex())
-
-            if isinstance(value, FlextProtocols.HasModelDump):
-                try:
-                    dumped: dict[str, object] = value.model_dump()
-                except TypeError:
-                    dumped = {}
-                normalized_dumped = FlextUtilities.Cache.normalize_component(dumped)
-                return ("pydantic", normalized_dumped)
-
-            if is_dataclass(value):
-                # Ensure we have a dataclass instance, not a class
-                if isinstance(value, type):
-                    return ("dataclass_class", str(value))
-                dataclass_dict = asdict(value)
-                normalized_dict = FlextUtilities.Cache.normalize_component(
-                    dataclass_dict
-                )
-                return ("dataclass", normalized_dict)
-
-            if isinstance(value, Mapping):
-                # Return sorted dict[str, object] for cache-friendly deterministic ordering
-                mapping_value = cast("Mapping[object, object]", value)
-                sorted_items = sorted(
-                    mapping_value.items(),
-                    key=lambda x: FlextUtilities.Cache.sort_key(x[0]),
-                )
-                return {
-                    FlextUtilities.Cache.normalize_component(
-                        k,
-                    ): FlextUtilities.Cache.normalize_component(v)
-                    for k, v in sorted_items
-                }
-
-            if isinstance(value, (list, tuple)):
-                sequence_value = cast("Sequence[object]", value)
-                sequence_items = [
-                    FlextUtilities.Cache.normalize_component(item)
-                    for item in sequence_value
-                ]
-                return ("sequence", tuple(sequence_items))
-
-            if isinstance(value, set):
-                set_value = cast("set[object]", value)
-                set_items = [
-                    FlextUtilities.Cache.normalize_component(item) for item in set_value
-                ]
-
-                # Sort by string representation for deterministic ordering
-                set_items.sort(key=str)
-
-                normalized_set = tuple(set_items)
-                return ("set", normalized_set)
-
-            try:
-                # Cast to proper type for type checker
-                value_vars_dict: dict[str, object] = cast(
-                    "dict[str, object]",
-                    vars(value),
-                )
-            except TypeError:
-                return ("repr", repr(value))
-
-            normalized_vars = tuple(
-                (key, FlextUtilities.Cache.normalize_component(val))
-                for key, val in sorted(
-                    value_vars_dict.items(),
-                    key=operator.itemgetter(0),
-                )
-            )
-            return ("vars", normalized_vars)
-
-        @staticmethod
-        def generate_cache_key(
-            command: object | None,
-            command_type: type[object],
-        ) -> str:
-            """Generate a deterministic cache key for the command.
-
-            Args:
-                command: The command/query object
-                command_type: The type of the command
-
-            Returns:
-                str: Deterministic cache key
-
-            """
-            try:
-                # For Pydantic models, use model_dump with sorted keys
-                if isinstance(command, FlextProtocols.HasModelDump):
-                    data = command.model_dump(mode="python")
-                    # Sort keys recursively for deterministic ordering
-                    sorted_data = FlextUtilities.Cache.sort_dict_keys(data)
-                    return f"{cast('type', command_type).__name__}_{hash(str(sorted_data))}"
-
-                # For dataclasses, use asdict with sorted keys
-                if (
-                    hasattr(command, "__dataclass_fields__")
-                    and is_dataclass(command)
-                    and not isinstance(command, type)
-                ):
-                    dataclass_data = asdict(command)
-                    dataclass_sorted_data = FlextUtilities.Cache.sort_dict_keys(
-                        dataclass_data,
-                    )
-                    return f"{cast('type', command_type).__name__}_{hash(str(dataclass_sorted_data))}"
-
-                # For dictionaries, sort keys
-                if isinstance(command, dict):
-                    dict_sorted_data = FlextUtilities.Cache.sort_dict_keys(
-                        cast("dict[str, object]", command),
-                    )
-                    return f"{cast('type', command_type).__name__}_{hash(str(dict_sorted_data))}"
-
-                # For other objects, use string representation
-                command_str = str(command) if command is not None else "None"
-                command_hash = hash(command_str)
-                return f"{cast('type', command_type).__name__}_{command_hash}"
-
-            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-                # Fallback to string representation if anything fails
-                command_str_fallback: str = (
-                    str(command) if command is not None else "None"
-                )
-                # Ensure we have a valid string for encoding
-                try:
-                    command_hash_fallback = hash(command_str_fallback)
-                    return (
-                        f"{cast('type', command_type).__name__}_{command_hash_fallback}"
-                    )
-                except TypeError:
-                    # If hash fails, use a deterministic fallback with proper encoding
-                    encoded_fallback = command_str_fallback.encode(
-                        FlextConstants.Utilities.DEFAULT_ENCODING
-                    )
-                    return f"{cast('type', command_type).__name__}_{abs(hash(encoded_fallback))}"
-
-        @staticmethod
-        def sort_dict_keys(
-            obj: FlextTypes.SortableObjectType,
-        ) -> FlextTypes.SortableObjectType:
-            """Recursively sort dictionary keys for deterministic ordering.
-
-            Args:
-                obj: Object to sort (dict[str, object], list, or other)
-
-            Returns:
-                Object with sorted keys
-
-            """
-            if isinstance(obj, dict):
-                dict_obj: dict[str, object] = obj
-                sorted_items: list[tuple[str, object]] = sorted(
-                    cast("list[tuple[str, object]]", dict_obj.items()),
-                    key=lambda x: str(x[0]),
-                )
-                return {
-                    str(k): FlextUtilities.Cache.sort_dict_keys(v)
-                    for k, v in sorted_items
-                }
-            if isinstance(obj, list):
-                obj_list: list[object] = cast("list[object]", obj)
-                return [FlextUtilities.Cache.sort_dict_keys(item) for item in obj_list]
-            if isinstance(obj, tuple):
-                obj_tuple: tuple[object, ...] = cast("tuple[object, ...]", obj)
-                return tuple(
-                    FlextUtilities.Cache.sort_dict_keys(item) for item in obj_tuple
-                )
-            return obj
-
-        @staticmethod
-        def initialize(obj: FlextTypes.CachedObjectType, field_name: str) -> None:
-            """Initialize validation for object.
-
-            Simplified implementation that directly sets the validation flag.
-
-            Args:
-                obj: Object to set validation on (must support attribute assignment)
-                field_name: Name of the field to set validation flag
-
-            Note:
-                The object must support attribute assignment. If setattr() fails,
-                it indicates a programming error (e.g., using a frozen dataclass,
-                or an object with __slots__ that doesn't include the field).
-
-            """
-            setattr(obj, field_name, True)
-
-        @staticmethod
-        def validate_required_string(
-            value: str | None,
-            context: str = "Field",
-        ) -> FlextResult[str]:
-            """Validate that a string is not None, empty, or whitespace-only.
-
-            This is the most commonly repeated validation pattern across flext-ldap,
-            flext-ldif, flext-meltano, and other projects. Consolidation eliminates
-            300+ LOC of duplication.
-
-            Args:
-                value: The string to validate (may be None or contain whitespace)
-                context: Context for error message (e.g., "Password", "DN", "Username")
-
-            Returns:
-                FlextResult[str]: Success with stripped value, or failure with error
-
-            """
-            if value is None or not value.strip():
-                return FlextResult[str].fail(f"{context} cannot be empty")
-            return FlextResult[str].ok(value.strip())
-
-        @staticmethod
-        def validate_choice(
-            value: str,
-            valid_choices: set[str],
-            context: str = "Value",
-            *,
-            case_sensitive: bool = False,
-        ) -> FlextResult[str]:
-            """Validate value is in set of valid choices (enum validation).
-
-            Common pattern in flext-ldap (scope, operation), flext-meltano (plugin type),
-            and other projects. Consolidation provides consistent error messages.
-
-            Args:
-                value: The value to validate against choices
-                valid_choices: Set of valid string choices
-                context: Context for error message (e.g., "LDAP scope", "Operation")
-                case_sensitive: Whether to perform case-sensitive comparison
-
-            Returns:
-                FlextResult[str]: Success with value (original case), or failure
-
-            """
-            # Prepare values for comparison
-            check_value = value if case_sensitive else value.lower()
-            check_choices = (
-                valid_choices if case_sensitive else {c.lower() for c in valid_choices}
-            )
-
-            # Validate
-            if check_value not in check_choices:
-                choices_str = ", ".join(sorted(valid_choices))
-                return FlextResult[str].fail(
-                    f"Invalid {context}: {value}. Must be one of {choices_str}"
-                )
-
-            return FlextResult[str].ok(value)
-
-        @staticmethod
-        def validate_length(
-            value: str,
-            min_length: int | None = None,
-            max_length: int | None = None,
-            context: str = "Value",
-        ) -> FlextResult[str]:
-            """Validate string length within bounds.
-
-            This pattern is repeated 6+ times across flext-ldap (passwords, DN, etc),
-            flext-ldif, flext-meltano, flext-target-ldif, and algar-oud-mig.
-            Consolidation ensures consistent boundary checking.
-
-            Args:
-                value: The string to validate
-                min_length: Minimum allowed length (inclusive), or None for no minimum
-                max_length: Maximum allowed length (inclusive), or None for no maximum
-                context: Context for error message (e.g., "Password", "DN component")
-
-            Returns:
-                FlextResult[str]: Success with value, or failure with clear bounds
-
-            """
-            if min_length is not None and len(value) < min_length:
-                return FlextResult[str].fail(
-                    f"{context} must be at least {min_length} characters"
-                )
-            if max_length is not None and len(value) > max_length:
-                return FlextResult[str].fail(
-                    f"{context} must be no more than {max_length} characters"
-                )
-            return FlextResult[str].ok(value)
-
-        @staticmethod
-        def validate_pattern(
-            value: str,
-            pattern: str,
-            context: str = "Value",
-        ) -> FlextResult[str]:
-            r"""Validate value matches regex pattern.
-
-            This pattern is repeated 5+ times across flext-ldap (DN, filter, attribute),
-            flext-ldif (RFC compliance), flext-target-ldif, and others.
-            Consolidation centralizes pattern definitions.
-
-            Args:
-                value: The string to validate
-                pattern: Regex pattern (as string, will be compiled internally)
-                context: Context for error message (e.g., "DN", "Attribute name")
-
-            Returns:
-                FlextResult[str]: Success with value, or failure with pattern context
-
-            """
-            if not re.match(pattern, value):
-                return FlextResult[str].fail(f"{context} format is invalid: {value}")
-            return FlextResult[str].ok(value)
-
-        @staticmethod
-        def validate_uri(
-            uri: str | None,
-            allowed_schemes: list[str] | None = None,
-            context: str = "URI",
-        ) -> FlextResult[str]:
-            """Validate URI format and optionally check scheme.
-
-            Common in flext-ldap (server_uri validation), flext-meltano, and other
-            projects that need to validate connection strings.
-
-            Args:
-                uri: The URI string to validate (may be None)
-                allowed_schemes: List of allowed URI schemes (e.g., ["ldap", "ldaps"])
-                               If None, any scheme is allowed
-                context: Context for error message (e.g., "LDAP server URI")
-
-            Returns:
-                FlextResult[str]: Success with stripped URI, or failure
-
-            """
-            # Validate non-empty
-            if not uri or not uri.strip():
-                return FlextResult[str].fail(f"{context} cannot be empty")
-
-            uri_stripped = uri.strip()
-
-            # Validate scheme if specified
-            if allowed_schemes and not any(
-                uri_stripped.startswith(f"{scheme}://") for scheme in allowed_schemes
-            ):
-                schemes_str = ", ".join(allowed_schemes)
-                return FlextResult[str].fail(
-                    f"{context} must start with one of {schemes_str}"
-                )
-
-            return FlextResult[str].ok(uri_stripped)
-
-        @staticmethod
-        def validate_port_number(
-            port: int | None,
-            context: str = "Port",
-        ) -> FlextResult[int]:
-            """Validate port number is in valid range (1-65535).
-
-            Common pattern in flext-ldap, flext-meltano, and other projects that
-            manage server connections.
-
-            Args:
-                port: The port number to validate (may be None)
-                context: Context for error message (e.g., "LDAP port")
-
-            Returns:
-                FlextResult[int]: Success with port number, or failure
-
-            """
-            if port is None:
-                return FlextResult[int].fail(f"{context} cannot be None")
-
-            if not (MIN_PORT_NUMBER <= port <= MAX_PORT_NUMBER):
-                return FlextResult[int].fail(
-                    f"{context} must be between {MIN_PORT_NUMBER} and {MAX_PORT_NUMBER}, got {port}"
-                )
-
-            return FlextResult[int].ok(port)
-
-        @staticmethod
-        def validate_non_negative(
-            value: int | None,
-            context: str = "Value",
-        ) -> FlextResult[int]:
-            """Validate integer is non-negative (>= 0).
-
-            Common pattern for timeout_seconds, retry_count, size_limit, and other
-            configuration values that must be non-negative.
-
-            Args:
-                value: The integer to validate (may be None)
-                context: Context for error message (e.g., "Timeout seconds")
-
-            Returns:
-                FlextResult[int]: Success with value, or failure
-
-            """
-            if value is None:
-                return FlextResult[int].fail(f"{context} cannot be None")
-
-            if value < 0:
-                return FlextResult[int].fail(
-                    f"{context} must be non-negative, got {value}"
-                )
-
-            return FlextResult[int].ok(value)
-
-        @staticmethod
-        def validate_positive(
-            value: int | None,
-            context: str = "Value",
-        ) -> FlextResult[int]:
-            """Validate integer is positive (> 0).
-
-            Useful for retry_count, max_retries, and other values requiring at least 1.
-
-            Args:
-                value: The integer to validate (may be None)
-                context: Context for error message (e.g., "Max retries")
-
-            Returns:
-                FlextResult[int]: Success with value, or failure
-
-            """
-            if value is None:
-                return FlextResult[int].fail(f"{context} cannot be None")
-
-            if value <= 0:
-                return FlextResult[int].fail(f"{context} must be positive, got {value}")
-
-            return FlextResult[int].ok(value)
-
-        @staticmethod
-        def validate_range(
-            value: int,
-            min_value: int | None = None,
-            max_value: int | None = None,
-            context: str = "Value",
-        ) -> FlextResult[int]:
-            """Validate integer is within specified range.
-
-            General-purpose range validation for any integer field.
-
-            Args:
-                value: The integer to validate
-                min_value: Minimum allowed value (inclusive), or None for no minimum
-                max_value: Maximum allowed value (inclusive), or None for no maximum
-                context: Context for error message
-
-            Returns:
-                FlextResult[int]: Success with value, or failure
-
-            """
-            if min_value is not None and value < min_value:
-                return FlextResult[int].fail(
-                    f"{context} must be at least {min_value}, got {value}"
-                )
-            if max_value is not None and value > max_value:
-                return FlextResult[int].fail(
-                    f"{context} must be at most {max_value}, got {value}"
-                )
-            return FlextResult[int].ok(value)
-
-    class TypeGuards:
-        """Type guard utilities for runtime type checking."""
-
-        @staticmethod
-        def is_string_non_empty(value: object) -> bool:
-            """Check if value is a non-empty string."""
-            return isinstance(value, str) and bool(value.strip())
-
-        @staticmethod
-        def is_dict_non_empty(value: object) -> bool:
-            """Check if value is a non-empty dictionary."""
-            return isinstance(value, dict) and bool(value)
-
-        @staticmethod
-        def is_list_non_empty(value: object) -> bool:
-            """Check if value is a non-empty list."""
-            return isinstance(value, list) and bool(value)
-
-    class Generators:
-        """ID and data generation utilities."""
-
-        @staticmethod
-        def generate_id() -> str:
-            """Generate a unique ID using UUID4."""
-            return str(uuid.uuid4())
-
-        @staticmethod
-        def generate_uuid() -> str:
-            """Generate a UUID string."""
-            return str(uuid.uuid4())
-
-        @staticmethod
-        def generate_timestamp() -> str:
-            """Generate ISO format timestamp without microseconds."""
-            return datetime.now(UTC).replace(microsecond=0).isoformat()
-
-        @staticmethod
-        def generate_iso_timestamp() -> str:
-            """Generate ISO format timestamp without microseconds."""
-            return datetime.now(UTC).replace(microsecond=0).isoformat()
-
-        @staticmethod
-        def generate_correlation_id() -> str:
-            """Generate a correlation ID for tracking."""
-            return f"corr_{str(uuid.uuid4())[: FlextConstants.Utilities.SHORT_UUID_LENGTH]}"
-
-        @staticmethod
-        def generate_short_id(length: int = 8) -> str:
-            """Generate a short random ID."""
-            alphabet = string.ascii_letters + string.digits
-            return "".join(secrets.choice(alphabet) for _ in range(length))
-
-        @staticmethod
-        def generate_entity_id() -> str:
-            """Generate a unique entity ID for domain entities.
-
-            Returns:
-                A unique entity identifier suitable for domain entities
-
-            """
-            return str(uuid.uuid4())
-
-        @staticmethod
-        def create_module_utilities(module_name: str) -> FlextResult[type]:
-            """Create utilities for a specific module.
-
-            Args:
-                module_name: Name of the module to create utilities for
-
-            Returns:
-                FlextResult containing module utilities type or error
-
-            """
-            if not module_name:
-                return FlextResult[type].fail(
-                    "Module name must be a non-empty string",
-                )
-
-            # For now, return a simple utilities object
-            # This can be expanded with actual module-specific functionality
-            utilities = type(
-                f"{module_name}_utilities",
-                (),
-                {
-                    "module_name": module_name,
-                    "logger": lambda: f"Logger for {module_name}",
-                    "config": lambda: f"Config for {module_name}",
-                },
-            )()
-
-            return FlextResult[type].ok(type(utilities))
-
-        @staticmethod
-        def generate_correlation_id_with_context(context: str) -> str:
-            """Generate a correlation ID with context prefix."""
-            return f"{context}_{str(uuid.uuid4())[: FlextConstants.Utilities.SHORT_UUID_LENGTH]}"
-
-        @staticmethod
-        def generate_batch_id(batch_size: int) -> str:
-            """Generate a batch ID with size information."""
-            return f"batch_{batch_size}_{str(uuid.uuid4())[: FlextConstants.Utilities.SHORT_UUID_LENGTH]}"
-
-        @staticmethod
-        def generate_transaction_id() -> str:
-            """Generate a transaction ID for distributed transactions."""
-            return (
-                f"txn_{str(uuid.uuid4())[: FlextConstants.Utilities.LONG_UUID_LENGTH]}"
-            )
-
-        @staticmethod
-        def generate_saga_id() -> str:
-            """Generate a saga ID for distributed transaction patterns."""
-            return (
-                f"saga_{str(uuid.uuid4())[: FlextConstants.Utilities.LONG_UUID_LENGTH]}"
-            )
-
-        @staticmethod
-        def generate_event_id() -> str:
-            """Generate an event ID for domain events."""
-            return (
-                f"evt_{str(uuid.uuid4())[: FlextConstants.Utilities.LONG_UUID_LENGTH]}"
-            )
-
-        @staticmethod
-        def generate_command_id() -> str:
-            """Generate a command ID for CQRS patterns."""
-            return (
-                f"cmd_{str(uuid.uuid4())[: FlextConstants.Utilities.LONG_UUID_LENGTH]}"
-            )
-
-        @staticmethod
-        def generate_query_id() -> str:
-            """Generate a query ID for CQRS patterns."""
-            return (
-                f"qry_{str(uuid.uuid4())[: FlextConstants.Utilities.LONG_UUID_LENGTH]}"
-            )
-
-        @staticmethod
-        def generate_aggregate_id(aggregate_type: str) -> str:
-            """Generate an aggregate ID with type prefix."""
-            return f"{aggregate_type}_{str(uuid.uuid4())[: FlextConstants.Utilities.LONG_UUID_LENGTH]}"
-
-        @staticmethod
-        def generate_entity_version() -> int:
-            """Generate an entity version number using FlextConstants.Context."""
-            return (
-                int(
-                    datetime.now(UTC).timestamp()
-                    * FlextConstants.Context.MILLISECONDS_PER_SECOND
-                )
-                % FlextConstants.Utilities.VERSION_MODULO
-            ) + 1
-
-        @staticmethod
-        def ensure_id(obj: FlextTypes.CachedObjectType) -> None:
-            """Ensure object has an ID using FlextUtilities and FlextConstants.
-
-            Args:
-                obj: Object to ensure ID for
-
-            """
-            if hasattr(obj, FlextConstants.Mixins.FIELD_ID):
-                id_value = getattr(obj, FlextConstants.Mixins.FIELD_ID, None)
-                if not id_value:
-                    new_id = FlextUtilities.Generators.generate_id()
-                    setattr(obj, FlextConstants.Mixins.FIELD_ID, new_id)
-
-    class Correlation:
-        """Distributed tracing and correlation ID management."""
-
-        @staticmethod
-        def generate_correlation_id() -> str:
-            """Generate a correlation ID for tracking."""
-            return FlextUtilities.Generators.generate_correlation_id()
-
-        @staticmethod
-        def generate_iso_timestamp() -> str:
-            """Generate ISO format timestamp."""
-            return FlextUtilities.Generators.generate_iso_timestamp()
-
-        @staticmethod
-        def generate_command_id() -> str:
-            """Generate a command ID for CQRS patterns."""
-            return FlextUtilities.Generators.generate_command_id()
-
-        @staticmethod
-        def generate_query_id() -> str:
-            """Generate a query ID for CQRS patterns."""
-            return FlextUtilities.Generators.generate_query_id()
-
-    class TextProcessor:
-        """Text processing utilities using railway composition."""
-
-        @staticmethod
-        def clean_text(text: str) -> FlextResult[str]:
-            """Clean text by removing extra whitespace and control characters."""
-            # Remove control characters except tab and newline
-            cleaned = re.sub(FlextConstants.Utilities.CONTROL_CHARS_PATTERN, "", text)
-            # Normalize whitespace
-            cleaned = re.sub(r"\s+", " ", cleaned).strip()
-
-            return FlextResult[str].ok(cleaned)
-
-        @staticmethod
-        def truncate_text(
-            text: str,
-            max_length: int = FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
-            suffix: str = "...",
-        ) -> FlextResult[str]:
-            """Truncate text to maximum length with suffix."""
-            if len(text) <= max_length:
-                return FlextResult[str].ok(text)
-
-            truncated = text[: max_length - len(suffix)] + suffix
-            return FlextResult[str].ok(truncated)
-
-        @staticmethod
-        def safe_string(
-            text: str,
-            default: str = FlextConstants.Performance.DEFAULT_EMPTY_STRING,
-        ) -> str:
-            """Convert text to safe string, handling None and empty values.
-
-            Args:
-                text: Text to make safe
-                default: Default value if text is None or empty
-
-            Returns:
-                Safe string value
-
-            """
-            if not text:
-                return default
-            return text.strip()
-
-    class Reliability:
-        """Reliability patterns for resilient operations."""
-
-        @staticmethod
-        def with_timeout[TTimeout](
-            operation: Callable[[], FlextResult[TTimeout]],
-            timeout_seconds: float,
-        ) -> FlextResult[TTimeout]:
-            """Execute operation with timeout using railway patterns."""
-            if timeout_seconds <= FlextConstants.INITIAL_TIME:
-                return FlextResult[TTimeout].fail("Timeout must be positive")
-
-            # Use proper typing for containers
-            result_container: list[FlextResult[TTimeout] | None] = [None]
-            exception_container: list[Exception | None] = [None]
-
-            def run_operation() -> None:
-                try:
-                    result_container[0] = operation()
-                except (
-                    AttributeError,
-                    TypeError,
-                    ValueError,
-                    RuntimeError,
-                    KeyError,
-                ) as e:
-                    exception_container[0] = e
-
-            # Copy current context to the new thread
-            context = contextvars.copy_context()
-            thread = threading.Thread(target=context.run, args=(run_operation,))
-            thread.daemon = True
-            thread.start()
-            thread.join(timeout_seconds)
-
-            if thread.is_alive():
-                # Thread is still running, timeout occurred
-                return FlextResult[TTimeout].fail(
-                    f"Operation timed out after {timeout_seconds} seconds",
-                )
-
-            if exception_container[0]:
-                return FlextResult[TTimeout].fail(
-                    f"Operation failed with exception: {exception_container[0]}",
-                )
-
-            if result_container[0] is None:
-                return FlextResult[TTimeout].fail(
-                    "Operation completed but returned no result",
-                )
-
-            return result_container[0]
-
-        @staticmethod
-        def retry[TResult](
-            operation: Callable[[], FlextResult[TResult]],
-            max_attempts: int | None = None,
-            delay_seconds: float | None = None,
-            backoff_multiplier: float | None = None,
-        ) -> FlextResult[TResult]:
-            """Execute operation with retry logic using railway patterns."""
-            max_attempts = max_attempts or FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
-            delay_seconds = (
-                delay_seconds or FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS
-            )
-            backoff_multiplier = (
-                backoff_multiplier or FlextConstants.Reliability.RETRY_BACKOFF_BASE
-            )
-
-            if max_attempts < FlextConstants.Reliability.RETRY_COUNT_MIN:
-                return FlextResult[TResult].fail(
-                    f"Max attempts must be at least {FlextConstants.Reliability.RETRY_COUNT_MIN}"
-                )
-
-            last_error: str | None = None
-
-            for attempt in range(max_attempts):
-                try:
-                    result = operation()
-                    if result.is_success:
-                        return result
-
-                    last_error = result.error or "Unknown error"
-
-                    # Don't delay on the last attempt
-                    if attempt == max_attempts - 1:
-                        break
-
-                    # Calculate delay with exponential backoff
-                    current_delay = delay_seconds * (backoff_multiplier**attempt)
-                    current_delay = min(
-                        current_delay,
-                        FlextConstants.Reliability.RETRY_BACKOFF_MAX,
-                    )
-
-                    # Sleep before retry
-                    time.sleep(current_delay)
-
-                except (
-                    AttributeError,
-                    TypeError,
-                    ValueError,
-                    RuntimeError,
-                    KeyError,
-                ) as e:
-                    last_error = str(e)
-
-                    # Don't delay on the last attempt
-                    if attempt == max_attempts - 1:
-                        break
-
-                    # Calculate delay with exponential backoff
-                    current_delay = delay_seconds * (backoff_multiplier**attempt)
-                    current_delay = min(
-                        current_delay,
-                        FlextConstants.Reliability.RETRY_BACKOFF_MAX,
-                    )
-
-                    # Sleep before retry
-                    time.sleep(current_delay)
-
-            return FlextResult[TResult].fail(
-                f"Operation failed after {max_attempts} attempts: {last_error}"
-            )
-
-    class TypeChecker:
-        """Handler type checking utilities for FlextHandlers complexity reduction.
-
-        Extracts type introspection and compatibility logic from FlextHandlers
-        to simplify handler initialization and provide reusable type checking.
-        """
-
-        @classmethod
-        def compute_accepted_message_types(
-            cls,
-            handler_class: type,
-        ) -> tuple[FlextTypes.MessageTypeSpecifier, ...]:
-            """Compute message types accepted by a handler using cached introspection.
-
-            Args:
-                handler_class: Handler class to analyze
-
-            Returns:
-                Tuple of accepted message types
-
-            """
-            message_types: list[FlextTypes.MessageTypeSpecifier] = []
-            generic_types = cls._extract_generic_message_types(handler_class)
-            # Extend with extracted generic types
-            message_types.extend(generic_types)
-
-            if not message_types:
-                explicit_type: FlextTypes.MessageTypeSpecifier | None = (
-                    cls._extract_message_type_from_handle(handler_class)
-                )
-                if explicit_type is not None:
-                    message_types.append(explicit_type)
-
-            return tuple(message_types)
-
-        @classmethod
-        def _extract_generic_message_types(
-            cls, handler_class: type
-        ) -> list[FlextTypes.MessageTypeSpecifier]:
-            """Extract message types from generic base annotations.
-
-            Args:
-                handler_class: Handler class to analyze
-
-            Returns:
-                List of message types from generic annotations
-
-            """
-            message_types: list[FlextTypes.MessageTypeSpecifier] = []
-            for base in getattr(handler_class, "__orig_bases__", ()) or ():
-                # Layer 0.5: Use FlextRuntime for type introspection
-                origin = get_origin(base)
-                # Check by name to avoid circular import
-                if origin and origin.__name__ == "FlextHandlers":
-                    # Use FlextRuntime.extract_generic_args() from Layer 0.5
-                    args = FlextRuntime.extract_generic_args(base)
-                    # Accept all type forms: plain types, generic aliases (e.g., dict[str, object]),
-                    # and string type references. The _evaluate_type_compatibility method
-                    # handles all these forms correctly.
-                    if args and args[0] is not None:
-                        message_types.append(args[0])
-            return message_types
-
-        @classmethod
-        def _extract_message_type_from_handle(
-            cls,
-            handler_class: type,
-        ) -> FlextTypes.MessageTypeSpecifier | None:
-            """Extract message type from handle method annotations when generics are absent.
-
-            Args:
-                handler_class: Handler class to analyze
-
-            Returns:
-                Message type from handle method or None
-
-            """
-            handle_method = getattr(handler_class, "handle", None)
-            if handle_method is None:
-                return None
-
-            try:
-                signature = inspect.signature(handle_method)
-            except (TypeError, ValueError):
-                return None
-
-            try:
-                type_hints = get_type_hints(
-                    handle_method,
-                    globalns=getattr(handle_method, "__globals__", {}),
-                    localns=dict(vars(handler_class)),
-                )
-            except (NameError, AttributeError, TypeError):
-                type_hints = {}
-
-            for name, parameter in signature.parameters.items():
-                if name == "self":
-                    continue
-
-                if name in type_hints:
-                    # Return the type hint directly (plain types, generic aliases, etc.)
-                    hint: object = type_hints[name]
-                    if hint is not None:
-                        return hint
-                    return None
-
-                annotation = parameter.annotation
-                if annotation is not inspect.Signature.empty:
-                    # Accept all type forms - compatibility check happens later
-                    # Cast to object since annotation could be Any from inspect
-                    return cast("object", annotation)
-
-                break
-
-            return None
-
-        @classmethod
-        def can_handle_message_type(
-            cls,
-            accepted_types: tuple[FlextTypes.MessageTypeSpecifier, ...],
-            message_type: FlextTypes.MessageTypeSpecifier,
-        ) -> bool:
-            """Check if handler can process this message type.
-
-            Args:
-                accepted_types: Types accepted by handler
-                message_type: Type to check
-
-            Returns:
-                True if handler can process this message type
-
-            """
-            if not accepted_types:
-                return False
-
-            for expected_type in accepted_types:
-                if cls._evaluate_type_compatibility(expected_type, message_type):
-                    return True
-            return False
-
-        @classmethod
-        def _evaluate_type_compatibility(
-            cls,
-            expected_type: FlextTypes.TypeOriginSpecifier,
-            message_type: FlextTypes.MessageTypeSpecifier,
-        ) -> bool:
-            """Evaluate compatibility between expected and actual message types.
-
-            Args:
-                expected_type: Expected message type
-                message_type: Actual message type
-
-            Returns:
-                True if types are compatible
-
-            """
-            # object type should be compatible with everything
-            if expected_type is object:
-                return True
-
-            # object type should be compatible with everything
-            if (
-                hasattr(expected_type, "__name__")
-                and getattr(expected_type, "__name__", "") == "object"
-            ):
-                return True
-
-            origin_type = get_origin(expected_type) or expected_type
-            message_origin = get_origin(message_type) or message_type
-
-            # Handle dict/dict[str, object] compatibility
-            # If expected is dict or dict[str, object], accept dict instances
-            if origin_type is dict and (
-                message_origin is dict
-                or (isinstance(message_type, type) and issubclass(message_type, dict))
-            ):
-                # Expected type has dict origin (like dict[str, object] or dict)
-                return True
-
-            # If message is dict or dict[str, object], and expected is also dict-like
-            if (
-                isinstance(message_type, type)
-                and issubclass(message_type, dict)
-                and (
-                    origin_type is dict
-                    or (
-                        isinstance(expected_type, type)
-                        and issubclass(expected_type, dict)
-                    )
-                )
-            ):
-                return True
-
-            if isinstance(message_type, type) or hasattr(message_type, "__origin__"):
-                return cls._handle_type_or_origin_check(
-                    expected_type,
-                    message_type,
-                    origin_type,
-                    message_origin,
-                )
-            return cls._handle_instance_check(message_type, origin_type)
-
-        @classmethod
-        def _handle_type_or_origin_check(
-            cls,
-            expected_type: FlextTypes.TypeOriginSpecifier,
-            message_type: FlextTypes.TypeOriginSpecifier,
-            origin_type: FlextTypes.TypeOriginSpecifier,
-            message_origin: FlextTypes.TypeOriginSpecifier,
-        ) -> bool:
-            """Handle type checking for types or objects with __origin__.
-
-            Args:
-                expected_type: Expected type
-                message_type: Message type
-                origin_type: Origin of expected type
-                message_origin: Origin of message type
-
-            Returns:
-                True if types are compatible
-
-            """
-            try:
-                if hasattr(message_type, "__origin__"):
-                    return message_origin is origin_type
-                if isinstance(message_type, type) and isinstance(origin_type, type):
-                    return issubclass(message_type, origin_type)
-                return message_type is expected_type
-            except TypeError:
-                return message_type is expected_type
-
-        @classmethod
-        def _handle_instance_check(
-            cls,
-            message_type: FlextTypes.TypeOriginSpecifier,
-            origin_type: FlextTypes.TypeOriginSpecifier,
-        ) -> bool:
-            """Handle instance checking for non-type objects.
-
-            Args:
-                message_type: Message type to check
-                origin_type: Origin type to check against
-
-            Returns:
-                True if instance check passes
-
-            """
-            try:
-                if isinstance(origin_type, type):
-                    return isinstance(message_type, origin_type)
-                return True
-            except TypeError:
-                return True
-
-    class Metrics:
-        """Metrics logging utilities for CQRS handlers (merged from metrics.py).
-
-        Provides structured logging methods for handler lifecycle events and metrics
-        collection. Previously a standalone FlextMetrics class, now integrated into
-        FlextUtilities for better organization.
-
-        All methods are static and require a FlextLogger instance to be passed,
-        allowing flexible integration with different logging configurations.
-        """
-
-        @staticmethod
-        def log_handler_start(
-            logger: FlextLogger | None,
-            handler_mode: str,
-            message_type: str,
-            message_id: str,
-        ) -> None:
-            """Log handler start event with structured logging.
-
-            Args:
-                logger: FlextLogger instance, or None to skip logging
-                handler_mode: Handler mode (e.g., "command", "query")
-                message_type: Type of message being processed
-                message_id: Unique identifier for the message
-
-            """
-            if logger is not None:
-                logger.info(
-                    "starting_handler_pipeline",
-                    handler_mode=handler_mode,
-                    message_type=message_type,
-                    message_id=message_id,
-                )
-
-        @staticmethod
-        def log_handler_processing(
-            logger: FlextLogger | None,
-            handler_mode: str,
-            message_type: str,
-            message_id: str,
-        ) -> None:
-            """Log handler processing event with structured logging.
-
-            Args:
-                logger: FlextLogger instance, or None to skip logging
-                handler_mode: Handler mode (e.g., "command", "query")
-                message_type: Type of message being processed
-                message_id: Unique identifier for the message
-
-            """
-            if logger is not None:
-                logger.debug(
-                    "processing_message",
-                    handler_mode=handler_mode,
-                    message_type=message_type,
-                    message_id=message_id,
-                )
-
-        @staticmethod
-        def log_handler_completion(
-            logger: FlextLogger | None,
-            handler_mode: str,
-            message_type: str,
-            message_id: str,
-            execution_time_ms: float,
-            *,
-            success: bool,
-        ) -> None:
-            """Log handler completion event with structured logging.
-
-            Args:
-                logger: FlextLogger instance, or None to skip logging
-                handler_mode: Handler mode (e.g., "command", "query")
-                message_type: Type of message being processed
-                message_id: Unique identifier for the message
-                execution_time_ms: Execution time in milliseconds
-                success: Whether the handler succeeded
-
-            """
-            # Always use info() for both success and failure
-            if logger is not None:
-                logger.info(
-                    "handler_pipeline_completed",
-                    handler_mode=handler_mode,
-                    message_type=message_type,
-                    message_id=message_id,
-                    execution_time_ms=execution_time_ms,
-                    success=success,
-                )
-
-        @staticmethod
-        def log_handler_error(
-            logger: FlextLogger | None,
-            handler_mode: str,
-            message_type: str,
-            message_id: str,
-            execution_time_ms: float | None = None,
-            exception_type: str | None = None,
-            error_code: str | None = None,
-            correlation_id: str | None = None,
-        ) -> None:
-            """Log handler error event with structured logging.
-
-            Args:
-                logger: FlextLogger instance, or None to skip logging
-                handler_mode: Handler mode (e.g., "command", "query")
-                message_type: Type of message being processed
-                message_id: Unique identifier for the message
-                execution_time_ms: Execution time in milliseconds (optional)
-                exception_type: Type of exception that occurred (optional)
-                error_code: Error code from failed result (optional)
-                correlation_id: Correlation ID for tracing (optional)
-
-            """
-            if logger is not None:
-                kwargs: dict[str, object] = {
-                    "handler_mode": handler_mode,
-                    "message_type": message_type,
-                    "message_id": message_id,
-                }
-                if execution_time_ms is not None:
-                    kwargs["execution_time_ms"] = execution_time_ms
-                if exception_type is not None:
-                    kwargs["exception_type"] = exception_type
-                if error_code is not None:
-                    kwargs["error_code"] = error_code
-                if correlation_id is not None:
-                    kwargs["correlation_id"] = correlation_id
-
-                logger.error("handler_critical_failure", **kwargs)
-
-        @staticmethod
-        def log_mode_validation_error(
-            logger: FlextLogger | None,
-            error_message: str,
-            expected_mode: str | None = None,
-            actual_mode: str | None = None,
-        ) -> None:
-            """Log mode validation error with structured logging.
-
-            Args:
-                logger: FlextLogger instance, or None to skip logging
-                error_message: Description of the validation error
-                expected_mode: Expected handler mode (optional)
-                actual_mode: Actual handler mode provided (optional)
-
-            """
-            if logger is not None:
-                kwargs = {"error_message": error_message}
-                if expected_mode is not None:
-                    kwargs["expected_mode"] = expected_mode
-                if actual_mode is not None:
-                    kwargs["actual_mode"] = actual_mode
-
-                logger.error("invalid_handler_mode", **kwargs)
-
-        @staticmethod
-        def log_handler_cannot_handle(
-            logger: FlextLogger | None,
-            error_message: str,
-            handler_name: str | None = None,
-            message_type: str | None = None,
-        ) -> None:
-            """Log handler cannot handle message type with structured logging.
-
-            Args:
-                logger: FlextLogger instance, or None to skip logging
-                error_message: Description of the error
-                handler_name: Name of the handler (optional)
-                message_type: Type of message the handler cannot handle (optional)
-
-            """
-            if logger is not None:
-                kwargs = {"error_message": error_message}
-                if handler_name is not None:
-                    kwargs["handler_name"] = handler_name
-                if message_type is not None:
-                    kwargs["message_type"] = message_type
-
-                logger.error("handler_cannot_handle", **kwargs)
-
-    class Configuration:
-        """Configuration parameter access and manipulation utilities."""
-
-        @staticmethod
-        def get_parameter(obj: object, parameter: str) -> FlextTypes.ParameterValueType:
-            """Get parameter value from a Pydantic configuration object.
-
-            Simplified implementation using Pydantic's model_dump for safe access.
-
-            Args:
-                obj: The configuration object (must have model_dump method or dict-like access)
-                parameter: The parameter name to retrieve (must exist in model)
-
-            Returns:
-                The parameter value
-
-            Raises:
-                KeyError: If parameter is not defined in the model
-
-            """
-            # Check for dict-like access first
-            if isinstance(obj, dict):
-                if parameter not in obj:
-                    msg = f"Parameter '{parameter}' is not defined"
-                    raise FlextExceptions.NotFoundError(msg, resource_id=parameter)
-                return obj[parameter]
-
-            # Check for Pydantic model with model_dump method
-            if hasattr(obj, "model_dump") and callable(obj.model_dump):
-                try:
-                    # Cast to protocol with model_dump for type safety
-                    pydantic_obj = cast("FlextProtocols.HasModelDump", obj)
-                    model_data: dict[str, object] = pydantic_obj.model_dump()
-                    if parameter not in model_data:
-                        msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
-                        raise FlextExceptions.NotFoundError(msg, resource_id=parameter)
-                    return model_data[parameter]
-                except (
-                    AttributeError,
-                    TypeError,
-                    ValueError,
-                    RuntimeError,
-                    KeyError,
-                ) as e:
-                    # Log and continue to fallback - object may not be Pydantic model
-                    _logger.debug(f"Failed to get parameter from model_dump: {e}")
-
-            # Fallback for non-Pydantic objects - direct attribute access
-            if not hasattr(obj, parameter):
-                msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
-                raise FlextExceptions.NotFoundError(
-                    msg, resource_type=f"parameter '{parameter}'"
-                )
-            return getattr(obj, parameter)
-
-        @staticmethod
-        def set_parameter(
-            obj: object, parameter: str, value: FlextTypes.ParameterValueType
-        ) -> bool:
-            """Set parameter value on a Pydantic configuration object with validation.
-
-            Simplified implementation using direct attribute assignment with Pydantic validation.
-
-            Args:
-                obj: The configuration object (Pydantic BaseSettings instance)
-                parameter: The parameter name to set
-                value: The new value to set (will be validated by Pydantic)
-
-            Returns:
-                True if successful, False if validation failed or parameter doesn't exist
-
-            """
-            try:
-                # Check if parameter exists in model fields for Pydantic objects
-                if isinstance(obj, FlextProtocols.HasModelFields):
-                    # Access model_fields from class, not instance (Pydantic 2.11+ compatibility)
-                    model_fields = type(obj).model_fields
-                    if parameter not in model_fields:
-                        return False
-
-                # Use setattr which triggers Pydantic validation if applicable
-                setattr(obj, parameter, value)
-                return True
-
-            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-                # Validation error or attribute error returns False
-                return False
-
-        @staticmethod
-        def get_singleton(
-            singleton_class: type, parameter: str
-        ) -> FlextTypes.ParameterValueType:
-            """Get parameter from a singleton configuration instance.
-
-            Args:
-                singleton_class: The singleton class (e.g., FlextConfig)
-                parameter: The parameter name to retrieve
-
-            Returns:
-                The parameter value
-
-            Raises:
-                KeyError: If parameter is not defined in the model
-                AttributeError: If class doesn't have get_global_instance method
-
-            """
-            if hasattr(singleton_class, "get_global_instance"):
-                get_global_instance_method = singleton_class.get_global_instance
-                if callable(get_global_instance_method):
-                    instance = get_global_instance_method()
-                    if isinstance(instance, FlextProtocols.HasModelDump):
-                        return FlextUtilities.Configuration.get_parameter(
-                            instance, parameter
-                        )
-
-            msg = f"Class {singleton_class.__name__} does not have get_global_instance method"
-            raise FlextExceptions.ValidationError(msg)
-
-        @staticmethod
-        def set_singleton(
-            singleton_class: type,
-            parameter: str,
-            value: FlextTypes.ParameterValueType,
-        ) -> bool:
-            """Set parameter on a singleton configuration instance with validation.
-
-            Args:
-                singleton_class: The singleton class (e.g., FlextConfig)
-                parameter: The parameter name to set
-                value: The new value to set (will be validated by Pydantic)
-
-            Returns:
-                True if successful, False if validation failed or parameter doesn't exist
-
-            """
-            if hasattr(singleton_class, "get_global_instance"):
-                get_global_instance_method = singleton_class.get_global_instance
-                if callable(get_global_instance_method):
-                    instance = get_global_instance_method()
-                    if isinstance(instance, FlextProtocols.HasModelDump):
-                        return FlextUtilities.Configuration.set_parameter(
-                            instance, parameter, value
-                        )
-
-            return False
-
-    @staticmethod
     def run_external_command(
         cmd: list[str],
         *,
@@ -2059,12 +471,9 @@ class FlextUtilities:
         """
         try:
             # Validate command for security - ensure all parts are safe strings
-            # This prevents shell injection since we use list form, not shell=True
-            if not cmd or not all(part for part in cmd):
-                return FlextResult[_CompletedProcessWrapper].fail(
-                    "Command must be a non-empty list of strings",
-                    error_code="INVALID_COMMAND",
-                )
+            validation_result = FlextUtilities._validate_command_input(cmd)
+            if validation_result is not None:
+                return validation_result
 
             # Check if command executable exists using shutil.which
             if not shutil.which(cmd[0]):
@@ -2082,100 +491,23 @@ class FlextUtilities:
                 if cwd:
                     os.chdir(str(cwd))
 
-                # Prepare environment variables
-                exec_env = os.environ.copy()
-                if env:
-                    exec_env.update(env)
-
-                # S603: Command is validated above to ensure it's a safe list of strings
-                process = subprocess.Popen(  # nosec B603
+                # Execute with timeout handling
+                result = FlextUtilities._execute_with_timeout(
                     cmd,
-                    stdout=subprocess.PIPE if capture_output else None,
-                    stderr=subprocess.PIPE if capture_output else None,
-                    stdin=subprocess.PIPE if command_input is not None else None,
-                    env=exec_env,
-                    text=text if text is not None else True,
+                    capture_output,
+                    env,
+                    command_input,
+                    text,
+                    timeout,
                 )
 
-                # Containers for thread results
-                result_container: list[tuple[str, str] | None] = [None]
-                exception_container: list[Exception | str | None] = [None]
+                if result.is_failure:
+                    return result
 
-                def communicate_thread() -> None:
-                    """Execute communicate in a separate thread."""
-                    try:
-                        stdout, stderr = process.communicate(input=command_input)
-                        result_container[0] = (stdout or "", stderr or "")
-                    except (
-                        AttributeError,
-                        TypeError,
-                        ValueError,
-                        RuntimeError,
-                        KeyError,
-                    ) as e:
-                        exception_container[0] = e
-
-                # Execute communication in thread for timeout handling
-                thread = threading.Thread(target=communicate_thread)
-                thread.daemon = False
-                thread.start()
-
-                # Wait for process with timeout
-                thread.join(timeout=timeout)
-
-                # Check if thread is still running (timeout occurred)
-                if thread.is_alive():
-                    with suppress(OSError, ProcessLookupError):
-                        process.kill()  # Process may already be terminated
-
-                    return FlextResult[_CompletedProcessWrapper].fail(
-                        f"Command timed out after {timeout} seconds",
-                        error_code="COMMAND_TIMEOUT",
-                        error_data={"cmd": cmd, "timeout": timeout},
-                    )
-
-                # Check for exceptions from thread
-                if exception_container[0] is not None:
-                    exc = exception_container[0]
-                    return FlextResult[_CompletedProcessWrapper].fail(
-                        f"Command execution failed: {exc!s}",
-                        error_code="COMMAND_ERROR",
-                        error_data={"cmd": cmd, "error": str(exc)},
-                    )
-
-                # Get process results
-                if result_container[0] is None:
-                    return FlextResult[_CompletedProcessWrapper].fail(
-                        "Process completed but no output captured",
-                        error_code="COMMAND_ERROR",
-                        error_data={"cmd": cmd},
-                    )
-
-                stdout_text, stderr_text = result_container[0]
-                returncode = process.returncode if process.returncode is not None else 1
-
-                # Create wrapper result
-                wrapper = _CompletedProcessWrapper(
-                    returncode=returncode,
-                    stdout=stdout_text,
-                    stderr=stderr_text,
-                    args=cmd,
+                # Process command results
+                return FlextUtilities._process_command_result(
+                    result.unwrap(), cmd, check
                 )
-
-                # Check exit code if requested
-                if check and returncode != 0:
-                    return FlextResult[_CompletedProcessWrapper].fail(
-                        f"Command failed with exit code {returncode}",
-                        error_code="COMMAND_FAILED",
-                        error_data={
-                            "cmd": cmd,
-                            "returncode": returncode,
-                            "stdout": stdout_text,
-                            "stderr": stderr_text,
-                        },
-                    )
-
-                return FlextResult[_CompletedProcessWrapper].ok(wrapper)
 
             finally:
                 # Always restore original working directory
@@ -2194,17 +526,139 @@ class FlextUtilities:
                 error_data={"cmd": cmd, "error": str(e)},
             )
 
+    @staticmethod
+    def _validate_command_input(
+        cmd: list[str],
+    ) -> FlextResult[_CompletedProcessWrapper] | None:
+        """Validate command input. Returns error result if invalid, None if valid."""
+        if not cmd or not all(part for part in cmd):
+            return FlextResult[_CompletedProcessWrapper].fail(
+                "Command must be a non-empty list of strings",
+                error_code="INVALID_COMMAND",
+            )
+        return None
+
+    @staticmethod
+    def _execute_with_timeout(
+        cmd: list[str],
+        capture_output: bool,
+        env: dict[str, str] | None,
+        command_input: str | bytes | None,
+        text: bool | None,
+        timeout: float | None,
+    ) -> FlextResult[tuple[str, str] | None]:
+        """Execute subprocess with thread-based timeout handling."""
+        # Prepare environment variables
+        exec_env = os.environ.copy()
+        if env:
+            exec_env.update(env)
+
+        # S603: Command is validated above to ensure it's a safe list of strings
+        process = subprocess.Popen(  # nosec B603
+            cmd,
+            stdout=subprocess.PIPE if capture_output else None,
+            stderr=subprocess.PIPE if capture_output else None,
+            stdin=subprocess.PIPE if command_input is not None else None,
+            env=exec_env,
+            text=text if text is not None else True,
+        )
+
+        # Containers for thread results
+        result_container: list[tuple[str, str] | None] = [None]
+        exception_container: list[Exception | str | None] = [None]
+
+        def communicate_thread() -> None:
+            """Execute communicate in a separate thread."""
+            try:
+                stdout, stderr = process.communicate(input=command_input)
+                result_container[0] = (stdout or "", stderr or "")
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+            ) as e:
+                exception_container[0] = e
+
+        # Execute communication in thread for timeout handling
+        thread = threading.Thread(target=communicate_thread)
+        thread.daemon = False
+        thread.start()
+
+        # Wait for process with timeout
+        thread.join(timeout=timeout)
+
+        # Check if thread is still running (timeout occurred)
+        if thread.is_alive():
+            with suppress(OSError, ProcessLookupError):
+                process.kill()  # Process may already be terminated
+
+            return FlextResult[tuple[str, str] | None].fail(
+                f"Command timed out after {timeout} seconds",
+                error_code="COMMAND_TIMEOUT",
+                error_data={"cmd": cmd, "timeout": timeout},
+            )
+
+        # Check for exceptions from thread
+        if exception_container[0] is not None:
+            exc = exception_container[0]
+            return FlextResult[tuple[str, str] | None].fail(
+                f"Command execution failed: {exc!s}",
+                error_code="COMMAND_ERROR",
+                error_data={"cmd": cmd, "error": str(exc)},
+            )
+
+        # Get process results
+        if result_container[0] is None:
+            return FlextResult[tuple[str, str] | None].fail(
+                "Process completed but no output captured",
+                error_code="COMMAND_ERROR",
+                error_data={"cmd": cmd},
+            )
+
+        return FlextResult[tuple[str, str] | None].ok(result_container[0])
+
+    @staticmethod
+    def _process_command_result(
+        output: tuple[str, str],
+        cmd: list[str],
+        check: bool,
+    ) -> FlextResult[_CompletedProcessWrapper]:
+        """Process command output and create result wrapper."""
+        stdout_text, stderr_text = output
+        returncode = 0  # Success if we got here without timeout
+
+        # Create wrapper result
+        wrapper = _CompletedProcessWrapper(
+            returncode=returncode,
+            stdout=stdout_text,
+            stderr=stderr_text,
+            args=cmd,
+        )
+
+        # Check exit code if requested
+        if check and returncode != 0:
+            return FlextResult[_CompletedProcessWrapper].fail(
+                f"Command failed with exit code {returncode}",
+                error_code="COMMAND_FAILED",
+                error_data={
+                    "cmd": cmd,
+                    "returncode": returncode,
+                    "stdout": stdout_text,
+                    "stderr": stderr_text,
+                },
+            )
+
+        return FlextResult[_CompletedProcessWrapper].ok(wrapper)
+
 
 # Module-level aliases for backward compatibility
 # FlextValidations is now integrated into FlextUtilities.Validation
 FlextValidations = FlextUtilities.Validation
 
-# FlextMetrics is now integrated into FlextUtilities.Metrics
-FlextMetrics = FlextUtilities.Metrics
-
 
 __all__ = [
-    "FlextMetrics",
     "FlextUtilities",
     "FlextValidationPipeline",
     "FlextValidations",

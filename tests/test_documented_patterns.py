@@ -18,6 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import operator
 from typing import Any
 
 import pytest
@@ -604,13 +605,13 @@ class TestPattern10MultipleOperations:
         pipeline = (
             MultiOperationService(operation="double", value=5)
             .execute()
-            .map(lambda data: data["result"])
+            .map(operator.itemgetter("result"))
             .flat_map(
                 lambda result: MultiOperationService(
                     operation="square", value=result
                 ).execute()
             )
-            .map(lambda data: data["result"])
+            .map(operator.itemgetter("result"))
         )
 
         assert pipeline.is_success
