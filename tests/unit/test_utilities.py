@@ -203,26 +203,6 @@ class TestFlextUtilitiesComprehensive:
         # For now, we just verify the Validation class exists
         assert FlextUtilities.Validation is not None
 
-    def test_correlation_operations(self) -> None:
-        """Test correlation ID operations."""
-        # Test correlation ID generation
-        corr_id1 = FlextUtilities.Correlation.generate_correlation_id()
-        corr_id2 = FlextUtilities.Correlation.generate_correlation_id()
-        assert corr_id1 != corr_id2
-        assert len(corr_id1) > 0
-
-        # Test ISO timestamp generation
-        iso_ts = FlextUtilities.Correlation.generate_iso_timestamp()
-        assert "T" in iso_ts
-
-        # Test command ID generation
-        cmd_id = FlextUtilities.Correlation.generate_command_id()
-        assert len(cmd_id) > 0
-
-        # Test query ID generation
-        query_id = FlextUtilities.Correlation.generate_query_id()
-        assert len(query_id) > 0
-
     def test_reliability_operations(self) -> None:
         """Test reliability and retry operations."""
         # Test retry logic (if method exists)
@@ -785,12 +765,6 @@ class TestFlextUtilitiesEdgeCases:
         key = FlextUtilities.Cache.generate_cache_key("test", foo="bar", num=42)
         assert isinstance(key, str)
         assert len(key) > 0
-
-    def test_correlation_multiple_ids_unique(self) -> None:
-        """Test that correlation functions generate unique IDs."""
-        id1 = FlextUtilities.Correlation.generate_command_id()
-        id2 = FlextUtilities.Correlation.generate_command_id()
-        assert id1 != id2
 
     def test_text_processor_safe_string_with_none(self) -> None:
         """Test safe_string handles None gracefully."""

@@ -556,9 +556,7 @@ class TestV2EdgeCases:
             user_name: str
 
             def execute(self) -> FlextResult[User]:
-                return FlextResult.ok(
-                    User(unique_id=self.user_id, name=self.user_name)
-                )
+                return FlextResult.ok(User(unique_id=self.user_id, name=self.user_name))
 
         service = UserService(user_id="123", user_name="Test User")
         user = service.result

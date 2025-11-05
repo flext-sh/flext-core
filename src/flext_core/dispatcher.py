@@ -1478,77 +1478,103 @@ class FlextDispatcher(FlextMixins):
             return FlextResult[None].ok(None)
 
         # Sort middleware by order
-        def get_order(middleware_config: dict[str, object]) -> int:
-            order_value = middleware_config.get("order", 0)
-            if isinstance(order_value, str):
-                try:
-                    return int(order_value)
-                except ValueError:
-                    return FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
-            return (
-                int(order_value)
-                if isinstance(order_value, int)
-                else FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
-            )
-
-        sorted_middleware = sorted(self._middleware_configs, key=get_order)
+        sorted_middleware = sorted(
+            self._middleware_configs, key=self._get_middleware_order
+        )
 
         for middleware_config in sorted_middleware:
-            # Extract configuration values from dict
-            middleware_id_value = middleware_config.get("middleware_id")
-            middleware_type_value = middleware_config.get("middleware_type")
-            enabled_value = middleware_config.get("enabled", True)
+            result = self._process_middleware_instance(
+                command, handler, middleware_config
+            )
+            if result.is_failure:
+                return result
 
-            # Skip disabled middleware
-            if not enabled_value:
-                self.logger.debug(
-                    "Skipping disabled middleware",
-                    middleware_id=middleware_id_value or "",
-                    middleware_type=str(middleware_type_value),
-                )
-                continue
+        return FlextResult[None].ok(None)
 
-            # Get actual middleware instance
-            middleware_id_str = str(middleware_id_value) if middleware_id_value else ""
-            middleware = self._middleware_instances.get(middleware_id_str)
-            if middleware is None:
-                continue
+    @staticmethod
+    def _get_middleware_order(middleware_config: dict[str, object]) -> int:
+        """Extract middleware execution order from config."""
+        order_value = middleware_config.get("order", 0)
+        if isinstance(order_value, str):
+            try:
+                return int(order_value)
+            except ValueError:
+                return FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
+        return (
+            int(order_value)
+            if isinstance(order_value, int)
+            else FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
+        )
 
+    def _process_middleware_instance(
+        self, command: object, handler: object, middleware_config: dict[str, object]
+    ) -> FlextResult[None]:
+        """Process a single middleware instance."""
+        # Extract configuration values from dict
+        middleware_id_value = middleware_config.get("middleware_id")
+        middleware_type_value = middleware_config.get("middleware_type")
+        enabled_value = middleware_config.get("enabled", True)
+
+        # Skip disabled middleware
+        if not enabled_value:
             self.logger.debug(
-                "Applying middleware",
+                "Skipping disabled middleware",
                 middleware_id=middleware_id_value or "",
                 middleware_type=str(middleware_type_value),
-                order=middleware_config.get("order", 0),
             )
+            return FlextResult[None].ok(None)
 
-            process_method = getattr(middleware, "process", None)
-            if callable(process_method):
-                result = process_method(command, handler)
-                if isinstance(result, FlextResult):
-                    result_typed = cast("FlextResult[object]", result)
-                    if result_typed.is_failure:
-                        self.logger.info(
-                            "Middleware rejected command",
-                            middleware_type=str(middleware_type_value),
-                            error=result_typed.error or "Unknown error",
-                        )
-                        return FlextResult[None].fail(
-                            str(result_typed.error or "Middleware rejected command"),
-                        )
-            elif callable(middleware):
-                # Fallback for callable middleware objects (like test middleware)
-                result = middleware(command)
-                if isinstance(result, FlextResult):
-                    result_typed = cast("FlextResult[object]", result)
-                    if result_typed.is_failure:
-                        self.logger.info(
-                            "Middleware rejected command",
-                            middleware_type=str(middleware_type_value),
-                            error=result_typed.error or "Unknown error",
-                        )
-                        return FlextResult[None].fail(
-                            str(result_typed.error or "Middleware rejected command"),
-                        )
+        # Get actual middleware instance
+        middleware_id_str = str(middleware_id_value) if middleware_id_value else ""
+        middleware = self._middleware_instances.get(middleware_id_str)
+        if middleware is None:
+            return FlextResult[None].ok(None)
+
+        self.logger.debug(
+            "Applying middleware",
+            middleware_id=middleware_id_value or "",
+            middleware_type=str(middleware_type_value),
+            order=middleware_config.get("order", 0),
+        )
+
+        return self._invoke_middleware(
+            middleware, command, handler, middleware_type_value
+        )
+
+    def _invoke_middleware(
+        self,
+        middleware: object,
+        command: object,
+        handler: object,
+        middleware_type: object,
+    ) -> FlextResult[None]:
+        """Invoke middleware and handle result."""
+        process_method = getattr(middleware, "process", None)
+        if callable(process_method):
+            result = process_method(command, handler)
+            return self._handle_middleware_result(result, middleware_type)
+        if callable(middleware):
+            # Fallback for callable middleware objects (like test middleware)
+            result = middleware(command)
+            return self._handle_middleware_result(result, middleware_type)
+
+        return FlextResult[None].ok(None)
+
+    def _handle_middleware_result(
+        self, result: object, middleware_type: object
+    ) -> FlextResult[None]:
+        """Handle middleware execution result."""
+        if isinstance(result, FlextResult):
+            result_typed = cast("FlextResult[object]", result)
+            if result_typed.is_failure:
+                self.logger.info(
+                    "Middleware rejected command",
+                    middleware_type=str(middleware_type),
+                    error=result_typed.error or "Unknown error",
+                )
+                return FlextResult[None].fail(
+                    str(result_typed.error or "Middleware rejected command"),
+                )
 
         return FlextResult[None].ok(None)
 
@@ -2555,22 +2581,10 @@ class FlextDispatcher(FlextMixins):
         )
         self._propagate_context(f"dispatch_{dispatch_type}")
 
-        # Support both old API (message_type, data) and new API (message)
-        if isinstance(message_or_type, str):
-            if data is not None:
-                # Old API: dispatch(message_type, data)
-                if not data or data is None:
-                    return FlextResult[object].fail("Message is required")
-                message_type = message_or_type
-                message = data
-            else:
-                # Old API: dispatch(message_type) - no data provided
-                message_type = message_or_type
-                message = None
-        else:
-            # New API: dispatch(message)
-            message = message_or_type
-            message_type = type(message).__name__ if message else "unknown"
+        # Normalize message and get type
+        message, message_type = self._normalize_dispatch_message(
+            message_or_type, data
+        )
 
         # Check pre-dispatch conditions (circuit breaker + rate limiting)
         conditions_check = self._check_pre_dispatch_conditions(message_type)
@@ -2581,113 +2595,144 @@ class FlextDispatcher(FlextMixins):
                 error_data=conditions_check.error_data,
             )
 
-        # Create message object
-        if isinstance(message_or_type, str) and data is not None:
-
-            class MessageWrapper(FlextModels.Value):
-                """Temporary message wrapper using FlextModels.Value."""
-
-                data: object
-                message_type: str
-
-                def model_post_init(self, /, __context: object) -> None:
-                    """Post-initialization to set class name."""
-                    super().model_post_init(__context)
-                    self.__class__.__name__ = self.message_type
-
-                def __str__(self) -> str:
-                    """String representation."""
-                    return str(self.data)
-
-            message = MessageWrapper(data=data, message_type=message_or_type)
-            message_type = message_or_type
-        else:
-            message = message_or_type
-
-        # Create structured request
-        if metadata:
-            string_metadata: dict[str, object] = {
-                k: str(v) for k, v in metadata.items()
-            }
-            FlextModels.Metadata(attributes=string_metadata)
-
-        # Execute dispatch with retry logic via RetryPolicy manager
+        # Execute with retry logic
         max_retries = self._retry_policy.get_max_attempts()
-
-        # Generate operation ID for timeout context tracking and deadline propagation
         operation_id = f"{message_type}_{id(message)}_{int(time.time() * 1000000)}"
 
         for attempt in range(max_retries):
-            try:
-                # Get timeout from config
-                timeout_seconds = float(
-                    cast(
-                        "int | float",
-                        self.config.timeout_seconds,
-                    ),
-                )
-                if timeout_override:
-                    timeout_seconds = float(timeout_override)
-
-                # Track timeout context with deadline for upstream cancellation
-                self._track_timeout_context(operation_id, timeout_seconds)
-
-                # Execute with timeout using shared ThreadPoolExecutor when enabled
-                def execute_with_context() -> FlextResult[object]:
-                    if correlation_id is not None or timeout_override is not None:
-                        context_metadata: dict[str, object] = {}
-                        if timeout_override is not None:
-                            context_metadata["timeout_override"] = timeout_override
-
-                        with self._context_scope(context_metadata, correlation_id):
-                            return self.execute(message)
-                    else:
-                        return self.execute(message)
-
-                # Execute with timeout enforcement (handles executor/threading logic)
-                bus_result = self._execute_with_timeout(
-                    execute_with_context,
-                    timeout_seconds,
-                    timeout_override,
-                )
-
-                # Handle executor shutdown retry case
-                if bus_result.is_failure and "Executor was shutdown" in (
-                    bus_result.error or ""
-                ):
-                    continue
-
-                if bus_result.is_success:
-                    # Record success in circuit breaker
-                    self._circuit_breaker.record_success(message_type)
-                    # Clean up timeout context after successful operation
-                    self._cleanup_timeout_context(operation_id)
-                    return FlextResult[object].ok(bus_result.value)
-
-                # Track circuit breaker failure
-                self._circuit_breaker.record_failure(message_type)
-
-                # Check if should retry (encapsulates retry policy and delay logic)
-                if self._should_retry_on_error(attempt, bus_result.error):
-                    continue
-
-                # Clean up timeout context after failed operation
+            result = self._execute_dispatch_attempt(
+                message,
+                message_type,
+                metadata,
+                correlation_id,
+                timeout_override,
+                operation_id,
+                attempt,
+                max_retries,
+            )
+            if result.is_success or not self._should_retry_on_error(
+                attempt, result.error if result.is_failure else None
+            ):
                 self._cleanup_timeout_context(operation_id)
-                return FlextResult[object].fail(bus_result.error or "Dispatch failed")
-            except Exception as e:
-                # Track circuit breaker failure for exceptions
-                self._circuit_breaker.record_failure(message_type)
-
-                # Check if should retry (for exceptions, no error message check)
-                if self._should_retry_on_error(attempt):
-                    continue
-                # Clean up timeout context after exception
-                self._cleanup_timeout_context(operation_id)
-                return FlextResult[object].fail(f"Dispatch error: {e}")
+                return result
 
         # Record final failure and clean up timeout context
         self._cleanup_timeout_context(operation_id)
         return FlextResult[object].fail("Max retries exceeded")
+
+    def _normalize_dispatch_message(
+        self, message_or_type: object | str, data: object | None
+    ) -> tuple[object, str]:
+        """Normalize message and extract message type."""
+        # Support both old API (message_type, data) and new API (message)
+        if isinstance(message_or_type, str):
+            if data is not None:
+                # Old API: dispatch(message_type, data)
+                message = self._create_message_wrapper(data, message_or_type)
+                return message, message_or_type
+            else:
+                # Old API: dispatch(message_type) - no data provided
+                return None, message_or_type
+        else:
+            # New API: dispatch(message)
+            message_type = type(message_or_type).__name__ if message_or_type else "unknown"
+            return message_or_type, message_type
+
+    def _create_message_wrapper(
+        self, data: object, message_type: str
+    ) -> object:
+        """Create message wrapper for string message types."""
+
+        class MessageWrapper(FlextModels.Value):
+            """Temporary message wrapper using FlextModels.Value."""
+
+            data: object
+            message_type: str
+
+            def model_post_init(self, /, __context: object) -> None:
+                """Post-initialization to set class name."""
+                super().model_post_init(__context)
+                self.__class__.__name__ = self.message_type
+
+            def __str__(self) -> str:
+                """String representation."""
+                return str(self.data)
+
+        return MessageWrapper(data=data, message_type=message_type)
+
+    def _execute_dispatch_attempt(
+        self,
+        message: object,
+        message_type: str,
+        metadata: dict[str, object] | None,
+        correlation_id: str | None,
+        timeout_override: int | None,
+        operation_id: str,
+        attempt: int,
+        max_retries: int,
+    ) -> FlextResult[object]:
+        """Execute a single dispatch attempt with timeout."""
+        try:
+            # Create structured request
+            if metadata:
+                string_metadata: dict[str, object] = {
+                    k: str(v) for k, v in metadata.items()
+                }
+                FlextModels.Metadata(attributes=string_metadata)
+
+            # Get timeout from config
+            timeout_seconds = float(
+                cast(
+                    "int | float",
+                    self.config.timeout_seconds,
+                ),
+            )
+            if timeout_override:
+                timeout_seconds = float(timeout_override)
+
+            # Track timeout context with deadline for upstream cancellation
+            self._track_timeout_context(operation_id, timeout_seconds)
+
+            # Execute with timeout using shared ThreadPoolExecutor when enabled
+            def execute_with_context() -> FlextResult[object]:
+                if correlation_id is not None or timeout_override is not None:
+                    context_metadata: dict[str, object] = {}
+                    if timeout_override is not None:
+                        context_metadata["timeout_override"] = timeout_override
+
+                    with self._context_scope(context_metadata, correlation_id):
+                        return self.execute(message)
+                else:
+                    return self.execute(message)
+
+            # Execute with timeout enforcement (handles executor/threading logic)
+            bus_result = self._execute_with_timeout(
+                execute_with_context,
+                timeout_seconds,
+                timeout_override,
+            )
+
+            # Handle executor shutdown retry case
+            if bus_result.is_failure and "Executor was shutdown" in (
+                bus_result.error or ""
+            ):
+                return FlextResult[object].fail(
+                    bus_result.error or "Executor was shutdown"
+                )
+
+            if bus_result.is_success:
+                # Record success in circuit breaker
+                self._circuit_breaker.record_success(message_type)
+                return FlextResult[object].ok(bus_result.value)
+
+            # Track circuit breaker failure
+            self._circuit_breaker.record_failure(message_type)
+            return FlextResult[object].fail(bus_result.error or "Dispatch failed")
+
+        except Exception as e:
+            # Track circuit breaker failure for exceptions
+            self._circuit_breaker.record_failure(message_type)
+            return FlextResult[object].fail(f"Dispatch error: {e}")
 
     # ------------------------------------------------------------------
     # Private helper methods
@@ -2702,41 +2747,7 @@ class FlextDispatcher(FlextMixins):
         if metadata is None:
             return None
 
-        raw_metadata: Mapping[str, object] | None = None
-
-        if isinstance(metadata, FlextModels.Metadata):
-            attributes = metadata.attributes
-            # Python 3.13+ type narrowing: attributes is already Mapping[str, object]
-            if attributes and len(attributes) > 0:
-                raw_metadata = attributes
-            else:
-                try:
-                    dumped = metadata.model_dump()
-                except Exception:
-                    dumped = None
-                if isinstance(dumped, Mapping):
-                    attributes_section = dumped.get("attributes")
-                    if isinstance(attributes_section, Mapping) and attributes_section:
-                        raw_metadata = cast("Mapping[str, object]", attributes_section)
-                    else:
-                        raw_metadata = cast("Mapping[str, object]", dumped)
-        elif isinstance(metadata, Mapping):
-            # Python 3.13+ type narrowing: metadata is already Mapping[str, object]
-            raw_metadata = cast("Mapping[str, object]", metadata)
-        else:
-            attributes_value = getattr(metadata, "attributes", None)
-            if isinstance(attributes_value, Mapping) and attributes_value:
-                # Python 3.13+ type narrowing: attributes_value is already Mapping[str, object]
-                raw_metadata = cast("Mapping[str, object]", attributes_value)
-            else:
-                model_dump = getattr(metadata, "model_dump", None)
-                if callable(model_dump):
-                    try:
-                        dumped = model_dump()
-                    except Exception:
-                        dumped = None
-                    if isinstance(dumped, Mapping):
-                        raw_metadata = cast("Mapping[str, object]", dumped)
+        raw_metadata = self._extract_metadata_mapping(metadata)
 
         if raw_metadata is None:
             return None
@@ -2746,6 +2757,57 @@ class FlextDispatcher(FlextMixins):
         }
 
         return normalized
+
+    def _extract_metadata_mapping(
+        self, metadata: object
+    ) -> Mapping[str, object] | None:
+        """Extract metadata as Mapping from various types."""
+        if isinstance(metadata, FlextModels.Metadata):
+            return self._extract_from_flext_metadata(metadata)
+        if isinstance(metadata, Mapping):
+            return cast("Mapping[str, object]", metadata)
+        return self._extract_from_object_attributes(metadata)
+
+    def _extract_from_flext_metadata(
+        self, metadata: FlextModels.Metadata
+    ) -> Mapping[str, object] | None:
+        """Extract metadata mapping from FlextModels.Metadata."""
+        attributes = metadata.attributes
+        # Python 3.13+ type narrowing: attributes is already Mapping[str, object]
+        if attributes and len(attributes) > 0:
+            return attributes
+
+        try:
+            dumped = metadata.model_dump()
+        except Exception:
+            dumped = None
+
+        if isinstance(dumped, Mapping):
+            attributes_section = dumped.get("attributes")
+            if isinstance(attributes_section, Mapping) and attributes_section:
+                return cast("Mapping[str, object]", attributes_section)
+            return cast("Mapping[str, object]", dumped)
+
+        return None
+
+    def _extract_from_object_attributes(
+        self, metadata: object
+    ) -> Mapping[str, object] | None:
+        """Extract metadata mapping from object's attributes."""
+        attributes_value = getattr(metadata, "attributes", None)
+        if isinstance(attributes_value, Mapping) and attributes_value:
+            return cast("Mapping[str, object]", attributes_value)
+
+        model_dump = getattr(metadata, "model_dump", None)
+        if callable(model_dump):
+            try:
+                dumped = model_dump()
+            except Exception:
+                dumped = None
+            if isinstance(dumped, Mapping):
+                return cast("Mapping[str, object]", dumped)
+
+        return None
 
     @contextmanager
     def _context_scope(

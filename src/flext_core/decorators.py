@@ -646,7 +646,6 @@ class FlextDecorators:
 
         return decorator
 
-    @staticmethod
     def retry(
         max_attempts: int | None = None,
         delay_seconds: float | None = None,
@@ -704,104 +703,142 @@ class FlextDecorators:
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                # Get logger from self if available
-                args_tuple = cast("tuple[object, ...]", args)
-                first_arg = args_tuple[0] if args_tuple else None
-                if first_arg is not None and hasattr(first_arg, "logger"):
-                    potential_logger = first_arg.logger
-                    logger = (
-                        potential_logger
-                        if isinstance(potential_logger, FlextLogger)
-                        else FlextLogger(func.__module__)
-                    )
-                else:
-                    logger = FlextLogger(func.__module__)
-
-                last_exception: Exception | None = None
-                current_delay = delay
-
-                for attempt in range(1, attempts + 1):
-                    try:
-                        if attempt > 1:
-                            logger.info(
-                                "retry_attempt",
-                                extra={
-                                    "function": func.__name__,
-                                    "attempt": attempt,
-                                    "max_attempts": attempts,
-                                    "delay_seconds": current_delay,
-                                },
-                            )
-                            time.sleep(current_delay)
-
-                        return func(*args, **kwargs)
-
-                    except (
-                        AttributeError,
-                        TypeError,
-                        ValueError,
-                        RuntimeError,
-                        KeyError,
-                    ) as e:
-                        last_exception = e
-
-                        logger.warning(
-                            "operation_failed_retrying",
-                            extra={
-                                "function": func.__name__,
-                                "attempt": attempt,
-                                "max_attempts": attempts,
-                                "error": str(e),
-                                "error_type": type(e).__name__,
-                            },
-                        )
-
-                        # Calculate next delay based on strategy
-                        if strategy == "exponential":
-                            current_delay *= 2
-                        elif strategy == "linear":
-                            current_delay += delay
-                        # For unknown strategies, keep constant delay
-
-                        # If this was the last attempt, we'll raise after loop
-                        if attempt == attempts:
-                            break
-
-                # All retries exhausted
-                if last_exception:
-                    logger.error(
-                        "operation_failed_all_retries_exhausted",
-                        extra={
-                            "function": func.__name__,
-                            "attempts": attempts,
-                            "error": str(last_exception),
-                            "error_type": type(last_exception).__name__,
-                        },
-                    )
-                else:
-                    logger.error(
-                        "operation_failed_all_retries_exhausted",
-                        extra={
-                            "function": func.__name__,
-                            "attempts": attempts,
-                            "error": "Unknown error",
-                        },
-                    )
-
-                # Raise the last exception
-                if last_exception:
-                    raise last_exception
-
-                # Should never reach here, but type safety
-                msg = f"Operation {func.__name__} failed after {attempts} attempts"
-                raise FlextExceptions.TimeoutError(
-                    msg,
-                    error_code=error_code or "RETRY_EXHAUSTED",
+                logger = FlextDecorators._get_logger_for_retry(args, func)
+                last_exception = FlextDecorators._execute_retry_loop(
+                    func, args, kwargs, logger, attempts, delay, strategy
                 )
+                # This only returns if execute_retry_loop returns None (not used)
+                # Otherwise it raises an exception
+                FlextDecorators._handle_retry_exhaustion(
+                    last_exception, func, attempts, error_code, logger
+                )
+                # Unreachable, but needed for type checking
+                msg = f"Operation {func.__name__} failed"
+                raise FlextExceptions.TimeoutError(msg, error_code=error_code or "RETRY_EXHAUSTED")
 
             return wrapper
 
         return decorator
+
+    @staticmethod
+    def _get_logger_for_retry(
+        args: tuple[object, ...], func: Callable[..., object]
+    ) -> FlextLogger:
+        """Get logger from self if available, otherwise create new logger."""
+        args_tuple = cast("tuple[object, ...]", args)
+        first_arg = args_tuple[0] if args_tuple else None
+        if first_arg is not None and hasattr(first_arg, "logger"):
+            potential_logger = first_arg.logger
+            return (
+                potential_logger
+                if isinstance(potential_logger, FlextLogger)
+                else FlextLogger(func.__module__)
+            )
+        return FlextLogger(func.__module__)
+
+    @staticmethod
+    def _execute_retry_loop(
+        func: Callable[P, R],
+        args: tuple[object, ...],
+        kwargs: dict[str, object],
+        logger: FlextLogger,
+        attempts: int,
+        delay: float,
+        strategy: str,
+    ) -> Exception | None:
+        """Execute retry loop and return last exception."""
+        last_exception: Exception | None = None
+        current_delay = delay
+
+        for attempt in range(1, attempts + 1):
+            try:
+                if attempt > 1:
+                    logger.info(
+                        "retry_attempt",
+                        extra={
+                            "function": func.__name__,
+                            "attempt": attempt,
+                            "max_attempts": attempts,
+                            "delay_seconds": current_delay,
+                        },
+                    )
+                    time.sleep(current_delay)
+
+                return func(*args, **kwargs)
+
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+            ) as e:
+                last_exception = e
+
+                logger.warning(
+                    "operation_failed_retrying",
+                    extra={
+                        "function": func.__name__,
+                        "attempt": attempt,
+                        "max_attempts": attempts,
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                    },
+                )
+
+                # Calculate next delay based on strategy
+                if strategy == "exponential":
+                    current_delay *= 2
+                elif strategy == "linear":
+                    current_delay += delay
+                # For unknown strategies, keep constant delay
+
+                # If this was the last attempt, we'll raise after loop
+                if attempt == attempts:
+                    break
+
+        return last_exception
+
+    @staticmethod
+    def _handle_retry_exhaustion(
+        last_exception: Exception | None,
+        func: Callable[..., object],
+        attempts: int,
+        error_code: str | None,
+        logger: FlextLogger,
+    ) -> None:
+        """Handle retry exhaustion and raise appropriate exception."""
+        # All retries exhausted
+        if last_exception:
+            logger.error(
+                "operation_failed_all_retries_exhausted",
+                extra={
+                    "function": func.__name__,
+                    "attempts": attempts,
+                    "error": str(last_exception),
+                    "error_type": type(last_exception).__name__,
+                },
+            )
+        else:
+            logger.error(
+                "operation_failed_all_retries_exhausted",
+                extra={
+                    "function": func.__name__,
+                    "attempts": attempts,
+                    "error": "Unknown error",
+                },
+            )
+
+        # Raise the last exception
+        if last_exception:
+            raise last_exception
+
+        # Should never reach here, but type safety
+        msg = f"Operation {func.__name__} failed after {attempts} attempts"
+        raise FlextExceptions.TimeoutError(
+            msg,
+            error_code=error_code or "RETRY_EXHAUSTED",
+        )
 
     @staticmethod
     def timeout(

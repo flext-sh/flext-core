@@ -248,12 +248,6 @@ class TestEdgeCases:
         assert isinstance(ts, str)
         assert "T" in ts  # ISO format includes 'T' separator
 
-    def test_correlation_iso_timestamp(self) -> None:
-        """Test correlation ISO timestamp generation."""
-        ts = FlextUtilities.Correlation.generate_iso_timestamp()
-        assert isinstance(ts, str)
-        assert "T" in ts
-
     def test_sort_dict_keys_with_various_types(self) -> None:
         """Test dict key sorting with various value types."""
         data = {"z": 1, "a": "string", "m": [1, 2, 3], "b": {"nested": True}}

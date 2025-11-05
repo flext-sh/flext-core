@@ -6,7 +6,6 @@ import pytest
 
 from flext_core import FlextExceptions, FlextModels, FlextResult, FlextService
 
-
 # =========================================================================
 # Test Models
 # =========================================================================

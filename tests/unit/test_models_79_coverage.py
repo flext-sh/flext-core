@@ -94,7 +94,9 @@ class TestFlextModelsAggregateRoot:
             owner_name: str
             balance: Decimal
 
-        account = Account(unique_id="acc-1", owner_name="Alice", balance=Decimal("1000.00"))
+        account = Account(
+            unique_id="acc-1", owner_name="Alice", balance=Decimal("1000.00")
+        )
         assert account.unique_id == "acc-1"
         assert account.owner_name == "Alice"
         assert account.balance == Decimal("1000.00")

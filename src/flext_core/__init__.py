@@ -405,7 +405,6 @@ from flext_core.typings import (  # TypeVars; FlextTypes - domain-specific types
     W,
 )
 from flext_core.utilities import (
-    FlextMetrics,
     FlextUtilities,
     FlextValidationPipeline,
     FlextValidations,
@@ -429,7 +428,6 @@ __all__ = [
     "FlextExceptions",
     "FlextHandlers",
     "FlextLogger",
-    "FlextMetrics",
     "FlextMixins",
     "FlextModels",
     "FlextProtocols",

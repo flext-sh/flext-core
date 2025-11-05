@@ -661,9 +661,9 @@ __all__ = [
     "TestServiceInfo",
     "TestServiceInstantiation",
     "TestServiceRegistration",
-    "TestValidationMethods",
-    "TestV2PropertyCoverage",
     "TestV2AutoCoverage",
+    "TestV2PropertyCoverage",
+    "TestValidationMethods",
 ]
 
 

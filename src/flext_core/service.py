@@ -115,7 +115,8 @@ class FlextService[TDomainResult](
         >>>
         >>> # V1: Monadic composition
         >>> result = (
-        ...     UserService(user_id="123").execute()
+        ...     UserService(user_id="123")
+        ...     .execute()
         ...     .map(lambda u: u.name.upper())
         ...     .and_then(lambda name: save_user(name))
         ... )
@@ -220,6 +221,7 @@ class FlextService[TDomainResult](
             >>> class AutoService(FlextService[User]):
             ...     auto_execute = True
             ...     user_id: str
+            ...
             ...     def execute(self) -> FlextResult[User]:
             ...         return FlextResult.ok(User(id=self.user_id))
             >>>
@@ -298,7 +300,10 @@ class FlextService[TDomainResult](
                 continue
 
             # Only include typed parameters
-            if param.annotation != inspect.Parameter.empty and param.annotation is not object:
+            if (
+                param.annotation != inspect.Parameter.empty
+                and param.annotation is not object
+            ):
                 # Extract base type from Optional/Union
                 dep_type = param.annotation
                 origin = get_origin(dep_type)
@@ -502,7 +507,10 @@ class FlextService[TDomainResult](
             if deps:
                 # Factory with auto-DI
                 def factory() -> object:
-                    return cls(**cls._resolve_dependencies(deps, container, service_name))
+                    return cls(
+                        **cls._resolve_dependencies(deps, container, service_name)
+                    )
+
                 container.register_factory(service_name, factory)
             else:
                 # No deps - simple registration
@@ -718,7 +726,9 @@ class FlextService[TDomainResult](
         return cast("TDomainResult", result)
 
     def _retry_loop(
-        self, request: FlextModels.OperationExecutionRequest, retry_config: dict[str, object]
+        self,
+        request: FlextModels.OperationExecutionRequest,
+        retry_config: dict[str, object],
     ) -> FlextResult[TDomainResult]:
         """Execute operation with retry logic.
 
@@ -733,8 +743,12 @@ class FlextService[TDomainResult](
         # Extract and validate retry parameters
         try:
             max_attempts = int(cast("int", retry_config.get("max_attempts", 1) or 1))
-            initial_delay = float(cast("float", retry_config.get("initial_delay_seconds", 0.1) or 0.1))
-            max_delay = float(cast("float", retry_config.get("max_delay_seconds", 60.0) or 60.0))
+            initial_delay = float(
+                cast("float", retry_config.get("initial_delay_seconds", 0.1) or 0.1)
+            )
+            max_delay = float(
+                cast("float", retry_config.get("max_delay_seconds", 60.0) or 60.0)
+            )
             exponential_backoff = bool(retry_config.get("exponential_backoff"))
             retry_on_exceptions = cast(
                 "list[type[Exception]]",
@@ -745,7 +759,9 @@ class FlextService[TDomainResult](
             if "backoff_multiplier" in retry_config:
                 backoff_mult = float(cast("float", retry_config["backoff_multiplier"]))
                 if backoff_mult < 1.0:
-                    msg = "Invalid retry configuration: backoff_multiplier must be >= 1.0"
+                    msg = (
+                        "Invalid retry configuration: backoff_multiplier must be >= 1.0"
+                    )
                     return FlextResult.fail(
                         msg,
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -919,10 +935,14 @@ class FlextService[TDomainResult](
             return FlextResult[TDomainResult].fail(f"Condition evaluation failed: {e}")
 
         # Execute false action if condition not met
+        if (
+            not condition_met
+            and hasattr(request, "false_action")
+            and request.false_action is not None
+        ):
+            return self._execute_action(request.false_action, "false")
         if not condition_met:
-            if hasattr(request, "false_action") and request.false_action is not None:
-                return self._execute_action(request.false_action, "false")
-                return FlextResult[TDomainResult].fail("Condition not met")
+            return FlextResult[TDomainResult].fail("Condition not met")
 
         # Execute true action if condition met
         if hasattr(request, "true_action") and request.true_action is not None:

@@ -289,22 +289,6 @@ class TestExternalCommand:
         assert result.is_failure
 
 
-class TestCorrelation:
-    """Test FlextUtilities.Correlation namespace."""
-
-    def test_generate_correlation_id(self) -> None:
-        """Test correlation ID generation via Correlation namespace."""
-        corr_id = FlextUtilities.Correlation.generate_correlation_id()
-        assert isinstance(corr_id, str)
-        assert len(corr_id) > 0
-
-    def test_generate_iso_timestamp(self) -> None:
-        """Test ISO timestamp generation via Correlation namespace."""
-        ts = FlextUtilities.Correlation.generate_iso_timestamp()
-        assert isinstance(ts, str)
-        assert len(ts) > 0
-
-
 class TestValidationErrorHandling:
     """Test FlextUtilities.Validation error handling paths."""
 
