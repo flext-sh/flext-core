@@ -185,7 +185,7 @@ class FlextModelsEntity:
         @override
         def __eq__(self, other: object) -> bool:
             """Identity-based equality for entities."""
-            if not isinstance(other, FlextModelsEntity.Core):
+            if not isinstance(other, type(self)):
                 return False
             return self.unique_id == other.unique_id
 
