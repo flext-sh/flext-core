@@ -647,7 +647,7 @@ class FlextDecorators:
         return decorator
 
     def retry(
-        max_attempts: int | None = None,
+        self: int | None = None,
         delay_seconds: float | None = None,
         backoff_strategy: str | None = None,
         error_code: str | None = None,
@@ -692,7 +692,7 @@ class FlextDecorators:
 
         """
         # Use FlextConstants.Reliability for defaults
-        attempts = max_attempts or FlextConstants.Reliability.DEFAULT_MAX_RETRIES
+        attempts = self or FlextConstants.Reliability.DEFAULT_MAX_RETRIES
         delay = delay_seconds or float(
             FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS
         )
@@ -714,7 +714,9 @@ class FlextDecorators:
                 )
                 # Unreachable, but needed for type checking
                 msg = f"Operation {func.__name__} failed"
-                raise FlextExceptions.TimeoutError(msg, error_code=error_code or "RETRY_EXHAUSTED")
+                raise FlextExceptions.TimeoutError(
+                    msg, error_code=error_code or "RETRY_EXHAUSTED"
+                )
 
             return wrapper
 
