@@ -329,6 +329,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             cls._raise_invalid_message_type(
                 operation_name, context_operation, type(message).__name__
             )
+            return None
 
         @classmethod
         def _try_attrs_serialization(cls, message: object) -> dict[str, object] | None:
@@ -379,8 +380,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             elif isinstance(slots, (list, tuple)):
                 slot_names = tuple(cast("list[str] | tuple[str, ...]", slots))
             else:
+                msg = f"Invalid __slots__ type: {type(slots).__name__}"
                 raise FlextExceptions.TypeError(
-                    f"Invalid __slots__ type: {type(slots).__name__}",
+                    msg,
                     expected_type="str, list, or tuple",
                     actual_type=type(slots).__name__,
                     context=f"message_type: {type(message).__name__}, __slots__: {slots!r}",
@@ -401,8 +403,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             cls, operation: str, context: str, actual_type: str
         ) -> None:
             """Raise TypeError for invalid message type."""
+            msg = f"Invalid message type for {operation}: {actual_type}"
             raise FlextExceptions.TypeError(
-                f"Invalid message type for {operation}: {actual_type}",
+                msg,
                 expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
                 actual_type=actual_type,
                 context=f"operation: {context}, message_type: {actual_type}, validation_type: serializable_check",

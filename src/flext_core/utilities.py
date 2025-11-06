@@ -430,7 +430,7 @@ class FlextUtilities:
     DataMapper = FlextUtilitiesDataMapper
 
     def run_external_command(
-        cmd: list[str],
+        self: list[str],
         *,
         capture_output: bool = True,
         check: bool = True,
@@ -471,16 +471,16 @@ class FlextUtilities:
         """
         try:
             # Validate command for security - ensure all parts are safe strings
-            validation_result = FlextUtilities._validate_command_input(cmd)
+            validation_result = FlextUtilities._validate_command_input(self)
             if validation_result is not None:
                 return validation_result
 
             # Check if command executable exists using shutil.which
-            if not shutil.which(cmd[0]):
+            if not shutil.which(self[0]):
                 return FlextResult[_CompletedProcessWrapper].fail(
-                    f"Command not found: {cmd[0]}",
+                    f"Command not found: {self[0]}",
                     error_code="COMMAND_NOT_FOUND",
-                    error_data={"cmd": cmd, "executable": cmd[0]},
+                    error_data={"cmd": self, "executable": self[0]},
                 )
 
             # Store original working directory for restoration
@@ -493,7 +493,7 @@ class FlextUtilities:
 
                 # Execute with timeout handling
                 result = FlextUtilities._execute_with_timeout(
-                    cmd,
+                    self,
                     capture_output,
                     env,
                     command_input,
@@ -506,7 +506,7 @@ class FlextUtilities:
 
                 # Process command results
                 return FlextUtilities._process_command_result(
-                    result.unwrap(), cmd, check
+                    result.unwrap(), self, check
                 )
 
             finally:
@@ -515,15 +515,15 @@ class FlextUtilities:
 
         except FileNotFoundError:
             return FlextResult[_CompletedProcessWrapper].fail(
-                f"Command not found: {cmd[0]}",
+                f"Command not found: {self[0]}",
                 error_code="COMMAND_NOT_FOUND",
-                error_data={"cmd": cmd, "executable": cmd[0]},
+                error_data={"cmd": self, "executable": self[0]},
             )
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[_CompletedProcessWrapper].fail(
                 f"Unexpected error running command: {e!s}",
                 error_code="COMMAND_ERROR",
-                error_data={"cmd": cmd, "error": str(e)},
+                error_data={"cmd": self, "error": str(e)},
             )
 
     @staticmethod

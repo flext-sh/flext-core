@@ -2582,9 +2582,7 @@ class FlextDispatcher(FlextMixins):
         self._propagate_context(f"dispatch_{dispatch_type}")
 
         # Normalize message and get type
-        message, message_type = self._normalize_dispatch_message(
-            message_or_type, data
-        )
+        message, message_type = self._normalize_dispatch_message(message_or_type, data)
 
         # Check pre-dispatch conditions (circuit breaker + rate limiting)
         conditions_check = self._check_pre_dispatch_conditions(message_type)
@@ -2630,17 +2628,13 @@ class FlextDispatcher(FlextMixins):
                 # Old API: dispatch(message_type, data)
                 message = self._create_message_wrapper(data, message_or_type)
                 return message, message_or_type
-            else:
-                # Old API: dispatch(message_type) - no data provided
-                return None, message_or_type
-        else:
-            # New API: dispatch(message)
-            message_type = type(message_or_type).__name__ if message_or_type else "unknown"
-            return message_or_type, message_type
+            # Old API: dispatch(message_type) - no data provided
+            return None, message_or_type
+        # New API: dispatch(message)
+        message_type = type(message_or_type).__name__ if message_or_type else "unknown"
+        return message_or_type, message_type
 
-    def _create_message_wrapper(
-        self, data: object, message_type: str
-    ) -> object:
+    def _create_message_wrapper(self, data: object, message_type: str) -> object:
         """Create message wrapper for string message types."""
 
         class MessageWrapper(FlextModels.Value):
