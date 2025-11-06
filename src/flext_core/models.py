@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from typing import (
     Annotated,
+    TypeAlias,
 )
 
 from pydantic import (
@@ -237,24 +238,24 @@ class FlextModels:
     # =========================================================================
     # BACKWARD COMPATIBILITY ALIASES - Entity & DDD Patterns
     # =========================================================================
-    AggregateRoot = FlextModelsEntity.AggregateRoot
-    ArbitraryTypesModel = FlextModelsEntity.ArbitraryTypesModel
-    DomainEvent = FlextModelsEntity.DomainEvent
-    Entity = FlextModelsEntity.Core
-    FrozenStrictModel = FlextModelsEntity.FrozenStrictModel
-    IdentifiableMixin = FlextModelsEntity.IdentifiableMixin
-    TimestampableMixin = FlextModelsEntity.TimestampableMixin
-    TimestampedModel = FlextModelsEntity.TimestampedModel
-    Value = FlextModelsEntity.Value
-    VersionableMixin = FlextModelsEntity.VersionableMixin
+    AggregateRoot: TypeAlias = FlextModelsEntity.AggregateRoot
+    ArbitraryTypesModel: TypeAlias = FlextModelsEntity.ArbitraryTypesModel
+    DomainEvent: TypeAlias = FlextModelsEntity.DomainEvent
+    Entity: TypeAlias = FlextModelsEntity.Core
+    FrozenStrictModel: TypeAlias = FlextModelsEntity.FrozenStrictModel
+    IdentifiableMixin: TypeAlias = FlextModelsEntity.IdentifiableMixin
+    TimestampableMixin: TypeAlias = FlextModelsEntity.TimestampableMixin
+    TimestampedModel: TypeAlias = FlextModelsEntity.TimestampedModel
+    Value: TypeAlias = FlextModelsEntity.Value
+    VersionableMixin: TypeAlias = FlextModelsEntity.VersionableMixin
 
     # =========================================================================
     # BACKWARD COMPATIBILITY ALIASES - CQRS Patterns
     # =========================================================================
-    Command = FlextModelsCqrs.Command
-    Cqrs = FlextModelsCqrs
-    Pagination = FlextModelsCqrs.Pagination
-    Query = FlextModelsCqrs.Query
+    Command: TypeAlias = FlextModelsCqrs.Command
+    Cqrs: TypeAlias = FlextModelsCqrs
+    Pagination: TypeAlias = FlextModelsCqrs.Pagination
+    Query: TypeAlias = FlextModelsCqrs.Query
 
     # =========================================================================
     # BACKWARD COMPATIBILITY ALIASES - Validation Patterns
