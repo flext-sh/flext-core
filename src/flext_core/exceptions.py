@@ -521,8 +521,9 @@ class FlextExceptions:
 
             """
             self.__cause__ = cause
-            if hasattr(cause, "correlation_id"):
-                self.metadata["parent_correlation_id"] = cause.correlation_id
+            parent_correlation_id = getattr(cause, "correlation_id", None)
+            if parent_correlation_id is not None:
+                self.metadata["parent_correlation_id"] = parent_correlation_id
 
             # Log exception chaining
             try:

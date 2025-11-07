@@ -420,8 +420,9 @@ class FlextDispatcher(FlextMixins):
             # Random variance between -jitter_factor and +jitter_factor
             # Note: S311 suppressed - random jitter for timing is not cryptographic
             variance = (
-                2.0 * random.random() - 1.0
-            ) * self._jitter_factor  # Range: [-jitter_factor, +jitter_factor]
+                2.0 * random.random()  # noqa: S311
+                - 1.0
+            ) * self._jitter_factor
             jittered = base_delay * (1.0 + variance)
 
             # Ensure jittered value doesn't go negative
@@ -661,11 +662,7 @@ class FlextDispatcher(FlextMixins):
         self._middleware_instances: dict[str, object] = {}  # Keyed by middleware_id
 
         # Query result caching (from FlextBus - LRU cache)
-        max_cache_size = (
-            self.config.cache_max_size
-            if hasattr(self.config, "cache_max_size")
-            else 100
-        )
+        max_cache_size = getattr(self.config, "cache_max_size", 100)
         self._cache: LRUCache[str, FlextResult[object]] = LRUCache(
             maxsize=max_cache_size
         )
@@ -824,6 +821,7 @@ class FlextDispatcher(FlextMixins):
         start_time = time.time()
         try:
             # Execute processor
+            result: object
             if callable(processor):
                 result = processor(data)
             else:
@@ -836,8 +834,11 @@ class FlextDispatcher(FlextMixins):
                     )
 
             # Convert to FlextResult if needed
+            result_wrapped: FlextResult[object]
             if not isinstance(result, FlextResult):
-                result = FlextResult[object].ok(result)
+                result_wrapped = FlextResult[object].ok(result)
+            else:
+                result_wrapped = cast("FlextResult[object]", result)
 
             # Update metrics
             execution_time = time.time() - start_time
@@ -854,14 +855,14 @@ class FlextDispatcher(FlextMixins):
                 }
             metrics = self._processor_metrics_per_name[processor_name]
             metrics["executions"] = metrics.get("executions", 0) + 1
-            if result.is_success:
+            if result_wrapped.is_success:
                 metrics["successful_processes"] = (
                     metrics.get("successful_processes", 0) + 1
                 )
             else:
                 metrics["failed_processes"] = metrics.get("failed_processes", 0) + 1
 
-            return result
+            return result_wrapped
         except Exception as e:
             execution_time = time.time() - start_time
             if processor_name not in self._processor_execution_times:
@@ -2026,7 +2027,7 @@ class FlextDispatcher(FlextMixins):
         message_type_or_handler: FlextTypes.MessageTypeOrHandlerType,
         handler: FlextTypes.HandlerOrCallableType | None = None,
         *,
-        handler_mode: FlextConstants.Cqrs.HandlerModeSimple = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+        handler_mode: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
         handler_config: FlextTypes.HandlerConfigurationType = None,
     ) -> FlextResult[dict[str, object]]:
         """Register handler with support for both old and new API.
@@ -2147,7 +2148,7 @@ class FlextDispatcher(FlextMixins):
         handler_func: FlextTypes.HandlerCallableType,
         *,
         handler_config: FlextTypes.HandlerConfigurationType = None,
-        mode: FlextConstants.Cqrs.HandlerModeSimple = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+        mode: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
     ) -> FlextResult[dict[str, object]]:
         """Register function as handler using factory pattern.
 
@@ -2605,8 +2606,6 @@ class FlextDispatcher(FlextMixins):
                 correlation_id,
                 timeout_override,
                 operation_id,
-                attempt,
-                max_retries,
             )
             if result.is_success or not self._should_retry_on_error(
                 attempt, result.error if result.is_failure else None
@@ -2662,8 +2661,6 @@ class FlextDispatcher(FlextMixins):
         correlation_id: str | None,
         timeout_override: int | None,
         operation_id: str,
-        attempt: int,
-        max_retries: int,
     ) -> FlextResult[object]:
         """Execute a single dispatch attempt with timeout."""
         try:

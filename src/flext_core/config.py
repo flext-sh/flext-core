@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import Any, ClassVar, Self, TypeVar
+from typing import ClassVar, Self, TypeVar
 
 from dependency_injector import providers
 from pydantic import (
@@ -28,6 +28,7 @@ from pydantic_settings import (
 
 from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 
 T_Config = TypeVar("T_Config", bound="FlextConfig")
 
@@ -439,7 +440,10 @@ class FlextConfig(BaseSettings):
         """Validate trace mode requires debug mode (Pydantic v2)."""
         if self.trace and not self.debug:
             msg = "Trace mode requires debug mode"
-            raise ValueError(msg)
+            raise FlextExceptions.ValidationError(
+                message=msg,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
         return self
 
     # ===== DEPENDENCY INJECTION INTEGRATION =====
@@ -542,7 +546,6 @@ class FlextConfig(BaseSettings):
         env_prefix: str,
         env_file: str | None = None,
         env_nested_delimiter: str = "__",
-        **additional_config: Any,
     ) -> SettingsConfigDict:
         """Create a SettingsConfigDict for environment binding.
 
@@ -563,7 +566,6 @@ class FlextConfig(BaseSettings):
             env_file: Optional path to .env file (default: uses FlextConstants)
             env_nested_delimiter: Delimiter for nested configs (default: "__")
                                  Example: MYAPP_DB__HOST → nested config binding
-            **additional_config: Additional SettingsConfigDict options
 
         Returns:
             SettingsConfigDict: Pydantic v2 settings configuration
@@ -576,7 +578,6 @@ class FlextConfig(BaseSettings):
             case_sensitive=False,
             extra="ignore",
             validate_default=True,
-            **additional_config,
         )
 
     # ===== COMPUTED FIELDS =====

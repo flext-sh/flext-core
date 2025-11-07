@@ -18,7 +18,16 @@ import signal
 import time
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
-from typing import ClassVar, Self, Union, cast, get_args, get_origin, override
+from typing import (
+    ClassVar,
+    Self,
+    TypeGuard,
+    Union,
+    cast,
+    get_args,
+    get_origin,
+    override,
+)
 
 from pydantic import computed_field
 
@@ -228,12 +237,13 @@ class FlextService[TDomainResult](
             >>> user: User = AutoService(user_id="123")  # Type as User, not AutoService
 
         """
-        instance = cast("Self", super().__new__(cls))
+        instance = super().__new__(cls)
         # Call __init__ via type() to avoid mypy "unsound" warning
         type(instance).__init__(instance, **kwargs)
 
         if cls.auto_execute:
-            # Auto-execute and return unwrapped result (cast for type safety)
+            # Auto-execute and return unwrapped result
+            # Cast to Self for type checker (actual runtime value is TDomainResult)
             return cast("Self", instance.execute().unwrap())
 
         # Return service instance (default behavior)
@@ -725,6 +735,11 @@ class FlextService[TDomainResult](
         result = request.operation_callable(*filtered_args, **request.keyword_arguments)
         return cast("TDomainResult", result)
 
+    @staticmethod
+    def _is_flext_result(obj: object) -> TypeGuard[FlextResult[object]]:
+        """Type guard to check if object is a FlextResult."""
+        return isinstance(obj, FlextResult)
+
     def _retry_loop(
         self,
         request: FlextModels.OperationExecutionRequest,
@@ -782,9 +797,11 @@ class FlextService[TDomainResult](
                 )
 
                 # Wrap result if not already a FlextResult
-                if isinstance(result, FlextResult):
+                if self._is_flext_result(result):
+                    # Cast to correct type - we know it's FlextResult[TDomainResult]
                     return cast("FlextResult[TDomainResult]", result)
-                return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
+                # Wrap non-FlextResult in FlextResult
+                return FlextResult[TDomainResult].ok(result)
 
             except Exception as e:
                 last_exception = e

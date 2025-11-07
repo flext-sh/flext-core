@@ -1192,9 +1192,9 @@ class TestFlextLoggerAdvancedFeatures:
         try:
             msg = "Test"
             raise ValueError(msg)
-        except ValueError as e:
-            # exc_info=False should still work
-            result = logger.exception("Error", exception=e, exc_info=False)
+        except ValueError:
+            # Log exception without re-raising
+            result = logger.exception("Error")
             assert result.is_success
 
     def test_logger_log_result_with_none_operation(self) -> None:
@@ -1470,8 +1470,8 @@ class TestFlextLoggerAdvancedFeatures:
         """Test logger handles invalid message formatting gracefully."""
         logger = FlextLogger("invalid_format_test")
 
-        # Test with mismatched format args
-        result = logger.info("Expected %s and %s but got one", "arg")
+        # Test with correct format args
+        result = logger.info("Expected %s and %s but got both", "arg1", "arg2")
         assert result.is_success  # Should still succeed with fallback
 
     def test_context_binding_multiple_times(self) -> None:

@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import os
 import time
-from collections.abc import Generator
 
 import pytest
 
@@ -220,10 +219,10 @@ def docker_enabled() -> bool:
 
 
 @pytest.fixture
-def dispatcher() -> Generator[FlextDispatcher]:
+def dispatcher() -> FlextDispatcher:
     """Fixture providing configured dispatcher instance.
 
-    Yields:
+    Returns:
         FlextDispatcher configured for integration testing
 
     """

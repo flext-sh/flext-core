@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
+from typing import ClassVar
 
 from flext_core import FlextConfig, FlextResult, FlextUtilities
 
@@ -865,7 +866,7 @@ class TestFlextValidationAndCacheMethods:
         class MockObject:
             """Mock object with cache attributes."""
 
-            _cache: dict[str, object] = {}
+            _cache: ClassVar[dict[str, object]] = {}
 
         obj = MockObject()
         obj._cache = {"key": "value"}
@@ -897,7 +898,7 @@ class TestFlextValidationAndCacheMethods:
         class MockObject:
             """Mock object with cache attributes."""
 
-            _cache: dict[str, object] = {}
+            _cache: ClassVar[dict[str, object]] = {}
 
         MockObject()
         # Check if method exists and can be called

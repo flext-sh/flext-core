@@ -495,11 +495,9 @@ class TestPattern8ErrorHandling:
 
     def test_error_handling_try_except_v2_property_failure(self) -> None:
         """Error Handling: try/except catches failure."""
-        try:
+        with pytest.raises(FlextExceptions.BaseError) as exc_info:
             GetUserService(user_id="invalid").result
-            pytest.fail("Should raise exception")
-        except FlextExceptions.BaseError as e:
-            assert "not found" in str(e).lower()
+        assert "not found" in str(exc_info.value).lower()
 
     def test_error_handling_try_except_v2_auto(self) -> None:
         """Error Handling: try/except with V2 Auto."""

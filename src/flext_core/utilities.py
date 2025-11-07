@@ -429,8 +429,9 @@ class FlextUtilities:
     StringParser = FlextUtilitiesStringParser
     DataMapper = FlextUtilitiesDataMapper
 
+    @staticmethod
     def run_external_command(
-        self: list[str],
+        cmd: list[str],
         *,
         capture_output: bool = True,
         check: bool = True,
@@ -471,16 +472,16 @@ class FlextUtilities:
         """
         try:
             # Validate command for security - ensure all parts are safe strings
-            validation_result = FlextUtilities._validate_command_input(self)
+            validation_result = FlextUtilities._validate_command_input(cmd)
             if validation_result is not None:
                 return validation_result
 
             # Check if command executable exists using shutil.which
-            if not shutil.which(self[0]):
+            if not shutil.which(cmd[0]):
                 return FlextResult[_CompletedProcessWrapper].fail(
-                    f"Command not found: {self[0]}",
+                    f"Command not found: {cmd[0]}",
                     error_code="COMMAND_NOT_FOUND",
-                    error_data={"cmd": self, "executable": self[0]},
+                    error_data={"cmd": cmd, "executable": cmd[0]},
                 )
 
             # Store original working directory for restoration
@@ -493,20 +494,27 @@ class FlextUtilities:
 
                 # Execute with timeout handling
                 result = FlextUtilities._execute_with_timeout(
-                    self,
-                    capture_output,
+                    cmd,
                     env,
                     command_input,
-                    text,
                     timeout,
+                    capture_output=capture_output,
+                    text=text,
                 )
 
                 if result.is_failure:
-                    return result
+                    # Map error to correct return type
+                    return FlextResult[_CompletedProcessWrapper].fail(
+                        result.error,
+                        error_code=result.error_code,
+                        error_data=result.error_data,
+                    )
 
                 # Process command results
                 return FlextUtilities._process_command_result(
-                    result.unwrap(), self, check
+                    result.unwrap(),
+                    cmd,
+                    check=check,
                 )
 
             finally:
@@ -515,15 +523,15 @@ class FlextUtilities:
 
         except FileNotFoundError:
             return FlextResult[_CompletedProcessWrapper].fail(
-                f"Command not found: {self[0]}",
+                f"Command not found: {cmd[0]}",
                 error_code="COMMAND_NOT_FOUND",
-                error_data={"cmd": self, "executable": self[0]},
+                error_data={"cmd": cmd, "executable": cmd[0]},
             )
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[_CompletedProcessWrapper].fail(
                 f"Unexpected error running command: {e!s}",
                 error_code="COMMAND_ERROR",
-                error_data={"cmd": self, "error": str(e)},
+                error_data={"cmd": cmd, "error": str(e)},
             )
 
     @staticmethod
@@ -541,12 +549,13 @@ class FlextUtilities:
     @staticmethod
     def _execute_with_timeout(
         cmd: list[str],
-        capture_output: bool,
         env: dict[str, str] | None,
         command_input: str | bytes | None,
-        text: bool | None,
         timeout: float | None,
-    ) -> FlextResult[tuple[str, str] | None]:
+        *,
+        capture_output: bool,
+        text: bool | None,
+    ) -> FlextResult[tuple[str, str]]:
         """Execute subprocess with thread-based timeout handling."""
         # Prepare environment variables
         exec_env = os.environ.copy()
@@ -594,7 +603,7 @@ class FlextUtilities:
             with suppress(OSError, ProcessLookupError):
                 process.kill()  # Process may already be terminated
 
-            return FlextResult[tuple[str, str] | None].fail(
+            return FlextResult[tuple[str, str]].fail(
                 f"Command timed out after {timeout} seconds",
                 error_code="COMMAND_TIMEOUT",
                 error_data={"cmd": cmd, "timeout": timeout},
@@ -603,7 +612,7 @@ class FlextUtilities:
         # Check for exceptions from thread
         if exception_container[0] is not None:
             exc = exception_container[0]
-            return FlextResult[tuple[str, str] | None].fail(
+            return FlextResult[tuple[str, str]].fail(
                 f"Command execution failed: {exc!s}",
                 error_code="COMMAND_ERROR",
                 error_data={"cmd": cmd, "error": str(exc)},
@@ -611,18 +620,19 @@ class FlextUtilities:
 
         # Get process results
         if result_container[0] is None:
-            return FlextResult[tuple[str, str] | None].fail(
+            return FlextResult[tuple[str, str]].fail(
                 "Process completed but no output captured",
                 error_code="COMMAND_ERROR",
                 error_data={"cmd": cmd},
             )
 
-        return FlextResult[tuple[str, str] | None].ok(result_container[0])
+        return FlextResult[tuple[str, str]].ok(result_container[0])
 
     @staticmethod
     def _process_command_result(
         output: tuple[str, str],
         cmd: list[str],
+        *,
         check: bool,
     ) -> FlextResult[_CompletedProcessWrapper]:
         """Process command output and create result wrapper."""

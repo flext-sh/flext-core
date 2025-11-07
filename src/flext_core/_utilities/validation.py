@@ -13,8 +13,8 @@ import logging
 import operator
 import re
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import asdict, is_dataclass
-from typing import cast
+from dataclasses import fields as get_dataclass_fields, is_dataclass
+from typing import TypeGuard, cast
 
 import orjson
 
@@ -124,6 +124,11 @@ class FlextUtilitiesValidation:
         return json.dumps(value, sort_keys=True, default=str)
 
     @staticmethod
+    def _is_dataclass_instance(obj: object) -> TypeGuard[object]:
+        """Type guard to check if object is a dataclass instance (not class)."""
+        return is_dataclass(obj) and not isinstance(obj, type)
+
+    @staticmethod
     def normalize_component(
         value: object,
     ) -> object:
@@ -137,8 +142,10 @@ class FlextUtilitiesValidation:
         if isinstance(value, FlextProtocols.HasModelDump):
             return FlextUtilitiesValidation._normalize_pydantic_value(value)
 
-        if is_dataclass(value):
-            return FlextUtilitiesValidation._normalize_dataclass_value(value)
+        if FlextUtilitiesValidation._is_dataclass_instance(value):
+            # At this point value passed the TypeGuard check - it's a dataclass instance
+            # asdict will work correctly even though mypy can't track the type narrowing
+            return FlextUtilitiesValidation._normalize_dataclass_value_instance(value)
 
         if isinstance(value, Mapping):
             return FlextUtilitiesValidation._normalize_mapping(value)
@@ -164,20 +171,27 @@ class FlextUtilitiesValidation:
         return ("pydantic", normalized_dumped)
 
     @staticmethod
-    def _normalize_dataclass_value(value: object) -> tuple[str, object]:
-        """Normalize dataclass to cache-friendly structure."""
-        if isinstance(value, type):
-            return ("dataclass_class", str(value))
-        dataclass_dict = asdict(value)
-        normalized_dict = FlextUtilitiesCache.normalize_component(dataclass_dict)
+    def _normalize_dataclass_value_instance(value: object) -> tuple[str, object]:
+        """Normalize dataclass instance to cache-friendly structure.
+
+        Note: This should only be called after checking is_dataclass(value) and
+        ensuring it's not a type (via isinstance(value, type) check).
+        """
+        # Caller guarantees value is a dataclass instance via _is_dataclass_instance check
+        # Using manual field extraction - cast to satisfy mypy strict mode
+        field_dict: dict[str, object] = {}
+        # Cast value.__class__ to type since we know it's a dataclass instance
+        for field in get_dataclass_fields(cast("type", value.__class__)):
+            field_dict[field.name] = getattr(value, field.name)
+
+        normalized_dict = FlextUtilitiesCache.normalize_component(field_dict)
         return ("dataclass", normalized_dict)
 
     @staticmethod
     def _normalize_mapping(value: Mapping[object, object]) -> dict[object, object]:
         """Normalize mapping to cache-friendly structure."""
-        mapping_value = cast("Mapping[object, object]", value)
         sorted_items = sorted(
-            mapping_value.items(),
+            value.items(),
             key=lambda x: FlextUtilitiesCache.sort_key(x[0]),
         )
         return {
@@ -190,19 +204,15 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _normalize_sequence(value: Sequence[object]) -> tuple[str, tuple[object, ...]]:
         """Normalize sequence to cache-friendly structure."""
-        sequence_value = cast("Sequence[object]", value)
         sequence_items = [
-            FlextUtilitiesCache.normalize_component(item) for item in sequence_value
+            FlextUtilitiesCache.normalize_component(item) for item in value
         ]
         return ("sequence", tuple(sequence_items))
 
     @staticmethod
     def _normalize_set(value: set[object]) -> tuple[str, tuple[object, ...]]:
         """Normalize set to cache-friendly structure."""
-        set_value = cast("set[object]", value)
-        set_items = [
-            FlextUtilitiesCache.normalize_component(item) for item in set_value
-        ]
+        set_items = [FlextUtilitiesCache.normalize_component(item) for item in value]
         set_items.sort(key=str)
         normalized_set = tuple(set_items)
         return ("set", normalized_set)
@@ -250,13 +260,16 @@ class FlextUtilitiesValidation:
                 sorted_data = FlextUtilitiesCache.sort_dict_keys(data)
                 return f"{cast('type', command_type).__name__}_{hash(str(sorted_data))}"
 
-            # For dataclasses, use asdict with sorted keys
+            # For dataclasses, use manual field extraction with sorted keys
             if (
                 hasattr(command, "__dataclass_fields__")
                 and is_dataclass(command)
                 and not isinstance(command, type)
             ):
-                dataclass_data = asdict(command)
+                # Manual field extraction - cast to satisfy mypy strict mode
+                dataclass_data: dict[str, object] = {}
+                for field in get_dataclass_fields(cast("type", command.__class__)):
+                    dataclass_data[field.name] = getattr(command, field.name)
                 dataclass_sorted_data = FlextUtilitiesCache.sort_dict_keys(
                     dataclass_data,
                 )

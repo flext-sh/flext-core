@@ -128,7 +128,7 @@ class FlextUtilitiesStringParser:
 
         try:
             components: list[str] = []
-            current = []
+            current: list[str] = []
             i = 0
 
             while i < len(text):
