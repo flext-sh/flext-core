@@ -17,6 +17,7 @@ from typing import ClassVar, Literal, override
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
+import flext_core._models.validation as _validation_module
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
@@ -34,8 +35,19 @@ class FlextModelsEntity:
     class IdentifiableMixin(BaseModel):
         """Mixin for models with unique identifiers."""
 
+        # Explicit construction for type safety (avoiding TypedDict spreading issues)
         model_config = ConfigDict(
-            **FlextConstants.ModelConfig.BASE,
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            strict=True,
+            str_strip_whitespace=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            extra="forbid",
+            ser_json_timedelta="iso8601",
+            ser_json_bytes="base64",
+            hide_input_in_errors=True,
             json_schema_extra={
                 "title": "IdentifiableMixin",
                 "description": "Mixin providing unique identifier fields",
@@ -47,8 +59,19 @@ class FlextModelsEntity:
     class TimestampableMixin(BaseModel):
         """Mixin for models with creation and update timestamps."""
 
+        # Explicit construction for type safety (avoiding TypedDict spreading issues)
         model_config = ConfigDict(
-            **FlextConstants.ModelConfig.BASE,
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            strict=True,
+            str_strip_whitespace=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            extra="forbid",
+            ser_json_timedelta="iso8601",
+            ser_json_bytes="base64",
+            hide_input_in_errors=True,
             json_schema_extra={
                 "title": "TimestampableMixin",
                 "description": "Mixin providing timestamp fields and serialization",
@@ -129,8 +152,19 @@ class FlextModelsEntity:
     class FrozenStrictModel(BaseModel):
         """Immutable base model."""
 
+        # Explicit construction for type safety (avoiding TypedDict spreading issues)
         model_config = ConfigDict(
-            **FlextConstants.ModelConfig.BASE,
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            strict=True,
+            str_strip_whitespace=True,
+            use_enum_values=True,
+            arbitrary_types_allowed=True,
+            extra="forbid",
+            ser_json_timedelta="iso8601",
+            ser_json_bytes="base64",
+            hide_input_in_errors=True,
             frozen=True,
             json_schema_extra={
                 "title": "FrozenStrictModel",
@@ -466,9 +500,5 @@ class FlextModelsEntity:
             super().model_post_init(__context)
             self.check_invariants()
 
-
-# Module-level import of validation to avoid circular dependency issues
-# This is imported after the class definition to prevent circular imports
-import flext_core._models.validation as _validation_module
 
 __all__ = ["FlextModelsEntity"]

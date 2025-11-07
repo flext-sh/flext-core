@@ -312,9 +312,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 return attrs_result
 
             # Try common serialization methods
-            common_result = cls._try_common_serialization_methods(
-                message, operation_name, context_operation
-            )
+            common_result = cls._try_common_serialization_methods(message)
             if common_result is not None:
                 return common_result
 
@@ -351,7 +349,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         @classmethod
         def _try_common_serialization_methods(
-            cls, message: object, operation: str, context: str
+            cls, message: object
         ) -> dict[str, object] | None:
             """Try common serialization methods."""
             for method_name in ("model_dump", "dict", "as_dict"):

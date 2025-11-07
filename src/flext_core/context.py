@@ -44,7 +44,7 @@ class FlextContext:
         - Hierarchical scopes (global, user, session) with scope-based access
         - Delegation to FlextLogger for structured logging integration
         - Container integration via FlextContext.Service for DI pattern
-        - StructlogProxyContextVar for direct logging system integration
+        - FlextModels.StructlogProxyContextVar for direct logging system integration
 
     Core Features:
         - Hierarchical context scopes (global, request, session, transaction)
@@ -111,7 +111,7 @@ class FlextContext:
 
     Context Variable Compliance:
         - Uses Python contextvars for inherent thread-safety and async support
-        - StructlogProxyContextVar wraps contextvars with structlog integration
+        - FlextModels.StructlogProxyContextVar wraps contextvars with structlog integration
         - No explicit protocol inheritance needed - implements context management patterns
         - Automatic FlextLogger delegation for logging consistency across ecosystem
     """
@@ -915,9 +915,6 @@ class FlextContext:
     # Variables - Context Variables using structlog as Single Source of Truth
     # ==========================================================================
 
-    # Use FlextModels.StructlogProxyContextVar (defined in models.py)
-    StructlogProxyContextVar = FlextModels.StructlogProxyContextVar
-
     class Variables:
         """Context variables using structlog as single source of truth."""
 
@@ -998,7 +995,7 @@ class FlextContext:
         def set_correlation_id(correlation_id: str) -> None:
             """Set correlation ID.
 
-            Note: Uses structlog as single source of truth (via StructlogProxyContextVar).
+            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
             FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
 
@@ -1006,7 +1003,7 @@ class FlextContext:
         def generate_correlation_id() -> str:
             """Generate unique correlation ID.
 
-            Note: Uses structlog as single source of truth (via StructlogProxyContextVar).
+            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             Uses FlextConstants.Context configuration for prefix and length.
             """
             # Generate correlation ID using centralized constants
@@ -1117,7 +1114,7 @@ class FlextContext:
         def set_service_name(service_name: str) -> None:
             """Set service name.
 
-            Note: Uses structlog as single source of truth (via StructlogProxyContextVar).
+            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
             FlextContext.Variables.Service.SERVICE_NAME.set(service_name)
 
@@ -1131,7 +1128,7 @@ class FlextContext:
         def set_service_version(version: str) -> None:
             """Set service version.
 
-            Note: Uses structlog as single source of truth (via StructlogProxyContextVar).
+            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
             FlextContext.Variables.Service.SERVICE_VERSION.set(version)
 
@@ -1230,7 +1227,7 @@ class FlextContext:
         def set_user_id(user_id: str) -> None:
             """Set user ID in context.
 
-            Note: Uses structlog as single source of truth (via StructlogProxyContextVar).
+            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
             FlextContext.Variables.Request.USER_ID.set(user_id)
 
@@ -1243,7 +1240,7 @@ class FlextContext:
         def set_operation_name(operation_name: str) -> None:
             """Set operation name in context.
 
-            Note: Uses structlog as single source of truth (via StructlogProxyContextVar).
+            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
             FlextContext.Variables.Performance.OPERATION_NAME.set(operation_name)
 
@@ -1256,7 +1253,7 @@ class FlextContext:
         def set_request_id(request_id: str) -> None:
             """Set request ID in context.
 
-            Note: Uses structlog as single source of truth (via StructlogProxyContextVar).
+            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
             FlextContext.Variables.Request.REQUEST_ID.set(request_id)
 
@@ -1505,7 +1502,7 @@ class FlextContext:
             FlextContext.Variables.Performance.OPERATION_METADATA.set(None)
             FlextContext.Variables.Request.REQUEST_TIMESTAMP.set(None)
 
-            # Note: All variables use structlog as single source (via StructlogProxyContextVar)
+            # Note: All variables use structlog as single source (via FlextModels.StructlogProxyContextVar)
 
         @staticmethod
         def ensure_correlation_id() -> str:

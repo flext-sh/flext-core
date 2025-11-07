@@ -14,10 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import (
-    Annotated,
-    TypeAlias,
-)
+from typing import Annotated
 
 from pydantic import (
     Discriminator,
@@ -236,83 +233,212 @@ class FlextModels:
     """
 
     # =========================================================================
-    # BACKWARD COMPATIBILITY ALIASES - Entity & DDD Patterns
+    # NESTED WRAPPER CLASSES - Entity & DDD Patterns
     # =========================================================================
-    AggregateRoot: TypeAlias = FlextModelsEntity.AggregateRoot
-    ArbitraryTypesModel: TypeAlias = FlextModelsEntity.ArbitraryTypesModel
-    DomainEvent: TypeAlias = FlextModelsEntity.DomainEvent
-    Entity: TypeAlias = FlextModelsEntity.Core
-    FrozenStrictModel: TypeAlias = FlextModelsEntity.FrozenStrictModel
-    IdentifiableMixin: TypeAlias = FlextModelsEntity.IdentifiableMixin
-    TimestampableMixin: TypeAlias = FlextModelsEntity.TimestampableMixin
-    TimestampedModel: TypeAlias = FlextModelsEntity.TimestampedModel
-    Value: TypeAlias = FlextModelsEntity.Value
-    VersionableMixin: TypeAlias = FlextModelsEntity.VersionableMixin
+    class Entity(FlextModelsEntity.Core):
+        """Domain entity with identity and lifecycle - wrapper class."""
+
+    class Value(FlextModelsEntity.Value):
+        """Immutable value object - wrapper class."""
+
+    class AggregateRoot(FlextModelsEntity.AggregateRoot, Entity):
+        """Aggregate root consistency boundary - wrapper class."""
+
+    class DomainEvent(FlextModelsEntity.DomainEvent):
+        """Domain event for event sourcing - wrapper class."""
+
+    class ArbitraryTypesModel(FlextModelsEntity.ArbitraryTypesModel):
+        """Base model with arbitrary types support - wrapper class."""
+
+    class FrozenStrictModel(FlextModelsEntity.FrozenStrictModel):
+        """Immutable strict model - wrapper class."""
+
+    class IdentifiableMixin(FlextModelsEntity.IdentifiableMixin):
+        """Mixin for unique identifiers - wrapper class."""
+
+    class TimestampableMixin(FlextModelsEntity.TimestampableMixin):
+        """Mixin for timestamps - wrapper class."""
+
+    class TimestampedModel(FlextModelsEntity.TimestampedModel):
+        """Model with timestamp fields - wrapper class."""
+
+    class VersionableMixin(FlextModelsEntity.VersionableMixin):
+        """Mixin for versioning - wrapper class."""
 
     # =========================================================================
-    # BACKWARD COMPATIBILITY ALIASES - CQRS Patterns
+    # OFFICIAL NAMESPACE - CQRS Patterns
     # =========================================================================
-    Command: TypeAlias = FlextModelsCqrs.Command
-    Cqrs: TypeAlias = FlextModelsCqrs
-    Pagination: TypeAlias = FlextModelsCqrs.Pagination
-    Query: TypeAlias = FlextModelsCqrs.Query
+    class Cqrs:
+        """CQRS namespace with nested wrapper classes."""
+
+        class Command(FlextModelsCqrs.Command):
+            """Base class for CQRS commands - wrapper class."""
+
+        class Pagination(FlextModelsCqrs.Pagination):
+            """Pagination model for query results - wrapper class."""
+
+        class Query(FlextModelsCqrs.Query):
+            """Query model for CQRS query operations - wrapper class."""
+
+            def model_post_init(self, __context: object, /) -> None:
+                """Convert internal Pagination to wrapper Pagination."""
+                super().model_post_init(__context)
+                if isinstance(
+                    self.pagination, FlextModelsCqrs.Pagination
+                ) and not isinstance(self.pagination, FlextModels.Cqrs.Pagination):
+                    self.pagination = FlextModels.Cqrs.Pagination(
+                        page=self.pagination.page, size=self.pagination.size
+                    )
+
+        class Bus(FlextModelsCqrs.Bus):
+            """Bus configuration model - wrapper class."""
+
+        class Handler(FlextModelsCqrs.Handler):
+            """Handler configuration model - wrapper class."""
+
+    # Backward compatibility: top-level aliases
+    Command = Cqrs.Command
+    Pagination = Cqrs.Pagination
+    Query = Cqrs.Query
+    Bus = Cqrs.Bus
+    Handler = Cqrs.Handler
 
     # =========================================================================
-    # BACKWARD COMPATIBILITY ALIASES - Validation Patterns
+    # OFFICIAL NAMESPACE - Validation Patterns
     # =========================================================================
-    Validation = FlextModelsValidation
+    class Validation:
+        """Validation namespace providing official access paths."""
+
+        validate_business_rules = FlextModelsValidation.validate_business_rules
+        validate_cross_fields = FlextModelsValidation.validate_cross_fields
+        validate_performance = FlextModelsValidation.validate_performance
+        validate_batch = FlextModelsValidation.validate_batch
+        validate_domain_invariants = FlextModelsValidation.validate_domain_invariants
+        validate_aggregate_consistency_with_rules = (
+            FlextModelsValidation.validate_aggregate_consistency_with_rules
+        )
+        validate_event_sourcing = FlextModelsValidation.validate_event_sourcing
+        validate_cqrs_patterns = FlextModelsValidation.validate_cqrs_patterns
+        validate_domain_event = FlextModelsValidation.validate_domain_event
+        validate_aggregate_consistency = (
+            FlextModelsValidation.validate_aggregate_consistency
+        )
+        validate_entity_relationships = (
+            FlextModelsValidation.validate_entity_relationships
+        )
 
     # =========================================================================
-    # BACKWARD COMPATIBILITY ALIASES - Base Utility Models
+    # NESTED WRAPPER CLASSES - Base Utility Models
     # =========================================================================
-    Metadata = FlextModelsBase.Metadata
-    Payload = FlextModelsBase.Payload
-    Url = FlextModelsBase.Url
-    LogOperation = FlextModelsBase.LogOperation
-    TimestampConfig = FlextModelsBase.TimestampConfig
-    SerializationRequest = FlextModelsBase.SerializationRequest
-    ConditionalExecutionRequest = FlextModelsBase.ConditionalExecutionRequest
-    StateInitializationRequest = FlextModelsBase.StateInitializationRequest
+    class Metadata(FlextModelsBase.Metadata):
+        """Metadata model for structured information - wrapper class."""
+
+    class Payload[T](FlextModelsBase.Payload[T]):
+        """Payload model for data transfer - wrapper class."""
+
+    class Url(FlextModelsBase.Url):
+        """URL model with validation - wrapper class."""
+
+    class LogOperation(FlextModelsBase.LogOperation):
+        """Log operation model - wrapper class."""
+
+    class TimestampConfig(FlextModelsBase.TimestampConfig):
+        """Timestamp configuration model - wrapper class."""
+
+    class SerializationRequest(FlextModelsBase.SerializationRequest):
+        """Serialization request model - wrapper class."""
+
+    class ConditionalExecutionRequest(FlextModelsBase.ConditionalExecutionRequest):
+        """Conditional execution request model - wrapper class."""
+
+    class StateInitializationRequest(FlextModelsBase.StateInitializationRequest):
+        """State initialization request model - wrapper class."""
 
     # =========================================================================
-    # BACKWARD COMPATIBILITY ALIASES - Configuration Models
+    # NESTED WRAPPER CLASSES - Configuration Models
     # =========================================================================
-    ProcessingRequest = FlextModelsConfig.ProcessingRequest
-    RetryConfiguration = FlextModelsConfig.RetryConfiguration
-    ValidationConfiguration = FlextModelsConfig.ValidationConfiguration
-    BatchProcessingConfig = FlextModelsConfig.BatchProcessingConfig
-    HandlerExecutionConfig = FlextModelsConfig.HandlerExecutionConfig
-    MiddlewareConfig = FlextModelsConfig.MiddlewareConfig
-    RateLimiterState = FlextModelsConfig.RateLimiterState
+    class ProcessingRequest(FlextModelsConfig.ProcessingRequest):
+        """Processing request configuration model - wrapper class."""
+
+    class RetryConfiguration(FlextModelsConfig.RetryConfiguration):
+        """Retry configuration model - wrapper class."""
+
+    class ValidationConfiguration(FlextModelsConfig.ValidationConfiguration):
+        """Validation configuration model - wrapper class."""
+
+    class BatchProcessingConfig(FlextModelsConfig.BatchProcessingConfig):
+        """Batch processing configuration model - wrapper class."""
+
+    class HandlerExecutionConfig(FlextModelsConfig.HandlerExecutionConfig):
+        """Handler execution configuration model - wrapper class."""
+
+    class MiddlewareConfig(FlextModelsConfig.MiddlewareConfig):
+        """Middleware configuration model - wrapper class."""
+
+    class RateLimiterState(FlextModelsConfig.RateLimiterState):
+        """Rate limiter state model - wrapper class."""
 
     # =========================================================================
-    # BACKWARD COMPATIBILITY ALIASES - Context Management Models
+    # NESTED WRAPPER CLASSES - Context Management Models
     # =========================================================================
-    StructlogProxyToken = FlextModelsContext.StructlogProxyToken
-    StructlogProxyContextVar = FlextModelsContext.StructlogProxyContextVar
-    Token = FlextModelsContext.Token
-    ContextData = FlextModelsContext.ContextData
-    ContextExport = FlextModelsContext.ContextExport
-    ContextScopeData = FlextModelsContext.ContextScopeData
-    ContextStatistics = FlextModelsContext.ContextStatistics
-    ContextMetadata = FlextModelsContext.ContextMetadata
-    ContextDomainData = FlextModelsContext.ContextDomainData
+    class StructlogProxyToken(FlextModelsContext.StructlogProxyToken):
+        """Structlog proxy token model - wrapper class."""
+
+    class StructlogProxyContextVar[T](FlextModelsContext.StructlogProxyContextVar[T]):
+        """Structlog proxy context variable model - wrapper class."""
+
+    class Token(FlextModelsContext.Token):
+        """Context token model - wrapper class."""
+
+    class ContextData(FlextModelsContext.ContextData):
+        """Context data model - wrapper class."""
+
+    class ContextExport(FlextModelsContext.ContextExport):
+        """Context export model - wrapper class."""
+
+    class ContextScopeData(FlextModelsContext.ContextScopeData):
+        """Context scope data model - wrapper class."""
+
+    class ContextStatistics(FlextModelsContext.ContextStatistics):
+        """Context statistics model - wrapper class."""
+
+    class ContextMetadata(FlextModelsContext.ContextMetadata):
+        """Context metadata model - wrapper class."""
+
+    class ContextDomainData(FlextModelsContext.ContextDomainData):
+        """Context domain data model - wrapper class."""
 
     # =========================================================================
-    # BACKWARD COMPATIBILITY ALIASES - Handler Management Models
+    # NESTED WRAPPER CLASSES - Handler Management Models
     # =========================================================================
-    HandlerRegistration = FlextModelsHandler.Registration
-    RegistrationDetails = FlextModelsHandler.RegistrationDetails
-    HandlerExecutionContext = FlextModelsHandler.ExecutionContext
+    class HandlerRegistration(FlextModelsHandler.Registration):
+        """Handler registration model - wrapper class."""
+
+    class RegistrationDetails(FlextModelsHandler.RegistrationDetails):
+        """Registration details model - wrapper class."""
+
+    class HandlerExecutionContext(FlextModelsHandler.ExecutionContext):
+        """Handler execution context model - wrapper class."""
 
     # =========================================================================
-    # BACKWARD COMPATIBILITY ALIASES - Domain Service Models
+    # NESTED WRAPPER CLASSES - Domain Service Models
     # =========================================================================
-    DomainServiceExecutionRequest = FlextModelsService.DomainServiceExecutionRequest
-    DomainServiceBatchRequest = FlextModelsService.DomainServiceBatchRequest
-    DomainServiceMetricsRequest = FlextModelsService.DomainServiceMetricsRequest
-    DomainServiceResourceRequest = FlextModelsService.DomainServiceResourceRequest
-    OperationExecutionRequest = FlextModelsService.OperationExecutionRequest
+    class DomainServiceExecutionRequest(
+        FlextModelsService.DomainServiceExecutionRequest
+    ):
+        """Domain service execution request model - wrapper class."""
+
+    class DomainServiceBatchRequest(FlextModelsService.DomainServiceBatchRequest):
+        """Domain service batch request model - wrapper class."""
+
+    class DomainServiceMetricsRequest(FlextModelsService.DomainServiceMetricsRequest):
+        """Domain service metrics request model - wrapper class."""
+
+    class DomainServiceResourceRequest(FlextModelsService.DomainServiceResourceRequest):
+        """Domain service resource request model - wrapper class."""
+
+    class OperationExecutionRequest(FlextModelsService.OperationExecutionRequest):
+        """Operation execution request model - wrapper class."""
 
     # =========================================================================
     # PYDANTIC V2 DISCRIMINATED UNION - Type-safe message routing
@@ -320,10 +446,12 @@ class FlextModels:
     # Discriminated union for CQRS message types eliminating object types
     # Uses Pydantic v2's most innovative feature: discriminated unions with
     # Discriminator field for automatic routing based on message_type
-    type MessageUnion = Annotated[
-        FlextModels.Command | FlextModels.Query | FlextModels.DomainEvent,
+    # Note: Uses raw assignment to support runtime introspection across ecosystem
+    _MessageUnion = Annotated[
+        Cqrs.Command | Cqrs.Query | DomainEvent,
         Discriminator("message_type"),
     ]
+    MessageUnion = _MessageUnion
     """Pydantic v2 discriminated union for type-safe CQRS message routing.
 
     This union type enables automatic message type detection and routing
@@ -344,12 +472,6 @@ class FlextModels:
     type based on the discriminator field value.
     """
 
-
-# Rebuild models after all classes are defined to resolve forward references
-FlextModels.DomainEvent.model_rebuild()
-FlextModels.Entity.model_rebuild()
-FlextModels.Query.model_rebuild()
-FlextModels.Pagination.model_rebuild()
 
 __all__ = [
     "FlextModels",

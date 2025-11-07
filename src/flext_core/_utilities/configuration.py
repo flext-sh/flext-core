@@ -49,7 +49,8 @@ class FlextUtilitiesConfiguration:
             return obj[parameter]
 
         # Check for Pydantic model with model_dump method
-        if hasattr(obj, "model_dump") and callable(obj.model_dump):
+        model_dump_method = getattr(obj, "model_dump", None)
+        if model_dump_method is not None and callable(model_dump_method):
             try:
                 # Cast to protocol with model_dump for type safety
                 pydantic_obj = cast("FlextProtocols.HasModelDump", obj)

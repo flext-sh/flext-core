@@ -402,13 +402,15 @@ class FlextDecorators:
                 # Get logger from self if available, otherwise create one
                 args_tuple = cast("tuple[object, ...]", args)
                 first_arg: object = args_tuple[0] if args_tuple else None
-                if first_arg is not None and hasattr(first_arg, "logger"):
-                    potential_logger = first_arg.logger
-                    logger = (
-                        potential_logger
-                        if isinstance(potential_logger, FlextLogger)
-                        else FlextLogger(func.__module__)
-                    )
+                potential_logger: object | None = (
+                    getattr(first_arg, "logger", None)
+                    if first_arg is not None
+                    else None
+                )
+                if potential_logger is not None and isinstance(
+                    potential_logger, FlextLogger
+                ):
+                    logger = potential_logger
                 else:
                     logger = FlextLogger(func.__module__)
 
@@ -507,13 +509,15 @@ class FlextDecorators:
                 # Get logger from self if available, otherwise create one
                 args_tuple = cast("tuple[object, ...]", args)
                 first_arg: object = args_tuple[0] if args_tuple else None
-                if first_arg is not None and hasattr(first_arg, "logger"):
-                    potential_logger = first_arg.logger
-                    logger = (
-                        potential_logger
-                        if isinstance(potential_logger, FlextLogger)
-                        else FlextLogger(func.__module__)
-                    )
+                potential_logger: object | None = (
+                    getattr(first_arg, "logger", None)
+                    if first_arg is not None
+                    else None
+                )
+                if potential_logger is not None and isinstance(
+                    potential_logger, FlextLogger
+                ):
+                    logger = potential_logger
                 else:
                     logger = FlextLogger(func.__module__)
 
@@ -646,8 +650,9 @@ class FlextDecorators:
 
         return decorator
 
+    @staticmethod
     def retry(
-        self: int | None = None,
+        max_attempts: int | None = None,
         delay_seconds: float | None = None,
         backoff_strategy: str | None = None,
         error_code: str | None = None,
@@ -692,7 +697,7 @@ class FlextDecorators:
 
         """
         # Use FlextConstants.Reliability for defaults
-        attempts = self or FlextConstants.Reliability.DEFAULT_MAX_RETRIES
+        attempts = max_attempts or FlextConstants.Reliability.DEFAULT_MAX_RETRIES
         delay = delay_seconds or float(
             FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS
         )
@@ -704,19 +709,22 @@ class FlextDecorators:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 logger = FlextDecorators._get_logger_for_retry(args, func)
-                last_exception = FlextDecorators._execute_retry_loop(
+                result_or_exception = FlextDecorators._execute_retry_loop(
                     func, args, kwargs, logger, attempts, delay, strategy
                 )
-                # This only returns if execute_retry_loop returns None (not used)
-                # Otherwise it raises an exception
-                FlextDecorators._handle_retry_exhaustion(
-                    last_exception, func, attempts, error_code, logger
-                )
-                # Unreachable, but needed for type checking
-                msg = f"Operation {func.__name__} failed"
-                raise FlextExceptions.TimeoutError(
-                    msg, error_code=error_code or "RETRY_EXHAUSTED"
-                )
+                # Check if we got a successful result or an exception
+                if isinstance(result_or_exception, Exception):
+                    # All retries failed - handle exhaustion and raise
+                    FlextDecorators._handle_retry_exhaustion(
+                        result_or_exception, func, attempts, error_code, logger
+                    )
+                    # Unreachable, but needed for type checking
+                    msg = f"Operation {func.__name__} failed"
+                    raise FlextExceptions.TimeoutError(
+                        msg, error_code=error_code or "RETRY_EXHAUSTED"
+                    )
+                # Success - return the result
+                return result_or_exception
 
             return wrapper
 
@@ -727,27 +735,24 @@ class FlextDecorators:
         args: tuple[object, ...], func: Callable[..., object]
     ) -> FlextLogger:
         """Get logger from self if available, otherwise create new logger."""
-        args_tuple = cast("tuple[object, ...]", args)
-        first_arg = args_tuple[0] if args_tuple else None
-        if first_arg is not None and hasattr(first_arg, "logger"):
-            potential_logger = first_arg.logger
-            return (
-                potential_logger
-                if isinstance(potential_logger, FlextLogger)
-                else FlextLogger(func.__module__)
-            )
+        first_arg = args[0] if args else None
+        potential_logger: object | None = (
+            getattr(first_arg, "logger", None) if first_arg is not None else None
+        )
+        if potential_logger is not None and isinstance(potential_logger, FlextLogger):
+            return potential_logger
         return FlextLogger(func.__module__)
 
     @staticmethod
-    def _execute_retry_loop(
-        func: Callable[P, R],
+    def _execute_retry_loop[R](
+        func: Callable[..., R],
         args: tuple[object, ...],
         kwargs: dict[str, object],
         logger: FlextLogger,
         attempts: int,
         delay: float,
         strategy: str,
-    ) -> Exception | None:
+    ) -> R | Exception:
         """Execute retry loop and return last exception."""
         last_exception: Exception | None = None
         current_delay = delay
@@ -799,11 +804,14 @@ class FlextDecorators:
                 if attempt == attempts:
                     break
 
+        # Should never be None (loop always catches exceptions), but handle defensively
+        if last_exception is None:
+            return RuntimeError("Retry loop completed without success or exception")
         return last_exception
 
     @staticmethod
     def _handle_retry_exhaustion(
-        last_exception: Exception | None,
+        last_exception: Exception,
         func: Callable[..., object],
         attempts: int,
         error_code: str | None,

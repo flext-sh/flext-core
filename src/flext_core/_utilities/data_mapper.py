@@ -123,9 +123,9 @@ class FlextUtilitiesDataMapper:
 
             # Set active flags to True
             for flag in active_flags:
-                output_key = flag_mapping.get(flag)
-                if output_key:
-                    result[output_key] = True
+                mapped_key: str | None = flag_mapping.get(flag)
+                if mapped_key:
+                    result[mapped_key] = True
 
             return FlextResult[dict[str, bool]].ok(result)
 

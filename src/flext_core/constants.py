@@ -1040,7 +1040,7 @@ class FlextConstants:
         # Type aliases using StrEnum classes (ModelLiteral removed - use StrEnum directly)
         # HandlerModeSimple is a subset of HandlerType for simple command/query operations
         # Since Python doesn't support enum subsets natively, we use the full HandlerType
-        type HandlerModeSimple = HandlerType
+        HandlerModeSimple = HandlerType
 
         # Command/Query defaults
         DEFAULT_COMMAND_TYPE: Final[str] = "generic_command"

@@ -1909,7 +1909,7 @@ class TestServiceDependencyResolution:
         from flext_core import FlextContainer
 
         class UnannnotatedService(FlextService[str]):
-            def __init__(self, some_param=None) -> None:
+            def __init__(self, some_param: object | None = None) -> None:
                 super().__init__()
                 self.param = some_param
 

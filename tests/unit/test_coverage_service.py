@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import operator
 from typing import cast
 
 import pytest
@@ -385,12 +386,9 @@ class TestExecuteOperation:
 
         service = ArgOperationService()
 
-        def add_numbers(a: int, b: int) -> int:
-            return a + b
-
         request = FlextModels.OperationExecutionRequest(
             operation_name="add",
-            operation_callable=add_numbers,
+            operation_callable=operator.add,
             arguments={"a": 5, "b": 3},
             keyword_arguments={},
         )
