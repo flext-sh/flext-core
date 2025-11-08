@@ -1915,21 +1915,21 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "pyrefly"
-version = "0.34.0"
+version = "0.40.1"
 description = "A fast type checker and language server for Python with powerful IDE features"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "pyrefly-0.34.0-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:c5b212f557c19bbc9f02377d25c0380ea9987e320a1ed69f625fe817a1163774"},
-    {file = "pyrefly-0.34.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:87181abe763ed19fd9e107a9ae5982f852f18f93de2957a731c9b40048174552"},
-    {file = "pyrefly-0.34.0-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1085c186cde52c79f42b8c654aa0840c1028601fbd9c35d981d60453008498ec"},
-    {file = "pyrefly-0.34.0-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:dcb92520e4dac3967744f44bd3145e8d029d313076b06277f15b693869f4eb4a"},
-    {file = "pyrefly-0.34.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1f840afa73371aa56f8e6666f2733b4b8a85620329aa385d7a39bb226983b43b"},
-    {file = "pyrefly-0.34.0-py3-none-win32.whl", hash = "sha256:a22f1fd6f03c6fe11c6b491c12a70bb07b3025cd316faa9f98729d42e410bbcd"},
-    {file = "pyrefly-0.34.0-py3-none-win_amd64.whl", hash = "sha256:ac6e33b6a2f90aea9bdf54c7f78ff29b9f71ffcf55f2636b7da513df74bd4b56"},
-    {file = "pyrefly-0.34.0-py3-none-win_arm64.whl", hash = "sha256:34517123a61caef9d19a73ebb04b5bb8bde6efe999daf89fd7a200bb755e3e73"},
-    {file = "pyrefly-0.34.0.tar.gz", hash = "sha256:eb18f4ec341105d5463b5c5844b25a2d520d36d5294302fcb3fd1de2868246e1"},
+    {file = "pyrefly-0.40.1-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:1899722f7ae5fcd7d2ec74119289d04f14d97e9ad9d44dbb36725a6769b3a328"},
+    {file = "pyrefly-0.40.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:c4e956ce758139c2d5357ec202aa93cbcb0102fc882160b5c51c526f80858ace"},
+    {file = "pyrefly-0.40.1-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:435f3d757f127313a6accc941441fe2e5564a4d60e990daa815a58382a9551b3"},
+    {file = "pyrefly-0.40.1-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:49aa72dbf47e0eb940443f81aa20cbdc1dee8fdedbedfa5defa45185cb75fd22"},
+    {file = "pyrefly-0.40.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a009c91ceb16e578c664c8e82b354249d63a316c4c951742608faac0aea37e99"},
+    {file = "pyrefly-0.40.1-py3-none-win32.whl", hash = "sha256:0540b4b68048d2b96208b0e60500125cc511360fc0179eaf010de3431fcca5f9"},
+    {file = "pyrefly-0.40.1-py3-none-win_amd64.whl", hash = "sha256:6c66bb4f132ddf23812a299e490ee9d1209dcb72f02e6c770fc07f8c681e3089"},
+    {file = "pyrefly-0.40.1-py3-none-win_arm64.whl", hash = "sha256:9e36eb9ba594e4b4f21432d807f8ab326de887f6586b1e6b6549558bcc65be20"},
+    {file = "pyrefly-0.40.1.tar.gz", hash = "sha256:9e7975292fbb64fdf69ee7f71b46c032eacdd6d71910103c012d6d46ff5bcd34"},
 ]
 
 [[package]]
@@ -3045,4 +3045,4 @@ typings = ["django-stubs", "types-docker", "types-ldap3", "types-protobuf", "typ
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "0522607278eac5da09082e74f30ccf8d70c59002dcced41299452d652626665f"
+content-hash = "64abe0683755b28b9138b35294be7832d9fe04ea25bef5d25c6480b14be6949d"
