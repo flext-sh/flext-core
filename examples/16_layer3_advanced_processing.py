@@ -76,13 +76,19 @@ def example_1_basic_registration() -> None:
 
     # Register processor
     result = dispatcher.register_processor("doubler", DataDoubler())
-    assert result.is_success
+    if result.is_failure:
+        print(f"❌ Failed to register processor: {result.error}")
+        return
     print("✅ Registered 'doubler' processor")
 
     # Execute processor
     process_result = dispatcher.process("doubler", 5)
-    assert process_result.is_success
-    assert process_result.unwrap() == 10
+    if process_result.is_failure:
+        print(f"❌ Failed to process: {process_result.error}")
+        return
+    if process_result.unwrap() != 10:
+        print(f"❌ Expected 10, got {process_result.unwrap()}")
+        return
     print(f"✅ Processed 5 → {process_result.unwrap()}")
 
 
@@ -100,9 +106,13 @@ def example_2_batch_processing() -> None:
     data_list = [1, 2, 3, 4, 5]
     result = dispatcher.process_batch("doubler", data_list, batch_size=2)
 
-    assert result.is_success
+    if result.is_failure:
+        print(f"❌ Failed to process batch: {result.error}")
+        return
     processed = result.unwrap()
-    assert processed == [2, 4, 6, 8, 10]
+    if processed != [2, 4, 6, 8, 10]:
+        print(f"❌ Expected [2, 4, 6, 8, 10], got {processed}")
+        return
     print(f"✅ Batch processed {data_list} → {processed}")
 
     # Check batch performance metrics
@@ -126,7 +136,9 @@ def example_3_parallel_processing() -> None:
     result = dispatcher.process_parallel("doubler", data_list, max_workers=4)
     elapsed = time.time() - start
 
-    assert result.is_success
+    if result.is_failure:
+        print(f"❌ Failed to process in parallel: {result.error}")
+        return
     processed = result.unwrap()
     print(f"✅ Parallel processed {data_list}")
     print(f"✅ Result: {processed}")
@@ -152,15 +164,21 @@ def example_4_timeout_enforcement() -> None:
 
     # Execute with reasonable timeout - should succeed
     result = dispatcher.execute_with_timeout("slow", 10, timeout=1.0)
-    assert result.is_success
+    if result.is_failure:
+        print(f"❌ Operation should have succeeded but failed: {result.error}")
+        return
     print("✅ Slow operation completed within timeout")
 
     # Execute with tight timeout - should fail
     very_slow = SlowProcessor(delay=0.5)
     dispatcher.register_processor("very_slow", very_slow)
     result = dispatcher.execute_with_timeout("very_slow", 10, timeout=0.1)
-    assert result.is_failure
-    assert "timeout" in result.error.lower()
+    if result.is_success:
+        print("❌ Operation should have timed out but succeeded")
+        return
+    if "timeout" not in result.error.lower():
+        print(f"❌ Expected timeout error, got: {result.error}")
+        return
     print(f"✅ Timeout error caught: {result.error}")
 
 
@@ -181,8 +199,12 @@ def example_5_fallback_chains() -> None:
 
     # Try primary, fall back to secondary
     result = dispatcher.execute_with_fallback("doubler", 5, fallback_names=["squarer"])
-    assert result.is_success
-    assert result.unwrap() == 10  # From doubler, not squarer
+    if result.is_failure:
+        print(f"❌ Fallback chain failed: {result.error}")
+        return
+    if result.unwrap() != 10:
+        print(f"❌ Expected 10 from doubler, got {result.unwrap()}")
+        return
     print(f"✅ Primary processor succeeded: 5 → {result.unwrap()}")
 
     # Now test with validator that fails - falls back
@@ -194,8 +216,12 @@ def example_5_fallback_chains() -> None:
         -5,  # Negative - will fail validation
         fallback_names=["doubler"],
     )
-    assert result.is_success
-    assert result.unwrap() == -10  # Fell back to doubler
+    if result.is_failure:
+        print(f"❌ Fallback chain failed: {result.error}")
+        return
+    if result.unwrap() != -10:
+        print(f"❌ Expected -10 from fallback, got {result.unwrap()}")
+        return
     print(
         f"✅ Fallback executed: validator failed, doubler succeeded: -5 → {result.unwrap()}"
     )
@@ -220,7 +246,9 @@ def example_6_metrics_auditing() -> None:
     metrics = dispatcher.processor_metrics
     doubler_metrics = metrics["doubler"]
     print(f"✅ Processor metrics: {doubler_metrics}")
-    assert doubler_metrics["executions"] == 5  # 1 + 1 + 3 items
+    if doubler_metrics["executions"] != 5:
+        print(f"❌ Expected 5 executions, got {doubler_metrics['executions']}")
+        return
 
     # Get batch performance
     batch_perf = dispatcher.batch_performance
@@ -228,13 +256,17 @@ def example_6_metrics_auditing() -> None:
 
     # Get comprehensive analytics
     analytics_result = dispatcher.get_performance_analytics()
-    assert analytics_result.is_success
+    if analytics_result.is_failure:
+        print(f"❌ Failed to get analytics: {analytics_result.error}")
+        return
     analytics = analytics_result.unwrap()
     print(f"✅ Analytics keys: {list(analytics.keys())}")
 
     # Get audit log
     audit_result = dispatcher.get_process_audit_log()
-    assert audit_result.is_success
+    if audit_result.is_failure:
+        print(f"❌ Failed to get audit log: {audit_result.error}")
+        return
     audit_log = audit_result.unwrap()
     print(f"✅ Audit log entries: {len(audit_log)}")
 
@@ -263,7 +295,9 @@ def example_7_integrated_workflow() -> None:
 
     # Step 2: Process batch with doubler
     batch_result = dispatcher.process_batch("doubler", [1, 2, 3, 4, 5])
-    assert batch_result.is_success
+    if batch_result.is_failure:
+        print(f"❌ Batch processing failed: {batch_result.error}")
+        return
     batch_processed = batch_result.unwrap()
     print(f"✅ Batch doubled: {batch_processed}")
 
@@ -271,7 +305,9 @@ def example_7_integrated_workflow() -> None:
     parallel_result = dispatcher.process_parallel(
         "squarer", [1, 2, 3, 4, 5], max_workers=2
     )
-    assert parallel_result.is_success
+    if parallel_result.is_failure:
+        print(f"❌ Parallel processing failed: {parallel_result.error}")
+        return
     parallel_processed = parallel_result.unwrap()
     print(f"✅ Parallel squared: {parallel_processed}")
 
@@ -279,7 +315,9 @@ def example_7_integrated_workflow() -> None:
     fallback_result = dispatcher.execute_with_fallback(
         "doubler", 10, fallback_names=["squarer"]
     )
-    assert fallback_result.is_success
+    if fallback_result.is_failure:
+        print(f"❌ Fallback execution failed: {fallback_result.error}")
+        return
     print(f"✅ Fallback execution: 10 → {fallback_result.unwrap()}")
 
     # Step 5: View comprehensive metrics

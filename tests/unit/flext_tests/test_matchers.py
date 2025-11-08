@@ -10,9 +10,9 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_tests.matchers import FlextTestsMatchers
 
 from flext_core import FlextResult
+from flext_tests.matchers import FlextTestsMatchers
 
 
 class TestDataBuilder:

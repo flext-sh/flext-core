@@ -10,9 +10,9 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pytest
-from flext_tests.utilities import FlextTestsUtilities
 
 from flext_core import FlextResult
+from flext_tests.utilities import FlextTestsUtilities
 
 
 class TestFlextTestsUtilities:

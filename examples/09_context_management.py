@@ -571,19 +571,8 @@ class ContextManagementService(FlextService[dict[str, object]]):
 
     # ========== NEW FlextResult METHODS (v0.9.9+) ==========
 
-    def demonstrate_new_flextresult_methods(self) -> None:
-        """Demonstrate the 5 new FlextResult methods in context management.
-
-        Shows how the new v0.9.9+ methods integrate with context operations:
-        - from_callable: Safe context operations
-        - flow_through: Context pipeline composition
-        - lash: Context fallback recovery
-        - alt: Context provider alternatives
-        - value_or_call: Lazy context loading
-        """
-        print("\n=== NEW FlextResult METHODS (v0.9.9+) ===")
-
-        # 1. from_callable - Safe Context Operations
+    def _demo_from_callable_context(self) -> None:
+        """Demonstrate from_callable with context operations."""
         print("\n1. from_callable: Safe Context Operations")
 
         def risky_context_operation() -> dict[str, object]:
@@ -617,7 +606,8 @@ class ContextManagementService(FlextService[dict[str, object]]):
         else:
             print(f"❌ Context extraction failed: {result.error}")
 
-        # 2. flow_through - Context Pipeline Composition
+    def _demo_flow_through_pipeline(self) -> None:
+        """Demonstrate flow_through with context pipeline."""
         print("\n2. flow_through: Context Pipeline Composition")
 
         def validate_user_context(
@@ -687,7 +677,8 @@ class ContextManagementService(FlextService[dict[str, object]]):
         else:
             print(f"❌ Pipeline failed: {pipeline_result.error}")
 
-        # 3. lash - Context Fallback Recovery
+    def _demo_lash_fallback(self) -> None:
+        """Demonstrate lash for context fallback recovery."""
         print("\n3. lash: Context Fallback Recovery")
 
         def try_get_user_from_context() -> FlextResult[dict[str, object]]:
@@ -726,7 +717,8 @@ class ContextManagementService(FlextService[dict[str, object]]):
         else:
             print(f"❌ All user resolution failed: {user_result.error}")
 
-        # 4. alt - Context Provider Alternatives
+    def _demo_alt_providers(self) -> None:
+        """Demonstrate alt for context provider alternatives."""
         print("\n4. alt: Context Provider Alternatives")
 
         def get_cached_service_config() -> FlextResult[dict[str, object]]:
@@ -754,7 +746,8 @@ class ContextManagementService(FlextService[dict[str, object]]):
         else:
             print(f"❌ No config sources available: {config.error}")
 
-        # 5. value_or_call - Lazy Context Loading
+    def _demo_value_or_call_lazy(self) -> None:
+        """Demonstrate value_or_call for lazy context loading."""
         print("\n5. value_or_call: Lazy Context Loading")
 
         def load_expensive_user_profile() -> dict[str, str]:
@@ -792,6 +785,18 @@ class ContextManagementService(FlextService[dict[str, object]]):
 
         print("\n✅ NEW FlextResult METHODS DEMONSTRATED!")
         print("All 5 methods integrated with context management operations")
+
+    def demonstrate_new_flextresult_methods(self) -> None:
+        """Demonstrate the 5 new FlextResult methods in context management.
+
+        Shows how the new v0.9.9+ methods integrate with context operations.
+        """
+        print("\n=== NEW FlextResult METHODS (v0.9.9+) ===")
+        self._demo_from_callable_context()
+        self._demo_flow_through_pipeline()
+        self._demo_lash_fallback()
+        self._demo_alt_providers()
+        self._demo_value_or_call_lazy()
 
     def demonstrate_deprecated_patterns(self) -> None:
         """Show deprecated context patterns."""

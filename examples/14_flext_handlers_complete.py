@@ -482,16 +482,12 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 super().__init__(config=config)
                 self._logger = FlextLogger.create_module_logger(__name__)
 
-            def handle(
-                self,
-                message: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
-                """Handle validation with comprehensive error handling."""
-                self._logger.info("Processing validation request")
-
-                # Required field validation
+            def _validate_required_fields(
+                self, message: dict[str, object]
+            ) -> FlextResult[None]:
+                """Validate required fields are present."""
                 if not message.get("id"):
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[None].fail(
                         "Missing required field: id",
                         error_code="MISSING_FIELD",
                         error_data={
@@ -499,36 +495,71 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                             "provided_fields": list(message.keys()),
                         },
                     )
+                return FlextResult[None].ok(None)
 
-                # Type validation
-                if not isinstance(message.get("amount"), (int, float)):
-                    return FlextResult[dict[str, object]].fail(
+            def _validate_amount_type(
+                self, message: dict[str, object]
+            ) -> FlextResult[int | float]:
+                """Validate amount field type."""
+                amount_value = message.get("amount")
+                if not isinstance(amount_value, (int, float)):
+                    return FlextResult[int | float].fail(
                         "Invalid type for amount field",
                         error_code="TYPE_ERROR",
                         error_data={
                             "field": "amount",
                             "expected": "number",
-                            "actual": type(message.get("amount")).__name__,
+                            "actual": type(amount_value).__name__,
                         },
                     )
+                return FlextResult[int | float].ok(amount_value)
 
-                # Business rule validation
-                amount_value = message.get("amount", 0)
-                if not isinstance(amount_value, (int, float)):
-                    return FlextResult[dict[str, object]].fail(
-                        "Amount must be a number",
-                        error_code="TYPE_ERROR",
-                    )
-
-                amount: int | float = amount_value
+            def _validate_business_rules(self, amount: float) -> FlextResult[None]:
+                """Validate business rules."""
                 if amount < 0:
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[None].fail(
                         "Amount cannot be negative",
                         error_code="BUSINESS_RULE_VIOLATION",
                         error_data={
                             "rule": "positive_amount",
                             "value": amount,
                         },
+                    )
+                return FlextResult[None].ok(None)
+
+            def handle(
+                self,
+                message: dict[str, object],
+            ) -> FlextResult[dict[str, object]]:
+                """Handle validation with comprehensive error handling."""
+                self._logger.info("Processing validation request")
+
+                # Validate required fields
+                field_result = self._validate_required_fields(message)
+                if field_result.is_failure:
+                    return FlextResult[dict[str, object]].fail(
+                        field_result.error,
+                        error_code=field_result.error_code,
+                        error_data=field_result.error_data,
+                    )
+
+                # Validate amount type
+                amount_result = self._validate_amount_type(message)
+                if amount_result.is_failure:
+                    return FlextResult[dict[str, object]].fail(
+                        amount_result.error,
+                        error_code=amount_result.error_code,
+                        error_data=amount_result.error_data,
+                    )
+                amount = amount_result.unwrap()
+
+                # Validate business rules
+                rule_result = self._validate_business_rules(amount)
+                if rule_result.is_failure:
+                    return FlextResult[dict[str, object]].fail(
+                        rule_result.error,
+                        error_code=rule_result.error_code,
+                        error_data=rule_result.error_data,
                     )
 
                 # Success case

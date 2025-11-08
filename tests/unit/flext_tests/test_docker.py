@@ -13,9 +13,9 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from flext_tests.docker import FlextTestDocker
 
 from flext_core import FlextResult
+from flext_tests.docker import FlextTestDocker
 
 # Access nested classes
 ContainerInfo = FlextTestDocker.ContainerInfo

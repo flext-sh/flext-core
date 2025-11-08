@@ -16,11 +16,14 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import asdict, is_dataclass
 from typing import (
+    ClassVar,
     Literal,
+    Self,
     cast,
     override,
 )
 
+from beartype.door import is_bearable
 from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
@@ -89,6 +92,63 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
     # Class-level logger for internal operations (not for subclass use)
     _internal_logger: FlextLogger = FlextLogger(__name__)
+
+    # Runtime type validation attributes
+    _expected_message_type: ClassVar[type | None] = None
+    _expected_result_type: ClassVar[type | None] = None
+
+    def __class_getitem__(cls, item: tuple[type, type] | type) -> type[Self]:
+        """Intercept FlextHandlers[M, R] to create typed subclass with validation.
+
+        This enables automatic runtime type validation for handlers:
+        - FlextHandlers[CreateUserCommand, User] validates message and result types
+        - FlextHandlers[Query, Report] validates both input and output types
+
+        Args:
+            item: Either tuple of (MessageType, ResultType) or single ResultType
+
+        Returns:
+            Typed subclass with expected types stored as class variables
+
+        Examples:
+            >>> class UserHandler(FlextHandlers[CreateUserCommand, User]):
+            ...     def handle(self, msg: CreateUserCommand) -> FlextResult[User]:
+            ...         return FlextResult[User].ok(User(name=msg.name))
+            >>>
+            >>> # ✅ Correct types - passes validation
+            >>> handler = UserHandler(config=...)
+            >>> result = handler.execute(CreateUserCommand(name="Alice"))
+            >>>
+            >>> # ❌ Wrong result type - automatic rejection
+            >>> class BadHandler(FlextHandlers[CreateUserCommand, User]):
+            ...     def handle(self, msg: CreateUserCommand) -> FlextResult[User]:
+            ...         return FlextResult.ok(Product(id="123"))  # Wrong type!
+
+        """
+        # Handle both single and tuple types
+        if isinstance(item, tuple):
+            if len(item) != 2:
+                msg = "FlextHandlers requires exactly 2 type parameters: FlextHandlers[MessageType, ResultType]"
+                raise TypeError(msg)
+            message_type, result_type = item
+        else:
+            # Single type parameter - assume it's result type, message type is Any
+            message_type = None
+            result_type = item
+
+        class TypedFlextHandlers(cls):  # type: ignore[misc,valid-type]
+            _expected_message_type: ClassVar[type | None] = message_type
+            _expected_result_type: ClassVar[type | None] = result_type
+
+        # Create readable name for better error messages and debugging
+        msg_name = getattr(message_type, "__name__", "Any") if message_type else "Any"
+        res_name = getattr(result_type, "__name__", str(result_type))
+        cls_name = getattr(cls, "__name__", "FlextHandlers")
+        cls_qualname = getattr(cls, "__qualname__", "FlextHandlers")
+        TypedFlextHandlers.__name__ = f"{cls_name}[{msg_name}, {res_name}]"
+        TypedFlextHandlers.__qualname__ = f"{cls_qualname}[{msg_name}, {res_name}]"
+
+        return TypedFlextHandlers  # type: ignore[return-value]
 
     class _MessageValidator:
         """Private message validation utilities for FlextHandlers."""
@@ -630,6 +690,76 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         """
         return self.execute(input_data)
 
+    def _validate_handler_result(
+        self,
+        message: MessageT_contra,
+        result: FlextResult[ResultT],
+    ) -> FlextResult[ResultT]:
+        """Validate handler result matches expected types.
+
+        Performs runtime type validation for both message input and result output:
+        1. Validates message type matches _expected_message_type (if set)
+        2. Validates result value type matches _expected_result_type (if set and successful)
+
+        Args:
+            message: The message that was handled
+            result: The FlextResult returned by handle()
+
+        Returns:
+            FlextResult[ResultT]: Original result if validation passes, failure otherwise
+
+        Examples:
+            >>> # ✅ Validation passes for correct types
+            >>> message = CreateUserCommand(name="Alice")
+            >>> result = FlextResult[User].ok(User(name="Alice"))
+            >>> validated = self._validate_handler_result(message, result)
+            >>> assert validated.is_success
+            >>>
+            >>> # ❌ Validation fails for wrong result type
+            >>> result = FlextResult.ok(Product(id="123"))  # Wrong type!
+            >>> validated = self._validate_handler_result(message, result)
+            >>> assert validated.is_failure
+
+        """
+        # Validate message type
+        if self._expected_message_type is not None and not is_bearable(
+            message, self._expected_message_type
+        ):
+            expected_name = getattr(
+                self._expected_message_type,
+                "__name__",
+                str(self._expected_message_type),
+            )
+            actual_name = type(message).__name__
+            msg = (
+                f"{self.__class__.__name__}.handle() received message of type "
+                f"{actual_name} instead of {expected_name}. "
+                f"Message: {message!r}"
+            )
+            return FlextResult[ResultT].fail(msg, error_code="TYPE_MISMATCH")
+
+        # Validate result type (only on success - errors don't need type validation)
+        if (
+            self._expected_result_type is not None
+            and result.is_success
+            and not is_bearable(result.value, self._expected_result_type)
+        ):
+            expected_name = getattr(
+                self._expected_result_type,
+                "__name__",
+                str(self._expected_result_type),
+            )
+            actual_name = type(result.value).__name__
+            msg = (
+                f"{self.__class__.__name__}.handle() returned "
+                f"FlextResult[{actual_name}] instead of "
+                f"FlextResult[{expected_name}]. "
+                f"Data: {result.value!r}"
+            )
+            return FlextResult[ResultT].fail(msg, error_code="TYPE_MISMATCH")
+
+        return result
+
     def _run_pipeline(
         self,
         message: MessageT_contra | dict[str, object],
@@ -683,9 +813,13 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 f"Message validation failed: {validation_result.error}"
             )
 
-        # Execute handler
+        # Execute handler with runtime type validation
         try:
-            return self.handle(cast("MessageT_contra", message))
+            result = self.handle(cast("MessageT_contra", message))
+            # Validate result types if __class_getitem__ was used
+            return self._validate_handler_result(
+                cast("MessageT_contra", message), result
+            )
         except Exception as e:
             # VALIDATION HIERARCHY - User handler execution (CRITICAL)
             # User-registered handlers can raise any exception
