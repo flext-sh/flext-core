@@ -19,7 +19,7 @@ import types
 from collections.abc import Callable, Iterator, Sequence
 from typing import Never, Self, cast, overload, override
 
-from beartype.door import is_bearable
+from beartype import beartype
 from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success, safe
@@ -28,6 +28,7 @@ from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 
 
+@beartype  # ← VALIDAÇÃO RUNTIME: Todos os 92 métodos públicos validados automaticamente!
 class FlextResult[T_co]:
     """FlextResult[T_co] type-safe result type implementing the railway pattern (Either monad).
 
@@ -194,9 +195,6 @@ class FlextResult[T_co]:
     _data: T_co | None
     _error: str | None
 
-    # Runtime type validation attribute (set by __class_getitem__)
-    _expected_type: type | None = None
-
     # =========================================================================
     # PRIVATE MEMBERS - Internal helpers to avoid circular imports
     # =========================================================================
@@ -242,24 +240,6 @@ class FlextResult[T_co]:
     ) -> None:
         """Initialize result with either success data or error using returns.Result backend."""
         super().__init__()
-
-        # Runtime type validation if _expected_type is set (via __class_getitem__)
-        if (
-            self._expected_type is not None
-            and error is None
-            and data is not None
-            and not is_bearable(data, self._expected_type)
-        ):
-            expected_name = getattr(
-                self._expected_type, "__name__", str(self._expected_type)
-            )
-            actual_name = type(data).__name__
-            msg = (
-                f"FlextResult[{expected_name}].ok() received {actual_name} "
-                f"instead of {expected_name}. Data: {data!r}"
-            )
-            raise TypeError(msg)
-
         # Architectural invariant: exactly one of data or error must be provided.
         if error is not None:
             # Failure path: create Failure with error message
@@ -279,43 +259,6 @@ class FlextResult[T_co]:
         self._error_code = error_code
         self._error_data = error_data or {}
         self.metadata: object | None = None
-
-    def __class_getitem__(cls, item: type) -> type[Self]:
-        """Intercept FlextResult[T] to create typed subclass for runtime validation.
-
-        When FlextResult[int] is accessed, this method creates a subclass that
-        stores the expected type (int) in _expected_type. The subclass inherits
-        all methods and behaviors but adds automatic type validation in __init__.
-
-        This enables automatic type checking at runtime:
-            FlextResult[int].ok(42)       # ✅ Valid
-            FlextResult[int].ok("string") # ❌ TypeError
-
-        Args:
-            item: The type parameter (e.g., int, str, User)
-
-        Returns:
-            A typed subclass with _expected_type set
-
-        Example:
-            >>> result = FlextResult[int].ok(42)  # ✅ Passes
-            >>> result = FlextResult[int].ok("string")  # ❌ TypeError
-
-        """
-
-        class TypedFlextResult(cls):  # type: ignore[valid-type,misc]
-            """Typed subclass with stored expected type for runtime validation."""
-
-            _expected_type: type | None = item
-
-        # Preserve readable name for debugging and error messages
-        type_name = getattr(item, "__name__", str(item))
-        cls_name = getattr(cls, "__name__", "FlextResult")
-        cls_qualname = getattr(cls, "__qualname__", "FlextResult")
-        TypedFlextResult.__name__ = f"{cls_name}[{type_name}]"
-        TypedFlextResult.__qualname__ = f"{cls_qualname}[{type_name}]"
-
-        return TypedFlextResult  # type: ignore[return-value]
 
     @property
     def is_success(self) -> bool:

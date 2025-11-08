@@ -204,11 +204,16 @@ def docker_enabled() -> bool:
         True if Docker daemon is accessible, False otherwise
 
     """
+    import shutil
     import subprocess
+
+    docker_path = shutil.which("docker")
+    if not docker_path:
+        return False
 
     try:
         subprocess.run(
-            ["docker", "ps"],
+            [docker_path, "ps"],
             capture_output=True,
             timeout=5,
             check=True,

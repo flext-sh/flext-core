@@ -14,11 +14,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, ClassVar, Self
 
-from pydantic import (
-    Discriminator,
-)
+from beartype.door import is_bearable
+from pydantic import Discriminator, model_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.config import FlextModelsConfig
@@ -334,7 +333,61 @@ class FlextModels:
         """Metadata model for structured information - wrapper class."""
 
     class Payload[T](FlextModelsBase.Payload[T]):
-        """Payload model for data transfer - wrapper class."""
+        """Payload model for data transfer with runtime type validation.
+
+        Runtime Type Validation:
+            Payload[User](data=user)    # ✅ Validates user is User type
+            Payload[User](data=product) # ❌ TypeError automatically
+        """
+
+        # Runtime type validation attribute (set by __class_getitem__)
+        _expected_data_type: ClassVar[type | None] = None
+
+        def __class_getitem__(cls, item: type) -> type[Self]:
+            """Intercept Payload[T] to create typed subclass for runtime validation.
+
+            Args:
+                item: The data type parameter (e.g., User, Product)
+
+            Returns:
+                A typed subclass with _expected_data_type set
+
+            """
+
+            class TypedPayload(cls):  # type: ignore[valid-type,misc]
+                """Typed subclass with stored expected data type."""
+
+                _expected_data_type: ClassVar[type | None] = item
+
+            # Preserve readable name for debugging
+            type_name = getattr(item, "__name__", str(item))
+            cls_name = getattr(cls, "__name__", "Payload")
+            cls_qualname = getattr(cls, "__qualname__", "Payload")
+            TypedPayload.__name__ = f"{cls_name}[{type_name}]"
+            TypedPayload.__qualname__ = f"{cls_qualname}[{type_name}]"
+
+            return TypedPayload  # type: ignore[return-value]
+
+        @model_validator(mode="after")
+        def _validate_data_type(self) -> Self:
+            """Validate data field matches expected type."""
+            if (
+                self._expected_data_type is not None
+                and self.data is not None
+                and not is_bearable(self.data, self._expected_data_type)
+            ):
+                expected_name = getattr(
+                    self._expected_data_type,
+                    "__name__",
+                    str(self._expected_data_type),
+                )
+                actual_name = type(self.data).__name__
+                msg = (
+                    f"Payload[{expected_name}] received data of type {actual_name} "
+                    f"instead of {expected_name}. Data: {self.data!r}"
+                )
+                raise TypeError(msg)
+            return self
 
     class Url(FlextModelsBase.Url):
         """URL model with validation - wrapper class."""

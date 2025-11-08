@@ -29,6 +29,7 @@ from typing import (
     override,
 )
 
+from beartype.door import is_bearable
 from pydantic import computed_field
 
 from flext_core.config import FlextConfig
@@ -205,6 +206,90 @@ class FlextService[TDomainResult](
         >>> assert isinstance(user, User)
     """
 
+    # Runtime type validation attribute (set by __class_getitem__)
+    _expected_domain_result_type: ClassVar[type | None] = None
+
+    # =========================================================================
+    # RUNTIME TYPE VALIDATION: Automatic via __class_getitem__
+    # =========================================================================
+
+    def __class_getitem__(cls, item: type) -> type[Self]:
+        """Intercept FlextService[T] to create typed subclass for runtime validation.
+
+        When FlextService[User] is accessed, this method creates a subclass that
+        stores the expected domain result type (User) in _expected_domain_result_type.
+        The subclass inherits all methods and behaviors but adds automatic type
+        validation in execute() return value.
+
+        This enables automatic type checking at runtime:
+            FlextService[User].execute() → FlextResult[User]     # ✅ Valid
+            FlextService[User].execute() → FlextResult[Product]  # ❌ TypeError
+
+        Args:
+            item: The domain result type parameter (e.g., User, Product)
+
+        Returns:
+            A typed subclass with _expected_domain_result_type set
+
+        Example:
+            >>> class UserService(FlextService[User]):
+            ...     def execute(self) -> FlextResult[User]:
+            ...         return FlextResult[User].ok(User(...))
+            >>>
+            >>> service = UserService()
+            >>> result = service.execute()  # ✅ Validated automatically
+
+        """
+
+        class TypedFlextService(cls):  # type: ignore[valid-type,misc]
+            """Typed subclass with stored expected domain result type."""
+
+            _expected_domain_result_type: ClassVar[type | None] = item
+
+        # Preserve readable name for debugging and error messages
+        type_name = getattr(item, "__name__", str(item))
+        cls_name = getattr(cls, "__name__", "FlextService")
+        cls_qualname = getattr(cls, "__qualname__", "FlextService")
+        TypedFlextService.__name__ = f"{cls_name}[{type_name}]"
+        TypedFlextService.__qualname__ = f"{cls_qualname}[{type_name}]"
+
+        return TypedFlextService  # type: ignore[return-value]
+
+    def _validate_domain_result(
+        self, result: FlextResult[TDomainResult]
+    ) -> FlextResult[TDomainResult]:
+        """Validate execute() result matches expected domain result type.
+
+        Args:
+            result: The result returned from execute()
+
+        Returns:
+            The same result if validation passes
+
+        Raises:
+            TypeError: If result data doesn't match _expected_domain_result_type
+
+        """
+        if (
+            self._expected_domain_result_type is not None
+            and result.is_success
+            and not is_bearable(result.value, self._expected_domain_result_type)
+        ):
+            expected_name = getattr(
+                self._expected_domain_result_type,
+                "__name__",
+                str(self._expected_domain_result_type),
+            )
+            actual_name = type(result.value).__name__
+            msg = (
+                f"{self.__class__.__name__}.execute() returned "
+                f"FlextResult[{actual_name}] instead of "
+                f"FlextResult[{expected_name}]. "
+                f"Data: {result.value!r}"
+            )
+            raise TypeError(msg)
+        return result
+
     # =========================================================================
     # V2 OVERRIDE: Zero-Ceremony Instantiation
     # =========================================================================
@@ -242,9 +327,10 @@ class FlextService[TDomainResult](
         type(instance).__init__(instance, **kwargs)
 
         if cls.auto_execute:
-            # Auto-execute and return unwrapped result
+            # Auto-execute with runtime type validation
+            result = instance._validate_domain_result(instance.execute())
             # Cast to Self for type checker (actual runtime value is TDomainResult)
-            return cast("Self", instance.execute().unwrap())
+            return cast("Self", result.unwrap())
 
         # Return service instance (default behavior)
         return instance
@@ -288,7 +374,7 @@ class FlextService[TDomainResult](
             - Zero performance overhead vs manual .execute().unwrap()
 
         """
-        return self.execute().unwrap()
+        return self._validate_domain_result(self.execute()).unwrap()
 
     @classmethod
     def _extract_dependencies_from_signature(cls) -> dict[str, type]:

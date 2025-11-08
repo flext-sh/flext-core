@@ -338,6 +338,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from beartype import BeartypeConf, BeartypeStrategy
+
 from flext_core.__version__ import __version__, __version_info__
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -355,16 +357,12 @@ from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
-from flext_core.typings import (  # TypeVars; FlextTypes - domain-specific types
-    # Note: Pydantic types (UUID1-5, EmailStr, HttpUrl, etc.) are no longer
-    # re-exported. Users should import directly from pydantic: from pydantic
-    # import EmailStr, PositiveInt, HttpUrl
+from flext_core.typings import (
     Command,
     E,
     Event,
     F,
     FlextTypes,
-    # Domain validation types (Phase 3 - Annotated constraints)
     HostName,
     K,
     LogLevel,
@@ -410,15 +408,45 @@ from flext_core.utilities import (
     FlextValidations,
 )
 
+# =============================================================================
+# RUNTIME TYPE CHECKING - Python 3.13 Strict Typing Enforcement
+# =============================================================================
+# beartype provides RUNTIME type validation in addition to static checking.
+#
+# ENABLED via FlextRuntime.enable_runtime_checking() for package-wide validation.
+# Critical methods can also use @beartype decorator individually.
+#
+# To enable full package-wide checking in YOUR application:
+#   from flext_core import FlextRuntime
+#   FlextRuntime.enable_runtime_checking()  # Applies beartype to all modules
+#
+# Or use @beartype decorator manually in your code:
+#   from beartype import beartype
+#   @beartype
+#   def my_function(x: int) -> str:
+#       return str(x)
+#
+# Beartype provides O(log n) runtime validation with minimal overhead.
+# Static type checking (pyright strict mode) is ALWAYS active.
+# Documentation: https://beartype.readthedocs.io/en/stable/
+# =============================================================================
+
+# Beartype configuration for runtime type checking (available for your use)
+BEARTYPE_CONF = BeartypeConf(
+    strategy=BeartypeStrategy.Ologn,  # O(log n) - thorough with acceptable overhead
+    is_color=True,  # Colored error messages
+    claw_is_pep526=False,  # Disable variable annotation checking
+    warning_cls_on_decorator_exception=UserWarning,  # Warnings on decorator failures
+)
+
+# =============================================================================
+
 __all__ = [
-    # FLEXT Core Classes
-    "CallableInputT",
-    "CallableOutputT",
+    "BEARTYPE_CONF",
     "Command",
     "E",
     "Event",
     "F",
-    "FactoryT",
     "FlextConfig",
     "FlextConstants",
     "FlextContainer",
@@ -443,16 +471,11 @@ __all__ = [
     "K",
     "LogLevel",
     "Message",
-    "MessageT",
-    "MessageT_contra",
     "NonEmptyStr",
     "P",
     "PortNumber",
-    "ProcessedDataT",
-    "ProcessorResultT",
     "Query",
     "R",
-    "RegistryHandlerT",
     "ResultT",
     "RetryCount",
     "T",
@@ -467,22 +490,15 @@ __all__ = [
     "TDomainEvent_co",
     "TEntity_co",
     "TEvent_contra",
-    "TInput_Handler_contra",
     "TInput_contra",
     "TItem_contra",
     "TQuery_contra",
-    "TResult_Handler_co",
     "TResult_co",
     "TResult_contra",
     "TState_co",
     "TUtil_contra",
-    "TValidateAll",
     "TValueObject_co",
     "TValue_co",
-    "T_Repository_contra",
-    "T_ResultProtocol",
-    "T_Service_co",
-    "T_Validator_contra",
     "T_co",
     "T_contra",
     "TimeoutSeconds",
@@ -491,5 +507,4 @@ __all__ = [
     "W",
     "__version__",
     "__version_info__",
-    "service_factory",
 ]
