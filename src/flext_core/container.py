@@ -32,8 +32,8 @@ from flext_core.typings import FactoryT, FlextTypes, T
 class FlextContainer(FlextProtocols.Configurable):
     """Type-safe dependency injection container for service management.
 
-    Implements FlextProtocols.Configurable through structural typing. All
-    container instances automatically satisfy the Configurable protocol by
+    Implements FlextProtocols.Configurable through protocol inheritance.
+    All container instances satisfy the Configurable protocol contract by
     implementing the required methods: configure() and get_config().
 
     Provides centralized service management with singleton pattern support,
@@ -692,9 +692,9 @@ class FlextContainer(FlextProtocols.Configurable):
         services_snapshot = snapshot.get("services")
         factories_snapshot = snapshot.get("factories")
 
-        if isinstance(services_snapshot, dict):
+        if FlextRuntime.is_dict_like(services_snapshot):
             self._services = services_snapshot
-        if isinstance(factories_snapshot, dict):
+        if FlextRuntime.is_dict_like(factories_snapshot):
             self._factories = factories_snapshot
 
     # =========================================================================
@@ -1224,7 +1224,7 @@ class FlextContainer(FlextProtocols.Configurable):
     def validate_and_get(
         self,
         name: str,
-        validators: list[FlextTypes.ValidatorFunctionType] | None = None,
+        validators: list[FlextTypes.ValidatorFunction[object]] | None = None,
     ) -> FlextResult[object]:
         """Get service and validate using flow_through pattern.
 

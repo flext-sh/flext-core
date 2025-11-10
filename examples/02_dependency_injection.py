@@ -38,7 +38,6 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextService,
-    FlextTypes,
 )
 
 
@@ -328,7 +327,7 @@ class CacheService(FlextService[object]):
         """Initialize cache with size and TTL limits."""
         super().__init__()
         self._cache: dict[str, object] = {}
-        self._metadata: FlextTypes.NestedDict = {}
+        self._metadata: dict[str, object] = {}
         self.max_size = max_size
         self._ttl_seconds = ttl_seconds
         self._hits = 0
@@ -746,7 +745,7 @@ class ComprehensiveDIService(FlextService[User]):
         print("✅ Container cleared")
 
         connection = str(self._config_data.get("database_url", "sqlite:///:memory:"))
-        db_service = DatabaseService(connection)
+        db_service = DatabaseService(connection_string=connection)
         result = self.container.register("database", db_service)
         print(f"Register singleton: {result.is_success}")
 
@@ -802,7 +801,9 @@ class ComprehensiveDIService(FlextService[User]):
         user_dict = sample_user
         email_result = self.container.get_or_create(
             "email",
-            lambda: EmailService(str(user_dict.get("email", "smtp@example.com"))),
+            lambda: EmailService(
+                smtp_host=str(user_dict.get("email", "smtp@example.com"))
+            ),
         )
         print(f"Get or create email: {email_result.is_success}")
 
@@ -1013,7 +1014,7 @@ class ComprehensiveDIService(FlextService[User]):
 
         # Safe database connection initialization
         def risky_db_connect() -> DatabaseService:
-            db = DatabaseService("postgresql://invalid-host/db")
+            db = DatabaseService(connection_string="postgresql://invalid-host/db")
             connect_result = db.connect()
             if connect_result.is_failure:
                 msg = "Database connection failed"
@@ -1140,7 +1141,7 @@ class ComprehensiveDIService(FlextService[User]):
             nonlocal expensive_created
             expensive_created = True
             print("  Creating expensive EmailService...")
-            return EmailService("expensive-smtp.example.com")
+            return EmailService(smtp_host="expensive-smtp.example.com")
 
         # Success case - expensive creation NOT called
         success = self.container.get("database")

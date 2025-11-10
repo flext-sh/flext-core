@@ -32,7 +32,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextContainer, FlextResult, FlextTypes
+from flext_core import FlextContainer, FlextResult
 
 
 class FunctionalExternalService:
@@ -78,7 +78,7 @@ class FunctionalUserService:
     def __init__(self) -> None:
         """Initialize functional user service."""
         super().__init__()
-        self.users: FlextTypes.NestedDict = {}
+        self.users: dict[str, object] = {}
         self.call_count = 0
         self.should_fail = False
 
@@ -239,8 +239,7 @@ class TestServiceIntegrationPatterns:
         self,
         mock_external_service: FunctionalExternalService,
         performance_threshold: dict[str, float],
-        benchmark_data: dict[str, object]
-        | dict[str, dict[str, dict[str, FlextTypes.IntList]]],
+        benchmark_data: dict[str, object] | dict[str, dict[str, dict[str, list[int]]]],
     ) -> None:
         """Test service pipeline meets performance requirements.
 
@@ -260,9 +259,9 @@ class TestServiceIntegrationPatterns:
         large_dataset = benchmark_data["large_dataset"]
 
         def process_pipeline(
-            data: FlextTypes.IntList
+            data: list[int]
             | dict[str, str]
-            | dict[str, dict[str, dict[str, FlextTypes.IntList]]],
+            | dict[str, dict[str, dict[str, list[int]]]],
         ) -> FlextResult[str]:
             # Simulate service pipeline with realistic operations
             result = FlextResult[object].ok(data)
@@ -280,7 +279,7 @@ class TestServiceIntegrationPatterns:
             # Cast to expected type to satisfy Pyrefly
             result = process_pipeline(
                 cast(
-                    "FlextTypes.IntList | dict[str, dict[str, dict[str, FlextTypes.IntList]]]",
+                    "list[int] | dict[str, dict[str, dict[str, list[int]]]]",
                     large_dataset,
                 ),
             )

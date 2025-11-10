@@ -19,6 +19,7 @@ from typing import ClassVar, cast
 
 import structlog
 
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 
 
@@ -311,9 +312,6 @@ class FlextExceptions:
                 return cls._global_failure_level
 
             try:
-                # Runtime import to avoid circular dependency
-                from flext_core.config import FlextConfig
-
                 # Get from FlextConfig singleton (Pydantic Settings handles environment variables)
                 config = FlextConfig.get_global_instance()
                 level_str = config.exception_failure_level
@@ -321,7 +319,7 @@ class FlextExceptions:
                     level_str.lower()
                 )
                 return cls._global_failure_level
-            except (ImportError, AttributeError, ValueError, TypeError):
+            except (AttributeError, ValueError, TypeError):
                 # Fallback to default if config is not available or invalid
                 cls._global_failure_level = (
                     FlextConstants.Exceptions.FailureLevel.STRICT

@@ -374,14 +374,14 @@ class FlextRegistry(FlextMixins):
 
         # Validate handler is not None
         if handler is None:
-            return FlextResult[FlextModels.RegistrationDetails].fail(
+            return self.fail(
                 "Handler cannot be None",
             )
 
         key = self._resolve_handler_key(handler)
         if key in self._registered_keys:
             # Return successful registration details for idempotent registration
-            return FlextResult[FlextModels.RegistrationDetails].ok(
+            return self.ok(
                 FlextModels.RegistrationDetails(
                     registration_id=key,
                     handler_mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
@@ -426,8 +426,8 @@ class FlextRegistry(FlextMixins):
                     ),
                 ),
             )
-            return FlextResult[FlextModels.RegistrationDetails].ok(reg_details)
-        return FlextResult[FlextModels.RegistrationDetails].fail(
+            return self.ok(reg_details)
+        return self.fail(
             registration.error or "Unknown error",
         )
 
@@ -448,7 +448,7 @@ class FlextRegistry(FlextMixins):
         for handler in handlers:
             result: FlextResult[None] = self._process_single_handler(handler, summary)
             if result.is_failure:
-                return FlextResult[FlextRegistry.Summary].fail(
+                return self.fail(
                     result.error or "Handler processing failed",
                 )
         return self._finalize_summary(summary)
@@ -467,7 +467,7 @@ class FlextRegistry(FlextMixins):
         key = self._resolve_handler_key(handler)
         if key in self._registered_keys:
             summary.skipped.append(key)
-            return FlextResult[None].ok(None)
+            return self.ok(None)
 
         # Handler is already the correct type
         registration_result: FlextResult[dict[str, object]] = (
@@ -493,9 +493,9 @@ class FlextRegistry(FlextMixins):
                 ),
             )
             self._add_successful_registration(key, reg_details, summary)
-            return FlextResult[None].ok(None)
+            return self.ok(None)
         self._add_registration_error(key, registration_result.error or "", summary)
-        return FlextResult[None].fail(
+        return self.fail(
             registration_result.error or "Registration failed",
         )
 
@@ -537,10 +537,10 @@ class FlextRegistry(FlextMixins):
 
         """
         if summary.errors:
-            return FlextResult[FlextRegistry.Summary].fail(
+            return self.fail(
                 "; ".join(summary.errors),
             )
-        return FlextResult[FlextRegistry.Summary].ok(summary)
+        return self.ok(summary)
 
     def register_bindings(
         self,
@@ -590,10 +590,10 @@ class FlextRegistry(FlextMixins):
             summary.registered.append(reg_details)
 
         if summary.errors:
-            return FlextResult[FlextRegistry.Summary].fail(
+            return self.fail(
                 "; ".join(summary.errors),
             )
-        return FlextResult[FlextRegistry.Summary].ok(summary)
+        return self.ok(summary)
 
     def register_function_map(
         self,
@@ -689,7 +689,7 @@ class FlextRegistry(FlextMixins):
                 summary.errors.append(error_msg)
                 continue
 
-        return FlextResult[FlextRegistry.Summary].ok(summary)
+        return self.ok(summary)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -762,7 +762,7 @@ class FlextRegistry(FlextMixins):
 
         """
         # Store metadata if provided (for future use)
-        if metadata and isinstance(metadata, dict):
+        if metadata and self.is_dict_like(metadata):
             # Log metadata with service name for observability
             self.logger.debug(
                 f"Registering service '{name}' with metadata",
@@ -784,14 +784,14 @@ class FlextRegistry(FlextMixins):
         try:
             return self.register(name, item)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(str(e))
+            return self.fail(str(e))
 
     def get_item(self, name: str) -> FlextResult[object]:
         """Get registered item (RegistrationTracker protocol)."""
         try:
-            return FlextResult[object].ok(getattr(self, name))
+            return self.ok(getattr(self, name))
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[object].fail(str(e))
+            return self.fail(str(e))
 
     def list_items(self) -> FlextResult[list[str]]:
         """List registered items (RegistrationTracker protocol)."""

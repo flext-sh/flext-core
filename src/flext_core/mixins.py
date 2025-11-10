@@ -23,6 +23,7 @@ from flext_core.context import FlextContext
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 
 
 class FlextMixins:
@@ -420,6 +421,55 @@ class FlextMixins:
         ...             self.logger.info("Processing", size=len(data))
         ...             return {"status": "processed"}
     """
+
+    # =========================================================================
+    # RUNTIME VALIDATION UTILITIES (Delegated from FlextRuntime)
+    # =========================================================================
+    # All classes inheriting FlextMixins automatically have access to
+    # runtime validation utilities without explicit FlextRuntime import
+
+    # Type guard utilities
+    is_dict_like = staticmethod(FlextRuntime.is_dict_like)
+    is_list_like = staticmethod(FlextRuntime.is_list_like)
+    is_valid_json = staticmethod(FlextRuntime.is_valid_json)
+    is_valid_identifier = staticmethod(FlextRuntime.is_valid_identifier)
+    is_valid_phone = staticmethod(FlextRuntime.is_valid_phone)
+
+    # Type introspection utilities
+    is_sequence_type = staticmethod(FlextRuntime.is_sequence_type)
+    safe_get_attribute = staticmethod(FlextRuntime.safe_get_attribute)
+    extract_generic_args = staticmethod(FlextRuntime.extract_generic_args)
+
+    # =========================================================================
+    # RESULT FACTORY UTILITIES (Delegated from FlextResult)
+    # =========================================================================
+    # All classes inheriting FlextMixins automatically have access to
+    # FlextResult factory methods for railway-oriented programming
+
+    # Factory methods - Use: self.ok(value) or self.fail("error")
+    ok = FlextResult.ok
+    fail = FlextResult.fail
+    from_exception = FlextResult.from_exception
+    from_callable = FlextResult.from_callable
+    safe_call = FlextResult.safe_call
+
+    # Collection operations - Work with multiple results
+    collect_successes = FlextResult.collect_successes
+    collect_failures = FlextResult.collect_failures
+    sequence = FlextResult.sequence
+    traverse = FlextResult.traverse
+
+    # Batch operations - Process multiple items efficiently
+    parallel_map = FlextResult.parallel_map
+    batch_process = FlextResult.batch_process
+
+    # Validation pipelines
+    chain_validations = FlextResult.chain_validations
+    validate_all = FlextResult.validate_all
+
+    # =========================================================================
+    # SERVICE INFRASTRUCTURE (Original FlextMixins functionality)
+    # =========================================================================
 
     # Class-level cache for loggers to avoid repeated DI lookups
     _logger_cache: ClassVar[dict[str, FlextLogger]] = {}

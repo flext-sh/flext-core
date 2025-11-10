@@ -16,6 +16,7 @@ import structlog.contextvars
 from pydantic import BaseModel, Field, computed_field, field_validator
 
 from flext_core._models.entity import FlextModelsEntity
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import T
 
 
@@ -255,7 +256,7 @@ class FlextModelsContext:
             Uses mode='before' to validate raw input before Pydantic processing.
             Only allows basic JSON-serializable types: str, int, float, bool, list, dict, None.
             """
-            if not isinstance(v, dict):
+            if not FlextRuntime.is_dict_like(v):
                 msg = f"Value must be a dictionary, got {type(v).__name__}"
                 raise TypeError(msg)
 
@@ -264,13 +265,13 @@ class FlextModelsContext:
                 """Recursively check if object is JSON-serializable."""
                 if obj is None or isinstance(obj, (str, int, float, bool)):
                     return
-                if isinstance(obj, dict):
+                if FlextRuntime.is_dict_like(obj):
                     for key, val in obj.items():
                         if not isinstance(key, str):
                             msg = f"Dictionary keys must be strings at {path}.{key}"
                             raise TypeError(msg)
                         check_serializable(val, f"{path}.{key}")
-                elif isinstance(obj, list):
+                elif FlextRuntime.is_list_like(obj):
                     for i, item in enumerate(obj):
                         check_serializable(item, f"{path}[{i}]")
                 else:
@@ -338,7 +339,7 @@ class FlextModelsContext:
             Uses mode='before' to validate raw input before Pydantic processing.
             Only allows basic JSON-serializable types: str, int, float, bool, list, dict, None.
             """
-            if not isinstance(v, dict):
+            if not FlextRuntime.is_dict_like(v):
                 msg = f"Value must be a dictionary, got {type(v).__name__}"
                 raise TypeError(msg)
 
@@ -347,13 +348,13 @@ class FlextModelsContext:
                 """Recursively check if object is JSON-serializable."""
                 if obj is None or isinstance(obj, (str, int, float, bool)):
                     return
-                if isinstance(obj, dict):
+                if FlextRuntime.is_dict_like(obj):
                     for key, val in obj.items():
                         if not isinstance(key, str):
                             msg = f"Dictionary keys must be strings at {path}.{key}"
                             raise TypeError(msg)
                         check_serializable(val, f"{path}.{key}")
-                elif isinstance(obj, list):
+                elif FlextRuntime.is_list_like(obj):
                     for i, item in enumerate(obj):
                         check_serializable(item, f"{path}[{i}]")
                 else:
@@ -424,7 +425,7 @@ class FlextModelsContext:
                 Validated dict[str, object]
 
             """
-            if isinstance(v, dict):
+            if FlextRuntime.is_dict_like(v):
                 return v
             return {} if v is None else cast("dict[str, object]", v)
 
@@ -440,7 +441,7 @@ class FlextModelsContext:
                 Validated dict[str, object]
 
             """
-            if isinstance(v, dict):
+            if FlextRuntime.is_dict_like(v):
                 return v
             return {} if v is None else cast("dict[str, object]", v)
 
@@ -508,7 +509,7 @@ class FlextModelsContext:
                 Validated dict[str, object]
 
             """
-            if isinstance(v, dict):
+            if FlextRuntime.is_dict_like(v):
                 return v
             return {} if v is None else cast("dict[str, object]", v)
 
@@ -613,7 +614,7 @@ class FlextModelsContext:
                 Validated dict[str, object]
 
             """
-            if isinstance(v, dict):
+            if FlextRuntime.is_dict_like(v):
                 return v
             return {} if v is None else cast("dict[str, object]", v)
 

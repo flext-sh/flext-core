@@ -18,7 +18,7 @@ import pytest
 from returns.io import IO, IOFailure, IOSuccess
 from returns.maybe import Nothing, Some
 
-from flext_core import FlextExceptions, FlextResult, FlextTypes
+from flext_core import FlextExceptions, FlextResult
 
 
 class TestFlextResult:
@@ -989,7 +989,7 @@ class TestFlextResult:
         assert class_result.is_success
 
         # Instance context through map
-        instance_result = FlextResult[FlextTypes.IntList].ok([1, 2, 3])
+        instance_result = FlextResult[list[int]].ok([1, 2, 3])
         mapped = instance_result.map(lambda x: [i * 2 for i in x])
         assert mapped.is_success
 
@@ -1148,7 +1148,7 @@ class TestFlextResult:
         result3 = FlextResult[int].ok(3)
 
         # sequence() accepts a list of results
-        combined: FlextResult[FlextTypes.IntList] = FlextResult[int].sequence([
+        combined: FlextResult[list[int]] = FlextResult[int].sequence([
             result1,
             result2,
             result3,
@@ -1208,9 +1208,7 @@ class TestFlextResultAdditionalCoverage:
         r2: FlextResult[int] = FlextResult[int].ok(2)
         r3: FlextResult[int] = FlextResult[int].ok(3)
 
-        accumulated: FlextResult[FlextTypes.IntList] = FlextResult.accumulate_errors(
-            r1, r2, r3
-        )
+        accumulated: FlextResult[list[int]] = FlextResult.accumulate_errors(r1, r2, r3)
         assert accumulated.is_success
         assert accumulated.value == [1, 2, 3]
 
@@ -1218,8 +1216,8 @@ class TestFlextResultAdditionalCoverage:
         r4: FlextResult[int] = FlextResult[int].fail("error1")
         r5: FlextResult[int] = FlextResult[int].fail("error2")
 
-        accumulated_fail: FlextResult[FlextTypes.IntList] = (
-            FlextResult.accumulate_errors(r1, r4, r2, r5)
+        accumulated_fail: FlextResult[list[int]] = FlextResult.accumulate_errors(
+            r1, r4, r2, r5
         )
         assert accumulated_fail.is_failure
         # Should contain both errors
@@ -1247,7 +1245,7 @@ class TestFlextResultAdditionalCoverage:
             success_result: FlextResult[int] = FlextResult[int].ok(x * 2)
             return success_result
 
-        parallel_result: FlextResult[FlextTypes.IntList] = FlextResult.parallel_map(
+        parallel_result: FlextResult[list[int]] = FlextResult.parallel_map(
             data, process_with_failure
         )
         assert parallel_result.is_failure
@@ -1689,7 +1687,7 @@ class TestFlextResultFinalCoverage:
     def test_hash_with_unhashable_data(self) -> None:
         """Test __hash__ with unhashable data types (lines 877-884)."""
         # Lists are unhashable, should handle gracefully
-        result_with_list = FlextResult[FlextTypes.IntList].ok([1, 2, 3])
+        result_with_list = FlextResult[list[int]].ok([1, 2, 3])
         result_with_dict = FlextResult[dict[str, str]].ok({"key": "value"})
 
         # Should be able to hash results even with unhashable data

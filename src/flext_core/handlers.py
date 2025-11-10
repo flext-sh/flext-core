@@ -81,7 +81,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         >>>
         >>> class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
         ...     def handle(self, command: CreateUserCommand) -> FlextResult[User]:
-        ...         return FlextResult[User].ok(User(name=command.name))
+        ...         return self.ok(User(name=command.name))
         >>>
         >>> handler = CreateUserHandler(config=...)
         >>> # FlextHandlers explicitly implements FlextProtocols.Handler
@@ -96,6 +96,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     # Runtime type validation attributes
     _expected_message_type: ClassVar[type | None] = None
     _expected_result_type: ClassVar[type | None] = None
+
+    # Type parameter count for generic subscription
+    _REQUIRED_TYPE_PARAM_COUNT: ClassVar[int] = 2
 
     def __class_getitem__(cls, item: tuple[type, type] | type) -> type[Self]:
         """Intercept FlextHandlers[M, R] to create typed subclass with validation.
@@ -113,7 +116,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         Examples:
             >>> class UserHandler(FlextHandlers[CreateUserCommand, User]):
             ...     def handle(self, msg: CreateUserCommand) -> FlextResult[User]:
-            ...         return FlextResult[User].ok(User(name=msg.name))
+            ...         return self.ok(User(name=msg.name))
             >>>
             >>> # ✅ Correct types - passes validation
             >>> handler = UserHandler(config=...)
@@ -122,12 +125,15 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             >>> # ❌ Wrong result type - automatic rejection
             >>> class BadHandler(FlextHandlers[CreateUserCommand, User]):
             ...     def handle(self, msg: CreateUserCommand) -> FlextResult[User]:
-            ...         return FlextResult.ok(Product(id="123"))  # Wrong type!
+            ...         return self.ok(Product(id="123"))  # Wrong type!
 
         """
         # Handle both single and tuple types
+        message_type: type | None
+        result_type: type
+
         if isinstance(item, tuple):
-            if len(item) != 2:
+            if len(item) != cls._REQUIRED_TYPE_PARAM_COUNT:
                 msg = "FlextHandlers requires exactly 2 type parameters: FlextHandlers[MessageType, ResultType]"
                 raise TypeError(msg)
             message_type, result_type = item
@@ -136,19 +142,25 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             message_type = None
             result_type = item
 
-        class TypedFlextHandlers(cls):  # type: ignore[misc,valid-type]
-            _expected_message_type: ClassVar[type | None] = message_type
-            _expected_result_type: ClassVar[type | None] = result_type
-
-        # Create readable name for better error messages and debugging
-        msg_name = getattr(message_type, "__name__", "Any") if message_type else "Any"
-        res_name = getattr(result_type, "__name__", str(result_type))
+        # Create typed subclass dynamically using type() built-in
         cls_name = getattr(cls, "__name__", "FlextHandlers")
         cls_qualname = getattr(cls, "__qualname__", "FlextHandlers")
-        TypedFlextHandlers.__name__ = f"{cls_name}[{msg_name}, {res_name}]"
-        TypedFlextHandlers.__qualname__ = f"{cls_qualname}[{msg_name}, {res_name}]"
+        msg_name = getattr(message_type, "__name__", "Any") if message_type else "Any"
+        res_name = getattr(result_type, "__name__", str(result_type))
 
-        return TypedFlextHandlers  # type: ignore[return-value]
+        typed_subclass = type(
+            f"{cls_name}[{msg_name}, {res_name}]",
+            (cls,),
+            {
+                "_expected_message_type": message_type,
+                "_expected_result_type": result_type,
+            },
+        )
+
+        # Preserve qualname for better debugging
+        typed_subclass.__qualname__ = f"{cls_qualname}[{msg_name}, {res_name}]"
+
+        return typed_subclass
 
     class _MessageValidator:
         """Private message validation utilities for FlextHandlers."""
@@ -417,7 +429,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 if callable(method):
                     try:
                         result_data = method()
-                        if isinstance(result_data, dict):
+                        if FlextMixins.is_dict_like(result_data):
                             return cast("dict[str, object]", result_data)
                     except Exception as e:
                         FlextHandlers._internal_logger.debug(
@@ -711,12 +723,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         Examples:
             >>> # ✅ Validation passes for correct types
             >>> message = CreateUserCommand(name="Alice")
-            >>> result = FlextResult[User].ok(User(name="Alice"))
+            >>> result = self.ok(User(name="Alice"))
             >>> validated = self._validate_handler_result(message, result)
             >>> assert validated.is_success
             >>>
             >>> # ❌ Validation fails for wrong result type
-            >>> result = FlextResult.ok(Product(id="123"))  # Wrong type!
+            >>> result = self.ok(Product(id="123"))  # Wrong type!
             >>> validated = self._validate_handler_result(message, result)
             >>> assert validated.is_failure
 
@@ -736,7 +748,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 f"{actual_name} instead of {expected_name}. "
                 f"Message: {message!r}"
             )
-            return FlextResult[ResultT].fail(msg, error_code="TYPE_MISMATCH")
+            return self.fail(msg, error_code="TYPE_MISMATCH")
 
         # Validate result type (only on success - errors don't need type validation)
         if (
@@ -756,7 +768,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 f"FlextResult[{expected_name}]. "
                 f"Data: {result.value!r}"
             )
-            return FlextResult[ResultT].fail(msg, error_code="TYPE_MISMATCH")
+            return self.fail(msg, error_code="TYPE_MISMATCH")
 
         return result
 
@@ -776,7 +788,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         """
         # Extract message ID
-        if isinstance(message, dict):
+        if self.is_dict_like(message):
             (
                 str(message.get(f"{operation}_id", "unknown"))
                 or str(message.get("message_id", "unknown"))
@@ -791,16 +803,14 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         # Validate operation matches handler mode
         if operation != self.mode:
-            return FlextResult[ResultT].fail(
+            return self.fail(
                 f"Handler with mode '{self.mode}' cannot execute {operation} pipelines"
             )
 
         # Validate message can be handled
         message_type_obj: type[object] = type(message)
         if not self.can_handle(cast("type[MessageT_contra]", message_type_obj)):
-            return FlextResult[ResultT].fail(
-                f"Handler cannot handle message type {message_type}"
-            )
+            return self.fail(f"Handler cannot handle message type {message_type}")
 
         # Validate message
         validation_result = (
@@ -809,9 +819,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             else self.validate_query(cast("object", message))
         )
         if validation_result.is_failure:
-            return FlextResult[ResultT].fail(
-                f"Message validation failed: {validation_result.error}"
-            )
+            return self.fail(f"Message validation failed: {validation_result.error}")
 
         # Execute handler with runtime type validation
         try:
@@ -824,7 +832,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             # VALIDATION HIERARCHY - User handler execution (CRITICAL)
             # User-registered handlers can raise any exception
             # Safe behavior: capture error, return failure result
-            return FlextResult[ResultT].fail(f"Critical handler failure: {e!s}")
+            return self.fail(f"Critical handler failure: {e!s}")
 
     @abstractmethod
     def handle(self, message: MessageT_contra) -> FlextResult[ResultT]:
@@ -920,14 +928,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     result = callable_func(message)
                     if isinstance(result, FlextResult):
                         return cast("FlextResult[CallableOutputT]", result)
-                    return FlextResult[CallableOutputT].ok(
-                        cast("CallableOutputT", result)
-                    )
+                    return self.ok(cast("CallableOutputT", result))
                 except Exception as e:
                     # VALIDATION HIERARCHY - User callable execution (CRITICAL)
                     # User-provided callable can raise any exception
-                    # Safe behavior: wrap exception in FlextResult.fail()
-                    return FlextResult[CallableOutputT].fail(str(e))
+                    # Safe behavior: wrap exception in self.fail()
+                    return self.fail(str(e))
 
             @override
             def can_handle(self, message_type: object) -> bool:
@@ -978,12 +984,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             if not hasattr(self, "_metrics"):
                 self._metrics: dict[str, float] = {}
             self._metrics[name] = value
-            return FlextResult[None].ok(None)
+            return self.ok(None)
         except Exception as e:
             # VALIDATION HIERARCHY - Metrics recording (MEDIUM)
             # Dict operations with user data can raise any exception
             # Safe behavior: wrap in FlextResult with error code
-            return FlextResult[None].fail(
+            return self.fail(
                 f"Metric recording failed: {e}",
                 error_code="METRICS_ERROR",
             )
@@ -1025,12 +1031,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             if not hasattr(self, "_context_stack"):
                 self._context_stack: list[dict[str, object]] = []
             self._context_stack.append(context)
-            return FlextResult[None].ok(None)
+            return self.ok(None)
         except Exception as e:
             # VALIDATION HIERARCHY - Context push (MEDIUM)
             # List operations with user data can raise any exception
             # Safe behavior: wrap in FlextResult with error code
-            return FlextResult[None].fail(
+            return self.fail(
                 f"Context push failed: {e}",
                 error_code="CONTEXT_ERROR",
             )
@@ -1049,12 +1055,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 self._context_stack = []
             if self._context_stack:
                 self._context_stack.pop()
-            return FlextResult[None].ok(None)
+            return self.ok(None)
         except Exception as e:
             # VALIDATION HIERARCHY - Context pop (MEDIUM)
             # List operations can raise unexpected exceptions
             # Safe behavior: wrap in FlextResult with error code
-            return FlextResult[None].fail(
+            return self.fail(
                 f"Context pop failed: {e}",
                 error_code="CONTEXT_ERROR",
             )

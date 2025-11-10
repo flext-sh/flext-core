@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import logging
 
+from flext_core.runtime import FlextRuntime
+
 # Module constants
 MAX_PORT_NUMBER: int = 65535
 MIN_PORT_NUMBER: int = 1
@@ -27,12 +29,12 @@ class FlextUtilitiesTypeGuards:
     @staticmethod
     def is_dict_non_empty(value: object) -> bool:
         """Check if value is a non-empty dictionary."""
-        return isinstance(value, dict) and bool(value)
+        return FlextRuntime.is_dict_like(value) and bool(value)
 
     @staticmethod
     def is_list_non_empty(value: object) -> bool:
         """Check if value is a non-empty list."""
-        return isinstance(value, list) and bool(value)
+        return FlextRuntime.is_list_like(value) and bool(value)
 
 
 __all__ = ["FlextUtilitiesTypeGuards"]

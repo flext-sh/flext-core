@@ -13,6 +13,7 @@ from typing import cast
 
 from flext_core.exceptions import FlextExceptions
 from flext_core.protocols import FlextProtocols
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
 # Module constants
@@ -42,7 +43,7 @@ class FlextUtilitiesConfiguration:
 
         """
         # Check for dict-like access first
-        if isinstance(obj, dict):
+        if FlextRuntime.is_dict_like(obj):
             if parameter not in obj:
                 msg = f"Parameter '{parameter}' is not defined"
                 raise FlextExceptions.NotFoundError(msg, resource_id=parameter)

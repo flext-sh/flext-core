@@ -253,7 +253,7 @@ class FlextModelsHandler:
                 ...     handler_name="MyHandler", handler_mode="command"
                 ... )
                 >>> metrics = context.metrics_state
-                >>> isinstance(metrics, dict)
+                >>> FlextRuntime.is_dict_like(metrics)
                 True
 
             """

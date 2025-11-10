@@ -20,6 +20,7 @@ from flext_core._models.entity import FlextModelsEntity
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
+from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsService:
@@ -49,7 +50,7 @@ class FlextModelsService:
         @classmethod
         def validate_context(cls, v: object) -> dict[str, object]:
             """Ensure context has required fields (Pydantic v2 mode='before')."""
-            if not isinstance(v, dict):
+            if not FlextRuntime.is_dict_like(v):
                 v = {}
             context: dict[str, object] = dict(v)
             if "trace_id" not in context:

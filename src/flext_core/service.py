@@ -17,6 +17,8 @@ import inspect
 import signal
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from typing import (
     ClassVar,
@@ -60,7 +62,7 @@ class FlextService[TDomainResult](
         ...     user_id: str
         ...
         ...     def execute(self) -> FlextResult[User]:
-        ...         return FlextResult.ok(User(id=self.user_id))
+        ...         return self.ok(User(id=self.user_id))
         >>>
         >>> # V2 Auto: Direct result (4 chars!)
         >>> user = UserService(user_id="123")  # Returns User directly!
@@ -84,7 +86,7 @@ class FlextService[TDomainResult](
         ...     user_id: str
         ...
         ...     def execute(self) -> FlextResult[User]:
-        ...         return FlextResult.ok(User(id=self.user_id))
+        ...         return self.ok(User(id=self.user_id))
         >>>
         >>> # Just instantiate - it returns User directly!
         >>> user = UserService(user_id="123")
@@ -105,7 +107,7 @@ class FlextService[TDomainResult](
         ...     user_id: str
         ...
         ...     def execute(self) -> FlextResult[User]:
-        ...         return FlextResult.ok(User(id=self.user_id))
+        ...         return self.ok(User(id=self.user_id))
         >>>
         >>> # Access .result property
         >>> user = UserService(user_id="123").result
@@ -199,7 +201,7 @@ class FlextService[TDomainResult](
         ...     auto_execute = True
         ...     user_id: str
         ...     def execute(self) -> FlextResult[User]:
-        ...         return FlextResult.ok(User(id=self.user_id))
+        ...         return self.ok(User(id=self.user_id))
         >>>
         >>> # Returns User directly, not service instance!
         >>> user = AutoUserService(user_id="123")
@@ -234,26 +236,31 @@ class FlextService[TDomainResult](
         Example:
             >>> class UserService(FlextService[User]):
             ...     def execute(self) -> FlextResult[User]:
-            ...         return FlextResult[User].ok(User(...))
+            ...         return self.ok(User(...))
             >>>
             >>> service = UserService()
             >>> result = service.execute()  # ✅ Validated automatically
 
         """
-
-        class TypedFlextService(cls):  # type: ignore[valid-type,misc]
-            """Typed subclass with stored expected domain result type."""
-
-            _expected_domain_result_type: ClassVar[type | None] = item
-
-        # Preserve readable name for debugging and error messages
-        type_name = getattr(item, "__name__", str(item))
+        # Create typed subclass dynamically using type() built-in
         cls_name = getattr(cls, "__name__", "FlextService")
         cls_qualname = getattr(cls, "__qualname__", "FlextService")
-        TypedFlextService.__name__ = f"{cls_name}[{type_name}]"
-        TypedFlextService.__qualname__ = f"{cls_qualname}[{type_name}]"
+        type_name = getattr(item, "__name__", str(item))
 
-        return TypedFlextService  # type: ignore[return-value]
+        # Create typed subclass with proper namespace attributes for Pydantic v2
+        # __module__ and __qualname__ must be in namespace dict for metaclass
+        # NOTE: type: ignore required due to type checker limitation with metaprogramming
+        # This is valid Python metaprogramming - dynamically creating a class at runtime
+        # Type checkers cannot verify dynamic type() calls with 3 arguments
+        return type(
+            f"{cls_name}[{type_name}]",
+            (cls,),
+            {
+                "_expected_domain_result_type": item,
+                "__module__": cls.__module__,
+                "__qualname__": f"{cls_qualname}[{type_name}]",
+            },
+        )
 
     def _validate_domain_result(
         self, result: FlextResult[TDomainResult]
@@ -317,7 +324,7 @@ class FlextService[TDomainResult](
             ...     user_id: str
             ...
             ...     def execute(self) -> FlextResult[User]:
-            ...         return FlextResult.ok(User(id=self.user_id))
+            ...         return self.ok(User(id=self.user_id))
             >>>
             >>> user: User = AutoService(user_id="123")  # Type as User, not AutoService
 
@@ -465,7 +472,7 @@ class FlextService[TDomainResult](
             ...     def execute(self) -> FlextResult[Order]:
             ...         # Config automatically available
             ...         timeout = self.service_config.timeout
-            ...         return FlextResult[Order].ok(Order())
+            ...         return self.ok(Order())
 
         Returns:
             FlextConfig: Global configuration instance
@@ -492,7 +499,7 @@ class FlextService[TDomainResult](
             ...     def execute(self) -> FlextResult[CliDataDict]:
             ...         # Automatically resolves FlextCliConfig
             ...         debug = self.project_config.debug
-            ...         return FlextResult[CliDataDict].ok({})
+            ...         return self.ok({})
 
         Returns:
             FlextConfig: Project-specific configuration instance
@@ -538,7 +545,7 @@ class FlextService[TDomainResult](
             ...     def execute(self) -> FlextResult[CliDataDict]:
             ...         # Automatically resolves FlextCliModels
             ...         config_model = self.project_models.Configuration
-            ...         return FlextResult[CliDataDict].ok({})
+            ...         return self.ok({})
 
         Returns:
             type: Project models namespace (typically a class with nested types)
@@ -588,7 +595,7 @@ class FlextService[TDomainResult](
         **Example - No DI**:
             >>> class SimpleService(FlextService[str]):
             ...     def execute(self) -> FlextResult[str]:
-            ...         return FlextResult[str].ok("simple")
+            ...         return self.ok("simple")
 
         """
         super().__init_subclass__()
@@ -697,7 +704,7 @@ class FlextService[TDomainResult](
             FlextResult[None]: Success if valid, failure with error details
 
         """
-        return FlextResult[None].ok(None)
+        return self.ok(None)
 
     def validate_config(self) -> FlextResult[None]:
         """Validate service configuration (Domain.Service protocol).
@@ -706,7 +713,7 @@ class FlextService[TDomainResult](
             FlextResult[None]: Success if configuration is valid, failure with error details
 
         """
-        return FlextResult[None].ok(None)
+        return self.ok(None)
 
     def is_valid(self) -> bool:
         """Check if the domain service is in a valid state (Domain.Service protocol).
@@ -758,7 +765,7 @@ class FlextService[TDomainResult](
                 f"Business rules validation failed for operation: {request.operation_name}",
                 extra={"error": business_rules_result.error},
             )
-            return FlextResult[None].fail(
+            return self.fail(
                 f"Business rules validation failed: {business_rules_result.error}"
             )
 
@@ -769,17 +776,15 @@ class FlextService[TDomainResult](
                 f"Configuration validation failed for operation: {request.operation_name}",
                 extra={"error": config_result.error},
             )
-            return FlextResult[None].fail(
-                f"Configuration validation failed: {config_result.error}"
-            )
+            return self.fail(f"Configuration validation failed: {config_result.error}")
 
         # Validate keyword_arguments is a dict
         if not isinstance(request.keyword_arguments, dict):
-            return FlextResult[None].fail(
+            return self.fail(
                 f"Invalid keyword arguments: expected dict, got {type(request.keyword_arguments).__name__}"
             )
 
-        return FlextResult[None].ok(None)
+        return self.ok(None)
 
     def _execute_callable_once(
         self, request: FlextModels.OperationExecutionRequest
@@ -863,12 +868,12 @@ class FlextService[TDomainResult](
                     msg = (
                         "Invalid retry configuration: backoff_multiplier must be >= 1.0"
                     )
-                    return FlextResult.fail(
+                    return self.fail(
                         msg,
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
         except (ValueError, TypeError) as e:
-            return FlextResult.fail(
+            return self.fail(
                 f"Invalid retry configuration: {e}",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
@@ -887,7 +892,7 @@ class FlextService[TDomainResult](
                     # Cast to correct type - we know it's FlextResult[TDomainResult]
                     return cast("FlextResult[TDomainResult]", result)
                 # Wrap non-FlextResult in FlextResult
-                return FlextResult[TDomainResult].ok(result)
+                return self.ok(result)
 
             except Exception as e:
                 last_exception = e
@@ -907,7 +912,7 @@ class FlextService[TDomainResult](
                         f"Operation execution failed: {request.operation_name}",
                         extra={"error": error_msg, "error_type": type(e).__name__},
                     )
-                    return FlextResult[TDomainResult].fail(
+                    return self.fail(
                         f"Operation {request.operation_name} failed: {error_msg}"
                     )
 
@@ -925,7 +930,7 @@ class FlextService[TDomainResult](
                 time.sleep(delay)
 
         # Fallback (should not reach here)
-        return FlextResult[TDomainResult].fail(
+        return self.fail(
             f"Operation {request.operation_name} failed after {max_attempts} attempts: {last_exception}"
         )
 
@@ -960,7 +965,7 @@ class FlextService[TDomainResult](
             # Validate pre-execution requirements
             validation_result = self._validate_pre_execution(request)
             if validation_result.is_failure:
-                return FlextResult[TDomainResult].fail(validation_result.error)
+                return self.fail(validation_result.error)
 
             # Execute with retry logic (delegated to private method)
             return self._retry_loop(request, request.retry_config or {})
@@ -980,15 +985,13 @@ class FlextService[TDomainResult](
         # Full validation: business rules + config + execution
         business_rules_result = self.validate_business_rules()
         if business_rules_result.is_failure:
-            return FlextResult[TDomainResult].fail(
+            return self.fail(
                 f"Business rules validation failed: {business_rules_result.error}"
             )
 
         config_result = self.validate_config()
         if config_result.is_failure:
-            return FlextResult[TDomainResult].fail(
-                f"Configuration validation failed: {config_result.error}"
-            )
+            return self.fail(f"Configuration validation failed: {config_result.error}")
 
         # Execute the operation and cast to object result type for API compatibility
         return self.execute()
@@ -1012,12 +1015,10 @@ class FlextService[TDomainResult](
                 # If the action returns a FlextResult, return it directly
                 if isinstance(result, FlextResult):
                     return cast("FlextResult[TDomainResult]", result)
-                return FlextResult[TDomainResult].ok(cast("TDomainResult", result))
-            return FlextResult[TDomainResult].ok(cast("TDomainResult", action))
+                return self.ok(cast("TDomainResult", result))
+            return self.ok(cast("TDomainResult", action))
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[TDomainResult].fail(
-                f"{action_name.capitalize()} action execution failed: {e}"
-            )
+            return self.fail(f"{action_name.capitalize()} action execution failed: {e}")
 
     def execute_conditionally(
         self, request: FlextModels.ConditionalExecutionRequest
@@ -1035,7 +1036,7 @@ class FlextService[TDomainResult](
         try:
             condition_met = bool(request.condition(self))
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[TDomainResult].fail(f"Condition evaluation failed: {e}")
+            return self.fail(f"Condition evaluation failed: {e}")
 
         # Execute false action if condition not met
         if (
@@ -1045,7 +1046,7 @@ class FlextService[TDomainResult](
         ):
             return self._execute_action(request.false_action, "false")
         if not condition_met:
-            return FlextResult[TDomainResult].fail("Condition not met")
+            return self.fail("Condition not met")
 
         # Execute true action if condition met
         if hasattr(request, "true_action") and request.true_action is not None:
@@ -1053,6 +1054,30 @@ class FlextService[TDomainResult](
 
         # No specific action, execute the default operation
         return self.execute()
+
+    @contextmanager
+    def _timeout_context(self, timeout_seconds: float) -> Iterator[None]:
+        """Context manager for signal-based timeout handling.
+
+        Args:
+            timeout_seconds: Timeout duration in seconds
+
+        """
+
+        def timeout_handler(_signum: object, _frame: object) -> None:
+            msg = f"Operation timed out after {timeout_seconds} seconds"
+            raise TimeoutError(msg)
+
+        # Set up the timeout
+        old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(int(timeout_seconds))
+
+        try:
+            yield
+        finally:
+            # Restore the old handler and cancel the alarm
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old_handler)
 
     def execute_with_timeout(
         self, timeout_seconds: float
@@ -1066,23 +1091,11 @@ class FlextService[TDomainResult](
             FlextResult[TDomainResult]: Success with result or failure with timeout error
 
         """
-
-        def timeout_handler(_signum: object, _frame: object) -> None:
-            msg = f"Operation timed out after {timeout_seconds} seconds"
-            raise TimeoutError(msg)
-
-        # Set up the timeout
-        old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(int(timeout_seconds))
-
         try:
-            return self.execute()
+            with self._timeout_context(timeout_seconds):
+                return self.execute()
         except TimeoutError as e:
-            return FlextResult[TDomainResult].fail(str(e))
-        finally:
-            # Restore the old handler and cancel the alarm
-            signal.alarm(0)
-            signal.signal(signal.SIGALRM, old_handler)
+            return self.fail(str(e))
 
     # Helper classes for advanced service operations
     class _ExecutionHelper:
@@ -1176,9 +1189,9 @@ class FlextService[TDomainResult](
         """
         try:
             self._context = context
-            return FlextResult[None].ok(None)
+            return self.ok(None)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(
+            return self.fail(
                 f"Context setting failed: {e}",
                 error_code="CONTEXT_ERROR",
                 error_data={"exception": str(e)},
@@ -1214,9 +1227,9 @@ class FlextService[TDomainResult](
         """
         try:
             timeout = getattr(self, "_timeout", 30.0)
-            return FlextResult[float].ok(timeout)
+            return self.ok(timeout)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[float].fail(
+            return self.fail(
                 f"Timeout retrieval failed: {e}",
                 error_code="TIMEOUT_ERROR",
                 error_data={"exception": str(e)},

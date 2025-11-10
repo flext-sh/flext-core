@@ -177,12 +177,12 @@ class TestFlextModelsValidation:
 
 
 class TestFlextModelsCommand:
-    """Test FlextModels.Command functionality."""
+    """Test FlextModels.Cqrs.Command functionality."""
 
     def test_command_creation(self) -> None:
         """Test command creation."""
 
-        class CreateUserCommand(FlextModels.Command):
+        class CreateUserCommand(FlextModels.Cqrs.Command):
             user_id: str
             name: str
             email: str
@@ -195,12 +195,12 @@ class TestFlextModelsCommand:
 
 
 class TestFlextModelsQuery:
-    """Test FlextModels.Query functionality."""
+    """Test FlextModels.Cqrs.Query functionality."""
 
     def test_query_creation(self) -> None:
         """Test query creation."""
 
-        class FindUserQuery(FlextModels.Query):
+        class FindUserQuery(FlextModels.Cqrs.Query):
             user_id: str
 
         query = FindUserQuery(user_id="user-1")
@@ -252,7 +252,7 @@ class TestFlextModelsEdgeCases:
     def test_command_with_optional_fields(self) -> None:
         """Test command with optional fields."""
 
-        class OptionalFieldCommand(FlextModels.Command):
+        class OptionalFieldCommand(FlextModels.Cqrs.Command):
             required_field: str
             optional_field: str | None = None
 
@@ -263,7 +263,7 @@ class TestFlextModelsEdgeCases:
     def test_query_with_pagination(self) -> None:
         """Test query with pagination parameters."""
 
-        class PagedQuery(FlextModels.Query):
+        class PagedQuery(FlextModels.Cqrs.Query):
             page: int
             page_size: int
 
@@ -278,11 +278,11 @@ class TestFlextModelsIntegration:
     def test_entity_command_query_flow(self) -> None:
         """Test flow: Command -> Entity -> Event -> Query."""
 
-        class CreateUserCmd(FlextModels.Command):
+        class CreateUserCmd(FlextModels.Cqrs.Command):
             user_id: str
             name: str
 
-        class GetUserQuery(FlextModels.Query):
+        class GetUserQuery(FlextModels.Cqrs.Query):
             user_id: str
 
         class User(FlextModels.Entity):

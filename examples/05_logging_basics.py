@@ -37,7 +37,6 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextService,
-    FlextTypes,
 )
 
 
@@ -519,7 +518,7 @@ class ComprehensiveLoggingService(FlextService[dict[str, object]]):
 
     def _compute_expensive_debug_data(
         self,
-    ) -> dict[str, str | FlextTypes.IntList]:
+    ) -> dict[str, str | list[int]]:
         """Simulate expensive debug data computation."""
         return {
             "expensive_computation": "result",

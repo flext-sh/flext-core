@@ -21,6 +21,7 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsConfig:
@@ -64,7 +65,7 @@ class FlextModelsConfig:
         @classmethod
         def validate_context(cls, v: object) -> dict[str, object]:
             """Validate context has required fields (Pydantic v2 mode='before')."""
-            if not isinstance(v, dict):
+            if not FlextRuntime.is_dict_like(v):
                 v = {}
             context: dict[str, object] = dict(v)
             if "correlation_id" not in context:
@@ -108,21 +109,15 @@ class FlextModelsConfig:
             ge=1.0,
             description="Backoff multiplier for exponential backoff",
         )
-        retry_on_exceptions: Annotated[
-            list[type[BaseException]],
-            Field(
-                default_factory=list,
-                description="Exception types to retry on",
-            ),
-        ]
-        retry_on_status_codes: Annotated[
-            list[object],
-            Field(
-                default_factory=list,
-                max_length=100,
-                description="HTTP status codes to retry on",
-            ),
-        ]
+        retry_on_exceptions: list[type[BaseException]] = Field(
+            default_factory=list,
+            description="Exception types to retry on",
+        )
+        retry_on_status_codes: list[object] = Field(
+            default_factory=list,
+            max_length=100,
+            description="HTTP status codes to retry on",
+        )
 
         @field_validator("retry_on_status_codes", mode="after")
         @classmethod

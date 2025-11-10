@@ -9,10 +9,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from flext_core import FlextTypes
 
-
-def get_test_contexts() -> FlextTypes.NestedDict:
+def get_test_contexts() -> dict[str, object]:
     """Provide common test contexts for various scenarios.
 
     Pre-defined contexts for testing different scenarios like

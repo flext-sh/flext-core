@@ -16,7 +16,7 @@ import traceback
 import types
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
-from typing import Any, ClassVar, Self, cast
+from typing import ClassVar, Self
 
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -313,10 +313,7 @@ class FlextLogger:
     @classmethod
     def get_global_context(cls) -> dict[str, object]:
         """Get current global context."""
-        return cast(
-            "dict[str, object]",
-            FlextRuntime.structlog().contextvars.get_contextvars(),
-        )
+        return FlextRuntime.structlog().contextvars.get_contextvars()
 
     # =========================================================================
     # SCOPED CONTEXT MANAGEMENT - Three-tier context system
@@ -745,7 +742,7 @@ class FlextLogger:
                 formatted_message = f"{message} | args={args!r}"
 
             self.logger.debug(
-                formatted_message, **cast("dict[str, Any]", kwargs)
+                formatted_message, **kwargs
             )  # FlextRuntime.structlog() doesn't have trace
             return FlextResult[None].ok(None)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
@@ -763,7 +760,7 @@ class FlextLogger:
                 formatted_message = message % args if args else message
             except (TypeError, ValueError):
                 formatted_message = f"{message} | args={args!r}"
-            self.logger.debug(formatted_message, **cast("dict[str, Any]", context))
+            self.logger.debug(formatted_message, **context)
             return FlextResult[None].ok(None)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[None].fail(f"Logging failed: {e}")
@@ -780,7 +777,7 @@ class FlextLogger:
                 formatted_message = message % args if args else message
             except (TypeError, ValueError):
                 formatted_message = f"{message} | args={args!r}"
-            self.logger.info(formatted_message, **cast("dict[str, Any]", context))
+            self.logger.info(formatted_message, **context)
             return FlextResult[None].ok(None)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[None].fail(f"Logging failed: {e}")
@@ -797,7 +794,7 @@ class FlextLogger:
                 formatted_message = message % args if args else message
             except (TypeError, ValueError):
                 formatted_message = f"{message} | args={args!r}"
-            self.logger.warning(formatted_message, **cast("dict[str, Any]", context))
+            self.logger.warning(formatted_message, **context)
             return FlextResult[None].ok(None)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[None].fail(f"Logging failed: {e}")
@@ -814,7 +811,7 @@ class FlextLogger:
                 formatted_message = message % args if args else message
             except (TypeError, ValueError):
                 formatted_message = f"{message} | args={args!r}"
-            self.logger.error(formatted_message, **cast("dict[str, Any]", kwargs))
+            self.logger.error(formatted_message, **kwargs)
             return FlextResult[None].ok(None)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[None].fail(f"Logging failed: {e}")
@@ -831,7 +828,7 @@ class FlextLogger:
                 formatted_message = message % args if args else message
             except (TypeError, ValueError):
                 formatted_message = f"{message} | args={args!r}"
-            self.logger.critical(formatted_message, **cast("dict[str, Any]", kwargs))
+            self.logger.critical(formatted_message, **kwargs)
             return FlextResult[None].ok(None)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[None].fail(f"Logging failed: {e}")
@@ -886,7 +883,7 @@ class FlextLogger:
             elif exc_info and include_stack_trace:
                 kwargs["stack_trace"] = traceback.format_exc()
 
-            self.logger.error(message, **cast("dict[str, Any]", kwargs))
+            self.logger.error(message, **kwargs)
             return FlextResult[None].ok(None)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[None].fail(f"Logging failed: {e}")

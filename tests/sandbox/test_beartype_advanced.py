@@ -70,7 +70,7 @@ class TestAdvancedTechnique1_RuntimeTypeValidation:
             print(f"❌ ok(42, int) FALHOU: {e}")
 
         try:
-            result_wrong = FlextResultManual.ok("string", _expected_type=int)  # type: ignore
+            result_wrong = FlextResultManual.ok("string", _expected_type=int)
             print(f"❌ ok('string', int) PASSOU (deveria falhar): {result_wrong.value}")
         except TypeError as e:
             print(f"✅ ok('string', int) REJEITADO: {e}")
@@ -85,7 +85,7 @@ class TestAdvancedTechnique1_RuntimeTypeValidation:
             print(f"❌ unwrap_or(99) FALHOU: {e}")
 
         try:
-            value_wrong = result.unwrap_or("string")  # type: ignore
+            value_wrong = result.unwrap_or("string")
             print(f"❌ unwrap_or('string') PASSOU (deveria falhar): {value_wrong}")
         except TypeError as e:
             print(f"✅ unwrap_or('string') REJEITADO: {e}")
@@ -148,7 +148,7 @@ class TestAdvancedTechnique2_DecorateCallables:
         print("\n[TESTE 2: Função com tipo de retorno ERRADO]")
 
         def bad_func(x: int) -> str:
-            return 42  # type: ignore  # Retorna int, declara str
+            return 42
 
         try:
             result = FlextResultDecorateCallable.ok(5).map(bad_func)
@@ -233,7 +233,7 @@ class TestAdvancedTechnique3_BeartypeDoor:
             print(f"❌ unwrap_or(99) FALHOU: {e}")
 
         try:
-            value_wrong = result.unwrap_or("string")  # type: ignore
+            value_wrong = result.unwrap_or("string")
             print("❌ unwrap_or('string') PASSOU (deveria falhar)")
         except TypeError as e:
             print(f"✅ unwrap_or('string') REJEITADO: {e}")
@@ -304,7 +304,7 @@ class TestAdvancedTechnique4_OverloadedMethods:
             print(f"❌ unwrap_or(99) FALHOU: {e}")
 
         try:
-            value_wrong = result_int.unwrap_or("string")  # type: ignore
+            value_wrong = result_int.unwrap_or("string")
             print("❌ unwrap_or('string') PASSOU (deveria falhar)")
         except TypeError as e:
             print(f"✅ unwrap_or('string') REJEITADO: {e}")
@@ -319,7 +319,7 @@ class TestAdvancedTechnique4_OverloadedMethods:
             print(f"❌ unwrap_or('default') FALHOU: {e}")
 
         try:
-            value_wrong = result_str.unwrap_or(42)  # type: ignore
+            value_wrong = result_str.unwrap_or(42)
             print("❌ unwrap_or(42) PASSOU (deveria falhar)")
         except TypeError as e:
             print(f"✅ unwrap_or(42) REJEITADO: {e}")

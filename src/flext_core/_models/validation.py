@@ -19,6 +19,7 @@ from pydantic import BaseModel
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
 
@@ -461,7 +462,7 @@ class FlextModelsValidation:
 
         # Validate data is a dict
         data = getattr(event, "data", None)
-        if data is not None and not isinstance(data, dict):
+        if data is not None and not FlextRuntime.is_dict_like(data):
             return FlextResult[None].fail(
                 "Domain event data must be a dictionary or None",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,

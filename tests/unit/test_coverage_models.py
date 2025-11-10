@@ -288,7 +288,7 @@ class TestCommands:
     def test_command_creation(self) -> None:
         """Test creating a command."""
 
-        class CreateUserCommand(FlextModels.Command):
+        class CreateUserCommand(FlextModels.Cqrs.Command):
             """Command to create a user."""
 
             email: str
@@ -301,7 +301,7 @@ class TestCommands:
     def test_command_mutation_behavior(self) -> None:
         """Test command mutation behavior with validate_assignment."""
 
-        class UpdateProfileCommand(FlextModels.Command):
+        class UpdateProfileCommand(FlextModels.Cqrs.Command):
             """Command to update profile."""
 
             name: str
@@ -321,7 +321,7 @@ class TestCommands:
     def test_command_validation(self) -> None:
         """Test command validation."""
 
-        class DepositCommand(FlextModels.Command):
+        class DepositCommand(FlextModels.Cqrs.Command):
             """Command with validation."""
 
             account_id: str
@@ -350,7 +350,7 @@ class TestQueries:
     def test_query_creation(self) -> None:
         """Test creating a query."""
 
-        class GetUserQuery(FlextModels.Query):
+        class GetUserQuery(FlextModels.Cqrs.Query):
             """Query to get a user."""
 
         query = GetUserQuery(
@@ -364,7 +364,7 @@ class TestQueries:
     def test_query_mutation_behavior(self) -> None:
         """Test query mutation behavior with validate_assignment."""
 
-        class ListAccountsQuery(FlextModels.Query):
+        class ListAccountsQuery(FlextModels.Cqrs.Query):
             """Query to list accounts."""
 
             page: int
@@ -381,7 +381,7 @@ class TestQueries:
     def test_query_with_filters(self) -> None:
         """Test query with filtering."""
 
-        class SearchProductsQuery(FlextModels.Query):
+        class SearchProductsQuery(FlextModels.Cqrs.Query):
             """Query to search products."""
 
             keyword: str
@@ -573,7 +573,7 @@ class TestModelSerialization:
     def test_command_serialization(self) -> None:
         """Test command serialization."""
 
-        class SendEmailCommand(FlextModels.Command):
+        class SendEmailCommand(FlextModels.Cqrs.Command):
             """Command to send email."""
 
             recipient: str
@@ -645,7 +645,7 @@ class TestModelIntegration:
     def test_command_factory_pattern(self) -> None:
         """Test command creation as factories."""
 
-        class RegisterUserCommand(FlextModels.Command):
+        class RegisterUserCommand(FlextModels.Cqrs.Command):
             """User registration command."""
 
             email: str

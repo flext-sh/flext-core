@@ -16,6 +16,7 @@ All operations use FlextResult[T] for composable error handling.
 """
 
 import time
+from typing import cast
 
 from flext_core import FlextDispatcher, FlextResult
 
@@ -131,7 +132,7 @@ def example_3_parallel_processing() -> None:
     dispatcher.register_processor("doubler", DataDoubler())
 
     # Process items in parallel
-    data_list = list(range(1, 11))
+    data_list = cast("list[object]", list(range(1, 11)))
     start = time.time()
     result = dispatcher.process_parallel("doubler", data_list, max_workers=4)
     elapsed = time.time() - start
@@ -176,7 +177,7 @@ def example_4_timeout_enforcement() -> None:
     if result.is_success:
         print("❌ Operation should have timed out but succeeded")
         return
-    if "timeout" not in result.error.lower():
+    if result.error and "timeout" not in result.error.lower():
         print(f"❌ Expected timeout error, got: {result.error}")
         return
     print(f"✅ Timeout error caught: {result.error}")

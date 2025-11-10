@@ -194,12 +194,18 @@ class FlextModelsEntity:
 
         Combines TimestampedModel, IdentifiableMixin, and VersionableMixin to provide:
         - unique_id: Unique identifier (from IdentifiableMixin)
+        - id: Backward compatibility property (alias for unique_id)
         - created_at/updated_at: Timestamps (from TimestampedModel)
         - version: Optimistic locking (from VersionableMixin)
         - domain_events: Event sourcing support
         """
 
         _internal_logger: ClassVar[FlextLogger | None] = None
+
+        @property
+        def id(self) -> str:
+            """Backward compatibility property - alias for unique_id."""
+            return self.unique_id
 
         @classmethod
         def _get_logger(cls) -> FlextLogger:
@@ -238,7 +244,7 @@ class FlextModelsEntity:
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
-            if data is not None and not isinstance(data, dict):
+            if data is not None and not FlextRuntime.is_dict_like(data):
                 return FlextResult[None].fail(
                     "Domain event data must be a dictionary or None",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -380,7 +386,7 @@ class FlextModelsEntity:
             if not events:
                 return FlextResult[None].ok(None)
 
-            if not isinstance(events, list):
+            if not FlextRuntime.is_list_like(events):
                 return FlextResult[None].fail(
                     "Events must be a list of tuples",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -400,7 +406,7 @@ class FlextModelsEntity:
                         f"Event {i}: name must be non-empty string",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
-                if data is not None and not isinstance(data, dict):
+                if data is not None and not FlextRuntime.is_dict_like(data):
                     return FlextResult[None].fail(
                         f"Event {i}: data must be dict[str, object] or None",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
