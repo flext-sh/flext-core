@@ -27,6 +27,7 @@ from flext_core.container import FlextContainer
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
 
@@ -179,7 +180,7 @@ class FlextContext:
         """Normalize initial data to FlextModels.ContextData format."""
         if initial_data is None:
             return FlextModels.ContextData()
-        if isinstance(initial_data, dict):
+        if FlextRuntime.is_dict_like(initial_data):
             return FlextModels.ContextData(data=initial_data)
         return initial_data
 
@@ -190,7 +191,7 @@ class FlextContext:
         try:
             if isinstance(context_data.metadata, FlextModels.ContextMetadata):
                 return context_data.metadata
-            if isinstance(context_data.metadata, dict):
+            if FlextRuntime.is_dict_like(context_data.metadata):
                 return self._handle_dict_metadata(context_data.metadata)
             return FlextModels.ContextMetadata()
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
@@ -352,7 +353,7 @@ class FlextContext:
         # in the hook implementation that should be fixed by the caller.
         if "set" in self._hooks:
             hooks = self._hooks["set"]
-            if isinstance(hooks, list):
+            if FlextRuntime.is_list_like(hooks):
                 for hook in hooks:
                     hook({"key": key, "value": value})
 
@@ -564,11 +565,13 @@ class FlextContext:
                 ctx_var = self._get_or_create_scope_var(scope_name)
                 current = ctx_var.get() or {}  # Handle None default
                 current_dict = (
-                    dict(current) if current and isinstance(current, dict) else {}
+                    dict(current)
+                    if current and FlextRuntime.is_dict_like(current)
+                    else {}
                 )
                 scope_dict = (
                     dict(scope_data)
-                    if scope_data and isinstance(scope_data, dict)
+                    if scope_data and FlextRuntime.is_dict_like(scope_data)
                     else {}
                 )
                 updated = {**current_dict, **scope_dict}
@@ -681,9 +684,9 @@ class FlextContext:
         context = cls()
 
         # Handle both old flat format and new scoped format
-        if isinstance(data, dict):
+        if FlextRuntime.is_dict_like(data):
             data_values = data.values()
-            if all(isinstance(v, dict) for v in data_values):
+            if all(FlextRuntime.is_dict_like(v) for v in data_values):
                 # New scoped format - restore all scopes
                 for scope_name, scope_data in data.items():
                     context._set_in_contextvar(scope_name, scope_data)
@@ -742,7 +745,7 @@ class FlextContext:
         if event not in self._hooks:
             self._hooks[event] = []
         hooks_list = self._hooks[event]
-        if isinstance(hooks_list, list):
+        if FlextRuntime.is_list_like(hooks_list):
             hooks_list.append(hook)
 
     def set_metadata(self, key: str, value: object) -> None:
@@ -860,7 +863,7 @@ class FlextContext:
             metadata_dict = self._metadata.model_dump()
             # Flatten custom_fields into top-level (matching get_all_metadata behavior)
             custom_fields = metadata_dict.pop("custom_fields", {})
-            if isinstance(custom_fields, dict):
+            if FlextRuntime.is_dict_like(custom_fields):
                 metadata_dict.update(custom_fields)
 
         statistics_dict = (
@@ -1346,7 +1349,7 @@ class FlextContext:
             """Add single metadata entry to operation context."""
             metadata_value = FlextContext.Variables.Performance.OPERATION_METADATA.get()
             current_metadata: dict[str, object] = (
-                metadata_value if isinstance(metadata_value, dict) else {}
+                metadata_value if FlextRuntime.is_dict_like(metadata_value) else {}
             )
             current_metadata[key] = value
             FlextContext.Variables.Performance.OPERATION_METADATA.set(current_metadata)

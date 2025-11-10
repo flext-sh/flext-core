@@ -14,7 +14,6 @@ from flext_core import (
     FlextHandlers,
     FlextModels,
     FlextResult,
-    FlextTypes,
 )
 
 # =============================================================================
@@ -149,7 +148,7 @@ class UpdateUserCommandHandler(
             handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         super().__init__(config=config)
-        self.updated_users: FlextTypes.NestedDict = {}
+        self.updated_users: dict[str, object] = {}
 
     def get_command_type(self) -> FlextCommandType:
         """Get command type this handler processes."""

@@ -110,7 +110,7 @@ class TestBeartypeTypeValidation:
         result = FlextResultBeartype[int].ok(5)
 
         def bad_func(x: int) -> str:
-            return 42  # type: ignore  # Retorna int, declarado como str!
+            return 42
 
         try:
             result.map(bad_func)

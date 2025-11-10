@@ -28,7 +28,6 @@ from pydantic_settings import (
 
 from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
-from flext_core.exceptions import FlextExceptions
 
 T_Config = TypeVar("T_Config", bound="FlextConfig")
 
@@ -439,11 +438,8 @@ class FlextConfig(BaseSettings):
     def validate_trace_requires_debug(self) -> Self:
         """Validate trace mode requires debug mode (Pydantic v2)."""
         if self.trace and not self.debug:
-            msg = "Trace mode requires debug mode"
-            raise FlextExceptions.ValidationError(
-                message=msg,
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
-            )
+            msg = f"Invalid configuration: Trace mode requires debug mode (error_code={FlextConstants.Errors.VALIDATION_ERROR})"
+            raise ValueError(msg)
         return self
 
     # ===== DEPENDENCY INJECTION INTEGRATION =====

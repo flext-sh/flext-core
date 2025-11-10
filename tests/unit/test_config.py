@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextConfig, FlextExceptions
+from flext_core import FlextConfig
 from flext_core.constants import FlextConstants
 
 
@@ -286,8 +286,10 @@ class TestFlextConfig:
 
     def test_config_validate_trace_requires_debug(self) -> None:
         """Test trace requires debug to be enabled (line 616-620)."""
-        # Test trace=True with debug=False should fail - raises FlextExceptions.ValidationError
-        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
+        # Test trace=True with debug=False should fail - Pydantic wraps ValueError as ValidationError
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError) as exc_info:
             FlextConfig(trace=True, debug=False)
 
         assert "Trace mode requires debug mode" in str(exc_info.value)

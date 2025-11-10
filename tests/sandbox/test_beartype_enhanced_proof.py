@@ -15,7 +15,7 @@ def test_proof_1_function_return_type_validation():
 
     def bad_func(x: int) -> str:
         """Declara retornar str, mas retorna int!"""
-        return 42  # type: ignore
+        return 42
 
     # ORIGINAL: ACEITA função com tipo errado
     print("\n[ORIGINAL - SEM TÉCNICA 2]")
@@ -65,7 +65,7 @@ def test_proof_2_function_parameter_type_validation():
     # ORIGINAL: Passa "string" onde esperava int
     print("\n[ORIGINAL - SEM TÉCNICA 2]")
     try:
-        result_orig = FlextResult[str].ok("5").map(strict_func)  # type: ignore
+        result_orig = FlextResult[str].ok("5").map(strict_func)
         print(f"❌ Original ACEITOU tipo errado: {result_orig}")
         original_accepts = True
     except Exception as e:
@@ -75,7 +75,7 @@ def test_proof_2_function_parameter_type_validation():
     # ENHANCED: Rejeita "string" onde esperava int
     print("\n[ENHANCED - COM TÉCNICA 2]")
     try:
-        result_enh = FlextResultEnhanced[str].ok("5").map(strict_func)  # type: ignore
+        result_enh = FlextResultEnhanced[str].ok("5").map(strict_func)
         print("❌ Enhanced ACEITOU tipo errado")
         enhanced_rejects = False
     except Exception as e:
@@ -106,7 +106,7 @@ def test_proof_3_unwrap_or_type_validation():
     print("\n[ORIGINAL - SEM VALIDAÇÃO]")
     try:
         result_orig = FlextResult[int].fail("error")
-        value = result_orig.unwrap_or("string")  # type: ignore
+        value = result_orig.unwrap_or("string")
         print(f"❌ Original ACEITOU tipo errado: {value} (tipo: {type(value)})")
         original_accepts = True
     except Exception as e:
@@ -120,7 +120,7 @@ def test_proof_3_unwrap_or_type_validation():
         # Forçar failure para testar unwrap_or
         result_enh_fail = FlextResultEnhanced[int].fail("error")
         result_enh_fail._type_hint = int  # Simular _type_hint
-        value = result_enh_fail.unwrap_or("string")  # type: ignore
+        value = result_enh_fail.unwrap_or("string")
         print(f"❌ Enhanced ACEITOU tipo errado: {value}")
         enhanced_rejects = False
     except TypeError as e:
@@ -173,7 +173,7 @@ def test_proof_5_generic_type_validation():
     # ORIGINAL: Aceita qualquer tipo
     print("\n[ORIGINAL - SEM VALIDAÇÃO]")
     try:
-        result_orig = FlextResult[int].ok("string")  # type: ignore
+        result_orig = FlextResult[int].ok("string")
         print(f"❌ Original ACEITOU tipo errado: {result_orig.value}")
         original_accepts = True
     except Exception as e:
@@ -183,7 +183,7 @@ def test_proof_5_generic_type_validation():
     # ENHANCED COM _type_hint: Rejeita tipo errado
     print("\n[ENHANCED - COM _type_hint]")
     try:
-        result_enh = FlextResultEnhanced.ok("string", _type_hint=int)  # type: ignore
+        result_enh = FlextResultEnhanced.ok("string", _type_hint=int)
         print(f"❌ Enhanced ACEITOU tipo errado: {result_enh.value}")
         enhanced_rejects = False
     except TypeError as e:

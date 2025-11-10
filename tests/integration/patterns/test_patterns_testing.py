@@ -22,8 +22,6 @@ from typing import cast
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextTypes
-
 
 def mark_test_pattern(
     pattern: str,
@@ -474,7 +472,7 @@ class TestPerformanceAnalysis:
     def test_endurance_testing(self) -> None:
         """Demonstrate endurance testing."""
 
-        def memory_operation() -> FlextTypes.IntList:
+        def memory_operation() -> list[int]:
             """Operation that uses some memory."""
             return list(range(100))
 
@@ -619,11 +617,11 @@ class TestAdvancedPatterns:
             return {"numbers": [1, 2, 3, 4, 5]}
 
         def act_on_data(data: dict[str, object]) -> int:
-            return sum(cast("FlextTypes.IntList", data["numbers"]))
+            return sum(cast("list[int]", data["numbers"]))
 
         def assert_result(result: int, original_data: dict[str, object]) -> None:
             assert result == 15
-            assert len(cast("FlextTypes.IntList", original_data["numbers"])) == 5
+            assert len(cast("list[int]", original_data["numbers"])) == 5
 
         @arrange_act_assert(
             arrange_data,

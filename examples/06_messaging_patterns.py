@@ -383,7 +383,7 @@ class MessagingPatternsService(FlextService[dict[str, object]]):
                     "date_from": datetime.now(UTC).date().replace(day=1).isoformat(),
                     "date_to": datetime.now(UTC).date().isoformat(),
                 },
-                "pagination": FlextModels.Pagination(page=1, size=20).model_dump(),
+                "pagination": FlextModels.Cqrs.Pagination(page=1, size=20).model_dump(),
             },
             metadata={
                 **self._safe_metadata,

@@ -38,7 +38,7 @@ class FlextConstants:
     - typing.Final type annotations for immutability guarantees
     - Hierarchical access patterns (FlextConstants.Namespace.CONSTANT)
     - Compile-time constant verification via strict type checking
-    - Runtime constant validation through __getitem__ and __class_getitem__
+    - Runtime constant validation through __getitem__
 
     **Core Features**:
     1. **Immutable Constants**: All constants wrapped with typing.Final
@@ -315,21 +315,6 @@ class FlextConstants:
             msg = f"Constant path '{key}' not found in FlextConstants"
             raise AttributeError(msg) from e
 
-    @classmethod
-    def __class_getitem__(cls, key: str) -> object:
-        """Class-level access for type annotations."""
-        # Parse nested key like "Errors.VALIDATION_ERROR"
-        parts = key.split(".")
-        value: object = cls
-
-        try:
-            for part in parts:
-                value = getattr(value, part)
-            return value
-        except AttributeError as e:
-            msg = f"Constant path '{key}' not found in FlextConstants"
-            raise AttributeError(msg) from e
-
     class Network:
         """Network-related defaults and limits."""
 
@@ -343,16 +328,12 @@ class FlextConstants:
         """Input validation limits and patterns."""
 
         MIN_NAME_LENGTH: Final[int] = 2  # Usage count: 1
-        MAX_NAME_LENGTH: Final[int] = 100  # Usage count: 0
-        MIN_SERVICE_NAME_LENGTH: Final[int] = 2  # Usage count: 0
-        MAX_EMAIL_LENGTH: Final[int] = 254  # Usage count: 0
+        MAX_NAME_LENGTH: Final[int] = 100  # Maximum name length for validation
+        MAX_EMAIL_LENGTH: Final[int] = 254  # Maximum email length (RFC 5321)
         EMAIL_PARTS_COUNT: Final[int] = 2  # Expected parts when splitting email by @
         LEVEL_PREFIX_PARTS_COUNT: Final[int] = (
             4  # Expected parts when splitting _level_<level>_<key>
         )
-        MIN_PERCENTAGE: Final[float] = 0.0  # Usage count: 0
-        MAX_PERCENTAGE: Final[float] = 100.0  # Usage count: 0
-        MIN_SECRET_KEY_LENGTH: Final[int] = 32  # Usage count: 0
 
         # Phone number validation
         MIN_PHONE_DIGITS: Final[int] = 10  # Minimum phone number length

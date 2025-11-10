@@ -11,7 +11,7 @@ from collections import UserDict
 from collections.abc import Callable
 from typing import Never, cast
 
-from flext_core import FlextConstants, FlextContainer, FlextResult, FlextTypes
+from flext_core import FlextConstants, FlextContainer, FlextResult
 
 
 class TestFlextContainer:
@@ -974,7 +974,7 @@ class TestServiceRegistrationSync:
     def test_register_factory_dual_storage(self) -> None:
         """Factory registration stores in both dict[str, object] and DI container."""
         container = FlextContainer()
-        factory_calls: FlextTypes.IntList = []
+        factory_calls: list[int] = []
 
         def test_factory() -> dict[str, int]:
             factory_calls.append(1)
@@ -1034,7 +1034,7 @@ class TestServiceResolutionSync:
     def test_get_factory_result_via_di(self) -> None:
         """Factory result is cached after first call (lazy singleton pattern)."""
         container = FlextContainer()
-        instance_count: FlextTypes.IntList = []
+        instance_count: list[int] = []
 
         def factory() -> dict[str, int]:
             instance_count.append(1)

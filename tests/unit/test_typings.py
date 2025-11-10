@@ -110,13 +110,16 @@ class TestFlextTypes:
     def test_flexttypes_core_weak_types(self) -> None:
         """Test core weak types are accessible."""
         # Test collection types from lean typings.py
+        # THIN LAYER principle: Use Python native types directly
         assert dict[str, object] is not None
         assert list[object] is not None
         assert list[str] is not None
-        assert FlextTypes.IntList is not None
-        assert FlextTypes.FloatList is not None
-        assert FlextTypes.BoolList is not None
-        assert FlextTypes.NestedDict is not None
+        assert list[int] is not None  # IntList removed - use list[int]
+        assert list[float] is not None  # FloatList removed - use list[float]
+        assert list[bool] is not None  # BoolList removed - use list[bool]
+        assert (
+            dict[str, dict[str, object]] is not None
+        )  # NestedDict removed - use dict nesting
         assert dict[str, str] is not None
 
     def test_flexttypes_domain_types(self) -> None:
@@ -159,9 +162,11 @@ class TestFlextTypes:
     def test_flexttypes_runtime_types(self) -> None:
         """Test runtime types from lean typings.py."""
         # Test types used by src/flext_core/runtime.py
-        assert FlextTypes.ValidatableInputType is not None
+        # ValidatableInputType removed - use object directly
         assert FlextTypes.TypeHintSpecifier is not None
-        assert FlextTypes.SerializableObjectType is not None
+        assert (
+            FlextTypes.SerializableType is not None
+        )  # Consolidated from SerializableObjectType
         assert FlextTypes.GenericTypeArgument is not None
         assert FlextTypes.LoggerContextType is not None
         assert FlextTypes.FactoryCallableType is not None

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import types
 from collections.abc import Callable, Iterator, Sequence
+from contextlib import suppress
 from typing import Never, Self, cast, overload, override
 
 from beartype.door import is_bearable
@@ -190,10 +191,6 @@ class FlextResult[T_co]:
     _error_code: str | None
     _error_data: dict[str, object]
 
-    # Legacy attributes for backward compatibility (synced from _result)
-    _data: T_co | None
-    _error: str | None
-
     # Runtime type validation attribute (set by __class_getitem__)
     _expected_type: type | None = None
 
@@ -205,11 +202,6 @@ class FlextResult[T_co]:
     def _get_exceptions() -> type[FlextExceptions]:
         """Get FlextExceptions class."""
         return FlextExceptions
-
-    # Python 3.13+ discriminated union architecture with pattern matching support
-    # Pattern matching works via __match_args__ which defines positional matching
-    # Example: match result: case FlextResult(_data=value, _error=None)
-    __match_args__ = ("_data", "_error")
 
     # Overloaded constructor for proper type discrimination.
     @overload
@@ -232,7 +224,7 @@ class FlextResult[T_co]:
         error_data: dict[str, object] | None = None,
     ) -> None: ...
 
-    def __init__(
+    def __init__(  # noqa: C901  # Complex type validation with multiple fallbacks required
         self,
         *,
         data: T_co | None = None,
@@ -244,37 +236,64 @@ class FlextResult[T_co]:
         super().__init__()
 
         # Runtime type validation if _expected_type is set (via __class_getitem__)
-        if (
-            self._expected_type is not None
-            and error is None
-            and data is not None
-            and not is_bearable(data, self._expected_type)
-        ):
-            expected_name = getattr(
-                self._expected_type, "__name__", str(self._expected_type)
-            )
-            actual_name = type(data).__name__
-            msg = (
-                f"FlextResult[{expected_name}].ok() received {actual_name} "
-                f"instead of {expected_name}. Data: {data!r}"
-            )
-            raise TypeError(msg)
+        if self._expected_type is not None and error is None and data is not None:
+            # Primary validation: use beartype for type checking
+            is_valid = is_bearable(data, self._expected_type)
+
+            # Fallback: if beartype fails and expected_type is a class,
+            # check if data is an instance (handles generic class subclasses)
+            if not is_valid and isinstance(self._expected_type, type):
+                # isinstance can fail with some generic types
+                with suppress(TypeError):
+                    is_valid = isinstance(data, self._expected_type)
+
+                # Second fallback: check if data is instance of base class
+                # This handles cases like FlextHandlers[object, object] where
+                # data is ConcreteHandler(FlextHandlers) - subclass of base class
+                if not is_valid:
+                    # Try to find base classes in __orig_bases__ or __mro__
+                    orig_bases = getattr(self._expected_type, "__orig_bases__", ())
+                    for base in orig_bases:
+                        # Get the origin (e.g., FlextHandlers from FlextHandlers[T, R])
+                        origin = getattr(base, "__origin__", base)
+                        if origin is None or not isinstance(origin, type):
+                            continue
+                        with suppress(TypeError):
+                            if isinstance(data, origin):
+                                is_valid = True
+                                break
+
+                    # If still not valid, try __mro__ (method resolution order)
+                    if not is_valid:
+                        mro = getattr(self._expected_type, "__mro__", ())
+                        for base_class in mro:
+                            if base_class is object or not isinstance(base_class, type):
+                                continue
+                            with suppress(TypeError):
+                                if isinstance(data, base_class):
+                                    is_valid = True
+                                    break
+
+            if not is_valid:
+                expected_name = getattr(
+                    self._expected_type, "__name__", str(self._expected_type)
+                )
+                actual_name = type(data).__name__
+                msg = (
+                    f"FlextResult[{expected_name}].ok() received {actual_name} "
+                    f"instead of {expected_name}. Data: {data!r}"
+                )
+                raise TypeError(msg)
 
         # Architectural invariant: exactly one of data or error must be provided.
         if error is not None:
             # Failure path: create Failure with error message
             self._result = Failure(error)
-            # Sync legacy attributes for backward compatibility
-            self._data = None
-            self._error = error
         else:
             # Success path: create Success with data
             # Note: None is a valid success value (e.g., FlextResult[None].ok(None))
             # The returns library supports Success(None) for void/unit operations
             self._result = Success(cast("T_co", data))
-            # Sync legacy attributes for backward compatibility
-            self._data = data
-            self._error = None
 
         self._error_code = error_code
         self._error_data = error_data or {}
@@ -302,20 +321,34 @@ class FlextResult[T_co]:
             >>> result = FlextResult[int].ok("string")  # ❌ TypeError
 
         """
+        if item is cls or (hasattr(item, "__origin__") and item.__origin__ is cls):
+            return cls
+        try:
+            if isinstance(item, type) and issubclass(item, cls):
+                return item
+        except TypeError:
+            pass
 
-        class TypedFlextResult(cls):  # type: ignore[valid-type,misc]
-            """Typed subclass with stored expected type for runtime validation."""
-
-            _expected_type: type | None = item
-
-        # Preserve readable name for debugging and error messages
-        type_name = getattr(item, "__name__", str(item))
+        # Create typed subclass dynamically with proper type annotations
+        # This is a valid pattern for Generic class subscription
         cls_name = getattr(cls, "__name__", "FlextResult")
         cls_qualname = getattr(cls, "__qualname__", "FlextResult")
-        TypedFlextResult.__name__ = f"{cls_name}[{type_name}]"
-        TypedFlextResult.__qualname__ = f"{cls_qualname}[{type_name}]"
+        type_name = getattr(item, "__name__", str(item))
 
-        return TypedFlextResult  # type: ignore[return-value]
+        # Create subclass using dynamic type() for Generic subscription
+        # NOTE: type: ignore required here due to type checker limitation with metaprogramming
+        # This is valid Python metaprogramming - dynamically creating a class at runtime
+        # Type checkers cannot verify dynamic type() calls with 3 arguments
+        typed_subclass = type(
+            f"{cls_name}[{type_name}]",
+            (cls,),
+            {"_expected_type": item},
+        )
+
+        # Preserve qualname for better debugging
+        typed_subclass.__qualname__ = f"{cls_qualname}[{type_name}]"
+
+        return typed_subclass
 
     @property
     def is_success(self) -> bool:
@@ -343,8 +376,7 @@ class FlextResult[T_co]:
         if self.is_failure:
             msg = "Attempted to access value on failed result"
             raise FlextResult._get_exceptions().ValidationError(
-                message=msg,
-                error_code="VALIDATION_ERROR",
+                message=msg, error_code="VALIDATION_ERROR"
             )
         # Use the returns backend to unwrap the value
         return self._result.unwrap()
@@ -366,6 +398,16 @@ class FlextResult[T_co]:
     def error_data(self) -> dict[str, object]:
         """Return the structured error metadata dictionary for observability."""
         return self._error_data
+
+    @property
+    def _data(self) -> T_co | None:
+        """Internal property to access result data from returns.Result backend."""
+        return self._result.unwrap() if self.is_success else None
+
+    @property
+    def _error(self) -> str | None:
+        """Internal property to access error message from returns.Result backend."""
+        return self._result.failure() if self.is_failure else None
 
     @classmethod
     def ok(cls, data: T_co) -> Self:
@@ -684,18 +726,18 @@ class FlextResult[T_co]:
     def __iter__(self) -> Iterator[T_co | str | None]:
         """Enable unpacking: value, error = result."""
         if self.is_success:
-            yield self._data
+            yield self._result.unwrap()
             yield None
         else:
             yield None
-            yield self._error
+            yield self._result.failure()
 
     def __getitem__(self, key: int) -> T_co | str | None:
         """Access result[0] for data, result[1] for error."""
         if key == 0:
-            return self._data if self.is_success else None
+            return self._result.unwrap() if self.is_success else None
         if key == 1:
-            return self._error
+            return self._result.failure() if self.is_failure else None
         msg = "FlextResult only supports indices 0 (data) and 1 (error)"
         raise FlextResult._get_exceptions().NotFoundError(
             msg, resource_type=f"index[{key}]"
@@ -714,8 +756,7 @@ class FlextResult[T_co]:
         if self.is_failure:
             error_msg = self._error or "Context manager failed"
             raise FlextResult._get_exceptions().BaseError(
-                message=error_msg,
-                error_code="OPERATION_ERROR",
+                message=error_msg, error_code="OPERATION_ERROR"
             )
 
         return cast("T_co", self._data)
@@ -732,34 +773,32 @@ class FlextResult[T_co]:
 
     @property
     def data(self) -> T_co:
-        """Legacy property for backward compatibility - equivalent to value."""
+        """Backward compatibility property - equivalent to value."""
         if self.is_failure:
             msg = "Attempted to access data on failed result"
             raise FlextResult._get_exceptions().ValidationError(
-                message=msg,
-                error_code="VALIDATION_ERROR",
+                message=msg, error_code="VALIDATION_ERROR"
             )
-        return cast("T_co", self._data)
+        # Use the returns backend to unwrap the value (same as .value)
+        return self._result.unwrap()
 
     @property
     def value_or_none(self) -> T_co | None:
         """Get value or None if failed."""
-        return self._data if self.is_success else None
+        return self._result.unwrap() if self.is_success else None
 
     def expect(self, message: str) -> T_co:
         """Get value or raise with custom message."""
         if self.is_failure:
             msg = f"{message}: {self._error}"
             raise FlextResult._get_exceptions().BaseError(
-                message=msg,
-                error_code="OPERATION_ERROR",
+                message=msg, error_code="OPERATION_ERROR"
             )
         # DEFENSIVE: .expect() validates None for safety (unlike .value/.unwrap)
         if self._data is None:
             msg = "Success result has None data"
             raise FlextResult._get_exceptions().BaseError(
-                message=msg,
-                error_code="OPERATION_ERROR",
+                message=msg, error_code="OPERATION_ERROR"
             )
         return self._data
 
@@ -891,8 +930,7 @@ class FlextResult[T_co]:
             return cast("T_co", self._data)
         error_msg = self._error or "Operation failed"
         raise FlextResult._get_exceptions().BaseError(
-            message=error_msg,
-            error_code="OPERATION_ERROR",
+            message=error_msg, error_code="OPERATION_ERROR"
         )
 
     def recover(self, func: Callable[[str], T_co]) -> FlextResult[T_co]:
@@ -1070,9 +1108,9 @@ class FlextResult[T_co]:
         except Exception as e:
             # If default computation fails, we need to handle it somehow
             # Since this returns T_co not FlextResult, we raise
+            error_message = f"Default value computation failed: {e}"
             raise FlextResult._get_exceptions().BaseError(
-                message=f"Default value computation failed: {e}",
-                error_code="OPERATION_ERROR",
+                message=error_message, error_code="OPERATION_ERROR"
             ) from e
 
     def filter(
@@ -1679,8 +1717,7 @@ class FlextResult[T_co]:
                 if not callable(item):
                     msg = "Expected callable when flattening alternatives"
                     raise FlextResult._get_exceptions().ValidationError(
-                        message=msg,
-                        error_code="VALIDATION_ERROR",
+                        message=msg, error_code="VALIDATION_ERROR"
                     )
                 flat_callables.append(cast("Callable[[], object]", item))
         return flat_callables
@@ -1756,7 +1793,9 @@ class FlextResult[T_co]:
         if self.is_failure:
             error_msg = self._error or "Failed"
             msg = f"Cannot convert failure to IO: {error_msg}"
-            raise ValueError(msg)
+            raise FlextResult._get_exceptions().ValidationError(
+                message=msg, error_code="VALIDATION_ERROR"
+            )
         return IO(self._data)
 
     def to_io_result(self) -> IOResult[object, object]:

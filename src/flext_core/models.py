@@ -21,6 +21,7 @@ from pydantic import Discriminator, model_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.config import FlextModelsConfig
+from flext_core._models.container import FlextModelsContainer
 from flext_core._models.context import FlextModelsContext
 from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
@@ -191,12 +192,12 @@ class FlextModels:
         ...         return FlextResult.ok(None)
         >>>
         >>> # Command - CQRS pattern
-        >>> class CreateUserCommand(FlextModels.Command):
+        >>> class CreateUserCommand(FlextModels.Cqrs.Command):
         ...     name: str
         ...     email: str
         >>>
         >>> # Query - CQRS pattern
-        >>> class GetUserQuery(FlextModels.Query):
+        >>> class GetUserQuery(FlextModels.Cqrs.Query):
         ...     user_id: str
         >>>
         >>> # Domain Event - Event sourcing
@@ -295,13 +296,6 @@ class FlextModels:
         class Handler(FlextModelsCqrs.Handler):
             """Handler configuration model - wrapper class."""
 
-    # Backward compatibility: top-level aliases
-    Command = Cqrs.Command
-    Pagination = Cqrs.Pagination
-    Query = Cqrs.Query
-    Bus = Cqrs.Bus
-    Handler = Cqrs.Handler
-
     # =========================================================================
     # OFFICIAL NAMESPACE - Validation Patterns
     # =========================================================================
@@ -353,20 +347,25 @@ class FlextModels:
                 A typed subclass with _expected_data_type set
 
             """
-
-            class TypedPayload(cls):  # type: ignore[valid-type,misc]
-                """Typed subclass with stored expected data type."""
-
-                _expected_data_type: ClassVar[type | None] = item
-
-            # Preserve readable name for debugging
-            type_name = getattr(item, "__name__", str(item))
+            # Create typed subclass dynamically using type() built-in
             cls_name = getattr(cls, "__name__", "Payload")
             cls_qualname = getattr(cls, "__qualname__", "Payload")
-            TypedPayload.__name__ = f"{cls_name}[{type_name}]"
-            TypedPayload.__qualname__ = f"{cls_qualname}[{type_name}]"
+            type_name = getattr(item, "__name__", str(item))
 
-            return TypedPayload  # type: ignore[return-value]
+            # Dynamic type creation using type() built-in - returns a subclass of cls
+            # NOTE: type: ignore required due to type checker limitation with metaprogramming
+            # This is valid Python metaprogramming - dynamically creating a class at runtime
+            # Type checkers cannot verify dynamic type() calls with 3 arguments
+            typed_subclass: type[Self] = type(
+                f"{cls_name}[{type_name}]",
+                (cls,),
+                {
+                    "_expected_data_type": item,
+                    "__module__": cls.__module__,
+                    "__qualname__": f"{cls_qualname}[{type_name}]",
+                },
+            )
+            return typed_subclass
 
         @model_validator(mode="after")
         def _validate_data_type(self) -> Self:
@@ -492,6 +491,19 @@ class FlextModels:
 
     class OperationExecutionRequest(FlextModelsService.OperationExecutionRequest):
         """Operation execution request model - wrapper class."""
+
+    # =========================================================================
+    # CONTAINER MODELS - Dependency Injection registry models
+    # =========================================================================
+
+    class ServiceRegistration(FlextModelsContainer.ServiceRegistration):
+        """Service registration model - DI container service entry."""
+
+    class FactoryRegistration(FlextModelsContainer.FactoryRegistration):
+        """Factory registration model - DI container factory entry."""
+
+    class ContainerConfig(FlextModelsContainer.ContainerConfig):
+        """Container configuration model - DI container settings."""
 
     # =========================================================================
     # PYDANTIC V2 DISCRIMINATED UNION - Type-safe message routing

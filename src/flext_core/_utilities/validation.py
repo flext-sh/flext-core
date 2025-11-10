@@ -22,6 +22,7 @@ from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
 # Module constants
@@ -276,9 +277,9 @@ class FlextUtilitiesValidation:
                 return f"{cast('type', command_type).__name__}_{hash(str(dataclass_sorted_data))}"
 
             # For dictionaries, sort keys
-            if isinstance(command, dict):
+            if FlextRuntime.is_dict_like(command):
                 dict_sorted_data = FlextUtilitiesCache.sort_dict_keys(
-                    cast("dict[str, object]", command),
+                    command,
                 )
                 return f"{cast('type', command_type).__name__}_{hash(str(dict_sorted_data))}"
 
@@ -314,7 +315,7 @@ class FlextUtilitiesValidation:
             Object with sorted keys
 
         """
-        if isinstance(obj, dict):
+        if FlextRuntime.is_dict_like(obj):
             dict_obj: dict[str, object] = obj
             sorted_items: list[tuple[str, object]] = sorted(
                 cast("list[tuple[str, object]]", dict_obj.items()),
@@ -323,8 +324,8 @@ class FlextUtilitiesValidation:
             return {
                 str(k): FlextUtilitiesCache.sort_dict_keys(v) for k, v in sorted_items
             }
-        if isinstance(obj, list):
-            obj_list: list[object] = cast("list[object]", obj)
+        if FlextRuntime.is_list_like(obj):
+            obj_list: list[object] = obj
             return [FlextUtilitiesCache.sort_dict_keys(item) for item in obj_list]
         if isinstance(obj, tuple):
             obj_tuple: tuple[object, ...] = cast("tuple[object, ...]", obj)

@@ -25,10 +25,10 @@ import socket
 from collections.abc import Callable
 from types import UnionType
 from typing import (
-    TYPE_CHECKING,
     Annotated,
     Literal,
     ParamSpec,
+    Protocol,
     TypeVar,
 )
 
@@ -40,79 +40,74 @@ from pydantic import (
     Field,
 )
 
-if TYPE_CHECKING:
-    from flext_core.result import FlextResult
-
 # =============================================================================
 # CORE TYPEVARS - Python 3.13+ Native (PEP 696 defaults)
 # =============================================================================
 
 # Core invariant TypeVars
-T = TypeVar("T", default=object)
-E = TypeVar("E", default=object)
-F = TypeVar("F", default=object)
-K = TypeVar("K", default=object)
+T = TypeVar("T")
+E = TypeVar("E")
+F = TypeVar("F")
+K = TypeVar("K")
 P = ParamSpec("P")
-R = TypeVar("R", default=object)
-U = TypeVar("U", default=object)
-V = TypeVar("V", default=object)
-W = TypeVar("W", default=object)
+R = TypeVar("R")
+U = TypeVar("U")
+V = TypeVar("V")
+W = TypeVar("W")
 
 # Covariant TypeVars (_co suffix)
-T_co = TypeVar("T_co", covariant=True, default=object)
-T1_co = TypeVar("T1_co", covariant=True, default=object)
-T2_co = TypeVar("T2_co", covariant=True, default=object)
-T3_co = TypeVar("T3_co", covariant=True, default=object)
-TAggregate_co = TypeVar("TAggregate_co", covariant=True, default=object)
-TCacheValue_co = TypeVar("TCacheValue_co", covariant=True, default=object)
-TDomainEvent_co = TypeVar("TDomainEvent_co", covariant=True, default=object)
-TEntity_co = TypeVar("TEntity_co", covariant=True, default=object)
-TResult_co = TypeVar("TResult_co", covariant=True, default=object)
-TState_co = TypeVar("TState_co", covariant=True, default=object)
-TValue_co = TypeVar("TValue_co", covariant=True, default=object)
-TValueObject_co = TypeVar("TValueObject_co", covariant=True, default=object)
-T_Service_co = TypeVar("T_Service_co", covariant=True, default=object)
-TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True, default=object)
+T_co = TypeVar("T_co", covariant=True)
+T1_co = TypeVar("T1_co", covariant=True)
+T2_co = TypeVar("T2_co", covariant=True)
+T3_co = TypeVar("T3_co", covariant=True)
+TAggregate_co = TypeVar("TAggregate_co", covariant=True)
+TCacheValue_co = TypeVar("TCacheValue_co", covariant=True)
+TDomainEvent_co = TypeVar("TDomainEvent_co", covariant=True)
+TEntity_co = TypeVar("TEntity_co", covariant=True)
+TResult_co = TypeVar("TResult_co", covariant=True)
+TState_co = TypeVar("TState_co", covariant=True)
+TValue_co = TypeVar("TValue_co", covariant=True)
+TValueObject_co = TypeVar("TValueObject_co", covariant=True)
+T_Service_co = TypeVar("T_Service_co", covariant=True)
+TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True)
 
 # Contravariant TypeVars (_contra suffix)
-T_contra = TypeVar("T_contra", contravariant=True, default=object)
-TCacheKey_contra = TypeVar("TCacheKey_contra", contravariant=True, default=object)
-TCommand_contra = TypeVar("TCommand_contra", contravariant=True, default=object)
-TConfigKey_contra = TypeVar("TConfigKey_contra", contravariant=True, default=object)
-TEvent_contra = TypeVar("TEvent_contra", contravariant=True, default=object)
-TInput_contra = TypeVar("TInput_contra", contravariant=True, default=object)
-TItem_contra = TypeVar("TItem_contra", contravariant=True, default=object)
-TQuery_contra = TypeVar("TQuery_contra", contravariant=True, default=object)
-TResult_contra = TypeVar("TResult_contra", contravariant=True, default=object)
-TUtil_contra = TypeVar("TUtil_contra", contravariant=True, default=object)
-T_Validator_contra = TypeVar("T_Validator_contra", contravariant=True, default=object)
-T_Repository_contra = TypeVar("T_Repository_contra", contravariant=True, default=object)
-TInput_Handler_contra = TypeVar(
-    "TInput_Handler_contra", contravariant=True, default=object
-)
-MessageT_contra = TypeVar("MessageT_contra", contravariant=True, default=object)
+T_contra = TypeVar("T_contra", contravariant=True)
+TCacheKey_contra = TypeVar("TCacheKey_contra", contravariant=True)
+TCommand_contra = TypeVar("TCommand_contra", contravariant=True)
+TConfigKey_contra = TypeVar("TConfigKey_contra", contravariant=True)
+TEvent_contra = TypeVar("TEvent_contra", contravariant=True)
+TInput_contra = TypeVar("TInput_contra", contravariant=True)
+TItem_contra = TypeVar("TItem_contra", contravariant=True)
+TQuery_contra = TypeVar("TQuery_contra", contravariant=True)
+TResult_contra = TypeVar("TResult_contra", contravariant=True)
+TUtil_contra = TypeVar("TUtil_contra", contravariant=True)
+T_Validator_contra = TypeVar("T_Validator_contra", contravariant=True)
+T_Repository_contra = TypeVar("T_Repository_contra", contravariant=True)
+TInput_Handler_contra = TypeVar("TInput_Handler_contra", contravariant=True)
+MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
 
 # Invariant advanced TypeVars
-T_ResultProtocol = TypeVar("T_ResultProtocol", default=object)
-CallableInputT = TypeVar("CallableInputT", default=object)
-CallableOutputT = TypeVar("CallableOutputT", default=object)
+T_ResultProtocol = TypeVar("T_ResultProtocol")
+CallableInputT = TypeVar("CallableInputT")
+CallableOutputT = TypeVar("CallableOutputT")
 
 # Domain-specific TypeVars
-Command = TypeVar("Command", default=object)
-Event = TypeVar("Event", default=object)
-Message = TypeVar("Message", default=object)
-Query = TypeVar("Query", default=object)
-ResultT = TypeVar("ResultT", default=object)
+Command = TypeVar("Command")
+Event = TypeVar("Event")
+Message = TypeVar("Message")
+Query = TypeVar("Query")
+ResultT = TypeVar("ResultT")
 
 # Module-level TypeVars (for compatibility)
-MessageT = TypeVar("MessageT", default=object)
-FactoryT = TypeVar("FactoryT", default=object)
-TValidateAll = TypeVar("TValidateAll", default=object)
+MessageT = TypeVar("MessageT")
+FactoryT = TypeVar("FactoryT")
+TValidateAll = TypeVar("TValidateAll")
 
 # TypeVars for generic processor operations
-ProcessedDataT = TypeVar("ProcessedDataT", default=object)
-ProcessorResultT = TypeVar("ProcessorResultT", default=object)
-RegistryHandlerT = TypeVar("RegistryHandlerT", default=object)
+ProcessedDataT = TypeVar("ProcessedDataT")
+ProcessorResultT = TypeVar("ProcessorResultT")
+RegistryHandlerT = TypeVar("RegistryHandlerT")
 
 
 # =============================================================================
@@ -197,32 +192,68 @@ class FlextTypes:
     # JSON TYPES - Python native with JSON compatibility
     # =========================================================================
 
-    # Use these ONLY when you need the union type - otherwise use dict/list
-    # Using object for dict/list values to avoid Pydantic recursion issues
-    # while maintaining type compatibility with nested JSON structures
-    type JsonValue = dict[str, object] | list[object] | str | int | float | bool | None
+    type JsonPrimitive = str | int | float | bool | None
+    # Non-recursive approximation (Pyrefly limitation workaround)
+    # Note: Full recursive type would be: JsonValue = JsonPrimitive | dict[str, JsonValue] | list[JsonValue]
+    # but type checkers have limitations. This pragmatic version covers 99% of real JSON usage.
+    type JsonValue = JsonPrimitive | dict[str, object] | list[object]
     type JsonDict = dict[str, JsonValue]
 
     # =========================================================================
     # FLEXT RESULT TYPES - Railway pattern (domain-specific)
     # =========================================================================
-    # Note: Using TYPE_CHECKING to avoid runtime circular imports
+    # Note: We define a minimal structural protocol to avoid circular imports
+    # with FlextResult (Tier 1) while providing useful typing guarantees.
 
-    if TYPE_CHECKING:
-        type FlextResultType[T] = FlextResult[T]
-        type ValidationRule[T] = Callable[[T], FlextResult[bool]]
-        type CrossFieldValidator[T] = Callable[[T], FlextResult[bool]]
-        type ValidatorFunctionType = Callable[[object], FlextResult[bool]]
+    class ResultLike(Protocol[T_co]):
+        """Structural protocol satisfied by FlextResult[T]."""
+
+        @property
+        def is_success(self) -> bool:
+            """Check if result represents success."""
+            ...
+
+        @property
+        def is_failure(self) -> bool:
+            """Check if result represents failure."""
+            ...
+
+        @property
+        def value(self) -> T_co:
+            """Get the success value."""
+            ...
+
+        def unwrap(self) -> T_co:
+            """Unwrap the result value or raise exception."""
+            ...
+
+    type FlextResultType[T] = ResultLike[T]
+    type ValidationRule[T] = Callable[[T], FlextResultType[T]]
+    type CrossFieldValidator[T] = Callable[[T], FlextResultType[T]]
+    type ValidatorFunction[T] = Callable[[T], FlextResultType[T]]
 
     # =========================================================================
     # HANDLER TYPES - CQRS/Bus patterns (domain-specific)
     # =========================================================================
 
-    type HandlerCallable[T, M] = Callable[[M], T]
-    type CallableHandlerType = Callable[[object], object]
-    type BusHandlerType = Callable[[object], object]
-    type MiddlewareType = Callable[[object], object]
-    type MiddlewareConfig = dict[str, object]
+    type HandlerCallable[TInput, TResult] = Callable[
+        [TInput],
+        FlextResultType[TResult],
+    ]
+    # Generic handler types with explicit TypeVar declarations
+    type CallableHandlerType[TInput_Handler_contra, TResult_Handler_co] = Callable[
+        [TInput_Handler_contra],
+        FlextResultType[TResult_Handler_co],
+    ]
+    type BusHandlerType[MessageT_contra, TResult_Handler_co] = Callable[
+        [MessageT_contra],
+        FlextResultType[TResult_Handler_co],
+    ]
+    type MiddlewareType[MessageT_contra, TResult_Handler_co] = Callable[
+        [MessageT_contra],
+        FlextResultType[TResult_Handler_co],
+    ]
+    type MiddlewareConfig = JsonDict
 
     # =========================================================================
     # PROCESSOR TYPES - Data processing (domain-specific)
@@ -257,29 +288,35 @@ class FlextTypes:
     # UTILITY TYPES - FlextUtilities domain-specific types
     # =========================================================================
 
-    type GenericDetailsType = dict[str, object] | object
-    type SortableObjectType = dict[str, object] | object
-    type CachedObjectType = object
+    # Complex types that provide semantic value
     type SerializableType = (
         object | dict[str, object] | list[object] | str | int | float | bool | None
     )
-    type SerializableObjectType = (
-        object | dict[str, object] | list[object] | str | int | float | bool | None
-    )
-    # Accepts plain types, generic aliases (e.g., dict[str, object]), and string references
     type TypeOriginSpecifier = object
-    type ParameterValueType = object
-    type IntList = list[int]
-    type FloatList = list[float]
-    type BoolList = list[bool]
-    type ObjectList = list[object]
-    type FloatDict = dict[str, float]
-    type NestedDict = dict[str, dict[str, object]]
     type GenericTypeArgument = type | str | object
     type TypeHintSpecifier = type | str | UnionType | None
-    type ValidatableInputType = object
     type ContextualObjectType = object
     type ContainerServiceType = object
+
+    # Cache and validation utility types
+    type ObjectList = list[object]
+    type CachedObjectType = (
+        object  # Object with cache attributes (e.g., _cache, __cache__)
+    )
+    type ParameterValueType = object  # Configuration parameter value
+    type SortableObjectType = object  # Object that can be sorted/ordered
+    type GenericDetailsType = object | dict[str, object]  # Generic details/metadata
+    type MetadataDict = dict[str, object]  # Generic metadata dictionary
+
+    # Container/DI types
+    type ServiceRegistry = dict[str, object]  # Service instance registry
+    type FactoryRegistry = dict[str, Callable[[], object]]  # Factory function registry
+    type ContainerConfig = dict[str, object]  # Container configuration
+
+    # CQRS Payload types
+    type EventPayload = dict[str, object]  # Event data payload
+    type CommandPayload = dict[str, object]  # Command data payload
+    type QueryPayload = dict[str, object]  # Query data payload
 
     # =========================================================================
     # BUS/HANDLER TYPES - Extended CQRS/Event Sourcing types
@@ -317,7 +354,7 @@ class FlextTypes:
     # =========================================================================
     # VALIDATOR TYPES - Validation framework types
     # =========================================================================
-    # Note: Validator types defined above with FlextResult types in TYPE_CHECKING block
+    # Note: Validator types defined above using forward references to FlextResult
 
     # =========================================================================
 

@@ -401,43 +401,53 @@ class FlextDecorators:
 
                 # Get logger from self if available, otherwise create one
                 args_tuple = cast("tuple[object, ...]", args)
-                first_arg: object = args_tuple[0] if args_tuple else None
-                potential_logger: object | None = (
-                    getattr(first_arg, "logger", None)
-                    if first_arg is not None
-                    else None
+                logger = FlextDecorators._resolve_logger(args_tuple, func)
+
+                correlation_id = FlextDecorators._bind_operation_context(
+                    operation=op_name,
+                    logger=logger,
+                    function_name=func.__name__,
+                    ensure_correlation=True,
                 )
-                if potential_logger is not None and isinstance(
-                    potential_logger, FlextLogger
-                ):
-                    logger = potential_logger
-                else:
-                    logger = FlextLogger(func.__module__)
-
-                # Ensure correlation ID exists for distributed tracing
-                FlextContext.Utilities.ensure_correlation_id()
-
-                # Set operation in FlextContext for automatic propagation
-                FlextContext.Request.set_operation_name(op_name)
-
-                # Bind operation context for structured logging
-                FlextLogger.bind_operation_context(operation=op_name)
 
                 try:
-                    logger.info(
+                    start_extra: dict[str, object] = {
+                        "function": func.__name__,
+                        "func_module": func.__module__,
+                    }
+                    if correlation_id is not None:
+                        start_extra["correlation_id"] = correlation_id
+
+                    log_start_result = logger.info(
                         f"{op_name}_started",
-                        extra={
-                            "function": func.__name__,
-                            "func_module": func.__module__,
+                        extra=start_extra,
+                    )
+                    FlextDecorators._handle_log_result(
+                        result=log_start_result,
+                        logger=logger,
+                        fallback_message="operation_log_emit_failed",
+                        kwargs={
+                            "extra": {**start_extra, "log_state": "start"},
                         },
                     )
 
                     result = func(*args, **kwargs)
-                    logger.info(
+                    completion_extra: dict[str, object] = {
+                        "function": func.__name__,
+                        "success": True,
+                    }
+                    if correlation_id is not None:
+                        completion_extra["correlation_id"] = correlation_id
+                    log_completion_result = logger.info(
                         f"{op_name}_completed",
-                        extra={
-                            "function": func.__name__,
-                            "success": True,
+                        extra=completion_extra,
+                    )
+                    FlextDecorators._handle_log_result(
+                        result=log_completion_result,
+                        logger=logger,
+                        fallback_message="operation_log_emit_failed",
+                        kwargs={
+                            "extra": {**completion_extra, "log_state": "completed"},
                         },
                     )
                     return result
@@ -448,13 +458,29 @@ class FlextDecorators:
                     RuntimeError,
                     KeyError,
                 ) as e:
-                    logger.exception(
+                    failure_extra: dict[str, object] = {
+                        "function": func.__name__,
+                        "success": False,
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                    }
+                    if correlation_id is not None:
+                        failure_extra["correlation_id"] = correlation_id
+                    failure_result = logger.exception(
                         f"{op_name}_failed",
-                        extra={
-                            "function": func.__name__,
-                            "success": False,
-                            "error": str(e),
-                            "error_type": type(e).__name__,
+                        exception=e,
+                        extra=failure_extra,
+                    )
+                    FlextDecorators._handle_log_result(
+                        result=failure_result,
+                        logger=logger,
+                        fallback_message="operation_log_emit_failed",
+                        kwargs={
+                            "extra": {
+                                **failure_extra,
+                                "log_state": "failed",
+                                "exception_repr": repr(e),
+                            },
                         },
                     )
                     raise
@@ -462,7 +488,11 @@ class FlextDecorators:
                     # CRITICAL: Clear operation context (defensive cleanup)
                     # Use suppress to ensure cleanup never fails
                     with suppress(Exception):
-                        FlextLogger.clear_scope("operation")
+                        FlextDecorators._clear_operation_scope(
+                            logger=logger,
+                            function_name=func.__name__,
+                            operation=op_name,
+                        )
 
             return wrapper
 
@@ -508,42 +538,32 @@ class FlextDecorators:
 
                 # Get logger from self if available, otherwise create one
                 args_tuple = cast("tuple[object, ...]", args)
-                first_arg: object = args_tuple[0] if args_tuple else None
-                potential_logger: object | None = (
-                    getattr(first_arg, "logger", None)
-                    if first_arg is not None
-                    else None
-                )
-                if potential_logger is not None and isinstance(
-                    potential_logger, FlextLogger
-                ):
-                    logger = potential_logger
-                else:
-                    logger = FlextLogger(func.__module__)
+                logger = FlextDecorators._resolve_logger(args_tuple, func)
 
                 start_time = time.perf_counter()
 
-                # Ensure correlation ID exists for distributed tracing
-                FlextContext.Utilities.ensure_correlation_id()
-
-                # Set operation in FlextContext for automatic propagation
-                FlextContext.Request.set_operation_name(op_name)
-
-                # Bind operation context for structured logging
-                FlextLogger.bind_operation_context(operation=op_name)
+                correlation_id = FlextDecorators._bind_operation_context(
+                    operation=op_name,
+                    logger=logger,
+                    function_name=func.__name__,
+                    ensure_correlation=True,
+                )
 
                 try:
                     result = func(*args, **kwargs)
                     duration = time.perf_counter() - start_time
 
+                    success_extra: dict[str, object] = {
+                        "operation": op_name,
+                        "duration_ms": duration * 1000,
+                        "duration_seconds": duration,
+                        "success": True,
+                    }
+                    if correlation_id is not None:
+                        success_extra["correlation_id"] = correlation_id
                     logger.info(
                         "operation_completed",
-                        extra={
-                            "operation": op_name,
-                            "duration_ms": duration * 1000,
-                            "duration_seconds": duration,
-                            "success": True,
-                        },
+                        extra=success_extra,
                     )
                     return result
                 except (
@@ -555,23 +575,30 @@ class FlextDecorators:
                 ) as e:
                     duration = time.perf_counter() - start_time
 
+                    failure_extra: dict[str, object] = {
+                        "operation": op_name,
+                        "duration_ms": duration * 1000,
+                        "duration_seconds": duration,
+                        "success": False,
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                    }
+                    if correlation_id is not None:
+                        failure_extra["correlation_id"] = correlation_id
                     logger.exception(
                         "operation_failed",
-                        extra={
-                            "operation": op_name,
-                            "duration_ms": duration * 1000,
-                            "duration_seconds": duration,
-                            "success": False,
-                            "error": str(e),
-                            "error_type": type(e).__name__,
-                        },
+                        extra=failure_extra,
                     )
                     raise
                 finally:
                     # CRITICAL: Clear operation context (defensive cleanup)
                     # Use suppress to ensure cleanup never fails
                     with suppress(Exception):
-                        FlextLogger.clear_scope("operation")
+                        FlextDecorators._clear_operation_scope(
+                            logger=logger,
+                            function_name=func.__name__,
+                            operation=op_name,
+                        )
 
             return wrapper
 
@@ -731,10 +758,11 @@ class FlextDecorators:
         return decorator
 
     @staticmethod
-    def _get_logger_for_retry(
-        args: tuple[object, ...], func: Callable[..., object]
+    def _resolve_logger(
+        args: tuple[object, ...],
+        func: Callable[..., object],
     ) -> FlextLogger:
-        """Get logger from self if available, otherwise create new logger."""
+        """Resolve logger from first argument or create module logger."""
         first_arg = args[0] if args else None
         potential_logger: object | None = (
             getattr(first_arg, "logger", None) if first_arg is not None else None
@@ -742,6 +770,13 @@ class FlextDecorators:
         if potential_logger is not None and isinstance(potential_logger, FlextLogger):
             return potential_logger
         return FlextLogger(func.__module__)
+
+    @staticmethod
+    def _get_logger_for_retry(
+        args: tuple[object, ...], func: Callable[..., object]
+    ) -> FlextLogger:
+        """Get logger from self if available, otherwise create new logger."""
+        return FlextDecorators._resolve_logger(args, func)
 
     @staticmethod
     def _execute_retry_loop[R](
@@ -849,6 +884,87 @@ class FlextDecorators:
             msg,
             error_code=error_code or "RETRY_EXHAUSTED",
         )
+
+    @staticmethod
+    def _bind_operation_context(
+        *,
+        operation: str,
+        logger: FlextLogger,
+        function_name: str,
+        ensure_correlation: bool,
+    ) -> str | None:
+        """Ensure correlation, bind operation context, and report failures."""
+        correlation_id: str | None = None
+        if ensure_correlation:
+            correlation_id = FlextContext.Utilities.ensure_correlation_id()
+        else:
+            current_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
+            if isinstance(current_id, str) and current_id:
+                correlation_id = current_id
+
+        FlextContext.Request.set_operation_name(operation)
+
+        binding_result = FlextLogger.bind_operation_context(operation=operation)
+        if binding_result.is_failure:
+            logger.warning(
+                "operation_context_binding_failed",
+                extra={
+                    "function": function_name,
+                    "operation": operation,
+                    "error": binding_result.error,
+                    "error_code": binding_result.error_code,
+                    "correlation_id": correlation_id,
+                },
+            )
+        return correlation_id
+
+    @staticmethod
+    def _clear_operation_scope(
+        *,
+        logger: FlextLogger,
+        function_name: str,
+        operation: str,
+    ) -> None:
+        """Clear operation scope and log if cleanup fails."""
+        clear_result = FlextLogger.clear_scope("operation")
+        if clear_result.is_failure:
+            FlextDecorators._handle_log_result(
+                result=clear_result,
+                logger=logger,
+                fallback_message="operation_context_clear_failed",
+                kwargs={
+                    "extra": {
+                        "function": function_name,
+                        "operation": operation,
+                    }
+                },
+            )
+
+    @staticmethod
+    def _handle_log_result(
+        *,
+        result: FlextResult[None],
+        logger: FlextLogger,
+        fallback_message: str,
+        kwargs: dict[str, object],
+    ) -> None:
+        """Ensure FlextLogger call results are handled for diagnostics."""
+        if result.is_failure:
+            fallback_logger = getattr(logger, "logger", None)
+            if fallback_logger is None or not hasattr(fallback_logger, "warning"):
+                return
+            fallback_kwargs = dict(kwargs)
+            fallback_kwargs.setdefault("extra", {})
+            extra_payload = fallback_kwargs["extra"]
+            if isinstance(extra_payload, dict):
+                extra_payload = dict(extra_payload)
+                extra_payload["log_error"] = result.error
+                extra_payload["log_error_code"] = result.error_code
+                fallback_kwargs["extra"] = extra_payload
+            else:
+                fallback_kwargs["log_error"] = result.error
+                fallback_kwargs["log_error_code"] = result.error_code
+            fallback_logger.warning(fallback_message, **fallback_kwargs)
 
     @staticmethod
     def timeout(
@@ -1117,16 +1233,42 @@ class FlextDecorators:
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+                args_tuple = cast("tuple[object, ...]", args)
+                logger = FlextDecorators._resolve_logger(args_tuple, func)
+
                 try:
                     # Bind context variables to global logging context
-                    FlextLogger.bind_global_context(**context_vars)
+                    if context_vars:
+                        bind_result = FlextLogger.bind_global_context(**context_vars)
+                        if bind_result.is_failure:
+                            logger.warning(
+                                "global_context_binding_failed",
+                                extra={
+                                    "function": func.__name__,
+                                    "error": bind_result.error,
+                                    "error_code": bind_result.error_code,
+                                    "bound_keys": tuple(context_vars.keys()),
+                                },
+                            )
 
                     return func(*args, **kwargs)
 
                 finally:
                     # Unbind context variables
-                    for key in context_vars:
-                        FlextLogger.unbind_global_context(key)
+                    if context_vars:
+                        unbind_result = FlextLogger.unbind_global_context(
+                            *tuple(context_vars.keys())
+                        )
+                        if unbind_result.is_failure:
+                            logger.warning(
+                                "global_context_unbind_failed",
+                                extra={
+                                    "function": func.__name__,
+                                    "error": unbind_result.error,
+                                    "error_code": unbind_result.error_code,
+                                    "bound_keys": tuple(context_vars.keys()),
+                                },
+                            )
 
             return wrapper
 
@@ -1180,15 +1322,23 @@ class FlextDecorators:
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 op_name = operation_name or func.__name__
 
-                # Ensure correlation ID if requested
-                if track_correlation:
-                    FlextContext.Utilities.ensure_correlation_id()
+                args_tuple = cast("tuple[object, ...]", args)
+                logger = FlextDecorators._resolve_logger(args_tuple, func)
 
-                # Set operation in FlextContext for automatic propagation
-                FlextContext.Request.set_operation_name(op_name)
-
-                # Bind operation name to context
-                FlextLogger.bind_operation_context(operation=op_name)
+                correlation_id = FlextDecorators._bind_operation_context(
+                    operation=op_name,
+                    logger=logger,
+                    function_name=func.__name__,
+                    ensure_correlation=track_correlation,
+                )
+                if track_correlation and correlation_id is None:
+                    logger.warning(
+                        "correlation_id_missing",
+                        extra={
+                            "function": func.__name__,
+                            "operation": op_name,
+                        },
+                    )
 
                 try:
                     # Call the actual function
@@ -1198,7 +1348,11 @@ class FlextDecorators:
                 finally:
                     # Clear operation context
                     with suppress(Exception):
-                        FlextLogger.clear_scope("operation")
+                        FlextDecorators._clear_operation_scope(
+                            logger=logger,
+                            function_name=func.__name__,
+                            operation=op_name,
+                        )
 
             return wrapper
 

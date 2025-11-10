@@ -185,7 +185,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_valid_phone(
-        value: FlextTypes.ValidatableInputType,
+        value: object,
     ) -> TypeGuard[str]:
         """Type guard to check if value is a valid phone number string.
 
@@ -205,7 +205,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_dict_like(
-        value: FlextTypes.ValidatableInputType,
+        value: object,
     ) -> TypeGuard[dict[str, object]]:
         """Type guard to check if value is dict-like.
 
@@ -219,8 +219,37 @@ class FlextRuntime:
         return isinstance(value, dict)
 
     @staticmethod
+    def safe_model_dump(model: object) -> FlextTypes.JsonDict:
+        """Safely convert supported objects into JSON-compatible dictionaries."""
+        if hasattr(model, "model_dump"):
+            model_dump = model.model_dump
+            if callable(model_dump):
+                try:
+                    dumped = model_dump(mode="json")
+                except TypeError:
+                    dumped = model_dump()
+                if isinstance(dumped, dict):
+                    return cast("FlextTypes.JsonDict", dumped)
+        if hasattr(model, "dict"):
+            dict_method = model.dict
+            if callable(dict_method):
+                dumped = dict_method()
+                if isinstance(dumped, dict):
+                    return cast("FlextTypes.JsonDict", dumped)
+        if isinstance(model, dict):
+            return cast("FlextTypes.JsonDict", model)
+        if hasattr(model, "__dict__"):
+            dumped = {
+                key: value
+                for key, value in vars(model).items()
+                if not key.startswith("_")
+            }
+            return cast("FlextTypes.JsonDict", dumped)
+        return {"value": repr(model)}
+
+    @staticmethod
     def is_list_like(
-        value: FlextTypes.ValidatableInputType,
+        value: object,
     ) -> TypeGuard[list[object]]:
         """Type guard to check if value is list-like.
 
@@ -235,7 +264,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_valid_json(
-        value: FlextTypes.ValidatableInputType,
+        value: object,
     ) -> TypeGuard[str]:
         """Type guard to check if value is valid JSON string.
 
@@ -256,7 +285,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_valid_identifier(
-        value: FlextTypes.ValidatableInputType,
+        value: object,
     ) -> TypeGuard[str]:
         """Type guard to check if value is a valid Python identifier.
 
@@ -277,10 +306,10 @@ class FlextRuntime:
 
     @staticmethod
     def safe_get_attribute(
-        obj: FlextTypes.SerializableObjectType,
+        obj: FlextTypes.SerializableType,
         attr: str,
-        default: FlextTypes.SerializableObjectType = None,
-    ) -> FlextTypes.SerializableObjectType:
+        default: FlextTypes.SerializableType = None,
+    ) -> FlextTypes.SerializableType:
         """Safe attribute access without raising AttributeError.
 
         Args:

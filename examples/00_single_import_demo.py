@@ -147,8 +147,8 @@ def demonstrate_single_import_pattern() -> None:
     # ========================================
     print("\n6. Domain Models (DDD Patterns):")
 
-    # Entity - using base Entity with id only
-    entity = FlextModels.Entity(id="entity-123")
+    # Entity - using base Entity with unique_id
+    entity = FlextModels.Entity(unique_id="entity-123")
     print(f"   ✅ Entity: {entity.id}")
 
     # Value Object
@@ -202,10 +202,10 @@ def demonstrate_single_import_pattern() -> None:
         "🎯 Domain extension ready via: class MyBase(FlextModels.AggregateRoot)   class MyBase(FlextModels.AggregateRoot):"
     )
     print(
-        "🎯 Domain extension ready via: class MyBase(FlextModels.Command)   class MyBase(FlextModels.Command):"
+        "🎯 Domain extension ready via: class MyBase(FlextModels.Cqrs.Command)   class MyBase(FlextModels.Cqrs.Command):"
     )
     print(
-        "🎯 Domain extension ready via: class MyBase(FlextModels.Query)   class MyBase(FlextModels.Query):"
+        "🎯 Domain extension ready via: class MyBase(FlextModels.Cqrs.Query)   class MyBase(FlextModels.Cqrs.Query):"
     )
     print(
         "🎯 Domain extension ready via: class MyBase(FlextModels.DomainEvent)   class MyBase(FlextModels.DomainEvent):"

@@ -18,6 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsCqrs:
@@ -128,8 +129,8 @@ class FlextModelsCqrs:
             """Convert pagination to Pagination instance."""
             if isinstance(v, FlextModelsCqrs.Pagination):
                 return v
-            if isinstance(v, dict):
-                v_dict = cast("dict[str, object]", v)
+            if FlextRuntime.is_dict_like(v):
+                v_dict = v
                 page_raw = v_dict.get("page", 1)
                 size_raw = v_dict.get("size", 20)
                 page: int | str = page_raw if isinstance(page_raw, (int, str)) else 1
@@ -155,8 +156,8 @@ class FlextModelsCqrs:
             try:
                 filters: object = query_payload.get("filters", {})
                 pagination_data = query_payload.get("pagination", {})
-                if isinstance(pagination_data, dict):
-                    pagination_dict = cast("dict[str, object]", pagination_data)
+                if FlextRuntime.is_dict_like(pagination_data):
+                    pagination_dict = pagination_data
                     page_raw = pagination_dict.get("page", 1)
                     size_raw = pagination_dict.get("page", 20)
                     page: int = int(page_raw) if isinstance(page_raw, (int, str)) else 1
@@ -168,7 +169,7 @@ class FlextModelsCqrs:
                     pagination = {"page": 1, "size": 20}
                 query_id = str(query_payload.get("query_id", str(uuid.uuid4())))
                 query_type: object = query_payload.get("query_type")
-                if not isinstance(filters, dict):
+                if not FlextRuntime.is_dict_like(filters):
                     filters = {}
                 filters_dict = cast("dict[str, object]", filters)
                 query = cls(

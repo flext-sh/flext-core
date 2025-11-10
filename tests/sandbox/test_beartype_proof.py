@@ -27,7 +27,7 @@ class TestBeartypeAddsValidation:
 
         def bad_func(x: int) -> str:
             """Declara retornar str, mas retorna int!"""
-            return 42  # type: ignore
+            return 42
 
         # ORIGINAL: ACEITA tipo errado (sem validação runtime)
         print("\n[ORIGINAL - SEM @beartype]")
@@ -73,7 +73,7 @@ class TestBeartypeAddsValidation:
         print("\n[ORIGINAL - SEM @beartype]")
         try:
             result_original = FlextResult[int].fail("error")
-            value_original = result_original.unwrap_or("string_default")  # type: ignore
+            value_original = result_original.unwrap_or("string_default")
             print(f"✅ Original ACEITOU default errado: {value_original}")
             print(f"   Tipo: {type(value_original)}")
             original_accepts = True
@@ -85,7 +85,7 @@ class TestBeartypeAddsValidation:
         print("\n[BEARTYPE - COM @beartype]")
         try:
             result_beartype = FlextResultBeartype[int].fail("error")
-            value_beartype = result_beartype.unwrap_or("string_default")  # type: ignore
+            value_beartype = result_beartype.unwrap_or("string_default")
             print(f"❌ Beartype ACEITOU default errado: {value_beartype}")
             beartype_rejects = False
         except BeartypeCallHintParamViolation as e:
@@ -113,7 +113,7 @@ class TestBeartypeAddsValidation:
 
         def bad_flat_map(x: int) -> FlextResult[str]:
             """Declara retornar FlextResult, mas retorna string!"""
-            return "not a result"  # type: ignore
+            return "not a result"
 
         # ORIGINAL: ACEITA retorno errado
         print("\n[ORIGINAL - SEM @beartype]")

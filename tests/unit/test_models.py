@@ -141,7 +141,7 @@ class TestFlextModels:
     def test_models_command_creation(self) -> None:
         """Test command model creation."""
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextModels.Cqrs.Command):
             command_type: str = "test_command"
             data: str
 
@@ -163,12 +163,12 @@ class TestFlextModels:
 
     def test_models_pagination_creation(self) -> None:
         """Test pagination model creation."""
-        pagination = FlextModels.Pagination(page=1, size=10)
+        pagination = FlextModels.Cqrs.Pagination(page=1, size=10)
         assert pagination.page == 1
         assert pagination.size == 10
         assert (pagination.page - 1) * pagination.size == 0
 
-        pagination2 = FlextModels.Pagination(page=3, size=10)
+        pagination2 = FlextModels.Cqrs.Pagination(page=3, size=10)
         assert (pagination2.page - 1) * pagination2.size == 20
 
     def test_models_domain_events(self) -> None:
@@ -300,13 +300,10 @@ class TestFlextModels:
             "Entity",
             "Value",
             "AggregateRoot",
-            "Command",
-            "Query",
             "DomainEvent",
-            "Cqrs",
+            "Cqrs",  # CQRS namespace (contains Command, Query, Pagination, etc.)
             "Metadata",
             "Payload",
-            "Pagination",
             "RegistrationDetails",
             "HandlerExecutionConfig",
             "BatchProcessingConfig",
@@ -317,6 +314,13 @@ class TestFlextModels:
         for class_name in critical_classes:
             assert hasattr(FlextModels, class_name), (
                 f"Critical class {class_name} should be available"
+            )
+
+        # Verify CQRS nested classes are available
+        cqrs_classes = ["Command", "Query", "Pagination", "Bus", "Handler"]
+        for class_name in cqrs_classes:
+            assert hasattr(FlextModels.Cqrs, class_name), (
+                f"CQRS class {class_name} should be available in FlextModels.Cqrs"
             )
 
     def test_entity_equality_and_hash(self) -> None:
@@ -569,7 +573,7 @@ class TestFlextModels:
     def test_command_creation_with_mixins(self) -> None:
         """Test Command creation with all mixins."""
 
-        class TestCommand(FlextModels.Command):
+        class TestCommand(FlextModels.Cqrs.Command):
             action: str
             target: str
 
@@ -611,7 +615,9 @@ class TestFlextModels:
 
     def test_query_creation(self) -> None:
         """Test Query creation."""
-        query = FlextModels.Query(query_type="find_users", filters={"active": "true"})
+        query = FlextModels.Cqrs.Query(
+            query_type="find_users", filters={"active": "true"}
+        )
 
         # Should have query_id
         assert hasattr(query, "query_id")
@@ -818,7 +824,7 @@ class TestFlextModels:
     def test_command_model_creation(self) -> None:
         """Test Command model creation with correct fields."""
         # Command has: message_type, command_type, issuer_id (+ id, created_at from mixins)
-        command = FlextModels.Command(
+        command = FlextModels.Cqrs.Command(
             command_type="CreateOrder", issuer_id="issuer-123"
         )
 
@@ -979,7 +985,7 @@ class TestFlextModels:
     def test_pagination_model_creation(self) -> None:
         """Test Pagination model with correct fields."""
         # Pagination has: page, size (plus computed offset and limit)
-        paging = FlextModels.Pagination(page=1, size=20)
+        paging = FlextModels.Cqrs.Pagination(page=1, size=20)
 
         assert paging.page == 1
         assert paging.size == 20
@@ -988,7 +994,7 @@ class TestFlextModels:
     def test_query_model_creation(self) -> None:
         """Test Query model with validators."""
         # Query has: message_type, filters, pagination, query_id, query_type
-        query = FlextModels.Query(
+        query = FlextModels.Cqrs.Query(
             filters={"user_id": "user-456"},
             pagination={"page": 1, "size": 20},
             query_type="GetOrdersByUser",
@@ -996,7 +1002,7 @@ class TestFlextModels:
 
         assert query.filters["user_id"] == "user-456"
         assert query.query_type == "GetOrdersByUser"
-        assert isinstance(query.pagination, FlextModels.Pagination)
+        assert isinstance(query.pagination, FlextModels.Cqrs.Pagination)
 
     def test_context_data_model_creation(self) -> None:
         """Test ContextData model with validators."""

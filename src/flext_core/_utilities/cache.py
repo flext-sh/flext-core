@@ -15,6 +15,7 @@ from typing import cast
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
 # Module constants
@@ -31,7 +32,7 @@ class FlextUtilitiesCache:
         component: FlextTypes.GenericDetailsType,
     ) -> object:
         """Normalize a component for consistent representation."""
-        if isinstance(component, dict):
+        if FlextRuntime.is_dict_like(component):
             component_dict = component
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)
@@ -62,7 +63,7 @@ class FlextUtilitiesCache:
         data: FlextTypes.SortableObjectType,
     ) -> FlextTypes.SortableObjectType:
         """Sort dictionary keys for consistent representation."""
-        if isinstance(data, dict):
+        if FlextRuntime.is_dict_like(data):
             data_dict = data
             return {
                 k: FlextUtilitiesCache.sort_dict_keys(data_dict[k])

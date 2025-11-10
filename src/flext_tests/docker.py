@@ -42,7 +42,6 @@ from flext_core import (
     FlextLogger,
     FlextModels,
     FlextResult,
-    FlextTypes,
     FlextUtilities,
 )
 
@@ -422,7 +421,7 @@ class FlextTestDocker:
         self,
         service_name: str,
         container_name: str,
-        ports: FlextTypes.IntList | None = None,
+        ports: list[int] | None = None,
         health_check_cmd: str | None = None,
         depends_on: list[str] | None = None,
         startup_timeout: int = 30,
@@ -1011,8 +1010,7 @@ class FlextTestDocker:
         self,
         name: str,
         image: str | None = None,
-        ports: dict[str, int | FlextTypes.IntList | tuple[str, int] | None]
-        | None = None,
+        ports: dict[str, int | list[int] | tuple[str, int] | None] | None = None,
     ) -> FlextResult[str]:
         """Start a Docker container."""
         try:
@@ -1165,7 +1163,7 @@ class FlextTestDocker:
         image: str,
         *,
         name: str | None = None,
-        ports: dict[str, int | FlextTypes.IntList | tuple[str, int]] | None = None,
+        ports: dict[str, int | list[int] | tuple[str, int]] | None = None,
         environment: dict[str, str] | None = None,
         volumes: dict[str, dict[str, str]] | list[str] | None = None,
         detach: bool = True,
