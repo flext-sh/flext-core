@@ -82,7 +82,7 @@ class TestHandlerRegistration:
         dispatcher = FlextDispatcher()
 
         handler = FlextHandlers.from_callable(
-            callable_func=lambda msg: "handled",
+            func=lambda msg: "handled",
             handler_name="test_handler",
             handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
@@ -95,7 +95,7 @@ class TestHandlerRegistration:
         dispatcher = FlextDispatcher()
 
         handler = FlextHandlers.from_callable(
-            callable_func=lambda cmd: "command_handled",
+            func=lambda cmd: "command_handled",
             handler_name="cmd_handler",
             handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
@@ -108,7 +108,7 @@ class TestHandlerRegistration:
         dispatcher = FlextDispatcher()
 
         handler = FlextHandlers.from_callable(
-            callable_func=lambda q: {"result": "query_answer"},
+            func=lambda q: {"result": "query_answer"},
             handler_name="query_handler",
             handler_type=FlextConstants.Cqrs.HandlerType.QUERY,
         )

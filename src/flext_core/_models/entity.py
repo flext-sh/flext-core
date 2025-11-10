@@ -13,7 +13,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import ClassVar, Literal, override
+from typing import ClassVar, Literal, cast, override
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
@@ -400,7 +400,9 @@ class FlextModelsEntity:
                 )
 
             validated_events = []
-            for i, (event_name, data) in enumerate(events):
+            # Type assertion: events is validated as list[tuple[str, dict[str, object]]] above
+            typed_events = cast("list[tuple[str, dict[str, object]]]", events)
+            for i, (event_name, data) in enumerate(typed_events):
                 if not isinstance(event_name, str) or not event_name:
                     return FlextResult[None].fail(
                         f"Event {i}: name must be non-empty string",

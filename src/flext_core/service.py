@@ -252,7 +252,7 @@ class FlextService[TDomainResult](
         # NOTE: type: ignore required due to type checker limitation with metaprogramming
         # This is valid Python metaprogramming - dynamically creating a class at runtime
         # Type checkers cannot verify dynamic type() calls with 3 arguments
-        return type(
+        return type(  # type: ignore[call-overload]
             f"{cls_name}[{type_name}]",
             (cls,),
             {

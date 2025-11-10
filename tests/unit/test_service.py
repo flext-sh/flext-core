@@ -172,7 +172,9 @@ class TestDomainServicesFixed:
         service = SampleUserService()
 
         # Test that assignment raises error on frozen model (Pydantic raises AttributeError for property without setter)
-        with pytest.raises((ValidationError, AttributeError)):
+        with pytest.raises(  # type: ignore[call-overload]
+            (ValidationError, AttributeError)
+        ):
             # Try to modify property on frozen model
             service.new_field = "not_allowed"
 
@@ -2044,6 +2046,7 @@ class TestServiceComplexExecution:
         service = FailingValidationService()
         result = service.validate_business_rules()
         assert result.is_failure
+        assert result.error is not None
         assert "Business rules" in result.error
 
     def test_validate_config_failure(self) -> None:
@@ -2059,6 +2062,7 @@ class TestServiceComplexExecution:
         service = FailingConfigService()
         result = service.validate_config()
         assert result.is_failure
+        assert result.error is not None
         assert "Config" in result.error
 
     def test_execute_conditionally_with_condition_exception(self) -> None:

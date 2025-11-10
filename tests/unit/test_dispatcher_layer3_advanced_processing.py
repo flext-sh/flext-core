@@ -134,6 +134,7 @@ class TestLayer3MessageProcessing:
         result = dispatcher.process("nonexistent", 5)
 
         assert result.is_failure
+        assert result.error is not None
         assert "not registered" in result.error
 
     def test_process_with_callable_processor(self) -> None:
@@ -200,6 +201,7 @@ class TestLayer3BatchProcessing:
 
         dispatcher.process_batch("double", [1, 2, 3])
 
+        assert isinstance(dispatcher.batch_performance["batch_operations"], int)
         assert dispatcher.batch_performance["batch_operations"] >= 1
 
 
@@ -262,6 +264,7 @@ class TestLayer3ParallelProcessing:
 
         dispatcher.process_parallel("double", [1, 2, 3])
 
+        assert isinstance(dispatcher.parallel_performance["parallel_operations"], int)
         assert dispatcher.parallel_performance["parallel_operations"] >= 1
 
 
@@ -320,6 +323,7 @@ class TestLayer3FallbackExecution:
         result = dispatcher.execute_with_fallback("fail1", 5, ["fail2"])
 
         assert result.is_failure
+        assert result.error is not None
         assert "All processors failed" in result.error
 
     def test_fallback_empty_chain(self) -> None:
@@ -356,6 +360,7 @@ class TestLayer3TimeoutEnforcement:
         result = dispatcher.execute_with_timeout("slow", 5, timeout=0.1)
 
         assert result.is_failure
+        assert result.error is not None
         assert "timeout" in result.error.lower()
 
     def test_timeout_with_reasonable_timeout(self) -> None:
@@ -541,4 +546,5 @@ class TestLayer3Integration:
         result = dispatcher.process("double", "not-a-number")
 
         assert result.is_failure
+        assert result.error is not None
         assert "Expected int" in result.error

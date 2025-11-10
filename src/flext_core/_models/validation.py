@@ -61,7 +61,7 @@ class FlextModelsValidation:
         for rule in rules:
             result = rule(model)
             if result.is_failure:
-                return FlextResult[object].fail(result.error or "Validation failed")
+                return FlextResult[object].fail(result.error or "Validation failed")  # type: ignore[attr-defined]
 
         return FlextResult[object].ok(model)
 
@@ -99,16 +99,18 @@ class FlextModelsValidation:
         ]
 
         errors = [
-            result.error
+            result.error  # type: ignore[attr-defined]
             for result in validation_results
-            if result.is_failure and result.error
+            if result.is_failure and result.error  # type: ignore[attr-defined]
         ]
 
         if errors:
+            # Type assertion: errors contains only non-None strings due to filter above
+            error_messages = [str(err) for err in errors]  # type: ignore[misc]
             return FlextResult[object].fail(
-                f"Cross-field validation failed: {'; '.join(errors)}",
+                f"Cross-field validation failed: {'; '.join(error_messages)}",
                 error_code="CROSS_FIELD_VALIDATION_FAILED",
-                error_data={"field_errors": errors},
+                error_data={"field_errors": error_messages},
             )
 
         return FlextResult[object].ok(model)
@@ -204,7 +206,7 @@ class FlextModelsValidation:
                     result = validator(model)
                     if result.is_failure:
                         return FlextResult[FlextTypes.ObjectList].fail(
-                            result.error or "Validation failed"
+                            result.error or "Validation failed"  # type: ignore[attr-defined]
                         )
 
                 valid_models.append(model)
@@ -221,17 +223,17 @@ class FlextModelsValidation:
                 result = validator(model)
                 if result.is_failure:
                     validation_result = FlextResult[object].fail(
-                        result.error or "Validation failed"
+                        result.error or "Validation failed"  # type: ignore[attr-defined]
                     )
                     break
             if validation_result.is_success:
                 validated_models.append(model)
             else:
-                all_errors.append(validation_result.error or "Validation failed")
+                all_errors.append(validation_result.error or "Validation failed")  # type: ignore[attr-defined]
 
         if all_errors:
             return FlextResult[FlextTypes.ObjectList].fail(
-                f"Batch validation failed: {'; '.join(all_errors)}",
+                f"Batch validation failed: {'; '.join(all_errors)}",  # type: ignore[arg-type]
                 error_code="BATCH_VALIDATION_FAILED",
                 error_data={"error_count": len(all_errors), "errors": all_errors},
             )
@@ -269,9 +271,9 @@ class FlextModelsValidation:
             result = invariant(model)
             if result.is_failure:
                 return FlextResult[object].fail(
-                    f"Domain invariant violation: {result.error}",
+                    f"Domain invariant violation: {result.error}",  # type: ignore[attr-defined]
                     error_code="DOMAIN_INVARIANT_VIOLATION",
-                    error_data={"invariant_error": result.error},
+                    error_data={"invariant_error": result.error},  # type: ignore[attr-defined]
                 )
         return FlextResult[object].ok(model)
 
@@ -306,11 +308,11 @@ class FlextModelsValidation:
         for rule_name, validator in consistency_rules.items():
             result = validator(aggregate)
             if result.is_failure:
-                violations.append(f"{rule_name}: {result.error}")
+                violations.append(f"{rule_name}: {result.error}")  # type: ignore[attr-defined]
 
         if violations:
             return FlextResult[object].fail(
-                f"Aggregate consistency violations: {'; '.join(violations)}",
+                f"Aggregate consistency violations: {'; '.join(violations)}",  # type: ignore[arg-type]
                 error_code="AGGREGATE_CONSISTENCY_VIOLATION",
                 error_data={"violations": violations},
             )
@@ -349,14 +351,14 @@ class FlextModelsValidation:
         ]
 
         errors = [
-            result.error
+            result.error  # type: ignore[attr-defined]
             for result in validation_results
-            if result.is_failure and result.error
+            if result.is_failure and result.error  # type: ignore[attr-defined]
         ]
 
         if errors:
             return FlextResult[object].fail(
-                f"Event validation failed: {'; '.join(errors)}",
+                f"Event validation failed: {'; '.join(errors)}",  # type: ignore[arg-type]
                 error_code="EVENT_VALIDATION_FAILED",
                 error_data={"event_errors": errors},
             )
@@ -403,11 +405,11 @@ class FlextModelsValidation:
             result = validator(command_or_query)
             if result.is_failure:
                 return FlextResult[object].fail(
-                    f"CQRS {pattern_type} validation failed: {result.error}",
+                    f"CQRS {pattern_type} validation failed: {result.error}",  # type: ignore[attr-defined]
                     error_code=f"CQRS_{pattern_type.upper()}_VALIDATION_FAILED",
                     error_data={
                         "pattern_type": pattern_type,
-                        "error": result.error,
+                        "error": result.error,  # type: ignore[attr-defined]
                     },
                 )
 

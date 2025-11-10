@@ -148,7 +148,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         msg_name = getattr(message_type, "__name__", "Any") if message_type else "Any"
         res_name = getattr(result_type, "__name__", str(result_type))
 
-        typed_subclass = type(
+        # Create typed subclass dynamically using type() built-in
+        # Type checkers cannot verify dynamic type() calls with 3 arguments
+        # This is valid Python metaprogramming - dynamically creating a class at runtime
+        typed_subclass: type[Self] = type(  # type: ignore[call-overload]
             f"{cls_name}[{msg_name}, {res_name}]",
             (cls,),
             {
@@ -430,7 +433,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     try:
                         result_data = method()
                         if FlextMixins.is_dict_like(result_data):
-                            return cast("dict[str, object]", result_data)
+                            return result_data  # type: ignore[return-value]
                     except Exception as e:
                         FlextHandlers._internal_logger.debug(
                             f"Serialization method {method_name} failed: {type(e).__name__}"
@@ -848,9 +851,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         ...
 
     @classmethod
-    def from_callable(
+    def from_callable(  # type: ignore[override]
         cls,
-        callable_func: FlextTypes.HandlerCallableType,
+        func: FlextTypes.HandlerCallableType,
         handler_name: str | None = None,
         handler_type: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
         mode: str | None = None,
@@ -859,7 +862,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         """Create a handler from a callable function.
 
         Args:
-            callable_func: The callable function to wrap
+            func: The callable function to wrap
             handler_name: Name for the handler (defaults to function name)
             handler_type: Type of handler (command, query, etc.)
             mode: Handler mode (for compatibility)
@@ -873,7 +876,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         resolved_handler_name: str = (
             handler_name
             if handler_name is not None
-            else getattr(callable_func, "__name__", "unknown_handler")
+            else getattr(func, "__name__", "unknown_handler")
         )
 
         # Use mode if provided (compatibility), otherwise use handler_type
@@ -900,7 +903,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         else:
             try:
                 config = FlextModels.Cqrs.Handler(
-                    handler_id=f"{resolved_handler_name}_{id(callable_func)}",
+                    handler_id=f"{resolved_handler_name}_{id(func)}",
                     handler_name=resolved_handler_name,
                     handler_type=effective_type,
                     handler_mode=effective_type,
@@ -920,12 +923,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
                 # Store callable as object - type variables are method-local, not class-scoped
-                self.original_callable: object = callable_func
+                self.original_callable: object = func
 
             @override
             def handle(self, message: CallableInputT) -> FlextResult[CallableOutputT]:
                 try:
-                    result = callable_func(message)
+                    result = func(message)
                     if isinstance(result, FlextResult):
                         return cast("FlextResult[CallableOutputT]", result)
                     return self.ok(cast("CallableOutputT", result))

@@ -322,10 +322,10 @@ class FlextResult[T_co]:
 
         """
         if item is cls or (hasattr(item, "__origin__") and item.__origin__ is cls):
-            return cls
+            return cls  # type: ignore[return-value]
         try:
-            if isinstance(item, type) and issubclass(item, cls):
-                return item
+            if isinstance(item, type) and issubclass(item, cls):  # type: ignore[arg-type]
+                return item  # type: ignore[return-value]
         except TypeError:
             pass
 
@@ -339,7 +339,7 @@ class FlextResult[T_co]:
         # NOTE: type: ignore required here due to type checker limitation with metaprogramming
         # This is valid Python metaprogramming - dynamically creating a class at runtime
         # Type checkers cannot verify dynamic type() calls with 3 arguments
-        typed_subclass = type(
+        typed_subclass: type[Self] = type(  # type: ignore[call-overload]
             f"{cls_name}[{type_name}]",
             (cls,),
             {"_expected_type": item},

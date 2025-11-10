@@ -21,7 +21,8 @@ from flext_core import (
     FlextModels,
     FlextResult,
 )
-from tests.fixtures.handlers import (
+
+from ..fixtures.handlers import (
     create_failing_handler,
     create_test_handler,
     create_transform_handler,
@@ -942,21 +943,22 @@ class TestFlextDispatcherCoverage:
         results = dispatcher.dispatch_batch("Batch", large_batch)
         assert isinstance(results, list)
 
-    def test_dispatcher_parallel_single_worker(self) -> None:
-        """Test parallel dispatch with single worker."""
-        dispatcher = FlextDispatcher()
+    # def test_dispatcher_parallel_single_worker(self) -> None:
+    #     """Test parallel dispatch with single worker."""
+    #     # NOTE: dispatch_parallel method removed - use process_parallel for Layer 3 processing
+    #     dispatcher = FlextDispatcher()
 
-        def handler(msg: object) -> object:
-            return msg
+    #     def handler(msg: object) -> object:
+    #         return msg
 
-        dispatcher.register_handler("Parallel", handler)
-        try:
-            results = dispatcher.dispatch_parallel(
-                "Parallel", ["a", "b", "c"], max_workers=1
-            )
-            assert isinstance(results, list)
-        except Exception:
-            pass  # May not be fully implemented
+    #     dispatcher.register_handler("Parallel", handler)
+    #     try:
+    #         results = dispatcher.dispatch_parallel(
+    #             "Parallel", ["a", "b", "c"], max_workers=1
+    #         )
+    #         assert isinstance(results, list)
+    #     except Exception:
+    #         pass  # May not be fully implemented
 
     def test_dispatcher_handler_statistics(self) -> None:
         """Test dispatcher handler statistics collection."""
@@ -1334,11 +1336,11 @@ class TestFlextDispatcherCoverage:
 
         def batch_handler(msg: object) -> object:
             processed.append(msg)
-            match msg:
-                case int(n) if n < 0:
+            match msg:  # type: ignore[match]
+                case int(n) if n < 0:  # type: ignore[case-pattern]
                     error_msg = "Negative number"
                     raise ValueError(error_msg)
-                case _:
+                case _:  # type: ignore[case-pattern]
                     return msg * 2
 
         dispatcher.register_handler("BatchError", batch_handler)
@@ -1349,26 +1351,27 @@ class TestFlextDispatcherCoverage:
         except Exception:
             pass  # May fail on first error
 
-    def test_dispatcher_parallel_error_handling(self) -> None:
-        """Test parallel dispatch with multiple workers."""
-        dispatcher = FlextDispatcher()
+    # def test_dispatcher_parallel_error_handling(self) -> None:
+    #     """Test parallel dispatch with multiple workers."""
+    #     # NOTE: dispatch_parallel method removed - use process_parallel for Layer 3 processing
+    #     dispatcher = FlextDispatcher()
 
-        def parallel_handler(msg: object) -> object:
-            match msg:
-                case int() as n:
-                    return n * 3
-                case _:
-                    return msg
+    #     def parallel_handler(msg: object) -> object:
+    #         match msg:
+    #             case int() as n:
+    #                 return n * 3
+    #             case _:
+    #                 return msg
 
-        dispatcher.register_handler("Parallel", parallel_handler)
+    #     dispatcher.register_handler("Parallel", parallel_handler)
 
-        try:
-            results = dispatcher.dispatch_parallel(
-                "Parallel", [1, 2, 3, 4, 5], max_workers=2
-            )
-            assert isinstance(results, list)
-        except Exception:
-            pass  # May not be fully implemented
+    #     try:
+    #         results = dispatcher.dispatch_parallel(
+    #             "Parallel", [1, 2, 3, 4, 5], max_workers=2
+    #         )
+    #         assert isinstance(results, list)
+    #     except Exception:
+    #         pass  # May not be fully implemented
 
     def test_dispatcher_metrics_collection_comprehensive(self) -> None:
         """Test dispatcher metrics collection and reporting."""
@@ -1510,22 +1513,23 @@ class TestFlextDispatcherCoverage:
         except Exception:
             pass
 
-    def test_dispatcher_single_item_parallel(self) -> None:
-        """Test parallel dispatch with single item."""
-        dispatcher = FlextDispatcher()
+    # def test_dispatcher_single_item_parallel(self) -> None:
+    #     """Test parallel dispatch with single item."""
+    #     # NOTE: dispatch_parallel method removed - use process_parallel for Layer 3 processing
+    #     dispatcher = FlextDispatcher()
 
-        def handler(msg: object) -> object:
-            return msg
+    #     def handler(msg: object) -> object:
+    #         return msg
 
-        dispatcher.register_handler("SingleParallel", handler)
+    #     dispatcher.register_handler("SingleParallel", handler)
 
-        try:
-            results = dispatcher.dispatch_parallel(
-                "SingleParallel", ["single"], max_workers=1
-            )
-            assert isinstance(results, list)
-        except Exception:
-            pass
+    #     try:
+    #         results = dispatcher.dispatch_parallel(
+    #             "SingleParallel", ["single"], max_workers=1
+    #         )
+    #         assert isinstance(results, list)
+    #     except Exception:
+    #         pass
 
     def test_dispatcher_large_message_payload(self) -> None:
         """Test dispatcher with large message payloads."""
@@ -1901,10 +1905,10 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         def error_handler(msg: object) -> object:
-            match msg:
-                case str(s) if s.startswith("error"):
+            match msg:  # type: ignore[match]
+                case str(s) if s.startswith("error"):  # type: ignore[case-pattern]
                     raise ValueError(f"Error processing: {s}")
-                case _:
+                case _:  # type: ignore[case-pattern]
                     return msg
 
         dispatcher.register_handler("ErrorMsg", error_handler)

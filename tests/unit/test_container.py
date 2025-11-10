@@ -11,7 +11,7 @@ from collections import UserDict
 from collections.abc import Callable
 from typing import Never, cast
 
-from flext_core import FlextConstants, FlextContainer, FlextResult
+from flext_core import FlextConstants, FlextContainer, FlextModels, FlextResult
 
 
 class TestFlextContainer:
@@ -762,22 +762,18 @@ class TestFlextContainer:
 
     def test_container_clear_exception_handling(self) -> None:
         """Test clear() exception handling with corrupted state."""
-        from typing import cast
-
         container = FlextContainer()
         container.register("test", "value")
 
         # Simulate exception by corrupting internal state
         # Replace _services dict[str, object] with object that raises on clear()
-        class FailingDict(UserDict[str, object]):
+        class FailingDict(UserDict[str, FlextModels.ServiceRegistration]):
             def clear(self) -> None:
                 msg = "Clear failed"
                 raise RuntimeError(msg)
 
-        # Cast needed to satisfy type checker for test scenario
-        container._services = cast(
-            "dict[str, object]", FailingDict(container._services)
-        )
+        # Type ignore needed for test scenario that corrupts internal state
+        container._services = FailingDict(container._services)  # type: ignore[assignment]
 
         result = container.clear()
         assert result.is_failure
