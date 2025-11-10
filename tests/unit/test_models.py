@@ -563,12 +563,14 @@ class TestFlextModels:
         # Should be immutable (frozen)
         from pydantic import ValidationError
 
-        with pytest.raises((
-            ValidationError,
-            AttributeError,
-            TypeError,
-        )):  # Pydantic v2 may raise ValidationError or frozen model errors
-            value1.value = 100
+        with pytest.raises(  # type: ignore[call-overload]
+            (
+                ValidationError,
+                AttributeError,
+                TypeError,
+            )
+        ):  # Pydantic v2 may raise ValidationError or frozen model errors
+            value1.value = 100  # type: ignore[misc]
 
     def test_command_creation_with_mixins(self) -> None:
         """Test Command creation with all mixins."""
@@ -931,7 +933,10 @@ class TestFlextModels:
         """Test ValidationConfiguration model with correct fields."""
         # ValidationConfiguration has: enable_strict_mode, max_validation_errors, validate_on_assignment, validate_on_read, custom_validators
         val_config = FlextModels.ValidationConfiguration(
-            enable_strict_mode=True, validate_on_assignment=True, validate_on_read=False
+            enable_strict_mode=True,
+            validate_on_assignment=True,
+            validate_on_read=False,
+            custom_validators=[],
         )
 
         assert val_config.enable_strict_mode is True

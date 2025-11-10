@@ -621,7 +621,7 @@ class TestFlextContext:
     def test_context_import_data(self) -> None:
         """Test importing data into context."""
         context = FlextContext()
-        data_to_import = {"key1": "value1", "key2": "value2"}
+        data_to_import: dict[str, object] = {"key1": "value1", "key2": "value2"}
 
         context.import_data(data_to_import)
         assert context.get("key1") == "value1"
@@ -736,7 +736,8 @@ class TestFlextContext:
         context.set("complex", complex_dict)
         result = context.get("complex")
         assert result == complex_dict
-        assert result["level1"]["level2"]["level3"]["value"] == "deeply_nested"
+        assert isinstance(result, dict)
+        assert result["level1"]["level2"]["level3"]["value"] == "deeply_nested"  # type: ignore[index]
 
     def test_context_edge_case_duplicate_keys_overwrite(self) -> None:
         """Test context behavior when overwriting existing keys."""

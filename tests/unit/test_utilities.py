@@ -1212,6 +1212,7 @@ class TestFlextValidationAndCacheMethods:
         """Test normalize_component preserves float values."""
         values = [math.pi, math.e, 1.41]
         result = FlextUtilities.Validation.normalize_component(values)
+        assert isinstance(result, list)
         assert result[0] == "sequence"
         # Floats should be preserved in the sequence
 
@@ -1332,5 +1333,6 @@ class TestFlextCacheMethods:
         data = {"10": "a", "2": "b", "20": "c"}
         result = FlextUtilities.Cache.sort_dict_keys(data)
         # Should sort as strings (lexicographically)
+        assert isinstance(result, dict)
         keys = list(result.keys())
         assert keys == ["10", "2", "20"]  # String sort order

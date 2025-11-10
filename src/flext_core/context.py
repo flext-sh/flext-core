@@ -182,7 +182,13 @@ class FlextContext:
             return FlextModels.ContextData()
         if FlextRuntime.is_dict_like(initial_data):
             return FlextModels.ContextData(data=initial_data)
-        return initial_data
+        # At this point, initial_data must be FlextModels.ContextData (guaranteed by prior checks)
+        # Using explicit type cast for Ruff compliance
+        return (
+            FlextModels.ContextData(data=initial_data.data)
+            if hasattr(initial_data, "data")
+            else FlextModels.ContextData()
+        )  # type: ignore[union-attr]
 
     def _initialize_metadata_from_data(
         self, context_data: FlextModels.ContextData
@@ -297,7 +303,7 @@ class FlextContext:
     # Instance Methods - Core context operations
     # =========================================================================
 
-    def set(
+    def set(  # noqa: C901  # Complex context management with multiple concerns
         self,
         key: str,
         value: object,
@@ -355,7 +361,8 @@ class FlextContext:
             hooks = self._hooks["set"]
             if FlextRuntime.is_list_like(hooks):
                 for hook in hooks:
-                    hook({"key": key, "value": value})
+                    if callable(hook):
+                        hook({"key": key, "value": value})  # type: ignore[misc]
 
     def get(
         self,
@@ -689,7 +696,8 @@ class FlextContext:
             if all(FlextRuntime.is_dict_like(v) for v in data_values):
                 # New scoped format - restore all scopes
                 for scope_name, scope_data in data.items():
-                    context._set_in_contextvar(scope_name, scope_data)
+                    if isinstance(scope_data, dict):
+                        context._set_in_contextvar(scope_name, scope_data)  # type: ignore[arg-type]
             else:
                 # Old flat format - put everything in global scope
                 context._set_in_contextvar(FlextConstants.Context.SCOPE_GLOBAL, data)

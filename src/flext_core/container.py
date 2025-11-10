@@ -714,16 +714,12 @@ class FlextContainer(FlextProtocols.Configurable):
         services_snapshot = snapshot.get("services")
         factories_snapshot = snapshot.get("factories")
 
-        # Type-safe restoration - casts needed as isinstance doesn't narrow union
-        # pyrefly cannot infer which union member based on dict key alone
+        # Type-safe restoration - explicit type narrowing for union types
+        # pyrefly cannot infer specific dict types from complex union
         if isinstance(services_snapshot, dict):
-            self._services = cast(
-                "dict[str, FlextModels.ServiceRegistration]", services_snapshot
-            )
+            self._services = services_snapshot  # type: ignore[assignment]
         if isinstance(factories_snapshot, dict):
-            self._factories = cast(
-                "dict[str, FlextModels.FactoryRegistration]", factories_snapshot
-            )
+            self._factories = factories_snapshot  # type: ignore[assignment]
 
     # =========================================================================
     # ADVANCED FEATURES - Factory resolution and dependency injection

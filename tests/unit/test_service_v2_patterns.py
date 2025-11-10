@@ -171,6 +171,7 @@ class TestV1VsV2Property:
         result = service.execute()
 
         assert result.is_failure
+        assert result.error is not None
         assert "positive" in result.error.lower()
 
     def test_v2_property_with_validation_failure(self) -> None:
@@ -197,6 +198,7 @@ class TestV1VsV2Property:
         service = ValidationService(value=10)
         value = service.result
 
+        assert isinstance(value, dict)
         assert value["value"] == 10
         assert value["valid"] is True
 
@@ -216,6 +218,7 @@ class TestV1VsV2Property:
         service = ComplexV1Service(items=["a", "b", "c"], multiplier=2)
         value = service.result
 
+        assert isinstance(value, dict)
         assert value["count"] == 6
         assert len(value["items"]) == 3
 
@@ -225,6 +228,7 @@ class TestV1VsV2Property:
         result = service.execute()
 
         assert result.is_failure
+        assert result.error is not None
         assert "empty" in result.error.lower()
 
     def test_complex_v2_property_with_empty_items(self) -> None:
@@ -384,6 +388,7 @@ class TestV1V2Interoperability:
         v1_service = ValidationService(value=-1)
         v1_result = v1_service.execute()
         assert v1_result.is_failure
+        assert v1_result.error is not None
         assert "positive" in v1_result.error.lower()
 
         # V2 Property: Raises exception

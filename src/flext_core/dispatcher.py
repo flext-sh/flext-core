@@ -2212,7 +2212,7 @@ class FlextDispatcher(FlextMixins):
         """
         try:
             handler = FlextHandlers.from_callable(
-                callable_func=handler_func,
+                func=handler_func,
                 handler_name=getattr(handler_func, "__name__", "FunctionHandler"),
                 handler_type=mode,
             )
