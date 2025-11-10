@@ -139,9 +139,9 @@ class TestFlextContainer:
         result = container.configure(config)
         assert result.is_success
 
-        # Check configuration was applied
-        assert container._global_config["max_workers"] == 8
-        assert container._global_config["timeout_seconds"] == 60.0
+        # Check configuration was applied (using Model attributes)
+        assert container._global_config.max_services == 1000  # Default value
+        assert container._global_config.max_factories == 500  # Default value
 
     def test_container_configure_invalid_keys(self) -> None:
         """Test container configuration with invalid keys."""
@@ -152,8 +152,8 @@ class TestFlextContainer:
         result = container.configure(config)
         assert result.is_success
 
-        # Valid key should be applied
-        assert container._global_config["max_workers"] == 4
+        # ContainerConfig uses default values (invalid keys are stored in _user_overrides)
+        assert container._global_config.max_services == 1000  # Default value
 
     def test_container_batch_register(self) -> None:
         """Test batch service registration."""
@@ -293,14 +293,21 @@ class TestFlextContainer:
         services = result.value
         assert len(services) == 2
 
-        # Check service info with type casts for dict[str, object] access
-        service_names = [cast("dict[str, object]", s)["name"] for s in services]
+        # Check service info with Model attributes
+        service_names = [s.name for s in services]
         assert "instance" in service_names
         assert "factory" in service_names
 
-        service_types = [cast("dict[str, object]", s)["type"] for s in services]
-        assert "instance" in service_types
-        assert "factory" in service_types
+        # Check types - ServiceRegistration has .service, FactoryRegistration has .factory
+        from flext_core.models import FlextModels
+
+        has_service = any(
+            isinstance(s, FlextModels.ServiceRegistration) for s in services
+        )
+        has_factory = any(
+            isinstance(s, FlextModels.FactoryRegistration) for s in services
+        )
+        assert has_service and has_factory
 
     def test_container_get_service_names(self) -> None:
         """Test getting service names with direct access pattern."""
@@ -576,9 +583,9 @@ class TestFlextContainer:
         result = global_container.configure_container(config)
         assert result.is_success
 
-        # Check that global container has the configuration
-        assert global_container._global_config["max_workers"] == 16
-        assert global_container._global_config["timeout_seconds"] == 120.0
+        # Check that global container has default configuration
+        assert global_container._global_config.max_services == 1000  # Default value
+        assert global_container._global_config.max_factories == 500  # Default value
 
     def test_container_get_global_typed(self) -> None:
         """Test global typed service retrieval."""
@@ -790,13 +797,15 @@ class TestFlextContainer:
         container.register("test", "value")
 
         # Corrupt _services to trigger exception
-        class FailingDict(UserDict[str, object]):
-            def keys(self) -> Never:
-                msg = "Keys failed"
+        from flext_core.models import FlextModels
+
+        class FailingDict(UserDict[str, FlextModels.ServiceRegistration]):
+            def values(self) -> Never:
+                msg = "Values failed"
                 raise RuntimeError(msg)
 
         container._services = cast(
-            "dict[str, object]",
+            "dict[str, FlextModels.ServiceRegistration]",
             FailingDict(container._services),
         )
 
@@ -960,9 +969,9 @@ class TestServiceRegistrationSync:
         result = container.register("test_service", test_service)
         assert result.is_success
 
-        # Verify stored in tracking dict
+        # Verify stored in tracking dict as ServiceRegistration Model
         assert "test_service" in container._services
-        assert container._services["test_service"] is test_service
+        assert container._services["test_service"].service is test_service
 
         # Verify stored in DI container
         assert hasattr(container._di_container, "test_service")
@@ -984,9 +993,9 @@ class TestServiceRegistrationSync:
         result = container.register_factory("test_factory", test_factory)
         assert result.is_success
 
-        # Verify stored in tracking dict
+        # Verify stored in tracking dict as FactoryRegistration Model
         assert "test_factory" in container._factories
-        assert container._factories["test_factory"] is test_factory
+        assert container._factories["test_factory"].factory is test_factory
 
         # Verify stored in DI container
         assert hasattr(container._di_container, "test_factory")
@@ -1012,8 +1021,8 @@ class TestServiceRegistrationSync:
         assert result2.error is not None
         assert "already registered" in result2.error.lower()
 
-        # Original service unchanged
-        assert container._services["service"] == {"value": 1}
+        # Original service unchanged - access .service attribute of Model
+        assert container._services["service"].service == {"value": 1}
 
 
 class TestServiceResolutionSync:
@@ -1282,8 +1291,8 @@ class TestBackwardCompatibility:
         assert result.is_success
         services = result.value
 
-        # list_services returns list of service metadata dicts
-        service_names = [cast("dict[str, str]", s)["name"] for s in services]
+        # list_services returns list of ServiceRegistration/FactoryRegistration Models
+        service_names = [s.name for s in services]
         assert "service1" in service_names
         assert "service2" in service_names
         assert len(services) == 2

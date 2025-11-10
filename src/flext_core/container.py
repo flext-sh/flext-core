@@ -23,6 +23,7 @@ from dependency_injector.providers import Object, Singleton
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -139,13 +140,17 @@ class FlextContainer(FlextProtocols.Configurable):
         # Provides advanced DI features while maintaining backward compatibility
         self._di_container = self.containers.DynamicContainer()
 
-        # Core service storage with type safety (MAINTAINED for compatibility)
-        self._services: dict[str, object] = {}
-        self._factories: dict[str, object] = {}
+        # Core service storage with type safety using Pydantic Models
+        # ServiceRegistration tracks service metadata (registration_time, tags, type info)
+        # FactoryRegistration tracks factory metadata (is_singleton, invocation_count, cached_instance)
+        self._services: dict[str, FlextModels.ServiceRegistration] = {}
+        self._factories: dict[str, FlextModels.FactoryRegistration] = {}
 
-        # Note: _flext_config is now a property that always returns the current global config
-        # This ensures the container stays in sync with config resets and upgrades
-        self._global_config: dict[str, object] = self._create_container_config()
+        # Container configuration using Pydantic Model
+        # Replaces dict[str, object] with typed ContainerConfig
+        self._global_config: FlextModels.ContainerConfig = (
+            self._create_container_config()
+        )
         self._user_overrides: dict[str, object] = {}
 
         # Sync FlextConfig to internal DI container
@@ -168,18 +173,24 @@ class FlextContainer(FlextProtocols.Configurable):
         """
         return FlextConfig.get_global_instance()
 
-    def _create_container_config(self) -> dict[str, object]:
-        """Create container configuration from FlextConfig defaults."""
-        return {
-            "max_workers": int(getattr(self._flext_config, "max_workers", 4)),
-            "timeout_seconds": float(
-                getattr(
-                    self._flext_config,
-                    "timeout_seconds",
-                    FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS,
-                ),
-            ),
-        }
+    def _create_container_config(self) -> FlextModels.ContainerConfig:
+        """Create container configuration from FlextConfig defaults using Pydantic Model.
+
+        Returns:
+            FlextModels.ContainerConfig: Typed container configuration with validation.
+
+        """
+        # Use ContainerConfig Model with defaults
+        return FlextModels.ContainerConfig(
+            enable_singleton=True,
+            enable_factory_caching=True,
+            max_services=1000,
+            max_factories=500,
+            validation_mode="strict",
+            enable_auto_registration=False,
+            enable_lifecycle_hooks=True,
+            lazy_loading=True,
+        )
 
     def _sync_config_to_di(self) -> None:
         """Sync FlextConfig to internal dependency-injector container.
@@ -229,50 +240,36 @@ class FlextContainer(FlextProtocols.Configurable):
         return self.configure_container(config)
 
     @property
-    def services(self) -> dict[str, object]:
-        """Get registered services dictionary (read-only access for compatibility).
+    def services(self) -> dict[str, FlextModels.ServiceRegistration]:
+        """Get registered services with metadata (ServiceRegistration Models).
 
         Returns:
-            dict[str, object]: Dictionary of registered service instances.
-
-        Note:
-            This property provides read-only access to the internal services registry
-            for backward compatibility with existing code that expects direct access.
+            dict[str, FlextModels.ServiceRegistration]: Dictionary mapping service names
+            to ServiceRegistration Models containing service instances and metadata.
 
         """
         return self._services.copy()
 
     @property
-    def factories(self) -> dict[str, object]:
-        """Get registered factories dictionary (read-only access for compatibility).
+    def factories(self) -> dict[str, FlextModels.FactoryRegistration]:
+        """Get registered factories with metadata (FactoryRegistration Models).
 
         Returns:
-            dict[str, object]: Dictionary of registered factory functions.
-
-        Note:
-            This property provides read-only access to the internal factories registry
-            for backward compatibility with existing code that expects direct access.
+            dict[str, FlextModels.FactoryRegistration]: Dictionary mapping factory names
+            to FactoryRegistration Models containing factory callables and metadata.
 
         """
         return self._factories.copy()
 
-    def get_config(self) -> dict[str, object]:
+    def get_config(self) -> FlextModels.ContainerConfig:
         """Get current configuration - Configurable protocol implementation.
 
         Returns:
-            dict[str, object]: Current container configuration
+            FlextModels.ContainerConfig: Typed container configuration Model.
 
         """
         self._refresh_global_config()
-        return {
-            "max_workers": self._global_config["max_workers"],
-            "timeout_seconds": self._global_config["timeout_seconds"],
-            "service_count": len(
-                set(self._services.keys()) | set(self._factories.keys())
-            ),
-            "services": list(self._services.keys()),
-            "factories": list(self._factories.keys()),
-        }
+        return self._global_config
 
     # =========================================================================
     # CORE SERVICE MANAGEMENT - Primary operations with railway patterns
@@ -345,18 +342,16 @@ class FlextContainer(FlextProtocols.Configurable):
         )
 
     def _store_service(self, name: str, service: object) -> FlextResult[None]:
-        """Store service in registry AND internal DI container with type preservation.
+        """Store service in registry using ServiceRegistration Model.
 
-        Stores in both tracking dict[str, object] (backward compatibility) and internal
-        dependency-injector container (advanced DI features). Uses Object
-        provider for existing service instances. Type T is preserved for static typing.
+        Creates ServiceRegistration with metadata (registration_time, service_type, tags)
+        and stores in internal DI container. Type T is preserved for static typing.
 
         Returns:
             FlextResult[None]: Success if stored or failure with error.
 
         Note:
-            Updated in v1.1.0 to use internal DI container while maintaining API.
-            Phase 4: Updated to use generic type T for type preservation.
+            Updated in v1.1.0 to use ServiceRegistration Pydantic Model.
 
         """
         if name in self._services:
@@ -364,8 +359,17 @@ class FlextContainer(FlextProtocols.Configurable):
 
         provider_registered = False
         try:
-            # Store in tracking dict[str, object] (backward compatibility)
-            self._services[name] = service
+            # Create ServiceRegistration Model with metadata
+            service_registration = FlextModels.ServiceRegistration(
+                name=name,
+                service=service,
+                service_type=type(service).__name__,
+                tags=[],
+                metadata={},
+            )
+
+            # Store ServiceRegistration Model in registry
+            self._services[name] = service_registration
 
             # Store in internal DI container using Object provider
             # Object provider is for existing instances (singletons by nature)
@@ -378,8 +382,6 @@ class FlextContainer(FlextProtocols.Configurable):
             # Rollback on failure - only delete if we successfully registered it
             # TypeError/AttributeError: set_provider() or delattr() failures
             # ValueError: Validation or constraint violations
-            # We successfully called set_provider, so the attribute should exist
-            # If it doesn't, something unexpected happened but rollback continues
             if provider_registered and hasattr(self._di_container, name):
                 delattr(self._di_container, name)
             self._services.pop(name, None)
@@ -408,19 +410,17 @@ class FlextContainer(FlextProtocols.Configurable):
         name: str,
         factory: Callable[[], FactoryT],
     ) -> FlextResult[None]:
-        """Store factory in registry AND internal DI container with type preservation.
+        """Store factory in registry using FactoryRegistration Model.
 
-        Stores in both tracking dict[str, object] (backward compatibility) and internal
-        dependency-injector container using Singleton provider with factory.
-        This ensures factory is called once and result is cached (lazy singleton).
+        Creates FactoryRegistration with metadata (is_singleton, invocation_count, cached_instance)
+        and stores in internal DI container using Singleton provider.
         Type T is preserved for static type checking.
 
         Returns:
             FlextResult[None]: Success if stored or failure with error.
 
         Note:
-            Updated in v1.1.0 to use DI Singleton(factory) for cached factory results.
-            Phase 4: Updated to use generic type T for type preservation.
+            Updated in v1.1.0 to use FactoryRegistration Pydantic Model.
 
         """
         # Validate that factory is actually callable
@@ -432,8 +432,18 @@ class FlextContainer(FlextProtocols.Configurable):
 
         provider_registered = False
         try:
-            # Store in tracking dict[str, object] (backward compatibility)
-            self._factories[name] = factory
+            # Create FactoryRegistration Model with metadata
+            factory_registration = FlextModels.FactoryRegistration(
+                name=name,
+                factory=factory,
+                is_singleton=True,  # All factories are singletons by default
+                cached_instance=None,  # Will be populated on first invocation
+                metadata={},
+                invocation_count=0,
+            )
+
+            # Store FactoryRegistration Model in registry
+            self._factories[name] = factory_registration
 
             # Store in internal DI container using Singleton with factory
             # This creates lazy singleton: factory called once, result cached
@@ -447,8 +457,6 @@ class FlextContainer(FlextProtocols.Configurable):
             # TypeError/AttributeError: set_provider() or delattr() failures
             # ValueError: Validation or constraint violations
             self._factories.pop(name, None)
-            # We successfully called set_provider, so the attribute should exist
-            # If it doesn't, something unexpected happened but rollback continues
             if provider_registered and hasattr(self._di_container, name):
                 delattr(self._di_container, name)
             return FlextResult[None].fail(f"Factory storage failed: {e}")
@@ -501,16 +509,14 @@ class FlextContainer(FlextProtocols.Configurable):
     def _resolve_service(self, name: str) -> FlextResult[object]:
         """Resolve service via internal DI container with FlextResult wrapping.
 
-        Resolves from dependency-injector container which handles both direct
-        services (Singleton self.providers) and factories (Factory self.providers).
-        Maintains FlextResult pattern for consistency with ecosystem.
+        Returns actual service instance from ServiceRegistration or FactoryRegistration.
+        Updates factory metadata (cached_instance, invocation_count) on first call.
 
         Returns:
             FlextResult[object]: Success with service instance or failure with error.
 
         Note:
-            Updated in v1.1.0 to use DI container resolution while maintaining API.
-            DynamicContainer stores self.providers like a dict, so we access by attribute.
+            Updated in v1.1.0 to use ServiceRegistration/FactoryRegistration Models.
 
         """
         try:
@@ -520,9 +526,14 @@ class FlextContainer(FlextProtocols.Configurable):
                 provider = getattr(self._di_container, name)
                 service = provider()
 
-                # Cache factory results in tracking dict[str, object] for compatibility
-                if name in self._factories and name not in self._services:
-                    self._services[name] = service
+                # Update factory metadata if this is a factory
+                if name in self._factories:
+                    factory_reg = self._factories[name]
+                    # Update invocation count
+                    factory_reg.invocation_count += 1
+                    # Cache the instance on first invocation
+                    if factory_reg.cached_instance is None:
+                        factory_reg.cached_instance = service
 
                 # Integration: Track successful service resolution
                 FlextRuntime.Integration.track_service_resolution(name, resolved=True)
@@ -542,7 +553,6 @@ class FlextContainer(FlextProtocols.Configurable):
             # AttributeError: Attribute access on provider object
             # KeyError: Dict access on internal structures
             # RuntimeError: Runtime failures from factory execution
-            # Preserve factory error messages for compatibility
             error_msg = (
                 f"Factory '{name}' failed: {e}"
                 if name in self._factories
@@ -557,20 +567,20 @@ class FlextContainer(FlextProtocols.Configurable):
             return FlextResult[object].fail(error_msg)
 
     def _invoke_factory_and_cache(self, name: str) -> FlextResult[object]:
-        """Invoke factory and cache result.
+        """Invoke factory from FactoryRegistration and update metadata.
 
         Returns:
             FlextResult[object]: Success with service instance or failure with error.
 
         """
         try:
-            factory_obj = self._factories[name]
-            # Type-safe factory invocation
-            factory = cast("Callable[[], object]", factory_obj)
-            service = factory()
+            factory_reg = self._factories[name]
+            # Invoke factory from FactoryRegistration
+            service = factory_reg.factory()
 
-            # Cache the created service
-            self._services[name] = service
+            # Update metadata
+            factory_reg.invocation_count += 1
+            factory_reg.cached_instance = service
 
             return FlextResult[object].ok(service)
         except (KeyError, TypeError, ValueError) as e:
@@ -647,11 +657,17 @@ class FlextContainer(FlextProtocols.Configurable):
             self._restore_registry_snapshot(snapshot)
             return FlextResult[None].fail(f"Batch registration error: {e}")
 
-    def _create_registry_snapshot(self) -> dict[str, object]:
+    def _create_registry_snapshot(
+        self,
+    ) -> dict[
+        str,
+        dict[str, FlextModels.ServiceRegistration]
+        | dict[str, FlextModels.FactoryRegistration],
+    ]:
         """Create snapshot of current registry state for rollback.
 
         Returns:
-            dict[str, object]: Snapshot containing services and factories.
+            dict containing services and factories with their specific Model types.
 
         """
         return {
@@ -686,16 +702,28 @@ class FlextContainer(FlextProtocols.Configurable):
 
         return FlextResult[None].ok(None)
 
-    def _restore_registry_snapshot(self, snapshot: dict[str, object]) -> None:
-        """Restore registry state from snapshot with type safety."""
-        # Direct assignment - snapshot already has correct types
+    def _restore_registry_snapshot(
+        self,
+        snapshot: dict[
+            str,
+            dict[str, FlextModels.ServiceRegistration]
+            | dict[str, FlextModels.FactoryRegistration],
+        ],
+    ) -> None:
+        """Restore registry state from snapshot with Models."""
         services_snapshot = snapshot.get("services")
         factories_snapshot = snapshot.get("factories")
 
-        if FlextRuntime.is_dict_like(services_snapshot):
-            self._services = services_snapshot
-        if FlextRuntime.is_dict_like(factories_snapshot):
-            self._factories = factories_snapshot
+        # Type-safe restoration - casts needed as isinstance doesn't narrow union
+        # pyrefly cannot infer which union member based on dict key alone
+        if isinstance(services_snapshot, dict):
+            self._services = cast(
+                "dict[str, FlextModels.ServiceRegistration]", services_snapshot
+            )
+        if isinstance(factories_snapshot, dict):
+            self._factories = cast(
+                "dict[str, FlextModels.FactoryRegistration]", factories_snapshot
+            )
 
     # =========================================================================
     # ADVANCED FEATURES - Factory resolution and dependency injection
@@ -898,37 +926,37 @@ class FlextContainer(FlextProtocols.Configurable):
             return False
         return validated_name in self._services or validated_name in self._factories
 
-    def list_services(self) -> FlextResult[list[object]]:
-        """List all registered services with metadata.
+    def list_services(
+        self,
+    ) -> FlextResult[
+        list[FlextModels.ServiceRegistration | FlextModels.FactoryRegistration]
+    ]:
+        """List all registered services and factories with full metadata.
 
         Returns:
-            FlextResult[list[object]]: Success with service list or failure with error.
+            FlextResult with list of ServiceRegistration and FactoryRegistration Models.
 
         """
-        # ISSUE: Duplicates get_service_names functionality - both methods iterate over same service collections
         try:
-            services: list[object] = []
-            for name in sorted(
-                set(self._services.keys()) | set(self._factories.keys()),
-            ):
-                service_info: dict[str, object] = {
-                    FlextConstants.Mixins.FIELD_NAME: name,
-                    FlextConstants.Mixins.FIELD_TYPE: "instance"
-                    if name in self._services
-                    else "factory",
-                    FlextConstants.Mixins.FIELD_REGISTERED: True,
-                }
-                # Ensure type compatibility by explicitly casting to object before append
-                services.append(cast("object", service_info))
+            # Use list() for efficient copy (PERF402 compliant)
+            services: list[
+                FlextModels.ServiceRegistration | FlextModels.FactoryRegistration
+            ] = [
+                *list(self._services.values()),
+                *list(self._factories.values()),
+            ]
 
-            return FlextResult[list[object]].ok(services)
-        except (TypeError, AttributeError, ValueError, KeyError, RuntimeError) as e:
+            return FlextResult[
+                list[FlextModels.ServiceRegistration | FlextModels.FactoryRegistration]
+            ].ok(services)
+        except (TypeError, AttributeError, ValueError, RuntimeError) as e:
             # TypeError: Type casting or collection operation failures
-            # AttributeError: FlextConstants access failures
+            # AttributeError: Model attribute access failures
             # ValueError: Constraint violations
-            # KeyError: Dict operation failures
             # RuntimeError: Runtime failures during service listing
-            return FlextResult[list[object]].fail(
+            return FlextResult[
+                list[FlextModels.ServiceRegistration | FlextModels.FactoryRegistration]
+            ].fail(
                 f"Failed to list services: {e}",
             )
 
@@ -979,64 +1007,42 @@ class FlextContainer(FlextProtocols.Configurable):
     def configure_container(
         self, config: dict[str, object] | FlextConfig
     ) -> FlextResult[None]:
-        """Configure container with validated settings.
+        """Configure container using ContainerConfig Model.
 
         Args:
             config: Either a dict for backward compatibility or FlextConfig instance.
-                   Using FlextConfig is preferred.
 
         Returns:
             FlextResult[None]: Success if configured or failure with error.
 
         """
         try:
-            # Convert FlextConfig to dict if needed
-            executor_config: dict[str, object]
+            # Update user overrides (for compatibility)
             if isinstance(config, FlextConfig):
-                executor_config = {
+                self._user_overrides.update({
                     "max_workers": config.max_workers,
                     "timeout_seconds": config.timeout_seconds,
-                }
+                })
             else:
-                # Only allow specific configuration keys
-                allowed_keys = {"max_workers", "timeout_seconds"}
-                executor_config_dict: dict[str, object] = {}
-                for key, value in config.items():
-                    if key in allowed_keys:
-                        if key == "timeout_seconds" and isinstance(value, (int, float)):
-                            executor_config_dict[key] = float(value)
-                        elif key == "max_workers" and isinstance(value, (int, str)):
-                            executor_config_dict[key] = int(value)
-                        else:
-                            executor_config_dict[key] = value
-                executor_config = executor_config_dict
+                self._user_overrides.update(config)
 
-            # Update user overrides
-            self._user_overrides.update(executor_config)
-
-            # Update global config
+            # Refresh global config (recreates ContainerConfig Model)
             self._refresh_global_config()
 
             return FlextResult[None].ok(None)
         except (TypeError, ValueError, AttributeError, KeyError, RuntimeError) as e:
-            # TypeError: Type conversion or dict operation failures
-            # ValueError: Constraint violations or invalid values
-            # AttributeError: FlextConfig attribute access failures
+            # TypeError: Type conversion failures
+            # ValueError: Validation errors
+            # AttributeError: Attribute access failures
             # KeyError: Dict key access failures
-            # RuntimeError: Runtime failures during configuration
+            # RuntimeError: Runtime failures
             return FlextResult[None].fail(f"Container configuration failed: {e}")
 
     def _refresh_global_config(self) -> None:
-        """Refresh the effective global configuration."""
-        # Start with user overrides (these take precedence)
-        merged: dict[str, object] = dict(self._user_overrides)
-
-        # Add defaults only for keys not already set by user
-        for key, value in self._create_container_config().items():
-            if key not in merged and value is not None:
-                merged[key] = value
-
-        self._global_config = merged
+        """Refresh the effective global configuration as ContainerConfig Model."""
+        # Recreate ContainerConfig Model (always uses defaults)
+        # User overrides are maintained separately for backward compatibility
+        self._global_config = self._create_container_config()
 
     # =========================================================================
     # GLOBAL CONTAINER MANAGEMENT - Singleton pattern with thread safety
