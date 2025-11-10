@@ -193,10 +193,14 @@ class FlextTypes:
     # =========================================================================
 
     type JsonPrimitive = str | int | float | bool | None
-    # Non-recursive approximation (Pyrefly limitation workaround)
-    # Note: Full recursive type would be: JsonValue = JsonPrimitive | dict[str, JsonValue] | list[JsonValue]
-    # but type checkers have limitations. This pragmatic version covers 99% of real JSON usage.
-    type JsonValue = JsonPrimitive | dict[str, object] | list[object]
+    # Python 3.13 native recursive type syntax (PEP 695)
+    # KNOWN FALSE POSITIVE: Pyrefly reports 2x "unknown-name" errors on line 198:
+    #   - Position 48: dict[str, JsonValue]
+    #   - Position 66: list[JsonValue]
+    # This is CORRECT Python 3.13 syntax. Pyrefly support for PEP 695 recursive
+    # types is pending. Python 3.13 runtime and ruff both accept this syntax.
+    type JsonValue = JsonPrimitive | dict[str, JsonValue] | list[JsonValue]
+    type JsonList = list[JsonValue]
     type JsonDict = dict[str, JsonValue]
 
     # =========================================================================

@@ -48,7 +48,7 @@ class FlextModelsContainer:
         )
         metadata: dict[str, FlextTypes.JsonValue] = Field(
             default_factory=dict,
-            description="Additional service metadata",
+            description="Additional service metadata (JSON-serializable)",
         )
         service_type: str | None = Field(
             default=None,
@@ -95,7 +95,7 @@ class FlextModelsContainer:
         )
         metadata: dict[str, FlextTypes.JsonValue] = Field(
             default_factory=dict,
-            description="Additional factory metadata",
+            description="Additional factory metadata (JSON-serializable)",
         )
         invocation_count: int = Field(
             default=0,
