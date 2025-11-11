@@ -10,9 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import uuid
 from collections.abc import Callable
-from typing import Annotated, Literal
+from typing import Annotated, Literal, cast
 
 from pydantic import Field, field_validator
 
@@ -20,7 +19,7 @@ from flext_core._models.entity import FlextModelsEntity
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
-from flext_core.runtime import FlextRuntime
+from flext_core.utilities import FlextUtilities
 
 
 class FlextModelsService:
@@ -49,25 +48,18 @@ class FlextModelsService:
         @field_validator("context", mode="before")
         @classmethod
         def validate_context(cls, v: object) -> dict[str, object]:
-            """Ensure context has required fields (Pydantic v2 mode='before')."""
-            if not FlextRuntime.is_dict_like(v):
-                v = {}
-            context: dict[str, object] = dict(v)
-            if "trace_id" not in context:
-                context["trace_id"] = str(uuid.uuid4())
-            if "span_id" not in context:
-                context["span_id"] = str(uuid.uuid4())
-            return context
+            """Ensure context has required fields (using FlextUtilities.Generators)."""
+            return FlextUtilities.Generators.ensure_trace_context(v)
 
         @field_validator("timeout_seconds", mode="after")
         @classmethod
         def validate_timeout(cls, v: int) -> int:
-            """Validate timeout is reasonable (Pydantic v2 mode='after')."""
+            """Validate timeout is reasonable (using FlextUtilities.Validation)."""
             max_timeout_seconds = FlextConstants.Performance.MAX_TIMEOUT_SECONDS
-            if v > max_timeout_seconds:
-                msg = f"Timeout cannot exceed {max_timeout_seconds} seconds"
+            result = FlextUtilities.Validation.validate_timeout(v, max_timeout_seconds)
+            if result.is_failure:
                 raise FlextExceptions.ValidationError(
-                    message=msg,
+                    message=result.error or "Timeout validation failed",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
             return v
@@ -149,14 +141,19 @@ class FlextModelsService:
         @field_validator("operation_callable", mode="after")
         @classmethod
         def validate_operation_callable(cls, v: object) -> Callable[..., object]:
-            """Validate operation is callable (Pydantic v2 mode='after')."""
-            if not callable(v):
-                error_msg = "Operation must be callable"
+            """Validate operation is callable (using FlextUtilities.Validation)."""
+            result = FlextUtilities.Validation.validate_callable(
+                v,
+                error_message="Operation must be callable",
+                error_code=FlextConstants.Errors.TYPE_ERROR,
+            )
+            if result.is_failure:
                 raise FlextExceptions.TypeError(
-                    message=error_msg,
+                    message=result.error or "Operation must be callable",
                     error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
-            return v
+            # Type-safe return: v is confirmed callable by validation
+            return cast("Callable[..., object]", v)
 
 
 __all__ = ["FlextModelsService"]

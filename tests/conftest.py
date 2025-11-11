@@ -197,9 +197,9 @@ def configured_container(
       FlextContainer with standard test services registered
 
     """
-    clean_container.register("external_service", mock_external_service)
-    clean_container.register("config", {"test_mode": True})
-    clean_container.register("logger", "test_logger")
+    clean_container.with_service("external_service", mock_external_service)
+    clean_container.with_service("config", {"test_mode": True})
+    clean_container.with_service("logger", "test_logger")
     return clean_container
 
 

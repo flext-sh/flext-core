@@ -139,9 +139,8 @@ class FlextRegistry(FlextMixins):
     ... )  # Re-registration - success (idempotent)
 
     **Usage Pattern 6 - Service Registration (Dependency Injection)**:
-    >>> result = registry.register("database", DatabaseService())
-    >>> if result.is_success:
-    ...     print("Service registered for DI")
+    >>> registry.with_service("database", DatabaseService())
+    >>> # Returns registry for chaining
 
     **Usage Pattern 7 - Error Handling in Batch Registration**:
     >>> result = registry.register_handlers(handlers)
@@ -611,6 +610,8 @@ class FlextRegistry(FlextMixins):
     ) -> FlextResult[FlextRegistry.Summary]:
         """Register plain callables or pre-built handlers for message types.
 
+        Refactored with DRY helpers to reduce nesting (6 → 3 levels).
+
         Returns:
             FlextResult[FlextRegistry.Summary]: Success result with registration summary.
 
@@ -618,71 +619,33 @@ class FlextRegistry(FlextMixins):
         summary = FlextRegistry.Summary()
         for message_type, entry in mapping.items():
             try:
+                # Resolve key and check if already registered (early continue)
                 key = self._resolve_binding_key_from_entry(entry, message_type)
                 if key in self._registered_keys:
                     summary.skipped.append(key)
                     continue
 
-                if isinstance(entry, (tuple, FlextHandlers)):
-                    # Handle tuple (function, config) or FlextHandlers instance
-                    if isinstance(entry, tuple):
-                        handler_func, handler_config = entry
-                        # Create handler from function
-                        handler_result = self._dispatcher.create_handler_from_function(
-                            cast(
-                                "FlextTypes.HandlerCallableType",
-                                handler_func,
-                            ),
-                            cast("dict[str, object] | None", handler_config),
-                            FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                        )
-                        if handler_result.is_success:
-                            handler = handler_result.value
-                            # Register with dispatcher
-                            register_result = self._dispatcher.register_handler(handler)
-                            if register_result.is_success:
-                                reg_details = FlextModels.RegistrationDetails(
-                                    registration_id=key,
-                                    handler_mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                                    timestamp="",
-                                    status=FlextConstants.Cqrs.Status.RUNNING,
-                                )
-                                summary.registered.append(reg_details)
-                                self._registered_keys.add(key)
-                            else:
-                                summary.errors.append(
-                                    f"Failed to register handler: {register_result.error}",
-                                )
-                        else:
-                            summary.errors.append(
-                                f"Failed to create handler: {handler_result.error}",
-                            )
-                    else:
-                        # Handle FlextHandlers instance
-                        register_result = self._dispatcher.register_handler(entry)
-                        if register_result.is_success:
-                            reg_details = FlextModels.RegistrationDetails(
-                                registration_id=key,
-                                handler_mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                                timestamp="",
-                                status=FlextConstants.Cqrs.Status.RUNNING,
-                            )
-                            summary.registered.append(reg_details)
-                            self._registered_keys.add(key)
-                        else:
-                            summary.errors.append(
-                                f"Failed to register handler: {register_result.error}",
-                            )
-                else:
-                    # Handle dict[str, object] or other types
-                    reg_details = FlextModels.RegistrationDetails(
-                        registration_id=key,
-                        handler_mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-                        timestamp="",
-                        status=FlextConstants.Cqrs.Status.RUNNING,
+                # Delegate to specialized helpers based on entry type
+                # Tuple entries must have exactly 2 elements: (handler, config)
+                tuple_entry_size = 2
+                if isinstance(entry, tuple) and len(entry) == tuple_entry_size:
+                    # Type narrowing: verify it's a 2-tuple before passing
+                    tuple_entry = cast(
+                        "tuple[FlextTypes.HandlerCallableType, object | FlextResult[object]]",
+                        entry,
                     )
-                    summary.registered.append(reg_details)
+                    result = self._register_tuple_entry(tuple_entry, key)
+                elif isinstance(entry, FlextHandlers):
+                    result = self._register_handler_entry(entry, key)
+                else:
+                    result = self._register_other_entry(key)
+
+                # Process result (nesting reduced via early returns in helpers)
+                if result.is_success:
+                    summary.registered.append(result.value)
                     self._registered_keys.add(key)
+                elif result.error is not None:
+                    summary.errors.append(result.error)
 
             except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                 error_msg = f"Failed to register handler for {message_type}: {e}"
@@ -690,6 +653,79 @@ class FlextRegistry(FlextMixins):
                 continue
 
         return self.ok(summary)
+
+    # ------------------------------------------------------------------
+    # Internal helpers for register_function_map (DRY + Reduce nesting)
+    # ------------------------------------------------------------------
+    def _register_tuple_entry(
+        self,
+        entry: tuple[FlextTypes.HandlerCallableType, object | FlextResult[object]],
+        key: str,
+    ) -> FlextResult[FlextModels.RegistrationDetails]:
+        """Register tuple (function, config) entry - DRY helper reduces nesting."""
+        handler_func, handler_config = entry
+
+        # Create handler from function
+        handler_result = self._dispatcher.create_handler_from_function(
+            cast("FlextTypes.HandlerCallableType", handler_func),
+            cast("dict[str, object] | None", handler_config),
+            FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+        )
+        if handler_result.is_failure:
+            return FlextResult[FlextModels.RegistrationDetails].fail(
+                f"Failed to create handler: {handler_result.error}"
+            )
+
+        # Register with dispatcher
+        handler = handler_result.value
+        register_result = self._dispatcher.register_handler(handler)
+        if register_result.is_failure:
+            return FlextResult[FlextModels.RegistrationDetails].fail(
+                f"Failed to register handler: {register_result.error}"
+            )
+
+        # Success - create registration details
+        reg_details = FlextModels.RegistrationDetails(
+            registration_id=key,
+            handler_mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            timestamp="",
+            status=FlextConstants.Cqrs.Status.RUNNING,
+        )
+        return FlextResult[FlextModels.RegistrationDetails].ok(reg_details)
+
+    def _register_handler_entry(
+        self,
+        entry: FlextHandlers[object, object],
+        key: str,
+    ) -> FlextResult[FlextModels.RegistrationDetails]:
+        """Register FlextHandlers instance - DRY helper reduces nesting."""
+        register_result = self._dispatcher.register_handler(entry)
+        if register_result.is_failure:
+            return FlextResult[FlextModels.RegistrationDetails].fail(
+                f"Failed to register handler: {register_result.error}"
+            )
+
+        # Success - create registration details
+        reg_details = FlextModels.RegistrationDetails(
+            registration_id=key,
+            handler_mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            timestamp="",
+            status=FlextConstants.Cqrs.Status.RUNNING,
+        )
+        return FlextResult[FlextModels.RegistrationDetails].ok(reg_details)
+
+    def _register_other_entry(
+        self,
+        key: str,
+    ) -> FlextResult[FlextModels.RegistrationDetails]:
+        """Register dict[str, object] or other types - DRY helper reduces nesting."""
+        reg_details = FlextModels.RegistrationDetails(
+            registration_id=key,
+            handler_mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+            timestamp="",
+            status=FlextConstants.Cqrs.Status.RUNNING,
+        )
+        return FlextResult[FlextModels.RegistrationDetails].ok(reg_details)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -773,7 +809,11 @@ class FlextRegistry(FlextMixins):
             )
 
         # Delegate to container
-        return self.container.register(name, service)
+        try:
+            self.container.with_service(name, service)
+            return FlextResult[None].ok(None)
+        except ValueError as e:
+            return FlextResult[None].fail(str(e))
 
     # =========================================================================
     # Protocol Implementations: RegistrationTracker, BatchProcessor

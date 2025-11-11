@@ -784,11 +784,51 @@ class FlextDecorators:
         args: tuple[object, ...],
         kwargs: dict[str, object],
         logger: FlextLogger,
-        attempts: int,
-        delay: float,
-        strategy: str,
+        attempts: int = 3,
+        delay: float = 1.0,
+        strategy: str = "exponential",
+        *,
+        config: object | None = None,
     ) -> R | Exception:
-        """Execute retry loop and return last exception."""
+        """Execute retry loop and return last exception.
+
+        NEW (RECOMMENDED - Config Pattern):
+            result = FlextDecorators._execute_retry_loop(
+                func, args, kwargs, logger,
+                config=FlextModels.Config.RetryConfiguration(
+                    max_attempts=5,
+                    initial_delay_seconds=2.0,
+                    exponential_backoff=True
+                )
+            )
+
+        OLD (Backward Compatible):
+            result = FlextDecorators._execute_retry_loop(
+                func, args, kwargs, logger, 5, 2.0, "exponential"
+            )
+
+        Args:
+            func: Function to execute
+            args: Function positional arguments
+            kwargs: Function keyword arguments
+            logger: Logger instance
+            attempts: Max retry attempts (backward compat)
+            delay: Initial delay seconds (backward compat)
+            strategy: Backoff strategy (backward compat)
+            config: RetryConfiguration instance (Pydantic v2) - NEW PATTERN
+
+        Returns:
+            Function result on success, or Exception on failure
+
+        """
+        # Extract config values (config takes priority over individual params)
+        if config is not None:
+            attempts = getattr(config, "max_attempts", attempts)
+            delay = getattr(config, "initial_delay_seconds", delay)
+            # Map exponential_backoff bool to strategy string
+            exponential = getattr(config, "exponential_backoff", True)
+            strategy = "exponential" if exponential else "linear"
+
         last_exception: Exception | None = None
         current_delay = delay
 

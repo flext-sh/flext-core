@@ -1003,7 +1003,7 @@ class TestFlextHandlers:
         handler = ConcreteTestHandler(config=config)
 
         # None should fail serialization validation
-        result = handler.validate(None)  # type: ignore[arg-type]
+        result = handler.validate(None)
         assert result.is_failure
 
     def test_handlers_message_validation_with_custom_method(self) -> None:
@@ -1052,7 +1052,7 @@ class TestFlextHandlers:
         handler = ConcreteTestHandler(config=config)
 
         msg = TestMessage(value="test")
-        result = handler.validate(msg)  # type: ignore[arg-type]
+        result = handler.validate(msg)
         assert result.is_success
 
     def test_handlers_dict_message_validation(self) -> None:
@@ -1064,7 +1064,7 @@ class TestFlextHandlers:
         handler = ConcreteTestHandler(config=config)
 
         msg_dict = {"key": "value", "number": 42}
-        result = handler.validate(msg_dict)  # type: ignore[arg-type]
+        result = handler.validate(msg_dict)
         assert result.is_success
 
     def test_handlers_int_message_validation(self) -> None:
@@ -1075,7 +1075,7 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
 
-        result = handler.validate(42)  # type: ignore[arg-type]
+        result = handler.validate(42)
         assert result.is_success
 
     def test_handlers_float_message_validation(self) -> None:
@@ -1086,7 +1086,7 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
 
-        result = handler.validate(math.pi)  # type: ignore[arg-type]
+        result = handler.validate(math.pi)
         assert result.is_success
 
     def test_handlers_bool_message_validation(self) -> None:
@@ -1097,7 +1097,7 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
 
-        result = handler.validate(True)  # type: ignore[arg-type]
+        result = handler.validate(True)
         assert result.is_success
 
     def test_handlers_dataclass_message_validation(self) -> None:
@@ -1116,7 +1116,7 @@ class TestFlextHandlers:
         handler = ConcreteTestHandler(config=config)
 
         msg = DataClassMessage(value="test", number=42)
-        result = handler.validate(msg)  # type: ignore[arg-type]
+        result = handler.validate(msg)
         assert result.is_success
 
     def test_handlers_slots_message_validation(self) -> None:
@@ -1135,7 +1135,7 @@ class TestFlextHandlers:
                 self.number = number
 
         msg = SlotsMessage(value="test", number=42)
-        result = handler.validate(msg)  # type: ignore[arg-type]
+        result = handler.validate(msg)
         assert result.is_success
 
     def test_handlers_dict_with_method_message_validation(self) -> None:
@@ -1154,7 +1154,7 @@ class TestFlextHandlers:
                 return {"value": self.value}
 
         msg = DictMethodMessage(value="test")
-        result = handler.validate(msg)  # type: ignore[arg-type]
+        result = handler.validate(msg)
         assert result.is_success
 
     def test_handlers_as_dict_method_message_validation(self) -> None:
@@ -1173,7 +1173,7 @@ class TestFlextHandlers:
                 return {"value": self.value}
 
         msg = AsDictMessage(value="test")
-        result = handler.validate(msg)  # type: ignore[arg-type]
+        result = handler.validate(msg)
         assert result.is_success
 
     def test_handlers_from_callable_invalid_config_creation(self) -> None:

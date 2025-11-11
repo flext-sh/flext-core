@@ -12,8 +12,7 @@ from __future__ import annotations
 
 import time as time_module
 from collections.abc import Callable
-from datetime import datetime
-from typing import Annotated, Literal, Self
+from typing import Annotated, Literal, Self, cast
 
 from pydantic import (
     BaseModel,
@@ -27,6 +26,7 @@ from pydantic import (
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
+from flext_core.utilities import FlextUtilities
 
 
 class FlextModelsHandler:
@@ -55,14 +55,19 @@ class FlextModelsHandler:
         @field_validator("handler", mode="after")
         @classmethod
         def validate_handler(cls, v: object) -> Callable[..., object]:
-            """Validate handler is properly callable (Pydantic v2 mode='after')."""
-            if not callable(v):
-                error_msg = "Handler must be callable"
+            """Validate handler is properly callable (using FlextUtilities.Validation)."""
+            result = FlextUtilities.Validation.validate_callable(
+                v,
+                error_message="Handler must be callable",
+                error_code=FlextConstants.Errors.TYPE_ERROR,
+            )
+            if result.is_failure:
                 raise FlextExceptions.TypeError(
-                    message=error_msg,
+                    message=result.error or "Handler must be callable",
                     error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
-            return v
+            # Type-safe return: v is confirmed callable by validation
+            return cast("Callable[..., object]", v)
 
     class RegistrationDetails(BaseModel):
         """Registration details for handler registration tracking.
@@ -135,18 +140,10 @@ class FlextModelsHandler:
         @field_validator("timestamp", mode="after")
         @classmethod
         def validate_timestamp_format(cls, v: str) -> str:
-            """Validate timestamp is in ISO 8601 format (Pydantic v2 mode='after')."""
-            # Allow empty strings for default values
-            if not v or not v.strip():
-                return v
-
-            try:
-                # Handle both Z suffix and explicit timezone offset
-                timestamp_str = v.replace("Z", "+00:00") if v.endswith("Z") else v
-                datetime.fromisoformat(timestamp_str)
-            except ValueError as e:
-                msg = f"Timestamp must be in ISO 8601 format: {e}"
-                raise ValueError(msg) from e
+            """Validate timestamp is in ISO 8601 format (using FlextUtilities.Validation)."""
+            result = FlextUtilities.Validation.validate_iso8601_timestamp(v, allow_empty=True)
+            if result.is_failure:
+                raise ValueError(result.error or "Timestamp validation failed")
             return v
 
     class ExecutionContext(BaseModel):

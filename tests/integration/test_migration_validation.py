@@ -99,10 +99,10 @@ class TestMigrationScenario2:
                 super().__init__()
                 self.name = "test"
 
-        # Use correct API: register() for registration
+        # Use correct API: with_service() for registration (fluent interface)
         test_service = TestService()
-        registration_result = container.register("test_migration_service", test_service)
-        assert registration_result.is_success
+        registration_result = container.with_service("test_migration_service", test_service)
+        assert registration_result is container  # Fluent interface returns Self
 
         # Use correct API: get() for resolution
         resolution_result = container.get("test_migration_service")

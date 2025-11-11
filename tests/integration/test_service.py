@@ -375,8 +375,8 @@ class TestServiceIntegrationPatterns:
             user_service.set_user_data(user_id, default_user_data)
 
         # Register services in container
-        clean_container.register("user_service", user_service)
-        clean_container.register("notification_service", notification_service)
+        clean_container.with_service("user_service", user_service)
+        clean_container.with_service("notification_service", notification_service)
 
         def user_notification_workflow(
             workflow_user_id: str,
@@ -455,15 +455,15 @@ class TestServiceIntegrationPatterns:
         }
 
         # Act - Register service with configuration
-        registration_result = clean_container.register(
+        registration_result = clean_container.with_service(
             "lifecycle_service",
             lifecycle_service,
         )
-        config_result = clean_container.register("service_config", service_config)
+        config_result = clean_container.with_service("service_config", service_config)
 
-        # Assert - Registration success
-        assert registration_result.is_success is True
-        assert config_result.is_success is True
+        # Assert - Registration success (fluent interface returns Self)
+        assert registration_result is clean_container
+        assert config_result is clean_container
 
         # Act - Initialize service
         service_result = clean_container.get("lifecycle_service")

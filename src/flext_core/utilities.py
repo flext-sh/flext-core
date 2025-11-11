@@ -28,6 +28,7 @@ from flext_core._utilities import (
     FlextUtilitiesCache,
     FlextUtilitiesConfiguration,
     FlextUtilitiesDataMapper,
+    FlextUtilitiesDomain,
     FlextUtilitiesGenerators,
     FlextUtilitiesReliability,
     FlextUtilitiesStringParser,
@@ -413,26 +414,53 @@ class FlextUtilities:
     """
 
     # =========================================================================
-    # NAMESPACE ALIASES - Maintain backward compatibility
+    # NESTED CLASSES - Provide access to utility modules
     # =========================================================================
-    # These aliases maintain the FlextUtilities.Cache.method() API while
-    # delegating to extracted classes in _utilities/ for modularity
+    # These nested classes provide the FlextUtilities.Cache.method() API while
+    # inheriting from extracted classes in _utilities/ for modularity
 
-    Cache = FlextUtilitiesCache
-    Validation = FlextUtilitiesValidation
-    TypeGuards = FlextUtilitiesTypeGuards
-    Generators = FlextUtilitiesGenerators
-    TextProcessor = FlextUtilitiesTextProcessor
-    Reliability = FlextUtilitiesReliability
-    TypeChecker = FlextUtilitiesTypeChecker
-    Configuration = FlextUtilitiesConfiguration
-    StringParser = FlextUtilitiesStringParser
-    DataMapper = FlextUtilitiesDataMapper
+    class Cache(FlextUtilitiesCache):
+        """Cache utilities - nested class for better API access."""
+
+    class Validation(FlextUtilitiesValidation):
+        """Validation utilities - nested class for better API access."""
+
+    class TypeGuards(FlextUtilitiesTypeGuards):
+        """Type guard utilities - nested class for better API access."""
+
+    class Generators(FlextUtilitiesGenerators):
+        """Generator utilities - nested class for better API access."""
+
+    class TextProcessor(FlextUtilitiesTextProcessor):
+        """Text processing utilities - nested class for better API access."""
+
+    class Reliability(FlextUtilitiesReliability):
+        """Reliability utilities - nested class for better API access."""
+
+    class TypeChecker(FlextUtilitiesTypeChecker):
+        """Type checking utilities - nested class for better API access."""
+
+    class Configuration(FlextUtilitiesConfiguration):
+        """Configuration utilities - nested class for better API access."""
+
+    class StringParser(FlextUtilitiesStringParser):
+        """String parsing utilities - nested class for better API access.
+
+        Provides access to FlextUtilitiesStringParser functionality through
+        FlextUtilities.StringParser for consistent API patterns.
+        """
+
+    class DataMapper(FlextUtilitiesDataMapper):
+        """Data mapping utilities - nested class for better API access."""
+
+    class Domain(FlextUtilitiesDomain):
+        """Domain utilities - nested class for better API access."""
 
     @staticmethod
     def run_external_command(
         cmd: list[str],
         *,
+        config: object | None = None,
         capture_output: bool = True,
         check: bool = True,
         env: dict[str, str] | None = None,
@@ -444,32 +472,53 @@ class FlextUtilities:
         """Execute external command with proper error handling using FlextResult pattern.
 
         Uses threading-based timeout handling instead of subprocess TimeoutExpired.
+        Supports both config object pattern (reduced params) and individual parameters.
 
         Args:
             cmd: Command to execute as list of strings
-            capture_output: Whether to capture stdout/stderr
-            check: Whether to raise exception on non-zero exit code
-            env: Environment variables dictionary for the command
-            cwd: Working directory for the command
-            timeout: Command timeout in seconds
-            command_input: Input to send to the command
-            text: Whether to decode stdout/stderr as text (Python 3.7+)
+            config: Optional FlextModels.Config.ExternalCommandConfig for all params
+            capture_output: Whether to capture stdout/stderr (ignored if config provided)
+            check: Whether to raise exception on non-zero exit code (ignored if config provided)
+            env: Environment variables dictionary (ignored if config provided)
+            cwd: Working directory (ignored if config provided)
+            timeout: Command timeout in seconds (ignored if config provided)
+            command_input: Input to send to command (ignored if config provided)
+            text: Whether to decode as text (ignored if config provided)
 
         Returns:
             FlextResult containing _CompletedProcessWrapper on success or error details on failure
 
-        Example:
+        Example (config pattern - RECOMMENDED):
+            ```python
+            from flext_core import FlextModels
+
+            config = FlextModels.Config.ExternalCommandConfig(
+                capture_output=True, timeout_seconds=60.0
+            )
+            result = FlextUtilities.run_external_command(
+                ["python", "script.py"], config=config
+            )
+            ```
+
+        Example (individual params - backward compatible):
             ```python
             result = FlextUtilities.run_external_command(
                 ["python", "script.py"], capture_output=True, timeout=60.0
             )
-            if result.is_success:
-                process = result.unwrap()
-                print(f"Exit code: {process.returncode}")
-                print(f"Output: {process.stdout}")
             ```
 
         """
+        # Extract config values or use individual parameters (backward compatibility)
+        if config is not None:
+            capture_output = getattr(config, "capture_output", capture_output)
+            check = getattr(config, "check", check)
+            env = getattr(config, "env", env)
+            cwd_from_config = getattr(config, "cwd", None)
+            cwd = cwd_from_config if cwd_from_config is not None else cwd
+            timeout = getattr(config, "timeout_seconds", timeout)
+            command_input = getattr(config, "command_input", command_input)
+            text = getattr(config, "text", text)
+
         try:
             # Validate command for security - ensure all parts are safe strings
             validation_result = FlextUtilities._validate_command_input(cmd)

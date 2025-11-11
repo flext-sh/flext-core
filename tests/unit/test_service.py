@@ -172,9 +172,7 @@ class TestDomainServicesFixed:
         service = SampleUserService()
 
         # Test that assignment raises error on frozen model (Pydantic raises AttributeError for property without setter)
-        with pytest.raises(  # type: ignore[call-overload]
-            (ValidationError, AttributeError)
-        ):
+        with pytest.raises((ValidationError, AttributeError)):
             # Try to modify property on frozen model
             service.new_field = "not_allowed"
 
@@ -1767,7 +1765,7 @@ class TestServicePropertyResolution:
             """Test service config."""
 
         container = FlextContainer.get_global()
-        container.register("TestServiceConfig", TestServiceConfig())
+        container.with_service("TestServiceConfig", TestServiceConfig())
 
         # Service that matches naming pattern: TestService → TestServiceConfig
         class TestService(FlextService[str]):
@@ -1790,7 +1788,7 @@ class TestServicePropertyResolution:
             """Test service models namespace."""
 
         container = FlextContainer.get_global()
-        container.register("SampleServiceModels", SampleServiceModels)
+        container.with_service("SampleServiceModels", SampleServiceModels)
 
         class SampleService(FlextService[str]):
             def execute(self) -> FlextResult[str]:
@@ -1814,8 +1812,8 @@ class TestServicePropertyResolution:
             """Property test models."""
 
         container = FlextContainer.get_global()
-        container.register("FlextPropertyTestConfig", FlextPropertyTestConfig())
-        container.register("FlextPropertyTestModels", FlextPropertyTestModels)
+        container.with_service("FlextPropertyTestConfig", FlextPropertyTestConfig())
+        container.with_service("FlextPropertyTestModels", FlextPropertyTestModels)
 
         # Service class name that matches: FlextPropertyTestService
         class FlextPropertyTestService(FlextService[str]):

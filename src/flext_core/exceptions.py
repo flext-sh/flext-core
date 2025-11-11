@@ -401,6 +401,7 @@ class FlextExceptions:
             self,
             message: str,
             *,
+            config: object | None = None,
             error_code: str | None = FlextConstants.Errors.UNKNOWN_ERROR,
             correlation_id: str | None = None,
             metadata: dict[str, object] | None = None,
@@ -410,16 +411,46 @@ class FlextExceptions:
         ) -> None:
             """Initialize base error with structured logging.
 
+            NEW (Config Pattern):
+                raise FlextException(
+                    "Error occurred",
+                    config=FlextModels.Config.ExceptionConfig(
+                        error_code="ERR001",
+                        correlation_id="abc-123",
+                        auto_log=True
+                    )
+                )
+
+            OLD (Backward Compatible):
+                raise FlextException(
+                    "Error occurred",
+                    error_code="ERR001",
+                    correlation_id="abc-123",
+                    auto_log=True
+                )
+
             Args:
                 message: Error message
-                error_code: Optional error code for categorization (defaults to UNKNOWN_ERROR)
-                correlation_id: Optional correlation ID
-                metadata: Optional additional metadata
-                auto_log: Whether to automatically log exception (default: False for backward compat)
-                auto_correlation: Whether to auto-generate correlation ID (default: False for backward compat)
-                **extra_kwargs: Additional keyword arguments stored in metadata
+                config: ExceptionConfig instance (Pydantic v2) - NEW PATTERN
+                error_code: Optional error code (backward compat)
+                correlation_id: Optional correlation ID (backward compat)
+                metadata: Optional additional metadata (backward compat)
+                auto_log: Whether to automatically log (backward compat)
+                auto_correlation: Whether to auto-generate ID (backward compat)
+                **extra_kwargs: Additional kwargs (backward compat)
 
             """
+            # Extract config values (config takes priority)
+            if config is not None:
+                error_code = getattr(config, "error_code", error_code)
+                correlation_id = getattr(config, "correlation_id", correlation_id)
+                metadata = getattr(config, "metadata", metadata)
+                auto_log = getattr(config, "auto_log", auto_log)
+                auto_correlation = getattr(config, "auto_correlation", auto_correlation)
+                config_extra = getattr(config, "extra_kwargs", {})
+                if isinstance(config_extra, dict):
+                    extra_kwargs = {**config_extra, **extra_kwargs}
+
             super().__init__(message)
             self.message = message
             self.error_code = error_code

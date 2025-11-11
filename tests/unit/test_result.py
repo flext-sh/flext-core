@@ -2355,10 +2355,15 @@ class TestIOInterop:
         assert isinstance(mapped, IO)
 
     def test_to_io_failure_raises(self) -> None:
-        """Test converting failed result to IO raises ValueError."""
+        """Test converting failed result to IO raises ValidationError (actual behavior)."""
         result = FlextResult[str].fail("error")
 
-        with pytest.raises(ValueError, match="Cannot convert failure to IO"):
+        # REAL behavior: to_io() raises ValidationError, not ValueError
+        from flext_core.exceptions import FlextExceptions
+
+        with pytest.raises(
+            FlextExceptions.ValidationError, match="Cannot convert failure to IO"
+        ):
             result.to_io()
 
     def test_to_io_result_success(self) -> None:

@@ -55,7 +55,7 @@ class TestInjectDecorator:
                 return "test_value"
 
         service = TestService()
-        container.register("test_service", service)
+        container.with_service("test_service", service)
 
         # Use inject decorator
         @FlextDecorators.inject(test_service="test_service")
@@ -86,7 +86,7 @@ class TestInjectDecorator:
         class TestService:
             value: str
 
-        container.register("service", TestService("from_container"))
+        container.with_service("service", TestService("from_container"))
 
         @FlextDecorators.inject(service="service")
         def process(*, service: TestService) -> str:
@@ -434,7 +434,7 @@ class TestCombinedDecorator:
             def get_value(self) -> str:
                 return "injected"
 
-        container.register("service", TestService())
+        container.with_service("service", TestService())
 
         @combined(inject_deps={"service": "service"}, operation_name="process")
         def process_data(*, service: TestService) -> str:
@@ -489,7 +489,7 @@ class TestCombinedDecorator:
             def save(self, data: str) -> str:
                 return f"saved_{data}"
 
-        container.register("repo", Repository())
+        container.with_service("repo", Repository())
 
         @combined(
             inject_deps={"repo": "repo"},

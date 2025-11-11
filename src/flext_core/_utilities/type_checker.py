@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import inspect
 import logging
+from collections.abc import Callable
 from typing import cast, get_origin, get_type_hints
 
 from flext_core.runtime import FlextRuntime
@@ -85,6 +86,53 @@ class FlextUtilitiesTypeChecker:
         return message_types
 
     @classmethod
+    def _get_method_signature(
+        cls, handle_method: object
+    ) -> inspect.Signature | None:
+        """Extract signature from handle method."""
+        try:
+            # Cast to Callable for inspect.signature
+            callable_method = cast("Callable[..., object]", handle_method)
+            return inspect.signature(callable_method)
+        except (TypeError, ValueError):
+            return None
+
+    @classmethod
+    def _get_type_hints_safe(
+        cls, handle_method: object, handler_class: type
+    ) -> dict[str, object]:
+        """Safely extract type hints from handle method."""
+        try:
+            return get_type_hints(
+                handle_method,
+                globalns=getattr(handle_method, "__globals__", {}),
+                localns=dict(vars(handler_class)),
+            )
+        except (NameError, AttributeError, TypeError):
+            return {}
+
+    @classmethod
+    def _extract_message_type_from_parameter(
+        cls,
+        parameter: inspect.Parameter,
+        type_hints: dict[str, object],
+        param_name: str,
+    ) -> FlextTypes.MessageTypeSpecifier | None:
+        """Extract message type from parameter hints or annotation."""
+        if param_name in type_hints:
+            # Return the type hint directly (plain types, generic aliases, etc.)
+            hint: object = type_hints[param_name]
+            return hint if hint is not None else None
+
+        annotation = parameter.annotation
+        if annotation is not inspect.Signature.empty:
+            # Accept all type forms - compatibility check happens later
+            # Cast to object since annotation could be Any from inspect
+            return cast("object", annotation)
+
+        return None
+
+    @classmethod
     def _extract_message_type_from_handle(
         cls,
         handler_class: type,
@@ -102,38 +150,19 @@ class FlextUtilitiesTypeChecker:
         if handle_method is None:
             return None
 
-        try:
-            signature = inspect.signature(handle_method)
-        except (TypeError, ValueError):
+        signature = cls._get_method_signature(handle_method)
+        if signature is None:
             return None
 
-        try:
-            type_hints = get_type_hints(
-                handle_method,
-                globalns=getattr(handle_method, "__globals__", {}),
-                localns=dict(vars(handler_class)),
-            )
-        except (NameError, AttributeError, TypeError):
-            type_hints = {}
+        type_hints = cls._get_type_hints_safe(handle_method, handler_class)
 
         for name, parameter in signature.parameters.items():
             if name == "self":
                 continue
 
-            if name in type_hints:
-                # Return the type hint directly (plain types, generic aliases, etc.)
-                hint: object = type_hints[name]
-                if hint is not None:
-                    return hint
-                return None
-
-            annotation = parameter.annotation
-            if annotation is not inspect.Signature.empty:
-                # Accept all type forms - compatibility check happens later
-                # Cast to object since annotation could be Any from inspect
-                return cast("object", annotation)
-
-            break
+            return cls._extract_message_type_from_parameter(
+                parameter, type_hints, name
+            )
 
         return None
 
@@ -162,6 +191,71 @@ class FlextUtilitiesTypeChecker:
         return False
 
     @classmethod
+    def _check_object_type_compatibility(cls, expected_type: object) -> bool | None:
+        """Check if expected type is object (universal compatibility).
+
+        Args:
+            expected_type: Type to check for object compatibility
+
+        Returns:
+            True if object type (accepts everything), None if not object type
+
+        """
+        # object type should be compatible with everything
+        if expected_type is object:
+            return True
+
+        # object type by name should be compatible with everything
+        if (
+            hasattr(expected_type, "__name__")
+            and getattr(expected_type, "__name__", "") == "object"
+        ):
+            return True
+
+        return None  # Not object type - continue checking
+
+    @classmethod
+    def _check_dict_compatibility(
+        cls,
+        expected_type: FlextTypes.TypeOriginSpecifier,
+        message_type: FlextTypes.MessageTypeSpecifier,
+        origin_type: object,
+        message_origin: object,
+    ) -> bool | None:
+        """Check dict type compatibility.
+
+        Args:
+            expected_type: Expected type
+            message_type: Message type
+            origin_type: Origin of expected type
+            message_origin: Origin of message type
+
+        Returns:
+            True if dict compatible, None if not dict types
+
+        """
+        # Handle dict/dict[str, object] compatibility
+        # If expected is dict or dict[str, object], accept dict instances
+        if origin_type is dict and (
+            message_origin is dict
+            or (isinstance(message_type, type) and issubclass(message_type, dict))
+        ):
+            return True
+
+        # If message is dict or dict[str, object], and expected is also dict-like
+        if (
+            isinstance(message_type, type)
+            and issubclass(message_type, dict)
+            and (
+                origin_type is dict
+                or (isinstance(expected_type, type) and issubclass(expected_type, dict))
+            )
+        ):
+            return True
+
+        return None  # Not dict compatibility - continue checking
+
+    @classmethod
     def _evaluate_type_compatibility(
         cls,
         expected_type: FlextTypes.TypeOriginSpecifier,
@@ -177,40 +271,23 @@ class FlextUtilitiesTypeChecker:
             True if types are compatible
 
         """
-        # object type should be compatible with everything
-        if expected_type is object:
-            return True
+        # Check object type compatibility (universal)
+        object_check = cls._check_object_type_compatibility(expected_type)
+        if object_check is not None:
+            return object_check
 
-        # object type should be compatible with everything
-        if (
-            hasattr(expected_type, "__name__")
-            and getattr(expected_type, "__name__", "") == "object"
-        ):
-            return True
-
+        # Get type origins
         origin_type = get_origin(expected_type) or expected_type
         message_origin = get_origin(message_type) or message_type
 
-        # Handle dict/dict[str, object] compatibility
-        # If expected is dict or dict[str, object], accept dict instances
-        if origin_type is dict and (
-            message_origin is dict
-            or (isinstance(message_type, type) and issubclass(message_type, dict))
-        ):
-            # Expected type has dict origin (like dict[str, object] or dict)
-            return True
+        # Check dict compatibility
+        dict_check = cls._check_dict_compatibility(
+            expected_type, message_type, origin_type, message_origin
+        )
+        if dict_check is not None:
+            return dict_check
 
-        # If message is dict or dict[str, object], and expected is also dict-like
-        if (
-            isinstance(message_type, type)
-            and issubclass(message_type, dict)
-            and (
-                origin_type is dict
-                or (isinstance(expected_type, type) and issubclass(expected_type, dict))
-            )
-        ):
-            return True
-
+        # Check type or origin
         if isinstance(message_type, type) or hasattr(message_type, "__origin__"):
             return cls._handle_type_or_origin_check(
                 expected_type,
@@ -218,6 +295,8 @@ class FlextUtilitiesTypeChecker:
                 origin_type,
                 message_origin,
             )
+
+        # Check instance
         return cls._handle_instance_check(message_type, origin_type)
 
     @classmethod

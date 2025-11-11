@@ -61,8 +61,7 @@ class TestPhase2FinalCoverage:
         def factory() -> str:
             return "instance_value"
 
-        result = container.register_factory("service", factory)
-        assert result.is_success
+        container.with_factory("service", factory)  # Returns Self for chaining
 
     def test_exception_hierarchy(self) -> None:
         """Test exception class hierarchy."""
@@ -111,7 +110,7 @@ class TestPhase2FinalCoverage:
     def test_container_unregister(self) -> None:
         """Test container unregister."""
         container = FlextContainer()
-        container.register("service", "value")
+        container.with_service("service", "value")
         assert container.get("service").is_success
 
         # Unregister

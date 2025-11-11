@@ -29,6 +29,7 @@ from typing import (
     Literal,
     ParamSpec,
     Protocol,
+    TypeAlias,
     TypeVar,
 )
 
@@ -70,6 +71,13 @@ TValue_co = TypeVar("TValue_co", covariant=True)
 TValueObject_co = TypeVar("TValueObject_co", covariant=True)
 T_Service_co = TypeVar("T_Service_co", covariant=True)
 TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True)
+
+# TypeVars specifically for Protocol definitions (Pyright requirement)
+# Input must be contravariant, Result must be invariant for Protocol
+TInput_Handler_Protocol_contra = TypeVar(
+    "TInput_Handler_Protocol_contra", contravariant=True
+)
+TResult_Handler_Protocol = TypeVar("TResult_Handler_Protocol")
 
 # Contravariant TypeVars (_contra suffix)
 T_contra = TypeVar("T_contra", contravariant=True)
@@ -224,37 +232,39 @@ class FlextTypes:
             """Get the success value."""
             ...
 
+        @property
+        def error(self) -> str | None:
+            """Get the error message if failure."""
+            ...
+
         def unwrap(self) -> T_co:
             """Unwrap the result value or raise exception."""
             ...
 
-    type FlextResultType[T] = ResultLike[T]
-    type ValidationRule[T] = Callable[[T], FlextResultType[T]]
-    type CrossFieldValidator[T] = Callable[[T], FlextResultType[T]]
-    type ValidatorFunction[T] = Callable[[T], FlextResultType[T]]
+    # TypeAlias is correct inside class scope - PEP 695 type statement doesn't work here
+    FlextResultType: TypeAlias = "ResultLike[T]"
+    ValidationRule: TypeAlias = "Callable[[T], ResultLike[T]]"
+    CrossFieldValidator: TypeAlias = "Callable[[T], ResultLike[T]]"
+    ValidatorFunction: TypeAlias = "Callable[[T], ResultLike[T]]"
 
     # =========================================================================
     # HANDLER TYPES - CQRS/Bus patterns (domain-specific)
     # =========================================================================
 
-    type HandlerCallable[TInput, TResult] = Callable[
-        [TInput],
-        FlextResultType[TResult],
-    ]
+    HandlerCallable: TypeAlias = (
+        "Callable[[CallableInputT], ResultLike[CallableOutputT]]"
+    )
     # Generic handler types with explicit TypeVar declarations
-    type CallableHandlerType[TInput_Handler_contra, TResult_Handler_co] = Callable[
-        [TInput_Handler_contra],
-        FlextResultType[TResult_Handler_co],
-    ]
-    type BusHandlerType[MessageT_contra, TResult_Handler_co] = Callable[
-        [MessageT_contra],
-        FlextResultType[TResult_Handler_co],
-    ]
-    type MiddlewareType[MessageT_contra, TResult_Handler_co] = Callable[
-        [MessageT_contra],
-        FlextResultType[TResult_Handler_co],
-    ]
-    type MiddlewareConfig = JsonDict
+    CallableHandlerType: TypeAlias = (
+        "Callable[[TInput_Handler_contra], ResultLike[TResult_Handler_co]]"
+    )
+    BusHandlerType: TypeAlias = (
+        "Callable[[MessageT_contra], ResultLike[TResult_Handler_co]]"
+    )
+    MiddlewareType: TypeAlias = (
+        "Callable[[MessageT_contra], ResultLike[TResult_Handler_co]]"
+    )
+    MiddlewareConfig: TypeAlias = JsonDict
 
     # =========================================================================
     # PROCESSOR TYPES - Data processing (domain-specific)

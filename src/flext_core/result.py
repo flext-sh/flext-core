@@ -18,7 +18,7 @@ from __future__ import annotations
 import types
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import suppress
-from typing import Never, Self, cast, overload, override
+from typing import Any, Never, Self, cast, overload, override
 
 from beartype.door import is_bearable
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -224,75 +224,132 @@ class FlextResult[T_co]:
         error_data: dict[str, object] | None = None,
     ) -> None: ...
 
-    def __init__(  # noqa: C901  # Complex type validation with multiple fallbacks required
+    def _extract_config_values(
+        self,
+        config: object | None,
+        error: str | None,
+        error_code: str | None,
+        error_data: dict[str, object] | None,
+    ) -> tuple[str | None, str | None, dict[str, object] | None]:
+        """Extract error values from config (config takes priority)."""
+        if config is not None:
+            error = getattr(config, "error", error)
+            error_code = getattr(config, "error_code", error_code)
+            error_data = getattr(config, "error_data", error_data)
+        return error, error_code, error_data
+
+    def _check_type_with_fallbacks(self, data: object) -> bool:
+        """Check type validity with fallback strategies."""
+        if not isinstance(self._expected_type, type):
+            return False
+
+        # isinstance can fail with some generic types
+        with suppress(TypeError):
+            if isinstance(data, self._expected_type):
+                return True
+
+        # Try to find base classes in __orig_bases__
+        orig_bases = getattr(self._expected_type, "__orig_bases__", ())
+        for base in orig_bases:
+            origin = getattr(base, "__origin__", base)
+            if origin is None or not isinstance(origin, type):
+                continue
+            with suppress(TypeError):
+                if isinstance(data, origin):
+                    return True
+
+        # Try __mro__ (method resolution order)
+        mro = getattr(self._expected_type, "__mro__", ())
+        for base_class in mro:
+            if base_class is object or not isinstance(base_class, type):
+                continue
+            with suppress(TypeError):
+                if isinstance(data, base_class):
+                    return True
+
+        return False
+
+    def _validate_data_type(self, data: T_co | None) -> None:
+        """Validate data type against _expected_type."""
+        # Skip validation for Any type (accepts anything)
+        if self._expected_type is None or self._expected_type is Any or data is None:
+            return
+
+        # Primary validation: use isinstance for simple types, beartype for complex hints
+        try:
+            if isinstance(self._expected_type, type):
+                is_valid = isinstance(data, self._expected_type)
+            else:
+                is_valid = is_bearable(data, self._expected_type)
+        except (TypeError, AttributeError):
+            is_valid = False
+
+        # Fallback validation for generic class subclasses
+        if not is_valid:
+            is_valid = self._check_type_with_fallbacks(data)
+
+        if not is_valid:
+            expected_name = getattr(
+                self._expected_type, "__name__", str(self._expected_type)
+            )
+            actual_name = type(data).__name__
+            msg = (
+                f"FlextResult[{expected_name}].ok() received {actual_name} "
+                f"instead of {expected_name}. Data: {data!r}"
+            )
+            raise TypeError(msg)
+
+    def __init__(
         self,
         *,
         data: T_co | None = None,
+        config: object | None = None,
         error: str | None = None,
         error_code: str | None = None,
         error_data: dict[str, object] | None = None,
     ) -> None:
-        """Initialize result with either success data or error using returns.Result backend."""
+        """Initialize result with either success data or error.
+
+        NEW (Config Pattern for failures):
+            result = FlextResult(
+                config=FlextModels.Config.ResultConfig(
+                    error="Operation failed",
+                    error_code="ERR001",
+                    error_data={"detail": "info"}
+                )
+            )
+
+        OLD (Backward Compatible):
+            result = FlextResult(
+                error="Operation failed",
+                error_code="ERR001",
+                error_data={"detail": "info"}
+            )
+
+        Args:
+            data: Success data (mutually exclusive with error)
+            config: ResultConfig instance (Pydantic v2) - NEW PATTERN
+            error: Error message (backward compat)
+            error_code: Error code (backward compat)
+            error_data: Error data (backward compat)
+
+        """
         super().__init__()
 
+        # Extract config values (config takes priority)
+        error, error_code, error_data = self._extract_config_values(
+            config, error, error_code, error_data
+        )
+
         # Runtime type validation if _expected_type is set (via __class_getitem__)
-        if self._expected_type is not None and error is None and data is not None:
-            # Primary validation: use beartype for type checking
-            is_valid = is_bearable(data, self._expected_type)
-
-            # Fallback: if beartype fails and expected_type is a class,
-            # check if data is an instance (handles generic class subclasses)
-            if not is_valid and isinstance(self._expected_type, type):
-                # isinstance can fail with some generic types
-                with suppress(TypeError):
-                    is_valid = isinstance(data, self._expected_type)
-
-                # Second fallback: check if data is instance of base class
-                # This handles cases like FlextHandlers[object, object] where
-                # data is ConcreteHandler(FlextHandlers) - subclass of base class
-                if not is_valid:
-                    # Try to find base classes in __orig_bases__ or __mro__
-                    orig_bases = getattr(self._expected_type, "__orig_bases__", ())
-                    for base in orig_bases:
-                        # Get the origin (e.g., FlextHandlers from FlextHandlers[T, R])
-                        origin = getattr(base, "__origin__", base)
-                        if origin is None or not isinstance(origin, type):
-                            continue
-                        with suppress(TypeError):
-                            if isinstance(data, origin):
-                                is_valid = True
-                                break
-
-                    # If still not valid, try __mro__ (method resolution order)
-                    if not is_valid:
-                        mro = getattr(self._expected_type, "__mro__", ())
-                        for base_class in mro:
-                            if base_class is object or not isinstance(base_class, type):
-                                continue
-                            with suppress(TypeError):
-                                if isinstance(data, base_class):
-                                    is_valid = True
-                                    break
-
-            if not is_valid:
-                expected_name = getattr(
-                    self._expected_type, "__name__", str(self._expected_type)
-                )
-                actual_name = type(data).__name__
-                msg = (
-                    f"FlextResult[{expected_name}].ok() received {actual_name} "
-                    f"instead of {expected_name}. Data: {data!r}"
-                )
-                raise TypeError(msg)
+        if error is None:
+            self._validate_data_type(data)
 
         # Architectural invariant: exactly one of data or error must be provided.
         if error is not None:
-            # Failure path: create Failure with error message
             self._result = Failure(error)
         else:
-            # Success path: create Success with data
             # Note: None is a valid success value (e.g., FlextResult[None].ok(None))
-            # The returns library supports Success(None) for void/unit operations
             self._result = Success(cast("T_co", data))
 
         self._error_code = error_code
@@ -322,10 +379,10 @@ class FlextResult[T_co]:
 
         """
         if item is cls or (hasattr(item, "__origin__") and item.__origin__ is cls):
-            return cls  # type: ignore[return-value]
+            return cls
         try:
-            if isinstance(item, type) and issubclass(item, cls):  # type: ignore[arg-type]
-                return item  # type: ignore[return-value]
+            if isinstance(item, type) and issubclass(item, cls):
+                return item
         except TypeError:
             pass
 
@@ -336,14 +393,14 @@ class FlextResult[T_co]:
         type_name = getattr(item, "__name__", str(item))
 
         # Create subclass using dynamic type() for Generic subscription
-        # NOTE: type: ignore required here due to type checker limitation with metaprogramming
         # This is valid Python metaprogramming - dynamically creating a class at runtime
-        # Type checkers cannot verify dynamic type() calls with 3 arguments
-        typed_subclass: type[Self] = type(  # type: ignore[call-overload]
+        typed_subclass_raw = type(
             f"{cls_name}[{type_name}]",
             (cls,),
             {"_expected_type": item},
         )
+        # Type checkers need explicit cast for dynamic type() calls
+        typed_subclass: type[Self] = cast("type[Self]", typed_subclass_raw)
 
         # Preserve qualname for better debugging
         typed_subclass.__qualname__ = f"{cls_qualname}[{type_name}]"

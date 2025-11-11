@@ -67,8 +67,9 @@ class TestCoveragePush75Percent:
     def test_container_basic(self) -> None:
         """Test basic container operations."""
         c = FlextContainer()
-        r = c.register("test", "value")
-        assert r.is_success
+        r = c.with_service("test", "value")
+
+        assert r is c  # Fluent interface returns Self
 
         r2 = c.get("test")
         assert r2.is_success
@@ -83,7 +84,7 @@ class TestCoveragePush75Percent:
     def test_container_clear(self) -> None:
         """Test container clear."""
         c = FlextContainer()
-        c.register("test", "value")
+        c.with_service("test", "value")
         c.clear()
         r = c.get("test")
         assert r.is_failure
@@ -151,8 +152,8 @@ class TestCoveragePush75Percent:
     def test_container_register_multiple(self) -> None:
         """Test registering multiple services."""
         c = FlextContainer()
-        c.register("svc1", "val1")
-        c.register("svc2", "val2")
+        c.with_service("svc1", "val1")
+        c.with_service("svc2", "val2")
         assert c.get("svc1").value == "val1"
         assert c.get("svc2").value == "val2"
 

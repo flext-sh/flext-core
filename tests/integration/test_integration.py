@@ -152,10 +152,10 @@ class TestLibraryIntegration:
         assert len(entity_id) > 0  # Just verify it's a non-empty string
 
         # Act - Test FlextContainer service registration
-        register_result = clean_container.register("test_service", test_value)
+        register_result = clean_container.with_service("test_service", test_value)
 
-        # Assert - Service registration success
-        assert register_result.is_success is True
+        # Assert - Service registration success (fluent interface returns Self)
+        assert register_result is clean_container
 
         # Act - Test service retrieval
         service_result = clean_container.get("test_service")
@@ -196,13 +196,13 @@ class TestLibraryIntegration:
             return mock_external_service.process(expected_result_data)
 
         # Act - Register factory in container
-        register_result = clean_container.register_factory(
+        register_result = clean_container.with_factory(
             "result_factory",
             create_result,
         )
 
-        # Assert - Factory registration success
-        assert register_result.is_success is True
+        # Assert - Factory registration success (fluent interface returns Self)
+        assert register_result is clean_container
 
         # Act - Get factory result from container
         factory_result = clean_container.get("result_factory")

@@ -207,11 +207,9 @@ USAGE EXAMPLES
     >>> if result.is_success:
     ...     email = result.unwrap()
 
-**Example 2: Dependency Injection**:
+**Example 2: Dependency Injection (Fluent Interface)**:
     >>> from flext_core import FlextContainer, FlextLogger
-    >>> container = FlextContainer.get_global()
-    >>> logger = FlextLogger(__name__)
-    >>> container.register("logger", logger)
+    >>> container = FlextContainer().with_service("logger", FlextLogger(__name__))
     >>> logger_result = container.get("logger")
     >>> if logger_result.is_success:
     ...     retrieved_logger = logger_result.unwrap()

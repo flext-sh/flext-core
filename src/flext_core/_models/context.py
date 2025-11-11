@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field, computed_field, field_validator
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T
+from flext_core.utilities import FlextUtilities
 
 
 class FlextModelsContext:
@@ -416,34 +417,14 @@ class FlextModelsContext:
         @field_validator("data", mode="before")
         @classmethod
         def _validate_data(cls, v: object) -> dict[str, object]:
-            """Validate scope data.
-
-            Args:
-                v: Value to validate
-
-            Returns:
-                Validated dict[str, object]
-
-            """
-            if FlextRuntime.is_dict_like(v):
-                return v
-            return {} if v is None else cast("dict[str, object]", v)
+            """Validate scope data (using FlextUtilities.Generators.ensure_dict)."""
+            return FlextUtilities.Generators.ensure_dict(v)
 
         @field_validator("metadata", mode="before")
         @classmethod
         def _validate_metadata(cls, v: object) -> dict[str, object]:
-            """Validate scope metadata.
-
-            Args:
-                v: Value to validate
-
-            Returns:
-                Validated dict[str, object]
-
-            """
-            if FlextRuntime.is_dict_like(v):
-                return v
-            return {} if v is None else cast("dict[str, object]", v)
+            """Validate scope metadata (using FlextUtilities.Generators.ensure_dict)."""
+            return FlextUtilities.Generators.ensure_dict(v)
 
     class ContextStatistics(BaseModel):
         """Statistics tracking for context operations and metrics.
@@ -500,18 +481,8 @@ class FlextModelsContext:
         @field_validator("operations", mode="before")
         @classmethod
         def _validate_operations(cls, v: object) -> dict[str, object]:
-            """Validate operations.
-
-            Args:
-                v: Value to validate (dict or model state)
-
-            Returns:
-                Validated dict[str, object]
-
-            """
-            if FlextRuntime.is_dict_like(v):
-                return v
-            return {} if v is None else cast("dict[str, object]", v)
+            """Validate operations (using FlextUtilities.Generators.ensure_dict)."""
+            return FlextUtilities.Generators.ensure_dict(v)
 
     class ContextMetadata(BaseModel):
         """Metadata storage for context objects with full tracing support.
@@ -605,18 +576,8 @@ class FlextModelsContext:
         @field_validator("custom_fields", mode="before")
         @classmethod
         def _validate_custom_fields(cls, v: object) -> dict[str, object]:
-            """Validate custom_fields.
-
-            Args:
-                v: Value to validate (dict or proper model state)
-
-            Returns:
-                Validated dict[str, object]
-
-            """
-            if FlextRuntime.is_dict_like(v):
-                return v
-            return {} if v is None else cast("dict[str, object]", v)
+            """Validate custom_fields (using FlextUtilities.Generators.ensure_dict)."""
+            return FlextUtilities.Generators.ensure_dict(v)
 
     class ContextDomainData(BaseModel):
         """Domain-specific context data storage."""

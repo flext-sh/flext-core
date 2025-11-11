@@ -11,6 +11,8 @@ from collections import UserDict
 from collections.abc import Callable
 from typing import Never, cast
 
+import pytest
+
 from flext_core import FlextConstants, FlextContainer, FlextModels, FlextResult
 
 
@@ -33,8 +35,9 @@ class TestFlextContainer:
                 self.value = "test"
 
         service_instance = TestService()
-        result = container.register("test_service", service_instance)
-        assert result.is_success
+        container.with_service(
+            "test_service", service_instance
+        )  # Returns Self for chaining
 
     def test_container_create_service(self) -> None:
         """Test service creation with dependency injection."""
@@ -53,7 +56,7 @@ class TestFlextContainer:
                 self.initialized = True
 
         dependency = Dependency()
-        container.register("dependency", dependency)
+        container.with_service("dependency", dependency)
 
         # Create service with dependency injection
         result = container.create_service(Service, "test_service")
@@ -80,7 +83,7 @@ class TestFlextContainer:
                 self.initialized = True
 
         dependency = Dependency()
-        container.register("dependency", dependency)
+        container.with_service("dependency", dependency)
 
         # Auto-wire service (creates instance but doesn't register)
         result = container.auto_wire(Service)
@@ -179,7 +182,7 @@ class TestFlextContainer:
         container = FlextContainer()
 
         # Pre-register a service
-        container.register("service1", {"key": "original"})
+        container.with_service("service1", {"key": "original"})
 
         services: dict[str, object] = {
             "service1": {"key": "duplicate"},  # This should fail
@@ -216,7 +219,7 @@ class TestFlextContainer:
                 self.value = "test"
 
         service = TestService()
-        container.register("test_service", service)
+        container.with_service("test_service", service)
 
         # Get with correct type
         result: FlextResult[object] = container.get_typed("test_service", TestService)
@@ -229,7 +232,7 @@ class TestFlextContainer:
         container = FlextContainer()
 
         service = {"key": "value"}
-        container.register("test_service", service)
+        container.with_service("test_service", service)
 
         # Get with wrong type
         result: FlextResult[object] = container.get_typed("test_service", dict)
@@ -284,8 +287,8 @@ class TestFlextContainer:
         container = FlextContainer()
 
         # Register different types of services
-        container.register("instance", {"type": "instance"})
-        container.register_factory("factory", lambda: {"type": "factory"})
+        container.with_service("instance", {"type": "instance"})
+        container.with_factory("factory", lambda: {"type": "factory"})
 
         result = container.list_services()
         assert result.is_success
@@ -313,8 +316,8 @@ class TestFlextContainer:
         """Test getting service names with direct access pattern."""
         container = FlextContainer()
 
-        container.register("service1", "value1")
-        container.register("service2", "value2")
+        container.with_service("service1", "value1")
+        container.with_service("service2", "value2")
 
         # Direct access pattern - no helper method
         all_names = set(container._services.keys()) | set(container._factories.keys())
@@ -326,7 +329,7 @@ class TestFlextContainer:
         """Test getting container info with direct access pattern."""
         container = FlextContainer()
 
-        container.register("test", "value")
+        container.with_service("test", "value")
 
         # Direct access pattern - build info dict[str, object] manually
         info: dict[str, object] = {
@@ -351,11 +354,8 @@ class TestFlextContainer:
 
         # Register non-callable as factory (string instead of function)
         invalid_factory = cast("Callable[[], object]", "this is not callable")
-        result = container.register_factory("invalid", invalid_factory)
-        assert result.is_failure
-        assert result.error is not None
-        assert result.error is not None
-        assert "must be callable" in result.error
+        with pytest.raises(ValueError, match="must be callable"):
+            container.with_factory("invalid", invalid_factory)
 
     def test_container_get_service_with_factory_caching(self) -> None:
         """Test that factory services are cached after first creation."""
@@ -368,7 +368,7 @@ class TestFlextContainer:
             call_count += 1
             return {"call_count": str(call_count)}
 
-        container.register_factory("cached_service", counting_factory)
+        container.with_factory("cached_service", counting_factory)
 
         # First call should create the service
         result1 = container.get("cached_service")
@@ -390,8 +390,8 @@ class TestFlextContainer:
         """Test clearing all services."""
         container = FlextContainer()
 
-        container.register("service1", "value1")
-        container.register_factory("service2", lambda: "value2")
+        container.with_service("service1", "value1")
+        container.with_factory("service2", lambda: "value2")
 
         assert container.has("service1")
         assert container.has("service2")
@@ -410,17 +410,11 @@ class TestFlextContainer:
         """Test registering with invalid service name."""
         container = FlextContainer()
 
-        result = container.register("", "service")
-        assert result.is_failure
-        assert result.error is not None
-        assert result.error is not None
-        assert "empty" in result.error
+        with pytest.raises(ValueError, match="empty"):
+            container.with_service("", "service")
 
-        result = container.register("invalid/name", "service")
-        assert result.is_failure
-        assert result.error is not None
-        assert result.error is not None
-        assert "invalid characters" in result.error
+        with pytest.raises(ValueError, match="invalid characters"):
+            container.with_service("invalid/name", "service")
 
     def test_container_unregister_nonexistent(self) -> None:
         """Test unregistering non-existent service."""
@@ -531,7 +525,7 @@ class TestFlextContainer:
                 error_msg = "Service creation failed"
                 raise ValueError(error_msg)
 
-        container.register("other_service", "some_value")
+        container.with_service("other_service", "some_value")
 
         result = container.create_service(FailingService)
         assert result.is_failure
@@ -547,7 +541,7 @@ class TestFlextContainer:
             error_msg = "Factory failed"
             raise RuntimeError(error_msg)
 
-        container.register_factory("failing", failing_factory)
+        container.with_factory("failing", failing_factory)
 
         result = container.get("failing")
         assert result.is_failure
@@ -564,8 +558,9 @@ class TestFlextContainer:
 
         # Test global registration
         global_container = FlextContainer()
-        result = global_container.register("global_service", "global_value")
-        assert result.is_success
+        global_container.with_service(
+            "global_service", "global_value"
+        )  # Returns Self for chaining
 
         # Should be accessible from global container
         get_result = global_container.get("global_service")
@@ -592,7 +587,7 @@ class TestFlextContainer:
         # Register service in global container
         service = {"type": "test"}
         global_container = FlextContainer()
-        global_container.register("typed_service", service)
+        global_container.with_service("typed_service", service)
 
         # Get with typing
         result: FlextResult[object] = global_container.get_typed("typed_service", dict)
@@ -614,7 +609,7 @@ class TestFlextContainer:
     def test_container_repr(self) -> None:
         """Test container string representation."""
         container = FlextContainer()
-        container.register("test", "value")
+        container.with_service("test", "value")
 
         repr_str = repr(container)
         assert "FlextContainer" in repr_str
@@ -633,22 +628,19 @@ class TestFlextContainer:
             return {"factory": "2"}
 
         # Register first factory
-        result1 = container.register_factory("test_factory", factory1)
-        assert result1.is_success
+        container.with_factory("test_factory", factory1)
 
         # Try to register second factory with same name
-        result2 = container.register_factory("test_factory", factory2)
-        assert result2.is_failure
-        assert result2.error is not None
-        assert "already registered" in result2.error
+        with pytest.raises(ValueError, match="already registered"):
+            container.with_factory("test_factory", factory2)
 
     def test_container_unregister_success_both_registries(self) -> None:
         """Test successful unregister removes from both services and factories."""
         container = FlextContainer()
 
         # Register both a service and factory with same name
-        container.register("test_service", "service_value")
-        container.register_factory("test_service", lambda: "factory_value")
+        container.with_service("test_service", "service_value")
+        container.with_factory("test_service", lambda: "factory_value")
 
         # Unregister should succeed and remove from both
         result = container.unregister("test_service")
@@ -660,7 +652,7 @@ class TestFlextContainer:
         container = FlextContainer()
 
         # Register initial service
-        container.register("initial", "value")
+        container.with_service("initial", "value")
 
         # Create services dict[str, object] with invalid entry that will cause exception
         # Using service name with invalid characters to trigger validation failure
@@ -684,7 +676,7 @@ class TestFlextContainer:
         container = FlextContainer()
 
         # Register a factory first
-        container.register_factory("test", lambda: "value")
+        container.with_factory("test", lambda: "value")
 
         # Try to create from factory with same name (will fail registration)
         result = container._create_from_factory("test", lambda: "new_value")
@@ -737,7 +729,7 @@ class TestFlextContainer:
                 self.value = "test"
 
         # Pre-register to cause registration failure
-        container.register("simpleservice", "existing")
+        container.with_service("simpleservice", "existing")
 
         # create_service will try to register "simpleservice" but it already exists
         result = container.create_service(SimpleService)
@@ -763,7 +755,7 @@ class TestFlextContainer:
     def test_container_clear_exception_handling(self) -> None:
         """Test clear() exception handling with corrupted state."""
         container = FlextContainer()
-        container.register("test", "value")
+        container.with_service("test", "value")
 
         # Simulate exception by corrupting internal state
         # Replace _services dict[str, object] with object that raises on clear()
@@ -773,7 +765,7 @@ class TestFlextContainer:
                 raise RuntimeError(msg)
 
         # Type ignore needed for test scenario that corrupts internal state
-        container._services = FailingDict(container._services)  # type: ignore[assignment]
+        container._services = FailingDict(container._services)
 
         result = container.clear()
         assert result.is_failure
@@ -790,7 +782,7 @@ class TestFlextContainer:
     def test_container_list_services_exception(self) -> None:
         """Test list_services() exception handling."""
         container = FlextContainer()
-        container.register("test", "value")
+        container.with_service("test", "value")
 
         # Corrupt _services to trigger exception
         from flext_core.models import FlextModels
@@ -882,7 +874,7 @@ class TestFlextContainer:
         assert container.has("name@#$%") is False
 
         # Register a valid service
-        container.register("valid_service", "value")
+        container.with_service("valid_service", "value")
 
         # Test that valid service is found
         assert container.has("valid_service") is True
@@ -908,7 +900,7 @@ class TestFlextContainer:
         assert result is False
 
         # Register a service and verify it's found
-        container.register("valid_service", "value")
+        container.with_service("valid_service", "value")
         result = container.has("valid_service")
         assert result is True
 
@@ -962,8 +954,9 @@ class TestServiceRegistrationSync:
         test_service = {"value": "test"}
 
         # Register service
-        result = container.register("test_service", test_service)
-        assert result.is_success
+        container.with_service(
+            "test_service", test_service
+        )  # Returns Self for chaining
 
         # Verify stored in tracking dict as ServiceRegistration Model
         assert "test_service" in container._services
@@ -986,8 +979,9 @@ class TestServiceRegistrationSync:
             return {"instance": len(factory_calls)}
 
         # Register factory
-        result = container.register_factory("test_factory", test_factory)
-        assert result.is_success
+        container.with_factory(
+            "test_factory", test_factory
+        )  # Returns Self for chaining
 
         # Verify stored in tracking dict as FactoryRegistration Model
         assert "test_factory" in container._factories
@@ -1008,14 +1002,11 @@ class TestServiceRegistrationSync:
         container = FlextContainer()
 
         # First registration succeeds
-        result1 = container.register("service", {"value": 1})
-        assert result1.is_success
+        container.with_service("service", {"value": 1})
 
         # Duplicate registration fails
-        result2 = container.register("service", {"value": 2})
-        assert result2.is_failure
-        assert result2.error is not None
-        assert "already registered" in result2.error.lower()
+        with pytest.raises(ValueError, match="already registered"):
+            container.with_service("service", {"value": 2})
 
         # Original service unchanged - access .service attribute of Model
         assert container._services["service"].service == {"value": 1}
@@ -1029,7 +1020,7 @@ class TestServiceResolutionSync:
         container = FlextContainer()
         test_service = {"value": "test"}
 
-        container.register("test_service", test_service)
+        container.with_service("test_service", test_service)
 
         # Get service via FlextResult API
         result = container.get("test_service")
@@ -1045,7 +1036,7 @@ class TestServiceResolutionSync:
             instance_count.append(1)
             return {"instance": len(instance_count)}
 
-        container.register_factory("factory", factory)
+        container.with_factory("factory", factory)
 
         # First retrieval - factory is called
         result1 = container.get("factory")
@@ -1082,7 +1073,7 @@ class TestServiceUnregistrationSync:
         test_service = {"value": "test"}
 
         # Register and verify
-        container.register("test_service", test_service)
+        container.with_service("test_service", test_service)
         assert "test_service" in container._services
         assert hasattr(container._di_container, "test_service")
 
@@ -1107,7 +1098,7 @@ class TestServiceUnregistrationSync:
             return {"value": "test"}
 
         # Register and verify
-        container.register_factory("test_factory", factory)
+        container.with_factory("test_factory", factory)
         assert "test_factory" in container._factories
         assert hasattr(container._di_container, "test_factory")
 
@@ -1170,29 +1161,60 @@ class TestFlextConfigSync:
         assert config_provider.__class__.__name__ == "Configuration"
 
 
-class TestFlextResultWrapping:
-    """Test that all DI operations are wrapped in FlextResult."""
+class TestFluentInterface:
+    """Test fluent interface API (with_service, with_factory)."""
 
-    def test_register_returns_flext_result(self) -> None:
-        """register() returns FlextResult[None]."""
+    def test_with_service_returns_self(self) -> None:
+        """with_service() returns Self for chaining."""
         container = FlextContainer()
 
-        result = container.register("service", {"value": "test"})
-        assert isinstance(result, FlextResult)
-        assert result.is_success
+        result = container.with_service("service", {"value": "test"})
+        assert result is container  # Returns same instance
+        assert isinstance(result, FlextContainer)
 
-    def test_register_factory_returns_flext_result(self) -> None:
-        """register_factory() returns FlextResult[None]."""
+    def test_with_factory_returns_self(self) -> None:
+        """with_factory() returns Self for chaining."""
         container = FlextContainer()
 
-        result = container.register_factory("factory", lambda: {"value": "test"})
-        assert isinstance(result, FlextResult)
-        assert result.is_success
+        result = container.with_factory("factory", lambda: {"value": "test"})
+        assert result is container  # Returns same instance
+        assert isinstance(result, FlextContainer)
+
+    def test_fluent_chaining(self) -> None:
+        """Fluent methods can be chained."""
+        container = (
+            FlextContainer()
+            .with_service("service1", "value1")
+            .with_service("service2", "value2")
+            .with_factory("factory1", lambda: "factory_value")
+        )
+
+        assert container.has("service1")
+        assert container.has("service2")
+        assert container.has("factory1")
+
+    def test_with_service_raises_on_error(self) -> None:
+        """with_service() raises ValueError on failure."""
+        container = FlextContainer()
+        container.with_service("service", {"value": 1})
+
+        # Duplicate registration should raise ValueError
+        with pytest.raises(ValueError, match="already registered"):
+            container.with_service("service", {"value": 2})
+
+    def test_with_factory_raises_on_error(self) -> None:
+        """with_factory() raises ValueError on failure."""
+        container = FlextContainer()
+        container.with_factory("factory", lambda: "value1")
+
+        # Duplicate registration should raise ValueError
+        with pytest.raises(ValueError, match="already registered"):
+            container.with_factory("factory", lambda: "value2")
 
     def test_get_returns_flext_result(self) -> None:
         """get() returns FlextResult[object]."""
         container = FlextContainer()
-        container.register("service", {"value": "test"})
+        container.with_service("service", {"value": "test"})
 
         result = container.get("service")
         assert isinstance(result, FlextResult)
@@ -1202,7 +1224,7 @@ class TestFlextResultWrapping:
     def test_unregister_returns_flext_result(self) -> None:
         """unregister() returns FlextResult[None]."""
         container = FlextContainer()
-        container.register("service", {"value": "test"})
+        container.with_service("service", {"value": "test"})
 
         result = container.unregister("service")
         assert isinstance(result, FlextResult)
@@ -1212,21 +1234,15 @@ class TestFlextResultWrapping:
         """Error cases return FlextResult with failure status."""
         container = FlextContainer()
 
-        # Duplicate registration
-        container.register("service", {"value": 1})
-        result = container.register("service", {"value": 2})
+        # Nonexistent service
+        result = container.get("nonexistent")
         assert isinstance(result, FlextResult)
         assert result.is_failure
-
-        # Nonexistent service
-        result2 = container.get("nonexistent")
-        assert isinstance(result2, FlextResult)
-        assert result2.is_failure
 
         # Unregister nonexistent
-        result = container.unregister("nonexistent")
-        assert isinstance(result, FlextResult)
-        assert result.is_failure
+        result2 = container.unregister("nonexistent")
+        assert isinstance(result2, FlextResult)
+        assert result2.is_failure
 
 
 class TestExceptionTranslation:
@@ -1236,11 +1252,15 @@ class TestExceptionTranslation:
         """DI container errors are caught and wrapped in FlextResult."""
         container = FlextContainer()
 
-        # Try to register non-callable as factory
-        result = container.register_factory(
-            "bad_factory",
-            cast("Callable[[], object]", "not_callable"),
-        )
+        # Try to register non-callable as factory using protocol method
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            result = container.register_factory(
+                "bad_factory",
+                cast("Callable[[], object]", "not_callable"),
+            )
         assert result.is_failure
         assert result.error is not None
         assert "must be callable" in result.error.lower()
@@ -1264,7 +1284,7 @@ class TestBackwardCompatibility:
 
         assert not container.has("service")
 
-        container.register("service", {"value": "test"})
+        container.with_service("service", {"value": "test"})
         assert container.has("service")
 
         container.unregister("service")
@@ -1280,8 +1300,8 @@ class TestBackwardCompatibility:
         assert len(result.value) == 0
 
         # Add services
-        container.register("service1", {"value": 1})
-        container.register("service2", {"value": 2})
+        container.with_service("service1", {"value": 1})
+        container.with_service("service2", {"value": 2})
 
         result = container.list_services()
         assert result.is_success
@@ -1298,9 +1318,9 @@ class TestBackwardCompatibility:
         container = FlextContainer()
 
         # Add multiple services
-        container.register("service1", {"value": 1})
-        container.register("service2", {"value": 2})
-        container.register_factory("factory1", lambda: {"value": 3})
+        container.with_service("service1", {"value": 1})
+        container.with_service("service2", {"value": 2})
+        container.with_factory("factory1", lambda: {"value": 3})
 
         # Clear all
         result = container.clear()

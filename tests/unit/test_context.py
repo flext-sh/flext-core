@@ -737,7 +737,7 @@ class TestFlextContext:
         result = context.get("complex")
         assert result == complex_dict
         assert isinstance(result, dict)
-        assert result["level1"]["level2"]["level3"]["value"] == "deeply_nested"  # type: ignore[index]
+        assert result["level1"]["level2"]["level3"]["value"] == "deeply_nested"
 
     def test_context_edge_case_duplicate_keys_overwrite(self) -> None:
         """Test context behavior when overwriting existing keys."""

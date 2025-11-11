@@ -44,9 +44,8 @@ from flext_core.typings import (
     FlextTypes,
     T,
     T_co,
-    T_Repository_contra,
-    TInput_Handler_contra,
-    TResult_Handler_co,
+    TInput_Handler_Protocol_contra,
+    TResult_Handler_Protocol,
 )
 
 # TYPE_CHECKING import pattern: protocols.py is Tier 0, result.py is Tier 1.
@@ -500,7 +499,7 @@ class FlextProtocols:
         model_fields: dict[str, object]
 
     @runtime_checkable
-    class HasResultValue(Protocol, Generic[T_co]):
+    class HasResultValue(Protocol, Generic[T]):
         """Protocol for FlextResult-like objects.
 
         Minimal protocol for result types with value and success status.
@@ -509,7 +508,7 @@ class FlextProtocols:
         Used in: processors.py (middleware processing)
         """
 
-        value: T_co
+        value: T
         is_success: bool
 
     @runtime_checkable
@@ -592,7 +591,7 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def register_service(self, name: str, service: T) -> FlextResult[None]:
+        def register_service(self, name: str, service: object) -> FlextResult[None]:
             """Register service with given name.
 
             Args:
@@ -606,14 +605,14 @@ class FlextProtocols:
             ...
 
         @abstractmethod
-        def get_service(self, name: str) -> FlextResult[T]:
+        def get_service(self, name: str) -> FlextResult[object]:
             """Retrieve registered service.
 
             Args:
                 name: Service identifier
 
             Returns:
-                FlextResult[T]: Service instance or error
+                FlextResult[object]: Service instance or error
 
             """
             ...
@@ -632,7 +631,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class FactoryProvider(Protocol, Generic[T_co]):
+    class FactoryProvider(Protocol, Generic[T]):
         """Protocol for factory functions creating instances.
 
         Provides factory-based service creation with lazy instantiation.
@@ -642,7 +641,7 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def create_instance(self) -> FlextResult[T_co]:
+        def create_instance(self) -> FlextResult[T]:
             """Create new instance using factory.
 
             Returns:
@@ -680,7 +679,7 @@ class FlextProtocols:
     # =========================================================================
 
     @runtime_checkable
-    class Service(Protocol, Generic[T_co]):
+    class Service(Protocol, Generic[T]):
         """Base domain service protocol.
 
         Provides the foundation for all domain services in the FLEXT ecosystem.
@@ -693,7 +692,7 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def execute(self) -> FlextResult[T_co]:
+        def execute(self) -> FlextResult[T]:
             """Execute the main domain operation.
 
             Returns:
@@ -739,7 +738,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Repository(Protocol, Generic[T_Repository_contra]):
+    class Repository(Protocol, Generic[T]):
         """Base repository protocol for data access.
 
         Provides the foundation for repository implementations following
@@ -752,12 +751,12 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def get_by_id(self, entity_id: str) -> FlextResult[T_Repository_contra]:
+        def get_by_id(self, entity_id: str) -> FlextResult[T]:
             """Retrieve an aggregate using the standardized identity lookup."""
             ...
 
         @abstractmethod
-        def save(self, entity: T_Repository_contra) -> FlextResult[None]:
+        def save(self, entity: T) -> FlextResult[None]:
             """Persist an entity following modernization consistency rules."""
             ...
 
@@ -767,12 +766,12 @@ class FlextProtocols:
             ...
 
         @abstractmethod
-        def find_all(self) -> FlextResult[list[T_Repository_contra]]:
+        def find_all(self) -> FlextResult[list[T]]:
             """Enumerate entities for modernization-aligned queries."""
             ...
 
     @runtime_checkable
-    class ExecutableService(Protocol, Generic[T_co]):
+    class ExecutableService(Protocol, Generic[T]):
         """Protocol for services with enhanced execution capabilities.
 
         Extends Service protocol with execution context management,
@@ -782,7 +781,7 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def execute_operation(self) -> FlextResult[T_co]:
+        def execute_operation(self) -> FlextResult[T]:
             """Execute operation with full validation and context.
 
             Returns:
@@ -792,7 +791,7 @@ class FlextProtocols:
             ...
 
         @abstractmethod
-        def execute_with_validation(self) -> FlextResult[T_co]:
+        def execute_with_validation(self) -> FlextResult[T]:
             """Execute with comprehensive business rule validation.
 
             Returns:
@@ -885,33 +884,36 @@ class FlextProtocols:
     # =========================================================================
 
     @runtime_checkable
-    class Handler(Protocol, Generic[TInput_Handler_contra, TResult_Handler_co]):
+    class Handler(
+        Protocol, Generic[TInput_Handler_Protocol_contra, TResult_Handler_Protocol]
+    ):
         """Application handler protocol for CQRS patterns.
 
         Used in: handlers.py (FlextHandlers implementation)
 
         Provides standardized interface for command and query handlers with
-        validation and execution methods.
+        validation and execution methods. Uses properly-varianced TypeVars
+        per Pyright requirement: input contravariant, result invariant.
         """
 
         @abstractmethod
         def handle(
-            self, message: TInput_Handler_contra
-        ) -> FlextResult[TResult_Handler_co]:
+            self, message: TInput_Handler_Protocol_contra
+        ) -> FlextResult[TResult_Handler_Protocol]:
             """Handle the message and return result.
 
             Args:
                 message: The input message to process
 
             Returns:
-                FlextResult[TResult_Handler_co]: Success with result or failure
+                FlextResult[TResult_Handler_Protocol]: Success with result or failure
 
             """
             ...
 
         def __call__(
-            self, input_data: TInput_Handler_contra
-        ) -> FlextResult[TResult_Handler_co]:
+            self, input_data: TInput_Handler_Protocol_contra
+        ) -> FlextResult[TResult_Handler_Protocol]:
             """Process input and return a FlextResult containing the output."""
             ...
 
@@ -920,20 +922,24 @@ class FlextProtocols:
             ...
 
         def execute(
-            self, message: TInput_Handler_contra
-        ) -> FlextResult[TResult_Handler_co]:
+            self, message: TInput_Handler_Protocol_contra
+        ) -> FlextResult[TResult_Handler_Protocol]:
             """Execute the handler with the given message."""
             ...
 
-        def validate_command(self, command: TInput_Handler_contra) -> FlextResult[None]:
+        def validate_command(
+            self, command: TInput_Handler_Protocol_contra
+        ) -> FlextResult[None]:
             """Validate a command message."""
             ...
 
-        def validate(self, _data: TInput_Handler_contra) -> FlextResult[None]:
+        def validate(self, _data: TInput_Handler_Protocol_contra) -> FlextResult[None]:
             """Validate input before processing."""
             ...
 
-        def validate_query(self, query: TInput_Handler_contra) -> FlextResult[None]:
+        def validate_query(
+            self, query: TInput_Handler_Protocol_contra
+        ) -> FlextResult[None]:
             """Validate a query message."""
             ...
 
@@ -1668,7 +1674,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Decorator(Protocol):
+    class Decorator(Protocol, Generic[T]):
         """Protocol for decorator pattern implementations.
 
         Decorators wrap objects to add behavior. Must implement component
@@ -1731,13 +1737,13 @@ class FlextProtocols:
 
         def register(
             self, message_type: type, handler: FlextTypes.HandlerCallableType
-        ) -> FlextTypes.FlextResultType[None]:
+        ) -> FlextResult[None]:
             """Register handler for message type."""
             ...
 
         def get_handler(
             self, message_type: type
-        ) -> FlextTypes.FlextResultType[FlextTypes.HandlerCallableType]:
+        ) -> FlextResult[FlextTypes.HandlerCallableType]:
             """Get handler for message type."""
             ...
 

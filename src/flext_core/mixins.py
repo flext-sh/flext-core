@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from functools import partial
 from typing import ClassVar, TypeVar, cast
 
@@ -526,7 +526,8 @@ class FlextMixins:
     def _register_in_container(self, service_name: str) -> FlextResult[None]:
         """Register self in global container for service discovery."""
         try:
-            return self.container.register(service_name, self)
+            self.container.with_service(service_name, self)
+            return FlextResult[None].ok(None)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             # If already registered, return success (for test compatibility)
             if "already registered" in str(e).lower():
@@ -582,7 +583,9 @@ class FlextMixins:
 
             # Logger not in container - create and register
             logger = FlextLogger(logger_name)
-            container.register(logger_key, logger)
+            with suppress(ValueError):
+                # Ignore if already registered (race condition)
+                container.with_service(logger_key, logger)
 
             # Cache the result
             with cls._cache_lock:

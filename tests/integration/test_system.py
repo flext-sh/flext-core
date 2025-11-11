@@ -182,8 +182,9 @@ class TestCompleteFlextSystemIntegration:
         container = FlextContainer.get_global()
 
         # Registrar serviço
-        register_result = container.register("test_service", "test_value")
-        assert register_result.is_success is True
+        register_result = container.with_service("test_service", "test_value")
+
+        assert register_result is container  # Fluent interface returns Self is True
 
         # Recuperar serviço registrado
         retrieved_service_result = container.get("test_service")
