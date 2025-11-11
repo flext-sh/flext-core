@@ -214,7 +214,7 @@ class FlextModelsCqrs:
         )
 
     class Handler(BaseModel):
-        """Handler configuration model."""
+        """Handler configuration model with Builder pattern support."""
 
         model_config = ConfigDict(
             json_schema_extra={
@@ -242,36 +242,131 @@ class FlextModelsCqrs:
             default_factory=dict, description="Handler metadata"
         )
 
+        class ConfigParams(BaseModel):
+            """Parameter object for handler configuration (reduces parameter count)."""
+
+            model_config = ConfigDict(
+                json_schema_extra={
+                    "title": "HandlerConfigParams",
+                    "description": "Parameter object for handler configuration",
+                }
+            )
+            default_name: str | None = None
+            default_id: str | None = None
+            handler_config: dict[str, object] | None = None
+            command_timeout: int = 0
+            max_command_retries: int = 0
+
+        class Builder:
+            """Builder pattern for Handler (reduces 8 params to fluent API).
+
+            Example:
+                config = (Handler.Builder(handler_type="command")
+                         .with_name("MyHandler")
+                         .with_timeout(30)
+                         .build())
+
+            """
+
+            def __init__(self, handler_type: FlextConstants.Cqrs.HandlerType) -> None:
+                """Initialize builder with required handler_type."""
+                self._data: dict[str, object] = {
+                    "handler_type": handler_type,
+                    "handler_mode": (
+                        FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
+                        if handler_type == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
+                        else FlextConstants.Dispatcher.HANDLER_MODE_QUERY
+                    ),
+                    "handler_id": f"{handler_type}_handler_{uuid.uuid4().hex[:8]}",
+                    "handler_name": f"{handler_type.title()} Handler",
+                    "command_timeout": FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT,
+                    "max_command_retries": FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
+                    "metadata": {},
+                }
+
+            def with_id(self, handler_id: str) -> Self:
+                """Set handler ID (fluent API)."""
+                self._data["handler_id"] = handler_id
+                return self
+
+            def with_name(self, handler_name: str) -> Self:
+                """Set handler name (fluent API)."""
+                self._data["handler_name"] = handler_name
+                return self
+
+            def with_timeout(self, timeout: int) -> Self:
+                """Set command timeout (fluent API)."""
+                self._data["command_timeout"] = timeout
+                return self
+
+            def with_retries(self, max_retries: int) -> Self:
+                """Set max retries (fluent API)."""
+                self._data["max_command_retries"] = max_retries
+                return self
+
+            def with_metadata(self, metadata: dict[str, object]) -> Self:
+                """Set metadata (fluent API)."""
+                self._data["metadata"] = metadata
+                return self
+
+            def merge_config(self, config: dict[str, object]) -> Self:
+                """Merge additional config (fluent API)."""
+                self._data.update(config)
+                return self
+
+            def build(self) -> FlextModelsCqrs.Handler:
+                """Build and validate Handler instance."""
+                return FlextModelsCqrs.Handler.model_validate(self._data)
+
         @classmethod
         def create_handler_config(
             cls,
             handler_type: FlextConstants.Cqrs.HandlerType,
             *,
+            params: FlextModelsCqrs.Handler.ConfigParams | None = None,
             default_name: str | None = None,
             default_id: str | None = None,
             handler_config: dict[str, object] | None = None,
             command_timeout: int = 0,
             max_command_retries: int = 0,
-        ) -> Self:
-            """Create handler configuration."""
-            handler_mode_value = (
-                FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
-                if handler_type == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
-                else FlextConstants.Dispatcher.HANDLER_MODE_QUERY
-            )
-            config_data: dict[str, object] = {
-                "handler_id": default_id
-                or f"{handler_type}_handler_{uuid.uuid4().hex[:8]}",
-                "handler_name": default_name or f"{handler_type.title()} Handler",
-                "handler_type": handler_type,
-                "handler_mode": handler_mode_value,
-                "command_timeout": command_timeout,
-                "max_command_retries": max_command_retries,
-                "metadata": {},
-            }
+        ) -> FlextModelsCqrs.Handler:
+            """Create handler configuration (legacy API - use Builder instead).
+
+            DEPRECATED: Use Handler.Builder() for cleaner API.
+
+            Example (NEW - RECOMMENDED):
+                config = Handler.Builder("command").with_name("MyHandler").build()
+
+            Example (PARAMETER OBJECT - also good):
+                params = Handler.ConfigParams(default_name="MyHandler", command_timeout=30)
+                config = Handler.create_handler_config("command", params=params)
+
+            Example (OLD - backward compatible):
+                config = Handler.create_handler_config("command", default_name="MyHandler")
+            """
+            # If params object provided, extract values (params takes precedence)
+            if params is not None:
+                default_name = params.default_name or default_name
+                default_id = params.default_id or default_id
+                handler_config = params.handler_config or handler_config
+                command_timeout = params.command_timeout or command_timeout
+                max_command_retries = params.max_command_retries or max_command_retries
+
+            # Delegate to Builder for cleaner implementation
+            builder = cls.Builder(handler_type)
+
+            if default_id:
+                builder.with_id(default_id)
+            if default_name:
+                builder.with_name(default_name)
+            if command_timeout:
+                builder.with_timeout(command_timeout)
+            if max_command_retries:
+                builder.with_retries(max_command_retries)
             if handler_config:
-                config_data.update(handler_config)
-            return cls.model_validate(config_data)
+                builder.merge_config(handler_config)
+
+            return builder.build()
 
 
 __all__ = ["FlextModelsCqrs"]

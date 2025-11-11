@@ -1212,9 +1212,15 @@ class TestFlextValidationAndCacheMethods:
         """Test normalize_component preserves float values."""
         values = [math.pi, math.e, 1.41]
         result = FlextUtilities.Validation.normalize_component(values)
-        assert isinstance(result, list)
+        assert isinstance(result, tuple)
+        assert len(result) == 2
         assert result[0] == "sequence"
         # Floats should be preserved in the sequence
+        assert isinstance(result[1], tuple)
+        assert len(result[1]) == 3
+        assert result[1][0] == math.pi
+        assert result[1][1] == math.e
+        assert result[1][2] == 1.41
 
     def test_normalize_component_mixed_types_in_dict(self) -> None:
         """Test normalize_component with mixed types in dictionary."""

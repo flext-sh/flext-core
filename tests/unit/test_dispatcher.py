@@ -1336,11 +1336,11 @@ class TestFlextDispatcherCoverage:
 
         def batch_handler(msg: object) -> object:
             processed.append(msg)
-            match msg:  # type: ignore[match]
-                case int(n) if n < 0:  # type: ignore[case-pattern]
+            match msg:
+                case int(n) if n < 0:
                     error_msg = "Negative number"
                     raise ValueError(error_msg)
-                case _:  # type: ignore[case-pattern]
+                case _:
                     return msg * 2
 
         dispatcher.register_handler("BatchError", batch_handler)
@@ -1905,10 +1905,10 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         def error_handler(msg: object) -> object:
-            match msg:  # type: ignore[match]
-                case str(s) if s.startswith("error"):  # type: ignore[case-pattern]
+            match msg:
+                case str(s) if s.startswith("error"):
                     raise ValueError(f"Error processing: {s}")
-                case _:  # type: ignore[case-pattern]
+                case _:
                     return msg
 
         dispatcher.register_handler("ErrorMsg", error_handler)

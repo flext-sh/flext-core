@@ -114,8 +114,8 @@ class TestExact75Percent:
     def test_container_coverage_lines(self) -> None:
         """Target container.py missing lines."""
         c = FlextContainer()
-        r = c.register("key", "value")
-        assert r.is_success
+        r = c.with_service("key", "value")
+        assert r is c  # Fluent interface returns Self
 
         r2 = c.get("key")
         assert r2.is_success
@@ -215,8 +215,9 @@ class TestExact75Percent:
         def factory() -> str:
             return "created"
 
-        r = c.register_factory("service", factory)
-        assert r.is_success
+        r = c.with_factory("service", factory)
+
+        assert r is c  # Fluent interface returns Self
 
     def test_exceptions_all_types(self) -> None:
         """Test all exception types."""

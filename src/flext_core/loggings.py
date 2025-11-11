@@ -638,6 +638,7 @@ class FlextLogger:
         self,
         name: str,
         *,
+        config: object | None = None,
         _level: str | None = None,
         _service_name: str | None = None,
         _service_version: str | None = None,
@@ -646,16 +647,41 @@ class FlextLogger:
     ) -> None:
         """Initialize FlextLogger with context.
 
+        NEW (RECOMMENDED - Config Pattern):
+            logger = FlextLogger(
+                "my.module",
+                config=FlextModels.Config.LoggerConfig(
+                    service_name="my-service",
+                    correlation_id="abc-123"
+                )
+            )
+
+        OLD (Backward Compatible):
+            logger = FlextLogger(
+                "my.module",
+                _service_name="my-service",
+                _correlation_id="abc-123"
+            )
+
         Args:
             name: Logger name (typically __name__ or module path)
-            _level: Optional log level override (currently unused, for future)
-            _service_name: Optional service name override
-            _service_version: Optional service version override
-            _correlation_id: Optional correlation ID override
-            _force_new: Force creation of new instance (for testing)
+            config: LoggerConfig instance (Pydantic v2) - NEW PATTERN
+            _level: Optional log level override (backward compat)
+            _service_name: Optional service name override (backward compat)
+            _service_version: Optional service version override (backward compat)
+            _correlation_id: Optional correlation ID override (backward compat)
+            _force_new: Force creation of new instance (backward compat)
 
         """
         super().__init__()
+
+        # Extract config values (config takes priority over individual params)
+        if config is not None:
+            _level = getattr(config, "level", _level)
+            _service_name = getattr(config, "service_name", _service_name)
+            _service_version = getattr(config, "service_version", _service_version)
+            _correlation_id = getattr(config, "correlation_id", _correlation_id)
+            _force_new = getattr(config, "force_new", _force_new)
 
         # Configure FlextRuntime.structlog() if not already configured (NO config dependency)
         FlextLogger._configure_structlog_if_needed()

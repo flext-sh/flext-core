@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
 from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -21,7 +20,7 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime
+from flext_core.utilities import FlextUtilities
 
 
 class FlextModelsConfig:
@@ -64,15 +63,10 @@ class FlextModelsConfig:
         @field_validator("context", mode="before")
         @classmethod
         def validate_context(cls, v: object) -> dict[str, object]:
-            """Validate context has required fields (Pydantic v2 mode='before')."""
-            if not FlextRuntime.is_dict_like(v):
-                v = {}
-            context: dict[str, object] = dict(v)
-            if "correlation_id" not in context:
-                context["correlation_id"] = str(uuid.uuid4())
-            if "timestamp" not in context:
-                context["timestamp"] = datetime.now(UTC).isoformat()
-            return context
+            """Ensure context has required fields (using FlextUtilities.Generators)."""
+            return FlextUtilities.Generators.ensure_trace_context(
+                v, include_correlation_id=True, include_timestamp=True
+            )
 
         def validate_processing_constraints(self) -> FlextResult[None]:
             """Validate constraints that should be checked during processing."""
@@ -122,36 +116,19 @@ class FlextModelsConfig:
         @field_validator("retry_on_status_codes", mode="after")
         @classmethod
         def validate_backoff_strategy(cls, v: list[object]) -> list[object]:
-            """Validate status codes are valid HTTP codes (Pydantic v2 mode='after')."""
-            validated_codes: list[object] = []
-            for code in v:
-                try:
-                    if isinstance(code, (int, str)):
-                        code_int = int(str(code))
-                        if (
-                            not FlextConstants.FlextWeb.HTTP_STATUS_MIN
-                            <= code_int
-                            <= FlextConstants.FlextWeb.HTTP_STATUS_MAX
-                        ):
-                            msg = f"Invalid HTTP status code: {code}"
-                            raise FlextExceptions.ValidationError(
-                                message=msg,
-                                error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                            )
-                        validated_codes.append(code_int)
-                    else:
-                        msg = f"Invalid HTTP status code type: {type(code)}"
-                        raise FlextExceptions.TypeError(
-                            message=msg,
-                            error_code=FlextConstants.Errors.TYPE_ERROR,
-                        )
-                except (ValueError, TypeError) as e:
-                    msg = f"Invalid HTTP status code: {code}"
-                    raise FlextExceptions.ValidationError(
-                        message=msg,
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    ) from e
-            return validated_codes
+            """Validate status codes are valid HTTP codes (using FlextUtilities.Validation)."""
+            result = FlextUtilities.Validation.validate_http_status_codes(
+                v,
+                min_code=FlextConstants.FlextWeb.HTTP_STATUS_MIN,
+                max_code=FlextConstants.FlextWeb.HTTP_STATUS_MAX,
+            )
+            if result.is_failure:
+                raise FlextExceptions.ValidationError(
+                    message=result.error or "HTTP status code validation failed",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+            # Return as list[object] to match Pydantic field type
+            return [int(code) for code in result.unwrap()]
 
         @model_validator(mode="after")
         def validate_delay_consistency(self) -> Self:
@@ -188,12 +165,16 @@ class FlextModelsConfig:
         @field_validator("custom_validators", mode="after")
         @classmethod
         def validate_additional_validators(cls, v: list[object]) -> list[object]:
-            """Validate custom validators are callable (Pydantic v2 mode='after')."""
+            """Validate custom validators are callable (using FlextUtilities.Validation)."""
             for validator in v:
-                if not callable(validator):
-                    msg = "All validators must be callable"
+                result = FlextUtilities.Validation.validate_callable(
+                    validator,
+                    error_message="All validators must be callable",
+                    error_code=FlextConstants.Errors.TYPE_ERROR,
+                )
+                if result.is_failure:
                     raise FlextExceptions.TypeError(
-                        message=msg,
+                        message=result.error or "Validator must be callable",
                         error_code=FlextConstants.Errors.TYPE_ERROR,
                     )
             return v
@@ -321,6 +302,178 @@ class FlextModelsConfig:
             default=0.0,
             ge=0.0,
             description="Timestamp until which requests are blocked",
+        )
+
+    class ExternalCommandConfig(FlextModelsEntity.ArbitraryTypesModel):
+        """Configuration for external command execution (Pydantic v2).
+
+        Reduces parameter count for run_external_command using config object pattern.
+        Reuses timeout pattern from ProcessingRequest and HandlerExecutionConfig.
+        """
+
+        capture_output: bool = Field(
+            default=True,
+            description="Whether to capture stdout/stderr",
+        )
+        check: bool = Field(
+            default=True,
+            description="Whether to raise exception on non-zero exit code",
+        )
+        env: dict[str, str] | None = Field(
+            default=None,
+            description="Environment variables for the command",
+        )
+        cwd: str | None = Field(
+            default=None,
+            description="Working directory for command execution",
+        )
+        timeout_seconds: float | None = Field(
+            default=None,
+            gt=0,
+            le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
+            description="Command timeout in seconds (max 5 min)",
+        )
+        command_input: str | bytes | None = Field(
+            default=None,
+            description="Input to send to command stdin",
+        )
+        text: bool | None = Field(
+            default=None,
+            description="Whether to decode stdout/stderr as text",
+        )
+
+    class StructlogConfig(FlextModelsEntity.ArbitraryTypesModel):
+        """Configuration for structlog setup (Pydantic v2).
+
+        Reduces parameter count for FlextRuntime.configure_structlog.
+        Allows validation and composition of logging configuration.
+        """
+
+        log_level: int | None = Field(
+            default=None,
+            ge=0,
+            le=50,
+            description="Numeric log level (DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50)",
+        )
+        console_renderer: bool = Field(
+            default=True,
+            description="Use console renderer (True) or JSON renderer (False)",
+        )
+        additional_processors: list[object] = Field(
+            default_factory=list,
+            description="Optional extra processors after standard FLEXT processors",
+        )
+        wrapper_class_factory: object | None = Field(
+            default=None,
+            description="Custom wrapper factory for structlog",
+        )
+        logger_factory: object | None = Field(
+            default=None,
+            description="Custom logger factory for structlog",
+        )
+        cache_logger_on_first_use: bool = Field(
+            default=True,
+            description="Cache logger on first use (performance optimization)",
+        )
+
+    class LoggerConfig(FlextModelsEntity.ArbitraryTypesModel):
+        """Configuration for FlextLogger initialization (Pydantic v2).
+
+        Reduces parameter count for FlextLogger.__init__ from 6 to 2 params.
+        Groups optional logger context and configuration.
+        """
+
+        level: str | None = Field(
+            default=None,
+            description="Optional log level override",
+        )
+        service_name: str | None = Field(
+            default=None,
+            description="Service name for distributed tracing context",
+        )
+        service_version: str | None = Field(
+            default=None,
+            description="Service version for distributed tracing context",
+        )
+        correlation_id: str | None = Field(
+            default=None,
+            description="Correlation ID for distributed tracing",
+        )
+        force_new: bool = Field(
+            default=False,
+            description="Force creation of new logger instance (for testing)",
+        )
+
+    class DispatchConfig(FlextModelsEntity.ArbitraryTypesModel):
+        """Configuration for FlextDispatcher.dispatch (Pydantic v2).
+
+        Reduces parameter count for dispatch from 5 to 3 params (message, data, config).
+        Groups optional dispatch context and overrides.
+        """
+
+        metadata: dict[str, object] | None = Field(
+            default=None,
+            description="Optional execution context metadata",
+        )
+        correlation_id: str | None = Field(
+            default=None,
+            description="Optional correlation ID for distributed tracing",
+        )
+        timeout_override: int | None = Field(
+            default=None,
+            ge=0,
+            description="Optional timeout override in seconds",
+        )
+
+    class ExceptionConfig(FlextModelsEntity.ArbitraryTypesModel):
+        """Configuration for FlextExceptions.__init__ (Pydantic v2).
+
+        Reduces parameter count for exception initialization from 7 to 2 params (message, config).
+        Groups optional exception context and behavior.
+        """
+
+        error_code: str | None = Field(
+            default=None,
+            description="Error code for categorization",
+        )
+        correlation_id: str | None = Field(
+            default=None,
+            description="Correlation ID for distributed tracing",
+        )
+        metadata: dict[str, object] | None = Field(
+            default=None,
+            description="Additional metadata",
+        )
+        auto_log: bool = Field(
+            default=False,
+            description="Whether to automatically log exception",
+        )
+        auto_correlation: bool = Field(
+            default=False,
+            description="Whether to auto-generate correlation ID",
+        )
+        extra_kwargs: dict[str, object] = Field(
+            default_factory=dict,
+            description="Additional keyword arguments for metadata",
+        )
+
+    class ResultConfig(FlextModelsEntity.ArbitraryTypesModel):
+        """Configuration for FlextResult failure case (Pydantic v2).
+
+        Groups optional error context for result failures.
+        """
+
+        error: str | None = Field(
+            default=None,
+            description="Error message for failure case",
+        )
+        error_code: str | None = Field(
+            default=None,
+            description="Error code for categorization",
+        )
+        error_data: dict[str, object] | None = Field(
+            default=None,
+            description="Additional error data",
         )
 
 

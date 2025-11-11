@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Callable
+from dataclasses import dataclass
 
 from flext_core.result import FlextResult
 
@@ -18,6 +19,15 @@ from flext_core.result import FlextResult
 MAX_PORT_NUMBER: int = 65535
 MIN_PORT_NUMBER: int = 1
 _logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ParseOptions:
+    """Parameter object for parse_delimited configuration."""
+
+    strip: bool = True
+    remove_empty: bool = True
+    validator: Callable[[str], bool] | None = None
 
 
 class FlextUtilitiesStringParser:
@@ -47,6 +57,7 @@ class FlextUtilitiesStringParser:
         text: str,
         delimiter: str,
         *,
+        options: ParseOptions | None = None,
         strip: bool = True,
         remove_empty: bool = True,
         validator: Callable[[str], bool] | None = None,
@@ -58,22 +69,36 @@ class FlextUtilitiesStringParser:
         Args:
             text: String to parse
             delimiter: Delimiter character/string
-            strip: Strip whitespace from each component
-            remove_empty: Remove empty components after stripping
-            validator: Optional validation function for each component
+            options: ParseOptions object (preferred). If provided, overrides other params
+            strip: Strip whitespace from each component (legacy, use options)
+            remove_empty: Remove empty components after stripping (legacy, use options)
+            validator: Optional validation function for each component (legacy, use options)
 
         Returns:
             FlextResult with list of parsed components or error
 
         Example:
-            >>> # Parse DN components
+            >>> # NEW - Using ParseOptions
+            >>> opts = ParseOptions(strip=True, remove_empty=True)
             >>> result = FlextUtilitiesStringParser.parse_delimited(
-            ...     "cn=REDACTED_LDAP_BIND_PASSWORD, ou=users, dc=example, dc=com", ","
+            ...     "cn=REDACTED_LDAP_BIND_PASSWORD, ou=users, dc=example, dc=com", ",", options=opts
             ... )
             >>> components = result.unwrap()
             >>> # ["cn=REDACTED_LDAP_BIND_PASSWORD", "ou=users", "dc=example", "dc=com"]
 
+            >>> # OLD - Backward compatible
+            >>> result = FlextUtilitiesStringParser.parse_delimited(
+            ...     "cn=REDACTED_LDAP_BIND_PASSWORD, ou=users, dc=example, dc=com", ","
+            ... )
+            >>> components = result.unwrap()
+
         """
+        # Use options if provided, otherwise use individual params for backward compatibility
+        if options is not None:
+            strip = options.strip
+            remove_empty = options.remove_empty
+            validator = options.validator
+
         if not text:
             return FlextResult[list[str]].ok([])
 
@@ -229,6 +254,63 @@ class FlextUtilitiesStringParser:
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[str].fail(f"Failed to apply regex pipeline: {e}")
+
+    @staticmethod
+    def get_object_key(obj: object, *, fallback_to_repr: bool = False) -> str:
+        """Get comparable string key from object (generic helper).
+
+        This generic helper consolidates object-to-key conversion logic from
+        dispatcher.py (_normalize_command_key) and provides flexible key extraction
+        strategies for objects.
+
+        Extraction Strategy:
+            1. Try __name__ attribute (for types, classes, functions)
+            2. Try str(obj) as fallback
+            3. Optionally try repr(obj) if fallback_to_repr=True
+
+        Args:
+            obj: Object to extract key from (type, class, instance, etc.)
+            fallback_to_repr: If True, use repr() as final fallback (default: False)
+
+        Returns:
+            String key for object (comparable, hashable)
+
+        Example:
+            >>> from flext_core.utilities import FlextUtilities
+            >>> # Class/Type
+            >>> FlextUtilities.StringParser.get_object_key(int)
+            'int'
+            >>> # Function
+            >>> def my_func(): pass
+            >>> FlextUtilities.StringParser.get_object_key(my_func)
+            'my_func'
+            >>> # Instance
+            >>> obj = object()
+            >>> key = FlextUtilities.StringParser.get_object_key(obj)
+            >>> isinstance(key, str)
+            True
+
+        """
+        # Strategy 1: Try __name__ attribute (classes, types, functions)
+        name_attr = getattr(obj, "__name__", None)
+        if name_attr is not None:
+            return str(name_attr)
+
+        # Strategy 2: Use str(obj) as fallback
+        try:
+            return str(obj)
+        except (TypeError, ValueError, AttributeError):
+            pass
+
+        # Strategy 3: Use repr(obj) if enabled
+        if fallback_to_repr:
+            try:
+                return repr(obj)
+            except (TypeError, ValueError, AttributeError):
+                pass
+
+        # Final fallback: object type name
+        return type(obj).__name__
 
 
 __all__ = ["FlextUtilitiesStringParser"]

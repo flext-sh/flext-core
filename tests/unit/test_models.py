@@ -563,14 +563,12 @@ class TestFlextModels:
         # Should be immutable (frozen)
         from pydantic import ValidationError
 
-        with pytest.raises(  # type: ignore[call-overload]
-            (
-                ValidationError,
-                AttributeError,
-                TypeError,
-            )
-        ):  # Pydantic v2 may raise ValidationError or frozen model errors
-            value1.value = 100  # type: ignore[misc]
+        with pytest.raises((
+            ValidationError,
+            AttributeError,
+            TypeError,
+        )):  # Pydantic v2 may raise ValidationError or frozen model errors
+            value1.value = 100
 
     def test_command_creation_with_mixins(self) -> None:
         """Test Command creation with all mixins."""

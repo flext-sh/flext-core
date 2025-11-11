@@ -12,8 +12,10 @@ import json
 import logging
 import operator
 import re
+import socket
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import fields as get_dataclass_fields, is_dataclass
+from datetime import datetime
 from typing import TypeGuard, cast
 
 import orjson
@@ -28,6 +30,7 @@ from flext_core.typings import FlextTypes
 # Module constants
 MAX_PORT_NUMBER: int = 65535
 MIN_PORT_NUMBER: int = 1
+MAX_HOSTNAME_LENGTH: int = 253  # RFC 1035: max 253 characters
 _logger = logging.getLogger(__name__)
 
 
@@ -65,6 +68,9 @@ class FlextUtilitiesValidation:
     def clear_all_caches(obj: FlextTypes.CachedObjectType) -> FlextResult[None]:
         """Clear all caches on an object to prevent memory leaks.
 
+        NOTE: This delegates to FlextUtilitiesCache.clear_object_cache to avoid
+        code duplication.
+
         Args:
             obj: Object to clear caches on
 
@@ -72,33 +78,13 @@ class FlextUtilitiesValidation:
             FlextResult indicating success or failure
 
         """
-        try:
-            # Common cache attribute names to check and clear
-            cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
-
-            cleared_count = 0
-            for attr_name in cache_attributes:
-                if hasattr(obj, attr_name):
-                    cache_attr = getattr(obj, attr_name, None)
-                    if cache_attr is not None:
-                        # Clear dict[str, object]-like caches
-                        if hasattr(cache_attr, "clear") and callable(
-                            cache_attr.clear,
-                        ):
-                            cache_attr.clear()
-                            cleared_count += 1
-                        # Reset to None for simple cached values
-                        else:
-                            setattr(obj, attr_name, None)
-                            cleared_count += 1
-
-            return FlextResult[None].ok(None)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(f"Failed to clear caches: {e}")
+        return FlextUtilitiesCache.clear_object_cache(obj)
 
     @staticmethod
     def has_cache_attributes(obj: FlextTypes.CachedObjectType) -> bool:
         """Check if object has any cache-related attributes.
+
+        NOTE: This delegates to FlextUtilitiesCache to avoid code duplication.
 
         Args:
             obj: Object to check for cache attributes
@@ -107,9 +93,7 @@ class FlextUtilitiesValidation:
             True if object has cache attributes, False otherwise
 
         """
-        cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
-
-        return any(hasattr(obj, attr) for attr in cache_attributes)
+        return FlextUtilitiesCache.has_cache_attributes(obj)
 
     @staticmethod
     def sort_key(value: FlextTypes.SerializableType) -> str:
@@ -130,22 +114,42 @@ class FlextUtilitiesValidation:
         return is_dataclass(obj) and not isinstance(obj, type)
 
     @staticmethod
+    def _normalize_primitive_or_bytes(value: object) -> tuple[bool, object]:
+        """Normalize primitive types and bytes.
+
+        Returns:
+            Tuple of (is_handled, normalized_value)
+            - is_handled: True if value was a primitive/bytes
+            - normalized_value: The normalized value (or None if not handled)
+
+        """
+        # Handle primitives (return as-is)
+        if value is None or isinstance(value, (bool, int, float, str)):
+            return (True, value)
+
+        # Handle bytes (convert to hex tuple)
+        if isinstance(value, bytes):
+            return (True, ("bytes", value.hex()))
+
+        return (False, None)  # Not a primitive/bytes - continue dispatching
+
+    @staticmethod
     def normalize_component(
         value: object,
     ) -> object:
         """Normalize arbitrary objects into cache-friendly deterministic structures."""
-        if value is None or isinstance(value, (bool, int, float, str)):
-            return value
+        # Check primitives and bytes first
+        is_primitive, normalized = FlextUtilitiesValidation._normalize_primitive_or_bytes(
+            value
+        )
+        if is_primitive:
+            return normalized
 
-        if isinstance(value, bytes):
-            return ("bytes", value.hex())
-
+        # Dispatch to specialized normalizers
         if isinstance(value, FlextProtocols.HasModelDump):
             return FlextUtilitiesValidation._normalize_pydantic_value(value)
 
         if FlextUtilitiesValidation._is_dataclass_instance(value):
-            # At this point value passed the TypeGuard check - it's a dataclass instance
-            # asdict will work correctly even though mypy can't track the type narrowing
             return FlextUtilitiesValidation._normalize_dataclass_value_instance(value)
 
         if isinstance(value, Mapping):
@@ -239,6 +243,63 @@ class FlextUtilitiesValidation:
         return ("vars", normalized_vars)
 
     @staticmethod
+    def _generate_key_from_data(
+        command_type: type[object], sorted_data: object
+    ) -> str:
+        """Generate cache key from sorted data."""
+        return f"{command_type.__name__}_{hash(str(sorted_data))}"
+
+    @staticmethod
+    def _generate_key_pydantic(
+        command: FlextProtocols.HasModelDump, command_type: type[object]
+    ) -> str | None:
+        """Generate cache key from Pydantic model."""
+        try:
+            data = command.model_dump(mode="python")
+            sorted_data = FlextUtilitiesCache.sort_dict_keys(data)
+            return FlextUtilitiesValidation._generate_key_from_data(
+                command_type, sorted_data
+            )
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
+            return None
+
+    @staticmethod
+    def _generate_key_dataclass(command: object, command_type: type[object]) -> str | None:
+        """Generate cache key from dataclass."""
+        try:
+            dataclass_data: dict[str, object] = {}
+            for field in get_dataclass_fields(cast("type", command.__class__)):
+                dataclass_data[field.name] = getattr(command, field.name)
+            sorted_data = FlextUtilitiesCache.sort_dict_keys(dataclass_data)
+            return FlextUtilitiesValidation._generate_key_from_data(
+                command_type, sorted_data
+            )
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
+            return None
+
+    @staticmethod
+    def _generate_key_dict(command: object, command_type: type[object]) -> str | None:
+        """Generate cache key from dict."""
+        try:
+            sorted_data = FlextUtilitiesCache.sort_dict_keys(command)
+            return FlextUtilitiesValidation._generate_key_from_data(
+                command_type, sorted_data
+            )
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
+            return None
+
+    @staticmethod
+    def _generate_key_fallback(command: object | None, command_type: type[object]) -> str:
+        """Generate cache key fallback from string representation."""
+        command_str = str(command) if command is not None else "None"
+        try:
+            return f"{command_type.__name__}_{hash(command_str)}"
+        except TypeError:
+            # If hash fails, use deterministic fallback with encoding
+            encoded = command_str.encode(FlextConstants.Utilities.DEFAULT_ENCODING)
+            return f"{command_type.__name__}_{abs(hash(encoded))}"
+
+    @staticmethod
     def generate_cache_key(
         command: object | None,
         command_type: type[object],
@@ -253,54 +314,39 @@ class FlextUtilitiesValidation:
             str: Deterministic cache key
 
         """
-        try:
-            # For Pydantic models, use model_dump with sorted keys
-            if isinstance(command, FlextProtocols.HasModelDump):
-                data = command.model_dump(mode="python")
-                # Sort keys recursively for deterministic ordering
-                sorted_data = FlextUtilitiesCache.sort_dict_keys(data)
-                return f"{cast('type', command_type).__name__}_{hash(str(sorted_data))}"
+        # Cast command_type once for all uses
+        typed_command_type = cast("type[object]", command_type)
 
-            # For dataclasses, use manual field extraction with sorted keys
-            if (
-                hasattr(command, "__dataclass_fields__")
-                and is_dataclass(command)
-                and not isinstance(command, type)
-            ):
-                # Manual field extraction - cast to satisfy mypy strict mode
-                dataclass_data: dict[str, object] = {}
-                for field in get_dataclass_fields(cast("type", command.__class__)):
-                    dataclass_data[field.name] = getattr(command, field.name)
-                dataclass_sorted_data = FlextUtilitiesCache.sort_dict_keys(
-                    dataclass_data,
-                )
-                return f"{cast('type', command_type).__name__}_{hash(str(dataclass_sorted_data))}"
+        # Try Pydantic model
+        if isinstance(command, FlextProtocols.HasModelDump):
+            key = FlextUtilitiesValidation._generate_key_pydantic(
+                command, typed_command_type
+            )
+            if key is not None:
+                return key
 
-            # For dictionaries, sort keys
-            if FlextRuntime.is_dict_like(command):
-                dict_sorted_data = FlextUtilitiesCache.sort_dict_keys(
-                    command,
-                )
-                return f"{cast('type', command_type).__name__}_{hash(str(dict_sorted_data))}"
+        # Try dataclass
+        if (
+            hasattr(command, "__dataclass_fields__")
+            and is_dataclass(command)
+            and not isinstance(command, type)
+        ):
+            key = FlextUtilitiesValidation._generate_key_dataclass(
+                command, typed_command_type
+            )
+            if key is not None:
+                return key
 
-            # For other objects, use string representation
-            command_str = str(command) if command is not None else "None"
-            command_hash = hash(command_str)
-            return f"{cast('type', command_type).__name__}_{command_hash}"
+        # Try dict
+        if FlextRuntime.is_dict_like(command):
+            key = FlextUtilitiesValidation._generate_key_dict(command, typed_command_type)
+            if key is not None:
+                return key
 
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-            # Fallback to string representation if anything fails
-            command_str_fallback: str = str(command) if command is not None else "None"
-            # Ensure we have a valid string for encoding
-            try:
-                command_hash_fallback = hash(command_str_fallback)
-                return f"{cast('type', command_type).__name__}_{command_hash_fallback}"
-            except TypeError:
-                # If hash fails, use a deterministic fallback with proper encoding
-                encoded_fallback = command_str_fallback.encode(
-                    FlextConstants.Utilities.DEFAULT_ENCODING
-                )
-                return f"{cast('type', command_type).__name__}_{abs(hash(encoded_fallback))}"
+        # Fallback to string representation
+        return FlextUtilitiesValidation._generate_key_fallback(
+            command, typed_command_type
+        )
 
     @staticmethod
     def sort_dict_keys(
@@ -703,6 +749,315 @@ class FlextUtilitiesValidation:
                 f"{context} must be at most {max_value}, got {value}"
             )
         return FlextResult[int].ok(value)
+
+    @staticmethod
+    def validate_callable(
+        value: object,
+        error_message: str = "Value must be callable",
+        error_code: str = FlextConstants.Errors.TYPE_ERROR,
+    ) -> FlextResult[object]:
+        """Validate that value is callable (generic helper for field validators).
+
+        This generic helper consolidates duplicate callable validation logic
+        across multiple Pydantic models (service.py, config.py, handler.py).
+
+        Args:
+            value: Value to validate (should be callable)
+            error_message: Custom error message (default: "Value must be callable")
+            error_code: Error code for validation failure
+
+        Returns:
+            FlextResult[object]: Success with value if callable, failure otherwise
+
+        Example:
+            >>> from flext_core.utilities import FlextUtilities
+            >>> result = FlextUtilities.Validation.validate_callable(lambda x: x + 1)
+            >>> result.is_success
+            True
+            >>> result = FlextUtilities.Validation.validate_callable("not callable")
+            >>> result.is_failure
+            True
+
+        """
+        if not callable(value):
+            return FlextResult[object].fail(
+                error_message,
+                error_code=error_code,
+            )
+        return FlextResult[object].ok(value)
+
+    @staticmethod
+    def validate_timeout(
+        timeout: float,
+        max_timeout: float,
+        error_message: str | None = None,
+        error_code: str = FlextConstants.Errors.VALIDATION_ERROR,
+    ) -> FlextResult[float | int]:
+        """Validate that timeout does not exceed maximum (generic helper).
+
+        This generic helper consolidates duplicate timeout validation logic
+        across multiple Pydantic models.
+
+        Args:
+            timeout: Timeout value to validate (in seconds)
+            max_timeout: Maximum allowed timeout (in seconds)
+            error_message: Custom error message (optional)
+            error_code: Error code for validation failure
+
+        Returns:
+            FlextResult: Success with timeout if valid, failure if exceeds max
+
+        Example:
+            >>> from flext_core.utilities import FlextUtilities
+            >>> result = FlextUtilities.Validation.validate_timeout(5.0, 300.0)
+            >>> result.is_success
+            True
+            >>> result = FlextUtilities.Validation.validate_timeout(500.0, 300.0)
+            >>> result.is_failure
+            True
+
+        """
+        if timeout > max_timeout:
+            msg = error_message or f"Timeout cannot exceed {max_timeout} seconds"
+            return FlextResult[float | int].fail(msg, error_code=error_code)
+        return FlextResult[float | int].ok(timeout)
+
+    @staticmethod
+    def validate_http_status_codes(
+        codes: list[object],
+        min_code: int = 100,
+        max_code: int = 599,
+    ) -> FlextResult[list[int]]:
+        """Validate and normalize HTTP status codes (generic helper).
+
+        This generic helper consolidates duplicate HTTP status code validation
+        logic across multiple Pydantic models (config.py).
+
+        Args:
+            codes: List of status codes (int or str) to validate
+            min_code: Minimum valid HTTP status code (default: 100)
+            max_code: Maximum valid HTTP status code (default: 599)
+
+        Returns:
+            FlextResult[list[int]]: Success with normalized int codes, failure otherwise
+
+        Example:
+            >>> from flext_core.utilities import FlextUtilities
+            >>> result = FlextUtilities.Validation.validate_http_status_codes([200, "404", 500])
+            >>> result.is_success and result.value == [200, 404, 500]
+            True
+            >>> result = FlextUtilities.Validation.validate_http_status_codes([999])
+            >>> result.is_failure
+            True
+
+        """
+        validated_codes: list[int] = []
+        for code in codes:
+            try:
+                # Convert to int (handles both int and str)
+                if isinstance(code, (int, str)):
+                    code_int = int(str(code))
+                    # Validate range
+                    if not min_code <= code_int <= max_code:
+                        return FlextResult[list[int]].fail(
+                            f"Invalid HTTP status code: {code} (must be {min_code}-{max_code})",
+                            error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                        )
+                    validated_codes.append(code_int)
+                else:
+                    return FlextResult[list[int]].fail(
+                        f"Invalid HTTP status code type: {type(code).__name__}",
+                        error_code=FlextConstants.Errors.TYPE_ERROR,
+                    )
+            except (ValueError, TypeError) as e:
+                return FlextResult[list[int]].fail(
+                    f"Invalid HTTP status code: {code} ({e})",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+
+        return FlextResult[list[int]].ok(validated_codes)
+
+    @staticmethod
+    def validate_iso8601_timestamp(
+        timestamp: str,
+        *,
+        allow_empty: bool = True,
+    ) -> FlextResult[str]:
+        """Validate ISO 8601 timestamp format (generic helper).
+
+        This generic helper consolidates duplicate ISO 8601 timestamp validation
+        logic across multiple Pydantic models (handler.py).
+
+        Args:
+            timestamp: Timestamp string to validate (ISO 8601 format)
+            allow_empty: If True, allow empty strings (default: True)
+
+        Returns:
+            FlextResult[str]: Success with normalized timestamp, failure otherwise
+
+        Example:
+            >>> from flext_core.utilities import FlextUtilities
+            >>> result = FlextUtilities.Validation.validate_iso8601_timestamp("2025-01-01T00:00:00Z")
+            >>> result.is_success
+            True
+            >>> result = FlextUtilities.Validation.validate_iso8601_timestamp("invalid")
+            >>> result.is_failure
+            True
+            >>> result = FlextUtilities.Validation.validate_iso8601_timestamp("", allow_empty=True)
+            >>> result.is_success
+            True
+
+        """
+        # Allow empty strings if configured
+        if allow_empty and (not timestamp or not timestamp.strip()):
+            return FlextResult[str].ok(timestamp)
+
+        try:
+            # Handle both Z suffix and explicit timezone offset
+            normalized = timestamp.replace("Z", "+00:00") if timestamp.endswith("Z") else timestamp
+            datetime.fromisoformat(normalized)
+            return FlextResult[str].ok(timestamp)
+        except (ValueError, TypeError) as e:
+            return FlextResult[str].fail(
+                f"Timestamp must be in ISO 8601 format: {e}",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+
+    @staticmethod
+    def validate_hostname(
+        hostname: str,
+        *,
+        perform_dns_lookup: bool = True,
+    ) -> FlextResult[str]:
+        """Validate hostname format and optionally perform DNS resolution (generic helper).
+
+        This generic helper consolidates hostname validation logic from typings.py
+        and provides flexible validation with optional DNS lookup.
+
+        Args:
+            hostname: Hostname string to validate
+            perform_dns_lookup: If True, perform DNS lookup to verify hostname resolution (default: True)
+
+        Returns:
+            FlextResult[str]: Success with hostname if valid, failure otherwise
+
+        Example:
+            >>> from flext_core.utilities import FlextUtilities
+            >>> result = FlextUtilities.Validation.validate_hostname("localhost")
+            >>> result.is_success
+            True
+            >>> result = FlextUtilities.Validation.validate_hostname("invalid..hostname")
+            >>> result.is_failure
+            True
+            >>> # Skip DNS lookup for performance
+            >>> result = FlextUtilities.Validation.validate_hostname("example.com", perform_dns_lookup=False)
+            >>> result.is_success
+            True
+
+        """
+        # Basic hostname validation (empty check)
+        if not hostname or not hostname.strip():
+            return FlextResult[str].fail(
+                "Hostname cannot be empty",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+
+        normalized_hostname = hostname.strip()
+
+        # Validate hostname length (RFC 1035: max 253 characters)
+        if len(normalized_hostname) > MAX_HOSTNAME_LENGTH:
+            return FlextResult[str].fail(
+                f"Hostname '{normalized_hostname}' exceeds maximum length of {MAX_HOSTNAME_LENGTH} characters",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+
+        # Perform DNS lookup if requested
+        if perform_dns_lookup:
+            try:
+                socket.gethostbyname(normalized_hostname)
+            except socket.gaierror as e:
+                return FlextResult[str].fail(
+                    f"Cannot resolve hostname '{normalized_hostname}': {e}",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+            except (OSError, ValueError) as e:
+                return FlextResult[str].fail(
+                    f"Invalid hostname '{normalized_hostname}': {e}",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+
+        return FlextResult[str].ok(normalized_hostname)
+
+    @staticmethod
+    def validate_identifier(
+        name: str,
+        *,
+        pattern: str = r"^[a-zA-Z0-9_:\- ]+$",
+        allow_empty: bool = False,
+        strip: bool = True,
+        error_message: str | None = None,
+    ) -> FlextResult[str]:
+        """Validate and normalize identifier/name with customizable pattern (generic helper).
+
+        This generic helper consolidates identifier validation logic from container.py
+        (_validate_service_name) and provides flexible validation for names, identifiers,
+        service names, etc.
+
+        Default pattern allows: alphanumeric, underscore, hyphen, colon, and space
+        - Useful for service names with namespacing (e.g., "logger:module_name")
+        - Useful for handler names with spaces (e.g., "Pre-built Handler")
+
+        Args:
+            name: Identifier/name string to validate
+            pattern: Regex pattern for validation (default: alphanumeric + _:-  + space)
+            allow_empty: If True, allow empty strings (default: False)
+            strip: If True, strip whitespace before validation (default: True)
+            error_message: Custom error message (optional)
+
+        Returns:
+            FlextResult[str]: Success with normalized name or failure with error
+
+        Example:
+            >>> from flext_core.utilities import FlextUtilities
+            >>> # Service name validation
+            >>> result = FlextUtilities.Validation.validate_identifier("logger:app")
+            >>> result.is_success
+            True
+            >>> # Custom pattern (only alphanumeric + underscore)
+            >>> result = FlextUtilities.Validation.validate_identifier(
+            ...     "my_service",
+            ...     pattern=r"^[a-zA-Z0-9_]+$"
+            ... )
+            >>> result.is_success
+            True
+            >>> # Invalid characters
+            >>> result = FlextUtilities.Validation.validate_identifier("invalid@name")
+            >>> result.is_failure
+            True
+
+        """
+        # Check empty string
+        if not name or (not allow_empty and not name.strip()):
+            return FlextResult[str].fail(
+                error_message or "Identifier cannot be empty",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+
+        # Normalize (strip if requested)
+        normalized_name = name.strip() if strip else name
+
+        # Validate pattern
+        if not re.match(pattern, normalized_name):
+            msg = error_message or (
+                f"Identifier '{normalized_name}' contains invalid characters. "
+                f"Must match pattern: {pattern}"
+            )
+            return FlextResult[str].fail(
+                msg,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+
+        return FlextResult[str].ok(normalized_name)
 
 
 __all__ = ["FlextUtilitiesValidation"]

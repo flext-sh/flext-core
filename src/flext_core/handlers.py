@@ -151,7 +151,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         # Create typed subclass dynamically using type() built-in
         # Type checkers cannot verify dynamic type() calls with 3 arguments
         # This is valid Python metaprogramming - dynamically creating a class at runtime
-        typed_subclass: type[Self] = type(  # type: ignore[call-overload]
+        typed_subclass_raw = type(
             f"{cls_name}[{msg_name}, {res_name}]",
             (cls,),
             {
@@ -159,6 +159,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 "_expected_result_type": result_type,
             },
         )
+        typed_subclass: type[Self] = cast("type[Self]", typed_subclass_raw)
 
         # Preserve qualname for better debugging
         typed_subclass.__qualname__ = f"{cls_qualname}[{msg_name}, {res_name}]"
@@ -433,7 +434,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     try:
                         result_data = method()
                         if FlextMixins.is_dict_like(result_data):
-                            return result_data  # type: ignore[return-value]
+                            return cast("dict[str, object]", result_data)
                     except Exception as e:
                         FlextHandlers._internal_logger.debug(
                             f"Serialization method {method_name} failed: {type(e).__name__}"
@@ -736,42 +737,66 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             >>> assert validated.is_failure
 
         """
-        # Validate message type
-        if self._expected_message_type is not None and not is_bearable(
-            message, self._expected_message_type
-        ):
-            expected_name = getattr(
-                self._expected_message_type,
-                "__name__",
-                str(self._expected_message_type),
-            )
-            actual_name = type(message).__name__
-            msg = (
-                f"{self.__class__.__name__}.handle() received message of type "
-                f"{actual_name} instead of {expected_name}. "
-                f"Message: {message!r}"
-            )
-            return self.fail(msg, error_code="TYPE_MISMATCH")
+        # Validate message type - use isinstance for simple types, beartype for complex hints
+        if self._expected_message_type is not None:
+            try:
+                # For simple type objects, isinstance is more reliable than beartype
+                if isinstance(self._expected_message_type, type):
+                    type_mismatch = not isinstance(message, self._expected_message_type)
+                else:
+                    # For complex type hints (generics, unions), use beartype
+                    type_mismatch = not is_bearable(
+                        message, self._expected_message_type
+                    )
+            except (TypeError, AttributeError):
+                # If type checking fails, assume type matches
+                type_mismatch = False
+
+            if type_mismatch:
+                expected_name = getattr(
+                    self._expected_message_type,
+                    "__name__",
+                    str(self._expected_message_type),
+                )
+                actual_name = type(message).__name__
+                msg = (
+                    f"{self.__class__.__name__}.handle() received message of type "
+                    f"{actual_name} instead of {expected_name}. "
+                    f"Message: {message!r}"
+                )
+                return self.fail(msg, error_code="TYPE_MISMATCH")
 
         # Validate result type (only on success - errors don't need type validation)
-        if (
-            self._expected_result_type is not None
-            and result.is_success
-            and not is_bearable(result.value, self._expected_result_type)
-        ):
-            expected_name = getattr(
-                self._expected_result_type,
-                "__name__",
-                str(self._expected_result_type),
-            )
-            actual_name = type(result.value).__name__
-            msg = (
-                f"{self.__class__.__name__}.handle() returned "
-                f"FlextResult[{actual_name}] instead of "
-                f"FlextResult[{expected_name}]. "
-                f"Data: {result.value!r}"
-            )
-            return self.fail(msg, error_code="TYPE_MISMATCH")
+        if self._expected_result_type is not None and result.is_success:
+            try:
+                # For simple type objects, isinstance is more reliable than beartype
+                if isinstance(self._expected_result_type, type):
+                    type_mismatch = not isinstance(
+                        result.value, self._expected_result_type
+                    )
+                else:
+                    # For complex type hints (generics, unions), use beartype
+                    type_mismatch = not is_bearable(
+                        result.value, self._expected_result_type
+                    )
+            except (TypeError, AttributeError):
+                # If type checking fails, assume type matches
+                type_mismatch = False
+
+            if type_mismatch:
+                expected_name = getattr(
+                    self._expected_result_type,
+                    "__name__",
+                    str(self._expected_result_type),
+                )
+                actual_name = type(result.value).__name__
+                msg = (
+                    f"{self.__class__.__name__}.handle() returned "
+                    f"FlextResult[{actual_name}] instead of "
+                    f"FlextResult[{expected_name}]. "
+                    f"Data: {result.value!r}"
+                )
+                return self.fail(msg, error_code="TYPE_MISMATCH")
 
         return result
 
@@ -791,10 +816,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         """
         # Extract message ID
-        if self.is_dict_like(message):
-            (
-                str(message.get(f"{operation}_id", "unknown"))
-                or str(message.get("message_id", "unknown"))
+        if isinstance(message, dict):
+            message_dict = cast("dict[str, object]", message)
+            # Message ID extraction for logging/tracing (currently unused but reserved for future observability)
+            _ = (
+                str(message_dict.get(f"{operation}_id", "unknown"))
+                or str(message_dict.get("message_id", "unknown"))
                 or "unknown"
             )
         elif hasattr(message, f"{operation}_id"):
@@ -851,7 +878,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         ...
 
     @classmethod
-    def from_callable(  # type: ignore[override]
+    def from_callable(
         cls,
         func: FlextTypes.HandlerCallableType,
         handler_name: str | None = None,

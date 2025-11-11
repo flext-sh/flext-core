@@ -12,8 +12,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-import re
 import threading
+import warnings
 from collections.abc import Callable
 from contextlib import suppress
 from typing import Self, cast, override
@@ -28,6 +28,7 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FactoryT, FlextTypes, T
+from flext_core.utilities import FlextUtilities
 
 
 class FlextContainer(FlextProtocols.Configurable):
@@ -76,30 +77,28 @@ class FlextContainer(FlextProtocols.Configurable):
         - get_typed_with_recovery[T]() now returns FlextResult[T] instead of FlextResult[object]
         - REQUIRED: Use get_typed[T](name, type_cls) for type-safe service retrieval
 
-    Usage Example:
-        >>> from flext_core import FlextContainer, FlextResult
+    Usage Example (Fluent Interface - v2.0.0+):
+        >>> from flext_core import FlextContainer, FlextLogger
         >>>
-        >>> # Get global singleton container
-        >>> container = FlextContainer.get_global()
+        >>> # Fluent interface - method chaining (RECOMMENDED)
+        >>> container = (
+        ...     FlextContainer()
+        ...     .with_config({"max_workers": 8, "timeout_seconds": 30})
+        ...     .with_service("logger", FlextLogger(__name__))
+        ...     .with_factory("database", create_database)
+        ... )
         >>>
-        >>> # Register service instance
-        >>> logger = create_logger(__name__)
-        >>> result: FlextResult[None] = container.register("logger", logger)
-        >>>
-        >>> # Retrieve service (untyped)
-        >>> logger_result: FlextResult[object] = container.get("logger")
+        >>> # Retrieve service (returns FlextResult)
+        >>> logger_result = container.get("logger")
         >>> if logger_result.is_success:
         ...     logger = logger_result.unwrap()
         >>>
-        >>> # Type-safe retrieval with generic type preservation (PREFERRED in v0.9.9+)
+        >>> # Type-safe retrieval with generic type preservation
         >>> typed_logger_result: FlextResult[FlextLogger] = container.get_typed(
         ...     "logger", FlextLogger
         ... )
         >>> if typed_logger_result.is_success:
-        ...     logger: FlextLogger = typed_logger_result.unwrap()  # Type preserved
-        >>>
-        >>> # Configure container
-        >>> config_result = container.configure({"max_workers": 8})
+        ...     logger: FlextLogger = typed_logger_result.unwrap()
 
     Instance Compliance Verification:
         >>> from flext_core import FlextContainer, FlextProtocols
@@ -276,70 +275,79 @@ class FlextContainer(FlextProtocols.Configurable):
     # =========================================================================
 
     def _validate_service_name(self, name: str) -> FlextResult[str]:
-        """Validate and normalize service name using centralized validation.
+        """Validate service name using FlextUtilities generic validation.
 
-        Service names must:
-        - Not be empty
-        - Contain only alphanumeric, underscore, hyphen, colon, or space characters
-        - Colons are allowed for namespacing (e.g., "logger:module_name")
-        - Spaces are allowed for handler names (e.g., "Pre-built Handler")
+        Delegates to FlextUtilities.Validation.validate_identifier() for generic
+        identifier validation.
+
+        Args:
+            name: Service name to validate
 
         Returns:
-            FlextResult[str]: Success with validated name or failure with error.
+            FlextResult[str]: Validated name or error
 
         """
-        if not name or not name.strip():
-            return FlextResult[str].fail(
-                "Service name cannot be empty",
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
-            )
-
-        normalized_name = name.strip()
-
-        # Check for invalid characters (allow alphanumeric, _, -, :, and space)
-        if not re.match(r"^[a-zA-Z0-9_:\- ]+$", normalized_name):
-            return FlextResult[str].fail(
-                f"Service name '{normalized_name}' contains invalid characters. "
-                f"Only alphanumeric, underscore, hyphen, colon, and space are allowed.",
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
-            )
-
-        return FlextResult[str].ok(normalized_name)
+        return FlextUtilities.Validation.validate_identifier(name)
 
     def register(
         self,
         name: str,
         service: object,
     ) -> FlextResult[None]:
-        """Register a service in the FlextContainer with type preservation.
+        """DEPRECATED: Use with_service() for fluent interface.
+
+        This method will be removed in v2.0.0. Migrate to:
+        container.with_service(name, service)
+        """
+        warnings.warn(
+            "register() is deprecated and will be removed in v2.0.0. "
+            "Use with_service() instead for fluent interface.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return FlextUtilities.Validation.validate_identifier(name).flat_map(
+            lambda validated_name: self._store_service(validated_name, service),
+        )
+
+    def with_service(
+        self,
+        name: str,
+        service: object,
+    ) -> Self:
+        """Register a service with fluent interface - returns self for chaining.
 
         Use this method to register services for dependency injection throughout
-        FLEXT applications. Returns FlextResult for explicit error handling.
-        Type T is preserved for static type checking purposes.
+        FLEXT applications. Returns self for method chaining (fluent interface).
+        Raises exception on failure for fail-fast behavior.
 
         Args:
             name: Service name for later retrieval
-            service: Service instance to register (generic type T for type safety)
+            service: Service instance to register
 
         Returns:
-            FlextResult[None]: Success if registered or failure with error details.
+            Self: Container instance for method chaining
+
+        Raises:
+            ValueError: If service name is invalid or service already registered
 
         Example:
             ```python
             from flext_core import FlextContainer, FlextLogger
 
-            container = FlextContainer()
-            logger = FlextLogger(__name__)
-
-            result: FlextResult[None] = container.register("logger", logger)
-            if result.is_failure:
-                print(f"Registration failed: {result.error}")
+            container = (
+                FlextContainer()
+                .with_service("logger", FlextLogger(__name__))
+                .with_service("database", DatabaseService())
+            )
             ```
 
         """
-        return self._validate_service_name(name).flat_map(
+        result = FlextUtilities.Validation.validate_identifier(name).flat_map(
             lambda validated_name: self._store_service(validated_name, service),
         )
+        if result.is_failure:
+            raise ValueError(result.error or f"Failed to register service '{name}'")
+        return self
 
     def _store_service(self, name: str, service: object) -> FlextResult[None]:
         """Store service in registry using ServiceRegistration Model.
@@ -392,18 +400,58 @@ class FlextContainer(FlextProtocols.Configurable):
         name: str,
         factory: Callable[[], FactoryT],
     ) -> FlextResult[None]:
-        """Register service factory with type preservation.
+        """DEPRECATED: Use with_factory() for fluent interface.
+
+        This method will be removed in v2.0.0. Migrate to:
+        container.with_factory(name, factory)
+        """
+        warnings.warn(
+            "register_factory() is deprecated and will be removed in v2.0.0. "
+            "Use with_factory() instead for fluent interface.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return FlextUtilities.Validation.validate_identifier(name).flat_map(
+            lambda validated_name: self._store_factory(validated_name, factory),
+        )
+
+    def with_factory(
+        self,
+        name: str,
+        factory: Callable[[], FactoryT],
+    ) -> Self:
+        """Register service factory with fluent interface - returns self for chaining.
 
         Type T is preserved for static type checking and inferred from the
         factory callable's return type at registration time.
+        Raises exception on failure for fail-fast behavior.
+
+        Args:
+            name: Service name for later retrieval
+            factory: Factory callable that creates service instances
 
         Returns:
-            FlextResult[None]: Success if registered or failure with error.
+            Self: Container instance for method chaining
+
+        Raises:
+            ValueError: If service name is invalid or factory already registered
+
+        Example:
+            ```python
+            container = (
+                FlextContainer()
+                .with_factory("logger", lambda: FlextLogger(__name__))
+                .with_factory("database", create_database)
+            )
+            ```
 
         """
-        return self._validate_service_name(name).flat_map(
+        result = FlextUtilities.Validation.validate_identifier(name).flat_map(
             lambda validated_name: self._store_factory(validated_name, factory),
         )
+        if result.is_failure:
+            raise ValueError(result.error or f"Failed to register factory '{name}'")
+        return self
 
     def _store_factory(
         self,
@@ -468,7 +516,7 @@ class FlextContainer(FlextProtocols.Configurable):
             FlextResult[None]: Success if unregistered or failure with error.
 
         """
-        return self._validate_service_name(name).flat_map(self._remove_service)
+        return FlextUtilities.Validation.validate_identifier(name).flat_map(self._remove_service)
 
     def _remove_service(self, name: str) -> FlextResult[None]:
         """Remove service from tracking dicts AND internal DI container.
@@ -504,7 +552,7 @@ class FlextContainer(FlextProtocols.Configurable):
             FlextResult[object]: Success with service instance or failure with error.
 
         """
-        return self._validate_service_name(name).flat_map(self._resolve_service)
+        return FlextUtilities.Validation.validate_identifier(name).flat_map(self._resolve_service)
 
     def _resolve_service(self, name: str) -> FlextResult[object]:
         """Resolve service via internal DI container with FlextResult wrapping.
@@ -687,7 +735,7 @@ class FlextContainer(FlextProtocols.Configurable):
         """
         for name, service in services.items():
             # Validate service name
-            validation_result = self._validate_service_name(name)
+            validation_result = FlextUtilities.Validation.validate_identifier(name)
             if validation_result.is_failure:
                 return FlextResult[None].fail(
                     validation_result.error or f"Invalid service name: {name}",
@@ -717,9 +765,13 @@ class FlextContainer(FlextProtocols.Configurable):
         # Type-safe restoration - explicit type narrowing for union types
         # pyrefly cannot infer specific dict types from complex union
         if isinstance(services_snapshot, dict):
-            self._services = services_snapshot  # type: ignore[assignment]
+            self._services = cast(
+                "dict[str, FlextModels.ServiceRegistration]", services_snapshot
+            )
         if isinstance(factories_snapshot, dict):
-            self._factories = factories_snapshot  # type: ignore[assignment]
+            self._factories = cast(
+                "dict[str, FlextModels.FactoryRegistration]", factories_snapshot
+            )
 
     # =========================================================================
     # ADVANCED FEATURES - Factory resolution and dependency injection
@@ -759,11 +811,10 @@ class FlextContainer(FlextProtocols.Configurable):
             FlextResult[object]: Success with service instance or failure with error.
 
         """
-        register_result = self.register_factory(name, factory)
-        if register_result.is_failure:
-            return FlextResult[object].fail(
-                register_result.error or "Factory registration failed",
-            )
+        try:
+            self.with_factory(name, factory)
+        except ValueError as e:
+            return FlextResult[object].fail(str(e))
 
         service_result = self.get(name)
         if service_result.is_success:
@@ -818,11 +869,10 @@ class FlextContainer(FlextProtocols.Configurable):
             service = service_class(**dependencies)
 
             # Register the service
-            register_result = self.register(name, service)
-            if register_result.is_failure:
-                return FlextResult[object].fail(
-                    register_result.error or "Service registration failed",
-                )
+            try:
+                self.with_service(name, service)
+            except ValueError as e:
+                return FlextResult[object].fail(str(e))
 
             return FlextResult[object].ok(service)
 
@@ -1034,6 +1084,33 @@ class FlextContainer(FlextProtocols.Configurable):
             # RuntimeError: Runtime failures
             return FlextResult[None].fail(f"Container configuration failed: {e}")
 
+    def with_config(self, config: dict[str, object] | FlextConfig) -> Self:
+        """Configure container with fluent interface - returns self for chaining.
+
+        Args:
+            config: Either a dict or FlextConfig instance for configuration.
+
+        Returns:
+            Self: Container instance for method chaining
+
+        Raises:
+            ValueError: If configuration fails
+
+        Example:
+            ```python
+            container = (
+                FlextContainer()
+                .with_config({"max_workers": 8, "timeout_seconds": 30})
+                .with_service("logger", logger)
+            )
+            ```
+
+        """
+        result = self.configure_container(config)
+        if result.is_failure:
+            raise ValueError(result.error or "Configuration failed")
+        return self
+
     def _refresh_global_config(self) -> None:
         """Refresh the effective global configuration as ContainerConfig Model."""
         # Recreate ContainerConfig Model (always uses defaults)
@@ -1160,7 +1237,11 @@ class FlextContainer(FlextProtocols.Configurable):
             )
 
         service: object = factory_result.unwrap()
-        return self.register(name, service)
+        try:
+            self.with_service(name, service)
+            return FlextResult[None].ok(None)
+        except ValueError as e:
+            return FlextResult[None].fail(str(e))
 
     def get_typed_with_recovery(
         self,
@@ -1218,7 +1299,9 @@ class FlextContainer(FlextProtocols.Configurable):
                 )
 
             # Register the recovered service for future use
-            self.register(name, service)
+            with suppress(ValueError):
+                # Ignore registration failure, return recovered service anyway
+                self.with_service(name, service)
             return FlextResult[T].ok(service)
 
         return self.get_typed(name, expected_type).lash(try_recovery)
@@ -1354,7 +1437,11 @@ class FlextContainer(FlextProtocols.Configurable):
             FlextResult[None]: Success or registration error
 
         """
-        return self.register(name, service)
+        try:
+            self.with_service(name, service)
+            return FlextResult[None].ok(None)
+        except ValueError as e:
+            return FlextResult[None].fail(str(e))
 
     def get_service(self, name: str) -> FlextResult[object]:
         """Retrieve registered service (ServiceRegistry protocol).

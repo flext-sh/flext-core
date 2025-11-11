@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self, cast
 
 from beartype.door import is_bearable
 from pydantic import Discriminator, model_validator
@@ -337,55 +337,69 @@ class FlextModels:
         # Runtime type validation attribute (set by __class_getitem__)
         _expected_data_type: ClassVar[type | None] = None
 
-        def __class_getitem__(cls, item: type) -> type[Self]:
+        def __class_getitem__(cls, item: type | tuple[type, ...]) -> type[Self]:
             """Intercept Payload[T] to create typed subclass for runtime validation.
 
             Args:
-                item: The data type parameter (e.g., User, Product)
+                item: The data type parameter (e.g., User, Product) or tuple of types
 
             Returns:
                 A typed subclass with _expected_data_type set
 
             """
+            # Handle tuple of types (for Pydantic compatibility) - use first type
+            actual_type = item[0] if isinstance(item, tuple) else item
+
             # Create typed subclass dynamically using type() built-in
             cls_name = getattr(cls, "__name__", "Payload")
             cls_qualname = getattr(cls, "__qualname__", "Payload")
-            type_name = getattr(item, "__name__", str(item))
+            type_name = getattr(actual_type, "__name__", str(actual_type))
 
             # Dynamic type creation using type() built-in - returns a subclass of cls
-            # NOTE: type: ignore required due to type checker limitation with metaprogramming
             # This is valid Python metaprogramming - dynamically creating a class at runtime
-            # Type checkers cannot verify dynamic type() calls with 3 arguments
-            typed_subclass: type[Self] = type(  # type: ignore[call-overload]
+            typed_subclass_raw = type(
                 f"{cls_name}[{type_name}]",
                 (cls,),
                 {
-                    "_expected_data_type": item,
+                    "_expected_data_type": actual_type,
                     "__module__": cls.__module__,
                     "__qualname__": f"{cls_qualname}[{type_name}]",
                 },
             )
-            return typed_subclass
+            # Type checkers need explicit cast for dynamic type() calls
+            return cast("type[Self]", typed_subclass_raw)
 
         @model_validator(mode="after")
         def _validate_data_type(self) -> Self:
             """Validate data field matches expected type."""
-            if (
-                self._expected_data_type is not None
-                and self.data is not None
-                and not is_bearable(self.data, self._expected_data_type)
-            ):
-                expected_name = getattr(
-                    self._expected_data_type,
-                    "__name__",
-                    str(self._expected_data_type),
-                )
-                actual_name = type(self.data).__name__
-                msg = (
-                    f"Payload[{expected_name}] received data of type {actual_name} "
-                    f"instead of {expected_name}. Data: {self.data!r}"
-                )
-                raise TypeError(msg)
+            if self._expected_data_type is not None and self.data is not None:
+                try:
+                    # For simple type objects, isinstance is more reliable than beartype
+                    if isinstance(self._expected_data_type, type):
+                        type_mismatch = not isinstance(
+                            self.data, self._expected_data_type
+                        )
+                    else:
+                        # For complex type hints (generics, unions), use beartype
+                        type_mismatch = not is_bearable(
+                            self.data, self._expected_data_type
+                        )
+                except (TypeError, AttributeError):
+                    # If type checking fails, assume type matches
+                    type_mismatch = False
+
+                if type_mismatch:
+                    expected_name = getattr(
+                        self._expected_data_type,
+                        "__name__",
+                        str(self._expected_data_type),
+                    )
+                    actual_name = type(self.data).__name__
+                    msg = (
+                        f"Payload[{expected_name}] received data of type {actual_name} "
+                        f"instead of {expected_name}. Data: {self.data!r}"
+                    )
+                    raise TypeError(msg)
             return self
 
     class Url(FlextModelsBase.Url):

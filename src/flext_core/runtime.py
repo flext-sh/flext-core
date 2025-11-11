@@ -222,7 +222,7 @@ class FlextRuntime:
     def safe_model_dump(model: object) -> FlextTypes.JsonDict:
         """Safely convert supported objects into JSON-compatible dictionaries."""
         if hasattr(model, "model_dump"):
-            model_dump = model.model_dump
+            model_dump = getattr(model, "model_dump", None)
             if callable(model_dump):
                 try:
                     dumped = model_dump(mode="json")
@@ -231,7 +231,7 @@ class FlextRuntime:
                 if isinstance(dumped, dict):
                     return cast("FlextTypes.JsonDict", dumped)
         if hasattr(model, "dict"):
-            dict_method = model.dict
+            dict_method = getattr(model, "dict", None)
             if callable(dict_method):
                 dumped = dict_method()
                 if isinstance(dumped, dict):
@@ -517,6 +517,7 @@ class FlextRuntime:
     def configure_structlog(
         cls,
         *,
+        config: object | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
         additional_processors: Sequence[Callable[..., FlextTypes.GenericTypeArgument]]
@@ -527,19 +528,50 @@ class FlextRuntime:
     ) -> None:
         """Configure structlog once using FLEXT defaults.
 
+        Supports both config object pattern (reduced params) and individual parameters.
+
         Args:
-            log_level: Numeric log level. Defaults to ``logging.INFO``.
-            console_renderer: When ``True`` use the console renderer, otherwise
-                JSON renderer.
-            additional_processors: Optional extra processors appended after the
-                standard FLEXT processors.
-            wrapper_class_factory: Custom wrapper factory passed to structlog.
-                Falls back to :func:`structlog.make_filtering_bound_logger`.
-            logger_factory: Custom logger factory. Defaults to
-                :class:`structlog.PrintLoggerFactory`.
-            cache_logger_on_first_use: Forwarded to structlog configuration.
+            config: Optional FlextModels.Config.StructlogConfig for all params
+            log_level: Numeric log level (ignored if config provided). Defaults to ``logging.INFO``.
+            console_renderer: Use console renderer (ignored if config provided)
+            additional_processors: Extra processors (ignored if config provided)
+            wrapper_class_factory: Custom wrapper factory (ignored if config provided)
+            logger_factory: Custom logger factory (ignored if config provided)
+            cache_logger_on_first_use: Cache logger (ignored if config provided)
+
+        Example (config pattern - RECOMMENDED):
+            ```python
+            from flext_core import FlextModels
+
+            config = FlextModels.Config.StructlogConfig(
+                log_level=20, console_renderer=True
+            )
+            FlextRuntime.configure_structlog(config=config)
+            ```
+
+        Example (individual params - backward compatible):
+            ```python
+            FlextRuntime.configure_structlog(log_level=20, console_renderer=True)
+            ```
 
         """
+        # Extract config values or use individual parameters (backward compatibility)
+        if config is not None:
+            log_level = getattr(config, "log_level", log_level)
+            console_renderer = getattr(config, "console_renderer", console_renderer)
+            additional_processors_from_config = getattr(
+                config, "additional_processors", None
+            )
+            if additional_processors_from_config:
+                additional_processors = additional_processors_from_config
+            wrapper_class_factory = getattr(
+                config, "wrapper_class_factory", wrapper_class_factory
+            )
+            logger_factory = getattr(config, "logger_factory", logger_factory)
+            cache_logger_on_first_use = getattr(
+                config, "cache_logger_on_first_use", cache_logger_on_first_use
+            )
+
         if cls._structlog_configured:
             return
 

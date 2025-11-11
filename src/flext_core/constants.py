@@ -440,6 +440,14 @@ class FlextConstants:
         )
         NONEXISTENT_ERROR: Final[str] = "NONEXISTENT_ERROR"
 
+    class Test:
+        """Test constants for development and testing."""
+
+        # Test authentication credentials
+        DEFAULT_PASSWORD: Final[str] = "password123"
+        DEFAULT_USERNAME: Final[str] = "testuser"
+        NONEXISTENT_USERNAME: Final[str] = "nonexistent"
+
     class Exceptions:
         """Exception handling configuration and failure levels."""
 
@@ -1095,6 +1103,15 @@ class FlextConstants:
         # Context export formats
         EXPORT_FORMAT_JSON: Final[str] = "json"
         EXPORT_FORMAT_DICT: Final[str] = "dict"
+
+        # Metadata field names (centralized to avoid duplication)
+        METADATA_FIELDS: Final[frozenset[str]] = frozenset({
+            "user_id",
+            "correlation_id",
+            "request_id",
+            "session_id",
+            "tenant_id",
+        })
 
     class Container:
         """Dependency injection container constants."""

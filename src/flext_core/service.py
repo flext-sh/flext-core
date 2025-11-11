@@ -16,6 +16,7 @@ import concurrent.futures
 import inspect
 import signal
 import time
+import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -215,7 +216,7 @@ class FlextService[TDomainResult](
     # RUNTIME TYPE VALIDATION: Automatic via __class_getitem__
     # =========================================================================
 
-    def __class_getitem__(cls, item: type) -> type[Self]:
+    def __class_getitem__(cls, item: type | tuple[type, ...]) -> type[Self]:
         """Intercept FlextService[T] to create typed subclass for runtime validation.
 
         When FlextService[User] is accessed, this method creates a subclass that
@@ -228,7 +229,7 @@ class FlextService[TDomainResult](
             FlextService[User].execute() → FlextResult[Product]  # ❌ TypeError
 
         Args:
-            item: The domain result type parameter (e.g., User, Product)
+            item: The domain result type parameter (e.g., User, Product) or tuple of types
 
         Returns:
             A typed subclass with _expected_domain_result_type set
@@ -242,25 +243,29 @@ class FlextService[TDomainResult](
             >>> result = service.execute()  # ✅ Validated automatically
 
         """
+        # Handle tuple of types (for Pydantic compatibility) - use first type
+        actual_type = item[0] if isinstance(item, tuple) else item
+
         # Create typed subclass dynamically using type() built-in
         cls_name = getattr(cls, "__name__", "FlextService")
         cls_qualname = getattr(cls, "__qualname__", "FlextService")
-        type_name = getattr(item, "__name__", str(item))
+        type_name = getattr(actual_type, "__name__", str(actual_type))
 
         # Create typed subclass with proper namespace attributes for Pydantic v2
         # __module__ and __qualname__ must be in namespace dict for metaclass
-        # NOTE: type: ignore required due to type checker limitation with metaprogramming
+        # Dynamic type creation using type() built-in - creates a typed subclass
         # This is valid Python metaprogramming - dynamically creating a class at runtime
-        # Type checkers cannot verify dynamic type() calls with 3 arguments
-        return type(  # type: ignore[call-overload]
+        typed_subclass = type(
             f"{cls_name}[{type_name}]",
             (cls,),
             {
-                "_expected_domain_result_type": item,
+                "_expected_domain_result_type": actual_type,
                 "__module__": cls.__module__,
                 "__qualname__": f"{cls_qualname}[{type_name}]",
             },
         )
+        # Type checkers need explicit cast for dynamic type() calls
+        return cast("type[Self]", typed_subclass)
 
     def _validate_domain_result(
         self, result: FlextResult[TDomainResult]
@@ -277,24 +282,37 @@ class FlextService[TDomainResult](
             TypeError: If result data doesn't match _expected_domain_result_type
 
         """
-        if (
-            self._expected_domain_result_type is not None
-            and result.is_success
-            and not is_bearable(result.value, self._expected_domain_result_type)
-        ):
-            expected_name = getattr(
-                self._expected_domain_result_type,
-                "__name__",
-                str(self._expected_domain_result_type),
-            )
-            actual_name = type(result.value).__name__
-            msg = (
-                f"{self.__class__.__name__}.execute() returned "
-                f"FlextResult[{actual_name}] instead of "
-                f"FlextResult[{expected_name}]. "
-                f"Data: {result.value!r}"
-            )
-            raise TypeError(msg)
+        # Type validation - use isinstance for simple types, beartype for complex hints
+        if self._expected_domain_result_type is not None and result.is_success:
+            try:
+                # For simple type objects, isinstance is more reliable than beartype
+                if isinstance(self._expected_domain_result_type, type):
+                    type_mismatch = not isinstance(
+                        result.value, self._expected_domain_result_type
+                    )
+                else:
+                    # For complex type hints (generics, unions), use beartype
+                    type_mismatch = not is_bearable(
+                        result.value, self._expected_domain_result_type
+                    )
+            except (TypeError, AttributeError):
+                # If type checking fails, assume type matches
+                type_mismatch = False
+
+            if type_mismatch:
+                expected_name = getattr(
+                    self._expected_domain_result_type,
+                    "__name__",
+                    str(self._expected_domain_result_type),
+                )
+                actual_name = type(result.value).__name__
+                msg = (
+                    f"{self.__class__.__name__}.execute() returned "
+                    f"FlextResult[{actual_name}] instead of "
+                    f"FlextResult[{expected_name}]. "
+                    f"Data: {result.value!r}"
+                )
+                raise TypeError(msg)
         return result
 
     # =========================================================================
@@ -604,31 +622,37 @@ class FlextService[TDomainResult](
         container = FlextContainer.get_global()
 
         # Auto-detect and inject dependencies
-        try:
-            deps = cls._extract_dependencies_from_signature()
+        # NOTE: Using register_factory() here (deprecated) because service names
+        # may contain invalid characters for with_factory(). This is internal
+        # framework usage, not user-facing API.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-            if deps:
-                # Factory with auto-DI
-                def factory() -> object:
-                    return cls(
-                        **cls._resolve_dependencies(deps, container, service_name)
-                    )
-
-                container.register_factory(service_name, factory)
-            else:
-                # No deps - simple registration
-                container.register_factory(service_name, cls)
-
-        except (ValueError, TypeError):
-            # Fallback: register without DI
             try:
-                container.register_factory(service_name, cls)
-            except Exception as inner_e:
-                raise FlextExceptions.ConfigurationError(
-                    message=f"Failed to register {service_name}",
-                    error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
-                    config_key=service_name,
-                ) from inner_e
+                deps = cls._extract_dependencies_from_signature()
+
+                if deps:
+                    # Factory with auto-DI
+                    def factory() -> object:
+                        return cls(
+                            **cls._resolve_dependencies(deps, container, service_name)
+                        )
+
+                    container.register_factory(service_name, factory)
+                else:
+                    # No deps - simple registration
+                    container.register_factory(service_name, cls)
+
+            except (ValueError, TypeError):
+                # Fallback: register without DI
+                try:
+                    container.register_factory(service_name, cls)
+                except Exception as inner_e:
+                    raise FlextExceptions.ConfigurationError(
+                        message=f"Failed to register {service_name}",
+                        error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
+                        config_key=service_name,
+                    ) from inner_e
 
     @override
     def __init__(self, **data: object) -> None:

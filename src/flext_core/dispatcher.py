@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import concurrent.futures
-import random
+import secrets
 import threading
 import time
 from collections.abc import Callable, Generator, Mapping
@@ -419,11 +419,9 @@ class FlextDispatcher(FlextMixins):
                 return base_delay
 
             # Random variance between -jitter_factor and +jitter_factor
-            # Note: S311 suppressed - random jitter for timing is not cryptographic
-            variance = (
-                2.0 * random.random()  # noqa: S311
-                - 1.0
-            ) * self._jitter_factor
+            # Use secrets.SystemRandom for cryptographically strong randomness
+            secure_random = secrets.SystemRandom()
+            variance = (2.0 * secure_random.random() - 1.0) * self._jitter_factor
             jittered = base_delay * (1.0 + variance)
 
             # Ensure jittered value doesn't go negative
@@ -1951,7 +1949,7 @@ class FlextDispatcher(FlextMixins):
         if isinstance(request, BaseModel):
             request_dict = request.model_dump()
         elif self.is_dict_like(request):
-            request_dict = request
+            request_dict = cast("dict[str, object]", request)
         else:
             return FlextResult[dict[str, object]].fail(
                 "Request must be dict or Pydantic model"
@@ -2010,7 +2008,7 @@ class FlextDispatcher(FlextMixins):
             if request_dict.get("message_type")
             else None,
             "handler_mode": request_dict.get("handler_mode"),
-            "timestamp": FlextUtilities.Generators.generate_timestamp(),
+            "timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
             "status": FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
         }
 
@@ -2277,7 +2275,7 @@ class FlextDispatcher(FlextMixins):
         if isinstance(request, BaseModel):
             request_dict = request.model_dump()
         elif self.is_dict_like(request):
-            request_dict = request
+            request_dict = cast("dict[str, object]", request)
         else:
             return FlextResult[dict[str, object]].fail(
                 "Request must be dict or Pydantic model"
@@ -2567,11 +2565,32 @@ class FlextDispatcher(FlextMixins):
         message_or_type: object | str,
         data: object | None = None,
         *,
+        config: object | None = None,
         metadata: dict[str, object] | None = None,
         correlation_id: str | None = None,
         timeout_override: int | None = None,
     ) -> FlextResult[object]:
         """Dispatch message with support for both old and new API.
+
+        NEW (RECOMMENDED - Config Pattern):
+            result = dispatcher.dispatch(
+                "my_message",
+                data={"key": "value"},
+                config=FlextModels.Config.DispatchConfig(
+                    metadata={"user_id": "123"},
+                    correlation_id="abc-123",
+                    timeout_override=30
+                )
+            )
+
+        OLD (Backward Compatible):
+            result = dispatcher.dispatch(
+                "my_message",
+                data={"key": "value"},
+                metadata={"user_id": "123"},
+                correlation_id="abc-123",
+                timeout_override=30
+            )
 
         Refactored to use specialized processors for SOLID compliance:
         - Timeout, retry → Uses threading with processors
@@ -2579,14 +2598,20 @@ class FlextDispatcher(FlextMixins):
         Args:
             message_or_type: Message object or message type string
             data: Data to dispatch (when message_or_type is string)
-            metadata: Optional execution context metadata
-            correlation_id: Optional correlation ID for tracing (reserved for future use)
-            timeout_override: Optional timeout override (reserved for future use)
+            config: DispatchConfig instance (Pydantic v2) - NEW PATTERN
+            metadata: Optional execution context metadata (backward compat)
+            correlation_id: Optional correlation ID for tracing (backward compat)
+            timeout_override: Optional timeout override (backward compat)
 
         Returns:
             FlextResult with execution result or error
 
         """
+        # Extract config values (config takes priority over individual params)
+        if config is not None:
+            metadata = getattr(config, "metadata", metadata)
+            correlation_id = getattr(config, "correlation_id", correlation_id)
+            timeout_override = getattr(config, "timeout_override", timeout_override)
         # Propagate context for distributed tracing
         dispatch_type = (
             type(message_or_type).__name__
@@ -2745,20 +2770,22 @@ class FlextDispatcher(FlextMixins):
         self,
         metadata: object | None,
     ) -> dict[str, object] | None:
-        """Normalize metadata payloads to plain dictionaries."""
+        """Normalize metadata payloads to plain dictionaries (using FlextUtilities.Generators.ensure_dict).
+
+        This method consolidates Pydantic model conversion and dict-like normalization
+        using the generic FlextUtilities.Generators.ensure_dict() helper.
+        """
         if metadata is None:
             return None
 
-        # Convert Pydantic models to dict immediately
-        if isinstance(metadata, BaseModel):
-            with suppress(Exception):
-                metadata = metadata.model_dump()
-
+        # Convert Pydantic models to dict using FlextUtilities.Generators.ensure_dict()
+        # This handles BaseModel.model_dump(), dict-like objects, and direct dicts
         raw_metadata = self._extract_metadata_mapping(metadata)
 
         if raw_metadata is None:
             return None
 
+        # Normalize keys to strings
         normalized: dict[str, object] = {
             str(key): value for key, value in raw_metadata.items()
         }
@@ -2768,16 +2795,17 @@ class FlextDispatcher(FlextMixins):
     def _extract_metadata_mapping(
         self, metadata: object
     ) -> Mapping[str, object] | None:
-        """Extract metadata as Mapping from various types."""
+        """Extract metadata as Mapping from various types (using FlextUtilities.Generators.ensure_dict)."""
         if isinstance(metadata, FlextModels.Metadata):
             return self._extract_from_flext_metadata(metadata)
         if isinstance(metadata, Mapping):
             return cast("Mapping[str, object]", metadata)
 
-        # Handle Pydantic models directly
+        # Handle Pydantic models and dict-like objects using FlextUtilities.Generators.ensure_dict()
+        # This consolidates duplicate model_dump() logic and provides uniform conversion
         if isinstance(metadata, BaseModel):
             with suppress(Exception):
-                dumped = metadata.model_dump()
+                dumped = FlextUtilities.Generators.ensure_dict(metadata, allow_none_as_empty=False)
                 if isinstance(dumped, Mapping):
                     return cast("Mapping[str, object]", dumped)
 

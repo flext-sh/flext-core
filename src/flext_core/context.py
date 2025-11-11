@@ -180,15 +180,14 @@ class FlextContext:
         """Normalize initial data to FlextModels.ContextData format."""
         if initial_data is None:
             return FlextModels.ContextData()
-        if FlextRuntime.is_dict_like(initial_data):
+        if isinstance(initial_data, dict):
             return FlextModels.ContextData(data=initial_data)
-        # At this point, initial_data must be FlextModels.ContextData (guaranteed by prior checks)
-        # Using explicit type cast for Ruff compliance
+        # At this point, initial_data must be FlextModels.ContextData (type narrowing)
         return (
             FlextModels.ContextData(data=initial_data.data)
             if hasattr(initial_data, "data")
             else FlextModels.ContextData()
-        )  # type: ignore[union-attr]
+        )
 
     def _initialize_metadata_from_data(
         self, context_data: FlextModels.ContextData
@@ -217,15 +216,10 @@ class FlextContext:
         self, metadata_dict: dict[str, object]
     ) -> dict[str, object]:
         """Extract known metadata fields from dict."""
-        known_field_names = {
-            "user_id",
-            "correlation_id",
-            "request_id",
-            "session_id",
-            "tenant_id",
-        }
         return {
-            key: metadata_dict[key] for key in known_field_names if key in metadata_dict
+            key: metadata_dict[key]
+            for key in FlextConstants.Context.METADATA_FIELDS
+            if key in metadata_dict
         }
 
     def _extract_unknown_fields(
@@ -234,15 +228,8 @@ class FlextContext:
         metadata_dict: dict[str, object],
     ) -> None:
         """Extract unknown metadata fields and add to custom_fields."""
-        known_fields = {
-            "user_id",
-            "correlation_id",
-            "request_id",
-            "session_id",
-            "tenant_id",
-        }
         for key, value in metadata_dict.items():
-            if key not in known_fields:
+            if key not in FlextConstants.Context.METADATA_FIELDS:
                 metadata.custom_fields[key] = value
 
     # =========================================================================
@@ -299,11 +286,67 @@ class FlextContext:
         ctx_var = self._get_or_create_scope_var(scope)
         return ctx_var.get() or {}  # Handle None default
 
+    def _update_statistics(self, operation: str) -> None:
+        """Update statistics counter for an operation (DRY helper).
+
+        Args:
+            operation: Operation name ('set', 'get', 'remove', etc.)
+
+        """
+        # Update primary counter using attribute name
+        counter_attr = f"{operation}s"
+        if hasattr(self._statistics, counter_attr):
+            current_value = getattr(self._statistics, counter_attr, 0)
+            if isinstance(current_value, int):
+                setattr(self._statistics, counter_attr, current_value + 1)
+
+        # Update operations dict if exists
+        if (
+            self._statistics.operations is not None
+            and operation in self._statistics.operations
+        ):
+            value = self._statistics.operations[operation]
+            if isinstance(value, int):
+                self._statistics.operations[operation] = value + 1
+
+    def _execute_hooks(self, event: str, event_data: dict[str, object]) -> None:
+        """Execute hooks for an event (DRY helper).
+
+        Args:
+            event: Event name ('set', 'get', 'remove', etc.)
+            event_data: Data to pass to hooks
+
+        """
+        if event not in self._hooks:
+            return
+
+        hooks = self._hooks[event]
+        if not FlextRuntime.is_list_like(hooks):
+            return
+
+        for hook in hooks:
+            if callable(hook):
+                # Note: Hooks should not raise exceptions
+                # Any exception indicates a programming error in hook implementation
+                hook(event_data)
+
+    def _propagate_to_logger(self, key: str, value: object, scope: str) -> None:
+        """Propagate context changes to FlextLogger (DRY helper).
+
+        Args:
+            key: Context key
+            value: Context value
+            scope: Context scope
+
+        """
+        if scope == FlextConstants.Context.SCOPE_GLOBAL:
+            FlextLogger.bind_global_context(**{key: value})
+
     # =========================================================================
     # Instance Methods - Core context operations
     # =========================================================================
 
-    def set(  # noqa: C901  # Complex context management with multiple concerns
+    def set(
         self,
         key: str,
         value: object,
@@ -339,30 +382,10 @@ class FlextContext:
         updated = {**current, key: value}
         ctx_var.set(updated)
 
-        # DELEGATION: Propagate global scope to FlextLogger for logging integration
-        if scope == FlextConstants.Context.SCOPE_GLOBAL:
-            FlextLogger.bind_global_context(**{key: value})
-
-        # Update statistics using model (type-safe, no .get() needed)
-        self._statistics.sets += 1
-        if (
-            self._statistics.operations is not None
-            and "set" in self._statistics.operations
-        ):
-            value = self._statistics.operations["set"]
-            if isinstance(value, int):
-                self._statistics.operations["set"] = value + 1
-
-        # Execute hooks
-        # Note: Hooks should be designed to not raise exceptions.
-        # If a hook raises an exception, it indicates a programming error
-        # in the hook implementation that should be fixed by the caller.
-        if "set" in self._hooks:
-            hooks = self._hooks["set"]
-            if FlextRuntime.is_list_like(hooks):
-                for hook in hooks:
-                    if callable(hook):
-                        hook({"key": key, "value": value})  # type: ignore[misc]
+        # DELEGATION: Propagate to logger, update stats, execute hooks
+        self._propagate_to_logger(key, value, scope)
+        self._update_statistics("set")
+        self._execute_hooks("set", {"key": key, "value": value})
 
     def get(
         self,
@@ -391,15 +414,8 @@ class FlextContext:
         scope_data = self._get_from_contextvar(scope)
         value = scope_data.get(key, default)
 
-        # Update statistics using model (type-safe, no .get() needed)
-        self._statistics.gets += 1
-        if (
-            self._statistics.operations is not None
-            and "get" in self._statistics.operations
-        ):
-            get_value = self._statistics.operations["get"]
-            if isinstance(get_value, int):
-                self._statistics.operations["get"] = get_value + 1
+        # Update statistics
+        self._update_statistics("get")
 
         return value
 
@@ -450,15 +466,8 @@ class FlextContext:
             if scope == FlextConstants.Context.SCOPE_GLOBAL:
                 FlextLogger.unbind_global_context(key)
 
-            # Update statistics using model (type-safe, no .get() needed)
-            self._statistics.removes += 1
-            if (
-                self._statistics.operations is not None
-                and "remove" in self._statistics.operations
-            ):
-                remove_value = self._statistics.operations["remove"]
-                if isinstance(remove_value, int):
-                    self._statistics.operations["remove"] = remove_value + 1
+            # Update statistics
+            self._update_statistics("remove")
 
     def clear(self) -> None:
         """Clear all data from the context.
@@ -697,7 +706,7 @@ class FlextContext:
                 # New scoped format - restore all scopes
                 for scope_name, scope_data in data.items():
                     if isinstance(scope_data, dict):
-                        context._set_in_contextvar(scope_name, scope_data)  # type: ignore[arg-type]
+                        context._set_in_contextvar(scope_name, scope_data)
             else:
                 # Old flat format - put everything in global scope
                 context._set_in_contextvar(FlextConstants.Context.SCOPE_GLOBAL, data)
@@ -914,7 +923,7 @@ class FlextContext:
 
         Example:
             >>> container = FlextContext.get_container()
-            >>> container.register("my_service", MyService())
+            >>> container.with_service("my_service", MyService())
             >>> service_result = container.get("my_service")
 
         """
@@ -1193,7 +1202,11 @@ class FlextContext:
 
             """
             container = FlextContext.get_container()
-            return container.register(service_name, service)
+            try:
+                container.with_service(service_name, service)
+                return FlextResult[None].ok(None)
+            except ValueError as e:
+                return FlextResult[None].fail(str(e))
 
         @staticmethod
         @contextmanager
