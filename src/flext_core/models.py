@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, Self, cast
+from typing import Annotated, ClassVar, Self
 
 from beartype.door import is_bearable
 from pydantic import Discriminator, model_validator
@@ -345,19 +345,19 @@ class FlextModels:
             cls_qualname = getattr(cls, "__qualname__", "Payload")
             type_name = getattr(actual_type, "__name__", str(actual_type))
 
-            # Dynamic type creation using type() built-in - returns a subclass of cls
+            # Dynamic type creation using helper function - returns a subclass of cls
             # This is valid Python metaprogramming - dynamically creating a class at runtime
-            typed_subclass_raw = type(
+            from flext_core._utilities.generators import create_dynamic_type_subclass
+
+            return create_dynamic_type_subclass(
                 f"{cls_name}[{type_name}]",
-                (cls,),
+                cls,
                 {
                     "_expected_data_type": actual_type,
                     "__module__": cls.__module__,
                     "__qualname__": f"{cls_qualname}[{type_name}]",
                 },
             )
-            # Type checkers need explicit cast for dynamic type() calls
-            return cast("type[Self]", typed_subclass_raw)
 
         @model_validator(mode="after")
         def _validate_data_type(self) -> Self:

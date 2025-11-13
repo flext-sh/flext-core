@@ -783,9 +783,7 @@ class FlextContainer(FlextProtocols.Configurable):
                 "dict[str, FlextModels.ServiceRegistration]", services_snapshot
             )
         if isinstance(factories_snapshot, dict):
-            self._factories = cast(
-                "dict[str, FlextModels.FactoryRegistration]", factories_snapshot
-            )
+            self._factories = factories_snapshot
 
     # =========================================================================
     # ADVANCED FEATURES - Factory resolution and dependency injection

@@ -296,6 +296,7 @@ class TestPattern4RailwayV1:
         )
 
         assert filtered_fail.is_failure
+        assert filtered_fail.error is not None
         assert "ID does not match" in filtered_fail.error
 
     def test_v1_railway_composition(self) -> None:
@@ -503,6 +504,7 @@ class TestPattern8ErrorHandling:
     def test_error_handling_try_except_v2_auto(self) -> None:
         """Error Handling: try/except with V2 Auto."""
         from typing import cast
+
         try:
             user = cast("User", AutoGetUserService(user_id="789"))
             assert user.entity_id == "789"
@@ -639,6 +641,7 @@ class TestAllPatternsIntegration:
 
         # V2 Auto: Zero ceremony
         from typing import cast
+
         auto_user = cast("User", AutoGetUserService(user_id="789"))
         assert auto_user.entity_id == "789"
 

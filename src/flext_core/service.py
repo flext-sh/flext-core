@@ -34,6 +34,7 @@ from typing import (
 from beartype.door import is_bearable
 from pydantic import computed_field
 
+from flext_core._utilities.generators import create_dynamic_type_subclass
 from flext_core._utilities.reliability import FlextUtilitiesReliability
 from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.config import FlextConfig
@@ -255,19 +256,16 @@ class FlextService[TDomainResult](
 
         # Create typed subclass with proper namespace attributes for Pydantic v2
         # __module__ and __qualname__ must be in namespace dict for metaclass
-        # Dynamic type creation using type() built-in - creates a typed subclass
-        # This is valid Python metaprogramming - dynamically creating a class at runtime
-        typed_subclass = type(
+        # Dynamic type creation using helper function - valid Python metaprogramming
+        return create_dynamic_type_subclass(
             f"{cls_name}[{type_name}]",
-            (cls,),
+            cls,
             {
                 "_expected_domain_result_type": actual_type,
                 "__module__": cls.__module__,
                 "__qualname__": f"{cls_qualname}[{type_name}]",
             },
         )
-        # Type checkers need explicit cast for dynamic type() calls
-        return cast("type[Self]", typed_subclass)
 
     def validate_domain_result(
         self, result: FlextResult[TDomainResult]
@@ -397,7 +395,7 @@ class FlextService[TDomainResult](
 
         """
         # Create instance using object.__new__ to bypass auto_execute
-        instance = object.__new__(cls)
+        instance = cast("Self", object.__new__(cls))
         # Initialize instance
         type(instance).__init__(instance, **kwargs)
         # Execute and return result
@@ -434,7 +432,7 @@ class FlextService[TDomainResult](
 
         """
         # Create instance using object.__new__ to bypass auto_execute
-        instance = object.__new__(cls)
+        instance = cast("Self", object.__new__(cls))
         # Initialize instance
         type(instance).__init__(instance, **kwargs)
         # Return instance without executing

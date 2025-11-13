@@ -607,11 +607,17 @@ class TestV2BestPractices:
 
     def test_v2_auto_recommended_for_simple_services(self) -> None:
         """V2 Auto: Recommended for simple, always-succeed services."""
-        # Simple service that always succeeds
+        # Simple service that always succeeds - auto_execute returns unwrapped value
         value = SimpleV2AutoService(message="simple")
 
         # V2 Auto: Zero ceremony (95% less code than V1)
+        # With auto_execute=True, we get the unwrapped value directly
         assert value == "V2 Auto: simple"
+
+        # If you need FlextResult, use .with_result()
+        result = SimpleV2AutoService.with_result(message="simple")
+        assert result.is_success
+        assert result.unwrap() == "V2 Auto: simple"
 
     def test_v1_railway_pattern_for_complex_pipelines(self) -> None:
         """V1 Railway: Recommended for complex pipelines."""

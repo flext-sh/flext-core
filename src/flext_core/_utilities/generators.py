@@ -14,13 +14,13 @@ import string
 import time
 import uuid
 import warnings
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from typing import cast
 
 from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
-from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 # Module constants
@@ -120,36 +120,6 @@ class FlextUtilitiesGenerators:
 
         """
         return str(uuid.uuid4())
-
-    @staticmethod
-    def create_module_utilities(module_name: str) -> FlextResult[type]:
-        """Create utilities for a specific module.
-
-        Args:
-            module_name: Name of the module to create utilities for
-
-        Returns:
-            FlextResult containing module utilities type or error
-
-        """
-        if not module_name:
-            return FlextResult[type].fail(
-                "Module name must be a non-empty string",
-            )
-
-        # For now, return a simple utilities object
-        # This can be expanded with actual module-specific functionality
-        utilities = type(
-            f"{module_name}_utilities",
-            (),
-            {
-                "module_name": module_name,
-                "logger": lambda: f"Logger for {module_name}",
-                "config": lambda: f"Config for {module_name}",
-            },
-        )()
-
-        return FlextResult[type].ok(type(utilities))
 
     @staticmethod
     def generate_correlation_id_with_context(context: str) -> str:
@@ -288,7 +258,9 @@ class FlextUtilitiesGenerators:
                     items_method = getattr(context, "items", None)
                     if callable(items_method):
                         # Cast to ensure type checker understands this returns dict items
-                        items_result = items_method()
+                        items_result = cast(
+                            "Iterable[tuple[str, object]]", items_method()
+                        )
                         context_dict = dict(items_result)
                     else:
                         context_dict = {}
@@ -299,8 +271,7 @@ class FlextUtilitiesGenerators:
         else:
             context_dict = context
 
-        # Ensure all keys are strings and cast to proper type
-        context_dict = cast("dict[str, object]", context_dict)
+        # Ensure all keys are strings (already validated above)
 
         # Ensure trace_id exists (always included)
         if "trace_id" not in context_dict:
@@ -380,8 +351,8 @@ class FlextUtilitiesGenerators:
                 items_method = getattr(value, "items", None)
                 if callable(items_method):
                     # Cast to ensure type checker understands this returns dict items
-                    items_result = items_method()
-                    return cast("dict[str, object]", dict(items_result))
+                    items_result = cast("Iterable[tuple[str, object]]", items_method())
+                    return dict(items_result)
             except (AttributeError, TypeError):
                 pass
 
@@ -407,6 +378,30 @@ class FlextUtilitiesGenerators:
         timestamp = int(time.time() * 1000000)
         message_id = id(message)
         return f"{message_type}_{message_id}_{timestamp}"
+
+
+def create_dynamic_type_subclass(
+    name: str,
+    base_class: object,  # Can be a class or Self
+    attributes: dict[str, object],
+) -> type:
+    """Create a dynamic subclass using type() for metaprogramming.
+
+    This helper function encapsulates the creation of dynamic classes
+    to isolate type checker issues with metaprogramming.
+
+    Args:
+        name: Name of the subclass
+        base_class: Base class to inherit from
+        attributes: Dictionary of attributes to add to the subclass
+
+    Returns:
+        The dynamically created subclass
+
+    """
+    # pyrefly doesn't understand type() for dynamic class creation
+    # This is valid Python metaprogramming
+    return type(name, (cast("type", base_class),), attributes)
 
 
 __all__ = ["FlextUtilitiesGenerators"]

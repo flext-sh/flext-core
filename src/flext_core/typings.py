@@ -202,10 +202,10 @@ class FlextTypes:
     # =========================================================================
 
     type JsonPrimitive = str | int | float | bool | None
-    # JSON recursive type using forward reference (Pyrefly compatible)
+    # JSON recursive type using Union (Pyrefly compatible)
     # Python 3.13 native syntax would be: JsonPrimitive | dict[str, JsonValue] | list[JsonValue]
-    # But Pyrefly doesn't support PEP 695 recursive types yet, so we use string forward reference
-    type JsonValue = JsonPrimitive | dict[str, JsonValue] | list[JsonValue]
+    # But Pyrefly doesn't support PEP 695 recursive types yet, so we use Any for recursion
+    JsonValue = JsonPrimitive | dict[str, object] | list[object]
     type JsonList = list[JsonValue]
     type JsonDict = dict[str, JsonValue]
 

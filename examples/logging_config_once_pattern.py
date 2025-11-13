@@ -16,9 +16,9 @@ from flext_core import FlextResult, FlextService
 class DatabaseService(FlextService[dict[str, object]]):
     """Example service showing config log-once pattern."""
 
-    config: dict[str, object]
+    db_config: dict[str, object]
 
-    def model_post_init(self, __context: object) -> None:
+    def model_post_init(self, /, __context: object) -> None:
         """Post-initialization hook.
 
         Args:
@@ -28,7 +28,7 @@ class DatabaseService(FlextService[dict[str, object]]):
         super().model_post_init(__context)
 
         # ✅ CORRECT: Log config ONCE, doesn't appear in all subsequent logs
-        self._log_config_once(self.config, message="Database configuration loaded")
+        self._log_config_once(self.db_config, message="Database configuration loaded")
 
         # ❌ WRONG: DO NOT pass config to _with_operation_context
         # self._with_operation_context("init", config=config)  # ← This binds config to ALL logs!
@@ -120,7 +120,7 @@ def main() -> None:
         "pool_size": 10,
     }
 
-    db_service = DatabaseService(db_config)
+    db_service = DatabaseService(db_config=db_config)
     result = db_service.execute()
 
     if result.is_success:
