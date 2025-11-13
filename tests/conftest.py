@@ -217,7 +217,7 @@ def test_constants() -> dict[str, object]:
 
 
 @pytest.fixture
-def test_contexts() -> dict[str, dict[str, object]]:
+def test_contexts() -> dict[str, object]:
     """Provide common test contexts for various scenarios."""
     return get_test_contexts()
 

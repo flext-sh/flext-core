@@ -166,7 +166,9 @@ class UpdateUserCommandHandler(
         if message.target_user_id not in self.updated_users:
             self.updated_users[message.target_user_id] = {}
 
-        self.updated_users[message.target_user_id].update(message.updates)
+        user_updates = self.updated_users[message.target_user_id]
+        if isinstance(user_updates, dict):
+            user_updates.update(message.updates)
 
         result_data: dict[str, object] = {
             "target_user_id": message.target_user_id,

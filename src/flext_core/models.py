@@ -280,16 +280,6 @@ class FlextModels:
         class Query(FlextModelsCqrs.Query):
             """Query model for CQRS query operations - wrapper class."""
 
-            def model_post_init(self, __context: object, /) -> None:
-                """Convert internal Pagination to wrapper Pagination."""
-                super().model_post_init(__context)
-                if isinstance(
-                    self.pagination, FlextModelsCqrs.Pagination
-                ) and not isinstance(self.pagination, FlextModels.Cqrs.Pagination):
-                    self.pagination = FlextModels.Cqrs.Pagination(
-                        page=self.pagination.page, size=self.pagination.size
-                    )
-
         class Bus(FlextModelsCqrs.Bus):
             """Bus configuration model - wrapper class."""
 

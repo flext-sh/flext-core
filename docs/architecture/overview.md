@@ -176,7 +176,7 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 
        def add_item(self, item: OrderItem) -> FlextResult[None]:
            self.items.append(item)
-           self.add_domain_event("ItemAdded", {"item_id": item.id})
+           self.add_domain_event("ItemAdded", {"item_id": item.entity_id})
            return FlextResult[None].ok(None)
    ```
 

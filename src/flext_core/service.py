@@ -18,9 +18,8 @@ import signal
 import time
 import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from datetime import UTC, datetime
 from typing import (
     ClassVar,
     Self,
@@ -35,6 +34,8 @@ from typing import (
 from beartype.door import is_bearable
 from pydantic import computed_field
 
+from flext_core._utilities.reliability import FlextUtilitiesReliability
+from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
@@ -42,6 +43,7 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 
 # =========================================================================
 # FLEXT SERVICE - Domain Service Base Class
@@ -267,7 +269,7 @@ class FlextService[TDomainResult](
         # Type checkers need explicit cast for dynamic type() calls
         return cast("type[Self]", typed_subclass)
 
-    def _validate_domain_result(
+    def validate_domain_result(
         self, result: FlextResult[TDomainResult]
     ) -> FlextResult[TDomainResult]:
         """Validate execute() result matches expected domain result type.
@@ -353,7 +355,7 @@ class FlextService[TDomainResult](
 
         if cls.auto_execute:
             # Auto-execute with runtime type validation
-            result = instance._validate_domain_result(instance.execute())
+            result = instance.validate_domain_result(instance.execute())
             # Cast to Self for type checker (actual runtime value is TDomainResult)
             return cast("Self", result.unwrap())
 
@@ -361,10 +363,88 @@ class FlextService[TDomainResult](
         return instance
 
     # =========================================================================
+    # CLASS METHODS: Alternative Instantiation Patterns
+    # =========================================================================
+
+    @classmethod
+    def with_result(cls, **kwargs: object) -> FlextResult[TDomainResult]:
+        """Create service and return FlextResult instead of unwrapped value.
+
+        This method always returns FlextResult[T], regardless of auto_execute setting.
+        Useful when you want railway pattern composition even with auto_execute=True.
+
+        Args:
+            **kwargs: Service initialization parameters
+
+        Returns:
+            FlextResult[TDomainResult]: Result of service execution
+
+        Example:
+            >>> class UserService(FlextService[User]):
+            ...     auto_execute = True  # Direct execution by default
+            ...     user_id: str
+            ...
+            ...     def execute(self) -> FlextResult[User]:
+            ...         return self.ok(User(id=self.user_id))
+            >>>
+            >>> # Normal: returns User directly
+            >>> user = UserService(user_id="123")
+            >>>
+            >>> # with_result(): returns FlextResult[User]
+            >>> result = UserService.with_result(user_id="456")
+            >>> assert result.is_success
+            >>> user = result.unwrap()
+
+        """
+        # Create instance using object.__new__ to bypass auto_execute
+        instance = object.__new__(cls)
+        # Initialize instance
+        type(instance).__init__(instance, **kwargs)
+        # Execute and return result
+        return instance.validate_domain_result(instance.execute())
+
+    @classmethod
+    def v1(cls, **kwargs: object) -> Self:
+        """Create service instance without auto-execution (V1 compatibility).
+
+        This method always returns the service instance, regardless of auto_execute.
+        Useful for V1-style explicit .execute() calls.
+
+        Args:
+            **kwargs: Service initialization parameters
+
+        Returns:
+            Self: Service instance (not executed)
+
+        Example:
+            >>> class UserService(FlextService[User]):
+            ...     auto_execute = True  # Would normally auto-execute
+            ...     user_id: str
+            ...
+            ...     def execute(self) -> FlextResult[User]:
+            ...         return self.ok(User(id=self.user_id))
+            >>>
+            >>> # Normal: returns User directly (auto-executed)
+            >>> user = UserService(user_id="123")
+            >>>
+            >>> # v1(): returns service instance (NOT executed)
+            >>> service = UserService.v1(user_id="456")
+            >>> assert isinstance(service, UserService)
+            >>> result = service.execute()  # Must call execute() manually
+
+        """
+        # Create instance using object.__new__ to bypass auto_execute
+        instance = object.__new__(cls)
+        # Initialize instance
+        type(instance).__init__(instance, **kwargs)
+        # Return instance without executing
+        return instance
+
+    # =========================================================================
     # V2 PROPERTY: Zero-Ceremony Access Pattern
     # =========================================================================
 
-    @computed_field  # Pydantic 2 native API - acts as property
+    @property
     def result(self) -> TDomainResult:
         """Auto-execute and unwrap shorthand (V2 pattern).
 
@@ -399,7 +479,7 @@ class FlextService[TDomainResult](
             - Zero performance overhead vs manual .execute().unwrap()
 
         """
-        return self._validate_domain_result(self.execute()).unwrap()
+        return self.validate_domain_result(self.execute()).unwrap()
 
     @classmethod
     def _extract_dependencies_from_signature(cls) -> dict[str, type]:
@@ -498,6 +578,45 @@ class FlextService[TDomainResult](
         """
         return FlextConfig.get_global_instance()
 
+    def _resolve_project_component(
+        self,
+        component_suffix: str,
+        type_check_func: Callable[[object], bool],
+        fallback_value: object,
+    ) -> object:
+        """Resolve project component by naming convention (DRY helper).
+
+        Eliminates duplication between project_config and project_models.
+        Both properties follow identical pattern: extract class name → replace
+        suffix → get from container → check type → return or fallback.
+
+        Args:
+            component_suffix: Suffix to replace "Service" with ("Config"/"Models")
+            type_check_func: Function to validate resolved object type
+            fallback_value: Value to return if resolution fails
+
+        Returns:
+            Resolved component or fallback value
+
+        """
+        try:
+            service_class_name = self.__class__.__name__
+            component_class_name = service_class_name.replace(
+                "Service", component_suffix
+            )
+
+            container = self.container
+            result = container.get(component_class_name)
+
+            if result.is_success:
+                obj = result.unwrap()
+                if type_check_func(obj):
+                    return obj
+        except Exception as e:
+            self.logger.debug(f"{component_suffix} resolution failed: {e}")
+
+        return fallback_value
+
     @property
     def project_config(self) -> FlextConfig:
         """Auto-resolve project-specific configuration by naming convention.
@@ -523,26 +642,14 @@ class FlextService[TDomainResult](
             FlextConfig: Project-specific configuration instance
 
         """
-        try:
-            # Extract project name from service class: FlextCliCore → FlextCli
-            service_class_name = self.__class__.__name__
-            # Try to find matching config class
-            # Pattern: FlextXyzService → FlextXyzConfig
-            config_class_name = service_class_name.replace("Service", "Config")
-
-            container = self.container
-            config_result = container.get(config_class_name)
-
-            if config_result.is_success:
-                config = config_result.unwrap()
-                if isinstance(config, FlextConfig):
-                    return config
-        except Exception as e:
-            # Fall back to global config if resolution fails
-            self.logger.debug(f"Config resolution failed, using global instance: {e}")
-
-        # Fall back to global config
-        return FlextConfig.get_global_instance()
+        return cast(
+            "FlextConfig",
+            self._resolve_project_component(
+                "Config",
+                lambda obj: isinstance(obj, FlextConfig),
+                FlextConfig.get_global_instance(),
+            ),
+        )
 
     @property
     def project_models(self) -> type:
@@ -569,26 +676,14 @@ class FlextService[TDomainResult](
             type: Project models namespace (typically a class with nested types)
 
         """
-        try:
-            # Extract project name from service class: FlextCliCore → FlextCli
-            service_class_name = self.__class__.__name__
-            # Try to find matching models class
-            # Pattern: FlextXyzService → FlextXyzModels
-            models_class_name = service_class_name.replace("Service", "Models")
-
-            container = self.container
-            models_result = container.get(models_class_name)
-
-            if models_result.is_success:
-                models_obj = models_result.unwrap()
-                if isinstance(models_obj, type):
-                    return models_obj
-        except Exception as e:
-            # Return default namespace if resolution fails
-            self.logger.debug(f"Models resolution failed, using default namespace: {e}")
-
-        # Return a minimal namespace type if not found
-        return type("ModelsNamespace", (), {})
+        return cast(
+            "type",
+            self._resolve_project_component(
+                "Models",
+                lambda obj: isinstance(obj, type),
+                type("ModelsNamespace", (), {}),
+            ),
+        )
 
     def __init_subclass__(cls) -> None:
         """Automatic service registration with dependency injection.
@@ -860,7 +955,7 @@ class FlextService[TDomainResult](
         request: FlextModels.OperationExecutionRequest,
         retry_config: dict[str, object],
     ) -> FlextResult[TDomainResult]:
-        """Execute operation with retry logic.
+        """Execute operation with retry logic using FlextUtilities.
 
         Args:
             request: Operation execution request
@@ -870,41 +965,27 @@ class FlextService[TDomainResult](
             FlextResult[TDomainResult]: Result of execution with retry
 
         """
-        # Extract and validate retry parameters
-        try:
-            max_attempts = int(cast("int", retry_config.get("max_attempts", 1) or 1))
-            initial_delay = float(
-                cast("float", retry_config.get("initial_delay_seconds", 0.1) or 0.1)
-            )
-            max_delay = float(
-                cast("float", retry_config.get("max_delay_seconds", 60.0) or 60.0)
-            )
-            exponential_backoff = bool(retry_config.get("exponential_backoff"))
-            retry_on_exceptions = cast(
-                "list[type[Exception]]",
-                retry_config.get("retry_on_exceptions") or [Exception],
-            )
+        # Use FlextUtilities for robust retry configuration validation and execution
+        return FlextUtilitiesValidation.create_retry_config(retry_config).flat_map(
+            lambda config: self._execute_with_retry_config(request, config)
+        )
 
-            # Validate backoff_multiplier if present
-            if "backoff_multiplier" in retry_config:
-                backoff_mult = float(cast("float", retry_config["backoff_multiplier"]))
-                if backoff_mult < 1.0:
-                    msg = (
-                        "Invalid retry configuration: backoff_multiplier must be >= 1.0"
-                    )
-                    return self.fail(
-                        msg,
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-        except (ValueError, TypeError) as e:
-            return self.fail(
-                f"Invalid retry configuration: {e}",
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
-            )
+    def _execute_with_retry_config(
+        self,
+        request: FlextModels.OperationExecutionRequest,
+        config: FlextTypes.RetryConfig,
+    ) -> FlextResult[TDomainResult]:
+        """Execute operation with validated retry configuration.
 
-        last_exception: Exception | None = None
+        Args:
+            request: Operation execution request
+            config: Validated retry configuration
 
-        for attempt in range(max_attempts):
+        Returns:
+            FlextResult[TDomainResult]: Result of execution with retry
+
+        """
+        for attempt in range(config.max_attempts):
             try:
                 result = self._execute_callable_once(request)
                 self.logger.info(
@@ -913,24 +994,22 @@ class FlextService[TDomainResult](
 
                 # Wrap result if not already a FlextResult
                 if self._is_flext_result(result):
-                    # Cast to correct type - we know it's FlextResult[TDomainResult]
                     return cast("FlextResult[TDomainResult]", result)
-                # Wrap non-FlextResult in FlextResult
                 return self.ok(result)
 
             except Exception as e:
-                last_exception = e
+                attempt_num = attempt + 1
 
-                # Check if we should retry this exception
-                should_retry = any(
-                    isinstance(e, exc_type) for exc_type in retry_on_exceptions
+                # Use FlextUtilities for exception type checking
+                should_retry = FlextUtilitiesValidation.is_exception_retryable(
+                    e, config.retry_on_exceptions
                 )
 
-                if not should_retry or attempt >= max_attempts - 1:
-                    # Final failure
-                    error_msg = str(e) or type(e).__name__
-                    if isinstance(e, (TimeoutError, concurrent.futures.TimeoutError)):
-                        error_msg = f"Operation timed out after {request.timeout_seconds} seconds"
+                if not should_retry or attempt_num >= config.max_attempts:
+                    # Final failure - use FlextUtilities for error message formatting
+                    error_msg = FlextUtilitiesValidation.format_error_message(
+                        e, request.timeout_seconds
+                    )
 
                     self.logger.exception(
                         f"Operation execution failed: {request.operation_name}",
@@ -940,22 +1019,20 @@ class FlextService[TDomainResult](
                         f"Operation {request.operation_name} failed: {error_msg}"
                     )
 
-                # Calculate delay for retry
-                delay = (
-                    min(initial_delay * (2**attempt), max_delay)
-                    if exponential_backoff
-                    else min(initial_delay, max_delay)
+                # Use FlextUtilities for delay calculation
+                delay = FlextUtilitiesReliability.calculate_delay(
+                    attempt=attempt, config=config
                 )
 
                 self.logger.warning(
-                    f"Operation {request.operation_name} failed (attempt {attempt + 1}/{max_attempts}), retrying in {delay}s",
+                    f"Operation {request.operation_name} failed (attempt {attempt_num}/{config.max_attempts}), retrying in {delay:.2f}s",
                     extra={"error": str(e), "error_type": type(e).__name__},
                 )
                 time.sleep(delay)
 
         # Fallback (should not reach here)
         return self.fail(
-            f"Operation {request.operation_name} failed after {max_attempts} attempts: {last_exception}"
+            f"Operation {request.operation_name} failed after {config.max_attempts} attempts"
         )
 
     def execute_operation(
@@ -1120,63 +1197,6 @@ class FlextService[TDomainResult](
                 return self.execute()
         except TimeoutError as e:
             return self.fail(str(e))
-
-    # Helper classes for advanced service operations
-    class _ExecutionHelper:
-        """Helper class for execution-related operations utilities."""
-
-        @staticmethod
-        def prepare_execution_context(
-            service: FlextService[
-                object
-            ],  # Generic service - works with any TDomainResult
-        ) -> dict[str, object]:
-            """Prepare execution context for a service."""
-            context: dict[str, object] = {
-                "service_type": service.__class__.__name__,
-                "service_name": getattr(service, "_service_name", None),
-                "timestamp": datetime.now(UTC),
-            }
-            return context
-
-        @staticmethod
-        def cleanup_execution_context(
-            service: FlextService[object],
-            context: dict[str, object],  # Generic service
-        ) -> None:
-            """Clean up execution context after operation."""
-            # Basic cleanup - could be extended for more complex operations
-
-    class _MetadataHelper:
-        """Helper class for metadata extraction and formatting utilities."""
-
-        @staticmethod
-        def extract_service_metadata(
-            service: FlextService[object],
-            *,
-            include_timestamps: bool = True,  # Generic service
-        ) -> dict[str, object]:
-            """Extract metadata from a service instance."""
-            metadata: dict[str, object] = {
-                "service_class": service.__class__.__name__,
-                "service_name": getattr(service, "_service_name", None),
-                "service_module": service.__class__.__module__,
-            }
-
-            if include_timestamps:
-                now = datetime.now(UTC)
-                metadata["created_at"] = now
-                metadata["extracted_at"] = now
-
-            return metadata
-
-        @staticmethod
-        def format_service_info(
-            _service: FlextService[object],
-            metadata: dict[str, object],  # Generic service
-        ) -> str:
-            """Format service information for display."""
-            return f"Service: {metadata.get('service_type', 'Unknown')} ({metadata.get('service_name', 'unnamed')})"
 
     # =========================================================================
     # Protocol Implementation: ExecutableService[T]

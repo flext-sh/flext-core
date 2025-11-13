@@ -48,7 +48,7 @@ class FlextUtilitiesTextProcessor:
 
     @staticmethod
     def safe_string(
-        text: str,
+        text: str | None,
         default: str = FlextConstants.Performance.DEFAULT_EMPTY_STRING,
     ) -> str:
         """Convert text to safe string, handling None and empty values.

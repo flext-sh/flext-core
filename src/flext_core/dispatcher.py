@@ -17,11 +17,14 @@ import threading
 import time
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager, suppress
-from typing import cast, override
+from typing import Any, cast, override
 
 from cachetools import LRUCache
 from pydantic import BaseModel
 
+from flext_core._utilities.generators import FlextUtilitiesGenerators
+from flext_core._utilities.reliability import FlextUtilitiesReliability
+from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
 from flext_core.handlers import FlextHandlers
@@ -662,9 +665,7 @@ class FlextDispatcher(FlextMixins):
 
         # Query result caching (from FlextBus - LRU cache)
         max_cache_size = getattr(self.config, "cache_max_size", 100)
-        self._cache: LRUCache[str, FlextResult[object]] = LRUCache(
-            maxsize=max_cache_size
-        )
+        self._cache: Any = LRUCache(maxsize=max_cache_size)
 
         # Event subscribers (from FlextBus event protocol)
         self._event_subscribers: dict[str, list[object]] = {}  # event_type → handlers
@@ -1073,6 +1074,45 @@ class FlextDispatcher(FlextMixins):
         # Execute processor with metrics collection
         return self._execute_processor_with_metrics(name, processor, data)
 
+    def _process_collection(
+        self,
+        name: str,
+        data_list: list[object],
+        resolved_param: int,
+        operation_type: str,
+        metric_key: str,
+    ) -> FlextResult[list[object]]:
+        """Process collection with specified operation type (DRY helper).
+
+        Eliminates duplication between process_batch and process_parallel.
+        Both methods follow identical pattern: empty check → call internal
+        method → update metrics → return result.
+
+        Args:
+            name: Processor name
+            data_list: List of items to process
+            resolved_param: Resolved batch size or worker count
+            operation_type: "batch" or "parallel" (for internal method routing)
+            metric_key: Metric key to increment on success
+
+        Returns:
+            FlextResult[list[object]]: List of processed items or error
+
+        """
+        if not data_list:
+            return FlextResult[list[object]].ok([])
+
+        # Call appropriate internal method based on operation type
+        if operation_type == "batch":
+            result = self._process_batch_internal(name, data_list, resolved_param)
+        else:  # parallel
+            result = self._process_parallel_internal(name, data_list, resolved_param)
+
+        if result.is_success:
+            self._process_metrics[metric_key] += 1
+
+        return result
+
     def process_batch(
         self,
         name: str,
@@ -1090,19 +1130,14 @@ class FlextDispatcher(FlextMixins):
             FlextResult[list[object]]: List of processed items or error
 
         """
-        if not data_list:
-            return FlextResult[list[object]].ok([])
-
-        # Resolve batch size
         resolved_batch_size = batch_size or self._batch_size
-
-        # Use internal batch processing
-        result = self._process_batch_internal(name, data_list, resolved_batch_size)
-
-        if result.is_success:
-            self._process_metrics["batch_operations"] += 1
-
-        return result
+        return self._process_collection(
+            name,
+            data_list,
+            resolved_batch_size,
+            "batch",
+            "batch_operations",
+        )
 
     def process_parallel(
         self,
@@ -1121,19 +1156,14 @@ class FlextDispatcher(FlextMixins):
             FlextResult[list[object]]: List of processed items or error
 
         """
-        if not data_list:
-            return FlextResult[list[object]].ok([])
-
-        # Resolve worker count
         resolved_workers = max_workers or self._parallel_workers
-
-        # Use internal parallel processing
-        result = self._process_parallel_internal(name, data_list, resolved_workers)
-
-        if result.is_success:
-            self._process_metrics["parallel_operations"] += 1
-
-        return result
+        return self._process_collection(
+            name,
+            data_list,
+            resolved_workers,
+            "parallel",
+            "parallel_operations",
+        )
 
     def execute_with_timeout(
         self,
@@ -2008,7 +2038,7 @@ class FlextDispatcher(FlextMixins):
             if request_dict.get("message_type")
             else None,
             "handler_mode": request_dict.get("handler_mode"),
-            "timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+            "timestamp": FlextUtilitiesGenerators.generate_iso_timestamp(),
             "status": FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
         }
 
@@ -2089,6 +2119,38 @@ class FlextDispatcher(FlextMixins):
 
         return self.register_handler_with_request(request)
 
+    def _register_handler(
+        self,
+        message_type: type[object],
+        handler: FlextHandlers[object, object],
+        handler_mode: str,
+        handler_config: FlextTypes.HandlerConfigurationType = None,
+    ) -> FlextResult[dict[str, object]]:
+        """Register handler with specific mode (DRY helper).
+
+        Eliminates duplication between register_command and register_query.
+        Both methods follow identical pattern: create request dict → call
+        register_handler_with_request().
+
+        Args:
+            message_type: Command or query message type
+            handler: Handler instance
+            handler_mode: Handler mode constant (COMMAND or QUERY)
+            handler_config: Optional handler configuration
+
+        Returns:
+            FlextResult with registration details or error
+
+        """
+        request: dict[str, object] = {
+            "handler": handler,
+            "message_type": message_type,
+            "handler_mode": handler_mode,
+            "handler_config": handler_config,
+        }
+
+        return self.register_handler_with_request(request)
+
     def register_command(
         self,
         command_type: type[object],
@@ -2107,14 +2169,12 @@ class FlextDispatcher(FlextMixins):
             FlextResult with registration details or error
 
         """
-        request: dict[str, object] = {
-            "handler": handler,
-            "message_type": command_type,
-            "handler_mode": FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-            "handler_config": handler_config,
-        }
-
-        return self.register_handler_with_request(request)
+        return self._register_handler(
+            command_type,
+            handler,
+            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+            handler_config,
+        )
 
     def register_query(
         self,
@@ -2134,14 +2194,12 @@ class FlextDispatcher(FlextMixins):
             FlextResult with registration details or error
 
         """
-        request: dict[str, object] = {
-            "handler": handler,
-            "message_type": query_type,
-            "handler_mode": FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
-            "handler_config": handler_config,
-        }
-
-        return self.register_handler_with_request(request)
+        return self._register_handler(
+            query_type,
+            handler,
+            FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+            handler_config,
+        )
 
     def register_function(
         self,
@@ -2209,7 +2267,7 @@ class FlextDispatcher(FlextMixins):
 
         """
         try:
-            handler = FlextHandlers.from_callable(
+            handler = FlextHandlers.create_from_callable(
                 func=handler_func,
                 handler_name=getattr(handler_func, "__name__", "FunctionHandler"),
                 handler_type=mode,
@@ -2562,42 +2620,22 @@ class FlextDispatcher(FlextMixins):
 
     def dispatch(
         self,
-        message_or_type: object | str,
-        data: object | None = None,
+        _message_or_type: object | str,
+        _data: object | None = None,
         *,
         config: object | None = None,
         metadata: dict[str, object] | None = None,
         correlation_id: str | None = None,
         timeout_override: int | None = None,
     ) -> FlextResult[object]:
-        """Dispatch message with support for both old and new API.
+        """Dispatch message with railway pattern and FlextUtilities integration.
 
-        NEW (RECOMMENDED - Config Pattern):
-            result = dispatcher.dispatch(
-                "my_message",
-                data={"key": "value"},
-                config=FlextModels.Config.DispatchConfig(
-                    metadata={"user_id": "123"},
-                    correlation_id="abc-123",
-                    timeout_override=30
-                )
-            )
-
-        OLD (Backward Compatible):
-            result = dispatcher.dispatch(
-                "my_message",
-                data={"key": "value"},
-                metadata={"user_id": "123"},
-                correlation_id="abc-123",
-                timeout_override=30
-            )
-
-        Refactored to use specialized processors for SOLID compliance:
-        - Timeout, retry → Uses threading with processors
+        Uses railway-oriented programming with automatic retry, circuit breaker,
+        and timeout handling through FlextUtilities and processor patterns.
 
         Args:
-            message_or_type: Message object or message type string
-            data: Data to dispatch (when message_or_type is string)
+            _message_or_type: Message object or message type string (unused in current implementation)
+            _data: Data to dispatch (when _message_or_type is string, unused in current implementation)
             config: DispatchConfig instance (Pydantic v2) - NEW PATTERN
             metadata: Optional execution context metadata (backward compat)
             correlation_id: Optional correlation ID for tracing (backward compat)
@@ -2607,53 +2645,139 @@ class FlextDispatcher(FlextMixins):
             FlextResult with execution result or error
 
         """
-        # Extract config values (config takes priority over individual params)
-        if config is not None:
-            metadata = getattr(config, "metadata", metadata)
-            correlation_id = getattr(config, "correlation_id", correlation_id)
-            timeout_override = getattr(config, "timeout_override", timeout_override)
-        # Propagate context for distributed tracing
-        dispatch_type = (
-            type(message_or_type).__name__
-            if not isinstance(message_or_type, str)
-            else str(message_or_type)
+        return (
+            self._extract_dispatch_config(
+                config, metadata, correlation_id, timeout_override
+            )
+            .flat_map(
+                lambda dispatch_config: self._prepare_dispatch_context(
+                    _message_or_type, _data, dispatch_config
+                )
+            )
+            .flat_map(self._validate_pre_dispatch_conditions)
+            .flat_map(self._execute_with_retry_policy)
         )
-        self._propagate_context(f"dispatch_{dispatch_type}")
 
-        # Normalize message and get type
-        message, message_type = self._normalize_dispatch_message(message_or_type, data)
+    def _extract_dispatch_config(
+        self,
+        config: object | None,
+        metadata: dict[str, object] | None,
+        correlation_id: str | None,
+        timeout_override: int | None,
+    ) -> FlextResult[dict[str, object]]:
+        """Extract and validate dispatch configuration using FlextUtilities."""
+        try:
+            # Extract config values (config takes priority over individual params)
+            if config is not None:
+                metadata = getattr(config, "metadata", metadata)
+                correlation_id = getattr(config, "correlation_id", correlation_id)
+                timeout_override = getattr(config, "timeout_override", timeout_override)
+
+            # Use FlextUtilities for configuration validation
+            config_dict = {
+                "metadata": metadata or {},
+                "correlation_id": correlation_id,
+                "timeout_override": timeout_override,
+            }
+
+            validation_result = FlextUtilitiesValidation.validate_dispatch_config(
+                cast("dict[str, object]", config_dict)
+            )
+            if validation_result.is_failure:
+                return FlextResult[dict[str, object]].fail(
+                    f"Invalid dispatch configuration: {validation_result.error}"
+                )
+
+            return FlextResult[dict[str, object]].ok(
+                cast("dict[str, object]", config_dict)
+            )
+
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Configuration extraction failed: {e}"
+            )
+
+    def _prepare_dispatch_context(
+        self,
+        message_or_type: object | str,
+        data: object | None,
+        dispatch_config: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
+        """Prepare dispatch context with message normalization and context propagation."""
+        try:
+            # Propagate context for distributed tracing
+            dispatch_type = (
+                type(message_or_type).__name__
+                if not isinstance(message_or_type, str)
+                else str(message_or_type)
+            )
+            self._propagate_context(f"dispatch_{dispatch_type}")
+
+            # Normalize message and get type
+            message, message_type = self._normalize_dispatch_message(
+                message_or_type, data
+            )
+
+            context = {
+                **dispatch_config,
+                "message": message,
+                "message_type": message_type,
+                "dispatch_type": dispatch_type,
+            }
+
+            return FlextResult[dict[str, object]].ok(context)
+
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Context preparation failed: {e}"
+            )
+
+    def _validate_pre_dispatch_conditions(
+        self, context: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Validate pre-dispatch conditions (circuit breaker + rate limiting)."""
+        message_type = cast("str", context["message_type"])
 
         # Check pre-dispatch conditions (circuit breaker + rate limiting)
         conditions_check = self._check_pre_dispatch_conditions(message_type)
         if conditions_check.is_failure:
-            return self.fail(
+            return FlextResult[dict[str, object]].fail(
                 conditions_check.error,
                 error_code=conditions_check.error_code,
                 error_data=conditions_check.error_data,
             )
 
-        # Execute with retry logic
-        max_retries = self._retry_policy.get_max_attempts()
-        operation_id = f"{message_type}_{id(message)}_{int(time.time() * 1000000)}"
+        return FlextResult[dict[str, object]].ok(context)
 
-        for attempt in range(max_retries):
-            result = self._execute_dispatch_attempt(
+    def _execute_with_retry_policy(
+        self, context: dict[str, object]
+    ) -> FlextResult[object]:
+        """Execute dispatch with retry policy using FlextUtilities."""
+        message = context["message"]
+        message_type = cast("str", context["message_type"])
+        metadata = cast("dict[str, object] | None", context["metadata"])
+        correlation_id = cast("str | None", context["correlation_id"])
+        timeout_override = cast("int | None", context["timeout_override"])
+
+        # Generate operation ID using FlextUtilities
+        operation_id = FlextUtilitiesGenerators.generate_operation_id(
+            message_type, message
+        )
+
+        # Use FlextUtilities for retry execution
+        return FlextUtilitiesReliability.with_retry(
+            lambda: self._execute_dispatch_attempt(
                 message,
                 message_type,
                 metadata,
                 correlation_id,
                 timeout_override,
                 operation_id,
-            )
-            if result.is_success or not self._should_retry_on_error(
-                attempt, result.error if result.is_failure else None
-            ):
-                self._cleanup_timeout_context(operation_id)
-                return result
-
-        # Record final failure and clean up timeout context
-        self._cleanup_timeout_context(operation_id)
-        return self.fail("Max retries exceeded")
+            ),
+            max_attempts=self._retry_policy.get_max_attempts(),
+            should_retry_func=self._should_retry_on_error,
+            cleanup_func=lambda: self._cleanup_timeout_context(operation_id),
+        )
 
     def _normalize_dispatch_message(
         self, message_or_type: object | str, data: object | None
@@ -2805,7 +2929,9 @@ class FlextDispatcher(FlextMixins):
         # This consolidates duplicate model_dump() logic and provides uniform conversion
         if isinstance(metadata, BaseModel):
             with suppress(Exception):
-                dumped = FlextUtilities.Generators.ensure_dict(metadata, allow_none_as_empty=False)
+                dumped = FlextUtilitiesGenerators.ensure_dict(
+                    metadata, allow_none_as_empty=False
+                )
                 if isinstance(dumped, Mapping):
                     return cast("Mapping[str, object]", dumped)
 

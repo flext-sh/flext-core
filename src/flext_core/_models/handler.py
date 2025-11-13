@@ -24,9 +24,9 @@ from pydantic import (
 )
 
 from flext_core._models.entity import FlextModelsEntity
+from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
-from flext_core.utilities import FlextUtilities
 
 
 class FlextModelsHandler:
@@ -56,7 +56,7 @@ class FlextModelsHandler:
         @classmethod
         def validate_handler(cls, v: object) -> Callable[..., object]:
             """Validate handler is properly callable (using FlextUtilities.Validation)."""
-            result = FlextUtilities.Validation.validate_callable(
+            result = FlextUtilitiesValidation.validate_callable(
                 v,
                 error_message="Handler must be callable",
                 error_code=FlextConstants.Errors.TYPE_ERROR,
@@ -141,7 +141,9 @@ class FlextModelsHandler:
         @classmethod
         def validate_timestamp_format(cls, v: str) -> str:
             """Validate timestamp is in ISO 8601 format (using FlextUtilities.Validation)."""
-            result = FlextUtilities.Validation.validate_iso8601_timestamp(v, allow_empty=True)
+            result = FlextUtilitiesValidation.validate_iso8601_timestamp(
+                v, allow_empty=True
+            )
             if result.is_failure:
                 raise ValueError(result.error or "Timestamp validation failed")
             return v

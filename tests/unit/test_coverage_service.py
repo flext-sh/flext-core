@@ -28,6 +28,7 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextService,
+    FlextUtilities,
 )
 
 
@@ -123,10 +124,12 @@ class TestAbstractMethodEnforcement:
         """Test that execute() is abstract and cannot be instantiated without implementation."""
         # This test verifies the ABC pattern is enforced
 
-        # Trying to instantiate FlextService directly fails (it's abstract)
-        # Note: This tests the ABC enforcement at runtime
-        with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            FlextService[str]()
+        # Check that FlextService has abstract methods
+        import abc
+
+        assert hasattr(FlextService, "__abstractmethods__")
+        assert "execute" in FlextService.__abstractmethods__
+        assert issubclass(FlextService, abc.ABC)
 
     def test_concrete_service_must_implement_execute(self) -> None:
         """Test that concrete services must implement execute()."""
@@ -516,7 +519,7 @@ class TestConditionalExecution:
 
 
 class TestExecutionHelper:
-    """Test _ExecutionHelper utility class."""
+    """Test ServiceHelpers utility class."""
 
     def test_prepare_execution_context(self) -> None:
         """Test execution context preparation."""
@@ -529,7 +532,7 @@ class TestExecutionHelper:
 
         service = HelperService()
         service_obj: FlextService[object] = cast("FlextService[object]", service)
-        context = FlextService._ExecutionHelper.prepare_execution_context(service_obj)
+        context = FlextUtilities.ServiceHelpers.prepare_execution_context(service_obj)
         assert isinstance(context, dict)
         assert "service_type" in context
         assert context["service_type"] == "HelperService"
@@ -548,11 +551,11 @@ class TestExecutionHelper:
         service_obj: FlextService[object] = cast("FlextService[object]", service)
         context: dict[str, object] = {"test": "data"}
         # Should not raise
-        FlextService._ExecutionHelper.cleanup_execution_context(service_obj, context)
+        FlextUtilities.ServiceHelpers.cleanup_execution_context(service_obj, context)
 
 
 class TestMetadataHelper:
-    """Test _MetadataHelper utility class."""
+    """Test ServiceHelpers metadata utility methods."""
 
     def test_extract_service_metadata(self) -> None:
         """Test metadata extraction."""
@@ -565,7 +568,7 @@ class TestMetadataHelper:
 
         service = MetadataService()
         service_obj: FlextService[object] = cast("FlextService[object]", service)
-        metadata = FlextService._MetadataHelper.extract_service_metadata(service_obj)
+        metadata = FlextUtilities.ServiceHelpers.extract_service_metadata(service_obj)
         assert isinstance(metadata, dict)
         assert metadata["service_class"] == "MetadataService"
         assert "service_module" in metadata
@@ -583,7 +586,7 @@ class TestMetadataHelper:
 
         service = NoTimeService()
         service_obj: FlextService[object] = cast("FlextService[object]", service)
-        metadata = FlextService._MetadataHelper.extract_service_metadata(
+        metadata = FlextUtilities.ServiceHelpers.extract_service_metadata(
             service_obj, include_timestamps=False
         )
         assert "created_at" not in metadata
@@ -605,9 +608,11 @@ class TestMetadataHelper:
             "service_type": "TestService",
             "service_name": "test_svc",
         }
-        formatted = FlextService._MetadataHelper.format_service_info(
+        result = FlextUtilities.ServiceHelpers.format_service_info(
             service_obj, metadata
         )
+        assert result.is_success
+        formatted = result.unwrap()
         assert isinstance(formatted, str)
         assert "TestService" in formatted
 

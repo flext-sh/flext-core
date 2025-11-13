@@ -136,8 +136,17 @@ class FlextContext:
 
         """
         super().__init__()
-        context_data = self._normalize_initial_data(initial_data)
-        self._metadata = self._initialize_metadata_from_data(context_data)
+        # Use Pydantic directly - NO redundant helpers (Pydantic validates dict/None/model)
+        context_data = (
+            FlextModels.ContextData(data=initial_data)
+            if isinstance(initial_data, dict)
+            else (initial_data or FlextModels.ContextData())
+        )
+        self._metadata = (
+            context_data.metadata
+            if isinstance(context_data.metadata, FlextModels.ContextMetadata)
+            else FlextModels.ContextMetadata.model_validate(context_data.metadata or {})
+        )
 
         self._hooks: FlextTypes.HookRegistry = {}
         self._statistics: FlextModels.ContextStatistics = (
@@ -173,64 +182,6 @@ class FlextContext:
             self._set_in_contextvar(
                 FlextConstants.Context.SCOPE_GLOBAL, context_data.data
             )
-
-    def _normalize_initial_data(
-        self, initial_data: FlextModels.ContextData | dict[str, object] | None
-    ) -> FlextModels.ContextData:
-        """Normalize initial data to FlextModels.ContextData format."""
-        if initial_data is None:
-            return FlextModels.ContextData()
-        if isinstance(initial_data, dict):
-            return FlextModels.ContextData(data=initial_data)
-        # At this point, initial_data must be FlextModels.ContextData (type narrowing)
-        return (
-            FlextModels.ContextData(data=initial_data.data)
-            if hasattr(initial_data, "data")
-            else FlextModels.ContextData()
-        )
-
-    def _initialize_metadata_from_data(
-        self, context_data: FlextModels.ContextData
-    ) -> FlextModels.ContextMetadata:
-        """Initialize metadata from context data with proper error handling."""
-        try:
-            if isinstance(context_data.metadata, FlextModels.ContextMetadata):
-                return context_data.metadata
-            if FlextRuntime.is_dict_like(context_data.metadata):
-                return self._handle_dict_metadata(context_data.metadata)
-            return FlextModels.ContextMetadata()
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-            # Fallback: if validation fails, create empty metadata
-            return FlextModels.ContextMetadata()
-
-    def _handle_dict_metadata(
-        self, metadata_dict: dict[str, object]
-    ) -> FlextModels.ContextMetadata:
-        """Handle metadata initialization from dict."""
-        known_fields = self._extract_known_fields(metadata_dict)
-        metadata = FlextModels.ContextMetadata.model_validate(known_fields)
-        self._extract_unknown_fields(metadata, metadata_dict)
-        return metadata
-
-    def _extract_known_fields(
-        self, metadata_dict: dict[str, object]
-    ) -> dict[str, object]:
-        """Extract known metadata fields from dict."""
-        return {
-            key: metadata_dict[key]
-            for key in FlextConstants.Context.METADATA_FIELDS
-            if key in metadata_dict
-        }
-
-    def _extract_unknown_fields(
-        self,
-        metadata: FlextModels.ContextMetadata,
-        metadata_dict: dict[str, object],
-    ) -> None:
-        """Extract unknown metadata fields and add to custom_fields."""
-        for key, value in metadata_dict.items():
-            if key not in FlextConstants.Context.METADATA_FIELDS:
-                metadata.custom_fields[key] = value
 
     # =========================================================================
     # PRIVATE HELPERS - Context variable management and FlextLogger delegation

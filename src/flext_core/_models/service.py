@@ -16,10 +16,11 @@ from typing import Annotated, Literal, cast
 from pydantic import Field, field_validator
 
 from flext_core._models.entity import FlextModelsEntity
+from flext_core._utilities.generators import FlextUtilitiesGenerators
+from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
-from flext_core.utilities import FlextUtilities
 
 
 class FlextModelsService:
@@ -49,14 +50,14 @@ class FlextModelsService:
         @classmethod
         def validate_context(cls, v: object) -> dict[str, object]:
             """Ensure context has required fields (using FlextUtilities.Generators)."""
-            return FlextUtilities.Generators.ensure_trace_context(v)
+            return FlextUtilitiesGenerators.ensure_trace_context(v)
 
         @field_validator("timeout_seconds", mode="after")
         @classmethod
         def validate_timeout(cls, v: int) -> int:
             """Validate timeout is reasonable (using FlextUtilities.Validation)."""
             max_timeout_seconds = FlextConstants.Performance.MAX_TIMEOUT_SECONDS
-            result = FlextUtilities.Validation.validate_timeout(v, max_timeout_seconds)
+            result = FlextUtilitiesValidation.validate_timeout(v, max_timeout_seconds)
             if result.is_failure:
                 raise FlextExceptions.ValidationError(
                     message=result.error or "Timeout validation failed",
@@ -142,7 +143,7 @@ class FlextModelsService:
         @classmethod
         def validate_operation_callable(cls, v: object) -> Callable[..., object]:
             """Validate operation is callable (using FlextUtilities.Validation)."""
-            result = FlextUtilities.Validation.validate_callable(
+            result = FlextUtilitiesValidation.validate_callable(
                 v,
                 error_message="Operation must be callable",
                 error_code=FlextConstants.Errors.TYPE_ERROR,

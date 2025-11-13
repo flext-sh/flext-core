@@ -77,7 +77,7 @@ jobs:
         run: |
           pip install dist/*.whl
           python -c "import flext_core; print(f'Version: {flext_core.__version__}')"
-          python -c "from flext_core import Pipeline, PipelineName; p = Pipeline(name=PipelineName(value='test')); print(f'Pipeline created: {p.id}')"
+          python -c "from flext_core import Pipeline, PipelineName; p = Pipeline(name=PipelineName(value='test')); print(f'Pipeline created: {p.entity_id}')"
 
   publish-testpypi:
     name: Publish to TestPyPI

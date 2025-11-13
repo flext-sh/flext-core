@@ -1682,7 +1682,7 @@ class TestFlextDispatcherCoverage:
     def test_dispatcher_retry_strategy_application(self) -> None:
         """Test retry strategy application."""
         dispatcher = FlextDispatcher()
-        attempt_count = {}
+        attempt_count: dict[str, int] = {}
 
         def retry_handler(msg: object) -> object:
             msg_type = "RetryMsg"

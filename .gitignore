@@ -278,3 +278,5 @@ build/
 # SAFETY: Keep .gitkeep files
 # ============================================================================
 !**/.gitkeep
+# Backup files
+*.bak

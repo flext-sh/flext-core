@@ -16,11 +16,12 @@ from typing import Annotated, Self
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from flext_core._models.entity import FlextModelsEntity
+from flext_core._utilities.generators import FlextUtilitiesGenerators
+from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
-from flext_core.utilities import FlextUtilities
 
 
 class FlextModelsConfig:
@@ -64,7 +65,7 @@ class FlextModelsConfig:
         @classmethod
         def validate_context(cls, v: object) -> dict[str, object]:
             """Ensure context has required fields (using FlextUtilities.Generators)."""
-            return FlextUtilities.Generators.ensure_trace_context(
+            return FlextUtilitiesGenerators.ensure_trace_context(
                 v, include_correlation_id=True, include_timestamp=True
             )
 
@@ -117,7 +118,7 @@ class FlextModelsConfig:
         @classmethod
         def validate_backoff_strategy(cls, v: list[object]) -> list[object]:
             """Validate status codes are valid HTTP codes (using FlextUtilities.Validation)."""
-            result = FlextUtilities.Validation.validate_http_status_codes(
+            result = FlextUtilitiesValidation.validate_http_status_codes(
                 v,
                 min_code=FlextConstants.FlextWeb.HTTP_STATUS_MIN,
                 max_code=FlextConstants.FlextWeb.HTTP_STATUS_MAX,
@@ -167,7 +168,7 @@ class FlextModelsConfig:
         def validate_additional_validators(cls, v: list[object]) -> list[object]:
             """Validate custom validators are callable (using FlextUtilities.Validation)."""
             for validator in v:
-                result = FlextUtilities.Validation.validate_callable(
+                result = FlextUtilitiesValidation.validate_callable(
                     validator,
                     error_message="All validators must be callable",
                     error_code=FlextConstants.Errors.TYPE_ERROR,
@@ -307,7 +308,7 @@ class FlextModelsConfig:
     class ExternalCommandConfig(FlextModelsEntity.ArbitraryTypesModel):
         """Configuration for external command execution (Pydantic v2).
 
-        Reduces parameter count for run_external_command using config object pattern.
+        Reduces parameter count for FlextUtilities.CommandExecution.run_external_command using config object pattern.
         Reuses timeout pattern from ProcessingRequest and HandlerExecutionConfig.
         """
 

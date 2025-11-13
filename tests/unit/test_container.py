@@ -110,7 +110,7 @@ class TestFlextContainer:
         assert result.is_failure
         assert result.error is not None
         assert result.error is not None
-        assert "Cannot resolve required dependency" in result.error
+        assert "Cannot resolve required dependencies" in result.error
 
     def test_container_auto_wire_with_defaults(self) -> None:
         """Test auto-wiring with default parameters."""
@@ -655,16 +655,16 @@ class TestFlextContainer:
         container.with_service("initial", "value")
 
         # Create services dict[str, object] with invalid entry that will cause exception
-        # Using service name with invalid characters to trigger validation failure
+        # Using empty service name to trigger validation failure
         services_with_invalid_key: dict[str, object] = {
             "valid_service": "valid_value",
-            "invalid.service": "invalid_key",  # Service name with dot will trigger validation failure
+            "": "empty_name",  # Empty service name will trigger validation failure
         }
 
         # Should fail and rollback
         result = container.batch_register(services_with_invalid_key)
         assert result.is_failure
-        assert "contains invalid characters" in (result.error or "")
+        assert "Must be non-empty string" in (result.error or "")
 
         # Original service should still exist (rollback worked)
         assert container.has("initial")
@@ -750,26 +750,24 @@ class TestFlextContainer:
 
         result = container.auto_wire(FailingService)
         assert result.is_failure
-        assert "Auto-wiring failed" in (result.error or "")
+        assert "Service instantiation failed" in (result.error or "")
 
     def test_container_clear_exception_handling(self) -> None:
         """Test clear() exception handling with corrupted state."""
+        import unittest.mock
+
         container = FlextContainer()
         container.with_service("test", "value")
 
-        # Simulate exception by corrupting internal state
-        # Replace _services dict[str, object] with object that raises on clear()
-        class FailingDict(UserDict[str, FlextModels.ServiceRegistration]):
-            def clear(self) -> None:
-                msg = "Clear failed"
-                raise RuntimeError(msg)
-
-        # Type ignore needed for test scenario that corrupts internal state
-        container._services = FailingDict(container._services)
-
-        result = container.clear()
-        assert result.is_failure
-        assert "Failed to clear container" in (result.error or "")
+        # Test exception handling by mocking DynamicContainer instantiation failure
+        # This simulates a failure in the DI container reset during clear()
+        with unittest.mock.patch.object(
+            container.containers, 'DynamicContainer',
+            side_effect=TypeError("DI container instantiation failed")
+        ):
+            result = container.clear()
+            assert result.is_failure
+            assert "Failed to clear container" in (result.error or "")
 
     def test_container_has_none_validated_name(self) -> None:
         """Test has() when validation returns None for validated_name."""

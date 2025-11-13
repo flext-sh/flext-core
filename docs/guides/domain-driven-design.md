@@ -707,10 +707,10 @@ class UserCommandService(FlextService):
         user = User(id=f"user_{cmd.username}", username=cmd.username, email=cmd.email)
 
         # Publish domain event
-        self.add_domain_event(UserCreatedEvent(user.id, user.username))
+        self.add_domain_event(UserCreatedEvent(user.entity_id, user.username))
 
         # Return result
-        return FlextResult[dict].ok({"user_id": user.id, "username": user.username})
+        return FlextResult[dict].ok({"user_id": user.entity_id, "username": user.username})
 
     def handle_update_email(self, cmd: UpdateUserEmailCommand) -> FlextResult[None]:
         """Execute update email command."""
@@ -766,7 +766,7 @@ class UserQueryService(FlextService):
             return FlextResult[dict].fail(f"User {query.user_id} not found")
 
         return FlextResult[dict].ok({
-            "id": user.id,
+            "id": user.entity_id,
             "username": user.username,
             "email": user.email,
             "created_at": user.created_at,
@@ -781,7 +781,7 @@ class UserQueryService(FlextService):
 
         return FlextResult[list].ok([
             {
-                "id": u.id,
+                "id": u.entity_id,
                 "username": u.username,
                 "email": u.email,
             }
@@ -795,7 +795,7 @@ class UserQueryService(FlextService):
             return FlextResult[list].ok([])  # Empty result is still success
 
         return FlextResult[list].ok([
-            {"id": u.id, "username": u.username}
+            {"id": u.entity_id, "username": u.username}
             for u in users
         ])
 ```

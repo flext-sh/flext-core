@@ -86,9 +86,7 @@ class FlextUtilitiesTypeChecker:
         return message_types
 
     @classmethod
-    def _get_method_signature(
-        cls, handle_method: object
-    ) -> inspect.Signature | None:
+    def _get_method_signature(cls, handle_method: object) -> inspect.Signature | None:
         """Extract signature from handle method."""
         try:
             # Cast to Callable for inspect.signature
@@ -160,9 +158,7 @@ class FlextUtilitiesTypeChecker:
             if name == "self":
                 continue
 
-            return cls._extract_message_type_from_parameter(
-                parameter, type_hints, name
-            )
+            return cls._extract_message_type_from_parameter(parameter, type_hints, name)
 
         return None
 

@@ -227,6 +227,7 @@ class Address(FlextModels.Value):
 class Product(FlextModels.Entity):
     """Product entity with identity and business logic."""
 
+    id: str
     name: str
     price: Money
     sku: str
@@ -351,6 +352,7 @@ class OrderLine(FlextModels.Value):
 class Order(FlextModels.AggregateRoot):
     """Order aggregate root - maintains consistency boundary."""
 
+    id: str
     customer_id: str
     order_number: str
     lines: list[OrderLine] = Field(default_factory=list)
@@ -382,7 +384,7 @@ class Order(FlextModels.AggregateRoot):
 
         # Create order line
         line = OrderLine(
-            product_id=product.id,
+            product_id=product.entity_id,
             product_name=product.name,
             quantity=quantity,
             unit_price=product.price,
@@ -397,8 +399,8 @@ class Order(FlextModels.AggregateRoot):
         self.add_domain_event(
             "OrderLineAdded",
             {
-                "order_id": str(self.id),
-                "product_id": str(product.id),
+                "order_id": str(self.entity_id),
+                "product_id": str(product.entity_id),
                 "quantity": quantity,
                 "line_total": str(line.calculate_total().amount),
             },
@@ -427,7 +429,7 @@ class Order(FlextModels.AggregateRoot):
         self.add_domain_event(
             "OrderLineRemoved",
             {
-                "order_id": str(self.id),
+                "order_id": str(self.entity_id),
                 "product_id": str(product_id),
             },
         )
@@ -456,7 +458,7 @@ class Order(FlextModels.AggregateRoot):
         self.add_domain_event(
             "OrderSubmitted",
             {
-                "order_id": str(self.id),
+                "order_id": str(self.entity_id),
                 "order_number": self.order_number,
                 "total_amount": str(self.total_amount.amount),
                 "line_count": len(self.lines),
@@ -477,7 +479,7 @@ class Order(FlextModels.AggregateRoot):
         self.add_domain_event(
             "OrderShipped",
             {
-                "order_id": str(self.id),
+                "order_id": str(self.entity_id),
                 "order_number": self.order_number,
                 "shipped_at": self.shipped_at.isoformat(),
             },
@@ -498,7 +500,7 @@ class Order(FlextModels.AggregateRoot):
         self.add_domain_event(
             "OrderCancelled",
             {
-                "order_id": str(self.id),
+                "order_id": str(self.entity_id),
                 "order_number": self.order_number,
                 "reason": reason,
                 "cancelled_at": datetime.now(UTC).isoformat(),
@@ -575,7 +577,7 @@ class ComprehensiveModelsService(FlextService[Order]):
         self.logger.info(
             "Sample order created for demonstration",
             extra={
-                "order_id": order.id,
+                "order_id": order.entity_id,
                 "order_number": order.order_number,
             },
         )
@@ -658,7 +660,7 @@ class ComprehensiveModelsService(FlextService[Order]):
             sku=str(product_data["product_id"])[:8],
             stock=10,
         )
-        print(f"Product: {product.name} (ID: {product.id})")
+        print(f"Product: {product.name} (ID: {product.entity_id})")
 
         result = product.add_stock(5)
         if result.is_success:
@@ -687,7 +689,7 @@ class ComprehensiveModelsService(FlextService[Order]):
         )
 
         product2 = Product(
-            id=product1.id,
+            id=product1.entity_id,
             name=f"{base_item['name']} Variant",
             price=Money(amount=Decimal(base_item["price"]), currency="USD"),
             sku=f"{product1.sku}-VAR",
@@ -760,7 +762,6 @@ class ComprehensiveModelsService(FlextService[Order]):
         )
 
         customer = Customer(
-            id=str(uuid4()),
             name=str(user_data["name"]),
             email=Email(address=str(user_data["email"])),
             shipping_address=address,
@@ -840,7 +841,7 @@ class ComprehensiveModelsService(FlextService[Order]):
 
             def save(self, order: Order) -> FlextResult[bool]:
                 """Save order aggregate."""
-                self._storage[order.id] = order
+                self._storage[order.entity_id] = order
                 return FlextResult[bool].ok(True)
 
             def find_by_id(self, order_id: str) -> FlextResult[Order]:
@@ -871,7 +872,7 @@ class ComprehensiveModelsService(FlextService[Order]):
         if result.is_success:
             print("✅ Order saved to repository")
 
-        find_result = repo.find_by_id(order.id)
+        find_result = repo.find_by_id(order.entity_id)
         if find_result.is_success:
             retrieved = find_result.unwrap()
             print(f"✅ Order retrieved: {retrieved.order_number}")
@@ -895,7 +896,7 @@ class ComprehensiveModelsService(FlextService[Order]):
             price=Money(amount=Decimal("99.99"), currency="USD"),
             sku="VAL-PROD-001",
         )
-        print(f"✅ Valid UUID for entity: {product.id[:8]}...")
+        print(f"✅ Valid UUID for entity: {product.entity_id[:8]}...")
 
         # JSON validation for serialized models
         order_json = json.dumps(
@@ -1018,7 +1019,6 @@ class ComprehensiveModelsService(FlextService[Order]):
             )
 
             customer = Customer(
-                id=str(uuid4()),
                 name=str(data.get("name", "")),
                 email=email,
                 shipping_address=address,

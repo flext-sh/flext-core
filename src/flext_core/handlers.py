@@ -434,7 +434,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     try:
                         result_data = method()
                         if FlextMixins.is_dict_like(result_data):
-                            return cast("dict[str, object]", result_data)
+                            return cast("dict[str, object]", dict(result_data))
                     except Exception as e:
                         FlextHandlers._internal_logger.debug(
                             f"Serialization method {method_name} failed: {type(e).__name__}"
@@ -817,7 +817,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         """
         # Extract message ID
         if isinstance(message, dict):
-            message_dict = cast("dict[str, object]", message)
+            message_dict = message
             # Message ID extraction for logging/tracing (currently unused but reserved for future observability)
             _ = (
                 str(message_dict.get(f"{operation}_id", "unknown"))
@@ -878,7 +878,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         ...
 
     @classmethod
-    def from_callable(
+    def create_from_callable(
         cls,
         func: FlextTypes.HandlerCallableType,
         handler_name: str | None = None,

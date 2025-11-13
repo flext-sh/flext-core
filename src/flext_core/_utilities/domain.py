@@ -107,7 +107,13 @@ class FlextUtilitiesDomain:
         # Try Pydantic model_dump first
         if hasattr(obj_a, "model_dump") and hasattr(obj_b, "model_dump"):
             try:
-                return obj_a.model_dump() == obj_b.model_dump()
+                # Type check: ensure both objects have the method and are callable
+                if callable(getattr(obj_a, "model_dump", None)) and callable(
+                    getattr(obj_b, "model_dump", None)
+                ):
+                    dump_a = obj_a.model_dump()
+                    dump_b = obj_b.model_dump()
+                    return bool(dump_a == dump_b)
             except (AttributeError, TypeError):
                 pass
 
@@ -138,9 +144,11 @@ class FlextUtilitiesDomain:
         # Try Pydantic model_dump first
         if hasattr(obj, "model_dump"):
             try:
-                data = obj.model_dump()
-                # Convert to hashable tuple of items
-                return hash(tuple(sorted(data.items())))
+                # Type check: ensure the method is callable
+                if callable(getattr(obj, "model_dump", None)):
+                    data = obj.model_dump()
+                    # Convert to hashable tuple of items
+                    return hash(tuple(sorted(data.items())))
             except (AttributeError, TypeError):
                 pass
 

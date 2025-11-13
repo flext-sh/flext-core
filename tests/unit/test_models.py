@@ -1005,7 +1005,11 @@ class TestFlextModels:
 
         assert query.filters["user_id"] == "user-456"
         assert query.query_type == "GetOrdersByUser"
-        assert isinstance(query.pagination, FlextModels.Cqrs.Pagination)
+        # Verify pagination has correct attributes (duck typing)
+        assert hasattr(query.pagination, "page")
+        assert hasattr(query.pagination, "size")
+        assert query.pagination.page == 1
+        assert query.pagination.size == 20
 
     def test_context_data_model_creation(self) -> None:
         """Test ContextData model with validators."""
@@ -1049,7 +1053,7 @@ class TestFlextModels:
             registration_id="reg-123",
             handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
             timestamp="2025-01-01T00:00:00Z",
-            status="running",
+            status=FlextConstants.Cqrs.Status.RUNNING,
         )
 
         assert details.registration_id == "reg-123"

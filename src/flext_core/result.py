@@ -18,7 +18,7 @@ from __future__ import annotations
 import types
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import suppress
-from typing import Any, Never, Self, cast, overload, override
+from typing import Any, Never, Self, cast, override
 
 from beartype.door import is_bearable
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -198,31 +198,7 @@ class FlextResult[T_co]:
     # PRIVATE MEMBERS - Internal helpers to avoid circular imports
     # =========================================================================
 
-    @staticmethod
-    def _get_exceptions() -> type[FlextExceptions]:
-        """Get FlextExceptions class."""
-        return FlextExceptions
-
-    # Overloaded constructor for proper type discrimination.
-    @overload
-    def __init__(
-        self,
-        *,
-        data: T_co,
-        error: None = None,
-        error_code: None = None,
-        error_data: None = None,
-    ) -> None: ...
-
-    @overload
-    def __init__(
-        self,
-        *,
-        data: None = None,
-        error: str,
-        error_code: str | None = None,
-        error_data: dict[str, object] | None = None,
-    ) -> None: ...
+    # Constructor with unified interface for success/failure
 
     def _extract_config_values(
         self,
@@ -356,7 +332,7 @@ class FlextResult[T_co]:
         self._error_data = error_data or {}
         self.metadata: object | None = None
 
-    def __class_getitem__(cls, item: type) -> type[Self]:
+    def __class_getitem__(cls, item: object) -> type:
         """Intercept FlextResult[T] to create typed subclass for runtime validation.
 
         When FlextResult[int] is accessed, this method creates a subclass that
@@ -432,7 +408,7 @@ class FlextResult[T_co]:
         """Return the success payload, raising :class:`ValidationError` on failure."""
         if self.is_failure:
             msg = "Attempted to access value on failed result"
-            raise FlextResult._get_exceptions().ValidationError(
+            raise FlextExceptions.ValidationError(
                 message=msg, error_code="VALIDATION_ERROR"
             )
         # Use the returns backend to unwrap the value
@@ -621,6 +597,28 @@ class FlextResult[T_co]:
             error_code=error_code or FlextConstants.Errors.OPERATION_ERROR,
         )
 
+    @classmethod
+    def create_from_callable(
+        cls: type[FlextResult[T_co]],
+        func: Callable[[], T_co],
+        *,
+        error_code: str | None = None,
+    ) -> FlextResult[T_co]:
+        """Alias for from_callable - for backward compatibility.
+
+        This method is an alias to maintain compatibility with existing code
+        that uses the create_from_callable() method name.
+
+        Args:
+            func: Callable that returns T_co (may raise exceptions)
+            error_code: Optional error code for failures (defaults to OPERATION_ERROR)
+
+        Returns:
+            FlextResult[T_co] wrapping the function result or any exception
+
+        """
+        return cls.from_callable(func, error_code=error_code)
+
     def flow_through(
         self, *functions: Callable[[T_co], FlextResult[T_co]]
     ) -> FlextResult[T_co]:
@@ -796,9 +794,7 @@ class FlextResult[T_co]:
         if key == 1:
             return self._result.failure() if self.is_failure else None
         msg = "FlextResult only supports indices 0 (data) and 1 (error)"
-        raise FlextResult._get_exceptions().NotFoundError(
-            msg, resource_type=f"index[{key}]"
-        )
+        raise FlextExceptions.NotFoundError(msg, resource_type=f"index[{key}]")
 
     def __or__(self, default: T_co) -> T_co:
         """Use | operator for default values: result | default_value.."""
@@ -812,7 +808,7 @@ class FlextResult[T_co]:
         """Context manager entry - returns value or raises on error."""
         if self.is_failure:
             error_msg = self._error or "Context manager failed"
-            raise FlextResult._get_exceptions().BaseError(
+            raise FlextExceptions.BaseError(
                 message=error_msg, error_code="OPERATION_ERROR"
             )
 
@@ -833,7 +829,7 @@ class FlextResult[T_co]:
         """Backward compatibility property - equivalent to value."""
         if self.is_failure:
             msg = "Attempted to access data on failed result"
-            raise FlextResult._get_exceptions().ValidationError(
+            raise FlextExceptions.ValidationError(
                 message=msg, error_code="VALIDATION_ERROR"
             )
         # Use the returns backend to unwrap the value (same as .value)
@@ -848,15 +844,11 @@ class FlextResult[T_co]:
         """Get value or raise with custom message."""
         if self.is_failure:
             msg = f"{message}: {self._error}"
-            raise FlextResult._get_exceptions().BaseError(
-                message=msg, error_code="OPERATION_ERROR"
-            )
+            raise FlextExceptions.BaseError(message=msg, error_code="OPERATION_ERROR")
         # DEFENSIVE: .expect() validates None for safety (unlike .value/.unwrap)
         if self._data is None:
             msg = "Success result has None data"
-            raise FlextResult._get_exceptions().BaseError(
-                message=msg, error_code="OPERATION_ERROR"
-            )
+            raise FlextExceptions.BaseError(message=msg, error_code="OPERATION_ERROR")
         return self._data
 
     @override
@@ -986,9 +978,7 @@ class FlextResult[T_co]:
         if self.is_success:
             return cast("T_co", self._data)
         error_msg = self._error or "Operation failed"
-        raise FlextResult._get_exceptions().BaseError(
-            message=error_msg, error_code="OPERATION_ERROR"
-        )
+        raise FlextExceptions.BaseError(message=error_msg, error_code="OPERATION_ERROR")
 
     def recover(self, func: Callable[[str], T_co]) -> FlextResult[T_co]:
         """Recover from failure by applying func to error.
@@ -1166,7 +1156,7 @@ class FlextResult[T_co]:
             # If default computation fails, we need to handle it somehow
             # Since this returns T_co not FlextResult, we raise
             error_message = f"Default value computation failed: {e}"
-            raise FlextResult._get_exceptions().BaseError(
+            raise FlextExceptions.BaseError(
                 message=error_message, error_code="OPERATION_ERROR"
             ) from e
 
@@ -1773,7 +1763,7 @@ class FlextResult[T_co]:
             else:
                 if not callable(item):
                     msg = "Expected callable when flattening alternatives"
-                    raise FlextResult._get_exceptions().ValidationError(
+                    raise FlextExceptions.ValidationError(
                         message=msg, error_code="VALIDATION_ERROR"
                     )
                 flat_callables.append(cast("Callable[[], object]", item))
@@ -1850,7 +1840,7 @@ class FlextResult[T_co]:
         if self.is_failure:
             error_msg = self._error or "Failed"
             msg = f"Cannot convert failure to IO: {error_msg}"
-            raise FlextResult._get_exceptions().ValidationError(
+            raise FlextExceptions.ValidationError(
                 message=msg, error_code="VALIDATION_ERROR"
             )
         return IO(self._data)

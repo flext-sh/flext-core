@@ -11,8 +11,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time as time_module
+from collections.abc import Callable
 from datetime import datetime
-from typing import cast
 
 from pydantic import BaseModel
 
@@ -29,7 +29,7 @@ class FlextModelsValidation:
     @staticmethod
     def validate_business_rules(
         model: object,
-        *rules: FlextTypes.ValidationRule[object],
+        *rules: Callable[[object], FlextResult[object]],
     ) -> FlextResult[object]:
         """Validate business rules with railway patterns.
 
@@ -68,7 +68,7 @@ class FlextModelsValidation:
     @staticmethod
     def validate_cross_fields(
         model: object,
-        field_validators: dict[str, FlextTypes.CrossFieldValidator[object]],
+        field_validators: dict[str, Callable[[object], FlextResult[object]]],
     ) -> FlextResult[object]:
         """Validate cross-field dependencies with railway patterns.
 
@@ -166,7 +166,7 @@ class FlextModelsValidation:
     @staticmethod
     def validate_batch(
         models: FlextTypes.ObjectList,
-        *validators: FlextTypes.ValidationRule[object],
+        *validators: Callable[[object], FlextResult[object]],
         fail_fast: bool = True,
     ) -> FlextResult[FlextTypes.ObjectList]:
         """Validate a batch of models with railway patterns.
@@ -243,7 +243,7 @@ class FlextModelsValidation:
     @staticmethod
     def validate_domain_invariants(
         model: object,
-        invariants: list[FlextTypes.ValidationRule[object]],
+        invariants: list[Callable[[object], FlextResult[object]]],
     ) -> FlextResult[object]:
         """Validate domain invariants with railway patterns.
 
@@ -280,7 +280,7 @@ class FlextModelsValidation:
     @staticmethod
     def validate_aggregate_consistency_with_rules(
         aggregate: object,
-        consistency_rules: dict[str, FlextTypes.CrossFieldValidator[object]],
+        consistency_rules: dict[str, Callable[[object], FlextResult[object]]],
     ) -> FlextResult[object]:
         """Validate aggregate consistency with railway patterns.
 
@@ -322,7 +322,7 @@ class FlextModelsValidation:
     @staticmethod
     def validate_event_sourcing(
         event: object,
-        event_validators: dict[str, FlextTypes.CrossFieldValidator[object]],
+        event_validators: dict[str, Callable[[object], FlextResult[object]]],
     ) -> FlextResult[object]:
         """Validate event sourcing patterns with railway patterns.
 
@@ -369,7 +369,7 @@ class FlextModelsValidation:
     def validate_cqrs_patterns(
         command_or_query: object,
         pattern_type: str,
-        validators: list[FlextTypes.ValidationRule[object]],
+        validators: list[Callable[[object], FlextResult[object]]],
     ) -> FlextResult[object]:
         """Validate CQRS patterns with railway patterns.
 
@@ -585,8 +585,8 @@ class FlextModelsValidation:
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
-        # Type-safe return for generic method using cast for proper type inference
-        return cast("FlextResult[object]", FlextResult.ok(entity))
+        # Return validated entity
+        return FlextResult.ok(entity)
 
 
 __all__ = ["FlextModelsValidation"]

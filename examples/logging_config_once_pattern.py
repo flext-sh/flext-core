@@ -16,17 +16,19 @@ from flext_core import FlextResult, FlextService
 class DatabaseService(FlextService[dict[str, object]]):
     """Example service showing config log-once pattern."""
 
-    def __init__(self, config: dict[str, object]) -> None:
-        """Initialize service with configuration.
+    config: dict[str, object]
+
+    def model_post_init(self, __context: object) -> None:
+        """Post-initialization hook.
 
         Args:
-            config: Database configuration
+            __context: Pydantic context (unused)
 
         """
-        super().__init__()
+        super().model_post_init(__context)
 
         # ✅ CORRECT: Log config ONCE, doesn't appear in all subsequent logs
-        self._log_config_once(config, message="Database configuration loaded")
+        self._log_config_once(self.config, message="Database configuration loaded")
 
         # ❌ WRONG: DO NOT pass config to _with_operation_context
         # self._with_operation_context("init", config=config)  # ← This binds config to ALL logs!

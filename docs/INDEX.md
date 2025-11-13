@@ -93,7 +93,7 @@ docs/
     ├── APPENDIX_F_FAQ.md
     ├── APPENDIX_G_TOOLS_SCRIPTS.md
     ├── APPENDIX_H_REFERENCES.md
-    ├── audit_pydantic_v2.py            (automation script)
+    ├── audit_pydantic_v2.py.bak        (DEPRECATED - use flext-quality)
     └── (+ 3 supporting files)
 ```
 

@@ -358,7 +358,9 @@ class CacheService(FlextService[object]):
         if key in self._metadata:
             metadata = self._metadata[key]
             current_time = time.time()
-            created_at_raw = metadata.get("created_at", 0)
+            created_at_raw = 0
+            if isinstance(metadata, dict):
+                created_at_raw = metadata.get("created_at", 0)
             created_at = 0.0
             if created_at_raw is not None:
                 try:
@@ -429,7 +431,9 @@ class CacheService(FlextService[object]):
         # Find oldest entry
         def get_timestamp(key: str) -> float:
             metadata = self._metadata[key]
-            created_at_raw = metadata.get("created_at", 0)
+            created_at_raw = 0
+            if isinstance(metadata, dict):
+                created_at_raw = metadata.get("created_at", 0)
             if created_at_raw is not None:
                 try:
                     # Safe conversion with type checking
@@ -520,8 +524,8 @@ class UserRepository(FlextService[User]):
             version=1,
             domain_events=[],
         )
-        self._cache[user.id] = user
-        self.logger.info("User loaded from database: %s", user.id)
+        self._cache[user.entity_id] = user
+        self.logger.info("User loaded from database: %s", user.entity_id)
         return FlextResult[User].ok(user)
 
     def save(self, user: User) -> FlextResult[None]:
@@ -533,12 +537,12 @@ class UserRepository(FlextService[User]):
 
         # Simulate save operation with enhanced logging
         self.logger.info(
-            f"Saving user to database: {user.id}",
+            f"Saving user to database: {user.entity_id}",
             extra={"user_email": user.email, "user_age": user.age},
         )
 
         # Update cache
-        self._cache[user.id] = user
+        self._cache[user.entity_id] = user
 
         return FlextResult[None].ok(None)
 

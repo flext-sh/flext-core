@@ -15,15 +15,18 @@ import os
 import pathlib
 import shutil
 import subprocess  # nosec B404 - subprocess is used for legitimate process management
-import threading
 from collections.abc import Callable
-from contextlib import suppress
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import (
     Self,
     TypeVar,
 )
 
+from flext_core._exception_helpers import (
+    extract_common_kwargs as _extract_common_kwargs,
+    prepare_exception_kwargs as _prepare_exception_kwargs,
+)
 from flext_core._utilities import (
     FlextUtilitiesCache,
     FlextUtilitiesConfiguration,
@@ -39,218 +42,22 @@ from flext_core._utilities import (
 )
 from flext_core.result import FlextResult
 
-# Module constants for networking
-MAX_PORT_NUMBER: int = 65535  # IANA standard maximum port (2^16 - 1)
-MIN_PORT_NUMBER: int = 1  # Minimum valid port number
+# Import constants from FlextConstants instead of defining locally
 
 
 # Module logger for exception tracking
 _logger = logging.getLogger(__name__)
 
-# TypeVar for FlextValidationPipeline
+# TypeVar for FlextUtilities.ValidationPipeline
 T_Pipeline = TypeVar("T_Pipeline")
 """Type variable for validation pipeline input/output."""
-
-
-# =========================================================================
-# VALIDATION PIPELINE - Composable validators with railway pattern
-# =========================================================================
-
-
-class FlextValidationPipeline[T_Pipeline]:
-    """Composable validation pipeline with railway-oriented error handling.
-
-    Enables elegant composition of validation rules using fluent interface:
-    - Chaining multiple validators with automatic error propagation
-    - Short-circuit on first failure (no further validators run)
-    - Optional error aggregation mode (collect all errors)
-    - Reusable pipeline instances
-
-    **Features**:
-    - Fluent interface: `pipeline.add_validator(...).add_validator(...)`
-    - Railway pattern: Automatic short-circuiting on first failure
-    - Type-safe: Generic over input type T
-    - Reusable: Create once, execute many times
-    - Error aggregation: Optional mode to collect all validation errors
-
-    Usage:
-        >>> from flext_core import FlextValidationPipeline, FlextResult
-
-        >>> # Create validation pipeline
-        >>> pipeline = (
-        ...     FlextValidationPipeline()
-        ...     .add_validator(validate_schema)
-        ...     .add_validator(validate_dns)
-        ...     .add_validator(validate_attributes)
-        ... )
-
-        >>> # Execute validation - short-circuits on first failure
-        >>> result = pipeline.validate(data)
-        >>> if result.is_success:
-        ...     print("All validations passed!")
-        ... else:
-        ...     print(f"Validation failed: {result.error}")
-
-        >>> # Reuse pipeline multiple times
-        >>> result1 = pipeline.validate(data1)
-        >>> result2 = pipeline.validate(data2)
-    """
-
-    def __init__(self, *, aggregate_errors: bool = False) -> None:
-        """Initialize validation pipeline.
-
-        Args:
-            aggregate_errors: If True, collect all validation errors instead
-                            of short-circuiting on first failure. Default: False
-
-        """
-        self._validators: list[Callable[[T_Pipeline], FlextResult[T_Pipeline]]] = []
-        self._aggregate_errors = aggregate_errors
-
-    def add_validator(
-        self, validator: Callable[[T_Pipeline], FlextResult[T_Pipeline]]
-    ) -> Self:
-        """Add validator to pipeline.
-
-        Args:
-            validator: Callable that takes input T and returns FlextResult[T].
-                     Must follow railway pattern (return FlextResult).
-
-        Returns:
-            Self: Returns self for fluent chaining
-
-        """
-        self._validators.append(validator)
-        return self
-
-    def validate(self, data: T_Pipeline) -> FlextResult[T_Pipeline]:
-        """Execute validation pipeline on data.
-
-        Runs all validators in order, with behavior determined by aggregate_errors:
-        - aggregate_errors=False: Short-circuit on first failure
-        - aggregate_errors=True: Run all validators, collect errors
-
-        Args:
-            data: Input data to validate
-
-        Returns:
-            FlextResult[T]: Success with original data or failure with error(s)
-
-        """
-        if not self._validators:
-            # No validators - pass through
-            return FlextResult[T_Pipeline].ok(data)
-
-        if self._aggregate_errors:
-            return self._validate_with_aggregation(data)
-        return self._validate_with_short_circuit(data)
-
-    def _validate_with_short_circuit(self, data: T_Pipeline) -> FlextResult[T_Pipeline]:
-        """Execute validation with short-circuit on first failure.
-
-        Args:
-            data: Input data to validate
-
-        Returns:
-            FlextResult[T]: Success or failure on first error
-
-        """
-        result: FlextResult[T_Pipeline] = FlextResult.ok(data)
-
-        for validator in self._validators:
-            result = result.flat_map(validator)
-            if result.is_failure:
-                return result  # Short-circuit - stop further validation
-
-        return result
-
-    def _validate_with_aggregation(self, data: T_Pipeline) -> FlextResult[T_Pipeline]:
-        """Execute validation and aggregate all errors.
-
-        Args:
-            data: Input data to validate
-
-        Returns:
-            FlextResult[T]: Success if all validators pass, or failure with
-                          aggregated error messages joined by '; '
-
-        """
-        errors: list[str] = []
-        current_data = data
-
-        for validator in self._validators:
-            result = validator(current_data)
-            if result.is_failure:
-                error_msg = str(result.error)
-                errors.append(error_msg)
-            else:
-                # Continue with validated data
-                current_data = result.unwrap()
-
-        if errors:
-            # Join all errors with semicolon separator
-            aggregated_error = "; ".join(errors)
-            return FlextResult[T_Pipeline].fail(aggregated_error)
-        return FlextResult[T_Pipeline].ok(current_data)
-
-    def clear(self) -> Self:
-        """Clear all validators from pipeline.
-
-        Returns:
-            Self: Returns self for fluent chaining
-
-        """
-        self._validators.clear()
-        return self
-
-    def count(self) -> int:
-        """Get number of validators in pipeline.
-
-        Returns:
-            int: Number of validators added
-
-        """
-        return len(self._validators)
-
-    def is_empty(self) -> bool:
-        """Check if pipeline has no validators.
-
-        Returns:
-            bool: True if no validators added
-
-        """
-        return len(self._validators) == 0
-
-
-# =========================================================================
-# COMPLETION PROCESS WRAPPER - Replacing subprocess.CompletedProcess
-# =========================================================================
-
-
-@dataclass(frozen=True)
-class _CompletedProcessWrapper:
-    """Wrapper replacing subprocess.CompletedProcess for command execution results.
-
-    This class provides the same interface as subprocess.CompletedProcess
-    without requiring the subprocess module in return types.
-
-    Attributes:
-        returncode: The exit code of the process
-        stdout: Standard output from the process (empty string if not captured)
-        stderr: Standard error output from the process (empty string if not captured)
-        args: The command that was executed as a list of strings
-
-    """
-
-    returncode: int
-    stdout: str
-    stderr: str
-    args: list[str]
-
 
 # =========================================================================
 # TYPE IMPORTS - All types now centralized in typings.py
 # =========================================================================
+
+T_Result = TypeVar("T_Result")
+"""Type variable for Result operations."""
 
 
 class FlextUtilities:
@@ -374,7 +181,7 @@ class FlextUtilities:
     >>> result = FlextUtilities.Reliability.retry(unreliable_op, max_attempts=3)
 
     **Usage Pattern 8 - Command Execution**:
-    >>> result = FlextUtilities.run_external_command(
+    >>> result = FlextUtilities.CommandExecution.run_external_command(
     ...     ["python", "--version"], capture_output=True, timeout=5.0
     ... )
     >>> if result.is_success:
@@ -456,269 +263,782 @@ class FlextUtilities:
     class Domain(FlextUtilitiesDomain):
         """Domain utilities - nested class for better API access."""
 
-    @staticmethod
-    def run_external_command(
-        cmd: list[str],
-        *,
-        config: object | None = None,
-        capture_output: bool = True,
-        check: bool = True,
-        env: dict[str, str] | None = None,
-        cwd: str | pathlib.Path | None = None,
-        timeout: float | None = None,
-        command_input: str | bytes | None = None,
-        text: bool | None = None,
-    ) -> FlextResult[_CompletedProcessWrapper]:
-        """Execute external command with proper error handling using FlextResult pattern.
+    # =========================================================================
+    # VALIDATION PIPELINE - Composable validators with railway pattern
+    # =========================================================================
 
-        Uses threading-based timeout handling instead of subprocess TimeoutExpired.
-        Supports both config object pattern (reduced params) and individual parameters.
+    class ValidationPipeline[T_Pipeline]:
+        """Composable validation pipeline with railway-oriented error handling.
 
-        Args:
-            cmd: Command to execute as list of strings
-            config: Optional FlextModels.Config.ExternalCommandConfig for all params
-            capture_output: Whether to capture stdout/stderr (ignored if config provided)
-            check: Whether to raise exception on non-zero exit code (ignored if config provided)
-            env: Environment variables dictionary (ignored if config provided)
-            cwd: Working directory (ignored if config provided)
-            timeout: Command timeout in seconds (ignored if config provided)
-            command_input: Input to send to command (ignored if config provided)
-            text: Whether to decode as text (ignored if config provided)
+        Enables elegant composition of validation rules using fluent interface:
+        - Chaining multiple validators with automatic error propagation
+        - Short-circuit on first failure (no further validators run)
+        - Optional error aggregation mode (collect all errors)
+        - Reusable pipeline instances
 
-        Returns:
-            FlextResult containing _CompletedProcessWrapper on success or error details on failure
+        **Features**:
+        - Fluent interface: `pipeline.add_validator(...).add_validator(...)`
+        - Railway pattern: Automatic short-circuiting on first failure
+        - Type-safe: Generic over input type T
+        - Reusable: Create once, execute many times
+        - Error aggregation: Optional mode to collect all validation errors
 
-        Example (config pattern - RECOMMENDED):
-            ```python
-            from flext_core import FlextModels
+        Usage:
+            >>> from flext_core import FlextUtilities.ValidationPipeline, FlextResult
 
-            config = FlextModels.Config.ExternalCommandConfig(
-                capture_output=True, timeout_seconds=60.0
-            )
-            result = FlextUtilities.run_external_command(
-                ["python", "script.py"], config=config
-            )
-            ```
+            >>> # Create validation pipeline
+            >>> pipeline = (
+            ...     FlextUtilities.ValidationPipeline()
+            ...     .add_validator(validate_schema)
+            ...     .add_validator(validate_dns)
+            ...     .add_validator(validate_attributes)
+            ... )
 
-        Example (individual params - backward compatible):
-            ```python
-            result = FlextUtilities.run_external_command(
-                ["python", "script.py"], capture_output=True, timeout=60.0
-            )
-            ```
+            >>> # Execute validation - short-circuits on first failure
+            >>> result = pipeline.validate(data)
+            >>> if result.is_success:
+            ...     print("All validations passed!")
+            ... else:
+            ...     print(f"Validation failed: {result.error}")
+
+            >>> # Reuse pipeline multiple times
+            >>> result1 = pipeline.validate(data1)
+            >>> result2 = pipeline.validate(data2)
+        """
+
+        def __init__(self, *, aggregate_errors: bool = False) -> None:
+            """Initialize validation pipeline.
+
+            Args:
+                aggregate_errors: If True, collect all validation errors instead
+                        of short-circuiting on first failure. Default: False
+
+            """
+            self._validators: list[Callable[[T_Pipeline], FlextResult[T_Pipeline]]] = []
+            self._aggregate_errors = aggregate_errors
+
+        def add_validator(
+            self, validator: Callable[[T_Pipeline], FlextResult[T_Pipeline]]
+        ) -> Self:
+            """Add validator to pipeline.
+
+            Args:
+                validator: Callable that takes input T and returns FlextResult[T].
+                Must follow railway pattern (return FlextResult).
+
+            Returns:
+                Self: Returns self for fluent chaining
+
+            """
+            self._validators.append(validator)
+            return self
+
+        def validate(self, data: T_Pipeline) -> FlextResult[T_Pipeline]:
+            """Execute validation pipeline on data.
+
+            Runs all validators in order, with behavior determined by aggregate_errors:
+            - aggregate_errors=False: Short-circuit on first failure
+            - aggregate_errors=True: Run all validators, collect errors
+
+            Args:
+                data: Input data to validate
+
+            Returns:
+                FlextResult[T]: Success with original data or failure with error(s)
+
+            """
+            if not self._validators:
+                # No validators - pass through
+                return FlextResult[T_Pipeline].ok(data)
+
+            if self._aggregate_errors:
+                return self._validate_with_aggregation(data)
+            return self._validate_with_short_circuit(data)
+
+        def _validate_with_short_circuit(
+            self, data: T_Pipeline
+        ) -> FlextResult[T_Pipeline]:
+            """Execute validation with short-circuit on first failure.
+
+            Args:
+                data: Input data to validate
+
+            Returns:
+                FlextResult[T]: Success or failure on first error
+
+            """
+            result: FlextResult[T_Pipeline] = FlextResult.ok(data)
+
+            for validator in self._validators:
+                result = result.flat_map(validator)
+                if result.is_failure:
+                    return result  # Short-circuit - stop further validation
+
+            return result
+
+        def _validate_with_aggregation(
+            self, data: T_Pipeline
+        ) -> FlextResult[T_Pipeline]:
+            """Execute validation and aggregate all errors.
+
+            Args:
+                data: Input data to validate
+
+            Returns:
+            FlextResult[T]: Success if all validators pass, or failure with
+                    aggregated error messages joined by '; '
+
+            """
+            errors: list[str] = []
+            current_data = data
+
+            for validator in self._validators:
+                result = validator(current_data)
+                if result.is_failure:
+                    error_msg = str(result.error)
+                    errors.append(error_msg)
+                else:
+                    # Continue with validated data
+                    current_data = result.unwrap()
+
+            if errors:
+                # Join all errors with semicolon separator
+                aggregated_error = "; ".join(errors)
+                return FlextResult[T_Pipeline].fail(aggregated_error)
+            return FlextResult[T_Pipeline].ok(current_data)
+
+        def clear(self) -> Self:
+            """Clear all validators from pipeline.
+
+            Returns:
+                Self: Returns self for fluent chaining
+
+            """
+            self._validators.clear()
+            return self
+
+        def count(self) -> int:
+            """Get number of validators in pipeline.
+
+            Returns:
+                int: Number of validators added
+
+            """
+            return len(self._validators)
+
+        def is_empty(self) -> bool:
+            """Check if pipeline has no validators.
+
+            Returns:
+                bool: True if no validators added
+
+            """
+            return len(self._validators) == 0
+
+    class Exceptions:
+        """Exception handling utilities - nested class for better API access.
+
+        Provides access to exception helpers through FlextUtilities.Exceptions
+        for consistent API patterns.
+        """
+
+        @staticmethod
+        def prepare_exception_kwargs(
+            kwargs: dict[str, object],
+            specific_params: dict[str, object] | None = None,
+        ) -> tuple[
+            str | None,
+            dict[str, object] | None,
+            bool,
+            bool,
+            object | None,
+            dict[str, object],
+        ]:
+            """Prepare kwargs for exception initialization.
+
+            Delegates to flext_core._exception_helpers.prepare_exception_kwargs.
+
+            Args:
+                kwargs: Raw kwargs from exception __init__
+                specific_params: Dict of specific parameters to add to metadata
+
+            Returns:
+                Tuple of (correlation_id, metadata, auto_log, auto_correlation,
+                        config, extra_kwargs)
+
+            """
+            return _prepare_exception_kwargs(kwargs, specific_params)
+
+        @staticmethod
+        def extract_common_kwargs(
+            kwargs: dict[str, object],
+        ) -> FlextResult[tuple[str | None, dict[str, object] | None]]:
+            """Extract correlation_id and metadata from kwargs using railway pattern.
+
+            Delegates to flext_core._exception_helpers.extract_common_kwargs with
+            proper error handling.
+
+            Args:
+                kwargs: Raw kwargs containing correlation_id and/or metadata
+
+            Returns:
+                FlextResult containing tuple of (correlation_id, metadata) or error
+
+            """
+            try:
+                result = _extract_common_kwargs(kwargs)
+                return FlextResult.ok(result)
+            except Exception as e:
+                return FlextResult.fail(
+                    f"Failed to extract common kwargs: {e}",
+                    error_code="UTILITY_EXTRACTION_ERROR",
+                )
+
+    class ServiceHelpers:
+        """Service execution and metadata utilities.
+
+        Helpers for service-related operations including execution context
+        preparation and metadata extraction.
 
         """
-        # Extract config values or use individual parameters (backward compatibility)
-        if config is not None:
-            capture_output = getattr(config, "capture_output", capture_output)
-            check = getattr(config, "check", check)
-            env = getattr(config, "env", env)
-            cwd_from_config = getattr(config, "cwd", None)
-            cwd = cwd_from_config if cwd_from_config is not None else cwd
-            timeout = getattr(config, "timeout_seconds", timeout)
-            command_input = getattr(config, "command_input", command_input)
-            text = getattr(config, "text", text)
 
-        try:
-            # Validate command for security - ensure all parts are safe strings
-            validation_result = FlextUtilities._validate_command_input(cmd)
-            if validation_result is not None:
-                return validation_result
+        @staticmethod
+        def prepare_execution_context(service: object) -> dict[str, object]:
+            """Prepare execution context for a service.
 
-            # Check if command executable exists using shutil.which
-            if not shutil.which(cmd[0]):
-                return FlextResult[_CompletedProcessWrapper].fail(
-                    f"Command not found: {cmd[0]}",
-                    error_code="COMMAND_NOT_FOUND",
-                    error_data={"cmd": cmd, "executable": cmd[0]},
+            Args:
+                service: Service instance
+
+            Returns:
+                dict containing service metadata and timestamp
+
+            """
+            return {
+                "service_type": service.__class__.__name__,
+                "service_name": getattr(service, "_service_name", None),
+                "timestamp": datetime.now(UTC),
+            }
+
+        @staticmethod
+        def cleanup_execution_context(
+            _service: object, _context: dict[str, object]
+        ) -> None:
+            """Clean up execution context after operation.
+
+            Args:
+                _service: Service instance (unused currently)
+                _context: Context dict (unused currently)
+
+            """
+            # Basic cleanup - could be extended for more complex operations
+
+        @staticmethod
+        def extract_service_metadata(
+            service: object, *, include_timestamps: bool = True
+        ) -> dict[str, object]:
+            """Extract metadata from a service instance.
+
+            Args:
+                service: Service instance
+                include_timestamps: Whether to include timestamp fields
+
+            Returns:
+                dict containing service metadata
+
+            """
+            metadata: dict[str, object] = {
+                "service_class": service.__class__.__name__,
+                "service_name": getattr(service, "_service_name", None),
+                "service_module": service.__class__.__module__,
+            }
+            if include_timestamps:
+                now = datetime.now(UTC)
+                metadata["created_at"] = now
+                metadata["extracted_at"] = now
+            return metadata
+
+        @staticmethod
+        def format_service_info(
+            service: object, metadata: dict[str, object]
+        ) -> FlextResult[str]:
+            """Format service information for display using railway pattern.
+
+            Args:
+                service: Service instance for additional context
+                metadata: Service metadata dict
+
+            Returns:
+                FlextResult containing formatted service information string
+
+            """
+            try:
+                service_type = metadata.get("service_type", "Unknown")
+                service_name = metadata.get("service_name", "unnamed")
+                service_class = getattr(service, "__class__", None)
+                service_module = getattr(service_class, "__module__", "unknown")
+
+                formatted = (
+                    f"Service: {service_type} ({service_name}) from {service_module}"
+                )
+                return FlextResult.ok(formatted)
+            except Exception as e:
+                return FlextResult.fail(
+                    f"Failed to format service info: {e}",
+                    error_code="SERVICE_FORMAT_ERROR",
                 )
 
-            # Store original working directory for restoration
-            original_cwd = pathlib.Path.cwd()
+        @staticmethod
+        def create_service_metadata_builder() -> FlextUtilities.ServiceMetadataBuilder:
+            """Create a fluent builder for service metadata.
+
+            Returns:
+                FlextUtilities.ServiceMetadataBuilder instance for fluent metadata construction
+
+            """
+            return FlextUtilities.ServiceMetadataBuilder()
+
+    # =========================================================================
+    # SERVICE METADATA BUILDER - Fluent builder pattern
+    # =========================================================================
+
+    class ServiceMetadataBuilder:
+        """Fluent builder for service metadata construction.
+
+        Provides a clean, chainable API for building service metadata dictionaries
+        with proper validation and type safety.
+
+        Example:
+            >>> builder = FlextUtilities.ServiceMetadataBuilder()
+            >>> metadata = (
+            ...     builder.with_service_type("UserService")
+            ...     .with_service_name("user_manager")
+            ...     .with_timestamps()
+            ...     .with_custom_data("version", "1.0.0")
+            ...     .build()
+            ... )
+
+        """
+
+        def __init__(self) -> None:
+            """Initialize empty metadata builder."""
+            self._metadata: dict[str, object] = {}
+
+        def with_service_type(self, service_type: str) -> Self:
+            """Add service type to metadata.
+
+            Args:
+                service_type: Type/classification of the service
+
+            Returns:
+                Self for method chaining
+
+            """
+            self._metadata["service_type"] = service_type
+            return self
+
+        def with_service_name(self, service_name: str) -> Self:
+            """Add service name to metadata.
+
+            Args:
+                service_name: Human-readable name of the service
+
+            Returns:
+                Self for method chaining
+
+            """
+            self._metadata["service_name"] = service_name
+            return self
+
+        def with_timestamps(
+            self, *, include_created: bool = True, include_extracted: bool = True
+        ) -> Self:
+            """Add timestamp information to metadata.
+
+            Args:
+                include_created: Whether to include creation timestamp
+                include_extracted: Whether to include extraction timestamp
+
+            Returns:
+                Self for method chaining
+
+            """
+            now = datetime.now(UTC)
+            if include_created:
+                self._metadata["created_at"] = now
+            if include_extracted:
+                self._metadata["extracted_at"] = now
+            return self
+
+        def with_custom_data(self, key: str, value: object) -> Self:
+            """Add custom key-value data to metadata.
+
+            Args:
+                key: Metadata key
+                value: Metadata value
+
+            Returns:
+                Self for method chaining
+
+            """
+            self._metadata[key] = value
+            return self
+
+        def with_service_instance(self, service: object) -> Self:
+            """Extract metadata from service instance.
+
+            Args:
+                service: Service instance to extract metadata from
+
+            Returns:
+                Self for method chaining
+
+            """
+            if service:
+                self._metadata["service_class"] = service.__class__.__name__
+                self._metadata["service_module"] = service.__class__.__module__
+                # Extract additional service-specific metadata if available
+                service_name = getattr(service, "_service_name", None)
+                if service_name is not None:
+                    self._metadata["service_name"] = service_name
+            return self
+
+        def build(self) -> dict[str, object]:
+            """Build and return the metadata dictionary.
+
+            Returns:
+                Constructed metadata dictionary
+
+            """
+            return self._metadata.copy()
+
+    # =========================================================================
+    # COMPLETION PROCESS WRAPPER - Replacing subprocess.CompletedProcess
+    # =========================================================================
+
+    @dataclass(frozen=True)
+    class _CompletedProcessWrapper:
+        """Wrapper replacing subprocess.CompletedProcess for command execution results.
+
+        This class provides the same interface as subprocess.CompletedProcess
+        without requiring the subprocess module in return types.
+
+        Attributes:
+            returncode: The exit code of the process
+            stdout: Standard output from the process (empty string if not captured)
+            stderr: Standard error output from the process (empty string if not captured)
+            args: The command that was executed as a list of strings
+
+        """
+
+        returncode: int
+        stdout: str
+        stderr: str
+        args: list[str]
+
+    class CommandExecution:
+        """Command execution utilities for running external processes.
+
+        Provides safe command execution with validation, timeout handling,
+        and proper result processing using the railway pattern.
+        """
+
+        @staticmethod
+        def run_external_command(
+            cmd: list[str],
+            *,
+            config: object | None = None,
+            capture_output: bool = True,
+            check: bool = True,
+            env: dict[str, str] | None = None,
+            cwd: str | pathlib.Path | None = None,
+            timeout: float | None = None,
+            command_input: str | bytes | None = None,
+            text: bool = True,
+        ) -> FlextResult[FlextUtilities._CompletedProcessWrapper]:
+            """Execute external command with comprehensive error handling.
+
+            Runs external commands safely with validation, timeout protection,
+            and structured result handling. All operations follow railway pattern.
+
+            Args:
+                cmd: Command and arguments as list of strings
+                config: Optional configuration object with execution parameters
+                capture_output: Whether to capture stdout/stderr (default: True)
+                check: Whether to raise on non-zero exit codes (default: True)
+                env: Environment variables for command execution
+                cwd: Working directory for command execution
+                timeout: Timeout in seconds for command execution
+                command_input: Input data to pass to command stdin
+                text: Whether to decode output as text (default: True)
+
+            Returns:
+                FlextResult wrapping completed process information
+
+            Examples:
+                >>> result = FlextUtilities.CommandExecution.FlextUtilities.CommandExecution.run_external_command([
+                ...     "echo",
+                ...     "hello world",
+                ... ])
+                >>> if result.is_success:
+                ...     output = result.unwrap().stdout
+                ...     print(f"Output: {output}")
+
+            """
+            # Extract configuration from config object if provided
+            if config:
+                env = getattr(config, "env", env)
+                cwd_from_config = getattr(config, "cwd", None)
+                cwd = cwd_from_config if cwd_from_config is not None else cwd
+                timeout = getattr(config, "timeout_seconds", timeout)
+                command_input = getattr(config, "command_input", command_input)
+                text = getattr(config, "text", text)
 
             try:
-                # Change to target directory if specified
-                if cwd:
-                    os.chdir(str(cwd))
-
-                # Execute with timeout handling
-                result = FlextUtilities._execute_with_timeout(
-                    cmd,
-                    env,
-                    command_input,
-                    timeout,
-                    capture_output=capture_output,
-                    text=text,
+                # Validate command for security - ensure all parts are safe strings
+                validation_result = (
+                    FlextUtilities.CommandExecution.validate_command_input(cmd)
                 )
+                if validation_result is not None:
+                    return validation_result
 
-                if result.is_failure:
-                    # Map error to correct return type
-                    return FlextResult[_CompletedProcessWrapper].fail(
-                        result.error,
-                        error_code=result.error_code,
-                        error_data=result.error_data,
+                # Check if command executable exists using shutil.which
+                if not shutil.which(cmd[0]):
+                    return FlextResult[FlextUtilities._CompletedProcessWrapper].fail(
+                        f"Command not found: {cmd[0]}",
+                        error_code="COMMAND_NOT_FOUND",
+                        error_data={"cmd": cmd, "executable": cmd[0]},
                     )
 
-                # Process command results
-                return FlextUtilities._process_command_result(
-                    result.unwrap(),
-                    cmd,
-                    check=check,
+                # Store original working directory for restoration
+                original_cwd = pathlib.Path.cwd()
+
+                try:
+                    # Change to target directory if specified
+                    if cwd:
+                        os.chdir(str(cwd))
+
+                    # Execute with timeout handling
+                    result = FlextUtilities.CommandExecution.execute_with_timeout(
+                        cmd,
+                        env,
+                        command_input,
+                        timeout,
+                        capture_output=capture_output,
+                        text=text,
+                    )
+
+                    if result.is_failure:
+                        # Map error to correct return type
+                        return FlextResult[
+                            FlextUtilities._CompletedProcessWrapper
+                        ].fail(
+                            result.error,
+                            error_code=result.error_code,
+                            error_data=result.error_data,
+                        )
+
+                    # Process command results
+                    return FlextUtilities.CommandExecution.process_command_result(
+                        result.unwrap(),
+                        cmd,
+                        check=check,
+                    )
+
+                finally:
+                    # Always restore original working directory
+                    os.chdir(str(original_cwd))
+
+            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
+                return FlextResult[FlextUtilities._CompletedProcessWrapper].fail(
+                    f"Unexpected error running command: {e!s}",
+                    error_code="COMMAND_ERROR",
+                    error_data={"cmd": cmd, "error": str(e)},
                 )
 
-            finally:
-                # Always restore original working directory
-                os.chdir(original_cwd)
+        @staticmethod
+        def validate_command_input(
+            cmd: list[str],
+        ) -> FlextResult[FlextUtilities._CompletedProcessWrapper] | None:
+            """Validate command input. Returns error result if invalid, None if valid."""
+            if not cmd or not all(part for part in cmd):
+                return FlextResult[FlextUtilities._CompletedProcessWrapper].fail(
+                    "Command must be a non-empty list of strings",
+                    error_code="INVALID_COMMAND",
+                )
+            return None
 
-        except FileNotFoundError:
-            return FlextResult[_CompletedProcessWrapper].fail(
-                f"Command not found: {cmd[0]}",
-                error_code="COMMAND_NOT_FOUND",
-                error_data={"cmd": cmd, "executable": cmd[0]},
-            )
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[_CompletedProcessWrapper].fail(
-                f"Unexpected error running command: {e!s}",
-                error_code="COMMAND_ERROR",
-                error_data={"cmd": cmd, "error": str(e)},
-            )
+        @staticmethod
+        def execute_with_timeout(
+            cmd: list[str],
+            env: dict[str, str] | None,
+            command_input: str | bytes | None,
+            timeout: float | None,
+            *,
+            capture_output: bool,
+            text: bool,
+        ) -> FlextResult[subprocess.CompletedProcess[str]]:
+            """Execute command with timeout handling using subprocess.
 
-    @staticmethod
-    def _validate_command_input(
-        cmd: list[str],
-    ) -> FlextResult[_CompletedProcessWrapper] | None:
-        """Validate command input. Returns error result if invalid, None if valid."""
-        if not cmd or not all(part for part in cmd):
-            return FlextResult[_CompletedProcessWrapper].fail(
-                "Command must be a non-empty list of strings",
-                error_code="INVALID_COMMAND",
-            )
-        return None
-
-    @staticmethod
-    def _execute_with_timeout(
-        cmd: list[str],
-        env: dict[str, str] | None,
-        command_input: str | bytes | None,
-        timeout: float | None,
-        *,
-        capture_output: bool,
-        text: bool | None,
-    ) -> FlextResult[tuple[str, str]]:
-        """Execute subprocess with thread-based timeout handling."""
-        # Prepare environment variables
-        exec_env = os.environ.copy()
-        if env:
-            exec_env.update(env)
-
-        # S603: Command is validated above to ensure it's a safe list of strings
-        process = subprocess.Popen(  # nosec B603
-            cmd,
-            stdout=subprocess.PIPE if capture_output else None,
-            stderr=subprocess.PIPE if capture_output else None,
-            stdin=subprocess.PIPE if command_input is not None else None,
-            env=exec_env,
-            text=text if text is not None else True,
-        )
-
-        # Containers for thread results
-        result_container: list[tuple[str, str] | None] = [None]
-        exception_container: list[Exception | str | None] = [None]
-
-        def communicate_thread() -> None:
-            """Execute communicate in a separate thread."""
+            Internal method for command execution with proper timeout and environment
+            handling. Returns raw subprocess result for further processing.
+            """
             try:
-                stdout, stderr = process.communicate(input=command_input)
-                result_container[0] = (stdout or "", stderr or "")
-            except (
-                AttributeError,
-                TypeError,
-                ValueError,
-                RuntimeError,
-                KeyError,
-            ) as e:
-                exception_container[0] = e
+                # Execute with timeout using subprocess.run
+                result = subprocess.run(
+                    cmd,
+                    env=env,
+                    input=command_input,
+                    capture_output=capture_output,
+                    text=text,
+                    timeout=timeout,
+                    check=False,  # We handle checking manually
+                )
+                return FlextResult.ok(result)
+            except subprocess.TimeoutExpired as e:
+                return FlextResult.fail(
+                    f"Command timed out after {timeout} seconds: {e!s}",
+                    error_code="COMMAND_TIMEOUT",
+                    error_data={"cmd": cmd, "timeout": timeout},
+                )
+            except (OSError, subprocess.SubprocessError) as e:
+                return FlextResult.fail(
+                    f"Command execution failed: {e!s}",
+                    error_code="COMMAND_EXECUTION_ERROR",
+                    error_data={"cmd": cmd, "error": str(e)},
+                )
 
-        # Execute communication in thread for timeout handling
-        thread = threading.Thread(target=communicate_thread)
-        thread.daemon = False
-        thread.start()
+        @staticmethod
+        def process_command_result(
+            output: subprocess.CompletedProcess[str],
+            cmd: list[str],
+            *,
+            check: bool,
+        ) -> FlextResult[FlextUtilities._CompletedProcessWrapper]:
+            """Process raw subprocess result into structured wrapper.
 
-        # Wait for process with timeout
-        thread.join(timeout=timeout)
+            Converts subprocess.CompletedProcess into our internal wrapper format
+            with proper error handling and data extraction.
+            """
+            returncode = output.returncode
+            stdout_text = output.stdout or ""
+            stderr_text = output.stderr or ""
 
-        # Check if thread is still running (timeout occurred)
-        if thread.is_alive():
-            with suppress(OSError, ProcessLookupError):
-                process.kill()  # Process may already be terminated
+            # Check return code if requested
+            if check and returncode != 0:
+                return FlextResult[FlextUtilities._CompletedProcessWrapper].fail(
+                    f"Command failed with return code {returncode}",
+                    error_code="COMMAND_FAILED",
+                    error_data={
+                        "cmd": cmd,
+                        "returncode": returncode,
+                        "stdout": stdout_text,
+                        "stderr": stderr_text,
+                    },
+                )
 
-            return FlextResult[tuple[str, str]].fail(
-                f"Command timed out after {timeout} seconds",
-                error_code="COMMAND_TIMEOUT",
-                error_data={"cmd": cmd, "timeout": timeout},
+            # Create wrapper with processed data
+            wrapper = FlextUtilities._CompletedProcessWrapper(
+                returncode=returncode,
+                stdout=stdout_text,
+                stderr=stderr_text,
+                args=cmd,
             )
 
-        # Check for exceptions from thread
-        if exception_container[0] is not None:
-            exc = exception_container[0]
-            return FlextResult[tuple[str, str]].fail(
-                f"Command execution failed: {exc!s}",
-                error_code="COMMAND_ERROR",
-                error_data={"cmd": cmd, "error": str(exc)},
+            return FlextResult[FlextUtilities._CompletedProcessWrapper].ok(wrapper)
+
+    class ResultHelpers:
+        """Monadic result operations and composition utilities.
+
+        Advanced helpers for working with FlextResult monads, supporting
+        functional composition patterns throughout the FLEXT ecosystem.
+
+        Usage:
+            >>> from flext_core import FlextUtilities, FlextResult
+            >>> results = [FlextResult[int].ok(1), FlextResult[int].ok(2)]
+            >>> combined = FlextUtilities.ResultHelpers.sequence(results)
+            >>> if combined.is_success:
+            ...     values = combined.unwrap()  # [1, 2]
+
+        """
+
+        @staticmethod
+        def sequence(
+            results: list[FlextResult[T_Result]],
+        ) -> FlextResult[list[T_Result]]:
+            """Convert list of Results into Result of list.
+
+            Combines multiple FlextResult instances. If any fails, returns first
+            failure. Success means all results succeeded.
+
+            Args:
+                results: List of FlextResult instances
+
+            Returns:
+                FlextResult[list[T]]: Success with list of values, or first failure
+
+            """
+            values: list[T_Result] = []
+            for result in results:
+                if result.is_failure:
+                    return FlextResult[list[T_Result]].fail(result.error)
+                values.append(result.unwrap())
+            return FlextResult[list[T_Result]].ok(values)
+
+        @staticmethod
+        def validate_all(
+            items: list[T_Result],
+            validator: Callable[[T_Result], FlextResult[None]],
+        ) -> FlextResult[list[T_Result]]:
+            """Validate all items using single validator function.
+
+            Applies validator to every item. If any fails, stops immediately.
+            Success means all items passed validation.
+
+            Args:
+                items: List of items to validate
+                validator: Function returning FlextResult[None]
+
+            Returns:
+                FlextResult[list[T]]: Success with items, or first failure
+
+            """
+            for item in items:
+                validation_result = validator(item)
+                if validation_result.is_failure:
+                    return FlextResult[list[T_Result]].fail(validation_result.error)
+            return FlextResult[list[T_Result]].ok(items)
+
+        @staticmethod
+        def compose_with_first_success(
+            results: list[FlextResult[object]],
+            default_value: object | None = None,
+        ) -> FlextResult[object]:
+            """Compose multiple results, returning first success or default.
+
+            Useful when trying multiple operations and wanting first success.
+            Falls back to default_value if all fail.
+
+            Args:
+                results: List of FlextResult instances
+                default_value: Value to return if all fail (default: None)
+
+            Returns:
+                FlextResult: First success or default value
+
+            """
+            for result in results:
+                if result.is_success:
+                    return FlextResult[object].ok(result.unwrap())
+            if default_value is not None:
+                return FlextResult[object].ok(default_value)
+            return FlextResult[object].fail(
+                "All operations failed and no default value provided"
             )
 
-        # Get process results
-        if result_container[0] is None:
-            return FlextResult[tuple[str, str]].fail(
-                "Process completed but no output captured",
-                error_code="COMMAND_ERROR",
-                error_data={"cmd": cmd},
-            )
 
-        return FlextResult[tuple[str, str]].ok(result_container[0])
-
-    @staticmethod
-    def _process_command_result(
-        output: tuple[str, str],
-        cmd: list[str],
-        *,
-        check: bool,
-    ) -> FlextResult[_CompletedProcessWrapper]:
-        """Process command output and create result wrapper."""
-        stdout_text, stderr_text = output
-        returncode = 0  # Success if we got here without timeout
-
-        # Create wrapper result
-        wrapper = _CompletedProcessWrapper(
-            returncode=returncode,
-            stdout=stdout_text,
-            stderr=stderr_text,
-            args=cmd,
-        )
-
-        # Check exit code if requested
-        if check and returncode != 0:
-            return FlextResult[_CompletedProcessWrapper].fail(
-                f"Command failed with exit code {returncode}",
-                error_code="COMMAND_FAILED",
-                error_data={
-                    "cmd": cmd,
-                    "returncode": returncode,
-                    "stdout": stdout_text,
-                    "stderr": stderr_text,
-                },
-            )
-
-        return FlextResult[_CompletedProcessWrapper].ok(wrapper)
-
-
-# Module-level aliases for backward compatibility
 # FlextValidations is now integrated into FlextUtilities.Validation
-FlextValidations = FlextUtilities.Validation
 
 
 __all__ = [
     "FlextUtilities",
-    "FlextValidationPipeline",
-    "FlextValidations",
 ]

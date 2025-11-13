@@ -65,17 +65,69 @@ poetry run pytest --lf --ff -x         # Last failed, fail fast
 **IMPORTANT**: This is a utility library (not a layered application). Dependencies flow from foundational types upward, not strictly hierarchical.
 
 ```
-Tier 0 (Foundation Types):    constants.py, typings.py, protocols.py, runtime.py
-    ↑ Everything depends on these
-Tier 1 (Core Abstractions):   result.py, container.py, exceptions.py
-    ↑ Domain/Application depend on these
-Tier 2 (Domain Models):       models.py, service.py, mixins.py, utilities.py
-    ↑ Application layer depends on these
-Tier 3 (Application/CQRS):    handlers.py, bus.py, dispatcher.py, registry.py, processors.py, decorators.py
-    ↑ End users depend on these
-Tier 4 (Infrastructure):      config.py, loggings.py, context.py
-    Cross-tier - used by multiple layers for external concerns
+Tier 0 (Pure Foundation - ZERO imports from flext_core):
+  ├── constants.py     # FlextConstants - error codes, defaults (0 imports)
+  ├── typings.py       # FlextTypes - type aliases (0 imports)
+  └── protocols.py     # FlextProtocols - interfaces (0 imports)
+
+Tier 0.1 (Configuration - CONTROLS ALL BEHAVIOR):
+  └── config.py        # FlextConfig → constants ✅
+
+Tier 0.5 (Runtime Bridge):
+  └── runtime.py       # FlextRuntime → constants, typings ✅
+
+Tier 1 (Core Abstractions - Error Handling):
+  ├── exceptions.py    # FlextExceptions → config, constants ✅
+  └── result.py        # FlextResult → constants, exceptions ✅
+
+Tier 1.5 (Structured Logging - uses Core):
+  └── loggings.py      # FlextLogger → result, runtime, typings ✅
+
+Tier 2 (Domain Foundation):
+  ├── models.py        # FlextModels → _models/* (Pydantic base classes)
+  ├── utilities.py     # FlextUtilities → result ✅
+  └── mixins.py        # FlextMixins (reusable behaviors)
+
+Tier 2.5 (Domain + DI):
+  ├── container.py     # FlextContainer → config, constants, models, result, runtime, utilities ✅
+  ├── service.py       # FlextService → config, container, exceptions, mixins, models, result ✅
+  └── context.py       # FlextContext → constants, container, loggings, models, result ✅
+
+Tier 3 (Application Layer):
+  ├── Tier 3.1 (Handlers):
+  │   └── handlers.py  # FlextHandlers → constants, exceptions, loggings, mixins, models ✅
+  │
+  ├── Tier 3.2 (Orchestration):
+  │   ├── dispatcher.py # FlextDispatcher → constants, context, handlers, mixins, models, result, utilities ✅
+  │   └── registry.py   # FlextRegistry → constants, dispatcher, handlers, mixins, models, result ✅
+  │
+  └── Tier 3.3 (Cross-Cutting):
+      └── decorators.py # FlextDecorators → constants, container, context, exceptions, loggings, result ✅
 ```
+
+**🔴 CRITICAL ARCHITECTURAL RULES**:
+
+1. **FlextConfig MUST be Tier 0.1** (just above constants/types) because it:
+   - Reads environment variables and provides runtime overrides
+   - Controls FlextConstants default values
+   - Sets FlextExceptions failure levels and auto-logging behavior
+   - Configures FlextLogger output formats, levels, and destinations
+   - Defines FlextRuntime correlation ID patterns and context tracking
+   - Modifies ALL other modules' behavior via configuration
+
+2. **Why Config can't be higher**:
+   - If Tier 1: Circular import with exceptions.py
+   - If Tier 4: Circular import with ALL lower tiers
+   - Current position (0.1): ✅ NO circular imports detected
+
+3. **Import Verification** (grep results):
+   - constants.py: 0 flext_core imports ✅
+   - typings.py: 0 flext_core imports ✅
+   - config.py: → constants ✅ (only Tier 0)
+   - runtime.py: → constants, typings ✅ (only Tier 0)
+   - exceptions.py: → config, constants ✅ (Tier 0 + 0.1)
+   - result.py: → constants, exceptions ✅ (Tier 0 + 1)
+   - loggings.py: → result, runtime, typings ✅ (no circular import)
 
 **Key Principle**: This library is NOT following Clean Architecture's strict unidirectional dependency rule. Instead, it uses a **practical utility library design** where:
 - Foundational types (constants, typings, protocols) are truly foundational
@@ -219,38 +271,56 @@ class Account(FlextModels.AggregateRoot):
 
 ```
 src/flext_core/
-├── Tier 0 (Foundation Types) - Everything builds on this
-│   ├── constants.py        # FlextConstants - 50+ error codes, validation patterns
-│   ├── typings.py          # FlextTypes - 50+ TypeVars, type aliases
-│   ├── protocols.py        # FlextProtocols - runtime-checkable interfaces
-│   └── runtime.py          # FlextRuntime - external library integration bridge
+├── Tier 0 (Pure Foundation) - ZERO flext_core imports
+│   ├── constants.py        # FlextConstants - 50+ error codes, defaults (0 imports)
+│   ├── typings.py          # FlextTypes - 50+ TypeVars, type aliases (0 imports)
+│   └── protocols.py        # FlextProtocols - runtime-checkable interfaces (0 imports)
 │
-├── Tier 1 (Core Abstractions) - Railway pattern & DI foundation
-│   ├── result.py           # FlextResult[T] - railway pattern (445 lines, 95% coverage)
-│   ├── container.py        # FlextContainer - DI singleton (612 lines, 99% coverage)
-│   └── exceptions.py       # FlextExceptions - error hierarchy
+├── Tier 0.1 (Configuration) - CONTROLS ALL BEHAVIOR
+│   └── config.py           # FlextConfig → constants ✅ (423 lines, Pydantic Settings)
 │
-├── Tier 2 (Domain Models) - DDD implementations
-│   ├── models.py           # FlextModels - Entity/Value/AggregateRoot (389 lines)
-│   ├── service.py          # FlextService - domain service base (323 lines)
-│   ├── mixins.py           # FlextMixins - reusable behaviors
-│   └── utilities.py        # FlextUtilities - validation, conversion (456 lines)
+├── Tier 0.5 (Runtime Bridge) - External library integration
+│   └── runtime.py          # FlextRuntime → constants, typings ✅
 │
-├── Tier 3 (Application/CQRS) - Business logic orchestration
-│   ├── handlers.py         # FlextHandlers - handler registry (445 lines)
-│   ├── bus.py              # FlextBus - event bus (856 lines, 94% coverage)
-│   ├── dispatcher.py       # FlextDispatcher - unified 3-layer dispatcher (854 lines - Layer 1 CQRS + Layer 2 Reliability + Layer 3 Advanced)
-│   ├── registry.py         # FlextRegistry - handler registry (198 lines)
-│   ├── processors.py       # FlextProcessors - message processing (267 lines)
-│   └── decorators.py       # FlextDecorators - cross-cutting concerns
+├── Tier 1 (Core Abstractions) - Error Handling
+│   ├── exceptions.py       # FlextExceptions → config, constants ✅ (1373 lines)
+│   └── result.py           # FlextResult[T] → constants, exceptions ✅ (445 lines, 95% coverage)
 │
-└── Tier 4 (Infrastructure) - External systems & cross-concerns
-    ├── config.py           # FlextConfig - Pydantic Settings (423 lines)
-    ├── loggings.py         # FlextLogger - structured logging (534 lines)
-    └── context.py          # FlextContext - request/operation context (387 lines)
+├── Tier 1.5 (Structured Logging) - Uses Core
+│   └── loggings.py         # FlextLogger → result, runtime, typings ✅ (534 lines)
+│
+├── Tier 2 (Domain Foundation) - DDD Base Classes
+│   ├── models.py           # FlextModels → _models/* ✅ (389 lines, Pydantic base)
+│   ├── utilities.py        # FlextUtilities → result ✅ (456 lines)
+│   └── mixins.py           # FlextMixins (reusable behaviors)
+│
+├── Tier 2.5 (Domain + DI) - Services & Context
+│   ├── container.py        # FlextContainer → config, models, result, utilities ✅ (612 lines)
+│   ├── service.py          # FlextService → config, container, exceptions, mixins, models, result ✅ (323 lines)
+│   └── context.py          # FlextContext → constants, container, loggings, models, result ✅ (387 lines)
+│
+└── Tier 3 (Application Layer) - CQRS & Orchestration
+    │
+    ├── Tier 3.1 (Handlers) - Command/Query/Event Handlers
+    │   └── handlers.py     # FlextHandlers → constants, exceptions, loggings, mixins, models ✅ (445 lines)
+    │
+    ├── Tier 3.2 (Orchestration) - Dispatch & Registry
+    │   ├── dispatcher.py   # FlextDispatcher → constants, context, handlers, models, result ✅ (854 lines, 3-layer)
+    │   └── registry.py     # FlextRegistry → constants, dispatcher, handlers, models, result ✅ (198 lines)
+    │
+    └── Tier 3.3 (Cross-Cutting) - Decorators
+        └── decorators.py   # FlextDecorators → constants, container, context, exceptions, loggings, result ✅
 ```
 
-**Dependency Note**: All tiers depend on Tier 0 (foundation types). Tier 4 (infrastructure) is accessible across all tiers because it provides cross-cutting concerns (logging, configuration) needed by the entire library.
+**🔴 VERIFIED DEPENDENCY RULES** (grep analysis):
+- **Tier 0**: Zero imports ✅
+- **Tier 0.1**: config → constants ONLY ✅
+- **Tier 0.5**: runtime → constants, typings ONLY ✅
+- **Tier 1**: exceptions → config, constants | result → constants, exceptions ✅
+- **Tier 1.5**: loggings → result, runtime, typings ✅ (moved DOWN from Tier 4!)
+- **Tier 2.5**: context → constants, container, loggings, models, result ✅ (moved DOWN from Tier 4!)
+- **Tier 3 subdivisions**: handlers (3.1) → dispatcher (3.2) → decorators (3.3) ✅
+- **NO CIRCULAR IMPORTS** ✅
 
 ---
 

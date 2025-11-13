@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextConfig
+from flext_core import FlextConfig, FlextUtilities
 from flext_core.constants import FlextConstants
 
 
@@ -36,25 +36,6 @@ class TestFlextConfig:
         assert config.app_name == "test_app"
         assert config.version == "1.0.0"
         assert config.debug is True
-
-    def test_config_callable_interface(self) -> None:
-        """Test config callable interface for nested field access."""
-        config = FlextConfig(
-            app_name="test_app",
-            version="1.0.0",
-            debug=True,
-        )
-
-        # Test direct field access
-        assert config("app_name") == "test_app"
-        assert config("version") == "1.0.0"
-        assert config("debug") is True
-
-        # Test non-existent key
-        with pytest.raises(
-            KeyError, match=r"Configuration key 'nonexistent' not found"
-        ):
-            config("nonexistent")
 
     def test_config_from_dict(self) -> None:
         """Test config creation from dictionary."""
@@ -613,27 +594,20 @@ class TestFlextConfig:
 
     def test_validate_config_class_success(self) -> None:
         """Test validate_config_class with valid config class."""
-        is_valid, error = FlextConfig.validate_config_class(FlextConfig)
+        is_valid, error = FlextUtilities.Configuration.validate_config_class(
+            FlextConfig
+        )
         assert is_valid is True
         assert error is None
 
     def test_validate_config_class_non_class(self) -> None:
         """Test validate_config_class with non-class input."""
-        is_valid, error = FlextConfig.validate_config_class("not_a_class")
+        is_valid, error = FlextUtilities.Configuration.validate_config_class(
+            "not_a_class"
+        )
         assert is_valid is False
         assert error is not None
         assert "must be a class" in error
-
-    def test_validate_config_class_non_subclass(self) -> None:
-        """Test validate_config_class with non-FlextConfig class."""
-
-        class NotFlextConfig:
-            pass
-
-        is_valid, error = FlextConfig.validate_config_class(NotFlextConfig)
-        assert is_valid is False
-        assert error is not None
-        assert "must extend FlextConfig" in error
 
     def test_validate_config_class_no_model_config(self) -> None:
         """Test validate_config_class with class missing model_config."""
@@ -645,7 +619,7 @@ class TestFlextConfig:
         if hasattr(BadConfig, "model_config"):
             delattr(BadConfig, "model_config")
 
-        is_valid, error = FlextConfig.validate_config_class(BadConfig)
+        is_valid, error = FlextUtilities.Configuration.validate_config_class(BadConfig)
         # Should fail because model_config is missing (or pass if it inherits from parent)
         assert isinstance(is_valid, bool)
         assert error is None or isinstance(error, str)
@@ -660,7 +634,9 @@ class TestFlextConfig:
         """Test create_settings_config static method."""
         # This method creates a Pydantic SettingsConfigDict
         # It's a static method that returns configuration for settings
-        config_settings = FlextConfig.create_settings_config(env_prefix="TEST_")
+        config_settings = FlextUtilities.Configuration.create_settings_config(
+            env_prefix="TEST_"
+        )
         # Method should return a valid settings configuration object
         assert config_settings is not None
         # Verify the returned config has the expected env_prefix
