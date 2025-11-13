@@ -192,7 +192,7 @@ result = service.create_order(
 
 if result.is_success:
     order = result.unwrap()
-    print(f"Order created: {order.id} with {len(order.items)} items")
+    print(f"Order created: {order.entity_id} with {len(order.items)} items")
 else:
     print(f"Order failed: {result.error}")
 ```

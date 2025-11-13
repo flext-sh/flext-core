@@ -265,7 +265,7 @@ class Order(FlextModels.AggregateRoot):
             return FlextResult[None].fail("Can only modify pending orders")
 
         self.items.append(item)
-        self.add_domain_event("ItemAdded", {"item_id": item.id})
+        self.add_domain_event("ItemAdded", {"item_id": item.entity_id})
         return FlextResult[None].ok(None)
 
 # ❌ WRONG - Anemic model

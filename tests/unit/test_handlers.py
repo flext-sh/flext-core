@@ -595,13 +595,13 @@ class TestFlextHandlers:
         assert result.error is not None
         assert "Message validation failed: Query validation failed" in result.error
 
-    def test_handlers_from_callable_basic(self) -> None:
-        """Test from_callable with basic function."""
+    def test_handlers_create_from_callable_basic(self) -> None:
+        """Test create_from_callable with basic function."""
 
         def simple_handler(message: str) -> str:
             return f"handled_{message}"
 
-        handler = FlextHandlers.from_callable(
+        handler = FlextHandlers.create_from_callable(
             cast("Callable[[object], object]", simple_handler),
             handler_name="simple_handler",
             handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
@@ -615,13 +615,13 @@ class TestFlextHandlers:
         assert result.is_success
         assert result.value == "handled_test"
 
-    def test_handlers_from_callable_with_flext_result(self) -> None:
-        """Test from_callable with function returning FlextResult."""
+    def test_handlers_create_from_callable_with_flext_result(self) -> None:
+        """Test create_from_callable with function returning FlextResult."""
 
         def result_handler(message: str) -> FlextResult[str]:
             return FlextResult[str].ok(f"result_{message}")
 
-        handler = FlextHandlers.from_callable(
+        handler = FlextHandlers.create_from_callable(
             cast("Callable[[object], object]", result_handler),
             handler_name="result_handler",
             handler_type=FlextConstants.Cqrs.HandlerType.QUERY,
@@ -634,8 +634,8 @@ class TestFlextHandlers:
         assert result.is_success
         assert result.value == "result_test"
 
-    def test_handlers_from_callable_with_exception(self) -> None:
-        """Test from_callable with function that raises exception."""
+    def test_handlers_create_from_callable_with_exception(self) -> None:
+        """Test create_from_callable with function that raises exception."""
 
         def failing_handler(message: str) -> str:
             # Parameter is intentionally unused in this test
@@ -643,7 +643,7 @@ class TestFlextHandlers:
             error_message = "Handler failed"
             raise ValueError(error_message)
 
-        handler = FlextHandlers.from_callable(
+        handler = FlextHandlers.create_from_callable(
             cast("Callable[[object], object]", failing_handler),
             handler_name="failing_handler",
             handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
@@ -654,13 +654,13 @@ class TestFlextHandlers:
         assert result.error is not None
         assert "Handler failed" in result.error
 
-    def test_handlers_from_callable_default_name(self) -> None:
-        """Test from_callable with default handler name from function name."""
+    def test_handlers_create_from_callable_default_name(self) -> None:
+        """Test create_from_callable with default handler name from function name."""
 
         def my_custom_function(message: str) -> str:
             return f"custom_{message}"
 
-        handler = FlextHandlers.from_callable(
+        handler = FlextHandlers.create_from_callable(
             cast("Callable[[object], object]", my_custom_function),
             handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
@@ -668,13 +668,13 @@ class TestFlextHandlers:
         assert handler.handler_name == "my_custom_function"
         assert handler.mode == FlextConstants.Cqrs.HandlerType.COMMAND
 
-    def test_handlers_from_callable_with_mode_parameter(self) -> None:
-        """Test from_callable with mode parameter (compatibility)."""
+    def test_handlers_create_from_callable_with_mode_parameter(self) -> None:
+        """Test create_from_callable with mode parameter (compatibility)."""
 
         def mode_handler(message: str) -> str:
             return f"mode_{message}"
 
-        handler = FlextHandlers.from_callable(
+        handler = FlextHandlers.create_from_callable(
             cast("Callable[[object], object]", mode_handler),
             handler_name="mode_handler",
             mode=FlextConstants.Cqrs.HandlerType.QUERY,
@@ -683,14 +683,14 @@ class TestFlextHandlers:
         assert handler.handler_name == "mode_handler"
         assert handler.mode == FlextConstants.Cqrs.HandlerType.QUERY
 
-    def test_handlers_from_callable_invalid_mode(self) -> None:
-        """Test from_callable with invalid mode."""
+    def test_handlers_create_from_callable_invalid_mode(self) -> None:
+        """Test create_from_callable with invalid mode."""
 
         def invalid_handler(message: str) -> str:
             return f"invalid_{message}"
 
         with pytest.raises(FlextExceptions.ValidationError) as exc_info:
-            FlextHandlers.from_callable(
+            FlextHandlers.create_from_callable(
                 cast("Callable[[object], object]", invalid_handler),
                 handler_name="invalid_handler",
                 mode=cast("FlextConstants.Cqrs.HandlerModeSimple", "invalid_mode"),
@@ -698,8 +698,8 @@ class TestFlextHandlers:
 
         assert "Invalid handler mode: invalid_mode" in str(exc_info.value)
 
-    def test_handlers_from_callable_with_model_config(self) -> None:
-        """Test from_callable with FlextModels.Cqrs.Handler model config."""
+    def test_handlers_create_from_callable_with_model_config(self) -> None:
+        """Test create_from_callable with FlextModels.Cqrs.Handler model config."""
 
         def model_config_handler(message: str) -> str:
             return f"model_config_{message}"
@@ -712,7 +712,7 @@ class TestFlextHandlers:
             metadata={"test": "value"},
         )
 
-        handler = FlextHandlers.from_callable(
+        handler = FlextHandlers.create_from_callable(
             cast("Callable[[object], object]", model_config_handler),
             handler_config=handler_config,
         )
@@ -721,8 +721,8 @@ class TestFlextHandlers:
         assert handler._config_model.handler_id == "custom_id"
         assert handler._config_model.metadata == {"test": "value"}
 
-    def test_handlers_from_callable_with_pydantic_config(self) -> None:
-        """Test from_callable with FlextModels.Cqrs.Handler object."""
+    def test_handlers_create_from_callable_with_pydantic_config(self) -> None:
+        """Test create_from_callable with FlextModels.Cqrs.Handler object."""
 
         def pydantic_config_handler(message: object) -> object:
             if isinstance(message, str):
@@ -736,7 +736,7 @@ class TestFlextHandlers:
             handler_mode=FlextConstants.Cqrs.HandlerType.QUERY,
         )
 
-        handler = FlextHandlers.from_callable(
+        handler = FlextHandlers.create_from_callable(
             pydantic_config_handler,
             handler_config=config,
         )
@@ -745,13 +745,13 @@ class TestFlextHandlers:
         assert handler._config_model.handler_id == "pydantic_id"
         assert handler.mode == FlextConstants.Cqrs.HandlerType.QUERY
 
-    def test_handlers_from_callable_anonymous_function(self) -> None:
-        """Test from_callable with lambda (anonymous function)."""
+    def test_handlers_create_from_callable_anonymous_function(self) -> None:
+        """Test create_from_callable with lambda (anonymous function)."""
 
         def process_message(message: str) -> str:
             return f"lambda_{message!s}"
 
-        handler = FlextHandlers.from_callable(
+        handler = FlextHandlers.create_from_callable(
             cast("FlextTypes.HandlerCallableType", process_message),
             handler_name="lambda_handler",
             handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
@@ -762,10 +762,10 @@ class TestFlextHandlers:
         assert result.is_success
         assert result.value == "lambda_test"
 
-    def test_handlers_from_callable_function_without_name_attribute(
+    def test_handlers_create_from_callable_function_without_name_attribute(
         self,
     ) -> None:
-        """Test from_callable with function object without __name__ attribute."""
+        """Test create_from_callable with function object without __name__ attribute."""
 
         # Create a callable object without __name__
         class CallableObject:
@@ -776,7 +776,7 @@ class TestFlextHandlers:
 
         callable_obj = CallableObject()
 
-        handler = FlextHandlers.from_callable(
+        handler = FlextHandlers.create_from_callable(
             callable_obj, handler_type=FlextConstants.Cqrs.HandlerType.COMMAND
         )
 
@@ -1176,14 +1176,14 @@ class TestFlextHandlers:
         result = handler.validate(msg)
         assert result.is_success
 
-    def test_handlers_from_callable_invalid_config_creation(self) -> None:
-        """Test from_callable with invalid config creation."""
+    def test_handlers_create_from_callable_invalid_config_creation(self) -> None:
+        """Test create_from_callable with invalid config creation."""
 
         def handler_func(message: str) -> str:
             return f"handled_{message}"
 
         # This should handle gracefully if config creation fails
-        handler = FlextHandlers.from_callable(
+        handler = FlextHandlers.create_from_callable(
             cast("Callable[[object], object]", handler_func),
             handler_name="test_func",
             handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,

@@ -150,7 +150,7 @@ class UserService(FlextService):
         user = User(id="new", name=name, email=email)
 
         # Emit domain event
-        self.add_domain_event(UserCreatedEvent(user.id, email))
+        self.add_domain_event(UserCreatedEvent(user.entity_id, email))
 
         return FlextResult[User].ok(user)
 

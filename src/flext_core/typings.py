@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import socket
 from collections.abc import Callable
+from dataclasses import dataclass
 from types import UnionType
 from typing import (
     Annotated,
@@ -204,7 +205,7 @@ class FlextTypes:
     # JSON recursive type using forward reference (Pyrefly compatible)
     # Python 3.13 native syntax would be: JsonPrimitive | dict[str, JsonValue] | list[JsonValue]
     # But Pyrefly doesn't support PEP 695 recursive types yet, so we use string forward reference
-    type JsonValue = JsonPrimitive | dict[str, JsonValue] | list[JsonValue]  # type: ignore[name-defined]
+    type JsonValue = JsonPrimitive | dict[str, JsonValue] | list[JsonValue]
     type JsonList = list[JsonValue]
     type JsonDict = dict[str, JsonValue]
 
@@ -243,9 +244,11 @@ class FlextTypes:
 
     # TypeAlias is correct inside class scope - PEP 695 type statement doesn't work here
     FlextResultType: TypeAlias = "ResultLike[T]"
-    ValidationRule: TypeAlias = "Callable[[T], ResultLike[T]]"
-    CrossFieldValidator: TypeAlias = "Callable[[T], ResultLike[T]]"
-    ValidatorFunction: TypeAlias = "Callable[[T], ResultLike[T]]"
+    # Validator type aliases - these are callable types, not generic type constructors
+    # Use them directly without subscripting (they're already parameterized by T)
+    ValidationRule: TypeAlias = Callable[[T], "ResultLike[T]"]
+    CrossFieldValidator: TypeAlias = Callable[[T], "ResultLike[T]"]
+    ValidatorFunction: TypeAlias = Callable[[T], "ResultLike[T]"]
 
     # =========================================================================
     # HANDLER TYPES - CQRS/Bus patterns (domain-specific)
@@ -366,6 +369,27 @@ class FlextTypes:
     # VALIDATOR TYPES - Validation framework types
     # =========================================================================
     # Note: Validator types defined above using forward references to FlextResult
+
+    @dataclass(frozen=True)
+    class RetryConfig:
+        """Configuration for retry operations.
+
+        Attributes:
+            max_attempts: Maximum number of retry attempts
+            initial_delay_seconds: Initial delay between retries
+            max_delay_seconds: Maximum delay between retries
+            exponential_backoff: Whether to use exponential backoff
+            retry_on_exceptions: List of exception types to retry on
+            backoff_multiplier: Optional multiplier for backoff calculation
+
+        """
+
+        max_attempts: int
+        initial_delay_seconds: float
+        max_delay_seconds: float
+        exponential_backoff: bool
+        retry_on_exceptions: list[type[Exception]]
+        backoff_multiplier: float | None = None
 
     # =========================================================================
 

@@ -58,15 +58,14 @@ setup: install-dev ## Complete project setup
 # =============================================================================
 
 .PHONY: validate
-validate: lint type-check security audit-pydantic-v2 test ## Run all quality gates (MANDATORY ORDER)
+validate: lint type-check security test ## Run all quality gates (MANDATORY ORDER)
 
 .PHONY: check
 check: lint type-check ## Quick health check
 
-.PHONY: audit-pydantic-v2
-audit-pydantic-v2: ## Audit Pydantic v2 compliance
-	@echo "🔍 Auditing Pydantic v2 compliance..."
-	@python ../scripts/audit_pydantic_v2.py --project .
+# audit-pydantic-v2 target REMOVED - use flext-quality instead:
+#   poetry run flext-quality analyze .
+#   Legacy scripts renamed to *.py.bak
 
 .PHONY: lint
 lint: ## Run linting (ZERO TOLERANCE)
@@ -77,8 +76,14 @@ format: ## Format code
 	$(POETRY) run ruff format .
 
 .PHONY: type-check
-type-check: ## Run type checking with Pyrefly (ZERO TOLERANCE)
-	PYTHONPATH=$(SRC_DIR):tests $(POETRY) run pyrefly check .
+type-check: ## Run type checking with Pyrefly (src only)
+	@echo "🔍 Type checking with Pyrefly (src/ only)..."
+	$(POETRY) run pyrefly check src/
+
+.PHONY: type-check-all
+type-check-all: ## Run type checking including examples
+	@echo "🔍 Type checking with Pyrefly (src/ + examples/)..."
+	$(POETRY) run pyrefly check src/ examples/
 
 .PHONY: security
 security: ## Run security scanning

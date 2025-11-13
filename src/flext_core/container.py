@@ -14,21 +14,21 @@ from __future__ import annotations
 import inspect
 import threading
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from contextlib import suppress
 from typing import Self, cast, override
 
 from dependency_injector.containers import DynamicContainer
 from dependency_injector.providers import Object, Singleton
 
+from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FactoryT, FlextTypes, T
-from flext_core.utilities import FlextUtilities
+from flext_core.typings import FactoryT, T
 
 
 class FlextContainer(FlextProtocols.Configurable):
@@ -274,21 +274,6 @@ class FlextContainer(FlextProtocols.Configurable):
     # CORE SERVICE MANAGEMENT - Primary operations with railway patterns
     # =========================================================================
 
-    def _validate_service_name(self, name: str) -> FlextResult[str]:
-        """Validate service name using FlextUtilities generic validation.
-
-        Delegates to FlextUtilities.Validation.validate_identifier() for generic
-        identifier validation.
-
-        Args:
-            name: Service name to validate
-
-        Returns:
-            FlextResult[str]: Validated name or error
-
-        """
-        return FlextUtilities.Validation.validate_identifier(name)
-
     def register(
         self,
         name: str,
@@ -305,7 +290,7 @@ class FlextContainer(FlextProtocols.Configurable):
             DeprecationWarning,
             stacklevel=2,
         )
-        return FlextUtilities.Validation.validate_identifier(name).flat_map(
+        return FlextUtilitiesValidation.validate_identifier(name).flat_map(
             lambda validated_name: self._store_service(validated_name, service),
         )
 
@@ -342,7 +327,7 @@ class FlextContainer(FlextProtocols.Configurable):
             ```
 
         """
-        result = FlextUtilities.Validation.validate_identifier(name).flat_map(
+        result = FlextUtilitiesValidation.validate_identifier(name).flat_map(
             lambda validated_name: self._store_service(validated_name, service),
         )
         if result.is_failure:
@@ -411,7 +396,7 @@ class FlextContainer(FlextProtocols.Configurable):
             DeprecationWarning,
             stacklevel=2,
         )
-        return FlextUtilities.Validation.validate_identifier(name).flat_map(
+        return FlextUtilitiesValidation.validate_identifier(name).flat_map(
             lambda validated_name: self._store_factory(validated_name, factory),
         )
 
@@ -446,7 +431,7 @@ class FlextContainer(FlextProtocols.Configurable):
             ```
 
         """
-        result = FlextUtilities.Validation.validate_identifier(name).flat_map(
+        result = FlextUtilitiesValidation.validate_identifier(name).flat_map(
             lambda validated_name: self._store_factory(validated_name, factory),
         )
         if result.is_failure:
@@ -516,7 +501,9 @@ class FlextContainer(FlextProtocols.Configurable):
             FlextResult[None]: Success if unregistered or failure with error.
 
         """
-        return FlextUtilities.Validation.validate_identifier(name).flat_map(self._remove_service)
+        return FlextUtilitiesValidation.validate_identifier(name).flat_map(
+            self._remove_service
+        )
 
     def _remove_service(self, name: str) -> FlextResult[None]:
         """Remove service from tracking dicts AND internal DI container.
@@ -552,7 +539,9 @@ class FlextContainer(FlextProtocols.Configurable):
             FlextResult[object]: Success with service instance or failure with error.
 
         """
-        return FlextUtilities.Validation.validate_identifier(name).flat_map(self._resolve_service)
+        return FlextUtilitiesValidation.validate_identifier(name).flat_map(
+            self._resolve_service
+        )
 
     def _resolve_service(self, name: str) -> FlextResult[object]:
         """Resolve service via internal DI container with FlextResult wrapping.
@@ -679,31 +668,56 @@ class FlextContainer(FlextProtocols.Configurable):
     def batch_register(self, services: dict[str, object]) -> FlextResult[None]:
         """Register multiple services atomically with rollback on failure.
 
+        Uses railway pattern with automatic rollback and FlextUtilities validation.
+
         Returns:
             FlextResult[None]: Success if all registered or failure with error.
 
         """
-        # Create snapshot for potential rollback
+        # Use railway pattern for atomic batch registration with rollback
+        return self._validate_batch_services(services).flat_map(
+            self._execute_batch_registration
+        )
+
+    def _validate_batch_services(
+        self, services: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
+        """Validate batch services using FlextUtilities."""
+        # Allow empty dictionaries for batch_register flexibility
+
+        # Use FlextUtilities for comprehensive validation
+        validation_result = FlextUtilitiesValidation.validate_batch_services(services)
+        if validation_result.is_failure:
+            return FlextResult[dict[str, object]].fail(
+                f"Batch validation failed: {validation_result.error}"
+            )
+
+        return FlextResult[dict[str, object]].ok(services)
+
+    def _execute_batch_registration(
+        self, services: dict[str, object]
+    ) -> FlextResult[None]:
+        """Execute batch registration with automatic rollback using snapshot pattern."""
+        # Create snapshot for rollback capability
         snapshot = self._create_registry_snapshot()
 
         try:
-            # Process all registrations with error handling
-            result = self._process_batch_registrations(services)
-            if result.is_failure:
-                # Restore snapshot on failure
-                self._restore_registry_snapshot(snapshot)
-                return FlextResult[None].fail(
-                    result.error or "Batch registration failed",
-                )
+            # Process all registrations using railway pattern
+            return self._process_batch_registrations(services).map(lambda _: None)
+        except Exception as e:
+            # Fallback rollback for unexpected exceptions
+            return self._rollback_and_fail(snapshot, str(e))
 
-            return FlextResult[None].ok(None)
-        except (TypeError, ValueError, AttributeError, KeyError) as e:
-            # TypeError/AttributeError: Registration processing failures
-            # ValueError: Validation violations
-            # KeyError: Dict access failures during batch processing
-            # Restore snapshot on exception
-            self._restore_registry_snapshot(snapshot)
-            return FlextResult[None].fail(f"Batch registration error: {e}")
+    def _rollback_and_fail(
+        self, snapshot: Mapping[str, object], error: str
+    ) -> FlextResult[None]:
+        """Rollback snapshot and return failure result."""
+        typed_snapshot = cast(
+            "dict[str, dict[str, FlextModels.ServiceRegistration] | dict[str, FlextModels.FactoryRegistration]]",
+            snapshot,
+        )
+        self._restore_registry_snapshot(typed_snapshot)
+        return FlextResult[None].fail(f"Batch registration failed: {error}")
 
     def _create_registry_snapshot(
         self,
@@ -735,7 +749,7 @@ class FlextContainer(FlextProtocols.Configurable):
         """
         for name, service in services.items():
             # Validate service name
-            validation_result = FlextUtilities.Validation.validate_identifier(name)
+            validation_result = FlextUtilitiesValidation.validate_identifier(name)
             if validation_result.is_failure:
                 return FlextResult[None].fail(
                     validation_result.error or f"Invalid service name: {name}",
@@ -889,46 +903,82 @@ class FlextContainer(FlextProtocols.Configurable):
     ) -> FlextResult[object]:
         """Auto-wire service dependencies without registering.
 
-        Creates a service instance by resolving its constructor dependencies
-        from the container, but does not register the created service.
+        Uses railway pattern with FlextUtilities for robust dependency resolution.
 
         Returns:
             FlextResult[object]: Success with instantiated service or failure with error.
 
         """
+        return (
+            self._analyze_constructor_signature(service_class)
+            .flat_map(self._resolve_dependencies)
+            .flat_map(lambda deps: self._instantiate_service(service_class, deps))
+        )
+
+    def _analyze_constructor_signature(
+        self, service_class: type[T]
+    ) -> FlextResult[dict[str, dict[str, object]]]:
+        """Analyze constructor signature for dependency requirements."""
         try:
-            # Try to resolve dependencies from container
-            dependencies: dict[str, object] = {}
             signature = inspect.signature(service_class.__init__)
+            dependencies: dict[str, dict[str, object]] = {}
 
             for param_name, param in signature.parameters.items():
                 if param_name == "self":
                     continue
 
-                # Try to get dependency from container
-                dep_result = self.get(param_name)
-                if dep_result.is_success:
-                    dependencies[param_name] = dep_result.value
-                elif param.default != inspect.Parameter.empty:
-                    # Use default value
-                    dependencies[param_name] = param.default
-                else:
-                    return FlextResult[object].fail(
-                        f"Cannot resolve required dependency '{param_name}' for auto-wiring",
-                    )
+                # Use FlextUtilities for parameter analysis
+                param_info = FlextUtilitiesValidation.analyze_constructor_parameter(
+                    param_name, param
+                )
+                dependencies[param_name] = param_info
 
-            # Create service instance
+            return FlextResult[dict[str, dict[str, object]]].ok(dependencies)
+
+        except Exception as e:
+            return FlextResult[dict[str, dict[str, object]]].fail(
+                f"Signature analysis failed: {e}"
+            )
+
+    def _resolve_dependencies(
+        self, param_specs: dict[str, dict[str, object]]
+    ) -> FlextResult[dict[str, object]]:
+        """Resolve dependencies from container using railway pattern."""
+        dependencies = {}
+        resolution_errors = []
+
+        for param_name, param_spec in param_specs.items():
+            # Extract parameter info
+            param_dict = param_spec
+            has_default = param_dict.get("has_default", False)
+            default_value = param_dict.get("default_value")
+
+            # Try to resolve from container
+            dep_result = self.get(param_name)
+
+            if dep_result.is_success:
+                dependencies[param_name] = dep_result.value
+            elif has_default:
+                dependencies[param_name] = default_value
+            else:
+                resolution_errors.append(param_name)
+
+        if resolution_errors:
+            return FlextResult[dict[str, object]].fail(
+                f"Cannot resolve required dependencies: {', '.join(resolution_errors)}"
+            )
+
+        return FlextResult[dict[str, object]].ok(dependencies)
+
+    def _instantiate_service(
+        self, service_class: type[T], dependencies: dict[str, object]
+    ) -> FlextResult[object]:
+        """Instantiate service with resolved dependencies."""
+        try:
             service = service_class(**dependencies)
-
             return FlextResult[object].ok(service)
-
-        except (TypeError, ValueError, AttributeError, KeyError, RuntimeError) as e:
-            # TypeError: Service class instantiation with wrong arguments
-            # ValueError: Validation or constraint violations
-            # AttributeError: Missing attributes on service class or dependency
-            # KeyError: Dependency resolution failures
-            # RuntimeError: Runtime failures during service instantiation
-            return FlextResult[object].fail(f"Auto-wiring failed: {e}")
+        except Exception as e:
+            return FlextResult[object].fail(f"Service instantiation failed: {e}")
 
     # =========================================================================
     # INSPECTION AND UTILITIES - Container introspection and management
@@ -964,7 +1014,7 @@ class FlextContainer(FlextProtocols.Configurable):
             bool: True if service is registered, False otherwise.
 
         """
-        normalized = self._validate_service_name(name)
+        normalized = FlextUtilitiesValidation.validate_identifier(name)
         if normalized.is_failure:
             return False
         validated_name = normalized.value_or_none
@@ -1309,7 +1359,7 @@ class FlextContainer(FlextProtocols.Configurable):
     def validate_and_get(
         self,
         name: str,
-        validators: list[FlextTypes.ValidatorFunction[object]] | None = None,
+        validators: list[Callable[[object], FlextResult[object]]] | None = None,
     ) -> FlextResult[object]:
         """Get service and validate using flow_through pattern.
 

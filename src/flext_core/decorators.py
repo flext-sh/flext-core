@@ -735,7 +735,7 @@ class FlextDecorators:
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                logger = FlextDecorators._get_logger_for_retry(args, func)
+                logger = FlextDecorators._resolve_logger(args, func)
                 result_or_exception = FlextDecorators._execute_retry_loop(
                     func, args, kwargs, logger, attempts, delay, strategy
                 )
@@ -770,13 +770,6 @@ class FlextDecorators:
         if potential_logger is not None and isinstance(potential_logger, FlextLogger):
             return potential_logger
         return FlextLogger(func.__module__)
-
-    @staticmethod
-    def _get_logger_for_retry(
-        args: tuple[object, ...], func: Callable[..., object]
-    ) -> FlextLogger:
-        """Get logger from self if available, otherwise create new logger."""
-        return FlextDecorators._resolve_logger(args, func)
 
     @staticmethod
     def _execute_retry_loop[R](

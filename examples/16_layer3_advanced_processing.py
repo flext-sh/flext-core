@@ -104,7 +104,7 @@ def example_2_batch_processing() -> None:
     dispatcher.register_processor("doubler", DataDoubler())
 
     # Process batch of items
-    data_list = [1, 2, 3, 4, 5]
+    data_list: list[object] = [1, 2, 3, 4, 5]
     result = dispatcher.process_batch("doubler", data_list, batch_size=2)
 
     if result.is_failure:

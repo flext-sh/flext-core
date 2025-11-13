@@ -430,7 +430,7 @@ class TestLayer1Middleware:
 
         # Get sorted middleware
         sorted_configs = sorted(
-            dispatcher._middleware_configs, key=lambda c: c.get("order", 0)
+            dispatcher._middleware_configs, key=lambda c: int(c.get("order", 0))
         )
 
         assert sorted_configs[0].get("order") == 10
@@ -475,7 +475,7 @@ class TestLayer1Middleware:
         command_handler: CommandHandler,
     ) -> None:
         """Test multiple middleware execute in order."""
-        execution_order = []
+        execution_order: list[int] = []
 
         class OrderTrackingMiddleware:
             def __init__(self, order_list: list[int], middleware_id: int) -> None:

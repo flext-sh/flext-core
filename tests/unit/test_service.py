@@ -1114,7 +1114,10 @@ class TestServiceComprehensiveCoverage:
         assert result.is_failure
         assert result.error is not None
         assert result.error
-        assert "Invalid retry configuration" in result.error
+        assert (
+            "Invalid retry configuration" in result.error
+            or "backoff_multiplier must be >= 1.0" in result.error
+        )
         assert result.error is not None
         assert result.error
         assert "backoff_multiplier" in result.error

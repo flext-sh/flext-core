@@ -281,7 +281,8 @@ class FlextUtilitiesStringParser:
             >>> FlextUtilities.StringParser.get_object_key(int)
             'int'
             >>> # Function
-            >>> def my_func(): pass
+            >>> def my_func():
+            ...     pass
             >>> FlextUtilities.StringParser.get_object_key(my_func)
             'my_func'
             >>> # Instance

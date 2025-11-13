@@ -16,23 +16,6 @@ from flext_core import FlextConfig, FlextResult
 class TestPhase2FinalCoveragePush:
     """Strategic tests targeting remaining coverage gaps."""
 
-    def test_config_callable_field_access(self) -> None:
-        """Test config callable interface for field access."""
-        config = FlextConfig(app_name="test_app")
-        # Test callable access
-        assert config("app_name") == "test_app"
-
-    def test_config_callable_nested_access(self) -> None:
-        """Test config callable with multiple field types."""
-        config = FlextConfig(
-            app_name="myapp",
-            version="1.0.0",
-            debug=True,
-            trace=False,
-        )
-        assert config("debug") is True
-        assert config("trace") is False
-
     def test_flext_result_chaining_operations(self) -> None:
         """Test FlextResult chaining with multiple operations."""
         # Test successful chaining

@@ -148,5 +148,87 @@ class FlextUtilitiesReliability:
             f"Operation failed after {max_attempts} attempts: {last_error}"
         )
 
+    @staticmethod
+    def calculate_delay(attempt: int, config: object) -> float:
+        """Calculate delay for retry attempt using configuration.
+
+        Args:
+            attempt: Current attempt number (0-based)
+            config: Retry configuration object
+
+        Returns:
+            float: Delay in seconds for next attempt
+
+        """
+        # Extract configuration values safely with proper type conversion
+        initial_delay = float(getattr(config, "initial_delay_seconds", 0.1))
+        max_delay = float(getattr(config, "max_delay_seconds", 60.0))
+        exponential_backoff = bool(getattr(config, "exponential_backoff", False))
+        backoff_multiplier = getattr(config, "backoff_multiplier", None)
+        if backoff_multiplier is not None:
+            backoff_multiplier = float(backoff_multiplier)
+
+        # Calculate base delay
+        if exponential_backoff:
+            delay = min(initial_delay * (2**attempt), max_delay)
+        else:
+            delay = min(initial_delay * (attempt + 1), max_delay)
+
+        # Apply backoff multiplier if specified
+        if backoff_multiplier is not None:
+            delay *= backoff_multiplier
+            delay = min(delay, max_delay)
+
+        return float(delay)
+
+    @staticmethod
+    def with_retry[TResult](
+        operation: Callable[[], FlextResult[TResult]],
+        max_attempts: int = 3,
+        should_retry_func: Callable[[int, str | None], bool] | None = None,
+        cleanup_func: Callable[[], None] | None = None,
+    ) -> FlextResult[TResult]:
+        """Execute operation with retry logic using railway patterns.
+
+        Args:
+            operation: Operation to execute (should return FlextResult)
+            max_attempts: Maximum number of attempts
+            should_retry_func: Function to determine if retry should happen
+            cleanup_func: Function to call for cleanup after each attempt
+
+        Returns:
+            FlextResult[TResult]: Result of operation with retry
+
+        """
+        for attempt in range(max_attempts):
+            try:
+                result = operation()
+                if result.is_success:
+                    return result
+
+                # Check if we should retry
+                should_retry = (
+                    should_retry_func(attempt, result.error)
+                    if should_retry_func
+                    else False
+                )
+
+                if not should_retry or attempt >= max_attempts - 1:
+                    return result
+
+                # Call cleanup function if provided
+                if cleanup_func:
+                    cleanup_func()
+
+            except Exception as e:
+                # If operation throws exception, consider it a failure
+                if attempt >= max_attempts - 1:
+                    return FlextResult[TResult].fail(f"Operation failed: {e}")
+
+                if cleanup_func:
+                    cleanup_func()
+
+        return FlextResult[TResult].fail("Max retries exceeded")
+
 
 __all__ = ["FlextUtilitiesReliability"]

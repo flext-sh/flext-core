@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from typing import Annotated, Literal, Self, cast
+from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -171,7 +171,8 @@ class FlextModelsCqrs:
                 query_type: object = query_payload.get("query_type")
                 if not FlextRuntime.is_dict_like(filters):
                     filters = {}
-                filters_dict = cast("dict[str, object]", filters)
+                # At this point filters is guaranteed to be dict-like
+                filters_dict = filters if isinstance(filters, dict) else dict(filters)
                 query = cls(
                     filters=filters_dict,
                     pagination=pagination,

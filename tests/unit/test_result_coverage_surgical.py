@@ -1,7 +1,7 @@
 """Surgical tests targeting exact uncovered lines in result.py.
 
 This test file specifically targets uncovered lines identified in coverage report:
-- Line 459: from_callable fallback
+- Line 459: create_from_callable fallback
 - Line 650: or operator with None data
 - Lines 679-680: data property exception
 - Lines 745-746: __eq__ exception handling
@@ -400,24 +400,24 @@ class TestResultCoverageSurgical:
         assert result.is_success
         assert result.value == 99
 
-    def test_result_from_callable_success(self) -> None:
-        """Test from_callable with successful function."""
+    def test_result_create_from_callable_success(self) -> None:
+        """Test create_from_callable with successful function."""
 
         def factory() -> str:
             return "result"
 
-        r = FlextResult.from_callable(factory)
+        r = FlextResult.create_from_callable(factory)
         assert r.is_success
         assert r.value == "result"
 
-    def test_result_from_callable_exception(self) -> None:
-        """Test from_callable with exception-raising function."""
+    def test_result_create_from_callable_exception(self) -> None:
+        """Test create_from_callable with exception-raising function."""
         error_msg = "error"
 
         def factory() -> str:
             raise ValueError(error_msg)
 
-        r = FlextResult.from_callable(factory)
+        r = FlextResult.create_from_callable(factory)
         assert r.is_failure
 
 

@@ -544,7 +544,7 @@ class User(FlextModels.Entity):
             raise ValueError("Age cannot be negative")
 
 user = User(id="user_123", name="Alice", email="alice@example.com", age=30)
-print(f"Created user: {user.name} with ID: {user.id}")
+print(f"Created user: {user.name} with ID: {user.entity_id}")
 
 # 4. Domain Service - Business logic encapsulation
 class UserService(FlextService):

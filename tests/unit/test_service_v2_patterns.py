@@ -210,7 +210,9 @@ class TestV1VsV2Property:
         assert result.is_success
         value = result.unwrap()
         assert value["count"] == 6  # 3 items * 2 multiplier
-        assert len(value["items"]) == 3
+        items = value["items"]
+        assert isinstance(items, list)
+        assert len(items) == 3
 
     def test_complex_v2_property_with_items(self) -> None:
         """V2 Property: Complex service with items."""
@@ -220,7 +222,9 @@ class TestV1VsV2Property:
 
         assert isinstance(value, dict)
         assert value["count"] == 6
-        assert len(value["items"]) == 3
+        items = value["items"]
+        assert isinstance(items, list)
+        assert len(items) == 3
 
     def test_complex_v1_with_empty_items(self) -> None:
         """V1: Complex service fails with empty items."""

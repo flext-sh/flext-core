@@ -30,6 +30,7 @@
         "returns>=0.26.0",
         "structlog>=25.4.0",
         "pydantic-core (>=2.41.4)",
+        "attrs (>=25.4.0,<26.0.0)",
     ]
     description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
     keywords = [

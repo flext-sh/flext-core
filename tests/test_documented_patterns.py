@@ -29,6 +29,7 @@ from flext_core import (
     FlextContainer,
     FlextExceptions,
     FlextLogger,
+    FlextModels,
     FlextResult,
     FlextService,
 )
@@ -38,10 +39,9 @@ from flext_core import (
 # ============================================================================
 
 
-class User(BaseModel):
+class User(FlextModels.Entity):
     """User domain model."""
 
-    id: str
     name: str
     email: str
 
@@ -70,7 +70,7 @@ class GetUserService(FlextService[User]):
 
         return FlextResult.ok(
             User(
-                id=self.user_id,
+                unique_id=self.user_id,
                 name=f"User {self.user_id}",
                 email=f"user{self.user_id}@example.com",
             )
@@ -90,7 +90,7 @@ class AutoGetUserService(FlextService[User]):
 
         return FlextResult.ok(
             User(
-                id=self.user_id,
+                unique_id=self.user_id,
                 name=f"User {self.user_id}",
                 email=f"user{self.user_id}@example.com",
             )
@@ -161,7 +161,7 @@ class TestPattern1V1Explicit:
         user = result.unwrap()
 
         assert isinstance(user, User)
-        assert user.id == "123"
+        assert user.entity_id == "123"
         assert user.name == "User 123"
 
     def test_v1_explicit_failure(self) -> None:
@@ -169,6 +169,7 @@ class TestPattern1V1Explicit:
         # V1 Pattern: .execute() returns FlextResult
         result = GetUserService(user_id="invalid").execute()
         assert result.is_failure
+        assert result.error is not None
         assert "not found" in result.error.lower()
 
     def test_v1_explicit_with_if_check(self) -> None:
@@ -177,7 +178,7 @@ class TestPattern1V1Explicit:
 
         if result.is_success:
             user = result.unwrap()
-            assert user.id == "456"
+            assert user.entity_id == "456"
         else:
             pytest.fail("Should succeed")
 
@@ -196,7 +197,7 @@ class TestPattern2V2Property:
         user = GetUserService(user_id="789").result
 
         assert isinstance(user, User)
-        assert user.id == "789"
+        assert user.entity_id == "789"
         assert user.name == "User 789"
 
     def test_v2_property_failure_raises(self) -> None:
@@ -213,7 +214,7 @@ class TestPattern2V2Property:
 
         assert result.is_success
         user = result.unwrap()
-        assert user.id == "123"
+        assert user.entity_id == "123"
 
 
 # ============================================================================
@@ -232,7 +233,7 @@ class TestPattern3V2Auto:
         # Returns User directly, not service instance
         assert isinstance(user, User)
         assert not isinstance(user, AutoGetUserService)
-        assert user.id == "999"
+        assert user.entity_id == "999"
 
     def test_v2_auto_failure_raises(self) -> None:
         """V2 Auto: Failure raises exception."""
@@ -282,7 +283,7 @@ class TestPattern4RailwayV1:
         result = (
             GetUserService(user_id="123")
             .execute()
-            .filter(lambda user: user.id == "123", "User ID mismatch")
+            .filter(lambda user: user.entity_id == "123", "User ID mismatch")
         )
 
         assert result.is_success
@@ -291,7 +292,7 @@ class TestPattern4RailwayV1:
         filtered_fail = (
             GetUserService(user_id="123")
             .execute()
-            .filter(lambda user: user.id == "999", "ID does not match")
+            .filter(lambda user: user.entity_id == "999", "ID does not match")
         )
 
         assert filtered_fail.is_failure
@@ -326,7 +327,7 @@ class TestPattern5RailwayV2Property:
         """V2 Property: .execute() available for railway pattern."""
         # V2 Property: Use .result for happy path
         user_happy = GetUserService(user_id="123").result
-        assert user_happy.id == "123"
+        assert user_happy.entity_id == "123"
 
         # V2 Property: Use .execute() for railway pattern
         result = GetUserService(user_id="123").execute().map(lambda u: u.email)
@@ -370,7 +371,7 @@ class TestPattern6RailwayV2Auto:
             def execute(self) -> FlextResult[User]:
                 """Get user."""
                 return FlextResult.ok(
-                    User(id=self.user_id, name="Test", email="test@example.com")
+                    User(unique_id=self.user_id, name="Test", email="test@example.com")
                 )
 
         # With auto_execute = False, returns service instance
@@ -430,7 +431,7 @@ class TestPattern7MonadicComposition:
         result = (
             GetUserService(user_id="123")
             .execute()
-            .tap(lambda user: called.append(user.id))
+            .tap(lambda user: called.append(user.entity_id))
             .map(lambda user: user.name)
         )
 
@@ -444,14 +445,14 @@ class TestPattern7MonadicComposition:
             .execute()
             .recover(
                 lambda _: User(
-                    id="default", name="Default", email="default@example.com"
+                    unique_id="default", name="Default", email="default@example.com"
                 )
             )
         )
 
         assert result.is_success
         user = result.unwrap()
-        assert user.id == "default"
+        assert user.entity_id == "default"
 
     def test_monadic_complex_pipeline(self) -> None:
         """Monadic: Complex pipeline with multiple operations."""
@@ -489,7 +490,7 @@ class TestPattern8ErrorHandling:
         """Error Handling: try/except with V2 Property."""
         try:
             user = GetUserService(user_id="123").result
-            assert user.id == "123"
+            assert user.entity_id == "123"
         except FlextExceptions.BaseError:
             pytest.fail("Should not raise")
 
@@ -501,9 +502,10 @@ class TestPattern8ErrorHandling:
 
     def test_error_handling_try_except_v2_auto(self) -> None:
         """Error Handling: try/except with V2 Auto."""
+        from typing import cast
         try:
-            user = AutoGetUserService(user_id="789")
-            assert user.id == "789"
+            user = cast("User", AutoGetUserService(user_id="789"))
+            assert user.entity_id == "789"
         except FlextExceptions.BaseError:
             pytest.fail("Should not raise")
 
@@ -633,11 +635,12 @@ class TestAllPatternsIntegration:
 
         # V2 Property: Happy path
         v2_user = GetUserService(user_id="456").result
-        assert v2_user.id == "456"
+        assert v2_user.entity_id == "456"
 
         # V2 Auto: Zero ceremony
-        auto_user = AutoGetUserService(user_id="789")
-        assert auto_user.id == "789"
+        from typing import cast
+        auto_user = cast("User", AutoGetUserService(user_id="789"))
+        assert auto_user.entity_id == "789"
 
         # All return same type
         assert isinstance(v1_result.unwrap(), User)
@@ -661,7 +664,7 @@ class TestAllPatternsIntegration:
 
             def execute(self) -> FlextResult[User]:
                 return FlextResult.ok(
-                    User(id=self.user_id, name="Test", email="test@example.com")
+                    User(unique_id=self.user_id, name="Test", email="test@example.com")
                 )
 
         v2_auto_pipeline = ManualService(user_id="789").execute().map(lambda u: u.email)

@@ -367,7 +367,7 @@ class OrderService(FlextService):
         # Business logic
         order.place()
         # Emit event for subscribers
-        self.add_domain_event(OrderPlacedEvent(order.id))
+        self.add_domain_event(OrderPlacedEvent(order.entity_id))
         return FlextResult[Order].ok(order)
 ```
 

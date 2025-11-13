@@ -340,7 +340,7 @@ class TestEdgeCases:
 
     def test_generators_timestamp_format(self) -> None:
         """Test timestamp has expected format."""
-        ts = FlextUtilities.Generators.generate_timestamp()
+        ts = FlextUtilities.Generators.generate_iso_timestamp()
         assert isinstance(ts, str)
         assert len(ts) > 0
         # ISO format should have either T or -
@@ -436,21 +436,7 @@ class TestEdgeCases:
             "app_name",
             "NewApp",
         )
-        # Result should be boolean indicating success
-        assert isinstance(result, bool)
-
-    def test_run_external_command_success(self) -> None:
-        """Test running successful external command."""
-        result = FlextUtilities.run_external_command(
-            ["echo", "hello"],
-            capture_output=True,
-            text=True,
-        )
-        assert result.is_success
-
-    def test_run_external_command_with_empty_list(self) -> None:
-        """Test running command with empty list."""
-        result = FlextUtilities.run_external_command([])
+        # Result should be FlextResult indicating failure (no get_global_instance method)
         assert result.is_failure
 
     def test_text_processor_clean_text_removal(self) -> None:

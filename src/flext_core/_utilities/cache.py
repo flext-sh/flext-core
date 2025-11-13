@@ -10,8 +10,6 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from collections.abc import Sequence
-from typing import cast
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
@@ -39,13 +37,9 @@ class FlextUtilitiesCache:
                 for k, v in component_dict.items()
             }
         if isinstance(component, (list, tuple)):
-            sequence = cast("Sequence[object]", component)
-            return [FlextUtilitiesCache.normalize_component(item) for item in sequence]
+            return [FlextUtilitiesCache.normalize_component(item) for item in component]
         if isinstance(component, set):
-            set_component = cast("set[object]", component)
-            return {
-                FlextUtilitiesCache.normalize_component(item) for item in set_component
-            }
+            return {FlextUtilitiesCache.normalize_component(item) for item in component}
         # Return primitives and other types directly
         return component
 

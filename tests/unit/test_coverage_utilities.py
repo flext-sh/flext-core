@@ -63,7 +63,7 @@ class TestGenerators:
 
     def test_generate_timestamp(self) -> None:
         """Test timestamp generation."""
-        ts = FlextUtilities.Generators.generate_timestamp()
+        ts = FlextUtilities.Generators.generate_iso_timestamp()
         assert isinstance(ts, str)
         assert "T" in ts or "-" in ts  # ISO format check
 
@@ -264,11 +264,11 @@ class TestConfiguration:
 
 
 class TestExternalCommand:
-    """Test FlextUtilities.run_external_command."""
+    """Test FlextUtilities.FlextUtilities.CommandExecution.run_external_command."""
 
     def test_run_external_command_echo(self) -> None:
         """Test running simple echo command."""
-        result = FlextUtilities.run_external_command(
+        result = FlextUtilities.CommandExecution.run_external_command(
             ["echo", "hello"],
             capture_output=True,
             text=True,
@@ -277,12 +277,14 @@ class TestExternalCommand:
 
     def test_run_external_command_empty_cmd(self) -> None:
         """Test with empty command."""
-        result = FlextUtilities.run_external_command([], capture_output=True)
+        result = FlextUtilities.CommandExecution.run_external_command(
+            [], capture_output=True
+        )
         assert result.is_failure
 
     def test_run_external_command_invalid_cmd(self) -> None:
         """Test with invalid command."""
-        result = FlextUtilities.run_external_command(
+        result = FlextUtilities.CommandExecution.run_external_command(
             ["/nonexistent/command/path"],
             capture_output=True,
         )

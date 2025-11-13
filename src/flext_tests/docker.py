@@ -458,7 +458,7 @@ class FlextTestDocker:
             capture_output = kwargs.get("capture_output", False)
 
             # Run the command
-            result = FlextUtilities.run_external_command(
+            result = FlextUtilities.CommandExecution.run_external_command(
                 ["docker"] + shlex.split(script_path),
                 check=False,
                 capture_output=bool(capture_output),

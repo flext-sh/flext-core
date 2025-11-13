@@ -13,17 +13,17 @@ from __future__ import annotations
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import ClassVar, Literal, cast, override
+from typing import ClassVar, Literal, override
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
 import flext_core._models.validation as _validation_module
+from flext_core._utilities.domain import FlextUtilitiesDomain
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.utilities import FlextUtilities
 
 
 class FlextModelsEntity:
@@ -195,7 +195,7 @@ class FlextModelsEntity:
 
         Combines TimestampedModel, IdentifiableMixin, and VersionableMixin to provide:
         - unique_id: Unique identifier (from IdentifiableMixin)
-        - id: Backward compatibility property (alias for unique_id)
+        - entity_id: Entity identifier property (alias for unique_id)
         - created_at/updated_at: Timestamps (from TimestampedModel)
         - version: Optimistic locking (from VersionableMixin)
         - domain_events: Event sourcing support
@@ -204,8 +204,8 @@ class FlextModelsEntity:
         _internal_logger: ClassVar[FlextLogger | None] = None
 
         @property
-        def id(self) -> str:
-            """Backward compatibility property - alias for unique_id."""
+        def entity_id(self) -> str:
+            """Entity identifier property - alias for unique_id."""
             return self.unique_id
 
         @classmethod
@@ -226,12 +226,12 @@ class FlextModelsEntity:
         @override
         def __eq__(self, other: object) -> bool:
             """Identity-based equality for entities (using FlextUtilities.Domain)."""
-            return FlextUtilities.Domain.compare_entities_by_id(self, other)
+            return FlextUtilitiesDomain.compare_entities_by_id(self, other)
 
         @override
         def __hash__(self) -> int:
             """Identity-based hash for entities (using FlextUtilities.Domain)."""
-            return FlextUtilities.Domain.hash_entity_by_id(self)
+            return FlextUtilitiesDomain.hash_entity_by_id(self)
 
         def _validate_event_input(
             self, event_name: str, data: dict[str, object]
@@ -452,9 +452,8 @@ class FlextModelsEntity:
 
             """
             validated_events: list[tuple[str, dict[str, object]]] = []
-            typed_events = cast("list[tuple[str, dict[str, object]]]", events)
 
-            for i, (event_name, data) in enumerate(typed_events):
+            for i, (event_name, data) in enumerate(events):
                 if not isinstance(event_name, str) or not event_name:
                     return FlextResult[list[tuple[str, dict[str, object]]]].fail(
                         f"Event {i}: name must be non-empty string",
@@ -569,12 +568,12 @@ class FlextModelsEntity:
         @override
         def __eq__(self, other: object) -> bool:
             """Compare by value (using FlextUtilities.Domain)."""
-            return FlextUtilities.Domain.compare_value_objects_by_value(self, other)
+            return FlextUtilitiesDomain.compare_value_objects_by_value(self, other)
 
         @override
         def __hash__(self) -> int:
             """Hash based on values for use in sets/dicts (using FlextUtilities.Domain)."""
-            return FlextUtilities.Domain.hash_value_object_by_value(self)
+            return FlextUtilitiesDomain.hash_value_object_by_value(self)
 
     class AggregateRoot(Core):
         """Base class for aggregate roots - consistency boundaries."""

@@ -89,7 +89,7 @@ class UserService(FlextService):
         user = User(id=f"user_{name.lower()}", name=name, email=email)
 
         # Domain events
-        self.add_domain_event(UserCreatedEvent(user.id))
+        self.add_domain_event(UserCreatedEvent(user.entity_id))
 
         return FlextResult[User].ok(user)
 
@@ -116,7 +116,7 @@ class OrderService(FlextService):
 
         # Update order status
         order.status = OrderStatus.PROCESSING
-        self.add_domain_event(OrderProcessedEvent(order.id))
+        self.add_domain_event(OrderProcessedEvent(order.entity_id))
 
         return FlextResult[Order].ok(order)
 ```
@@ -222,7 +222,7 @@ class OrderConfirmedEvent(DomainEvent):
 # Publishing events
 user = User(id="user_123", name="Alice", email="alice@company.com")
 event = UserCreatedEvent(
-    user_id=user.id,
+    user_id=user.entity_id,
     email=user.email,
     created_at=datetime.utcnow()
 )
@@ -368,14 +368,14 @@ class OrderService(FlextService):
         # Create order
         order = Order(
             id=f"order_{datetime.utcnow().timestamp()}",
-            customer_id=customer.id,
+            customer_id=customer.entity_id,
             items=items,
             total=total,
             status=OrderStatus.PENDING
         )
 
         # Add domain event
-        self.add_domain_event(OrderPlacedEvent(order.id, customer.id, total.amount))
+        self.add_domain_event(OrderPlacedEvent(order.entity_id, customer.entity_id, total.amount))
 
         return FlextResult[Order].ok(order)
 
@@ -408,7 +408,7 @@ result = service.place_order(customer, [item1, item2])
 
 if result.is_success:
     order = result.unwrap()
-    print(f"Order placed: {order.id} for ${order.total.amount}")
+    print(f"Order placed: {order.entity_id} for ${order.total.amount}")
 ```
 
 This domain layer provides a solid foundation for implementing business logic with proper separation of concerns and domain-driven design principles.

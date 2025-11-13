@@ -350,6 +350,41 @@ class FlextRegistry(FlextMixins):
         # Default to running for invalid values
         return FlextConstants.Cqrs.Status.RUNNING
 
+    def _create_registration_details(
+        self,
+        reg_data: dict[str, object],
+        key: str,
+    ) -> FlextModels.RegistrationDetails:
+        """Create RegistrationDetails from registration data (DRY helper).
+
+        Eliminates duplication in _process_single_handler and register_handler_batch.
+        Both methods create RegistrationDetails from dict in identical way.
+
+        Args:
+            reg_data: Registration data dict from dispatcher
+            key: Handler key for fallback registration_id
+
+        Returns:
+            RegistrationDetails: Validated registration details model
+
+        """
+        return FlextModels.RegistrationDetails(
+            registration_id=str(reg_data.get("registration_id", key)),
+            handler_mode=self._safe_get_handler_mode(
+                reg_data.get(
+                    "handler_mode",
+                    FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+                ),
+            ),
+            timestamp=str(reg_data.get("timestamp", "")),
+            status=self._safe_get_status(
+                reg_data.get(
+                    "status",
+                    FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
+                ),
+            ),
+        )
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -475,22 +510,7 @@ class FlextRegistry(FlextMixins):
         if registration_result.is_success:
             # Convert dict[str, object] to RegistrationDetails
             reg_data = registration_result.value
-            reg_details = FlextModels.RegistrationDetails(
-                registration_id=str(reg_data.get("registration_id", key)),
-                handler_mode=self._safe_get_handler_mode(
-                    reg_data.get(
-                        "handler_mode",
-                        FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-                    ),
-                ),
-                timestamp=str(reg_data.get("timestamp", "")),
-                status=self._safe_get_status(
-                    reg_data.get(
-                        "status",
-                        FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
-                    ),
-                ),
-            )
+            reg_details = self._create_registration_details(reg_data, key)
             self._add_successful_registration(key, reg_details, summary)
             return self.ok(None)
         self._add_registration_error(key, registration_result.error or "", summary)
@@ -570,22 +590,7 @@ class FlextRegistry(FlextMixins):
             self._registered_keys.add(key)
             # Convert dict[str, object] to RegistrationDetails
             reg_data = registration.value
-            reg_details = FlextModels.RegistrationDetails(
-                registration_id=str(reg_data.get("registration_id", key)),
-                handler_mode=self._safe_get_handler_mode(
-                    reg_data.get(
-                        "handler_mode",
-                        FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-                    ),
-                ),
-                timestamp=str(reg_data.get("timestamp", "")),
-                status=self._safe_get_status(
-                    reg_data.get(
-                        "status",
-                        FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
-                    ),
-                ),
-            )
+            reg_details = self._create_registration_details(reg_data, key)
             summary.registered.append(reg_details)
 
         if summary.errors:
@@ -667,7 +672,7 @@ class FlextRegistry(FlextMixins):
 
         # Create handler from function
         handler_result = self._dispatcher.create_handler_from_function(
-            cast("FlextTypes.HandlerCallableType", handler_func),
+            handler_func,
             cast("dict[str, object] | None", handler_config),
             FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
         )

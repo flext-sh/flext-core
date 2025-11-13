@@ -149,7 +149,7 @@ def demonstrate_single_import_pattern() -> None:
 
     # Entity - using base Entity with unique_id
     entity = FlextModels.Entity(unique_id="entity-123")
-    print(f"   ✅ Entity: {entity.id}")
+    print(f"   ✅ Entity: {entity.entity_id}")
 
     # Value Object
     class Email(FlextModels.Value):

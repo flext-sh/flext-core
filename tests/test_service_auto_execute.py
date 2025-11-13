@@ -129,10 +129,11 @@ class TestAutoExecution:
         # Manual service
         manual_user = ManualUserService(user_id="999").result
 
-        # Auto service
+        # Auto service (returns User directly due to auto_execute=True)
         auto_user = AutoUserService(user_id="999")
 
         # Same domain result
+        assert isinstance(auto_user, User)
         assert manual_user.user_id == auto_user.user_id
         assert manual_user.name == auto_user.name
         assert manual_user.email == auto_user.email

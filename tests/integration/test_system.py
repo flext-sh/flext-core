@@ -220,7 +220,7 @@ class TestCompleteFlextSystemIntegration:
             # Processar dados
             dados_processados: dict[str, str] = {}
 
-            # FlextValidations was completely removed - using direct validation
+            # FlextUtilities.Validation was completely removed - using direct validation
             for key, value in dados.items():
                 if len(value.strip()) == 0:
                     return FlextResult[dict[str, str]].fail(

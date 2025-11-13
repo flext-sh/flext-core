@@ -405,7 +405,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         )
 
         # Use from_callable factory method with wrapper
-        email_handler = FlextHandlers.from_callable(
+        email_handler = FlextHandlers.create_from_callable(
             func=validate_email_wrapper,
             mode="command",
             handler_config=handler_config,
@@ -445,7 +445,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 return FlextResult[str].fail("Input must be a string")
             return FlextResult[str].ok(data.upper() if data else "")
 
-        string_handler = FlextHandlers.from_callable(
+        string_handler = FlextHandlers.create_from_callable(
             func=string_processor_wrapper,
             mode="command",
             handler_config=lambda_config,

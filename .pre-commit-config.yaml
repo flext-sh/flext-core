@@ -90,13 +90,14 @@ repos:
         pass_filenames: false
         args: [src/, -nb]
 
-      - id: check-pydantic-v2
-        name: "🐍 Pydantic v2 Compliance Check"
-        entry: python scripts/check_pydantic_v2_precommit.py
-        language: system
-        types: [python]
-        pass_filenames: true
-        stages: [commit]
+      # DEPRECATED - Use flext-quality instead
+      # - id: check-pydantic-v2
+      #   name: "🐍 Pydantic v2 Compliance Check"
+      #   entry: python scripts/check_pydantic_v2_precommit.py
+      #   language: system
+      #   types: [python]
+      #   pass_filenames: true
+      #   stages: [commit]
 
   # YAML/TOML/JSON validation
   - repo: https://github.com/pre-commit/pre-commit-hooks

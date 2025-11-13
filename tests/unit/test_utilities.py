@@ -34,8 +34,8 @@ class TestFlextUtilitiesComprehensive:
         assert len(uuid1) > 0
 
         # Test timestamp generation
-        ts1 = FlextUtilities.Generators.generate_timestamp()
-        ts2 = FlextUtilities.Generators.generate_timestamp()
+        ts1 = FlextUtilities.Generators.generate_iso_timestamp()
+        ts2 = FlextUtilities.Generators.generate_iso_timestamp()
         # Timestamps may be equal if generated within same second (microseconds removed)
         # Just verify they have valid ISO format
         assert "T" in ts1
@@ -296,32 +296,29 @@ class TestFlextUtilitiesComprehensive:
         result = FlextUtilities.Configuration.set_singleton(
             FlextConfig, "test_param", "test_value"
         )
-        assert isinstance(result, bool)
+        # set_singleton now returns FlextResult[bool]
+        assert (
+            result.is_failure
+        )  # Should fail because FlextConfig doesn't allow arbitrary params
 
 
 class TestFlextValidationPipeline:
-    """Comprehensive test suite for FlextValidationPipeline."""
+    """Comprehensive test suite for FlextUtilities.ValidationPipeline."""
 
     def test_pipeline_initialization_default(self) -> None:
-        """Test FlextValidationPipeline initialization with default settings."""
-        from flext_core import FlextValidationPipeline
-
-        pipeline = FlextValidationPipeline[str]()
+        """Test FlextUtilities.ValidationPipeline initialization with default settings."""
+        pipeline = FlextUtilities.ValidationPipeline[str]()
         assert pipeline.is_empty() is True
         assert pipeline.count() == 0
 
     def test_pipeline_initialization_aggregate_errors(self) -> None:
-        """Test FlextValidationPipeline initialization with aggregate_errors=True."""
-        from flext_core import FlextValidationPipeline
-
-        pipeline = FlextValidationPipeline[str](aggregate_errors=True)
+        """Test FlextUtilities.ValidationPipeline initialization with aggregate_errors=True."""
+        pipeline = FlextUtilities.ValidationPipeline[str](aggregate_errors=True)
         assert pipeline.is_empty() is True
 
     def test_pipeline_add_single_validator(self) -> None:
         """Test adding a single validator to pipeline."""
-        from flext_core import FlextValidationPipeline
-
-        pipeline = FlextValidationPipeline[str]()
+        pipeline = FlextUtilities.ValidationPipeline[str]()
 
         def is_not_empty(data: str) -> FlextResult[str]:
             if not data:
@@ -335,9 +332,7 @@ class TestFlextValidationPipeline:
 
     def test_pipeline_add_multiple_validators_chaining(self) -> None:
         """Test chaining multiple validators."""
-        from flext_core import FlextValidationPipeline
-
-        pipeline = FlextValidationPipeline[str]()
+        pipeline = FlextUtilities.ValidationPipeline[str]()
 
         def is_not_empty(data: str) -> FlextResult[str]:
             if not data:
@@ -355,44 +350,39 @@ class TestFlextValidationPipeline:
 
     def test_pipeline_validate_empty_pipeline(self) -> None:
         """Test validating with empty pipeline (no validators added)."""
-        from flext_core import FlextValidationPipeline
-
-        pipeline = FlextValidationPipeline[str]()
+        pipeline = FlextUtilities.ValidationPipeline[str]()
         result = pipeline.validate("test_data")
         assert result.is_success
         assert result.unwrap() == "test_data"
 
     def test_pipeline_validate_single_validator_success(self) -> None:
         """Test validation succeeds with single validator."""
-        from flext_core import FlextValidationPipeline
 
         def is_not_empty(data: str) -> FlextResult[str]:
             if not data:
                 return FlextResult[str].fail("String cannot be empty")
             return FlextResult[str].ok(data)
 
-        pipeline = FlextValidationPipeline[str]().add_validator(is_not_empty)
+        pipeline = FlextUtilities.ValidationPipeline[str]().add_validator(is_not_empty)
         result = pipeline.validate("valid_data")
         assert result.is_success
         assert result.unwrap() == "valid_data"
 
     def test_pipeline_validate_single_validator_failure(self) -> None:
         """Test validation fails with single validator."""
-        from flext_core import FlextValidationPipeline
 
         def is_not_empty(data: str) -> FlextResult[str]:
             if not data:
                 return FlextResult[str].fail("String cannot be empty")
             return FlextResult[str].ok(data)
 
-        pipeline = FlextValidationPipeline[str]().add_validator(is_not_empty)
+        pipeline = FlextUtilities.ValidationPipeline[str]().add_validator(is_not_empty)
         result = pipeline.validate("")
         assert result.is_failure
         assert "cannot be empty" in str(result.error)
 
     def test_pipeline_validate_multiple_validators_all_success(self) -> None:
         """Test validation with multiple validators all succeeding."""
-        from flext_core import FlextValidationPipeline
 
         def is_not_empty(data: str) -> FlextResult[str]:
             if not data:
@@ -405,7 +395,7 @@ class TestFlextValidationPipeline:
             return FlextResult[str].ok(data)
 
         pipeline = (
-            FlextValidationPipeline[str]()
+            FlextUtilities.ValidationPipeline[str]()
             .add_validator(is_not_empty)
             .add_validator(has_min_length)
         )
@@ -415,8 +405,6 @@ class TestFlextValidationPipeline:
 
     def test_pipeline_validate_short_circuit_on_first_failure(self) -> None:
         """Test short-circuit behavior: stops on first validator failure."""
-        from flext_core import FlextValidationPipeline
-
         call_count = 0
 
         def first_validator(data: str) -> FlextResult[str]:
@@ -430,7 +418,7 @@ class TestFlextValidationPipeline:
             return FlextResult[str].ok(data)
 
         pipeline = (
-            FlextValidationPipeline[str]()
+            FlextUtilities.ValidationPipeline[str]()
             .add_validator(first_validator)
             .add_validator(second_validator)
         )
@@ -440,7 +428,6 @@ class TestFlextValidationPipeline:
 
     def test_pipeline_validate_aggregation_mode(self) -> None:
         """Test aggregation mode: collects all validation errors."""
-        from flext_core import FlextValidationPipeline
 
         def validator1(data: str) -> FlextResult[str]:
             return FlextResult[str].fail("Error 1")
@@ -449,7 +436,7 @@ class TestFlextValidationPipeline:
             return FlextResult[str].fail("Error 2")
 
         pipeline = (
-            FlextValidationPipeline[str](aggregate_errors=True)
+            FlextUtilities.ValidationPipeline[str](aggregate_errors=True)
             .add_validator(validator1)
             .add_validator(validator2)
         )
@@ -462,7 +449,6 @@ class TestFlextValidationPipeline:
 
     def test_pipeline_validate_aggregation_partial_failure(self) -> None:
         """Test aggregation with some validators failing."""
-        from flext_core import FlextValidationPipeline
 
         def validator1(data: str) -> FlextResult[str]:
             return FlextResult[str].fail("Error 1")
@@ -474,7 +460,7 @@ class TestFlextValidationPipeline:
             return FlextResult[str].fail("Error 3")
 
         pipeline = (
-            FlextValidationPipeline[str](aggregate_errors=True)
+            FlextUtilities.ValidationPipeline[str](aggregate_errors=True)
             .add_validator(validator1)
             .add_validator(validator2)
             .add_validator(validator3)
@@ -487,13 +473,12 @@ class TestFlextValidationPipeline:
 
     def test_pipeline_clear_validators(self) -> None:
         """Test clearing all validators from pipeline."""
-        from flext_core import FlextValidationPipeline
 
         def validator(data: str) -> FlextResult[str]:
             return FlextResult[str].ok(data)
 
         pipeline = (
-            FlextValidationPipeline[str]()
+            FlextUtilities.ValidationPipeline[str]()
             .add_validator(validator)
             .add_validator(validator)
         )
@@ -506,12 +491,11 @@ class TestFlextValidationPipeline:
 
     def test_pipeline_count_validators(self) -> None:
         """Test counting validators in pipeline."""
-        from flext_core import FlextValidationPipeline
 
         def validator(data: str) -> FlextResult[str]:
             return FlextResult[str].ok(data)
 
-        pipeline = FlextValidationPipeline[str]()
+        pipeline = FlextUtilities.ValidationPipeline[str]()
         assert pipeline.count() == 0
 
         pipeline.add_validator(validator)
@@ -522,47 +506,43 @@ class TestFlextValidationPipeline:
 
     def test_pipeline_is_empty(self) -> None:
         """Test is_empty check."""
-        from flext_core import FlextValidationPipeline
 
         def validator(data: str) -> FlextResult[str]:
             return FlextResult[str].ok(data)
 
-        pipeline = FlextValidationPipeline[str]()
+        pipeline = FlextUtilities.ValidationPipeline[str]()
         assert pipeline.is_empty() is True
 
         pipeline.add_validator(validator)
         assert pipeline.is_empty() is False
 
     def test_pipeline_with_int_type(self) -> None:
-        """Test FlextValidationPipeline with int type parameter."""
-        from flext_core import FlextValidationPipeline
+        """Test FlextUtilities.ValidationPipeline with int type parameter."""
 
         def is_positive(data: int) -> FlextResult[int]:
             if data <= 0:
                 return FlextResult[int].fail("Must be positive")
             return FlextResult[int].ok(data)
 
-        pipeline = FlextValidationPipeline[int]().add_validator(is_positive)
+        pipeline = FlextUtilities.ValidationPipeline[int]().add_validator(is_positive)
         result = pipeline.validate(5)
         assert result.is_success
         assert result.unwrap() == 5
 
     def test_pipeline_with_int_type_failure(self) -> None:
-        """Test FlextValidationPipeline failure with int type."""
-        from flext_core import FlextValidationPipeline
+        """Test FlextUtilities.ValidationPipeline failure with int type."""
 
         def is_positive(data: int) -> FlextResult[int]:
             if data <= 0:
                 return FlextResult[int].fail("Must be positive")
             return FlextResult[int].ok(data)
 
-        pipeline = FlextValidationPipeline[int]().add_validator(is_positive)
+        pipeline = FlextUtilities.ValidationPipeline[int]().add_validator(is_positive)
         result = pipeline.validate(-5)
         assert result.is_failure
 
     def test_pipeline_validation_chain_data_mutation(self) -> None:
         """Test that validators can transform data in aggregation mode."""
-        from flext_core import FlextValidationPipeline
 
         def uppercase_validator(data: str) -> FlextResult[str]:
             return FlextResult[str].ok(data.upper())
@@ -571,7 +551,7 @@ class TestFlextValidationPipeline:
             return FlextResult[str].ok(data + "_VALIDATED")
 
         pipeline = (
-            FlextValidationPipeline[str](aggregate_errors=False)
+            FlextUtilities.ValidationPipeline[str](aggregate_errors=False)
             .add_validator(uppercase_validator)
             .add_validator(add_suffix_validator)
         )
@@ -581,7 +561,6 @@ class TestFlextValidationPipeline:
 
     def test_pipeline_aggregation_all_success(self) -> None:
         """Test aggregation mode with all validators succeeding."""
-        from flext_core import FlextValidationPipeline
 
         def validator1(data: str) -> FlextResult[str]:
             return FlextResult[str].ok(data)
@@ -590,7 +569,7 @@ class TestFlextValidationPipeline:
             return FlextResult[str].ok(data)
 
         pipeline = (
-            FlextValidationPipeline[str](aggregate_errors=True)
+            FlextUtilities.ValidationPipeline[str](aggregate_errors=True)
             .add_validator(validator1)
             .add_validator(validator2)
         )
@@ -600,7 +579,6 @@ class TestFlextValidationPipeline:
 
     def test_pipeline_clear_and_reuse(self) -> None:
         """Test clearing pipeline and adding new validators."""
-        from flext_core import FlextValidationPipeline
 
         def old_validator(data: str) -> FlextResult[str]:
             return FlextResult[str].fail("Old")
@@ -608,7 +586,7 @@ class TestFlextValidationPipeline:
         def new_validator(data: str) -> FlextResult[str]:
             return FlextResult[str].ok(data)
 
-        pipeline = FlextValidationPipeline[str]().add_validator(old_validator)
+        pipeline = FlextUtilities.ValidationPipeline[str]().add_validator(old_validator)
         assert pipeline.count() == 1
 
         pipeline.clear()
@@ -720,8 +698,8 @@ class TestFlextUtilitiesEdgeCases:
 
     def test_generators_multiple_timestamp_uniqueness(self) -> None:
         """Test that timestamps are reasonably unique."""
-        ts1 = FlextUtilities.Generators.generate_timestamp()
-        ts2 = FlextUtilities.Generators.generate_timestamp()
+        ts1 = FlextUtilities.Generators.generate_iso_timestamp()
+        ts2 = FlextUtilities.Generators.generate_iso_timestamp()
         # Timestamps may be identical if within same second
         # Just verify format
         assert "T" in ts1
@@ -1342,3 +1320,201 @@ class TestFlextCacheMethods:
         assert isinstance(result, dict)
         keys = list(result.keys())
         assert keys == ["10", "2", "20"]  # String sort order
+
+
+class TestServiceMetadataBuilder:
+    """Test suite for ServiceMetadataBuilder fluent API."""
+
+    def test_empty_builder(self) -> None:
+        """Test building empty metadata."""
+        from flext_core import FlextUtilities
+
+        builder = FlextUtilities.ServiceMetadataBuilder()
+        metadata = builder.build()
+        assert metadata == {}
+
+    def test_with_service_type(self) -> None:
+        """Test adding service type."""
+        from flext_core import FlextUtilities
+
+        builder = FlextUtilities.ServiceMetadataBuilder()
+        metadata = builder.with_service_type("UserService").build()
+        assert metadata["service_type"] == "UserService"
+
+    def test_with_service_name(self) -> None:
+        """Test adding service name."""
+        from flext_core import FlextUtilities
+
+        builder = FlextUtilities.ServiceMetadataBuilder()
+        metadata = builder.with_service_name("user_manager").build()
+        assert metadata["service_name"] == "user_manager"
+
+    def test_with_timestamps(self) -> None:
+        """Test adding timestamps."""
+        from flext_core import FlextUtilities
+
+        builder = FlextUtilities.ServiceMetadataBuilder()
+        metadata = builder.with_timestamps().build()
+
+        assert "created_at" in metadata
+        assert "extracted_at" in metadata
+        assert metadata["created_at"] is not None
+        assert metadata["extracted_at"] is not None
+
+    def test_with_timestamps_selective(self) -> None:
+        """Test adding selective timestamps."""
+        from flext_core import FlextUtilities
+
+        builder = FlextUtilities.ServiceMetadataBuilder()
+        metadata = builder.with_timestamps(
+            include_created=True, include_extracted=False
+        ).build()
+
+        assert "created_at" in metadata
+        assert "extracted_at" not in metadata
+
+    def test_with_custom_data(self) -> None:
+        """Test adding custom data."""
+        from flext_core import FlextUtilities
+
+        builder = FlextUtilities.ServiceMetadataBuilder()
+        metadata = builder.with_custom_data("version", "1.0.0").build()
+        assert metadata["version"] == "1.0.0"
+
+    def test_with_service_instance(self) -> None:
+        """Test extracting metadata from service instance."""
+        from flext_core import FlextUtilities
+
+        class TestService:
+            pass
+
+        service = TestService()
+        builder = FlextUtilities.ServiceMetadataBuilder()
+        metadata = builder.with_service_instance(service).build()
+
+        assert metadata["service_class"] == "TestService"
+        assert metadata["service_module"] == "tests.unit.test_utilities"
+
+    def test_with_service_instance_with_name(self) -> None:
+        """Test extracting metadata from service with custom name."""
+        from flext_core import FlextUtilities
+
+        class TestService:
+            _service_name = "custom_name"
+
+        service = TestService()
+        builder = FlextUtilities.ServiceMetadataBuilder()
+        metadata = builder.with_service_instance(service).build()
+
+        assert metadata["service_class"] == "TestService"
+        assert metadata["service_name"] == "custom_name"
+
+    def test_fluent_chaining(self) -> None:
+        """Test fluent method chaining."""
+        from flext_core import FlextUtilities
+
+        builder = FlextUtilities.ServiceMetadataBuilder()
+        metadata = (
+            builder.with_service_type("UserService")
+            .with_service_name("user_manager")
+            .with_timestamps()
+            .with_custom_data("version", "1.0.0")
+            .build()
+        )
+
+        assert metadata["service_type"] == "UserService"
+        assert metadata["service_name"] == "user_manager"
+        assert "created_at" in metadata
+        assert "extracted_at" in metadata
+        assert metadata["version"] == "1.0.0"
+
+    def test_method_returns_self(self) -> None:
+        """Test that methods return self for chaining."""
+        from flext_core import FlextUtilities
+
+        builder = FlextUtilities.ServiceMetadataBuilder()
+        result = builder.with_service_type("Test")
+        assert result is builder
+
+
+class TestImprovedFlextUtilities:
+    """Test suite for improved FlextUtilities methods."""
+
+    def test_extract_common_kwargs_success(self) -> None:
+        """Test successful extraction of common kwargs."""
+        kwargs: dict[str, object] = {
+            "correlation_id": "test-123",
+            "metadata": {"key": "value"},
+        }
+        result = FlextUtilities.Exceptions.extract_common_kwargs(kwargs)
+
+        assert result.is_success
+        correlation_id, metadata = result.unwrap()
+        assert correlation_id == "test-123"
+        assert metadata == {"key": "value"}
+
+    def test_extract_common_kwargs_empty(self) -> None:
+        """Test extraction with empty kwargs."""
+        kwargs: dict[str, object] = {}
+        result = FlextUtilities.Exceptions.extract_common_kwargs(kwargs)
+
+        assert result.is_success
+        correlation_id, metadata = result.unwrap()
+        assert correlation_id is None
+        assert metadata is None
+
+    def test_extract_common_kwargs_failure(self) -> None:
+        """Test extraction failure handling."""
+        # This should not fail in normal usage, but let's test error handling
+        kwargs = {"invalid": object()}  # Object that might cause issues
+        result = FlextUtilities.Exceptions.extract_common_kwargs(kwargs)
+
+        # Should still succeed since we use try/catch
+        assert result.is_success
+
+    def test_format_service_info_success(self) -> None:
+        """Test successful service info formatting."""
+
+        class TestService:
+            pass
+
+        service = TestService()
+        metadata: dict[str, object] = {
+            "service_type": "UserService",
+            "service_name": "user_manager",
+        }
+
+        result = FlextUtilities.ServiceHelpers.format_service_info(service, metadata)
+
+        assert result.is_success
+        formatted = result.unwrap()
+        assert "Service: UserService (user_manager)" in formatted
+        assert "tests.unit.test_utilities" in formatted
+
+    def test_format_service_info_minimal(self) -> None:
+        """Test service info formatting with minimal metadata."""
+        service = object()
+        metadata: dict[str, object] = {}
+
+        result = FlextUtilities.ServiceHelpers.format_service_info(service, metadata)
+
+        assert result.is_success
+        formatted = result.unwrap()
+        assert "Service: Unknown (unnamed)" in formatted
+
+    def test_format_service_info_failure(self) -> None:
+        """Test service info formatting error handling."""
+        service = None
+        metadata: dict[str, object] = {"service_type": "Test"}
+
+        result = FlextUtilities.ServiceHelpers.format_service_info(service, metadata)
+
+        assert result.is_success  # Should handle None gracefully
+
+    def test_create_service_metadata_builder(self) -> None:
+        """Test creating service metadata builder."""
+        from flext_core import FlextUtilities
+
+        builder = FlextUtilities.ServiceHelpers.create_service_metadata_builder()
+
+        assert isinstance(builder, FlextUtilities.ServiceMetadataBuilder)

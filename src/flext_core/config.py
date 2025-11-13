@@ -43,11 +43,21 @@ T_Config = TypeVar("T_Config", bound="FlextConfig")
 class FlextConfig(BaseSettings):
     """Configuration management with Pydantic validation and dependency injection.
 
-    **ARCHITECTURE LAYER 4** - Infrastructure Configuration Management
+    **ARCHITECTURE LAYER 0.5** - Configuration Foundation (Controls All Layers)
 
     FlextConfig provides enterprise-grade configuration management for the FLEXT
     ecosystem through Pydantic v2 BaseSettings, implementing structural typing via
     FlextProtocols.Configurable (duck typing - no inheritance required).
+
+    **CRITICAL ARCHITECTURAL POSITION**:
+    FlextConfig MUST be at Layer 0.5 because it CONTROLS behavior of ALL other layers:
+    - FlextConstants (Layer 0) - config provides runtime overrides
+    - FlextRuntime (Layer 0.5) - uses config for correlation IDs, logging
+    - FlextExceptions (Layer 1) - uses config for failure levels, auto-logging
+    - FlextLogger (Layer 4) - uses config for log levels, output formats
+    - FlextContainer (Layer 1) - uses config for DI provider pattern
+
+    If FlextConfig were Layer 4, it would create circular import with all lower layers!
 
     **Protocol Compliance** (Structural Typing):
     Satisfies FlextProtocols.Configurable through method signatures:
@@ -412,15 +422,6 @@ class FlextConfig(BaseSettings):
         description="Exception handling failure level (strict, warn, permissive)",
     )
 
-    # Direct access method
-    def __call__(self, key: str) -> object:
-        """Direct value access: config('log_level')."""
-        if not hasattr(self, key):
-            msg = f"Configuration key '{key}' not found"
-            raise KeyError(msg)
-        value: object = getattr(self, key)
-        return value
-
     # ===== VALIDATION METHODS =====
     # ===== FIELD VALIDATORS (Pydantic v2 native) =====
 
@@ -428,9 +429,7 @@ class FlextConfig(BaseSettings):
     @classmethod
     def uppercase_log_level(cls, v: object) -> FlextConstants.Settings.LogLevel:
         """Convert log level to uppercase and validate against LogLevel enum."""
-        if isinstance(v, FlextConstants.Settings.LogLevel):
-            return v
-        # Convert string to uppercase and return enum member
+        # Convert to uppercase and return enum member (Pydantic handles conversion)
         level_str = str(v).upper() if v is not None else "INFO"
         return FlextConstants.Settings.LogLevel(level_str)
 
@@ -469,14 +468,6 @@ class FlextConfig(BaseSettings):
                 if base_class not in cls._instances:
                     instance = cls()
                     cls._instances[base_class] = instance
-        else:
-            stored = cls._instances[base_class]
-            if not isinstance(stored, cls):
-                with cls._lock:
-                    stored = cls._instances[base_class]
-                    if not isinstance(stored, cls):
-                        instance = cls()
-                        cls._instances[base_class] = instance
 
         return cls._instances[base_class]
 
@@ -493,88 +484,6 @@ class FlextConfig(BaseSettings):
         with cls._lock:
             base_class = cls
             cls._instances.pop(base_class, None)
-
-    @classmethod
-    def validate_config_class(
-        cls,
-        config_class: object,
-    ) -> tuple[bool, str | None]:
-        """Validate that a configuration class is properly configured.
-
-        Checks that the class:
-        - Extends FlextConfig
-        - Has proper model_config for environment binding
-        - Has required fields with sensible defaults
-
-        Args:
-            config_class: Configuration class to validate
-
-        Returns:
-            tuple[bool, str | None]: (is_valid, error_message)
-                - (True, None) if valid
-                - (False, error_message) if invalid
-
-        """
-        try:
-            # Check that it's a class
-            if not isinstance(config_class, type):
-                return (False, "config_class must be a class, not an instance")
-
-            # Check inheritance
-            class_name = getattr(config_class, "__name__", "UnknownClass")
-            if not issubclass(config_class, FlextConfig):
-                return (False, f"{class_name} must extend FlextConfig")
-
-            # Check model_config existence
-            if not hasattr(config_class, "model_config"):
-                return (False, f"{class_name} must define model_config")
-
-            # Try to instantiate to ensure it's valid
-            _ = config_class()
-
-            return (True, None)
-
-        except Exception as e:
-            return (False, f"Configuration class validation failed: {e!s}")
-
-    @staticmethod
-    def create_settings_config(
-        env_prefix: str,
-        env_file: str | None = None,
-        env_nested_delimiter: str = "__",
-    ) -> SettingsConfigDict:
-        """Create a SettingsConfigDict for environment binding.
-
-        Helper method for creating proper Pydantic v2 SettingsConfigDict
-        that enables automatic environment variable binding.
-
-        **When to Use**:
-        - Creating new configuration classes that extend FlextConfig
-        - Updating existing configurations to use environment binding
-        - Setting up custom environment prefixes
-
-        **Not Needed for**: Existing classes that already have proper
-        model_config defined.
-
-        Args:
-            env_prefix: Environment variable prefix (e.g., "MYAPP_")
-                       All env vars matching this prefix will be loaded
-            env_file: Optional path to .env file (default: uses FlextConstants)
-            env_nested_delimiter: Delimiter for nested configs (default: "__")
-                                 Example: MYAPP_DB__HOST → nested config binding
-
-        Returns:
-            SettingsConfigDict: Pydantic v2 settings configuration
-
-        """
-        return SettingsConfigDict(
-            env_prefix=env_prefix,
-            env_file=env_file,
-            env_nested_delimiter=env_nested_delimiter,
-            case_sensitive=False,
-            extra="ignore",
-            validate_default=True,
-        )
 
     # ===== COMPUTED FIELDS =====
     @computed_field

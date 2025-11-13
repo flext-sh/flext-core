@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import secrets
 import string
+import time
 import uuid
 import warnings
 from datetime import UTC, datetime
@@ -255,19 +256,25 @@ class FlextUtilitiesGenerators:
             >>> from flext_core.utilities import FlextUtilities
             >>> # Basic: trace_id + span_id
             >>> ctx = FlextUtilities.Generators.ensure_trace_context({})
-            >>> 'trace_id' in ctx and 'span_id' in ctx
+            >>> "trace_id" in ctx and "span_id" in ctx
             True
             >>> # With correlation_id
-            >>> ctx = FlextUtilities.Generators.ensure_trace_context({}, include_correlation_id=True)
-            >>> 'correlation_id' in ctx
+            >>> ctx = FlextUtilities.Generators.ensure_trace_context(
+            ...     {}, include_correlation_id=True
+            ... )
+            >>> "correlation_id" in ctx
             True
             >>> # With timestamp
-            >>> ctx = FlextUtilities.Generators.ensure_trace_context({}, include_timestamp=True)
-            >>> 'timestamp' in ctx
+            >>> ctx = FlextUtilities.Generators.ensure_trace_context(
+            ...     {}, include_timestamp=True
+            ... )
+            >>> "timestamp" in ctx
             True
             >>> # Existing values preserved
-            >>> ctx = FlextUtilities.Generators.ensure_trace_context({"trace_id": "abc"})
-            >>> ctx['trace_id']
+            >>> ctx = FlextUtilities.Generators.ensure_trace_context({
+            ...     "trace_id": "abc"
+            ... })
+            >>> ctx["trace_id"]
             'abc'
 
         """
@@ -275,16 +282,25 @@ class FlextUtilitiesGenerators:
         if not isinstance(context, dict):
             # Try converting dict-like objects (has .items())
             if hasattr(context, "items"):
-                # Type: At runtime, context has .items() so dict() will work
                 # Cast is safe here as we checked for dict-like protocol
                 try:
-                    context_dict = dict(context)  # type: ignore[arg-type]
+                    # Use getattr to safely access items() method
+                    items_method = getattr(context, "items", None)
+                    if callable(items_method):
+                        # Cast to ensure type checker understands this returns dict items
+                        items_result = items_method()
+                        context_dict = dict(items_result)
+                    else:
+                        context_dict = {}
                 except (AttributeError, TypeError):
                     context_dict = {}
             else:
                 context_dict = {}
         else:
             context_dict = context
+
+        # Ensure all keys are strings and cast to proper type
+        context_dict = cast("dict[str, object]", context_dict)
 
         # Ensure trace_id exists (always included)
         if "trace_id" not in context_dict:
@@ -300,12 +316,16 @@ class FlextUtilitiesGenerators:
 
         # Optionally ensure timestamp (ISO 8601 format)
         if include_timestamp and "timestamp" not in context_dict:
-            context_dict["timestamp"] = FlextUtilitiesGenerators.generate_iso_timestamp()
+            context_dict["timestamp"] = (
+                FlextUtilitiesGenerators.generate_iso_timestamp()
+            )
 
         return context_dict
 
     @staticmethod
-    def ensure_dict(value: object, *, allow_none_as_empty: bool = True) -> dict[str, object]:
+    def ensure_dict(
+        value: object, *, allow_none_as_empty: bool = True
+    ) -> dict[str, object]:
         """Ensure value is a dict, converting or defaulting to empty dict.
 
         This generic helper consolidates duplicate dict normalization logic
@@ -356,7 +376,12 @@ class FlextUtilitiesGenerators:
         # Strategy 3: Dict-like object (has .items()) - convert
         if hasattr(value, "items"):
             try:
-                return dict(value)  # type: ignore[arg-type]
+                # Use getattr to safely access items() method
+                items_method = getattr(value, "items", None)
+                if callable(items_method):
+                    # Cast to ensure type checker understands this returns dict items
+                    items_result = items_method()
+                    return cast("dict[str, object]", dict(items_result))
             except (AttributeError, TypeError):
                 pass
 
@@ -366,6 +391,22 @@ class FlextUtilitiesGenerators:
 
         # Strategy 5: Fallback - cast to dict (may fail at runtime)
         return cast("dict[str, object]", value) if value is not None else {}
+
+    @staticmethod
+    def generate_operation_id(message_type: str, message: object) -> str:
+        """Generate unique operation ID for dispatch operations.
+
+        Args:
+            message_type: Type of message being dispatched
+            message: Message object
+
+        Returns:
+            str: Unique operation ID
+
+        """
+        timestamp = int(time.time() * 1000000)
+        message_id = id(message)
+        return f"{message_type}_{message_id}_{timestamp}"
 
 
 __all__ = ["FlextUtilitiesGenerators"]

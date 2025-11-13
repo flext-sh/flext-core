@@ -2112,58 +2112,58 @@ class TestFlextResultFinalCoveragePush:
 
 
 class TestFromCallable:
-    """Test from_callable method with @safe decorator integration."""
+    """Test create_from_callable method with @safe decorator integration."""
 
-    def test_from_callable_success(self) -> None:
-        """Test from_callable with successful operation."""
+    def test_create_from_callable_success(self) -> None:
+        """Test create_from_callable with successful operation."""
 
         def safe_operation() -> int:
             return 42
 
-        result = FlextResult[int].from_callable(safe_operation)
+        result = FlextResult[int].create_from_callable(safe_operation)
 
         assert result.is_success
         assert result.value == 42
 
-    def test_from_callable_with_exception(self) -> None:
-        """Test from_callable with operation that raises exception."""
+    def test_create_from_callable_with_exception(self) -> None:
+        """Test create_from_callable with operation that raises exception."""
 
         def failing_operation() -> int:
             msg = "Operation failed"
             raise ValueError(msg)
 
-        result = FlextResult[int].from_callable(failing_operation)
+        result = FlextResult[int].create_from_callable(failing_operation)
 
         assert result.is_failure
         assert "Operation failed" in (result.error or "")
 
-    def test_from_callable_with_custom_error_code(self) -> None:
-        """Test from_callable with custom error code."""
+    def test_create_from_callable_with_custom_error_code(self) -> None:
+        """Test create_from_callable with custom error code."""
 
         def failing_operation() -> str:
             msg = "Custom error"
             raise RuntimeError(msg)
 
-        result = FlextResult[str].from_callable(
+        result = FlextResult[str].create_from_callable(
             failing_operation, error_code="CUSTOM_ERROR"
         )
 
         assert result.is_failure
         assert result.error_code == "CUSTOM_ERROR"
 
-    def test_from_callable_with_none_return(self) -> None:
-        """Test from_callable with function returning None."""
+    def test_create_from_callable_with_none_return(self) -> None:
+        """Test create_from_callable with function returning None."""
 
         def returns_none() -> None:
             return None
 
-        result = FlextResult[None].from_callable(returns_none)
+        result = FlextResult[None].create_from_callable(returns_none)
 
         assert result.is_success
         assert result.value is None
 
-    def test_from_callable_with_complex_operation(self) -> None:
-        """Test from_callable with complex operation."""
+    def test_create_from_callable_with_complex_operation(self) -> None:
+        """Test create_from_callable with complex operation."""
 
         def complex_operation() -> dict[str, object]:
             data: dict[str, object] = {"processed": True, "count": 10}
@@ -2173,7 +2173,7 @@ class TestFromCallable:
             msg = "Count too low"
             raise ValueError(msg)
 
-        result = FlextResult[dict[str, object]].from_callable(complex_operation)
+        result = FlextResult[dict[str, object]].create_from_callable(complex_operation)
 
         assert result.is_success
         assert result.value == {"processed": True, "count": 10}
@@ -2574,10 +2574,10 @@ class TestIntegrationScenarios:
         def double_value(x: int) -> FlextResult[int]:
             return FlextResult[int].ok(x * 2)
 
-        # Combine from_callable, lash, and flow_through
+        # Combine create_from_callable, lash, and flow_through
         result = (
             FlextResult[int]
-            .from_callable(risky_operation)
+            .create_from_callable(risky_operation)
             .lash(recovery_operation)
             .flow_through(double_value)
         )
@@ -2666,7 +2666,7 @@ class TestIntegrationScenarios:
         # Complete pipeline
         result = (
             FlextResult[dict[str, object]]
-            .from_callable(fetch_data)
+            .create_from_callable(fetch_data)
             .flow_through(validate_data, enrich_data)
             .lash(error_fallback)
         )

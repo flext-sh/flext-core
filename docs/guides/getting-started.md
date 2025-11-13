@@ -163,7 +163,7 @@ class UserService(FlextService):
         # Create entity
         try:
             user = User(id=f"user_{name.lower()}", name=name, email=email, age=age)
-            self.logger.info("User created", extra={"user_id": user.id})
+            self.logger.info("User created", extra={"user_id": user.entity_id})
             return FlextResult[User].ok(user)
         except ValueError as e:
             return FlextResult[User].fail(str(e))
@@ -279,8 +279,8 @@ class ProductService(FlextService):
                 price=price,
                 quantity=quantity
             )
-            self._products[product.id] = product
-            self.logger.info("Product created", extra={"product_id": product.id})
+            self._products[product.entity_id] = product
+            self.logger.info("Product created", extra={"product_id": product.entity_id})
             return FlextResult[Product].ok(product)
         except ValueError as e:
             return FlextResult[Product].fail(str(e))
@@ -395,7 +395,7 @@ class Order(FlextModels.AggregateRoot):
             return FlextResult[None].fail("Order total must be positive")
 
         # Emit domain event
-        self.add_domain_event("OrderPlaced", {"order_id": self.id, "total": self.total})
+        self.add_domain_event("OrderPlaced", {"order_id": self.entity_id, "total": self.total})
 
         return FlextResult[None].ok(None)
 ```
