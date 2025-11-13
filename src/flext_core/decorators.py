@@ -418,7 +418,7 @@ class FlextDecorators:
                     if correlation_id is not None:
                         start_extra["correlation_id"] = correlation_id
 
-                    log_start_result = logger.info(
+                    log_start_result = logger.debug(
                         f"{op_name}_started",
                         extra=start_extra,
                     )
@@ -438,7 +438,7 @@ class FlextDecorators:
                     }
                     if correlation_id is not None:
                         completion_extra["correlation_id"] = correlation_id
-                    log_completion_result = logger.info(
+                    log_completion_result = logger.debug(
                         f"{op_name}_completed",
                         extra=completion_extra,
                     )
