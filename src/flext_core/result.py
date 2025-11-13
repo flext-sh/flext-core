@@ -25,6 +25,7 @@ from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success, safe
 
+from flext_core._utilities.generators import create_dynamic_type_subclass
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 
@@ -354,10 +355,12 @@ class FlextResult[T_co]:
             >>> result = FlextResult[int].ok("string")  # ❌ TypeError
 
         """
-        if item is cls or (hasattr(item, "__origin__") and item.__origin__ is cls):
-            return cls
+        if item is cls or (
+            hasattr(item, "__origin__") and getattr(item, "__origin__", None) is cls
+        ):
+            return cast("type", cls)
         try:
-            if isinstance(item, type) and issubclass(item, cls):
+            if isinstance(item, type) and issubclass(item, cast("type", cls)):
                 return item
         except TypeError:
             pass
@@ -368,15 +371,13 @@ class FlextResult[T_co]:
         cls_qualname = getattr(cls, "__qualname__", "FlextResult")
         type_name = getattr(item, "__name__", str(item))
 
-        # Create subclass using dynamic type() for Generic subscription
-        # This is valid Python metaprogramming - dynamically creating a class at runtime
-        typed_subclass_raw = type(
+        # Create subclass using helper function - valid Python metaprogramming
+        typed_subclass_raw = create_dynamic_type_subclass(
             f"{cls_name}[{type_name}]",
-            (cls,),
+            cls,
             {"_expected_type": item},
         )
-        # Type checkers need explicit cast for dynamic type() calls
-        typed_subclass: type[Self] = cast("type[Self]", typed_subclass_raw)
+        typed_subclass: type[Self] = typed_subclass_raw
 
         # Preserve qualname for better debugging
         typed_subclass.__qualname__ = f"{cls_qualname}[{type_name}]"

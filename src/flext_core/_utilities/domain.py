@@ -10,7 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Hashable
+from collections.abc import Callable, Hashable
+from typing import cast
 
 _logger = logging.getLogger(__name__)
 
@@ -108,11 +109,11 @@ class FlextUtilitiesDomain:
         if hasattr(obj_a, "model_dump") and hasattr(obj_b, "model_dump"):
             try:
                 # Type check: ensure both objects have the method and are callable
-                if callable(getattr(obj_a, "model_dump", None)) and callable(
-                    getattr(obj_b, "model_dump", None)
-                ):
-                    dump_a = obj_a.model_dump()
-                    dump_b = obj_b.model_dump()
+                model_dump_a = getattr(obj_a, "model_dump", None)
+                model_dump_b = getattr(obj_b, "model_dump", None)
+                if callable(model_dump_a) and callable(model_dump_b):
+                    dump_a = cast("Callable[[], dict[str, object]]", model_dump_a)()
+                    dump_b = cast("Callable[[], dict[str, object]]", model_dump_b)()
                     return bool(dump_a == dump_b)
             except (AttributeError, TypeError):
                 pass
@@ -145,8 +146,9 @@ class FlextUtilitiesDomain:
         if hasattr(obj, "model_dump"):
             try:
                 # Type check: ensure the method is callable
-                if callable(getattr(obj, "model_dump", None)):
-                    data = obj.model_dump()
+                model_dump = getattr(obj, "model_dump", None)
+                if callable(model_dump):
+                    data = cast("Callable[[], dict[str, object]]", model_dump)()
                     # Convert to hashable tuple of items
                     return hash(tuple(sorted(data.items())))
             except (AttributeError, TypeError):

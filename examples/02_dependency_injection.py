@@ -515,7 +515,6 @@ class UserRepository(FlextService[User]):
 
         # Simulate database query
         user = User(
-            id="default_user",
             name="Default User",
             email="default@example.com",
             age=0,
@@ -555,7 +554,6 @@ class UserRepository(FlextService[User]):
         # Simulate database lookup
         if user_id == "default_user":
             user = User(
-                id=user_id,
                 name="Default User",
                 email="default@example.com",
                 age=0,

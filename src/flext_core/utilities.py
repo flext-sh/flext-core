@@ -884,7 +884,9 @@ class FlextUtilities:
             """
             try:
                 # Execute with timeout using subprocess.run
-                result = subprocess.run(
+                # nosec B603: subprocess call is intentional for command execution
+                # Input validation happens at caller level via safe command construction
+                result = subprocess.run(  # nosec B603
                     cmd,
                     env=env,
                     input=command_input,

@@ -171,9 +171,9 @@ class TestDomainServicesFixed:
         """Test that service is immutable (frozen)."""
         service = SampleUserService()
 
-        # Test that assignment raises error on frozen model (Pydantic raises AttributeError for property without setter)
+        # Test that assignment raises error on frozen model (Pydantic raises ValidationError for frozen models)
         with pytest.raises((ValidationError, AttributeError)):
-            # Try to modify property on frozen model
+            # Try to add a new attribute to frozen model - should fail
             service.new_field = "not_allowed"
 
     def test_execute_method_abstract(self) -> None:

@@ -26,6 +26,7 @@ from typing import (
 from beartype.door import is_bearable
 from pydantic import BaseModel
 
+from flext_core._utilities.generators import create_dynamic_type_subclass
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
@@ -148,18 +149,16 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         msg_name = getattr(message_type, "__name__", "Any") if message_type else "Any"
         res_name = getattr(result_type, "__name__", str(result_type))
 
-        # Create typed subclass dynamically using type() built-in
-        # Type checkers cannot verify dynamic type() calls with 3 arguments
-        # This is valid Python metaprogramming - dynamically creating a class at runtime
-        typed_subclass_raw = type(
+        # Create typed subclass using helper function - valid Python metaprogramming
+        typed_subclass_raw = create_dynamic_type_subclass(
             f"{cls_name}[{msg_name}, {res_name}]",
-            (cls,),
+            cls,
             {
                 "_expected_message_type": message_type,
                 "_expected_result_type": result_type,
             },
         )
-        typed_subclass: type[Self] = cast("type[Self]", typed_subclass_raw)
+        typed_subclass: type[Self] = typed_subclass_raw
 
         # Preserve qualname for better debugging
         typed_subclass.__qualname__ = f"{cls_qualname}[{msg_name}, {res_name}]"
@@ -434,7 +433,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     try:
                         result_data = method()
                         if FlextMixins.is_dict_like(result_data):
-                            return cast("dict[str, object]", dict(result_data))
+                            # Type narrowed by TypeGuard; cast needed for pyright
+                            return cast(
+                                "dict[str, object]", result_data
+                            )  # pyrefly: ignore[redundant-cast]
                     except Exception as e:
                         FlextHandlers._internal_logger.debug(
                             f"Serialization method {method_name} failed: {type(e).__name__}"

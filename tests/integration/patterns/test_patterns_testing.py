@@ -29,7 +29,7 @@ def mark_test_pattern(
     """Mark test with a specific pattern for demonstration purposes."""
 
     def decorator(func: Callable[..., None]) -> Callable[..., None]:
-        # Use hasattr/setattr for dynamic attribute setting to avoid PyRight error
+        # Use setattr for dynamic attribute setting to avoid mypy error
         func._test_pattern = pattern
         return func
 

@@ -1976,10 +1976,14 @@ class FlextDispatcher(FlextMixins):
 
         """
         # Convert Pydantic model to dict if needed
+        request_dict: dict[str, object]
         if isinstance(request, BaseModel):
             request_dict = request.model_dump()
         elif self.is_dict_like(request):
-            request_dict = cast("dict[str, object]", request)
+            # Type narrowed by TypeGuard; cast needed for pyright
+            request_dict = cast(
+                "dict[str, object]", request
+            )  # pyrefly: ignore[redundant-cast]
         else:
             return FlextResult[dict[str, object]].fail(
                 "Request must be dict or Pydantic model"
@@ -2330,10 +2334,14 @@ class FlextDispatcher(FlextMixins):
 
         """
         # Convert Pydantic model to dict if needed
+        request_dict: dict[str, object]
         if isinstance(request, BaseModel):
             request_dict = request.model_dump()
         elif self.is_dict_like(request):
-            request_dict = cast("dict[str, object]", request)
+            # Type narrowed by TypeGuard; cast needed for pyright
+            request_dict = cast(
+                "dict[str, object]", request
+            )  # pyrefly: ignore[redundant-cast]
         else:
             return FlextResult[dict[str, object]].fail(
                 "Request must be dict or Pydantic model"

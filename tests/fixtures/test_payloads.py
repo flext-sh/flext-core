@@ -9,10 +9,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from flext_core import FlextTypes
 
-
-def get_test_payloads() -> FlextTypes.NestedDict:
+def get_test_payloads() -> dict[str, object]:
     """Provide common test payloads for different operations.
 
     Standardized payloads for testing commands, queries, events,

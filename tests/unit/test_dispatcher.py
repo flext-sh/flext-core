@@ -938,9 +938,11 @@ class TestFlextDispatcherCoverage:
                 case _:
                     return msg
 
+        from typing import cast
+
         dispatcher.register_handler("Batch", handler)
         large_batch = [str(i) for i in range(1000)]
-        results = dispatcher.dispatch_batch("Batch", large_batch)
+        results = dispatcher.dispatch_batch("Batch", cast("list[object]", large_batch))
         assert isinstance(results, list)
 
     # def test_dispatcher_parallel_single_worker(self) -> None:
@@ -1341,7 +1343,9 @@ class TestFlextDispatcherCoverage:
                     error_msg = "Negative number"
                     raise ValueError(error_msg)
                 case _:
-                    return msg * 2
+                    if isinstance(msg, (int, float)):
+                        return msg * 2
+                    return msg
 
         dispatcher.register_handler("BatchError", batch_handler)
 

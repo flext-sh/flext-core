@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import os
 import time
+from typing import cast
 
 import pytest
 
@@ -411,9 +412,13 @@ class TestLayer3BatchProcessing:
         """
         dispatcher.register_processor("latency", latency_service)
 
+        from typing import cast
+
         data_list = [{"value": i} for i in range(3)]
         start_time = time.time()
-        result = dispatcher.process_batch("latency", data_list, batch_size=2)
+        result = dispatcher.process_batch(
+            "latency", cast("list[object]", data_list), batch_size=2
+        )
         elapsed = time.time() - start_time
 
         assert result.is_success
@@ -454,7 +459,9 @@ class TestLayer3BatchProcessing:
         dispatcher.register_processor("latency", latency_service)
 
         data_list = [{"value": i} for i in range(100)]
-        result = dispatcher.process_batch("latency", data_list, batch_size=10)
+        result = dispatcher.process_batch(
+            "latency", cast("list[object]", data_list), batch_size=10
+        )
 
         assert result.is_success
         items = result.unwrap()
@@ -482,7 +489,9 @@ class TestLayer3ParallelProcessing:
 
         data_list = [{"value": i} for i in range(4)]
         start_time = time.time()
-        result = dispatcher.process_parallel("latency", data_list, max_workers=2)
+        result = dispatcher.process_parallel(
+            "latency", cast("list[object]", data_list), max_workers=2
+        )
         elapsed = time.time() - start_time
 
         assert result.is_success
@@ -523,7 +532,9 @@ class TestLayer3ParallelProcessing:
         dispatcher.register_processor("latency", latency_service)
 
         data_list = [{"value": i} for i in range(50)]
-        result = dispatcher.process_parallel("latency", data_list, max_workers=4)
+        result = dispatcher.process_parallel(
+            "latency", cast("list[object]", data_list), max_workers=4
+        )
 
         assert result.is_success
         items = result.unwrap()
@@ -735,7 +746,8 @@ class TestLayer3MetricsAndObservability:
 
         batch_perf = dispatcher.batch_performance
         assert "batch_operations" in batch_perf
-        assert batch_perf["batch_operations"] >= 0
+        batch_ops = batch_perf["batch_operations"]
+        assert isinstance(batch_ops, int) and batch_ops >= 0
 
     def test_parallel_performance_metrics(
         self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
@@ -754,7 +766,8 @@ class TestLayer3MetricsAndObservability:
 
         parallel_perf = dispatcher.parallel_performance
         assert "parallel_operations" in parallel_perf
-        assert parallel_perf["parallel_operations"] >= 0
+        parallel_ops = parallel_perf["parallel_operations"]
+        assert isinstance(parallel_ops, int) and parallel_ops >= 0
 
     def test_performance_analytics(
         self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor

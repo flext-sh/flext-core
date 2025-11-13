@@ -762,8 +762,9 @@ class TestFlextContainer:
         # Test exception handling by mocking DynamicContainer instantiation failure
         # This simulates a failure in the DI container reset during clear()
         with unittest.mock.patch.object(
-            container.containers, 'DynamicContainer',
-            side_effect=TypeError("DI container instantiation failed")
+            container.containers,
+            "DynamicContainer",
+            side_effect=TypeError("DI container instantiation failed"),
         ):
             result = container.clear()
             assert result.is_failure
