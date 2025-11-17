@@ -43,15 +43,15 @@ class CreateUserCommand(FlextModels.TimestampedModel):
             "email": self.email,
         }
 
-    def validate_command(self) -> FlextResult[None]:
+    def validate_command(self) -> FlextResult[bool]:
         """Validate command data."""
         if not self.username:
-            return FlextResult[None].fail("Username is required")
+            return FlextResult[bool].fail("Username is required")
         if not self.email:
-            return FlextResult[None].fail("Email is required")
+            return FlextResult[bool].fail("Email is required")
         if "@" not in self.email:
-            return FlextResult[None].fail("Invalid email format")
-        return FlextResult[None].ok(None)
+            return FlextResult[bool].fail("Invalid email format")
+        return FlextResult[bool].ok(True)
 
 
 class UpdateUserCommand(FlextModels.TimestampedModel):
@@ -67,13 +67,13 @@ class UpdateUserCommand(FlextModels.TimestampedModel):
             "updates": self.updates,
         }
 
-    def validate_command(self) -> FlextResult[None]:
+    def validate_command(self) -> FlextResult[bool]:
         """Validate command data."""
         if not self.target_user_id:
-            return FlextResult[None].fail("Target User ID is required")
+            return FlextResult[bool].fail("Target User ID is required")
         if not self.updates:
-            return FlextResult[None].fail("Updates are required")
-        return FlextResult[None].ok(None)
+            return FlextResult[bool].fail("Updates are required")
+        return FlextResult[bool].ok(True)
 
 
 class FailingCommand(FlextModels.TimestampedModel):
@@ -83,9 +83,9 @@ class FailingCommand(FlextModels.TimestampedModel):
         """Get command payload."""
         return {}
 
-    def validate_command(self) -> FlextResult[None]:
+    def validate_command(self) -> FlextResult[bool]:
         """Fail validation intentionally."""
-        return FlextResult[None].fail("This command always fails")
+        return FlextResult[bool].fail("This command always fails")
 
 
 class CreateUserCommandHandler(
@@ -196,15 +196,15 @@ class FailingCommandHandler(FlextCommandHandler[FailingCommand, None]):
         """Check if can handle command."""
         return message_type == FailingCommand or str(message_type) == "failing"
 
-    def handle(self, message: FailingCommand) -> FlextResult[None]:
+    def handle(self, message: FailingCommand) -> FlextResult[bool]:
         """Fail to handle command intentionally."""
         # Use message to demonstrate it's being processed
         error_msg = (
             f"Handler processing failed for command: {message.__class__.__name__}"
         )
-        return FlextResult[None].fail(error_msg)
+        return FlextResult[bool].fail(error_msg)
 
-    def handle_command(self, command: FailingCommand) -> FlextResult[None]:
+    def handle_command(self, command: FailingCommand) -> FlextResult[bool]:
         """Fail to handle command intentionally (alias for handle)."""
         return self.handle(command)
 
@@ -479,7 +479,7 @@ class TestFlextCommandResults:
         """Test creating failed command result."""
         error_message = "Command execution failed"
 
-        command_result = FlextResult[None].fail(error_message)
+        command_result = FlextResult[bool].fail(error_message)
 
         if command_result.is_success:
             msg = f"Expected False, got {command_result.is_success}"

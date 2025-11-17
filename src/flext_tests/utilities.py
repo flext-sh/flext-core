@@ -37,7 +37,7 @@ class FlextTestsUtilities:
 
         Args:
             success: Whether the result should be successful
-            data: Success data
+            data: Success data (must not be None for success)
             error: Error message for failure results
 
         Returns:
@@ -45,6 +45,10 @@ class FlextTestsUtilities:
 
         """
         if success:
+            # Fast fail: None is not a valid success value
+            if data is None:
+                # Use empty dict as default test data
+                return FlextResult[object].ok({})
             return FlextResult[object].ok(data)
         return FlextResult[object].fail(error or "Test error")
 

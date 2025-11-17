@@ -15,9 +15,6 @@ from dataclasses import dataclass
 
 from flext_core.result import FlextResult
 
-# Module constants
-MAX_PORT_NUMBER: int = 65535
-MIN_PORT_NUMBER: int = 1
 _logger = logging.getLogger(__name__)
 
 
@@ -256,7 +253,7 @@ class FlextUtilitiesStringParser:
             return FlextResult[str].fail(f"Failed to apply regex pipeline: {e}")
 
     @staticmethod
-    def get_object_key(obj: object, *, fallback_to_repr: bool = False) -> str:
+    def get_object_key(obj: object) -> str:
         """Get comparable string key from object (generic helper).
 
         This generic helper consolidates object-to-key conversion logic from
@@ -265,12 +262,11 @@ class FlextUtilitiesStringParser:
 
         Extraction Strategy:
             1. Try __name__ attribute (for types, classes, functions)
-            2. Try str(obj) as fallback
-            3. Optionally try repr(obj) if fallback_to_repr=True
+            2. Try str(obj)
+            3. Use type name as final strategy
 
         Args:
             obj: Object to extract key from (type, class, instance, etc.)
-            fallback_to_repr: If True, use repr() as final fallback (default: False)
 
         Returns:
             String key for object (comparable, hashable)
@@ -297,20 +293,13 @@ class FlextUtilitiesStringParser:
         if name_attr is not None:
             return str(name_attr)
 
-        # Strategy 2: Use str(obj) as fallback
+        # Strategy 2: Use str(obj)
         try:
             return str(obj)
         except (TypeError, ValueError, AttributeError):
             pass
 
-        # Strategy 3: Use repr(obj) if enabled
-        if fallback_to_repr:
-            try:
-                return repr(obj)
-            except (TypeError, ValueError, AttributeError):
-                pass
-
-        # Final fallback: object type name
+        # Strategy 3: Use type name
         return type(obj).__name__
 
 

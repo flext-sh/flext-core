@@ -17,12 +17,12 @@ FLEXT Core provides the foundation for 32+ dependent projects through:
   - Structural typing: Satisfies FlextProtocols.Result via method signatures
   - Methods: ok(), fail(), is_success, is_failure, unwrap(), unwrap_error()
   - Operations: map, flat_map, map_error, alt, filter, pipeline
-  - Primary access: .value (raises on failure), .value_or_none, .unwrap()
+  - Primary access: .value (raises on failure), .unwrap(), .unwrap_or(default)
 
 **Dependency Injection & Configuration**:
   FlextContainer - Type-safe singleton dependency injection
   - Structural typing: Satisfies FlextProtocols.ServiceLocator via methods
-  - Methods: register(), get(), register_factory(), get_typed()
+  - Methods: with_service(), get(), with_factory(), get_typed()
   - Features: Singleton pattern, factory pattern, type-safe retrieval
   - Integration: Global container accessible from any layer
 
@@ -257,7 +257,7 @@ USAGE EXAMPLES
     >>> from flext_core import FlextDecorators, FlextContainer, FlextResult
     >>> @FlextDecorators.inject
     ... def process_user(container: FlextContainer) -> FlextResult:
-    ...     return FlextResult[None].ok(None)
+    ...     return FlextResult[bool].ok(True)
 
 **Example 9: Decorator for Performance Tracking**:
     >>> from flext_core import FlextDecorators
@@ -363,7 +363,6 @@ from flext_core.typings import (
     FlextTypes,
     HostName,
     K,
-    LogLevel,
     Message,
     NonEmptyStr,
     P,
@@ -461,7 +460,6 @@ __all__ = [
     "FlextUtilities",
     "HostName",
     "K",
-    "LogLevel",
     "Message",
     "NonEmptyStr",
     "P",

@@ -27,7 +27,6 @@ from dataclasses import dataclass
 from types import UnionType
 from typing import (
     Annotated,
-    Literal,
     ParamSpec,
     Protocol,
     TypeAlias,
@@ -178,7 +177,8 @@ class FlextTypes:
         Field(min_length=1, description="Non-empty string"),
     ]
 
-    type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    # LogLevel moved to FlextConstants.Settings.LogLevel (StrEnum)
+    # Use: from flext_core import FlextConstants; FlextConstants.Settings.LogLevel.INFO
 
     # Complex validators (with AfterValidator for DNS checks)
     @staticmethod
@@ -380,7 +380,7 @@ class FlextTypes:
             max_delay_seconds: Maximum delay between retries
             exponential_backoff: Whether to use exponential backoff
             retry_on_exceptions: List of exception types to retry on
-            backoff_multiplier: Optional multiplier for backoff calculation
+            backoff_multiplier: Multiplier for backoff calculation (default: 2.0)
 
         """
 
@@ -389,7 +389,7 @@ class FlextTypes:
         max_delay_seconds: float
         exponential_backoff: bool
         retry_on_exceptions: list[type[Exception]]
-        backoff_multiplier: float | None = None
+        backoff_multiplier: float = 2.0
 
     # =========================================================================
 
@@ -404,7 +404,7 @@ PortNumber = FlextTypes.PortNumber
 TimeoutSeconds = FlextTypes.TimeoutSeconds
 RetryCount = FlextTypes.RetryCount
 NonEmptyStr = FlextTypes.NonEmptyStr
-LogLevel = FlextTypes.LogLevel
+# LogLevel moved to FlextConstants.Settings.LogLevel (StrEnum)
 HostName = FlextTypes.HostName
 
 
@@ -421,7 +421,6 @@ __all__: list[str] = [
     # Domain validation types (Phase 3 - Annotated constraints)
     "HostName",
     "K",
-    "LogLevel",
     "Message",
     "MessageT",
     "MessageT_contra",

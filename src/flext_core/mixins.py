@@ -179,7 +179,7 @@ class FlextMixins:
 
     **FlextResult Integration**:
     - Railway pattern for all result-returning methods
-    - _register_in_container() returns FlextResult[None]
+    - _register_in_container() returns FlextResult[bool]
     - Service initialization failure handling
 
     **FlextConfig Integration**:
@@ -200,7 +200,8 @@ class FlextMixins:
 
     **2. Already-Registered Service Handling**:
     if register_result.is_failure:
-        error_msg = register_result.error or ""
+        # Fast fail: error must be str (FlextResult guarantees this)
+        error_msg: str = register_result.error
         if "already registered" not in error_msg.lower():
             # Log only if it's NOT an already-registered error
             logger.warning(...)
@@ -523,16 +524,16 @@ class FlextMixins:
         """
         return FlextConfig.get_global_instance()
 
-    def _register_in_container(self, service_name: str) -> FlextResult[None]:
+    def _register_in_container(self, service_name: str) -> FlextResult[bool]:
         """Register self in global container for service discovery."""
         try:
             self.container.with_service(service_name, self)
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             # If already registered, return success (for test compatibility)
             if "already registered" in str(e).lower():
-                return FlextResult[None].ok(None)
-            return FlextResult[None].fail(f"Service registration failed: {e}")
+                return FlextResult[bool].ok(True)
+            return FlextResult[bool].fail(f"Service registration failed: {e}")
 
     def _propagate_context(self, operation_name: str) -> None:
         """Propagate context for current operation using FlextContext."""
@@ -622,17 +623,25 @@ class FlextMixins:
             service_name: Optional service name for registration
 
         """
-        service_name = service_name or self.__class__.__name__
+        # Fast fail: service_name must be str or None
+        effective_service_name: str = (
+            service_name
+            if isinstance(service_name, str) and service_name
+            else self.__class__.__name__
+        )
 
-        register_result = self._register_in_container(service_name)
+        register_result = self._register_in_container(effective_service_name)
 
         if register_result.is_failure:
             # Only log warning if it's not an "already registered" error
-            error_msg = register_result.error or ""
+            # Fast fail: error must be str (FlextResult guarantees this)
+            error_msg = register_result.error
+            if error_msg is None:
+                error_msg = "Service registration failed"
             if "already registered" not in error_msg.lower():
                 self.logger.warning(
                     f"Service registration failed: {register_result.error}",
-                    extra={"service_name": service_name},
+                    extra={"service_name": effective_service_name},
                 )
 
     # =========================================================================
@@ -827,8 +836,9 @@ class FlextMixins:
 
         **Architecture**: Layer 2 Domain Layer - Reusable validation patterns
 
-        **Pattern**: All validators return FlextResult[None] to indicate success/failure.
+        **Pattern**: All validators return FlextResult[bool] to indicate success/failure.
         Validation chains compose using flat_map for monadic composition.
+        Validators return FlextResult[bool].ok(True) for success, FlextResult[bool].fail(...) for failure.
 
         **Example**:
 
@@ -836,16 +846,16 @@ class FlextMixins:
             from flext_core import FlextMixins, FlextResult
 
 
-            def validate_name(value: str) -> FlextResult[None]:
+            def validate_name(value: str) -> FlextResult[bool]:
                 if not value:
-                    return FlextResult.fail("Name required")
-                return FlextResult.ok(None)
+                    return FlextResult[bool].fail("Name required")
+                return FlextResult[bool].ok(True)
 
 
-            def validate_email(value: str) -> FlextResult[None]:
+            def validate_email(value: str) -> FlextResult[bool]:
                 if "@" not in value:
-                    return FlextResult.fail("Valid email required")
-                return FlextResult.ok(None)
+                    return FlextResult[bool].fail("Valid email required")
+                return FlextResult[bool].ok(True)
 
 
             # Chain validators using ROP pattern
@@ -872,28 +882,30 @@ class FlextMixins:
         @staticmethod
         def validate_with_result(
             data: FlextMixins.Validation.T,
-            validators: list[Callable[[FlextMixins.Validation.T], FlextResult[None]]],
+            validators: list[Callable[[FlextMixins.Validation.T], FlextResult[bool]]],
         ) -> FlextResult[FlextMixins.Validation.T]:
             """Chain multiple validators using railway-oriented programming.
 
             Applies validators sequentially using monadic composition with
             flat_map. If any validator fails, stops immediately and returns
-            the error. Success means all validators passed.
+            the error. Success means all validators passed and returned True.
 
             Args:
                 data: The data to validate (any type T)
                 validators: List of validator functions, each returning
-                           FlextResult[None] to indicate pass/fail
+                           FlextResult[bool] to indicate pass/fail
+                           - FlextResult[bool].ok(True) indicates validation passed
+                           - FlextResult[bool].fail(...) indicates validation failed
 
             Returns:
                 FlextResult[T]: Success with original data if all validators pass,
                               or failure with error message from first failure
 
             **Success Path**:
-            All validators return FlextResult[None].ok(None) → Returns FlextResult[T].ok(data)
+            All validators return FlextResult[bool].ok(True) → Returns FlextResult[T].ok(data)
 
             **Failure Path**:
-            Any validator returns FlextResult[None].fail(msg) → Returns FlextResult[T].fail(msg)
+            Any validator returns FlextResult[bool].fail(msg) → Returns FlextResult[T].fail(msg)
 
             """
             result: FlextResult[FlextMixins.Validation.T] = FlextResult.ok(data)
@@ -902,9 +914,21 @@ class FlextMixins:
                 # Create helper function with proper closure to validate and preserve data
                 def validate_and_preserve(
                     data: FlextMixins.Validation.T,
-                    v: Callable[[FlextMixins.Validation.T], FlextResult[None]],
+                    v: Callable[[FlextMixins.Validation.T], FlextResult[bool]],
                 ) -> FlextResult[FlextMixins.Validation.T]:
-                    return v(data).map(lambda _: data)
+                    validation_result = v(data)
+                    if validation_result.is_failure:
+                        return FlextResult[FlextMixins.Validation.T].fail(
+                            validation_result.error or "Validation failed",
+                            error_code=validation_result.error_code,
+                            error_data=validation_result.error_data,
+                        )
+                    # Check that validation returned True
+                    if validation_result.value is not True:
+                        return FlextResult[FlextMixins.Validation.T].fail(
+                            f"Validator must return FlextResult[bool].ok(True) for success, got {validation_result.value!r}"
+                        )
+                    return FlextResult[FlextMixins.Validation.T].ok(data)
 
                 # Use partial to bind validator while passing data through flat_map
                 result = result.flat_map(partial(validate_and_preserve, v=validator))
@@ -974,7 +998,7 @@ class FlextMixins:
         def validate_protocol_compliance(
             obj: object,
             protocol_name: str,
-        ) -> FlextResult[None]:
+        ) -> FlextResult[bool]:
             """Validate object compliance with named protocol.
 
             Provides detailed error message if object doesn't satisfy protocol.
@@ -984,7 +1008,7 @@ class FlextMixins:
                 protocol_name: Name of protocol (e.g., "Handler", "Service", "CommandBus")
 
             Returns:
-                FlextResult[None]: Success if compliant, failure with error message
+                FlextResult[bool]: Success with True if compliant, failure with error details
 
             """
             protocol_map = {
@@ -996,23 +1020,23 @@ class FlextMixins:
             }
 
             if protocol_name not in protocol_map:
-                return FlextResult.fail(
+                return FlextResult[bool].fail(
                     f"Unknown protocol: {protocol_name}. "
                     f"Supported: {', '.join(protocol_map.keys())}"
                 )
 
             protocol = protocol_map[protocol_name]
             if isinstance(obj, protocol):
-                return FlextResult.ok(None)
+                return FlextResult[bool].ok(True)
 
-            return FlextResult.fail(
+            return FlextResult[bool].fail(
                 f"Object {type(obj).__name__} does not satisfy "
                 f"protocol {protocol_name}. "
                 f"Verify all required methods are implemented."
             )
 
         @staticmethod
-        def validate_processor_protocol(obj: object) -> FlextResult[None]:
+        def validate_processor_protocol(obj: object) -> FlextResult[bool]:
             """Validate object satisfies processor protocol.
 
             Checks that processor has required methods: process() and validate().
@@ -1021,24 +1045,24 @@ class FlextMixins:
                 obj: Object to validate as processor
 
             Returns:
-                FlextResult[None]: Success if processor is valid, failure with message
+                FlextResult[bool]: Success with True if processor is valid, failure with message
 
             """
             required_methods = ["process", "validate"]
 
             for method_name in required_methods:
                 if not hasattr(obj, method_name):
-                    return FlextResult.fail(
+                    return FlextResult[bool].fail(
                         f"Processor {type(obj).__name__} missing required "
                         f"method '{method_name}()'. "
                         f"Processors must implement: {', '.join(required_methods)}"
                     )
                 if not callable(getattr(obj, method_name)):
-                    return FlextResult.fail(
+                    return FlextResult[bool].fail(
                         f"Processor {type(obj).__name__}.{method_name} is not callable"
                     )
 
-            return FlextResult.ok(None)
+            return FlextResult[bool].ok(True)
 
 
 __all__ = [

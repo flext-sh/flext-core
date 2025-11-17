@@ -360,7 +360,7 @@ class TestFlextLogger:
         """Test logging with thread safety."""
         logger = FlextLogger("test_logger")
 
-        results: list[FlextResult[None]] = []
+        results: list[FlextResult[bool]] = []
 
         def log_message(thread_id: int) -> None:
             result = logger.info("Thread %s message", thread_id)

@@ -376,7 +376,12 @@ class FlextRegistry(FlextMixins):
                     FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
                 ),
             ),
-            timestamp=str(reg_data.get("timestamp", "")),
+            # Fast fail: timestamp must be str or None
+            timestamp=(
+                str(reg_data.get("timestamp"))
+                if reg_data.get("timestamp") is not None
+                else ""
+            ),
             status=self._safe_get_status(
                 reg_data.get(
                     "status",
@@ -438,7 +443,11 @@ class FlextRegistry(FlextMixins):
                 .replace("+00:00", "Z")
             )
             # Get timestamp from dispatcher or use default - ensure it matches pattern
-            dispatcher_timestamp = reg_data.get("timestamp", "")
+            # Fast fail: timestamp must be str or None
+            timestamp_value = reg_data.get("timestamp")
+            dispatcher_timestamp: str = (
+                str(timestamp_value) if timestamp_value is not None else ""
+            )
             timestamp_value = (
                 default_timestamp
                 if not dispatcher_timestamp
@@ -480,7 +489,7 @@ class FlextRegistry(FlextMixins):
 
         summary = FlextRegistry.Summary()
         for handler in handlers:
-            result: FlextResult[None] = self._process_single_handler(handler, summary)
+            result: FlextResult[bool] = self._process_single_handler(handler, summary)
             if result.is_failure:
                 return self.fail(
                     result.error or "Handler processing failed",
@@ -491,17 +500,17 @@ class FlextRegistry(FlextMixins):
         self,
         handler: FlextHandlers[object, object],
         summary: FlextRegistry.Summary,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Process a single handler registration.
 
         Returns:
-            FlextResult[None]: Success result if registration succeeds.
+            FlextResult[bool]: Success with True if registration succeeds, failure with error details.
 
         """
         key = self._resolve_handler_key(handler)
         if key in self._registered_keys:
             summary.skipped.append(key)
-            return self.ok(None)
+            return self.ok(True)
 
         # Handler is already the correct type
         registration_result: FlextResult[dict[str, object]] = (
@@ -512,11 +521,13 @@ class FlextRegistry(FlextMixins):
             reg_data = registration_result.value
             reg_details = self._create_registration_details(reg_data, key)
             self._add_successful_registration(key, reg_details, summary)
-            return self.ok(None)
-        self._add_registration_error(key, registration_result.error or "", summary)
-        return self.fail(
-            registration_result.error or "Registration failed",
-        )
+            return self.ok(True)
+        # Fast fail: error must be str (FlextResult guarantees this)
+        error_msg = registration_result.error
+        if error_msg is None:
+            error_msg = "Registration failed"
+        self._add_registration_error(key, error_msg, summary)
+        return self.fail(error_msg)
 
     def _add_successful_registration(
         self,
@@ -787,7 +798,7 @@ class FlextRegistry(FlextMixins):
         name: str,
         service: object,
         metadata: dict[str, object] | None = None,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Register a service component with optional metadata.
 
         Delegates to the container's register method for dependency injection.
@@ -799,7 +810,7 @@ class FlextRegistry(FlextMixins):
             metadata: Optional metadata about the service (dict)
 
         Returns:
-            FlextResult[None]: Success if registered or failure with error details.
+            FlextResult[bool]: Success (True) if registered or failure with error details.
 
         """
         # Store metadata if provided (for future use)
@@ -816,20 +827,18 @@ class FlextRegistry(FlextMixins):
         # Delegate to container
         try:
             self.container.with_service(name, service)
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except ValueError as e:
-            return FlextResult[None].fail(str(e))
+            return FlextResult[bool].fail(str(e))
 
     # =========================================================================
     # Protocol Implementations: RegistrationTracker, BatchProcessor
     # =========================================================================
 
-    def register_item(self, name: str, item: object) -> FlextResult[None]:
+    def register_item(self, name: str, item: object) -> FlextResult[bool]:
         """Register item (RegistrationTracker protocol)."""
-        try:
-            return self.register(name, item)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return self.fail(str(e))
+        # Direct implementation without try/except - use FlextResult for error handling
+        return self.register(name, item)
 
     def get_item(self, name: str) -> FlextResult[object]:
         """Get registered item (RegistrationTracker protocol)."""

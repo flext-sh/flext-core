@@ -115,12 +115,14 @@ class TestTextProcessor:
         assert result.value.endswith("...")
 
     def test_safe_string(self) -> None:
-        """Test safe string conversion."""
+        """Test safe string conversion - now returns FlextResult[str] with fast fail."""
         result = FlextUtilities.TextProcessor.safe_string("  hello  ")
-        assert result == "hello"
+        assert result.is_success
+        assert result.value == "hello"
 
+        # Empty string should fail (fast fail pattern)
         result = FlextUtilities.TextProcessor.safe_string("")
-        assert not result
+        assert result.is_failure
 
 
 class TestCache:
@@ -300,7 +302,7 @@ class TestValidationErrorHandling:
         # The pipeline skips non-callable validators silently
         result = FlextUtilities.Validation.validate_pipeline(
             "test_value",
-            [lambda x: FlextResult[None].ok(None), "not_callable"],
+            [lambda x: FlextResult[bool].ok(True), "not_callable"],
         )
         # Should succeed even with non-callable in list (they're skipped)
         assert result.is_success or result.is_failure  # Depends on implementation
@@ -308,7 +310,7 @@ class TestValidationErrorHandling:
     def test_validation_pipeline_with_exception_raising_validator(self) -> None:
         """Test validate_pipeline when validator raises exception."""
 
-        def failing_validator(x: object) -> FlextResult[None]:
+        def failing_validator(x: object) -> FlextResult[bool]:
             msg = "Validation error"
             raise ValueError(msg)
 
@@ -332,7 +334,7 @@ class TestValidationErrorHandling:
         obj._cache = {"key": "value"}  # Dict-like cache
         obj._simple_cache = "value"  # Simple cached value
 
-        result = FlextUtilities.Validation.clear_all_caches(obj)
+        result = FlextUtilities.Cache.clear_object_cache(obj)
         # Should succeed
         assert (
             result.is_success or result.is_failure
@@ -347,9 +349,9 @@ class TestValidationErrorHandling:
 
         obj = MockObject()
         # Object without expected cache attributes
-        result = FlextUtilities.Validation.has_cache_attributes(obj)
+        has_cache = FlextUtilities.Cache.has_cache_attributes(obj)
         # Should return boolean
-        assert isinstance(result, bool)
+        assert isinstance(has_cache, bool)
 
     def test_validation_sort_key_with_various_types(self) -> None:
         """Test sort_key with different serializable types."""

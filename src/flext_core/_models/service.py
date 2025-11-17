@@ -5,13 +5,12 @@ as nested classes. It should NOT be imported directly - use FlextModels.Service 
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Annotated, Literal, cast
+from typing import Annotated, cast
 
 from pydantic import Field, field_validator
 
@@ -90,13 +89,13 @@ class FlextModelsService:
 
         service_name: str
         metric_types: Annotated[
-            list[
-                Literal[
-                    "performance", "errors", "throughput", "latency", "availability"
-                ]
-            ],
+            list[FlextConstants.Cqrs.ServiceMetricTypeLiteral],
             Field(
-                default_factory=lambda: ["performance", "errors", "throughput"],
+                default_factory=lambda: [
+                    "performance",
+                    "errors",
+                    "throughput",
+                ],
                 description="Types of metrics to collect",
             ),
         ]

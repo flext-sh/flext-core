@@ -154,14 +154,14 @@ class FlextTestDocker:
         except Exception as e:
             self.logger.warning("Failed to save dirty state", extra={"error": str(e)})
 
-    def mark_container_dirty(self, container_name: str) -> FlextResult[None]:
+    def mark_container_dirty(self, container_name: str) -> FlextResult[bool]:
         """Mark a container as dirty, requiring recreation on next use.
 
         Args:
             container_name: Name of the container to mark dirty
 
         Returns:
-            FlextResult indicating success or failure
+            FlextResult[bool]: Success with True if marked, failure with error
 
         """
         try:
@@ -171,18 +171,18 @@ class FlextTestDocker:
                 "Container marked as dirty",
                 extra={"container": container_name},
             )
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except Exception as e:
-            return FlextResult[None].fail(f"Failed to mark container dirty: {e}")
+            return FlextResult[bool].fail(f"Failed to mark container dirty: {e}")
 
-    def mark_container_clean(self, container_name: str) -> FlextResult[None]:
+    def mark_container_clean(self, container_name: str) -> FlextResult[bool]:
         """Mark a container as clean after successful recreation.
 
         Args:
             container_name: Name of the container to mark clean
 
         Returns:
-            FlextResult indicating success or failure
+            FlextResult[bool]: Success with True if marked, failure with error
 
         """
         try:
@@ -192,9 +192,9 @@ class FlextTestDocker:
                 "Container marked as clean",
                 extra={"container": container_name},
             )
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except Exception as e:
-            return FlextResult[None].fail(f"Failed to mark container clean: {e}")
+            return FlextResult[bool].fail(f"Failed to mark container clean: {e}")
 
     def is_container_dirty(self, container_name: str) -> bool:
         """Check if a container is marked as dirty.
@@ -222,7 +222,7 @@ class FlextTestDocker:
         container_name: str,
         compose_file: str,
         service: str | None = None,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Register a container's docker-compose configuration for cleanup.
 
         This enables cleanup_dirty_containers() to properly recreate private/project-specific
@@ -234,7 +234,7 @@ class FlextTestDocker:
             service: Optional service name in docker-compose (if None, uses container name)
 
         Returns:
-            FlextResult indicating success
+            FlextResult[bool]: Success with True if registered, failure with error
 
         """
         try:
@@ -250,9 +250,9 @@ class FlextTestDocker:
                     "service": service,
                 },
             )
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except Exception as e:
-            return FlextResult[None].fail(f"Failed to register container config: {e}")
+            return FlextResult[bool].fail(f"Failed to register container config: {e}")
 
     def cleanup_dirty_containers(self) -> FlextResult[dict[str, str]]:
         """Clean up all dirty containers by recreating them with fresh volumes.
@@ -484,10 +484,10 @@ class FlextTestDocker:
         except Exception as e:
             return FlextResult[tuple[int, str, str]].fail(f"Command failed: {e}")
 
-    def enable_auto_cleanup(self, *, enabled: bool = True) -> FlextResult[None]:
+    def enable_auto_cleanup(self, *, enabled: bool = True) -> FlextResult[bool]:
         """Enable or disable auto cleanup."""
         _ = enabled  # Unused parameter
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     def start_services_for_test(
         self,
@@ -1399,7 +1399,7 @@ class FlextTestDocker:
         self,
         container_name: str,
         env_vars: dict[str, str],
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Set environment variables for container before start.
 
         Note: This stores env vars for use when starting containers.
@@ -1410,7 +1410,7 @@ class FlextTestDocker:
             env_vars: Dict of environment variables to set
 
         Returns:
-            FlextResult indicating success or failure
+            FlextResult[bool]: Success with True if set, failure with error
 
         """
         try:
@@ -1429,13 +1429,13 @@ class FlextTestDocker:
                 self._container_env_vars: dict[str, dict[str, str]] = {}
             self._container_env_vars[container_name] = env_vars
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
 
         except NotFound:
-            return FlextResult[None].fail(f"Container {container_name} not found")
+            return FlextResult[bool].fail(f"Container {container_name} not found")
         except DockerException as e:
             self.logger.exception(f"Failed to set env vars for {container_name}")
-            return FlextResult[None].fail(f"Failed to set environment variables: {e}")
+            return FlextResult[bool].fail(f"Failed to set environment variables: {e}")
 
     def get_container_env_vars(
         self,
@@ -2171,13 +2171,13 @@ class FlextTestDocker:
         )
 
     @classmethod
-    def _display_status_table(cls, manager: FlextTestDocker) -> FlextResult[None]:
+    def _display_status_table(cls, manager: FlextTestDocker) -> FlextResult[bool]:
         """Render the container status table to the console."""
         status_result = manager.get_all_status()
         if status_result.is_failure:
             error_message = f"Failed to get status: {status_result.error}"
             cls._console.print(f"[bold red]{error_message}[/bold red]")
-            return FlextResult[None].fail(error_message)
+            return FlextResult[bool].fail(error_message)
 
         table = Table(title="FLEXT Docker Test Containers Status", show_header=True)
         table.add_column("Container", style="cyan", no_wrap=True)
@@ -2194,9 +2194,9 @@ class FlextTestDocker:
             )
 
         cls._console.print(table)
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
-    def show_status_table(self) -> FlextResult[None]:
+    def show_status_table(self) -> FlextResult[bool]:
         """Public helper to render container status."""
         return self._display_status_table(self)
 

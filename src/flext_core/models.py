@@ -174,22 +174,22 @@ class FlextModels:
         ...     email: Email
         ...     is_active: bool = False
         ...
-        ...     def activate(self) -> FlextResult[None]:
+        ...     def activate(self) -> FlextResult[bool]:
         ...         if self.is_active:
         ...             return FlextResult.fail("Already active")
         ...         self.is_active = True
-        ...         return FlextResult.ok(None)
+        ...         return FlextResult[bool].ok(True)
         >>>
         >>> # Aggregate Root - consistency boundary
         >>> class Account(FlextModels.AggregateRoot):
         ...     owner: User
         ...     balance: float = 0.0
         ...
-        ...     def deposit(self, amount: float) -> FlextResult[None]:
+        ...     def deposit(self, amount: float) -> FlextResult[bool]:
         ...         if amount <= 0:
         ...             return FlextResult.fail("Amount must be positive")
         ...         self.balance += amount
-        ...         return FlextResult.ok(None)
+        ...         return FlextResult[bool].ok(True)
         >>>
         >>> # Command - CQRS pattern
         >>> class CreateUserCommand(FlextModels.Cqrs.Command):
@@ -347,9 +347,9 @@ class FlextModels:
 
             # Dynamic type creation using helper function - returns a subclass of cls
             # This is valid Python metaprogramming - dynamically creating a class at runtime
-            from flext_core._utilities.generators import create_dynamic_type_subclass
+            from flext_core._utilities.generators import FlextUtilitiesGenerators
 
-            return create_dynamic_type_subclass(
+            return FlextUtilitiesGenerators.create_dynamic_type_subclass(
                 f"{cls_name}[{type_name}]",
                 cls,
                 {

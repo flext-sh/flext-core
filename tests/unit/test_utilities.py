@@ -112,15 +112,18 @@ class TestFlextUtilitiesComprehensive:
         assert result.is_success
         assert result.value == "Short"
 
-        # Test safe string
-        result_str = FlextUtilities.TextProcessor.safe_string("test")
-        assert result_str == "test"
+        # Test safe string - now returns FlextResult[str] with fast fail
+        result = FlextUtilities.TextProcessor.safe_string("test")
+        assert result.is_success
+        assert result.value == "test"
 
-        result_str = FlextUtilities.TextProcessor.safe_string("")
-        assert not result_str
+        # Empty string should fail (fast fail pattern)
+        result = FlextUtilities.TextProcessor.safe_string("")
+        assert result.is_failure
 
-        result_str = FlextUtilities.TextProcessor.safe_string("", default="default")
-        assert result_str == "default"
+        # None should fail (fast fail pattern)
+        result = FlextUtilities.TextProcessor.safe_string(None)  # type: ignore[arg-type]
+        assert result.is_failure
 
     def test_type_guards_operations(self) -> None:
         """Test type guard operations."""
@@ -746,14 +749,16 @@ class TestFlextUtilitiesEdgeCases:
         assert len(key) > 0
 
     def test_text_processor_safe_string_with_none(self) -> None:
-        """Test safe_string handles None gracefully."""
-        result = FlextUtilities.TextProcessor.safe_string(None, default="fallback")
-        assert result == "fallback"
+        """Test safe_string with None - should fail (fast fail pattern)."""
+        # None should fail (fast fail pattern - no fallback)
+        result = FlextUtilities.TextProcessor.safe_string(None)  # type: ignore[arg-type]
+        assert result.is_failure
 
     def test_text_processor_safe_string_empty_with_default(self) -> None:
-        """Test safe_string returns default for empty string."""
-        result = FlextUtilities.TextProcessor.safe_string("", default="default_value")
-        assert result == "default_value"
+        """Test safe_string with empty string - should fail (fast fail pattern)."""
+        # Empty string should fail (fast fail pattern - no fallback)
+        result = FlextUtilities.TextProcessor.safe_string("")
+        assert result.is_failure
 
     def test_validators_are_available(self) -> None:
         """Test that validation methods exist in FlextUtilities.Validation."""
@@ -780,17 +785,17 @@ class TestFlextValidationAndCacheMethods:
     def test_validate_pipeline_success_path(self) -> None:
         """Test validate_pipeline with successful validators."""
 
-        def validator1(data: str) -> FlextResult[None]:
+        def validator1(data: str) -> FlextResult[bool]:
             """First validator passes."""
             if len(data) < 2:
-                return FlextResult[None].fail("Too short")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Too short")
+            return FlextResult[bool].ok(True)
 
-        def validator2(data: str) -> FlextResult[None]:
+        def validator2(data: str) -> FlextResult[bool]:
             """Second validator passes."""
             if not data.isalnum():
-                return FlextResult[None].fail("Not alphanumeric")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Not alphanumeric")
+            return FlextResult[bool].ok(True)
 
         result = FlextUtilities.Validation.validate_pipeline(
             "abc123", [validator1, validator2]
@@ -800,13 +805,13 @@ class TestFlextValidationAndCacheMethods:
     def test_validate_pipeline_failure_on_first_validator(self) -> None:
         """Test validate_pipeline stops on first validator failure."""
 
-        def validator1(data: str) -> FlextResult[None]:
+        def validator1(data: str) -> FlextResult[bool]:
             """First validator fails."""
-            return FlextResult[None].fail("First failed")
+            return FlextResult[bool].fail("First failed")
 
-        def validator2(data: str) -> FlextResult[None]:
+        def validator2(data: str) -> FlextResult[bool]:
             """Second validator should not be called."""
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
 
         result = FlextUtilities.Validation.validate_pipeline(
             "test", [validator1, validator2]
@@ -817,7 +822,7 @@ class TestFlextValidationAndCacheMethods:
     def test_validate_pipeline_with_exception_in_validator(self) -> None:
         """Test validate_pipeline handles exceptions from validators."""
 
-        def bad_validator(data: str) -> FlextResult[None]:
+        def bad_validator(data: str) -> FlextResult[bool]:
             """Validator that raises an exception."""
             msg = "Unexpected error"
             raise ValueError(msg)
@@ -848,7 +853,7 @@ class TestFlextValidationAndCacheMethods:
 
         obj = MockObject()
         obj._cache = {"key": "value"}
-        result = FlextUtilities.Validation.clear_all_caches(obj)
+        result = FlextUtilities.Cache.clear_object_cache(obj)
         assert result.is_success
 
     def test_clear_all_caches_with_none_attributes(self) -> None:
@@ -860,13 +865,13 @@ class TestFlextValidationAndCacheMethods:
             _cache: object = None
 
         obj = MockObject()
-        result = FlextUtilities.Validation.clear_all_caches(obj)
+        result = FlextUtilities.Cache.clear_object_cache(obj)
         assert result.is_success
 
     def test_clear_all_caches_with_exception(self) -> None:
         """Test clear_all_caches handles exceptions gracefully."""
         # Pass something that might raise an error
-        result = FlextUtilities.Validation.clear_all_caches(None)
+        result = FlextUtilities.Cache.clear_object_cache(None)
         # Should handle the error and return failure result
         assert isinstance(result, FlextResult)
 
@@ -878,9 +883,10 @@ class TestFlextValidationAndCacheMethods:
 
             _cache: ClassVar[dict[str, object]] = {}
 
-        MockObject()
-        # Check if method exists and can be called
-        assert callable(FlextUtilities.Validation.has_cache_attributes)
+        obj = MockObject()
+        # Use direct method call
+        has_cache = FlextUtilities.Cache.has_cache_attributes(obj)
+        assert has_cache is True
 
     def test_has_cache_attributes_false(self) -> None:
         """Test has_cache_attributes returns False for objects without cache."""
@@ -888,9 +894,10 @@ class TestFlextValidationAndCacheMethods:
         class EmptyObject:
             """Object without cache attributes."""
 
-        EmptyObject()
-        # Check if method exists and can be called
-        assert callable(FlextUtilities.Validation.has_cache_attributes)
+        obj = EmptyObject()
+        # Use direct method call
+        has_cache = FlextUtilities.Cache.has_cache_attributes(obj)
+        assert has_cache is False
 
     def test_sort_key_with_string(self) -> None:
         """Test sort_key generates deterministic keys for strings."""
@@ -1005,15 +1012,15 @@ class TestFlextValidationAndCacheMethods:
         """Test validate_pipeline with multiple validators executed in sequence."""
         call_order = []
 
-        def first_validator(data: str) -> FlextResult[None]:
+        def first_validator(data: str) -> FlextResult[bool]:
             """First validator in pipeline."""
             call_order.append("first")
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
 
-        def second_validator(data: str) -> FlextResult[None]:
+        def second_validator(data: str) -> FlextResult[bool]:
             """Second validator in pipeline."""
             call_order.append("second")
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
 
         result = FlextUtilities.Validation.validate_pipeline(
             "test", [first_validator, second_validator]
@@ -1113,7 +1120,7 @@ class TestFlextValidationAndCacheMethods:
             _cache: WeirdCache = WeirdCache()
 
         obj = ObjectWithWeirdCache()
-        result = FlextUtilities.Validation.clear_all_caches(obj)
+        result = FlextUtilities.Cache.clear_object_cache(obj)
         # Should handle non-callable clear gracefully
         assert isinstance(result, FlextResult)
 
@@ -1163,7 +1170,7 @@ class TestFlextValidationAndCacheMethods:
     def test_validate_pipeline_with_typed_error(self) -> None:
         """Test validate_pipeline with various exception types."""
 
-        def key_error_validator(data: str) -> FlextResult[None]:
+        def key_error_validator(data: str) -> FlextResult[bool]:
             """Validator that raises KeyError."""
             msg = "Missing key"
             raise KeyError(msg)
@@ -1176,7 +1183,7 @@ class TestFlextValidationAndCacheMethods:
     def test_validate_pipeline_with_attribute_error(self) -> None:
         """Test validate_pipeline with AttributeError."""
 
-        def attr_error_validator(data: str) -> FlextResult[None]:
+        def attr_error_validator(data: str) -> FlextResult[bool]:
             """Validator that raises AttributeError."""
             msg = "Missing attribute"
             raise AttributeError(msg)

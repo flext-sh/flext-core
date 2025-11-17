@@ -16,9 +16,6 @@ from typing import cast, get_origin, get_type_hints
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
-# Module constants
-MAX_PORT_NUMBER: int = 65535
-MIN_PORT_NUMBER: int = 1
 _logger = logging.getLogger(__name__)
 
 

@@ -179,15 +179,15 @@ class Middleware:
         self.call_count = 0
         self.should_reject = False
 
-    def process(self, message: object, handler: object) -> FlextResult[None]:
+    def process(self, message: object, handler: object) -> FlextResult[bool]:
         """Process message through middleware."""
         self.process_called = True
         self.call_count += 1
 
         if self.should_reject:
-            return FlextResult[None].fail("Middleware rejected")
+            return FlextResult[bool].fail("Middleware rejected")
 
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
 
 # ==================== FIXTURES ====================
@@ -482,9 +482,9 @@ class TestLayer1Middleware:
                 self.order_list = order_list
                 self.middleware_id = middleware_id
 
-            def process(self, message: object, handler: object) -> FlextResult[None]:
+            def process(self, message: object, handler: object) -> FlextResult[bool]:
                 self.order_list.append(self.middleware_id)
-                return FlextResult[None].ok(None)
+                return FlextResult[bool].ok(True)
 
         middleware1 = OrderTrackingMiddleware(execution_order, 1)
         middleware2 = OrderTrackingMiddleware(execution_order, 2)

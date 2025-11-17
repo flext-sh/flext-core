@@ -312,9 +312,14 @@ class TestFlextContext:
         context.set_metadata("created_at", "2025-01-01")
         context.set_metadata("version", "1.0.0")
 
-        # Get metadata
-        assert context.get_metadata("created_at") == "2025-01-01"
-        assert context.get_metadata("version") == "1.0.0"
+        # Get metadata - now returns FlextResult
+        created_at_result = context.get_metadata("created_at")
+        assert created_at_result.is_success
+        assert created_at_result.unwrap() == "2025-01-01"
+        
+        version_result = context.get_metadata("version")
+        assert version_result.is_success
+        assert version_result.unwrap() == "1.0.0"
 
         # Get all metadata
         metadata = context.get_all_metadata()
@@ -877,23 +882,33 @@ class TestFlextContext:
             assert context.get(f"key_{i}") == f"value_{i}"
 
     def test_context_get_metadata_nonexistent(self) -> None:
-        """Test getting metadata that doesn't exist."""
+        """Test getting metadata that doesn't exist - fast fail."""
+        from flext_core import FlextResult
+
         context = FlextContext()
         result = context.get_metadata("nonexistent_meta")
-        assert result is None
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
+        assert "not found" in result.error.lower()
 
     def test_context_get_metadata_with_default(self) -> None:
-        """Test getting metadata with default value."""
+        """Test getting metadata with default value using monadic operations."""
         context = FlextContext()
-        result = context.get_metadata("nonexistent_meta", "default_value")
-        assert result == "default_value"
+        result = context.get_metadata("nonexistent_meta")
+        # Use monadic unwrap_or for default value
+        value = result.unwrap_or("default_value")
+        assert value == "default_value"
 
     def test_context_set_get_metadata(self) -> None:
         """Test setting and getting metadata."""
+        from flext_core import FlextResult
+
         context = FlextContext()
         context.set_metadata("meta_key", "meta_value")
         result = context.get_metadata("meta_key")
-        assert result == "meta_value"
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        assert result.unwrap() == "meta_value"
 
     def test_context_get_all_metadata_empty(self) -> None:
         """Test getting all metadata when empty."""

@@ -170,10 +170,9 @@ class TestFlextResult:
         assert result.is_failure
         assert result.error == "Unknown error occurred"
 
-        # Test None value in success
-        result_none = FlextResult[None].ok(None)
-        assert result_none.is_success
-        assert result_none.value is None
+        # Test that None is not a valid success value
+        with pytest.raises(TypeError, match="cannot accept None"):
+            FlextResult[int].ok(None)
 
     def test_result_performance(self) -> None:
         """Test performance characteristics of FlextResult."""
@@ -343,18 +342,23 @@ class TestFlextResult:
         assert failures == ["error1", "error2"]
 
     def test_result_value_or_none_property(self) -> None:
-        """Test value_or_none property."""
+        """Test value_or_none property - REMOVED: None is not a valid success value."""
+        # value_or_none was removed because None is not a valid success value
+        # Use .value or .unwrap() for success, or check .is_success first
         result = FlextResult[int].ok(5)
-        value = result.value_or_none
+        value = result.value
 
         assert value == 5
 
     def test_result_value_or_none_property_failure(self) -> None:
-        """Test value_or_none property on failure."""
+        """Test value_or_none property on failure - REMOVED: Use .is_success check."""
+        # value_or_none was removed because None is not a valid success value
+        # Use .is_success check instead
         result = FlextResult[int].fail("error")
-        value = result.value_or_none
 
-        assert value is None
+        assert result.is_failure
+        with pytest.raises(FlextExceptions.ValidationError):
+            _ = result.value
 
     def test_result_rshift_operator(self) -> None:
         """Test >> operator (flat_map)."""
@@ -667,16 +671,16 @@ class TestFlextResult:
         assert "Something went wrong" in failure_result.error
 
     def test_result_safe_unwrap_or_none_static_method(self) -> None:
-        """Test value_or_none instance property (replaces safe_unwrap_or_none static method)."""
+        """Test value access - value_or_none removed, use .value or .unwrap_or()."""
         # Success result
         result = FlextResult[int].ok(42)
-        value = result.value_or_none
+        value = result.value
         assert value == 42
 
-        # Failure result
+        # Failure result - use unwrap_or for default value
         result = FlextResult[int].fail("Error")
-        value = result.value_or_none
-        assert value is None
+        value = result.unwrap_or(0)
+        assert value == 0
 
     def test_result_success_rate_static_method(self) -> None:
         """Test success_rate static method."""
@@ -731,14 +735,14 @@ class TestFlextResult:
         """Test chain_validations static method."""
 
         # Create validation functions that don't depend on input
-        def validate_positive() -> FlextResult[None]:
+        def validate_positive() -> FlextResult[bool]:
             # For this test, we'll simulate validation that always passes
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
 
-        def validate_even() -> FlextResult[None]:
+        def validate_even() -> FlextResult[bool]:
             # For this test, we'll simulate validation that always passes for the first case
             # and fails for the second case - this is just for testing the chaining logic
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
 
         validators = [validate_positive, validate_even]
 
@@ -747,8 +751,8 @@ class TestFlextResult:
         assert result.is_success
 
         # Invalid value (positive but odd)
-        def validate_even_fail() -> FlextResult[None]:
-            return FlextResult[None].fail("Must be even")
+        def validate_even_fail() -> FlextResult[bool]:
+            return FlextResult[bool].fail("Must be even")
 
         result = FlextResult.chain_validations(validate_positive, validate_even_fail)
         assert result.is_failure
@@ -756,8 +760,8 @@ class TestFlextResult:
         assert "Must be even" in result.error
 
         # Invalid value (negative) - first validator should fail
-        def validate_positive_fail() -> FlextResult[None]:
-            return FlextResult[None].fail("Must be positive")
+        def validate_positive_fail() -> FlextResult[bool]:
+            return FlextResult[bool].fail("Must be positive")
 
         result = FlextResult.chain_validations(validate_positive_fail, validate_even)
         assert result.is_failure
@@ -767,10 +771,10 @@ class TestFlextResult:
     def test_result_validate_and_execute_static_method(self) -> None:
         """Test validate_and_execute static method."""
 
-        def validator(x: int) -> FlextResult[None]:
+        def validator(x: int) -> FlextResult[bool]:
             if x > 0:
-                return FlextResult[None].ok(None)
-            return FlextResult[None].fail("Must be positive")
+                return FlextResult[bool].ok(True)
+            return FlextResult[bool].fail("Must be positive")
 
         def executor(x: int) -> FlextResult[str]:
             return FlextResult[str].ok(f"Processed: {x}")
@@ -928,23 +932,23 @@ class TestFlextResult:
         """Test the validate_all classmethod with validators."""
 
         # Define test validators
-        def validate_positive(x: int) -> FlextResult[None]:
+        def validate_positive(x: int) -> FlextResult[bool]:
             if x <= 0:
-                return FlextResult[None].fail("Must be positive")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Must be positive")
+            return FlextResult[bool].ok(True)
 
-        def validate_even(x: int) -> FlextResult[None]:
+        def validate_even(x: int) -> FlextResult[bool]:
             if x % 2 != 0:
-                return FlextResult[None].fail("Must be even")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Must be even")
+            return FlextResult[bool].ok(True)
 
-        def validate_less_than_100(x: int) -> FlextResult[None]:
+        def validate_less_than_100(x: int) -> FlextResult[bool]:
             if x >= 100:
-                return FlextResult[None].fail("Must be less than 100")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Must be less than 100")
+            return FlextResult[bool].ok(True)
 
         # Test all validations pass
-        result = FlextResult[None].validate_all(
+        result = FlextResult[int].validate_all(
             42,
             validate_positive,
             validate_even,
@@ -1038,22 +1042,15 @@ class TestFlextResult:
         """Test __iter__ for unpacking and iteration."""
         # Success iteration returns (data, None)
         success: FlextResult[int] = FlextResult[int].ok(42)
-        values = list(success)
-        assert len(values) == 2
-        assert values[0] == 42
-        assert values[1] is None
+        # Success iteration raises on unpacking (fast fail pattern)
+        # Use .value or .unwrap() for success values
+        assert success[0] == 42
+        assert success[1] == ""  # Empty string for error when success
 
-        # Unpacking success
-        value, error = success
-        assert value == 42
-        assert error is None
-
-        # Failure iteration returns (None, error)
+        # Failure iteration raises on unpacking (fast fail pattern)
         failure = FlextResult[int].fail("error message")
-        values = list(failure)
-        assert len(values) == 2
-        assert values[0] is None
-        assert values[1] == "error message"
+        with pytest.raises(FlextExceptions.BaseError):
+            _ = failure[0]  # Accessing data on failure raises
 
     def test_result_getitem_protocol(self) -> None:
         """Test __getitem__ for indexing."""
@@ -1062,26 +1059,27 @@ class TestFlextResult:
         # Index 0 returns data
         assert success[0] == 42
 
-        # Index 1 returns error (None for success)
-        assert success[1] is None
+        # Index 1 returns empty string for error when success (not None)
+        assert success[1] == ""
 
         # Out of range raises FlextExceptions.NotFoundError
         with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
             _ = success[2]
         assert "only supports indices 0 (data) and 1 (error)" in str(exc_info.value)
 
-        # Failure returns None for index 0, error for index 1
+        # Failure raises on index 0 (fast fail), error for index 1
         failure = FlextResult[int].fail("error message")
-        assert failure[0] is None
+        # Fast fail: accessing data on failure raises exception
+        with pytest.raises(FlextExceptions.BaseError) as exc_info:
+            _ = failure[0]
+        assert "error message" in str(exc_info.value)
         assert failure[1] == "error message"
 
     def test_result_context_manager_with_none_value(self) -> None:
         """Test context manager protocol with edge cases."""
-        # Success with None value is allowed (data validation removed for performance)
-        success_none = FlextResult[None].ok(None)
-        # Using __enter__ directly (not expect which wraps it)
-        with success_none as value:
-            assert value is None
+        # None is not a valid success value - should raise TypeError
+        with pytest.raises(TypeError, match="cannot accept None"):
+            FlextResult[int].ok(None)
 
         # Test __exit__ is called properly
         success: FlextResult[int] = FlextResult[int].ok(42)
@@ -1254,15 +1252,15 @@ class TestFlextResultAdditionalCoverage:
         """Test _Collections.validate_all method (lines 385-412)."""
 
         # Define validators
-        def is_positive(x: int) -> FlextResult[None]:
+        def is_positive(x: int) -> FlextResult[bool]:
             if x <= 0:
-                return FlextResult[None].fail("Must be positive")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Must be positive")
+            return FlextResult[bool].ok(True)
 
-        def is_less_than_100(x: int) -> FlextResult[None]:
+        def is_less_than_100(x: int) -> FlextResult[bool]:
             if x >= 100:
-                return FlextResult[None].fail("Must be less than 100")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Must be less than 100")
+            return FlextResult[bool].ok(True)
 
         # All pass
         result = FlextResult.validate_all(50, is_positive, is_less_than_100)
@@ -1333,9 +1331,9 @@ class TestFlextResultAdditionalCoverage:
 
     def test_result_hash_with_various_types(self) -> None:
         """Test __hash__ with different data types (lines 872-887)."""
-        # Hash with None data
-        result_none = FlextResult[None].ok(None)
-        hash1 = hash(result_none)
+        # None is not a valid success value - test with valid data instead
+        result_int = FlextResult[int].ok(42)
+        hash1 = hash(result_int)
         assert isinstance(hash1, int)
 
         # Hash with complex data
@@ -1480,17 +1478,17 @@ class TestFlextResultAdditionalCoverage:
 
     def test_result_validate_all(self) -> None:
         """Test validate_all method for chaining value-based validations."""
-        # validate_all takes a value and *validators, each is Callable[[T], FlextResult[None]]
+        # validate_all takes a value and *validators, each is Callable[[T], FlextResult[bool]]
 
-        def validate_positive(value: int) -> FlextResult[None]:
+        def validate_positive(value: int) -> FlextResult[bool]:
             if value <= 0:
-                return FlextResult[None].fail("Must be positive")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Must be positive")
+            return FlextResult[bool].ok(True)
 
-        def validate_even(value: int) -> FlextResult[None]:
+        def validate_even(value: int) -> FlextResult[bool]:
             if value % 2 != 0:
-                return FlextResult[None].fail("Must be even")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Must be even")
+            return FlextResult[bool].ok(True)
 
         # Validate value - all pass
         result = FlextResult.validate_all(10, validate_positive, validate_even)
@@ -1506,10 +1504,10 @@ class TestFlextResultAdditionalCoverage:
         """Test validate_and_execute method (lines 1375)."""
         # validate_and_execute is an instance method, not a classmethod
 
-        def validator(x: int) -> FlextResult[None]:
+        def validator(x: int) -> FlextResult[bool]:
             if x < 10:
-                return FlextResult[None].fail("Too small")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Too small")
+            return FlextResult[bool].ok(True)
 
         def executor(x: int) -> FlextResult[int]:
             return FlextResult[int].ok(x * 2)
@@ -1614,11 +1612,10 @@ class TestFlextResultFinalCoverage:
         assert result_mapped.value == 20
 
     def test_ensure_success_data_with_none_value(self) -> None:
-        """Test _ensure_success_data when value is None (line 522)."""
-        # Create result with None value - should still be success
-        result = FlextResult[None].ok(None)
-        assert result.is_success
-        assert result.value is None
+        """Test that None is not a valid success value."""
+        # None is not a valid success value - should raise TypeError
+        with pytest.raises(TypeError, match="cannot accept None"):
+            FlextResult[int].ok(None)
 
     def test_value_property_failure_path(self) -> None:
         """Test value property when result is failure (lines 552-553)."""
@@ -1763,8 +1760,8 @@ class TestFlextResultFinalCoverage:
     def test_validate_and_execute_validation_failure(self) -> None:
         """Test validate_and_execute when validation fails (line 1375)."""
 
-        def validator(x: int) -> FlextResult[None]:
-            return FlextResult[None].fail("Validation failed")
+        def validator(x: int) -> FlextResult[bool]:
+            return FlextResult[bool].fail("Validation failed")
 
         def executor(x: int) -> FlextResult[str]:
             return FlextResult[str].ok(f"Executed {x}")
@@ -1813,11 +1810,11 @@ class TestFlextResultFinalCoverage:
     def test_validate_all_with_failures(self) -> None:
         """Test validate_all when some validators fail (lines 1935-1936)."""
 
-        def validator1(x: int) -> FlextResult[None]:
-            return FlextResult[None].ok(None)
+        def validator1(x: int) -> FlextResult[bool]:
+            return FlextResult[bool].ok(True)
 
-        def validator2(x: int) -> FlextResult[None]:
-            return FlextResult[None].fail("Validator 2 failed")
+        def validator2(x: int) -> FlextResult[bool]:
+            return FlextResult[bool].fail("Validator 2 failed")
 
         # validate_all takes variadic validators, not a list
         result = FlextResult.validate_all(42, validator1, validator2)
@@ -1939,16 +1936,17 @@ class TestFlextResultFinalPush:
         assert "Transformation failed" in str(mapped.error)
 
     def test_expect_with_none_data_success(self) -> None:
-        """Test expect with None data in success state (lines 815-819)."""
-        # Create a success result with None data (edge case)
-        result = FlextResult[int | None].ok(None)
+        """Test expect with None data in success state (lines 815-819).
 
-        # expect should raise for None data
+        REMOVED: None is not a valid success value. Creating FlextResult with None
+        now raises TypeError at creation time (fast fail).
+        """
+        # Fast fail: None is not a valid success value - raises at creation
         with pytest.raises(
-            FlextExceptions.BaseError,
-            match="Success result has None data",
+            TypeError,
+            match="cannot accept None as data",
         ):
-            result.expect("Expected non-None value")
+            _ = FlextResult[int | None].ok(None)
 
     def test_eq_string_comparison_fallback(self) -> None:
         """Test __eq__ with string comparison fallback (lines 850-854)."""
@@ -2069,8 +2067,8 @@ class TestFlextResultFinalCoveragePush:
         """Test validate_and_execute with failure result (line 1375)."""
         result = FlextResult[int].fail("Initial failure")
 
-        def validator(x: int) -> FlextResult[None]:
-            return FlextResult[None].ok(None)
+        def validator(x: int) -> FlextResult[bool]:
+            return FlextResult[bool].ok(True)
 
         def executor(x: int) -> FlextResult[str]:
             return FlextResult[str].ok(str(x))
@@ -2152,15 +2150,16 @@ class TestFromCallable:
         assert result.error_code == "CUSTOM_ERROR"
 
     def test_create_from_callable_with_none_return(self) -> None:
-        """Test create_from_callable with function returning None."""
+        """Test create_from_callable with function returning None - REMOVED: None not valid."""
+        # None is not a valid success value - use FlextResult.fail() for failures
+        # This test is no longer valid as FlextResult[None] is not allowed
 
         def returns_none() -> None:
             return None
 
-        result = FlextResult[None].create_from_callable(returns_none)
-
-        assert result.is_success
-        assert result.value is None
+        # Creating FlextResult[None].ok(None) raises TypeError
+        with pytest.raises(TypeError, match="cannot accept None as data"):
+            _ = FlextResult[None].create_from_callable(returns_none)
 
     def test_create_from_callable_with_complex_operation(self) -> None:
         """Test create_from_callable with complex operation."""

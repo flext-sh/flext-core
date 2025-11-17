@@ -135,10 +135,10 @@ class TestEnterprisePatterns:
                 self._data: dict[str, object] = {}
                 self._query_count = 0
 
-            def save(self, entity_id: str, data: object) -> FlextResult[None]:
+            def save(self, entity_id: str, data: object) -> FlextResult[bool]:
                 """Save entity to repository."""
                 self._data[entity_id] = data
-                return FlextResult[None].ok(None)
+                return FlextResult[bool].ok(True)
 
             def find_by_id(self, entity_id: str) -> FlextResult[object]:
                 """Find entity by ID."""
@@ -217,15 +217,15 @@ class TestEventDrivenPatterns:
                 super().__init__()
                 self.processed_events: list[FlextModels.DomainEvent] = []
 
-            def handle_user_created(self, event: UserCreatedEvent) -> FlextResult[None]:
+            def handle_user_created(self, event: UserCreatedEvent) -> FlextResult[bool]:
                 """Handle user created event."""
                 self.processed_events.append(event)
-                return FlextResult[None].ok(None)
+                return FlextResult[bool].ok(True)
 
-            def handle_user_updated(self, event: UserUpdatedEvent) -> FlextResult[None]:
+            def handle_user_updated(self, event: UserUpdatedEvent) -> FlextResult[bool]:
                 """Handle user updated event."""
                 self.processed_events.append(event)
-                return FlextResult[None].ok(None)
+                return FlextResult[bool].ok(True)
 
         # Test event processing
         handler = UserEventHandler()

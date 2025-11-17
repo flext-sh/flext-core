@@ -103,10 +103,10 @@ class User(FlextModels.Entity):
     name: str
     email: str
 
-    def validate(self) -> FlextResult[None]:
+    def validate(self) -> FlextResult[bool]:
         if "@" not in self.email:
-            return FlextResult.fail("Invalid email")
-        return FlextResult.ok(None)
+            return FlextResult[bool].fail("Invalid email")
+        return FlextResult[bool].ok(True)
 ```
 
 ### CQRS Pattern

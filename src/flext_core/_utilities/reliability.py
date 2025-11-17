@@ -17,9 +17,6 @@ from collections.abc import Callable
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 
-# Module constants
-MAX_PORT_NUMBER: int = 65535
-MIN_PORT_NUMBER: int = 1
 _logger = logging.getLogger(__name__)
 
 
@@ -83,36 +80,53 @@ class FlextUtilitiesReliability:
         delay_seconds: float | None = None,
         backoff_multiplier: float | None = None,
     ) -> FlextResult[TResult]:
-        """Execute operation with retry logic using railway patterns."""
-        max_attempts = max_attempts or FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
-        delay_seconds = (
-            delay_seconds or FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS
+        """Execute operation with retry logic using railway patterns.
+
+        Fast fail: explicit default values instead of 'or' fallback.
+        """
+        # Fast fail: explicit default values instead of 'or' fallback
+        max_attempts_value: int = (
+            max_attempts
+            if max_attempts is not None
+            else FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
         )
-        backoff_multiplier = (
-            backoff_multiplier or FlextConstants.Reliability.RETRY_BACKOFF_BASE
+        delay_seconds_value: float = (
+            delay_seconds
+            if delay_seconds is not None
+            else FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS
+        )
+        backoff_multiplier_value: float = (
+            backoff_multiplier
+            if backoff_multiplier is not None
+            else FlextConstants.Reliability.RETRY_BACKOFF_BASE
         )
 
-        if max_attempts < FlextConstants.Reliability.RETRY_COUNT_MIN:
+        if max_attempts_value < FlextConstants.Reliability.RETRY_COUNT_MIN:
             return FlextResult[TResult].fail(
                 f"Max attempts must be at least {FlextConstants.Reliability.RETRY_COUNT_MIN}"
             )
 
         last_error: str | None = None
 
-        for attempt in range(max_attempts):
+        for attempt in range(max_attempts_value):
             try:
                 result = operation()
                 if result.is_success:
                     return result
 
-                last_error = result.error or "Unknown error"
+                # Fast fail: explicit error message instead of 'or' fallback
+                last_error = (
+                    result.error if result.error is not None else "Unknown error"
+                )
 
                 # Don't delay on the last attempt
-                if attempt == max_attempts - 1:
+                if attempt == max_attempts_value - 1:
                     break
 
                 # Calculate delay with exponential backoff
-                current_delay = delay_seconds * (backoff_multiplier**attempt)
+                current_delay = delay_seconds_value * (
+                    backoff_multiplier_value**attempt
+                )
                 current_delay = min(
                     current_delay,
                     FlextConstants.Reliability.RETRY_BACKOFF_MAX,
@@ -131,11 +145,13 @@ class FlextUtilitiesReliability:
                 last_error = str(e)
 
                 # Don't delay on the last attempt
-                if attempt == max_attempts - 1:
+                if attempt == max_attempts_value - 1:
                     break
 
                 # Calculate delay with exponential backoff
-                current_delay = delay_seconds * (backoff_multiplier**attempt)
+                current_delay = delay_seconds_value * (
+                    backoff_multiplier_value**attempt
+                )
                 current_delay = min(
                     current_delay,
                     FlextConstants.Reliability.RETRY_BACKOFF_MAX,
@@ -145,7 +161,7 @@ class FlextUtilitiesReliability:
                 time.sleep(current_delay)
 
         return FlextResult[TResult].fail(
-            f"Operation failed after {max_attempts} attempts: {last_error}"
+            f"Operation failed after {max_attempts_value} attempts: {last_error}"
         )
 
     @staticmethod

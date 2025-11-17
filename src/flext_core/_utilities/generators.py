@@ -14,7 +14,7 @@ import string
 import time
 import uuid
 import warnings
-from collections.abc import Iterable
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import cast
 
@@ -23,9 +23,6 @@ from pydantic import BaseModel
 from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes
 
-# Module constants
-MAX_PORT_NUMBER: int = 65535
-MIN_PORT_NUMBER: int = 1
 _logger = logging.getLogger(__name__)
 
 
@@ -199,6 +196,83 @@ class FlextUtilitiesGenerators:
                 setattr(obj, FlextConstants.Mixins.FIELD_ID, new_id)
 
     @staticmethod
+    def _normalize_context_to_dict(
+        context: dict[str, object] | object,
+    ) -> dict[str, object]:
+        """Normalize context to dict - fast fail validation.
+
+        Args:
+            context: Context to normalize
+
+        Returns:
+            dict[str, object]: Normalized context dict
+
+        Raises:
+            TypeError: If context cannot be normalized
+
+        """
+        if isinstance(context, dict):
+            return context
+        if isinstance(context, Mapping):
+            try:
+                return dict(context.items())
+            except (AttributeError, TypeError) as e:
+                msg = (
+                    f"Failed to convert Mapping {type(context).__name__} to dict: "
+                    f"{type(e).__name__}: {e}"
+                )
+                raise TypeError(msg) from e
+        if isinstance(context, BaseModel):
+            try:
+                return context.model_dump()
+            except (AttributeError, TypeError) as e:
+                msg = (
+                    f"Failed to dump BaseModel {type(context).__name__}: "
+                    f"{type(e).__name__}: {e}"
+                )
+                raise TypeError(msg) from e
+        if context is None:
+            msg = (
+                "Context cannot be None. Use explicit empty dict {} "
+                "or handle None in calling code."
+            )
+            raise TypeError(msg)
+        msg = (
+            f"Context must be dict, Mapping, or BaseModel, got {type(context).__name__}"
+        )
+        raise TypeError(msg)
+
+    @staticmethod
+    def _enrich_context_fields(
+        context_dict: dict[str, object],
+        *,
+        include_correlation_id: bool = False,
+        include_timestamp: bool = False,
+    ) -> None:
+        """Enrich context dict with tracing fields.
+
+        Args:
+            context_dict: Context dict to enrich (modified in place)
+            include_correlation_id: If True, ensure correlation_id exists
+            include_timestamp: If True, ensure timestamp exists
+
+        """
+        if "trace_id" not in context_dict:
+            context_dict["trace_id"] = FlextUtilitiesGenerators.generate_uuid()
+        if "span_id" not in context_dict:
+            context_dict["span_id"] = FlextUtilitiesGenerators.generate_uuid()
+
+        # Optionally ensure correlation_id
+        if include_correlation_id and "correlation_id" not in context_dict:
+            context_dict["correlation_id"] = FlextUtilitiesGenerators.generate_uuid()
+
+        # Optionally ensure timestamp (ISO 8601 format)
+        if include_timestamp and "timestamp" not in context_dict:
+            context_dict["timestamp"] = (
+                FlextUtilitiesGenerators.generate_iso_timestamp()
+            )
+
+    @staticmethod
     def ensure_trace_context(
         context: dict[str, object] | object,
         *,
@@ -248,81 +322,42 @@ class FlextUtilitiesGenerators:
             'abc'
 
         """
-        # Convert to dict if not dict-like
-        if not isinstance(context, dict):
-            # Try converting dict-like objects (has .items())
-            if hasattr(context, "items"):
-                # Cast is safe here as we checked for dict-like protocol
-                try:
-                    # Use getattr to safely access items() method
-                    items_method = getattr(context, "items", None)
-                    if callable(items_method):
-                        # Cast to ensure type checker understands this returns dict items
-                        items_result = cast(
-                            "Iterable[tuple[str, object]]", items_method()
-                        )
-                        context_dict = dict(items_result)
-                    else:
-                        context_dict = {}
-                except (AttributeError, TypeError):
-                    context_dict = {}
-            else:
-                context_dict = {}
-        else:
-            context_dict = context
-
-        # Ensure all keys are strings (already validated above)
-
-        # Ensure trace_id exists (always included)
-        if "trace_id" not in context_dict:
-            context_dict["trace_id"] = FlextUtilitiesGenerators.generate_uuid()
-
-        # Ensure span_id exists (always included)
-        if "span_id" not in context_dict:
-            context_dict["span_id"] = FlextUtilitiesGenerators.generate_uuid()
-
-        # Optionally ensure correlation_id
-        if include_correlation_id and "correlation_id" not in context_dict:
-            context_dict["correlation_id"] = FlextUtilitiesGenerators.generate_uuid()
-
-        # Optionally ensure timestamp (ISO 8601 format)
-        if include_timestamp and "timestamp" not in context_dict:
-            context_dict["timestamp"] = (
-                FlextUtilitiesGenerators.generate_iso_timestamp()
-            )
-
+        context_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
+        FlextUtilitiesGenerators._enrich_context_fields(
+            context_dict,
+            include_correlation_id=include_correlation_id,
+            include_timestamp=include_timestamp,
+        )
         return context_dict
 
     @staticmethod
-    def ensure_dict(
-        value: object, *, allow_none_as_empty: bool = True
-    ) -> dict[str, object]:
-        """Ensure value is a dict, converting or defaulting to empty dict.
+    def ensure_dict(value: object) -> dict[str, object]:
+        """Ensure value is a dict, converting from Pydantic models or dict-like.
 
         This generic helper consolidates duplicate dict normalization logic
         across multiple Pydantic validators (context.py) and dispatcher metadata
-        handling. Supports Pydantic models, dict-like objects, and None values.
+        handling. Supports Pydantic models and dict-like objects.
 
         Conversion Strategy:
             1. Already dict → return as-is
             2. Pydantic BaseModel → call model_dump()
             3. Dict-like (has .items()) → convert via dict()
-            4. None → empty dict (if allow_none_as_empty=True)
-            5. Fallback → cast to dict[str, object]
+            4. None → fast fail (raises TypeError)
+            5. Other → fast fail (raises TypeError)
 
         Args:
-            value: Value to normalize (dict, BaseModel, dict-like, None, or other)
-            allow_none_as_empty: If True, None becomes {} (default: True)
+            value: Value to normalize (dict, BaseModel, or dict-like)
 
         Returns:
             dict[str, object]: Normalized dict
+
+        Raises:
+            TypeError: If value is None or cannot be converted to dict
 
         Example:
             >>> from flext_core.utilities import FlextUtilities
             >>> FlextUtilities.Generators.ensure_dict({"a": 1})
             {'a': 1}
-            >>> FlextUtilities.Generators.ensure_dict(None)
-            {}
             >>> # Pydantic model
             >>> from pydantic import BaseModel
             >>> class MyModel(BaseModel):
@@ -336,32 +371,44 @@ class FlextUtilitiesGenerators:
         if isinstance(value, dict):
             return value
 
-        # Strategy 2: Pydantic BaseModel - use model_dump()
+        # Strategy 2: Pydantic BaseModel - use model_dump() (fast fail)
         if isinstance(value, BaseModel):
+            # Fast fail: model_dump() must succeed for valid Pydantic models
             try:
                 return value.model_dump()
-            except (AttributeError, TypeError):
-                # Fallback for older Pydantic versions or custom implementations
-                pass
+            except (AttributeError, TypeError) as e:
+                msg = (
+                    f"Failed to dump BaseModel {type(value).__name__}: "
+                    f"{type(e).__name__}: {e}"
+                )
+                raise TypeError(msg) from e
 
-        # Strategy 3: Dict-like object (has .items()) - convert
-        if hasattr(value, "items"):
+        # Strategy 3: Mapping (dict-like) - convert via dict() (fast fail)
+        if isinstance(value, Mapping):
+            # Fast fail: Mapping.items() must succeed
             try:
-                # Use getattr to safely access items() method
-                items_method = getattr(value, "items", None)
-                if callable(items_method):
-                    # Cast to ensure type checker understands this returns dict items
-                    items_result = cast("Iterable[tuple[str, object]]", items_method())
-                    return dict(items_result)
-            except (AttributeError, TypeError):
-                pass
+                return dict(value.items())
+            except (AttributeError, TypeError) as e:
+                msg = (
+                    f"Failed to convert Mapping {type(value).__name__} to dict: "
+                    f"{type(e).__name__}: {e}"
+                )
+                raise TypeError(msg) from e
 
-        # Strategy 4: None - return empty dict if allowed
-        if value is None and allow_none_as_empty:
-            return {}
+        # Strategy 4: None - fast fail (no fallback)
+        if value is None:
+            msg = (
+                "Value cannot be None. Use explicit empty dict {} "
+                "or handle None in calling code."
+            )
+            raise TypeError(msg)
 
-        # Strategy 5: Fallback - cast to dict (may fail at runtime)
-        return cast("dict[str, object]", value) if value is not None else {}
+        # Strategy 5: Fast fail - unsupported type
+        msg = (
+            f"Cannot convert {type(value).__name__} to dict. "
+            "Supported types: dict, BaseModel, Mapping."
+        )
+        raise TypeError(msg)
 
     @staticmethod
     def generate_operation_id(message_type: str, message: object) -> str:
@@ -379,29 +426,29 @@ class FlextUtilitiesGenerators:
         message_id = id(message)
         return f"{message_type}_{message_id}_{timestamp}"
 
+    @staticmethod
+    def create_dynamic_type_subclass(
+        name: str,
+        base_class: object,  # Can be a class or Self
+        attributes: dict[str, object],
+    ) -> type:
+        """Create a dynamic subclass using type() for metaprogramming.
 
-def create_dynamic_type_subclass(
-    name: str,
-    base_class: object,  # Can be a class or Self
-    attributes: dict[str, object],
-) -> type:
-    """Create a dynamic subclass using type() for metaprogramming.
+        This helper function encapsulates the creation of dynamic classes
+        to isolate type checker issues with metaprogramming.
 
-    This helper function encapsulates the creation of dynamic classes
-    to isolate type checker issues with metaprogramming.
+        Args:
+            name: Name of the subclass
+            base_class: Base class to inherit from
+            attributes: Dictionary of attributes to add to the subclass
 
-    Args:
-        name: Name of the subclass
-        base_class: Base class to inherit from
-        attributes: Dictionary of attributes to add to the subclass
+        Returns:
+            The dynamically created subclass
 
-    Returns:
-        The dynamically created subclass
-
-    """
-    # pyrefly doesn't understand type() for dynamic class creation
-    # This is valid Python metaprogramming
-    return type(name, (cast("type", base_class),), attributes)
+        """
+        # pyrefly doesn't understand type() for dynamic class creation
+        # This is valid Python metaprogramming
+        return type(name, (cast("type", base_class),), attributes)
 
 
 __all__ = ["FlextUtilitiesGenerators"]

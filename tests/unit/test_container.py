@@ -348,7 +348,7 @@ class TestFlextContainer:
         assert info["service_count"] == 1
         assert info["direct_services"] == 1
 
-    def test_container_register_factory_invalid(self) -> None:
+    def test_container_with_factory_invalid(self) -> None:
         """Test registering invalid factory."""
         container = FlextContainer()
 
@@ -617,7 +617,7 @@ class TestFlextContainer:
         assert "factories=0" in repr_str
         assert "total_registered=1" in repr_str
 
-    def test_container_register_factory_duplicate_name(self) -> None:
+    def test_container_with_factory_duplicate_name(self) -> None:
         """Test registering factory with duplicate name fails."""
         container = FlextContainer()
 
@@ -968,7 +968,7 @@ class TestServiceRegistrationSync:
         provider = container._di_container.test_service
         assert provider() is test_service
 
-    def test_register_factory_dual_storage(self) -> None:
+    def test_with_factory_dual_storage(self) -> None:
         """Factory registration stores in both dict[str, object] and DI container."""
         container = FlextContainer()
         factory_calls: list[int] = []
@@ -1221,7 +1221,7 @@ class TestFluentInterface:
         assert result.value == {"value": "test"}
 
     def test_unregister_returns_flext_result(self) -> None:
-        """unregister() returns FlextResult[None]."""
+        """unregister() returns FlextResult[bool]."""
         container = FlextContainer()
         container.with_service("service", {"value": "test"})
 
@@ -1251,18 +1251,10 @@ class TestExceptionTranslation:
         """DI container errors are caught and wrapped in FlextResult."""
         container = FlextContainer()
 
-        # Try to register non-callable as factory using protocol method
-        import warnings
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            result = container.register_factory(
-                "bad_factory",
-                cast("Callable[[], object]", "not_callable"),
-            )
-        assert result.is_failure
-        assert result.error is not None
-        assert "must be callable" in result.error.lower()
+        # Try to register non-callable as factory - should raise ValueError
+        invalid_factory = cast("Callable[[], object]", "not_callable")
+        with pytest.raises(ValueError, match="must be callable"):
+            container.with_factory("bad_factory", invalid_factory)
 
     def test_resolution_error_wrapped(self) -> None:
         """Service resolution errors are wrapped in FlextResult."""

@@ -17,7 +17,6 @@ from abc import ABC, abstractmethod
 from dataclasses import asdict, is_dataclass
 from typing import (
     ClassVar,
-    Literal,
     Self,
     cast,
     override,
@@ -26,7 +25,7 @@ from typing import (
 from beartype.door import is_bearable
 from pydantic import BaseModel
 
-from flext_core._utilities.generators import create_dynamic_type_subclass
+from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
@@ -60,9 +59,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         - handle(message: MessageT_contra) -> object - Abstract method for subclasses
         - execute(message: MessageT_contra) -> object - Execute handler with message
         - __call__(input_data: MessageT_contra) -> object - Callable interface
-        - validate(data: FlextTypes.AcceptableMessageType) -> FlextResult[None] - Validate input
-        - validate_command(command: FlextTypes.AcceptableMessageType) -> FlextResult[None] - Validate command
-        - validate_query(query: FlextTypes.AcceptableMessageType) -> FlextResult[None] - Validate query
+        - validate(data: FlextTypes.AcceptableMessageType) -> FlextResult[bool] - Validate input
+        - validate_command(command: FlextTypes.AcceptableMessageType) -> FlextResult[bool] - Validate command
+        - validate_query(query: FlextTypes.AcceptableMessageType) -> FlextResult[bool] - Validate query
         - can_handle(message_type: object) -> bool - Check handler capability
 
     Features:
@@ -150,7 +149,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         res_name = getattr(result_type, "__name__", str(result_type))
 
         # Create typed subclass using helper function - valid Python metaprogramming
-        typed_subclass_raw = create_dynamic_type_subclass(
+        typed_subclass_raw = FlextUtilitiesGenerators.create_dynamic_type_subclass(
             f"{cls_name}[{msg_name}, {res_name}]",
             cls,
             {
@@ -180,7 +179,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             *,
             operation: str,
             revalidate_pydantic_messages: bool = False,
-        ) -> FlextResult[None]:
+        ) -> FlextResult[bool]:
             """Validate a message for the given operation.
 
             Args:
@@ -189,30 +188,35 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 revalidate_pydantic_messages: Whether to revalidate Pydantic models
 
             Returns:
-                FlextResult[None]: Success if valid, failure with error details if invalid
+                FlextResult[bool]: Success with True if valid, failure with error details if invalid
 
             """
             # Check for custom validation methods first
             custom_validation = cls._validate_custom_method(message, operation)
-            if custom_validation is not None:
+            if custom_validation.is_failure:
                 return custom_validation
 
             # Validate Pydantic models
             pydantic_validation = cls._validate_pydantic_model(
                 message, operation, revalidate=revalidate_pydantic_messages
             )
-            if pydantic_validation is not None:
+            if pydantic_validation.is_failure:
                 return pydantic_validation
 
             # Validate message serialization for non-Pydantic objects
-            return cls._validate_message_serialization(message, operation)
+            serialization_result = cls._validate_message_serialization(
+                message, operation
+            )
+            if serialization_result.is_success:
+                return FlextResult[bool].ok(True)
+            return serialization_result
 
         @classmethod
         def _validate_custom_method(
             cls,
             message: object,
             operation: str,
-        ) -> FlextResult[None] | None:
+        ) -> FlextResult[bool]:
             """Check for and execute custom validation method.
 
             Args:
@@ -220,32 +224,32 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 operation: The operation name
 
             Returns:
-                FlextResult error if custom validation failed, None if no validation or success
+                FlextResult[bool]: Success with True if validation passed or no custom validation,
+                failure if custom validation failed
 
             """
             validation_method_name = f"validate_{operation}"
             if not hasattr(message, validation_method_name):
-                return None
+                return FlextResult[bool].ok(True)
 
             validation_method = getattr(message, validation_method_name)
             if not callable(validation_method):
-                return None
+                return FlextResult[bool].ok(True)
 
             try:
                 sig = inspect.signature(validation_method)
                 if len(sig.parameters) != 0:
-                    return None
+                    return FlextResult[bool].ok(True)
 
                 validation_result_obj = validation_method()
+                # Fast fail: type narrowing instead of cast
                 if not isinstance(validation_result_obj, FlextResult):
-                    return None
+                    return FlextResult[bool].ok(True)
 
-                validation_result: FlextResult[object] = cast(
-                    "FlextResult[object]",
-                    validation_result_obj,
-                )
+                # Type narrowing: validation_result_obj is FlextResult
+                validation_result: FlextResult[object] = validation_result_obj
                 if validation_result.is_failure:
-                    return FlextResult[None].fail(
+                    return FlextResult[bool].fail(
                         validation_result.error or f"{operation} validation failed",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -257,7 +261,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     f"Skipping validation method {validation_method_name}: {type(e).__name__}"
                 )
 
-            return None
+            return FlextResult[bool].ok(True)
 
         @classmethod
         def _validate_pydantic_model(
@@ -266,7 +270,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             operation: str,
             *,
             revalidate: bool,
-        ) -> FlextResult[None] | None:
+        ) -> FlextResult[bool]:
             """Validate Pydantic models.
 
             Args:
@@ -275,18 +279,19 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 revalidate: Whether to revalidate Pydantic models
 
             Returns:
-                FlextResult error if validation failed, None if not a Pydantic model
+                FlextResult[bool]: Success with True if validation passed or not a Pydantic model,
+                failure if validation failed
 
             """
             if not isinstance(message, BaseModel):
-                return None
+                return FlextResult[bool].ok(True)
 
             if not revalidate:
-                return FlextResult[None].ok(None)
+                return FlextResult[bool].ok(True)
 
             try:
                 message.__class__.model_validate(message.model_dump(mode="python"))
-                return FlextResult[None].ok(None)
+                return FlextResult[bool].ok(True)
             except Exception as e:
                 # VALIDATION HIERARCHY - Pydantic model revalidation (HIGH)
                 # User model_validate() can raise any exception
@@ -303,7 +308,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                         "context": f"operation: {operation}, message_type: {type(message).__name__}, validation_type: pydantic_revalidation",
                     },
                 )
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     str(validation_error),
                     error_code=validation_error.error_code,
                     error_data={"exception_context": str(validation_error)},
@@ -314,7 +319,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             cls,
             message: object,
             operation: str,
-        ) -> FlextResult[None]:
+        ) -> FlextResult[bool]:
             """Validate message serialization for non-Pydantic objects.
 
             Args:
@@ -322,7 +327,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 operation: The operation name
 
             Returns:
-                FlextResult: Success if serializable, failure otherwise
+                FlextResult[bool]: Success with True if serializable, failure otherwise
 
             """
             try:
@@ -332,7 +337,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 # User message serialization can raise any exception
                 # Safe behavior: check exception type and respond appropriately
                 if isinstance(exc, FlextExceptions.TypeError):
-                    return FlextResult[None].fail(
+                    return FlextResult[bool].fail(
                         str(exc),
                         error_code=exc.error_code,
                         error_data={
@@ -347,13 +352,13 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     context=f"operation: {operation}, message_type: {type(message).__name__}, validation_type: serializable_check, original_exception: {exc!s}",
                     correlation_id=f"type_validation_{int(time.time() * 1000)}",
                 )
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     str(fallback_error),
                     error_code=fallback_error.error_code,
                     error_data={"exception_context": str(fallback_error)},
                 )
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
 
         @classmethod
         def _build_serializable_message_payload(
@@ -362,13 +367,19 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             *,
             operation: str | None = None,
         ) -> object:
-            """Build a serializable representation for message validation heuristics."""
-            operation_name = operation or "message"
-            context_operation = operation or "unknown"
+            """Build a serializable representation for message validation heuristics.
+
+            Fast fail: operation is optional for logging purposes only.
+            Uses explicit default values instead of 'or' fallback.
+            """
+            # Fast fail: explicit default values for optional operation parameter
+            operation_name: str = operation if operation is not None else "message"
+            context_operation: str = operation if operation is not None else "unknown"
 
             # Try different message types in order
+            # Fast fail: type narrowing instead of cast
             if isinstance(message, (dict, str, int, float, bool)):
-                return cast("dict[str, object] | str | int | float | bool", message)
+                return message
 
             if message is None:
                 cls._raise_invalid_message_type(
@@ -433,10 +444,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     try:
                         result_data = method()
                         if FlextMixins.is_dict_like(result_data):
-                            # Type narrowed by TypeGuard; cast needed for pyright
-                            return cast(
-                                "dict[str, object]", result_data
-                            )  # pyrefly: ignore[redundant-cast]
+                            # Type narrowed by TypeGuard - use narrowed type directly
+                            typed_result: dict[str, object] = result_data
+                            return typed_result
                     except Exception as e:
                         FlextHandlers._internal_logger.debug(
                             f"Serialization method {method_name} failed: {type(e).__name__}"
@@ -451,10 +461,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             if not slots:
                 return None
 
+            # Fast fail: type narrowing instead of cast
             if isinstance(slots, str):
                 slot_names: tuple[str, ...] = (slots,)
             elif isinstance(slots, (list, tuple)):
-                slot_names = tuple(cast("list[str] | tuple[str, ...]", slots))
+                # Type narrowing: slots is list or tuple, convert to tuple[str, ...]
+                slot_names = tuple(str(s) for s in slots)
             else:
                 msg = f"Invalid __slots__ type: {type(slots).__name__}"
                 raise FlextExceptions.TypeError(
@@ -518,7 +530,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         self._execution_context = FlextModels.HandlerExecutionContext(
             handler_name=config.handler_name,
             handler_mode=cast(
-                "Literal['command', 'query', 'event', 'operation', 'saga']",
+                "FlextConstants.Cqrs.HandlerModeLiteral",
                 handler_mode_value,
             ),
         )
@@ -609,14 +621,14 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
     def validate_command(
         self, command: FlextTypes.AcceptableMessageType
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Validate a command message with type-safe parameter.
 
         Args:
             command: The command to validate (typed parameter)
 
         Returns:
-            FlextResult indicating validation success or failure
+            FlextResult[bool]: Success with True if valid, failure otherwise
 
         """
         return FlextHandlers._MessageValidator.validate_message(
@@ -627,14 +639,14 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
     def validate_query(
         self, query: FlextTypes.AcceptableMessageType
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Validate a query message with type-safe parameter.
 
         Args:
             query: The query to validate (typed parameter)
 
         Returns:
-            FlextResult indicating validation success or failure
+            FlextResult[bool]: Success with True if valid, failure otherwise
 
         """
         return FlextHandlers._MessageValidator.validate_message(
@@ -643,7 +655,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             revalidate_pydantic_messages=self._revalidate_pydantic_messages,
         )
 
-    def validate(self, _data: MessageT_contra) -> FlextResult[None]:
+    def validate(self, _data: MessageT_contra) -> FlextResult[bool]:
         """Validate input data based on handler mode with generic type support.
 
         Generic validation that delegates to mode-specific validation methods.
@@ -654,7 +666,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             _data: The data to validate (generic type MessageT_contra)
 
         Returns:
-            FlextResult[None]: Success if valid, failure with error details
+            FlextResult[bool]: Success with True if valid, failure with error details
 
         Examples:
             >>> handler = MyCommandHandler()
@@ -985,7 +997,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     # Protocol Implementation: MessageValidator, MetricsCollector, ExecutionContextManager
     # =========================================================================
 
-    def validate_message(self, message: MessageT_contra) -> FlextResult[None]:
+    def validate_message(self, message: MessageT_contra) -> FlextResult[bool]:
         """Validate message (MessageValidator protocol).
 
         Part of MessageValidator protocol implementation.
@@ -994,12 +1006,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             message: Message to validate
 
         Returns:
-            FlextResult[None]: Validation success or error
+            FlextResult[bool]: Success with True if valid, failure otherwise
 
         """
         return self.validate(message)
 
-    def record_metric(self, name: str, value: float) -> FlextResult[None]:
+    def record_metric(self, name: str, value: float) -> FlextResult[bool]:
         """Record metric (MetricsCollector protocol).
 
         Part of MetricsCollector protocol implementation.
@@ -1009,19 +1021,19 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             value: Metric value
 
         Returns:
-            FlextResult[None]: Success or error
+            FlextResult[bool]: Success with True if recorded, failure otherwise
 
         """
         try:
             if not hasattr(self, "_metrics"):
                 self._metrics: dict[str, float] = {}
             self._metrics[name] = value
-            return self.ok(None)
+            return FlextResult[bool].ok(True)
         except Exception as e:
             # VALIDATION HIERARCHY - Metrics recording (MEDIUM)
             # Dict operations with user data can raise any exception
             # Safe behavior: wrap in FlextResult with error code
-            return self.fail(
+            return FlextResult[bool].fail(
                 f"Metric recording failed: {e}",
                 error_code="METRICS_ERROR",
             )
@@ -1047,7 +1059,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 error_code="METRICS_ERROR",
             )
 
-    def push_context(self, context: dict[str, object]) -> FlextResult[None]:
+    def push_context(self, context: dict[str, object]) -> FlextResult[bool]:
         """Push context (ExecutionContextManager protocol).
 
         Part of ExecutionContextManager protocol implementation.
@@ -1056,30 +1068,30 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             context: Context dictionary
 
         Returns:
-            FlextResult[None]: Success or error
+            FlextResult[bool]: Success with True if pushed, failure otherwise
 
         """
         try:
             if not hasattr(self, "_context_stack"):
                 self._context_stack: list[dict[str, object]] = []
             self._context_stack.append(context)
-            return self.ok(None)
+            return FlextResult[bool].ok(True)
         except Exception as e:
             # VALIDATION HIERARCHY - Context push (MEDIUM)
             # List operations with user data can raise any exception
             # Safe behavior: wrap in FlextResult with error code
-            return self.fail(
+            return FlextResult[bool].fail(
                 f"Context push failed: {e}",
                 error_code="CONTEXT_ERROR",
             )
 
-    def pop_context(self) -> FlextResult[None]:
+    def pop_context(self) -> FlextResult[bool]:
         """Pop context (ExecutionContextManager protocol).
 
         Part of ExecutionContextManager protocol implementation.
 
         Returns:
-            FlextResult[None]: Success or error
+            FlextResult[bool]: Success with True if popped, failure otherwise
 
         """
         try:
@@ -1087,7 +1099,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 self._context_stack = []
             if self._context_stack:
                 self._context_stack.pop()
-            return self.ok(None)
+            return self.ok(True)
         except Exception as e:
             # VALIDATION HIERARCHY - Context pop (MEDIUM)
             # List operations can raise unexpected exceptions

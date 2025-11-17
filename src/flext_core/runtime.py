@@ -219,35 +219,6 @@ class FlextRuntime:
         return isinstance(value, dict)
 
     @staticmethod
-    def safe_model_dump(model: object) -> FlextTypes.JsonDict:
-        """Safely convert supported objects into JSON-compatible dictionaries."""
-        if hasattr(model, "model_dump"):
-            model_dump = getattr(model, "model_dump", None)
-            if callable(model_dump):
-                try:
-                    dumped = model_dump(mode="json")
-                except TypeError:
-                    dumped = model_dump()
-                if isinstance(dumped, dict):
-                    return cast("FlextTypes.JsonDict", dumped)
-        if hasattr(model, "dict"):
-            dict_method = getattr(model, "dict", None)
-            if callable(dict_method):
-                dumped = dict_method()
-                if isinstance(dumped, dict):
-                    return cast("FlextTypes.JsonDict", dumped)
-        if isinstance(model, dict):
-            return cast("FlextTypes.JsonDict", model)
-        if hasattr(model, "__dict__"):
-            dumped = {
-                key: value
-                for key, value in vars(model).items()
-                if not key.startswith("_")
-            }
-            return cast("FlextTypes.JsonDict", dumped)
-        return {"value": repr(model)}
-
-    @staticmethod
     def is_list_like(
         value: object,
     ) -> TypeGuard[list[object]]:

@@ -198,7 +198,7 @@ class TestExceptionIntegration:
             msg = "Test error"
             raise FlextExceptions.ValidationError(msg, field="email")
         except FlextExceptions.ValidationError as e:
-            result = FlextResult[None].fail(str(e))
+            result = FlextResult[bool].fail(str(e))
             assert result.is_failure
             assert result.error is not None and "Test error" in result.error
 
@@ -229,7 +229,7 @@ class TestExceptionIntegration:
             )
         except FlextExceptions.ValidationError as e:
             # Wrap in another exception
-            result = FlextResult[None].fail(f"Error in user creation: {e}")
+            result = FlextResult[bool].fail(f"Error in user creation: {e}")
             assert result.is_failure
             assert result.error is not None and "Validation failed" in result.error
 
@@ -356,7 +356,7 @@ class TestExceptionContext:
         error = FlextExceptions.ValidationError(original_msg)
 
         # Verify message is preserved through conversion
-        result = FlextResult[None].fail(str(error))
+        result = FlextResult[bool].fail(str(error))
         assert result.error is not None and (
             original_msg in result.error or "Original error" in result.error
         )

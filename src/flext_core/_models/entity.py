@@ -13,7 +13,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import ClassVar, Literal, override
+from typing import ClassVar, override
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
@@ -179,7 +179,7 @@ class FlextModelsEntity:
     class DomainEvent(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
         """Base class for domain events."""
 
-        message_type: Literal["event"] = Field(
+        message_type: FlextConstants.Cqrs.EventMessageTypeLiteral = Field(
             default="event",
             frozen=True,
             description="Message type discriminator for union routing - always 'event'",
@@ -235,16 +235,16 @@ class FlextModelsEntity:
 
         def _validate_event_input(
             self, event_name: str, data: dict[str, object]
-        ) -> FlextResult[None]:
+        ) -> FlextResult[bool]:
             """Validate event input parameters."""
             if not event_name or not isinstance(event_name, str):
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     "Domain event name must be a non-empty string",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
             if data is not None and not FlextRuntime.is_dict_like(data):
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     "Domain event data must be a dictionary or None",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
@@ -253,22 +253,24 @@ class FlextModelsEntity:
                 len(self.domain_events)
                 >= FlextConstants.Validation.MAX_UNCOMMITTED_EVENTS
             ):
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     f"Maximum uncommitted events reached: {FlextConstants.Validation.MAX_UNCOMMITTED_EVENTS}",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
 
         def _create_and_validate_event(
             self, event_name: str, data: dict[str, object]
         ) -> FlextResult[FlextModelsEntity.DomainEvent]:
             """Create and validate domain event."""
             try:
+                # Fast fail: data must be dict (None not allowed for domain events)
+                event_data: dict[str, object] = data if isinstance(data, dict) else {}
                 domain_event = FlextModelsEntity.DomainEvent(
                     event_type=event_name,
                     aggregate_id=self.unique_id,
-                    data=data or {},
+                    data=event_data,
                 )
 
                 validation_result = (
@@ -294,7 +296,14 @@ class FlextModelsEntity:
             self, event_name: str, data: dict[str, object]
         ) -> None:
             """Execute event handler if available."""
-            event_type = data.get("event_type", "") if data else ""
+            # Fast fail: event_type must be str or None
+            event_type_value: str = ""
+            if isinstance(data, dict):
+                event_type_raw = data.get("event_type")
+                event_type_value = (
+                    str(event_type_raw) if event_type_raw is not None else ""
+                )
+            event_type: str = event_type_value
             if event_type:
                 handler_method_name = f"_apply_{str(event_type).lower()}"
                 if hasattr(self, handler_method_name):
@@ -320,7 +329,7 @@ class FlextModelsEntity:
 
         def add_domain_event(
             self, event_name: str, data: dict[str, object]
-        ) -> FlextResult[None]:
+        ) -> FlextResult[bool]:
             """Add a domain event to be dispatched with enhanced validation."""
             # Validate input
             validation_result = self._validate_event_input(event_name, data)
@@ -330,7 +339,7 @@ class FlextModelsEntity:
             # Create and validate event
             event_result = self._create_and_validate_event(event_name, data)
             if event_result.is_failure:
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     event_result.error or "Event creation failed",
                     error_code=FlextConstants.Errors.DOMAIN_EVENT_ERROR,
                 )
@@ -362,7 +371,7 @@ class FlextModelsEntity:
             self.increment_version()
             self.update_timestamp()
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
 
         @property
         def uncommitted_events(self) -> list[FlextModelsEntity.DomainEvent]:
@@ -464,13 +473,15 @@ class FlextModelsEntity:
                         f"Event {i}: data must be dict[str, object] or None",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
-                validated_events.append((event_name, data or {}))
+                # Fast fail: data must be dict (None not allowed)
+                event_data: dict[str, object] = data if isinstance(data, dict) else {}
+                validated_events.append((event_name, event_data))
 
             return FlextResult[list[tuple[str, dict[str, object]]]].ok(validated_events)
 
         def _add_validated_events_bulk(
             self, validated_events: list[tuple[str, dict[str, object]]]
-        ) -> FlextResult[None]:
+        ) -> FlextResult[bool]:
             """Add validated events in bulk.
 
             Args:
@@ -500,34 +511,34 @@ class FlextModelsEntity:
                     event_types=[name for name, _ in validated_events],
                 )
 
-                return FlextResult[None].ok(None)
+                return FlextResult[bool].ok(True)
 
             except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     f"Failed to add bulk domain events: {e}",
                     error_code=FlextConstants.Errors.DOMAIN_EVENT_ERROR,
                 )
 
         def add_domain_events_bulk(
             self, events: list[tuple[str, dict[str, object]]]
-        ) -> FlextResult[None]:
+        ) -> FlextResult[bool]:
             """Add multiple domain events in bulk with validation."""
             # Validate input
             count_result = self._validate_bulk_events_input(events)
             if count_result.is_failure:
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     count_result.error or "Input validation failed",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
             # Handle empty case
             if count_result.unwrap() == 0:
-                return FlextResult[None].ok(None)
+                return FlextResult[bool].ok(True)
 
             # Validate and collect events
             validated_result = self._validate_and_collect_events(events)
             if validated_result.is_failure:
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     validated_result.error or "Event validation failed",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
@@ -535,7 +546,7 @@ class FlextModelsEntity:
             # Add validated events
             return self._add_validated_events_bulk(validated_result.unwrap())
 
-        def validate_consistency(self) -> FlextResult[None]:
+        def validate_consistency(self) -> FlextResult[bool]:
             """Validate entity consistency using centralized validation."""
             entity_result = (
                 _validation_module.FlextModelsValidation.validate_entity_relationships(
@@ -543,7 +554,7 @@ class FlextModelsEntity:
                 )
             )
             if entity_result.is_failure:
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     f"Entity validation failed: {entity_result.error}",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
@@ -555,12 +566,12 @@ class FlextModelsEntity:
                     )
                 )
                 if event_result.is_failure:
-                    return FlextResult[None].fail(
+                    return FlextResult[bool].fail(
                         f"Domain event validation failed: {event_result.error}",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
 
     class Value(FrozenStrictModel):
         """Base class for value objects - immutable and compared by value."""

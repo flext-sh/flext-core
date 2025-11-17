@@ -36,14 +36,14 @@ class FlextLogger:
     ===========================================
     FlextLogger implements FlextProtocols.LoggerProtocol through structural typing by
     providing all required logging methods:
-    - debug(message, *args, **context) -> FlextResult[None]
-    - info(message, *args, **context) -> FlextResult[None]
-    - warning(message, *args, **context) -> FlextResult[None]
-    - error(message, *args, **context) -> FlextResult[None]
-    - critical(message, *args, **context) -> FlextResult[None]
-    - exception(message, *, exception=None, exc_info=True, **kwargs) -> FlextResult[None]
+    - debug(message, *args, **context) -> FlextResult[bool]
+    - info(message, *args, **context) -> FlextResult[bool]
+    - warning(message, *args, **context) -> FlextResult[bool]
+    - error(message, *args, **context) -> FlextResult[bool]
+    - critical(message, *args, **context) -> FlextResult[bool]
+    - exception(message, *, exception=None, exc_info=True, **kwargs) -> FlextResult[bool]
     - bind(**context) -> FlextLogger (new bound logger with context)
-    - trace(message, *args, **kwargs) -> FlextResult[None]
+    - trace(message, *args, **kwargs) -> FlextResult[bool]
 
     Core Features:
     ==============
@@ -64,7 +64,7 @@ class FlextLogger:
     Architecture Layers:
     ====================
     - Uses FlextRuntime.structlog() - Bridge layer for external logging library
-    - Returns FlextResult[None] for all operations - Railway pattern
+    - Returns FlextResult[bool] for all operations - Railway pattern
     - Integrates with FlextContext for distributed tracing
     - Provides observability hooks for application layer
 
@@ -122,9 +122,9 @@ class FlextLogger:
 
     FlextResult Integration (Railway Pattern):
     ===========================================
-    All logging methods return FlextResult[None]:
-    - Success: FlextResult[None].ok(None)
-    - Failure: FlextResult[None].fail(error_message)
+    All logging methods return FlextResult[bool]:
+    - Success: FlextResult[bool].ok(True)
+    - Failure: FlextResult[bool].fail(error_message)
     - Enables functional composition of logging operations
 
     Global Context Management:
@@ -251,7 +251,7 @@ class FlextLogger:
     # =========================================================================
 
     @classmethod
-    def bind_global_context(cls, **context: object) -> FlextResult[None]:
+    def bind_global_context(cls, **context: object) -> FlextResult[bool]:
         """Bind context globally using FlextRuntime.structlog() contextvars.
 
         Context is automatically included in all subsequent log messages
@@ -261,7 +261,7 @@ class FlextLogger:
             **context: Key-value pairs to bind globally
 
         Returns:
-            FlextResult[None]: Success or failure result
+            FlextResult[bool]: Success with True if bound, failure with error details
 
         Example:
             >>> FlextLogger.bind_global_context(
@@ -275,40 +275,40 @@ class FlextLogger:
         """
         try:
             FlextRuntime.structlog().contextvars.bind_contextvars(**context)
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(f"Failed to bind global context: {e}")
+            return FlextResult[bool].fail(f"Failed to bind global context: {e}")
 
     @classmethod
-    def unbind_global_context(cls, *keys: str) -> FlextResult[None]:
+    def unbind_global_context(cls, *keys: str) -> FlextResult[bool]:
         """Unbind specific keys from global context.
 
         Args:
             *keys: Context keys to unbind
 
         Returns:
-            FlextResult[None]: Success or failure result
+            FlextResult[bool]: Success with True if unbound, failure with error details
 
         """
         try:
             FlextRuntime.structlog().contextvars.unbind_contextvars(*keys)
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(f"Failed to unbind global context: {e}")
+            return FlextResult[bool].fail(f"Failed to unbind global context: {e}")
 
     @classmethod
-    def clear_global_context(cls) -> FlextResult[None]:
+    def clear_global_context(cls) -> FlextResult[bool]:
         """Clear all globally bound context.
 
         Returns:
-            FlextResult[None]: Success or failure result
+            FlextResult[bool]: Success with True if cleared, failure with error details
 
         """
         try:
             FlextRuntime.structlog().contextvars.clear_contextvars()
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(f"Failed to clear global context: {e}")
+            return FlextResult[bool].fail(f"Failed to clear global context: {e}")
 
     @classmethod
     def get_global_context(cls) -> dict[str, object]:
@@ -321,7 +321,7 @@ class FlextLogger:
     # =========================================================================
 
     @classmethod
-    def _bind_context(cls, _scope: str, **context: object) -> FlextResult[None]:
+    def _bind_context(cls, _scope: str, **context: object) -> FlextResult[bool]:
         """Internal method to bind context to a specific scope.
 
         Args:
@@ -329,7 +329,7 @@ class FlextLogger:
             **context: Context variables to bind
 
         Returns:
-            FlextResult[None]: Success or failure result
+            FlextResult[bool]: Success with True if bound, failure with error details
 
         """
         try:
@@ -340,12 +340,12 @@ class FlextLogger:
 
             # Bind globally
             FlextRuntime.structlog().contextvars.bind_contextvars(**context)
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(f"Failed to bind {_scope} context: {e}")
+            return FlextResult[bool].fail(f"Failed to bind {_scope} context: {e}")
 
     @classmethod
-    def bind_application_context(cls, **context: object) -> FlextResult[None]:
+    def bind_application_context(cls, **context: object) -> FlextResult[bool]:
         """Bind application-level context (persists for entire app lifetime).
 
         Application context persists for the entire application lifetime and is
@@ -355,7 +355,7 @@ class FlextLogger:
             **context: Application-level context variables
 
         Returns:
-            FlextResult[None]: Success or failure result
+            FlextResult[bool]: Success with True if bound, failure with error details
 
         Example:
             >>> FlextLogger.bind_application_context(
@@ -369,7 +369,7 @@ class FlextLogger:
         return cls._bind_context("application", **context)
 
     @classmethod
-    def bind_request_context(cls, **context: object) -> FlextResult[None]:
+    def bind_request_context(cls, **context: object) -> FlextResult[bool]:
         """Bind request-level context (persists for single request/command).
 
         Request context persists for a single CLI command or API request.
@@ -379,7 +379,7 @@ class FlextLogger:
             **context: Request-level context variables
 
         Returns:
-            FlextResult[None]: Success or failure result
+            FlextResult[bool]: Success with True if bound, failure with error details
 
         Example:
             >>> FlextLogger.bind_request_context(
@@ -393,7 +393,7 @@ class FlextLogger:
         return cls._bind_context("request", **context)
 
     @classmethod
-    def bind_operation_context(cls, **context: object) -> FlextResult[None]:
+    def bind_operation_context(cls, **context: object) -> FlextResult[bool]:
         """Bind operation-level context (persists for single service operation).
 
         Operation context persists for a single service operation.
@@ -403,7 +403,7 @@ class FlextLogger:
             **context: Operation-level context variables
 
         Returns:
-            FlextResult[None]: Success or failure result
+            FlextResult[bool]: Success with True if bound, failure with error details
 
         Example:
             >>> FlextLogger.bind_operation_context(
@@ -417,14 +417,14 @@ class FlextLogger:
         return cls._bind_context("operation", **context)
 
     @classmethod
-    def clear_scope(cls, scope: str) -> FlextResult[None]:
+    def clear_scope(cls, scope: str) -> FlextResult[bool]:
         """Clear all context variables for a specific scope.
 
         Args:
             scope: Scope to clear ("application", "request", "operation")
 
         Returns:
-            FlextResult[None]: Success or failure result
+            FlextResult[bool]: Success with True if cleared, failure with error details
 
         Example:
             >>> FlextLogger.clear_scope("request")
@@ -443,9 +443,9 @@ class FlextLogger:
                 # Clear from tracking
                 cls._scoped_contexts[scope] = {}
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(f"Failed to clear scope {scope}: {e}")
+            return FlextResult[bool].fail(f"Failed to clear scope {scope}: {e}")
 
     @classmethod
     @contextmanager
@@ -484,7 +484,7 @@ class FlextLogger:
                 cls._scoped_contexts[scope] = {}
             cls._scoped_contexts[scope].update(context)
             FlextRuntime.structlog().contextvars.bind_contextvars(**context)
-            result = FlextResult[None].ok(None)
+            result = FlextResult[bool].ok(True)
 
         if result.is_failure:
             # If binding failed, still yield but log warning
@@ -502,7 +502,7 @@ class FlextLogger:
     # =========================================================================
 
     @classmethod
-    def bind_context_for_level(cls, level: str, **context: object) -> FlextResult[None]:
+    def bind_context_for_level(cls, level: str, **context: object) -> FlextResult[bool]:
         """Bind context that only appears at specific log level.
 
         Context variables are tracked and will be filtered by the
@@ -514,7 +514,7 @@ class FlextLogger:
             **context: Context variables to bind
 
         Returns:
-            FlextResult[None]: Success or failure result
+            FlextResult[bool]: Success with True if bound, failure with error details
 
         Example:
             >>> # Config only appears in DEBUG logs
@@ -543,12 +543,12 @@ class FlextLogger:
             }
             FlextRuntime.structlog().contextvars.bind_contextvars(**prefixed_context)
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(f"Failed to bind level context: {e}")
+            return FlextResult[bool].fail(f"Failed to bind level context: {e}")
 
     @classmethod
-    def unbind_context_for_level(cls, level: str, *keys: str) -> FlextResult[None]:
+    def unbind_context_for_level(cls, level: str, *keys: str) -> FlextResult[bool]:
         """Unbind specific level-filtered context variables.
 
         Args:
@@ -556,7 +556,7 @@ class FlextLogger:
             *keys: Context keys to unbind
 
         Returns:
-            FlextResult[None]: Success or failure result
+            FlextResult[bool]: Success with True if unbound, failure with error details
 
         """
         try:
@@ -572,9 +572,9 @@ class FlextLogger:
             if prefixed_keys:
                 FlextRuntime.structlog().contextvars.unbind_contextvars(*prefixed_keys)
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(f"Failed to unbind level context: {e}")
+            return FlextResult[bool].fail(f"Failed to unbind level context: {e}")
 
     @classmethod
     def get_logger(cls) -> FlextLogger:
@@ -754,7 +754,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.LoggingArgType,
         **kwargs: object,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Log trace message - LoggerProtocol implementation."""
         try:
             try:
@@ -765,9 +765,9 @@ class FlextLogger:
             self.logger.debug(
                 formatted_message, **kwargs
             )  # FlextRuntime.structlog() doesn't have trace
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(f"Logging failed: {e}")
+            return FlextResult[bool].fail(f"Logging failed: {e}")
 
     def _log(
         self,
@@ -775,7 +775,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.LoggingArgType,
         **context: object,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Internal logging method - consolidates all log level methods.
 
         Args:
@@ -785,7 +785,7 @@ class FlextLogger:
             **context: Additional context for structured logging
 
         Returns:
-            FlextResult[None]: Success or failure
+            FlextResult[bool]: Success with True if logged, failure with error details
 
         """
         try:
@@ -798,16 +798,16 @@ class FlextLogger:
             # Get logger method dynamically and call it
             log_method = getattr(self.logger, _level.lower())
             log_method(formatted_message, **context)
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(f"Logging failed: {e}")
+            return FlextResult[bool].fail(f"Logging failed: {e}")
 
     def debug(
         self,
         message: str,
         *args: FlextTypes.LoggingArgType,
         **context: object,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Log debug message - LoggerProtocol implementation."""
         return self._log("debug", message, *args, **context)
 
@@ -816,7 +816,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.LoggingArgType,
         **context: object,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Log info message - LoggerProtocol implementation."""
         return self._log("info", message, *args, **context)
 
@@ -825,7 +825,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.LoggingArgType,
         **context: object,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Log warning message - LoggerProtocol implementation."""
         return self._log("warning", message, *args, **context)
 
@@ -834,7 +834,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.LoggingArgType,
         **kwargs: object,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Log error message - LoggerProtocol implementation."""
         return self._log("error", message, *args, **kwargs)
 
@@ -843,7 +843,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.LoggingArgType,
         **kwargs: object,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Log critical message - LoggerProtocol implementation."""
         return self._log("critical", message, *args, **kwargs)
 
@@ -854,7 +854,7 @@ class FlextLogger:
         exception: BaseException | None = None,
         exc_info: bool = True,
         **kwargs: object,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Log exception message with stack trace - LoggerProtocol implementation.
 
         Stack traces are conditionally included based on FlextConfig.log_level:
@@ -898,9 +898,9 @@ class FlextLogger:
                 kwargs["stack_trace"] = traceback.format_exc()
 
             self.logger.error(message, **kwargs)
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(f"Logging failed: {e}")
+            return FlextResult[bool].fail(f"Logging failed: {e}")
 
     # =========================================================================
     # ADVANCED FEATURES - Performance tracking and result integration
@@ -933,7 +933,7 @@ class FlextLogger:
         *,
         operation: str | None = None,
         level: str = "info",
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Log FlextResult with automatic success/failure handling.
 
         Args:
@@ -942,7 +942,7 @@ class FlextLogger:
             level: Log level for success case (error used for failures)
 
         Returns:
-            FlextResult[None]: Success or failure result
+            FlextResult[bool]: Success with True if logged, failure with error details
 
         Example:
             >>> result = validate_user(data)
@@ -968,21 +968,21 @@ class FlextLogger:
                 context["error_data"] = result.error_data
                 self.error(msg, **context)
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(f"Failed to log result: {e}")
+            return FlextResult[bool].fail(f"Failed to log result: {e}")
 
     # =========================================================================
     # Protocol Implementations: ContextBinder, PerformanceTracker
     # =========================================================================
 
-    def bind_context(self, context: dict[str, object]) -> FlextResult[None]:
+    def bind_context(self, context: dict[str, object]) -> FlextResult[bool]:
         """Bind context to logger (ContextBinder protocol)."""
         try:
             self._context.update(context)
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(str(e))
+            return FlextResult[bool].fail(str(e))
 
     def get_context(self) -> FlextResult[dict[str, object]]:
         """Get context (ContextBinder protocol)."""
@@ -991,12 +991,12 @@ class FlextLogger:
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[dict[str, object]].fail(str(e))
 
-    def start_tracking(self, _operation: str) -> FlextResult[None]:
+    def start_tracking(self, _operation: str) -> FlextResult[bool]:
         """Start tracking operation (PerformanceTracker protocol)."""
         try:
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(str(e))
+            return FlextResult[bool].fail(str(e))
 
     def stop_tracking(self, _operation: str) -> FlextResult[float]:
         """Stop tracking operation (PerformanceTracker protocol)."""

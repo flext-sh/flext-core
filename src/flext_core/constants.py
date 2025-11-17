@@ -16,6 +16,8 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import (
     Final,
+    Literal,
+    TypeAlias,
 )
 
 from pydantic import ConfigDict
@@ -323,6 +325,7 @@ class FlextConstants:
         DEFAULT_TIMEOUT: Final[int] = 30
         DEFAULT_CONNECTION_POOL_SIZE: Final[int] = 10
         MAX_CONNECTION_POOL_SIZE: Final[int] = 100
+        MAX_HOSTNAME_LENGTH: Final[int] = 253  # RFC 1035: max 253 characters
 
     class Validation:
         """Input validation limits and patterns."""
@@ -430,6 +433,7 @@ class FlextConstants:
         # Security errors (reserved for authentication/authorization)
         PERMISSION_ERROR: Final[str] = "PERMISSION_ERROR"  # Reserved for access control
         AUTHENTICATION_ERROR: Final[str] = "AUTHENTICATION_ERROR"  # Reserved for auth
+        AUTHORIZATION_ERROR: Final[str] = "AUTHORIZATION_ERROR"  # Reserved for authorization failures
 
         # System errors (reserved for critical failures)
         EXCEPTION_ERROR: Final[str] = (
@@ -805,6 +809,7 @@ class FlextConstants:
             COMMAND = "command"
             QUERY = "query"
             EVENT = "event"
+            OPERATION = "operation"
             SAGA = "saga"
 
         # Handler type constants using StrEnum values
@@ -812,7 +817,19 @@ class FlextConstants:
         COMMAND_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
         QUERY_HANDLER_TYPE: HandlerType = HandlerType.QUERY
         EVENT_HANDLER_TYPE: HandlerType = HandlerType.EVENT
+        OPERATION_HANDLER_TYPE: HandlerType = HandlerType.OPERATION
         SAGA_HANDLER_TYPE: HandlerType = HandlerType.SAGA
+
+        # Handler mode Literal type for type-safe annotations
+        HandlerModeLiteral: TypeAlias = Literal["command", "query", "event", "operation", "saga"]
+
+        # Message type Literal types for type-safe annotations
+        CommandMessageTypeLiteral: TypeAlias = Literal["command"]
+        QueryMessageTypeLiteral: TypeAlias = Literal["query"]
+        EventMessageTypeLiteral: TypeAlias = Literal["event"]
+
+        # Service metric type Literal for type-safe annotations
+        ServiceMetricTypeLiteral: TypeAlias = Literal["performance", "errors", "throughput", "latency", "availability"]
 
         # Processing mode StrEnum
         class ProcessingMode(StrEnum):
@@ -1034,9 +1051,6 @@ class FlextConstants:
         # Command/Query defaults
         DEFAULT_COMMAND_TYPE: Final[str] = "generic_command"
         DEFAULT_TIMESTAMP: Final[str] = ""  # Empty string for uninitialized timestamps
-        DEFAULT_PRIORITY: Final[int] = 0  # Default priority level
-        MAX_PRIORITY: Final[int] = 100  # Maximum priority value
-        MIN_PRIORITY: Final[int] = 0  # Minimum priority value
 
         # Timeout constants
         DEFAULT_TIMEOUT: Final[int] = 30000  # milliseconds

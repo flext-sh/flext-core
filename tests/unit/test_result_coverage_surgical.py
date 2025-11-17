@@ -16,8 +16,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 
 from flext_core import (
@@ -54,8 +52,9 @@ class TestResultCoverageSurgical:
         This tests the specific case where is_success is True but _data is None,
         causing the or operator to return the default value.
         """
-        # Create a result with None data (normally happens in specific cases)
-        r: FlextResult[int | None] = FlextResult.ok(None)
+        # REMOVED: None is not a valid success value, even with int | None type
+        # Use failure case instead to test | operator
+        r: FlextResult[int] = FlextResult[int].fail("error")
         # Using | operator should return default
         result = r | 42
         assert result == 42
@@ -76,8 +75,9 @@ class TestResultCoverageSurgical:
         When comparing results with incomparable data types,
         the __eq__ method should catch exceptions and return False.
         """
-        r1 = FlextResult[Any].ok({"dict": "value"})
-        r2 = FlextResult[Any].ok([1, 2, 3])
+        # Use specific types instead of Any (Any is not a valid type parameter)
+        r1 = FlextResult[dict[str, object]].ok({"dict": "value"})
+        r2 = FlextResult[list[object]].ok([1, 2, 3])
         # Comparing incomparable types should not raise, just return False
         result = r1 == r2
         assert result is False
@@ -143,9 +143,11 @@ class TestResultCoverageSurgical:
             if x is not None:
                 called.append(x)
 
-        r: FlextResult[int | None] = FlextResult.ok(None)
+        # REMOVED: None is not a valid success value
+        # Use failure case instead to test tap on failure
+        r: FlextResult[int] = FlextResult[int].fail("error")
         r.tap(append_value)
-        # Function should not be called
+        # Function should not be called on failure
         assert len(called) == 0
 
     def test_result_tap_with_success_and_data(self) -> None:
@@ -217,14 +219,16 @@ class TestResultCoverageSurgical:
         assert r[0] == 42
 
     def test_result_getitem_one_success(self) -> None:
-        """Test r[1] returns None on success."""
+        """Test r[1] returns empty string on success (no error)."""
         r = FlextResult[int].ok(42)
-        assert r[1] is None
+        assert r[1] == ""  # Success case returns empty string for error index
 
     def test_result_getitem_zero_failure(self) -> None:
-        """Test r[0] returns None on failure."""
+        """Test r[0] raises on failure (fast fail pattern)."""
         r = FlextResult[int].fail("error")
-        assert r[0] is None
+        # Fast fail: accessing data on failure raises exception
+        with pytest.raises(FlextExceptions.BaseError):
+            _ = r[0]
 
     def test_result_repr_success(self) -> None:
         """Test __repr__ for success."""
@@ -257,10 +261,11 @@ class TestResultCoverageSurgical:
         assert "value" in items
 
     def test_result_iter_failure(self) -> None:
-        """Test iteration on failure."""
+        """Test iteration on failure raises exception (fast fail pattern)."""
         r = FlextResult[str].fail("error")
-        items = list(r)
-        assert "error" in items
+        # Fast fail: iterating on failure raises exception
+        with pytest.raises(FlextExceptions.BaseError):
+            _ = list(r)
 
     def test_result_xor_operator(self) -> None:
         """Test ^ operator for recovery."""
@@ -309,14 +314,16 @@ class TestResultCoverageSurgical:
             r.expect("custom message")
 
     def test_result_value_or_none_success(self) -> None:
-        """Test value_or_none on success."""
+        """Test value access on success - value_or_none removed, use .value or .unwrap()."""
         r = FlextResult[str].ok("value")
-        assert r.value_or_none == "value"
+        assert r.value == "value"
 
     def test_result_value_or_none_failure(self) -> None:
-        """Test value_or_none on failure."""
+        """Test value access on failure - value_or_none removed, use .is_success check."""
         r = FlextResult[str].fail("error")
-        assert r.value_or_none is None
+        assert r.is_failure
+        # Use unwrap_or for default value instead of value_or_none
+        assert r.unwrap_or("default") == "default"
 
     def test_result_or_else_success(self) -> None:
         """Test or_else on success."""
