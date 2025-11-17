@@ -249,8 +249,14 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 # Type narrowing: validation_result_obj is FlextResult
                 validation_result: FlextResult[object] = validation_result_obj
                 if validation_result.is_failure:
+                    base_msg = f"{operation} validation failed"
+                    error_msg = (
+                        f"{base_msg}: {validation_result.error}"
+                        if validation_result.error
+                        else f"{base_msg} (validation rule failed)"
+                    )
                     return FlextResult[bool].fail(
-                        validation_result.error or f"{operation} validation failed",
+                        error_msg,
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
             except Exception as e:
@@ -410,10 +416,17 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             if hasattr(message, "__dict__"):
                 return vars(message)
 
+            # Fast fail: raise exception - no return None
             cls._raise_invalid_message_type(
                 operation_name, context_operation, type(message).__name__
             )
-            return None
+            # This line should never be reached - _raise_invalid_message_type raises exception
+            msg = f"Serialization failed for {type(message).__name__}"
+            raise FlextExceptions.TypeError(
+                msg,
+                expected_type="serializable type",
+                actual_type=type(message).__name__,
+            )
 
         @classmethod
         def _try_attrs_serialization(cls, message: object) -> dict[str, object] | None:

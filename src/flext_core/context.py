@@ -143,7 +143,9 @@ class FlextContext:
         context_data = (
             FlextModels.ContextData(data=initial_data)
             if isinstance(initial_data, dict)
-            else (initial_data or FlextModels.ContextData())
+            else (
+                initial_data if initial_data is not None else FlextModels.ContextData()
+            )
         )
         # Validate metadata - NO fallback to empty dict, use proper validation
         if isinstance(context_data.metadata, FlextModels.ContextMetadata):
@@ -334,7 +336,7 @@ class FlextContext:
         key: str,
         value: object,
         scope: str = FlextConstants.Context.SCOPE_GLOBAL,
-    ) -> None:
+    ) -> FlextResult[bool]:
         """Set a value in the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
@@ -345,73 +347,111 @@ class FlextContext:
             value: The value to set
             scope: The scope for the value (global, user, session)
 
+        Returns:
+            FlextResult[bool]: Success with True if set, failure with error message
+
         """
         if not self._active:
-            return
+            return FlextResult[bool].fail("Context is not active")
 
         # Validate key is not None or empty
         if not key:
-            msg = "Key must be a non-empty string"
-            raise ValueError(msg)
+            return FlextResult[bool].fail("Key must be a non-empty string")
 
         # Validate value is serializable
         if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
-            msg = "Value must be serializable"
-            raise TypeError(msg)
+            return FlextResult[bool].fail("Value must be serializable")
 
-        # Set in contextvar (thread-safe by design, no lock needed)
-        ctx_var = self._get_or_create_scope_var(scope)
-        current_value = ctx_var.get()
-        # Fast fail: contextvar must contain dict or None (uninitialized)
-        if current_value is not None and not isinstance(current_value, dict):
-            msg = (
-                f"Invalid contextvar value type in scope '{scope}': "
-                f"{type(current_value).__name__}. Expected dict[str, object] | None"
+        try:
+            # Set in contextvar (thread-safe by design, no lock needed)
+            ctx_var = self._get_or_create_scope_var(scope)
+            current_value = ctx_var.get()
+            # Fast fail: contextvar must contain dict or None (uninitialized)
+            if current_value is not None and not isinstance(current_value, dict):
+                msg = (
+                    f"Invalid contextvar value type in scope '{scope}': "
+                    f"{type(current_value).__name__}. Expected dict[str, object] | None"
+                )
+                return FlextResult[bool].fail(msg)
+            # Initialize with empty dict if None (first use)
+            current: dict[str, object] = (
+                current_value if isinstance(current_value, dict) else {}
             )
-            raise TypeError(msg)
-        # Initialize with empty dict if None (first use)
-        current: dict[str, object] = (
-            current_value if isinstance(current_value, dict) else {}
-        )
-        updated = {**current, key: value}
-        ctx_var.set(updated)
+            updated = {**current, key: value}
+            ctx_var.set(updated)
 
-        # DELEGATION: Propagate to logger, update stats, execute hooks
-        self._propagate_to_logger(key, value, scope)
-        self._update_statistics("set")
-        self._execute_hooks("set", {"key": key, "value": value})
+            # DELEGATION: Propagate to logger, update stats, execute hooks
+            self._propagate_to_logger(key, value, scope)
+            self._update_statistics("set")
+            self._execute_hooks("set", {"key": key, "value": value})
+
+            return FlextResult[bool].ok(True)
+        except Exception as e:
+            return FlextResult[bool].fail(f"Failed to set context value: {e}")
 
     def get(
         self,
         key: str,
-        default: object | None = None,
         scope: str = FlextConstants.Context.SCOPE_GLOBAL,
-    ) -> object:
+    ) -> FlextResult[object]:
         """Get a value from the context.
+
+        Fast fail: Returns FlextResult[object] - fails if key not found.
+        No fallback behavior - use FlextResult monadic operations for defaults.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
         No longer checks structlog - FlextLogger is independent.
 
         Args:
             key: The key to get
-            default: Default value if key not found
             scope: The scope to get from (global, user, session)
 
         Returns:
-            The value or default
+            FlextResult[object]: Success with value, or failure if key not found
+
+        Example:
+            >>> context = FlextContext()
+            >>> context.set("key", "value")
+            >>> result = context.get("key")
+            >>> if result.is_success:
+            ...     value = result.unwrap()  # "value"
+            >>>
+            >>> # Key not found - fast fail
+            >>> result = context.get("nonexistent")
+            >>> assert result.is_failure
+            >>>
+            >>> # Use monadic operations for defaults
+            >>> value = context.get("key").unwrap_or("default")
 
         """
         if not self._active:
-            return default
+            return FlextResult[object].fail(
+                "Context is not active",
+                error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
+            )
 
         # Get from contextvar (single source of truth)
         scope_data = self._get_from_contextvar(scope)
-        value = scope_data.get(key, default)
+
+        if key not in scope_data:
+            return FlextResult[object].fail(
+                f"Context key '{key}' not found in scope '{scope}'",
+                error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
+            )
+
+        value = scope_data[key]
 
         # Update statistics
         self._update_statistics("get")
 
-        return value
+        # Handle None values - return failure since FlextResult.ok() cannot accept None
+        if value is None:
+            return FlextResult[object].fail(
+                f"Context key '{key}' has None value in scope '{scope}'",
+                error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
+            )
+
+        return FlextResult[object].ok(value)
 
     def has(self, key: str, scope: str = FlextConstants.Context.SCOPE_GLOBAL) -> bool:
         """Check if a key exists in the context.

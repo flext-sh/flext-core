@@ -55,8 +55,14 @@ class FlextModelsHandler:
                 error_code=FlextConstants.Errors.TYPE_ERROR,
             )
             if result.is_failure:
+                base_msg = "Handler must be callable"
+                error_msg = (
+                    f"{base_msg}: {result.error}"
+                    if result.error
+                    else f"{base_msg} (type validation failed)"
+                )
                 raise FlextExceptions.TypeError(
-                    message=result.error or "Handler must be callable",
+                    message=error_msg,
                     error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
             # Type-safe return: v is confirmed callable by validation
@@ -138,7 +144,13 @@ class FlextModelsHandler:
                 v, allow_empty=True
             )
             if result.is_failure:
-                raise ValueError(result.error or "Timestamp validation failed")
+                base_msg = "Timestamp validation failed"
+                error_msg = (
+                    f"{base_msg}: {result.error}"
+                    if result.error
+                    else f"{base_msg} (invalid timestamp value)"
+                )
+                raise ValueError(error_msg)
             return v
 
     class ExecutionContext(BaseModel):

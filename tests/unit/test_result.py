@@ -2133,7 +2133,8 @@ class TestFromCallable:
         result = FlextResult[int].create_from_callable(failing_operation)
 
         assert result.is_failure
-        assert "Operation failed" in (result.error or "")
+        assert result.error is not None
+        assert "Operation failed" in result.error
 
     def test_create_from_callable_with_custom_error_code(self) -> None:
         """Test create_from_callable with custom error code."""

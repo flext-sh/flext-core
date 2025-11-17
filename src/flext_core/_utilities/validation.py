@@ -321,19 +321,6 @@ class FlextUtilitiesValidation:
             return None
 
     @staticmethod
-    def _generate_key_fallback(
-        command: object | None, command_type: type[object]
-    ) -> str:
-        """Generate cache key fallback from string representation."""
-        command_str = str(command) if command is not None else "None"
-        try:
-            return f"{command_type.__name__}_{hash(command_str)}"
-        except TypeError:
-            # If hash fails, use deterministic fallback with encoding
-            encoded = command_str.encode(FlextConstants.Utilities.DEFAULT_ENCODING)
-            return f"{command_type.__name__}_{abs(hash(encoded))}"
-
-    @staticmethod
     def generate_cache_key(
         command: object | None,
         command_type: type[object],
@@ -372,8 +359,14 @@ class FlextUtilitiesValidation:
             if key is not None:
                 return key
 
-        # Fallback to string representation
-        return FlextUtilitiesValidation._generate_key_fallback(command, command_type)
+        # Last resort: string representation with hash
+        command_str = str(command) if command is not None else "None"
+        try:
+            return f"{command_type.__name__}_{hash(command_str)}"
+        except TypeError:
+            # If hash fails, use deterministic encoding-based hash
+            encoded = command_str.encode(FlextConstants.Utilities.DEFAULT_ENCODING)
+            return f"{command_type.__name__}_{abs(hash(encoded))}"
 
     @staticmethod
     def sort_dict_keys(
@@ -1336,8 +1329,7 @@ class FlextUtilitiesValidation:
             # Check for callable services (should be registered as factories)
             if callable(service):
                 error_msg = (
-                    f"Service '{name}' appears to be callable. "
-                    "Use with_factory instead"
+                    f"Service '{name}' appears to be callable. Use with_factory instead"
                 )
                 return FlextResult[dict[str, object]].fail(error_msg)
 

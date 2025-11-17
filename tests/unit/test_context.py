@@ -25,34 +25,54 @@ class TestFlextContext:
 
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
+        from flext_core import FlextResult
+
         initial_data = FlextModels.ContextData(
             data={"user_id": "123", "session_id": "abc"}
         )
         context = FlextContext(initial_data)
         assert context is not None
-        assert context.get("user_id") == "123"
-        assert context.get("session_id") == "abc"
+
+        user_id_result = context.get("user_id")
+        assert isinstance(user_id_result, FlextResult)
+        assert user_id_result.is_success
+        assert user_id_result.unwrap() == "123"
+
+        session_id_result = context.get("session_id")
+        assert isinstance(session_id_result, FlextResult)
+        assert session_id_result.is_success
+        assert session_id_result.unwrap() == "abc"
 
     def test_context_set_get_value(self) -> None:
         """Test context set/get value operations."""
+        from flext_core import FlextResult
+
         context = FlextContext()
 
-        context.set("test_key", "test_value")
-        value = context.get("test_key")
-        assert value == "test_value"
+        context.set("test_key", "test_value").unwrap()
+        result = context.get("test_key")
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        assert result.unwrap() == "test_value"
 
     def test_context_get_with_default(self) -> None:
-        """Test context get with default value."""
+        """Test context get with default value using monadic operations."""
+        from flext_core import FlextResult
+
         context = FlextContext()
 
-        value = context.get("nonexistent_key", "default_value")
+        result = context.get("nonexistent_key")
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
+        # Use monadic unwrap_or for default value
+        value = result.unwrap_or("default_value")
         assert value == "default_value"
 
     def test_context_has_value(self) -> None:
         """Test context has value check."""
         context = FlextContext()
 
-        context.set("test_key", "test_value")
+        context.set("test_key", "test_value").unwrap()
         assert context.has("test_key") is True
         assert context.has("nonexistent_key") is False
 
@@ -60,7 +80,7 @@ class TestFlextContext:
         """Test context remove value operation."""
         context = FlextContext()
 
-        context.set("test_key", "test_value")
+        context.set("test_key", "test_value").unwrap()
         assert context.has("test_key") is True
 
         context.remove("test_key")
@@ -70,8 +90,8 @@ class TestFlextContext:
         """Test context clear operation."""
         context = FlextContext()
 
-        context.set("key1", "value1")
-        context.set("key2", "value2")
+        context.set("key1", "value1").unwrap()
+        context.set("key2", "value2").unwrap()
 
         assert context.has("key1") is True
         assert context.has("key2") is True
@@ -85,8 +105,8 @@ class TestFlextContext:
         """Test context keys, values, and items operations."""
         context = FlextContext()
 
-        context.set("key1", "value1")
-        context.set("key2", "value2")
+        context.set("key1", "value1").unwrap()
+        context.set("key2", "value2").unwrap()
 
         keys = context.keys()
         assert "key1" in keys
@@ -111,8 +131,10 @@ class TestFlextContext:
             },
         }
 
-        context.set("nested", nested_data)
-        retrieved = context.get("nested")
+        context.set("nested", nested_data).unwrap()
+        retrieved_result = context.get("nested")
+        assert retrieved_result.is_success
+        retrieved = retrieved_result.unwrap()
         assert retrieved == nested_data
         if isinstance(retrieved, dict):
             assert retrieved["user"]["profile"]["name"] == "John Doe"
@@ -128,32 +150,47 @@ class TestFlextContext:
         context2.set("key3", "value3")
 
         merged = context1.merge(context2)
-        assert merged.get("key1") == "value1"
-        assert merged.get("key2") == "value2"  # Overridden by context2
-        assert merged.get("key3") == "value3"
+        key1_result = merged.get("key1")
+        assert key1_result.is_success
+        assert key1_result.unwrap() == "value1"
+
+        key2_result = merged.get("key2")
+        assert key2_result.is_success
+        assert key2_result.unwrap() == "value2"  # Overridden by context2
+
+        key3_result = merged.get("key3")
+        assert key3_result.is_success
+        assert key3_result.unwrap() == "value3"
 
     def test_context_clone(self) -> None:
         """Test context cloning."""
         context = FlextContext()
-        context.set("key1", "value1")
-        context.set("key2", "value2")
+        context.set("key1", "value1").unwrap()
+        context.set("key2", "value2").unwrap()
 
         cloned = context.clone()
-        assert cloned.get("key1") == "value1"
-        assert cloned.get("key2") == "value2"
+        key1_result = cloned.get("key1")
+        assert key1_result.is_success
+        assert key1_result.unwrap() == "value1"
+
+        key2_result = cloned.get("key2")
+        assert key2_result.is_success
+        assert key2_result.unwrap() == "value2"
 
         # Modifying clone should not affect original
         cloned.set("key1", "modified_value")
-        assert context.get("key1") == "value1"
+        original_key1_result = context.get("key1")
+        assert original_key1_result.is_success
+        assert original_key1_result.unwrap() == "value1"
 
     def test_context_serialization(self) -> None:
         """Test context serialization."""
         context = FlextContext()
-        context.set("string_key", "string_value")
-        context.set("int_key", 42)
-        context.set("bool_key", True)
-        context.set("list_key", [1, 2, 3])
-        context.set("dict_key", {"nested": "value"})
+        context.set("string_key", "string_value").unwrap()
+        context.set("int_key", 42).unwrap()
+        context.set("bool_key", True).unwrap()
+        context.set("list_key", [1, 2, 3]).unwrap()
+        context.set("dict_key", {"nested": "value"}).unwrap()
 
         # Test JSON serialization
         json_str = context.to_json()
@@ -162,32 +199,38 @@ class TestFlextContext:
 
         # Test JSON deserialization
         restored_context = FlextContext.from_json(json_str)
-        assert restored_context.get("string_key") == "string_value"
-        assert restored_context.get("int_key") == 42
-        assert restored_context.get("bool_key") is True
+        string_result = restored_context.get("string_key")
+        assert string_result.is_success
+        assert string_result.unwrap() == "string_value"
+
+        int_result = restored_context.get("int_key")
+        assert int_result.is_success
+        assert int_result.unwrap() == 42
+
+        bool_result = restored_context.get("bool_key")
+        assert bool_result.is_success
+        assert bool_result.unwrap() is True
 
     def test_context_validation(self) -> None:
         """Test context validation."""
         context = FlextContext()
-        context.set("valid_key", "valid_value")
+        context.set("valid_key", "valid_value").unwrap()
 
         result = context.validate()
         assert result.is_success
 
     def test_context_validation_failure(self) -> None:
-        """Test context validation failure - empty key raises ValueError immediately."""
-        import pytest
-
+        """Test context validation failure - empty key returns failure."""
         context = FlextContext()
 
-        # Empty key should raise ValueError at set time
-        with pytest.raises(ValueError) as exc_info:
-            context.set("", "empty_key")  # Should raise ValueError
-        assert "must be a non-empty string" in str(exc_info.value)
+        # Empty key should return failure (not raise exception)
+        result = context.set("", "empty_key")
+        assert result.is_failure
+        assert "must be a non-empty string" in result.error
 
         # Validate should still pass since no invalid keys were actually set
-        result = context.validate()
-        assert result.is_success
+        validation_result = context.validate()
+        assert validation_result.is_success
 
     def test_context_thread_safety(self) -> None:
         """Test context thread safety."""
@@ -197,8 +240,8 @@ class TestFlextContext:
         def set_value(thread_id: int) -> None:
             context.set(f"thread_{thread_id}", f"value_{thread_id}")
             result = context.get(f"thread_{thread_id}")
-            if result is not None:
-                results.append(str(result))
+            if result.is_success:
+                results.append(str(result.unwrap()))
 
         threads: list[threading.Thread] = []
         for i in range(10):
@@ -221,7 +264,8 @@ class TestFlextContext:
         # Perform many operations
         for i in range(1000):
             context.set(f"key_{i}", f"value_{i}")
-            context.get(f"key_{i}")
+            result = context.get(f"key_{i}")
+            assert result.is_success
 
         end_time = time.time()
 
@@ -229,45 +273,48 @@ class TestFlextContext:
         assert end_time - start_time < 1.0
 
     def test_context_error_handling(self) -> None:
-        """Test context error handling."""
+        """Test context error handling with FlextResult pattern."""
         context = FlextContext()
 
-        # Test invalid key
-        try:
-            # Use cast to suppress Pyrefly type error for intentional None test
-            context.set(cast("str", None), "value")
-            msg = "Should have raised an error"
-            raise AssertionError(msg)
-        except (TypeError, ValueError):
-            pass  # Expected
+        # Test invalid key (None) - should return failure with message
+        result = context.set(cast("str", None), "value")
+        assert result.is_failure
+        assert "must be a non-empty string" in result.error
 
-        # Test invalid value
-        try:
-            context.set("key", object())
-            msg = "Should have raised an error"
-            raise AssertionError(msg)
-        except (TypeError, ValueError):
-            pass  # Expected
+        # Test invalid value (object) - should return failure with message
+        result = context.set("key", object())
+        assert result.is_failure
+        assert "must be serializable" in result.error
 
     def test_context_scoped_access(self) -> None:
         """Test context scoped access."""
         context = FlextContext()
 
         # Set values in different scopes
-        context.set("global_key", "global_value")
-        context.set("user_key", "user_value", scope="user")
-        context.set("session_key", "session_value", scope="session")
+        context.set("global_key", "global_value").unwrap()
+        context.set("user_key", "user_value", scope="user").unwrap()
+        context.set("session_key", "session_value", scope="session").unwrap()
 
         # Test global access
-        assert context.get("global_key") == "global_value"
+        global_result = context.get("global_key")
+        assert global_result.is_success
+        assert global_result.unwrap() == "global_value"
 
         # Test scoped access
-        assert context.get("user_key", scope="user") == "user_value"
-        assert context.get("session_key", scope="session") == "session_value"
+        user_result = context.get("user_key", scope="user")
+        assert user_result.is_success
+        assert user_result.unwrap() == "user_value"
 
-        # Test cross-scope access
-        assert context.get("user_key") is None  # Not in global scope
-        assert context.get("session_key") is None  # Not in global scope
+        session_result = context.get("session_key", scope="session")
+        assert session_result.is_success
+        assert session_result.unwrap() == "session_value"
+
+        # Test cross-scope access - fast fail when key not found
+        user_key_global_result = context.get("user_key")
+        assert user_key_global_result.is_failure  # Not in global scope
+
+        session_key_global_result = context.get("session_key")
+        assert session_key_global_result.is_failure  # Not in global scope
 
     def test_context_lifecycle(self) -> None:
         """Test context lifecycle management."""
@@ -300,7 +347,7 @@ class TestFlextContext:
             return _arg
 
         context.add_hook("set", test_hook)
-        context.set("test_key", "test_value")
+        context.set("test_key", "test_value").unwrap()
 
         assert hook_called is True
 
@@ -316,7 +363,7 @@ class TestFlextContext:
         created_at_result = context.get_metadata("created_at")
         assert created_at_result.is_success
         assert created_at_result.unwrap() == "2025-01-01"
-        
+
         version_result = context.get_metadata("version")
         assert version_result.is_success
         assert version_result.unwrap() == "1.0.0"
@@ -330,8 +377,8 @@ class TestFlextContext:
         """Test context statistics."""
         context = FlextContext()
 
-        context.set("key1", "value1")
-        context.set("key2", "value2")
+        context.set("key1", "value1").unwrap()
+        context.set("key2", "value2").unwrap()
         context.get("key1")
         context.get("key2")
         context.remove("key1")
@@ -351,8 +398,8 @@ class TestFlextContext:
         """Test context cleanup."""
         context = FlextContext()
 
-        context.set("key1", "value1")
-        context.set("key2", "value2")
+        context.set("key1", "value1").unwrap()
+        context.set("key2", "value2").unwrap()
 
         assert context.has("key1") is True
         assert context.has("key2") is True
@@ -365,8 +412,8 @@ class TestFlextContext:
     def test_context_export_import(self) -> None:
         """Test context export/import."""
         context = FlextContext()
-        context.set("key1", "value1")
-        context.set("key2", "value2")
+        context.set("key1", "value1").unwrap()
+        context.set("key2", "value2").unwrap()
 
         # Export context
         exported = context.export()
@@ -378,8 +425,8 @@ class TestFlextContext:
         new_context = FlextContext()
         new_context.import_data(exported)
 
-        assert new_context.get("key1") == "value1"
-        assert new_context.get("key2") == "value2"
+        assert new_context.get("key1").unwrap() == "value1"
+        assert new_context.get("key2").unwrap() == "value2"
 
     def test_context_singleton_pattern(self) -> None:
         """Test context singleton pattern - manage explicitly."""
@@ -460,7 +507,7 @@ class TestFlextContext:
     def test_context_suspend_resume(self) -> None:
         """Test context suspend and resume operations."""
         context = FlextContext()
-        context.set("key1", "value1")
+        context.set("key1", "value1").unwrap()
         assert context.is_active() is True
 
         context.suspend()
@@ -477,35 +524,35 @@ class TestFlextContext:
     def test_context_destroy(self) -> None:
         """Test context destroy operation."""
         context = FlextContext()
-        context.set("key1", "value1")
+        context.set("key1", "value1").unwrap()
         context.destroy()
         # After destroy, context should be inactive or cleared
 
     def test_context_scoped_access_request_scope(self) -> None:
         """Test scoped access with request scope."""
         context = FlextContext()
-        context.set("user_id", "user-456")
+        context.set("user_id", "user-456").unwrap()
         result = context.get("user_id")
-        assert result == "user-456"
+        assert result.unwrap() == "user-456"
 
     def test_context_scoped_access_operation_scope(self) -> None:
         """Test scoped access with operation scope."""
         context = FlextContext()
-        context.set("operation_id", "op-789")
+        context.set("operation_id", "op-789").unwrap()
         result = context.get("operation_id")
-        assert result == "op-789"
+        assert result.unwrap() == "op-789"
 
     def test_context_scoped_access_application_scope(self) -> None:
         """Test scoped access with application scope."""
         context = FlextContext()
-        context.set("app_config", {"key": "value"})
+        context.set("app_config", {"key": "value"}).unwrap()
         result = context.get("app_config")
-        assert result == {"key": "value"}
+        assert result.unwrap() == {"key": "value"}
 
     def test_context_remove_from_scope(self) -> None:
         """Test removing value from specific scope."""
         context = FlextContext()
-        context.set("key1", "value1")
+        context.set("key1", "value1").unwrap()
         assert context.has("key1") is True
 
         context.remove("key1")
@@ -514,7 +561,7 @@ class TestFlextContext:
     def test_context_validate_success(self) -> None:
         """Test context validation succeeds."""
         context = FlextContext()
-        context.set("key1", "value1")
+        context.set("key1", "value1").unwrap()
         result = context.validate()
         assert result.is_success
 
@@ -527,7 +574,7 @@ class TestFlextContext:
     def test_context_to_json(self) -> None:
         """Test context serialization to JSON."""
         context = FlextContext()
-        context.set("key1", "value1")
+        context.set("key1", "value1").unwrap()
         json_str = context.to_json()
         assert json_str is not None
         assert isinstance(json_str, str)
@@ -542,14 +589,19 @@ class TestFlextContext:
         json_str = context1.to_json()
         context2 = FlextContext.from_json(json_str)
 
-        assert context2.get("key1") == "value1"
-        assert context2.get("key2") == 42
+        key1_result = context2.get("key1")
+        assert key1_result.is_success
+        assert key1_result.unwrap() == "value1"
+
+        key2_result = context2.get("key2")
+        assert key2_result.is_success
+        assert key2_result.unwrap() == 42
 
     def test_context_get_all_scopes(self) -> None:
         """Test getting all scope registrations."""
         context = FlextContext()
-        context.set("key1", "value1")
-        context.set("key2", "value2")
+        context.set("key1", "value1").unwrap()
+        context.set("key2", "value2").unwrap()
 
         scopes = context.get_all_scopes()
         assert scopes is not None
@@ -559,7 +611,7 @@ class TestFlextContext:
         """Test context performance tracking."""
         context = FlextContext()
         start_time = time.time()
-        context.set("key1", "value1")
+        context.set("key1", "value1").unwrap()
         context.get("key1")
         context.has("key1")
         end_time = time.time()
@@ -571,14 +623,16 @@ class TestFlextContext:
     def test_context_multiple_scopes_isolation(self) -> None:
         """Test that values in different scopes are isolated."""
         context = FlextContext()
-        context.set("key1", "global_value")
-        context.set("key2", "request_value")
+        context.set("key1", "global_value").unwrap()
+        context.set("key2", "request_value").unwrap()
 
         global_val = context.get("key1")
         request_val = context.get("key2")
 
-        assert global_val == "global_value"
-        assert request_val == "request_value"
+        assert global_val.is_success
+        assert request_val.is_success
+        assert global_val.unwrap() == "global_value"
+        assert request_val.unwrap() == "request_value"
 
     def test_context_variables_correlation(self) -> None:
         """Test Variables inner class Correlation access."""
@@ -607,8 +661,8 @@ class TestFlextContext:
     def test_context_export_with_data(self) -> None:
         """Test exporting context with data."""
         context = FlextContext()
-        context.set("key1", "value1")
-        context.set("key2", 42)
+        context.set("key1", "value1").unwrap()
+        context.set("key2", 42).unwrap()
 
         exported = context.export()
         assert exported is not None
@@ -617,7 +671,7 @@ class TestFlextContext:
     def test_context_export_snapshot(self) -> None:
         """Test exporting context snapshot."""
         context = FlextContext()
-        context.set("key1", "value1")
+        context.set("key1", "value1").unwrap()
 
         snapshot = context.export_snapshot()
         assert snapshot is not None
@@ -629,18 +683,18 @@ class TestFlextContext:
         data_to_import: dict[str, object] = {"key1": "value1", "key2": "value2"}
 
         context.import_data(data_to_import)
-        assert context.get("key1") == "value1"
-        assert context.get("key2") == "value2"
+        assert context.get("key1").unwrap() == "value1"
+        assert context.get("key2").unwrap() == "value2"
 
     def test_context_merge_with_dict(self) -> None:
         """Test merging context with dictionary."""
         context = FlextContext()
-        context.set("key1", "value1")
+        context.set("key1", "value1").unwrap()
 
         merged = context.merge({"key2": "value2", "key3": "value3"})
-        assert merged.get("key1") == "value1"
-        assert merged.get("key2") == "value2"
-        assert merged.get("key3") == "value3"
+        assert merged.get("key1").unwrap() == "value1"
+        assert merged.get("key2").unwrap() == "value2"
+        assert merged.get("key3").unwrap() == "value3"
 
     def test_context_merge_with_context(self) -> None:
         """Test merging context with another context."""
@@ -651,8 +705,14 @@ class TestFlextContext:
         context2.set("key2", "value2")
 
         merged = context1.merge(context2)
-        assert merged.get("key1") == "value1"
-        assert merged.get("key2") == "value2"
+        # Use FlextResult API - get() returns FlextResult[object]
+        result1 = merged.get("key1")
+        assert result1.is_success
+        assert result1.unwrap() == "value1"
+
+        result2 = merged.get("key2")
+        assert result2.is_success
+        assert result2.unwrap() == "value2"
 
     def test_context_clone_independence(self) -> None:
         """Test cloned context is independent."""
@@ -663,52 +723,55 @@ class TestFlextContext:
         context2.set("key1", "value2")
         context2.set("key3", "value3")
 
-        assert context1.get("key1") == "value1"
-        assert context2.get("key1") == "value2"
+        assert context1.get("key1").unwrap() == "value1"
+        assert context2.get("key1").unwrap() == "value2"
         assert context1.has("key3") is False
         assert context2.has("key3") is True
 
     def test_context_edge_case_none_value(self) -> None:
         """Test context with None value."""
         context = FlextContext()
-        context.set("key_none", None)
+        context.set("key_none", None).unwrap()
         result = context.get("key_none")
-        assert result is None
+        # FlextResult.ok() cannot accept None, so get() should fail
+        assert result.is_failure
+        assert "None value" in result.error or "not found" in result.error.lower()
 
     def test_context_edge_case_empty_string(self) -> None:
         """Test context with empty string."""
         context = FlextContext()
-        context.set("empty_key", "")
+        context.set("empty_key", "").unwrap()
         result = context.get("empty_key")
-        assert result == ""
+        assert result.unwrap() == ""
 
     def test_context_edge_case_empty_dict(self) -> None:
         """Test context with empty dict."""
         context = FlextContext()
-        context.set("empty_dict", {})
+        context.set("empty_dict", {}).unwrap()
         result = context.get("empty_dict")
-        assert result == {}
+        assert result.unwrap() == {}
 
     def test_context_edge_case_empty_list(self) -> None:
         """Test context with empty list."""
         context = FlextContext()
-        context.set("empty_list", [])
+        context.set("empty_list", []).unwrap()
         result = context.get("empty_list")
-        assert result == []
+        assert result.unwrap() == []
 
     def test_context_edge_case_zero_value(self) -> None:
         """Test context with zero value."""
         context = FlextContext()
-        context.set("zero", 0)
+        context.set("zero", 0).unwrap()
         result = context.get("zero")
-        assert result == 0
+        assert result.unwrap() == 0
 
     def test_context_edge_case_false_value(self) -> None:
         """Test context with False value."""
         context = FlextContext()
-        context.set("false_val", False)
+        context.set("false_val", False).unwrap()
         result = context.get("false_val")
-        assert result is False
+        assert result.is_success
+        assert result.unwrap() is False
 
     def test_context_edge_case_special_characters(self) -> None:
         """Test context keys with special characters."""
@@ -716,7 +779,7 @@ class TestFlextContext:
         special_key = "key!@#$%^&*()"
         context.set(special_key, "special_value")
         result = context.get(special_key)
-        assert result == "special_value"
+        assert result.unwrap() == "special_value"
 
     def test_context_edge_case_very_long_key(self) -> None:
         """Test context with very long key name."""
@@ -724,38 +787,40 @@ class TestFlextContext:
         long_key = "k" * 1000
         context.set(long_key, "long_key_value")
         result = context.get(long_key)
-        assert result == "long_key_value"
+        assert result.unwrap() == "long_key_value"
 
     def test_context_edge_case_very_long_value(self) -> None:
         """Test context with very long value."""
         context = FlextContext()
         long_value = "v" * 10000
-        context.set("long_value_key", long_value)
+        context.set("long_value_key", long_value).unwrap()
         result = context.get("long_value_key")
-        assert result == long_value
+        assert result.unwrap() == long_value
 
     def test_context_edge_case_complex_nested_dict(self) -> None:
         """Test context with complex nested dictionary."""
         context = FlextContext()
         complex_dict = {"level1": {"level2": {"level3": {"value": "deeply_nested"}}}}
-        context.set("complex", complex_dict)
+        context.set("complex", complex_dict).unwrap()
         result = context.get("complex")
-        assert result == complex_dict
-        assert isinstance(result, dict)
-        assert result["level1"]["level2"]["level3"]["value"] == "deeply_nested"
+        assert result.is_success
+        unwrapped = result.unwrap()
+        assert unwrapped == complex_dict
+        assert isinstance(unwrapped, dict)
+        assert unwrapped["level1"]["level2"]["level3"]["value"] == "deeply_nested"
 
     def test_context_edge_case_duplicate_keys_overwrite(self) -> None:
         """Test context behavior when overwriting existing keys."""
         context = FlextContext()
-        context.set("key", "value1")
-        assert context.get("key") == "value1"
-        context.set("key", "value2")
-        assert context.get("key") == "value2"
+        context.set("key", "value1").unwrap()
+        assert context.get("key").unwrap() == "value1"
+        context.set("key", "value2").unwrap()
+        assert context.get("key").unwrap() == "value2"
 
     def test_context_concurrent_reads(self) -> None:
         """Test context with concurrent read operations."""
         context = FlextContext()
-        context.set("shared_key", "shared_value")
+        context.set("shared_key", "shared_value").unwrap()
 
         error_count = []
 
@@ -833,9 +898,9 @@ class TestFlextContext:
     def test_context_merge_empty_dicts(self) -> None:
         """Test merging context with empty dictionary."""
         context = FlextContext()
-        context.set("key1", "value1")
+        context.set("key1", "value1").unwrap()
         merged = context.merge({})
-        assert merged.get("key1") == "value1"
+        assert merged.get("key1").unwrap() == "value1"
 
     def test_context_clone_then_clear_original(self) -> None:
         """Test cloning, then clearing original."""
@@ -850,14 +915,14 @@ class TestFlextContext:
     def test_context_import_empty_data(self) -> None:
         """Test importing empty data into context."""
         context = FlextContext()
-        context.set("existing_key", "existing_value")
+        context.set("existing_key", "existing_value").unwrap()
         context.import_data({})
-        assert context.get("existing_key") == "existing_value"
+        assert context.get("existing_key").unwrap() == "existing_value"
 
     def test_context_export_after_clear(self) -> None:
         """Test exporting after clearing context."""
         context = FlextContext()
-        context.set("key1", "value1")
+        context.set("key1", "value1").unwrap()
         context.clear()
         exported = context.export()
         assert isinstance(exported, dict)
@@ -870,7 +935,9 @@ class TestFlextContext:
             context.set(f"key_{i}", f"value_{i}")
 
         for i in range(100):
-            assert context.get(f"key_{i}") == f"value_{i}"
+            result = context.get(f"key_{i}")
+            assert result.is_success
+            assert result.unwrap() == f"value_{i}"
 
         for i in range(50):
             context.remove(f"key_{i}")
@@ -879,7 +946,9 @@ class TestFlextContext:
             assert context.has(f"key_{i}") is False
 
         for i in range(50, 100):
-            assert context.get(f"key_{i}") == f"value_{i}"
+            result = context.get(f"key_{i}")
+            assert result.is_success
+            assert result.unwrap() == f"value_{i}"
 
     def test_context_get_metadata_nonexistent(self) -> None:
         """Test getting metadata that doesn't exist - fast fail."""
@@ -925,8 +994,8 @@ class TestFlextContext:
     def test_context_get_statistics(self) -> None:
         """Test getting context statistics."""
         context = FlextContext()
-        context.set("key1", "value1")
-        context.set("key2", "value2")
+        context.set("key1", "value1").unwrap()
+        context.set("key2", "value2").unwrap()
         stats = context.get_statistics()
         assert stats is not None
         assert isinstance(stats, FlextModels.ContextStatistics)
@@ -965,6 +1034,6 @@ class TestFlextContext:
     def test_context_cleanup_twice(self) -> None:
         """Test cleanup called multiple times."""
         context = FlextContext()
-        context.set("key1", "value1")
+        context.set("key1", "value1").unwrap()
         context.cleanup()
         context.cleanup()  # Second call should not error

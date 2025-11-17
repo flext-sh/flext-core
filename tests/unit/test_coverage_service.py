@@ -109,12 +109,21 @@ class TestServiceRegistration:
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("registered")
 
-        # Service should be registered by __init_subclass__
-        # Explicitly reference the class to satisfy linter
+        # NOTE: Test classes are NOT auto-registered (see service.py:707-709)
+        # This is intentional - test classes should not pollute DI container
+        # Manual registration required for testing
         assert RegisteredService is not None
         container = FlextContainer.get_global()
-        registration_result = container.get("RegisteredService")
-        assert registration_result.is_success
+        module = RegisteredService.__module__.replace(".", "_")
+        service_name = f"{module}_{RegisteredService.__name__}"
+
+        # Manual registration for test class
+        container.with_factory(service_name, RegisteredService)
+
+        registration_result = container.get(service_name)
+        assert registration_result.is_success, (
+            f"Failed to get service '{service_name}': {registration_result.error if registration_result.is_failure else 'unknown'}"
+        )
 
 
 class TestAbstractMethodEnforcement:

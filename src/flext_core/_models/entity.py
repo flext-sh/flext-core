@@ -339,8 +339,14 @@ class FlextModelsEntity:
             # Create and validate event
             event_result = self._create_and_validate_event(event_name, data)
             if event_result.is_failure:
+                base_msg = "Event creation failed"
+                error_msg = (
+                    f"{base_msg}: {event_result.error}"
+                    if event_result.error
+                    else f"{base_msg} (domain event creation failed)"
+                )
                 return FlextResult[bool].fail(
-                    event_result.error or "Event creation failed",
+                    error_msg,
                     error_code=FlextConstants.Errors.DOMAIN_EVENT_ERROR,
                 )
 
@@ -526,8 +532,14 @@ class FlextModelsEntity:
             # Validate input
             count_result = self._validate_bulk_events_input(events)
             if count_result.is_failure:
+                base_msg = "Input validation failed"
+                error_msg = (
+                    f"{base_msg}: {count_result.error}"
+                    if count_result.error
+                    else f"{base_msg} (count validation failed)"
+                )
                 return FlextResult[bool].fail(
-                    count_result.error or "Input validation failed",
+                    error_msg,
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
@@ -538,8 +550,14 @@ class FlextModelsEntity:
             # Validate and collect events
             validated_result = self._validate_and_collect_events(events)
             if validated_result.is_failure:
+                base_msg = "Event validation failed"
+                error_msg = (
+                    f"{base_msg}: {validated_result.error}"
+                    if validated_result.error
+                    else f"{base_msg} (event validation rule failed)"
+                )
                 return FlextResult[bool].fail(
-                    validated_result.error or "Event validation failed",
+                    error_msg,
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 

@@ -696,13 +696,20 @@ class TestLayer2Integration:
         handler = CircuitBreakerTestHandler()
 
         # Register handler
-        dispatcher.register_handler("cb_test", handler)
+        result = dispatcher.register_handler({
+            "handler_name": "cb_test",
+            "handler": handler,
+            "handler_mode": FlextConstants.Cqrs.HandlerType.COMMAND,
+        })
+        assert result.is_success
 
-        # Force circuit open
-        dispatcher._circuit_breaker.transition_to_open("cb_test")
+        # Force circuit open - use message type name
+        message = CircuitBreakerTestMessage("msg1")
+        message_type = type(message).__name__
+        dispatcher._circuit_breaker.transition_to_open(message_type)
 
         # Dispatch should fail due to circuit
-        result = dispatcher.dispatch("cb_test", CircuitBreakerTestMessage("msg1"))
+        result = dispatcher.dispatch(message)
         # Result may fail due to circuit or other reasons
         _ = result
 
@@ -780,13 +787,16 @@ class TestDispatcherDispatchIntegration:
         handler = CircuitBreakerTestHandler()
 
         # Register handler
-        result = dispatcher.register_handler("success_test", handler)
+        result = dispatcher.register_handler({
+            "handler_name": "success_test",
+            "handler": handler,
+            "handler_mode": FlextConstants.Cqrs.HandlerType.COMMAND,
+        })
         assert result.is_success
 
         # Dispatch message
-        dispatch_result = dispatcher.dispatch(
-            "success_test", CircuitBreakerTestMessage("msg1")
-        )
+        message = CircuitBreakerTestMessage("msg1")
+        dispatch_result = dispatcher.dispatch(message)
         assert dispatch_result.is_success
 
     def test_dispatcher_dispatch_with_circuit_breaker_closed(self) -> None:
@@ -795,12 +805,19 @@ class TestDispatcherDispatchIntegration:
         handler = CircuitBreakerTestHandler()
 
         # Register and verify circuit is closed
-        dispatcher.register_handler("cb_test", handler)
-        state = dispatcher._circuit_breaker.get_state("cb_test")
+        result = dispatcher.register_handler({
+            "handler_name": "cb_test",
+            "handler": handler,
+            "handler_mode": FlextConstants.Cqrs.HandlerType.COMMAND,
+        })
+        assert result.is_success
+        message = CircuitBreakerTestMessage("msg1")
+        message_type = type(message).__name__
+        state = dispatcher._circuit_breaker.get_state(message_type)
         assert state == FlextConstants.Reliability.CircuitBreakerState.CLOSED
 
         # Dispatch should succeed
-        result = dispatcher.dispatch("cb_test", CircuitBreakerTestMessage("msg1"))
+        result = dispatcher.dispatch(message)
         _ = result  # Use result to avoid linting warning
 
     def test_dispatcher_handler_registration_with_validation(self) -> None:
@@ -809,7 +826,11 @@ class TestDispatcherDispatchIntegration:
         handler = CircuitBreakerTestHandler()
 
         # Registration should validate handler has handle() method
-        result = dispatcher.register_handler("validated_handler", handler)
+        result = dispatcher.register_handler({
+            "handler_name": "validated_handler",
+            "handler": handler,
+            "handler_mode": FlextConstants.Cqrs.HandlerType.COMMAND,
+        })
         assert result.is_success
 
     def test_dispatcher_dispatch_multiple_times(self) -> None:
@@ -817,13 +838,17 @@ class TestDispatcherDispatchIntegration:
         dispatcher = FlextDispatcher()
         handler = CircuitBreakerTestHandler()
 
-        dispatcher.register_handler("multi_test", handler)
+        result = dispatcher.register_handler({
+            "handler_name": "multi_test",
+            "handler": handler,
+            "handler_mode": FlextConstants.Cqrs.HandlerType.COMMAND,
+        })
+        assert result.is_success
 
         # Multiple dispatches
         for i in range(3):
-            result = dispatcher.dispatch(
-                "multi_test", CircuitBreakerTestMessage(f"msg{i}")
-            )
+            message = CircuitBreakerTestMessage(f"msg{i}")
+            result = dispatcher.dispatch(message)
             assert result.is_success or result.is_failure  # Accept either
 
     def test_dispatcher_registers_handler_creates_state(self) -> None:
@@ -833,7 +858,12 @@ class TestDispatcherDispatchIntegration:
         msg_type = "new_handler"
 
         # Register creates state
-        dispatcher.register_handler(msg_type, handler)
+        result = dispatcher.register_handler({
+            "handler_name": msg_type,
+            "handler": handler,
+            "handler_mode": FlextConstants.Cqrs.HandlerType.COMMAND,
+        })
+        assert result.is_success
 
         # Circuit breaker should have state for this message type
         state = dispatcher._circuit_breaker.get_state(msg_type)
@@ -847,12 +877,25 @@ class TestDispatcherDispatchIntegration:
         cb_handler = CircuitBreakerTestHandler()
         rl_handler = RateLimitTestHandler()
 
-        dispatcher.register_handler("cb_msg", cb_handler)
-        dispatcher.register_handler("rl_msg", rl_handler)
+        result1 = dispatcher.register_handler({
+            "handler_name": "cb_msg",
+            "handler": cb_handler,
+            "handler_mode": FlextConstants.Cqrs.HandlerType.COMMAND,
+        })
+        assert result1.is_success
+
+        result2 = dispatcher.register_handler({
+            "handler_name": "rl_msg",
+            "handler": rl_handler,
+            "handler_mode": FlextConstants.Cqrs.HandlerType.COMMAND,
+        })
+        assert result2.is_success
 
         # Dispatch different types
-        cb_result = dispatcher.dispatch("cb_msg", CircuitBreakerTestMessage("msg1"))
-        rl_result = dispatcher.dispatch("rl_msg", RateLimitTestMessage("msg2"))
+        cb_message = CircuitBreakerTestMessage("msg1")
+        rl_message = RateLimitTestMessage("msg2")
+        cb_result = dispatcher.dispatch(cb_message)
+        rl_result = dispatcher.dispatch(rl_message)
 
         # Both should be successful or fail independently
         assert isinstance(cb_result, FlextResult)
@@ -863,8 +906,14 @@ class TestDispatcherDispatchIntegration:
         dispatcher = FlextDispatcher()
         handler = CircuitBreakerTestHandler()
 
-        dispatcher.register_handler("metrics_test", handler)
-        dispatcher.dispatch("metrics_test", CircuitBreakerTestMessage("msg1"))
+        result = dispatcher.register_handler({
+            "handler_name": "metrics_test",
+            "handler": handler,
+            "handler_mode": FlextConstants.Cqrs.HandlerType.COMMAND,
+        })
+        assert result.is_success
+        message = CircuitBreakerTestMessage("msg1")
+        dispatcher.dispatch(message)
 
         # Metrics should be available
         cb_metrics = dispatcher._circuit_breaker.get_metrics()
@@ -877,18 +926,25 @@ class TestDispatcherDispatchIntegration:
         handler = CircuitBreakerTestHandler()
         handler.failure_mode = True  # Enable failure mode
 
-        dispatcher.register_handler("failure_test", handler)
+        result = dispatcher.register_handler({
+            "handler_name": "failure_test",
+            "handler": handler,
+            "handler_mode": FlextConstants.Cqrs.HandlerType.COMMAND,
+        })
+        assert result.is_success
 
         # Record failures
-        initial_count = dispatcher._circuit_breaker.get_failure_count("failure_test")
+        message = CircuitBreakerTestMessage("msg1")
+        message_type = type(message).__name__
+        initial_count = dispatcher._circuit_breaker.get_failure_count(message_type)
         assert initial_count == 0
 
         # Dispatch (will fail due to handler)
-        dispatcher.dispatch("failure_test", CircuitBreakerTestMessage("msg1"))
+        dispatcher.dispatch(message)
 
         # Check if failure count increased
         # Note: This depends on how dispatch handles handler failures
-        count_after = dispatcher._circuit_breaker.get_failure_count("failure_test")
+        count_after = dispatcher._circuit_breaker.get_failure_count(message_type)
         assert isinstance(count_after, int)
 
     def test_dispatcher_cleanup_resources(self) -> None:

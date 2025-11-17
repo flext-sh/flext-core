@@ -918,8 +918,14 @@ class FlextMixins:
                 ) -> FlextResult[FlextMixins.Validation.T]:
                     validation_result = v(data)
                     if validation_result.is_failure:
+                        base_msg = "Validation failed"
+                        error_msg = (
+                            f"{base_msg}: {validation_result.error}"
+                            if validation_result.error
+                            else f"{base_msg} (validation rule failed)"
+                        )
                         return FlextResult[FlextMixins.Validation.T].fail(
-                            validation_result.error or "Validation failed",
+                            error_msg,
                             error_code=validation_result.error_code,
                             error_data=validation_result.error_data,
                         )

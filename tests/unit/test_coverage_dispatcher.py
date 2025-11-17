@@ -69,10 +69,16 @@ class TestHandlerRegistration:
         def simple_handler(msg: object) -> str:
             return "handled"
 
-        result = dispatcher.register_handler(
-            "TestMessage",
+        # Use register_function which accepts mode as keyword argument
+        # Create a simple message type class for testing
+        class TestMessage:
+            def __init__(self, value: str) -> None:
+                self.value = value
+
+        result = dispatcher.register_function(
+            TestMessage,
             simple_handler,
-            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+            mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         assert result.is_success
         assert "registration_id" in result.value or "status" in result.value

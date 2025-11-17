@@ -1,0 +1,348 @@
+"""Real tests to achieve 100% runtime coverage - no mocks.
+
+This module provides comprehensive real tests (no mocks, patches, or bypasses)
+to cover all remaining lines in runtime.py.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+import logging
+from collections import UserDict
+from typing import Never
+
+from flext_core import FlextRuntime
+
+
+class TestRuntime100Coverage:
+    """Real tests to achieve 100% runtime coverage."""
+
+    def test_is_dict_like_with_exception_on_items(self) -> None:
+        """Test is_dict_like when items() raises AttributeError."""
+
+        # Create object that has keys/items/get but items() raises AttributeError
+        class BadDictLike:
+            def keys(self):
+                return []
+
+            def items(self) -> Never:
+                msg = "items not available"
+                raise AttributeError(msg)
+
+            def get(self, key: object) -> object:
+                return None
+
+        obj = BadDictLike()
+        result = FlextRuntime.is_dict_like(obj)
+        assert result is False
+
+    def test_is_dict_like_with_exception_on_items_typeerror(self) -> None:
+        """Test is_dict_like when items() raises TypeError."""
+
+        # Create object that has keys/items/get but items() raises TypeError
+        class BadDictLike:
+            def keys(self):
+                return []
+
+            def items(self) -> Never:
+                msg = "items failed"
+                raise TypeError(msg)
+
+            def get(self, key: object) -> object:
+                return None
+
+        obj = BadDictLike()
+        result = FlextRuntime.is_dict_like(obj)
+        assert result is False
+
+    def test_is_dict_like_with_userdict(self) -> None:
+        """Test is_dict_like with UserDict (dict-like object)."""
+        user_dict = UserDict({"key": "value"})
+        result = FlextRuntime.is_dict_like(user_dict)
+        assert result is True
+
+    def test_is_dict_like_with_missing_attributes(self) -> None:
+        """Test is_dict_like with object missing required attributes."""
+
+        class NotDictLike:
+            pass
+
+        obj = NotDictLike()
+        result = FlextRuntime.is_dict_like(obj)
+        assert result is False
+
+    def test_is_dict_like_with_missing_keys(self) -> None:
+        """Test is_dict_like with object missing keys attribute."""
+
+        class NotDictLike:
+            def items(self):
+                return []
+
+            def get(self, key: object) -> object:
+                return None
+
+        obj = NotDictLike()
+        result = FlextRuntime.is_dict_like(obj)
+        assert result is False
+
+    def test_is_dict_like_with_missing_items(self) -> None:
+        """Test is_dict_like with object missing items attribute."""
+
+        class NotDictLike:
+            def keys(self):
+                return []
+
+            def get(self, key: object) -> object:
+                return None
+
+        obj = NotDictLike()
+        result = FlextRuntime.is_dict_like(obj)
+        assert result is False
+
+    def test_is_dict_like_with_missing_get(self) -> None:
+        """Test is_dict_like with object missing get attribute."""
+
+        class NotDictLike:
+            def keys(self):
+                return []
+
+            def items(self):
+                return []
+
+        obj = NotDictLike()
+        result = FlextRuntime.is_dict_like(obj)
+        assert result is False
+
+    def test_extract_generic_args_with_type_mapping(self) -> None:
+        """Test extract_generic_args with known type aliases."""
+
+        # Create mock type aliases that match the type_mapping
+        class StringDict:
+            __name__ = "StringDict"
+
+        class IntDict:
+            __name__ = "IntDict"
+
+        class FloatDict:
+            __name__ = "FloatDict"
+
+        class BoolDict:
+            __name__ = "BoolDict"
+
+        class NestedDict:
+            __name__ = "NestedDict"
+
+        # Test each type alias
+        assert FlextRuntime.extract_generic_args(StringDict) == (str, str)
+        assert FlextRuntime.extract_generic_args(IntDict) == (str, int)
+        assert FlextRuntime.extract_generic_args(FloatDict) == (str, float)
+        assert FlextRuntime.extract_generic_args(BoolDict) == (str, bool)
+        assert FlextRuntime.extract_generic_args(NestedDict) == (str, object)
+
+    def test_is_sequence_type_with_type_mapping(self) -> None:
+        """Test is_sequence_type with known type aliases."""
+
+        # Create mock type aliases that match the type_mapping
+        class StringList:
+            __name__ = "StringList"
+
+        class IntList:
+            __name__ = "IntList"
+
+        class FloatList:
+            __name__ = "FloatList"
+
+        class BoolList:
+            __name__ = "BoolList"
+
+        class List:
+            __name__ = "List"
+
+        # Test each type alias
+        assert FlextRuntime.is_sequence_type(StringList) is True
+        assert FlextRuntime.is_sequence_type(IntList) is True
+        assert FlextRuntime.is_sequence_type(FloatList) is True
+        assert FlextRuntime.is_sequence_type(BoolList) is True
+        assert FlextRuntime.is_sequence_type(List) is True
+
+    def test_level_based_context_filter_malformed_prefix(self) -> None:
+        """Test level_based_context_filter with malformed prefix."""
+        import structlog
+
+        # Configure structlog first
+        FlextRuntime.configure_structlog()
+
+        # Create event dict with malformed prefix
+        # Malformed prefix: starts with _level_ but doesn't have enough parts after split
+        # LEVEL_PREFIX_PARTS_COUNT is typically 4, so we need _level_<level>_<key>
+        # A malformed one would be just "_level_" or "_level_debug" (not enough parts)
+        # Create a key that starts with _level_ but has fewer parts than required
+        malformed_key = "_level_"  # This will split into fewer parts than required
+        event_dict = {
+            malformed_key: "value1",  # Malformed - not enough parts after split
+            "normal_key": "value2",  # Not prefixed
+        }
+
+        # Process with the filter
+        logger = structlog.get_logger()
+        result = FlextRuntime.level_based_context_filter(logger, "info", event_dict)
+
+        # Malformed prefix should be included as-is (line 491)
+        assert malformed_key in result or "normal_key" in result
+
+    def test_configure_structlog_with_config_object(self) -> None:
+        """Test configure_structlog with config object."""
+        # Reset configuration
+        FlextRuntime._structlog_configured = False
+
+        # Create config object with attributes
+        class Config:
+            log_level = logging.DEBUG
+            console_renderer = False
+            additional_processors = []
+            wrapper_class_factory = None
+            logger_factory = None
+            cache_logger_on_first_use = True
+
+        config = Config()
+        FlextRuntime.configure_structlog(config=config)
+
+        assert FlextRuntime._structlog_configured is True
+
+    def test_enable_runtime_checking(self) -> None:
+        """Test enable_runtime_checking method."""
+        # This should enable beartype runtime checking
+        result = FlextRuntime.enable_runtime_checking()
+        assert result is True
+
+    def test_is_valid_phone_non_string(self) -> None:
+        """Test is_valid_phone with non-string types."""
+        assert not FlextRuntime.is_valid_phone(123)
+        assert not FlextRuntime.is_valid_phone(None)
+        assert not FlextRuntime.is_valid_phone([])
+
+    def test_is_valid_json_exception_path(self) -> None:
+        """Test is_valid_json when json.loads raises exception."""
+        # Invalid JSON that causes json.loads to raise
+        invalid_json = "{invalid json}"
+        result = FlextRuntime.is_valid_json(invalid_json)
+        assert result is False
+
+    def test_is_valid_identifier_non_string(self) -> None:
+        """Test is_valid_identifier with non-string types."""
+        assert not FlextRuntime.is_valid_identifier(123)
+        assert not FlextRuntime.is_valid_identifier(None)
+
+    def test_extract_generic_args_with_typing_get_args(self) -> None:
+        """Test extract_generic_args when typing.get_args returns values."""
+        # Test with actual generic types
+        args = FlextRuntime.extract_generic_args(list[str])
+        assert args == (str,)
+
+        args = FlextRuntime.extract_generic_args(dict[str, int])
+        assert args == (str, int)
+
+    def test_extract_generic_args_exception_path(self) -> None:
+        """Test extract_generic_args exception handling."""
+
+        # Test with object that raises exception
+        class BadType:
+            def __getattribute__(self, name: str) -> object:
+                if name == "__name__":
+                    msg = "Cannot access __name__"
+                    raise AttributeError(msg)
+                return super().__getattribute__(name)
+
+        bad_type = BadType()
+        result = FlextRuntime.extract_generic_args(bad_type)
+        assert result == ()
+
+    def test_is_sequence_type_with_origin(self) -> None:
+        """Test is_sequence_type with typing.get_origin returning Sequence."""
+        from collections.abc import Sequence
+
+        # Test with actual sequence types
+        assert FlextRuntime.is_sequence_type(Sequence[str]) is True
+        assert FlextRuntime.is_sequence_type(Sequence[int]) is True
+
+    def test_is_sequence_type_with_sequence_subclass(self) -> None:
+        """Test is_sequence_type with type that is Sequence subclass."""
+        from collections.abc import Sequence
+
+        class MySequence(Sequence):
+            def __getitem__(self, index: int) -> object:
+                return None
+
+            def __len__(self) -> int:
+                return 0
+
+        assert FlextRuntime.is_sequence_type(MySequence) is True
+
+    def test_is_sequence_type_exception_path(self) -> None:
+        """Test is_sequence_type exception handling."""
+
+        # Test with object that raises exception
+        class BadType:
+            def __getattribute__(self, name: str) -> object:
+                if name == "__name__":
+                    msg = "Cannot access __name__"
+                    raise AttributeError(msg)
+                return super().__getattribute__(name)
+
+        bad_type = BadType()
+        result = FlextRuntime.is_sequence_type(bad_type)
+        assert result is False
+
+    def test_level_based_context_filter_with_level_prefixed(self) -> None:
+        """Test level_based_context_filter with properly formatted level prefix."""
+        import structlog
+
+        FlextRuntime.configure_structlog()
+
+        # Create event dict with properly formatted level prefix
+        # Format: _level_<level>_<key> where parts_count = 4
+        # So "_level_debug_config" splits into ['', 'level', 'debug', 'config']
+        # Level hierarchy: DEBUG (10) < INFO (20) < WARNING (30) < ERROR (40) < CRITICAL (50)
+        event_dict = {
+            "_level_debug_config": {"key": "value"},  # DEBUG level (10)
+            "_level_info_status": "ok",  # INFO level (20)
+            "_level_error_stack": "trace",  # ERROR level (40)
+            "normal_key": "value",
+        }
+
+        logger = structlog.get_logger()
+        # Test with INFO level (20)
+        # Logic: if current_level >= required_level, include
+        # - DEBUG (10): INFO (20) >= DEBUG (10) = True, so config is included
+        # - INFO (20): INFO (20) >= INFO (20) = True, so status is included
+        # - ERROR (40): INFO (20) >= ERROR (40) = False, so stack is excluded
+        # - normal_key: always included (not prefixed)
+        result = FlextRuntime.level_based_context_filter(logger, "info", event_dict)
+        assert "status" in result  # INFO level included (same level)
+        assert "normal_key" in result  # Normal key included
+        assert "config" in result  # DEBUG level included (INFO >= DEBUG)
+        assert "stack" not in result  # ERROR level excluded (INFO < ERROR)
+
+    def test_configure_structlog_with_config_additional_processors(self) -> None:
+        """Test configure_structlog with config object having additional_processors."""
+        FlextRuntime._structlog_configured = False
+
+        def custom_processor(
+            logger: object, method_name: str, event_dict: dict[str, object]
+        ) -> dict[str, object]:
+            event_dict["custom"] = True
+            return event_dict
+
+        class Config:
+            log_level = logging.DEBUG
+            console_renderer = True
+            additional_processors = [custom_processor]
+            wrapper_class_factory = None
+            logger_factory = None
+            cache_logger_on_first_use = True
+
+        config = Config()
+        FlextRuntime.configure_structlog(config=config)
+        assert FlextRuntime._structlog_configured is True

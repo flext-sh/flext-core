@@ -15,9 +15,36 @@ from typing import Annotated, Self
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core._models.entity import FlextModelsEntity
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
+
+
+def _get_command_timeout_default() -> int:
+    """Get command timeout from Config (priority) or Constants (default).
+
+    Config has priority over Constants. Returns Constants value if Config is 0 or unavailable.
+    This ensures Models use Config values in initialization without requiring them to be passed.
+    """
+    config = FlextConfig.get_global_instance()
+    timeout = config.dispatcher_timeout_seconds
+    if timeout > 0:
+        return int(timeout)
+    return FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT
+
+
+def _get_max_command_retries_default() -> int:
+    """Get max retry attempts from Config (priority) or Constants (default).
+
+    Config has priority over Constants. Returns Constants value if Config is 0 or unavailable.
+    This ensures Models use Config values in initialization without requiring them to be passed.
+    """
+    config = FlextConfig.get_global_instance()
+    retries = config.max_retry_attempts
+    if retries > 0:
+        return retries
+    return FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES
 
 
 class FlextModelsCqrs:
@@ -157,7 +184,7 @@ class FlextModelsCqrs:
                 # Fast fail: filters and pagination must be dict or None
                 filters_raw = query_payload.get("filters")
                 filters: dict[str, object] = (
-                    filters_raw if isinstance(filters_raw, dict) else {}
+                    filters_raw if FlextRuntime.is_dict_like(filters_raw) else {}
                 )
                 pagination_raw = query_payload.get("pagination")
                 pagination_data: dict[str, object] = (
@@ -244,12 +271,12 @@ class FlextModelsCqrs:
             default=FlextConstants.Cqrs.HandlerType.COMMAND, description="Handler mode"
         )
         command_timeout: int = Field(
-            default_factory=lambda: FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT,
-            description="Command timeout",
+            default_factory=_get_command_timeout_default,
+            description="Command timeout from FlextConfig (priority) or FlextConstants (default). Models use Config values in initialization.",
         )
         max_command_retries: int = Field(
-            default_factory=lambda: FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
-            description="Maximum retry attempts",
+            default_factory=_get_max_command_retries_default,
+            description="Maximum retry attempts from FlextConfig (priority) or FlextConstants (default). Models use Config values in initialization.",
         )
         metadata: dict[str, object] = Field(
             default_factory=dict, description="Handler metadata"

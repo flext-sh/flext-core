@@ -13,7 +13,7 @@ from typing import Never, cast
 
 import pytest
 
-from flext_core import FlextConstants, FlextContainer, FlextModels, FlextResult
+from flext_core import FlextContainer, FlextModels, FlextResult
 
 
 class TestFlextContainer:
@@ -804,8 +804,10 @@ class TestFlextContainer:
     # Removed: test_container_get_info_exception - method removed
     # These methods are now removed. Use direct access to _services and _factories instead.
 
-    def test_container_build_service_info_exception_fallback(self) -> None:
-        """Test _build_service_info exception handling with fallback dict."""
+    def test_container_build_service_info_exception_fast_fail(self) -> None:
+        """Test _build_service_info exception handling - fast fail (no fallback)."""
+        from flext_core import FlextExceptions
+
         container = FlextContainer()
 
         # Create an object that raises exception when accessing __class__
@@ -822,19 +824,12 @@ class TestFlextContainer:
 
         service = ProblematicService()
 
-        # Should return fallback dict[str, object] with "unknown" values
-        info = container._build_service_info("test", service, "service")
+        # Fast fail: should raise TypeError, not return fallback dict
+        with pytest.raises(FlextExceptions.TypeError) as exc_info:
+            container._build_service_info("test", service, "service")
 
-        assert info[FlextConstants.Mixins.FIELD_NAME] == "test"
-        assert info[FlextConstants.Mixins.FIELD_TYPE] == "service"
-        assert (
-            info[FlextConstants.Mixins.FIELD_CLASS]
-            == FlextConstants.Mixins.IDENTIFIER_UNKNOWN
-        )
-        assert (
-            info[FlextConstants.Mixins.FIELD_MODULE]
-            == FlextConstants.Mixins.IDENTIFIER_UNKNOWN
-        )
+        assert "Failed to inspect service" in str(exc_info.value)
+        assert "Class access failed" in str(exc_info.value)
 
     def test_container_configure_container_exception(self) -> None:
         """Test configure_container() exception handling."""

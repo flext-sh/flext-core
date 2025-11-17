@@ -208,7 +208,14 @@ class FlextUtilitiesStringParser:
             normalized = re.sub(pattern, replacement, text).strip()
             return FlextResult[str].ok(normalized)
 
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            RuntimeError,
+            KeyError,
+            re.error,
+        ) as e:
             return FlextResult[str].fail(f"Failed to normalize whitespace: {e}")
 
     @staticmethod
