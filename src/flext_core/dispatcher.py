@@ -17,7 +17,7 @@ import threading
 import time
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
-from typing import cast, override
+from typing import override
 
 from cachetools import LRUCache
 from pydantic import BaseModel
@@ -1372,7 +1372,13 @@ class FlextDispatcher(FlextMixins):
         # First, try to find handler by command type name in _handlers
         # (two-arg registration)
         if command_name in self._handlers:
-            return self._handlers[command_name]
+            handler_entry = self._handlers[command_name]
+            # Extract handler from dict if registered via register_handler
+            if isinstance(handler_entry, dict) and "handler" in handler_entry:
+                handler_obj: object = handler_entry["handler"]
+                return handler_obj
+            # Return handler directly if it's not a dict (old API)
+            return handler_entry
 
         # Search auto-registered handlers (single-arg form)
         for handler in self._auto_handlers:
@@ -1489,13 +1495,17 @@ class FlextDispatcher(FlextMixins):
             handler_type=handler.__class__.__name__,
         )
 
-        # BREAKING CHANGE: Require standard handle() method
-        # No fallback to execute() or process_command() - must use handle()
-        # Fast fail: check if handle method exists, no fallback
-        method_name = FlextConstants.Mixins.METHOD_HANDLE
-        if not hasattr(handler, method_name):
+        # Try standard handle() method first, then execute() as fallback
+        # Consistent with registration validation that accepts both
+        method_name = None
+        if hasattr(handler, "handle") and callable(handler.handle):
+            method_name = "handle"
+        elif hasattr(handler, "execute") and callable(handler.execute):
+            method_name = "execute"
+
+        if not method_name:
             return self.fail(
-                f"Handler must have '{method_name}' method",
+                "Handler must have 'handle' or 'execute' method",
                 error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
             )
         handle_method = getattr(handler, method_name)
@@ -1618,17 +1628,18 @@ class FlextDispatcher(FlextMixins):
         handler: object,
         middleware_type: object,
     ) -> FlextResult[bool]:
-        """Invoke middleware and handle result."""
-        process_method = getattr(middleware, "process", None)
-        if callable(process_method):
-            result = process_method(command, handler)
-            return self._handle_middleware_result(result, middleware_type)
-        if callable(middleware):
-            # Fallback for callable middleware objects (like test middleware)
-            result = middleware(command)
-            return self._handle_middleware_result(result, middleware_type)
+        """Invoke middleware and handle result.
 
-        return self.ok(True)
+        Fast fail: Middleware must have process() method. No fallback to callable.
+        """
+        process_method = getattr(middleware, "process", None)
+        if not callable(process_method):
+            return self.fail(
+                "Middleware must have callable 'process' method",
+                error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
+            )
+        result = process_method(command, handler)
+        return self._handle_middleware_result(result, middleware_type)
 
     def _handle_middleware_result(
         self, result: object, middleware_type: object
@@ -2030,6 +2041,41 @@ class FlextDispatcher(FlextMixins):
     # ------------------------------------------------------------------
     # Registration methods using structured models
     # ------------------------------------------------------------------
+    def _extract_handler_name(
+        self,
+        handler: object,
+        request_dict: dict[str, object],
+    ) -> str:
+        """Extract handler_name from request or handler config.
+
+        Args:
+            handler: Handler instance
+            request_dict: Request dictionary
+
+        Returns:
+            Handler name string or empty string if not found
+
+        """
+        handler_name = str(request_dict.get("handler_name", ""))
+        if handler_name:
+            return handler_name
+
+        # Try to extract from handler's config attribute (FlextHandlers pattern)
+        # Use getattr to safely access private attributes
+        config_model = getattr(handler, "_config_model", None)
+        if config_model and hasattr(config_model, "handler_name"):
+            return str(config_model.handler_name)
+        if hasattr(handler, "config") and hasattr(handler.config, "handler_name"):
+            return str(handler.config.handler_name)
+        if hasattr(handler, "handler_name"):
+            return str(handler.handler_name)
+        if hasattr(handler, "__name__"):
+            return str(handler.__name__)
+        if hasattr(handler, "__class__") and hasattr(handler.__class__, "__name__"):
+            return str(handler.__class__.__name__)
+
+        return ""
+
     def register_handler_with_request(
         self,
         request: dict[str, object] | object,
@@ -2047,163 +2093,230 @@ class FlextDispatcher(FlextMixins):
         request_dict: dict[str, object]
         if isinstance(request, BaseModel):
             request_dict = request.model_dump()
-        elif self.is_dict_like(request):
-            # Type narrowed by TypeGuard - use narrowed type directly
-            request_dict = cast("dict[str, object]", request)
+        elif isinstance(request, dict):
+            # Type narrowed by isinstance check
+            request_dict = request
         else:
             return FlextResult[dict[str, object]].fail(
                 "Request must be dict or Pydantic model"
             )
 
         # Validate handler mode using constants
-        if (
-            request_dict.get("handler_mode")
-            not in FlextConstants.Dispatcher.VALID_HANDLER_MODES
-        ):
+        handler_mode = request_dict.get("handler_mode")
+        # Use HandlerType enum values for validation
+        valid_modes = [
+            FlextConstants.Cqrs.HandlerType.COMMAND,
+            FlextConstants.Cqrs.HandlerType.QUERY,
+            FlextConstants.Cqrs.HandlerType.EVENT,
+            FlextConstants.Cqrs.HandlerType.OPERATION,
+            FlextConstants.Cqrs.HandlerType.SAGA,
+        ]
+        if handler_mode and str(handler_mode) not in [str(m) for m in valid_modes]:
             return FlextResult[dict[str, object]].fail(
-                FlextConstants.Dispatcher.ERROR_INVALID_HANDLER_MODE,
+                f"Invalid handler_mode: {handler_mode}. Must be one of {valid_modes}"
             )
 
-        # Validate handler is provided - fast fail: handler must exist
-        handler_value = request_dict.get("handler")
-        if handler_value is None:
-            return FlextResult[dict[str, object]].fail(
-                FlextConstants.Dispatcher.ERROR_HANDLER_REQUIRED,
-            )
+        # Validate handler implementation
+        handler = request_dict.get("handler")
+        if not handler:
+            return FlextResult[dict[str, object]].fail("Handler is required")
 
-        # Add Phase 4 enhancement: Protocol validation before registration
-        handler_obj = request_dict.get("handler")
-        protocol_validation = (
-            FlextMixins.ProtocolValidation.validate_protocol_compliance(
-                handler_obj, "Handler"
-            )
+        # Validate handler has required interface
+        validation_result = self._validate_handler_registry_interface(
+            handler, handler_context="registered handler"
         )
-        if protocol_validation.is_failure:
+        if validation_result.is_failure:
             return FlextResult[dict[str, object]].fail(
-                f"Handler protocol validation failed: {protocol_validation.error}",
+                validation_result.error or "Handler validation failed"
             )
 
-        # Register handler directly in dispatcher's internal structures
-        handler_obj = request_dict.get("handler")
+        # Extract handler_name for tracking
+        handler_name = self._extract_handler_name(handler, request_dict)
+        if not handler_name:
+            return FlextResult[dict[str, object]].fail("handler_name is required")
+
+        # ARCHITECTURE: Two registration modes
+        # 1. Auto-discovery: handlers with can_handle() method
+        # 2. Explicit: handlers registered for specific message type
+
+        # Check if handler supports auto-discovery
+        has_can_handle = hasattr(handler, "can_handle") and callable(handler.can_handle)
+
+        if has_can_handle:
+            # Mode 1: Auto-discovery via can_handle()
+            # Add to _auto_handlers list for routing via can_handle()
+            if handler not in self._auto_handlers:
+                self._auto_handlers.append(handler)
+
+            return FlextResult[dict[str, object]].ok({
+                "handler_name": handler_name,
+                "status": "registered",
+                "mode": "auto_discovery",
+            })
+
+        # Mode 2: Explicit registration for specific message type
         message_type = request_dict.get("message_type")
-
-        # Store based on whether message_type is provided
-        if message_type:
-            # Store in explicit handlers mapping
-            handler_key = (
-                message_type
-                if isinstance(message_type, str)
-                else getattr(message_type, "__name__", str(message_type))
+        if not message_type:
+            return FlextResult[dict[str, object]].fail(
+                "Handler without can_handle() requires message_type"
             )
-            self._handlers[handler_key] = handler_obj
-        # Add to auto-discovery handlers list
-        elif handler_obj not in self._auto_handlers:
-            self._auto_handlers.append(handler_obj)
 
-        # Create registration details
-        # Fast fail: message_type must exist in request_dict
-        message_type_value = request_dict.get("message_type")
-        message_type_name: str | None = (
-            getattr(message_type_value, "__name__", None)
-            if message_type_value is not None
-            else None
+        # Get message type name for indexing
+        message_type_name = (
+            message_type.__name__
+            if hasattr(message_type, "__name__")
+            else str(message_type)
         )
-        details: dict[str, object] = {
-            "registration_id": request_dict.get("registration_id"),
-            "message_type_name": message_type_name,
-            "handler_mode": request_dict.get("handler_mode"),
-            "timestamp": FlextUtilitiesGenerators.generate_iso_timestamp(),
-            "status": FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
-        }
 
-        if self.config.dispatcher_enable_logging:
-            self._log_with_context(
-                "info",
-                "handler_registered",
-                registration_id=details.get("registration_id"),
-                handler_mode=details.get("handler_mode"),
-                message_type=details.get("message_type_name"),
-            )
+        # Store handler indexed by message type name
+        self._handlers[message_type_name] = handler
 
-        return FlextResult[dict[str, object]].ok(details)
+        return FlextResult[dict[str, object]].ok({
+            "handler_name": handler_name,
+            "message_type": message_type_name,
+            "status": "registered",
+            "mode": "explicit",
+        })
 
-    def register_handler(
+    def register_handler(  # noqa: C901 - complexity justified for dual-mode registration
         self,
-        message_type_or_handler: FlextTypes.MessageTypeOrHandlerType,
-        handler: FlextTypes.HandlerOrCallableType | None = None,
-        *,
-        handler_mode: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-        handler_config: FlextTypes.HandlerConfigurationType = None,
+        request: dict[str, object] | BaseModel | object,
+        handler: object | None = None,
     ) -> FlextResult[dict[str, object]]:
-        """Register handler with support for both old and new API.
+        """Register a handler dynamically.
+
+        Supports two calling patterns:
+        1. register_handler({"handler_name": "...", "handler": ..., ...}) - Dict/BaseModel
+        2. register_handler("message_type", handler) - Two-arg compatibility mode
 
         Args:
-            message_type_or_handler: Message type (str) or handler instance
-            handler: Handler instance (when message_type is provided)
-            handler_mode: Handler operation mode (command/query)
-            handler_config: Optional handler configuration
+            request: Dict or Pydantic model containing registration details, or message_type string
+            handler: Handler instance (for two-arg compatibility mode)
 
         Returns:
             FlextResult with registration details or error
 
         """
-        # Support both old API (message_type, handler) and new API (handler only)
-        if isinstance(message_type_or_handler, str) and handler is not None:
-            # Old API: register_handler(message_type, handler)
-            # Ensure handler is FlextHandlers instance (use helper to eliminate duplication)
-            ensure_result = self._ensure_handler(handler, mode=handler_mode)
-            if ensure_result.is_failure:
-                # Fast fail: error must exist for failed result
-                error_msg = ensure_result.error
-                if error_msg is None:
-                    msg = "Handler creation result is failure but error is None"
-                    raise FlextExceptions.OperationError(
-                        message=msg,
-                        error_code=FlextConstants.Errors.OPERATION_ERROR,
-                    )
-                return FlextResult[dict[str, object]].fail(error_msg)
-            resolved_handler = ensure_result.value
-
-            # Create structured request with message type
-            request: dict[str, object] = {
-                "handler": resolved_handler,
-                "message_type": message_type_or_handler,
-                "handler_mode": handler_mode,
-                "handler_config": handler_config,
-            }
-        else:
-            # New API: register_handler(handler)
-            # Ensure we have a handler, not a string
-            if isinstance(message_type_or_handler, str):
+        # Two-arg compatibility mode: register_handler("message_type", handler)
+        if handler is not None:
+            # Delegate to layer1_register_handler for compatibility
+            result = self.layer1_register_handler(request, handler)
+            if result.is_failure:
                 return FlextResult[dict[str, object]].fail(
-                    "Cannot register handler: message type string provided without handler",
+                    result.error or "Registration failed"
                 )
+            # Convert to dict format for consistency
+            return FlextResult[dict[str, object]].ok({
+                "handler_name": str(request) if isinstance(request, str) else "unknown",
+                "status": "registered",
+                "mode": "explicit",
+            })
 
-            # Ensure handler is FlextHandlers instance (use helper to eliminate duplication)
-            ensure_result = self._ensure_handler(
-                message_type_or_handler, mode=handler_mode
+        # Single-arg mode: register_handler(dict_or_model_or_handler)
+        # Convert Pydantic model to dict if needed
+        request_dict: dict[str, object] | None = None
+        if isinstance(request, BaseModel):
+            request_dict = request.model_dump()
+        elif isinstance(request, dict):
+            # Type narrowed by isinstance check
+            request_dict = request
+        else:
+            # Single handler object - delegate to layer1_register_handler for compatibility
+            result = self.layer1_register_handler(request)
+            if result.is_failure:
+                return FlextResult[dict[str, object]].fail(
+                    result.error or "Registration failed"
+                )
+            # Convert to dict format for consistency
+            handler_name = getattr(request, "__class__", type(request)).__name__
+            return FlextResult[dict[str, object]].ok({
+                "handler_name": handler_name,
+                "status": "registered",
+                "mode": "auto_discovery",
+            })
+
+        # Continue with dict-based registration
+        if request_dict is None:
+            return FlextResult[dict[str, object]].fail(
+                "Request must be dict, Pydantic model, or handler object"
             )
-            if ensure_result.is_failure:
-                # Fast fail: error must exist for failed result
-                error_msg = ensure_result.error
-                if error_msg is None:
-                    msg = "Handler creation result is failure but error is None"
-                    raise FlextExceptions.OperationError(
-                        message=msg,
-                        error_code=FlextConstants.Errors.OPERATION_ERROR,
-                    )
-                return FlextResult[dict[str, object]].fail(error_msg)
-            resolved_handler = ensure_result.value
 
-            # Create structured request
-            request = {
-                "handler": resolved_handler,
-                "message_type": None,
-                "handler_mode": handler_mode,
-                "handler_config": handler_config,
-            }
+        # Validate handler mode using constants
+        handler_mode = request_dict.get("handler_mode")
+        # Use HandlerType enum values for validation
+        valid_modes = [
+            FlextConstants.Cqrs.HandlerType.COMMAND,
+            FlextConstants.Cqrs.HandlerType.QUERY,
+            FlextConstants.Cqrs.HandlerType.EVENT,
+            FlextConstants.Cqrs.HandlerType.OPERATION,
+            FlextConstants.Cqrs.HandlerType.SAGA,
+        ]
+        if handler_mode and str(handler_mode) not in [str(m) for m in valid_modes]:
+            return FlextResult[dict[str, object]].fail(
+                f"Invalid handler_mode: {handler_mode}. Must be one of {valid_modes}"
+            )
 
-        return self.register_handler_with_request(request)
+        # Validate handler implementation
+        handler = request_dict.get("handler")
+        if not handler:
+            return FlextResult[dict[str, object]].fail("Handler is required")
+
+        # Validate handler has required interface
+        validation_result = self._validate_handler_registry_interface(
+            handler, handler_context="registered handler"
+        )
+        if validation_result.is_failure:
+            return FlextResult[dict[str, object]].fail(
+                validation_result.error or "Handler validation failed"
+            )
+
+        # Extract handler_name for tracking
+        handler_name = self._extract_handler_name(handler, request_dict)
+        if not handler_name:
+            return FlextResult[dict[str, object]].fail("handler_name is required")
+
+        # ARCHITECTURE: Two registration modes
+        # 1. Auto-discovery: handlers with can_handle() method
+        # 2. Explicit: handlers registered for specific message type
+
+        # Check if handler supports auto-discovery
+        has_can_handle = hasattr(handler, "can_handle") and callable(handler.can_handle)
+
+        if has_can_handle:
+            # Mode 1: Auto-discovery via can_handle()
+            # Add to _auto_handlers list for routing via can_handle()
+            if handler not in self._auto_handlers:
+                self._auto_handlers.append(handler)
+
+            return FlextResult[dict[str, object]].ok({
+                "handler_name": handler_name,
+                "status": "registered",
+                "mode": "auto_discovery",
+            })
+
+        # Mode 2: Explicit registration for specific message type
+        message_type = request_dict.get("message_type")
+        if not message_type:
+            return FlextResult[dict[str, object]].fail(
+                "Handler without can_handle() requires message_type"
+            )
+
+        # Get message type name for indexing
+        message_type_name = (
+            message_type.__name__
+            if hasattr(message_type, "__name__")
+            else str(message_type)
+        )
+
+        # Store handler indexed by message type name
+        self._handlers[message_type_name] = handler
+
+        return FlextResult[dict[str, object]].ok({
+            "handler_name": handler_name,
+            "message_type": message_type_name,
+            "status": "registered",
+            "mode": "explicit",
+        })
 
     def _register_handler(
         self,
@@ -2403,10 +2516,9 @@ class FlextDispatcher(FlextMixins):
     # Dispatch execution using structured models
     # ------------------------------------------------------------------
     def dispatch_with_request(
-        self,
-        request: dict[str, object] | object,
+        self, request: dict[str, object] | BaseModel | object
     ) -> FlextResult[dict[str, object]]:
-        """Dispatch using structured request model.
+        """Enhanced dispatch accepting Pydantic models or dicts.
 
         Args:
             request: Dict or Pydantic model containing dispatch details
@@ -2419,123 +2531,31 @@ class FlextDispatcher(FlextMixins):
         request_dict: dict[str, object]
         if isinstance(request, BaseModel):
             request_dict = request.model_dump()
-        elif self.is_dict_like(request):
-            # Type narrowed by TypeGuard - use narrowed type directly
-            request_dict = cast("dict[str, object]", request)
+        elif isinstance(request, dict):
+            # Type narrowed by isinstance check
+            request_dict = request
         else:
             return FlextResult[dict[str, object]].fail(
                 "Request must be dict or Pydantic model"
             )
 
         # Propagate context for distributed tracing
-        message = request_dict.get("message")
-        message_type = type(message).__name__ if message else "unknown"
-        self._propagate_context(f"dispatch_with_request_{message_type}")
-
-        start_time = time.time()
-
-        # Validate request
-        if request_dict.get("message") is None:
-            return FlextResult[dict[str, object]].fail(
-                FlextConstants.Dispatcher.ERROR_MESSAGE_REQUIRED,
-            )
-
-        # Get timeout from request override or config
-        timeout_override = request_dict.get("timeout_override")
-        timeout_seconds = (
-            timeout_override
-            if timeout_override is not None
-            else self.config.timeout_seconds
-        )
-
-        # Execute dispatch with context management and timeout enforcement
-        context_metadata = request_dict.get("context_metadata")
-        normalized_metadata = self._normalize_context_metadata(context_metadata)
-        metadata_dict = normalized_metadata if normalized_metadata is not None else {}
         correlation_id = request_dict.get("correlation_id")
-        correlation_id_str = str(correlation_id) if correlation_id is not None else None
+        if correlation_id and isinstance(correlation_id, str):
+            FlextContext.Correlation.set_correlation_id(correlation_id)
 
-        with self._context_scope(metadata_dict, correlation_id_str):
-            # Execute with timeout if configured
-            if (
-                timeout_seconds
-                and isinstance(timeout_seconds, (int, float))
-                and timeout_seconds > 0
-            ):
-                # Use FlextUtilities.Reliability.with_timeout for timeout enforcement
-                execution_result = FlextUtilities.Reliability.with_timeout(
-                    lambda: self.execute(request_dict.get("message")),
-                    float(timeout_seconds),
-                )
-            else:
-                # No timeout configured, execute directly
-                execution_result = self.execute(request_dict.get("message"))
+        # Execute dispatch
+        dispatch_result = self.dispatch(request_dict)
 
-            execution_time_ms = int((time.time() - start_time) * 1000)
-
-            # Get message type for circuit breaker and audit
-            message = request_dict.get("message")
-            message_type = type(message).__name__ if message else "unknown"
-
-            # Update circuit breaker state machine
-            if execution_result.is_success:
-                self._circuit_breaker.record_success(message_type)
-            else:
-                self._circuit_breaker.record_failure(message_type)
-
-            if execution_result.is_success:
-                dispatch_result: dict[str, object] = {
-                    "success": True,
-                    "result": execution_result.value,
-                    "error_message": None,
-                    "request_id": request_dict.get("request_id"),
-                    "execution_time_ms": execution_time_ms,
-                    "correlation_id": request_dict.get("correlation_id"),
-                    "timeout_seconds": timeout_seconds,
-                }
-
-                if self.config.dispatcher_enable_logging:
-                    self._log_with_context(
-                        "debug",
-                        "dispatch_succeeded",
-                        request_id=request_dict.get("request_id"),
-                        message_type=type(request_dict.get("message")).__name__,
-                        execution_time_ms=execution_time_ms,
-                        timeout_seconds=timeout_seconds,
-                    )
-
-                return FlextResult[dict[str, object]].ok(dispatch_result)
-
-            # Fast fail: error must exist for failed result
-            error_msg = execution_result.error
-            if error_msg is None:
-                msg = "Execution result is failure but error is None"
-                raise FlextExceptions.OperationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.OPERATION_ERROR,
-                )
-            dispatch_result = {
-                "success": False,
-                "result": None,
-                "error_message": error_msg,
-                "request_id": request_dict.get("request_id"),
-                "execution_time_ms": execution_time_ms,
-                "correlation_id": request_dict.get("correlation_id"),
-                "timeout_seconds": timeout_seconds,
+        # Wrap result in structured format
+        if dispatch_result.is_success:
+            structured_result = {
+                "status": "success",
+                "data": dispatch_result.value,
+                "correlation_id": FlextContext.Correlation.get_correlation_id(),
             }
-
-            if self.config.dispatcher_enable_logging:
-                self._log_with_context(
-                    "error",
-                    "dispatch_failed",
-                    request_id=request_dict.get("request_id"),
-                    message_type=type(request_dict.get("message")).__name__,
-                    error=dispatch_result.get("error_message"),
-                    execution_time_ms=execution_time_ms,
-                    timeout_seconds=timeout_seconds,
-                )
-
-            return FlextResult[dict[str, object]].ok(dispatch_result)
+            return FlextResult[dict[str, object]].ok(structured_result)
+        return FlextResult[dict[str, object]].fail(dispatch_result.error)
 
     def _check_pre_dispatch_conditions(
         self,
@@ -2718,38 +2738,58 @@ class FlextDispatcher(FlextMixins):
 
     def dispatch(
         self,
-        _message_or_type: object | str,
-        _data: object | None = None,
+        message_or_type: object,
+        data: object | None = None,
         *,
         config: object | None = None,
         metadata: dict[str, object] | None = None,
         correlation_id: str | None = None,
         timeout_override: int | None = None,
     ) -> FlextResult[object]:
-        """Dispatch message with railway pattern and FlextUtilities integration.
+        """Dispatch message - supports both new (object) and old (type, data) APIs.
 
-        Uses railway-oriented programming with automatic retry, circuit breaker,
-        and timeout handling through FlextUtilities and processor patterns.
+        ARCHITECTURE: Unified API supporting backward compatibility.
 
         Args:
-            _message_or_type: Message object or message type string (unused in current implementation)
-            _data: Data to dispatch (when _message_or_type is string, unused in current implementation)
-            config: DispatchConfig instance (Pydantic v2) - NEW PATTERN
-            metadata: Optional execution context metadata (backward compat)
-            correlation_id: Optional correlation ID for tracing (backward compat)
-            timeout_override: Optional timeout override (backward compat)
+            message_or_type: Message object (new) or type string (old)
+            data: Message data (old API only)
+            config: DispatchConfig instance
+            metadata: Optional execution context metadata
+            correlation_id: Optional correlation ID for tracing
+            timeout_override: Optional timeout override
 
         Returns:
             FlextResult with execution result or error
 
         """
+        # ARCHITECTURE: Detect API pattern - old (type, data) vs new (object)
+        message: object
+        if data is not None or isinstance(message_or_type, str):
+            # Old API: dispatch("type", data)
+            # Create wrapper message with correct __name__ for routing
+            message_type_str = str(message_or_type)
+
+            # Create message class dynamically with correct name for routing
+            message_class = type(message_type_str, (), {"payload": data})
+            message = message_class()
+        else:
+            # New API: dispatch(message_object)
+            message = message_or_type
+
+        # Fast fail: message cannot be None
+        if message is None:
+            return self.fail(
+                "Message cannot be None",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+
         return (
             self._extract_dispatch_config(
                 config, metadata, correlation_id, timeout_override
             )
             .flat_map(
                 lambda dispatch_config: self._prepare_dispatch_context(
-                    _message_or_type, _data, dispatch_config
+                    message, None, dispatch_config
                 )
             )
             .flat_map(self._validate_pre_dispatch_conditions)
@@ -2810,24 +2850,21 @@ class FlextDispatcher(FlextMixins):
 
     def _prepare_dispatch_context(
         self,
-        message_or_type: object | str,
-        data: object | None,
+        message: object,
+        _data: object | None,
         dispatch_config: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
-        """Prepare dispatch context with message normalization and context propagation."""
+        """Prepare dispatch context with message normalization and context propagation.
+
+        Fast fail: Only accepts message objects. _data parameter is ignored (kept for signature compatibility).
+        """
         try:
             # Propagate context for distributed tracing
-            dispatch_type = (
-                type(message_or_type).__name__
-                if not isinstance(message_or_type, str)
-                else str(message_or_type)
-            )
+            dispatch_type = type(message).__name__
             self._propagate_context(f"dispatch_{dispatch_type}")
 
             # Normalize message and get type
-            message, message_type = self._normalize_dispatch_message(
-                message_or_type, data
-            )
+            message, message_type = self._normalize_dispatch_message(message, _data)
 
             context = {
                 **dispatch_config,
@@ -2847,7 +2884,12 @@ class FlextDispatcher(FlextMixins):
         self, context: dict[str, object]
     ) -> FlextResult[dict[str, object]]:
         """Validate pre-dispatch conditions (circuit breaker + rate limiting)."""
-        message_type = cast("str", context["message_type"])
+        # Fast fail: message_type must be str (created by _normalize_dispatch_message)
+        message_type_raw = context.get("message_type")
+        if not isinstance(message_type_raw, str):
+            msg = f"Invalid message_type in context: {type(message_type_raw).__name__}, expected str"
+            return FlextResult[dict[str, object]].fail(msg)
+        message_type: str = message_type_raw
 
         # Check pre-dispatch conditions (circuit breaker + rate limiting)
         conditions_check = self._check_pre_dispatch_conditions(message_type)
@@ -2864,11 +2906,32 @@ class FlextDispatcher(FlextMixins):
         self, context: dict[str, object]
     ) -> FlextResult[object]:
         """Execute dispatch with retry policy using FlextUtilities."""
-        message = context["message"]
-        message_type = cast("str", context["message_type"])
-        metadata = cast("dict[str, object] | None", context["metadata"])
-        correlation_id = cast("str | None", context["correlation_id"])
-        timeout_override = cast("int | None", context["timeout_override"])
+        # Fast fail: validate context values (created by _prepare_dispatch_context)
+        message = context.get("message")
+        message_type_raw = context.get("message_type")
+        if not isinstance(message_type_raw, str):
+            msg = f"Invalid message_type in context: {type(message_type_raw).__name__}, expected str"
+            return FlextResult[object].fail(msg)
+        message_type: str = message_type_raw
+
+        metadata_raw = context.get("metadata")
+        metadata: dict[str, object] | None = (
+            metadata_raw if isinstance(metadata_raw, (dict, type(None))) else None
+        )
+
+        correlation_id_raw = context.get("correlation_id")
+        correlation_id: str | None = (
+            correlation_id_raw
+            if isinstance(correlation_id_raw, (str, type(None)))
+            else None
+        )
+
+        timeout_override_raw = context.get("timeout_override")
+        timeout_override: int | None = (
+            timeout_override_raw
+            if isinstance(timeout_override_raw, (int, type(None)))
+            else None
+        )
 
         # Generate operation ID using FlextUtilities
         operation_id = FlextUtilitiesGenerators.generate_operation_id(
@@ -2891,20 +2954,28 @@ class FlextDispatcher(FlextMixins):
         )
 
     def _normalize_dispatch_message(
-        self, message_or_type: object | str, data: object | None
+        self, message: object, _data: object | None
     ) -> tuple[object, str]:
-        """Normalize message and extract message type."""
-        # Support both old API (message_type, data) and new API (message)
-        if isinstance(message_or_type, str):
-            if data is not None:
-                # Old API: dispatch(message_type, data)
-                message = self._create_message_wrapper(data, message_or_type)
-                return message, message_or_type
-            # Old API: dispatch(message_type) - no data provided
-            return None, message_or_type
-        # New API: dispatch(message)
-        message_type = type(message_or_type).__name__ if message_or_type else "unknown"
-        return message_or_type, message_type
+        """Normalize message and extract message type.
+
+        Fast fail: Only accepts message objects. No support for (message_type, data) API.
+        """
+        # Fast fail: message cannot be None
+        if message is None:
+            msg = "Message cannot be None. Use dispatch(message_object), not dispatch(None, data)."
+            raise TypeError(msg)
+
+        # Fast fail: message cannot be string (old API not supported)
+        if isinstance(message, str):
+            msg = (
+                "String message_type not supported. "
+                "Use dispatch(message_object), not dispatch('message_type', data)."
+            )
+            raise TypeError(msg)
+
+        # Extract message type from message object
+        message_type = type(message).__name__
+        return message, message_type
 
     def _create_message_wrapper(self, data: object, message_type: str) -> object:
         """Create message wrapper for string message types."""
@@ -2936,7 +3007,12 @@ class FlextDispatcher(FlextMixins):
             float: Timeout in seconds
 
         """
-        timeout_seconds = float(cast("int | float", self.config.timeout_seconds))
+        # Fast fail: timeout_seconds must be numeric
+        timeout_raw = self.config.timeout_seconds
+        if not isinstance(timeout_raw, (int, float)):
+            msg = f"Invalid timeout_seconds type: {type(timeout_raw).__name__}, expected int | float"
+            raise TypeError(msg)
+        timeout_seconds: float = float(timeout_raw)
         if timeout_override:
             timeout_seconds = float(timeout_override)
         return timeout_seconds
@@ -3147,7 +3223,8 @@ class FlextDispatcher(FlextMixins):
         """Extract metadata mapping from object's attributes."""
         attributes_value = getattr(metadata, "attributes", None)
         if isinstance(attributes_value, Mapping) and attributes_value:
-            return cast("Mapping[str, object]", attributes_value)
+            # Type narrowed by isinstance check - no cast needed
+            return attributes_value
 
         # Use model_dump() directly if available - Pydantic v2 pattern
         model_dump = getattr(metadata, "model_dump", None)
@@ -3257,20 +3334,21 @@ class FlextDispatcher(FlextMixins):
 
     def dispatch_batch(
         self,
-        message_type: str,
+        message_type: str,  # noqa: ARG002 - kept for backward compatibility
         messages: list[object],
     ) -> list[FlextResult[object]]:
         """Dispatch multiple messages in batch.
 
         Args:
-            message_type: Type of messages to dispatch
-            messages: List of message data to dispatch
+            message_type: Type of messages to dispatch (kept for compatibility, not used)
+            messages: List of message objects to dispatch
 
         Returns:
             List of FlextResult objects for each dispatched message
 
         """
-        return [self.dispatch(message_type, msg) for msg in messages]
+        # Dispatch each message - message_type is extracted from message object
+        return [self.dispatch(msg) for msg in messages]
 
     def get_performance_metrics(self) -> dict[str, object]:
         """Get performance metrics for the dispatcher.

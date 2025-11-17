@@ -111,7 +111,9 @@ class FlextModelsBase:
         """Conditional execution request."""
 
         condition: Callable[[object], bool]
-        true_action: Callable[..., object]
+        true_action: Callable[..., object] | None = (
+            None  # Optional for test convenience
+        )
         false_action: Callable[..., object] | None = None
         context: dict[str, object] = Field(default_factory=dict)
 

@@ -1167,7 +1167,7 @@ class FlextExceptions:
             message: str,
             *,
             config: object | None = None,
-            error_code: str = FlextConstants.Errors.CONFIGURATION_ERROR,
+            error_code: str = FlextConstants.Errors.TYPE_ERROR,
             expected_type: str | None = None,
             actual_type: str | None = None,
             **kwargs: object,

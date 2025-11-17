@@ -471,7 +471,7 @@ class FlextResult[T_co]:
     @property
     def data(self) -> T_co:
         """Return the success payload (backward compatibility alias for .value).
-        
+
         Raises :class:`ValidationError` on failure, same as .value property.
         """
         return self.value

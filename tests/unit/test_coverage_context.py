@@ -501,8 +501,13 @@ class TestContextDataModel:
         )
         context = FlextContext(context_data)
 
-        assert context.get("key1") == "value1"
-        assert context.get("key2") == "value2"
+        result1 = context.get("key1")
+        assert result1.is_success
+        assert result1.unwrap() == "value1"
+
+        result2 = context.get("key2")
+        assert result2.is_success
+        assert result2.unwrap() == "value2"
 
     def test_context_export_snapshot(self) -> None:
         """Test exporting context as ContextExport model."""
@@ -576,7 +581,9 @@ class TestContextIntegration:
 
         # Deserialize
         restored_context = FlextContext.from_json(json_str)
-        assert restored_context.get("basic_key") == "basic_value"
+        result = restored_context.get("basic_key")
+        assert result.is_success
+        assert result.unwrap() == "basic_value"
 
 
 __all__ = [

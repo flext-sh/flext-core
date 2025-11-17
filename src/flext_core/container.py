@@ -15,7 +15,7 @@ import inspect
 import threading
 from collections.abc import Callable, Mapping
 from contextlib import suppress
-from typing import Self, cast, override
+from typing import Self, TypeGuard, cast, override
 
 from dependency_injector.containers import DynamicContainer
 from dependency_injector.providers import Object, Singleton
@@ -23,6 +23,7 @@ from dependency_injector.providers import Object, Singleton
 from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
@@ -308,7 +309,13 @@ class FlextContainer(FlextProtocols.Configurable):
             lambda validated_name: self._store_service(validated_name, service),
         )
         if result.is_failure:
-            raise ValueError(result.error or f"Failed to register service '{name}'")
+            base_msg = f"Failed to register service '{name}'"
+            error_msg = (
+                f"{base_msg}: {result.error}"
+                if result.error
+                else f"{base_msg} (validation or storage failed)"
+            )
+            raise ValueError(error_msg)
         return self
 
     def _store_service(self, name: str, service: object) -> FlextResult[bool]:
@@ -392,7 +399,13 @@ class FlextContainer(FlextProtocols.Configurable):
             lambda validated_name: self._store_factory(validated_name, factory),
         )
         if result.is_failure:
-            raise ValueError(result.error or f"Failed to register factory '{name}'")
+            base_msg = f"Failed to register factory '{name}'"
+            error_msg = (
+                f"{base_msg}: {result.error}"
+                if result.error
+                else f"{base_msg} (validation or storage failed)"
+            )
+            raise ValueError(error_msg)
         return self
 
     def _store_factory(
@@ -577,10 +590,11 @@ class FlextContainer(FlextProtocols.Configurable):
             factory_reg.cached_instance = service
 
             return FlextResult[object].ok(service)
-        except (KeyError, TypeError, ValueError) as e:
+        except (KeyError, TypeError, ValueError, RuntimeError) as e:
             # KeyError: Factory not found in _factories dict
             # TypeError: Factory not callable or wrong number of arguments
             # ValueError: Factory validation or constraint violations
+            # RuntimeError: Factory execution failures
             return FlextResult[object].fail(f"Factory '{name}' failed: {e}")
 
     def get_typed(self, name: str, expected_type: type[T]) -> FlextResult[T]:
@@ -708,18 +722,54 @@ class FlextContainer(FlextProtocols.Configurable):
             # Validate service name
             validation_result = FlextUtilitiesValidation.validate_identifier(name)
             if validation_result.is_failure:
-                return FlextResult[bool].fail(
-                    validation_result.error or f"Invalid service name: {name}",
+                base_msg = f"Invalid service name: {name}"
+                error_msg = (
+                    f"{base_msg}: {validation_result.error}"
+                    if validation_result.error
+                    else f"{base_msg} (validation failed)"
                 )
+                return FlextResult[bool].fail(error_msg)
 
             # Store the service
             storage_result = self._store_service(name, service)
             if storage_result.is_failure:
-                return FlextResult[bool].fail(
-                    storage_result.error or f"Failed to store service: {name}",
+                base_msg = f"Failed to store service: {name}"
+                error_msg = (
+                    f"{base_msg}: {storage_result.error}"
+                    if storage_result.error
+                    else f"{base_msg} (storage operation failed)"
                 )
+                return FlextResult[bool].fail(error_msg)
 
         return FlextResult[bool].ok(True)
+
+    @staticmethod
+    def _is_service_registration_dict(
+        value: dict[str, FlextModels.ServiceRegistration]
+        | dict[str, FlextModels.FactoryRegistration]
+        | None,
+    ) -> TypeGuard[dict[str, FlextModels.ServiceRegistration]]:
+        """Type guard to check if dict contains ServiceRegistration values."""
+        if not isinstance(value, dict) or not value:
+            return False
+        first_value = next(iter(value.values()), None)
+        return first_value is not None and isinstance(
+            first_value, FlextModels.ServiceRegistration
+        )
+
+    @staticmethod
+    def _is_factory_registration_dict(
+        value: dict[str, FlextModels.ServiceRegistration]
+        | dict[str, FlextModels.FactoryRegistration]
+        | None,
+    ) -> TypeGuard[dict[str, FlextModels.FactoryRegistration]]:
+        """Type guard to check if dict contains FactoryRegistration values."""
+        if not isinstance(value, dict) or not value:
+            return False
+        first_value = next(iter(value.values()), None)
+        return first_value is not None and isinstance(
+            first_value, FlextModels.FactoryRegistration
+        )
 
     def _restore_registry_snapshot(
         self,
@@ -733,16 +783,11 @@ class FlextContainer(FlextProtocols.Configurable):
         services_snapshot = snapshot.get("services")
         factories_snapshot = snapshot.get("factories")
 
-        # Type-safe restoration - explicit type narrowing for union types
-        # pyrefly cannot infer specific dict types from complex union
-        if isinstance(services_snapshot, dict):
-            self._services = cast(
-                "dict[str, FlextModels.ServiceRegistration]", services_snapshot
-            )
-        if isinstance(factories_snapshot, dict):
-            self._factories = cast(
-                "dict[str, FlextModels.FactoryRegistration]", factories_snapshot
-            )
+        # Type-safe restoration using type guards for union type narrowing
+        if self._is_service_registration_dict(services_snapshot):
+            self._services = services_snapshot
+        if self._is_factory_registration_dict(factories_snapshot):
+            self._factories = factories_snapshot
 
     # =========================================================================
     # ADVANCED FEATURES - Factory resolution and dependency injection
@@ -1045,7 +1090,10 @@ class FlextContainer(FlextProtocols.Configurable):
                 raise FlextExceptions.AttributeAccessError(
                     message=msg,
                     attribute_name="__module__",
-                    attribute_context={"service_name": name, "service_type": service_type},
+                    attribute_context={
+                        "service_name": name,
+                        "service_type": service_type,
+                    },
                 )
             return {
                 FlextConstants.Mixins.FIELD_NAME: name,

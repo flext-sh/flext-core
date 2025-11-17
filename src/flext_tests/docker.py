@@ -558,20 +558,54 @@ class FlextTestDocker:
                             # First, clean up any existing containers from previous runs
                             # This is necessary because --force-recreate doesn't remove stopped containers
                             try:
+                                # Try to stop and remove containers
                                 docker_client.compose.down(
                                     remove_orphans=True,
                                     volumes=True,
                                 )
                             except Exception:
-                                # Ignore errors if compose stack doesn't exist yet
-                                pass
+                                # If compose.down fails, try to remove containers directly
+                                try:
+                                    # Get project name from compose file directory
+                                    project_name = compose_path.parent.name
+                                    # List all containers with compose labels
+                                    all_containers = docker_client.container.list(
+                                        all=True
+                                    )
+                                    for container in all_containers:
+                                        try:
+                                            labels = container.labels
+                                            compose_project = labels.get(
+                                                "com.docker.compose.project", ""
+                                            )
+                                            compose_service = labels.get(
+                                                "com.docker.compose.service", ""
+                                            )
+                                            # Match containers from this compose file
+                                            if compose_project == project_name or (
+                                                compose_service
+                                                and compose_path.name
+                                                in str(compose_path)
+                                            ):
+                                                try:
+                                                    container.stop()
+                                                except Exception:
+                                                    pass  # May already be stopped
+                                                try:
+                                                    container.remove(force=True)
+                                                except Exception:
+                                                    pass  # May already be removed
+                                        except Exception:
+                                            pass  # Skip containers without labels
+                                except Exception:
+                                    pass  # Ignore errors if compose stack doesn't exist yet
 
                             # Now start the services
                             services = [service] if service else []
                             docker_client.compose.up(
                                 services=services,
                                 detach=True,
-                                # Don't use force_recreate since we already cleaned up
+                                # Use force_recreate to ensure clean start
                                 recreate=True,
                                 remove_orphans=True,
                             )

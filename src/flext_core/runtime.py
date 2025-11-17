@@ -216,7 +216,18 @@ class FlextRuntime:
             True if value is a dict[str, object] or dict-like object, False otherwise
 
         """
-        return isinstance(value, dict)
+        if isinstance(value, dict):
+            return True
+        # Check for dict-like objects (UserDict, etc.)
+        if hasattr(value, "keys") and hasattr(value, "items") and hasattr(value, "get"):
+            # Verify it's actually dict-like by checking if it has dict methods
+            try:
+                # Try to access items to verify it's dict-like
+                _ = value.items()  # type: ignore[attr-defined]
+                return True
+            except (AttributeError, TypeError):
+                return False
+        return False
 
     @staticmethod
     def is_list_like(

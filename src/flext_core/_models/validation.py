@@ -60,7 +60,13 @@ class FlextModelsValidation:
         for rule in rules:
             result = rule(model)
             if result.is_failure:
-                return FlextResult[object].fail(result.error or "Validation failed")
+                base_msg = "Validation failed"
+                error_msg = (
+                    f"{base_msg}: {result.error}"
+                    if result.error
+                    else f"{base_msg} (validation rule failed)"
+                )
+                return FlextResult[object].fail(error_msg)
 
         return FlextResult[object].ok(model)
 
@@ -145,7 +151,13 @@ class FlextModelsValidation:
         start_time = time_module.time()
 
         try:
-            validated_model = model.__class__.model_validate(model.model_dump())
+            # Exclude computed fields that are not actual model fields
+            # Use model_dump with exclude_unset to avoid extra fields
+            dump = model.model_dump(
+                exclude={"is_initial_version", "is_modified"}, exclude_unset=True
+            )
+            # Re-validate the model from the dump
+            validated_model = model.__class__.model_validate(dump)
             validation_time = (time_module.time() - start_time) * 1000
 
             if validation_time > timeout_ms:
@@ -204,9 +216,13 @@ class FlextModelsValidation:
                 for validator in validators:
                     result = validator(model)
                     if result.is_failure:
-                        return FlextResult[FlextTypes.ObjectList].fail(
-                            result.error or "Validation failed"
+                        base_msg = "Validation failed"
+                        error_msg = (
+                            f"{base_msg}: {result.error}"
+                            if result.error
+                            else f"{base_msg} (item validation failed)"
                         )
+                        return FlextResult[FlextTypes.ObjectList].fail(error_msg)
 
                 valid_models.append(model)
 
@@ -221,14 +237,24 @@ class FlextModelsValidation:
             for validator in validators:
                 result = validator(model)
                 if result.is_failure:
-                    validation_result = FlextResult[object].fail(
-                        result.error or "Validation failed"
+                    base_msg = "Validation failed"
+                    error_msg = (
+                        f"{base_msg}: {result.error}"
+                        if result.error
+                        else f"{base_msg} (model validation failed)"
                     )
+                    validation_result = FlextResult[object].fail(error_msg)
                     break
             if validation_result.is_success:
                 validated_models.append(model)
             else:
-                all_errors.append(validation_result.error or "Validation failed")
+                base_msg = "Validation failed"
+                error_msg = (
+                    f"{base_msg}: {validation_result.error}"
+                    if validation_result.error
+                    else f"{base_msg} (validation rule failed)"
+                )
+                all_errors.append(error_msg)
 
         if all_errors:
             return FlextResult[FlextTypes.ObjectList].fail(

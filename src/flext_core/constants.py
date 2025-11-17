@@ -433,7 +433,9 @@ class FlextConstants:
         # Security errors (reserved for authentication/authorization)
         PERMISSION_ERROR: Final[str] = "PERMISSION_ERROR"  # Reserved for access control
         AUTHENTICATION_ERROR: Final[str] = "AUTHENTICATION_ERROR"  # Reserved for auth
-        AUTHORIZATION_ERROR: Final[str] = "AUTHORIZATION_ERROR"  # Reserved for authorization failures
+        AUTHORIZATION_ERROR: Final[str] = (
+            "AUTHORIZATION_ERROR"  # Reserved for authorization failures
+        )
 
         # System errors (reserved for critical failures)
         EXCEPTION_ERROR: Final[str] = (
@@ -821,7 +823,9 @@ class FlextConstants:
         SAGA_HANDLER_TYPE: HandlerType = HandlerType.SAGA
 
         # Handler mode Literal type for type-safe annotations
-        HandlerModeLiteral: TypeAlias = Literal["command", "query", "event", "operation", "saga"]
+        HandlerModeLiteral: TypeAlias = Literal[
+            "command", "query", "event", "operation", "saga"
+        ]
 
         # Message type Literal types for type-safe annotations
         CommandMessageTypeLiteral: TypeAlias = Literal["command"]
@@ -829,7 +833,9 @@ class FlextConstants:
         EventMessageTypeLiteral: TypeAlias = Literal["event"]
 
         # Service metric type Literal for type-safe annotations
-        ServiceMetricTypeLiteral: TypeAlias = Literal["performance", "errors", "throughput", "latency", "availability"]
+        ServiceMetricTypeLiteral: TypeAlias = Literal[
+            "performance", "errors", "throughput", "latency", "availability"
+        ]
 
         # Processing mode StrEnum
         class ProcessingMode(StrEnum):

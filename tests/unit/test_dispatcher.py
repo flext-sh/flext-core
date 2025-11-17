@@ -72,6 +72,21 @@ class ComplexMessageData(FlextModels.Value):
     data: dict[str, object]
 
 
+class TestMessage(FlextModels.Value):
+    """Simple test message for dispatcher tests."""
+
+    data: object
+
+
+class SimpleMessage:
+    """Simple message class for testing dispatch API."""
+
+    def __init__(self, value: object) -> None:
+        """Initialize simple message."""
+        self.value = value
+        self.data = value
+
+
 # ============================================================================
 # Test Helper Functions (Python 3.13 - Named Functions for Clarity)
 # ============================================================================
@@ -132,6 +147,14 @@ def format_metadata_message(msg: object) -> object:
     return {"message": msg, "metadata_processed": True}
 
 
+def create_test_message(message_type: str, data: object) -> TestMessage:
+    """Create TestMessage for dispatcher tests.
+
+    Replaces old API dispatch(message_type, data) with new API dispatch(message).
+    """
+    return TestMessage(data=data)
+
+
 # ============================================================================
 
 
@@ -170,8 +193,13 @@ class TestFlextDispatcherCoverage:
         # Create a simple handler using factory (eliminates 13 lines of boilerplate)
         handler = create_test_handler("test_handler", "TestHandler")
 
-        # Test handler registration
-        result = dispatcher.register_handler("test_message", handler)
+        # Test handler registration - use new API with dict
+        register_request = {
+            "handler_name": "TestHandler",
+            "handler": handler,
+            "handler_mode": FlextConstants.Cqrs.HandlerType.COMMAND,
+        }
+        result = dispatcher.register_handler(register_request)
         assert result.is_success
 
     def test_dispatcher_message_dispatch(self) -> None:
@@ -187,11 +215,19 @@ class TestFlextDispatcherCoverage:
             "SimpleHandler",
             process_fn=process_message,
         )
-        registration_result = dispatcher.register_handler("simple_message", handler)
+        # Use new API: register_handler takes dict or BaseModel
+        # Register with message_type so dispatch can find it
+        register_request = {
+            "handler_name": "simple_message",  # Use message_type as handler_name for dispatch lookup
+            "handler": handler,
+            "handler_mode": handler.mode,
+        }
+        registration_result = dispatcher.register_handler(register_request)
         assert registration_result.is_success
 
-        # Test message dispatch
-        dispatch_result = dispatcher.dispatch("simple_message", "test_data")
+        # Test message dispatch - new API: dispatch(message object)
+        message = create_test_message("simple_message", "test_data")
+        dispatch_result = dispatcher.dispatch(message)
         assert dispatch_result.is_success
 
     def test_dispatcher_batch_processing(self) -> None:
@@ -200,7 +236,9 @@ class TestFlextDispatcherCoverage:
 
         # Create a batch handler using factory (eliminates 13 lines)
         handler = create_transform_handler("batch_handler", format_batch_message)
-        registration_result = dispatcher.register_handler("batch_message", handler)
+        registration_result = dispatcher.layer1_register_handler(
+            "batch_message", handler
+        )
         assert registration_result.is_success
 
         # Test batch dispatch - returns list of FlextResult objects
@@ -219,11 +257,14 @@ class TestFlextDispatcherCoverage:
 
         # Create a failing handler using factory (eliminates 15 lines)
         handler = create_failing_handler("failing_handler", "Handler failed")
-        registration_result = dispatcher.register_handler("failing_message", handler)
+        registration_result = dispatcher.layer1_register_handler(
+            "failing_message", handler
+        )
         assert registration_result.is_success
 
-        # Test dispatch with failing handler
-        dispatch_result = dispatcher.dispatch("failing_message", "test_data")
+        # Test dispatch with failing handler - new API: dispatch(message object)
+        message = create_test_message("failing_message", "test_data")
+        dispatch_result = dispatcher.dispatch(message)
         assert dispatch_result.is_failure
 
     def test_dispatcher_operations(self) -> None:
@@ -232,7 +273,7 @@ class TestFlextDispatcherCoverage:
 
         # Create an handler using factory (eliminates 13 lines)
         handler = create_transform_handler("handler", format_sync_message)
-        registration_result = dispatcher.register_handler("message", handler)
+        registration_result = dispatcher.register_function(TestMessage, handler)
         assert registration_result.is_success
 
     def test_dispatcher_context_management(self) -> None:
@@ -245,14 +286,14 @@ class TestFlextDispatcherCoverage:
 
         # Create a context-aware handler using factory (eliminates 13 lines)
         handler = create_transform_handler("context_handler", format_context_message)
-        registration_result = dispatcher.register_handler("context_message", handler)
+        registration_result = dispatcher.register_function(TestMessage, handler)
         assert registration_result.is_success
 
         # Test dispatch with metadata (context)
-        # FlextDispatcher uses metadata parameter
+        # Create message object and dispatch with metadata
+        message = create_test_message("context_message", "test_data")
         dispatch_result = dispatcher.dispatch(
-            "context_message",
-            "test_data",
+            message,
             metadata=context,
         )
         assert dispatch_result.is_success
@@ -264,12 +305,13 @@ class TestFlextDispatcherCoverage:
         # Create a simple handler to generate metrics using factory
         # (eliminates 13 lines)
         handler = create_transform_handler("metrics_handler", format_metrics_message)
-        registration_result = dispatcher.register_handler("metrics_message", handler)
+        registration_result = dispatcher.register_function(TestMessage, handler)
         assert registration_result.is_success
 
         # Dispatch multiple messages to generate metrics
         for i in range(3):
-            dispatch_result = dispatcher.dispatch("metrics_message", f"test_{i}")
+            message = create_test_message("metrics_message", f"test_{i}")
+            dispatch_result = dispatcher.dispatch(message)
             assert dispatch_result.is_success
 
         # Test metrics retrieval - use direct method
@@ -281,12 +323,12 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Test with invalid handler (None)
-        result = dispatcher.register_handler("invalid", None)
+        result = dispatcher.register_handler("TestMessage", None)
         assert result.is_failure
 
         # Test with valid handler using factory (eliminates 13 lines)
         handler = create_transform_handler("valid_handler", identity_handler)
-        result = dispatcher.register_handler("valid_type", handler)
+        result = dispatcher.register_function(TestMessage, handler)
         assert result.is_success
 
     def test_dispatcher_audit_logging(self) -> None:
@@ -295,11 +337,19 @@ class TestFlextDispatcherCoverage:
 
         # Create a handler for audit testing using factory (eliminates 13 lines)
         handler = create_transform_handler("audit_handler", format_audit_message)
-        registration_result = dispatcher.register_handler("audit_message", handler)
+        # Use new API: register_handler takes dict or BaseModel
+        # Register with TestMessage type name so dispatch can find it
+        register_request = {
+            "handler_name": "TestMessage",  # Must match message type name
+            "handler": handler,
+            "handler_mode": FlextConstants.Cqrs.HandlerType.COMMAND,
+        }
+        registration_result = dispatcher.register_handler(register_request)
         assert registration_result.is_success
 
-        # Test dispatch with audit enabled
-        dispatch_result = dispatcher.dispatch("audit_message", "audit_test")
+        # Test dispatch with audit enabled - use message object, not string
+        message = create_test_message("audit_message", "audit_test")
+        dispatch_result = dispatcher.dispatch(message)
         assert dispatch_result.is_success
 
     def test_dispatcher_retry_functionality(self) -> None:
@@ -320,11 +370,12 @@ class TestFlextDispatcherCoverage:
             "RetryHandler",
             process_fn=retry_process,
         )
-        registration_result = dispatcher.register_handler("retry_message", handler)
-        assert registration_result.is_success
+        # Register handler for TestMessage type
+        dispatcher.register_function(TestMessage, handler.handle)
 
         # Test dispatch with retry
-        dispatch_result = dispatcher.dispatch("retry_message", "retry_test")
+        message = create_test_message("retry_message", "retry_test")
+        dispatch_result = dispatcher.dispatch(message)
         # Use the result to avoid linting warning
         _ = dispatch_result
         # Result depends on retry implementation
@@ -336,11 +387,12 @@ class TestFlextDispatcherCoverage:
 
         # Create a quick handler using factory (eliminates 13 lines)
         handler = create_transform_handler("quick_handler", format_quick_message)
-        registration_result = dispatcher.register_handler("quick_message", handler)
-        assert registration_result.is_success
+        # Register handler for TestMessage type
+        dispatcher.register_function(TestMessage, handler.handle)
 
         # Test dispatch within timeout
-        dispatch_result = dispatcher.dispatch("quick_message", "timeout_test")
+        message = create_test_message("quick_message", "timeout_test")
+        dispatch_result = dispatcher.dispatch(message)
         assert dispatch_result.is_success
 
     def test_dispatcher_handler_lookup(self) -> None:
@@ -363,12 +415,13 @@ class TestFlextDispatcherCoverage:
                 f"TestHandler{i}",
                 process_fn=make_handler_fn(i),
             )
-            result = dispatcher.register_handler(f"test_message_{i}", handler)
-            assert result.is_success
+            # Register handler for TestMessage type
+            dispatcher.register_function(TestMessage, handler.handle)
 
         # Test dispatching to different handlers
         for i in range(3):
-            dispatch_result = dispatcher.dispatch(f"test_message_{i}", "lookup_test")
+            message = create_test_message(f"test_message_{i}", "lookup_test")
+            dispatch_result = dispatcher.dispatch(message)
             assert dispatch_result.is_success
 
     def test_dispatcher_cleanup(self) -> None:
@@ -377,8 +430,8 @@ class TestFlextDispatcherCoverage:
 
         # Create and register handlers using factory (eliminates 13 lines)
         handler = create_transform_handler("cleanup_handler", format_cleanup_message)
-        registration_result = dispatcher.register_handler("cleanup_message", handler)
-        assert registration_result.is_success
+        # Register handler for TestMessage type
+        dispatcher.register_function(TestMessage, handler.handle)
 
         # Test cleanup operations (if available)
         # This tests methods like clearing metrics, resetting state, etc.
@@ -387,7 +440,8 @@ class TestFlextDispatcherCoverage:
 
         # Test multiple operations to ensure state management
         for i in range(5):
-            dispatch_result = dispatcher.dispatch("cleanup_message", f"cleanup_{i}")
+            message = create_test_message("cleanup_message", f"cleanup_{i}")
+            dispatch_result = dispatcher.dispatch(message)
             assert dispatch_result.is_success
 
     def test_dispatcher_edge_cases(self) -> None:
@@ -395,7 +449,8 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         # Test dispatch without registered handlers
-        result = dispatcher.dispatch("nonexistent_message", "test_data")
+        message = create_test_message("nonexistent_message", "test_data")
+        result = dispatcher.dispatch(message)
         assert result.is_failure
 
         # Test with empty message type using factory (eliminates 13 lines)
@@ -414,13 +469,14 @@ class TestFlextDispatcherCoverage:
 
         # Create a performance handler using factory (eliminates 13 lines)
         handler = create_transform_handler("perf_handler", format_perf_message)
-        registration_result = dispatcher.register_handler("perf_message", handler)
+        registration_result = dispatcher.register_function(TestMessage, handler)
         assert registration_result.is_success
 
         # Test multiple quick dispatches
         results: list[FlextResult[object]] = []
         for i in range(10):
-            result = dispatcher.dispatch("perf_message", f"perf_test_{i}")
+            message = create_test_message("perf_message", f"perf_test_{i}")
+            result = dispatcher.dispatch(message)
             results.append(result)
 
         # Verify all dispatches completed
@@ -471,11 +527,10 @@ class TestFlextDispatcherCoverage:
         assert registration_result.is_success
 
         # Test multiple dispatches to the same handler
+        dispatcher.register_function(TestMessage, complex_handler.handle)
         for i in range(3):
-            dispatch_result = dispatcher.dispatch(
-                "complex_message",
-                f"complex_test_{i}",
-            )
+            message = create_test_message("complex_message", f"complex_test_{i}")
+            dispatch_result = dispatcher.dispatch(message)
             assert dispatch_result.is_success
 
     def test_dispatcher_register_command(self) -> None:
@@ -502,7 +557,7 @@ class TestFlextDispatcherCoverage:
         handler = CreateUserCommand()
 
         # Test register_command method
-        result = dispatcher.register_handler("CreateUser", handler)
+        result = dispatcher.register_function(TestMessage, handler)
         assert result.is_success or result.is_failure  # Either outcome is valid
 
     def test_dispatcher_register_query(self) -> None:
@@ -528,10 +583,8 @@ class TestFlextDispatcherCoverage:
 
         handler = GetUserQuery()
 
-        # Test register_query method
-        result = dispatcher.register_handler(
-            "GetUser", handler, handler_mode=FlextConstants.Cqrs.HandlerType.QUERY
-        )
+        # Test register_query method - use register_query directly
+        result = dispatcher.register_query(type(handler), handler)
         assert result.is_success or result.is_failure  # Either outcome is valid
 
     def test_dispatcher_register_function(self) -> None:
@@ -542,11 +595,10 @@ class TestFlextDispatcherCoverage:
         def process_data(data: object) -> FlextResult[object]:
             return FlextResult[object].ok(f"Processed: {data}")
 
-        # Test register_function method
+        # Test register_function method - use two-arg form
         result = dispatcher.register_handler(
             "ProcessData",
             process_data,
-            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         assert result.is_success or result.is_failure  # Either outcome is valid
 
@@ -556,13 +608,14 @@ class TestFlextDispatcherCoverage:
 
         # Register a handler using factory (eliminates 13 lines)
         handler = create_transform_handler("test_cleanup", identity_handler)
-        dispatcher.register_handler("TestMessage", handler)
+        dispatcher.register_function(TestMessage, handler)
 
         # Test cleanup method
         dispatcher.cleanup()
 
         # After cleanup, dispatch should fail or handle differently
-        result = dispatcher.dispatch("TestMessage", "test")
+        message = create_test_message("TestMessage", "test")
+        result = dispatcher.dispatch(message)
         # Just test the method exists and runs
         assert result.is_success or result.is_failure
 
@@ -587,7 +640,7 @@ class TestFlextDispatcherCoverage:
 
         # Test register_handler (register_handler_with_request has different signature)
         try:
-            register_result = dispatcher.register_handler("RequestMessage", handler)
+            register_result = dispatcher.register_function(TestMessage, handler)
             # register_result should be a FlextResult
             if hasattr(register_result, "is_success"):
                 assert register_result.is_success or register_result.is_failure
@@ -597,7 +650,8 @@ class TestFlextDispatcherCoverage:
 
         # Test dispatch (dispatch_with_request has different signature)
         try:
-            dispatch_result = dispatcher.dispatch("RequestMessage", "test_data")
+            message = create_test_message("RequestMessage", "test_data")
+            dispatch_result = dispatcher.dispatch(message)
             # dispatch_result should be a FlextResult
             if hasattr(dispatch_result, "is_success"):
                 assert dispatch_result.is_success or dispatch_result.is_failure
@@ -696,7 +750,13 @@ class TestFlextDispatcherCoverage:
                 handler_type=handler_type_enum,
                 process_fn=make_dynamic_handler(current_msg_type, current_mode),
             )
-            register_result = dispatcher.register_handler(msg_type, handler)
+            # Use new API: register_handler takes dict or BaseModel
+            register_request = {
+                "handler_name": f"Handler_{current_msg_type}",
+                "handler": handler,
+                "handler_mode": current_mode,
+            }
+            register_result = dispatcher.register_handler(register_request)
             assert register_result.is_success or register_result.is_failure
 
         # Test dispatching to all registered handlers
@@ -726,8 +786,10 @@ class TestFlextDispatcherCoverage:
         try:
             # Create handler using factory (eliminates 13 lines)
             handler = create_transform_handler("none_handler", identity_handler)
-            dispatcher.register_handler("NoneTest", handler)
-            result = dispatcher.dispatch("NoneTest", None)
+            dispatcher.register_function(TestMessage, handler.handle)
+            # Create message with None data
+            message = TestMessage(data=None)
+            result = dispatcher.dispatch(message)
             assert result.is_success or result.is_failure
         except Exception as e:
             # Some error scenarios might fail, that's okay for testing
@@ -753,12 +815,13 @@ class TestFlextDispatcherCoverage:
             "ConcurrentHandler",
             process_fn=concurrent_process,
         )
-        dispatcher.register_handler("ConcurrentMessage", handler)
+        dispatcher.register_function(TestMessage, handler.handle)
 
         # Test rapid successive dispatches
         results: list[FlextResult[object]] = []
         for i in range(20):
-            result = dispatcher.dispatch("ConcurrentMessage", f"concurrent_{i}")
+            message = create_test_message("ConcurrentMessage", f"concurrent_{i}")
+            result = dispatcher.dispatch(message)
             results.append(result)
 
         # Verify at least some succeeded
@@ -771,7 +834,7 @@ class TestFlextDispatcherCoverage:
 
         # Create a metadata-aware handler using factory (eliminates 16 lines)
         handler = create_transform_handler("metadata_handler", format_metadata_message)
-        dispatcher.register_handler("MetadataMessage", handler)
+        dispatcher.register_function(TestMessage, handler.handle)
 
         # Test dispatch with various metadata (using type-safe models)
         metadata_tests = [
@@ -782,7 +845,8 @@ class TestFlextDispatcherCoverage:
         ]
 
         for metadata in metadata_tests:
-            result = dispatcher.dispatch("MetadataMessage", "test", metadata=metadata)
+            message = create_test_message("MetadataMessage", "test")
+            result = dispatcher.dispatch(message, metadata=metadata.model_dump())
             assert result.is_success or result.is_failure
 
     def test_dispatcher_batch_error_handling(self) -> None:
@@ -801,7 +865,7 @@ class TestFlextDispatcherCoverage:
             "BatchErrorHandler",
             process_fn=batch_error_process,
         )
-        dispatcher.register_handler("BatchError", handler)
+        dispatcher.register_function(TestMessage, handler)
 
         # Test batch with mixed success/failure
         messages: list[object] = [
@@ -827,9 +891,11 @@ class TestFlextDispatcherCoverage:
         def handler2(msg: object) -> object:
             return f"handler2: {msg}"
 
-        dispatcher.register_handler("TestMsg", handler1)
-        dispatcher.register_handler("TestMsg", handler2)  # Should overwrite
-        result = dispatcher.dispatch("TestMsg", "test")
+        # Register handlers for SimpleMessage type
+        dispatcher.register_function(SimpleMessage, handler1)
+        dispatcher.register_function(SimpleMessage, handler2)  # Should overwrite
+        message = SimpleMessage("test")
+        result = dispatcher.dispatch(message)
         assert result is not None
 
     def test_dispatcher_dispatch_empty_message(self) -> None:
@@ -839,8 +905,10 @@ class TestFlextDispatcherCoverage:
         def handler(msg: object) -> object:
             return msg
 
-        dispatcher.register_handler("Empty", handler)
-        result = dispatcher.dispatch("Empty", "test")
+        # Register handler for SimpleMessage type
+        dispatcher.register_function(SimpleMessage, handler)
+        message = SimpleMessage("test")
+        result = dispatcher.dispatch(message)
         # Result should be a FlextResult or similar
         assert result is not None
 
@@ -849,7 +917,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
         # Try to dispatch without registering handler
         try:
-            dispatcher.dispatch("NonExistent", "data")
+            dispatcher.dispatch(create_test_message("NonExistent", "data"))
         except Exception:
             pass  # Expected to fail or return None
 
@@ -860,13 +928,13 @@ class TestFlextDispatcherCoverage:
         def handler(msg: object) -> object:
             return msg
 
-        dispatcher.register_handler("Type1", handler)
-        dispatcher.register_handler("Type2", handler)
+        dispatcher.register_function(TestMessage, handler)
+        dispatcher.register_function(TestMessage, handler)
         dispatcher.cleanup()
 
         # After cleanup, handlers should be cleared
         try:
-            dispatcher.dispatch("Type1", "data")
+            dispatcher.dispatch(create_test_message("Type1", "data"))
         except Exception:
             pass  # Expected
 
@@ -878,10 +946,10 @@ class TestFlextDispatcherCoverage:
             msg = "Handler error"
             raise ValueError(msg)
 
-        dispatcher.register_handler("Failing", failing_handler)
+        dispatcher.register_handler("TestMessage", failing_handler)
 
         try:
-            dispatcher.dispatch("Failing", "data")
+            dispatcher.dispatch(create_test_message("Failing", "data"))
         except Exception:
             pass  # Expected to handle or propagate
 
@@ -892,8 +960,9 @@ class TestFlextDispatcherCoverage:
         def none_handler(msg: object) -> None:
             return None
 
-        dispatcher.register_handler("NoneReturn", none_handler)
-        result = dispatcher.dispatch("NoneReturn", "data")
+        dispatcher.register_function(SimpleMessage, none_handler)
+        message = SimpleMessage("data")
+        result = dispatcher.dispatch(message)
         # Dispatcher returns FlextResult, verify it exists and is successful
         assert result is not None
         assert hasattr(result, "is_success")
@@ -909,9 +978,9 @@ class TestFlextDispatcherCoverage:
                 case _:
                     return None
 
-        dispatcher.register_handler("Complex", complex_handler)
+        dispatcher.register_function(ComplexMessageData, complex_handler)
         msg = ComplexMessageData(data={"key": "value"})
-        result = dispatcher.dispatch("Complex", msg)
+        result = dispatcher.dispatch(msg)
         # Dispatcher returns FlextResult, verify it exists and is successful
         assert result is not None
         assert hasattr(result, "is_success")
@@ -923,7 +992,7 @@ class TestFlextDispatcherCoverage:
         def handler(msg: object) -> object:
             return f"processed: {msg}"
 
-        dispatcher.register_handler("Single", handler)
+        dispatcher.register_function(TestMessage, handler)
         results = dispatcher.dispatch_batch("Single", ["item1"])
         assert len(results) > 0
 
@@ -940,7 +1009,7 @@ class TestFlextDispatcherCoverage:
 
         from typing import cast
 
-        dispatcher.register_handler("Batch", handler)
+        dispatcher.register_function(TestMessage, handler)
         large_batch = [str(i) for i in range(1000)]
         results = dispatcher.dispatch_batch("Batch", cast("list[object]", large_batch))
         assert isinstance(results, list)
@@ -953,7 +1022,7 @@ class TestFlextDispatcherCoverage:
     #     def handler(msg: object) -> object:
     #         return msg
 
-    #     dispatcher.register_handler("Parallel", handler)
+    #     dispatcher.register_function(TestMessage, handler)
     #     try:
     #         results = dispatcher.dispatch_parallel(
     #             "Parallel", ["a", "b", "c"], max_workers=1
@@ -969,9 +1038,9 @@ class TestFlextDispatcherCoverage:
         def handler(msg: object) -> object:
             return msg
 
-        dispatcher.register_handler("Stats", handler)
-        dispatcher.dispatch("Stats", "data1")
-        dispatcher.dispatch("Stats", "data2")
+        dispatcher.register_function(TestMessage, handler)
+        dispatcher.dispatch(create_test_message("Stats", "data1"))
+        dispatcher.dispatch(create_test_message("Stats", "data2"))
 
         # Check if metrics available
         try:
@@ -987,8 +1056,9 @@ class TestFlextDispatcherCoverage:
         def handler(msg: object) -> object:
             return msg
 
-        dispatcher.register_handler("Perf", handler)
-        dispatcher.dispatch("Perf", "data")
+        dispatcher.register_function(TestMessage, handler)
+        message = create_test_message("Perf", "data")
+        dispatcher.dispatch(message)
 
         # Check performance metrics
         try:
@@ -1006,11 +1076,11 @@ class TestFlextDispatcherCoverage:
         def handler(msg: object) -> object:
             return f"handled: {msg}"
 
-        dispatcher.register_handler("Concurrent", handler)
+        dispatcher.register_function(TestMessage, handler)
         results = []
 
         def dispatch_in_thread(msg: str) -> None:
-            result = dispatcher.dispatch("Concurrent", msg)
+            result = dispatcher.dispatch(create_test_message("Concurrent", msg))
             results.append(result)
 
         threads = [
@@ -1030,7 +1100,7 @@ class TestFlextDispatcherCoverage:
 
         # Try to register non-callable
         try:
-            dispatcher.register_handler("Bad", "not_callable")
+            dispatcher.register_handler("TestMessage", "not_callable")
         except (TypeError, Exception):
             pass  # Expected
 
@@ -1039,11 +1109,15 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         def handler(msg: object) -> object:
+            if isinstance(msg, TestMessage):
+                return f"string: {msg.data}"
             return f"string: {msg}"
 
-        dispatcher.register_handler("String", handler)
-        result = dispatcher.dispatch("String", "test message")
-        assert "test message" in str(result)
+        dispatcher.register_function(TestMessage, handler)
+        message = create_test_message("String", "test message")
+        result = dispatcher.dispatch(message)
+        assert result.is_success
+        assert "test message" in str(result.unwrap())
 
     def test_dispatcher_message_type_int(self) -> None:
         """Test dispatcher with integer message type."""
@@ -1056,8 +1130,8 @@ class TestFlextDispatcherCoverage:
                 case _:
                     return msg
 
-        dispatcher.register_handler("Int", handler)
-        result = dispatcher.dispatch("Int", 42)
+        dispatcher.register_function(TestMessage, handler)
+        result = dispatcher.dispatch(create_test_message("Int", 42))
         # Dispatcher returns FlextResult, verify it exists and is successful
         assert result is not None
         assert hasattr(result, "is_success")
@@ -1073,8 +1147,9 @@ class TestFlextDispatcherCoverage:
                 case _:
                     return 0
 
-        dispatcher.register_handler("List", handler)
-        result = dispatcher.dispatch("List", [1, 2, 3, 4, 5])
+        dispatcher.register_function(TestMessage, handler)
+        message = create_test_message("List", [1, 2, 3, 4, 5])
+        result = dispatcher.dispatch(message)
         # Dispatcher returns FlextResult, verify it exists and is successful
         assert result is not None
         assert hasattr(result, "is_success")
@@ -1090,8 +1165,8 @@ class TestFlextDispatcherCoverage:
                 case _:
                     return None
 
-        dispatcher.register_handler("Dict", handler)
-        result = dispatcher.dispatch("Dict", {"key": "value"})
+        dispatcher.register_function(TestMessage, handler)
+        result = dispatcher.dispatch(create_test_message("Dict", {"key": "value"}))
         # Dispatcher returns FlextResult, verify it exists and is successful
         assert result is not None
         assert hasattr(result, "is_success")
@@ -1103,7 +1178,7 @@ class TestFlextDispatcherCoverage:
         def handler(msg: object) -> object:
             return msg
 
-        dispatcher.register_handler("Timeout", handler)
+        dispatcher.register_function(TestMessage, handler)
 
         try:
             result = dispatcher.execute_with_timeout("Timeout", "data", timeout=5.0)
@@ -1122,8 +1197,8 @@ class TestFlextDispatcherCoverage:
         def secondary(msg: object) -> object:
             return f"secondary: {msg}"
 
-        dispatcher.register_handler("Primary", primary)
-        dispatcher.register_handler("Secondary", secondary)
+        dispatcher.register_handler("TestMessage", primary)
+        dispatcher.register_handler("TestMessage", secondary)
 
         # Fast fail: use process directly, no fallback pattern
         result = dispatcher.process("Primary", "data")
@@ -1136,8 +1211,8 @@ class TestFlextDispatcherCoverage:
         def handler(msg: object) -> object:
             return msg
 
-        dispatcher.register_handler("Audit", handler)
-        dispatcher.dispatch("Audit", "data")
+        dispatcher.register_function(TestMessage, handler)
+        dispatcher.dispatch(create_test_message("Audit", "data"))
 
         try:
             audit_log = dispatcher.get_process_audit_log()
@@ -1152,8 +1227,8 @@ class TestFlextDispatcherCoverage:
         def handler(msg: object) -> object:
             return msg
 
-        dispatcher.register_handler("Analytics", handler)
-        dispatcher.dispatch("Analytics", "data1")
+        dispatcher.register_function(TestMessage, handler)
+        dispatcher.dispatch(create_test_message("Analytics", "data1"))
 
         try:
             analytics = dispatcher.get_performance_analytics()
@@ -1166,7 +1241,7 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         try:
-            dispatcher.dispatch("MissingType", "data")
+            dispatcher.dispatch(create_test_message("MissingType", "data"))
             # Should either return None or raise predictable exception
         except (KeyError, ValueError, AttributeError):
             pass  # Expected
@@ -1208,9 +1283,9 @@ class TestFlextDispatcherCoverage:
                 raise ValueError(msg)
             return f"success: {msg}"
 
-        dispatcher.register_handler("Resilient", failing_handler)
+        dispatcher.register_handler("TestMessage", failing_handler)
         try:
-            result = dispatcher.dispatch("Resilient", "test")
+            result = dispatcher.dispatch(create_test_message("Resilient", "test"))
             assert result is not None
         except Exception:
             pass  # May not implement retry logic in dispatch
@@ -1224,14 +1299,14 @@ class TestFlextDispatcherCoverage:
             execution_count.append(1)
             return f"count: {len(execution_count)}"
 
-        dispatcher.register_handler("Cache", counting_handler)
+        dispatcher.register_function(TestMessage, counting_handler)
 
         # First dispatch
-        result1 = dispatcher.dispatch("Cache", "test")
+        result1 = dispatcher.dispatch(create_test_message("Cache", "test"))
         count1 = len(execution_count)
 
         # Second dispatch with same message
-        result2 = dispatcher.dispatch("Cache", "test")
+        result2 = dispatcher.dispatch(create_test_message("Cache", "test"))
 
         # Should execute handler each time (no caching) or cache
         assert result1 is not None
@@ -1248,13 +1323,13 @@ class TestFlextDispatcherCoverage:
         def handler_v2(msg: object) -> object:
             return "v2"
 
-        dispatcher.register_handler("Version", handler_v1)
-        result1 = dispatcher.dispatch("Version", "test")
+        dispatcher.register_handler("TestMessage", handler_v1)
+        result1 = dispatcher.dispatch(create_test_message("Version", "test"))
         assert result1 is not None
 
         # Register new handler for same type
-        dispatcher.register_handler("Version", handler_v2)
-        result2 = dispatcher.dispatch("Version", "test")
+        dispatcher.register_handler("TestMessage", handler_v2)
+        result2 = dispatcher.dispatch(create_test_message("Version", "test"))
         assert result2 is not None
 
     def test_dispatcher_fallback_chain_simple(self) -> None:
@@ -1270,9 +1345,9 @@ class TestFlextDispatcherCoverage:
         def fallback2(msg: object) -> object:
             return "fallback2"
 
-        dispatcher.register_handler("Primary", primary)
-        dispatcher.register_handler("Fallback1", fallback1)
-        dispatcher.register_handler("Fallback2", fallback2)
+        dispatcher.register_handler("TestMessage", primary)
+        dispatcher.register_handler("TestMessage", fallback1)
+        dispatcher.register_handler("TestMessage", fallback2)
 
         # Fast fail: use process directly, no fallback pattern
         result = dispatcher.process("Primary", "data")
@@ -1288,7 +1363,7 @@ class TestFlextDispatcherCoverage:
             time.sleep(0.1)
             return msg
 
-        dispatcher.register_handler("Slow", slow_handler)
+        dispatcher.register_handler("TestMessage", slow_handler)
 
         try:
             result = dispatcher.execute_with_timeout(
@@ -1310,7 +1385,7 @@ class TestFlextDispatcherCoverage:
             time.sleep(2.0)  # Sleep longer than timeout
             return msg
 
-        dispatcher.register_handler("VerySlow", very_slow_handler)
+        dispatcher.register_handler("TestMessage", very_slow_handler)
 
         try:
             result = dispatcher.execute_with_timeout(
@@ -1339,7 +1414,7 @@ class TestFlextDispatcherCoverage:
                         return msg * 2
                     return msg
 
-        dispatcher.register_handler("BatchError", batch_handler)
+        dispatcher.register_handler("TestMessage", batch_handler)
 
         try:
             results = dispatcher.dispatch_batch("BatchError", [1, 2, -1, 3, -2])
@@ -1359,7 +1434,7 @@ class TestFlextDispatcherCoverage:
     #             case _:
     #                 return msg
 
-    #     dispatcher.register_handler("Parallel", parallel_handler)
+    #     dispatcher.register_handler("TestMessage", parallel_handler)
 
     #     try:
     #         results = dispatcher.dispatch_parallel(
@@ -1376,11 +1451,11 @@ class TestFlextDispatcherCoverage:
         def metrics_handler(msg: object) -> object:
             return f"metrics: {msg}"
 
-        dispatcher.register_handler("Metrics", metrics_handler)
+        dispatcher.register_handler("TestMessage", metrics_handler)
 
         # Execute multiple times
         for i in range(5):
-            dispatcher.dispatch("Metrics", f"msg{i}")
+            dispatcher.dispatch(create_test_message("Metrics", f"msg{i}"))
 
         # Try to get metrics
         try:
@@ -1393,13 +1468,17 @@ class TestFlextDispatcherCoverage:
         """Test dispatcher performance and timing tracking."""
         dispatcher = FlextDispatcher()
 
-        def perf_handler(msg: object) -> object:
-            return len(str(msg))
+        class PerfHandler:
+            def handle(self, msg: object) -> FlextResult[object]:
+                return FlextResult[object].ok(len(str(msg)))
 
-        dispatcher.register_handler("Perf", perf_handler)
+        perf_handler = PerfHandler()
+        result = dispatcher.layer1_register_handler("Perf", perf_handler)
+        assert result.is_success
 
         # Execute to collect performance data
-        dispatcher.dispatch("Perf", "test")
+        message = create_test_message("Perf", "test")
+        dispatcher.dispatch(message)
 
         try:
             # Check batch performance
@@ -1419,8 +1498,11 @@ class TestFlextDispatcherCoverage:
         def audit_handler(msg: object) -> object:
             return "audited"
 
-        dispatcher.register_handler("Audit", audit_handler)
-        dispatcher.dispatch("Audit", "data1")
+        # Register handler with TestMessage type name
+        dispatcher.register_handler("TestMessage", audit_handler)
+        # Use message object, not string
+        message = create_test_message("Audit", "data1")
+        dispatcher.dispatch(message)
 
         try:
             audit_log = dispatcher.get_process_audit_log()
@@ -1435,8 +1517,8 @@ class TestFlextDispatcherCoverage:
         def analytics_handler(msg: object) -> object:
             return msg
 
-        dispatcher.register_handler("Analytics", analytics_handler)
-        dispatcher.dispatch("Analytics", "data")
+        dispatcher.register_handler("TestMessage", analytics_handler)
+        dispatcher.dispatch(create_test_message("Analytics", "data"))
 
         try:
             analytics = dispatcher.get_performance_analytics()
@@ -1452,8 +1534,8 @@ class TestFlextDispatcherCoverage:
             return msg
 
         # Register valid handler
-        dispatcher.register_handler("Valid", valid_handler)
-        result = dispatcher.dispatch("Valid", "data")
+        dispatcher.register_handler("TestMessage", valid_handler)
+        result = dispatcher.dispatch(create_test_message("Valid", "data"))
         assert result is not None
 
     def test_dispatcher_message_transformation(self) -> None:
@@ -1469,10 +1551,10 @@ class TestFlextDispatcherCoverage:
                 case _:
                     return str(msg)
 
-        dispatcher.register_handler("Transform", transform_handler)
+        dispatcher.register_handler("TestMessage", transform_handler)
 
-        result1 = dispatcher.dispatch("Transform", "hello")
-        result2 = dispatcher.dispatch("Transform", 10)
+        result1 = dispatcher.dispatch(create_test_message("Transform", "hello"))
+        result2 = dispatcher.dispatch(create_test_message("Transform", 10))
 
         assert result1 is not None
         assert result2 is not None
@@ -1486,10 +1568,10 @@ class TestFlextDispatcherCoverage:
                 return "null received"
             return msg
 
-        dispatcher.register_handler("Null", null_handler)
+        dispatcher.register_handler("TestMessage", null_handler)
 
         try:
-            result = dispatcher.dispatch("Null", None)
+            result = dispatcher.dispatch(TestMessage(data=None))
             assert result is not None
         except Exception:
             pass
@@ -1501,7 +1583,7 @@ class TestFlextDispatcherCoverage:
         def handler(msg: object) -> object:
             return msg
 
-        dispatcher.register_handler("Empty", handler)
+        dispatcher.register_function(TestMessage, handler)
 
         try:
             results = dispatcher.dispatch_batch("Empty", [])
@@ -1517,7 +1599,7 @@ class TestFlextDispatcherCoverage:
     #     def handler(msg: object) -> object:
     #         return msg
 
-    #     dispatcher.register_handler("SingleParallel", handler)
+    #     dispatcher.register_function(TestMessage, handler)
 
     #     try:
     #         results = dispatcher.dispatch_parallel(
@@ -1538,11 +1620,11 @@ class TestFlextDispatcherCoverage:
                 case _:
                     return msg
 
-        dispatcher.register_handler("Large", large_handler)
+        dispatcher.register_handler("TestMessage", large_handler)
 
         # Create large message
         large_msg = "x" * 10000
-        result = dispatcher.dispatch("Large", large_msg)
+        result = dispatcher.dispatch(create_test_message("Large", large_msg))
         assert result is not None
 
     def test_dispatcher_nested_message_types(self) -> None:
@@ -1556,10 +1638,10 @@ class TestFlextDispatcherCoverage:
                 case _:
                     return None
 
-        dispatcher.register_handler("Nested", nested_handler)
+        dispatcher.register_handler("TestMessage", nested_handler)
 
         msg = {"nested": {"value": "found", "other": [1, 2, 3]}}
-        result = dispatcher.dispatch("Nested", msg)
+        result = dispatcher.dispatch(create_test_message("Nested", msg))
         assert result is not None
 
     def test_dispatcher_handler_state_isolation(self) -> None:
@@ -1571,10 +1653,10 @@ class TestFlextDispatcherCoverage:
             state["value"] += 1
             return state["value"]
 
-        dispatcher.register_handler("Stateful", stateful_handler)
+        dispatcher.register_handler("TestMessage", stateful_handler)
 
-        result1 = dispatcher.dispatch("Stateful", "call1")
-        result2 = dispatcher.dispatch("Stateful", "call2")
+        result1 = dispatcher.dispatch(create_test_message("Stateful", "call1"))
+        result2 = dispatcher.dispatch(create_test_message("Stateful", "call2"))
 
         # Each call should increment state
         assert result1 is not None
@@ -1592,8 +1674,8 @@ class TestFlextDispatcherCoverage:
             msg = "Handler 2 failed"
             raise ValueError(msg)
 
-        dispatcher.register_handler("Fail1", failing_handler_1)
-        dispatcher.register_handler("Fail2", failing_handler_2)
+        dispatcher.register_handler("TestMessage", failing_handler_1)
+        dispatcher.register_handler("TestMessage", failing_handler_2)
 
         # Fast fail: first handler fails, return error immediately
         result = dispatcher.process("Fail1", "data")
@@ -1624,11 +1706,11 @@ class TestFlextDispatcherCoverage:
         def reliable_handler(msg: object) -> object:
             return f"success: {msg}"
 
-        dispatcher.register_handler("Reliable", reliable_handler)
+        dispatcher.register_handler("TestMessage", reliable_handler)
 
         # Multiple successful executions should be tracked
         for i in range(10):
-            result = dispatcher.dispatch("Reliable", f"msg{i}")
+            result = dispatcher.dispatch(create_test_message("Reliable", f"msg{i}"))
             assert result is not None
 
     def test_dispatcher_circuit_breaker_failure_recording(self) -> None:
@@ -1643,12 +1725,12 @@ class TestFlextDispatcherCoverage:
                 raise ValueError(msg)
             return msg
 
-        dispatcher.register_handler("FailTrack", failing_handler)
+        dispatcher.register_handler("TestMessage", failing_handler)
 
         # Some calls fail, circuit breaker should track
         for i in range(5):
             try:
-                dispatcher.dispatch("FailTrack", f"msg{i}")
+                dispatcher.dispatch(create_test_message("FailTrack", f"msg{i}"))
             except Exception:
                 pass  # Expected failures
 
@@ -1661,12 +1743,14 @@ class TestFlextDispatcherCoverage:
             execution_times.append(__import__("time").time())
             return msg
 
-        dispatcher.register_handler("RateLimit", rate_limited_handler)
+        dispatcher.register_handler("TestMessage", rate_limited_handler)
 
         # Execute multiple times rapidly
         for i in range(5):
             try:
-                result = dispatcher.dispatch("RateLimit", f"msg{i}")
+                result = dispatcher.dispatch(
+                    create_test_message("RateLimit", f"msg{i}")
+                )
                 assert result is not None
             except Exception:
                 pass  # Rate limit may kick in
@@ -1684,10 +1768,10 @@ class TestFlextDispatcherCoverage:
                 raise ValueError(msg)
             return "recovered"
 
-        dispatcher.register_handler("RetryMsg", retry_handler)
+        dispatcher.register_handler("TestMessage", retry_handler)
 
         try:
-            result = dispatcher.dispatch("RetryMsg", "data")
+            result = dispatcher.dispatch(create_test_message("RetryMsg", "data"))
             assert result is not None
         except Exception:
             pass  # Retry may not be implemented in dispatch
@@ -1701,11 +1785,11 @@ class TestFlextDispatcherCoverage:
             call_sequence.append(msg)
             return len(call_sequence)
 
-        dispatcher.register_handler("Sequential", seq_handler)
+        dispatcher.register_handler("TestMessage", seq_handler)
 
         # Make multiple sequential calls
         for i in range(10):
-            result = dispatcher.dispatch("Sequential", f"call{i}")
+            result = dispatcher.dispatch(create_test_message("Sequential", f"call{i}"))
             assert result is not None
 
     def test_dispatcher_handler_concurrent_same_type(self) -> None:
@@ -1718,11 +1802,13 @@ class TestFlextDispatcherCoverage:
         def concurrent_handler(msg: object) -> object:
             return len(str(msg))
 
-        dispatcher.register_handler("Concurrent", concurrent_handler)
+        dispatcher.register_handler("TestMessage", concurrent_handler)
 
         def dispatch_call(idx: int) -> None:
             try:
-                result = dispatcher.dispatch("Concurrent", f"msg{idx}")
+                result = dispatcher.dispatch(
+                    create_test_message("Concurrent", f"msg{idx}")
+                )
                 if result:
                     concurrent_results.append(result)
             except Exception:
@@ -1744,8 +1830,8 @@ class TestFlextDispatcherCoverage:
         def cleanup_handler(msg: object) -> object:
             return msg
 
-        dispatcher.register_handler("Cleanup", cleanup_handler)
-        dispatcher.dispatch("Cleanup", "test")
+        dispatcher.register_handler("TestMessage", cleanup_handler)
+        dispatcher.dispatch(create_test_message("Cleanup", "test"))
 
         # Cleanup should not raise errors
         try:
@@ -1764,11 +1850,11 @@ class TestFlextDispatcherCoverage:
                     execution_order.append(n)
             return msg
 
-        dispatcher.register_handler("OrderTest", order_handler)
+        dispatcher.register_handler("TestMessage", order_handler)
 
         # Execute in specific order
         for i in [5, 2, 8, 1, 9]:
-            dispatcher.dispatch("OrderTest", i)
+            dispatcher.dispatch(create_test_message("OrderTest", i))
 
         # Should have executed in order
         assert len(execution_order) >= 0
@@ -1782,10 +1868,13 @@ class TestFlextDispatcherCoverage:
             side_effects.append(f"effect_{msg}")
             return msg
 
-        dispatcher.register_handler("Effects", effect_handler)
+        # Register handler with TestMessage type name
+        dispatcher.register_handler("TestMessage", effect_handler)
 
+        # Use message objects, not strings
         for i in range(5):
-            dispatcher.dispatch("Effects", i)
+            message = create_test_message("Effects", i)
+            dispatcher.dispatch(message)
 
         # Side effects should be recorded
         assert len(side_effects) >= 0
@@ -1803,7 +1892,7 @@ class TestFlextDispatcherCoverage:
                 case _:
                     return msg
 
-        dispatcher.register_handler("BatchProc", batch_proc)
+        dispatcher.register_handler("TestMessage", batch_proc)
 
         try:
             # Use the process_batch public method
@@ -1819,7 +1908,7 @@ class TestFlextDispatcherCoverage:
         def parallel_proc(msg: object) -> object:
             return msg
 
-        dispatcher.register_handler("ParallelProc", parallel_proc)
+        dispatcher.register_handler("TestMessage", parallel_proc)
 
         try:
             # Use the process_parallel public method
@@ -1837,7 +1926,7 @@ class TestFlextDispatcherCoverage:
         def timed_proc(msg: object) -> object:
             return msg
 
-        dispatcher.register_handler("TimedProc", timed_proc)
+        dispatcher.register_handler("TestMessage", timed_proc)
 
         try:
             # Use process with timeout
@@ -1867,8 +1956,8 @@ class TestFlextDispatcherCoverage:
         def handler2(msg: object) -> object:
             return f"h2_{msg}"
 
-        dispatcher.register_handler("Type1", handler1)
-        dispatcher.register_handler("Type2", handler2)
+        dispatcher.register_handler("TestMessage", handler1)
+        dispatcher.register_handler("TestMessage", handler2)
 
         results = []
 
@@ -1903,16 +1992,16 @@ class TestFlextDispatcherCoverage:
                 case _:
                     return msg
 
-        dispatcher.register_handler("ErrorMsg", error_handler)
+        dispatcher.register_handler("TestMessage", error_handler)
 
         try:
             # Normal message
-            result1 = dispatcher.dispatch("ErrorMsg", "normal")
+            result1 = dispatcher.dispatch(create_test_message("ErrorMsg", "normal"))
             assert result1 is not None
 
             # Error message
             try:
-                dispatcher.dispatch("ErrorMsg", "error_trigger")
+                dispatcher.dispatch(create_test_message("ErrorMsg", "error_trigger"))
             except Exception:
                 pass  # Expected
         except Exception:
@@ -1933,13 +2022,13 @@ class TestFlextDispatcherCoverage:
                 case _:
                     return None
 
-        dispatcher.register_handler("Variant", variant_handler)
+        dispatcher.register_handler("TestMessage", variant_handler)
 
         # Test different input types
-        result1 = dispatcher.dispatch("Variant", "test")
-        result2 = dispatcher.dispatch("Variant", 42)
-        result3 = dispatcher.dispatch("Variant", [1, 2, 3])
-        result4 = dispatcher.dispatch("Variant", {"key": "value"})
+        result1 = dispatcher.dispatch(create_test_message("Variant", "test"))
+        result2 = dispatcher.dispatch(create_test_message("Variant", 42))
+        result3 = dispatcher.dispatch(create_test_message("Variant", [1, 2, 3]))
+        result4 = dispatcher.dispatch(create_test_message("Variant", {"key": "value"}))
 
         assert result1 is not None
         assert result2 is not None

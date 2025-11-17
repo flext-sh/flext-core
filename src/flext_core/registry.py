@@ -491,9 +491,13 @@ class FlextRegistry(FlextMixins):
         for handler in handlers:
             result: FlextResult[bool] = self._process_single_handler(handler, summary)
             if result.is_failure:
-                return self.fail(
-                    result.error or "Handler processing failed",
+                base_msg = "Handler processing failed"
+                error_msg = (
+                    f"{base_msg}: {result.error}"
+                    if result.error
+                    else f"{base_msg} (operation failed)"
                 )
+                return self.fail(error_msg)
         return self._finalize_summary(summary)
 
     def _process_single_handler(

@@ -37,10 +37,10 @@ class FlextModelsService:
         parameters: dict[str, object] = Field(default_factory=dict)
         context: dict[str, object] = Field(default_factory=dict)
         timeout_seconds: float = Field(
-            default_factory=lambda: FlextConfig().timeout_seconds,
+            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds,
             gt=0,
             le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
-            description="Timeout from FlextConfig",
+            description="Timeout from FlextConfig (Config has priority over Constants)",
         )
         execution: bool = False
         enable_validation: bool = True
@@ -58,8 +58,14 @@ class FlextModelsService:
             max_timeout_seconds = FlextConstants.Performance.MAX_TIMEOUT_SECONDS
             result = FlextUtilitiesValidation.validate_timeout(v, max_timeout_seconds)
             if result.is_failure:
+                base_msg = "Timeout validation failed"
+                error_msg = (
+                    f"{base_msg}: {result.error}"
+                    if result.error
+                    else f"{base_msg} (invalid timeout value)"
+                )
                 raise FlextExceptions.ValidationError(
-                    message=result.error or "Timeout validation failed",
+                    message=error_msg,
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
             return v
@@ -76,12 +82,12 @@ class FlextModelsService:
         parallel_execution: bool = False
         stop_on_error: bool = True
         batch_size: int = Field(
-            default_factory=lambda: FlextConfig().max_batch_size,
-            description="Batch size from FlextConfig",
+            default_factory=lambda: FlextConfig.get_global_instance().max_batch_size,
+            description="Batch size from FlextConfig (Config has priority over Constants)",
         )
         timeout_per_operation: float = Field(
-            default_factory=lambda: FlextConfig().timeout_seconds,
-            description="Timeout per operation from FlextConfig",
+            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds,
+            description="Timeout per operation from FlextConfig (Config has priority over Constants)",
         )
 
     class DomainServiceMetricsRequest(FlextModelsEntity.ArbitraryTypesModel):
@@ -131,10 +137,10 @@ class FlextModelsService:
         arguments: dict[str, object] = Field(default_factory=dict)
         keyword_arguments: dict[str, object] = Field(default_factory=dict)
         timeout_seconds: float = Field(
-            default_factory=lambda: FlextConfig().timeout_seconds,
+            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds,
             gt=0,
             le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
-            description="Timeout from FlextConfig",
+            description="Timeout from FlextConfig (Config has priority over Constants)",
         )
         retry_config: dict[str, object] = Field(default_factory=dict)
 
@@ -149,7 +155,9 @@ class FlextModelsService:
             )
             if result.is_failure:
                 raise FlextExceptions.TypeError(
-                    message=result.error or "Operation must be callable",
+                    message=f"Operation must be callable: {result.error}"
+                    if result.error
+                    else "Operation must be callable (validation failed)",
                     error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
             # Type-safe return: v is confirmed callable by validation
