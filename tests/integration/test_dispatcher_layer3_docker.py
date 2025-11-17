@@ -608,10 +608,10 @@ class TestLayer3TimeoutEnforcement:
 class TestLayer3FallbackChains:
     """Test fallback chain execution with real services."""
 
-    def test_execute_with_fallback_primary_success(
+    def test_process_primary_success(
         self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
     ) -> None:
-        """Test fallback chain with successful primary processor.
+        """Test successful primary processor execution (fast fail, no fallback).
 
         Args:
             dispatcher: FlextDispatcher instance
@@ -621,42 +621,38 @@ class TestLayer3FallbackChains:
         dispatcher.register_processor("primary", latency_service)
         dispatcher.register_processor("fallback1", NetworkLatencyProcessor(0.02))
 
-        result = dispatcher.execute_with_fallback(
-            "primary", {"value": 42}, ["fallback1"]
-        )
+        result = dispatcher.process("primary", {"value": 42})
 
         assert result.is_success
         assert latency_service.process_count == 1
 
-    def test_execute_with_fallback_fallback_success(
+    def test_process_primary_failure_fast_fail(
         self, dispatcher: FlextDispatcher, fault_service: FaultInjectionProcessor
     ) -> None:
-        """Test fallback chain using fallback processor.
+        """Test primary processor failure returns error immediately (fast fail).
 
         Args:
             dispatcher: FlextDispatcher instance
             fault_service: Fault injection processor
 
         """
-        # Primary fails, fallback succeeds
+        # Primary fails, no fallback - fast fail
         primary = FaultInjectionProcessor(failure_rate=1.0)  # Always fails
         fallback = FaultInjectionProcessor(failure_rate=0.0)  # Always succeeds
 
         dispatcher.register_processor("primary", primary)
         dispatcher.register_processor("fallback", fallback)
 
-        result = dispatcher.execute_with_fallback(
-            "primary", {"value": 42}, ["fallback"]
-        )
+        result = dispatcher.process("primary", {"value": 42})
 
-        assert (
-            result.is_success or result.is_failure
-        )  # Depends on first processor failure handling
+        # Fast fail: should return error immediately
+        assert result.is_failure
         assert primary.attempt_count >= 1
-        assert fallback.attempt_count >= 0
+        # Fallback should not be called
+        assert fallback.attempt_count == 0
 
-    def test_execute_with_fallback_all_fail(self, dispatcher: FlextDispatcher) -> None:
-        """Test fallback chain with all processors failing.
+    def test_process_all_fail_fast_fail(self, dispatcher: FlextDispatcher) -> None:
+        """Test processor failure returns error immediately (fast fail, no fallback).
 
         Args:
             dispatcher: FlextDispatcher instance
@@ -670,17 +666,19 @@ class TestLayer3FallbackChains:
         dispatcher.register_processor("fallback1", fallback1)
         dispatcher.register_processor("fallback2", fallback2)
 
-        result = dispatcher.execute_with_fallback(
-            "primary", {"value": 42}, ["fallback1", "fallback2"]
-        )
+        # Fast fail: primary fails, return error immediately
+        result = dispatcher.process("primary", {"value": 42})
 
         assert result.is_failure
-        assert "failed" in (result.error or "").lower()
+        assert result.error is not None
+        # Fallbacks should not be called (fast fail pattern)
+        assert fallback1.attempt_count == 0
+        assert fallback2.attempt_count == 0
 
-    def test_execute_with_fallback_multiple_fallbacks(
+    def test_process_multiple_processors_independent(
         self, dispatcher: FlextDispatcher
     ) -> None:
-        """Test fallback chain with multiple fallback options.
+        """Test multiple processors operate independently (no fallback pattern).
 
         Args:
             dispatcher: FlextDispatcher instance
@@ -694,12 +692,13 @@ class TestLayer3FallbackChains:
         dispatcher.register_processor("fallback1", fallback1)
         dispatcher.register_processor("fallback2", fallback2)
 
-        result = dispatcher.execute_with_fallback(
-            "primary", {"value": 42}, ["fallback1", "fallback2"]
-        )
+        # Fast fail: primary fails, return error immediately
+        result1 = dispatcher.process("primary", {"value": 42})
+        assert result1.is_failure
 
-        # Should eventually succeed through fallback2
-        assert result.is_success or result.is_failure
+        # Each processor can be called independently
+        result2 = dispatcher.process("fallback2", {"value": 42})
+        assert result2.is_success
 
 
 # ==================== TESTS: METRICS & OBSERVABILITY ====================

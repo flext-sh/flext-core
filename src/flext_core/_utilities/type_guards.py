@@ -12,9 +12,6 @@ import logging
 
 from flext_core.runtime import FlextRuntime
 
-# Module constants
-MAX_PORT_NUMBER: int = 65535
-MIN_PORT_NUMBER: int = 1
 _logger = logging.getLogger(__name__)
 
 

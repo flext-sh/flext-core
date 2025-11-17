@@ -501,10 +501,10 @@ class TestFlextHandlers:
             def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
 
-            def validate_command(self, command: object) -> FlextResult[None]:
+            def validate_command(self, command: object) -> FlextResult[bool]:
                 # Parameter is intentionally unused in this test
                 _ = command  # Mark as intentionally unused
-                return FlextResult[None].fail("Validation failed for test")
+                return FlextResult[bool].fail("Validation failed for test")
 
             def handle(self, message: str) -> FlextResult[str]:
                 return FlextResult[str].ok(f"processed_{message}")
@@ -580,10 +580,10 @@ class TestFlextHandlers:
             def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)
 
-            def validate_query(self, query: object) -> FlextResult[None]:
+            def validate_query(self, query: object) -> FlextResult[bool]:
                 # Parameter is intentionally unused in this test
                 _ = query  # Mark as intentionally unused
-                return FlextResult[None].fail("Query validation failed")
+                return FlextResult[bool].fail("Query validation failed")
 
             def handle(self, message: str) -> FlextResult[str]:
                 return FlextResult[str].ok(f"queried_{message}")
@@ -1029,10 +1029,10 @@ class TestFlextHandlers:
             def __init__(self, value: str) -> None:
                 self.value = value
 
-            def validate_command(self) -> FlextResult[None]:
+            def validate_command(self) -> FlextResult[bool]:
                 if len(self.value) > 0:
-                    return FlextResult[None].ok(None)
-                return FlextResult[None].fail("Value too short")
+                    return FlextResult[bool].ok(True)
+                return FlextResult[bool].fail("Value too short")
 
         msg = MessageWithValidation("test")
         result = handler.validate_command(msg)

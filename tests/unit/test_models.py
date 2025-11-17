@@ -874,7 +874,8 @@ class TestFlextModels:
     def test_handler_registration_model_creation(self) -> None:
         """Test HandlerRegistration model with correct fields."""
 
-        # HandlerRegistration has: name, handler (callable), event_types, priority
+        # HandlerRegistration has: name, handler (callable), event_types
+        # Note: priority field was removed - use order in middleware chain instead
         def dummy_handler() -> None:
             pass
 
@@ -882,7 +883,6 @@ class TestFlextModels:
             name="TestHandler",
             handler=dummy_handler,
             event_types=["CreateUser"],
-            priority=5,
         )
 
         assert reg.name == "TestHandler"
@@ -902,7 +902,7 @@ class TestFlextModels:
 
     def test_handler_execution_config_model(self) -> None:
         """Test HandlerExecutionConfig model with correct fields."""
-        # HandlerExecutionConfig has: handler_name, input_data, execution_context, timeout_seconds, retry_on_failure, max_retries, fallback_handlers
+        # HandlerExecutionConfig has: handler_name, input_data, execution_context, timeout_seconds, retry_on_failure, max_retries
         config = FlextModels.HandlerExecutionConfig(
             handler_name="my_handler",
             input_data={"key": "value"},

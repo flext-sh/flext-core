@@ -5,7 +5,6 @@ as nested classes. It should NOT be imported directly - use FlextModels.Config i
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -69,15 +68,15 @@ class FlextModelsConfig:
                 v, include_correlation_id=True, include_timestamp=True
             )
 
-        def validate_processing_constraints(self) -> FlextResult[None]:
+        def validate_processing_constraints(self) -> FlextResult[bool]:
             """Validate constraints that should be checked during processing."""
             max_timeout_seconds = FlextConstants.Utilities.MAX_TIMEOUT_SECONDS
             if self.timeout_seconds > max_timeout_seconds:
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     f"Timeout cannot exceed {max_timeout_seconds} seconds"
                 )
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
 
     class RetryConfiguration(FlextModelsEntity.ArbitraryTypesModel):
         """Retry configuration with advanced validation."""
@@ -117,7 +116,7 @@ class FlextModelsConfig:
         @field_validator("retry_on_status_codes", mode="after")
         @classmethod
         def validate_backoff_strategy(cls, v: list[object]) -> list[object]:
-            """Validate status codes are valid HTTP codes (using FlextUtilities.Validation)."""
+            """Validate status codes are valid HTTP codes."""
             result = FlextUtilitiesValidation.validate_http_status_codes(
                 v,
                 min_code=FlextConstants.FlextWeb.HTTP_STATUS_MIN,
@@ -166,7 +165,7 @@ class FlextModelsConfig:
         @field_validator("custom_validators", mode="after")
         @classmethod
         def validate_additional_validators(cls, v: list[object]) -> list[object]:
-            """Validate custom validators are callable (using FlextUtilities.Validation)."""
+            """Validate custom validators are callable."""
             for validator in v:
                 result = FlextUtilitiesValidation.validate_callable(
                     validator,
@@ -241,7 +240,6 @@ class FlextModelsConfig:
             default_factory=lambda: FlextConfig().max_retry_attempts,
             description="Max retries from FlextConfig",
         )
-        fallback_handlers: list[str] = Field(default_factory=list)
 
     class MiddlewareConfig(BaseModel):
         """Configuration for middleware execution.
@@ -253,18 +251,14 @@ class FlextModelsConfig:
         model_config = ConfigDict(
             json_schema_extra={
                 "title": "MiddlewareConfig",
-                "description": "Configuration for middleware execution in request processing",
+                "description": (
+                    "Configuration for middleware execution in request processing"
+                ),
             },
         )
 
         enabled: bool = Field(default=True, description="Whether middleware is enabled")
         order: int = Field(default=0, description="Execution order in middleware chain")
-        priority: int = Field(
-            default=0,
-            ge=0,
-            le=100,
-            description="Priority level for execution ordering (0-100)",
-        )
         name: str | None = Field(default=None, description="Optional middleware name")
         config: dict[str, object] = Field(
             default_factory=dict, description="Middleware-specific configuration"
@@ -308,7 +302,8 @@ class FlextModelsConfig:
     class ExternalCommandConfig(FlextModelsEntity.ArbitraryTypesModel):
         """Configuration for external command execution (Pydantic v2).
 
-        Reduces parameter count for FlextUtilities.CommandExecution.run_external_command using config object pattern.
+        Reduces parameter count for FlextUtilities.CommandExecution
+        run_external_command using config object pattern.
         Reuses timeout pattern from ProcessingRequest and HandlerExecutionConfig.
         """
 
@@ -354,7 +349,10 @@ class FlextModelsConfig:
             default=None,
             ge=0,
             le=50,
-            description="Numeric log level (DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50)",
+            description=(
+                "Numeric log level (DEBUG=10, INFO=20, WARNING=30, "
+                "ERROR=40, CRITICAL=50)"
+            ),
         )
         console_renderer: bool = Field(
             default=True,
@@ -429,8 +427,8 @@ class FlextModelsConfig:
     class ExceptionConfig(FlextModelsEntity.ArbitraryTypesModel):
         """Configuration for FlextExceptions.__init__ (Pydantic v2).
 
-        Reduces parameter count for exception initialization from 7 to 2 params (message, config).
-        Groups optional exception context and behavior.
+        Reduces parameter count for exception initialization from 7 to 2 params
+        (message, config). Groups optional exception context and behavior.
         """
 
         error_code: str | None = Field(

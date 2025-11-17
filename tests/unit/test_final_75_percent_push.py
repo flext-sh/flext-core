@@ -247,7 +247,7 @@ class TestCoveragePush75Percent:
         """Test indexing result."""
         r = FlextResult[int].ok(42)
         assert r[0] == 42
-        assert r[1] is None
+        assert r[1] == ""  # Success case returns empty string for error index
 
     def test_result_eq(self) -> None:
         """Test result equality."""

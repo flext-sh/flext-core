@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import pytest
+
 from flext_core import (
     FlextExceptions,
     FlextResult,
@@ -32,13 +34,14 @@ class TestCoverage76Lines:
     def test_result_getitem_index_1(self) -> None:
         """Test __getitem__ with index 1."""
         r = FlextResult[int].ok(42)
-        assert r[1] is None
+        assert r[1] == ""  # Success case returns empty string for error index
 
     def test_result_getitem_on_failure(self) -> None:
-        """Test __getitem__ on failure."""
+        """Test __getitem__ on failure raises exception (fast fail pattern)."""
         r = FlextResult[int].fail("error")
-        # On failure, index 0 returns None
-        assert r[0] is None
+        # Fast fail: accessing data on failure raises exception
+        with pytest.raises(FlextExceptions.BaseError):
+            _ = r[0]
 
     def test_result_bool_true(self) -> None:
         """Test __bool__ returns True for success."""
@@ -58,10 +61,11 @@ class TestCoverage76Lines:
         assert "value" in items
 
     def test_result_iter_failure(self) -> None:
-        """Test __iter__ on failure."""
+        """Test __iter__ on failure raises exception (fast fail pattern)."""
         r = FlextResult[str].fail("error message")
-        items = list(r)
-        assert "error message" in items
+        # Fast fail: iterating on failure raises exception
+        with pytest.raises(FlextExceptions.BaseError):
+            _ = list(r)
 
     def test_result_or_operator(self) -> None:
         """Test __or__ operator for default value."""
@@ -241,14 +245,14 @@ class TestCoverage76Lines:
         assert isinstance(r.error_data, dict)
 
     def test_result_value_or_none_success(self) -> None:
-        """Test .value_or_none on success."""
+        """Test .value on success - value_or_none removed."""
         r = FlextResult[str].ok("value")
-        assert r.value_or_none == "value"
+        assert r.value == "value"
 
     def test_result_value_or_none_failure(self) -> None:
-        """Test .value_or_none on failure."""
+        """Test .unwrap_or on failure - value_or_none removed."""
         r = FlextResult[str].fail("error")
-        assert r.value_or_none is None
+        assert r.unwrap_or("default") == "default"
 
 
 __all__ = ["TestCoverage76Lines"]

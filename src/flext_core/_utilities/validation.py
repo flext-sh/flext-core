@@ -22,17 +22,12 @@ from typing import TypeGuard, cast
 
 import orjson
 
-from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
-# Module constants
-MAX_PORT_NUMBER: int = 65535
-MIN_PORT_NUMBER: int = 1
-MAX_HOSTNAME_LENGTH: int = 253  # RFC 1035: max 253 characters
 _logger = logging.getLogger(__name__)
 
 
@@ -46,12 +41,15 @@ class FlextUtilitiesValidation:
     """
 
     # CONSOLIDATED: Use FlextUtilitiesCache for cache operations (no duplication)
-    # NOTE: _normalize_component, _sort_key, _sort_dict_keys below are INTERNAL recursive helpers
-    # They are NOT duplicates of cache.py - they have different logic and recursion patterns
+    # NOTE: _normalize_component, _sort_key, _sort_dict_keys below are INTERNAL
+    # recursive helpers. They are NOT duplicates of cache.py - they have different
+    # logic and recursion patterns
 
     @staticmethod
-    def _normalize_component(component: FlextTypes.GenericDetailsType) -> object:
-        """Normalize a component for consistent representation (internal recursive helper)."""
+    def _normalize_component(
+        component: FlextTypes.GenericDetailsType,
+    ) -> object:
+        """Normalize component for consistent representation (internal recursive)."""
         if FlextRuntime.is_dict_like(component):
             component_dict = component
             return {
@@ -82,7 +80,7 @@ class FlextUtilitiesValidation:
     def _sort_dict_keys(
         data: FlextTypes.SortableObjectType,
     ) -> FlextTypes.SortableObjectType:
-        """Sort dictionary keys for consistent representation (internal recursive helper)."""
+        """Sort dict keys for consistent representation (internal recursive)."""
         if FlextRuntime.is_dict_like(data):
             data_dict = data
             return {
@@ -94,16 +92,22 @@ class FlextUtilitiesValidation:
         return data
 
     @staticmethod
-    def validate_pipeline(value: str, validators: list[object]) -> FlextResult[None]:
+    def validate_pipeline(value: str, validators: list[object]) -> FlextResult[bool]:
         """Validate using a pipeline of validators."""
         for validator in validators:
             if callable(validator):
                 try:
-                    result: FlextResult[None] = cast(
-                        "FlextResult[None]", validator(value)
+                    result: FlextResult[bool] = cast(
+                        "FlextResult[bool]", validator(value)
                     )
                     if result.is_failure:
                         return result
+                    if not result.is_success or result.value is not True:
+                        error_msg = (
+                            "Validator must return FlextResult[bool].ok(True) "
+                            "for success"
+                        )
+                        return FlextResult[bool].fail(error_msg)
                 except (
                     AttributeError,
                     TypeError,
@@ -111,38 +115,8 @@ class FlextUtilitiesValidation:
                     RuntimeError,
                     KeyError,
                 ) as e:
-                    return FlextResult[None].fail(f"Validator failed: {e}")
-        return FlextResult[None].ok(None)
-
-    @staticmethod
-    def clear_all_caches(obj: FlextTypes.CachedObjectType) -> FlextResult[None]:
-        """Clear all caches on an object to prevent memory leaks.
-
-        NOTE: Uses FlextUtilitiesCache.clear_object_cache() (CONSOLIDATED - no duplication).
-
-        Args:
-            obj: Object to clear caches on
-
-        Returns:
-            FlextResult indicating success or failure
-
-        """
-        return FlextUtilitiesCache.clear_object_cache(obj)
-
-    @staticmethod
-    def has_cache_attributes(obj: FlextTypes.CachedObjectType) -> bool:
-        """Check if object has any cache-related attributes.
-
-        NOTE: Uses FlextUtilitiesCache.has_cache_attributes() (CONSOLIDATED - no duplication).
-
-        Args:
-            obj: Object to check for cache attributes
-
-        Returns:
-            True if object has cache attributes, False otherwise
-
-        """
-        return FlextUtilitiesCache.has_cache_attributes(obj)
+                    return FlextResult[bool].fail(f"Validator failed: {e}")
+        return FlextResult[bool].ok(True)
 
     @staticmethod
     def sort_key(value: FlextTypes.SerializableType) -> str:
@@ -217,10 +191,16 @@ class FlextUtilitiesValidation:
         value: FlextProtocols.HasModelDump,
     ) -> tuple[str, object]:
         """Normalize Pydantic model to cache-friendly structure."""
+        # Fast fail: model_dump() must succeed for valid Pydantic models
         try:
             dumped: dict[str, object] = value.model_dump()
-        except TypeError:
-            dumped = {}
+        except TypeError as e:
+            # Fast fail: model_dump() failure indicates invalid model
+            msg = (
+                f"Failed to dump Pydantic value: {type(value).__name__}: "
+                f"{type(e).__name__}: {e}"
+            )
+            raise TypeError(msg) from e
         normalized_dumped = FlextUtilitiesValidation._normalize_component(dumped)
         return ("pydantic", normalized_dumped)
 
@@ -231,8 +211,9 @@ class FlextUtilitiesValidation:
         Note: This should only be called after checking is_dataclass(value) and
         ensuring it's not a type (via isinstance(value, type) check).
         """
-        # Caller guarantees value is a dataclass instance via _is_dataclass_instance check
-        # Using manual field extraction - cast to satisfy mypy strict mode
+        # Caller guarantees value is a dataclass instance via
+        # _is_dataclass_instance check. Using manual field extraction -
+        # cast to satisfy mypy strict mode
         field_dict: dict[str, object] = {}
         # Cast value.__class__ to type since we know it's a dataclass instance
         for field in get_dataclass_fields(cast("type", value.__class__)):
@@ -671,10 +652,14 @@ class FlextUtilitiesValidation:
         if port is None:
             return FlextResult[int].fail(f"{context} cannot be None")
 
-        if not (MIN_PORT_NUMBER <= port <= MAX_PORT_NUMBER):
-            return FlextResult[int].fail(
-                f"{context} must be between {MIN_PORT_NUMBER} and {MAX_PORT_NUMBER}, got {port}"
+        if not (
+            FlextConstants.Network.MIN_PORT <= port <= FlextConstants.Network.MAX_PORT
+        ):
+            error_msg = (
+                f"{context} must be between {FlextConstants.Network.MIN_PORT} and "
+                f"{FlextConstants.Network.MAX_PORT}, got {port}"
             )
+            return FlextResult[int].fail(error_msg)
 
         return FlextResult[int].ok(port)
 
@@ -867,7 +852,12 @@ class FlextUtilitiesValidation:
 
         """
         if timeout > max_timeout:
-            msg = error_message or f"Timeout cannot exceed {max_timeout} seconds"
+            # Fast fail: explicit default value instead of 'or' fallback
+            msg: str = (
+                error_message
+                if error_message is not None
+                else f"Timeout cannot exceed {max_timeout} seconds"
+            )
             return FlextResult[float | int].fail(msg, error_code=error_code)
         return FlextResult[float | int].ok(timeout)
 
@@ -912,8 +902,12 @@ class FlextUtilitiesValidation:
                     code_int = int(str(code))
                     # Validate range
                     if not min_code <= code_int <= max_code:
+                        error_msg = (
+                            f"Invalid HTTP status code: {code} "
+                            f"(must be {min_code}-{max_code})"
+                        )
                         return FlextResult[list[int]].fail(
-                            f"Invalid HTTP status code: {code} (must be {min_code}-{max_code})",
+                            error_msg,
                             error_code=FlextConstants.Errors.VALIDATION_ERROR,
                         )
                     validated_codes.append(code_int)
@@ -990,14 +984,15 @@ class FlextUtilitiesValidation:
         *,
         perform_dns_lookup: bool = True,
     ) -> FlextResult[str]:
-        """Validate hostname format and optionally perform DNS resolution (generic helper).
+        """Validate hostname format and optionally perform DNS resolution.
 
         This generic helper consolidates hostname validation logic from typings.py
         and provides flexible validation with optional DNS lookup.
 
         Args:
             hostname: Hostname string to validate
-            perform_dns_lookup: If True, perform DNS lookup to verify hostname resolution (default: True)
+            perform_dns_lookup: If True, perform DNS lookup to verify hostname
+                resolution (default: True)
 
         Returns:
             FlextResult[str]: Success with hostname if valid, failure otherwise
@@ -1030,9 +1025,13 @@ class FlextUtilitiesValidation:
         normalized_hostname = hostname.strip()
 
         # Validate hostname length (RFC 1035: max 253 characters)
-        if len(normalized_hostname) > MAX_HOSTNAME_LENGTH:
+        if len(normalized_hostname) > FlextConstants.Network.MAX_HOSTNAME_LENGTH:
+            error_msg = (
+                f"Hostname '{normalized_hostname}' exceeds maximum length of "
+                f"{FlextConstants.Network.MAX_HOSTNAME_LENGTH} characters"
+            )
             return FlextResult[str].fail(
-                f"Hostname '{normalized_hostname}' exceeds maximum length of {MAX_HOSTNAME_LENGTH} characters",
+                error_msg,
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
 
@@ -1062,11 +1061,11 @@ class FlextUtilitiesValidation:
         strip: bool = True,
         error_message: str | None = None,
     ) -> FlextResult[str]:
-        """Validate and normalize identifier/name with customizable pattern (generic helper).
+        """Validate and normalize identifier/name with customizable pattern.
 
-        This generic helper consolidates identifier validation logic from container.py
-        (_validate_service_name) and provides flexible validation for names, identifiers,
-        service names, etc.
+        This generic helper consolidates identifier validation logic from
+        container.py (_validate_service_name) and provides flexible validation
+        for names, identifiers, service names, etc.
 
         Default pattern allows: alphanumeric, underscore, hyphen, colon, and space
         - Useful for service names with namespacing (e.g., "logger:module_name")
@@ -1112,9 +1111,14 @@ class FlextUtilitiesValidation:
 
         # Validate pattern
         if not re.match(pattern, normalized_name):
-            msg = error_message or (
-                f"Identifier '{normalized_name}' contains invalid characters. "
-                f"Must match pattern: {pattern}"
+            # Fast fail: explicit default value instead of 'or' fallback
+            msg: str = (
+                error_message
+                if error_message is not None
+                else (
+                    f"Identifier '{normalized_name}' contains invalid characters. "
+                    f"Must match pattern: {pattern}"
+                )
             )
             return FlextResult[str].fail(
                 msg,
@@ -1171,7 +1175,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _validate_backoff_multiplier(
         retry_config: dict[str, object],
-    ) -> FlextResult[float | None]:
+    ) -> FlextResult[float]:
         """Validate backoff_multiplier parameter."""
         backoff_multiplier = retry_config.get("backoff_multiplier")
         if backoff_multiplier is not None and isinstance(
@@ -1179,12 +1183,14 @@ class FlextUtilitiesValidation:
         ):
             backoff_mult = float(backoff_multiplier)
             if backoff_mult < 1.0:
-                return FlextResult[float | None].fail(
+                return FlextResult[float].fail(
                     "backoff_multiplier must be >= 1.0",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
-            return FlextResult[float | None].ok(backoff_mult)
-        return FlextResult[float | None].ok(None)
+            return FlextResult[float].ok(backoff_mult)
+        return FlextResult[float].ok(
+            FlextConstants.Performance.DEFAULT_BACKOFF_MULTIPLIER
+        )
 
     @staticmethod
     def create_retry_config(
@@ -1232,9 +1238,14 @@ class FlextUtilitiesValidation:
                         exponential_backoff=bool(
                             retry_config.get("exponential_backoff")
                         ),
-                        retry_on_exceptions=cast(
-                            "list[type[Exception]]",
-                            retry_config.get("retry_on_exceptions") or [Exception],
+                        retry_on_exceptions=(
+                            cast(
+                                "list[type[Exception]]",
+                                retry_config["retry_on_exceptions"],
+                            )
+                            if "retry_on_exceptions" in retry_config
+                            and retry_config["retry_on_exceptions"] is not None
+                            else [Exception]
                         ),
                         backoff_multiplier=params[3],
                     )
@@ -1324,9 +1335,11 @@ class FlextUtilitiesValidation:
 
             # Check for callable services (should be registered as factories)
             if callable(service):
-                return FlextResult[dict[str, object]].fail(
-                    f"Service '{name}' appears to be callable. Use register_factory instead"
+                error_msg = (
+                    f"Service '{name}' appears to be callable. "
+                    "Use with_factory instead"
                 )
+                return FlextResult[dict[str, object]].fail(error_msg)
 
         return FlextResult[dict[str, object]].ok(services)
 

@@ -124,7 +124,7 @@ class DemoScenarios:
 class DatabaseServiceProtocol(Protocol):
     """Protocol defining database service interface."""
 
-    def connect(self) -> FlextResult[None]:
+    def connect(self) -> FlextResult[bool]:
         """Connect to database."""
         ...
 
@@ -149,7 +149,7 @@ class CacheServiceProtocol(Protocol):
         """Get value from cache."""
         ...
 
-    def set(self, key: str, value: object) -> FlextResult[None]:
+    def set(self, key: str, value: object) -> FlextResult[bool]:
         """Set value in cache."""
         ...
 
@@ -157,7 +157,7 @@ class CacheServiceProtocol(Protocol):
 class EmailServiceProtocol(Protocol):
     """Protocol defining email service interface."""
 
-    def send(self, to: str, subject: str, body: str) -> FlextResult[None]:
+    def send(self, to: str, subject: str, body: str) -> FlextResult[bool]:
         """Send email."""
         ...
 
@@ -175,7 +175,7 @@ class HasGetStats(Protocol):
 class HasCacheSet(Protocol):
     """Protocol for cache objects with set method."""
 
-    def set(self, key: str, value: object) -> FlextResult[None]:
+    def set(self, key: str, value: object) -> FlextResult[bool]:
         """Set value in cache."""
         ...
 
@@ -204,12 +204,12 @@ class DatabaseService(FlextService[None]):
 
     def execute(self) -> FlextResult[None]:
         """Execute the database service."""
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
-    def connect(self) -> FlextResult[None]:
+    def connect(self) -> FlextResult[bool]:
         """Connect to database with state validation."""
         if self.connected:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "Database already connected",
                 error_code=FlextConstants.Errors.ALREADY_EXISTS,
                 error_data={"connection_string": self._connection_string},
@@ -221,7 +221,7 @@ class DatabaseService(FlextService[None]):
             "Database connection established",
             extra={"connection_string": self._connection_string},
         )
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     def query(self, sql: str) -> FlextResult[list[dict[str, object]]]:
         """Execute query with comprehensive error handling."""
@@ -396,13 +396,13 @@ class CacheService(FlextService[object]):
     ) -> FlextResult[None]:
         """Set value in cache with optional TTL override."""
         if not key or not key.strip():
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "Cache key cannot be empty",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
 
         if value is None:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "Cache value cannot be None",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
@@ -421,7 +421,7 @@ class CacheService(FlextService[object]):
         self.logger.debug(
             f"Cache set: {key} (TTL: {ttl_seconds or self._ttl_seconds}s)",
         )
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     def _evict_oldest(self) -> None:
         """Evict the oldest cache entry using LRU strategy."""
@@ -474,13 +474,13 @@ class EmailService(FlextService[None]):
 
     def execute(self) -> FlextResult[None]:
         """Execute the email service."""
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
-    def send(self, to: str, subject: str, body: str) -> FlextResult[None]:
+    def send(self, to: str, subject: str, body: str) -> FlextResult[bool]:
         """Send email (simulated)."""
         self.logger.info("Email sent to %s: %s", to, subject)
         _ = body
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
 
 # ========== DOMAIN MODELS ==========
@@ -527,12 +527,12 @@ class UserRepository(FlextService[User]):
         self.logger.info("User loaded from database: %s", user.entity_id)
         return FlextResult[User].ok(user)
 
-    def save(self, user: User) -> FlextResult[None]:
+    def save(self, user: User) -> FlextResult[bool]:
         """Save user to database with validation."""
         # Validate user before saving
         validation_result = self._validate_user(user)
         if validation_result.is_failure:
-            return validation_result
+            return validation_result.map(lambda _: False)
 
         # Simulate save operation with enhanced logging
         self.logger.info(
@@ -543,7 +543,7 @@ class UserRepository(FlextService[User]):
         # Update cache
         self._cache[user.entity_id] = user
 
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     def find_by_id(self, user_id: str) -> FlextResult[User]:
         """Find user by ID from cache or database."""
@@ -573,13 +573,13 @@ class UserRepository(FlextService[User]):
     def _validate_user(self, user: User) -> FlextResult[None]:
         """Validate user data before saving."""
         if not user.name or not user.name.strip():
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "User name cannot be empty",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
 
         if not user.email or "@" not in user.email:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "User email must be valid",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
@@ -588,12 +588,12 @@ class UserRepository(FlextService[User]):
             user.age < FlextConstants.Validation.MIN_AGE
             or user.age > FlextConstants.Validation.MAX_AGE
         ):
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 f"User age must be between {FlextConstants.Validation.MIN_AGE} and {FlextConstants.Validation.MAX_AGE}",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
 
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     def get_stats(self) -> dict[str, object]:
         """Get repository statistics."""

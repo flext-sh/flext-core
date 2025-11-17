@@ -14,16 +14,22 @@ from __future__ import annotations
 import contextvars
 import logging
 import time
+from collections.abc import Callable
 from typing import ClassVar, cast
 
 import structlog
 
-from flext_core._exception_helpers import (
-    extract_common_kwargs,
-    prepare_exception_kwargs,
-)
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+
+# Reserved keyword names used across all exception classes
+_EXCEPTION_RESERVED_KEYS: frozenset[str] = frozenset({
+    "correlation_id",
+    "metadata",
+    "auto_log",
+    "auto_correlation",
+    "config",
+})
 
 
 class FlextExceptions:
@@ -468,7 +474,18 @@ class FlextExceptions:
                 # Type narrowing: correlation_id is str | None, but we assign it directly
                 # The type checker will accept this as the attribute allows str | None
                 self.correlation_id = correlation_id
-            self.metadata = metadata or {}
+            # Validate metadata - NO fallback, explicit validation
+            if metadata is None:
+                self.metadata = {}
+            elif isinstance(metadata, dict):
+                self.metadata = metadata.copy()  # Avoid mutating input
+            else:
+                # Fast fail: metadata must be dict or None
+                msg = (
+                    f"Invalid metadata type: {type(metadata).__name__}. "
+                    "Expected dict[str, object] | None"
+                )
+                raise TypeError(msg)
             self.metadata.update(extra_kwargs)
             self.timestamp = time.time()
             self.auto_log = auto_log
@@ -600,7 +617,7 @@ class FlextExceptions:
             *,
             field: str | None = None,
             value: object | None = None,
-            error_code: str | None = None,
+            error_code: str = FlextConstants.Errors.VALIDATION_ERROR,
             **kwargs: object,
         ) -> None:
             """Initialize validation error.
@@ -609,7 +626,7 @@ class FlextExceptions:
                 message: Validation error message
                 field: Optional field name that failed validation
                 value: Optional invalid value
-                error_code: Optional error code override
+                error_code: Error code (defaults to VALIDATION_ERROR)
                 **kwargs: correlation_id, metadata, config, auto_log, auto_correlation, etc.
 
             """
@@ -620,12 +637,12 @@ class FlextExceptions:
                 auto_correlation,
                 config,
                 extra_kwargs,
-            ) = prepare_exception_kwargs(
+            ) = FlextExceptions.prepare_exception_kwargs(
                 kwargs, specific_params={"field": field, "value": value}
             )
             super().__init__(
                 message,
-                error_code=error_code or FlextConstants.Errors.VALIDATION_ERROR,
+                error_code=error_code,
                 correlation_id=correlation_id,
                 metadata=metadata,
                 auto_log=auto_log,
@@ -649,7 +666,7 @@ class FlextExceptions:
             *,
             config_key: str | None = None,
             config_source: str | None = None,
-            error_code: str | None = None,
+            error_code: str = FlextConstants.Errors.CONFIGURATION_ERROR,
             **kwargs: object,
         ) -> None:
             """Initialize configuration error.
@@ -669,7 +686,7 @@ class FlextExceptions:
                 auto_correlation,
                 config,
                 extra_kwargs,
-            ) = prepare_exception_kwargs(
+            ) = FlextExceptions.prepare_exception_kwargs(
                 kwargs,
                 specific_params={
                     "config_key": config_key,
@@ -678,7 +695,7 @@ class FlextExceptions:
             )
             super().__init__(
                 message,
-                error_code=error_code or FlextConstants.Errors.CONFIGURATION_ERROR,
+                error_code=error_code,
                 correlation_id=correlation_id,
                 metadata=metadata,
                 auto_log=auto_log,
@@ -703,7 +720,7 @@ class FlextExceptions:
             host: str | None = None,
             port: int | None = None,
             timeout: float | None = None,
-            error_code: str | None = None,
+            error_code: str = FlextConstants.Errors.CONFIGURATION_ERROR,
             **kwargs: object,
         ) -> None:
             """Initialize connection error.
@@ -724,13 +741,13 @@ class FlextExceptions:
                 auto_correlation,
                 config,
                 extra_kwargs,
-            ) = prepare_exception_kwargs(
+            ) = FlextExceptions.prepare_exception_kwargs(
                 kwargs,
                 specific_params={"host": host, "port": port, "timeout": timeout},
             )
             super().__init__(
                 message,
-                error_code=error_code or FlextConstants.Errors.CONNECTION_ERROR,
+                error_code=error_code,
                 correlation_id=correlation_id,
                 metadata=metadata,
                 auto_log=auto_log,
@@ -755,7 +772,7 @@ class FlextExceptions:
             *,
             timeout_seconds: float | None = None,
             operation: str | None = None,
-            error_code: str | None = None,
+            error_code: str = FlextConstants.Errors.CONFIGURATION_ERROR,
             **kwargs: object,
         ) -> None:
             """Initialize timeout error.
@@ -775,7 +792,7 @@ class FlextExceptions:
                 auto_correlation,
                 config,
                 extra_kwargs,
-            ) = prepare_exception_kwargs(
+            ) = FlextExceptions.prepare_exception_kwargs(
                 kwargs,
                 specific_params={
                     "timeout_seconds": timeout_seconds,
@@ -784,7 +801,7 @@ class FlextExceptions:
             )
             super().__init__(
                 message,
-                error_code=error_code or FlextConstants.Errors.TIMEOUT_ERROR,
+                error_code=error_code,
                 correlation_id=correlation_id,
                 metadata=metadata,
                 auto_log=auto_log,
@@ -808,7 +825,7 @@ class FlextExceptions:
             *,
             auth_method: str | None = None,
             user_id: str | None = None,
-            error_code: str | None = None,
+            error_code: str = FlextConstants.Errors.CONFIGURATION_ERROR,
             **kwargs: object,
         ) -> None:
             """Initialize authentication error.
@@ -828,13 +845,13 @@ class FlextExceptions:
                 auto_correlation,
                 config,
                 extra_kwargs,
-            ) = prepare_exception_kwargs(
+            ) = FlextExceptions.prepare_exception_kwargs(
                 kwargs,
                 specific_params={"auth_method": auth_method, "user_id": user_id},
             )
             super().__init__(
                 message,
-                error_code=error_code or FlextConstants.Errors.AUTHENTICATION_ERROR,
+                error_code=error_code,
                 correlation_id=correlation_id,
                 metadata=metadata,
                 auto_log=auto_log,
@@ -859,7 +876,7 @@ class FlextExceptions:
             user_id: str | None = None,
             resource: str | None = None,
             permission: str | None = None,
-            error_code: str | None = None,
+            error_code: str = FlextConstants.Errors.AUTHORIZATION_ERROR,
             **kwargs: object,
         ) -> None:
             """Initialize authorization error.
@@ -880,7 +897,7 @@ class FlextExceptions:
                 auto_correlation,
                 config,
                 extra_kwargs,
-            ) = prepare_exception_kwargs(
+            ) = FlextExceptions.prepare_exception_kwargs(
                 kwargs,
                 specific_params={
                     "user_id": user_id,
@@ -890,7 +907,7 @@ class FlextExceptions:
             )
             super().__init__(
                 message,
-                error_code=error_code or FlextConstants.Errors.PERMISSION_ERROR,
+                error_code=error_code,
                 correlation_id=correlation_id,
                 metadata=metadata,
                 auto_log=auto_log,
@@ -915,7 +932,7 @@ class FlextExceptions:
             *,
             resource_type: str | None = None,
             resource_id: str | None = None,
-            error_code: str | None = None,
+            error_code: str = FlextConstants.Errors.CONFIGURATION_ERROR,
             **kwargs: object,
         ) -> None:
             """Initialize not found error.
@@ -935,7 +952,7 @@ class FlextExceptions:
                 auto_correlation,
                 config,
                 extra_kwargs,
-            ) = prepare_exception_kwargs(
+            ) = FlextExceptions.prepare_exception_kwargs(
                 kwargs,
                 specific_params={
                     "resource_type": resource_type,
@@ -944,7 +961,7 @@ class FlextExceptions:
             )
             super().__init__(
                 message,
-                error_code=error_code or FlextConstants.Errors.NOT_FOUND_ERROR,
+                error_code=error_code,
                 correlation_id=correlation_id,
                 metadata=metadata,
                 auto_log=auto_log,
@@ -967,7 +984,7 @@ class FlextExceptions:
             message: str,
             *,
             config: object | None = None,
-            error_code: str | None = None,
+            error_code: str = FlextConstants.Errors.CONFIGURATION_ERROR,
             resource_type: str | None = None,
             resource_id: str | None = None,
             conflict_reason: str | None = None,
@@ -994,7 +1011,7 @@ class FlextExceptions:
                 auto_correlation,
                 config_obj,
                 extra_kwargs,
-            ) = prepare_exception_kwargs(
+            ) = FlextExceptions.prepare_exception_kwargs(
                 kwargs,
                 specific_params={
                     "resource_type": resource_type,
@@ -1004,7 +1021,7 @@ class FlextExceptions:
             )
             super().__init__(
                 message,
-                error_code=error_code or FlextConstants.Errors.ALREADY_EXISTS,
+                error_code=error_code,
                 correlation_id=correlation_id,
                 metadata=metadata,
                 auto_log=auto_log,
@@ -1028,7 +1045,7 @@ class FlextExceptions:
             message: str,
             *,
             config: object | None = None,
-            error_code: str | None = None,
+            error_code: str = FlextConstants.Errors.CONFIGURATION_ERROR,
             limit: int | None = None,
             window_seconds: int | None = None,
             retry_after: int | None = None,
@@ -1055,7 +1072,7 @@ class FlextExceptions:
                 auto_correlation,
                 config_obj,
                 extra_kwargs,
-            ) = prepare_exception_kwargs(
+            ) = FlextExceptions.prepare_exception_kwargs(
                 kwargs,
                 specific_params={
                     "limit": limit,
@@ -1089,7 +1106,7 @@ class FlextExceptions:
             message: str,
             *,
             config: object | None = None,
-            error_code: str | None = None,
+            error_code: str = FlextConstants.Errors.CONFIGURATION_ERROR,
             service_name: str | None = None,
             failure_count: int | None = None,
             reset_timeout: int | None = None,
@@ -1116,7 +1133,7 @@ class FlextExceptions:
                 auto_correlation,
                 config_obj,
                 extra_kwargs,
-            ) = prepare_exception_kwargs(
+            ) = FlextExceptions.prepare_exception_kwargs(
                 kwargs,
                 specific_params={
                     "service_name": service_name,
@@ -1150,7 +1167,7 @@ class FlextExceptions:
             message: str,
             *,
             config: object | None = None,
-            error_code: str | None = None,
+            error_code: str = FlextConstants.Errors.CONFIGURATION_ERROR,
             expected_type: str | None = None,
             actual_type: str | None = None,
             **kwargs: object,
@@ -1175,7 +1192,7 @@ class FlextExceptions:
                 auto_correlation,
                 config_obj,
                 extra_kwargs,
-            ) = prepare_exception_kwargs(
+            ) = FlextExceptions.prepare_exception_kwargs(
                 kwargs,
                 specific_params={
                     "expected_type": expected_type,
@@ -1207,7 +1224,7 @@ class FlextExceptions:
             message: str,
             *,
             config: object | None = None,
-            error_code: str | None = None,
+            error_code: str = FlextConstants.Errors.OPERATION_ERROR,
             operation: str | None = None,
             reason: str | None = None,
             **kwargs: object,
@@ -1232,7 +1249,7 @@ class FlextExceptions:
                 auto_correlation,
                 config_obj,
                 extra_kwargs,
-            ) = prepare_exception_kwargs(
+            ) = FlextExceptions.prepare_exception_kwargs(
                 kwargs,
                 specific_params={"operation": operation, "reason": reason},
             )
@@ -1252,6 +1269,79 @@ class FlextExceptions:
     # =========================================================================
     # UTILITY METHODS - Convenience functions for error creation
     # =========================================================================
+
+    @staticmethod
+    def prepare_exception_kwargs(
+        kwargs: dict[str, object],
+        specific_params: dict[str, object] | None = None,
+    ) -> tuple[
+        str | None,
+        dict[str, object] | None,
+        bool,
+        bool,
+        object | None,
+        dict[str, object],
+    ]:
+        """Prepare kwargs for exception initialization (DRY helper).
+
+        Extracts common parameters and filters kwargs for BaseError.__init__().
+        Eliminates 30-40 lines of duplicate code from each exception class.
+
+        Args:
+            kwargs: Raw kwargs from exception __init__
+            specific_params: Dict of specific parameters to add to metadata
+
+        Returns:
+            Tuple of (correlation_id, metadata, auto_log, auto_correlation,
+                      config, extra_kwargs)
+
+        """
+        # Add specific params to kwargs for metadata
+        if specific_params:
+            for key, value in specific_params.items():
+                if value is not None:
+                    kwargs.setdefault(key, value)
+
+        # Extract common parameters with proper type casting
+        correlation_id = cast("str | None", kwargs.get("correlation_id"))
+        metadata = cast("dict[str, object] | None", kwargs.get("metadata"))
+        auto_log = bool(kwargs.get("auto_log"))
+        auto_correlation = bool(kwargs.get("auto_correlation"))
+        config = kwargs.get("config")
+
+        # Filter out reserved keys
+        extra_kwargs = {
+            k: v for k, v in kwargs.items() if k not in _EXCEPTION_RESERVED_KEYS
+        }
+
+        return (
+            correlation_id,
+            metadata,
+            auto_log,
+            auto_correlation,
+            config,
+            extra_kwargs,
+        )
+
+    @staticmethod
+    def extract_common_kwargs(
+        kwargs: dict[str, object],
+    ) -> tuple[str | None, dict[str, object] | None]:
+        """Extract correlation_id and metadata from kwargs.
+
+        Used by exception factory methods (e.g., create()) to extract
+        common parameters before passing to __init__().
+
+        Args:
+            kwargs: Raw kwargs containing correlation_id and/or metadata
+
+        Returns:
+            Tuple of (correlation_id, metadata)
+
+        """
+        correlation_id = cast("str | None", kwargs.get("correlation_id"))
+        metadata = cast("dict[str, object] | None", kwargs.get("metadata"))
+        return correlation_id, metadata
 
     @staticmethod
     def create_error(
@@ -1295,6 +1385,288 @@ class FlextExceptions:
         return error_class(message)
 
     @staticmethod
+    def _create_validation_error(
+        message: str,
+        error_code: str | None,
+        kwargs: dict[str, object],
+        correlation_id: str | None,
+        metadata: dict[str, object] | None,
+    ) -> FlextExceptions.ValidationError:
+        """Create ValidationError from kwargs."""
+        return FlextExceptions.ValidationError(
+            message,
+            error_code=error_code or FlextConstants.Errors.VALIDATION_ERROR,
+            field=cast("str | None", kwargs.get("field")),
+            value=kwargs.get("value"),
+            correlation_id=correlation_id,
+            metadata=metadata,
+        )
+
+    @staticmethod
+    def _create_configuration_error(
+        message: str,
+        error_code: str | None,
+        kwargs: dict[str, object],
+        correlation_id: str | None,
+        metadata: dict[str, object] | None,
+    ) -> FlextExceptions.ConfigurationError:
+        """Create ConfigurationError from kwargs."""
+        return FlextExceptions.ConfigurationError(
+            message,
+            error_code=error_code or FlextConstants.Errors.CONFIGURATION_ERROR,
+            config_key=cast("str | None", kwargs.get("config_key")),
+            config_source=cast("str | None", kwargs.get("config_source")),
+            correlation_id=correlation_id,
+            metadata=metadata,
+        )
+
+    @staticmethod
+    def _create_operation_error(
+        message: str,
+        error_code: str | None,
+        kwargs: dict[str, object],
+        correlation_id: str | None,
+        metadata: dict[str, object] | None,
+    ) -> FlextExceptions.OperationError:
+        """Create OperationError from kwargs."""
+        return FlextExceptions.OperationError(
+            message,
+            error_code=error_code or FlextConstants.Errors.OPERATION_ERROR,
+            operation=cast("str | None", kwargs.get("operation")),
+            reason=cast("str | None", kwargs.get("reason")),
+            correlation_id=correlation_id,
+            metadata=metadata,
+        )
+
+    @staticmethod
+    def _create_connection_error(
+        message: str,
+        error_code: str | None,
+        kwargs: dict[str, object],
+        correlation_id: str | None,
+        metadata: dict[str, object] | None,
+    ) -> FlextExceptions.ConnectionError:
+        """Create ConnectionError from kwargs."""
+        return FlextExceptions.ConnectionError(
+            message,
+            error_code=error_code or FlextConstants.Errors.CONNECTION_ERROR,
+            host=cast("str | None", kwargs.get("host")),
+            port=cast("int | None", kwargs.get("port")),
+            timeout=cast("float | None", kwargs.get("timeout")),
+            correlation_id=correlation_id,
+            metadata=metadata,
+        )
+
+    @staticmethod
+    def _create_timeout_error(
+        message: str,
+        error_code: str | None,
+        kwargs: dict[str, object],
+        correlation_id: str | None,
+        metadata: dict[str, object] | None,
+    ) -> FlextExceptions.TimeoutError:
+        """Create TimeoutError from kwargs."""
+        return FlextExceptions.TimeoutError(
+            message,
+            error_code=error_code or FlextConstants.Errors.TIMEOUT_ERROR,
+            timeout_seconds=cast("float | None", kwargs.get("timeout_seconds")),
+            operation=cast("str | None", kwargs.get("operation")),
+            correlation_id=correlation_id,
+            metadata=metadata,
+        )
+
+    @staticmethod
+    def _create_authorization_error(
+        message: str,
+        error_code: str | None,
+        kwargs: dict[str, object],
+        correlation_id: str | None,
+        metadata: dict[str, object] | None,
+    ) -> FlextExceptions.AuthorizationError:
+        """Create AuthorizationError from kwargs."""
+        final_error_code: str = error_code or FlextConstants.Errors.AUTHORIZATION_ERROR
+        return FlextExceptions.AuthorizationError(
+            message,
+            error_code=final_error_code,
+            user_id=cast("str | None", kwargs.get("user_id")),
+            resource=cast("str | None", kwargs.get("resource")),
+            permission=cast("str | None", kwargs.get("permission")),
+            correlation_id=correlation_id,
+            metadata=metadata,
+        )
+
+    @staticmethod
+    def _create_authentication_error(
+        message: str,
+        error_code: str | None,
+        kwargs: dict[str, object],
+        correlation_id: str | None,
+        metadata: dict[str, object] | None,
+    ) -> FlextExceptions.AuthenticationError:
+        """Create AuthenticationError from kwargs."""
+        final_error_code: str = error_code or FlextConstants.Errors.AUTHENTICATION_ERROR
+        return FlextExceptions.AuthenticationError(
+            message,
+            error_code=final_error_code,
+            auth_method=cast("str | None", kwargs.get("auth_method")),
+            user_id=cast("str | None", kwargs.get("user_id")),
+            correlation_id=correlation_id,
+            metadata=metadata,
+        )
+
+    @staticmethod
+    def _create_not_found_error(
+        message: str,
+        error_code: str | None,
+        kwargs: dict[str, object],
+        correlation_id: str | None,
+        metadata: dict[str, object] | None,
+    ) -> FlextExceptions.NotFoundError:
+        """Create NotFoundError from kwargs."""
+        final_error_code: str = error_code or FlextConstants.Errors.NOT_FOUND_ERROR
+        return FlextExceptions.NotFoundError(
+            message,
+            error_code=final_error_code,
+            resource_type=cast("str | None", kwargs.get("resource_type")),
+            resource_id=cast("str | None", kwargs.get("resource_id")),
+            correlation_id=correlation_id,
+            metadata=metadata,
+        )
+
+    @staticmethod
+    def _create_attribute_access_error(
+        message: str,
+        error_code: str | None,
+        kwargs: dict[str, object],
+        correlation_id: str | None,
+        metadata: dict[str, object] | None,
+    ) -> FlextExceptions.AttributeAccessError:
+        """Create AttributeAccessError from kwargs."""
+        final_error_code: str = error_code or FlextConstants.Errors.ATTRIBUTE_ERROR
+        return FlextExceptions.AttributeAccessError(
+            message,
+            error_code=final_error_code,
+            attribute_name=cast("str | None", kwargs.get("attribute_name")),
+            attribute_context=cast(
+                "dict[str, object] | None", kwargs.get("attribute_context")
+            ),
+            correlation_id=correlation_id,
+            metadata=metadata,
+        )
+
+    @staticmethod
+    def _determine_error_type(kwargs: dict[str, object]) -> str | None:
+        """Determine error type from kwargs.
+
+        Args:
+            kwargs: Keyword arguments to analyze
+
+        Returns:
+            str | None: Error type name or None for default
+
+        """
+        if "field" in kwargs or "value" in kwargs:
+            return "validation"
+        if (
+            "config_key" in kwargs
+            or "config_file" in kwargs
+            or "config_source" in kwargs
+        ):
+            return "configuration"
+        if "operation" in kwargs:
+            return "operation"
+        if "host" in kwargs or "port" in kwargs:
+            return "connection"
+        if "timeout_seconds" in kwargs:
+            return "timeout"
+        if "user_id" in kwargs and "permission" in kwargs:
+            return "authorization"
+        if "auth_method" in kwargs:
+            return "authentication"
+        if "resource_id" in kwargs:
+            return "not_found"
+        if "attribute_name" in kwargs:
+            return "attribute_access"
+        return None
+
+    @staticmethod
+    def _get_error_creator(
+        error_type: str | None,
+    ) -> (
+        Callable[
+            [str, str | None, dict[str, object], str | None, dict[str, object] | None],
+            FlextExceptions.BaseError,
+        ]
+        | None
+    ):
+        """Get error creator function by type.
+
+        Args:
+            error_type: Type of error
+
+        Returns:
+            Callable that creates error or None for default
+
+        """
+        creators: dict[
+            str,
+            Callable[
+                [
+                    str,
+                    str | None,
+                    dict[str, object],
+                    str | None,
+                    dict[str, object] | None,
+                ],
+                FlextExceptions.BaseError,
+            ],
+        ] = {
+            "validation": FlextExceptions._create_validation_error,
+            "configuration": FlextExceptions._create_configuration_error,
+            "operation": FlextExceptions._create_operation_error,
+            "connection": FlextExceptions._create_connection_error,
+            "timeout": FlextExceptions._create_timeout_error,
+            "authorization": FlextExceptions._create_authorization_error,
+            "authentication": FlextExceptions._create_authentication_error,
+            "not_found": FlextExceptions._create_not_found_error,
+            "attribute_access": FlextExceptions._create_attribute_access_error,
+        }
+        return creators.get(error_type) if error_type else None
+
+    @staticmethod
+    def _create_error_by_type(
+        error_type: str | None,
+        message: str,
+        error_code: str | None,
+        kwargs: dict[str, object],
+        correlation_id: str | None,
+        metadata: dict[str, object] | None,
+    ) -> FlextExceptions.BaseError:
+        """Create error instance by type.
+
+        Args:
+            error_type: Type of error to create
+            message: Error message
+            error_code: Optional error code
+            kwargs: Keyword arguments
+            correlation_id: Optional correlation ID
+            metadata: Optional metadata
+
+        Returns:
+            BaseError: Error instance
+
+        """
+        creator = FlextExceptions._get_error_creator(error_type)
+        if creator:
+            return creator(message, error_code, kwargs, correlation_id, metadata)
+        metadata_value: dict[str, object] | None = None
+        if kwargs:
+            metadata_value = kwargs
+        return FlextExceptions.BaseError(
+            message, error_code=error_code, metadata=metadata_value
+        )
+
+    @staticmethod
     def create(
         message: str,
         error_code: str | None = None,
@@ -1314,102 +1686,10 @@ class FlextExceptions:
             Error instance of the appropriate type
 
         """
-        # Extract common parameters once
-        correlation_id, metadata = extract_common_kwargs(kwargs)
-
-        # Determine error type based on kwargs and create instance
-        if "field" in kwargs or "value" in kwargs:
-            return FlextExceptions.ValidationError(
-                message,
-                error_code=error_code,
-                field=cast("str | None", kwargs.get("field")),
-                value=kwargs.get("value"),
-                correlation_id=correlation_id,
-                metadata=metadata,
-            )
-        if (
-            "config_key" in kwargs
-            or "config_file" in kwargs
-            or "config_source" in kwargs
-        ):
-            return FlextExceptions.ConfigurationError(
-                message,
-                error_code=error_code,
-                config_key=cast("str | None", kwargs.get("config_key")),
-                config_source=cast("str | None", kwargs.get("config_source")),
-                correlation_id=correlation_id,
-                metadata=metadata,
-            )
-        if "operation" in kwargs:
-            return FlextExceptions.OperationError(
-                message,
-                error_code=error_code,
-                operation=cast("str | None", kwargs.get("operation")),
-                reason=cast("str | None", kwargs.get("reason")),
-                correlation_id=correlation_id,
-                metadata=metadata,
-            )
-        if "host" in kwargs or "port" in kwargs:
-            return FlextExceptions.ConnectionError(
-                message,
-                error_code=error_code,
-                host=cast("str | None", kwargs.get("host")),
-                port=cast("int | None", kwargs.get("port")),
-                timeout=cast("float | None", kwargs.get("timeout")),
-                correlation_id=correlation_id,
-                metadata=metadata,
-            )
-        if "timeout_seconds" in kwargs:
-            return FlextExceptions.TimeoutError(
-                message,
-                error_code=error_code,
-                timeout_seconds=cast("float | None", kwargs.get("timeout_seconds")),
-                operation=cast("str | None", kwargs.get("operation")),
-                correlation_id=correlation_id,
-                metadata=metadata,
-            )
-        if "user_id" in kwargs and "permission" in kwargs:
-            return FlextExceptions.AuthorizationError(
-                message,
-                error_code=error_code,
-                user_id=cast("str | None", kwargs.get("user_id")),
-                resource=cast("str | None", kwargs.get("resource")),
-                permission=cast("str | None", kwargs.get("permission")),
-                correlation_id=correlation_id,
-                metadata=metadata,
-            )
-        if "auth_method" in kwargs:
-            return FlextExceptions.AuthenticationError(
-                message,
-                error_code=error_code,
-                auth_method=cast("str | None", kwargs.get("auth_method")),
-                user_id=cast("str | None", kwargs.get("user_id")),
-                correlation_id=correlation_id,
-                metadata=metadata,
-            )
-        if "resource_id" in kwargs:
-            return FlextExceptions.NotFoundError(
-                message,
-                error_code=error_code,
-                resource_type=cast("str | None", kwargs.get("resource_type")),
-                resource_id=cast("str | None", kwargs.get("resource_id")),
-                correlation_id=correlation_id,
-                metadata=metadata,
-            )
-        if "attribute_name" in kwargs:
-            return FlextExceptions.AttributeAccessError(
-                message,
-                error_code=error_code,
-                attribute_name=cast("str | None", kwargs.get("attribute_name")),
-                attribute_context=cast(
-                    "dict[str, object] | None", kwargs.get("attribute_context")
-                ),
-                correlation_id=correlation_id,
-                metadata=metadata,
-            )
-        # Default to BaseError
-        return FlextExceptions.BaseError(
-            message, error_code=error_code, metadata=kwargs or None
+        correlation_id, metadata = FlextExceptions.extract_common_kwargs(kwargs)
+        error_type = FlextExceptions._determine_error_type(kwargs)
+        return FlextExceptions._create_error_by_type(
+            error_type, message, error_code, kwargs, correlation_id, metadata
         )
 
     # Metrics tracking for exception monitoring
@@ -1478,7 +1758,7 @@ class FlextExceptions:
             message: str,
             *,
             config: object | None = None,
-            error_code: str | None = None,
+            error_code: str = FlextConstants.Errors.CONFIGURATION_ERROR,
             attribute_name: str | None = None,
             attribute_context: dict[str, object] | None = None,
             **kwargs: object,
@@ -1503,7 +1783,7 @@ class FlextExceptions:
                 auto_correlation,
                 config_obj,
                 extra_kwargs,
-            ) = prepare_exception_kwargs(
+            ) = FlextExceptions.prepare_exception_kwargs(
                 kwargs,
                 specific_params={
                     "attribute_name": attribute_name,

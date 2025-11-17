@@ -40,33 +40,35 @@ class TestEdgeCases:
         assert "..." in truncated or len(truncated) <= 5
 
     def test_safe_string_with_whitespace_only(self) -> None:
-        """Test safe_string with only whitespace."""
+        """Test safe_string with only whitespace - should fail (fast fail pattern)."""
         result = FlextUtilities.TextProcessor.safe_string("   \t\n  ")
-        # Should return empty or whitespace-stripped
-        assert not result or not result.strip()
+        # Whitespace-only should fail (fast fail pattern)
+        assert result.is_failure
 
     def test_safe_string_with_normal_text(self) -> None:
         """Test safe_string with normal text."""
         result = FlextUtilities.TextProcessor.safe_string("hello world")
-        assert result == "hello world"
+        assert result.is_success
+        assert result.unwrap() == "hello world"
 
     def test_safe_string_with_leading_trailing_spaces(self) -> None:
         """Test safe_string strips leading/trailing spaces."""
         result = FlextUtilities.TextProcessor.safe_string("  hello  ")
-        assert result == "hello"
+        assert result.is_success
+        assert result.unwrap() == "hello"
 
     def test_validate_pipeline_with_multiple_validators(self) -> None:
         """Test validator pipeline with multiple validators."""
 
-        def validator1(value: str) -> FlextResult[None]:
+        def validator1(value: str) -> FlextResult[bool]:
             if not value:
-                return FlextResult[None].fail("Empty string")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Empty string")
+            return FlextResult[bool].ok(True)
 
-        def validator2(value: str) -> FlextResult[None]:
+        def validator2(value: str) -> FlextResult[bool]:
             if len(value) < 3:
-                return FlextResult[None].fail("Too short")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Too short")
+            return FlextResult[bool].ok(True)
 
         result = FlextUtilities.Validation.validate_pipeline(
             "hello",
@@ -77,11 +79,11 @@ class TestEdgeCases:
     def test_validate_pipeline_with_failing_validator(self) -> None:
         """Test validator pipeline with failing validator."""
 
-        def validator1(value: str) -> FlextResult[None]:
-            return FlextResult[None].fail("Always fails")
+        def validator1(value: str) -> FlextResult[bool]:
+            return FlextResult[bool].fail("Always fails")
 
-        def validator2(value: str) -> FlextResult[None]:
-            return FlextResult[None].ok(None)
+        def validator2(value: str) -> FlextResult[bool]:
+            return FlextResult[bool].ok(True)
 
         result = FlextUtilities.Validation.validate_pipeline(
             "test",

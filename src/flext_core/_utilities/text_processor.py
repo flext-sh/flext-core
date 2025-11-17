@@ -14,9 +14,6 @@ import re
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 
-# Module constants
-MAX_PORT_NUMBER: int = 65535
-MIN_PORT_NUMBER: int = 1
 _logger = logging.getLogger(__name__)
 
 
@@ -47,23 +44,32 @@ class FlextUtilitiesTextProcessor:
         return FlextResult[str].ok(truncated)
 
     @staticmethod
-    def safe_string(
-        text: str | None,
-        default: str = FlextConstants.Performance.DEFAULT_EMPTY_STRING,
-    ) -> str:
-        """Convert text to safe string, handling None and empty values.
+    def safe_string(text: str) -> FlextResult[str]:
+        """Validate and clean text string.
+
+        Fast fail: text must be non-empty string. Use FlextResult for error handling.
 
         Args:
-            text: Text to make safe
-            default: Default value if text is None or empty
+            text: Text to validate and clean
 
         Returns:
-            Safe string value
+            FlextResult[str]: Success with cleaned text, or failure if text is None/empty
 
         """
-        if not text:
-            return default
-        return text.strip()
+        # Fast fail: text cannot be None
+        if text is None:
+            return FlextResult[str].fail(
+                "Text cannot be None. Use explicit empty string '' or handle None in calling code.",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+        # Fast fail: text cannot be empty or whitespace-only
+        stripped = text.strip()
+        if not stripped:
+            return FlextResult[str].fail(
+                "Text cannot be empty or whitespace-only. Use explicit non-empty string.",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+        return FlextResult[str].ok(stripped)
 
 
 __all__ = ["FlextUtilitiesTextProcessor"]

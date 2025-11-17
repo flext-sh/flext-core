@@ -23,7 +23,8 @@ class TestFlextTestsUtilities:
         result = FlextTestsUtilities.create_test_result()
 
         assert result.is_success
-        assert result.value is None
+        # Default data is empty dict (None is not valid for FlextResult)
+        assert result.value == {}
 
     def test_create_test_result_success_with_data(self) -> None:
         """Test create_test_result success with data."""

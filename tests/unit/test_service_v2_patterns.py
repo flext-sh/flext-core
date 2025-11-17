@@ -503,17 +503,17 @@ class TestV2EdgeCases:
     def test_v2_auto_with_none_return(self) -> None:
         """V2 Auto: Works with None return type."""
 
-        class NoneService(FlextService[None]):
-            """Service returning None."""
+        class BoolService(FlextService[bool]):
+            """Service returning bool."""
 
             auto_execute = True
 
-            def execute(self) -> FlextResult[None]:
-                return FlextResult.ok(None)
+            def execute(self) -> FlextResult[bool]:
+                return FlextResult[bool].ok(True)
 
-        # Returns None directly
-        value = NoneService()
-        assert value is None
+        # Returns True directly
+        value = BoolService()
+        assert value is True
 
     def test_v2_property_with_dict_return(self) -> None:
         """V2 Property: Works with dict return type."""

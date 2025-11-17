@@ -1125,13 +1125,9 @@ class TestFlextDispatcherCoverage:
         dispatcher.register_handler("Primary", primary)
         dispatcher.register_handler("Secondary", secondary)
 
-        try:
-            result = dispatcher.execute_with_fallback(
-                "Primary", "data", fallback_names=["Secondary"]
-            )
-            assert result is not None
-        except Exception:
-            pass
+        # Fast fail: use process directly, no fallback pattern
+        result = dispatcher.process("Primary", "data")
+        assert result.is_success or result.is_failure
 
     def test_dispatcher_audit_log_access(self) -> None:
         """Test accessing dispatcher audit log."""
@@ -1278,13 +1274,9 @@ class TestFlextDispatcherCoverage:
         dispatcher.register_handler("Fallback1", fallback1)
         dispatcher.register_handler("Fallback2", fallback2)
 
-        try:
-            result = dispatcher.execute_with_fallback(
-                "Primary", "data", fallback_names=["Fallback1", "Fallback2"]
-            )
-            assert result is not None
-        except Exception:
-            pass  # Fallback may not be fully implemented
+        # Fast fail: use process directly, no fallback pattern
+        result = dispatcher.process("Primary", "data")
+        assert result.is_success or result.is_failure
 
     def test_dispatcher_timeout_enforcement(self) -> None:
         """Test timeout enforcement in dispatcher."""
@@ -1603,14 +1595,10 @@ class TestFlextDispatcherCoverage:
         dispatcher.register_handler("Fail1", failing_handler_1)
         dispatcher.register_handler("Fail2", failing_handler_2)
 
-        try:
-            result = dispatcher.execute_with_fallback(
-                "Fail1", "data", fallback_names=["Fail2"]
-            )
-            # Should fail completely
-            assert result is not None or result is None
-        except Exception:
-            pass  # Expected when all handlers fail
+        # Fast fail: first handler fails, return error immediately
+        result = dispatcher.process("Fail1", "data")
+        assert result.is_failure
+        assert result.error is not None
 
     def test_dispatcher_processor_registration_and_execution(self) -> None:
         """Test processor registration and execution."""

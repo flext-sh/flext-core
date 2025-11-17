@@ -13,9 +13,6 @@ from collections.abc import Callable
 
 from flext_core.result import FlextResult
 
-# Module constants
-MAX_PORT_NUMBER: int = 65535
-MIN_PORT_NUMBER: int = 1
 _logger = logging.getLogger(__name__)
 
 

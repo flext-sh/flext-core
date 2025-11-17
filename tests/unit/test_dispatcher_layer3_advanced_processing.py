@@ -268,73 +268,39 @@ class TestLayer3ParallelProcessing:
         assert dispatcher.parallel_performance["parallel_operations"] >= 1
 
 
-class TestLayer3FallbackExecution:
-    """Test fallback chain execution."""
+class TestLayer3FastFailExecution:
+    """Test fast fail execution - no fallback patterns."""
 
-    def test_fallback_uses_primary_on_success(self) -> None:
-        """Test fallback uses primary processor when successful."""
+    def test_process_success(self) -> None:
+        """Test successful processor execution."""
         dispatcher = FlextDispatcher()
         double_processor = DoubleProcessor()
-        square_processor = SquareProcessor()
         dispatcher.register_processor("double", double_processor)
-        dispatcher.register_processor("square", square_processor)
 
-        result = dispatcher.execute_with_fallback("double", 5, ["square"])
+        result = dispatcher.process("double", 5)
 
         assert result.is_success
-        assert result.unwrap() == 10  # From double, not square
+        assert result.unwrap() == 10
 
-    def test_fallback_uses_fallback_on_failure(self) -> None:
-        """Test fallback uses fallback processor when primary fails."""
+    def test_process_failure_fast_fail(self) -> None:
+        """Test processor failure returns error immediately (fast fail)."""
         dispatcher = FlextDispatcher()
         failing_processor = FailingProcessor()
-        double_processor = DoubleProcessor()
         dispatcher.register_processor("failing", failing_processor)
-        dispatcher.register_processor("double", double_processor)
 
-        result = dispatcher.execute_with_fallback("failing", 5, ["double"])
-
-        assert result.is_success
-        assert result.unwrap() == 10
-
-    def test_fallback_chain_multiple_fallbacks(self) -> None:
-        """Test fallback chain with multiple fallback processors."""
-        dispatcher = FlextDispatcher()
-        failing1 = FailingProcessor()
-        failing2 = FailingProcessor()
-        double_processor = DoubleProcessor()
-        dispatcher.register_processor("fail1", failing1)
-        dispatcher.register_processor("fail2", failing2)
-        dispatcher.register_processor("double", double_processor)
-
-        result = dispatcher.execute_with_fallback("fail1", 5, ["fail2", "double"])
-
-        assert result.is_success
-        assert result.unwrap() == 10
-
-    def test_fallback_all_fail(self) -> None:
-        """Test fallback when all processors fail."""
-        dispatcher = FlextDispatcher()
-        failing1 = FailingProcessor()
-        failing2 = FailingProcessor()
-        dispatcher.register_processor("fail1", failing1)
-        dispatcher.register_processor("fail2", failing2)
-
-        result = dispatcher.execute_with_fallback("fail1", 5, ["fail2"])
+        result = dispatcher.process("failing", 5)
 
         assert result.is_failure
         assert result.error is not None
-        assert "All processors failed" in result.error
 
-    def test_fallback_empty_chain(self) -> None:
-        """Test fallback with empty fallback chain."""
+    def test_process_unregistered_processor(self) -> None:
+        """Test unregistered processor returns error immediately."""
         dispatcher = FlextDispatcher()
-        failing_processor = FailingProcessor()
-        dispatcher.register_processor("failing", failing_processor)
 
-        result = dispatcher.execute_with_fallback("failing", 5, [])
+        result = dispatcher.process("nonexistent", 5)
 
         assert result.is_failure
+        assert result.error is not None
 
 
 class TestLayer3TimeoutEnforcement:
@@ -474,18 +440,23 @@ class TestLayer3Integration:
         assert single_result.is_success
         assert single_result.unwrap() == 10
 
-    def test_full_workflow_parallel_with_fallback(self) -> None:
-        """Test workflow combining parallel and fallback."""
+    def test_full_workflow_parallel_with_fast_fail(self) -> None:
+        """Test workflow combining parallel with fast fail (no fallback)."""
         dispatcher = FlextDispatcher()
         double_processor = DoubleProcessor()
         failing_processor = FailingProcessor()
         dispatcher.register_processor("double", double_processor)
         dispatcher.register_processor("failing", failing_processor)
 
-        # Fallback with double as fallback
-        result = dispatcher.execute_with_fallback("failing", 5, ["double"])
-        assert result.is_success
-        assert result.unwrap() == 10
+        # Fast fail: failing processor should return error immediately
+        result = dispatcher.process("failing", 5)
+        assert result.is_failure
+        assert result.error is not None
+
+        # Successful processor should work
+        result2 = dispatcher.process("double", 5)
+        assert result2.is_success
+        assert result2.unwrap() == 10
 
     def test_full_workflow_all_features(self) -> None:
         """Test workflow using all Layer 3 features."""
@@ -514,8 +485,8 @@ class TestLayer3Integration:
         r4 = dispatcher.execute_with_timeout("slow", 5, timeout=1.0)
         assert r4.is_success
 
-        # Fallback
-        r5 = dispatcher.execute_with_fallback("double", 7, ["square"])
+        # Direct process (no fallback pattern)
+        r5 = dispatcher.process("double", 7)
         assert r5.is_success and r5.unwrap() == 14
 
         # Verify metrics

@@ -82,8 +82,8 @@ class TestFlextProtocols:
             def save(self, entity: dict[str, object]) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok(entity)
 
-            def delete(self, entity_id: str) -> FlextResult[None]:
-                return FlextResult[None].ok(None)
+            def delete(self, entity_id: str) -> FlextResult[bool]:
+                return FlextResult[bool].ok(True)
 
         repo = UserRepository()
         assert hasattr(repo, "find_by_id")

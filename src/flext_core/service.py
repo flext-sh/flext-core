@@ -14,12 +14,14 @@ from __future__ import annotations
 
 import concurrent.futures
 import inspect
+import re
 import signal
 import time
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from types import SimpleNamespace
 from typing import (
     ClassVar,
     Self,
@@ -34,7 +36,7 @@ from typing import (
 from beartype.door import is_bearable
 from pydantic import computed_field
 
-from flext_core._utilities.generators import create_dynamic_type_subclass
+from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core._utilities.reliability import FlextUtilitiesReliability
 from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.config import FlextConfig
@@ -257,7 +259,7 @@ class FlextService[TDomainResult](
         # Create typed subclass with proper namespace attributes for Pydantic v2
         # __module__ and __qualname__ must be in namespace dict for metaclass
         # Dynamic type creation using helper function - valid Python metaprogramming
-        return create_dynamic_type_subclass(
+        return FlextUtilitiesGenerators.create_dynamic_type_subclass(
             f"{cls_name}[{type_name}]",
             cls,
             {
@@ -401,43 +403,6 @@ class FlextService[TDomainResult](
         # Execute and return result
         return instance.validate_domain_result(instance.execute())
 
-    @classmethod
-    def v1(cls, **kwargs: object) -> Self:
-        """Create service instance without auto-execution (V1 compatibility).
-
-        This method always returns the service instance, regardless of auto_execute.
-        Useful for V1-style explicit .execute() calls.
-
-        Args:
-            **kwargs: Service initialization parameters
-
-        Returns:
-            Self: Service instance (not executed)
-
-        Example:
-            >>> class UserService(FlextService[User]):
-            ...     auto_execute = True  # Would normally auto-execute
-            ...     user_id: str
-            ...
-            ...     def execute(self) -> FlextResult[User]:
-            ...         return self.ok(User(id=self.user_id))
-            >>>
-            >>> # Normal: returns User directly (auto-executed)
-            >>> user = UserService(user_id="123")
-            >>>
-            >>> # v1(): returns service instance (NOT executed)
-            >>> service = UserService.v1(user_id="456")
-            >>> assert isinstance(service, UserService)
-            >>> result = service.execute()  # Must call execute() manually
-
-        """
-        # Create instance using object.__new__ to bypass auto_execute
-        instance = cast("Self", object.__new__(cls))
-        # Initialize instance
-        type(instance).__init__(instance, **kwargs)
-        # Return instance without executing
-        return instance
-
     # =========================================================================
     # V2 PROPERTY: Zero-Ceremony Access Pattern
     # =========================================================================
@@ -580,40 +545,51 @@ class FlextService[TDomainResult](
         self,
         component_suffix: str,
         type_check_func: Callable[[object], bool],
-        fallback_value: object,
     ) -> object:
         """Resolve project component by naming convention (DRY helper).
 
-        Eliminates duplication between project_config and project_models.
-        Both properties follow identical pattern: extract class name → replace
-        suffix → get from container → check type → return or fallback.
+        Attempts to resolve component from container. Fast fail on errors.
 
         Args:
             component_suffix: Suffix to replace "Service" with ("Config"/"Models")
             type_check_func: Function to validate resolved object type
-            fallback_value: Value to return if resolution fails
 
         Returns:
-            Resolved component or fallback value
+            Resolved component
+
+        Raises:
+            FlextExceptions.TypeError: If component found but type check fails
+            FlextExceptions.NotFoundError: If component not found in container
 
         """
-        try:
-            service_class_name = self.__class__.__name__
-            component_class_name = service_class_name.replace(
-                "Service", component_suffix
+        service_class_name = self.__class__.__name__
+        component_class_name = service_class_name.replace("Service", component_suffix)
+
+        # Fast fail: container must be accessible
+        container = self.container
+
+        # Fast fail: component must exist in container
+        result = container.get(component_class_name)
+        if result.is_failure:
+            msg = f"Component '{component_class_name}' not found in container"
+            raise FlextExceptions.NotFoundError(
+                message=msg,
+                resource_type="component",
+                resource_id=component_class_name,
             )
 
-            container = self.container
-            result = container.get(component_class_name)
-
-            if result.is_success:
-                obj = result.unwrap()
-                if type_check_func(obj):
-                    return obj
-        except Exception as e:
-            self.logger.debug(f"{component_suffix} resolution failed: {e}")
-
-        return fallback_value
+        obj = result.unwrap()
+        if not type_check_func(obj):
+            msg = (
+                f"Component '{component_class_name}' found but type check failed. "
+                f"Expected type validated by {type_check_func.__name__}"
+            )
+            raise FlextExceptions.TypeError(
+                message=msg,
+                expected_type=component_class_name,
+                actual_type=type(obj).__name__,
+            )
+        return obj
 
     @property
     def project_config(self) -> FlextConfig:
@@ -640,14 +616,17 @@ class FlextService[TDomainResult](
             FlextConfig: Project-specific configuration instance
 
         """
-        return cast(
-            "FlextConfig",
-            self._resolve_project_component(
-                "Config",
-                lambda obj: isinstance(obj, FlextConfig),
-                FlextConfig.get_global_instance(),
-            ),
-        )
+        try:
+            return cast(
+                "FlextConfig",
+                self._resolve_project_component(
+                    "Config",
+                    lambda obj: isinstance(obj, FlextConfig),
+                ),
+            )
+        except (FlextExceptions.NotFoundError, RuntimeError, AttributeError):
+            # Fast fail: return global config if project config not found or container unavailable
+            return FlextConfig.get_global_instance()
 
     @property
     def project_models(self) -> type:
@@ -674,14 +653,20 @@ class FlextService[TDomainResult](
             type: Project models namespace (typically a class with nested types)
 
         """
-        return cast(
-            "type",
-            self._resolve_project_component(
-                "Models",
-                lambda obj: isinstance(obj, type),
-                type("ModelsNamespace", (), {}),
-            ),
-        )
+        try:
+            return cast(
+                "type",
+                self._resolve_project_component(
+                    "Models",
+                    lambda obj: isinstance(obj, type),
+                ),
+            )
+        except FlextExceptions.NotFoundError:
+            # Fast fail: return empty namespace if project models not found
+            class EmptyModelsNamespace(SimpleNamespace):
+                """Empty models namespace when not found in container."""
+
+            return EmptyModelsNamespace
 
     def __init_subclass__(cls) -> None:
         """Automatic service registration with dependency injection.
@@ -711,11 +696,31 @@ class FlextService[TDomainResult](
         """
         super().__init_subclass__()
 
-        service_name = cls.__name__
+        # Skip registration for base class or generic parameterized classes
+        # Only register actual concrete subclasses (user-defined services)
+        if cls is FlextService or "[" in cls.__name__:
+            return
+
+        # Normalize service name: create unique identifier
+        # Fast fail: service name must be valid identifier (pattern: ^[a-zA-Z0-9_:\- ]+$)
+        # Use the actual subclass name for uniqueness
+        raw_name = cls.__name__
+        # Include module for uniqueness (multiple classes with same name in different modules)
+        module = getattr(cls, "__module__", "")
+        # Create unique name: module_classname (dots replaced with underscores)
+        if module and not module.startswith("flext_core.service"):
+            # Only include module if it's not the base module (user modules)
+            module_normalized = module.replace(".", "_")
+            service_name = f"{module_normalized}_{raw_name}"
+        else:
+            service_name = raw_name
+        # Replace any remaining invalid characters with underscores (pattern allows: a-zA-Z0-9_:\- space)
+        service_name = re.sub(r"[^a-zA-Z0-9_:\- ]", "_", service_name)
+        
         container = FlextContainer.get_global()
 
         # Auto-detect and inject dependencies
-        # NOTE: Using register_factory() here (deprecated) because service names
+        # NOTE: Using with_factory() for fluent interface
         # may contain invalid characters for with_factory(). This is internal
         # framework usage, not user-facing API.
         with warnings.catch_warnings():
@@ -731,21 +736,18 @@ class FlextService[TDomainResult](
                             **cls._resolve_dependencies(deps, container, service_name)
                         )
 
-                    container.register_factory(service_name, factory)
+                    container.with_factory(service_name, factory)
                 else:
                     # No deps - simple registration
-                    container.register_factory(service_name, cls)
+                    container.with_factory(service_name, cls)
 
-            except (ValueError, TypeError):
-                # Fallback: register without DI
-                try:
-                    container.register_factory(service_name, cls)
-                except Exception as inner_e:
-                    raise FlextExceptions.ConfigurationError(
-                        message=f"Failed to register {service_name}",
-                        error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
-                        config_key=service_name,
-                    ) from inner_e
+            except (ValueError, TypeError) as e:
+                # Fast fail: registration must succeed or fail explicitly
+                raise FlextExceptions.ConfigurationError(
+                    message=f"Failed to register {service_name}: {type(e).__name__}: {e}",
+                    error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
+                    config_key=service_name,
+                ) from e
 
     @override
     def __init__(self, **data: object) -> None:
@@ -814,23 +816,23 @@ class FlextService[TDomainResult](
     # VALIDATION METHODS (Domain.Service protocol)
     # =============================================================================
 
-    def validate_business_rules(self) -> FlextResult[None]:
+    def validate_business_rules(self) -> FlextResult[bool]:
         """Validate business rules for the domain service (Domain.Service protocol).
 
         Returns:
-            FlextResult[None]: Success if valid, failure with error details
+            FlextResult[bool]: Success with True if valid, failure with error details
 
         """
-        return self.ok(None)
+        return self.ok(True)
 
-    def validate_config(self) -> FlextResult[None]:
+    def validate_config(self) -> FlextResult[bool]:
         """Validate service configuration (Domain.Service protocol).
 
         Returns:
-            FlextResult[None]: Success if configuration is valid, failure with error details
+            FlextResult[bool]: Success with True if configuration is valid, failure with error details
 
         """
-        return self.ok(None)
+        return self.ok(True)
 
     def is_valid(self) -> bool:
         """Check if the domain service is in a valid state (Domain.Service protocol).
@@ -843,7 +845,13 @@ class FlextService[TDomainResult](
         try:
             business_rules = self.validate_business_rules()
             config = self.validate_config()
-            return business_rules.is_success and config.is_success
+            # Both must be successful AND return True
+            return (
+                business_rules.is_success
+                and business_rules.value is True
+                and config.is_success
+                and config.value is True
+            )
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             # If validation raises an exception, the service is not valid
             return False
@@ -865,14 +873,14 @@ class FlextService[TDomainResult](
 
     def _validate_pre_execution(
         self, request: FlextModels.OperationExecutionRequest
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Validate business rules, config, and request before execution.
 
         Args:
             request: Operation execution request
 
         Returns:
-            FlextResult[None]: Success or failure with validation error
+            FlextResult[bool]: Success with True if valid, failure with validation error
 
         """
         # Validate business rules
@@ -901,7 +909,7 @@ class FlextService[TDomainResult](
                 f"Invalid keyword arguments: expected dict, got {type(request.keyword_arguments).__name__}"
             )
 
-        return self.ok(None)
+        return self.ok(True)
 
     def _execute_callable_once(
         self, request: FlextModels.OperationExecutionRequest
@@ -915,7 +923,7 @@ class FlextService[TDomainResult](
             TDomainResult: Result from the operation
 
         Raises:
-            Exception: Any exception from the operation execution
+            Exception: Exception from the operation execution
 
         """
         if not callable(request.operation_callable):
@@ -925,22 +933,41 @@ class FlextService[TDomainResult](
                 field="operation_callable",
             )
 
-        # Filter out None values from arguments
-        filtered_args = [v for v in request.arguments.values() if v is not None]
+        # Fast fail: None values in arguments indicate invalid request
+        for arg_name, arg_value in request.arguments.items():
+            if arg_value is None:
+                msg = f"Argument '{arg_name}' cannot be None. Use FlextResult.fail() for failures."
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    field=arg_name,
+                )
+
+        # Fast fail: None values in keyword arguments indicate invalid request
+        for kwarg_name, kwarg_value in request.keyword_arguments.items():
+            if kwarg_value is None:
+                msg = f"Keyword argument '{kwarg_name}' cannot be None. Use FlextResult.fail() for failures."
+                raise FlextExceptions.ValidationError(
+                    message=msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    field=kwarg_name,
+                )
+
+        args_list = list(request.arguments.values())
 
         # Execute with timeout if specified
         if request.timeout_seconds and request.timeout_seconds > 0:
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 future = executor.submit(
                     request.operation_callable,
-                    *filtered_args,
+                    *args_list,
                     **request.keyword_arguments,
                 )
                 result = future.result(timeout=request.timeout_seconds)
             return cast("TDomainResult", result)
 
         # Execute without timeout
-        result = request.operation_callable(*filtered_args, **request.keyword_arguments)
+        result = request.operation_callable(*args_list, **request.keyword_arguments)
         return cast("TDomainResult", result)
 
     @staticmethod
@@ -1048,7 +1075,12 @@ class FlextService[TDomainResult](
             FlextResult[TDomainResult]: Success with operation result or failure with validation/execution error
 
         """
-        operation_name = request.operation_name or "unnamed_operation"
+        # Fast fail: operation_name must be str or None
+        operation_name: str = (
+            request.operation_name
+            if isinstance(request.operation_name, str) and request.operation_name
+            else "unnamed_operation"
+        )
         with self.track(operation_name):
             self._propagate_context(operation_name)
 
@@ -1067,7 +1099,16 @@ class FlextService[TDomainResult](
                 return self.fail(validation_result.error)
 
             # Execute with retry logic (delegated to private method)
-            return self._retry_loop(request, request.retry_config or {})
+            # Validate retry_config - NO fallback, explicit validation
+            retry_config = request.retry_config
+            if not isinstance(retry_config, dict):
+                # Fast fail: retry_config must be dict (Field default_factory ensures this)
+                msg = (
+                    f"Invalid retry_config type: {type(retry_config).__name__}. "
+                    "Expected dict[str, object]"
+                )
+                raise TypeError(msg)
+            return self._retry_loop(request, retry_config)
 
     def execute_with_full_validation(
         self, _request: FlextModels.DomainServiceExecutionRequest
@@ -1112,10 +1153,16 @@ class FlextService[TDomainResult](
             if callable(action):
                 result = action(self)
                 # If the action returns a FlextResult, return it directly
+                # Fast fail: use type narrowing with validation
                 if isinstance(result, FlextResult):
-                    return cast("FlextResult[TDomainResult]", result)
-                return self.ok(cast("TDomainResult", result))
-            return self.ok(cast("TDomainResult", action))
+                    # Validate result type matches TDomainResult at runtime
+                    return self.validate_domain_result(result)
+                # Fast fail: non-FlextResult must be TDomainResult - validate via ok()
+                # Type narrowing: result is object, but we validate it's TDomainResult
+                return FlextResult[TDomainResult].ok(result)
+            # Fast fail: non-callable action must be TDomainResult - validate via ok()
+            # Type narrowing: action is object, but we validate it's TDomainResult
+            return FlextResult[TDomainResult].ok(action)  # type: ignore[arg-type]
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return self.fail(f"{action_name.capitalize()} action execution failed: {e}")
 
@@ -1216,7 +1263,7 @@ class FlextService[TDomainResult](
     # Protocol Implementation: ContextAware
     # =========================================================================
 
-    def set_context(self, context: dict[str, object]) -> FlextResult[None]:
+    def set_context(self, context: dict[str, object]) -> FlextResult[bool]:
         """Set context (ContextAware protocol).
 
         Part of ContextAware protocol implementation.
@@ -1226,12 +1273,12 @@ class FlextService[TDomainResult](
             context: Context dictionary
 
         Returns:
-            FlextResult[None]: Success or context setting error
+            FlextResult[bool]: Success with True if set, failure with context setting error
 
         """
         try:
             self._context = context
-            return self.ok(None)
+            return self.ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return self.fail(
                 f"Context setting failed: {e}",

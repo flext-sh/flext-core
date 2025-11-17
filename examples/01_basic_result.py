@@ -395,7 +395,7 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
 
         print(f".unwrap() on success: {success.unwrap()['email']}")
         print(f".unwrap_or('default'): {failure.unwrap_or({'email': 'default'})}")
-        print(f".value_or_none: {failure.value_or_none}")
+        print(f".unwrap_or(None): {failure.unwrap_or(None)}")
 
         print(f".value property: {success.value['name']}")
         print(f".expect('Must have value'): {success.expect('Must have value')}")

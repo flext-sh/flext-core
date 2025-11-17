@@ -33,12 +33,12 @@ class TestPhase2FinalCoverage:
         assert result.is_failure  # Just verify it's a failure
 
     def test_result_value_or_none(self) -> None:
-        """Test value_or_none property."""
+        """Test value access - value_or_none removed, use .value or .unwrap_or()."""
         ok_result = FlextResult[str].ok("value")
-        assert ok_result.value_or_none == "value"
+        assert ok_result.value == "value"
 
         fail_result = FlextResult[str].fail("error")
-        assert fail_result.value_or_none is None
+        assert fail_result.unwrap_or("default") == "default"
 
     def test_result_recover(self) -> None:
         """Test recover on failure."""
@@ -54,7 +54,7 @@ class TestPhase2FinalCoverage:
         assert recovered.is_success
         assert recovered.value == "value"
 
-    def test_container_register_factory(self) -> None:
+    def test_container_with_factory(self) -> None:
         """Test container factory registration."""
         container = FlextContainer()
 

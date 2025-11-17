@@ -161,7 +161,7 @@ class TestValidationMethods:
         service = ValidatedService()
         result = service.validate_business_rules()
         assert result.is_success
-        assert result.value is None
+        assert result.value is True
 
     def test_validate_business_rules_custom(self) -> None:
         """Test custom business rules validation."""
@@ -172,9 +172,9 @@ class TestValidationMethods:
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("executed")
 
-            def validate_business_rules(self) -> FlextResult[None]:
+            def validate_business_rules(self) -> FlextResult[bool]:
                 """Custom validation that checks a condition."""
-                return FlextResult[None].ok(None)
+                return FlextResult[bool].ok(True)
 
         service = CustomValidationService()
         result = service.validate_business_rules()
@@ -214,9 +214,9 @@ class TestValidationMethods:
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("should_not_reach")
 
-            def validate_business_rules(self) -> FlextResult[None]:
+            def validate_business_rules(self) -> FlextResult[bool]:
                 """Validation that fails."""
-                return FlextResult[None].fail("Invalid business rules")
+                return FlextResult[bool].fail("Invalid business rules")
 
         service = InvalidService()
         assert service.is_valid() is False
@@ -230,7 +230,7 @@ class TestValidationMethods:
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("safe")
 
-            def validate_business_rules(self) -> FlextResult[None]:
+            def validate_business_rules(self) -> FlextResult[bool]:
                 """Validation that throws exception."""
                 msg = "Validation error"
                 raise ValueError(msg)
@@ -320,8 +320,8 @@ class TestExecuteFullValidation:
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("should_not_reach")
 
-            def validate_business_rules(self) -> FlextResult[None]:
-                return FlextResult[None].fail("Business rules violated")
+            def validate_business_rules(self) -> FlextResult[bool]:
+                return FlextResult[bool].fail("Business rules violated")
 
         service = InvalidBusinessRulesService()
         request = FlextModels.DomainServiceExecutionRequest(
@@ -340,8 +340,8 @@ class TestExecuteFullValidation:
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("should_not_reach")
 
-            def validate_config(self) -> FlextResult[None]:
-                return FlextResult[None].fail("Configuration invalid")
+            def validate_config(self) -> FlextResult[bool]:
+                return FlextResult[bool].fail("Configuration invalid")
 
         service = InvalidConfigService()
         request = FlextModels.DomainServiceExecutionRequest(
@@ -755,17 +755,17 @@ class TestV2PropertyCoverage:
     def test_v2_property_with_none_result(self) -> None:
         """V2 Property: Works with None results."""
 
-        class NoneService(FlextService[None]):
-            """Service returning None."""
+        class BoolService(FlextService[bool]):
+            """Service returning bool."""
 
-            def execute(self) -> FlextResult[None]:
-                return FlextResult.ok(None)
+            def execute(self) -> FlextResult[bool]:
+                return FlextResult[bool].ok(True)
 
-        service = NoneService()
+        service = BoolService()
 
-        # V2 Property: Returns None
+        # V2 Property: Returns True
         result = service.result
-        assert result is None
+        assert result is True
 
 
 class TestV2AutoCoverage:

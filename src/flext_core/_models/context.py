@@ -5,7 +5,6 @@ as nested classes. It should NOT be imported directly - use FlextModels.Context 
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -16,7 +15,6 @@ import structlog.contextvars
 from pydantic import BaseModel, Field, computed_field, field_validator
 
 from flext_core._models.entity import FlextModelsEntity
-from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T
 
@@ -338,10 +336,15 @@ class FlextModelsContext:
             """Validate that dict[str, object] values are JSON-serializable.
 
             Uses mode='before' to validate raw input before Pydantic processing.
+            Accepts Pydantic models (converts via model_dump) or dict.
             Only allows basic JSON-serializable types: str, int, float, bool, list, dict, None.
             """
+            # Accept Pydantic models directly - convert to dict
+            if hasattr(v, "model_dump") and callable(v.model_dump):
+                v = v.model_dump()
+
             if not FlextRuntime.is_dict_like(v):
-                msg = f"Value must be a dictionary, got {type(v).__name__}"
+                msg = f"Value must be a dictionary or Pydantic model, got {type(v).__name__}"
                 raise TypeError(msg)
 
             # Recursively check all values are JSON-serializable
@@ -417,14 +420,30 @@ class FlextModelsContext:
         @field_validator("data", mode="before")
         @classmethod
         def _validate_data(cls, v: object) -> dict[str, object]:
-            """Validate scope data (using FlextUtilitiesGenerators.ensure_dict)."""
-            return FlextUtilitiesGenerators.ensure_dict(v)
+            """Validate scope data - direct validation without helper."""
+            # Fast fail: direct validation instead of helper
+            if isinstance(v, dict):
+                return v
+            if isinstance(v, BaseModel):
+                return v.model_dump()
+            if v is None:
+                return {}
+            msg = f"data must be dict or BaseModel, got {type(v).__name__}"
+            raise TypeError(msg)
 
         @field_validator("metadata", mode="before")
         @classmethod
         def _validate_metadata(cls, v: object) -> dict[str, object]:
-            """Validate scope metadata (using FlextUtilitiesGenerators.ensure_dict)."""
-            return FlextUtilitiesGenerators.ensure_dict(v)
+            """Validate scope metadata - direct validation without helper."""
+            # Fast fail: direct validation instead of helper
+            if isinstance(v, dict):
+                return v
+            if isinstance(v, BaseModel):
+                return v.model_dump()
+            if v is None:
+                return {}
+            msg = f"metadata must be dict or BaseModel, got {type(v).__name__}"
+            raise TypeError(msg)
 
     class ContextStatistics(BaseModel):
         """Statistics tracking for context operations and metrics.
@@ -481,8 +500,16 @@ class FlextModelsContext:
         @field_validator("operations", mode="before")
         @classmethod
         def _validate_operations(cls, v: object) -> dict[str, object]:
-            """Validate operations (using FlextUtilitiesGenerators.ensure_dict)."""
-            return FlextUtilitiesGenerators.ensure_dict(v)
+            """Validate operations - direct validation without helper."""
+            # Fast fail: direct validation instead of helper
+            if isinstance(v, dict):
+                return v
+            if isinstance(v, BaseModel):
+                return v.model_dump()
+            if v is None:
+                return {}
+            msg = f"operations must be dict or BaseModel, got {type(v).__name__}"
+            raise TypeError(msg)
 
     class ContextMetadata(BaseModel):
         """Metadata storage for context objects with full tracing support.
@@ -576,8 +603,16 @@ class FlextModelsContext:
         @field_validator("custom_fields", mode="before")
         @classmethod
         def _validate_custom_fields(cls, v: object) -> dict[str, object]:
-            """Validate custom_fields (using FlextUtilitiesGenerators.ensure_dict)."""
-            return FlextUtilitiesGenerators.ensure_dict(v)
+            """Validate custom_fields - direct validation without helper."""
+            # Fast fail: direct validation instead of helper
+            if isinstance(v, dict):
+                return v
+            if isinstance(v, BaseModel):
+                return v.model_dump()
+            if v is None:
+                return {}
+            msg = f"custom_fields must be dict or BaseModel, got {type(v).__name__}"
+            raise TypeError(msg)
 
     class ContextDomainData(BaseModel):
         """Domain-specific context data storage."""

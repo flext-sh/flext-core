@@ -16,9 +16,6 @@ from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
-# Module constants
-MAX_PORT_NUMBER: int = 65535
-MIN_PORT_NUMBER: int = 1
 _logger = logging.getLogger(__name__)
 
 
@@ -66,7 +63,7 @@ class FlextUtilitiesCache:
         return data
 
     @staticmethod
-    def clear_object_cache(obj: FlextTypes.CachedObjectType) -> FlextResult[None]:
+    def clear_object_cache(obj: FlextTypes.CachedObjectType) -> FlextResult[bool]:
         """Clear any caches on an object."""
         try:
             # Common cache attribute names to check and clear
@@ -88,9 +85,9 @@ class FlextUtilitiesCache:
                             setattr(obj, attr_name, None)
                             cleared_count += 1
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[None].fail(f"Failed to clear caches: {e}")
+            return FlextResult[bool].fail(f"Failed to clear caches: {e}")
 
     @staticmethod
     def has_cache_attributes(obj: FlextTypes.CachedObjectType) -> bool:

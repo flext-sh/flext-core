@@ -5,14 +5,13 @@ as nested classes. It should NOT be imported directly - use FlextModels.Handler 
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
 import time as time_module
 from collections.abc import Callable
-from typing import Annotated, Literal, Self, cast
+from typing import Annotated, Self, cast
 
 from pydantic import (
     BaseModel,
@@ -44,12 +43,6 @@ class FlextModelsHandler:
         event_types: list[str] = Field(
             default_factory=list,
             description="Event types this handler processes",
-        )
-        priority: int = Field(
-            default_factory=lambda: FlextConstants.Cqrs.DEFAULT_PRIORITY,
-            ge=FlextConstants.Cqrs.MIN_PRIORITY,
-            le=FlextConstants.Cqrs.MAX_PRIORITY,
-            description="Priority level for handler execution",
         )
 
         @field_validator("handler", mode="after")
@@ -189,7 +182,7 @@ class FlextModelsHandler:
             ),
         ]
         handler_mode: Annotated[
-            Literal["command", "query", "event", "operation", "saga"],
+            FlextConstants.Cqrs.HandlerModeLiteral,
             Field(
                 min_length=1,
                 description="Mode of handler execution",
@@ -300,7 +293,7 @@ class FlextModelsHandler:
         def create_for_handler(
             cls,
             handler_name: str,
-            handler_mode: Literal["command", "query", "event", "operation", "saga"],
+            handler_mode: FlextConstants.Cqrs.HandlerModeLiteral,
         ) -> Self:
             """Create execution context for a handler.
 

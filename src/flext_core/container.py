@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import inspect
 import threading
-import warnings
 from collections.abc import Callable, Mapping
 from contextlib import suppress
 from typing import Self, cast, override
@@ -43,7 +42,7 @@ class FlextContainer(FlextProtocols.Configurable):
     via constructor inspection.
 
     Protocol Compliance:
-        - configure(config: dict) -> FlextResult[None] - Configure component settings
+        - configure(config: dict) -> FlextResult[bool] - Configure component settings
         - get_config() -> dict - Get current configuration
         - Automatic singleton pattern enforcement
 
@@ -64,14 +63,12 @@ class FlextContainer(FlextProtocols.Configurable):
         - Configuration Management - FlextConfig synchronization
 
     Advanced Patterns:
-        - get_with_fallback() - Alt pattern for service resolution chains
         - safe_register_from_factory() - from_callable for safe factories
         - get_typed_with_recovery() - Lash pattern for error recovery with type preservation
         - validate_and_get() - flow_through for resolution pipelines
 
     BREAKING CHANGES (Phase 4 - v0.9.9):
         - register[T]() now uses generic type T instead of object
-        - register_factory[T]() now uses Callable[[], T] instead of Callable[[], object]
         - get_typed[T]() now returns FlextResult[T] instead of FlextResult[object]
         - _validate_service_type[T]() now returns FlextResult[T] instead of FlextResult[object]
         - get_typed_with_recovery[T]() now returns FlextResult[T] instead of FlextResult[object]
@@ -225,7 +222,7 @@ class FlextContainer(FlextProtocols.Configurable):
     # =========================================================================
 
     @override
-    def configure(self, config: dict[str, object] | FlextConfig) -> FlextResult[None]:
+    def configure(self, config: dict[str, object] | FlextConfig) -> FlextResult[bool]:
         """Configure component with provided settings - Configurable protocol implementation.
 
         Args:
@@ -233,7 +230,7 @@ class FlextContainer(FlextProtocols.Configurable):
                    Using FlextConfig is preferred.
 
         Returns:
-            FlextResult[None]: Configuration result
+            FlextResult[bool]: Success with True if configured, failure with error details
 
         """
         return self.configure_container(config)
@@ -273,26 +270,6 @@ class FlextContainer(FlextProtocols.Configurable):
     # =========================================================================
     # CORE SERVICE MANAGEMENT - Primary operations with railway patterns
     # =========================================================================
-
-    def register(
-        self,
-        name: str,
-        service: object,
-    ) -> FlextResult[None]:
-        """DEPRECATED: Use with_service() for fluent interface.
-
-        This method will be removed in v2.0.0. Migrate to:
-        container.with_service(name, service)
-        """
-        warnings.warn(
-            "register() is deprecated and will be removed in v2.0.0. "
-            "Use with_service() instead for fluent interface.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return FlextUtilitiesValidation.validate_identifier(name).flat_map(
-            lambda validated_name: self._store_service(validated_name, service),
-        )
 
     def with_service(
         self,
@@ -334,21 +311,21 @@ class FlextContainer(FlextProtocols.Configurable):
             raise ValueError(result.error or f"Failed to register service '{name}'")
         return self
 
-    def _store_service(self, name: str, service: object) -> FlextResult[None]:
+    def _store_service(self, name: str, service: object) -> FlextResult[bool]:
         """Store service in registry using ServiceRegistration Model.
 
         Creates ServiceRegistration with metadata (registration_time, service_type, tags)
         and stores in internal DI container. Type T is preserved for static typing.
 
         Returns:
-            FlextResult[None]: Success if stored or failure with error.
+            FlextResult[bool]: Success with True if stored, failure with error details.
 
         Note:
             Updated in v1.1.0 to use ServiceRegistration Pydantic Model.
 
         """
         if name in self._services:
-            return FlextResult[None].fail(f"Service '{name}' already registered")
+            return FlextResult[bool].fail(f"Service '{name}' already registered")
 
         provider_registered = False
         try:
@@ -370,7 +347,7 @@ class FlextContainer(FlextProtocols.Configurable):
             cast("DynamicContainer", self._di_container).set_provider(name, provider)
             provider_registered = True
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (TypeError, AttributeError, ValueError) as e:
             # Rollback on failure - only delete if we successfully registered it
             # TypeError/AttributeError: set_provider() or delattr() failures
@@ -378,27 +355,7 @@ class FlextContainer(FlextProtocols.Configurable):
             if provider_registered and hasattr(self._di_container, name):
                 delattr(self._di_container, name)
             self._services.pop(name, None)
-            return FlextResult[None].fail(f"Service storage failed: {e}")
-
-    def register_factory(
-        self,
-        name: str,
-        factory: Callable[[], FactoryT],
-    ) -> FlextResult[None]:
-        """DEPRECATED: Use with_factory() for fluent interface.
-
-        This method will be removed in v2.0.0. Migrate to:
-        container.with_factory(name, factory)
-        """
-        warnings.warn(
-            "register_factory() is deprecated and will be removed in v2.0.0. "
-            "Use with_factory() instead for fluent interface.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return FlextUtilitiesValidation.validate_identifier(name).flat_map(
-            lambda validated_name: self._store_factory(validated_name, factory),
-        )
+            return FlextResult[bool].fail(f"Service storage failed: {e}")
 
     def with_factory(
         self,
@@ -442,7 +399,7 @@ class FlextContainer(FlextProtocols.Configurable):
         self,
         name: str,
         factory: Callable[[], FactoryT],
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Store factory in registry using FactoryRegistration Model.
 
         Creates FactoryRegistration with metadata (is_singleton, invocation_count, cached_instance)
@@ -450,7 +407,7 @@ class FlextContainer(FlextProtocols.Configurable):
         Type T is preserved for static type checking.
 
         Returns:
-            FlextResult[None]: Success if stored or failure with error.
+            FlextResult[bool]: Success with True if stored, failure with error details.
 
         Note:
             Updated in v1.1.0 to use FactoryRegistration Pydantic Model.
@@ -458,10 +415,10 @@ class FlextContainer(FlextProtocols.Configurable):
         """
         # Validate that factory is actually callable
         if not callable(factory):
-            return FlextResult[None].fail(f"Factory '{name}' must be callable")
+            return FlextResult[bool].fail(f"Factory '{name}' must be callable")
 
         if name in self._factories:
-            return FlextResult[None].fail(f"Factory '{name}' already registered")
+            return FlextResult[bool].fail(f"Factory '{name}' already registered")
 
         provider_registered = False
         try:
@@ -484,7 +441,7 @@ class FlextContainer(FlextProtocols.Configurable):
             cast("DynamicContainer", self._di_container).set_provider(name, provider)
             provider_registered = True
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (TypeError, AttributeError, ValueError) as e:
             # Rollback on failure - only delete if we successfully registered it
             # TypeError/AttributeError: set_provider() or delattr() failures
@@ -492,24 +449,24 @@ class FlextContainer(FlextProtocols.Configurable):
             self._factories.pop(name, None)
             if provider_registered and hasattr(self._di_container, name):
                 delattr(self._di_container, name)
-            return FlextResult[None].fail(f"Factory storage failed: {e}")
+            return FlextResult[bool].fail(f"Factory storage failed: {e}")
 
-    def unregister(self, name: str) -> FlextResult[None]:
+    def unregister(self, name: str) -> FlextResult[bool]:
         """Unregister service or factory with validation.
 
         Returns:
-            FlextResult[None]: Success if unregistered or failure with error.
+            FlextResult[bool]: Success with True if unregistered, failure with error details.
 
         """
         return FlextUtilitiesValidation.validate_identifier(name).flat_map(
             self._remove_service
         )
 
-    def _remove_service(self, name: str) -> FlextResult[None]:
+    def _remove_service(self, name: str) -> FlextResult[bool]:
         """Remove service from tracking dicts AND internal DI container.
 
         Returns:
-            FlextResult[None]: Success if removed or failure with error.
+            FlextResult[bool]: Success with True if removed, failure with error details.
 
         Note:
             Updated in v1.1.0 to remove from DI container as well.
@@ -519,7 +476,7 @@ class FlextContainer(FlextProtocols.Configurable):
         factory_found = name in self._factories
 
         if not service_found and not factory_found:
-            return FlextResult[None].fail(f"Service '{name}' not registered")
+            return FlextResult[bool].fail(f"Service '{name}' not registered")
 
         # Remove from tracking dicts (backward compatibility)
         self._services.pop(name, None)
@@ -530,7 +487,7 @@ class FlextContainer(FlextProtocols.Configurable):
         if hasattr(self._di_container, name):
             delattr(self._di_container, name)
 
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     def get(self, name: str) -> FlextResult[object]:
         """Get service with factory resolution and caching.
@@ -665,13 +622,13 @@ class FlextContainer(FlextProtocols.Configurable):
     # BATCH OPERATIONS - Efficient bulk service management
     # =========================================================================
 
-    def batch_register(self, services: dict[str, object]) -> FlextResult[None]:
+    def batch_register(self, services: dict[str, object]) -> FlextResult[bool]:
         """Register multiple services atomically with rollback on failure.
 
         Uses railway pattern with automatic rollback and FlextUtilities validation.
 
         Returns:
-            FlextResult[None]: Success if all registered or failure with error.
+            FlextResult[bool]: Success with True if all registered, failure with error details.
 
         """
         # Use railway pattern for atomic batch registration with rollback
@@ -696,28 +653,28 @@ class FlextContainer(FlextProtocols.Configurable):
 
     def _execute_batch_registration(
         self, services: dict[str, object]
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Execute batch registration with automatic rollback using snapshot pattern."""
         # Create snapshot for rollback capability
         snapshot = self._create_registry_snapshot()
 
         try:
             # Process all registrations using railway pattern
-            return self._process_batch_registrations(services).map(lambda _: None)
+            return self._process_batch_registrations(services).map(lambda _: True)
         except Exception as e:
             # Fallback rollback for unexpected exceptions
             return self._rollback_and_fail(snapshot, str(e))
 
     def _rollback_and_fail(
         self, snapshot: Mapping[str, object], error: str
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Rollback snapshot and return failure result."""
         typed_snapshot = cast(
             "dict[str, dict[str, FlextModels.ServiceRegistration] | dict[str, FlextModels.FactoryRegistration]]",
             snapshot,
         )
         self._restore_registry_snapshot(typed_snapshot)
-        return FlextResult[None].fail(f"Batch registration failed: {error}")
+        return FlextResult[bool].fail(f"Batch registration failed: {error}")
 
     def _create_registry_snapshot(
         self,
@@ -740,29 +697,29 @@ class FlextContainer(FlextProtocols.Configurable):
     def _process_batch_registrations(
         self,
         services: dict[str, object],
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Process batch registrations with proper error handling.
 
         Returns:
-            FlextResult[None]: Success if all processed or failure with error.
+            FlextResult[bool]: Success with True if all processed, failure with error details.
 
         """
         for name, service in services.items():
             # Validate service name
             validation_result = FlextUtilitiesValidation.validate_identifier(name)
             if validation_result.is_failure:
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     validation_result.error or f"Invalid service name: {name}",
                 )
 
             # Store the service
             storage_result = self._store_service(name, service)
             if storage_result.is_failure:
-                return FlextResult[None].fail(
+                return FlextResult[bool].fail(
                     storage_result.error or f"Failed to store service: {name}",
                 )
 
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     def _restore_registry_snapshot(
         self,
@@ -783,7 +740,9 @@ class FlextContainer(FlextProtocols.Configurable):
                 "dict[str, FlextModels.ServiceRegistration]", services_snapshot
             )
         if isinstance(factories_snapshot, dict):
-            self._factories = factories_snapshot
+            self._factories = cast(
+                "dict[str, FlextModels.FactoryRegistration]", factories_snapshot
+            )
 
     # =========================================================================
     # ADVANCED FEATURES - Factory resolution and dependency injection
@@ -833,9 +792,12 @@ class FlextContainer(FlextProtocols.Configurable):
             # Type assertion since we know the service type matches
             service = service_result.unwrap()
             return FlextResult[object].ok(cast("T", service))
-        return FlextResult[object].fail(
-            service_result.error or "Service retrieval failed"
-        )
+        # Fast fail: error must be str (FlextResult guarantees this)
+        error_msg = service_result.error
+        if error_msg is None:
+            msg = "Service result is failure but error is None"
+            return FlextResult[object].fail(msg)
+        return FlextResult[object].fail(error_msg)
 
     def create_service(
         self,
@@ -982,14 +944,14 @@ class FlextContainer(FlextProtocols.Configurable):
     # INSPECTION AND UTILITIES - Container introspection and management
     # =========================================================================
 
-    def clear(self) -> FlextResult[None]:
+    def clear(self) -> FlextResult[bool]:
         """Clear all services and factories.
 
         Note: _flext_config is now a property that always returns the current
         global config, so no need to manually refresh it here.
 
         Returns:
-            FlextResult[None]: Success if cleared or failure with error.
+            FlextResult[bool]: Success with True if cleared, failure with error details.
 
         """
         try:
@@ -997,13 +959,13 @@ class FlextContainer(FlextProtocols.Configurable):
             self._factories.clear()
             # Reset DI container to clear all providers
             self._di_container = self.containers.DynamicContainer()
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (TypeError, AttributeError, ValueError, RuntimeError) as e:
             # TypeError: DynamicContainer instantiation failures
             # AttributeError: Clear() method failures or attribute access issues
             # ValueError: Validation or constraint violations
             # RuntimeError: Runtime failures during clearing
-            return FlextResult[None].fail(f"Failed to clear container: {e}")
+            return FlextResult[bool].fail(f"Failed to clear container: {e}")
 
     def has(self, name: str) -> bool:
         """Check if service is registered.
@@ -1015,10 +977,11 @@ class FlextContainer(FlextProtocols.Configurable):
         normalized = FlextUtilitiesValidation.validate_identifier(name)
         if normalized.is_failure:
             return False
-        validated_name = normalized.value_or_none
-        if validated_name is None:
+        try:
+            validated_name = normalized.unwrap()
+            return validated_name in self._services or validated_name in self._factories
+        except Exception:
             return False
-        return validated_name in self._services or validated_name in self._factories
 
     def list_services(
         self,
@@ -1066,33 +1029,40 @@ class FlextContainer(FlextProtocols.Configurable):
             dict[str, object]: Service information dictionary.
 
         """
+        # Fast fail: service inspection must succeed or fail explicitly
+        # No fallback to fake data - raise exception if inspection fails
         try:
+            service_class = service.__class__
+            service_class_name = service_class.__name__
+            service_module = getattr(
+                service_class,
+                "__module__",
+                None,
+            )
+            # Fast fail: module must exist for valid service
+            if service_module is None:
+                msg = f"Service {name} has no __module__ attribute"
+                raise FlextExceptions.AttributeAccessError(
+                    message=msg,
+                    attribute_name="__module__",
+                    attribute_context={"service_name": name, "service_type": service_type},
+                )
             return {
                 FlextConstants.Mixins.FIELD_NAME: name,
                 FlextConstants.Mixins.FIELD_TYPE: service_type,
-                FlextConstants.Mixins.FIELD_CLASS: service.__class__.__name__,
-                FlextConstants.Mixins.FIELD_MODULE: getattr(
-                    service.__class__,
-                    "__module__",
-                    FlextConstants.Mixins.IDENTIFIER_UNKNOWN,
-                ),
+                FlextConstants.Mixins.FIELD_CLASS: service_class_name,
+                FlextConstants.Mixins.FIELD_MODULE: service_module,
                 "is_callable": callable(service),
                 "id": id(service),
             }
-        except (TypeError, AttributeError, RuntimeError):
-            # Fallback for problematic services
-            # TypeError: Type/callable inspection failures
-            # AttributeError: Missing attributes on service class or module
-            # RuntimeError: Runtime failures during introspection
-            return {
-                FlextConstants.Mixins.FIELD_NAME: name,
-                FlextConstants.Mixins.FIELD_TYPE: service_type,
-                FlextConstants.Mixins.FIELD_CLASS: FlextConstants.Mixins.IDENTIFIER_UNKNOWN,
-                FlextConstants.Mixins.FIELD_MODULE: FlextConstants.Mixins.IDENTIFIER_UNKNOWN,
-                "is_callable": False,
-                "id": id(service),
-                "error": "Failed to inspect service",
-            }
+        except (TypeError, AttributeError, RuntimeError) as e:
+            # Fast fail: service inspection failures indicate invalid service
+            msg = f"Failed to inspect service {name}: {type(e).__name__}: {e}"
+            raise FlextExceptions.TypeError(
+                message=msg,
+                expected_type="service with inspectable attributes",
+                actual_type=type(service).__name__,
+            ) from e
 
     # =========================================================================
     # CONFIGURATION MANAGEMENT - FlextConfig integration
@@ -1100,14 +1070,14 @@ class FlextContainer(FlextProtocols.Configurable):
 
     def configure_container(
         self, config: dict[str, object] | FlextConfig
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Configure container using ContainerConfig Model.
 
         Args:
             config: Either a dict for backward compatibility or FlextConfig instance.
 
         Returns:
-            FlextResult[None]: Success if configured or failure with error.
+            FlextResult[bool]: Success with True if configured, failure with error details.
 
         """
         try:
@@ -1123,14 +1093,14 @@ class FlextContainer(FlextProtocols.Configurable):
             # Refresh global config (recreates ContainerConfig Model)
             self._refresh_global_config()
 
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except (TypeError, ValueError, AttributeError, KeyError, RuntimeError) as e:
             # TypeError: Type conversion failures
             # ValueError: Validation errors
             # AttributeError: Attribute access failures
             # KeyError: Dict key access failures
             # RuntimeError: Runtime failures
-            return FlextResult[None].fail(f"Container configuration failed: {e}")
+            return FlextResult[bool].fail(f"Container configuration failed: {e}")
 
     def with_config(self, config: dict[str, object] | FlextConfig) -> Self:
         """Configure container with fluent interface - returns self for chaining.
@@ -1156,7 +1126,12 @@ class FlextContainer(FlextProtocols.Configurable):
         """
         result = self.configure_container(config)
         if result.is_failure:
-            raise ValueError(result.error or "Configuration failed")
+            # Fast fail: error must be str (FlextResult guarantees this)
+            error_msg = result.error
+            if error_msg is None:
+                msg = "Container configuration failed but error is None"
+                raise ValueError(msg)
+            raise ValueError(error_msg)
         return self
 
     def _refresh_global_config(self) -> None:
@@ -1221,37 +1196,11 @@ class FlextContainer(FlextProtocols.Configurable):
             "logger": f"flext.{module_name}",
         })
 
-    def get_with_fallback(
-        self,
-        primary_name: str,
-        *fallback_names: str,
-    ) -> FlextResult[object]:
-        """Get service trying multiple names using alt pattern.
-
-        Demonstrates alt for service resolution fallback chains.
-
-        Args:
-            primary_name: Primary service name to try
-            *fallback_names: Fallback service names to try in order
-
-        Returns:
-            FlextResult with service from first found name
-
-        Example:
-            >>> container = FlextContainer.get_global()
-            >>> service = container.get_with_fallback("db_service", "database", "db")
-
-        """
-        result = self.get(primary_name)
-        for fallback_name in fallback_names:
-            result = result.alt(self.get(fallback_name))
-        return result
-
     def safe_register_from_factory(
         self,
         name: str,
         factory: object,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Register service from factory using from_callable pattern.
 
         Demonstrates from_callable for safe factory registration.
@@ -1261,7 +1210,7 @@ class FlextContainer(FlextProtocols.Configurable):
             factory: Factory callable
 
         Returns:
-            FlextResult[None]: Success or error
+            FlextResult[bool]: Success with True, failure with error details
 
         Example:
             >>> container = FlextContainer.get_global()
@@ -1280,16 +1229,16 @@ class FlextContainer(FlextProtocols.Configurable):
         )
 
         if factory_result.is_failure:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 f"Factory execution failed: {factory_result.error}"
             )
 
         service: object = factory_result.unwrap()
         try:
             self.with_service(name, service)
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except ValueError as e:
-            return FlextResult[None].fail(str(e))
+            return FlextResult[bool].fail(str(e))
 
     def get_typed_with_recovery(
         self,
@@ -1472,7 +1421,7 @@ class FlextContainer(FlextProtocols.Configurable):
     # Protocol Implementation: ServiceRegistry[T]
     # =========================================================================
 
-    def register_service(self, name: str, service: object) -> FlextResult[None]:
+    def register_service(self, name: str, service: object) -> FlextResult[bool]:
         """Register service (ServiceRegistry protocol).
 
         Part of ServiceRegistry[T] protocol implementation.
@@ -1482,14 +1431,14 @@ class FlextContainer(FlextProtocols.Configurable):
             service: Service instance
 
         Returns:
-            FlextResult[None]: Success or registration error
+            FlextResult[bool]: Success with True if registered, failure with error details
 
         """
         try:
             self.with_service(name, service)
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].ok(True)
         except ValueError as e:
-            return FlextResult[None].fail(str(e))
+            return FlextResult[bool].fail(str(e))
 
     def get_service(self, name: str) -> FlextResult[object]:
         """Retrieve registered service (ServiceRegistry protocol).
@@ -1592,24 +1541,24 @@ class FlextContainer(FlextProtocols.Configurable):
                 error_data={"exception": str(e)},
             )
 
-    def reset_instance(self) -> FlextResult[None]:
+    def reset_instance(self) -> FlextResult[bool]:
         """Reset singleton instance (SingletonProvider protocol).
 
         Part of SingletonProvider[T] protocol implementation.
         Resets the global singleton for testing purposes only.
 
         Returns:
-            FlextResult[None]: Success or reset error
+            FlextResult[bool]: Success with True if reset, failure with error details
 
         """
         try:
             with self._global_lock:
                 self._global_instance = None
-                return FlextResult[None].ok(None)
+                return FlextResult[bool].ok(True)
         except (RuntimeError, AttributeError) as e:
             # RuntimeError: Lock acquisition or threading failures
             # AttributeError: Instance attribute access failures
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 f"Singleton reset failed: {e}",
                 error_code="SINGLETON_RESET_ERROR",
                 error_data={"exception": str(e)},

@@ -96,7 +96,7 @@ class TestExact75Percent:
     def test_result_lines_1699_1702(self) -> None:
         """Target result.py:1699-1702."""
         r = FlextResult[int].ok(42)
-        assert r.value_or_none == 42
+        assert r.value == 42
 
     def test_result_line_1713(self) -> None:
         """Target result.py:1713."""

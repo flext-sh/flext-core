@@ -23,10 +23,6 @@ from typing import (
     TypeVar,
 )
 
-from flext_core._exception_helpers import (
-    extract_common_kwargs as _extract_common_kwargs,
-    prepare_exception_kwargs as _prepare_exception_kwargs,
-)
 from flext_core._utilities import (
     FlextUtilitiesCache,
     FlextUtilitiesConfiguration,
@@ -40,6 +36,7 @@ from flext_core._utilities import (
     FlextUtilitiesTypeGuards,
     FlextUtilitiesValidation,
 )
+from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 
 # Import constants from FlextConstants instead of defining locally
@@ -467,7 +464,7 @@ class FlextUtilities:
                         config, extra_kwargs)
 
             """
-            return _prepare_exception_kwargs(kwargs, specific_params)
+            return FlextExceptions.prepare_exception_kwargs(kwargs, specific_params)
 
         @staticmethod
         def extract_common_kwargs(
@@ -486,7 +483,7 @@ class FlextUtilities:
 
             """
             try:
-                result = _extract_common_kwargs(kwargs)
+                result = FlextExceptions.extract_common_kwargs(kwargs)
                 return FlextResult.ok(result)
             except Exception as e:
                 return FlextResult.fail(
@@ -922,8 +919,9 @@ class FlextUtilities:
             with proper error handling and data extraction.
             """
             returncode = output.returncode
-            stdout_text = output.stdout or ""
-            stderr_text = output.stderr or ""
+            # Fast fail: stdout/stderr must be str or None (from subprocess)
+            stdout_text: str = output.stdout if isinstance(output.stdout, str) else ""
+            stderr_text: str = output.stderr if isinstance(output.stderr, str) else ""
 
             # Check return code if requested
             if check and returncode != 0:
@@ -947,95 +945,6 @@ class FlextUtilities:
             )
 
             return FlextResult[FlextUtilities._CompletedProcessWrapper].ok(wrapper)
-
-    class ResultHelpers:
-        """Monadic result operations and composition utilities.
-
-        Advanced helpers for working with FlextResult monads, supporting
-        functional composition patterns throughout the FLEXT ecosystem.
-
-        Usage:
-            >>> from flext_core import FlextUtilities, FlextResult
-            >>> results = [FlextResult[int].ok(1), FlextResult[int].ok(2)]
-            >>> combined = FlextUtilities.ResultHelpers.sequence(results)
-            >>> if combined.is_success:
-            ...     values = combined.unwrap()  # [1, 2]
-
-        """
-
-        @staticmethod
-        def sequence(
-            results: list[FlextResult[T_Result]],
-        ) -> FlextResult[list[T_Result]]:
-            """Convert list of Results into Result of list.
-
-            Combines multiple FlextResult instances. If any fails, returns first
-            failure. Success means all results succeeded.
-
-            Args:
-                results: List of FlextResult instances
-
-            Returns:
-                FlextResult[list[T]]: Success with list of values, or first failure
-
-            """
-            values: list[T_Result] = []
-            for result in results:
-                if result.is_failure:
-                    return FlextResult[list[T_Result]].fail(result.error)
-                values.append(result.unwrap())
-            return FlextResult[list[T_Result]].ok(values)
-
-        @staticmethod
-        def validate_all(
-            items: list[T_Result],
-            validator: Callable[[T_Result], FlextResult[None]],
-        ) -> FlextResult[list[T_Result]]:
-            """Validate all items using single validator function.
-
-            Applies validator to every item. If any fails, stops immediately.
-            Success means all items passed validation.
-
-            Args:
-                items: List of items to validate
-                validator: Function returning FlextResult[None]
-
-            Returns:
-                FlextResult[list[T]]: Success with items, or first failure
-
-            """
-            for item in items:
-                validation_result = validator(item)
-                if validation_result.is_failure:
-                    return FlextResult[list[T_Result]].fail(validation_result.error)
-            return FlextResult[list[T_Result]].ok(items)
-
-        @staticmethod
-        def compose_with_first_success(
-            results: list[FlextResult[object]],
-            default_value: object | None = None,
-        ) -> FlextResult[object]:
-            """Compose multiple results, returning first success or default.
-
-            Useful when trying multiple operations and wanting first success.
-            Falls back to default_value if all fail.
-
-            Args:
-                results: List of FlextResult instances
-                default_value: Value to return if all fail (default: None)
-
-            Returns:
-                FlextResult: First success or default value
-
-            """
-            for result in results:
-                if result.is_success:
-                    return FlextResult[object].ok(result.unwrap())
-            if default_value is not None:
-                return FlextResult[object].ok(default_value)
-            return FlextResult[object].fail(
-                "All operations failed and no default value provided"
-            )
 
 
 # FlextValidations is now integrated into FlextUtilities.Validation

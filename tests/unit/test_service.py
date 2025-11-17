@@ -58,33 +58,33 @@ class SampleComplexService(FlextService[object]):
         self.amount = amount
         self.enabled = enabled
 
-    def validate_business_rules(self) -> FlextResult[None]:
+    def validate_business_rules(self) -> FlextResult[bool]:
         """Validate business rules with multiple checks.
 
         Returns:
-            FlextResult[None]: Success if all rules pass, failure with error message otherwise.
+            FlextResult[bool]: Success with True if all rules pass, failure with error message otherwise.
 
         """
         if not self.name:
-            return FlextResult[None].fail("Name is required")
+            return FlextResult[bool].fail("Name is required")
         if self.amount < 0:
-            return FlextResult[None].fail("Value must be non-negative")
+            return FlextResult[bool].fail("Value must be non-negative")
         if not self.enabled and self.amount > 0:
-            return FlextResult[None].fail("Cannot have amount when disabled")
-        return FlextResult[None].ok(None)
+            return FlextResult[bool].fail("Cannot have amount when disabled")
+        return FlextResult[bool].ok(True)
 
-    def validate_config(self) -> FlextResult[None]:
+    def validate_config(self) -> FlextResult[bool]:
         """Validate configuration with custom logic.
 
         Returns:
-            FlextResult[None]: Success if configuration is valid, failure otherwise.
+            FlextResult[bool]: Success with True if configuration is valid, failure otherwise.
 
         """
         if len(self.name) > 50:
-            return FlextResult[None].fail("Name too long")
+            return FlextResult[bool].fail("Name too long")
         if self.amount > 1000:
-            return FlextResult[None].fail("Value too large")
-        return FlextResult[None].ok(None)
+            return FlextResult[bool].fail("Value too large")
+        return FlextResult[bool].ok(True)
 
     def execute(self) -> FlextResult[object]:
         """Execute complex operation."""
@@ -102,16 +102,16 @@ class SampleComplexService(FlextService[object]):
         )
 
 
-class SampleFailingService(FlextService[None]):
+class SampleFailingService(FlextService[bool]):
     """Sample service that fails validation, used in tests."""
 
-    def validate_business_rules(self) -> FlextResult[None]:
+    def validate_business_rules(self) -> FlextResult[bool]:
         """Always fail validation."""
-        return FlextResult[None].fail("Validation always fails")
+        return FlextResult[bool].fail("Validation always fails")
 
-    def execute(self) -> FlextResult[None]:
+    def execute(self) -> FlextResult[bool]:
         """Execute failing operation."""
-        return FlextResult[None].fail("Execution failed")
+        return FlextResult[bool].fail("Execution failed")
 
 
 class SampleExceptionService(FlextService[str]):
@@ -127,12 +127,12 @@ class SampleExceptionService(FlextService[str]):
         # Set field values after initialization (required for frozen models)
         self.should_raise = should_raise
 
-    def validate_business_rules(self) -> FlextResult[None]:
+    def validate_business_rules(self) -> FlextResult[bool]:
         """Validation that can raise exceptions."""
         if self.should_raise:
             msg = "Validation exception"
             raise ValueError(msg)
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     def execute(self) -> FlextResult[str]:
         """Execute operation that can raise."""
@@ -773,13 +773,17 @@ class TestServiceComprehensiveCoverage:
         assert result.unwrap() == "args: ([1, 2, 3],)"
 
     def test_execute_operation_args_none_handling(self) -> None:
-        """Test execute_operation with None args in arguments dict."""
+        """Test execute_operation with None args in arguments dict.
+
+        REMOVED: None is not allowed in arguments (fast fail).
+        Test now verifies that None arguments raise ValidationError.
+        """
         service = SampleUserService()
 
         def test_operation(*args: object) -> str:
             return f"args: {args}"
 
-        # Test with args as None
+        # Fast fail: None is not allowed in arguments
         operation_request = FlextModels.OperationExecutionRequest(
             operation_name="test_none_args",
             operation_callable=test_operation,
@@ -787,8 +791,9 @@ class TestServiceComprehensiveCoverage:
         )
 
         result = service.execute_operation(operation_request)
-        assert result.is_success
-        assert result.unwrap() == "args: ()"
+        # Fast fail: should return failure with ValidationError
+        assert result.is_failure
+        assert "cannot be None" in result.error
 
     def test_execute_operation_args_single_value(self) -> None:
         """Test execute_operation with single amount args."""
@@ -2038,8 +2043,8 @@ class TestServiceComplexExecution:
         """Test validate_business_rules returns failure (line 462)."""
 
         class FailingValidationService(FlextService[str]):
-            def validate_business_rules(self) -> FlextResult[None]:
-                return FlextResult[None].fail("Business rules validation failed")
+            def validate_business_rules(self) -> FlextResult[bool]:
+                return FlextResult[bool].fail("Business rules validation failed")
 
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Should not execute")
@@ -2054,8 +2059,8 @@ class TestServiceComplexExecution:
         """Test validate_config returns failure (line 468)."""
 
         class FailingConfigService(FlextService[str]):
-            def validate_config(self) -> FlextResult[None]:
-                return FlextResult[None].fail("Config validation failed")
+            def validate_config(self) -> FlextResult[bool]:
+                return FlextResult[bool].fail("Config validation failed")
 
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Should not execute")

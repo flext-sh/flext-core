@@ -397,7 +397,10 @@ class FlextDecorators:
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                op_name = operation_name or func.__name__
+                # Fast fail: explicit default value instead of 'or' fallback
+                op_name: str = (
+                    operation_name if operation_name is not None else func.__name__
+                )
 
                 # Get logger from self if available, otherwise create one
                 args_tuple = cast("tuple[object, ...]", args)
@@ -534,7 +537,10 @@ class FlextDecorators:
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                op_name = operation_name or func.__name__
+                # Fast fail: explicit default value instead of 'or' fallback
+                op_name: str = (
+                    operation_name if operation_name is not None else func.__name__
+                )
 
                 # Get logger from self if available, otherwise create one
                 args_tuple = cast("tuple[object, ...]", args)
@@ -668,9 +674,13 @@ class FlextDecorators:
                     KeyError,
                 ) as e:
                     # Convert exception to FlextResult failure
+                    # Fast fail: error_code must be str or None
+                    effective_error_code: str = (
+                        error_code if isinstance(error_code, str) else "OPERATION_ERROR"
+                    )
                     return FlextResult[T].fail(
                         str(e),
-                        error_code=error_code or "OPERATION_ERROR",
+                        error_code=effective_error_code,
                     )
 
             return wrapper
@@ -723,13 +733,21 @@ class FlextDecorators:
             across the entire ecosystem. Logs retry attempts automatically.
 
         """
-        # Use FlextConstants.Reliability for defaults
-        attempts = max_attempts or FlextConstants.Reliability.DEFAULT_MAX_RETRIES
-        delay = delay_seconds or float(
-            FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS
+        # Fast fail: explicit default values instead of 'or' fallback
+        attempts: int = (
+            max_attempts
+            if max_attempts is not None
+            else FlextConstants.Reliability.DEFAULT_MAX_RETRIES
         )
-        strategy = (
-            backoff_strategy or FlextConstants.Reliability.DEFAULT_BACKOFF_STRATEGY
+        delay: float = (
+            delay_seconds
+            if delay_seconds is not None
+            else float(FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS)
+        )
+        strategy: str = (
+            backoff_strategy
+            if backoff_strategy is not None
+            else FlextConstants.Reliability.DEFAULT_BACKOFF_STRATEGY
         )
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
@@ -913,9 +931,13 @@ class FlextDecorators:
 
         # Should never reach here, but type safety
         msg = f"Operation {func.__name__} failed after {attempts} attempts"
+        # Fast fail: error_code must be str or None
+        effective_error_code: str = (
+            error_code if isinstance(error_code, str) else "RETRY_EXHAUSTED"
+        )
         raise FlextExceptions.TimeoutError(
             msg,
-            error_code=error_code or "RETRY_EXHAUSTED",
+            error_code=effective_error_code,
         )
 
     @staticmethod
@@ -976,7 +998,7 @@ class FlextDecorators:
     @staticmethod
     def _handle_log_result(
         *,
-        result: FlextResult[None],
+        result: FlextResult[bool],
         logger: FlextLogger,
         fallback_message: str,
         kwargs: dict[str, object],
@@ -1054,9 +1076,15 @@ class FlextDecorators:
                     duration = time.perf_counter() - start_time
                     if duration > max_duration:
                         msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s)"
+                        # Fast fail: error_code must be str or None
+                        effective_error_code: str = (
+                            error_code
+                            if isinstance(error_code, str)
+                            else "OPERATION_TIMEOUT"
+                        )
                         raise FlextExceptions.TimeoutError(
                             msg,
-                            error_code=error_code or "OPERATION_TIMEOUT",
+                            error_code=effective_error_code,
                             timeout_seconds=max_duration,
                             operation=func.__name__,
                             metadata={"duration_seconds": duration},
@@ -1353,7 +1381,10 @@ class FlextDecorators:
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                op_name = operation_name or func.__name__
+                # Fast fail: explicit default value instead of 'or' fallback
+                op_name: str = (
+                    operation_name if operation_name is not None else func.__name__
+                )
 
                 args_tuple = cast("tuple[object, ...]", args)
                 logger = FlextDecorators._resolve_logger(args_tuple, func)

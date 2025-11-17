@@ -5,7 +5,6 @@ It should NOT be imported directly - use FlextModels.Validation instead.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -416,10 +415,10 @@ class FlextModelsValidation:
         return FlextResult[object].ok(command_or_query)
 
     @staticmethod
-    def _validate_event_structure(event: object) -> FlextResult[None]:
+    def _validate_event_structure(event: object) -> FlextResult[bool]:
         """Validate event is not None and has required attributes."""
         if event is None:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "Domain event cannot be None",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
@@ -428,20 +427,20 @@ class FlextModelsValidation:
         required_attrs = ["event_type", "aggregate_id", "unique_id", "created_at"]
         missing_attrs = [attr for attr in required_attrs if not hasattr(event, attr)]
         if missing_attrs:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 f"Domain event missing required attributes: {missing_attrs}",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
 
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     @staticmethod
-    def _validate_event_fields(event: object) -> FlextResult[None]:
+    def _validate_event_fields(event: object) -> FlextResult[bool]:
         """Validate event field types and values."""
         # Validate event_type is non-empty string
         event_type = getattr(event, "event_type", "")
         if not event_type or not isinstance(event_type, str):
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "Domain event event_type must be a non-empty string",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
@@ -449,7 +448,7 @@ class FlextModelsValidation:
         # Validate aggregate_id is non-empty string
         aggregate_id = getattr(event, "aggregate_id", "")
         if not aggregate_id or not isinstance(aggregate_id, str):
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "Domain event aggregate_id must be a non-empty string",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
@@ -457,17 +456,17 @@ class FlextModelsValidation:
         # Validate data is a dict
         data = getattr(event, "data", None)
         if data is not None and not FlextRuntime.is_dict_like(data):
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "Domain event data must be a dictionary or None",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
 
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     @staticmethod
     def validate_domain_event(
         event: object,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Enhanced domain event validation with comprehensive checks.
 
         Validates domain events for proper structure, required fields,
@@ -477,7 +476,7 @@ class FlextModelsValidation:
             event: The domain event to validate
 
         Returns:
-            FlextResult[None]: Success if valid, failure with details
+            FlextResult[bool]: Success with True if valid, failure with details
 
         """
         # Validate structure
@@ -490,7 +489,7 @@ class FlextModelsValidation:
         if fields_result.is_failure:
             return fields_result
 
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     @staticmethod
     def validate_aggregate_consistency(
@@ -534,8 +533,14 @@ class FlextModelsValidation:
         if hasattr(aggregate, "domain_events"):
             events = getattr(aggregate, "domain_events", [])
             if len(events) > FlextConstants.Validation.MAX_UNCOMMITTED_EVENTS:
+                max_events = FlextConstants.Validation.MAX_UNCOMMITTED_EVENTS
+                event_count = len(events)
+                error_msg = (
+                    f"Too many uncommitted domain events: {event_count} "
+                    f"(max: {max_events})"
+                )
                 return FlextResult[object].fail(
-                    f"Too many uncommitted domain events: {len(events)} (max: {FlextConstants.Validation.MAX_UNCOMMITTED_EVENTS})",
+                    error_msg,
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 

@@ -5,13 +5,12 @@ as nested classes. It should NOT be imported directly - use FlextModels.Cqrs ins
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
 import uuid
-from typing import Annotated, Literal, Self
+from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -35,7 +34,7 @@ class FlextModelsCqrs:
     ):
         """Base class for CQRS commands with validation."""
 
-        message_type: Literal["command"] = Field(
+        message_type: FlextConstants.Cqrs.CommandMessageTypeLiteral = Field(
             default="command",
             frozen=True,
             description="Message type discriminator for union routing - always 'command'",
@@ -108,7 +107,7 @@ class FlextModelsCqrs:
             },
         )
 
-        message_type: Literal["query"] = Field(
+        message_type: FlextConstants.Cqrs.QueryMessageTypeLiteral = Field(
             default="query",
             frozen=True,
             description="Message type discriminator",
@@ -131,8 +130,9 @@ class FlextModelsCqrs:
                 return v
             if FlextRuntime.is_dict_like(v):
                 v_dict = v
-                page_raw = v_dict.get("page", 1)
-                size_raw = v_dict.get("size", 20)
+                # Fast fail: page and size must be int or None
+                page_raw = v_dict.get("page")
+                size_raw = v_dict.get("size")
                 page: int | str = page_raw if isinstance(page_raw, (int, str)) else 1
                 size: int | str = size_raw if isinstance(size_raw, (int, str)) else 20
                 if isinstance(page, str):
@@ -154,20 +154,32 @@ class FlextModelsCqrs:
         ) -> FlextResult[FlextModelsCqrs.Query]:
             """Validate and create Query from payload."""
             try:
-                filters: object = query_payload.get("filters", {})
-                pagination_data = query_payload.get("pagination", {})
+                # Fast fail: filters and pagination must be dict or None
+                filters_raw = query_payload.get("filters")
+                filters: dict[str, object] = (
+                    filters_raw if isinstance(filters_raw, dict) else {}
+                )
+                pagination_raw = query_payload.get("pagination")
+                pagination_data: dict[str, object] = (
+                    pagination_raw if isinstance(pagination_raw, dict) else {}
+                )
                 if FlextRuntime.is_dict_like(pagination_data):
                     pagination_dict = pagination_data
-                    page_raw = pagination_dict.get("page", 1)
-                    size_raw = pagination_dict.get("page", 20)
+                    # Fast fail: page and size must be int or None
+                    page_raw = pagination_dict.get("page")
                     page: int = int(page_raw) if isinstance(page_raw, (int, str)) else 1
+                    size_raw = pagination_dict.get("size")
                     size: int = (
                         int(size_raw) if isinstance(size_raw, (int, str)) else 20
                     )
                     pagination: dict[str, int] = {"page": page, "size": size}
                 else:
                     pagination = {"page": 1, "size": 20}
-                query_id = str(query_payload.get("query_id", str(uuid.uuid4())))
+                # Fast fail: query_id must be str or None
+                query_id_raw = query_payload.get("query_id")
+                query_id: str = (
+                    str(query_id_raw) if query_id_raw is not None else str(uuid.uuid4())
+                )
                 query_type: object = query_payload.get("query_type")
                 if not FlextRuntime.is_dict_like(filters):
                     filters = {}
@@ -318,56 +330,6 @@ class FlextModelsCqrs:
             def build(self) -> FlextModelsCqrs.Handler:
                 """Build and validate Handler instance."""
                 return FlextModelsCqrs.Handler.model_validate(self._data)
-
-        @classmethod
-        def create_handler_config(
-            cls,
-            handler_type: FlextConstants.Cqrs.HandlerType,
-            *,
-            params: FlextModelsCqrs.Handler.ConfigParams | None = None,
-            default_name: str | None = None,
-            default_id: str | None = None,
-            handler_config: dict[str, object] | None = None,
-            command_timeout: int = 0,
-            max_command_retries: int = 0,
-        ) -> FlextModelsCqrs.Handler:
-            """Create handler configuration (legacy API - use Builder instead).
-
-            DEPRECATED: Use Handler.Builder() for cleaner API.
-
-            Example (NEW - RECOMMENDED):
-                config = Handler.Builder("command").with_name("MyHandler").build()
-
-            Example (PARAMETER OBJECT - also good):
-                params = Handler.ConfigParams(default_name="MyHandler", command_timeout=30)
-                config = Handler.create_handler_config("command", params=params)
-
-            Example (OLD - backward compatible):
-                config = Handler.create_handler_config("command", default_name="MyHandler")
-            """
-            # If params object provided, extract values (params takes precedence)
-            if params is not None:
-                default_name = params.default_name or default_name
-                default_id = params.default_id or default_id
-                handler_config = params.handler_config or handler_config
-                command_timeout = params.command_timeout or command_timeout
-                max_command_retries = params.max_command_retries or max_command_retries
-
-            # Delegate to Builder for cleaner implementation
-            builder = cls.Builder(handler_type)
-
-            if default_id:
-                builder.with_id(default_id)
-            if default_name:
-                builder.with_name(default_name)
-            if command_timeout:
-                builder.with_timeout(command_timeout)
-            if max_command_retries:
-                builder.with_retries(max_command_retries)
-            if handler_config:
-                builder.merge_config(handler_config)
-
-            return builder.build()
 
 
 __all__ = ["FlextModelsCqrs"]
