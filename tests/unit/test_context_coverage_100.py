@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import pytest
+
 from flext_core import (
     FlextConstants,
     FlextContext,
@@ -534,12 +536,8 @@ class TestContext100Coverage:
         from flext_core._models.context import FlextModelsContext
 
         # Test with non-dict value for metadata (which uses validate_dict_serializable)
-        try:
+        with pytest.raises(TypeError, match=r".*must be a dictionary.*"):
             FlextModelsContext.ContextData(metadata=123)  # type: ignore[arg-type]
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            assert "must be a dictionary" in str(e)
 
     def test_context_data_validate_dict_serializable_non_string_key(self) -> None:
         """Test ContextData.validate_dict_serializable with non-string key."""
@@ -555,14 +553,11 @@ class TestContext100Coverage:
                 super().__init__()
                 self[123] = "value"  # type: ignore[index]
 
-        try:
+        with pytest.raises(
+            TypeError,
+            match=r".*(keys must be strings|Dictionary keys must be strings).*",
+        ):
             FlextModelsContext.ContextData(data=BadDict())  # type: ignore[arg-type]
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            assert "keys must be strings" in str(
-                e
-            ) or "Dictionary keys must be strings" in str(e)
 
     def test_context_data_validate_dict_serializable_non_serializable_value(
         self,
@@ -571,13 +566,9 @@ class TestContext100Coverage:
         from flext_core._models.context import FlextModelsContext
 
         # Test with dict containing non-serializable value (e.g., set)
-        try:
-            bad_dict = {"key": {1, 2, 3}}  # set is not JSON-serializable
+        bad_dict = {"key": {1, 2, 3}}  # set is not JSON-serializable
+        with pytest.raises(TypeError, match=r".*Non-JSON-serializable.*"):
             FlextModelsContext.ContextData(data=bad_dict)
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            assert "Non-JSON-serializable" in str(e)
 
     def test_context_export_validate_dict_serializable_pydantic_model(self) -> None:
         """Test ContextExport.validate_dict_serializable with Pydantic model."""
@@ -599,12 +590,10 @@ class TestContext100Coverage:
         from flext_core._models.context import FlextModelsContext
 
         # Test with non-dict value (should raise TypeError via Pydantic validation)
-        try:
+        with pytest.raises(
+            TypeError, match=r".*must be a dictionary or Pydantic model.*"
+        ):
             FlextModelsContext.ContextExport(data=123)  # type: ignore[arg-type]
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            assert "must be a dictionary or Pydantic model" in str(e)
 
     def test_context_export_validate_dict_serializable_non_string_key(self) -> None:
         """Test ContextExport.validate_dict_serializable with non-string key."""
@@ -613,17 +602,11 @@ class TestContext100Coverage:
         # Create dict with non-string key (will fail validation)
         bad_data = {123: "value"}  # Non-string key
 
-        try:
+        with pytest.raises(
+            TypeError,
+            match=r".*(keys must be strings|Dictionary keys must be strings|must be a dictionary).*",
+        ):
             FlextModelsContext.ContextExport(data=bad_data)  # type: ignore[arg-type]
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            # May raise different error messages depending on validation order
-            assert (
-                "keys must be strings" in str(e)
-                or "Dictionary keys must be strings" in str(e)
-                or "must be a dictionary" in str(e).lower()
-            )
 
     def test_context_export_validate_dict_serializable_non_serializable_value(
         self,
@@ -632,13 +615,9 @@ class TestContext100Coverage:
         from flext_core._models.context import FlextModelsContext
 
         # Test with dict containing non-serializable value (e.g., set)
-        try:
-            bad_dict = {"key": {1, 2, 3}}  # set is not JSON-serializable
+        bad_dict = {"key": {1, 2, 3}}  # set is not JSON-serializable
+        with pytest.raises(TypeError, match=r".*Non-JSON-serializable.*"):
             FlextModelsContext.ContextExport(data=bad_dict)
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            assert "Non-JSON-serializable" in str(e)
 
     def test_context_export_total_data_items(self) -> None:
         """Test ContextExport.total_data_items computed field."""

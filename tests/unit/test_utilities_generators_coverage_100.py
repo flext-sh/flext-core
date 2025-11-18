@@ -14,6 +14,7 @@ from collections import UserDict
 from collections.abc import Mapping
 from typing import Never
 
+import pytest
 from pydantic import BaseModel
 
 from flext_core._utilities.generators import FlextUtilitiesGenerators
@@ -44,7 +45,7 @@ class TestGenerators100Coverage:
             def __getitem__(self, key: str) -> object:
                 return self._data[key]
 
-            def __iter__(self):
+            def __iter__(self) -> object:  # type: ignore[return]
                 return iter(self._data)
 
             def __len__(self) -> int:
@@ -63,7 +64,7 @@ class TestGenerators100Coverage:
                 msg = "Cannot get item"
                 raise AttributeError(msg)
 
-            def __iter__(self):
+            def __iter__(self) -> object:  # type: ignore[return]
                 return iter([])
 
             def __len__(self) -> int:
@@ -74,12 +75,8 @@ class TestGenerators100Coverage:
                 raise TypeError(msg)
 
         mapping = BadMapping()
-        try:
+        with pytest.raises(TypeError, match=r".*Failed to convert Mapping.*"):
             FlextUtilitiesGenerators._normalize_context_to_dict(mapping)
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            assert "Failed to convert Mapping" in str(e)
 
     def test_normalize_context_to_dict_with_basemodel(self) -> None:
         """Test _normalize_context_to_dict with BaseModel."""
@@ -119,21 +116,15 @@ class TestGenerators100Coverage:
 
     def test_normalize_context_to_dict_with_none(self) -> None:
         """Test _normalize_context_to_dict with None."""
-        try:
+        with pytest.raises(TypeError, match=r".*Context cannot be None.*"):
             FlextUtilitiesGenerators._normalize_context_to_dict(None)
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            assert "Context cannot be None" in str(e)
 
     def test_normalize_context_to_dict_with_unsupported_type(self) -> None:
         """Test _normalize_context_to_dict with unsupported type."""
-        try:
+        with pytest.raises(
+            TypeError, match=r".*Context must be dict, Mapping, or BaseModel.*"
+        ):
             FlextUtilitiesGenerators._normalize_context_to_dict(123)
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            assert "Context must be dict, Mapping, or BaseModel" in str(e)
 
     def test_enrich_context_fields_with_correlation_id(self) -> None:
         """Test _enrich_context_fields with correlation_id."""
@@ -248,7 +239,7 @@ class TestGenerators100Coverage:
                 msg = "Cannot get item"
                 raise AttributeError(msg)
 
-            def __iter__(self):
+            def __iter__(self) -> object:  # type: ignore[return]
                 return iter([])
 
             def __len__(self) -> int:
@@ -259,27 +250,15 @@ class TestGenerators100Coverage:
                 raise TypeError(msg)
 
         mapping = BadMapping()
-        try:
+        with pytest.raises(TypeError, match=r".*Failed to convert Mapping.*"):
             FlextUtilitiesGenerators.ensure_dict(mapping)
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            assert "Failed to convert Mapping" in str(e)
 
     def test_ensure_dict_with_none(self) -> None:
         """Test ensure_dict with None."""
-        try:
+        with pytest.raises(TypeError, match=r".*Value cannot be None.*"):
             FlextUtilitiesGenerators.ensure_dict(None)
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            assert "Value cannot be None" in str(e)
 
     def test_ensure_dict_with_unsupported_type(self) -> None:
         """Test ensure_dict with unsupported type."""
-        try:
+        with pytest.raises(TypeError, match=r".*Cannot convert.*"):
             FlextUtilitiesGenerators.ensure_dict(123)
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            assert "Cannot convert" in str(e)

@@ -57,7 +57,7 @@ class TestFlextUtilitiesDataMapperMapDictKeys:
                 raise RuntimeError(msg)
 
         bad = BadDict()
-        result = FlextUtilitiesDataMapper.map_dict_keys(bad, {})  # type: ignore
+        result = FlextUtilitiesDataMapper.map_dict_keys(bad, {})  # type: ignore[call-overload]
         assert result.is_failure
         assert "Failed to map" in result.error
 
@@ -103,7 +103,7 @@ class TestFlextUtilitiesDataMapperBuildFlagsDict:
                 raise RuntimeError(msg)
 
         bad = BadList()
-        result = FlextUtilitiesDataMapper.build_flags_dict(bad, {})  # type: ignore
+        result = FlextUtilitiesDataMapper.build_flags_dict(bad, {})  # type: ignore[call-overload]
         assert result.is_failure
         assert "Failed to build" in result.error
 
@@ -142,7 +142,7 @@ class TestFlextUtilitiesDataMapperCollectActiveKeys:
                 raise RuntimeError(msg)
 
         bad = BadDict()
-        result = FlextUtilitiesDataMapper.collect_active_keys(bad, {"key": "output"})  # type: ignore
+        result = FlextUtilitiesDataMapper.collect_active_keys(bad, {"key": "output"})  # type: ignore[call-overload]
         assert result.is_failure
         assert "Failed to collect" in result.error
 

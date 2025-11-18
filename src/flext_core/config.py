@@ -435,10 +435,20 @@ class FlextConfig(BaseSettings):
 
     @model_validator(mode="after")
     def validate_trace_requires_debug(self) -> Self:
-        """Validate trace mode requires debug mode (Pydantic v2)."""
+        """Validate trace mode requires debug mode (Pydantic v2).
+
+        Architectural Note:
+            - This validator ONLY validates (SRP)
+            - Logger configuration is EXTERNAL responsibility
+            - Applications must call FlextRuntime.configure_structlog() explicitly
+            - CLI params can call FlextRuntime.reconfigure_structlog() to override
+
+        """
+        # Validation: trace requires debug
         if self.trace and not self.debug:
             msg = f"Invalid configuration: Trace mode requires debug mode (error_code={FlextConstants.Errors.VALIDATION_ERROR})"
             raise ValueError(msg)
+
         return self
 
     # ===== DEPENDENCY INJECTION INTEGRATION =====
@@ -468,6 +478,8 @@ class FlextConfig(BaseSettings):
                 if base_class not in cls._instances:
                     instance = cls()
                     cls._instances[base_class] = instance
+        else:
+            cls._instances[base_class]
 
         return cls._instances[base_class]
 

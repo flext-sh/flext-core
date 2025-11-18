@@ -12,6 +12,8 @@ from __future__ import annotations
 import time
 from typing import override
 
+import pytest
+
 from flext_core import (
     FlextConstants,
     FlextDispatcher,
@@ -129,12 +131,8 @@ class TestDispatcher100Coverage:
         dispatcher = FlextDispatcher()
         # String messages are caught in _normalize_dispatch_message which raises
         # But dispatch() catches and returns FlextResult, so test the internal method
-        try:
+        with pytest.raises(TypeError, match=r".*String message_type not supported.*"):
             dispatcher._normalize_dispatch_message("string", None)
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            assert "String message_type not supported" in str(e)
 
     def test_dispatch_with_invalid_metadata_type(self) -> None:
         """Test dispatch with invalid metadata type."""
@@ -271,22 +269,14 @@ class TestDispatcher100Coverage:
     def test_normalize_dispatch_message_none_raises(self) -> None:
         """Test _normalize_dispatch_message raises on None."""
         dispatcher = FlextDispatcher()
-        try:
+        with pytest.raises(TypeError, match=r".*Message cannot be None.*"):
             dispatcher._normalize_dispatch_message(None, None)
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            assert "Message cannot be None" in str(e)
 
     def test_normalize_dispatch_message_string_raises(self) -> None:
         """Test _normalize_dispatch_message raises on string."""
         dispatcher = FlextDispatcher()
-        try:
+        with pytest.raises(TypeError, match=r".*String message_type not supported.*"):
             dispatcher._normalize_dispatch_message("string", None)
-            msg = "Should have raised TypeError"
-            raise AssertionError(msg)
-        except TypeError as e:
-            assert "String message_type not supported" in str(e)
 
     def test_timeout_deadline_tracking(self) -> None:
         """Test timeout deadline tracking."""
@@ -328,3 +318,285 @@ class TestDispatcher100Coverage:
             max_attempts + 1, error_message="timeout"
         )
         assert should_retry is False
+
+    def test_circuit_breaker_full_cycle_open_to_closed(self) -> None:
+        """Test circuit breaker OPEN → HALF_OPEN → CLOSED cycle (covers line 192)."""
+        dispatcher = FlextDispatcher()
+
+        # Configure circuit breaker with shorter timeout for testing (real config, not mock)
+        dispatcher._circuit_breaker._recovery_timeout = 0.5
+
+        # Create handler that fails initially
+        class FailingHandler(FlextHandlers[TestMessage100, dict[str, bool]]):
+            def __init__(self) -> None:
+                config = FlextModels.Cqrs.Handler(
+                    handler_id="failing_handler",
+                    handler_name="FailingHandler",
+                    command_timeout=30,
+                    max_command_retries=0,  # No retries
+                )
+                super().__init__(config=config)
+                self.call_count = 0
+
+            @override
+            def handle(self, command: TestMessage100) -> FlextResult[dict[str, bool]]:
+                self.call_count += 1
+                if self.call_count <= 5:  # Fail first 5 times (threshold = 5)
+                    return FlextResult[dict[str, bool]].fail("Error to open circuit")
+                return FlextResult[dict[str, bool]].ok({"success": True})
+
+        handler = FailingHandler()
+        dispatcher.register_handler(TestMessage100, handler)
+
+        # 1. Fail enough times to OPEN circuit (threshold = 5)
+        for _ in range(5):
+            result = dispatcher.dispatch(TestMessage100("test"))
+            assert result.is_failure
+
+        # 2. Circuit should be OPEN - verify state
+        breaker_state = dispatcher._circuit_breaker.get_state("TestMessage100")
+        assert breaker_state == FlextConstants.Reliability.CircuitBreakerState.OPEN
+
+        # 3. Wait for half-open window (recovery_timeout = 0.5s configured above)
+        time.sleep(0.6)
+
+        # 4. Next call triggers attempt_reset → HALF_OPEN, handler called (count=6, success!)
+        result = dispatcher.dispatch(TestMessage100("test"))
+        assert result.is_success, f"Expected success in HALF_OPEN, got: {result.error}"
+
+        # 5. State should now be HALF_OPEN
+        breaker_state = dispatcher._circuit_breaker.get_state("TestMessage100")
+        assert breaker_state == FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN
+
+        # 6. Need 3 total successes in HALF_OPEN to close (success_threshold = 3)
+        # Already have 1, need 2 more
+        for _ in range(2):
+            result = dispatcher.dispatch(TestMessage100("test"))
+            assert result.is_success
+
+        # 7. After 3 successes in HALF_OPEN, transitions to CLOSED (line 159 → 199 → 188-192)
+        breaker_state_final = dispatcher._circuit_breaker.get_state("TestMessage100")
+        assert (
+            breaker_state_final == FlextConstants.Reliability.CircuitBreakerState.CLOSED
+        )
+
+        # 8. Verify opened_at was deleted (line 192 executed!)
+        assert "TestMessage100" not in dispatcher._circuit_breaker._opened_at
+
+    def test_rate_limiter_apply_jitter_with_zero_base_delay(self) -> None:
+        """Test rate limiter _apply_jitter with base_delay <= 0 (lines 425-426)."""
+        dispatcher = FlextDispatcher()
+        rate_limiter = dispatcher._rate_limiter
+
+        # Test with base_delay = 0.0
+        result = rate_limiter._apply_jitter(0.0)
+        assert result == 0.0
+
+        # Test with negative base_delay
+        result = rate_limiter._apply_jitter(-1.0)
+        assert result == -1.0
+
+    def test_rate_limiter_apply_jitter_with_zero_jitter_factor(self) -> None:
+        """Test rate limiter _apply_jitter with jitter_factor == 0 (lines 425-426)."""
+        dispatcher = FlextDispatcher()
+        rate_limiter = dispatcher._rate_limiter
+
+        # Set jitter_factor to 0
+        rate_limiter._jitter_factor = 0.0
+
+        # Should return base_delay unchanged
+        result = rate_limiter._apply_jitter(1.0)
+        assert result == 1.0
+
+    def test_rate_limiter_apply_jitter_with_positive_values(self) -> None:
+        """Test rate limiter _apply_jitter with positive values (lines 428-435)."""
+        dispatcher = FlextDispatcher()
+        rate_limiter = dispatcher._rate_limiter
+
+        # Test with positive base_delay and jitter_factor
+        base_delay = 1.0
+        result = rate_limiter._apply_jitter(base_delay)
+
+        # Result should be jittered (different from base) and non-negative
+        assert result >= 0.0
+        # With default jitter_factor (0.1), result should be between 0.9 and 1.1
+        assert 0.8 <= result <= 1.2  # Allow some margin
+
+    def test_rate_limiter_get_max_requests(self) -> None:
+        """Test rate limiter get_max_requests (line 478)."""
+        dispatcher = FlextDispatcher()
+        rate_limiter = dispatcher._rate_limiter
+
+        # Get max_requests value
+        max_requests = rate_limiter.get_max_requests()
+        assert isinstance(max_requests, int)
+        assert max_requests > 0
+
+    def test_rate_limiter_get_window_seconds(self) -> None:
+        """Test rate limiter get_window_seconds (line 482)."""
+        dispatcher = FlextDispatcher()
+        rate_limiter = dispatcher._rate_limiter
+
+        # Get window_seconds value
+        window_seconds = rate_limiter.get_window_seconds()
+        assert isinstance(window_seconds, float)
+        assert window_seconds > 0.0
+
+    def test_retry_policy_exponential_delay_with_zero_base(self) -> None:
+        """Test get_exponential_delay with base_delay = 0.0 (lines 558-559)."""
+        dispatcher = FlextDispatcher()
+        policy = dispatcher._retry_policy
+
+        # Set base_delay to 0.0
+        policy._base_delay = 0.0
+
+        # Should return 0.0 regardless of attempt number
+        assert policy.get_exponential_delay(0) == 0.0
+        assert policy.get_exponential_delay(5) == 0.0
+        assert policy.get_exponential_delay(10) == 0.0
+
+    def test_retry_policy_exponential_delay_calculation(self) -> None:
+        """Test get_exponential_delay exponential backoff (lines 562-564)."""
+        dispatcher = FlextDispatcher()
+        policy = dispatcher._retry_policy
+
+        # Set known values for testing
+        policy._base_delay = 1.0
+        policy._exponential_factor = 2.0
+        policy._max_delay = 100.0
+
+        # Test exponential backoff: base_delay * (factor ^ attempt)
+        # Attempt 0: 1.0 * (2.0 ^ 0) = 1.0
+        assert policy.get_exponential_delay(0) == 1.0
+
+        # Attempt 1: 1.0 * (2.0 ^ 1) = 2.0
+        assert policy.get_exponential_delay(1) == 2.0
+
+        # Attempt 2: 1.0 * (2.0 ^ 2) = 4.0
+        assert policy.get_exponential_delay(2) == 4.0
+
+        # Attempt 3: 1.0 * (2.0 ^ 3) = 8.0
+        assert policy.get_exponential_delay(3) == 8.0
+
+    def test_retry_policy_exponential_delay_max_cap(self) -> None:
+        """Test get_exponential_delay capped at max_delay (line 566)."""
+        dispatcher = FlextDispatcher()
+        policy = dispatcher._retry_policy
+
+        # Set values that will exceed max_delay
+        policy._base_delay = 1.0
+        policy._exponential_factor = 2.0
+        policy._max_delay = 10.0  # Cap at 10 seconds
+
+        # Attempt 10: 1.0 * (2.0 ^ 10) = 1024.0, but should be capped at 10.0
+        result = policy.get_exponential_delay(10)
+        assert result == 10.0  # Should be capped at max_delay
+
+        # Attempt 5: 1.0 * (2.0 ^ 5) = 32.0, should be capped at 10.0
+        result = policy.get_exponential_delay(5)
+        assert result == 10.0
+
+    def test_processor_validation_missing_process_method(self) -> None:
+        """Test processor validation when process method is missing (lines 765, 849)."""
+        dispatcher = FlextDispatcher()
+
+        # Create processor without "process" method
+        class InvalidProcessor:
+            def execute(self, data: object) -> object:
+                return data
+
+        processor = InvalidProcessor()
+
+        # Validation should fail - line 765
+        validation_result = dispatcher._validate_processor_interface(processor)
+        assert validation_result.is_failure
+        assert "must be callable or have 'process' method" in validation_result.error
+
+        # Register processor (bypassing validation for test purposes)
+        dispatcher._processors["invalid_processor"] = processor
+
+        # Execution should fail - line 849
+        result = dispatcher.process("invalid_processor", "test_data")
+        assert result.is_failure
+        assert "must be callable or have 'process' method" in result.error
+
+    def test_processor_validation_process_not_callable(self) -> None:
+        """Test processor validation when process attribute is not callable (lines 772, 855)."""
+        dispatcher = FlextDispatcher()
+
+        # Create processor with non-callable "process" attribute
+        class InvalidProcessor:
+            process = "not_callable"  # Not a method
+
+        processor = InvalidProcessor()
+
+        # Validation should fail - line 772
+        validation_result = dispatcher._validate_processor_interface(processor)
+        assert validation_result.is_failure
+        assert "'process' attribute must be callable" in validation_result.error
+
+        # Register processor (bypassing validation for test purposes)
+        dispatcher._processors["invalid_processor"] = processor
+
+        # Execution should fail - line 855
+        result = dispatcher.process("invalid_processor", "test_data")
+        assert result.is_failure
+        assert "'process' attribute must be callable" in result.error
+
+    def test_processor_metrics_initialization_on_first_execution(self) -> None:
+        """Test processor metrics are initialized on first execution (line 877)."""
+        dispatcher = FlextDispatcher()
+
+        # Create simple processor
+        class SimpleProcessor:
+            def process(self, data: int) -> FlextResult[int]:
+                return FlextResult[int].ok(data * 2)
+
+        # Verify metrics don't exist yet
+        assert "simple_processor" not in dispatcher._processor_metrics_per_name
+
+        # Register processor (initializes metrics dict - line 877)
+        dispatcher.register_processor("simple_processor", SimpleProcessor())
+
+        # Verify metrics were initialized during registration
+        assert "simple_processor" in dispatcher._processor_metrics_per_name
+        metrics = dispatcher._processor_metrics_per_name["simple_processor"]
+        assert metrics["executions"] == 0
+        assert metrics["successful_processes"] == 0
+        assert metrics["failed_processes"] == 0
+
+        # Execute processor to update metrics
+        result = dispatcher.process("simple_processor", 5)
+        assert result.is_success
+        assert result.unwrap() == 10
+
+        # Verify metrics were updated
+        metrics = dispatcher._processor_metrics_per_name["simple_processor"]
+        assert metrics["executions"] == 1
+        assert metrics["successful_processes"] == 1
+
+    def test_processor_exception_handling_with_metrics(self) -> None:
+        """Test processor exception handling records execution time (lines 892-897)."""
+        dispatcher = FlextDispatcher()
+
+        # Create processor that raises exception
+        class FailingProcessor:
+            def process(self, data: object) -> FlextResult[object]:
+                msg = "Processor error"
+                raise RuntimeError(msg)
+
+        # Register processor
+        dispatcher.register_processor("failing_processor", FailingProcessor())
+
+        # Execute processor (triggers exception handling lines 892-897)
+        result = dispatcher.process("failing_processor", "test_data")
+
+        # Should return failure result
+        assert result.is_failure
+        assert "Processor execution failed" in result.error
+        assert "Processor error" in result.error
+
+        # Verify execution time was recorded even on failure (line 893-896)
+        assert "failing_processor" in dispatcher._processor_execution_times
+        assert len(dispatcher._processor_execution_times["failing_processor"]) == 1
+        assert dispatcher._processor_execution_times["failing_processor"][0] >= 0.0

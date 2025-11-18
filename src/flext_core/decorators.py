@@ -405,6 +405,7 @@ class FlextDecorators:
                 # Get logger from self if available, otherwise create one
                 args_tuple = cast("tuple[object, ...]", args)
                 logger = FlextDecorators._resolve_logger(args_tuple, func)
+                result_logger = logger.with_result()
 
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
@@ -421,7 +422,7 @@ class FlextDecorators:
                     if correlation_id is not None:
                         start_extra["correlation_id"] = correlation_id
 
-                    log_start_result = logger.debug(
+                    log_start_result = result_logger.debug(
                         f"{op_name}_started",
                         extra=start_extra,
                     )
@@ -441,7 +442,7 @@ class FlextDecorators:
                     }
                     if correlation_id is not None:
                         completion_extra["correlation_id"] = correlation_id
-                    log_completion_result = logger.debug(
+                    log_completion_result = result_logger.debug(
                         f"{op_name}_completed",
                         extra=completion_extra,
                     )
@@ -469,7 +470,7 @@ class FlextDecorators:
                     }
                     if correlation_id is not None:
                         failure_extra["correlation_id"] = correlation_id
-                    failure_result = logger.exception(
+                    failure_result = result_logger.exception(
                         f"{op_name}_failed",
                         exception=e,
                         extra=failure_extra,

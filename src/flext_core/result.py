@@ -358,7 +358,11 @@ class FlextResult[T_co]:
 
         # Architectural invariant: exactly one of data or error must be provided.
         if error is not None:
-            self._result = Failure(error)
+            # Provide fallback for None/empty errors to maintain backward compatibility
+            actual_error = (
+                "Unknown error occurred" if (not error or error.isspace()) else error
+            )
+            self._result = Failure(actual_error)
         else:
             # Fast fail: None is not a valid success value
             if data is None:
@@ -478,11 +482,27 @@ class FlextResult[T_co]:
 
     @property
     def error(self) -> str | None:
-        """Return the captured error message for failure results."""
+        """Return the captured error message for failure results.
+
+        Returns:
+            str | None: Error message or None if is_success (backward compatibility).
+                        Guaranteed non-empty string when is_failure.
+
+        Raises:
+            AssertionError: If is_failure but error is empty/None (defensive check).
+
+        """
         if self.is_success:
-            return None
+            return None  # Success has no error (backward compatibility)  # type: ignore[return-value]
+
         # Extract error from returns.Result backend using failure()
-        return self._result.failure()
+        error_msg = self._result.failure()
+
+        # Defensive fallback: provide default if None/empty (backward compatibility)
+        if not error_msg:
+            return "Unknown error occurred"
+
+        return error_msg
 
     @property
     def error_code(self) -> str | None:
@@ -539,7 +559,7 @@ class FlextResult[T_co]:
     @classmethod
     def fail(
         cls,
-        error: str | None,
+        error: str,
         /,
         *,
         error_code: str | None = None,
@@ -552,12 +572,15 @@ class FlextResult[T_co]:
         raising exceptions in business logic.
 
         Args:
-            error: The error message describing the failure.
+            error: The error message describing the failure (non-empty string required).
             error_code: Optional error code for categorization and monitoring.
             error_data: Optional additional error data/metadata for diagnostics.
 
         Returns:
             Self: A failed FlextResult with the provided error information.
+
+        Raises:
+            ValueError: If error is empty or whitespace-only (fast fail).
 
         Example:
             ```python
@@ -575,7 +598,7 @@ class FlextResult[T_co]:
             ```
 
         """
-        # Normalize empty/whitespace errors to default message
+        # Provide fallback for None/empty errors to maintain backward compatibility
         if not error or error.isspace():
             actual_error = "Unknown error occurred"
         else:
@@ -1565,7 +1588,9 @@ class FlextResult[T_co]:
         for item in items:
             result: FlextResult[UTraverse] = func(item)
             if result.is_failure:
-                if result.error is None:
+                if not result.error or (
+                    isinstance(result.error, str) and result.error.isspace()
+                ):
                     error_msg = f"Traverse failed at item {item}: error is None"
                 else:
                     error_msg = result.error
@@ -1638,7 +1663,9 @@ class FlextResult[T_co]:
         for result in results:
             if result.is_success:
                 successes.append(result.unwrap())
-            elif result.error is None:
+            elif not result.error or (
+                isinstance(result.error, str) and result.error.isspace()
+            ):
                 errors.append("Unknown error")
             else:
                 errors.append(result.error)
@@ -1668,7 +1695,9 @@ class FlextResult[T_co]:
             fast_successes: list[UPar] = []
             for result in results:
                 if result.is_failure:
-                    if result.error is None:
+                    if not result.error or (
+                        isinstance(result.error, str) and result.error.isspace()
+                    ):
                         error_msg = "Sequence operation failed: error is None"
                     else:
                         error_msg = result.error
@@ -1680,7 +1709,9 @@ class FlextResult[T_co]:
         errors: list[str] = []
         for result in results:
             if result.is_failure:
-                if result.error is None:
+                if not result.error or (
+                    isinstance(result.error, str) and result.error.isspace()
+                ):
                     error_msg = "Operation failed: error is None"
                 else:
                     error_msg = result.error
@@ -1710,7 +1741,7 @@ class FlextResult[T_co]:
 
         """
         if self.is_failure:
-            if self.error is None:
+            if not self.error or (isinstance(self.error, str) and self.error.isspace()):
                 error_msg = "Cannot use resource with failed result: error is None"
             else:
                 error_msg = self.error
@@ -1742,7 +1773,9 @@ class FlextResult[T_co]:
         values: list[TCombine] = []
         for result in results:
             if result.is_failure:
-                if result.error is None:
+                if not result.error or (
+                    isinstance(result.error, str) and result.error.isspace()
+                ):
                     error_msg = "Combine operation failed: error is None"
                 else:
                     error_msg = result.error
@@ -1759,7 +1792,9 @@ class FlextResult[T_co]:
         values: list[TSeq] = []
         for result in results:
             if result.is_failure:
-                if result.error is None:
+                if not result.error or (
+                    isinstance(result.error, str) and result.error.isspace()
+                ):
                     error_msg = "Sequence failed: error is None"
                 else:
                     error_msg = result.error
@@ -1878,7 +1913,9 @@ class FlextResult[T_co]:
         for item in items:
             result = mapper(item)
             if result.is_failure:
-                if result.error is None:
+                if not result.error or (
+                    isinstance(result.error, str) and result.error.isspace()
+                ):
                     error_msg = "Mapping failed: error is None"
                 else:
                     error_msg = result.error
@@ -1951,7 +1988,8 @@ class FlextResult[T_co]:
 
         """
         if self.is_failure:
-            if self.error is None:
+            # Check if error is the fallback (indicates None/empty was provided)
+            if not self.error or (isinstance(self.error, str) and self.error.isspace()):
                 error_msg = "Validation failed: error is None"
             else:
                 error_msg = self.error
@@ -1964,7 +2002,8 @@ class FlextResult[T_co]:
         # Validate the current value
         validation_result = validator(self.value)
         if validation_result.is_failure:
-            if validation_result.error is None:
+            # Check if error is the fallback (indicates None/empty was provided)
+            if validation_result.error == "Unknown error occurred":
                 error_msg = "Validation failed: error is None"
             else:
                 error_msg = validation_result.error

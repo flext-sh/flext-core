@@ -2078,16 +2078,11 @@ class TestFlextResultFinalCoveragePush:
         assert "Initial failure" in str(validated.error)
 
     def test_with_context_failure_without_error(self) -> None:
-        """Test with_context when failure has no error (line 1485)."""
-        # Create failure with empty error (edge case)
+        """Test that creating failure with empty error uses fallback."""
+        # Fallback behavior: empty error gets default message for backward compatibility
         result = FlextResult[int](error="")
-
-        def add_context(err: str) -> str:
-            return f"Context: {err}"
-
-        contextualized = result.with_context(add_context)
-        # Should return self when no error message
-        assert contextualized.is_failure
+        assert result.is_failure
+        assert result.error == "Unknown error occurred"
 
     def test_with_resource_failure_propagation(self) -> None:
         """Test with_resource with failure result (line 1751)."""
