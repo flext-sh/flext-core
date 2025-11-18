@@ -13,7 +13,15 @@ import time
 
 import pytest
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextLoggerResultAdapter, FlextResult
+
+
+def make_result_logger(
+    *args: object,
+    **kwargs: object,
+) -> FlextLoggerResultAdapter:
+    """Helper to create loggers that expose FlextResult outputs."""
+    return FlextLogger(*args, **kwargs).with_result()
 
 
 class TestFlextLogger:
@@ -27,47 +35,47 @@ class TestFlextLogger:
 
     def test_logger_with_custom_config(self) -> None:
         """Test logger initialization with custom configuration."""
-        logger = FlextLogger("test_logger", _level="INFO")
+        logger = make_result_logger("test_logger", _level="INFO")
         assert logger is not None
 
     def test_logger_info_logging(self) -> None:
         """Test info level logging."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.info("Test info message")
         assert result.is_success
 
     def test_logger_debug_logging(self) -> None:
         """Test debug level logging."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.debug("Test debug message")
         assert result.is_success
 
     def test_logger_warning_logging(self) -> None:
         """Test warning level logging."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.warning("Test warning message")
         assert result.is_success
 
     def test_logger_error_logging(self) -> None:
         """Test error level logging."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.error("Test error message")
         assert result.is_success
 
     def test_logger_critical_logging(self) -> None:
         """Test critical level logging."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.critical("Test critical message")
         assert result.is_success
 
     def test_logger_logging_with_context(self) -> None:
         """Test logging with context."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         context = {"user_id": "123", "action": "test"}
         result = logger.info("Test message", context=context)
@@ -75,14 +83,14 @@ class TestFlextLogger:
 
     def test_logger_logging_with_correlation_id(self) -> None:
         """Test logging with correlation ID."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.info("Test message", correlation_id="test_corr_123")
         assert result.is_success
 
     def test_logger_logging_with_exception(self) -> None:
         """Test logging with exception."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         try:
             msg = "Test exception"
@@ -93,7 +101,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_structured_data(self) -> None:
         """Test logging with structured data."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         structured_data: dict[str, object] = {
             "action": "user_action",
@@ -106,7 +114,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_performance_metrics(self) -> None:
         """Test logging with performance metrics."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         performance = {
             "duration_ms": 150.5,
@@ -119,7 +127,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_custom_fields(self) -> None:
         """Test logging with custom fields."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         custom_fields: dict[str, object] = {
             "custom_field_1": "value1",
@@ -132,7 +140,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_nested_context(self) -> None:
         """Test logging with nested context."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         nested_context: dict[str, object] = {
             "user": {
@@ -147,7 +155,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_array_data(self) -> None:
         """Test logging with array data."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         array_data: dict[str, object] = {
             "items": [1, 2, 3, 4, 5],
@@ -160,7 +168,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_boolean_data(self) -> None:
         """Test logging with boolean data."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         boolean_data = {
             "is_active": True,
@@ -173,7 +181,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_numeric_data(self) -> None:
         """Test logging with numeric data."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         numeric_data: dict[str, object] = {
             "count": 42,
@@ -186,7 +194,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_null_data(self) -> None:
         """Test logging with null data."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         null_data = {"nullable_field": None, "optional_field": None}
 
@@ -195,7 +203,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_empty_data(self) -> None:
         """Test logging with empty data."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         empty_data: dict[str, str | list[str] | dict[str, str]] = {
             "empty_string": "",
@@ -208,7 +216,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_special_characters(self) -> None:
         """Test logging with special characters."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         special_data = {
             "unicode_text": "Hello 世界",
@@ -222,7 +230,7 @@ class TestFlextLogger:
     @pytest.mark.filterwarnings("ignore:LogEntry validation failed:UserWarning")
     def test_logger_logging_with_large_data(self) -> None:
         """Test logging with large data."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         large_data: dict[str, object] = {
             "large_string": "x" * 1000,
@@ -235,7 +243,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_complex_data(self) -> None:
         """Test logging with complex data structures."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         complex_data: dict[str, object] = {
             "nested": {
@@ -263,7 +271,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_validation(self) -> None:
         """Test logging with validation."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         # Valid data should pass
         result = logger.info("Valid message", valid_field="value")
@@ -272,7 +280,7 @@ class TestFlextLogger:
     @pytest.mark.filterwarnings("ignore:LogEntry validation failed:UserWarning")
     def test_logger_logging_with_validation_failure(self) -> None:
         """Test logging with validation failure - should handle gracefully."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         # Invalid data should be handled gracefully (not fail)
         # The logger should sanitize invalid data and log successfully
@@ -284,7 +292,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_middleware(self) -> None:
         """Test logging with middleware - not implemented in new FlextLogger."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         # Middleware functionality is not implemented in the new thin FlextLogger
         # Just test basic logging functionality
@@ -293,7 +301,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_filters(self) -> None:
         """Test logging with filters - not implemented in new FlextLogger."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         # Filter functionality is not implemented in the new thin FlextLogger
         # Just test basic logging functionality
@@ -302,7 +310,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_handlers(self) -> None:
         """Test logging with custom handlers - not implemented in new FlextLogger."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         # Handler functionality is not implemented in the new thin FlextLogger
         # Just test basic logging functionality
@@ -311,7 +319,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_formatters(self) -> None:
         """Test logging with custom formatters - not implemented in new FlextLogger."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         # Formatter functionality is not implemented in the new thin FlextLogger
         # Just test basic logging functionality
@@ -320,7 +328,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_levels(self) -> None:
         """Test logging with different levels."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         # Test all levels using the specific methods
         result = logger.debug("Test debug message")
@@ -340,7 +348,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_level_filtering(self) -> None:
         """Test logging with level filtering."""
-        logger = FlextLogger("test_logger", _level="WARNING")
+        logger = make_result_logger("test_logger", _level="WARNING")
 
         # Debug and info should be filtered out
         result = logger.debug("Debug message")
@@ -358,7 +366,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_thread_safety(self) -> None:
         """Test logging with thread safety."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         results: list[FlextResult[bool]] = []
 
@@ -380,7 +388,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_performance(self) -> None:
         """Test logging performance - adjusted for actual performance."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         start_time = time.time()
 
@@ -400,7 +408,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_error_handling(self) -> None:
         """Test logging with error handling."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         # Test normal logging
         result = logger.info("Test message")
@@ -408,7 +416,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_cleanup(self) -> None:
         """Test logging with cleanup - not needed in new FlextLogger."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.info("Test message")
         assert result.is_success
@@ -420,7 +428,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_statistics(self) -> None:
         """Test logging with statistics - not implemented in new FlextLogger."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         logger.info("Test message 1")
         logger.warning("Test message 2")
@@ -432,7 +440,7 @@ class TestFlextLogger:
 
     def test_logger_logging_with_audit(self) -> None:
         """Test logging with audit."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.info("Test message")
         assert result.is_success
@@ -442,7 +450,7 @@ class TestFlextLogger:
 
     def test_logger_validation(self) -> None:
         """Test logger validation - not implemented in new FlextLogger."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         # Validation functionality is not implemented in the new thin FlextLogger
         # Just test basic logging functionality
@@ -451,8 +459,8 @@ class TestFlextLogger:
 
     def test_logger_logging_with_instance_creation(self) -> None:
         """Test logging instance creation - no caching in new FlextLogger."""
-        logger1 = FlextLogger("test_logger")
-        logger2 = FlextLogger("test_logger")
+        logger1 = make_result_logger("test_logger")
+        logger2 = make_result_logger("test_logger")
 
         # The new FlextLogger doesn't cache instances
         # Each call creates a new instance
@@ -462,8 +470,8 @@ class TestFlextLogger:
 
     def test_logger_logging_with_singleton_reset(self) -> None:
         """Test logging with different instances."""
-        logger1 = FlextLogger("test_logger", _force_new=True)
-        logger2 = FlextLogger("test_logger", _force_new=True)
+        logger1 = make_result_logger("test_logger", _force_new=True)
+        logger2 = make_result_logger("test_logger", _force_new=True)
 
         assert logger1 is not logger2
 
@@ -472,7 +480,7 @@ class TestFlextLogger:
         os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
 
         try:
-            logger = FlextLogger("test_logger")
+            logger = make_result_logger("test_logger")
             result = logger.debug("Test debug message")
             assert result.is_success
         finally:
@@ -483,7 +491,7 @@ class TestFlextLogger:
         """Test logging with file output - file output not currently implemented."""
         # FlextLogger uses structlog which outputs to stdout/stderr by default
         # File output functionality is not currently implemented
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.info("Test message to file")
         assert result.is_success
@@ -493,56 +501,56 @@ class TestFlextLogger:
 
     def test_logger_logging_with_json_output(self) -> None:
         """Test logging with JSON output."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.info("Test message", field1="value1", field2=42)
         assert result.is_success
 
     def test_logger_logging_with_structured_output(self) -> None:
         """Test logging with structured output."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.info("Test message", structured_field="value")
         assert result.is_success
 
     def test_logger_logging_with_custom_output(self) -> None:
         """Test logging with custom output."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.info("Test message")
         assert result.is_success
 
     def test_logger_logging_with_rotation(self) -> None:
         """Test logging with log rotation."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.info("Test message")
         assert result.is_success
 
     def test_logger_logging_with_compression(self) -> None:
         """Test logging with compression."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.info("Test message")
         assert result.is_success
 
     def test_logger_logging_with_buffering(self) -> None:
         """Test logging with buffering."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.info("Test message")
         assert result.is_success
 
     def test_logger_logging_with_output(self) -> None:
         """Test logging with output."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result = logger.info("Test message")
         assert result.is_success
 
     def test_logger_logging_with_metrics_collection(self) -> None:
         """Test logging with metrics collection - not implemented in new FlextLogger."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         result1 = logger.info("Test message 1")
         result2 = logger.warning("Test message 2")
@@ -557,7 +565,7 @@ class TestFlextLogger:
 
     def test_logger_get_performance_metrics(self) -> None:
         """Test getting logger performance metrics - not implemented in new FlextLogger."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         # Performance metrics are not implemented in the new thin FlextLogger
         # Just test basic logging functionality
@@ -637,12 +645,12 @@ class TestFlextLoggerAdvancedFeatures:
         )
 
         assert logger.name == "payment-service"
-        result = logger.info("Service initialized")
+        result = logger.info("Service initialized", return_result=True)
         assert result.is_success
 
     def test_create_service_logger_with_minimal_context(self) -> None:
         """Test creating service logger with minimal context."""
-        logger = FlextLogger.create_service_logger("minimal-service")
+        logger = FlextLogger.create_service_logger("minimal-service").with_result()
 
         assert logger.name == "minimal-service"
         result = logger.info("Minimal service logger created")
@@ -650,7 +658,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_create_module_logger_success(self) -> None:
         """Test creating module logger."""
-        logger = FlextLogger.create_module_logger("test.module.path")
+        logger = FlextLogger.create_module_logger("test.module.path").with_result()
 
         assert logger.name == "test.module.path"
         result = logger.info("Module logger created")
@@ -662,12 +670,12 @@ class TestFlextLoggerAdvancedFeatures:
 
         assert isinstance(logger, FlextLogger)
         assert logger.name == "flext"
-        result = logger.info("Default logger obtained")
+        result = logger.with_result().info("Default logger obtained")
         assert result.is_success
 
     def test_bind_creates_bound_logger(self) -> None:
         """Test bind() creates new logger with additional context."""
-        base_logger = FlextLogger("base_logger")
+        base_logger = make_result_logger("base_logger")
 
         # Create bound logger with additional context
         bound_logger = base_logger.bind(request_id="req-456", endpoint="/api/users")
@@ -682,7 +690,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_bind_multiple_times(self) -> None:
         """Test binding context multiple times creates chained loggers."""
-        logger1 = FlextLogger("chained_logger")
+        logger1 = make_result_logger("chained_logger")
         logger2 = logger1.bind(level1="value1")
         logger3 = logger2.bind(level2="value2")
         logger4 = logger3.bind(level3="value3")
@@ -698,7 +706,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_track_performance_success(self) -> None:
         """Test performance tracking with successful operation."""
-        logger = FlextLogger("perf_logger")
+        logger = make_result_logger("perf_logger")
 
         with logger.track_performance("database_query"):
             time.sleep(0.01)  # Simulate operation
@@ -707,7 +715,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_track_performance_with_exception(self) -> None:
         """Test performance tracking with exception."""
-        logger = FlextLogger("perf_logger")
+        logger = make_result_logger("perf_logger")
 
         def failing_operation() -> None:
             with logger.track_performance("failing_operation"):
@@ -719,7 +727,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_track_performance_context_manager_enter_exit(self) -> None:
         """Test performance tracker context manager methods."""
-        logger = FlextLogger("perf_logger")
+        logger = make_result_logger("perf_logger")
         tracker = logger.track_performance("test_operation")
 
         # Test context manager by using with statement
@@ -728,7 +736,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_log_result_success_case(self) -> None:
         """Test logging successful FlextResult."""
-        logger = FlextLogger("result_logger")
+        logger = make_result_logger("result_logger")
 
         success_result = FlextResult[str].ok("Operation completed")
         log_result = logger.log_result(success_result, operation="user_validation")
@@ -737,7 +745,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_log_result_failure_case(self) -> None:
         """Test logging failed FlextResult."""
-        logger = FlextLogger("result_logger")
+        logger = make_result_logger("result_logger")
 
         failure_result = FlextResult[str].fail(
             "Validation failed", error_code="VAL_001"
@@ -748,7 +756,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_log_result_without_operation_name(self) -> None:
         """Test logging result without operation name."""
-        logger = FlextLogger("result_logger")
+        logger = make_result_logger("result_logger")
 
         result = FlextResult[str].ok("Success")
         log_result = logger.log_result(result)
@@ -757,7 +765,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_log_result_with_custom_level(self) -> None:
         """Test logging result with custom log level."""
-        logger = FlextLogger("result_logger")
+        logger = make_result_logger("result_logger")
 
         result = FlextResult[str].ok("Success")
         log_result = logger.log_result(result, level="debug")
@@ -766,21 +774,21 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_trace_logging(self) -> None:
         """Test trace level logging."""
-        logger = FlextLogger("trace_logger")
+        logger = make_result_logger("trace_logger")
 
         result = logger.trace("Trace message with details", key="value")
         assert result.is_success
 
     def test_trace_logging_with_formatting(self) -> None:
         """Test trace logging with string formatting."""
-        logger = FlextLogger("trace_logger")
+        logger = make_result_logger("trace_logger")
 
         result = logger.trace("Trace message: %s", "formatted_value")
         assert result.is_success
 
     def test_exception_logging_with_exc_info(self) -> None:
         """Test exception logging with exc_info parameter."""
-        logger = FlextLogger("exception_logger")
+        logger = make_result_logger("exception_logger")
 
         try:
             msg = "Test exception"
@@ -792,7 +800,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_exception_logging_with_provided_exception(self) -> None:
         """Test exception logging with provided exception object."""
-        logger = FlextLogger("exception_logger")
+        logger = make_result_logger("exception_logger")
 
         try:
             msg = "Provided exception"
@@ -804,7 +812,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_exception_logging_with_additional_context(self) -> None:
         """Test exception logging with additional context."""
-        logger = FlextLogger("exception_logger")
+        logger = make_result_logger("exception_logger")
 
         try:
             msg = "Context exception"
@@ -820,12 +828,12 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_logger_name_property(self) -> None:
         """Test logger name property accessor."""
-        logger = FlextLogger("property_test")
+        logger = make_result_logger("property_test")
         assert logger.name == "property_test"
 
     def test_logger_with_all_initialization_params(self) -> None:
         """Test logger initialization with all parameters."""
-        logger = FlextLogger(
+        logger = make_result_logger(
             "full_init",
             _level="DEBUG",
             _service_name="test-service",
@@ -843,7 +851,7 @@ class TestFlextLoggerAdvancedFeatures:
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(global_request_id="global-123")
 
-        logger = FlextLogger("context_test")
+        logger = make_result_logger("context_test")
         result = logger.info("Message with global context")
 
         assert result.is_success
@@ -957,13 +965,13 @@ class TestFlextLoggerAdvancedFeatures:
         FlextLogger.bind_operation_context(operation="test_op")
 
         # Create logger and log
-        logger = FlextLogger("multi_context_test")
+        logger = make_result_logger("multi_context_test")
         result = logger.info("Message with multiple contexts")
         assert result.is_success
 
     def test_logger_performance_tracking_with_context(self) -> None:
         """Test performance tracking with context binding."""
-        logger = FlextLogger("perf_test")
+        logger = make_result_logger("perf_test")
 
         # Bind context for tracking
         FlextLogger.bind_operation_context(operation="perf_operation")
@@ -974,7 +982,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_exception_logging_with_context(self) -> None:
         """Test exception logging with context bindings."""
-        logger = FlextLogger("exc_test")
+        logger = make_result_logger("exc_test")
 
         # Bind context
         FlextLogger.bind_operation_context(operation="exception_test")
@@ -1019,7 +1027,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_logger_result_logging_with_context(self) -> None:
         """Test logging FlextResult objects with context."""
-        logger = FlextLogger("result_test")
+        logger = make_result_logger("result_test")
 
         # Bind context
         FlextLogger.bind_operation_context(operation="result_op")
@@ -1031,7 +1039,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_logger_result_failure_logging_with_context(self) -> None:
         """Test logging failed FlextResult with context."""
-        logger = FlextLogger("result_fail_test")
+        logger = make_result_logger("result_fail_test")
 
         # Bind context
         FlextLogger.bind_operation_context(operation="result_failure_op")
@@ -1043,7 +1051,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_trace_logging_with_context(self) -> None:
         """Test trace level logging with context."""
-        logger = FlextLogger("trace_context_test")
+        logger = make_result_logger("trace_context_test")
 
         # Bind context
         FlextLogger.bind_operation_context(operation="trace_op")
@@ -1054,7 +1062,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_logger_methods_return_flext_result(self) -> None:
         """Verify all logger methods return FlextResult."""
-        logger = FlextLogger("result_test")
+        logger = make_result_logger("result_test")
 
         # Test all log levels return FlextResult
         debug_result = logger.debug("Debug")
@@ -1092,9 +1100,9 @@ class TestFlextLoggerAdvancedFeatures:
         FlextLogger.bind_global_context(shared_key="shared_value")
 
         # Create multiple loggers
-        logger1 = FlextLogger("logger1")
-        logger2 = FlextLogger("logger2")
-        logger3 = FlextLogger("logger3")
+        logger1 = make_result_logger("logger1")
+        logger2 = make_result_logger("logger2")
+        logger3 = make_result_logger("logger3")
 
         # All loggers should see the same global context
         logger1.info("Logger 1 sees global context")
@@ -1122,19 +1130,19 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_logger_with_correlation_id_in_constructor(self) -> None:
         """Test logger initialization with correlation_id."""
-        logger = FlextLogger("test_logger", _correlation_id="cor-abc-123")
+        logger = make_result_logger("test_logger", _correlation_id="cor-abc-123")
         result = logger.info("Message with correlation ID")
         assert result.is_success
 
     def test_logger_with_service_name_in_constructor(self) -> None:
         """Test logger initialization with service_name."""
-        logger = FlextLogger("test_logger", _service_name="test-service")
+        logger = make_result_logger("test_logger", _service_name="test-service")
         result = logger.info("Message from service")
         assert result.is_success
 
     def test_logger_with_service_version_in_constructor(self) -> None:
         """Test logger initialization with service_version."""
-        logger = FlextLogger("test_logger", _service_version="2.1.0")
+        logger = make_result_logger("test_logger", _service_version="2.1.0")
         result = logger.info("Message from versioned service")
         assert result.is_success
 
@@ -1151,6 +1159,8 @@ class TestFlextLoggerAdvancedFeatures:
 
         # Bound logger should be a FlextLogger instance
         assert isinstance(bound_logger, FlextLogger)
+        result = bound_logger.with_result().info("Bound logger active")
+        assert result.is_success
 
     def test_logger_bind_chaining(self) -> None:
         """Test logger.bind() chaining."""
@@ -1159,10 +1169,11 @@ class TestFlextLoggerAdvancedFeatures:
 
         # Should still be a logger after chaining
         assert isinstance(chained, FlextLogger)
+        assert chained.with_result().info("Chained log").is_success
 
     def test_logger_bind_with_logging(self) -> None:
         """Test logger.bind() followed by logging."""
-        logger = FlextLogger("bind_log_test")
+        logger = make_result_logger("bind_log_test")
         bound = logger.bind(request_id="req-123", user="john")
 
         result = bound.info("Logged with bound context")
@@ -1170,7 +1181,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_logger_with_all_log_levels(self) -> None:
         """Test all log levels are available and work."""
-        logger = FlextLogger("all_levels")
+        logger = make_result_logger("all_levels")
 
         # Test all log levels
         assert logger.debug("Debug").is_success
@@ -1182,13 +1193,13 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_logger_debug_with_custom_level(self) -> None:
         """Test debug logging with custom log level parameter."""
-        logger = FlextLogger("debug_custom")
+        logger = make_result_logger("debug_custom")
         result = logger.debug("Debug message", level="debug")
         assert result.is_success
 
     def test_logger_exception_with_exc_info_false(self) -> None:
         """Test exception logging with exc_info=False."""
-        logger = FlextLogger("exc_false_test")
+        logger = make_result_logger("exc_false_test")
         try:
             msg = "Test"
             raise ValueError(msg)
@@ -1199,14 +1210,14 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_logger_log_result_with_none_operation(self) -> None:
         """Test log_result with operation=None."""
-        logger = FlextLogger("result_none_op")
+        logger = make_result_logger("result_none_op")
         result = FlextResult[str].ok("Success")
         log_result = logger.log_result(result, operation=None)
         assert log_result.is_success
 
     def test_logger_log_result_with_failure_status(self) -> None:
         """Test log_result properly logs failures."""
-        logger = FlextLogger("result_fail_test")
+        logger = make_result_logger("result_fail_test")
         failed_result = FlextResult[str].fail("Operation failed")
         log_result = logger.log_result(failed_result, operation="test_op")
         assert log_result.is_success  # Logging itself succeeds even if result failed
@@ -1232,7 +1243,7 @@ class TestFlextLoggerAdvancedFeatures:
         """Test scoped_context context manager."""
         # Test that scoped_context can be used as a context manager
         with FlextLogger.scoped_context("test_scope", scope_key="scope_value"):
-            logger = FlextLogger("scoped_test")
+            logger = make_result_logger("scoped_test")
             result = logger.info("Inside scoped context")
             assert result.is_success
 
@@ -1245,39 +1256,39 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_track_performance_context_manager(self) -> None:
         """Test track_performance context manager."""
-        logger = FlextLogger("perf_ctx")
+        logger = make_result_logger("perf_ctx")
         with logger.track_performance("test_operation"):
             pass
         # Performance tracking should complete without error
 
     def test_logger_string_formatting_with_args(self) -> None:
         """Test logger with string formatting arguments."""
-        logger = FlextLogger("format_test")
+        logger = make_result_logger("format_test")
         result = logger.info("Message with %s and %d", "string", 42)
         assert result.is_success
 
     def test_logger_string_formatting_with_kwargs(self) -> None:
         """Test logger with keyword argument formatting."""
-        logger = FlextLogger("format_kwargs_test")
+        logger = make_result_logger("format_kwargs_test")
         result = logger.info("Message for %(user)s", user="john")
         assert result.is_success
 
     def test_logger_with_unicode_messages(self) -> None:
         """Test logger with unicode characters."""
-        logger = FlextLogger("unicode_test")
+        logger = make_result_logger("unicode_test")
         result = logger.info("Message with unicode: 日本語 العربية Ελληνικά")
         assert result.is_success
 
     def test_logger_with_very_long_message(self) -> None:
         """Test logger with very long message."""
-        logger = FlextLogger("long_msg_test")
+        logger = make_result_logger("long_msg_test")
         long_message = "x" * 10000
         result = logger.info(long_message)
         assert result.is_success
 
     def test_logger_with_newline_in_message(self) -> None:
         """Test logger with newlines in message."""
-        logger = FlextLogger("newline_test")
+        logger = make_result_logger("newline_test")
         message = "Line 1\nLine 2\nLine 3"
         result = logger.info(message)
         assert result.is_success
@@ -1285,12 +1296,12 @@ class TestFlextLoggerAdvancedFeatures:
     def test_logger_configuration_persistence(self) -> None:
         """Test that logger configuration persists correctly."""
         # Create logger with specific configuration
-        logger1 = FlextLogger("config_test", _level="INFO")
+        logger1 = make_result_logger("config_test", _level="INFO")
         result1 = logger1.info("From logger 1")
         assert result1.is_success
 
         # Create another logger - should use default config
-        logger2 = FlextLogger("config_test2")
+        logger2 = make_result_logger("config_test2")
         result2 = logger2.info("From logger 2")
         assert result2.is_success
 
@@ -1305,7 +1316,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_performance_tracker_with_exception(self) -> None:
         """Test performance tracker when exception occurs."""
-        logger = FlextLogger("perf_exc_test")
+        logger = make_result_logger("perf_exc_test")
         try:
             with logger.track_performance("failing_operation"):
                 msg = "Intentional error"
@@ -1316,7 +1327,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_logger_exception_with_no_active_exception(self) -> None:
         """Test exception logging when no exception is active."""
-        logger = FlextLogger("no_exc_test")
+        logger = make_result_logger("no_exc_test")
         # Call exception() outside of except block
         result = logger.error("No active exception")
         assert result.is_success or result.is_failure  # Either is acceptable
@@ -1341,14 +1352,14 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_performance_tracker_with_very_short_duration(self) -> None:
         """Test performance tracker with microsecond-duration operation."""
-        logger = FlextLogger("perf_logger")
+        logger = make_result_logger("perf_logger")
 
         with logger.track_performance("instant_operation"):
             pass  # Instant operation
 
     def test_performance_tracker_with_long_operation(self) -> None:
         """Test performance tracker with longer operation."""
-        logger = FlextLogger("perf_logger")
+        logger = make_result_logger("perf_logger")
 
         with logger.track_performance("long_operation"):
             time.sleep(0.05)  # 50ms operation
@@ -1359,13 +1370,13 @@ class TestFlextLoggerAdvancedFeatures:
         bound = base.bind(endpoint="/users")
 
         # Both should log successfully
-        assert base.info("Base message").is_success
-        assert bound.info("Bound message").is_success
+        assert base.info("Base message", return_result=True).is_success
+        assert bound.info("Bound message", return_result=True).is_success
 
     def test_multiple_loggers_independent(self) -> None:
         """Test that multiple logger instances are independent."""
-        logger1 = FlextLogger("logger1")
-        logger2 = FlextLogger("logger2")
+        logger1 = make_result_logger("logger1")
+        logger2 = make_result_logger("logger2")
 
         bound1 = logger1.bind(context1="value1")
         bound2 = logger2.bind(context2="value2")
@@ -1378,7 +1389,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_bind_context_method(self) -> None:
         """Test bind_context method."""
-        logger = FlextLogger("bind_ctx_test")
+        logger = make_result_logger("bind_ctx_test")
 
         # Normal case - should succeed
         result = logger.bind_context({"key": "value"})
@@ -1386,7 +1397,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_get_context_method(self) -> None:
         """Test get_context method."""
-        logger = FlextLogger("get_ctx_test")
+        logger = make_result_logger("get_ctx_test")
 
         # Bind some context first
         logger.bind_context({"test_key": "test_value"})
@@ -1399,7 +1410,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_start_tracking_method(self) -> None:
         """Test start_tracking method."""
-        logger = FlextLogger("start_track_test")
+        logger = make_result_logger("start_track_test")
 
         # Should succeed
         result = logger.start_tracking("test_op")
@@ -1407,7 +1418,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_stop_tracking_method(self) -> None:
         """Test stop_tracking method."""
-        logger = FlextLogger("stop_track_test")
+        logger = make_result_logger("stop_track_test")
 
         # Should succeed
         result = logger.stop_tracking("test_op")
@@ -1423,7 +1434,7 @@ class TestFlextLoggerAdvancedFeatures:
 
         # Use scoped context
         with FlextLogger.scoped_context("application", app_id="test_app"):
-            logger = FlextLogger("scoped_test")
+            logger = make_result_logger("scoped_test")
             result = logger.info("Inside scoped context")
             assert result.is_success
 
@@ -1432,7 +1443,7 @@ class TestFlextLoggerAdvancedFeatures:
         FlextLogger.clear_global_context()
 
         with FlextLogger.scoped_context("request", req_id="req_123"):
-            logger = FlextLogger("req_scoped_test")
+            logger = make_result_logger("req_scoped_test")
             result = logger.info("Request context message")
             assert result.is_success
 
@@ -1441,7 +1452,7 @@ class TestFlextLoggerAdvancedFeatures:
         FlextLogger.clear_global_context()
 
         with FlextLogger.scoped_context("operation", op_name="migrate"):
-            logger = FlextLogger("op_scoped_test")
+            logger = make_result_logger("op_scoped_test")
             result = logger.info("Operation context message")
             assert result.is_success
 
@@ -1450,13 +1461,13 @@ class TestFlextLoggerAdvancedFeatures:
         FlextLogger.clear_global_context()
 
         with FlextLogger.scoped_context("custom_scope", custom_key="custom_value"):
-            logger = FlextLogger("custom_scoped_test")
+            logger = make_result_logger("custom_scoped_test")
             result = logger.info("Custom scope message")
             assert result.is_success
 
     def test_logger_with_message_formatting(self) -> None:
         """Test logger with message formatting (% style)."""
-        logger = FlextLogger("format_test")
+        logger = make_result_logger("format_test")
 
         # Test with %s formatting
         result = logger.info("User %s logged in", "john")
@@ -1468,7 +1479,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_logger_with_invalid_message_formatting(self) -> None:
         """Test logger handles invalid message formatting gracefully."""
-        logger = FlextLogger("invalid_format_test")
+        logger = make_result_logger("invalid_format_test")
 
         # Test with correct format args
         result = logger.info("Expected %s and %s but got both", "arg1", "arg2")
@@ -1512,7 +1523,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_logger_trace_method(self) -> None:
         """Test trace logging method."""
-        logger = FlextLogger("trace_test")
+        logger = make_result_logger("trace_test")
 
         result = logger.trace("Trace message", context="value")
         assert result.is_success
@@ -1527,7 +1538,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_logger_binding_chainability(self) -> None:
         """Test that logger.bind() returns a new logger that can be chained."""
-        logger = FlextLogger("chain_test")
+        logger = make_result_logger("chain_test")
 
         # Chain bind calls
         bound = logger.bind(context1="value1").bind(context2="value2")
@@ -1541,7 +1552,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_performance_tracking_context_manager_success(self) -> None:
         """Test performance tracker in successful operation."""
-        logger = FlextLogger("perf_success_test")
+        logger = make_result_logger("perf_success_test")
 
         # Use tracker in successful operation
         with logger.track_performance("successful_op"):
@@ -1549,7 +1560,7 @@ class TestFlextLoggerAdvancedFeatures:
 
     def test_performance_tracking_with_sleep(self) -> None:
         """Test performance tracker can measure elapsed time."""
-        logger = FlextLogger("perf_timing_test")
+        logger = make_result_logger("perf_timing_test")
 
         # Use tracker with actual timing
         with logger.track_performance("timed_op"):

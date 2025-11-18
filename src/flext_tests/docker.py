@@ -367,7 +367,7 @@ class FlextTestDocker:
 
             for container in containers:
                 container_name: str = getattr(container, "name", "unknown")
-                state = container.attrs.get("State", {})
+                state = container.attrs.get("State", {})  # type: ignore[union-attr]
                 health = state.get("Health", {})
                 health_status = health.get("Status", "none")
 
@@ -574,7 +574,7 @@ class FlextTestDocker:
                                     )
                                     for container in all_containers:
                                         try:
-                                            labels = container.labels
+                                            labels = container.labels  # type: ignore[misc]
                                             compose_project = labels.get(
                                                 "com.docker.compose.project", ""
                                             )
@@ -1489,7 +1489,7 @@ class FlextTestDocker:
             container = client.containers.get(container_name)
 
             # Get container config
-            container_config = container.attrs.get("Config", {})
+            container_config = container.attrs.get("Config", {})  # type: ignore[union-attr]
             env_list = container_config.get("Env", [])
 
             # Parse ENV list into dict
@@ -1538,7 +1538,7 @@ class FlextTestDocker:
             container = client.containers.get(container_name)
 
             # Get container state
-            state = container.attrs.get("State", {})
+            state = container.attrs.get("State", {})  # type: ignore[union-attr]
             running = state.get("Running", False)
             health = state.get("Health", {})
 
@@ -1793,7 +1793,7 @@ class FlextTestDocker:
             issues: list[str] = []
 
             # Check container state
-            state = container.attrs.get("State", {})
+            state = container.attrs.get("State", {})  # type: ignore[union-attr]
             running = state.get("Running", False)
 
             # Check if restarting
@@ -1881,9 +1881,9 @@ class FlextTestDocker:
 
             # First try to get the container to confirm it exists
             try:
-                container: Container = client.containers.get(container_name)
-                was_running = container.attrs.get("State", {}).get("Running", False)
-                state = container.attrs.get("State", {})
+                container: Container = client.containers.get(container_name)  # type: ignore[assignment]
+                was_running = container.attrs.get("State", {}).get("Running", False)  # type: ignore[union-attr]
+                state = container.attrs.get("State", {})  # type: ignore[union-attr]
                 health = state.get("Health", {})
                 health_status = health.get("Status", "unknown") if health else "none"
             except NotFound:
@@ -2053,7 +2053,7 @@ class FlextTestDocker:
             # Check if container exists and is running
             try:
                 container = client.containers.get(container_name)
-                is_running = container.attrs.get("State", {}).get("Running", False)
+                is_running = container.attrs.get("State", {}).get("Running", False)  # type: ignore[union-attr]
 
                 if is_running:
                     self.logger.info(
@@ -2154,13 +2154,13 @@ class FlextTestDocker:
                 return FlextResult[str].fail(f"Container {container_name} not found")
 
             # Stop the container gracefully
-            state = container.attrs.get("State", {})
+            state = container.attrs.get("State", {})  # type: ignore[union-attr]
             if state.get("Running", False):
                 self.logger.info(
                     f"Stopping container {container_name}",
                     extra={"container": container_name, "timeout": timeout},
                 )
-                container.stop(timeout=timeout)
+                container.stop(timeout=timeout)  # type: ignore[union-attr]
             else:
                 self.logger.info(
                     f"Container {container_name} is already stopped",
@@ -2173,9 +2173,9 @@ class FlextTestDocker:
                     f"Removing volumes for {container_name}",
                     extra={"container": container_name},
                 )
-                container.remove(v=True)
+                container.remove(v=True)  # type: ignore[union-attr]
             else:
-                container.remove()
+                container.remove()  # type: ignore[union-attr]
 
             return FlextResult[str].ok(
                 f"Container {container_name} stopped and removed"

@@ -22,7 +22,15 @@ import time
 
 import pytest
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, FlextLoggerResultAdapter, FlextResult
+
+
+def make_result_logger(
+    *args: object,
+    **kwargs: object,
+) -> FlextLoggerResultAdapter:
+    """Helper to build loggers returning FlextResult for logging tests."""
+    return FlextLogger(*args, **kwargs).with_result()
 
 
 class TestGlobalContextManagement:
@@ -228,12 +236,12 @@ class TestInstanceCreation:
 
     def test_logger_init_with_name(self) -> None:
         """Test initializing logger with name."""
-        logger = FlextLogger("test_module")
+        logger = make_result_logger("test_module")
         assert logger.name == "test_module"
 
     def test_logger_init_with_service_context(self) -> None:
         """Test initializing logger with service context."""
-        logger = FlextLogger(
+        logger = make_result_logger(
             "service_logger",
             _service_name="my-service",
             _service_version="1.0.0",
@@ -242,7 +250,7 @@ class TestInstanceCreation:
 
     def test_logger_name_property(self) -> None:
         """Test logger name property."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         assert logger.name == "test"
 
     def test_bind_creates_new_instance(self) -> None:
@@ -262,67 +270,67 @@ class TestLoggingMethods:
 
     def test_trace_logging(self) -> None:
         """Test trace level logging."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.trace("Test trace message")
         assert result.is_success
 
     def test_debug_logging(self) -> None:
         """Test debug level logging."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.debug("Test debug message")
         assert result.is_success
 
     def test_debug_with_context(self) -> None:
         """Test debug logging with context."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.debug("Debug with context", user_id="123", action="login")
         assert result.is_success
 
     def test_info_logging(self) -> None:
         """Test info level logging."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.info("Test info message")
         assert result.is_success
 
     def test_info_with_context(self) -> None:
         """Test info logging with context."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.info("Info with context", status="completed", duration="0.5s")
         assert result.is_success
 
     def test_warning_logging(self) -> None:
         """Test warning level logging."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.warning("Test warning message")
         assert result.is_success
 
     def test_warning_with_context(self) -> None:
         """Test warning logging with context."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.warning("Warning with context", retry_count=3, delay="1s")
         assert result.is_success
 
     def test_error_logging(self) -> None:
         """Test error level logging."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.error("Test error message")
         assert result.is_success
 
     def test_error_with_context(self) -> None:
         """Test error logging with context."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.error("Error with context", error_code="ERR_001", user_id="456")
         assert result.is_success
 
     def test_critical_logging(self) -> None:
         """Test critical level logging."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.critical("Test critical message")
         assert result.is_success
 
     def test_critical_with_context(self) -> None:
         """Test critical logging with context."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.critical(
             "Critical with context", alert_level="high", system="payment"
         )
@@ -330,13 +338,13 @@ class TestLoggingMethods:
 
     def test_logging_with_formatting(self) -> None:
         """Test logging with message formatting."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.info("User %s logged in", "john")
         assert result.is_success
 
     def test_logging_with_invalid_formatting(self) -> None:
         """Test logging with invalid format string."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.info("Message with %s and %d", "arg1", 42)
         assert result.is_success
 
@@ -346,7 +354,7 @@ class TestExceptionLogging:
 
     def test_exception_logging_with_exception_object(self) -> None:
         """Test logging with exception object."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         try:
             msg = "Test error"
             raise ValueError(msg)
@@ -356,7 +364,7 @@ class TestExceptionLogging:
 
     def test_exception_logging_with_exc_info(self) -> None:
         """Test logging with exc_info=True."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         try:
             msg = "Test error"
             raise RuntimeError(msg)
@@ -366,13 +374,13 @@ class TestExceptionLogging:
 
     def test_exception_logging_without_current_exception(self) -> None:
         """Test logging error outside exception context."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.error("No exception context")
         assert result.is_success
 
     def test_exception_logging_with_context(self) -> None:
         """Test exception logging with additional context."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         try:
             msg = "Test error"
             raise OSError(msg)
@@ -391,13 +399,13 @@ class TestPerformanceTracking:
 
     def test_track_performance_success(self) -> None:
         """Test tracking operation that completes successfully."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         with logger.track_performance("database_query"):
             time.sleep(0.01)
 
     def test_track_performance_with_exception(self) -> None:
         """Test tracking operation that raises exception."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
 
         def failing_operation() -> None:
             with logger.track_performance("failing_operation"):
@@ -409,26 +417,26 @@ class TestPerformanceTracking:
 
     def test_track_performance_duration_measured(self) -> None:
         """Test performance tracker measures duration."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         with logger.track_performance("timed_operation") as tracker:
             time.sleep(0.05)
             assert tracker._start_time > 0
 
     def test_performance_tracker_enter(self) -> None:
         """Test PerformanceTracker context manager entry."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         with logger.track_performance("test_op") as tracker:
             assert tracker._start_time > 0
 
     def test_performance_tracker_exit_success(self) -> None:
         """Test PerformanceTracker context manager exit on success."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         with logger.track_performance("test_op"):
             pass
 
     def test_performance_tracker_exit_with_exception(self) -> None:
         """Test PerformanceTracker context manager logs exception."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
 
         def failing_op() -> None:
             with logger.track_performance("test_op"):
@@ -444,35 +452,35 @@ class TestResultIntegration:
 
     def test_log_result_success(self) -> None:
         """Test logging successful result."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = FlextResult[str].ok("test_value")
         log_result = logger.log_result(result, operation="test_operation")
         assert log_result.is_success
 
     def test_log_result_failure(self) -> None:
         """Test logging failed result."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = FlextResult[str].fail("Something went wrong")
         log_result = logger.log_result(result, operation="test_operation")
         assert log_result.is_success
 
     def test_log_result_without_operation(self) -> None:
         """Test logging result without operation name."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = FlextResult[str].ok("value")
         log_result = logger.log_result(result)
         assert log_result.is_success
 
     def test_log_result_with_custom_level(self) -> None:
         """Test logging result with custom log level."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = FlextResult[str].ok("value")
         log_result = logger.log_result(result, operation="op", level="debug")
         assert log_result.is_success
 
     def test_log_result_failure_includes_error_details(self) -> None:
         """Test logging result includes error_code and error_data."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = FlextResult[str].fail("Error occurred")
         log_result = logger.log_result(result, operation="op")
         assert log_result.is_success
@@ -485,7 +493,7 @@ class TestLoggingIntegration:
         """Test logger respects global context."""
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(request_id="req-123")
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.info("Message with global context")
         assert result.is_success
         FlextLogger.clear_global_context()
@@ -494,7 +502,7 @@ class TestLoggingIntegration:
         """Test logger respects scoped context."""
         FlextLogger.clear_global_context()
         with FlextLogger.scoped_context("request", correlation_id="flext-456"):
-            logger = FlextLogger("test")
+            logger = make_result_logger("test")
             result = logger.info("Message with scoped context")
             assert result.is_success
         FlextLogger.clear_global_context()
@@ -503,7 +511,7 @@ class TestLoggingIntegration:
         """Test bound logger includes all context."""
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(app="test_app")
-        logger = FlextLogger("test").bind(user_id="123")
+        logger = make_result_logger("test").bind(user_id="123")
         result = logger.info("Bound logger message")
         assert result.is_success
         FlextLogger.clear_global_context()
@@ -513,8 +521,8 @@ class TestLoggingIntegration:
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(shared="context_value")
 
-        logger1 = FlextLogger("logger1")
-        logger2 = FlextLogger("logger2")
+        logger1 = make_result_logger("logger1")
+        logger2 = make_result_logger("logger2")
 
         result1 = logger1.info("First logger message")
         result2 = logger2.info("Second logger message")
@@ -551,19 +559,19 @@ class TestEdgeCases:
 
     def test_logging_with_empty_message(self) -> None:
         """Test logging with empty message."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.info("")
         assert result.is_success
 
     def test_logging_with_none_context_values(self) -> None:
         """Test logging with None context values."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         result = logger.info("Message", context_key=None)
         assert result.is_success
 
     def test_logging_with_large_context(self) -> None:
         """Test logging with large context dictionary."""
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
         large_context = {f"key_{i}": f"value_{i}" for i in range(100)}
         result = logger.info("Message with large context", **large_context)
         assert result.is_success
@@ -573,7 +581,7 @@ class TestEdgeCases:
         FlextLogger.clear_global_context()
         with FlextLogger.scoped_context("request", req_id="r1"):
             with FlextLogger.scoped_context("operation", op_id="o1"):
-                logger = FlextLogger("test")
+                logger = make_result_logger("test")
                 result = logger.info("Nested context message")
                 assert result.is_success
         FlextLogger.clear_global_context()

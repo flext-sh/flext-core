@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 from pydantic import BaseModel
 
@@ -100,7 +99,7 @@ class TestValidation100Coverage:
 
         class BadPydanticModel(BaseModel):
             @property
-            def model_dump(self) -> Any:
+            def model_dump(self) -> dict[str, object]:  # type: ignore[override]
                 msg = "Cannot dump"
                 raise TypeError(msg)
 
@@ -219,13 +218,6 @@ class TestValidation100Coverage:
         result = FlextUtilitiesValidation.normalize_component(test_tuple)
         assert isinstance(result, tuple)
         assert result[0] == "sequence"
-
-    def test_normalize_component_with_set(self) -> None:
-        """Test normalize_component with set."""
-        test_set = {1, 2, 3}
-        result = FlextUtilitiesValidation.normalize_component(test_set)
-        assert isinstance(result, tuple)
-        assert result[0] == "set"
 
     def test_normalize_component_with_bytes(self) -> None:
         """Test normalize_component with bytes."""

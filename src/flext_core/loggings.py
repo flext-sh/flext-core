@@ -11,12 +11,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 import time
 import traceback
 import types
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import ClassVar, Self
+from pathlib import Path
+from typing import ClassVar, Literal, Self, overload
 
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -35,15 +37,18 @@ class FlextLogger:
     Structural Typing and Protocol Compliance:
     ===========================================
     FlextLogger implements FlextProtocols.LoggerProtocol through structural typing by
-    providing all required logging methods:
-    - debug(message, *args, **context) -> FlextResult[bool]
-    - info(message, *args, **context) -> FlextResult[bool]
-    - warning(message, *args, **context) -> FlextResult[bool]
-    - error(message, *args, **context) -> FlextResult[bool]
-    - critical(message, *args, **context) -> FlextResult[bool]
-    - exception(message, *, exception=None, exc_info=True, **kwargs) -> FlextResult[bool]
+    providing all required logging methods. Logging calls return None by default to
+    align with conventional logger semantics, and callers can request structured
+    FlextResult[bool] responses via the ``return_result`` flag or the
+    :meth:`FlextLogger.with_result` adapter:
+    - debug(message, *args, return_result=False, **context)
+    - info(message, *args, return_result=False, **context)
+    - warning(message, *args, return_result=False, **context)
+    - error(message, *args, return_result=False, **context)
+    - critical(message, *args, return_result=False, **context)
+    - exception(message, *, exception=None, exc_info=True, return_result=False, **kwargs)
     - bind(**context) -> FlextLogger (new bound logger with context)
-    - trace(message, *args, **kwargs) -> FlextResult[bool]
+    - trace(message, *args, return_result=False, **kwargs)
 
     Core Features:
     ==============
@@ -64,7 +69,7 @@ class FlextLogger:
     Architecture Layers:
     ====================
     - Uses FlextRuntime.structlog() - Bridge layer for external logging library
-    - Returns FlextResult[bool] for all operations - Railway pattern
+    - Optional FlextResult[bool] outputs for all operations (via return_result or with_result)
     - Integrates with FlextContext for distributed tracing
     - Provides observability hooks for application layer
 
@@ -199,9 +204,9 @@ class FlextLogger:
     # =========================================================================
     # PRIVATE MEMBERS - FlextRuntime.structlog() configuration
     # =========================================================================
-
-    _configured: bool = False
-    _structlog_configured: bool = False
+    #
+    # NOTE: Configuration state is tracked by FlextRuntime._structlog_configured ONLY
+    # FlextLogger no longer maintains its own redundant flags
 
     # Scoped context tracking
     # Format: {scope_name: {context_key: context_value}}
@@ -211,40 +216,9 @@ class FlextLogger:
     # Format: {log_level: {context_key: context_value}}
     _level_contexts: ClassVar[dict[str, dict[str, object]]] = {}
 
-    @staticmethod
-    def _configure_structlog_if_needed(
-        log_level: int | None = None,
-        *,
-        console_enabled: bool = True,
-        additional_processors: Sequence[Callable[..., FlextTypes.GenericTypeArgument]]
-        | None = None,
-    ) -> None:
-        """Configure FlextRuntime.structlog() with advanced processor chain.
-
-        Args:
-            log_level: Logging level (e.g., logging.INFO, logging.DEBUG)
-            console_enabled: Use console renderer vs JSON renderer
-            additional_processors: Extra processors to add to chain
-
-        Note:
-            Can be called with FlextConfig values to configure logging:
-            >>> from flext_core import FlextConfig
-            >>> config = FlextConfig()
-            >>> log_level_int = getattr(logging, config.log_level.upper())
-            >>> FlextLogger._configure_structlog_if_needed(log_level=log_level_int)
-
-        """
-        if FlextLogger._structlog_configured:
-            return
-
-        FlextRuntime.configure_structlog(
-            log_level=log_level,
-            console_renderer=console_enabled,
-            additional_processors=additional_processors,
-        )
-
-        FlextLogger._structlog_configured = True
-        FlextLogger._configured = True
+    # NOTE: _configure_structlog_if_needed() wrapper method REMOVED
+    # Applications must call FlextRuntime.configure_structlog() explicitly at startup
+    # This eliminates wrapper indirection and makes configuration responsibility clear
 
     # =========================================================================
     # ADVANCED FEATURES - Global context management via contextvars
@@ -678,8 +652,8 @@ class FlextLogger:
             _correlation_id = getattr(config, "correlation_id", _correlation_id)
             _force_new = getattr(config, "force_new", _force_new)
 
-        # Configure FlextRuntime.structlog() if not already configured (NO config dependency)
-        FlextLogger._configure_structlog_if_needed()
+        # DO NOT configure structlog here - should be done at application startup
+        # Application must call FlextRuntime.configure_structlog() explicitly before creating loggers
 
         # Store logger name as public attribute (immutable after initialization)
         self.name = name
@@ -745,16 +719,39 @@ class FlextLogger:
         """
         return FlextLogger._create_bound_logger(self.name, self.logger.bind(**context))
 
+    def with_result(self) -> FlextLoggerResultAdapter:
+        """Create a logger adapter that preserves FlextResult outputs."""
+        return FlextLoggerResultAdapter(self)
+
     # =============================================================================
     # LOGGING METHODS - DELEGATE TO FlextRuntime.structlog()
     # =============================================================================
+
+    @overload
+    def trace(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        return_result: Literal[True],
+        **kwargs: object,
+    ) -> FlextResult[bool]: ...
+
+    @overload
+    def trace(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        return_result: Literal[False] = False,
+        **kwargs: object,
+    ) -> None: ...
 
     def trace(
         self,
         message: str,
         *args: FlextTypes.LoggingArgType,
+        return_result: bool = False,
         **kwargs: object,
-    ) -> FlextResult[bool]:
+    ) -> FlextResult[bool] | None:
         """Log trace message - LoggerProtocol implementation."""
         try:
             try:
@@ -765,9 +762,110 @@ class FlextLogger:
             self.logger.debug(
                 formatted_message, **kwargs
             )  # FlextRuntime.structlog() doesn't have trace
-            return FlextResult[bool].ok(True)
+            result = FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[bool].fail(f"Logging failed: {e}")
+            result = FlextResult[bool].fail(f"Logging failed: {e}")
+        return result if return_result else None
+
+    def _format_log_message(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+    ) -> str:
+        """Format log message with arguments.
+
+        Args:
+            message: Log message (may contain % formatting)
+            *args: Arguments for % formatting
+
+        Returns:
+            str: Formatted message
+
+        """
+        try:
+            return message % args if args else message
+        except (TypeError, ValueError):
+            return f"{message} | args={args!r}"
+
+    def _get_caller_source_path(self) -> str | None:
+        """Get source file path of the caller.
+
+        Returns:
+            str | None: Relative path from workspace root or filename, None if fails
+
+        """
+        try:
+            # Get the calling frame (skip this method and _log and the public method)
+            frame = inspect.currentframe()
+            if not frame:
+                return None
+
+            # Go up 3 frames: _get_caller_source_path -> _log -> debug/info/etc -> caller
+            caller_frame = frame.f_back
+            if not caller_frame:
+                return None
+            caller_frame = caller_frame.f_back
+            if not caller_frame:
+                return None
+            caller_frame = caller_frame.f_back
+            if not caller_frame:
+                return None
+
+            filename = caller_frame.f_code.co_filename
+            return self._convert_to_relative_path(filename)
+        except Exception:
+            return None
+
+    def _convert_to_relative_path(self, filename: str) -> str:
+        """Convert absolute path to relative path from workspace root.
+
+        Args:
+            filename: Absolute file path
+
+        Returns:
+            str: Relative path from workspace root or filename only
+
+        """
+        try:
+            abs_path = Path(filename).resolve()
+            workspace_root = self._find_workspace_root(abs_path)
+
+            if workspace_root:
+                try:
+                    rel_path = abs_path.relative_to(workspace_root)
+                    return str(rel_path)
+                except ValueError:
+                    return Path(filename).name
+            return Path(filename).name
+        except Exception:
+            return Path(filename).name
+
+    def _find_workspace_root(self, abs_path: Path) -> Path | None:
+        """Find workspace root by looking for common markers.
+
+        Args:
+            abs_path: Absolute path to start search from
+
+        Returns:
+            Path | None: Workspace root path or None if not found
+
+        """
+        current = abs_path.parent
+        max_depth = 10
+        depth = 0
+
+        while current != current.parent and depth < max_depth:
+            # Check for common workspace markers
+            if (
+                (current / "pyproject.toml").exists()
+                or (current / ".git").exists()
+                or (current / "poetry.lock").exists()
+            ):
+                return current
+            current = current.parent
+            depth += 1
+
+        return None
 
     def _log(
         self,
@@ -790,10 +888,13 @@ class FlextLogger:
         """
         try:
             # Format message with args if provided
-            try:
-                formatted_message = message % args if args else message
-            except (TypeError, ValueError):
-                formatted_message = f"{message} | args={args!r}"
+            formatted_message = self._format_log_message(message, *args)
+
+            # Automatically add source file path if not provided
+            if "source" not in context:
+                source_path = self._get_caller_source_path()
+                if source_path:
+                    context["source"] = source_path
 
             # Get logger method dynamically and call it
             log_method = getattr(self.logger, _level.lower())
@@ -802,50 +903,172 @@ class FlextLogger:
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[bool].fail(f"Logging failed: {e}")
 
+    @overload
     def debug(
         self,
         message: str,
         *args: FlextTypes.LoggingArgType,
+        return_result: Literal[True],
         **context: object,
-    ) -> FlextResult[bool]:
+    ) -> FlextResult[bool]: ...
+
+    @overload
+    def debug(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        return_result: Literal[False] = False,
+        **context: object,
+    ) -> None: ...
+
+    def debug(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        return_result: bool = False,
+        **context: object,
+    ) -> FlextResult[bool] | None:
         """Log debug message - LoggerProtocol implementation."""
-        return self._log("debug", message, *args, **context)
+        result = self._log("debug", message, *args, **context)
+        return result if return_result else None
+
+    @overload
+    def info(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        return_result: Literal[True],
+        **context: object,
+    ) -> FlextResult[bool]: ...
+
+    @overload
+    def info(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        return_result: Literal[False] = False,
+        **context: object,
+    ) -> None: ...
 
     def info(
         self,
         message: str,
         *args: FlextTypes.LoggingArgType,
+        return_result: bool = False,
         **context: object,
-    ) -> FlextResult[bool]:
+    ) -> FlextResult[bool] | None:
         """Log info message - LoggerProtocol implementation."""
-        return self._log("info", message, *args, **context)
+        result = self._log("info", message, *args, **context)
+        return result if return_result else None
+
+    @overload
+    def warning(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        return_result: Literal[True],
+        **context: object,
+    ) -> FlextResult[bool]: ...
+
+    @overload
+    def warning(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        return_result: Literal[False] = False,
+        **context: object,
+    ) -> None: ...
 
     def warning(
         self,
         message: str,
         *args: FlextTypes.LoggingArgType,
+        return_result: bool = False,
         **context: object,
-    ) -> FlextResult[bool]:
+    ) -> FlextResult[bool] | None:
         """Log warning message - LoggerProtocol implementation."""
-        return self._log("warning", message, *args, **context)
+        result = self._log("warning", message, *args, **context)
+        return result if return_result else None
+
+    @overload
+    def error(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        return_result: Literal[True],
+        **context: object,
+    ) -> FlextResult[bool]: ...
+
+    @overload
+    def error(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        return_result: Literal[False] = False,
+        **context: object,
+    ) -> None: ...
 
     def error(
         self,
         message: str,
         *args: FlextTypes.LoggingArgType,
-        **kwargs: object,
-    ) -> FlextResult[bool]:
+        return_result: bool = False,
+        **context: object,
+    ) -> FlextResult[bool] | None:
         """Log error message - LoggerProtocol implementation."""
-        return self._log("error", message, *args, **kwargs)
+        result = self._log("error", message, *args, **context)
+        return result if return_result else None
+
+    @overload
+    def critical(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        return_result: Literal[True],
+        **context: object,
+    ) -> FlextResult[bool]: ...
+
+    @overload
+    def critical(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        return_result: Literal[False] = False,
+        **context: object,
+    ) -> None: ...
 
     def critical(
         self,
         message: str,
         *args: FlextTypes.LoggingArgType,
-        **kwargs: object,
-    ) -> FlextResult[bool]:
+        return_result: bool = False,
+        **context: object,
+    ) -> FlextResult[bool] | None:
         """Log critical message - LoggerProtocol implementation."""
-        return self._log("critical", message, *args, **kwargs)
+        result = self._log("critical", message, *args, **context)
+        return result if return_result else None
+
+    @overload
+    def exception(
+        self,
+        message: str,
+        *,
+        exception: BaseException | None = None,
+        exc_info: bool = True,
+        return_result: Literal[True],
+        **kwargs: object,
+    ) -> FlextResult[bool]: ...
+
+    @overload
+    def exception(
+        self,
+        message: str,
+        *,
+        exception: BaseException | None = None,
+        exc_info: bool = True,
+        return_result: Literal[False] = False,
+        **kwargs: object,
+    ) -> None: ...
 
     def exception(
         self,
@@ -853,8 +1076,9 @@ class FlextLogger:
         *,
         exception: BaseException | None = None,
         exc_info: bool = True,
+        return_result: bool = False,
         **kwargs: object,
-    ) -> FlextResult[bool]:
+    ) -> FlextResult[bool] | None:
         """Log exception message with stack trace - LoggerProtocol implementation.
 
         Stack traces are conditionally included based on FlextConfig.log_level:
@@ -898,9 +1122,10 @@ class FlextLogger:
                 kwargs["stack_trace"] = traceback.format_exc()
 
             self.logger.error(message, **kwargs)
-            return FlextResult[bool].ok(True)
+            result = FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[bool].fail(f"Logging failed: {e}")
+            result = FlextResult[bool].fail(f"Logging failed: {e}")
+        return result if return_result else None
 
     # =========================================================================
     # ADVANCED FEATURES - Performance tracking and result integration
@@ -957,7 +1182,7 @@ class FlextLogger:
             if result.is_success:
                 msg = f"{operation} succeeded" if operation else "Operation succeeded"
                 log_method = getattr(self, level, self.info)
-                log_method(msg, **context)
+                log_method(msg, return_result=False, **context)  # type: ignore[call-arg]
             else:
                 msg = (
                     f"{operation} failed: {result.error}"
@@ -966,7 +1191,7 @@ class FlextLogger:
                 )
                 context["error_code"] = result.error_code
                 context["error_data"] = result.error_data
-                self.error(msg, **context)
+                self.error(msg, return_result=False, **context)
 
             return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
@@ -1052,6 +1277,176 @@ class FlextLogger:
                 )
 
 
+class FlextLoggerResultAdapter:
+    """Adapter ensuring FlextLogger methods return FlextResult outputs."""
+
+    __slots__ = ("_base_logger",)
+
+    def __init__(self, base_logger: FlextLogger) -> None:
+        """Initialize adapter with base logger.
+
+        Args:
+            base_logger: FlextLogger instance to wrap
+
+        """
+        self._base_logger = base_logger
+
+    def __getattr__(self, item: str) -> object:
+        """Delegate attribute access to the wrapped logger."""
+        return getattr(self._base_logger, item)
+
+    def with_result(self) -> FlextLoggerResultAdapter:
+        """Result adapters are idempotent."""
+        return self
+
+    def bind(self, **context: object) -> FlextLoggerResultAdapter:
+        """Bind context on base logger and preserve adapter semantics."""
+        return FlextLoggerResultAdapter(self._base_logger.bind(**context))
+
+    def trace(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        **kwargs: object,
+    ) -> FlextResult[bool]:
+        """Log trace message returning FlextResult.
+
+        Args:
+            message: Log message
+            *args: Message format args
+            **kwargs: Context fields
+
+        Returns:
+            FlextResult[bool]: Success with True if logged
+
+        """
+        return self._base_logger.trace(message, *args, return_result=True, **kwargs)
+
+    def debug(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        **context: object,
+    ) -> FlextResult[bool]:
+        """Log debug message returning FlextResult.
+
+        Args:
+            message: Log message
+            *args: Message format args
+            **context: Context fields
+
+        Returns:
+            FlextResult[bool]: Success with True if logged
+
+        """
+        return self._base_logger.debug(message, *args, return_result=True, **context)
+
+    def info(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        **context: object,
+    ) -> FlextResult[bool]:
+        """Log info message returning FlextResult.
+
+        Args:
+            message: Log message
+            *args: Message format args
+            **context: Context fields
+
+        Returns:
+            FlextResult[bool]: Success with True if logged
+
+        """
+        return self._base_logger.info(message, *args, return_result=True, **context)
+
+    def warning(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        **context: object,
+    ) -> FlextResult[bool]:
+        """Log warning message returning FlextResult.
+
+        Args:
+            message: Log message
+            *args: Message format args
+            **context: Context fields
+
+        Returns:
+            FlextResult[bool]: Success with True if logged
+
+        """
+        return self._base_logger.warning(message, *args, return_result=True, **context)
+
+    def error(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        **context: object,
+    ) -> FlextResult[bool]:
+        """Log error message returning FlextResult.
+
+        Args:
+            message: Log message
+            *args: Message format args
+            **context: Context fields
+
+        Returns:
+            FlextResult[bool]: Success with True if logged
+
+        """
+        return self._base_logger.error(message, *args, return_result=True, **context)
+
+    def critical(
+        self,
+        message: str,
+        *args: FlextTypes.LoggingArgType,
+        **context: object,
+    ) -> FlextResult[bool]:
+        """Log critical message returning FlextResult.
+
+        Args:
+            message: Log message
+            *args: Message format args
+            **context: Context fields
+
+        Returns:
+            FlextResult[bool]: Success with True if logged
+
+        """
+        return self._base_logger.critical(message, *args, return_result=True, **context)
+
+    def exception(
+        self,
+        message: str,
+        *,
+        exception: BaseException | None = None,
+        exc_info: bool = True,
+        **kwargs: object,
+    ) -> FlextResult[bool]:
+        """Log exception with traceback returning FlextResult.
+
+        Args:
+            message: Log message
+            exception: Exception object to log
+            exc_info: Include exception info
+            **kwargs: Context fields
+
+        Returns:
+            FlextResult[bool]: Success with True if logged
+
+        """
+        return self._base_logger.error(
+            message,
+            exception=exception,
+            exc_info=exc_info,
+            return_result=True,
+            **kwargs,
+        )
+
+
 __all__: list[str] = [
     "FlextLogger",
+    "FlextLoggerResultAdapter",
 ]

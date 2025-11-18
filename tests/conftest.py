@@ -42,22 +42,43 @@ warnings.filterwarnings(
 # Core Fixtures
 @pytest.fixture(autouse=True)
 def reset_container_singleton() -> Generator[None]:
-    """Reset FlextContainer and FlextConfig singletons between tests for isolation.
+    """Reset FlextContainer, FlextConfig, FlextRuntime, and FlextLogger between tests.
 
     This autouse fixture ensures that every test starts with clean singleton states,
-    preventing test contamination from shared state.
+    preventing test contamination from shared state. Critical for test idempotency
+    and parallel execution.
     """
+    from flext_core.runtime import FlextRuntime
+
     # Clear singletons before test
     FlextContainer._global_instance = None
-    FlextConfig.reset_global_instance()  # Use new simplified singleton pattern
+    FlextConfig.reset_global_instance()
     FlextConfig._di_config_provider = None
+
+    # Reset FlextRuntime structlog configuration state
+    FlextRuntime._structlog_configured = False
+
+    # Clear FlextLogger global context (contextvars)
+    FlextLogger.clear_global_context()
+    # Clear all scoped contexts
+    FlextLogger._scoped_contexts.clear()
+    # Clear all level contexts
+    FlextLogger._level_contexts.clear()
 
     yield
 
     # Clear singletons after test
     FlextContainer._global_instance = None
-    FlextConfig.reset_global_instance()  # Use new simplified singleton pattern
+    FlextConfig.reset_global_instance()
     FlextConfig._di_config_provider = None
+
+    # Reset FlextRuntime state after test
+    FlextRuntime._structlog_configured = False
+
+    # Clear FlextLogger state after test
+    FlextLogger.clear_global_context()
+    FlextLogger._scoped_contexts.clear()
+    FlextLogger._level_contexts.clear()
 
 
 @pytest.fixture

@@ -24,7 +24,7 @@ class TestRuntime100Coverage:
 
         # Create object that has keys/items/get but items() raises AttributeError
         class BadDictLike:
-            def keys(self):
+            def keys(self) -> list[object]:
                 return []
 
             def items(self) -> Never:
@@ -43,7 +43,7 @@ class TestRuntime100Coverage:
 
         # Create object that has keys/items/get but items() raises TypeError
         class BadDictLike:
-            def keys(self):
+            def keys(self) -> list[object]:
                 return []
 
             def items(self) -> Never:
@@ -77,7 +77,7 @@ class TestRuntime100Coverage:
         """Test is_dict_like with object missing keys attribute."""
 
         class NotDictLike:
-            def items(self):
+            def items(self) -> list[object]:
                 return []
 
             def get(self, key: object) -> object:
@@ -91,7 +91,7 @@ class TestRuntime100Coverage:
         """Test is_dict_like with object missing items attribute."""
 
         class NotDictLike:
-            def keys(self):
+            def keys(self) -> list[object]:
                 return []
 
             def get(self, key: object) -> object:
@@ -105,10 +105,10 @@ class TestRuntime100Coverage:
         """Test is_dict_like with object missing get attribute."""
 
         class NotDictLike:
-            def keys(self):
+            def keys(self) -> list[object]:
                 return []
 
-            def items(self):
+            def items(self) -> list[tuple[object, object]]:
                 return []
 
         obj = NotDictLike()
@@ -199,12 +199,14 @@ class TestRuntime100Coverage:
 
         # Create config object with attributes
         class Config:
-            log_level = logging.DEBUG
-            console_renderer = False
-            additional_processors = []
-            wrapper_class_factory = None
-            logger_factory = None
-            cache_logger_on_first_use = True
+            from typing import ClassVar
+
+            log_level: ClassVar[int] = logging.DEBUG
+            console_renderer: ClassVar[bool] = False
+            additional_processors: ClassVar[list[object]] = []
+            wrapper_class_factory: ClassVar[object | None] = None
+            logger_factory: ClassVar[object | None] = None
+            cache_logger_on_first_use: ClassVar[bool] = True
 
         config = Config()
         FlextRuntime.configure_structlog(config=config)
@@ -336,12 +338,14 @@ class TestRuntime100Coverage:
             return event_dict
 
         class Config:
-            log_level = logging.DEBUG
-            console_renderer = True
-            additional_processors = [custom_processor]
-            wrapper_class_factory = None
-            logger_factory = None
-            cache_logger_on_first_use = True
+            from typing import ClassVar
+
+            log_level: ClassVar[int] = logging.DEBUG
+            console_renderer: ClassVar[bool] = True
+            additional_processors: ClassVar[list[object]] = [custom_processor]
+            wrapper_class_factory: ClassVar[object | None] = None
+            logger_factory: ClassVar[object | None] = None
+            cache_logger_on_first_use: ClassVar[bool] = True
 
         config = Config()
         FlextRuntime.configure_structlog(config=config)

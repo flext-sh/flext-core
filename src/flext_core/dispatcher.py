@@ -677,7 +677,7 @@ class FlextDispatcher(FlextMixins):
         # Query result caching (from FlextBus - LRU cache)
         # Fast fail: use constant directly, no fallback
         max_cache_size = FlextConstants.Container.MAX_CACHE_SIZE
-        self._cache: LRUCache[str, object] = LRUCache(maxsize=max_cache_size)
+        self._cache: LRUCache = LRUCache(maxsize=max_cache_size)  # type: ignore[type-arg]
 
         # Event subscribers (from FlextBus event protocol)
         self._event_subscribers: dict[str, list[object]] = {}  # event_type → handlers
@@ -1321,7 +1321,9 @@ class FlextDispatcher(FlextMixins):
         """
         # Fast fail: __name__ should always exist on types, but handle gracefully
         if hasattr(command_type_obj, "__name__"):
-            return str(command_type_obj.__name__)
+            name_attr = getattr(command_type_obj, "__name__", None)
+            if name_attr is not None:
+                return str(name_attr)
         return str(command_type_obj)
 
     def _validate_handler_interface(
@@ -1384,7 +1386,7 @@ class FlextDispatcher(FlextMixins):
         for handler in self._auto_handlers:
             # Fast fail: check if can_handle method exists before calling
             if hasattr(handler, "can_handle"):
-                can_handle_method = handler.can_handle
+                can_handle_method = getattr(handler, "can_handle", None)
                 if callable(can_handle_method) and can_handle_method(command_type):
                     return handler
         return None
@@ -1490,18 +1492,24 @@ class FlextDispatcher(FlextMixins):
             FlextResult: Handler execution result
 
         """
+        handler_class = type(handler)
+        handler_class_name = getattr(handler_class, "__name__", "Unknown")
         self.logger.debug(
             "Delegating to handler",
-            handler_type=handler.__class__.__name__,
+            handler_type=handler_class_name,
         )
 
         # Try standard handle() method first, then execute() as fallback
         # Consistent with registration validation that accepts both
         method_name = None
-        if hasattr(handler, "handle") and callable(handler.handle):
-            method_name = "handle"
-        elif hasattr(handler, "execute") and callable(handler.execute):
-            method_name = "execute"
+        if hasattr(handler, "handle"):
+            handle_method = getattr(handler, "handle", None)
+            if callable(handle_method):
+                method_name = "handle"
+        elif hasattr(handler, "execute"):
+            execute_method = getattr(handler, "execute", None)
+            if callable(execute_method):
+                method_name = "execute"
 
         if not method_name:
             return self.fail(
@@ -2041,7 +2049,7 @@ class FlextDispatcher(FlextMixins):
     # ------------------------------------------------------------------
     # Registration methods using structured models
     # ------------------------------------------------------------------
-    def _extract_handler_name(
+    def _extract_handler_name(  # noqa: C901
         self,
         handler: object,
         request_dict: dict[str, object],
@@ -2064,15 +2072,29 @@ class FlextDispatcher(FlextMixins):
         # Use getattr to safely access private attributes
         config_model = getattr(handler, "_config_model", None)
         if config_model and hasattr(config_model, "handler_name"):
-            return str(config_model.handler_name)
-        if hasattr(handler, "config") and hasattr(handler.config, "handler_name"):
-            return str(handler.config.handler_name)
+            handler_name_attr = getattr(config_model, "handler_name", None)
+            if handler_name_attr is not None:
+                return str(handler_name_attr)
+        if hasattr(handler, "config"):
+            config_attr = getattr(handler, "config", None)
+            if config_attr and hasattr(config_attr, "handler_name"):
+                handler_name_attr = getattr(config_attr, "handler_name", None)
+                if handler_name_attr is not None:
+                    return str(handler_name_attr)
         if hasattr(handler, "handler_name"):
-            return str(handler.handler_name)
+            handler_name_attr = getattr(handler, "handler_name", None)
+            if handler_name_attr is not None:
+                return str(handler_name_attr)
         if hasattr(handler, "__name__"):
-            return str(handler.__name__)
-        if hasattr(handler, "__class__") and hasattr(handler.__class__, "__name__"):
-            return str(handler.__class__.__name__)
+            name_attr = getattr(handler, "__name__", None)
+            if name_attr is not None:
+                return str(name_attr)
+        if hasattr(handler, "__class__"):
+            class_attr = getattr(handler, "__class__", None)
+            if class_attr and hasattr(class_attr, "__name__"):
+                name_attr = getattr(class_attr, "__name__", None)
+                if name_attr is not None:
+                    return str(name_attr)
 
         return ""
 
@@ -2140,7 +2162,12 @@ class FlextDispatcher(FlextMixins):
         # 2. Explicit: handlers registered for specific message type
 
         # Check if handler supports auto-discovery
-        has_can_handle = hasattr(handler, "can_handle") and callable(handler.can_handle)
+        can_handle_attr = (
+            getattr(handler, "can_handle", None)
+            if hasattr(handler, "can_handle")
+            else None
+        )
+        has_can_handle = callable(can_handle_attr)
 
         if has_can_handle:
             # Mode 1: Auto-discovery via can_handle()
@@ -2162,10 +2189,13 @@ class FlextDispatcher(FlextMixins):
             )
 
         # Get message type name for indexing
-        message_type_name = (
-            message_type.__name__
+        name_attr = (
+            getattr(message_type, "__name__", None)
             if hasattr(message_type, "__name__")
-            else str(message_type)
+            else None
+        )
+        message_type_name = (
+            str(name_attr) if name_attr is not None else str(message_type)
         )
 
         # Store handler indexed by message type name
@@ -2280,7 +2310,12 @@ class FlextDispatcher(FlextMixins):
         # 2. Explicit: handlers registered for specific message type
 
         # Check if handler supports auto-discovery
-        has_can_handle = hasattr(handler, "can_handle") and callable(handler.can_handle)
+        can_handle_attr = (
+            getattr(handler, "can_handle", None)
+            if hasattr(handler, "can_handle")
+            else None
+        )
+        has_can_handle = callable(can_handle_attr)
 
         if has_can_handle:
             # Mode 1: Auto-discovery via can_handle()
@@ -2302,10 +2337,13 @@ class FlextDispatcher(FlextMixins):
             )
 
         # Get message type name for indexing
-        message_type_name = (
-            message_type.__name__
+        name_attr = (
+            getattr(message_type, "__name__", None)
             if hasattr(message_type, "__name__")
-            else str(message_type)
+            else None
+        )
+        message_type_name = (
+            str(name_attr) if name_attr is not None else str(message_type)
         )
 
         # Store handler indexed by message type name

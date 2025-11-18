@@ -510,6 +510,8 @@ class FlextRuntime:
     ) -> None:
         """Configure structlog once using FLEXT defaults.
 
+        DEBUG INSTRUMENTATION ACTIVE
+
         Supports both config object pattern (reduced params) and individual parameters.
 
         Args:
@@ -554,15 +556,13 @@ class FlextRuntime:
                 config, "cache_logger_on_first_use", cache_logger_on_first_use
             )
 
+        # Single guard - no redundant checks
         if cls._structlog_configured:
             return
 
-        module = structlog
-        if module.is_configured():
-            cls._structlog_configured = True
-            return
-
         level_to_use = log_level if log_level is not None else logging.INFO
+
+        module = structlog
 
         processors: list[object] = [
             module.contextvars.merge_contextvars,
@@ -600,6 +600,69 @@ class FlextRuntime:
         )
 
         cls._structlog_configured = True
+
+    @classmethod
+    def reconfigure_structlog(
+        cls,
+        *,
+        log_level: int | None = None,
+        console_renderer: bool = True,
+        additional_processors: Sequence[Callable[..., FlextTypes.GenericTypeArgument]]
+        | None = None,
+    ) -> None:
+        """Force reconfigure structlog (ignores is_configured checks).
+
+        **USE ONLY when CLI params override config defaults.**
+
+        For initial configuration, use configure_structlog().
+        This method bypasses the guards and forces reconfiguration,
+        allowing CLI parameters to override the initial configuration.
+
+        **Layer 2 Responsibility (flext-cli MODIFIER)**:
+        - flext-core: Uses configure_structlog() for initial setup
+        - flext-cli: Uses reconfigure_structlog() to override via CLI params
+        - Applications: Inherit automatically, zero manual code
+
+        Args:
+            log_level: Numeric log level to reconfigure
+            console_renderer: Use console renderer vs JSON
+            additional_processors: Extra processors to add
+
+        Example:
+            ```python
+            # CLI override: User passed --debug flag
+            from flext_core.runtime import FlextRuntime
+            from flext_core.constants import FlextConstants
+
+            FlextRuntime.reconfigure_structlog(
+                log_level=FlextConstants.Settings.LogLevel.DEBUG.value,
+                console_renderer=True,
+            )
+            ```
+
+        Notes:
+            - Resets structlog state completely
+            - Resets FLEXT configuration flags
+            - Calls configure_structlog() with fresh state
+            - Safe to call multiple times
+
+        """
+        # Reset structlog state (makes is_configured() return False)
+        module = structlog
+        module.reset_defaults()
+
+        # Reset FLEXT configuration flag (single source of truth)
+        cls._structlog_configured = False
+
+        # NOTE: FlextLogger no longer maintains its own flag - it checks FlextRuntime directly
+        # This eliminates circular import and redundant state tracking
+
+        # Now configure with new settings (guards will be False)
+        cls.configure_structlog(
+            log_level=log_level,
+            console_renderer=console_renderer,
+            additional_processors=additional_processors,
+        )
 
     # =========================================================================
     # =========================================================================

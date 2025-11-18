@@ -218,6 +218,31 @@ class FlextService[TDomainResult](
     _expected_domain_result_type: ClassVar[type | None] = None
 
     # =========================================================================
+    # AUTO-CONFIGURATION: Structlog Configuration
+    # =========================================================================
+
+    def model_post_init(self, __context: object, /) -> None:
+        """Auto-configure structlog on first FlextService instantiation.
+
+        This ensures logging is available automatically in all FLEXT libraries
+        without requiring manual configuration in each application.
+
+        Configuration happens once per process via FlextRuntime guards.
+        """
+        super().model_post_init(__context)
+
+        # Auto-configure structlog if not already configured
+        import logging  # noqa: PLC0415
+
+        from flext_core.runtime import FlextRuntime  # noqa: PLC0415
+
+        if not FlextRuntime._structlog_configured:  # noqa: SLF001
+            FlextRuntime.configure_structlog(
+                log_level=logging.INFO,  # Default to INFO, can be overridden by CLI
+                console_renderer=True,
+            )
+
+    # =========================================================================
     # RUNTIME TYPE VALIDATION: Automatic via __class_getitem__
     # =========================================================================
 
@@ -355,6 +380,8 @@ class FlextService[TDomainResult](
 
         if cls.auto_execute:
             # Auto-execute with runtime type validation
+            # NOTE: kwargs already applied via __init__() above (line 379)
+            # execute() accesses them as self.field_name, does not take parameters
             result = instance.validate_domain_result(instance.execute())
             # Cast to Self for type checker (actual runtime value is TDomainResult)
             return cast("Self", result.unwrap())
@@ -778,11 +805,20 @@ class FlextService[TDomainResult](
     # =============================================================================
 
     @abstractmethod
-    def execute(self) -> FlextResult[TDomainResult]:
+    def execute(self, **kwargs: object) -> FlextResult[TDomainResult]:
         """Execute the main domain operation (Domain.Service protocol).
+
+        Args:
+            **kwargs: Optional operation parameters (for services that extend execute with parameters).
+                     Services that don't need parameters can ignore this.
 
         Returns:
             FlextResult[TDomainResult]: Success with domain result or failure with error
+
+        Note:
+            Subclasses can extend this method with specific parameters while maintaining
+            compatibility with the base signature. When called without parameters,
+            performs the standard domain operation (health check or default behavior).
 
         """
 

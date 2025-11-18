@@ -330,6 +330,28 @@ class FlextModelsContext:
             ),
         ] = Field(default_factory=dict)
 
+        @staticmethod
+        def _check_json_serializable(obj: object, path: str = "") -> None:
+            """Recursively check if object is JSON-serializable."""
+            if obj is None or isinstance(obj, (str, int, float, bool)):
+                return
+            if FlextRuntime.is_dict_like(obj):
+                for key, val in obj.items():
+                    if not isinstance(key, str):
+                        msg = f"Dictionary keys must be strings at {path}.{key}"
+                        raise TypeError(msg)
+                    FlextModelsContext.ContextExport._check_json_serializable(  # noqa: SLF001
+                        val, f"{path}.{key}"
+                    )
+            elif FlextRuntime.is_list_like(obj):
+                for i, item in enumerate(obj):
+                    FlextModelsContext.ContextExport._check_json_serializable(  # noqa: SLF001
+                        item, f"{path}[{i}]"
+                    )
+            else:
+                msg = f"Non-JSON-serializable type {type(obj).__name__} at {path}"
+                raise TypeError(msg)
+
         @field_validator("data", "metadata", "statistics", mode="before")
         @classmethod
         def validate_dict_serializable(cls, v: object) -> dict[str, object]:
@@ -340,32 +362,18 @@ class FlextModelsContext:
             Only allows basic JSON-serializable types: str, int, float, bool, list, dict, None.
             """
             # Accept Pydantic models directly - convert to dict
-            if hasattr(v, "model_dump") and callable(v.model_dump):
-                v = v.model_dump()
+            model_dump_attr = (
+                getattr(v, "model_dump", None) if hasattr(v, "model_dump") else None
+            )
+            if callable(model_dump_attr):
+                v = model_dump_attr()
 
             if not FlextRuntime.is_dict_like(v):
                 msg = f"Value must be a dictionary or Pydantic model, got {type(v).__name__}"
                 raise TypeError(msg)
 
             # Recursively check all values are JSON-serializable
-            def check_serializable(obj: object, path: str = "") -> None:
-                """Recursively check if object is JSON-serializable."""
-                if obj is None or isinstance(obj, (str, int, float, bool)):
-                    return
-                if FlextRuntime.is_dict_like(obj):
-                    for key, val in obj.items():
-                        if not isinstance(key, str):
-                            msg = f"Dictionary keys must be strings at {path}.{key}"
-                            raise TypeError(msg)
-                        check_serializable(val, f"{path}.{key}")
-                elif FlextRuntime.is_list_like(obj):
-                    for i, item in enumerate(obj):
-                        check_serializable(item, f"{path}[{i}]")
-                else:
-                    msg = f"Non-JSON-serializable type {type(obj).__name__} at {path}"
-                    raise TypeError(msg)
-
-            check_serializable(v)
+            FlextModelsContext.ContextExport._check_json_serializable(v)  # noqa: SLF001
             return v
 
         @computed_field

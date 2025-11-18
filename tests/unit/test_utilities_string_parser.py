@@ -119,7 +119,7 @@ class TestFlextUtilitiesStringParserParseDelimited:
                 raise RuntimeError(msg)
 
         bad = BadString()
-        result = FlextUtilitiesStringParser.parse_delimited(bad, ",")  # type: ignore
+        result = FlextUtilitiesStringParser.parse_delimited(bad, ",")  # type: ignore[call-overload]
         assert result.is_failure
         assert "Failed to parse" in result.error
 
@@ -180,7 +180,7 @@ class TestFlextUtilitiesStringParserSplitWithEscape:
         bad = BadString()
         result = FlextUtilitiesStringParser.split_on_char_with_escape(
             bad,
-            ",",  # type: ignore
+            ",",  # type: ignore[call-overload]
         )
         assert result.is_failure
         assert "Failed to split" in result.error
@@ -232,7 +232,7 @@ class TestFlextUtilitiesStringParserNormalizeWhitespace:
                 raise RuntimeError(msg)
 
         bad = BadString()
-        result = FlextUtilitiesStringParser.normalize_whitespace(bad)  # type: ignore
+        result = FlextUtilitiesStringParser.normalize_whitespace(bad)  # type: ignore[call-overload]
         assert result.is_failure
         assert "Failed to normalize" in result.error
 
@@ -281,7 +281,7 @@ class TestFlextUtilitiesStringParserRegexPipeline:
     def test_apply_regex_pipeline_exception_handling(self) -> None:
         """Test pipeline exception handling."""
         # Pass invalid patterns to trigger exception
-        patterns = [(None, "replacement")]  # type: ignore
+        patterns: list[tuple[str | None, str]] = [(None, "replacement")]
         result = FlextUtilitiesStringParser.apply_regex_pipeline("test", patterns)
         assert result.is_failure
         assert "Failed to apply" in result.error

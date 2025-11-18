@@ -456,7 +456,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 if callable(method):
                     try:
                         result_data = method()
-                        if FlextMixins.is_dict_like(result_data):
+                        if FlextMixins.is_dict_like(result_data) and isinstance(
+                            result_data, dict
+                        ):
                             # Type narrowed by TypeGuard - use narrowed type directly
                             typed_result: dict[str, object] = result_data
                             return typed_result

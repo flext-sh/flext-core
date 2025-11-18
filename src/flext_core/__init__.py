@@ -347,7 +347,7 @@ from flext_core.decorators import FlextDecorators
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
-from flext_core.loggings import FlextLogger
+from flext_core.loggings import FlextLogger, FlextLoggerResultAdapter
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
@@ -449,6 +449,7 @@ __all__ = [
     "FlextExceptions",
     "FlextHandlers",
     "FlextLogger",
+    "FlextLoggerResultAdapter",
     "FlextMixins",
     "FlextModels",
     "FlextProtocols",

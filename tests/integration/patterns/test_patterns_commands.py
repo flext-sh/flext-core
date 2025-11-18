@@ -473,7 +473,9 @@ class TestFlextCommandResults:
         if command_result.value != result_data:
             msg = f"Expected {result_data}, got {command_result.value}"
             raise AssertionError(msg)
-        assert command_result.error is None
+        assert (
+            command_result.error is None
+        )  # Success has no error (backward compatibility)
 
     def test_failure_result_creation(self) -> None:
         """Test creating failed command result."""

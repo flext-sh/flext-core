@@ -680,7 +680,7 @@ class FlextMixins:
             **context_data,
         }
         # Log service initialization ONCE instead of binding to all logs
-        self.logger.info("Service initialized", **service_context)
+        self.logger.info("Service initialized", return_result=False, **service_context)
 
     def _log_config_once(
         self,

@@ -1540,7 +1540,10 @@ class FlextContainer(FlextProtocols.Configurable):
 
             # Use first factory found
             factory_name = next(iter(self._factories.keys()))
-            factory = self._factories[factory_name]
+            factory_registration = self._factories[factory_name]
+
+            # Extract factory callable from FactoryRegistration
+            factory = factory_registration.factory
 
             if callable(factory):
                 instance = factory()

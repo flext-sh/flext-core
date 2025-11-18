@@ -12,13 +12,21 @@ import time
 
 import pytest
 
-from flext_core import FlextConstants, FlextLogger
+from flext_core import FlextConstants, FlextLogger, FlextLoggerResultAdapter
 
 # Alias for the LogLevel enum
 FlextLogLevel = FlextConstants.Settings.LogLevel
 
 # Constants
 EXPECTED_BULK_SIZE = 2
+
+
+def make_result_logger(
+    *args: object,
+    **kwargs: object,
+) -> FlextLoggerResultAdapter:
+    """Helper to create loggers with FlextResult outputs."""
+    return FlextLogger(*args, **kwargs).with_result()
 
 
 class TestFlextContext:
@@ -157,14 +165,14 @@ class TestFlextLogger:
     def test_logger_auto_configuration(self) -> None:
         """Test that logger auto-configures on first use."""
         # Getting a logger should auto-configure
-        logger = FlextLogger("test")
+        logger = make_result_logger("test")
 
         # The new thin FlextLogger auto-configures structlog on first use
         assert logger is not None
 
     def test_get_logger_creates_instance(self) -> None:
         """Test that FlextLogger creates logger instances."""
-        logger = FlextLogger("test_logger")
+        logger = make_result_logger("test_logger")
 
         assert logger is not None
         assert hasattr(logger, "info")  # Should be a structlog BoundLogger
@@ -173,15 +181,15 @@ class TestFlextLogger:
 
     def test_get_logger_caches_instances(self) -> None:
         """Test that FlextLogger creates new instances (no caching in new implementation)."""
-        logger1 = FlextLogger("cached_test")
-        logger2 = FlextLogger("cached_test")
+        logger1 = make_result_logger("cached_test")
+        logger2 = make_result_logger("cached_test")
 
         # The new thin FlextLogger doesn't cache instances
         assert logger1 is not logger2
 
     def test_logger_methods_exist(self) -> None:
         """Test that logger has expected methods."""
-        logger = FlextLogger("method_test")
+        logger = make_result_logger("method_test")
 
         # Basic logging methods
         assert hasattr(logger, "debug")
@@ -195,7 +203,7 @@ class TestFlextLogger:
 
     def test_get_base_logger(self) -> None:
         """Test getting base logger instance."""
-        base_logger = FlextLogger("base_test")
+        base_logger = make_result_logger("base_test")
 
         assert base_logger is not None
         # Base logger should have observability features
@@ -203,13 +211,13 @@ class TestFlextLogger:
 
     def test_get_base_logger_with_level(self) -> None:
         """Test getting base logger with specific level."""
-        base_logger = FlextLogger("level_test")
+        base_logger = make_result_logger("level_test")
 
         assert base_logger is not None
 
     def test_bind_context(self) -> None:
         """Test binding context to logger."""
-        logger = FlextLogger("bind_test")
+        logger = make_result_logger("bind_test")
         bound_logger = logger.bind(
             user_id="123",
             operation="test",
@@ -220,14 +228,14 @@ class TestFlextLogger:
 
     def test_backward_compatibility_function(self) -> None:
         """Test backward compatibility function."""
-        logger = FlextLogger("compat_test")
+        logger = make_result_logger("compat_test")
 
         assert logger is not None
         assert hasattr(logger, "info")
 
     def test_module_level_function(self) -> None:
         """Test module-level backward compatibility function."""
-        logger = FlextLogger("module_test")
+        logger = make_result_logger("module_test")
 
         assert logger is not None
         assert hasattr(logger, "info")
@@ -239,7 +247,7 @@ class TestFlextLoggerUsage:
     def test_basic_logging(self) -> None:
         """Test basic logging functionality."""
         # Use FlextLogger constructor directly, not FlextLogger()
-        logger = FlextLogger("usage_test")
+        logger = make_result_logger("usage_test")
 
         # These should not raise errors
         logger.info("Test info message", test=True)
@@ -250,7 +258,7 @@ class TestFlextLoggerUsage:
 
     def test_logging_with_context(self) -> None:
         """Test logging with context data."""
-        logger = FlextLogger("context_test")
+        logger = make_result_logger("context_test")
 
         # These should not raise errors
         logger.info("User action", user_id="123", action="login")
@@ -258,7 +266,7 @@ class TestFlextLoggerUsage:
 
     def test_bound_logger_usage(self) -> None:
         """Test using bound logger."""
-        logger = FlextLogger("bound_test")
+        logger = make_result_logger("bound_test")
         bound_logger = logger.bind(request_id="req-123", user_id="user-456")
 
         # Context should be automatically included in these logs
@@ -267,7 +275,7 @@ class TestFlextLoggerUsage:
 
     def test_context_manager_style(self) -> None:
         """Test context manager style usage."""
-        logger = FlextLogger("context_mgr_test")
+        logger = make_result_logger("context_mgr_test")
 
         # Bind context for a series of operations
         bound_logger = logger.bind(operation="batch_process", batch_id="batch-123")
@@ -279,7 +287,7 @@ class TestFlextLoggerUsage:
     @pytest.mark.performance
     def test_performance_logging(self) -> None:
         """Test performance-focused logging."""
-        perf_logger = FlextLogger("performance_test")
+        perf_logger = make_result_logger("performance_test")
 
         # Performance loggers should support similar operations
 
@@ -292,9 +300,9 @@ class TestFlextLoggerIntegration:
 
     def test_logging_hierarchy(self) -> None:
         """Test hierarchical logging."""
-        parent_logger = FlextLogger("parent")
-        child_logger = FlextLogger("parent.child")
-        grandchild_logger = FlextLogger("parent.child.grandchild")
+        parent_logger = make_result_logger("parent")
+        child_logger = make_result_logger("parent.child")
+        grandchild_logger = make_result_logger("parent.child.grandchild")
 
         # All should be valid logger instances
         assert parent_logger is not None
@@ -303,7 +311,7 @@ class TestFlextLoggerIntegration:
 
     def test_complex_logging_scenario(self) -> None:
         """Test complex logging scenario with multiple contexts."""
-        logger = FlextLogger("complex_test")
+        logger = make_result_logger("complex_test")
 
         # Simulate a complex operation with nested contexts
         bound_logger = logger.bind(operation="user_registration", request_id="req-789")
@@ -324,7 +332,7 @@ class TestFlextLoggerIntegration:
 
     def test_error_logging_with_context(self) -> None:
         """Test error logging with rich context."""
-        logger = FlextLogger("error_test")
+        logger = make_result_logger("error_test")
 
         def _raise_test_error() -> None:
             """Raise test error for exception logging tests."""
@@ -347,7 +355,7 @@ class TestFlextLoggerIntegration:
     @pytest.mark.performance
     def test_performance_logging_integration(self) -> None:
         """Test performance logging integration."""
-        logger = FlextLogger("perf_integration_test")
+        logger = make_result_logger("perf_integration_test")
 
         start_time = time.time()
 
