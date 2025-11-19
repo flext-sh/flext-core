@@ -264,7 +264,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 # Validation methods on user data can raise any exception
                 # Safe behavior: log and continue with next validation
                 FlextHandlers._internal_logger.debug(
-                    f"Skipping validation method {validation_method_name}: {type(e).__name__}"
+                    "Skipping validation method due to exception",
+                    operation="validate_custom_method",
+                    validation_method=validation_method_name,
+                    error_type=type(e).__name__,
+                    error=str(e),
+                    source="flext-core/src/flext_core/handlers.py",
                 )
 
             return FlextResult[bool].ok(True)
@@ -464,7 +469,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                             return typed_result
                     except Exception as e:
                         FlextHandlers._internal_logger.debug(
-                            f"Serialization method {method_name} failed: {type(e).__name__}"
+                            "Serialization method failed, trying next method",
+                            operation="try_common_serialization_methods",
+                            method_name=method_name,
+                            error_type=type(e).__name__,
+                            error=str(e),
+                            source="flext-core/src/flext_core/handlers.py",
                         )
                         continue
             return None
@@ -774,7 +784,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     type_mismatch = not isinstance(message, self._expected_message_type)
                 else:
                     # For complex type hints (generics, unions), use beartype
-                    type_mismatch = not is_bearable(
+                    # Type checker may think this is unreachable, but complex types are validated here
+                    type_mismatch = not is_bearable(  # type: ignore[unreachable]
                         message, self._expected_message_type
                     )
             except (TypeError, AttributeError):
@@ -788,6 +799,16 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     str(self._expected_message_type),
                 )
                 actual_name = type(message).__name__
+                self.logger.error(
+                    "FAILED: Message type mismatch - VALIDATION ABORTED",
+                    operation="validate_handler_result",
+                    handler_name=self.handler_name,
+                    expected_message_type=expected_name,
+                    actual_message_type=actual_name,
+                    consequence="Handler cannot process this message type",
+                    resolution_hint="Ensure message type matches handler's expected type",
+                    source="flext-core/src/flext_core/handlers.py",
+                )
                 msg = (
                     f"{self.__class__.__name__}.handle() received message of type "
                     f"{actual_name} instead of {expected_name}. "
@@ -805,7 +826,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     )
                 else:
                     # For complex type hints (generics, unions), use beartype
-                    type_mismatch = not is_bearable(
+                    # Type checker may think this is unreachable, but complex types are validated here
+                    type_mismatch = not is_bearable(  # type: ignore[unreachable]
                         result.value, self._expected_result_type
                     )
             except (TypeError, AttributeError):
@@ -819,6 +841,16 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     str(self._expected_result_type),
                 )
                 actual_name = type(result.value).__name__
+                self.logger.error(
+                    "FAILED: Result type mismatch - VALIDATION ABORTED",
+                    operation="validate_handler_result",
+                    handler_name=self.handler_name,
+                    expected_result_type=expected_name,
+                    actual_result_type=actual_name,
+                    consequence="Handler returned incorrect result type",
+                    resolution_hint="Ensure handle() method returns correct result type",
+                    source="flext-core/src/flext_core/handlers.py",
+                )
                 msg = (
                     f"{self.__class__.__name__}.handle() returned "
                     f"FlextResult[{actual_name}] instead of "
@@ -860,8 +892,28 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         message_type: str = str(type(message).__name__)
 
+        self.logger.debug(
+            "Starting handler pipeline execution",
+            operation="run_pipeline",
+            handler_name=self.handler_name,
+            handler_mode=self.mode,
+            requested_operation=operation,
+            message_type=message_type,
+            source="flext-core/src/flext_core/handlers.py",
+        )
+
         # Validate operation matches handler mode
         if operation != self.mode:
+            self.logger.error(
+                "FAILED: Handler mode mismatch - PIPELINE ABORTED",
+                operation="run_pipeline",
+                handler_name=self.handler_name,
+                handler_mode=self.mode,
+                requested_operation=operation,
+                consequence="Handler cannot execute this operation type",
+                resolution_hint="Use handler with matching mode or change operation type",
+                source="flext-core/src/flext_core/handlers.py",
+            )
             return self.fail(
                 f"Handler with mode '{self.mode}' cannot execute {operation} pipelines"
             )
@@ -869,28 +921,96 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         # Validate message can be handled
         message_type_obj: type[object] = type(message)
         if not self.can_handle(cast("type[MessageT_contra]", message_type_obj)):
+            self.logger.error(
+                "FAILED: Handler cannot handle message type - PIPELINE ABORTED",
+                operation="run_pipeline",
+                handler_name=self.handler_name,
+                message_type=message_type,
+                handler_mode=self.mode,
+                consequence="Message cannot be processed by this handler",
+                resolution_hint="Register appropriate handler for this message type",
+                source="flext-core/src/flext_core/handlers.py",
+            )
             return self.fail(f"Handler cannot handle message type {message_type}")
 
         # Validate message
+        self.logger.debug(
+            "Validating message",
+            operation="run_pipeline",
+            handler_name=self.handler_name,
+            message_type=message_type,
+            operation_type=operation,
+            source="flext-core/src/flext_core/handlers.py",
+        )
         validation_result = (
             self.validate_command(cast("object", message))
             if operation == "command"
             else self.validate_query(cast("object", message))
         )
         if validation_result.is_failure:
-            return self.fail(f"Message validation failed: {validation_result.error}")
+            error_msg = validation_result.error or "Unknown validation error"
+            self.logger.warning(
+                "Message validation failed - pipeline stopped",
+                operation="run_pipeline",
+                handler_name=self.handler_name,
+                message_type=message_type,
+                validation_error=error_msg,
+                consequence="Message will not be processed",
+                source="flext-core/src/flext_core/handlers.py",
+            )
+            return self.fail(f"Message validation failed: {error_msg}")
 
         # Execute handler with runtime type validation
+        self.logger.debug(
+            "Executing handler handle() method",
+            operation="run_pipeline",
+            handler_name=self.handler_name,
+            message_type=message_type,
+            source="flext-core/src/flext_core/handlers.py",
+        )
         try:
             result = self.handle(cast("MessageT_contra", message))
             # Validate result types if __class_getitem__ was used
-            return self._validate_handler_result(
+            validated_result = self._validate_handler_result(
                 cast("MessageT_contra", message), result
             )
+            
+            if validated_result.is_success:
+                self.logger.info(
+                    "Handler pipeline completed successfully",
+                    operation="run_pipeline",
+                    handler_name=self.handler_name,
+                    message_type=message_type,
+                    handler_mode=self.mode,
+                    source="flext-core/src/flext_core/handlers.py",
+                )
+            else:
+                self.logger.warning(
+                    "Handler pipeline completed with validation warnings",
+                    operation="run_pipeline",
+                    handler_name=self.handler_name,
+                    message_type=message_type,
+                    validation_error=validated_result.error,
+                    source="flext-core/src/flext_core/handlers.py",
+                )
+            
+            return validated_result
         except Exception as e:
             # VALIDATION HIERARCHY - User handler execution (CRITICAL)
             # User-registered handlers can raise any exception
             # Safe behavior: capture error, return failure result
+            self.logger.exception(
+                "FATAL ERROR during handler execution - PIPELINE ABORTED",
+                operation="run_pipeline",
+                handler_name=self.handler_name,
+                message_type=message_type,
+                error=str(e),
+                error_type=type(e).__name__,
+                consequence="Handler execution failed completely - no result returned",
+                severity="critical",
+                resolution_hint="Check handler implementation for bugs or invalid assumptions",
+                source="flext-core/src/flext_core/handlers.py",
+            )
             return self.fail(f"Critical handler failure: {e!s}")
 
     @abstractmethod

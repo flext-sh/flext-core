@@ -11,11 +11,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
+import os
 import threading
+from collections.abc import Callable
+from pathlib import Path
 from typing import ClassVar, Self, TypeVar
 
 from dependency_injector import providers
 from pydantic import (
+    BaseModel,
     Field,
     computed_field,
     field_validator,
@@ -26,10 +31,19 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
+try:
+    from dotenv import dotenv_values
+except ImportError:
+    dotenv_values = None  # type: ignore[assignment, misc]
+
 from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
 
+_logger = logging.getLogger(__name__)
+
 T_Config = TypeVar("T_Config", bound="FlextConfig")
+T_Namespace = TypeVar("T_Namespace", bound=BaseModel)
+T_AutoConfig = TypeVar("T_AutoConfig", bound="FlextConfig.AutoConfig")
 
 # NOTE: Pydantic v2 BaseSettings handles environment variable type coercion automatically.
 # No custom validators needed - Pydantic uses lax validation mode for env vars:
@@ -140,6 +154,12 @@ class FlextConfig(BaseSettings):
     # Class attributes for singleton pattern
     _instances: ClassVar[dict[type, Self]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
+
+    # Class attributes for namespace pattern
+    _namespaces: ClassVar[dict[str, type[BaseModel]]] = {}
+    _namespace_instances: ClassVar[dict[str, BaseModel]] = {}
+    _namespace_factories: ClassVar[dict[str, Callable[[], BaseModel]]] = {}
+    _namespace_lock: ClassVar[threading.RLock] = threading.RLock()
 
     def __new__(cls, **_kwargs: object) -> Self:
         """Create or return singleton FlextConfig instance.
@@ -497,6 +517,512 @@ class FlextConfig(BaseSettings):
             base_class = cls
             cls._instances.pop(base_class, None)
 
+    # ===== NAMESPACE PATTERN (UNIFIED CONFIG HIERARCHY) =====
+
+    @classmethod
+    def register_namespace(
+        cls,
+        name: str,
+        config_class: type[T_Namespace],
+        factory: Callable[[], T_Namespace] | None = None,
+    ) -> None:
+        """Register a configuration namespace for unified config hierarchy.
+
+        This implements a namespace pattern where subproject configs (FlextLdapConfig,
+        FlextLdifConfig) are registered as namespaces of the root FlextConfig singleton.
+        This creates a unified configuration hierarchy: config.ldap, config.ldif, etc.
+
+        Args:
+            name: Namespace name (e.g., 'ldap', 'ldif')
+            config_class: Config class (must be BaseModel, not BaseSettings)
+            factory: Optional factory function for singleton creation
+                     (defaults to config_class.get_instance())
+
+        Raises:
+            TypeError: If config_class is not a Pydantic BaseModel
+            TypeError: If config_class inherits from BaseSettings (namespaces must use BaseModel)
+
+        Example:
+            # Register namespace (typically done in subproject __init__)
+            FlextConfig.register_namespace('ldap', FlextLdapConfig)
+
+            # Access namespace (lazy-loaded singleton)
+            config = FlextConfig.get_instance()
+            ldap_cfg = config.ldap  # FlextLdapConfig instance
+            ldif_cfg = config.ldif  # FlextLdifConfig instance
+
+        """
+        # Runtime validation: ensure config_class is BaseModel (not BaseSettings)
+        # TypeVar bound provides compile-time safety, but runtime validation ensures correctness
+        # Check both conditions together to avoid mypy unreachable warning
+        is_base_model = issubclass(config_class, BaseModel)
+        is_base_settings = issubclass(config_class, BaseSettings)
+        
+        if not is_base_model:
+            msg = f"{config_class} must be a Pydantic BaseModel"
+            raise TypeError(msg)
+        
+        if is_base_settings:
+            msg = (
+                f"{config_class} inherits from BaseSettings. "
+                "Namespaces must use BaseModel (nested configs)."
+            )
+            raise TypeError(msg)
+
+        with cls._namespace_lock:
+            cls._namespaces[name] = config_class
+
+            # Store factory for lazy loading
+            if factory is None:
+                # Default: use get_instance() if available, otherwise create new
+                get_instance_attr = getattr(config_class, "get_instance", None)
+                if get_instance_attr is not None and callable(get_instance_attr):
+                    resolved_factory = get_instance_attr
+                else:
+                    resolved_factory = config_class
+            else:
+                resolved_factory = factory
+
+            cls._namespace_factories[name] = resolved_factory  # type: ignore[assignment]
+
+    @classmethod
+    def _get_namespace_instance(cls, name: str) -> BaseModel:
+        """Get or create namespace instance (lazy singleton).
+
+        Args:
+            name: Namespace name
+
+        Returns:
+            Namespace config instance (singleton)
+
+        Raises:
+            KeyError: If namespace not registered
+
+        """
+        with cls._namespace_lock:
+            if name not in cls._namespace_instances:
+                if name not in cls._namespace_factories:
+                    msg = f"Namespace '{name}' not registered"
+                    raise KeyError(msg)
+
+                factory = cls._namespace_factories[name]
+                cls._namespace_instances[name] = factory()
+
+            return cls._namespace_instances[name]
+
+    def __getattr__(self, name: str) -> BaseModel:
+        """Dynamic namespace access via attribute (e.g., config.ldap).
+
+        This allows accessing registered namespaces as attributes:
+            config = FlextConfig.get_instance()
+            ldap_cfg = config.ldap  # Lazy-loads FlextLdapConfig
+
+        Args:
+            name: Namespace name
+
+        Returns:
+            Namespace config instance
+
+        Raises:
+            AttributeError: If namespace not registered or invalid attribute
+
+        """
+        # Check if it's a registered namespace
+        if name in self._namespaces:
+            return self._get_namespace_instance(name)
+
+        # Not a namespace - raise standard AttributeError
+        msg = f"'{type(self).__name__}' object has no attribute '{name}'"
+        raise AttributeError(msg)
+
+    @classmethod
+    def list_namespaces(cls) -> list[str]:
+        """List all registered namespace names.
+
+        Returns:
+            List of namespace names (e.g., ['ldap', 'ldif'])
+
+        Example:
+            >>> namespaces = FlextConfig.list_namespaces()
+            >>> print(namespaces)
+            ['ldap', 'ldif']
+
+        """
+        return list(cls._namespaces.keys())
+
+    @classmethod
+    def has_namespace(cls, name: str) -> bool:
+        """Check if namespace is registered.
+
+        Args:
+            name: Namespace name
+
+        Returns:
+            True if namespace registered, False otherwise
+
+        Example:
+            >>> FlextConfig.has_namespace('ldap')
+            True
+            >>> FlextConfig.has_namespace('unknown')
+            False
+
+        """
+        return name in cls._namespaces
+
+    @classmethod
+    def reset_namespaces(cls) -> None:
+        """Reset all namespace registrations (for testing only).
+
+        WARNING: This method is intended for testing purposes only.
+        Do not use in production code.
+
+        """
+        with cls._namespace_lock:
+            cls._namespaces.clear()
+            cls._namespace_instances.clear()
+            cls._namespace_factories.clear()
+
+    # ===== AUTO-REGISTRATION PATTERN (ZERO-BOILERPLATE) =====
+
+    @staticmethod
+    def auto_register(namespace: str) -> Callable[[type[T_Namespace]], type[T_Namespace]]:
+        """Decorator for automatic namespace registration at class definition time.
+
+        This decorator enables zero-boilerplate config registration. Simply decorate
+        your config class and it will be automatically registered as a namespace
+        when the module is imported.
+
+        Args:
+            namespace: Namespace name (e.g., 'ldap', 'ldif', 'cli')
+
+        Returns:
+            Decorator function that registers the class
+
+        Example:
+            >>> from flext_core import FlextConfig
+            >>> from pydantic import BaseModel, Field
+            >>>
+            >>> @FlextConfig.auto_register("ldap")
+            >>> class FlextLdapConfig(FlextConfig.AutoConfig):
+            ...     '''LDAP configuration with auto-singleton and auto-registration.'''
+            ...
+            ...     ldap_host: str = Field(default="localhost")
+            ...     ldap_port: int = Field(default=389, ge=1, le=65535)
+            >>>
+            >>> # Config is automatically registered as 'ldap' namespace
+            >>> config = FlextConfig.get_global_instance()
+            >>> ldap_config = config.ldap  # FlextLdapConfig instance
+            >>> print(ldap_config.ldap_host)  # 'localhost'
+
+        Benefits:
+            - Zero boilerplate (no manual registration calls)
+            - Impossible to forget registration
+            - Namespace visible at class definition
+            - Works with IDE autocomplete
+
+        """
+
+        def decorator(cls: type[T_Namespace]) -> type[T_Namespace]:
+            # Store namespace for introspection
+            cls.__namespace__ = namespace  # type: ignore[attr-defined]
+
+            # Register immediately at class definition time
+            FlextConfig.register_namespace(namespace, cls)
+
+            return cls
+
+        return decorator
+
+    @staticmethod
+    def config_default(config_class: type[BaseModel], field_name: str) -> Callable[[], object]:
+        """Create a factory function for Pydantic default_factory from config singleton.
+
+        Args:
+            config_class: Config class (must have get_instance() method)
+            field_name: Field name in config
+
+        Returns:
+            Factory function suitable for Pydantic's default_factory
+
+        Example:
+            >>> from flext_core import FlextConfig
+            >>> from pydantic import BaseModel, Field
+            >>>
+            >>> class ConnectionModel(BaseModel):
+            ...     host: str = Field(
+            ...         default_factory=FlextConfig.config_default(FlextLdapConfig, "ldap_host"),
+            ...     )
+
+        """
+
+        def factory() -> object:
+            if hasattr(config_class, "get_instance"):
+                instance = config_class.get_instance()
+            else:
+                instance = config_class()
+            return getattr(instance, field_name)
+
+        return factory
+
+    class AutoConfig(BaseModel):
+        """Base class for auto-singleton configs with zero boilerplate.
+
+        Inherit from this class to get automatic singleton pattern, thread-safety,
+        and test reset capabilities without writing any boilerplate code.
+
+        Features:
+            - Automatic singleton pattern (thread-safe with RLock)
+            - Automatic get_instance() class method
+            - Automatic _reset_instance() for testing
+            - Zero boilerplate code needed
+
+        Example:
+            >>> from flext_core import FlextConfig
+            >>> from pydantic import Field
+            >>>
+            >>> @FlextConfig.auto_register("myproject")
+            >>> class MyProjectConfig(FlextConfig.AutoConfig):
+            ...     '''My project configuration - complete in 3 lines!'''
+            ...
+            ...     api_url: str = Field(default="https://api.example.com")
+            ...     timeout: int = Field(default=30, ge=1, le=300)
+            >>>
+            >>> # Usage
+            >>> config = MyProjectConfig.get_instance()
+            >>> print(config.api_url)
+            >>>
+            >>> # Testing
+            >>> MyProjectConfig._reset_instance()  # Clear singleton for test isolation
+
+        Configuration Pattern:
+            Use with @FlextConfig.auto_register() decorator for full automation:
+            - Auto-singleton (no manual __new__ or get_instance() needed)
+            - Auto-registration (namespace accessible via config.myproject)
+            - Auto-reset (test fixtures can clear between tests)
+
+        """
+
+        # Singleton storage: maps class to its instance
+        # Using dict instead of ClassVar[Self] for proper type inference
+        _instances: ClassVar[dict[type, FlextConfig.AutoConfig]] = {}
+        _lock: ClassVar[threading.RLock] = threading.RLock()
+
+        model_config = SettingsConfigDict(
+            frozen=False,
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+            extra="ignore",
+        )
+
+        @staticmethod
+        def _extract_settings_config(
+            config_dict: object,
+        ) -> tuple[str | None, str | None, str, str]:
+            """Extract Settings configuration from model_config.
+
+            Returns:
+                Tuple of (env_prefix, env_file, env_nested_delimiter, env_file_encoding)
+
+            """
+            if isinstance(config_dict, dict):
+                return (
+                    config_dict.get("env_prefix"),
+                    config_dict.get("env_file"),
+                    config_dict.get("env_nested_delimiter", "__"),
+                    config_dict.get("env_file_encoding", "utf-8"),
+                )
+            # Fallback: try attribute access (for compatibility)
+            return (
+                getattr(config_dict, "env_prefix", None),
+                getattr(config_dict, "env_file", None),
+                getattr(config_dict, "env_nested_delimiter", "__"),
+                getattr(config_dict, "env_file_encoding", "utf-8"),
+            )
+
+        @staticmethod
+        def _resolve_env_file(env_prefix: str, env_file: str | None) -> str | None:
+            """Resolve .env file path with override support.
+
+            Returns:
+                Resolved path or None if file doesn't exist
+
+            """
+            # Check for override via environment variable
+            env_file_override = os.getenv(f"{env_prefix}ENV_FILE")
+            if env_file_override:
+                env_file = env_file_override
+
+            if not env_file or not isinstance(env_file, str):
+                return None
+
+            env_file_path = Path(env_file)
+            if not env_file_path.is_absolute():
+                env_file_path = Path.cwd() / env_file_path
+
+            return str(env_file_path) if env_file_path.exists() else None
+
+        @staticmethod
+        def _load_env_values(
+            env_prefix: str,
+            env_file: str | None,
+            env_nested_delimiter: str,
+            env_file_encoding: str,
+        ) -> dict[str, object]:
+            """Load values from .env file and environment variables.
+
+            Returns:
+                Dictionary of field_name -> value
+
+            """
+            loaded_values: dict[str, object] = {}
+            prefix_len = len(env_prefix)
+
+            # Load from .env file if it exists
+            if env_file and Path(env_file).exists() and dotenv_values is not None:
+                try:
+                    env_file_values = dotenv_values(env_file, encoding=env_file_encoding)
+                    for key, value in env_file_values.items():
+                        if key.startswith(env_prefix):
+                            field_name = key[prefix_len:].lower()
+                            if env_nested_delimiter and env_nested_delimiter in field_name:
+                                parts = field_name.split(env_nested_delimiter.lower())
+                                field_name = "_".join(parts)
+                            loaded_values[field_name] = value
+                except Exception as e:
+                    _logger.debug("Failed to load .env file %s: %s", env_file, e)
+
+            # Load from environment variables (override .env file values)
+            for key, value in os.environ.items():
+                if key.startswith(env_prefix):
+                    field_name = key[prefix_len:].lower()
+                    if env_nested_delimiter and env_nested_delimiter in field_name:
+                        parts = field_name.split(env_nested_delimiter.lower())
+                        field_name = "_".join(parts)
+                    loaded_values[field_name] = value
+
+            return loaded_values
+
+        def __init__(self, **kwargs: object) -> None:
+            """Initialize AutoConfig with automatic .env file and environment variable loading.
+
+            If model_config contains env_prefix or env_file settings, automatically
+            loads values from environment variables and .env files.
+
+            Priority order:
+            1. kwargs (explicit values)
+            2. Environment variables (with env_prefix)
+            3. .env file values
+            4. Field defaults
+            """
+            cls = type(self)
+            config_dict = getattr(cls, "model_config", None)
+
+            if not config_dict:
+                super().__init__(**kwargs)
+                return
+
+            env_prefix, env_file, env_nested_delimiter, env_file_encoding = (
+                self._extract_settings_config(config_dict)
+            )
+
+            if not env_prefix:
+                super().__init__(**kwargs)
+                return
+
+            resolved_env_file = self._resolve_env_file(env_prefix, env_file)
+            loaded_values = self._load_env_values(
+                env_prefix, resolved_env_file, env_nested_delimiter, env_file_encoding
+            )
+
+            # Merge with kwargs (kwargs take precedence)
+            merged_kwargs = {**loaded_values, **kwargs}
+            super().__init__(**merged_kwargs)
+
+        @classmethod
+        def get_instance(cls) -> Self:
+            """Get or create singleton instance (thread-safe).
+
+            Returns:
+                The singleton instance for this config class
+
+            Example:
+                >>> config = MyProjectConfig.get_instance()
+                >>> same_config = MyProjectConfig.get_instance()
+                >>> assert config is same_config  # Same instance
+
+            """
+            if cls not in cls._instances:
+                with cls._lock:
+                    if cls not in cls._instances:
+                        cls._instances[cls] = cls()
+            # Type checkers understand that _instances[cls] returns an instance of cls
+            instance = cls._instances[cls]
+            # Runtime check ensures type safety
+            if not isinstance(instance, cls):
+                msg = f"Instance is not of type {cls.__name__}"
+                raise TypeError(msg)
+            return instance  # type: ignore[return-value]
+
+        @classmethod
+        def _reset_instance(cls) -> None:
+            """Reset singleton instance (for testing only).
+
+            WARNING: This method is intended for testing purposes only.
+            Do not use in production code.
+
+            Example:
+                >>> # In test fixtures
+                >>> @pytest.fixture(autouse=True)
+
+            """
+            with cls._lock:
+                if cls in cls._instances:
+                    del cls._instances[cls]
+
+        @classmethod
+        def _reset_all_instances(cls) -> None:
+            """Reset ALL singleton instances (for testing only).
+
+            WARNING: This clears instances for ALL AutoConfig subclasses.
+            Use _reset_instance() to clear only one class.
+
+            Example:
+                >>> # In test cleanup
+                >>> FlextConfig.AutoConfig._reset_all_instances()
+
+            """
+            with cls._lock:
+                cls._instances.clear()
+
+        def __getattr__(self, name: str) -> BaseModel:
+            """Dynamic namespace access via attribute (e.g., config.ldap).
+
+            Delegates to FlextConfig for namespace resolution, enabling
+            AutoConfig subclasses to access registered namespaces like
+            self.ldap, self.ldif, etc.
+
+            Args:
+                name: Attribute/namespace name
+
+            Returns:
+                Namespace config instance
+
+            Raises:
+                AttributeError: If not a registered namespace
+
+            """
+            # Get the outer FlextConfig class to access namespaces
+            # FlextConfig is defined in the same module
+            outer_cls = FlextConfig
+
+            # Check if it's a registered namespace
+            if name in outer_cls._namespaces:
+                return outer_cls._get_namespace_instance(name)
+
+            # Not a namespace - raise standard AttributeError
+            msg = f"'{type(self).__name__}' object has no attribute '{name}'"
+            raise AttributeError(msg)
+
     # ===== COMPUTED FIELDS =====
     @computed_field
     def is_debug_enabled(self) -> bool:
@@ -504,7 +1030,8 @@ class FlextConfig(BaseSettings):
         return (
             self.debug
             or self.trace
-            or self.log_level == FlextConstants.Settings.LogLevel.DEBUG
+            or (hasattr(self, "log_level") and self.log_level == FlextConstants.Settings.LogLevel.DEBUG)
+            or (hasattr(self, "cli_log_level") and isinstance(getattr(self, "cli_log_level", None), FlextConstants.Settings.LogLevel) and self.cli_log_level == FlextConstants.Settings.LogLevel.DEBUG)
         )
 
     @computed_field
@@ -514,7 +1041,17 @@ class FlextConfig(BaseSettings):
             return FlextConstants.Settings.LogLevel.DEBUG
         if self.debug:
             return FlextConstants.Settings.LogLevel.INFO
-        return self.log_level
+        # Support both log_level (FlextConfig) and cli_log_level (FlextCliConfig)
+        if hasattr(self, "log_level"):
+            log_level = self.log_level
+            if isinstance(log_level, FlextConstants.Settings.LogLevel):
+                return log_level
+        if hasattr(self, "cli_log_level"):
+            cli_log_level = self.cli_log_level
+            if isinstance(cli_log_level, FlextConstants.Settings.LogLevel):
+                return cli_log_level
+        # Fallback to INFO if neither exists
+        return FlextConstants.Settings.LogLevel.INFO
 
     @computed_field
     def is_production(self) -> bool:

@@ -15,6 +15,7 @@ import os
 import pathlib
 import shutil
 import subprocess  # nosec B404 - subprocess is used for legitimate process management
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -829,7 +830,7 @@ class FlextUtilities:
                         return FlextResult[
                             FlextUtilities._CompletedProcessWrapper
                         ].fail(
-                            result.error,
+                            result.error or "Command execution failed",
                             error_code=result.error_code,
                             error_data=result.error_data,
                         )
@@ -843,7 +844,7 @@ class FlextUtilities:
 
                 finally:
                     # Always restore original working directory
-                    os.chdir(str(original_cwd))
+                    os.chdir(original_cwd)
 
             except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                 return FlextResult[FlextUtilities._CompletedProcessWrapper].fail(
@@ -874,31 +875,79 @@ class FlextUtilities:
             capture_output: bool,
             text: bool,
         ) -> FlextResult[subprocess.CompletedProcess[str]]:
-            """Execute command with timeout handling using subprocess.
+            """Execute command with timeout handling using threading.
 
             Internal method for command execution with proper timeout and environment
-            handling. Returns raw subprocess result for further processing.
+            handling using threading.Thread instead of subprocess timeout.
+            Returns raw subprocess result for further processing.
             """
             try:
-                # Execute with timeout using subprocess.run
-                # nosec B603: subprocess call is intentional for command execution
-                # Input validation happens at caller level via safe command construction
-                result = subprocess.run(  # nosec B603
-                    cmd,
-                    env=env,
-                    input=command_input,
-                    capture_output=capture_output,
-                    text=text,
-                    timeout=timeout,
-                    check=False,  # We handle checking manually
-                )
-                return FlextResult.ok(result)
-            except subprocess.TimeoutExpired as e:
-                return FlextResult.fail(
-                    f"Command timed out after {timeout} seconds: {e!s}",
-                    error_code="COMMAND_TIMEOUT",
-                    error_data={"cmd": cmd, "timeout": timeout},
-                )
+                # Use subprocess.Popen for execution (lower-level control)
+                process_result: subprocess.CompletedProcess[str] | None = None
+                process_error: Exception | None = None
+
+                def run_command() -> None:
+                    """Run command in thread."""
+                    nonlocal process_result, process_error
+                    try:
+                        # nosec B603: subprocess call is intentional for command execution
+                        # Input validation happens at caller level via safe command construction
+                        popen = subprocess.Popen(  # nosec B603
+                            cmd,
+                            env=env,
+                            stdin=subprocess.PIPE if command_input else None,
+                            stdout=subprocess.PIPE if capture_output else None,
+                            stderr=subprocess.PIPE if capture_output else None,
+                            text=text,
+                        )
+
+                        stdout, stderr = popen.communicate(
+                            input=command_input or None
+                        )
+
+                        process_result = subprocess.CompletedProcess(
+                            args=cmd,
+                            returncode=popen.returncode,
+                            stdout=stdout or "",
+                            stderr=stderr or "",
+                        )
+                    except Exception as e:
+                        process_error = e
+
+                # Execute in thread with timeout handling
+                thread = threading.Thread(target=run_command, daemon=True)
+                thread.start()
+
+                if timeout:
+                    thread.join(timeout=timeout)
+                    if thread.is_alive():
+                        # Thread still running - timeout occurred
+                        return FlextResult.fail(
+                            f"Command timed out after {timeout} seconds",
+                            error_code="COMMAND_TIMEOUT",
+                            error_data={"cmd": cmd, "timeout": timeout},
+                        )
+                else:
+                    thread.join()
+
+                # Check for execution error
+                if process_error:
+                    return FlextResult.fail(
+                        f"Command execution failed: {process_error!s}",
+                        error_code="COMMAND_EXECUTION_ERROR",
+                        error_data={"cmd": cmd, "error": str(process_error)},
+                    )
+
+                # Check if process_result was set
+                if process_result is None:
+                    return FlextResult.fail(
+                        "Command execution did not complete",
+                        error_code="COMMAND_EXECUTION_ERROR",
+                        error_data={"cmd": cmd},
+                    )
+
+                return FlextResult.ok(process_result)
+
             except (OSError, subprocess.SubprocessError) as e:
                 return FlextResult.fail(
                     f"Command execution failed: {e!s}",

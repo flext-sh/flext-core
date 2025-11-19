@@ -17,18 +17,21 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Container, Iterator, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
-from typing import cast
+from typing import ParamSpec, TypeVar, cast
 
 import pytest
 from hypothesis import given, settings, strategies as st
 
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
+
 
 def mark_test_pattern(
     pattern: str,
-) -> Callable[[Callable[..., None]], Callable[..., None]]:
+) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]:
     """Mark test with a specific pattern for demonstration purposes."""
 
-    def decorator(func: Callable[..., None]) -> Callable[..., None]:
+    def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
         # Use setattr for dynamic attribute setting to avoid mypy error
         func._test_pattern = pattern
         return func

@@ -31,6 +31,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ✅ 36/36 comprehensive tests passing (8 test classes covering all Layer 3 features)
 - ✅ Quality Gates: Linting ✅ (0 violations), Type-check ✅ (0 errors), Coverage ✅ (80.24%), Tests ✅ (1,878/1,878 passing)
 
+**Phase 5: Configuration Namespace Architecture (January 2025): ✅ COMPLETE**
+- ✅ Unified namespace registration system in FlextConfig (lines 147-151, 509-663)
+- ✅ NamespaceConfigProtocol added to FlextProtocols (lines 676-744)
+- ✅ Thread-safe lazy loading with RLock for concurrent access
+- ✅ 29 comprehensive tests passing (test_config_namespaces.py)
+- ✅ Quality Gates: Lint ✅ (0 violations), Type-check ✅ (0 errors)
+- ✅ Enables unified config hierarchy: `config.ldap`, `config.ldif`, `config.cli`
+- ✅ Auto-registration pattern for subprojects (call on module import)
+- ✅ Factory function support for custom singleton patterns
+
+**Namespace Architecture Benefits**:
+- **Unified Singleton**: One `FlextConfig.get_instance()` for entire ecosystem
+- **Type-Safe Access**: `config.ldap: FlextLdapConfig` with full IDE autocomplete
+- **Lazy Loading**: Namespaces created only when first accessed
+- **Auto-Discovery**: Subprojects self-register via `register_as_namespace()`
+- **Backward Compatible**: Existing code unchanged, new pattern is additive
+
+**Next Steps (Ecosystem Migration)**:
+- Phase 2: Core libraries (flext-ldif, flext-ldap, flext-cli, +7 others)
+- Phase 3: Services (19 Singer taps/targets, DBT, database projects)
+- Phase 4: Applications (flext-web, algar-oud-mig, gruponos-meltano-native)
+
 ---
 
 ## Essential Commands
@@ -239,6 +261,109 @@ class Account(FlextModels.AggregateRoot):
     owner: User
     balance: Decimal
 ```
+
+#### 6. Configuration Namespace Pattern (UNIFIED CONFIG HIERARCHY)
+
+The namespace pattern enables unified configuration management across the FLEXT ecosystem, replacing multiple disconnected singletons with a single hierarchical config.
+
+**Architecture**:
+```
+FlextConfig (root singleton, BaseSettings)
+    ↓ registers
+FlextLdapConfig as 'ldap' namespace (BaseModel)
+FlextLdifConfig as 'ldif' namespace (BaseModel)
+FlextCliConfig as 'cli' namespace (BaseModel)
+...
+```
+
+**Implementation in Subprojects**:
+```python
+# flext-ldap/src/flext_ldap/config.py
+from pydantic import BaseModel, Field, AliasChoices
+from flext_core import FlextConfig, FlextResult
+
+class FlextLdapConfig(BaseModel):
+    """LDAP configuration - nested under FlextConfig."""
+
+    # Use AliasChoices for field aliasing (Pydantic v2)
+    ldap_host: str = Field(
+        default="localhost",
+        validation_alias=AliasChoices('ldap_host', 'oud_host', 'oid_host'),
+        description="LDAP server hostname"
+    )
+    ldap_port: int = Field(default=389, ge=1, le=65535)
+    ldap_bind_dn: str = Field(default="cn=admin")
+
+    @classmethod
+    def register_as_namespace(cls) -> FlextResult[bool]:
+        """Register as 'ldap' namespace."""
+        try:
+            FlextConfig.register_namespace('ldap', cls)
+            return FlextResult[bool].ok(True)
+        except Exception as e:
+            return FlextResult[bool].fail(str(e))
+
+# flext-ldap/src/flext_ldap/__init__.py
+from flext_ldap.config import FlextLdapConfig
+
+# Auto-register on module import
+FlextLdapConfig.register_as_namespace()
+```
+
+**Usage Pattern**:
+```python
+from flext_core import FlextConfig
+
+# Get unified config singleton
+config = FlextConfig.get_instance()
+
+# Access namespaces (lazy-loaded, type-safe)
+ldap_config = config.ldap  # FlextLdapConfig instance
+ldif_config = config.ldif  # FlextLdifConfig instance
+cli_config = config.cli    # FlextCliConfig instance
+
+# Environment variables automatically mapped
+# FLEXT_LDAP__HOST → config.ldap.ldap_host
+# FLEXT_LDIF__MAX_ENTRIES → config.ldif.max_entries
+```
+
+**Key Benefits**:
+- ✅ **Unified Access**: One `FlextConfig.get_instance()` for entire ecosystem
+- ✅ **Type-Safe**: Full IDE autocomplete (`config.ldap: FlextLdapConfig`)
+- ✅ **Lazy Loading**: Namespaces created only when first accessed
+- ✅ **Thread-Safe**: RLock ensures concurrent access safety
+- ✅ **Auto-Discovery**: Subprojects self-register via `register_as_namespace()`
+- ✅ **Env Var Parsing**: Pydantic v2 automatic parsing with `env_nested_delimiter="__"`
+- ✅ **Backward Compatible**: Existing code unchanged, new pattern is additive
+
+**Pydantic v2 Requirements**:
+- **Root Config**: Must inherit from `BaseSettings` (loads environment variables)
+- **Namespace Configs**: Must inherit from `BaseModel` (receives parsed values from parent)
+- **Field Aliasing**: Use `AliasChoices` for backward compatibility (not `alias=`)
+- **Env Nested Delimiter**: Use `__` for nested configs (e.g., `FLEXT_LDAP__HOST`)
+
+**Testing**:
+```python
+# Test namespace registration
+result = FlextLdapConfig.register_as_namespace()
+assert result.is_success
+
+# Test namespace access
+config = FlextConfig()
+assert hasattr(config, 'ldap')
+assert isinstance(config.ldap, FlextLdapConfig)
+
+# Test lazy loading
+assert 'ldap' in FlextConfig._namespaces
+assert 'ldap' not in FlextConfig._namespace_instances  # Not yet loaded
+_ = config.ldap  # First access triggers instantiation
+assert 'ldap' in FlextConfig._namespace_instances  # Now loaded
+```
+
+**See Also**:
+- `src/flext_core/config.py` - FlextConfig namespace registration system (lines 509-663)
+- `src/flext_core/protocols.py` - NamespaceConfigProtocol (lines 676-744)
+- `tests/unit/test_config_namespaces.py` - 29 comprehensive tests
 
 ---
 

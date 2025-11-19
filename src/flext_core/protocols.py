@@ -673,6 +673,76 @@ class FlextProtocols:
             """
             ...
 
+    @runtime_checkable
+    class NamespaceConfigProtocol(Protocol):
+        """Protocol for configuration classes that can be registered as namespaces.
+
+        This protocol defines the interface for configuration classes that want to
+        register themselves as namespaces in the FlextConfig singleton hierarchy.
+        Enables unified configuration management across the FLEXT ecosystem.
+
+        Architecture:
+            FlextConfig (root singleton)
+                ↓ registers
+            FlextLdapConfig as 'ldap' namespace
+            FlextLdifConfig as 'ldif' namespace
+            FlextCliConfig as 'cli' namespace
+            ...
+
+        Usage Pattern:
+            >>> class FlextLdapConfig(BaseModel):
+            ...     @classmethod
+            ...     def register_as_namespace(cls) -> FlextResult[bool]:
+            ...         return FlextConfig.register_namespace('ldap', cls)
+            ...
+            >>> # Auto-register on module import
+            >>> FlextLdapConfig.register_as_namespace()
+            ...
+            >>> # Access via unified config
+            >>> config = FlextConfig.get_instance()
+            >>> ldap_cfg = config.ldap  # FlextLdapConfig instance
+
+        Implementation Notes:
+            - Namespace configs must inherit from BaseModel (not BaseSettings)
+            - Root configs inherit from BaseSettings
+            - Namespace registration is lazy (instance created on first access)
+            - Thread-safe singleton pattern with RLock
+            - Supports factory functions for custom instantiation
+
+        Used in: config.py (FlextConfig namespace registration system)
+        """
+
+        @classmethod
+        @abstractmethod
+        def register_as_namespace(cls) -> FlextResult[bool]:
+            """Register this configuration class as a namespace.
+
+            Subprojects implement this method to register their config classes
+            as namespaces in the root FlextConfig singleton.
+
+            Returns:
+                FlextResult[bool]: Success if registered, failure if already registered
+                    or if registration fails
+
+            Example:
+                >>> class FlextLdapConfig(BaseModel):
+                ...     # ... fields ...
+                ...
+                ...     @classmethod
+                ...     def register_as_namespace(cls) -> FlextResult[bool]:
+                ...         from flext_core import FlextConfig
+                ...         try:
+                ...             FlextConfig.register_namespace('ldap', cls)
+                ...             return FlextResult[bool].ok(True)
+                ...         except Exception as e:
+                ...             return FlextResult[bool].fail(str(e))
+                ...
+                >>> # In __init__.py of flext-ldap
+                >>> FlextLdapConfig.register_as_namespace()
+
+            """
+            ...
+
     # =========================================================================
     # DOMAIN LAYER (Layer 1) - Service and Repository protocols
     # =========================================================================

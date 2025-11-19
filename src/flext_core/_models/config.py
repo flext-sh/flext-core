@@ -244,13 +244,13 @@ class FlextModelsConfig:
         input_data: dict[str, object] = Field(default_factory=dict)
         execution_context: dict[str, object] = Field(default_factory=dict)
         timeout_seconds: float = Field(
-            default_factory=lambda: FlextConfig().timeout_seconds,
+            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds,
             le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextConfig",
         )
         retry_on_failure: bool = True
         max_retries: int = Field(
-            default_factory=lambda: FlextConfig().max_retry_attempts,
+            default_factory=lambda: FlextConfig.get_global_instance().max_retry_attempts,
             description="Max retries from FlextConfig",
         )
 
@@ -398,7 +398,7 @@ class FlextModelsConfig:
         """
 
         level: str = Field(
-            default_factory=lambda: FlextConfig().log_level.value,
+            default_factory=lambda: FlextConfig.get_global_instance().log_level.value,
             description="Log level from FlextConfig (can be overridden)",
         )
         service_name: str | None = Field(

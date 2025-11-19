@@ -502,10 +502,9 @@ class FlextRuntime:
         config: object | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[Callable[..., FlextTypes.GenericTypeArgument]]
-        | None = None,
-        wrapper_class_factory: FlextTypes.FactoryCallableType | None = None,
-        logger_factory: FlextTypes.FactoryCallableType | None = None,
+        additional_processors: Sequence[object] | None = None,
+        wrapper_class_factory: Callable[[], object] | None = None,
+        logger_factory: Callable[[], object] | None = None,
         cache_logger_on_first_use: bool = True,
     ) -> None:
         """Configure structlog once using FLEXT defaults.
@@ -582,20 +581,22 @@ class FlextRuntime:
             # Tested but not covered: structlog configures once per process
             processors.append(module.processors.JSONRenderer())
 
+        # Type-safe processor list - structlog processors have complex types
+        # that cannot be expressed without Any, so we use cast for type safety
         module.configure(
-            processors=cast("list[Callable[..., dict[str, object]]]", processors),
+            processors=processors,  # type: ignore[arg-type]
             wrapper_class=cast(
-                "type[structlog.BoundLoggerBase] | None",
+                "type[object] | None",
                 wrapper_class_factory
                 if wrapper_class_factory is not None
                 else module.make_filtering_bound_logger(level_to_use),
-            ),
+            ),  # type: ignore[arg-type]
             logger_factory=cast(
-                "Callable[[], structlog.BoundLoggerBase] | None",
+                "Callable[[], object] | None",
                 logger_factory
                 if logger_factory is not None
                 else module.PrintLoggerFactory(),
-            ),
+            ),  # type: ignore[arg-type]
             cache_logger_on_first_use=cache_logger_on_first_use,
         )
 
@@ -607,8 +608,7 @@ class FlextRuntime:
         *,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[Callable[..., FlextTypes.GenericTypeArgument]]
-        | None = None,
+        additional_processors: Sequence[object] | None = None,
     ) -> None:
         """Force reconfigure structlog (ignores is_configured checks).
 

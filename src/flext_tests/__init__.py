@@ -29,8 +29,10 @@ from flext_core import (
     FlextTypes,
     FlextUtilities,
 )
+from flext_tests.builders import FlextTestsBuilders
 from flext_tests.docker import FlextTestDocker
 from flext_tests.domains import FlextTestsDomains
+from flext_tests.factories import FlextTestsFactories
 from flext_tests.matchers import FlextTestsMatchers
 from flext_tests.utilities import FlextTestsUtilities
 
@@ -52,7 +54,9 @@ __all__ = [
     "FlextRuntime",
     "FlextService",
     "FlextTestDocker",
+    "FlextTestsBuilders",
     "FlextTestsDomains",
+    "FlextTestsFactories",
     "FlextTestsMatchers",
     "FlextTestsUtilities",
     "FlextTypes",

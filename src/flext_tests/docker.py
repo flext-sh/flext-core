@@ -1019,7 +1019,7 @@ class FlextTestDocker:
     # Class attributes that are expected
     SHARED_CONTAINERS: ClassVar[dict[str, dict[str, str | int]]] = {
         "flext-openldap-test": {
-            "compose_file": "docker/docker-compose.openldap.yml",
+            "compose_file": "docker/docker-compose.yml",
             "service": "openldap",
             "port": 3390,
         },
@@ -1989,7 +1989,7 @@ class FlextTestDocker:
             # Detect issues
             issues_result = self.detect_container_issues(container_name)
             if issues_result.is_failure:
-                return FlextResult[str].fail(issues_result.error)
+                return FlextResult[str].fail(issues_result.error or "Failed to detect container issues")
 
             issues = issues_result.unwrap()
             if not issues:
@@ -2108,7 +2108,7 @@ class FlextTestDocker:
             # CRITICAL: If health check failed, fail startup
             # (container is marked dirty for recreation)
             if health_result.is_failure:
-                return FlextResult[str].fail(health_result.error)
+                return FlextResult[str].fail(health_result.error or "Container health check failed")
 
             # If health check returned False (unhealthy/stuck/restarting)
             # Container already marked dirty by wait_for_container_healthy

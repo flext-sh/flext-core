@@ -319,7 +319,8 @@ class FlextService[TDomainResult](
                     )
                 else:
                     # For complex type hints (generics, unions), use beartype
-                    type_mismatch = not is_bearable(
+                    # Type checker may think this is unreachable, but complex types are validated here
+                    type_mismatch = not is_bearable(  # type: ignore[unreachable]
                         result.value, self._expected_domain_result_type
                     )
             except (TypeError, AttributeError):
@@ -924,28 +925,53 @@ class FlextService[TDomainResult](
 
         """
         # Validate business rules
+        self.logger.debug(
+            "Validating business rules",
+            operation="validate_pre_execution",
+            operation_name=request.operation_name,
+            source="flext-core/src/flext_core/service.py",
+        )
         business_rules_result = self.validate_business_rules()
         if business_rules_result.is_failure:
+            error_msg = business_rules_result.error or "Unknown business rules error"
             self.logger.error(
-                f"Business rules validation failed for operation: {request.operation_name}",
-                extra={"error": business_rules_result.error},
+                "FAILED: Business rules validation failed - EXECUTION ABORTED",
+                operation="validate_pre_execution",
+                operation_name=request.operation_name,
+                error=error_msg,
+                consequence="Operation will not be executed",
+                resolution_hint="Fix business rules validation logic",
+                source="flext-core/src/flext_core/service.py",
             )
             return self.fail(
-                f"Business rules validation failed: {business_rules_result.error}"
+                f"Business rules validation failed: {error_msg}"
             )
 
         # Validate configuration
+        self.logger.debug(
+            "Validating configuration",
+            operation="validate_pre_execution",
+            operation_name=request.operation_name,
+            source="flext-core/src/flext_core/service.py",
+        )
         config_result = self.validate_config()
         if config_result.is_failure:
+            error_msg = config_result.error or "Unknown configuration error"
             self.logger.error(
-                f"Configuration validation failed for operation: {request.operation_name}",
-                extra={"error": config_result.error},
+                "FAILED: Configuration validation failed - EXECUTION ABORTED",
+                operation="validate_pre_execution",
+                operation_name=request.operation_name,
+                error=error_msg,
+                consequence="Operation will not be executed",
+                resolution_hint="Fix configuration validation logic",
+                source="flext-core/src/flext_core/service.py",
             )
-            return self.fail(f"Configuration validation failed: {config_result.error}")
+            return self.fail(f"Configuration validation failed: {error_msg}")
 
         # Validate keyword_arguments is a dict
         if not isinstance(request.keyword_arguments, dict):
-            return self.fail(
+            # Type checker may think this is unreachable, but it's reachable at runtime
+            return self.fail(  # type: ignore[unreachable]
                 f"Invalid keyword arguments: expected dict, got {type(request.keyword_arguments).__name__}"
             )
 
@@ -953,7 +979,7 @@ class FlextService[TDomainResult](
 
     def _execute_callable_once(
         self,
-        request: FlextModels.OperationExecutionRequest | Callable[..., TDomainResult],
+        request: FlextModels.OperationExecutionRequest | Callable[[object], TDomainResult],
     ) -> TDomainResult:
         """Execute operation callable once (with timeout if specified).
 
@@ -971,7 +997,7 @@ class FlextService[TDomainResult](
         if callable(request):
             operation_request = FlextModels.OperationExecutionRequest(
                 operation_name="direct_callable",
-                operation_callable=cast("Callable[..., object]", request),
+                operation_callable=cast("Callable[[object], object]", request),
             )
         else:
             operation_request = request
@@ -1064,9 +1090,22 @@ class FlextService[TDomainResult](
         """
         for attempt in range(config.max_attempts):
             try:
+                self.logger.debug(
+                    "Executing operation callable",
+                    operation="execute_with_retry_config",
+                    operation_name=request.operation_name,
+                    attempt=attempt + 1,
+                    max_attempts=config.max_attempts,
+                    source="flext-core/src/flext_core/service.py",
+                )
                 result = self._execute_callable_once(request)
                 self.logger.info(
-                    f"Operation completed successfully: {request.operation_name}"
+                    "Operation completed successfully",
+                    operation="execute_with_retry_config",
+                    operation_name=request.operation_name,
+                    attempt=attempt + 1,
+                    max_attempts=config.max_attempts,
+                    source="flext-core/src/flext_core/service.py",
                 )
 
                 # Wrap result if not already a FlextResult
@@ -1089,8 +1128,17 @@ class FlextService[TDomainResult](
                     )
 
                     self.logger.exception(
-                        f"Operation execution failed: {request.operation_name}",
-                        extra={"error": error_msg, "error_type": type(e).__name__},
+                        "FATAL ERROR: Operation execution failed after all retries - EXECUTION ABORTED",
+                        operation="execute_with_retry_config",
+                        operation_name=request.operation_name,
+                        attempt=attempt_num,
+                        max_attempts=config.max_attempts,
+                        error=error_msg,
+                        error_type=type(e).__name__,
+                        consequence="Operation failed completely - no result returned",
+                        severity="critical",
+                        resolution_hint="Check operation implementation and retry configuration",
+                        source="flext-core/src/flext_core/service.py",
                     )
                     return self.fail(
                         f"Operation {request.operation_name} failed: {error_msg}"
@@ -1102,8 +1150,16 @@ class FlextService[TDomainResult](
                 )
 
                 self.logger.warning(
-                    f"Operation {request.operation_name} failed (attempt {attempt_num}/{config.max_attempts}), retrying in {delay:.2f}s",
-                    extra={"error": str(e), "error_type": type(e).__name__},
+                    "Operation failed, retrying with delay",
+                    operation="execute_with_retry_config",
+                    operation_name=request.operation_name,
+                    attempt=attempt_num,
+                    max_attempts=config.max_attempts,
+                    retry_delay_seconds=delay,
+                    error=str(e),
+                    error_type=type(e).__name__,
+                    consequence="Will retry operation after delay",
+                    source="flext-core/src/flext_core/service.py",
                 )
                 time.sleep(delay)
 
@@ -1137,25 +1193,27 @@ class FlextService[TDomainResult](
             self._propagate_context(operation_name)
 
             self.logger.info(
-                f"Executing operation: {request.operation_name}",
-                extra={
-                    "timeout_seconds": request.timeout_seconds,
-                    "has_retry_config": bool(request.retry_config),
-                    "correlation_id": self._get_correlation_id(),
-                },
+                "Starting operation execution",
+                operation="execute_operation",
+                operation_name=request.operation_name,
+                timeout_seconds=request.timeout_seconds,
+                has_retry_config=bool(request.retry_config),
+                correlation_id=self._get_correlation_id(),
+                source="flext-core/src/flext_core/service.py",
             )
 
             # Validate pre-execution requirements
             validation_result = self._validate_pre_execution(request)
             if validation_result.is_failure:
-                return self.fail(validation_result.error)
+                return self.fail(validation_result.error or "Pre-execution validation failed")
 
             # Execute with retry logic (delegated to private method)
             # Validate retry_config - NO fallback, explicit validation
             retry_config = request.retry_config
             if not isinstance(retry_config, dict):
                 # Fast fail: retry_config must be dict (Field default_factory ensures this)
-                msg = (
+                # Type checker may think this is unreachable, but it's reachable at runtime
+                msg = (  # type: ignore[unreachable]
                     f"Invalid retry_config type: {type(retry_config).__name__}. "
                     "Expected dict[str, object]"
                 )

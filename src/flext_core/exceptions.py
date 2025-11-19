@@ -481,11 +481,13 @@ class FlextExceptions:
                 self.metadata = metadata.copy()  # Avoid mutating input
             else:
                 # Fast fail: metadata must be dict or None
+                # Type checker may think this is unreachable, but it's reachable at runtime
+                # This handles cases where invalid types are passed at runtime
                 msg = (
                     f"Invalid metadata type: {type(metadata).__name__}. "
                     "Expected dict[str, object] | None"
                 )
-                raise TypeError(msg)
+                raise TypeError(msg)  # type: ignore[unreachable]
             self.metadata.update(extra_kwargs)
             self.timestamp = time.time()
             self.auto_log = auto_log

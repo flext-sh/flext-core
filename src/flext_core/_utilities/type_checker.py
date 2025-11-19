@@ -87,7 +87,10 @@ class FlextUtilitiesTypeChecker:
         """Extract signature from handle method."""
         try:
             # Cast to Callable for inspect.signature
-            callable_method = cast("Callable[..., object]", handle_method)
+            if not callable(handle_method):
+                return None
+            # Use Protocol to avoid explicit Any - inspect.signature accepts any callable
+            callable_method = cast("Callable[[object], object]", handle_method)
             return inspect.signature(callable_method)
         except (TypeError, ValueError):
             return None

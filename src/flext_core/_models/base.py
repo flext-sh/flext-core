@@ -15,6 +15,7 @@ from datetime import UTC, datetime
 from pydantic import Field, HttpUrl, computed_field
 
 from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.service import OperationCallable
 from flext_core.constants import FlextConstants
 
 
@@ -111,16 +112,16 @@ class FlextModelsBase:
         """Conditional execution request."""
 
         condition: Callable[[object], bool]
-        true_action: Callable[..., object] | None = (
+        true_action: OperationCallable | None = (
             None  # Optional for test convenience
         )
-        false_action: Callable[..., object] | None = None
+        false_action: OperationCallable | None = None
         context: dict[str, object] = Field(default_factory=dict)
 
         @classmethod
         def validate_condition(
-            cls, v: Callable[..., object] | None
-        ) -> Callable[..., object] | None:
+            cls, v: OperationCallable | None
+        ) -> OperationCallable | None:
             """Validate callables are properly defined (Pydantic v2 mode='after')."""
             return v
 
