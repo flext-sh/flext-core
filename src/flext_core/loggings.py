@@ -788,10 +788,11 @@ class FlextLogger:
             return f"{message} | args={args!r}"
 
     def _get_caller_source_path(self) -> str | None:
-        """Get source file path of the caller.
+        """Get source file path of the caller with line, class and method context.
 
         Returns:
-            str | None: Relative path from workspace root or filename, None if fails
+            str | None: Formatted string like "file.py:3334" or "file.py:3334 ClassName.method_name",
+                       None if fails
 
         """
         try:
@@ -812,7 +813,42 @@ class FlextLogger:
                 return None
 
             filename = caller_frame.f_code.co_filename
-            return self._convert_to_relative_path(filename)
+            file_path = self._convert_to_relative_path(filename)
+            
+            # Get line number (add 1 to show the line after the logger call)
+            line_number = caller_frame.f_lineno + 1
+            
+            # Get method name
+            method_name = caller_frame.f_code.co_name
+            
+            # Try to get class name
+            class_name: str | None = None
+            # Check if 'self' is in the frame's locals
+            if 'self' in caller_frame.f_locals:
+                self_obj = caller_frame.f_locals['self']
+                if hasattr(self_obj, '__class__'):
+                    class_name = self_obj.__class__.__name__
+            # Alternative: try to extract from qualname if available (Python 3.11+)
+            elif hasattr(caller_frame.f_code, 'co_qualname'):
+                qualname = caller_frame.f_code.co_qualname
+                if '.' in qualname:
+                    # Extract class name from qualname (e.g., "ClassName.method_name")
+                    parts = qualname.rsplit('.', 1)
+                    if len(parts) == 2:
+                        potential_class = parts[0]
+                        # Verify it's likely a class (not a nested function)
+                        if potential_class and potential_class[0].isupper():
+                            class_name = potential_class
+            
+            # Build the source string
+            source_parts = [f"{file_path}:{line_number}"]
+            
+            if class_name and method_name:
+                source_parts.append(f"{class_name}.{method_name}")
+            elif method_name and method_name != "<module>":
+                source_parts.append(method_name)
+            
+            return " ".join(source_parts) if len(source_parts) > 1 else source_parts[0]
         except Exception:
             return None
 

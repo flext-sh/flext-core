@@ -729,7 +729,7 @@ class TestResult100Coverage:
         result = FlextResult[str].fail("error")
         failure_none = Failure(None)
         result._result = failure_none  # type: ignore[attr-defined]
-        with pytest.raises(FlextExceptions.BaseError, match=r".*None error.*"):
+        with pytest.raises(FlextExceptions.BaseError, match=r".*Unknown error.*"):
             list(result)
 
     def test_traverse_with_none_error(self) -> None:

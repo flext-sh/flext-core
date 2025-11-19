@@ -21,6 +21,9 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 
+# Type alias for operation callables - avoids explicit Any while maintaining flexibility
+OperationCallable = Callable[[], object] | Callable[[object], object] | Callable[[object, object], object]
+
 
 class FlextModelsService:
     """Domain service pattern container class.
@@ -133,7 +136,7 @@ class FlextModelsService:
             min_length=1,
             description="Operation name",
         )
-        operation_callable: Callable[..., object]
+        operation_callable: OperationCallable
         arguments: dict[str, object] = Field(default_factory=dict)
         keyword_arguments: dict[str, object] = Field(default_factory=dict)
         timeout_seconds: float = Field(
@@ -146,7 +149,7 @@ class FlextModelsService:
 
         @field_validator("operation_callable", mode="after")
         @classmethod
-        def validate_operation_callable(cls, v: object) -> Callable[..., object]:
+        def validate_operation_callable(cls, v: object) -> OperationCallable:
             """Validate operation is callable (using FlextUtilities.Validation)."""
             result = FlextUtilitiesValidation.validate_callable(
                 v,
@@ -161,7 +164,7 @@ class FlextModelsService:
                     error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
             # Type-safe return: v is confirmed callable by validation
-            return cast("Callable[..., object]", v)
+            return cast("OperationCallable", v)
 
 
 __all__ = ["FlextModelsService"]

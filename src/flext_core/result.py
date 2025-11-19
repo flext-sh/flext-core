@@ -290,7 +290,8 @@ class FlextResult[T_co]:
             if isinstance(self._expected_type, type):
                 is_valid = isinstance(data, self._expected_type)
             else:
-                is_valid = is_bearable(data, self._expected_type)
+                # Type checker may think this is unreachable, but complex types are validated here
+                is_valid = is_bearable(data, self._expected_type)  # type: ignore[unreachable]
         except (TypeError, AttributeError):
             is_valid = False
 
@@ -383,11 +384,12 @@ class FlextResult[T_co]:
             self._error_data = error_data
         else:
             # Fast fail: error_data must be dict or None
+            # Runtime validation: type checker may not catch all invalid types
             msg = (
                 f"Invalid error_data type: {type(error_data).__name__}. "
                 "Expected dict[str, object] | None"
             )
-            raise TypeError(msg)
+            raise TypeError(msg)  # type: ignore[unreachable]
         self.metadata: object | None = None
 
     def __class_getitem__(cls, item: object) -> type:
@@ -502,6 +504,34 @@ class FlextResult[T_co]:
         if not error_msg:
             return "Unknown error occurred"
 
+        return error_msg
+
+    def unwrap_error(self) -> str:
+        """Return the error message, raising if success.
+
+        This is the type-safe way to get error messages when you know
+        the result is a failure. Use this instead of .error when you
+        need a guaranteed str type.
+
+        Returns:
+            str: The error message (guaranteed non-None for failures).
+
+        Raises:
+            ValueError: If called on a success result.
+
+        Example:
+            if result.is_failure:
+                error_msg = result.unwrap_error()  # Returns str, not str | None
+                return self.fail(error_msg)
+
+        """
+        if self.is_success:
+            msg = "Cannot unwrap_error on success result"
+            raise ValueError(msg)
+
+        error_msg = self._result.failure()
+        if not error_msg:
+            return "Unknown error occurred"
         return error_msg
 
     @property
@@ -886,14 +916,13 @@ class FlextResult[T_co]:
             yield self._result.unwrap()
             yield ""  # Empty string for error when success
         else:
-            error_msg = self._result.failure()
-            if error_msg is None:
-                msg = "Failed result has None error message"
-                raise FlextExceptions.BaseError(
-                    message=msg, error_code="OPERATION_ERROR"
-                )
+            # Use error property which has fallback logic and guarantees non-None for failures
+            error_msg = self.error
+            # error property returns "Unknown error occurred" as fallback, so never None for failures
+            # Type assertion: when is_failure is True, error is guaranteed to be str
+            final_error = error_msg if error_msg is not None else "Unknown error occurred"
             raise FlextExceptions.BaseError(
-                message=error_msg, error_code="OPERATION_ERROR"
+                message=final_error, error_code="OPERATION_ERROR"
             )
 
     def __getitem__(self, key: int) -> T_co | str:
@@ -905,21 +934,20 @@ class FlextResult[T_co]:
         if key == 0:
             if self.is_success:
                 return self._result.unwrap()
-            error_msg = self._result.failure()
-            if error_msg is None:
-                msg = "Failed result has None error message"
-                raise FlextExceptions.BaseError(
-                    message=msg, error_code="OPERATION_ERROR"
-                )
+            # Use error property which has fallback logic and guarantees non-None for failures
+            error_msg = self.error
+            # error property returns "Unknown error occurred" as fallback, so never None for failures
+            # Type assertion: when is_failure is True, error is guaranteed to be str
+            final_error = error_msg if error_msg is not None else "Unknown error occurred"
             raise FlextExceptions.BaseError(
-                message=error_msg, error_code="OPERATION_ERROR"
+                message=final_error, error_code="OPERATION_ERROR"
             )
         if key == 1:
             if self.is_failure:
-                error_msg = self._result.failure()
-                if error_msg is None:
-                    return ""
-                return error_msg
+                # Use error property which has fallback logic
+                error_msg = self.error
+                # error property returns "Unknown error occurred" as fallback, so never None for failures
+                return error_msg or ""
             # Success case - return empty string (no error)
             return ""
         msg = "FlextResult only supports indices 0 (data) and 1 (error)"
@@ -2006,7 +2034,7 @@ class FlextResult[T_co]:
             if validation_result.error == "Unknown error occurred":
                 error_msg = "Validation failed: error is None"
             else:
-                error_msg = validation_result.error
+                error_msg = validation_result.error or "Validation failed"
             return FlextResult[U].fail(
                 error_msg,
                 error_code=validation_result.error_code,

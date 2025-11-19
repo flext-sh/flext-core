@@ -411,14 +411,36 @@ class FlextRegistry(FlextMixins):
         handler_name = handler.__class__.__name__ if handler else "unknown"
         self._propagate_context(f"register_handler_{handler_name}")
 
+        self.logger.debug(
+            "Starting handler registration",
+            operation="register_handler",
+            handler_name=handler_name,
+            handler_type=type(handler).__name__ if handler else "None",
+            source="flext-core/src/flext_core/registry.py",
+        )
+
         # Validate handler is not None
         if handler is None:
+            self.logger.error(
+                "FAILED: Handler is None - REGISTRATION ABORTED",
+                operation="register_handler",
+                consequence="Cannot register None handler",
+                resolution_hint="Provide a valid handler instance",
+                source="flext-core/src/flext_core/registry.py",
+            )
             return self.fail(
                 "Handler cannot be None",
             )
 
         key = self._resolve_handler_key(handler)
         if key in self._registered_keys:
+            self.logger.debug(
+                "Handler already registered, returning existing registration",
+                operation="register_handler",
+                handler_name=handler_name,
+                handler_key=key,
+                source="flext-core/src/flext_core/registry.py",
+            )
             # Return successful registration details for idempotent registration
             return self.ok(
                 FlextModels.RegistrationDetails(
@@ -430,9 +452,23 @@ class FlextRegistry(FlextMixins):
             )
 
         # Handler is already the correct type
+        self.logger.debug(
+            "Registering handler with dispatcher",
+            operation="register_handler",
+            handler_name=handler_name,
+            handler_key=key,
+            source="flext-core/src/flext_core/registry.py",
+        )
         registration = self._dispatcher.register_handler(handler)
         if registration.is_success:
             self._registered_keys.add(key)
+            self.logger.info(
+                "Handler registered successfully",
+                operation="register_handler",
+                handler_name=handler_name,
+                handler_key=key,
+                source="flext-core/src/flext_core/registry.py",
+            )
             # Convert dict[str, object] to RegistrationDetails
             reg_data = registration.value
             # Format timestamp without microseconds to match pattern
@@ -470,9 +506,19 @@ class FlextRegistry(FlextMixins):
                 ),
             )
             return self.ok(reg_details)
-        return self.fail(
-            registration.error or "Unknown error",
+        
+        error_msg = registration.error or "Unknown error"
+        self.logger.error(
+            "FAILED to register handler with dispatcher - REGISTRATION ABORTED",
+            operation="register_handler",
+            handler_name=handler_name,
+            handler_key=key,
+            error=error_msg,
+            consequence="Handler will not be available for dispatch",
+            resolution_hint="Check dispatcher configuration and handler compatibility",
+            source="flext-core/src/flext_core/registry.py",
         )
+        return self.fail(error_msg)
 
     def register_handlers(
         self,
@@ -487,8 +533,25 @@ class FlextRegistry(FlextMixins):
         # Propagate context for distributed tracing
         self._propagate_context("register_handlers_batch")
 
+        handlers_list = list(handlers)
+        self.logger.info(
+            "Starting batch handler registration",
+            operation="register_handlers",
+            handlers_count=len(handlers_list),
+            source="flext-core/src/flext_core/registry.py",
+        )
+
         summary = FlextRegistry.Summary()
-        for handler in handlers:
+        for idx, handler in enumerate(handlers_list):
+            handler_name = handler.__class__.__name__ if handler else "unknown"
+            self.logger.debug(
+                "Processing handler in batch",
+                operation="register_handlers",
+                handler_index=idx + 1,
+                total_handlers=len(handlers_list),
+                handler_name=handler_name,
+                source="flext-core/src/flext_core/registry.py",
+            )
             result: FlextResult[bool] = self._process_single_handler(handler, summary)
             if result.is_failure:
                 base_msg = "Handler processing failed"
@@ -497,8 +560,41 @@ class FlextRegistry(FlextMixins):
                     if result.error
                     else f"{base_msg} (operation failed)"
                 )
+                self.logger.error(
+                    "FAILED: Batch registration stopped due to handler error",
+                    operation="register_handlers",
+                    handler_index=idx + 1,
+                    total_handlers=len(handlers_list),
+                    handler_name=handler_name,
+                    error=error_msg,
+                    successful_registrations=len(summary.registered),
+                    skipped_registrations=len(summary.skipped),
+                    consequence="Remaining handlers in batch will not be registered",
+                    source="flext-core/src/flext_core/registry.py",
+                )
                 return self.fail(error_msg)
-        return self._finalize_summary(summary)
+        
+        final_summary = self._finalize_summary(summary)
+        if final_summary.is_success:
+            self.logger.info(
+                "Batch handler registration completed successfully",
+                operation="register_handlers",
+                total_handlers=len(handlers_list),
+                successful_registrations=len(summary.registered),
+                skipped_registrations=len(summary.skipped),
+                source="flext-core/src/flext_core/registry.py",
+            )
+        else:
+            self.logger.warning(
+                "Batch handler registration completed with errors",
+                operation="register_handlers",
+                total_handlers=len(handlers_list),
+                successful_registrations=len(summary.registered),
+                failed_registrations=len(summary.errors),
+                errors=summary.errors[:5],  # Show first 5 errors
+                source="flext-core/src/flext_core/registry.py",
+            )
+        return final_summary
 
     def _process_single_handler(
         self,
@@ -512,11 +608,27 @@ class FlextRegistry(FlextMixins):
 
         """
         key = self._resolve_handler_key(handler)
+        handler_name = handler.__class__.__name__ if handler else "unknown"
+        
         if key in self._registered_keys:
+            self.logger.debug(
+                "Handler already registered, skipping",
+                operation="process_single_handler",
+                handler_name=handler_name,
+                handler_key=key,
+                source="flext-core/src/flext_core/registry.py",
+            )
             summary.skipped.append(key)
             return self.ok(True)
 
         # Handler is already the correct type
+        self.logger.debug(
+            "Registering handler with dispatcher",
+            operation="process_single_handler",
+            handler_name=handler_name,
+            handler_key=key,
+            source="flext-core/src/flext_core/registry.py",
+        )
         registration_result: FlextResult[dict[str, object]] = (
             self._dispatcher.register_handler(handler)
         )
@@ -525,13 +637,29 @@ class FlextRegistry(FlextMixins):
             reg_data = registration_result.value
             reg_details = self._create_registration_details(reg_data, key)
             self._add_successful_registration(key, reg_details, summary)
+            self.logger.debug(
+                "Handler registered successfully in batch",
+                operation="process_single_handler",
+                handler_name=handler_name,
+                handler_key=key,
+                source="flext-core/src/flext_core/registry.py",
+            )
             return self.ok(True)
-        # Fast fail: error must be str (FlextResult guarantees this)
+        # error property has fallback logic and guarantees non-None for failures
         error_msg = registration_result.error
-        if error_msg is None:
-            error_msg = "Registration failed"
-        self._add_registration_error(key, error_msg, summary)
-        return self.fail(error_msg)
+        self.logger.warning(
+            "Handler registration failed in batch",
+            operation="process_single_handler",
+            handler_name=handler_name,
+            handler_key=key,
+            error=error_msg,
+            consequence="Handler will not be available for dispatch",
+            source="flext-core/src/flext_core/registry.py",
+        )
+        # Use unwrap_error() for type-safe str
+        error_str = registration_result.unwrap_error()
+        self._add_registration_error(key, error_str, summary)
+        return self.fail(error_str)
 
     def _add_successful_registration(
         self,
@@ -821,11 +949,12 @@ class FlextRegistry(FlextMixins):
         if metadata and self.is_dict_like(metadata):
             # Log metadata with service name for observability
             self.logger.debug(
-                f"Registering service '{name}' with metadata",
-                extra={
-                    "service_name": name,
-                    "metadata": metadata,
-                },
+                "Registering service with metadata",
+                operation="with_service",
+                service_name=name,
+                has_metadata=True,
+                metadata_keys=list(metadata.keys()) if isinstance(metadata, dict) else None,
+                source="flext-core/src/flext_core/registry.py",
             )
 
         # Delegate to container

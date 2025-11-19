@@ -513,13 +513,32 @@ class FlextMixins:
 
     @property
     def config(self) -> FlextConfig:
-        """Get global FlextConfig instance.
+        """Get global FlextConfig instance with namespace support.
 
         Provides convenient access to global configuration instance
-        for service classes using FlextMixins.
+        for service classes using FlextMixins. Supports namespace access
+        via attribute (e.g., self.config.ldap, self.config.api).
+
+        **Namespace Pattern**:
+            Services can access project-specific configs via namespaces:
+            - self.config.ldap → FlextLdapConfig (if registered)
+            - self.config.api → FlextApiConfig (if registered)
+            - self.config.auth → FlextAuthConfig (if registered)
+            - self.config.cli → FlextCliConfig (if registered)
+
+        **Auto-Registration**:
+            Configs are auto-registered using @FlextConfig.auto_register("namespace")
+            decorator and must extend FlextConfig.AutoConfig.
 
         Returns:
-            FlextConfig: Global configuration instance
+            FlextConfig: Global configuration instance with namespace support
+
+        Example:
+            >>> class LdapService(FlextService[dict]):
+            ...     def execute(self) -> FlextResult[dict]:
+            ...         ldap_config = self.config.ldap  # FlextLdapConfig
+            ...         host = ldap_config.ldap_host
+            ...         return self.ok({"host": host})
 
         """
         return FlextConfig.get_global_instance()

@@ -401,6 +401,11 @@ from flext_core.typings import (
 )
 from flext_core.utilities import FlextUtilities
 
+# Type aliases for nested FlextConfig attributes (pyrefly compatibility)
+# These enable proper type-checking for @FlextConfig.auto_register() pattern
+AutoConfig = FlextConfig.AutoConfig
+auto_register = FlextConfig.auto_register
+
 # =============================================================================
 # RUNTIME TYPE CHECKING - Python 3.13 Strict Typing Enforcement
 # =============================================================================
@@ -436,6 +441,7 @@ BEARTYPE_CONF = BeartypeConf(
 
 __all__ = [
     "BEARTYPE_CONF",
+    "AutoConfig",
     "Command",
     "E",
     "Event",
@@ -498,4 +504,5 @@ __all__ = [
     "W",
     "__version__",
     "__version_info__",
+    "auto_register",
 ]

@@ -27,6 +27,9 @@ from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 
+# Type alias for handler callables - avoids explicit Any while maintaining flexibility
+HandlerCallable = Callable[[], object] | Callable[[object], object] | Callable[[object, object], object]
+
 
 class FlextModelsHandler:
     """Handler management pattern container class.
@@ -39,7 +42,7 @@ class FlextModelsHandler:
         """Handler registration with advanced validation."""
 
         name: str = Field(min_length=1, description="Handler name")
-        handler: Callable[..., object]
+        handler: HandlerCallable
         event_types: list[str] = Field(
             default_factory=list,
             description="Event types this handler processes",
@@ -47,7 +50,7 @@ class FlextModelsHandler:
 
         @field_validator("handler", mode="after")
         @classmethod
-        def validate_handler(cls, v: object) -> Callable[..., object]:
+        def validate_handler(cls, v: object) -> HandlerCallable:
             """Validate handler is properly callable (using FlextUtilities.Validation)."""
             result = FlextUtilitiesValidation.validate_callable(
                 v,
@@ -66,7 +69,7 @@ class FlextModelsHandler:
                     error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
             # Type-safe return: v is confirmed callable by validation
-            return cast("Callable[..., object]", v)
+            return cast("HandlerCallable", v)
 
     class RegistrationDetails(BaseModel):
         """Registration details for handler registration tracking.

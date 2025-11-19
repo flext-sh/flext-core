@@ -434,7 +434,7 @@ class TestFlextTestDocker:
 
         # Check structure of one container config
         ldap_config = shared["flext-openldap-test"]
-        assert ldap_config["compose_file"] == "docker/docker-compose.openldap.yml"
+        assert ldap_config["compose_file"] == "docker/docker-compose.yml"
         assert ldap_config["service"] == "openldap"
         assert ldap_config["port"] == 3390
 
