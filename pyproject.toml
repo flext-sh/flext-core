@@ -79,6 +79,7 @@
         security = [
             "bandit>=1.8.0",
             "pip-audit>=2.7.3",
+            "uv>=0.9.6",
         ]
         test = [
             "factory-boy>=3.3.1",

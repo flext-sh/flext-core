@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-import time
 from abc import ABC, abstractmethod
 from dataclasses import asdict, is_dataclass
 from typing import (
@@ -25,7 +24,6 @@ from typing import (
 from beartype.door import is_bearable
 from pydantic import BaseModel
 
-from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
@@ -149,7 +147,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         res_name = getattr(result_type, "__name__", str(result_type))
 
         # Create typed subclass using helper function - valid Python metaprogramming
-        typed_subclass_raw = FlextUtilitiesGenerators.create_dynamic_type_subclass(
+        typed_subclass_raw = FlextUtilities.Generators.create_dynamic_type_subclass(
             f"{cls_name}[{msg_name}, {res_name}]",
             cls,
             {
@@ -198,14 +196,17 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
             # Validate Pydantic models
             pydantic_validation = cls._validate_pydantic_model(
-                message, operation, revalidate=revalidate_pydantic_messages
+                message,
+                operation,
+                revalidate=revalidate_pydantic_messages,
             )
             if pydantic_validation.is_failure:
                 return pydantic_validation
 
             # Validate message serialization for non-Pydantic objects
             serialization_result = cls._validate_message_serialization(
-                message, operation
+                message,
+                operation,
             )
             if serialization_result.is_success:
                 return FlextResult[bool].ok(True)
@@ -313,11 +314,13 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     value=str(message)[: FlextConstants.Defaults.MAX_MESSAGE_LENGTH]
                     if hasattr(message, "__str__")
                     else "unknown",
-                    correlation_id=f"pydantic_validation_{int(time.time() * 1000)}",
-                    metadata={
-                        "validation_details": f"pydantic_exception: {e!s}, model_class: {message.__class__.__name__}, revalidated: True",
-                        "context": f"operation: {operation}, message_type: {type(message).__name__}, validation_type: pydantic_revalidation",
-                    },
+                    correlation_id=f"pydantic_validation_{FlextUtilities.Generators.generate_short_id(length=8)}",
+                    metadata=FlextModels.Metadata(
+                        attributes={
+                            "validation_details": f"pydantic_exception: {e!s}, model_class: {message.__class__.__name__}, revalidated: True",
+                            "context": f"operation: {operation}, message_type: {type(message).__name__}, validation_type: pydantic_revalidation",
+                        },
+                    ),
                 )
                 return FlextResult[bool].fail(
                     str(validation_error),
@@ -352,7 +355,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                         str(exc),
                         error_code=exc.error_code,
                         error_data={
-                            "exception_context": getattr(exc, "context", str(exc))
+                            "exception_context": getattr(exc, "context", str(exc)),
                         },
                     )
 
@@ -361,7 +364,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
                     actual_type=type(message).__name__,
                     context=f"operation: {operation}, message_type: {type(message).__name__}, validation_type: serializable_check, original_exception: {exc!s}",
-                    correlation_id=f"type_validation_{int(time.time() * 1000)}",
+                    correlation_id=f"type_validation_{FlextUtilities.Generators.generate_short_id(length=8)}",
                 )
                 return FlextResult[bool].fail(
                     str(fallback_error),
@@ -394,11 +397,13 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
             if message is None:
                 cls._raise_invalid_message_type(
-                    operation_name, context_operation, "NoneType"
+                    operation_name,
+                    context_operation,
+                    "NoneType",
                 )
 
             if isinstance(message, BaseModel):
-                return message.model_dump()
+                return FlextMixins.ModelConversion.to_dict(message)
 
             if is_dataclass(message) and not isinstance(message, type):
                 return asdict(message)
@@ -423,7 +428,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
             # Fast fail: raise exception - no return None
             cls._raise_invalid_message_type(
-                operation_name, context_operation, type(message).__name__
+                operation_name,
+                context_operation,
+                type(message).__name__,
             )
             # This line should never be reached - _raise_invalid_message_type raises exception
             msg = f"Serialization failed for {type(message).__name__}"
@@ -453,7 +460,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         @classmethod
         def _try_common_serialization_methods(
-            cls, message: object
+            cls,
+            message: object,
         ) -> dict[str, object] | None:
             """Try common serialization methods."""
             for method_name in ("model_dump", "dict", "as_dict"):
@@ -462,7 +470,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     try:
                         result_data = method()
                         if FlextMixins.is_dict_like(result_data) and isinstance(
-                            result_data, dict
+                            result_data,
+                            dict,
                         ):
                             # Type narrowed by TypeGuard - use narrowed type directly
                             typed_result: dict[str, object] = result_data
@@ -499,7 +508,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     expected_type="str, list, or tuple",
                     actual_type=type(slots).__name__,
                     context=f"message_type: {type(message).__name__}, __slots__: {slots!r}",
-                    correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+                    correlation_id=f"message_serialization_{FlextUtilities.Generators.generate_short_id(length=8)}",
                 )
 
             def get_slot_value(slot_name: str) -> object:
@@ -513,7 +522,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         @classmethod
         def _raise_invalid_message_type(
-            cls, operation: str, context: str, actual_type: str
+            cls,
+            operation: str,
+            context: str,
+            actual_type: str,
         ) -> None:
             """Raise TypeError for invalid message type."""
             msg = f"Invalid message type for {operation}: {actual_type}"
@@ -522,7 +534,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
                 actual_type=actual_type,
                 context=f"operation: {context}, message_type: {actual_type}, validation_type: serializable_check",
-                correlation_id=f"message_serialization_{int(time.time() * 1000)}",
+                correlation_id=f"message_serialization_{FlextUtilities.Generators.generate_short_id(length=8)}",
             )
 
     @override
@@ -567,10 +579,11 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
     def _extract_revalidation_setting(self) -> bool:
         """Extract revalidation setting from configuration."""
-        # Check metadata first
+        # Check metadata first (metadata is now FlextModels.Metadata, not dict)
         if hasattr(self._config_model, "metadata") and self._config_model.metadata:
-            metadata_value = self._config_model.metadata.get(
-                "revalidate_pydantic_messages"
+            # Access attributes dict from Pydantic model
+            metadata_value = self._config_model.metadata.attributes.get(
+                "revalidate_pydantic_messages",
             )
             if metadata_value is not None:
                 # Handle string values
@@ -597,7 +610,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         if not isinstance(message_type, type):
             return False
         return FlextUtilities.TypeChecker.can_handle_message_type(
-            self._accepted_message_types, message_type
+            self._accepted_message_types,
+            message_type,
         )
 
     # NOTE: logger property inherited from FlextMixins
@@ -645,7 +659,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         return self._config_model
 
     def validate_command(
-        self, command: FlextTypes.AcceptableMessageType
+        self,
+        command: FlextTypes.AcceptableMessageType,
     ) -> FlextResult[bool]:
         """Validate a command message with type-safe parameter.
 
@@ -663,7 +678,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         )
 
     def validate_query(
-        self, query: FlextTypes.AcceptableMessageType
+        self,
+        query: FlextTypes.AcceptableMessageType,
     ) -> FlextResult[bool]:
         """Validate a query message with type-safe parameter.
 
@@ -785,8 +801,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 else:
                     # For complex type hints (generics, unions), use beartype
                     # Type checker may think this is unreachable, but complex types are validated here
-                    type_mismatch = not is_bearable(  # type: ignore[unreachable]
-                        message, self._expected_message_type
+                    type_mismatch = not is_bearable(
+                        message,
+                        self._expected_message_type,
                     )
             except (TypeError, AttributeError):
                 # If type checking fails, assume type matches
@@ -822,13 +839,15 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 # For simple type objects, isinstance is more reliable than beartype
                 if isinstance(self._expected_result_type, type):
                     type_mismatch = not isinstance(
-                        result.value, self._expected_result_type
+                        result.value,
+                        self._expected_result_type,
                     )
                 else:
                     # For complex type hints (generics, unions), use beartype
                     # Type checker may think this is unreachable, but complex types are validated here
-                    type_mismatch = not is_bearable(  # type: ignore[unreachable]
-                        result.value, self._expected_result_type
+                    type_mismatch = not is_bearable(
+                        result.value,
+                        self._expected_result_type,
                     )
             except (TypeError, AttributeError):
                 # If type checking fails, assume type matches
@@ -915,7 +934,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 source="flext-core/src/flext_core/handlers.py",
             )
             return self.fail(
-                f"Handler with mode '{self.mode}' cannot execute {operation} pipelines"
+                f"Handler with mode '{self.mode}' cannot execute {operation} pipelines",
             )
 
         # Validate message can be handled
@@ -972,9 +991,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             result = self.handle(cast("MessageT_contra", message))
             # Validate result types if __class_getitem__ was used
             validated_result = self._validate_handler_result(
-                cast("MessageT_contra", message), result
+                cast("MessageT_contra", message),
+                result,
             )
-            
+
             if validated_result.is_success:
                 self.logger.info(
                     "Handler pipeline completed successfully",
@@ -993,7 +1013,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     validation_error=validated_result.error,
                     source="flext-core/src/flext_core/handlers.py",
                 )
-            
+
             return validated_result
         except Exception as e:
             # VALIDATION HIERARCHY - User handler execution (CRITICAL)

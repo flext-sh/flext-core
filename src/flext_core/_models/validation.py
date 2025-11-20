@@ -154,7 +154,8 @@ class FlextModelsValidation:
             # Exclude computed fields that are not actual model fields
             # Use model_dump with exclude_unset to avoid extra fields
             dump = model.model_dump(
-                exclude={"is_initial_version", "is_modified"}, exclude_unset=True
+                exclude={"is_initial_version", "is_modified"},
+                exclude_unset=True,
             )
             # Re-validate the model from the dump
             validated_model = model.__class__.model_validate(dump)

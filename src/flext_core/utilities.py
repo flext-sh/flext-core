@@ -14,15 +14,12 @@ import logging
 import os
 import pathlib
 import shutil
-import subprocess  # nosec B404 - subprocess is used for legitimate process management
+import subprocess
 import threading
 from collections.abc import Callable
-from dataclasses import dataclass
-from datetime import UTC, datetime
-from typing import (
-    Self,
-    TypeVar,
-)
+from typing import Self, TypeVar
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core._utilities import (
     FlextUtilitiesCache,
@@ -37,13 +34,12 @@ from flext_core._utilities import (
     FlextUtilitiesTypeGuards,
     FlextUtilitiesValidation,
 )
+from flext_core._utilities.string_parser import ParseOptions
+from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 
-# Import constants from FlextConstants instead of defining locally
-
-
-# Module logger for exception tracking
 _logger = logging.getLogger(__name__)
 
 # TypeVar for FlextUtilities.ValidationPipeline
@@ -236,8 +232,77 @@ class FlextUtilities:
     class Generators(FlextUtilitiesGenerators):
         """Generator utilities - nested class for better API access."""
 
-    class TextProcessor(FlextUtilitiesTextProcessor):
-        """Text processing utilities - nested class for better API access."""
+    class TextProcessor:
+        """Text processing utilities - FlextResult wrappers for railway-oriented programming.
+
+        ⚠️ ARCHITECTURAL NOTE: Does NOT inherit from FlextUtilitiesTextProcessor to avoid
+        bad-override errors (primitives return str, wrappers return FlextResult[str]).
+
+        Instead, delegates to primitive functions and wraps results in FlextResult.
+        This provides the railway-oriented API while preserving primitive access.
+
+        Primitive functions are available via FlextUtilitiesTextProcessor directly.
+        """
+
+        @staticmethod
+        def clean_text(text: str) -> FlextResult[str]:
+            """Clean text by removing extra whitespace - returns FlextResult.
+
+            Railway-oriented wrapper around primitive FlextUtilitiesTextProcessor.clean_text.
+
+            Args:
+                text: Text to clean
+
+            Returns:
+                FlextResult[str]: Success with cleaned text (never fails)
+
+            """
+            cleaned = FlextUtilitiesTextProcessor.clean_text(text)
+            return FlextResult[str].ok(cleaned)
+
+        @staticmethod
+        def truncate_text(
+            text: str,
+            max_length: int = FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
+            suffix: str = "...",
+        ) -> FlextResult[str]:
+            """Truncate text to maximum length - returns FlextResult.
+
+            Delegates to FlextUtilitiesTextProcessor.truncate_text which already returns FlextResult[str].
+
+            Args:
+                text: Text to truncate
+                max_length: Maximum length including suffix
+                suffix: Suffix to add when truncating
+
+            Returns:
+                FlextResult[str]: Success with truncated text (never fails)
+
+            """
+            return FlextUtilitiesTextProcessor.truncate_text(text, max_length, suffix)
+
+        @staticmethod
+        def safe_string(text: str) -> FlextResult[str]:
+            """Validate and clean text string - returns FlextResult.
+
+            Railway-oriented wrapper around primitive FlextUtilitiesTextProcessor.safe_string.
+
+            Args:
+                text: Text to validate and clean
+
+            Returns:
+                FlextResult[str]: Success with cleaned text, or failure with error message
+
+            """
+            try:
+                # Call primitive function (raises ValueError on failure)
+                cleaned = FlextUtilitiesTextProcessor.safe_string(text)
+                return FlextResult[str].ok(cleaned)
+            except ValueError as e:
+                return FlextResult[str].fail(
+                    str(e),
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
 
     class Reliability(FlextUtilitiesReliability):
         """Reliability utilities - nested class for better API access."""
@@ -254,6 +319,8 @@ class FlextUtilities:
         Provides access to FlextUtilitiesStringParser functionality through
         FlextUtilities.StringParser for consistent API patterns.
         """
+
+        ParseOptions = ParseOptions
 
     class DataMapper(FlextUtilitiesDataMapper):
         """Data mapping utilities - nested class for better API access."""
@@ -316,7 +383,8 @@ class FlextUtilities:
             self._aggregate_errors = aggregate_errors
 
         def add_validator(
-            self, validator: Callable[[T_Pipeline], FlextResult[T_Pipeline]]
+            self,
+            validator: Callable[[T_Pipeline], FlextResult[T_Pipeline]],
         ) -> Self:
             """Add validator to pipeline.
 
@@ -354,7 +422,8 @@ class FlextUtilities:
             return self._validate_with_short_circuit(data)
 
         def _validate_with_short_circuit(
-            self, data: T_Pipeline
+            self,
+            data: T_Pipeline,
         ) -> FlextResult[T_Pipeline]:
             """Execute validation with short-circuit on first failure.
 
@@ -375,7 +444,8 @@ class FlextUtilities:
             return result
 
         def _validate_with_aggregation(
-            self, data: T_Pipeline
+            self,
+            data: T_Pipeline,
         ) -> FlextResult[T_Pipeline]:
             """Execute validation and aggregate all errors.
 
@@ -446,7 +516,7 @@ class FlextUtilities:
             specific_params: dict[str, object] | None = None,
         ) -> tuple[
             str | None,
-            dict[str, object] | None,
+            FlextProtocols.MetadataProtocol | dict[str, object] | None,
             bool,
             bool,
             object | None,
@@ -470,7 +540,12 @@ class FlextUtilities:
         @staticmethod
         def extract_common_kwargs(
             kwargs: dict[str, object],
-        ) -> FlextResult[tuple[str | None, dict[str, object] | None]]:
+        ) -> FlextResult[
+            tuple[
+                str | None,
+                FlextProtocols.MetadataProtocol | dict[str, object] | None,
+            ]
+        ]:
             """Extract correlation_id and metadata from kwargs using railway pattern.
 
             Delegates to flext_core._exception_helpers.extract_common_kwargs with
@@ -485,6 +560,7 @@ class FlextUtilities:
             """
             try:
                 result = FlextExceptions.extract_common_kwargs(kwargs)
+                # Type narrowing: result is already correct type
                 return FlextResult.ok(result)
             except Exception as e:
                 return FlextResult.fail(
@@ -514,12 +590,13 @@ class FlextUtilities:
             return {
                 "service_type": service.__class__.__name__,
                 "service_name": getattr(service, "_service_name", None),
-                "timestamp": datetime.now(UTC),
+                "timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
             }
 
         @staticmethod
         def cleanup_execution_context(
-            _service: object, _context: dict[str, object]
+            _service: object,
+            _context: dict[str, object],
         ) -> None:
             """Clean up execution context after operation.
 
@@ -532,7 +609,9 @@ class FlextUtilities:
 
         @staticmethod
         def extract_service_metadata(
-            service: object, *, include_timestamps: bool = True
+            service: object,
+            *,
+            include_timestamps: bool = True,
         ) -> dict[str, object]:
             """Extract metadata from a service instance.
 
@@ -550,14 +629,15 @@ class FlextUtilities:
                 "service_module": service.__class__.__module__,
             }
             if include_timestamps:
-                now = datetime.now(UTC)
+                now = FlextUtilities.Generators.generate_datetime_utc()
                 metadata["created_at"] = now
                 metadata["extracted_at"] = now
             return metadata
 
         @staticmethod
         def format_service_info(
-            service: object, metadata: dict[str, object]
+            service: object,
+            metadata: dict[str, object],
         ) -> FlextResult[str]:
             """Format service information for display using railway pattern.
 
@@ -648,7 +728,10 @@ class FlextUtilities:
             return self
 
         def with_timestamps(
-            self, *, include_created: bool = True, include_extracted: bool = True
+            self,
+            *,
+            include_created: bool = True,
+            include_extracted: bool = True,
         ) -> Self:
             """Add timestamp information to metadata.
 
@@ -660,7 +743,7 @@ class FlextUtilities:
                 Self for method chaining
 
             """
-            now = datetime.now(UTC)
+            now = FlextUtilities.Generators.generate_datetime_utc()
             if include_created:
                 self._metadata["created_at"] = now
             if include_extracted:
@@ -713,9 +796,11 @@ class FlextUtilities:
     # COMPLETION PROCESS WRAPPER - Replacing subprocess.CompletedProcess
     # =========================================================================
 
-    @dataclass(frozen=True)
-    class _CompletedProcessWrapper:
+    class _CompletedProcessWrapper(BaseModel):
         """Wrapper replacing subprocess.CompletedProcess for command execution results.
+
+        Uses Pydantic v2 for validation and immutability.
+        Converted from @dataclass to leverage Pydantic validation.
 
         This class provides the same interface as subprocess.CompletedProcess
         without requiring the subprocess module in return types.
@@ -728,10 +813,12 @@ class FlextUtilities:
 
         """
 
-        returncode: int
-        stdout: str
-        stderr: str
-        args: list[str]
+        model_config = ConfigDict(frozen=True)
+
+        returncode: int = Field(description="Exit code of the process")
+        stdout: str = Field(default="", description="Standard output")
+        stderr: str = Field(default="", description="Standard error output")
+        args: list[str] = Field(description="Command that was executed")
 
     class CommandExecution:
         """Command execution utilities for running external processes.
@@ -901,9 +988,7 @@ class FlextUtilities:
                             text=text,
                         )
 
-                        stdout, stderr = popen.communicate(
-                            input=command_input or None
-                        )
+                        stdout, stderr = popen.communicate(input=command_input or None)
 
                         process_result = subprocess.CompletedProcess(
                             args=cmd,

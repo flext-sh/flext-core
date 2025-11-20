@@ -56,7 +56,8 @@ class FlextUtilitiesTypeChecker:
 
     @classmethod
     def _extract_generic_message_types(
-        cls, handler_class: type
+        cls,
+        handler_class: type,
     ) -> list[FlextTypes.MessageTypeSpecifier]:
         """Extract message types from generic base annotations.
 
@@ -97,7 +98,9 @@ class FlextUtilitiesTypeChecker:
 
     @classmethod
     def _get_type_hints_safe(
-        cls, handle_method: object, handler_class: type
+        cls,
+        handle_method: object,
+        handler_class: type,
     ) -> dict[str, object]:
         """Safely extract type hints from handle method."""
         try:
@@ -278,7 +281,10 @@ class FlextUtilitiesTypeChecker:
 
         # Check dict compatibility
         dict_check = cls._check_dict_compatibility(
-            expected_type, message_type, origin_type, message_origin
+            expected_type,
+            message_type,
+            origin_type,
+            message_origin,
         )
         if dict_check is not None:
             return dict_check

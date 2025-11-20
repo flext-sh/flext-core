@@ -281,7 +281,7 @@ class TestMixins100Coverage:
             def process(self, data: object) -> FlextResult[object]:
                 return FlextResult[object].ok(data)
 
-            validate = "not_callable"  # type: ignore[assignment]
+            validate = "not_callable"
 
         processor = BadProcessor()
         result = FlextMixins.ProtocolValidation.validate_processor_protocol(processor)

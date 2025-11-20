@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import socket
 from collections.abc import Callable
-from dataclasses import dataclass
 from types import UnionType
 from typing import (
     Annotated,
@@ -38,6 +37,8 @@ from typing import (
 #   from pydantic import EmailStr, PositiveInt, HttpUrl, etc.
 from pydantic import (
     AfterValidator,
+    BaseModel,
+    ConfigDict,
     Field,
 )
 
@@ -75,7 +76,8 @@ TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True)
 # TypeVars specifically for Protocol definitions (Pyright requirement)
 # Input must be contravariant, Result must be invariant for Protocol
 TInput_Handler_Protocol_contra = TypeVar(
-    "TInput_Handler_Protocol_contra", contravariant=True
+    "TInput_Handler_Protocol_contra",
+    contravariant=True,
 )
 TResult_Handler_Protocol = TypeVar("TResult_Handler_Protocol")
 
@@ -295,7 +297,8 @@ class FlextTypes:
     # =========================================================================
 
     type DecoratorReturnType = Callable[
-        [Callable[[object], object]], Callable[[object], object]
+        [Callable[[object], object]],
+        Callable[[object], object],
     ]
 
     # =========================================================================
@@ -370,9 +373,11 @@ class FlextTypes:
     # =========================================================================
     # Note: Validator types defined above using forward references to FlextResult
 
-    @dataclass(frozen=True)
-    class RetryConfig:
+    class RetryConfig(BaseModel):
         """Configuration for retry operations.
+
+        Uses Pydantic v2 for validation and immutability.
+        Converted from @dataclass to leverage Pydantic validation.
 
         Attributes:
             max_attempts: Maximum number of retry attempts
@@ -384,12 +389,26 @@ class FlextTypes:
 
         """
 
-        max_attempts: int
-        initial_delay_seconds: float
-        max_delay_seconds: float
-        exponential_backoff: bool
-        retry_on_exceptions: list[type[Exception]]
-        backoff_multiplier: float = 2.0
+        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+        max_attempts: int = Field(
+            ge=1,
+            description="Maximum retry attempts (minimum 1)",
+        )
+        initial_delay_seconds: float = Field(
+            gt=0.0,
+            description="Initial delay in seconds",
+        )
+        max_delay_seconds: float = Field(gt=0.0, description="Maximum delay in seconds")
+        exponential_backoff: bool = Field(description="Enable exponential backoff")
+        retry_on_exceptions: list[type[Exception]] = Field(
+            description="Exception types to retry on",
+        )
+        backoff_multiplier: float = Field(
+            default=2.0,
+            gt=0.0,
+            description="Backoff multiplier (minimum 0)",
+        )
 
     # =========================================================================
 

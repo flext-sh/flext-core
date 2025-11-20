@@ -138,9 +138,16 @@ class TestCoverage76Lines:
         assert r.success is True
 
     def test_result_failed_alias(self) -> None:
-        """Test .failed property alias for .is_failure."""
+        """Test .failed property alias for .is_failure (deprecated)."""
+        import warnings
+
         r = FlextResult[int].fail("error")
-        assert r.failed is True
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            assert r.failed is True
+            assert len(w) == 1
+            assert issubclass(w[0].category, DeprecationWarning)
+            assert "is_failure" in str(w[0].message)
 
     def test_exception_str_representation(self) -> None:
         """Test exception string representation."""

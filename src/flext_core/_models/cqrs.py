@@ -9,42 +9,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import uuid
 from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.metadata import Metadata
+from flext_core._utilities.data_mapper import FlextUtilitiesDataMapper
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
+from flext_core.utilities import FlextUtilities
 
-
-def _get_command_timeout_default() -> int:
-    """Get command timeout from Config (priority) or Constants (default).
-
-    Config has priority over Constants. Returns Constants value if Config is 0 or unavailable.
-    This ensures Models use Config values in initialization without requiring them to be passed.
-    """
-    config = FlextConfig.get_global_instance()
-    timeout = config.dispatcher_timeout_seconds
-    if timeout > 0:
-        return int(timeout)
-    return FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT
-
-
-def _get_max_command_retries_default() -> int:
-    """Get max retry attempts from Config (priority) or Constants (default).
-
-    Config has priority over Constants. Returns Constants value if Config is 0 or unavailable.
-    This ensures Models use Config values in initialization without requiring them to be passed.
-    """
-    config = FlextConfig.get_global_instance()
-    retries = config.max_retry_attempts
-    if retries > 0:
-        return retries
-    return FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES
+# Constants for validator logic
+_MIN_QUALNAME_PARTS_FOR_WRAPPER = 2  # FlextModels.Cqrs requires at least 2 parts
 
 
 class FlextModelsCqrs:
@@ -142,42 +121,65 @@ class FlextModelsCqrs:
 
         filters: dict[str, object] = Field(default_factory=dict)
         pagination: FlextModelsCqrs.Pagination | dict[str, int] = Field(
-            default_factory=dict
+            default_factory=dict,
         )
-        query_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+        query_id: str = Field(default_factory=FlextUtilities.Generators.generate_uuid)
         query_type: str | None = None
 
         @field_validator("pagination", mode="before")
         @classmethod
         def validate_pagination(
-            cls, v: FlextModelsCqrs.Pagination | dict[str, int | str] | None
+            cls,
+            v: FlextModelsCqrs.Pagination | dict[str, int | str] | None,
         ) -> FlextModelsCqrs.Pagination:
-            """Convert pagination to Pagination instance."""
+            """Convert pagination to Pagination instance.
+
+            Dynamically determines correct Pagination class based on context.
+            Uses wrapper Pagination if Query is accessed via FlextModels.Cqrs (public API).
+            Uses base Pagination if Query is accessed directly from FlextModelsCqrs (internal).
+            """
+            # Detect if we're in wrapper context (uses wrapper Pagination)
+            # or base context (uses base Pagination)
+            import sys  # noqa: PLC0415
+
+            pagination_cls: type[FlextModelsCqrs.Pagination] = (
+                FlextModelsCqrs.Pagination
+            )
+
+            # If cls is wrapper from models.py, get wrapper Pagination
+            if cls.__module__ == "flext_core.models" and "." in cls.__qualname__:
+                parts = cls.__qualname__.split(".")
+                models_module = sys.modules.get("flext_core.models")
+                if models_module and len(parts) >= _MIN_QUALNAME_PARTS_FOR_WRAPPER:
+                    obj: object = getattr(models_module, parts[0], None)
+                    for part in parts[1:-1]:  # Navigate to Cqrs (skip Query)
+                        if obj and hasattr(obj, part):
+                            obj = getattr(obj, part)
+                    if obj and hasattr(obj, "Pagination"):
+                        pagination_cls = obj.Pagination
+
+            # Return existing Pagination instance
             if isinstance(v, FlextModelsCqrs.Pagination):
                 return v
+
+            # Convert dict to Pagination
             if FlextRuntime.is_dict_like(v):
                 v_dict = v
-                # Fast fail: page and size must be int or None
-                page_raw = v_dict.get("page")
-                size_raw = v_dict.get("size")
-                page: int | str = page_raw if isinstance(page_raw, (int, str)) else 1
-                size: int | str = size_raw if isinstance(size_raw, (int, str)) else 20
-                if isinstance(page, str):
-                    try:
-                        page = int(page)
-                    except ValueError:
-                        page = 1
-                if isinstance(size, str):
-                    try:
-                        size = int(size)
-                    except ValueError:
-                        size = 20
-                return FlextModelsCqrs.Pagination(page=page, size=size)
-            return FlextModelsCqrs.Pagination()
+                page = FlextUtilitiesDataMapper.convert_to_int_safe(
+                    v_dict.get("page"), 1
+                )
+                size = FlextUtilitiesDataMapper.convert_to_int_safe(
+                    v_dict.get("size"), 20
+                )
+                return pagination_cls(page=page, size=size)
+
+            # Default empty Pagination
+            return pagination_cls()
 
         @classmethod
         def validate_query(
-            cls, query_payload: dict[str, object]
+            cls,
+            query_payload: dict[str, object],
         ) -> FlextResult[FlextModelsCqrs.Query]:
             """Validate and create Query from payload."""
             try:
@@ -188,7 +190,7 @@ class FlextModelsCqrs:
                 )
                 pagination_raw = query_payload.get("pagination")
                 pagination_data: dict[str, object] = (
-                    pagination_raw if isinstance(pagination_raw, dict) else {}
+                    pagination_raw if FlextRuntime.is_dict_like(pagination_raw) else {}
                 )
                 if FlextRuntime.is_dict_like(pagination_data):
                     pagination_dict = pagination_data
@@ -205,23 +207,28 @@ class FlextModelsCqrs:
                 # Fast fail: query_id must be str or None
                 query_id_raw = query_payload.get("query_id")
                 query_id: str = (
-                    str(query_id_raw) if query_id_raw is not None else str(uuid.uuid4())
+                    str(query_id_raw)
+                    if query_id_raw is not None
+                    else FlextUtilities.Generators.generate_uuid()
                 )
                 query_type: object = query_payload.get("query_type")
+                # Fast fail: filters must be dict-like
                 if not FlextRuntime.is_dict_like(filters):
-                    filters = {}
-                # At this point filters is guaranteed to be dict-like
-                filters_dict = filters if isinstance(filters, dict) else dict(filters)
+                    filters_dict: dict[str, object] = {}
+                elif isinstance(filters, dict):
+                    filters_dict = filters
+                else:
+                    filters_dict = dict(filters.items())
                 query = cls(
                     filters=filters_dict,
                     pagination=pagination,
                     query_id=query_id,
-                    query_type=str(query_type) if query_type is not None else None,
+                    query_type=None if query_type is None else str(query_type),
                 )
                 return FlextResult[FlextModelsCqrs.Query].ok(query)
             except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                 return FlextResult[FlextModelsCqrs.Query].fail(
-                    f"Query validation failed: {e}"
+                    f"Query validation failed: {e}",
                 )
 
     class Bus(BaseModel):
@@ -231,16 +238,19 @@ class FlextModelsCqrs:
             json_schema_extra={
                 "title": "Bus",
                 "description": "CQRS command bus configuration",
-            }
+            },
         )
         enable_middleware: bool = Field(
-            default=True, description="Enable middleware pipeline"
+            default=True,
+            description="Enable middleware pipeline",
         )
         enable_metrics: bool = Field(
-            default=True, description="Enable metrics collection"
+            default=True,
+            description="Enable metrics collection",
         )
         enable_caching: bool = Field(
-            default=True, description="Enable query result caching"
+            default=True,
+            description="Enable query result caching",
         )
         execution_timeout: int = Field(
             default=FlextConstants.Defaults.TIMEOUT,
@@ -260,26 +270,41 @@ class FlextModelsCqrs:
             json_schema_extra={
                 "title": "Handler",
                 "description": "CQRS handler configuration",
-            }
+            },
         )
         handler_id: str = Field(description="Unique handler identifier")
         handler_name: str = Field(description="Human-readable handler name")
         handler_type: FlextConstants.Cqrs.HandlerType = Field(
-            default=FlextConstants.Cqrs.HandlerType.COMMAND, description="Handler type"
+            default=FlextConstants.Cqrs.HandlerType.COMMAND,
+            description="Handler type",
         )
         handler_mode: FlextConstants.Cqrs.HandlerType = Field(
-            default=FlextConstants.Cqrs.HandlerType.COMMAND, description="Handler mode"
+            default=FlextConstants.Cqrs.HandlerType.COMMAND,
+            description="Handler mode",
         )
         command_timeout: int = Field(
-            default_factory=_get_command_timeout_default,
+            default_factory=lambda: (
+                int(timeout)
+                if (
+                    timeout
+                    := FlextConfig.get_global_instance().dispatcher_timeout_seconds
+                )
+                > 0
+                else FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT
+            ),
             description="Command timeout from FlextConfig (priority) or FlextConstants (default). Models use Config values in initialization.",
         )
         max_command_retries: int = Field(
-            default_factory=_get_max_command_retries_default,
+            default_factory=lambda: (
+                retries
+                if (retries := FlextConfig.get_global_instance().max_retry_attempts) > 0
+                else FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES
+            ),
             description="Maximum retry attempts from FlextConfig (priority) or FlextConstants (default). Models use Config values in initialization.",
         )
-        metadata: dict[str, object] = Field(
-            default_factory=dict, description="Handler metadata"
+        metadata: Metadata | None = Field(
+            default=None,
+            description="Handler metadata (Pydantic model)",
         )
 
         class ConfigParams(BaseModel):
@@ -289,7 +314,7 @@ class FlextModelsCqrs:
                 json_schema_extra={
                     "title": "HandlerConfigParams",
                     "description": "Parameter object for handler configuration",
-                }
+                },
             )
             default_name: str | None = None
             default_id: str | None = None
@@ -310,6 +335,7 @@ class FlextModelsCqrs:
 
             def __init__(self, handler_type: FlextConstants.Cqrs.HandlerType) -> None:
                 """Initialize builder with required handler_type."""
+                handler_short_id = FlextUtilities.Generators.generate_short_id(length=8)
                 self._data: dict[str, object] = {
                     "handler_type": handler_type,
                     "handler_mode": (
@@ -317,11 +343,11 @@ class FlextModelsCqrs:
                         if handler_type == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
                         else FlextConstants.Dispatcher.HANDLER_MODE_QUERY
                     ),
-                    "handler_id": f"{handler_type}_handler_{uuid.uuid4().hex[:8]}",
+                    "handler_id": f"{handler_type}_handler_{handler_short_id}",
                     "handler_name": f"{handler_type.title()} Handler",
                     "command_timeout": FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT,
                     "max_command_retries": FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
-                    "metadata": {},
+                    "metadata": None,
                 }
 
             def with_id(self, handler_id: str) -> Self:
@@ -344,8 +370,8 @@ class FlextModelsCqrs:
                 self._data["max_command_retries"] = max_retries
                 return self
 
-            def with_metadata(self, metadata: dict[str, object]) -> Self:
-                """Set metadata (fluent API)."""
+            def with_metadata(self, metadata: Metadata) -> Self:
+                """Set metadata (fluent API - Pydantic model)."""
                 self._data["metadata"] = metadata
                 return self
 

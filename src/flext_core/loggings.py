@@ -18,8 +18,9 @@ import types
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import ClassVar, Literal, Self, overload
+from typing import ClassVar, Literal, Self, cast, overload
 
+from flext_core.config import FlextConfig
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes, T
@@ -676,7 +677,9 @@ class FlextLogger:
 
     @classmethod
     def _create_bound_logger(
-        cls, name: str, bound_logger: FlextTypes.BoundLoggerType
+        cls,
+        name: str,
+        bound_logger: FlextTypes.BoundLoggerType,
     ) -> FlextLogger:
         """Internal factory for creating logger with pre-bound FlextRuntime.structlog() instance.
 
@@ -760,7 +763,8 @@ class FlextLogger:
                 formatted_message = f"{message} | args={args!r}"
 
             self.logger.debug(
-                formatted_message, **kwargs
+                formatted_message,
+                **kwargs,
             )  # FlextRuntime.structlog() doesn't have trace
             result = FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
@@ -787,6 +791,56 @@ class FlextLogger:
         except (TypeError, ValueError):
             return f"{message} | args={args!r}"
 
+    def _get_calling_frame(self) -> types.FrameType | None:
+        """Get the calling frame 3 levels up the stack.
+
+        Returns:
+            types.FrameType | None: The calling frame, or None if unavailable.
+
+        """
+        frame = inspect.currentframe()
+        if not frame:
+            return None
+
+        # Go up 3 frames: _get_calling_frame -> _get_caller_source_path -> _log -> public method -> caller
+        for _ in range(4):  # Skip 4 frames to get to actual caller
+            frame = frame.f_back
+            if not frame:
+                return None
+
+        return frame
+
+    def _extract_class_name(self, frame: types.FrameType) -> str | None:
+        """Extract class name from frame locals or qualname.
+
+        Args:
+            frame: The frame to extract class name from
+
+        Returns:
+            str | None: The class name if found, None otherwise
+
+        """
+        # Check if 'self' is in the frame's locals
+        if "self" in frame.f_locals:
+            self_obj = frame.f_locals["self"]
+            if hasattr(self_obj, "__class__"):
+                class_name = self_obj.__class__.__name__
+                return cast("str", class_name)
+
+        # Alternative: try to extract from qualname if available (Python 3.11+)
+        if hasattr(frame.f_code, "co_qualname"):
+            qualname = frame.f_code.co_qualname
+            if "." in qualname:
+                # Extract class name from qualname (e.g., "ClassName.method_name")
+                parts = qualname.rsplit(".", 1)
+                if len(parts) == 2:  # noqa: PLR2004
+                    potential_class = parts[0]
+                    # Verify it's likely a class (not a nested function)
+                    if potential_class and potential_class[0].isupper():
+                        return potential_class
+
+        return None
+
     def _get_caller_source_path(self) -> str | None:
         """Get source file path of the caller with line, class and method context.
 
@@ -796,58 +850,28 @@ class FlextLogger:
 
         """
         try:
-            # Get the calling frame (skip this method and _log and the public method)
-            frame = inspect.currentframe()
-            if not frame:
-                return None
-
-            # Go up 3 frames: _get_caller_source_path -> _log -> debug/info/etc -> caller
-            caller_frame = frame.f_back
-            if not caller_frame:
-                return None
-            caller_frame = caller_frame.f_back
-            if not caller_frame:
-                return None
-            caller_frame = caller_frame.f_back
+            # Get the calling frame
+            caller_frame = self._get_calling_frame()
             if not caller_frame:
                 return None
 
+            # Get file path and line number
             filename = caller_frame.f_code.co_filename
             file_path = self._convert_to_relative_path(filename)
-            
-            # Get line number (add 1 to show the line after the logger call)
-            line_number = caller_frame.f_lineno + 1
-            
-            # Get method name
+            line_number = caller_frame.f_lineno + 1  # Show line after logger call
+
+            # Get method and class names
             method_name = caller_frame.f_code.co_name
-            
-            # Try to get class name
-            class_name: str | None = None
-            # Check if 'self' is in the frame's locals
-            if 'self' in caller_frame.f_locals:
-                self_obj = caller_frame.f_locals['self']
-                if hasattr(self_obj, '__class__'):
-                    class_name = self_obj.__class__.__name__
-            # Alternative: try to extract from qualname if available (Python 3.11+)
-            elif hasattr(caller_frame.f_code, 'co_qualname'):
-                qualname = caller_frame.f_code.co_qualname
-                if '.' in qualname:
-                    # Extract class name from qualname (e.g., "ClassName.method_name")
-                    parts = qualname.rsplit('.', 1)
-                    if len(parts) == 2:
-                        potential_class = parts[0]
-                        # Verify it's likely a class (not a nested function)
-                        if potential_class and potential_class[0].isupper():
-                            class_name = potential_class
-            
+            class_name = self._extract_class_name(caller_frame)
+
             # Build the source string
             source_parts = [f"{file_path}:{line_number}"]
-            
+
             if class_name and method_name:
                 source_parts.append(f"{class_name}.{method_name}")
             elif method_name and method_name != "<module>":
                 source_parts.append(method_name)
-            
+
             return " ".join(source_parts) if len(source_parts) > 1 else source_parts[0]
         except Exception:
             return None
@@ -1132,9 +1156,6 @@ class FlextLogger:
             # Check FlextConfig to determine if we should include stack traces
             # Stack traces are only shown in DEBUG mode (from FlextConfig.log_level)
             try:
-                # Avoid circular import: lazy import FlextConfig
-                from flext_core.config import FlextConfig
-
                 config = FlextConfig.get_global_instance()
                 # Include stack trace only if log_level is DEBUG or lower
                 include_stack_trace = config.log_level.upper() == "DEBUG"
@@ -1150,8 +1171,10 @@ class FlextLogger:
                 if include_stack_trace:
                     kwargs["stack_trace"] = "".join(
                         traceback.format_exception(
-                            type(exception), exception, exception.__traceback__
-                        )
+                            type(exception),
+                            exception,
+                            exception.__traceback__,
+                        ),
                     )
             # Otherwise, if exc_info is True, get current exception info
             elif exc_info and include_stack_trace:
@@ -1218,7 +1241,7 @@ class FlextLogger:
             if result.is_success:
                 msg = f"{operation} succeeded" if operation else "Operation succeeded"
                 log_method = getattr(self, level, self.info)
-                log_method(msg, return_result=False, **context)  # type: ignore[call-arg]
+                log_method(msg, return_result=False, **context)
             else:
                 msg = (
                     f"{operation} failed: {result.error}"

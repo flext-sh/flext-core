@@ -11,7 +11,12 @@ import time
 
 import pytest
 
-from flext_core import FlextExceptions
+from flext_core import FlextExceptions, FlextModels
+
+
+def create_metadata(**kwargs: object) -> FlextModels.Metadata:
+    """Helper to create FlextModels.Metadata from kwargs (STRICT mode)."""
+    return FlextModels.Metadata(attributes=dict(kwargs))
 
 
 class TestFlextExceptions:
@@ -23,7 +28,9 @@ class TestFlextExceptions:
         assert error.message == "Test error"
         assert error.error_code == "UNKNOWN_ERROR"  # Default error code
         assert error.correlation_id is None
-        assert isinstance(error.metadata, dict)
+        assert isinstance(
+            error.metadata.attributes, dict
+        )  # metadata.attributes is dict
         assert isinstance(error.timestamp, float)
 
     def test_base_error_with_error_code(self) -> None:
@@ -39,16 +46,16 @@ class TestFlextExceptions:
 
     def test_base_error_with_metadata(self) -> None:
         """Test BaseError with metadata."""
-        metadata: dict[str, object] = {"field": "email", "value": "invalid"}
+        metadata = create_metadata(field="email", value="invalid")
         error = FlextExceptions.BaseError("Test error", metadata=metadata)
-        assert error.metadata["field"] == "email"
-        assert error.metadata["value"] == "invalid"
+        assert error.metadata.attributes["field"] == "email"
+        assert error.metadata.attributes["value"] == "invalid"
 
     def test_base_error_with_extra_kwargs(self) -> None:
         """Test BaseError with extra keyword arguments."""
         error = FlextExceptions.BaseError("Test error", field="email", value="invalid")
-        assert error.metadata["field"] == "email"
-        assert error.metadata["value"] == "invalid"
+        assert error.metadata.attributes["field"] == "email"
+        assert error.metadata.attributes["value"] == "invalid"
 
     def test_base_error_to_dict(self) -> None:
         """Test BaseError to_dict conversion."""
@@ -66,6 +73,7 @@ class TestFlextExceptions:
         assert "timestamp" in error_dict
         metadata = error_dict["metadata"]
         if isinstance(metadata, dict):
+            # metadata is attributes dict (user-provided metadata)
             assert metadata["field"] == "email"
 
     def test_base_error_str_without_code(self) -> None:
@@ -310,12 +318,12 @@ class TestFlextExceptions:
 
     def test_metadata_merge_with_kwargs(self) -> None:
         """Test that metadata and kwargs are properly merged."""
-        metadata: dict[str, object] = {"existing": "value"}
+        metadata = create_metadata(existing="value")
         error = FlextExceptions.BaseError(
             "Test error", metadata=metadata, new_field="new_value"
         )
-        assert error.metadata["existing"] == "value"
-        assert error.metadata["new_field"] == "new_value"
+        assert error.metadata.attributes["existing"] == "value"
+        assert error.metadata.attributes["new_field"] == "new_value"
 
 
 class TestFlextExceptionsComprehensive:
@@ -399,16 +407,16 @@ class TestFlextExceptionsComprehensive:
 
     def test_exception_with_metadata(self) -> None:
         """Test exceptions with additional metadata."""
-        metadata: dict[str, object] = {"resource_id": "123", "user_id": "456"}
+        metadata = create_metadata(resource_id="123", user_id="456")
         not_found_exc = FlextExceptions.NotFoundError(
             "Resource not found", metadata=metadata
         )
-        assert not_found_exc.metadata == metadata
+        assert not_found_exc.metadata.attributes == metadata.attributes
 
         validation_exc = FlextExceptions.ValidationError(
-            "Invalid", metadata={"field": "email"}
+            "Invalid", metadata=create_metadata(field="email")
         )
-        assert validation_exc.metadata["field"] == "email"
+        assert validation_exc.metadata.attributes["field"] == "email"
 
     def test_exception_inheritance(self) -> None:
         """Test exception class inheritance hierarchy."""
@@ -457,20 +465,24 @@ class TestFlextExceptionsComprehensive:
     def test_exception_with_various_data_types(self) -> None:
         """Test exceptions with various metadata data types."""
         # String metadata
-        exc = FlextExceptions.BaseError("Error", metadata={"msg": "test"})
-        assert exc.metadata["msg"] == "test"
+        exc = FlextExceptions.BaseError("Error", metadata=create_metadata(msg="test"))
+        assert exc.metadata.attributes["msg"] == "test"
 
         # Numeric metadata
-        exc = FlextExceptions.BaseError("Error", metadata={"count": 42})
-        assert exc.metadata["count"] == 42
+        exc = FlextExceptions.BaseError("Error", metadata=create_metadata(count=42))
+        assert exc.metadata.attributes["count"] == 42
 
         # List metadata
-        exc = FlextExceptions.BaseError("Error", metadata={"items": [1, 2, 3]})
-        assert exc.metadata["items"] == [1, 2, 3]
+        exc = FlextExceptions.BaseError(
+            "Error", metadata=create_metadata(items=[1, 2, 3])
+        )
+        assert exc.metadata.attributes["items"] == [1, 2, 3]
 
         # Nested dict[str, object] metadata
-        exc = FlextExceptions.BaseError("Error", metadata={"nested": {"key": "val"}})
-        nested_dict = exc.metadata["nested"]
+        exc = FlextExceptions.BaseError(
+            "Error", metadata=create_metadata(nested={"key": "val"})
+        )
+        nested_dict = exc.metadata.attributes["nested"]
         assert isinstance(nested_dict, dict) and nested_dict["key"] == "val"
 
     def test_all_exception_repr(self) -> None:
@@ -511,7 +523,7 @@ class TestFlextExceptionsComprehensive:
         exc = FlextExceptions.ValidationError(
             "Validation failed",
             error_code="INVALID_INPUT",
-            metadata={"field": "email", "value": "invalid"},
+            metadata=create_metadata(field="email", value="invalid"),
         )
 
         # Test if exception has serialization method
@@ -549,17 +561,17 @@ class TestFlextExceptionsComprehensive:
             assert exc.error_code == f"{name.upper()}_ERROR"
 
             # Test with metadata
-            exc = exc_class(f"{name} error", metadata={"test": "data"})
+            exc = exc_class(f"{name} error", metadata=create_metadata(test="data"))
             # Metadata should contain at least the passed data
-            assert "test" in exc.metadata
-            assert exc.metadata["test"] == "data"
+            assert "test" in exc.metadata.attributes
+            assert exc.metadata.attributes["test"] == "data"
 
             # Test with all parameters
             exc = exc_class(
                 f"{name} error",
                 error_code=f"{name.upper()}_CODE",
-                metadata={"key": "value"},
+                metadata=create_metadata(key="value"),
             )
             assert f"{name} error" in str(exc)
             assert exc.error_code == f"{name.upper()}_CODE"
-            assert exc.metadata["key"] == "value"
+            assert exc.metadata.attributes["key"] == "value"

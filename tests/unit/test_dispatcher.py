@@ -75,6 +75,8 @@ class ComplexMessageData(FlextModels.Value):
 class TestMessage(FlextModels.Value):
     """Simple test message for dispatcher tests."""
 
+    __test__ = False  # Not a test class, just a helper class
+
     data: object
 
 

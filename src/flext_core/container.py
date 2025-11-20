@@ -342,7 +342,7 @@ class FlextContainer(FlextProtocols.Configurable):
                 service=service,
                 service_type=type(service).__name__,
                 tags=[],
-                metadata={},
+                metadata=FlextModels.Metadata(attributes={}),
             )
 
             # Store ServiceRegistration Model in registry
@@ -441,7 +441,7 @@ class FlextContainer(FlextProtocols.Configurable):
                 factory=factory,
                 is_singleton=True,  # All factories are singletons by default
                 cached_instance=None,  # Will be populated on first invocation
-                metadata={},
+                metadata=FlextModels.Metadata(attributes={}),
                 invocation_count=0,
             )
 
@@ -472,7 +472,7 @@ class FlextContainer(FlextProtocols.Configurable):
 
         """
         return FlextUtilitiesValidation.validate_identifier(name).flat_map(
-            self._remove_service
+            self._remove_service,
         )
 
     def _remove_service(self, name: str) -> FlextResult[bool]:
@@ -510,7 +510,7 @@ class FlextContainer(FlextProtocols.Configurable):
 
         """
         return FlextUtilitiesValidation.validate_identifier(name).flat_map(
-            self._resolve_service
+            self._resolve_service,
         )
 
     def _resolve_service(self, name: str) -> FlextResult[object]:
@@ -568,7 +568,9 @@ class FlextContainer(FlextProtocols.Configurable):
 
             # Integration: Track resolution failure
             FlextRuntime.Integration.track_service_resolution(
-                name, resolved=False, error_message=error_msg
+                name,
+                resolved=False,
+                error_message=error_msg,
             )
 
             return FlextResult[object].fail(error_msg)
@@ -647,11 +649,12 @@ class FlextContainer(FlextProtocols.Configurable):
         """
         # Use railway pattern for atomic batch registration with rollback
         return self._validate_batch_services(services).flat_map(
-            self._execute_batch_registration
+            self._execute_batch_registration,
         )
 
     def _validate_batch_services(
-        self, services: dict[str, object]
+        self,
+        services: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Validate batch services using FlextUtilities."""
         # Allow empty dictionaries for batch_register flexibility
@@ -660,13 +663,14 @@ class FlextContainer(FlextProtocols.Configurable):
         validation_result = FlextUtilitiesValidation.validate_batch_services(services)
         if validation_result.is_failure:
             return FlextResult[dict[str, object]].fail(
-                f"Batch validation failed: {validation_result.error}"
+                f"Batch validation failed: {validation_result.error}",
             )
 
         return FlextResult[dict[str, object]].ok(services)
 
     def _execute_batch_registration(
-        self, services: dict[str, object]
+        self,
+        services: dict[str, object],
     ) -> FlextResult[bool]:
         """Execute batch registration with automatic rollback using snapshot pattern."""
         # Create snapshot for rollback capability
@@ -680,7 +684,9 @@ class FlextContainer(FlextProtocols.Configurable):
             return self._rollback_and_fail(snapshot, str(e))
 
     def _rollback_and_fail(
-        self, snapshot: Mapping[str, object], error: str
+        self,
+        snapshot: Mapping[str, object],
+        error: str,
     ) -> FlextResult[bool]:
         """Rollback snapshot and return failure result."""
         typed_snapshot = cast(
@@ -754,7 +760,8 @@ class FlextContainer(FlextProtocols.Configurable):
             return False
         first_value = next(iter(value.values()), None)
         return first_value is not None and isinstance(
-            first_value, FlextModels.ServiceRegistration
+            first_value,
+            FlextModels.ServiceRegistration,
         )
 
     @staticmethod
@@ -768,7 +775,8 @@ class FlextContainer(FlextProtocols.Configurable):
             return False
         first_value = next(iter(value.values()), None)
         return first_value is not None and isinstance(
-            first_value, FlextModels.FactoryRegistration
+            first_value,
+            FlextModels.FactoryRegistration,
         )
 
     def _restore_registry_snapshot(
@@ -921,7 +929,8 @@ class FlextContainer(FlextProtocols.Configurable):
         )
 
     def _analyze_constructor_signature(
-        self, service_class: type[T]
+        self,
+        service_class: type[T],
     ) -> FlextResult[dict[str, dict[str, object]]]:
         """Analyze constructor signature for dependency requirements."""
         try:
@@ -934,7 +943,8 @@ class FlextContainer(FlextProtocols.Configurable):
 
                 # Use FlextUtilities for parameter analysis
                 param_info = FlextUtilitiesValidation.analyze_constructor_parameter(
-                    param_name, param
+                    param_name,
+                    param,
                 )
                 dependencies[param_name] = param_info
 
@@ -942,11 +952,12 @@ class FlextContainer(FlextProtocols.Configurable):
 
         except Exception as e:
             return FlextResult[dict[str, dict[str, object]]].fail(
-                f"Signature analysis failed: {e}"
+                f"Signature analysis failed: {e}",
             )
 
     def _resolve_dependencies(
-        self, param_specs: dict[str, dict[str, object]]
+        self,
+        param_specs: dict[str, dict[str, object]],
     ) -> FlextResult[dict[str, object]]:
         """Resolve dependencies from container using railway pattern."""
         dependencies = {}
@@ -970,13 +981,15 @@ class FlextContainer(FlextProtocols.Configurable):
 
         if resolution_errors:
             return FlextResult[dict[str, object]].fail(
-                f"Cannot resolve required dependencies: {', '.join(resolution_errors)}"
+                f"Cannot resolve required dependencies: {', '.join(resolution_errors)}",
             )
 
         return FlextResult[dict[str, object]].ok(dependencies)
 
     def _instantiate_service(
-        self, service_class: type[T], dependencies: dict[str, object]
+        self,
+        service_class: type[T],
+        dependencies: dict[str, object],
     ) -> FlextResult[object]:
         """Instantiate service with resolved dependencies."""
         try:
@@ -1117,7 +1130,8 @@ class FlextContainer(FlextProtocols.Configurable):
     # =========================================================================
 
     def configure_container(
-        self, config: dict[str, object] | FlextConfig
+        self,
+        config: dict[str, object] | FlextConfig,
     ) -> FlextResult[bool]:
         """Configure container using ContainerConfig Model.
 
@@ -1273,12 +1287,12 @@ class FlextContainer(FlextProtocols.Configurable):
             return factory() if callable(factory) else factory
 
         factory_result: FlextResult[object] = FlextResult[object].from_callable(
-            _execute_factory
+            _execute_factory,
         )
 
         if factory_result.is_failure:
             return FlextResult[bool].fail(
-                f"Factory execution failed: {factory_result.error}"
+                f"Factory execution failed: {factory_result.error}",
             )
 
         service: object = factory_result.unwrap()
@@ -1318,7 +1332,7 @@ class FlextContainer(FlextProtocols.Configurable):
         def try_recovery(_error: str) -> FlextResult[T]:
             if recovery_factory is None:
                 return FlextResult[T].fail(
-                    f"Service '{name}' not found and no recovery factory provided"
+                    f"Service '{name}' not found and no recovery factory provided",
                 )
 
             def _execute_recovery_factory() -> object:
@@ -1329,18 +1343,18 @@ class FlextContainer(FlextProtocols.Configurable):
                 )
 
             factory_result: FlextResult[object] = FlextResult[object].from_callable(
-                _execute_recovery_factory
+                _execute_recovery_factory,
             )
 
             if factory_result.is_failure:
                 return FlextResult[T].fail(
-                    f"Recovery factory failed: {factory_result.error}"
+                    f"Recovery factory failed: {factory_result.error}",
                 )
 
             service: object = factory_result.unwrap()
             if not isinstance(service, expected_type):
                 return FlextResult[T].fail(
-                    f"Recovery factory returned wrong type: expected {getattr(expected_type, '__name__', str(expected_type))}, got {getattr(type(service), '__name__', str(type(service)))}"
+                    f"Recovery factory returned wrong type: expected {getattr(expected_type, '__name__', str(expected_type))}, got {getattr(type(service), '__name__', str(type(service)))}",
                 )
 
             # Register the recovered service for future use
@@ -1391,7 +1405,7 @@ class FlextContainer(FlextProtocols.Configurable):
                     # Ensure result is a FlextResult
                     if not isinstance(result, FlextResult):
                         return FlextResult[object].fail(
-                            f"Validator must return FlextResult, got {type(result)}"
+                            f"Validator must return FlextResult, got {type(result)}",
                         )
 
                     validator_result = result
@@ -1399,7 +1413,7 @@ class FlextContainer(FlextProtocols.Configurable):
                     # Check if validation failed
                     if validator_result.is_failure:
                         return FlextResult[object].fail(
-                            f"Validation failed: {validator_result.error}"
+                            f"Validation failed: {validator_result.error}",
                         )
                     # Continue with validated service
 
@@ -1428,7 +1442,9 @@ class FlextContainer(FlextProtocols.Configurable):
     # =========================================================================
 
     def validate_type(
-        self, value: object, expected_type: type[object]
+        self,
+        value: object,
+        expected_type: type[object],
     ) -> FlextResult[object]:
         """Validate value matches expected type (TypeValidator protocol).
 

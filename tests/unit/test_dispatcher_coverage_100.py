@@ -28,6 +28,8 @@ from flext_core import (
 class TestMessage100:
     """Simple message for 100% coverage tests."""
 
+    __test__ = False  # Not a test class, just a helper class
+
     def __init__(self, value: object) -> None:
         """Initialize test message."""
         self.value = value
@@ -155,7 +157,8 @@ class TestDispatcher100Coverage:
         # Create config object
         class DispatchConfig:
             def __init__(self) -> None:
-                self.metadata = {"key": "value"}
+                # Use FlextModels.Metadata for STRICT mode
+                self.metadata = FlextModels.Metadata(attributes={"key": "value"})
                 self.correlation_id = "test-correlation"
                 self.timeout_override = 30
 
@@ -510,15 +513,15 @@ class TestDispatcher100Coverage:
         # Validation should fail - line 765
         validation_result = dispatcher._validate_processor_interface(processor)
         assert validation_result.is_failure
-        assert "must be callable or have 'process' method" in validation_result.error
+        assert "must have 'process' method" in validation_result.error
 
         # Register processor (bypassing validation for test purposes)
         dispatcher._processors["invalid_processor"] = processor
 
-        # Execution should fail - line 849
+        # Execution should fail - line 858
         result = dispatcher.process("invalid_processor", "test_data")
         assert result.is_failure
-        assert "must be callable or have 'process' method" in result.error
+        assert "processor must be callable or have 'process' method" in result.error
 
     def test_processor_validation_process_not_callable(self) -> None:
         """Test processor validation when process attribute is not callable (lines 772, 855)."""
@@ -533,12 +536,12 @@ class TestDispatcher100Coverage:
         # Validation should fail - line 772
         validation_result = dispatcher._validate_processor_interface(processor)
         assert validation_result.is_failure
-        assert "'process' attribute must be callable" in validation_result.error
+        assert "must have 'process' method" in validation_result.error
 
         # Register processor (bypassing validation for test purposes)
         dispatcher._processors["invalid_processor"] = processor
 
-        # Execution should fail - line 855
+        # Execution should fail - line 864
         result = dispatcher.process("invalid_processor", "test_data")
         assert result.is_failure
         assert "'process' attribute must be callable" in result.error

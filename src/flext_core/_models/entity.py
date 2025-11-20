@@ -10,20 +10,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import ClassVar, override
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
-import flext_core._models.validation as _validation_module
-from flext_core._utilities.domain import FlextUtilitiesDomain
+from flext_core._models.validation import FlextModelsValidation
 from flext_core.constants import FlextConstants
-from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
+from flext_core.utilities import FlextUtilities
 
 
 class FlextModelsEntity:
@@ -55,7 +53,7 @@ class FlextModelsEntity:
             },
         )
 
-        unique_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+        unique_id: str = Field(default_factory=FlextUtilities.Generators.generate_uuid)
 
     class TimestampableMixin(BaseModel):
         """Mixin for models with creation and update timestamps."""
@@ -80,7 +78,7 @@ class FlextModelsEntity:
         )
 
         created_at: datetime = Field(
-            default_factory=lambda: datetime.now(UTC),
+            default_factory=FlextUtilities.Generators.generate_datetime_utc,
             description="Timestamp when the model was created (UTC timezone)",
             examples=[
                 datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
@@ -108,7 +106,7 @@ class FlextModelsEntity:
 
         def update_timestamp(self) -> None:
             """Update the updated_at timestamp to current UTC time."""
-            self.updated_at = datetime.now(UTC)
+            self.updated_at = FlextUtilities.Generators.generate_datetime_utc()
 
     class VersionableMixin(BaseModel):
         """Mixin for models with versioning support."""
@@ -221,20 +219,22 @@ class FlextModelsEntity:
         def model_post_init(self, __context: object, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
             if self.updated_at is None:
-                self.updated_at = datetime.now(UTC)
+                self.updated_at = FlextUtilities.Generators.generate_datetime_utc()
 
         @override
         def __eq__(self, other: object) -> bool:
             """Identity-based equality for entities (using FlextUtilities.Domain)."""
-            return FlextUtilitiesDomain.compare_entities_by_id(self, other)
+            return FlextUtilities.Domain.compare_entities_by_id(self, other)
 
         @override
         def __hash__(self) -> int:
             """Identity-based hash for entities (using FlextUtilities.Domain)."""
-            return FlextUtilitiesDomain.hash_entity_by_id(self)
+            return FlextUtilities.Domain.hash_entity_by_id(self)
 
         def _validate_event_input(
-            self, event_name: str, data: dict[str, object]
+            self,
+            event_name: str,
+            data: dict[str, object],
         ) -> FlextResult[bool]:
             """Validate event input parameters."""
             if not event_name or not isinstance(event_name, str):
@@ -261,22 +261,26 @@ class FlextModelsEntity:
             return FlextResult[bool].ok(True)
 
         def _create_and_validate_event(
-            self, event_name: str, data: dict[str, object]
+            self,
+            event_name: str,
+            data: dict[str, object],
         ) -> FlextResult[FlextModelsEntity.DomainEvent]:
             """Create and validate domain event."""
             try:
                 # Fast fail: data must be dict (None not allowed for domain events)
-                event_data: dict[str, object] = data if isinstance(data, dict) else {}
+                event_data: dict[str, object] = (
+                    data if FlextRuntime.is_dict_like(data) else {}
+                )
                 domain_event = FlextModelsEntity.DomainEvent(
                     event_type=event_name,
                     aggregate_id=self.unique_id,
                     data=event_data,
                 )
 
-                validation_result = (
-                    _validation_module.FlextModelsValidation.validate_domain_event(
-                        domain_event
-                    )
+                # Validate domain event using FlextUtilitiesValidation
+                # (imported at module level - safe because validation.py uses ResultProtocol)
+                validation_result = FlextUtilities.Validation.validate_domain_event(
+                    domain_event
                 )
                 if validation_result.is_failure:
                     return FlextResult[FlextModelsEntity.DomainEvent].fail(
@@ -293,17 +297,16 @@ class FlextModelsEntity:
                 )
 
         def _execute_event_handler(
-            self, event_name: str, data: dict[str, object]
+            self,
+            event_name: str,
+            data: dict[str, object],
         ) -> None:
             """Execute event handler if available."""
-            # Fast fail: event_type must be str or None
-            event_type_value: str = ""
-            if isinstance(data, dict):
+            # Fast fail: event_type must be str
+            event_type: str = ""
+            if FlextRuntime.is_dict_like(data):
                 event_type_raw = data.get("event_type")
-                event_type_value = (
-                    str(event_type_raw) if event_type_raw is not None else ""
-                )
-            event_type: str = event_type_value
+                event_type = "" if event_type_raw is None else str(event_type_raw)
             if event_type:
                 handler_method_name = f"_apply_{str(event_type).lower()}"
                 if hasattr(self, handler_method_name):
@@ -324,11 +327,13 @@ class FlextModelsEntity:
                         KeyError,
                     ) as e:
                         self._get_logger().warning(
-                            f"Domain event handler {handler_method_name} failed for event {event_name}: {e}"
+                            f"Domain event handler {handler_method_name} failed for event {event_name}: {e}",
                         )
 
         def add_domain_event(
-            self, event_name: str, data: dict[str, object]
+            self,
+            event_name: str,
+            data: dict[str, object],
         ) -> FlextResult[bool]:
             """Add a domain event to be dispatched with enhanced validation."""
             # Validate input
@@ -413,25 +418,23 @@ class FlextModelsEntity:
 
         def clear_domain_events(self) -> list[FlextModelsEntity.DomainEvent]:
             """Clear and return domain events."""
-            events = self.domain_events.copy()
+            events = list(self.domain_events)
 
             if events:
-                domain_events = list(events)
                 self._get_logger().debug(
                     "Domain events cleared",
                     aggregate_id=self.unique_id,
                     aggregate_type=self.__class__.__name__,
-                    event_count=len(domain_events),
-                    event_types=[e.event_type for e in domain_events]
-                    if domain_events
-                    else [],
+                    event_count=len(events),
+                    event_types=[e.event_type for e in events],
                 )
 
             self.domain_events.clear()
             return events
 
         def _validate_bulk_events_input(
-            self, events: list[tuple[str, dict[str, object]]]
+            self,
+            events: list[tuple[str, dict[str, object]]],
         ) -> FlextResult[int]:
             """Validate bulk events input and return total count.
 
@@ -458,7 +461,8 @@ class FlextModelsEntity:
             return FlextResult[int].ok(total_after_add)
 
         def _validate_and_collect_events(
-            self, events: list[tuple[str, dict[str, object]]]
+            self,
+            events: list[tuple[str, dict[str, object]]],
         ) -> FlextResult[list[tuple[str, dict[str, object]]]]:
             """Validate and collect events for bulk add.
 
@@ -480,13 +484,16 @@ class FlextModelsEntity:
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 # Fast fail: data must be dict (None not allowed)
-                event_data: dict[str, object] = data if isinstance(data, dict) else {}
+                event_data: dict[str, object] = (
+                    data if FlextRuntime.is_dict_like(data) else {}
+                )
                 validated_events.append((event_name, event_data))
 
             return FlextResult[list[tuple[str, dict[str, object]]]].ok(validated_events)
 
         def _add_validated_events_bulk(
-            self, validated_events: list[tuple[str, dict[str, object]]]
+            self,
+            validated_events: list[tuple[str, dict[str, object]]],
         ) -> FlextResult[bool]:
             """Add validated events in bulk.
 
@@ -526,7 +533,8 @@ class FlextModelsEntity:
                 )
 
         def add_domain_events_bulk(
-            self, events: list[tuple[str, dict[str, object]]]
+            self,
+            events: list[tuple[str, dict[str, object]]],
         ) -> FlextResult[bool]:
             """Add multiple domain events in bulk with validation."""
             # Validate input
@@ -566,11 +574,7 @@ class FlextModelsEntity:
 
         def validate_consistency(self) -> FlextResult[bool]:
             """Validate entity consistency using centralized validation."""
-            entity_result = (
-                _validation_module.FlextModelsValidation.validate_entity_relationships(
-                    self
-                )
-            )
+            entity_result = FlextModelsValidation.validate_entity_relationships(self)
             if entity_result.is_failure:
                 return FlextResult[bool].fail(
                     f"Entity validation failed: {entity_result.error}",
@@ -578,11 +582,7 @@ class FlextModelsEntity:
                 )
 
             for event in self.domain_events:
-                event_result = (
-                    _validation_module.FlextModelsValidation.validate_domain_event(
-                        event
-                    )
-                )
+                event_result = FlextUtilities.Validation.validate_domain_event(event)
                 if event_result.is_failure:
                     return FlextResult[bool].fail(
                         f"Domain event validation failed: {event_result.error}",
@@ -597,12 +597,12 @@ class FlextModelsEntity:
         @override
         def __eq__(self, other: object) -> bool:
             """Compare by value (using FlextUtilities.Domain)."""
-            return FlextUtilitiesDomain.compare_value_objects_by_value(self, other)
+            return FlextUtilities.Domain.compare_value_objects_by_value(self, other)
 
         @override
         def __hash__(self) -> int:
             """Hash based on values for use in sets/dicts (using FlextUtilities.Domain)."""
-            return FlextUtilitiesDomain.hash_value_object_by_value(self)
+            return FlextUtilities.Domain.hash_value_object_by_value(self)
 
     class AggregateRoot(Core):
         """Base class for aggregate roots - consistency boundaries."""
@@ -613,6 +613,9 @@ class FlextModelsEntity:
             """Check all business invariants."""
             for invariant in self._invariants:
                 if not invariant():
+                    # Late import to avoid circular dependency
+                    from flext_core.exceptions import FlextExceptions  # noqa: PLC0415
+
                     msg = f"Invariant violated: {invariant.__name__}"
                     raise FlextExceptions.ValidationError(
                         message=msg,

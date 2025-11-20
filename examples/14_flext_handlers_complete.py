@@ -142,7 +142,9 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                     command_timeout=5000,
                     max_command_retries=3,
-                    metadata={"description": "Handles user creation commands"},
+                    metadata=FlextModels.Metadata(
+                        attributes={"description": "Handles user creation commands"}
+                    ),
                 )
                 super().__init__(config=config)
                 self._users = user_store
@@ -199,7 +201,9 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                     command_timeout=3000,
                     max_command_retries=2,
-                    metadata={"description": "Handles user update commands"},
+                    metadata=FlextModels.Metadata(
+                        attributes={"description": "Handles user update commands"}
+                    ),
                 )
                 super().__init__(config=config)
                 self._users = user_store
@@ -289,7 +293,9 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     handler_mode=FlextConstants.Cqrs.HandlerType.QUERY,
                     command_timeout=1000,
                     max_command_retries=1,
-                    metadata={"description": "Handles single user queries"},
+                    metadata=FlextModels.Metadata(
+                        attributes={"description": "Handles single user queries"}
+                    ),
                 )
                 super().__init__(config=config)
                 self._users = user_store
@@ -320,9 +326,11 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     handler_mode=FlextConstants.Cqrs.HandlerType.QUERY,
                     command_timeout=2000,
                     max_command_retries=1,
-                    metadata={
-                        "description": "Handles user list[object] queries with pagination",
-                    },
+                    metadata=FlextModels.Metadata(
+                        attributes={
+                            "description": "Handles user list[object] queries with pagination",
+                        }
+                    ),
                 )
                 super().__init__(config=config)
                 self._users = user_store
@@ -401,7 +409,9 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
             command_timeout=1000,
             max_command_retries=1,
-            metadata={"description": "Validates email addresses"},
+            metadata=FlextModels.Metadata(
+                attributes={"description": "Validates email addresses"}
+            ),
         )
 
         # Use from_callable factory method with wrapper
@@ -435,7 +445,9 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
             command_timeout=500,
             max_command_retries=1,
-            metadata={"description": "Processes strings"},
+            metadata=FlextModels.Metadata(
+                attributes={"description": "Processes strings"}
+            ),
         )
 
         # Create handler from lambda with proper type handling
@@ -477,7 +489,11 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                     command_timeout=2000,
                     max_command_retries=2,
-                    metadata={"description": "Demonstrates error handling patterns"},
+                    metadata=FlextModels.Metadata(
+                        attributes={
+                            "description": "Demonstrates error handling patterns"
+                        }
+                    ),
                 )
                 super().__init__(config=config)
                 self._logger = FlextLogger.create_module_logger(__name__)
@@ -630,7 +646,9 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                     command_timeout=3000,
                     max_command_retries=1,
-                    metadata={"stage": "validation", "pipeline_order": 1},
+                    metadata=FlextModels.Metadata(
+                        attributes={"stage": "validation", "pipeline_order": 1}
+                    ),
                 )
                 super().__init__(config=config)
 
@@ -664,7 +682,9 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                     command_timeout=5000,
                     max_command_retries=2,
-                    metadata={"stage": "enrichment", "pipeline_order": 2},
+                    metadata=FlextModels.Metadata(
+                        attributes={"stage": "enrichment", "pipeline_order": 2}
+                    ),
                 )
                 super().__init__(config=config)
 
@@ -702,7 +722,9 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                     command_timeout=10000,
                     max_command_retries=3,
-                    metadata={"stage": "persistence", "pipeline_order": 3},
+                    metadata=FlextModels.Metadata(
+                        attributes={"stage": "persistence", "pipeline_order": 3}
+                    ),
                 )
                 super().__init__(config=config)
 

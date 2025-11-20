@@ -9,14 +9,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import datetime
+from typing import TYPE_CHECKING, ClassVar, Self
 
-from pydantic import Field, HttpUrl, computed_field
+from beartype.door import is_bearable
+from pydantic import Field, HttpUrl, computed_field, model_validator
 
+from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
-from flext_core._models.service import OperationCallable
+from flext_core._models.metadata import Metadata
 from flext_core.constants import FlextConstants
+from flext_core.utilities import FlextUtilities
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from flext_core._models.service import OperationCallable
 
 
 class FlextModelsBase:
@@ -26,39 +34,99 @@ class FlextModelsBase:
     All nested classes are accessed via FlextModels.Base.* in the main models.py.
     """
 
-    class Metadata(FlextModelsEntity.FrozenStrictModel):
-        """Immutable metadata model."""
-
-        created_by: str | None = None
-        created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-        modified_by: str | None = None
-        modified_at: datetime | None = None
-        tags: list[str] = Field(default_factory=list)
-        attributes: dict[str, object] = Field(default_factory=dict)
+    # Use zero-dependency Metadata from _models/metadata.py
+    Metadata = Metadata
 
     class Payload[T](
         FlextModelsEntity.ArbitraryTypesModel,
         FlextModelsEntity.IdentifiableMixin,
         FlextModelsEntity.TimestampableMixin,
     ):
-        """Enhanced payload model with computed field.
+        """Enhanced payload model with runtime type validation.
 
         Uses IdentifiableMixin for id and TimestampableMixin for created_at.
+        Runtime Type Validation:
+            Payload[User](data=user)    # Validates user is User type
+            Payload[User](data=product) # TypeError automatically
         """
 
-        data: T = Field(...)  # Required field, no default
+        _expected_data_type: ClassVar[type | None] = None
+
+        data: T = Field(...)
         metadata: dict[str, str | int | float] = Field(default_factory=dict)
         expires_at: datetime | None = None
         correlation_id: str | None = None
         source_service: str | None = None
         message_type: str | None = None
 
+        def __class_getitem__(cls, item: type | tuple[type, ...]) -> type[Self]:
+            """Intercept Payload[T] to create typed subclass for runtime validation.
+
+            Returns:
+                A typed subclass with _expected_data_type set to the provided type.
+
+            """
+            actual_type = item[0] if isinstance(item, tuple) else item
+            cls_name = getattr(cls, "__name__", "Payload")
+            cls_qualname = getattr(cls, "__qualname__", "Payload")
+            type_name = getattr(actual_type, "__name__", str(actual_type))
+
+            return FlextUtilities.Generators.create_dynamic_type_subclass(
+                f"{cls_name}[{type_name}]",
+                cls,
+                {
+                    "_expected_data_type": actual_type,
+                    "__module__": cls.__module__,
+                    "__qualname__": f"{cls_qualname}[{type_name}]",
+                },
+            )
+
+        @model_validator(mode="after")
+        def _validate_data_type(self) -> Self:
+            """Validate data field matches expected type.
+
+            Returns:
+                Self: The validated instance with data matching expected type.
+
+            Raises:
+                TypeError: If data field doesn't match expected type.
+
+            """
+            if self._expected_data_type is not None and self.data is not None:
+                try:
+                    if isinstance(self._expected_data_type, type):
+                        type_mismatch = not isinstance(
+                            self.data,
+                            self._expected_data_type,
+                        )
+                    else:
+                        type_mismatch = not is_bearable(
+                            self.data,
+                            self._expected_data_type,
+                        )
+                except (TypeError, AttributeError):
+                    type_mismatch = False
+
+                if type_mismatch:
+                    expected_name = getattr(
+                        self._expected_data_type,
+                        "__name__",
+                        str(self._expected_data_type),
+                    )
+                    actual_name = type(self.data).__name__
+                    msg = (
+                        f"Payload[{expected_name}] received data of type {actual_name} "
+                        f"instead of {expected_name}. Data: {self.data!r}"
+                    )
+                    raise TypeError(msg)
+            return self
+
         @computed_field
         def is_expired(self) -> bool:
-            """Computed property to check if payload is expired."""
+            """Check if payload is expired."""
             if self.expires_at is None:
                 return False
-            return datetime.now(UTC) > self.expires_at
+            return FlextUtilities.Generators.generate_datetime_utc() > self.expires_at
 
     class Url(FlextModelsEntity.Value):
         """Enhanced URL value object using Pydantic v2 HttpUrl validation."""
@@ -71,12 +139,14 @@ class FlextModelsBase:
         level: str = Field(default_factory=lambda: "INFO")
         message: str
         context: dict[str, object] = Field(default_factory=dict)
-        timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+        timestamp: datetime = Field(
+            default_factory=FlextUtilities.Generators.generate_datetime_utc
+        )
         source: str | None = None
         operation: str | None = None
         obj: object | None = None
 
-    class TimestampConfig(FlextModelsEntity.ArbitraryTypesModel):
+    class TimestampConfig(FlextModelsCollections.Config):
         """Enhanced timestamp configuration."""
 
         obj: object
@@ -90,7 +160,7 @@ class FlextModelsBase:
             default_factory=lambda: {
                 "created_at": "created_at",
                 "updated_at": "updated_at",
-            }
+            },
         )
 
     class SerializationRequest(FlextModelsEntity.ArbitraryTypesModel):
@@ -98,7 +168,7 @@ class FlextModelsBase:
 
         data: object
         format: str = Field(
-            default_factory=lambda: FlextConstants.Cqrs.SerializationFormat.JSON
+            default_factory=lambda: FlextConstants.Cqrs.SerializationFormat.JSON,
         )
         encoding: str = Field(default_factory=lambda: "utf-8")
         compression: str | None = None
@@ -112,15 +182,14 @@ class FlextModelsBase:
         """Conditional execution request."""
 
         condition: Callable[[object], bool]
-        true_action: OperationCallable | None = (
-            None  # Optional for test convenience
-        )
+        true_action: OperationCallable | None = None
         false_action: OperationCallable | None = None
         context: dict[str, object] = Field(default_factory=dict)
 
         @classmethod
         def validate_condition(
-            cls, v: OperationCallable | None
+            cls,
+            v: OperationCallable | None,
         ) -> OperationCallable | None:
             """Validate callables are properly defined (Pydantic v2 mode='after')."""
             return v
@@ -133,7 +202,7 @@ class FlextModelsBase:
         initial_value: object
         ttl_seconds: int | None = None
         persistence_level: str = Field(
-            default_factory=lambda: FlextConstants.Cqrs.PersistenceLevel.MEMORY
+            default_factory=lambda: FlextConstants.Cqrs.PersistenceLevel.MEMORY,
         )
         field_name: str = "state"
         state: object

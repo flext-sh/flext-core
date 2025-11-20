@@ -66,19 +66,22 @@ class FlextUtilitiesConfiguration:
                 KeyError,
             ) as e:
                 # Log and continue to fallback - object may not be Pydantic model
-                _logger.debug(f"Failed to get parameter from model_dump: {e}")
+                _logger.debug("Failed to get parameter from model_dump: %s", e)
 
         # Fallback for non-Pydantic objects - direct attribute access
         if not hasattr(obj, parameter):
             msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
             raise FlextExceptions.NotFoundError(
-                msg, resource_type=f"parameter '{parameter}'"
+                msg,
+                resource_type=f"parameter '{parameter}'",
             )
         return getattr(obj, parameter)
 
     @staticmethod
     def set_parameter(
-        obj: object, parameter: str, value: FlextTypes.ParameterValueType
+        obj: object,
+        parameter: str,
+        value: FlextTypes.ParameterValueType,
     ) -> bool:
         """Set parameter value on a Pydantic configuration object with validation.
 
@@ -111,7 +114,8 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def get_singleton(
-        singleton_class: type, parameter: str
+        singleton_class: type,
+        parameter: str,
     ) -> FlextTypes.ParameterValueType:
         """Get parameter from a singleton configuration instance.
 
@@ -133,7 +137,8 @@ class FlextUtilitiesConfiguration:
                 instance = get_global_instance_method()
                 if isinstance(instance, FlextProtocols.HasModelDump):
                     return FlextUtilitiesConfiguration.get_parameter(
-                        instance, parameter
+                        instance,
+                        parameter,
                     )
 
         msg = (
@@ -160,26 +165,26 @@ class FlextUtilitiesConfiguration:
         """
         if not hasattr(singleton_class, "get_global_instance"):
             return FlextResult[bool].fail(
-                f"Class {singleton_class.__name__} does not have get_global_instance method"
+                f"Class {singleton_class.__name__} does not have get_global_instance method",
             )
 
         get_global_instance_method = singleton_class.get_global_instance
         if not callable(get_global_instance_method):
             return FlextResult[bool].fail(
-                f"get_global_instance is not callable on {singleton_class.__name__}"
+                f"get_global_instance is not callable on {singleton_class.__name__}",
             )
 
         instance = get_global_instance_method()
         if not isinstance(instance, FlextProtocols.HasModelDump):
             return FlextResult[bool].fail(
-                "Instance does not implement HasModelDump protocol"
+                "Instance does not implement HasModelDump protocol",
             )
 
         success = FlextUtilitiesConfiguration.set_parameter(instance, parameter, value)
         if success:
             return FlextResult[bool].ok(True)
         return FlextResult[bool].fail(
-            f"Failed to set parameter '{parameter}' on {singleton_class.__name__}"
+            f"Failed to set parameter '{parameter}' on {singleton_class.__name__}",
         )
 
     @staticmethod

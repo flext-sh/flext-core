@@ -252,13 +252,15 @@ class TestFlextHandlers:
         config = FlextModels.Cqrs.Handler(
             handler_id="test_handler_with_metadata",
             handler_name="Test Handler With Metadata",
-            metadata={"test_key": "test_value", "priority": 1},
+            metadata=FlextModels.Metadata(
+                attributes={"test_key": "test_value", "priority": 1}
+            ),
         )
         handler = ConcreteTestHandler(config=config)
 
         assert handler._config_model.metadata is not None
-        assert handler._config_model.metadata["test_key"] == "test_value"
-        assert handler._config_model.metadata["priority"] == 1
+        assert handler._config_model.metadata.attributes["test_key"] == "test_value"
+        assert handler._config_model.metadata.attributes["priority"] == 1
 
     def test_handlers_with_timeout(self) -> None:
         """Test handlers with timeout configuration."""
@@ -709,7 +711,7 @@ class TestFlextHandlers:
             handler_name="Custom Name",
             handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
             handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
-            metadata={"test": "value"},
+            metadata=FlextModels.Metadata(attributes={"test": "value"}),
         )
 
         handler = FlextHandlers.create_from_callable(
@@ -719,7 +721,7 @@ class TestFlextHandlers:
 
         assert handler.handler_name == "Custom Name"
         assert handler._config_model.handler_id == "custom_id"
-        assert handler._config_model.metadata == {"test": "value"}
+        assert handler._config_model.metadata.attributes == {"test": "value"}
 
     def test_handlers_create_from_callable_with_pydantic_config(self) -> None:
         """Test create_from_callable with FlextModels.Cqrs.Handler object."""

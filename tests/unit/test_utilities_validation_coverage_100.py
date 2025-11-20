@@ -13,8 +13,7 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel
 
-from flext_core import FlextResult
-from flext_core._utilities.validation import FlextUtilitiesValidation
+from flext_core import FlextResult, FlextUtilities
 
 # ==================== COVERAGE TESTS ====================
 
@@ -25,7 +24,7 @@ class TestValidation100Coverage:
     def test_normalize_component_with_set(self) -> None:
         """Test _normalize_component with set."""
         test_set = {1, 2, 3}
-        result = FlextUtilitiesValidation._normalize_component(test_set)
+        result = FlextUtilities.Validation._normalize_component(test_set)
         # Set should be converted to set of normalized items
         assert isinstance(result, set)
         assert len(result) == 3
@@ -33,31 +32,35 @@ class TestValidation100Coverage:
     def test_sort_dict_keys_with_dict(self) -> None:
         """Test _sort_dict_keys with dict."""
         test_dict = {"c": 3, "a": 1, "b": 2}
-        result = FlextUtilitiesValidation._sort_dict_keys(test_dict)
+        result = FlextUtilities.Validation._sort_dict_keys(test_dict)
         # Keys should be sorted
         assert isinstance(result, dict)
         keys = list(result.keys())
         assert keys == sorted(keys, key=lambda x: (str(x).casefold(), str(x)))
 
     def test_validate_pipeline_with_non_callable_validator(self) -> None:
-        """Test validate_pipeline with non-callable validator."""
-        # Non-callable validators should be skipped
-        result = FlextUtilitiesValidation.validate_pipeline(
+        """Test validate_pipeline with non-callable validator - FAST FAIL expected."""
+        # Non-callable validators should FAIL immediately (FAST FAIL, not defensive programming)
+        result = FlextUtilities.Validation.validate_pipeline(
             "test", validators=[123, "not_callable"]
         )
-        assert result.is_success
+        assert result.is_failure
+        assert "Validator must be callable" in result.error
 
     def test_validate_pipeline_with_validator_returning_false(self) -> None:
-        """Test validate_pipeline with validator returning False."""
+        """Test validate_pipeline with validator raising ValueError - CORRECT API."""
 
-        def validator(value: str) -> FlextResult[bool]:
-            return FlextResult[bool].ok(False)  # Not True
+        def validator(value: str) -> None:
+            """Validator that raises exception (correct API - not FlextResult)."""
+            msg = "Validation failed"
+            raise ValueError(msg)
 
-        result = FlextUtilitiesValidation.validate_pipeline(
+        result = FlextUtilities.Validation.validate_pipeline(
             "test", validators=[validator]
         )
         assert result.is_failure
-        assert "must return FlextResult[bool].ok(True)" in result.error
+        assert "Validator failed:" in result.error
+        assert "Validation failed" in result.error
 
     def test_validate_pipeline_with_validator_exception(self) -> None:
         """Test validate_pipeline with validator raising exception."""
@@ -66,7 +69,7 @@ class TestValidation100Coverage:
             msg = "Validator error"
             raise ValueError(msg)
 
-        result = FlextUtilitiesValidation.validate_pipeline(
+        result = FlextUtilities.Validation.validate_pipeline(
             "test", validators=[validator]
         )
         assert result.is_failure
@@ -88,10 +91,10 @@ class TestValidation100Coverage:
         # Actually, orjson is quite robust, so we test with a complex nested structure
         value = {"key": {"nested": [1, 2, 3]}}
         # This should work with orjson, but we test the fallback path
-        result = FlextUtilitiesValidation.sort_key(value)
+        result = FlextUtilities.Validation.sort_key(value)
         assert isinstance(result, str)
         # Test with a value that definitely works
-        result2 = FlextUtilitiesValidation.sort_key({"test": 123})
+        result2 = FlextUtilities.Validation.sort_key({"test": 123})
         assert isinstance(result2, str)
 
     def test_normalize_pydantic_value_with_model_dump_failure(self) -> None:
@@ -99,7 +102,7 @@ class TestValidation100Coverage:
 
         class BadPydanticModel(BaseModel):
             @property
-            def model_dump(self) -> dict[str, object]:  # type: ignore[override]
+            def model_dump(self) -> dict[str, object]:
                 msg = "Cannot dump"
                 raise TypeError(msg)
 
@@ -116,7 +119,7 @@ class TestValidation100Coverage:
             field: str = "value"
 
         model = GoodPydanticModel()
-        result = FlextUtilitiesValidation._normalize_pydantic_value(model)
+        result = FlextUtilities.Validation._normalize_pydantic_value(model)
         assert isinstance(result, tuple)
         assert result[0] == "pydantic"
 
@@ -129,7 +132,7 @@ class TestValidation100Coverage:
             field2: int
 
         instance = TestDataClass(field1="value", field2=123)
-        result = FlextUtilitiesValidation._normalize_dataclass_value_instance(instance)
+        result = FlextUtilities.Validation._normalize_dataclass_value_instance(instance)
         assert isinstance(result, tuple)
         assert result[0] == "dataclass"
         assert isinstance(result[1], dict)
@@ -137,7 +140,7 @@ class TestValidation100Coverage:
     def test_normalize_mapping(self) -> None:
         """Test _normalize_mapping."""
         test_mapping = {"key1": "value1", "key2": "value2"}
-        result = FlextUtilitiesValidation._normalize_mapping(test_mapping)
+        result = FlextUtilities.Validation._normalize_mapping(test_mapping)
         assert isinstance(result, dict)
         # Keys should be normalized
         assert "key1" in result or "key2" in result
@@ -145,20 +148,20 @@ class TestValidation100Coverage:
     def test_normalize_sequence(self) -> None:
         """Test _normalize_sequence."""
         test_list = [1, 2, 3]
-        result = FlextUtilitiesValidation._normalize_sequence(test_list)
+        result = FlextUtilities.Validation._normalize_sequence(test_list)
         assert isinstance(result, tuple)
         assert result[0] == "sequence"
         assert len(result[1]) == 3
 
         test_tuple = (4, 5, 6)
-        result2 = FlextUtilitiesValidation._normalize_sequence(test_tuple)
+        result2 = FlextUtilities.Validation._normalize_sequence(test_tuple)
         assert isinstance(result2, tuple)
         assert result2[0] == "sequence"
 
     def test_normalize_set(self) -> None:
         """Test _normalize_set."""
         test_set = {1, 2, 3}
-        result = FlextUtilitiesValidation._normalize_set(test_set)
+        result = FlextUtilities.Validation._normalize_set(test_set)
         assert isinstance(result, tuple)
         assert result[0] == "set"
         assert len(result[1]) == 3
@@ -171,7 +174,7 @@ class TestValidation100Coverage:
             attr2 = 123
 
         instance = TestClass()
-        result = FlextUtilitiesValidation._normalize_vars(instance)
+        result = FlextUtilities.Validation._normalize_vars(instance)
         assert isinstance(result, tuple)
         assert result[0] == "vars"
         assert isinstance(result[1], tuple)
@@ -183,7 +186,7 @@ class TestValidation100Coverage:
             field: str = "value"
 
         model = TestModel()
-        result = FlextUtilitiesValidation.normalize_component(model)
+        result = FlextUtilities.Validation.normalize_component(model)
         assert isinstance(result, tuple)
         assert result[0] == "pydantic"
 
@@ -195,55 +198,55 @@ class TestValidation100Coverage:
             field: str = "value"
 
         instance = TestDataClass()
-        result = FlextUtilitiesValidation.normalize_component(instance)
+        result = FlextUtilities.Validation.normalize_component(instance)
         assert isinstance(result, tuple)
         assert result[0] == "dataclass"
 
     def test_normalize_component_with_mapping(self) -> None:
         """Test normalize_component with mapping."""
         test_dict = {"key": "value"}
-        result = FlextUtilitiesValidation.normalize_component(test_dict)
+        result = FlextUtilities.Validation.normalize_component(test_dict)
         assert isinstance(result, dict)
 
     def test_normalize_component_with_list(self) -> None:
         """Test normalize_component with list."""
         test_list = [1, 2, 3]
-        result = FlextUtilitiesValidation.normalize_component(test_list)
+        result = FlextUtilities.Validation.normalize_component(test_list)
         assert isinstance(result, tuple)
         assert result[0] == "sequence"
 
     def test_normalize_component_with_tuple(self) -> None:
         """Test normalize_component with tuple."""
         test_tuple = (1, 2, 3)
-        result = FlextUtilitiesValidation.normalize_component(test_tuple)
+        result = FlextUtilities.Validation.normalize_component(test_tuple)
         assert isinstance(result, tuple)
         assert result[0] == "sequence"
 
     def test_normalize_component_with_bytes(self) -> None:
         """Test normalize_component with bytes."""
         test_bytes = b"test"
-        result = FlextUtilitiesValidation.normalize_component(test_bytes)
+        result = FlextUtilities.Validation.normalize_component(test_bytes)
         assert isinstance(result, tuple)
         assert result[0] == "bytes"
 
     def test_normalize_component_with_primitive_types(self) -> None:
         """Test normalize_component with primitive types."""
         # None
-        result = FlextUtilitiesValidation.normalize_component(None)
+        result = FlextUtilities.Validation.normalize_component(None)
         assert result is None
 
         # bool
-        result = FlextUtilitiesValidation.normalize_component(True)
+        result = FlextUtilities.Validation.normalize_component(True)
         assert result is True
 
         # int
-        result = FlextUtilitiesValidation.normalize_component(123)
+        result = FlextUtilities.Validation.normalize_component(123)
         assert result == 123
 
         # float
-        result = FlextUtilitiesValidation.normalize_component(123.45)
+        result = FlextUtilities.Validation.normalize_component(123.45)
         assert result == 123.45
 
         # str
-        result = FlextUtilitiesValidation.normalize_component("test")
+        result = FlextUtilities.Validation.normalize_component("test")
         assert result == "test"

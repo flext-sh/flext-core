@@ -32,6 +32,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Callable
+from datetime import datetime
 from typing import (
     TYPE_CHECKING,
     Generic,
@@ -414,7 +415,8 @@ class FlextProtocols:
 
         @abstractmethod
         def bind(
-            self, func: Callable[[T_co], FlextProtocols.Monad[T]]
+            self,
+            func: Callable[[T_co], FlextProtocols.Monad[T]],
         ) -> FlextProtocols.Monad[T]:
             """Monadic bind operation (flat_map equivalent).
 
@@ -429,7 +431,8 @@ class FlextProtocols:
 
         @abstractmethod
         def flat_map(
-            self, func: Callable[[T_co], FlextProtocols.Monad[T]]
+            self,
+            func: Callable[[T_co], FlextProtocols.Monad[T]],
         ) -> FlextProtocols.Monad[T]:
             """Monadic flat_map operation (bind equivalent).
 
@@ -456,7 +459,8 @@ class FlextProtocols:
             ...
 
         def filter(
-            self, predicate: Callable[[T_co], bool]
+            self,
+            predicate: Callable[[T_co], bool],
         ) -> FlextProtocols.Monad[T_co]:
             """Filter monad based on predicate (optional)."""
             ...
@@ -509,6 +513,148 @@ class FlextProtocols:
 
         value: T
         is_success: bool
+
+    @runtime_checkable
+    class ResultProtocol(Protocol, Generic[T]):
+        """Protocol for FlextResult[T] - prevents circular imports.
+
+        Complete interface for Railway-Oriented Programming result type.
+        Enables type checking without importing concrete FlextResult class.
+
+        ARCHITECTURAL PURPOSE:
+        =====================
+        Breaks circular import between result.py (Tier 1) and
+        validation.py/models.py/_models/*.py (Tier 2) by providing
+        result interface at Tier 0 (protocols.py).
+
+        Dependency Inversion Principle (SOLID):
+        - Higher-level modules (validation.py) depend on abstraction (ResultProtocol)
+        - Lower-level module (result.py) implements abstraction (FlextResult)
+        - Both depend on protocol, not each other
+
+        IMPLEMENTATION:
+        ==============
+        FlextResult[T] implements this protocol via structural typing (@runtime_checkable).
+        No explicit inheritance needed - duck typing validates interface compliance.
+
+        USAGE PATTERN:
+        =============
+        In validation.py:
+            def validate_timeout(timeout: float) -> ResultProtocol[bool]:
+                from flext_core.result import FlextResult  # Import inside function
+                if timeout > MAX:
+                    return FlextResult[bool].fail("Timeout too large")
+                return FlextResult[bool].ok(True)
+
+        In _models/*.py:
+            from flext_core.protocols import FlextProtocols
+            result: FlextProtocols.ResultProtocol[bool] = validate_timeout(30.0)
+            if result.is_success:
+                value = result.unwrap()
+
+        INTERFACE COMPLIANCE:
+        ====================
+        Satisfies: FlextResult[T] (via structural typing)
+        Used in: validation.py, _models/*.py
+        """
+
+        # Properties (read-only attributes)
+        value: T
+        error: str | None
+        error_code: str | None
+        is_success: bool
+        is_failure: bool
+
+        # Factory class methods
+        @classmethod
+        def ok(cls, data: T) -> FlextProtocols.ResultProtocol[T]:
+            """Create successful result wrapping data."""
+            ...
+
+        @classmethod
+        def fail(
+            cls,
+            error: str,
+            error_code: str | None = None,
+            error_data: dict[str, object] | None = None,
+        ) -> FlextProtocols.ResultProtocol[T]:
+            """Create failed result with error message and optional metadata."""
+            ...
+
+        # Instance methods
+        def unwrap(self) -> T:
+            """Extract success value or raise error.
+
+            Raises:
+                ValueError: If result is failure
+
+            """
+            ...
+
+        def unwrap_or(self, default: T) -> T:
+            """Extract success value or return default if failure."""
+            ...
+
+        def map(
+            self,
+            func: Callable[[T], object],
+        ) -> FlextProtocols.ResultProtocol[object]:
+            """Transform success value with function.
+
+            Short-circuits if result is failure (railway pattern).
+            """
+            ...
+
+        def flat_map(
+            self,
+            func: Callable[[T], FlextProtocols.ResultProtocol[object]],
+        ) -> FlextProtocols.ResultProtocol[object]:
+            """Chain operations returning ResultProtocol (monadic bind).
+
+            Short-circuits if result is failure (railway pattern).
+            """
+            ...
+
+    @runtime_checkable
+    class MetadataProtocol(Protocol):
+        """Protocol for metadata objects - prevents circular imports.
+
+        Structural typing for metadata used across FLEXT ecosystem.
+        Prevents circular import between models.py and exceptions.py.
+
+        Satisfies: FlextModels.Metadata (via structural typing)
+        Used in: exceptions.py (BaseError metadata parameter)
+
+        All fields match FlextModels.Metadata structure.
+        Note: model_dump signature matches Pydantic v2 (with all optional parameters).
+        """
+
+        created_by: str | None
+        created_at: datetime
+        modified_by: str | None
+        modified_at: datetime | None
+        tags: list[str]
+        attributes: dict[str, object]
+
+        def model_dump(
+            self,
+            *,
+            mode: str = "python",
+            include: object = None,
+            exclude: object = None,
+            context: object = None,
+            by_alias: bool | None = None,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            exclude_computed_fields: bool = False,
+            round_trip: bool = False,
+            warnings: str | bool = True,
+            fallback: object = None,
+            serialize_as_any: bool = False,
+        ) -> dict[str, object]:
+            """Dump model to dict - Pydantic v2 signature."""
+            ...
 
     @runtime_checkable
     class HasValidateCommand(Protocol):
@@ -693,11 +839,9 @@ class FlextProtocols:
             >>> class FlextLdapConfig(BaseModel):
             ...     @classmethod
             ...     def register_as_namespace(cls) -> FlextResult[bool]:
-            ...         return FlextConfig.register_namespace('ldap', cls)
-            ...
+            ...         return FlextConfig.register_namespace("ldap", cls)
             >>> # Auto-register on module import
             >>> FlextLdapConfig.register_as_namespace()
-            ...
             >>> # Access via unified config
             >>> config = FlextConfig.get_instance()
             >>> ldap_cfg = config.ldap  # FlextLdapConfig instance
@@ -731,12 +875,12 @@ class FlextProtocols:
                 ...     @classmethod
                 ...     def register_as_namespace(cls) -> FlextResult[bool]:
                 ...         from flext_core import FlextConfig
+                ...
                 ...         try:
-                ...             FlextConfig.register_namespace('ldap', cls)
+                ...             FlextConfig.register_namespace("ldap", cls)
                 ...             return FlextResult[bool].ok(True)
                 ...         except Exception as e:
                 ...             return FlextResult[bool].fail(str(e))
-                ...
                 >>> # In __init__.py of flext-ldap
                 >>> FlextLdapConfig.register_as_namespace()
 
@@ -954,7 +1098,8 @@ class FlextProtocols:
 
     @runtime_checkable
     class Handler(
-        Protocol, Generic[TInput_Handler_Protocol_contra, TResult_Handler_Protocol]
+        Protocol,
+        Generic[TInput_Handler_Protocol_contra, TResult_Handler_Protocol],
     ):
         """Application handler protocol for CQRS patterns.
 
@@ -967,7 +1112,8 @@ class FlextProtocols:
 
         @abstractmethod
         def handle(
-            self, message: TInput_Handler_Protocol_contra
+            self,
+            message: TInput_Handler_Protocol_contra,
         ) -> FlextResult[TResult_Handler_Protocol]:
             """Handle the message and return result.
 
@@ -981,7 +1127,8 @@ class FlextProtocols:
             ...
 
         def __call__(
-            self, input_data: TInput_Handler_Protocol_contra
+            self,
+            input_data: TInput_Handler_Protocol_contra,
         ) -> FlextResult[TResult_Handler_Protocol]:
             """Process input and return a FlextResult containing the output."""
             ...
@@ -991,13 +1138,15 @@ class FlextProtocols:
             ...
 
         def execute(
-            self, message: TInput_Handler_Protocol_contra
+            self,
+            message: TInput_Handler_Protocol_contra,
         ) -> FlextResult[TResult_Handler_Protocol]:
             """Execute the handler with the given message."""
             ...
 
         def validate_command(
-            self, command: TInput_Handler_Protocol_contra
+            self,
+            command: TInput_Handler_Protocol_contra,
         ) -> FlextResult[bool]:
             """Validate a command message."""
             ...
@@ -1007,7 +1156,8 @@ class FlextProtocols:
             ...
 
         def validate_query(
-            self, query: TInput_Handler_Protocol_contra
+            self,
+            query: TInput_Handler_Protocol_contra,
         ) -> FlextResult[bool]:
             """Validate a query message."""
             ...
@@ -1233,7 +1383,8 @@ class FlextProtocols:
 
         @abstractmethod
         def add_middleware(
-            self, middleware: FlextProtocols.Middleware
+            self,
+            middleware: FlextProtocols.Middleware,
         ) -> FlextResult[bool]:
             """Add middleware to processing chain.
 
@@ -1276,7 +1427,9 @@ class FlextProtocols:
 
         @abstractmethod
         def on_registered(
-            self, message_type: type, handler: object
+            self,
+            message_type: type,
+            handler: object,
         ) -> FlextResult[bool]:
             """Track handler registration event.
 
@@ -1418,7 +1571,9 @@ class FlextProtocols:
 
         @abstractmethod
         def execute_with_timeout(
-            self, operation: Callable[[], object], timeout_ms: float
+            self,
+            operation: Callable[[], object],
+            timeout_ms: float,
         ) -> FlextResult[object]:
             """Execute operation with timeout constraint.
 
@@ -1467,7 +1622,10 @@ class FlextProtocols:
 
         @abstractmethod
         def record_metric(
-            self, metric_name: str, value: float, tags: dict[str, str] | None
+            self,
+            metric_name: str,
+            value: float,
+            tags: dict[str, str] | None,
         ) -> FlextResult[bool]:
             """Record metric value with tags.
 
@@ -1540,7 +1698,9 @@ class FlextProtocols:
 
         @abstractmethod
         def subscribe(
-            self, event_type: type, handler: Callable[[object], object]
+            self,
+            event_type: type,
+            handler: Callable[[object], object],
         ) -> FlextResult[bool]:
             """Subscribe to event type.
 
@@ -1698,7 +1858,9 @@ class FlextProtocols:
 
         @abstractmethod
         def record_latency(
-            self, operation_name: str, duration_ms: float
+            self,
+            operation_name: str,
+            duration_ms: float,
         ) -> FlextResult[bool]:
             """Record operation latency.
 
@@ -1805,19 +1967,49 @@ class FlextProtocols:
         """
 
         def register(
-            self, message_type: type, handler: FlextTypes.HandlerCallableType
+            self,
+            message_type: type,
+            handler: FlextTypes.HandlerCallableType,
         ) -> FlextResult[bool]:
             """Register handler for message type."""
             ...
 
         def get_handler(
-            self, message_type: type
+            self,
+            message_type: type,
         ) -> FlextResult[FlextTypes.HandlerCallableType]:
             """Get handler for message type."""
             ...
 
         def list_handlers(self) -> dict[type, FlextTypes.HandlerCallableType]:
             """List all registered handlers."""
+            ...
+
+    # =========================================================================
+    # VALIDATION LAYER - Domain event validation protocol
+    # =========================================================================
+
+    @runtime_checkable
+    class DomainEventValidator(Protocol):
+        """Protocol for domain event validation (breaks circular imports).
+
+        Used by _models/entity.py to validate domain events without importing
+        from _utilities/validation.py (which would cause circular import).
+
+        Implementation: FlextUtilitiesValidation.validate_domain_event
+        """
+
+        @staticmethod
+        def validate_domain_event(event: object) -> FlextResult[bool]:
+            """Validate domain event structure and fields.
+
+            Args:
+                event: Domain event to validate
+
+            Returns:
+                FlextResult[bool]: Success if valid, failure with error details
+
+            """
             ...
 
 

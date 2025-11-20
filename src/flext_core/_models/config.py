@@ -10,18 +10,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-import uuid
 from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
-from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.validation import FlextUtilitiesValidation
+from flext_core._models.metadata import Metadata
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
-from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
+from flext_core.utilities import FlextUtilities
 
 
 class FlextModelsConfig:
@@ -41,23 +40,31 @@ class FlextModelsConfig:
         )
 
         operation_id: str = Field(
-            default_factory=lambda: str(uuid.uuid4()),
+            default_factory=FlextUtilities.Generators.generate_uuid,
             min_length=1,
             description="Unique operation identifier",
         )
         data: dict[str, object] = Field(default_factory=dict)
         context: dict[str, object] = Field(default_factory=dict)
         timeout_seconds: float = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds,
+            default_factory=(lambda: FlextConfig.get_global_instance().timeout_seconds),
             gt=0,
             le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
-            description="Operation timeout from FlextConfig (Config has priority over Constants)",
+            description=(
+                "Operation timeout from FlextConfig "
+                "(Config has priority over Constants)"
+            ),
         )
         retry_attempts: int = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().max_retry_attempts,
+            default_factory=(
+                lambda: FlextConfig.get_global_instance().max_retry_attempts
+            ),
             ge=0,
             le=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
-            description="Maximum retry attempts from FlextConfig (Config has priority over Constants)",
+            description=(
+                "Maximum retry attempts from FlextConfig "
+                "(Config has priority over Constants)"
+            ),
         )
         enable_validation: bool = True
 
@@ -65,8 +72,10 @@ class FlextModelsConfig:
         @classmethod
         def validate_context(cls, v: object) -> dict[str, object]:
             """Ensure context has required fields (using FlextUtilities.Generators)."""
-            return FlextUtilitiesGenerators.ensure_trace_context(
-                v, include_correlation_id=True, include_timestamp=True
+            return FlextUtilities.Generators.ensure_trace_context(
+                v,
+                include_correlation_id=True,
+                include_timestamp=True,
             )
 
         def validate_processing_constraints(self) -> FlextResult[bool]:
@@ -74,7 +83,7 @@ class FlextModelsConfig:
             max_timeout_seconds = FlextConstants.Utilities.MAX_TIMEOUT_SECONDS
             if self.timeout_seconds > max_timeout_seconds:
                 return FlextResult[bool].fail(
-                    f"Timeout cannot exceed {max_timeout_seconds} seconds"
+                    f"Timeout cannot exceed {max_timeout_seconds} seconds",
                 )
 
             return FlextResult[bool].ok(True)
@@ -83,10 +92,15 @@ class FlextModelsConfig:
         """Retry configuration with advanced validation."""
 
         max_attempts: int = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().max_retry_attempts,
+            default_factory=(
+                lambda: FlextConfig.get_global_instance().max_retry_attempts
+            ),
             ge=FlextConstants.Reliability.RETRY_COUNT_MIN,
             le=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
-            description="Maximum retry attempts from FlextConfig (Config has priority over Constants)",
+            description=(
+                "Maximum retry attempts from FlextConfig "
+                "(Config has priority over Constants)"
+            ),
         )
         initial_delay_seconds: float = Field(
             default=FlextConstants.Performance.DEFAULT_INITIAL_DELAY_SECONDS,
@@ -118,7 +132,7 @@ class FlextModelsConfig:
         @classmethod
         def validate_backoff_strategy(cls, v: list[object]) -> list[object]:
             """Validate status codes are valid HTTP codes."""
-            result = FlextUtilitiesValidation.validate_http_status_codes(
+            result = FlextUtilities.Validation.validate_http_status_codes(
                 v,
                 min_code=FlextConstants.FlextWeb.HTTP_STATUS_MIN,
                 max_code=FlextConstants.FlextWeb.HTTP_STATUS_MAX,
@@ -130,10 +144,7 @@ class FlextModelsConfig:
                     if result.error
                     else f"{base_msg} (invalid status code)"
                 )
-                raise FlextExceptions.ValidationError(
-                    message=error_msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
+                raise ValueError(error_msg)
             # Return as list[object] to match Pydantic field type
             return [int(code) for code in result.unwrap()]
 
@@ -142,10 +153,7 @@ class FlextModelsConfig:
             """Validate delay configuration consistency."""
             if self.max_delay_seconds < self.initial_delay_seconds:
                 msg = "max_delay_seconds must be >= initial_delay_seconds"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
+                raise ValueError(msg)
             return self
 
     class ValidationConfiguration(FlextModelsEntity.ArbitraryTypesModel):
@@ -173,8 +181,10 @@ class FlextModelsConfig:
         @classmethod
         def validate_additional_validators(cls, v: list[object]) -> list[object]:
             """Validate custom validators are callable."""
+            from flext_core.exceptions import FlextExceptions
+
             for validator in v:
-                result = FlextUtilitiesValidation.validate_callable(
+                result = FlextUtilities.Validation.validate_callable(
                     validator,
                     error_message="All validators must be callable",
                     error_code=FlextConstants.Errors.TYPE_ERROR,
@@ -192,12 +202,14 @@ class FlextModelsConfig:
                     )
             return v
 
-    class BatchProcessingConfig(FlextModelsEntity.ArbitraryTypesModel):
+    class BatchProcessingConfig(FlextModelsCollections.Config):
         """Enhanced batch processing configuration."""
 
         batch_size: int = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().max_batch_size,
-            description="Batch size from FlextConfig (Config has priority over Constants)",
+            default_factory=(lambda: FlextConfig.get_global_instance().max_batch_size),
+            description=(
+                "Batch size from FlextConfig (Config has priority over Constants)"
+            ),
         )
         max_workers: int = Field(
             default_factory=lambda: FlextConfig.get_global_instance().max_workers,
@@ -225,10 +237,7 @@ class FlextModelsConfig:
             )
             if self.batch_size > max_batch_size:
                 msg = f"Batch size cannot exceed {max_batch_size}"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
+                raise ValueError(msg)
 
             # Adjust max_workers to not exceed batch_size without triggering validation
             adjusted_workers = min(self.max_workers, self.batch_size)
@@ -237,7 +246,7 @@ class FlextModelsConfig:
 
             return self
 
-    class HandlerExecutionConfig(FlextModelsEntity.ArbitraryTypesModel):
+    class HandlerExecutionConfig(FlextModelsCollections.Config):
         """Enhanced handler execution configuration."""
 
         handler_name: str = Field(pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$")
@@ -274,7 +283,8 @@ class FlextModelsConfig:
         order: int = Field(default=0, description="Execution order in middleware chain")
         name: str | None = Field(default=None, description="Optional middleware name")
         config: dict[str, object] = Field(
-            default_factory=dict, description="Middleware-specific configuration"
+            default_factory=dict,
+            description="Middleware-specific configuration",
         )
 
     class RateLimiterState(BaseModel):
@@ -292,19 +302,28 @@ class FlextModelsConfig:
         )
 
         processor_name: str = Field(
-            default="", description="Name of the rate limiter processor"
+            default="",
+            description="Name of the rate limiter processor",
         )
         count: int = Field(
-            default=0, ge=0, description="Current request count in window"
+            default=0,
+            ge=0,
+            description="Current request count in window",
         )
         window_start: float = Field(
-            default=0.0, ge=0.0, description="Timestamp when current window started"
+            default=0.0,
+            ge=0.0,
+            description="Timestamp when current window started",
         )
         limit: int = Field(
-            default=100, ge=1, description="Maximum requests allowed per window"
+            default=100,
+            ge=1,
+            description="Maximum requests allowed per window",
         )
         window_seconds: int = Field(
-            default=60, ge=1, description="Duration of rate limit window in seconds"
+            default=60,
+            ge=1,
+            description="Duration of rate limit window in seconds",
         )
         block_until: float = Field(
             default=0.0,
@@ -312,7 +331,7 @@ class FlextModelsConfig:
             description="Timestamp until which requests are blocked",
         )
 
-    class ExternalCommandConfig(FlextModelsEntity.ArbitraryTypesModel):
+    class ExternalCommandConfig(FlextModelsCollections.Config):
         """Configuration for external command execution (Pydantic v2).
 
         Reduces parameter count for FlextUtilities.CommandExecution
@@ -351,7 +370,7 @@ class FlextModelsConfig:
             description="Whether to decode stdout/stderr as text",
         )
 
-    class StructlogConfig(FlextModelsEntity.ArbitraryTypesModel):
+    class StructlogConfig(FlextModelsCollections.Config):
         """Configuration for structlog setup (Pydantic v2).
 
         Reduces parameter count for FlextRuntime.configure_structlog.
@@ -360,7 +379,9 @@ class FlextModelsConfig:
 
         log_level: int = Field(
             default_factory=lambda: getattr(
-                logging, FlextConfig().log_level.value.upper(), logging.INFO
+                logging,
+                FlextConfig().log_level.value.upper(),
+                logging.INFO,
             ),
             ge=0,
             le=50,
@@ -390,7 +411,7 @@ class FlextModelsConfig:
             description="Cache logger on first use (performance optimization)",
         )
 
-    class LoggerConfig(FlextModelsEntity.ArbitraryTypesModel):
+    class LoggerConfig(FlextModelsCollections.Config):
         """Configuration for FlextLogger initialization (Pydantic v2).
 
         Reduces parameter count for FlextLogger.__init__ from 6 to 2 params.
@@ -418,16 +439,16 @@ class FlextModelsConfig:
             description="Force creation of new logger instance (for testing)",
         )
 
-    class DispatchConfig(FlextModelsEntity.ArbitraryTypesModel):
+    class DispatchConfig(FlextModelsCollections.Config):
         """Configuration for FlextDispatcher.dispatch (Pydantic v2).
 
         Reduces parameter count for dispatch from 5 to 3 params (message, data, config).
         Groups optional dispatch context and overrides.
         """
 
-        metadata: dict[str, object] | None = Field(
+        metadata: Metadata | None = Field(
             default=None,
-            description="Optional execution context metadata",
+            description="Optional execution context metadata (Pydantic model)",
         )
         correlation_id: str | None = Field(
             default=None,
@@ -439,7 +460,7 @@ class FlextModelsConfig:
             description="Optional timeout override in seconds",
         )
 
-    class ExceptionConfig(FlextModelsEntity.ArbitraryTypesModel):
+    class ExceptionConfig(FlextModelsCollections.Config):
         """Configuration for FlextExceptions.__init__ (Pydantic v2).
 
         Reduces parameter count for exception initialization from 7 to 2 params
@@ -454,9 +475,9 @@ class FlextModelsConfig:
             default=None,
             description="Correlation ID for distributed tracing",
         )
-        metadata: dict[str, object] | None = Field(
+        metadata: Metadata | None = Field(
             default=None,
-            description="Additional metadata",
+            description="Additional metadata (Pydantic model)",
         )
         auto_log: bool = Field(
             default=False,
@@ -471,7 +492,7 @@ class FlextModelsConfig:
             description="Additional keyword arguments for metadata",
         )
 
-    class ResultConfig(FlextModelsEntity.ArbitraryTypesModel):
+    class ResultConfig(FlextModelsCollections.Config):
         """Configuration for FlextResult failure case (Pydantic v2).
 
         Groups optional error context for result failures.
@@ -485,9 +506,9 @@ class FlextModelsConfig:
             default=None,
             description="Error code for categorization",
         )
-        error_data: dict[str, object] | None = Field(
+        error_data: Metadata | None = Field(
             default=None,
-            description="Additional error data",
+            description="Additional error data (Pydantic model)",
         )
 
 

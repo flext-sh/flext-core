@@ -413,7 +413,9 @@ class TestFlextConfig:
                 if key in os.environ:
                     del os.environ[key]
 
-    def test_pydantic_dotenv_file_loading(self, tmp_path: Path) -> None:
+    def test_pydantic_dotenv_file_loading(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test that FlextConfig automatically loads .env file."""
         import os
         from pathlib import Path
@@ -421,6 +423,12 @@ class TestFlextConfig:
         original_dir = Path.cwd()
 
         try:
+            # Isolate environment variables for this test
+            # Remove FLEXT_LOG_LEVEL to ensure .env file is used
+            monkeypatch.delenv("FLEXT_LOG_LEVEL", raising=False)
+            monkeypatch.delenv("FLEXT_DEBUG", raising=False)
+            monkeypatch.delenv("FLEXT_APP_NAME", raising=False)
+
             # Change to temp directory
             os.chdir(tmp_path)
 
@@ -430,11 +438,23 @@ class TestFlextConfig:
                 "FLEXT_APP_NAME=from-dotenv\nFLEXT_LOG_LEVEL=WARNING\nFLEXT_DEBUG=true\n"
             )
 
+            # Reset singleton to force reload from .env
+            # Import here to avoid circular dependency
+            from flext_core.config import FlextConfig
+
+            # Clear singleton to force reload
+            if hasattr(FlextConfig, "_instances"):
+                FlextConfig._instances.clear()
+
             # Create config - should load from .env
             config = FlextConfig()
 
             assert config.app_name == "from-dotenv"
-            assert config.log_level == "WARNING"
+            # log_level is LogLevel enum - compare enum value directly
+            assert config.log_level.value == "WARNING", (
+                f"Expected WARNING but got {config.log_level.value}. "
+                f"Check if FLEXT_LOG_LEVEL env var is set."
+            )
             assert config.debug is True
 
         finally:

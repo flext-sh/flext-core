@@ -23,6 +23,8 @@ from flext_core import (
 class TestService:
     """Simple test service for container tests."""
 
+    __test__ = False  # Not a test class, just a helper class
+
     def __init__(self, value: str = "default") -> None:
         """Initialize test service."""
         self.value = value
@@ -34,6 +36,8 @@ class TestService:
 
 class TestServiceWithDependency:
     """Service that requires dependency injection."""
+
+    __test__ = False  # Not a test class, just a helper class
 
     def __init__(self, logger: FlextLogger) -> None:
         """Initialize with dependency."""
@@ -812,7 +816,7 @@ class TestContainer100Coverage:
                 self.metadata: dict[str, object] = {}
 
         # Replace the factory registration with our non-callable version
-        container._factories["test_factory"] = NonCallableFactoryReg()  # type: ignore[assignment]
+        container._factories["test_factory"] = NonCallableFactoryReg()
 
         # Try to create instance - should fail with FACTORY_NOT_CALLABLE
         result = container.create_instance()
@@ -865,7 +869,7 @@ class TestContainer100Coverage:
                 raise AttributeError(msg)
 
         # This should catch the exception and return False
-        result = container.is_valid_type(TestService("test"), ProblematicType)  # type: ignore[arg-type]
+        result = container.is_valid_type(TestService("test"), ProblematicType)
         assert result is False
 
     def test_get_instance_exception_path(self) -> None:

@@ -77,19 +77,23 @@ class TestEdgeCases:
         assert result.is_success
 
     def test_validate_pipeline_with_failing_validator(self) -> None:
-        """Test validator pipeline with failing validator."""
+        """Test validator pipeline with failing validator - CORRECT API."""
 
-        def validator1(value: str) -> FlextResult[bool]:
-            return FlextResult[bool].fail("Always fails")
+        def validator1(value: str) -> None:
+            """Validator that raises exception (correct API - not FlextResult)."""
+            msg = "Always fails"
+            raise ValueError(msg)
 
-        def validator2(value: str) -> FlextResult[bool]:
-            return FlextResult[bool].ok(True)
+        def validator2(value: str) -> None:
+            """Validator that passes (should not be called after validator1 fails)."""
+            # Validates successfully
 
         result = FlextUtilities.Validation.validate_pipeline(
             "test",
             [validator1, validator2],
         )
         assert result.is_failure
+        assert "Always fails" in result.error
 
     def test_generators_correlation_id_format(self) -> None:
         """Test correlation ID has expected format."""

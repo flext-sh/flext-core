@@ -194,7 +194,8 @@ class FlextTestsDomains:
 
     @staticmethod
     def batch_users(
-        count: int = 5, **user_overrides: str | bool
+        count: int = 5,
+        **user_overrides: str | bool,
     ) -> list[dict[str, str | bool]]:
         """Create a batch of test users.
 

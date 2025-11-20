@@ -1,0 +1,17 @@
+grep: src/flext_core/_models/__pycache__/base.cpython-313.pyc: arquivo binário coincide com o padrão
+src/flext_core/_models/base.py:13:from typing import TYPE_CHECKING, ClassVar, Self
+src/flext_core/_models/base.py:24:if TYPE_CHECKING:
+grep: src/flext_core/__pycache__/protocols.cpython-313.pyc: arquivo binário coincide com o padrão
+grep: src/flext_core/__pycache__/context.cpython-313.pyc: arquivo binário coincide com o padrão
+src/flext_core/context.py:20:    TYPE_CHECKING,
+src/flext_core/context.py:37:if TYPE_CHECKING:
+src/flext_core/protocols.py:37:    TYPE_CHECKING,
+src/flext_core/protocols.py:52:# TYPE_CHECKING import pattern: protocols.py is Tier 0, result.py is Tier 1.
+src/flext_core/protocols.py:53:# Using TYPE_CHECKING prevents runtime circular imports while enabling type checking.
+src/flext_core/protocols.py:55:if TYPE_CHECKING:
+src/flext_core/result.py:56:# - result.py imports _utilities modules ONLY inside TYPE_CHECKING block
+src/flext_core/result.py:57:# - TYPE_CHECKING imports are NEVER executed at runtime (only for type checkers)
+src/flext_core/result.py:63:# ❌ DO NOT remove TYPE_CHECKING imports of _utilities modules
+src/flext_core/result.py:64:# ❌ DO NOT move _utilities imports outside TYPE_CHECKING block
+src/flext_core/result.py:69:# ✅ TYPE_CHECKING imports provide type hints without runtime circular import
+src/flext_core/result.py:2279:# ❌ DO NOT use `if False:` or TYPE_CHECKING (must be real import)

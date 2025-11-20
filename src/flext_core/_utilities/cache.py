@@ -10,9 +10,10 @@ from __future__ import annotations
 
 import hashlib
 import logging
+from typing import cast
 
 from flext_core.constants import FlextConstants
-from flext_core.result import FlextResult
+from flext_core.protocols import FlextProtocols
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
@@ -63,8 +64,13 @@ class FlextUtilitiesCache:
         return data
 
     @staticmethod
-    def clear_object_cache(obj: FlextTypes.CachedObjectType) -> FlextResult[bool]:
+    def clear_object_cache(
+        obj: FlextTypes.CachedObjectType,
+    ) -> FlextProtocols.ResultProtocol[bool]:
         """Clear any caches on an object."""
+        # Lazy import to avoid circular dependency (cache → result → _utilities → cache)
+        from flext_core.result import FlextResult  # noqa: PLC0415
+
         try:
             # Common cache attribute names to check and clear
             cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
@@ -85,9 +91,11 @@ class FlextUtilitiesCache:
                             setattr(obj, attr_name, None)
                             cleared_count += 1
 
-            return FlextResult[bool].ok(True)
+            result = FlextResult[bool].ok(True)
+            return cast("FlextProtocols.ResultProtocol[bool]", result)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[bool].fail(f"Failed to clear caches: {e}")
+            result = FlextResult[bool].fail(f"Failed to clear caches: {e}")
+            return cast("FlextProtocols.ResultProtocol[bool]", result)
 
     @staticmethod
     def has_cache_attributes(obj: FlextTypes.CachedObjectType) -> bool:

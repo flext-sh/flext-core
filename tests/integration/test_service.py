@@ -257,7 +257,9 @@ class TestServiceIntegrationPatterns:
             large_dataset = benchmark_data["large_dataset"]
         else:
             # Create real benchmark data for testing
-            large_dataset: list[int] = list(range(1000))  # 1000 integers for performance test
+            large_dataset: list[int] = list(
+                range(1000)
+            )  # 1000 integers for performance test
 
         def process_pipeline(
             data: list[int]
@@ -273,7 +275,9 @@ class TestServiceIntegrationPatterns:
         # Act - Measure pipeline performance
         start_time = time.perf_counter()
         # Type check and process large_dataset
-        if isinstance(large_dataset, list) and all(isinstance(x, int) for x in large_dataset):
+        if isinstance(large_dataset, list) and all(
+            isinstance(x, int) for x in large_dataset
+        ):
             # Process list[int] directly
             result = process_pipeline(large_dataset)
         elif isinstance(large_dataset, dict):
