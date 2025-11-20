@@ -122,7 +122,7 @@ class TestFlextUtilitiesComprehensive:
         assert result.is_failure
 
         # None should fail (fast fail pattern)
-        result = FlextUtilities.TextProcessor.safe_string(None)  # type: ignore[arg-type]
+        result = FlextUtilities.TextProcessor.safe_string(None)
         assert result.is_failure
 
     def test_type_guards_operations(self) -> None:
@@ -751,7 +751,7 @@ class TestFlextUtilitiesEdgeCases:
     def test_text_processor_safe_string_with_none(self) -> None:
         """Test safe_string with None - should fail (fast fail pattern)."""
         # None should fail (fast fail pattern - no fallback)
-        result = FlextUtilities.TextProcessor.safe_string(None)  # type: ignore[arg-type]
+        result = FlextUtilities.TextProcessor.safe_string(None)
         assert result.is_failure
 
     def test_text_processor_safe_string_empty_with_default(self) -> None:
@@ -803,15 +803,16 @@ class TestFlextValidationAndCacheMethods:
         assert result.is_success
 
     def test_validate_pipeline_failure_on_first_validator(self) -> None:
-        """Test validate_pipeline stops on first validator failure."""
+        """Test validate_pipeline stops on first validator failure - CORRECT API."""
 
-        def validator1(data: str) -> FlextResult[bool]:
-            """First validator fails."""
-            return FlextResult[bool].fail("First failed")
+        def validator1(data: str) -> None:
+            """First validator fails by raising exception (correct API)."""
+            msg = "First failed"
+            raise ValueError(msg)
 
-        def validator2(data: str) -> FlextResult[bool]:
+        def validator2(data: str) -> None:
             """Second validator should not be called."""
-            return FlextResult[bool].ok(True)
+            # Validates successfully
 
         result = FlextUtilities.Validation.validate_pipeline(
             "test", [validator1, validator2]
@@ -831,12 +832,13 @@ class TestFlextValidationAndCacheMethods:
         assert result.is_failure
 
     def test_validate_pipeline_with_non_callable(self) -> None:
-        """Test validate_pipeline skips non-callable validators."""
-        # Non-callable validators should be skipped
+        """Test validate_pipeline fails on non-callable - FAST FAIL expected."""
+        # Non-callable validators should FAIL immediately (FAST FAIL, not defensive programming)
         result = FlextUtilities.Validation.validate_pipeline(
             "test", [None, "not_callable"]
         )
-        assert result.is_success
+        assert result.is_failure
+        assert "Validator must be callable" in result.error
 
     def test_validate_pipeline_empty_validators(self) -> None:
         """Test validate_pipeline with empty validator list."""
@@ -1125,12 +1127,13 @@ class TestFlextValidationAndCacheMethods:
         assert isinstance(result, FlextResult)
 
     def test_validate_pipeline_with_all_non_callable(self) -> None:
-        """Test validate_pipeline skips all non-callable items."""
+        """Test validate_pipeline fails on first non-callable - FAST FAIL expected."""
         result = FlextUtilities.Validation.validate_pipeline(
             "test", [None, "string", 42, {}, []]
         )
-        # Should succeed since all validators are non-callable
-        assert result.is_success
+        # Should FAIL on first non-callable (FAST FAIL, not defensive programming)
+        assert result.is_failure
+        assert "Validator must be callable" in result.error
 
     def test_sort_key_with_boolean_values(self) -> None:
         """Test sort_key with boolean values."""

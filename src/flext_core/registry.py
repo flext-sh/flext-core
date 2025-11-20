@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import datetime
 from collections.abc import Iterable, Mapping, Sequence
 from typing import (
     Annotated,
@@ -26,7 +25,9 @@ from flext_core.handlers import FlextHandlers
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
 
 
 class FlextRegistry(FlextMixins):
@@ -473,16 +474,15 @@ class FlextRegistry(FlextMixins):
             reg_data = registration.value
             # Format timestamp without microseconds to match pattern
             default_timestamp = (
-                datetime.datetime.now(datetime.UTC)
-                .replace(microsecond=0)
-                .isoformat()
-                .replace("+00:00", "Z")
+                FlextUtilities.Generators.generate_iso_timestamp().replace(
+                    "+00:00", "Z"
+                )
             )
             # Get timestamp from dispatcher or use default - ensure it matches pattern
             # Fast fail: timestamp must be str or None
             timestamp_value = reg_data.get("timestamp")
             dispatcher_timestamp: str = (
-                str(timestamp_value) if timestamp_value is not None else ""
+                "" if timestamp_value is None else str(timestamp_value)
             )
             timestamp_value = (
                 default_timestamp
@@ -506,7 +506,7 @@ class FlextRegistry(FlextMixins):
                 ),
             )
             return self.ok(reg_details)
-        
+
         error_msg = registration.error or "Unknown error"
         self.logger.error(
             "FAILED to register handler with dispatcher - REGISTRATION ABORTED",
@@ -573,7 +573,7 @@ class FlextRegistry(FlextMixins):
                     source="flext-core/src/flext_core/registry.py",
                 )
                 return self.fail(error_msg)
-        
+
         final_summary = self._finalize_summary(summary)
         if final_summary.is_success:
             self.logger.info(
@@ -609,7 +609,7 @@ class FlextRegistry(FlextMixins):
         """
         key = self._resolve_handler_key(handler)
         handler_name = handler.__class__.__name__ if handler else "unknown"
-        
+
         if key in self._registered_keys:
             self.logger.debug(
                 "Handler already registered, skipping",
@@ -821,7 +821,7 @@ class FlextRegistry(FlextMixins):
         )
         if handler_result.is_failure:
             return FlextResult[FlextModels.RegistrationDetails].fail(
-                f"Failed to create handler: {handler_result.error}"
+                f"Failed to create handler: {handler_result.error}",
             )
 
         # Register with dispatcher
@@ -829,7 +829,7 @@ class FlextRegistry(FlextMixins):
         register_result = self._dispatcher.register_handler(handler)
         if register_result.is_failure:
             return FlextResult[FlextModels.RegistrationDetails].fail(
-                f"Failed to register handler: {register_result.error}"
+                f"Failed to register handler: {register_result.error}",
             )
 
         # Success - create registration details
@@ -850,7 +850,7 @@ class FlextRegistry(FlextMixins):
         register_result = self._dispatcher.register_handler(entry)
         if register_result.is_failure:
             return FlextResult[FlextModels.RegistrationDetails].fail(
-                f"Failed to register handler: {register_result.error}"
+                f"Failed to register handler: {register_result.error}",
             )
 
         # Success - create registration details
@@ -929,31 +929,48 @@ class FlextRegistry(FlextMixins):
         self,
         name: str,
         service: object,
-        metadata: dict[str, object] | None = None,
+        metadata: dict[str, object] | FlextModels.Metadata | None = None,
     ) -> FlextResult[bool]:
         """Register a service component with optional metadata.
 
         Delegates to the container's register method for dependency injection.
         Metadata is currently stored for future use but not actively used.
 
+        STRICT Mode: Accepts both dict[str, object] and FlextModels.Metadata for
+        backward compatibility during migration to STRICT metadata patterns.
+
         Args:
             name: Service name for later retrieval
             service: Service instance to register
-            metadata: Optional metadata about the service (dict)
+            metadata: Optional metadata (dict or FlextModels.Metadata)
 
         Returns:
             FlextResult[bool]: Success (True) if registered or failure with error details.
 
         """
+        # Normalize metadata to dict for internal use (STRICT mode support)
+        validated_metadata: dict[str, object] | None = None
+        if metadata is not None:
+            if FlextRuntime.is_dict_like(metadata):
+                validated_metadata = metadata
+            elif hasattr(metadata, "model_dump") and hasattr(metadata, "attributes"):
+                # FlextModels.Metadata - extract attributes dict
+                validated_metadata = metadata.attributes
+            else:
+                # Fast fail for invalid metadata type
+                return FlextResult[bool].fail(
+                    f"metadata must be dict or FlextModels.Metadata, got {type(metadata).__name__}",
+                )
+
         # Store metadata if provided (for future use)
-        if metadata and self.is_dict_like(metadata):
+        if validated_metadata:
             # Log metadata with service name for observability
             self.logger.debug(
                 "Registering service with metadata",
                 operation="with_service",
                 service_name=name,
                 has_metadata=True,
-                metadata_keys=list(metadata.keys()) if isinstance(metadata, dict) else None,
+                metadata_keys=list(validated_metadata.keys()),
                 source="flext-core/src/flext_core/registry.py",
             )
 

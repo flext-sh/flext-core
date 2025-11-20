@@ -23,12 +23,19 @@ from pydantic import (
 )
 
 from flext_core._models.entity import FlextModelsEntity
-from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import FlextConstants
-from flext_core.exceptions import FlextExceptions
+from flext_core.utilities import FlextUtilities
+
+# FlextUtilitiesValidation is safe to import at module level:
+# - validation.py uses ResultProtocol (not concrete FlextResult) to break circular import
+# - circular import issue was RESOLVED (validation.py doesn't import handler.py)
 
 # Type alias for handler callables - avoids explicit Any while maintaining flexibility
-HandlerCallable = Callable[[], object] | Callable[[object], object] | Callable[[object, object], object]
+HandlerCallable = (
+    Callable[[], object]
+    | Callable[[object], object]
+    | Callable[[object, object], object]
+)
 
 
 class FlextModelsHandler:
@@ -51,23 +58,11 @@ class FlextModelsHandler:
         @field_validator("handler", mode="after")
         @classmethod
         def validate_handler(cls, v: object) -> HandlerCallable:
-            """Validate handler is properly callable (using FlextUtilities.Validation)."""
-            result = FlextUtilitiesValidation.validate_callable(
-                v,
-                error_message="Handler must be callable",
-                error_code=FlextConstants.Errors.TYPE_ERROR,
-            )
-            if result.is_failure:
-                base_msg = "Handler must be callable"
-                error_msg = (
-                    f"{base_msg}: {result.error}"
-                    if result.error
-                    else f"{base_msg} (type validation failed)"
-                )
-                raise FlextExceptions.TypeError(
-                    message=error_msg,
-                    error_code=FlextConstants.Errors.TYPE_ERROR,
-                )
+            """Validate handler is properly callable (direct validation, no circular imports)."""
+            # Direct callable check - avoid circular import via FlextUtilitiesValidation
+            if not callable(v):
+                msg = f"Handler must be callable, got {type(v).__name__}"
+                raise TypeError(msg)
             # Type-safe return: v is confirmed callable by validation
             return cast("HandlerCallable", v)
 
@@ -143,8 +138,9 @@ class FlextModelsHandler:
         @classmethod
         def validate_timestamp_format(cls, v: str) -> str:
             """Validate timestamp is in ISO 8601 format (using FlextUtilities.Validation)."""
-            result = FlextUtilitiesValidation.validate_iso8601_timestamp(
-                v, allow_empty=True
+            result = FlextUtilities.Validation.validate_iso8601_timestamp(
+                v,
+                allow_empty=True,
             )
             if result.is_failure:
                 base_msg = "Timestamp validation failed"

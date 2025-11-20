@@ -10,11 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from flext_core.typings import FlextTypes
+from flext_core._models.metadata import Metadata
+from flext_core.runtime import FlextRuntime
+from flext_core.utilities import FlextUtilities
 
 
 class FlextModelsContainer:
@@ -43,11 +45,11 @@ class FlextModelsContainer:
             description="Service instance (actual object)",
         )
         registration_time: datetime = Field(
-            default_factory=lambda: datetime.now(UTC),
+            default_factory=FlextUtilities.Generators.generate_datetime_utc,
             description="UTC timestamp when service was registered",
         )
-        metadata: dict[str, FlextTypes.JsonValue] = Field(
-            default_factory=dict,
+        metadata: Metadata | dict[str, object] | None = Field(
+            default=None,
             description="Additional service metadata (JSON-serializable)",
         )
         service_type: str | None = Field(
@@ -58,6 +60,23 @@ class FlextModelsContainer:
             default_factory=list,
             description="Service tags for categorization",
         )
+
+        @field_validator("metadata", mode="before")
+        @classmethod
+        def validate_metadata(cls, v: object) -> Metadata:
+            """Validate and normalize metadata to Metadata (STRICT mode).
+
+            Accepts: None, dict, or Metadata. Always returns Metadata.
+            Maintains advanced capability to convert dict → Metadata.
+            """
+            if v is None:
+                return Metadata(attributes={})
+            if FlextRuntime.is_dict_like(v):
+                return Metadata(attributes=v)
+            if isinstance(v, Metadata):
+                return v
+            msg = f"metadata must be None, dict, or Metadata, got {type(v).__name__}"
+            raise TypeError(msg)
 
     class FactoryRegistration(BaseModel):
         """Model for factory registry entries.
@@ -82,7 +101,7 @@ class FlextModelsContainer:
             description="Factory function that creates service instances",
         )
         registration_time: datetime = Field(
-            default_factory=lambda: datetime.now(UTC),
+            default_factory=FlextUtilities.Generators.generate_datetime_utc,
             description="UTC timestamp when factory was registered",
         )
         is_singleton: bool = Field(
@@ -93,8 +112,8 @@ class FlextModelsContainer:
             default=None,
             description="Cached singleton instance (if is_singleton=True)",
         )
-        metadata: dict[str, FlextTypes.JsonValue] = Field(
-            default_factory=dict,
+        metadata: Metadata | dict[str, object] | None = Field(
+            default=None,
             description="Additional factory metadata (JSON-serializable)",
         )
         invocation_count: int = Field(
@@ -102,6 +121,23 @@ class FlextModelsContainer:
             ge=0,
             description="Number of times factory has been invoked",
         )
+
+        @field_validator("metadata", mode="before")
+        @classmethod
+        def validate_metadata(cls, v: object) -> Metadata:
+            """Validate and normalize metadata to Metadata (STRICT mode).
+
+            Accepts: None, dict, or Metadata. Always returns Metadata.
+            Maintains advanced capability to convert dict → Metadata.
+            """
+            if v is None:
+                return Metadata(attributes={})
+            if FlextRuntime.is_dict_like(v):
+                return Metadata(attributes=v)
+            if isinstance(v, Metadata):
+                return v
+            msg = f"metadata must be None, dict, or Metadata, got {type(v).__name__}"
+            raise TypeError(msg)
 
     class ContainerConfig(BaseModel):
         """Model for container configuration.

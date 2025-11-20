@@ -324,8 +324,8 @@ class TestExceptionContext:
         error = FlextExceptions.ValidationError(
             "Validation failed in context",
         ).with_context(**context_dict)
-        assert "user_id" in error.metadata
-        assert error.metadata["user_id"] == "123"
+        assert "user_id" in error.metadata.attributes
+        assert error.metadata.attributes["user_id"] == "123"
 
     def test_exception_with_correlation_id(self) -> None:
         """Test exception with auto-generated correlation ID."""

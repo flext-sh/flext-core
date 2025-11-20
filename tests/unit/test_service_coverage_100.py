@@ -27,6 +27,8 @@ from flext_core import (
 class TestDomainResult:
     """Simple domain result for testing."""
 
+    __test__ = False  # Not a test class, just a helper class
+
     def __init__(self, value: str) -> None:
         """Initialize domain result."""
         self.value = value
@@ -34,6 +36,8 @@ class TestDomainResult:
 
 class TestService(FlextService[TestDomainResult]):
     """Test service for coverage tests."""
+
+    __test__ = False  # Not a test class, just a helper class
 
     def __init__(self, **data: object) -> None:
         """Initialize test service."""
@@ -47,6 +51,8 @@ class TestService(FlextService[TestDomainResult]):
 class TestServiceWithValidation(FlextService[TestDomainResult]):
     """Test service with validation."""
 
+    __test__ = False  # Not a test class, just a helper class
+
     def __init__(self, **data: object) -> None:
         """Initialize test service."""
         super().__init__(**data)
@@ -59,6 +65,8 @@ class TestServiceWithValidation(FlextService[TestDomainResult]):
 class TestServiceWithTimeout(FlextService[TestDomainResult]):
     """Test service with timeout."""
 
+    __test__ = False  # Not a test class, just a helper class
+
     def __init__(self, **data: object) -> None:
         """Initialize test service."""
         super().__init__(**data)
@@ -70,6 +78,8 @@ class TestServiceWithTimeout(FlextService[TestDomainResult]):
 
 class TestServiceWithContext(FlextService[TestDomainResult]):
     """Test service with context management."""
+
+    __test__ = False  # Not a test class, just a helper class
 
     def __init__(self, **data: object) -> None:
         """Initialize test service."""
@@ -645,7 +655,7 @@ class TestService100Coverage:
         class ServiceWithUnionDeps(FlextService[TestDomainResult]):
             def __init__(
                 self,
-                logger: Union[object, None] = None,  # type: ignore[type-arg]
+                logger: Union[object, None] = None,
                 **data: object,
             ) -> None:
                 super().__init__(**data)
@@ -732,7 +742,7 @@ class TestService100Coverage:
             return TestDomainResult("direct_callable")
 
         # Pass callable directly instead of OperationExecutionRequest
-        result = service._execute_callable_once(callable_func)  # type: ignore[arg-type]
+        result = service._execute_callable_once(callable_func)
         assert isinstance(result, TestDomainResult)
         assert result.value == "direct_callable"
 

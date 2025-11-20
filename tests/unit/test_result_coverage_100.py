@@ -382,7 +382,7 @@ class TestResult100Coverage:
             error="original_error",
             error_code="ORIGINAL_CODE",
             error_data={"original_key": "original_value"},
-            config=config,  # type: ignore[arg-type]
+            config=config,
         )
         # Config values should override
         assert result2.error == "config_error"
@@ -398,12 +398,12 @@ class TestResult100Coverage:
         # This is internal, so we test via type validation
         # We need to create a scenario where origin is None
         class TestType:
-            __orig_bases__ = ((None,),)  # type: ignore[assignment]
+            __orig_bases__ = ((None,),)
 
         # This will trigger _check_orig_bases with None origin
         try:
             # Try to create result with incompatible type
-            FlextResult[TestType].ok("test")  # type: ignore[arg-type]
+            FlextResult[TestType].ok("test")
             # Type validation should handle None origin gracefully
         except Exception:
             pass  # Expected to fail type validation
@@ -416,10 +416,10 @@ class TestResult100Coverage:
         # This is internal, so we test via type validation edge cases
         # The method checks `if not isinstance(origin, type)`
         class TestType:
-            __orig_bases__ = (("not_a_type",),)  # type: ignore[assignment]
+            __orig_bases__ = (("not_a_type",),)
 
         try:
-            FlextResult[TestType].ok("test")  # type: ignore[arg-type]
+            FlextResult[TestType].ok("test")
         except Exception:
             pass  # Expected to fail type validation
 
@@ -432,10 +432,10 @@ class TestResult100Coverage:
         # The method checks `if not isinstance(base_class, type)`
         # This is hard to trigger directly, so we test via type validation
         class TestType:
-            __mro__ = (object, "not_a_type")  # type: ignore[assignment]
+            __mro__ = (object, "not_a_type")
 
         try:
-            FlextResult[TestType].ok("test")  # type: ignore[arg-type]
+            FlextResult[TestType].ok("test")
         except Exception:
             pass  # Expected to fail type validation
 
@@ -479,7 +479,7 @@ class TestResult100Coverage:
     def test_fail_with_none_error(self) -> None:
         """Test fail() with None error."""
         # None should be normalized to "Unknown error occurred"
-        result = FlextResult[str].fail(None)  # type: ignore[arg-type]
+        result = FlextResult[str].fail(None)
         assert result.is_failure
         assert result.error == "Unknown error occurred"
 
@@ -537,7 +537,7 @@ class TestResult100Coverage:
         # Test when item has __origin__ attribute
         result_type = FlextResult[str]
         # Test with actual generic type
-        typed_result = result_type[str]  # type: ignore[index]
+        typed_result = result_type[str]
         assert typed_result is not None
 
     def test_from_callable_with_none_exception(self) -> None:
@@ -593,7 +593,7 @@ class TestResult100Coverage:
         # Create a result with Success(None) to test defensive code
         result = FlextResult[str].ok("test")
         success_none = Success(None)
-        result._result = success_none  # type: ignore[attr-defined]
+        result._result = success_none
         with pytest.raises(FlextExceptions.BaseError, match=r".*None data.*"):
             result.unwrap_or("default")
 
@@ -603,7 +603,7 @@ class TestResult100Coverage:
 
         result = FlextResult[str].ok("test")
         success_none = Success(None)
-        result._result = success_none  # type: ignore[attr-defined]
+        result._result = success_none
         with pytest.raises(FlextExceptions.BaseError, match=r".*None data.*"):
             result.unwrap()
 
@@ -613,7 +613,7 @@ class TestResult100Coverage:
 
         result = FlextResult[str].fail("error")
         failure_none = Failure(None)
-        result._result = failure_none  # type: ignore[attr-defined]
+        result._result = failure_none
         with pytest.raises(FlextExceptions.BaseError, match=r".*error is None.*"):
             result.unwrap()
 
@@ -623,7 +623,7 @@ class TestResult100Coverage:
 
         result = FlextResult[str].fail("error")
         failure_none = Failure(None)
-        result._result = failure_none  # type: ignore[attr-defined]
+        result._result = failure_none
 
         def recovery_func(error: str) -> str:
             return f"recovered: {error}"
@@ -638,7 +638,7 @@ class TestResult100Coverage:
 
         result = FlextResult[str].fail("error")
         failure_none = Failure(None)
-        result._result = failure_none  # type: ignore[attr-defined]
+        result._result = failure_none
 
         def recovery_func(error: str) -> FlextResult[str]:
             return FlextResult[str].ok(f"recovered: {error}")
@@ -653,7 +653,7 @@ class TestResult100Coverage:
 
         result = FlextResult[str].fail("error")
         failure_none = Failure(None)
-        result._result = failure_none  # type: ignore[attr-defined]
+        result._result = failure_none
         with pytest.raises(FlextExceptions.BaseError, match=r".*error is None.*"):
             with result:
                 pass
@@ -664,7 +664,7 @@ class TestResult100Coverage:
 
         result = FlextResult[str].ok("test")
         success_none = Success(None)
-        result._result = success_none  # type: ignore[attr-defined]
+        result._result = success_none
         with pytest.raises(FlextExceptions.BaseError, match=r".*None data.*"):
             with result:
                 pass
@@ -675,7 +675,7 @@ class TestResult100Coverage:
 
         result = FlextResult[str].ok("test")
         success_none = Success(None)
-        result._result = success_none  # type: ignore[attr-defined]
+        result._result = success_none
         with pytest.raises(FlextExceptions.BaseError, match=r".*None data.*"):
             result.expect("Should not fail")
 
@@ -728,7 +728,7 @@ class TestResult100Coverage:
 
         result = FlextResult[str].fail("error")
         failure_none = Failure(None)
-        result._result = failure_none  # type: ignore[attr-defined]
+        result._result = failure_none
         with pytest.raises(FlextExceptions.BaseError, match=r".*Unknown error.*"):
             list(result)
 
@@ -740,7 +740,7 @@ class TestResult100Coverage:
             # Create a Failure with None to test the defensive code path
             failure_result = Failure(None)
             result = FlextResult[int](error="error")
-            result._result = failure_result  # type: ignore[attr-defined]
+            result._result = failure_result
             return result
 
         items = [1, 2, 3]
@@ -755,7 +755,7 @@ class TestResult100Coverage:
         def failing_func(item: int) -> FlextResult[int]:
             result = FlextResult[int].fail("error")
             # Modify _result to have None failure
-            result._result = Failure(None)  # type: ignore[attr-defined]
+            result._result = Failure(None)
             return result
 
         items = [1, 2, 3]
@@ -769,7 +769,7 @@ class TestResult100Coverage:
 
         result = FlextResult[str].fail("error")
         # Modify _result to have None failure
-        result._result = Failure(None)  # type: ignore[attr-defined]
+        result._result = Failure(None)
 
         def factory() -> str:
             return "resource"
@@ -788,7 +788,7 @@ class TestResult100Coverage:
         result1 = FlextResult[int].ok(1)
         result2 = FlextResult[int].fail("error")
         # Modify _result to have None failure
-        result2._result = Failure(None)  # type: ignore[attr-defined]
+        result2._result = Failure(None)
 
         combined = FlextResult[int]._combine_results([result1, result2])
         assert combined.is_failure
@@ -801,7 +801,7 @@ class TestResult100Coverage:
         result1 = FlextResult[int].ok(1)
         result2 = FlextResult[int].fail("error")
         # Modify _result to have None failure
-        result2._result = Failure(None)  # type: ignore[attr-defined]
+        result2._result = Failure(None)
 
         sequenced = FlextResult[int]._sequence_results([result1, result2])
         assert sequenced.is_failure
@@ -814,7 +814,7 @@ class TestResult100Coverage:
         def failing_func(item: int) -> FlextResult[int]:
             result = FlextResult[int].fail("error")
             # Modify _result to have None failure
-            result._result = Failure(None)  # type: ignore[attr-defined]
+            result._result = Failure(None)
             return result
 
         items = [1, 2, 3]
@@ -853,7 +853,7 @@ class TestResult100Coverage:
 
         result = FlextResult[int].fail("error")
         # Modify _result to have None failure
-        result._result = Failure(None)  # type: ignore[attr-defined]
+        result._result = Failure(None)
 
         def validator(x: int) -> FlextResult[bool]:
             return FlextResult[bool].ok(True)
@@ -874,7 +874,7 @@ class TestResult100Coverage:
         def validator(x: int) -> FlextResult[bool]:
             validator_result = FlextResult[bool].fail("validation failed")
             # Modify _result to have None failure
-            validator_result._result = Failure(None)  # type: ignore[attr-defined]
+            validator_result._result = Failure(None)
             return validator_result
 
         def executor(x: int) -> FlextResult[str]:
@@ -1005,14 +1005,14 @@ class TestResult100Coverage:
         # Test when item has __origin__ attribute
         result_type = FlextResult[str]
         # Test with actual generic type
-        typed_result = result_type[str]  # type: ignore[index]
+        typed_result = result_type[str]
         assert typed_result is not None
 
         # Test with subclass
         class MyResult(FlextResult[str]):
             pass
 
-        typed_my_result = MyResult[str]  # type: ignore[index]
+        typed_my_result = MyResult[str]
         assert typed_my_result is not None
 
     def test_from_callable_with_none_exception_real(self) -> None:

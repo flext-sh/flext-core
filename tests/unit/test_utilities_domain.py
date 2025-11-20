@@ -1,7 +1,7 @@
-"""Comprehensive tests for FlextUtilitiesDomain - 100% coverage target.
+"""Comprehensive tests for FlextUtilities.Domain - 100% coverage target.
 
 This module provides real tests (no mocks) for all domain utility functions
-in FlextUtilitiesDomain to achieve 100% code coverage.
+in FlextUtilities.Domain to achieve 100% code coverage.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,8 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextModels
-from flext_core._utilities.domain import FlextUtilitiesDomain
+from flext_core import FlextModels, FlextUtilities
 
 # ============================================================================
 # Test Data Models
@@ -45,21 +44,21 @@ class TestFlextUtilitiesDomainCompareEntities:
         entity2 = DomainTestEntity(name="Bob", value=20)
         # Set same unique_id
         entity2.unique_id = entity1.unique_id
-        result = FlextUtilitiesDomain.compare_entities_by_id(entity1, entity2)
+        result = FlextUtilities.Domain.compare_entities_by_id(entity1, entity2)
         assert result is True
 
     def test_compare_entities_different_id(self) -> None:
         """Test comparing entities with different IDs."""
         entity1 = DomainTestEntity(name="Alice", value=10)
         entity2 = DomainTestEntity(name="Bob", value=20)
-        result = FlextUtilitiesDomain.compare_entities_by_id(entity1, entity2)
+        result = FlextUtilities.Domain.compare_entities_by_id(entity1, entity2)
         assert result is False
 
     def test_compare_entities_different_type(self) -> None:
         """Test comparing entities of different types."""
         entity1 = DomainTestEntity(name="Alice", value=10)
         value_obj = DomainTestValue(data="test", count=5)
-        result = FlextUtilitiesDomain.compare_entities_by_id(entity1, value_obj)
+        result = FlextUtilities.Domain.compare_entities_by_id(entity1, value_obj)
         assert result is False
 
     def test_compare_entities_no_id(self) -> None:
@@ -68,7 +67,7 @@ class TestFlextUtilitiesDomainCompareEntities:
         entity2 = DomainTestEntity(name="Bob", value=20)
         # Remove unique_id
         delattr(entity1, "unique_id")
-        result = FlextUtilitiesDomain.compare_entities_by_id(entity1, entity2)
+        result = FlextUtilities.Domain.compare_entities_by_id(entity1, entity2)
         assert result is False
 
     def test_compare_entities_custom_id_attr(self) -> None:
@@ -82,7 +81,7 @@ class TestFlextUtilitiesDomainCompareEntities:
 
         entity1 = CustomEntity("id1")
         entity2 = CustomEntity("id1")
-        result = FlextUtilitiesDomain.compare_entities_by_id(
+        result = FlextUtilities.Domain.compare_entities_by_id(
             entity1, entity2, id_attr="custom_id"
         )
         assert result is True
@@ -99,7 +98,7 @@ class TestFlextUtilitiesDomainHashEntity:
     def test_hash_entity_with_id(self) -> None:
         """Test hashing entity with ID."""
         entity = DomainTestEntity(name="Alice", value=10)
-        hash_val = FlextUtilitiesDomain.hash_entity_by_id(entity)
+        hash_val = FlextUtilities.Domain.hash_entity_by_id(entity)
         assert isinstance(hash_val, int)
 
     def test_hash_entity_no_id(self) -> None:
@@ -107,7 +106,7 @@ class TestFlextUtilitiesDomainHashEntity:
         entity = DomainTestEntity(name="Alice", value=10)
         # Remove unique_id to trigger fallback
         delattr(entity, "unique_id")
-        hash_val = FlextUtilitiesDomain.hash_entity_by_id(entity)
+        hash_val = FlextUtilities.Domain.hash_entity_by_id(entity)
         assert isinstance(hash_val, int)
 
     def test_hash_entity_custom_id_attr(self) -> None:
@@ -120,7 +119,7 @@ class TestFlextUtilitiesDomainHashEntity:
                 self.custom_id = custom_id
 
         entity = CustomEntity("id1")
-        hash_val = FlextUtilitiesDomain.hash_entity_by_id(entity, id_attr="custom_id")
+        hash_val = FlextUtilities.Domain.hash_entity_by_id(entity, id_attr="custom_id")
         assert isinstance(hash_val, int)
 
 
@@ -136,21 +135,21 @@ class TestFlextUtilitiesDomainCompareValueObjects:
         """Test comparing value objects with same values."""
         obj1 = DomainTestValue(data="test", count=5)
         obj2 = DomainTestValue(data="test", count=5)
-        result = FlextUtilitiesDomain.compare_value_objects_by_value(obj1, obj2)
+        result = FlextUtilities.Domain.compare_value_objects_by_value(obj1, obj2)
         assert result is True
 
     def test_compare_value_objects_different_values(self) -> None:
         """Test comparing value objects with different values."""
         obj1 = DomainTestValue(data="test", count=5)
         obj2 = DomainTestValue(data="test", count=10)
-        result = FlextUtilitiesDomain.compare_value_objects_by_value(obj1, obj2)
+        result = FlextUtilities.Domain.compare_value_objects_by_value(obj1, obj2)
         assert result is False
 
     def test_compare_value_objects_different_type(self) -> None:
         """Test comparing value objects of different types."""
         obj1 = DomainTestValue(data="test", count=5)
         entity = DomainTestEntity(name="Alice", value=10)
-        result = FlextUtilitiesDomain.compare_value_objects_by_value(obj1, entity)
+        result = FlextUtilities.Domain.compare_value_objects_by_value(obj1, entity)
         assert result is False
 
     def test_compare_value_objects_no_model_dump(self) -> None:
@@ -162,7 +161,7 @@ class TestFlextUtilitiesDomainCompareValueObjects:
 
         obj1 = SimpleValue("test")
         obj2 = SimpleValue("test")
-        result = FlextUtilitiesDomain.compare_value_objects_by_value(obj1, obj2)
+        result = FlextUtilities.Domain.compare_value_objects_by_value(obj1, obj2)
         assert result is True
 
     def test_compare_value_objects_model_dump_exception(self) -> None:
@@ -175,7 +174,7 @@ class TestFlextUtilitiesDomainCompareValueObjects:
 
         obj1 = BadModelDump()
         obj2 = BadModelDump()
-        result = FlextUtilitiesDomain.compare_value_objects_by_value(obj1, obj2)
+        result = FlextUtilities.Domain.compare_value_objects_by_value(obj1, obj2)
         # Should fallback to __dict__ or repr
         assert isinstance(result, bool)
 
@@ -193,7 +192,7 @@ class TestFlextUtilitiesDomainCompareValueObjects:
 
         obj1 = NoDict(5)
         obj2 = NoDict(5)
-        result = FlextUtilitiesDomain.compare_value_objects_by_value(obj1, obj2)
+        result = FlextUtilities.Domain.compare_value_objects_by_value(obj1, obj2)
         assert result is True
 
 
@@ -208,7 +207,7 @@ class TestFlextUtilitiesDomainHashValueObject:
     def test_hash_value_object_with_model_dump(self) -> None:
         """Test hashing value object with model_dump."""
         obj = DomainTestValue(data="test", count=5)
-        hash_val = FlextUtilitiesDomain.hash_value_object_by_value(obj)
+        hash_val = FlextUtilities.Domain.hash_value_object_by_value(obj)
         assert isinstance(hash_val, int)
 
     def test_hash_value_object_no_model_dump(self) -> None:
@@ -220,7 +219,7 @@ class TestFlextUtilitiesDomainHashValueObject:
                 self.count = count
 
         obj = SimpleValue("test", 5)
-        hash_val = FlextUtilitiesDomain.hash_value_object_by_value(obj)
+        hash_val = FlextUtilities.Domain.hash_value_object_by_value(obj)
         assert isinstance(hash_val, int)
 
     def test_hash_value_object_model_dump_exception(self) -> None:
@@ -232,7 +231,7 @@ class TestFlextUtilitiesDomainHashValueObject:
                 raise TypeError(msg)
 
         obj = BadModelDump()
-        hash_val = FlextUtilitiesDomain.hash_value_object_by_value(obj)
+        hash_val = FlextUtilities.Domain.hash_value_object_by_value(obj)
         # Should fallback to __dict__ or repr
         assert isinstance(hash_val, int)
 
@@ -245,7 +244,7 @@ class TestFlextUtilitiesDomainHashValueObject:
                 self.items = items  # list is not hashable
 
         obj = ComplexValue("test", ["a", "b"])
-        hash_val = FlextUtilitiesDomain.hash_value_object_by_value(obj)
+        hash_val = FlextUtilities.Domain.hash_value_object_by_value(obj)
         assert isinstance(hash_val, int)
 
     def test_hash_value_object_no_dict(self) -> None:
@@ -261,7 +260,7 @@ class TestFlextUtilitiesDomainHashValueObject:
                 return f"NoDict({self.value})"
 
         obj = NoDict(5)
-        hash_val = FlextUtilitiesDomain.hash_value_object_by_value(obj)
+        hash_val = FlextUtilities.Domain.hash_value_object_by_value(obj)
         assert isinstance(hash_val, int)
 
 
@@ -276,14 +275,14 @@ class TestFlextUtilitiesDomainValidateEntityHasId:
     def test_validate_entity_has_id_true(self) -> None:
         """Test validation with entity that has ID."""
         entity = DomainTestEntity(name="Alice", value=10)
-        result = FlextUtilitiesDomain.validate_entity_has_id(entity)
+        result = FlextUtilities.Domain.validate_entity_has_id(entity)
         assert result is True
 
     def test_validate_entity_has_id_false(self) -> None:
         """Test validation with entity without ID."""
         entity = DomainTestEntity(name="Alice", value=10)
         delattr(entity, "unique_id")
-        result = FlextUtilitiesDomain.validate_entity_has_id(entity)
+        result = FlextUtilities.Domain.validate_entity_has_id(entity)
         assert result is False
 
     def test_validate_entity_has_id_custom_attr(self) -> None:
@@ -296,7 +295,7 @@ class TestFlextUtilitiesDomainValidateEntityHasId:
                 self.custom_id = custom_id
 
         entity = CustomEntity("id1")
-        result = FlextUtilitiesDomain.validate_entity_has_id(
+        result = FlextUtilities.Domain.validate_entity_has_id(
             entity, id_attr="custom_id"
         )
         assert result is True
@@ -314,7 +313,7 @@ class TestFlextUtilitiesDomainValidateValueObjectImmutable:
         """Test validation with frozen Pydantic model."""
         # Value objects are frozen by default
         obj = DomainTestValue(data="test", count=5)
-        result = FlextUtilitiesDomain.validate_value_object_immutable(obj)
+        result = FlextUtilities.Domain.validate_value_object_immutable(obj)
         assert result is True
 
     def test_validate_immutable_mutable(self) -> None:
@@ -325,7 +324,7 @@ class TestFlextUtilitiesDomainValidateValueObjectImmutable:
                 self.value = value
 
         obj = MutableObj(5)
-        result = FlextUtilitiesDomain.validate_value_object_immutable(obj)
+        result = FlextUtilities.Domain.validate_value_object_immutable(obj)
         assert result is False
 
     def test_validate_immutable_custom_setattr(self) -> None:
@@ -344,7 +343,7 @@ class TestFlextUtilitiesDomainValidateValueObjectImmutable:
                 object.__setattr__(self, name, value)
 
         obj = ImmutableObj(5)
-        result = FlextUtilitiesDomain.validate_value_object_immutable(obj)
+        result = FlextUtilities.Domain.validate_value_object_immutable(obj)
         assert result is True
 
     def test_validate_immutable_config_exception(self) -> None:
@@ -357,7 +356,7 @@ class TestFlextUtilitiesDomainValidateValueObjectImmutable:
                 raise AttributeError(msg)
 
         obj = BadConfig()
-        result = FlextUtilitiesDomain.validate_value_object_immutable(obj)
+        result = FlextUtilities.Domain.validate_value_object_immutable(obj)
         # Should handle exception and check __setattr__
         assert isinstance(result, bool)
 
@@ -374,7 +373,7 @@ class TestFlextUtilitiesDomainValidateValueObjectImmutable:
         obj = BadConfig()
         # The exception should be caught in the try/except
         try:
-            result = FlextUtilitiesDomain.validate_value_object_immutable(obj)
+            result = FlextUtilities.Domain.validate_value_object_immutable(obj)
             # Should handle TypeError and continue
             assert isinstance(result, bool)
         except TypeError:
@@ -388,7 +387,7 @@ class TestFlextUtilitiesDomainValidateValueObjectImmutable:
             pass
 
         obj = NoConfigNoSetattr()
-        result = FlextUtilitiesDomain.validate_value_object_immutable(obj)
+        result = FlextUtilities.Domain.validate_value_object_immutable(obj)
         # Should return False (line 216)
         assert result is False
 
@@ -399,5 +398,5 @@ class TestFlextUtilitiesDomainValidateValueObjectImmutable:
             pass
 
         obj = NoSetattr()
-        result = FlextUtilitiesDomain.validate_value_object_immutable(obj)
+        result = FlextUtilities.Domain.validate_value_object_immutable(obj)
         assert result is False

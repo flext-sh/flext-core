@@ -161,7 +161,9 @@ class TestFlextConfigNamespaces:
     def test_namespace_with_factory_function(self) -> None:
         """Test namespace registration with custom factory function."""
         # MockCliConfig uses get_instance() factory
-        FlextConfig.register_namespace("cli", MockCliConfig, factory=MockCliConfig.get_instance)
+        FlextConfig.register_namespace(
+            "cli", MockCliConfig, factory=MockCliConfig.get_instance
+        )
 
         config = FlextConfig()
         cli1 = config.cli
@@ -221,7 +223,7 @@ class TestFlextConfigNamespaces:
             pass
 
         with pytest.raises(TypeError, match="must be a Pydantic BaseModel"):
-            FlextConfig.register_namespace("invalid", NotABaseModel)  # type: ignore[arg-type]
+            FlextConfig.register_namespace("invalid", NotABaseModel)
 
     def test_register_basesettings_raises_error(self) -> None:
         """Test registering BaseSettings (instead of BaseModel) raises TypeError."""
@@ -231,7 +233,7 @@ class TestFlextConfigNamespaces:
             field: str = "value"
 
         with pytest.raises(TypeError, match="inherits from BaseSettings"):
-            FlextConfig.register_namespace("settings", SettingsConfig)  # type: ignore[arg-type]
+            FlextConfig.register_namespace("settings", SettingsConfig)
 
     def test_namespace_thread_safety_registration(self) -> None:
         """Test thread-safe namespace registration."""
@@ -309,7 +311,7 @@ class TestFlextConfigNamespaces:
         # Independent instances
         assert isinstance(ldap_config, MockLdapConfig)
         assert isinstance(ldif_config, MockLdifConfig)
-        assert ldap_config is not ldif_config  # type: ignore[comparison-overlap]
+        assert ldap_config is not ldif_config
 
     def test_namespace_default_values(self) -> None:
         """Test namespace configs use their default values."""
@@ -367,7 +369,7 @@ class TestFlextConfigNamespaces:
         assert isinstance(ldif, MockLdifConfig)
 
         # Verify independence
-        assert ldap is not ldif  # type: ignore[comparison-overlap]
+        assert ldap is not ldif
 
 
 class TestNamespaceConfigProtocol:

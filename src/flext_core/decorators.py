@@ -22,7 +22,9 @@ from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
+from flext_core.models import FlextModels
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import P, R, T
 
 
@@ -423,7 +425,8 @@ class FlextDecorators:
                         start_extra["correlation_id"] = correlation_id
 
                     log_start_result = result_logger.debug(
-                        f"{op_name}_started",
+                        "%s_started",
+                        op_name,
                         extra=start_extra,
                     )
                     FlextDecorators._handle_log_result(
@@ -443,7 +446,8 @@ class FlextDecorators:
                     if correlation_id is not None:
                         completion_extra["correlation_id"] = correlation_id
                     log_completion_result = result_logger.debug(
-                        f"{op_name}_completed",
+                        "%s_completed",
+                        op_name,
                         extra=completion_extra,
                     )
                     FlextDecorators._handle_log_result(
@@ -467,6 +471,7 @@ class FlextDecorators:
                         "success": False,
                         "error": str(e),
                         "error_type": type(e).__name__,
+                        "operation": op_name,
                     }
                     if correlation_id is not None:
                         failure_extra["correlation_id"] = correlation_id
@@ -756,18 +761,29 @@ class FlextDecorators:
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 logger = FlextDecorators._resolve_logger(args, func)
                 result_or_exception = FlextDecorators._execute_retry_loop(
-                    func, args, kwargs, logger, attempts, delay, strategy
+                    func,
+                    args,
+                    kwargs,
+                    logger,
+                    attempts,
+                    delay,
+                    strategy,
                 )
                 # Check if we got a successful result or an exception
                 if isinstance(result_or_exception, Exception):
                     # All retries failed - handle exhaustion and raise
                     FlextDecorators._handle_retry_exhaustion(
-                        result_or_exception, func, attempts, error_code, logger
+                        result_or_exception,
+                        func,
+                        attempts,
+                        error_code,
+                        logger,
                     )
                     # Unreachable, but needed for type checking
                     msg = f"Operation {func.__name__} failed"
                     raise FlextExceptions.TimeoutError(
-                        msg, error_code=error_code or "RETRY_EXHAUSTED"
+                        msg,
+                        error_code=error_code or "RETRY_EXHAUSTED",
                     )
                 # Success - return the result
                 return result_or_exception
@@ -992,7 +1008,7 @@ class FlextDecorators:
                     "extra": {
                         "function": function_name,
                         "operation": operation,
-                    }
+                    },
                 },
             )
 
@@ -1012,7 +1028,7 @@ class FlextDecorators:
             fallback_kwargs = dict(kwargs)
             fallback_kwargs.setdefault("extra", {})
             extra_payload = fallback_kwargs["extra"]
-            if isinstance(extra_payload, dict):
+            if FlextRuntime.is_dict_like(extra_payload):
                 extra_payload = dict(extra_payload)
                 extra_payload["log_error"] = result.error
                 extra_payload["log_error_code"] = result.error_code
@@ -1088,7 +1104,9 @@ class FlextDecorators:
                             error_code=effective_error_code,
                             timeout_seconds=max_duration,
                             operation=func.__name__,
-                            metadata={"duration_seconds": duration},
+                            metadata=FlextModels.Metadata(
+                                attributes={"duration_seconds": duration},
+                            ),
                         )
 
                     return result
@@ -1112,10 +1130,12 @@ class FlextDecorators:
                             error_code=error_code or "OPERATION_TIMEOUT",
                             timeout_seconds=max_duration,
                             operation=func.__name__,
-                            metadata={
-                                "duration_seconds": duration,
-                                "original_error": str(e),
-                            },
+                            metadata=FlextModels.Metadata(
+                                attributes={
+                                    "duration_seconds": duration,
+                                    "original_error": str(e),
+                                },
+                            ),
                         ) from e
                     # Re-raise original exception if not timeout
                     raise
@@ -1187,7 +1207,7 @@ class FlextDecorators:
             # Apply railway pattern first if requested (outermost wrapper)
             if use_railway:
                 railway_result = FlextDecorators.railway(error_code=error_code)(
-                    decorated
+                    decorated,
                 )
                 decorated = cast("Callable[..., R]", railway_result)
 
@@ -1199,13 +1219,13 @@ class FlextDecorators:
             # Apply performance tracking
             if track_perf:
                 perf_result = FlextDecorators.track_performance(
-                    operation_name=operation_name
+                    operation_name=operation_name,
                 )(decorated)
                 decorated = perf_result
 
             # Apply operation logging (innermost wrapper)
             log_result = FlextDecorators.log_operation(operation_name=operation_name)(
-                decorated
+                decorated,
             )
             return cast("Callable[P, R]", log_result)
 
@@ -1319,7 +1339,7 @@ class FlextDecorators:
                     # Unbind context variables
                     if context_vars:
                         unbind_result = FlextLogger.unbind_global_context(
-                            *tuple(context_vars.keys())
+                            *tuple(context_vars.keys()),
                         )
                         if unbind_result.is_failure:
                             logger.warning(

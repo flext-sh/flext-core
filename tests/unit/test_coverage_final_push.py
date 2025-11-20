@@ -103,9 +103,13 @@ class TestCoverageFinalPush:
 
     def test_result_properties_consistency(self) -> None:
         """Test result properties are consistent."""
+        import warnings
+
         r = FlextResult[str].ok("test")
         assert r.success == r.is_success
-        assert r.failed == r.is_failure
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            assert r.failed == r.is_failure
         assert r.error_code is None or isinstance(r.error_code, str)
 
     def test_result_error_data_on_failure(self) -> None:

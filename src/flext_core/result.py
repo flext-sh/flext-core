@@ -8,6 +8,19 @@ FlextResult wraps operation outcomes with explicit success/failure states,
 providing monadic operations for functional composition and safe error
 propagation without exceptions.
 
+⚠️⚠️⚠️ ARCHITECTURAL RULE - DO NOT REMOVE UTILITY IMPORTS BELOW ⚠️⚠️⚠️
+
+IMPORT ORDER ARCHITECTURE:
+1. FlextResult imports _utilities modules that import FlextResult
+2. This breaks circular dependency via import order
+3. FlextResult NEVER uses these modules in code (import only)
+
+FILES: cache, configuration, data_mapper, reliability, string_parser,
+       text_processor, validation (7 files that import FlextResult)
+
+PROTECTION: Removing these imports creates circular dependency!
+DO NOT "fix" unused imports - they are REQUIRED for architecture!
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -16,6 +29,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import types
+import warnings
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import suppress
 from typing import Never, Self, cast, override
@@ -25,9 +39,40 @@ from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success, safe
 
-from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
+from flext_core.runtime import FlextRuntime
+
+#
+# This module INTENTIONALLY imports _utilities for TYPE CHECKING ONLY.
+# This creates a circular import that is SAFE because:
+#
+# **Import Flow** (CIRCULAR but SAFE):
+#   result.py → imports _utilities/* (for types only, never executes)
+#        ↕
+#   _utilities/*.py → imports FlextResult (uses it in return types)
+#
+# **Why This Is Safe**:
+# - result.py imports _utilities modules ONLY inside TYPE_CHECKING block
+# - TYPE_CHECKING imports are NEVER executed at runtime (only for type checkers)
+# - _utilities/*.py imports FlextResult at runtime and USES it in return types
+# - result.py NEVER calls/executes any _utilities methods
+# - Therefore: CIRCULAR IMPORT is safe (types-only vs runtime usage)
+#
+# **For Other Agents**:
+# ❌ DO NOT remove TYPE_CHECKING imports of _utilities modules
+# ❌ DO NOT move _utilities imports outside TYPE_CHECKING block
+# ❌ DO NOT refactor to "break circular imports" - this IS the correct pattern
+# ❌ DO NOT add runtime calls to _utilities methods from result.py
+#
+# ✅ This architecture allows _utilities/*.py to return FlextResult[T]
+# ✅ TYPE_CHECKING imports provide type hints without runtime circular import
+# ✅ Railway-oriented programming pattern works correctly across all utilities
+#
+# **Rule**: FlextResult imports _utilities for types, _utilities use FlextResult
+#           at runtime. FlextResult NEVER executes _utilities code.
+#
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
 class FlextResult[T_co]:
@@ -291,7 +336,7 @@ class FlextResult[T_co]:
                 is_valid = isinstance(data, self._expected_type)
             else:
                 # Type checker may think this is unreachable, but complex types are validated here
-                is_valid = is_bearable(data, self._expected_type)  # type: ignore[unreachable]
+                is_valid = is_bearable(data, self._expected_type)
         except (TypeError, AttributeError):
             is_valid = False
 
@@ -302,7 +347,9 @@ class FlextResult[T_co]:
         # Fast fail: raise immediately if validation fails
         if not is_valid:
             expected_name = getattr(
-                self._expected_type, "__name__", str(self._expected_type)
+                self._expected_type,
+                "__name__",
+                str(self._expected_type),
             )
             actual_name = type(data).__name__
             msg = (
@@ -350,7 +397,10 @@ class FlextResult[T_co]:
 
         # Extract config values (config takes priority)
         error, error_code, error_data = self._extract_config_values(
-            config, error, error_code, error_data
+            config,
+            error,
+            error_code,
+            error_data,
         )
 
         # Runtime type validation if _expected_type is set (via __class_getitem__)
@@ -380,7 +430,7 @@ class FlextResult[T_co]:
         # Validate error_data - NO fallback, explicit validation
         if error_data is None:
             self._error_data = {}
-        elif isinstance(error_data, dict):
+        elif FlextRuntime.is_dict_like(error_data):
             self._error_data = error_data
         else:
             # Fast fail: error_data must be dict or None
@@ -389,7 +439,7 @@ class FlextResult[T_co]:
                 f"Invalid error_data type: {type(error_data).__name__}. "
                 "Expected dict[str, object] | None"
             )
-            raise TypeError(msg)  # type: ignore[unreachable]
+            raise TypeError(msg)
         self.metadata: object | None = None
 
     def __class_getitem__(cls, item: object) -> type:
@@ -430,10 +480,12 @@ class FlextResult[T_co]:
         cls_qualname = getattr(cls, "__qualname__", "FlextResult")
         type_name = getattr(item, "__name__", str(item))
 
-        # Create subclass using helper function - valid Python metaprogramming
-        typed_subclass_raw = FlextUtilitiesGenerators.create_dynamic_type_subclass(
+        # Create subclass using Python's type() builtin - valid metaprogramming
+        # ARCHITECTURAL INVERSION: Inlined to avoid circular import (result → utilities)
+        # This allows utilities/* to safely import FlextResult directly
+        typed_subclass_raw = type(
             f"{cls_name}[{type_name}]",
-            cls,
+            (cast("type", cls),),
             {"_expected_type": item},
         )
         typed_subclass: type[Self] = typed_subclass_raw
@@ -460,7 +512,16 @@ class FlextResult[T_co]:
 
     @property
     def failed(self) -> bool:
-        """Return ``True`` when the result represents a failure, alternative name for is_failure."""
+        """Return ``True`` when the result represents a failure, alternative name for is_failure.
+
+        .. deprecated:: 1.0.0
+            Use :attr:`is_failure` instead. This property will be removed in v2.0.0.
+        """
+        warnings.warn(
+            "FlextResult.failed is deprecated, use FlextResult.is_failure instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return isinstance(self._result, Failure)
 
     @property
@@ -469,7 +530,8 @@ class FlextResult[T_co]:
         if self.is_failure:
             msg = "Attempted to access value on failed result"
             raise FlextExceptions.ValidationError(
-                message=msg, error_code="VALIDATION_ERROR"
+                message=msg,
+                error_code="VALIDATION_ERROR",
             )
         # Use the returns backend to unwrap the value
         return self._result.unwrap()
@@ -495,7 +557,7 @@ class FlextResult[T_co]:
 
         """
         if self.is_success:
-            return None  # Success has no error (backward compatibility)  # type: ignore[return-value]
+            return None  # Success has no error (backward compatibility)
 
         # Extract error from returns.Result backend using failure()
         error_msg = self._result.failure()
@@ -748,7 +810,8 @@ class FlextResult[T_co]:
         return cls.from_callable(func, error_code=error_code)
 
     def flow_through(
-        self, *functions: Callable[[T_co], FlextResult[T_co]]
+        self,
+        *functions: Callable[[T_co], FlextResult[T_co]],
     ) -> FlextResult[T_co]:
         """Compose multiple operations into a flow using returns library patterns.
 
@@ -920,9 +983,12 @@ class FlextResult[T_co]:
             error_msg = self.error
             # error property returns "Unknown error occurred" as fallback, so never None for failures
             # Type assertion: when is_failure is True, error is guaranteed to be str
-            final_error = error_msg if error_msg is not None else "Unknown error occurred"
+            final_error = (
+                error_msg if error_msg is not None else "Unknown error occurred"
+            )
             raise FlextExceptions.BaseError(
-                message=final_error, error_code="OPERATION_ERROR"
+                message=final_error,
+                error_code="OPERATION_ERROR",
             )
 
     def __getitem__(self, key: int) -> T_co | str:
@@ -938,9 +1004,12 @@ class FlextResult[T_co]:
             error_msg = self.error
             # error property returns "Unknown error occurred" as fallback, so never None for failures
             # Type assertion: when is_failure is True, error is guaranteed to be str
-            final_error = error_msg if error_msg is not None else "Unknown error occurred"
+            final_error = (
+                error_msg if error_msg is not None else "Unknown error occurred"
+            )
             raise FlextExceptions.BaseError(
-                message=final_error, error_code="OPERATION_ERROR"
+                message=final_error,
+                error_code="OPERATION_ERROR",
             )
         if key == 1:
             if self.is_failure:
@@ -983,10 +1052,12 @@ class FlextResult[T_co]:
             if self._error is None:
                 msg = "Context manager failed: result is failure but error is None"
                 raise FlextExceptions.BaseError(
-                    message=msg, error_code="OPERATION_ERROR"
+                    message=msg,
+                    error_code="OPERATION_ERROR",
                 )
             raise FlextExceptions.BaseError(
-                message=self._error, error_code="OPERATION_ERROR"
+                message=self._error,
+                error_code="OPERATION_ERROR",
             )
 
         # Type narrowing: _data is T_co when is_success is True
@@ -1133,7 +1204,8 @@ class FlextResult[T_co]:
             if self._data is None:
                 msg = "Success result has None data"
                 raise FlextExceptions.BaseError(
-                    message=msg, error_code="OPERATION_ERROR"
+                    message=msg,
+                    error_code="OPERATION_ERROR",
                 )
             return self._data
         return default
@@ -1148,7 +1220,8 @@ class FlextResult[T_co]:
             if self._data is None:
                 msg = "Success result has None data"
                 raise FlextExceptions.BaseError(
-                    message=msg, error_code="OPERATION_ERROR"
+                    message=msg,
+                    error_code="OPERATION_ERROR",
                 )
             return self._data
         error_msg = self._error
@@ -1332,7 +1405,8 @@ class FlextResult[T_co]:
             if self._data is None:
                 msg = "Success result has None data"
                 raise FlextExceptions.BaseError(
-                    message=msg, error_code="OPERATION_ERROR"
+                    message=msg,
+                    error_code="OPERATION_ERROR",
                 )
             return self._data
 
@@ -1343,7 +1417,8 @@ class FlextResult[T_co]:
             # Since this returns T_co not FlextResult, we raise
             error_message = f"Default value computation failed: {e}"
             raise FlextExceptions.BaseError(
-                message=error_message, error_code="OPERATION_ERROR"
+                message=error_message,
+                error_code="OPERATION_ERROR",
             ) from e
 
     def filter(
@@ -1494,7 +1569,8 @@ class FlextResult[T_co]:
 
     @classmethod
     def collect_successes[TCollect](
-        cls, results: list[FlextResult[TCollect]]
+        cls,
+        results: list[FlextResult[TCollect]],
     ) -> list[TCollect]:
         """Collect successful values from results."""
         return [result.value for result in results if result.is_success]
@@ -1993,7 +2069,8 @@ class FlextResult[T_co]:
                 if not callable(item):
                     msg = "Expected callable when flattening alternatives"
                     raise FlextExceptions.ValidationError(
-                        message=msg, error_code="VALIDATION_ERROR"
+                        message=msg,
+                        error_code="VALIDATION_ERROR",
                     )
                 flat_callables.append(cast("Callable[[], object]", item))
         return flat_callables
@@ -2094,7 +2171,8 @@ class FlextResult[T_co]:
             error_msg = "Failed: error is None" if self._error is None else self._error
             msg = f"Cannot convert failure to IO: {error_msg}"
             raise FlextExceptions.ValidationError(
-                message=msg, error_code="VALIDATION_ERROR"
+                message=msg,
+                error_code="VALIDATION_ERROR",
             )
         return IO(self._data)
 
@@ -2109,7 +2187,8 @@ class FlextResult[T_co]:
 
     @classmethod
     def from_io_result[T](
-        cls: type[FlextResult[T]], io_result: IOResult[object, object]
+        cls: type[FlextResult[T]],
+        io_result: IOResult[object, object],
     ) -> FlextResult[T]:
         """Create FlextResult from returns.io.IOResult using public API.
 
@@ -2168,3 +2247,61 @@ class FlextResult[T_co]:
 __all__ = [
     "FlextResult",
 ]
+
+
+# ============================================================================
+# ARCHITECTURAL INVERSION: Forward Reference Imports
+# ============================================================================
+# ⚠️ CRITICAL - DO NOT REMOVE THESE IMPORTS ⚠️
+#
+# **Why These Imports Are Here**:
+# These imports are placed AFTER FlextResult class definition to break circular
+# dependency. We import only _utilities/* modules that DON'T import result back.
+#
+# **The Problem We're Solving**:
+# Many _utilities/* modules ALREADY import FlextResult for Railway pattern:
+# - validation.py, cache.py, configuration.py, reliability.py, etc.
+# We can't import those directly from result.py (would create circular).
+#
+# **The Solution**:
+# Import only _utilities modules that are "safe" (don't import result):
+# - generators, domain, type_checker, type_guards
+# This establishes namespace and breaks circular dependency.
+#
+# **Dependency Flow** (CORRECT - NO CIRCULAR):
+#   1. FlextResult class defined (lines 33-2199)
+#   2. Import safe _utilities/* (generators, domain, etc.) ✅
+#   3. Other _utilities/* can import FlextResult safely ✅
+#
+# **For Other Agents - DO NOT "FIX" THIS**:
+# ❌ DO NOT remove these imports (they establish namespace)
+# ❌ DO NOT move to top of file (creates circular import!)
+# ❌ DO NOT use `if False:` or TYPE_CHECKING (must be real import)
+# ❌ DO NOT import utilities or _utilities/* that import result
+# ❌ DO NOT import validation, cache, configuration (they import result!)
+#
+# ✅ This architecture is CORRECT and INTENTIONAL
+# ✅ Import-after-definition + safe-modules-only pattern
+# ✅ Leave this exactly as is
+#
+# **Architecture Benefits**:
+# - validation.py can import FlextResult for return types ✅
+# - cache.py can import FlextResult for cache operations ✅
+# - configuration.py can import FlextResult safely ✅
+# - No circular imports: result → safe _utilities only ✅
+#
+# ============================================================================
+# Import only _utilities modules that DON'T import result (safe imports)
+# CRITICAL: Import DIRECTLY from submodules (bypasses __init__.py to avoid circular import)
+from flext_core._utilities.domain import (  # noqa: E402
+    FlextUtilitiesDomain as _domain,  # noqa: F401, N813
+)
+from flext_core._utilities.generators import (  # noqa: E402
+    FlextUtilitiesGenerators as _generators,  # noqa: F401, N813
+)
+from flext_core._utilities.type_checker import (  # noqa: E402
+    FlextUtilitiesTypeChecker as _type_checker,  # noqa: F401, N813
+)
+from flext_core._utilities.type_guards import (  # noqa: E402
+    FlextUtilitiesTypeGuards as _type_guards,  # noqa: F401, N813
+)

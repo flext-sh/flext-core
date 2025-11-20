@@ -13,15 +13,17 @@ from __future__ import annotations
 
 import contextvars
 import json
-import uuid
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import (
+    TYPE_CHECKING,
     Final,
     Self,
+    TypeAlias,
 )
 
+from flext_core._models.context import FlextModelsContext
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
 from flext_core.loggings import FlextLogger
@@ -29,6 +31,44 @@ from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
+
+# Type aliases for MyPy compatibility
+if TYPE_CHECKING:
+    _StructlogProxyStr: TypeAlias = FlextModelsContext.StructlogProxyContextVar[str]
+    _StructlogProxyDatetime: TypeAlias = FlextModelsContext.StructlogProxyContextVar[datetime]
+    _StructlogProxyDict: TypeAlias = FlextModelsContext.StructlogProxyContextVar[dict[str, object]]
+else:
+    _StructlogProxyStr = FlextModels.StructlogProxyContextVar[str]
+    _StructlogProxyDatetime = FlextModels.StructlogProxyContextVar[datetime]
+    _StructlogProxyDict = FlextModels.StructlogProxyContextVar[dict[str, object]]
+
+
+def _create_str_proxy(key: str, default: str | None = None) -> _StructlogProxyStr:
+    """Helper to create StructlogProxyContextVar[str] instances."""
+    return FlextModelsContext.StructlogProxyContextVar[str](key, default=default)
+
+
+def _create_datetime_proxy(
+    key: str,
+    default: datetime | None = None,
+) -> _StructlogProxyDatetime:
+    """Helper to create StructlogProxyContextVar[datetime] instances."""
+    return FlextModelsContext.StructlogProxyContextVar[datetime](
+        key,
+        default=default,
+    )
+
+
+def _create_dict_proxy(
+    key: str,
+    default: dict[str, object] | None = None,
+) -> _StructlogProxyDict:
+    """Helper to create StructlogProxyContextVar[dict[str, object]] instances."""
+    return FlextModelsContext.StructlogProxyContextVar[dict[str, object]](
+        key,
+        default=default,
+    )
 
 
 class FlextContext:
@@ -61,18 +101,23 @@ class FlextContext:
         - Statistics tracking for context operations
 
     Nested Domains:
-        - FlextContext.Variables - Context variable definitions (Correlation, Service, Request, Performance)
+        - FlextContext.Variables - Context variable definitions
+          (Correlation, Service, Request, Performance)
         - FlextContext.Correlation - Distributed tracing and correlation ID management
         - FlextContext.Service - Service identification and lifecycle context
         - FlextContext.Request - User and request metadata management
         - FlextContext.Performance - Operation timing and performance tracking
-        - FlextContext.Serialization - Context serialization for cross-service communication
+        - FlextContext.Serialization - Context serialization for
+          cross-service communication
         - FlextContext.Utilities - Helper methods and utility operations
 
     Integration Patterns:
-        - Container Integration - FlextContext.Service.get_service() / register_service()
-        - Logger Delegation - Automatic FlextLogger.bind_global_context() on context changes
-        - Cross-Service Propagation - HTTP header format (X-Correlation-Id, X-Service-Name)
+        - Container Integration - FlextContext.Service.get_service() /
+          register_service()
+        - Logger Delegation - Automatic FlextLogger.bind_global_context() on
+          context changes
+        - Cross-Service Propagation - HTTP header format
+          (X-Correlation-Id, X-Service-Name)
         - FlextResult Integration - All service operations return FlextResult[T]
 
     Usage Example:
@@ -112,7 +157,8 @@ class FlextContext:
 
     Context Variable Compliance:
         - Uses Python contextvars for inherent thread-safety and async support
-        - FlextModels.StructlogProxyContextVar wraps contextvars with structlog integration
+        - FlextModels.StructlogProxyContextVar wraps contextvars with
+          structlog integration
         - No explicit protocol inheritance needed - implements context management patterns
         - Automatic FlextLogger delegation for logging consistency across ecosystem
     """
@@ -140,27 +186,23 @@ class FlextContext:
         """
         super().__init__()
         # Use Pydantic directly - NO redundant helpers (Pydantic validates dict/None/model)
-        context_data = (
-            FlextModels.ContextData(data=initial_data)
-            if isinstance(initial_data, dict)
-            else (
-                initial_data if initial_data is not None else FlextModels.ContextData()
+        # Type narrowing: always create FlextModels.ContextData instance
+        if FlextRuntime.is_dict_like(initial_data):
+            context_data: FlextModels.ContextData = FlextModels.ContextData(
+                data=initial_data
             )
-        )
-        # Validate metadata - NO fallback to empty dict, use proper validation
-        if isinstance(context_data.metadata, FlextModels.ContextMetadata):
-            self._metadata = context_data.metadata
-        elif isinstance(context_data.metadata, dict):
-            self._metadata = FlextModels.ContextMetadata.model_validate(
-                context_data.metadata,
-            )
+        elif initial_data is not None and isinstance(
+            initial_data, FlextModels.ContextData
+        ):
+            # Already a ContextData instance - explicit type check for MyPy
+            context_data = initial_data
         else:
-            # Fast fail: metadata must be dict or ContextMetadata instance
-            msg = (
-                f"Invalid metadata type: {type(context_data.metadata).__name__}. "
-                "Expected dict[str, object] or FlextModels.ContextMetadata"
-            )
-            raise TypeError(msg)
+            # None or uninitialized - create empty ContextData
+            context_data = FlextModels.ContextData()
+        # Initialize context-specific metadata (separate from ContextData.metadata)
+        # ContextData.metadata = generic creation/modification metadata (Metadata)
+        # FlextContext._metadata = context-specific tracing metadata (ContextMetadata)
+        self._metadata = FlextModels.ContextMetadata()
 
         self._hooks: FlextTypes.HookRegistry = {}
         self._statistics: FlextModels.ContextStatistics = (
@@ -173,7 +215,8 @@ class FlextContext:
         # Note: Each instance gets its own contextvars to prevent state sharing
         # Note: Using None default per B039 - mutable defaults cause issues
         self._scope_vars: dict[
-            str, contextvars.ContextVar[dict[str, object] | None]
+            str,
+            contextvars.ContextVar[dict[str, object] | None],
         ] = {
             FlextConstants.Context.SCOPE_GLOBAL: contextvars.ContextVar(
                 "flext_global_context",
@@ -191,10 +234,12 @@ class FlextContext:
 
         # Initialize contextvars with initial data if provided
         # Note: No self._lock needed - contextvars are thread-safe by design
+        # Type narrowing: context_data is always FlextModels.ContextData at this point
         if context_data.data:
             # Set initial data in global context
             self._set_in_contextvar(
-                FlextConstants.Context.SCOPE_GLOBAL, context_data.data
+                FlextConstants.Context.SCOPE_GLOBAL,
+                context_data.data,
             )
 
     # =========================================================================
@@ -202,7 +247,8 @@ class FlextContext:
     # =========================================================================
 
     def _get_or_create_scope_var(
-        self, scope: str
+        self,
+        scope: str,
     ) -> contextvars.ContextVar[dict[str, object] | None]:
         """Get or create contextvar for scope.
 
@@ -217,7 +263,8 @@ class FlextContext:
             # Create new contextvar for dynamic scope
             # Note: Using None default per B039 - mutable defaults cause issues
             self._scope_vars[scope] = contextvars.ContextVar(
-                f"flext_{scope}_context", default=None
+                f"flext_{scope}_context",
+                default=None,
             )
         return self._scope_vars[scope]
 
@@ -232,7 +279,7 @@ class FlextContext:
         ctx_var = self._get_or_create_scope_var(scope)
         current_value = ctx_var.get()
         # Fast fail: contextvar must contain dict or None (uninitialized)
-        if current_value is not None and not isinstance(current_value, dict):
+        if current_value is not None and not FlextRuntime.is_dict_like(current_value):
             msg = (
                 f"Invalid contextvar value type in scope '{scope}': "
                 f"{type(current_value).__name__}. Expected dict[str, object] | None"
@@ -240,7 +287,7 @@ class FlextContext:
             raise TypeError(msg)
         # Initialize with empty dict if None (first use)
         current: dict[str, object] = (
-            current_value if isinstance(current_value, dict) else {}
+            current_value if FlextRuntime.is_dict_like(current_value) else {}
         )
         updated = {**current, **data}
         ctx_var.set(updated)
@@ -262,14 +309,14 @@ class FlextContext:
         ctx_var = self._get_or_create_scope_var(scope)
         value = ctx_var.get()
         # Fast fail: contextvar must contain dict or None (uninitialized)
-        if value is not None and not isinstance(value, dict):
+        if value is not None and not FlextRuntime.is_dict_like(value):
             msg = (
                 f"Invalid contextvar value type in scope '{scope}': "
                 f"{type(value).__name__}. Expected dict[str, object] | None"
             )
             raise TypeError(msg)
         # Return empty dict if None (uninitialized scope)
-        return value if isinstance(value, dict) else {}
+        return value if FlextRuntime.is_dict_like(value) else {}
 
     def _update_statistics(self, operation: str) -> None:
         """Update statistics counter for an operation (DRY helper).
@@ -367,7 +414,9 @@ class FlextContext:
             ctx_var = self._get_or_create_scope_var(scope)
             current_value = ctx_var.get()
             # Fast fail: contextvar must contain dict or None (uninitialized)
-            if current_value is not None and not isinstance(current_value, dict):
+            if current_value is not None and not FlextRuntime.is_dict_like(
+                current_value
+            ):
                 msg = (
                     f"Invalid contextvar value type in scope '{scope}': "
                     f"{type(current_value).__name__}. Expected dict[str, object] | None"
@@ -375,7 +424,7 @@ class FlextContext:
                 return FlextResult[bool].fail(msg)
             # Initialize with empty dict if None (first use)
             current: dict[str, object] = (
-                current_value if isinstance(current_value, dict) else {}
+                current_value if FlextRuntime.is_dict_like(current_value) else {}
             )
             updated = {**current, key: value}
             ctx_var.set(updated)
@@ -474,7 +523,9 @@ class FlextContext:
         return key in scope_data
 
     def remove(
-        self, key: str, scope: str = FlextConstants.Context.SCOPE_GLOBAL
+        self,
+        key: str,
+        scope: str = FlextConstants.Context.SCOPE_GLOBAL,
     ) -> None:
         """Remove a key from the context.
 
@@ -493,7 +544,7 @@ class FlextContext:
         ctx_var = self._get_or_create_scope_var(scope)
         current_value = ctx_var.get()
         # Fast fail: contextvar must contain dict or None (uninitialized)
-        if current_value is not None and not isinstance(current_value, dict):
+        if current_value is not None and not FlextRuntime.is_dict_like(current_value):
             msg = (
                 f"Invalid contextvar value type in scope '{scope}': "
                 f"{type(current_value).__name__}. Expected dict[str, object] | None"
@@ -501,7 +552,7 @@ class FlextContext:
             raise TypeError(msg)
         # Initialize with empty dict if None (first use)
         current: dict[str, object] = (
-            current_value if isinstance(current_value, dict) else {}
+            current_value if FlextRuntime.is_dict_like(current_value) else {}
         )
         if key in current:
             updated = {k: v for k, v in current.items() if k != key}
@@ -559,14 +610,14 @@ class FlextContext:
         for scope_name, ctx_var in self._scope_vars.items():
             scope_value = ctx_var.get()
             # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not isinstance(scope_value, dict):
+            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
                 msg = (
                     f"Invalid contextvar value type in scope '{scope_name}': "
                     f"{type(scope_value).__name__}. Expected dict[str, object] | None"
                 )
                 raise TypeError(msg)
             # Skip None (uninitialized scopes)
-            if isinstance(scope_value, dict):
+            if FlextRuntime.is_dict_like(scope_value):
                 all_keys.update(scope_value.keys())
 
         return list(all_keys)
@@ -588,14 +639,14 @@ class FlextContext:
         for scope_name, ctx_var in self._scope_vars.items():
             scope_value = ctx_var.get()
             # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not isinstance(scope_value, dict):
+            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
                 msg = (
                     f"Invalid contextvar value type in scope '{scope_name}': "
                     f"{type(scope_value).__name__}. Expected dict[str, object] | None"
                 )
                 raise TypeError(msg)
             # Skip None (uninitialized scopes)
-            if isinstance(scope_value, dict):
+            if FlextRuntime.is_dict_like(scope_value):
                 all_values.extend(scope_value.values())
 
         return all_values
@@ -617,14 +668,14 @@ class FlextContext:
         for scope_name, ctx_var in self._scope_vars.items():
             scope_value = ctx_var.get()
             # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not isinstance(scope_value, dict):
+            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
                 msg = (
                     f"Invalid contextvar value type in scope '{scope_name}': "
                     f"{type(scope_value).__name__}. Expected dict[str, object] | None"
                 )
                 raise TypeError(msg)
             # Skip None (uninitialized scopes)
-            if isinstance(scope_value, dict):
+            if FlextRuntime.is_dict_like(scope_value):
                 all_items.extend(scope_value.items())
 
         return all_items
@@ -653,14 +704,16 @@ class FlextContext:
                 ctx_var = self._get_or_create_scope_var(scope_name)
                 current_value = ctx_var.get()
                 # Fast fail: contextvar must contain dict or None (uninitialized)
-                if current_value is not None and not isinstance(current_value, dict):
+                if current_value is not None and not FlextRuntime.is_dict_like(
+                    current_value
+                ):
                     msg = (
                         f"Invalid contextvar value type in scope '{scope_name}': "
                         f"{type(current_value).__name__}. Expected dict[str, object] | None"
                     )
                     raise TypeError(msg)
                 # Fast fail: scope_data must be dict
-                if not isinstance(scope_data, dict):
+                if not FlextRuntime.is_dict_like(scope_data):
                     msg = (
                         f"Invalid scope_data type in scope '{scope_name}': "
                         f"{type(scope_data).__name__}. Expected dict[str, object]"
@@ -668,7 +721,9 @@ class FlextContext:
                     raise TypeError(msg)
                 # Initialize with empty dict if None (first use)
                 current_dict: dict[str, object] = (
-                    dict(current_value) if isinstance(current_value, dict) else {}
+                    dict(current_value)
+                    if FlextRuntime.is_dict_like(current_value)
+                    else {}
                 )
                 updated = {**current_dict, **scope_data}
                 ctx_var.set(updated)
@@ -697,14 +752,14 @@ class FlextContext:
         for scope_name, ctx_var in self._scope_vars.items():
             scope_value = ctx_var.get()
             # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not isinstance(scope_value, dict):
+            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
                 msg = (
                     f"Invalid contextvar value type in scope '{scope_name}': "
                     f"{type(scope_value).__name__}. Expected dict[str, object] | None"
                 )
                 raise TypeError(msg)
             # Skip None (uninitialized scopes)
-            if isinstance(scope_value, dict) and scope_value:
+            if FlextRuntime.is_dict_like(scope_value) and scope_value:
                 cloned_ctx_var = cloned._get_or_create_scope_var(scope_name)
                 cloned_ctx_var.set(scope_value.copy())
 
@@ -730,7 +785,7 @@ class FlextContext:
         scopes: FlextTypes.ScopeRegistry = {}
         for scope_name, ctx_var in self._scope_vars.items():
             scope_value = ctx_var.get()
-            scope_data = scope_value if isinstance(scope_value, dict) else {}
+            scope_data = scope_value if FlextRuntime.is_dict_like(scope_value) else {}
             if scope_data:  # Only include non-empty scopes
                 scopes[scope_name] = scope_data.copy()
         return scopes
@@ -751,14 +806,14 @@ class FlextContext:
         for scope_name, ctx_var in self._scope_vars.items():
             scope_value = ctx_var.get()
             # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not isinstance(scope_value, dict):
+            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
                 msg = (
                     f"Invalid contextvar value type in scope '{scope_name}': "
                     f"{type(scope_value).__name__}. Expected dict[str, object] | None"
                 )
                 return FlextResult[bool].fail(msg)
             # Skip None (uninitialized scopes)
-            if isinstance(scope_value, dict):
+            if FlextRuntime.is_dict_like(scope_value):
                 for key in scope_value:
                     if not key:
                         return FlextResult[bool].fail("Invalid key found in context")
@@ -778,14 +833,14 @@ class FlextContext:
         for scope_name, ctx_var in self._scope_vars.items():
             scope_value = ctx_var.get()
             # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not isinstance(scope_value, dict):
+            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
                 msg = (
                     f"Invalid contextvar value type in scope '{scope_name}': "
                     f"{type(scope_value).__name__}. Expected dict[str, object] | None"
                 )
                 raise TypeError(msg)
             # Skip None (uninitialized scopes)
-            if isinstance(scope_value, dict):
+            if FlextRuntime.is_dict_like(scope_value):
                 all_data.update(scope_value)
         return json.dumps(all_data, default=str)
 
@@ -812,7 +867,7 @@ class FlextContext:
             if all(FlextRuntime.is_dict_like(v) for v in data_values):
                 # New scoped format - restore all scopes
                 for scope_name, scope_data in data.items():
-                    if isinstance(scope_data, dict):
+                    if FlextRuntime.is_dict_like(scope_data):
                         context._set_in_contextvar(scope_name, scope_data)
             else:
                 # Old flat format - put everything in global scope
@@ -920,7 +975,7 @@ class FlextContext:
 
         custom_fields = (
             self._metadata.custom_fields
-            if isinstance(self._metadata.custom_fields, dict)
+            if FlextRuntime.is_dict_like(self._metadata.custom_fields)
             else {}
         )
 
@@ -961,14 +1016,14 @@ class FlextContext:
         for scope_name, ctx_var in self._scope_vars.items():
             scope_value = ctx_var.get()
             # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not isinstance(scope_value, dict):
+            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
                 msg = (
                     f"Invalid contextvar value type in scope '{scope_name}': "
                     f"{type(scope_value).__name__}. Expected dict[str, object] | None"
                 )
                 raise TypeError(msg)
             # Skip None (uninitialized scopes)
-            if isinstance(scope_value, dict):
+            if FlextRuntime.is_dict_like(scope_value):
                 all_data.update(scope_value)
         return all_data
 
@@ -1020,14 +1075,14 @@ class FlextContext:
         for scope_name, ctx_var in self._scope_vars.items():
             scope_value = ctx_var.get()
             # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not isinstance(scope_value, dict):
+            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
                 msg = (
                     f"Invalid contextvar value type in scope '{scope_name}': "
                     f"{type(scope_value).__name__}. Expected dict[str, object] | None"
                 )
                 raise TypeError(msg)
             # Skip None (uninitialized scopes)
-            if isinstance(scope_value, dict):
+            if FlextRuntime.is_dict_like(scope_value):
                 all_data.update(scope_value)
 
         # Fast fail: metadata must be ContextMetadata instance
@@ -1056,13 +1111,13 @@ class FlextContext:
             statistics_dict = {}
 
         # Fast fail: metadata and statistics must be dict
-        if not isinstance(metadata_dict, dict):
+        if not FlextRuntime.is_dict_like(metadata_dict):
             msg = (
                 f"Invalid metadata_dict type: {type(metadata_dict).__name__}. "
                 "Expected dict[str, object]"
             )
             raise TypeError(msg)
-        if not isinstance(statistics_dict, dict):
+        if not FlextRuntime.is_dict_like(statistics_dict):
             msg = (
                 f"Invalid statistics_dict type: {type(statistics_dict).__name__}. "
                 "Expected dict[str, object]"
@@ -1121,60 +1176,46 @@ class FlextContext:
         class Correlation:
             """Correlation variables for distributed tracing."""
 
-            CORRELATION_ID: Final[FlextModels.StructlogProxyContextVar[str]] = (
-                FlextModels.StructlogProxyContextVar[str](
-                    "correlation_id", default=None
-                )
+            CORRELATION_ID: Final[_StructlogProxyStr] = _create_str_proxy(
+                "correlation_id", default=None
             )
-            PARENT_CORRELATION_ID: Final[FlextModels.StructlogProxyContextVar[str]] = (
-                FlextModels.StructlogProxyContextVar[str](
-                    "parent_correlation_id", default=None
-                )
+            PARENT_CORRELATION_ID: Final[_StructlogProxyStr] = _create_str_proxy(
+                "parent_correlation_id", default=None
             )
 
         class Service:
             """Service context variables for identification."""
 
-            SERVICE_NAME: Final[FlextModels.StructlogProxyContextVar[str]] = (
-                FlextModels.StructlogProxyContextVar[str]("service_name", default=None)
+            SERVICE_NAME: Final[_StructlogProxyStr] = _create_str_proxy(
+                "service_name", default=None
             )
-            SERVICE_VERSION: Final[FlextModels.StructlogProxyContextVar[str]] = (
-                FlextModels.StructlogProxyContextVar[str](
-                    "service_version", default=None
-                )
+            SERVICE_VERSION: Final[_StructlogProxyStr] = _create_str_proxy(
+                "service_version", default=None
             )
 
         class Request:
             """Request context variables for metadata."""
 
-            USER_ID: Final[FlextModels.StructlogProxyContextVar[str]] = (
-                FlextModels.StructlogProxyContextVar[str]("user_id", default=None)
+            USER_ID: Final[_StructlogProxyStr] = _create_str_proxy(
+                "user_id", default=None
             )
-            REQUEST_ID: Final[FlextModels.StructlogProxyContextVar[str]] = (
-                FlextModels.StructlogProxyContextVar[str]("request_id", default=None)
+            REQUEST_ID: Final[_StructlogProxyStr] = _create_str_proxy(
+                "request_id", default=None
             )
-            REQUEST_TIMESTAMP: Final[FlextModels.StructlogProxyContextVar[datetime]] = (
-                FlextModels.StructlogProxyContextVar[datetime](
-                    "request_timestamp", default=None
-                )
+            REQUEST_TIMESTAMP: Final[_StructlogProxyDatetime] = _create_datetime_proxy(
+                "request_timestamp", default=None
             )
 
         class Performance:
             """Performance context variables for timing."""
 
-            OPERATION_NAME: Final[FlextModels.StructlogProxyContextVar[str]] = (
-                FlextModels.StructlogProxyContextVar[str](
-                    "operation_name", default=None
-                )
+            OPERATION_NAME: Final[_StructlogProxyStr] = _create_str_proxy(
+                "operation_name", default=None
             )
-            OPERATION_START_TIME: Final[
-                FlextModels.StructlogProxyContextVar[datetime]
-            ] = FlextModels.StructlogProxyContextVar[datetime](
-                "operation_start_time", default=None
+            OPERATION_START_TIME: Final[_StructlogProxyDatetime] = (
+                _create_datetime_proxy("operation_start_time", default=None)
             )
-            OPERATION_METADATA: Final[
-                FlextModels.StructlogProxyContextVar[dict[str, object]]
-            ] = FlextModels.StructlogProxyContextVar[dict[str, object]](
+            OPERATION_METADATA: Final[_StructlogProxyDict] = _create_dict_proxy(
                 "operation_metadata", default=None
             )
 
@@ -1203,16 +1244,10 @@ class FlextContext:
         def generate_correlation_id() -> str:
             """Generate unique correlation ID.
 
-            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
-            Uses FlextConstants.Context configuration for prefix and length.
+            Note: Uses FlextUtilities.Generators.generate_correlation_id() for ID generation.
+            Sets the correlation ID in context variables (via FlextModels.StructlogProxyContextVar).
             """
-            # Generate correlation ID using centralized constants
-            random_suffix = str(uuid.uuid4()).replace("-", "")[
-                : FlextConstants.Context.CORRELATION_ID_LENGTH
-            ]
-            correlation_id = (
-                f"{FlextConstants.Context.CORRELATION_ID_PREFIX}{random_suffix}"
-            )
+            correlation_id = FlextUtilities.Generators.generate_correlation_id()
             FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
             return correlation_id
 
@@ -1237,14 +1272,9 @@ class FlextContext:
 
             Uses FlextConstants.Context configuration for correlation ID generation.
             """
-            # Generate correlation ID if not provided
+            # Generate correlation ID if not provided using FlextUtilities
             if correlation_id is None:
-                random_suffix = str(uuid.uuid4()).replace("-", "")[
-                    : FlextConstants.Context.CORRELATION_ID_LENGTH
-                ]
-                correlation_id = (
-                    f"{FlextConstants.Context.CORRELATION_ID_PREFIX}{random_suffix}"
-                )
+                correlation_id = FlextUtilities.Generators.generate_correlation_id()
 
             # Save current context
             current_correlation = (
@@ -1532,7 +1562,7 @@ class FlextContext:
         ) -> None:
             """Set operation start time in context."""
             if start_time is None:
-                start_time = datetime.now(UTC)
+                start_time = FlextUtilities.Generators.generate_datetime_utc()
             FlextContext.Variables.Performance.OPERATION_START_TIME.set(start_time)
 
         @staticmethod
@@ -1550,7 +1580,9 @@ class FlextContext:
             """Add single metadata entry to operation context."""
             metadata_value = FlextContext.Variables.Performance.OPERATION_METADATA.get()
             # Fast fail: metadata must be dict or None (uninitialized)
-            if metadata_value is not None and not isinstance(metadata_value, dict):
+            if metadata_value is not None and not FlextRuntime.is_dict_like(
+                metadata_value
+            ):
                 msg = (
                     f"Invalid OPERATION_METADATA type: {type(metadata_value).__name__}. "
                     "Expected dict[str, object] | None"
@@ -1558,7 +1590,7 @@ class FlextContext:
                 raise TypeError(msg)
             # Initialize with empty dict if None (first use)
             current_metadata: dict[str, object] = (
-                metadata_value if isinstance(metadata_value, dict) else {}
+                metadata_value if FlextRuntime.is_dict_like(metadata_value) else {}
             )
             current_metadata[key] = value
             FlextContext.Variables.Performance.OPERATION_METADATA.set(current_metadata)
@@ -1569,7 +1601,7 @@ class FlextContext:
             operation_name: str | None = None,
         ) -> Generator[dict[str, object]]:
             """Create timed operation context with performance tracking."""
-            start_time = datetime.now(UTC)
+            start_time = FlextUtilities.Generators.generate_datetime_utc()
             operation_metadata: dict[str, object] = {
                 "start_time": start_time,
                 "operation_name": operation_name,
@@ -1596,8 +1628,8 @@ class FlextContext:
             try:
                 yield operation_metadata
             finally:
-                # Calculate duration
-                end_time = datetime.now(UTC)
+                # Calculate duration with full precision
+                end_time = FlextUtilities.Generators.generate_datetime_utc()
                 duration = (end_time - start_time).total_seconds()
                 operation_metadata.update(
                     {
@@ -1668,10 +1700,11 @@ class FlextContext:
             if correlation_id_value is None:
                 correlation_id_value = context.get("correlation_id")
             if correlation_id_value is not None and isinstance(
-                correlation_id_value, str
+                correlation_id_value,
+                str,
             ):
                 FlextContext.Variables.Correlation.CORRELATION_ID.set(
-                    correlation_id_value
+                    correlation_id_value,
                 )
 
             parent_id_value = context.get("X-Parent-Correlation-Id")
@@ -1679,7 +1712,7 @@ class FlextContext:
                 parent_id_value = context.get("parent_correlation_id")
             if parent_id_value is not None and isinstance(parent_id_value, str):
                 FlextContext.Variables.Correlation.PARENT_CORRELATION_ID.set(
-                    parent_id_value
+                    parent_id_value,
                 )
 
             service_name_value = context.get("X-Service-Name")

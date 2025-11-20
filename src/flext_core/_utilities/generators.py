@@ -94,8 +94,31 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def generate_iso_timestamp() -> str:
-        """Generate ISO format timestamp without microseconds."""
+        """Generate ISO format timestamp without microseconds.
+
+        Note: For precise duration calculations, use generate_datetime_utc() instead
+        as this method removes microseconds which affects timing precision.
+        """
         return datetime.now(UTC).replace(microsecond=0).isoformat()
+
+    @staticmethod
+    def generate_datetime_utc() -> datetime:
+        """Generate current UTC datetime with full precision (preserves microseconds).
+
+        Use this method when you need precise datetime objects for duration calculations.
+        Unlike generate_iso_timestamp(), this preserves microseconds for accurate timing.
+
+        Returns:
+            datetime: Current UTC datetime with full microsecond precision
+
+        Example:
+            >>> start = FlextUtilitiesGenerators.generate_datetime_utc()
+            >>> # ... operation ...
+            >>> end = FlextUtilitiesGenerators.generate_datetime_utc()
+            >>> duration = (end - start).total_seconds()  # Precise duration
+
+        """
+        return datetime.now(UTC)
 
     @staticmethod
     def generate_correlation_id() -> str:
@@ -132,42 +155,48 @@ class FlextUtilitiesGenerators:
     def generate_transaction_id() -> str:
         """Generate a transaction ID for distributed transactions."""
         return FlextUtilitiesGenerators._generate_prefixed_id(
-            "txn", length=FlextConstants.Utilities.LONG_UUID_LENGTH
+            "txn",
+            length=FlextConstants.Utilities.LONG_UUID_LENGTH,
         )
 
     @staticmethod
     def generate_saga_id() -> str:
         """Generate a saga ID for distributed transaction patterns."""
         return FlextUtilitiesGenerators._generate_prefixed_id(
-            "saga", length=FlextConstants.Utilities.LONG_UUID_LENGTH
+            "saga",
+            length=FlextConstants.Utilities.LONG_UUID_LENGTH,
         )
 
     @staticmethod
     def generate_event_id() -> str:
         """Generate an event ID for domain events."""
         return FlextUtilitiesGenerators._generate_prefixed_id(
-            "evt", length=FlextConstants.Utilities.LONG_UUID_LENGTH
+            "evt",
+            length=FlextConstants.Utilities.LONG_UUID_LENGTH,
         )
 
     @staticmethod
     def generate_command_id() -> str:
         """Generate a command ID for CQRS patterns."""
         return FlextUtilitiesGenerators._generate_prefixed_id(
-            "cmd", length=FlextConstants.Utilities.LONG_UUID_LENGTH
+            "cmd",
+            length=FlextConstants.Utilities.LONG_UUID_LENGTH,
         )
 
     @staticmethod
     def generate_query_id() -> str:
         """Generate a query ID for CQRS patterns."""
         return FlextUtilitiesGenerators._generate_prefixed_id(
-            "qry", length=FlextConstants.Utilities.LONG_UUID_LENGTH
+            "qry",
+            length=FlextConstants.Utilities.LONG_UUID_LENGTH,
         )
 
     @staticmethod
     def generate_aggregate_id(aggregate_type: str) -> str:
         """Generate an aggregate ID with type prefix."""
         return FlextUtilitiesGenerators._generate_prefixed_id(
-            aggregate_type, length=FlextConstants.Utilities.LONG_UUID_LENGTH
+            aggregate_type,
+            length=FlextConstants.Utilities.LONG_UUID_LENGTH,
         )
 
     @staticmethod
@@ -175,8 +204,8 @@ class FlextUtilitiesGenerators:
         """Generate an entity version number using FlextConstants.Context."""
         return (
             int(
-                datetime.now(UTC).timestamp()
-                * FlextConstants.Context.MILLISECONDS_PER_SECOND
+                FlextUtilitiesGenerators.generate_datetime_utc().timestamp()
+                * FlextConstants.Context.MILLISECONDS_PER_SECOND,
             )
             % FlextConstants.Utilities.VERSION_MODULO
         ) + 1

@@ -17,7 +17,7 @@ from typing import Never
 import pytest
 from pydantic import BaseModel
 
-from flext_core._utilities.generators import FlextUtilitiesGenerators
+from flext_core import FlextUtilities
 
 # ==================== COVERAGE TESTS ====================
 
@@ -29,7 +29,7 @@ class TestGenerators100Coverage:
         """Test generate_timestamp deprecated warning."""
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            result = FlextUtilitiesGenerators.generate_timestamp()
+            result = FlextUtilities.Generators.generate_timestamp()
             assert len(w) == 1
             assert issubclass(w[0].category, DeprecationWarning)
             assert "deprecated" in str(w[0].message).lower()
@@ -45,14 +45,14 @@ class TestGenerators100Coverage:
             def __getitem__(self, key: str) -> object:
                 return self._data[key]
 
-            def __iter__(self) -> object:  # type: ignore[return]
+            def __iter__(self) -> object:
                 return iter(self._data)
 
             def __len__(self) -> int:
                 return len(self._data)
 
         mapping = TestMapping({"key": "value"})
-        result = FlextUtilitiesGenerators._normalize_context_to_dict(mapping)
+        result = FlextUtilities.Generators._normalize_context_to_dict(mapping)
         assert isinstance(result, dict)
         assert result == {"key": "value"}
 
@@ -64,7 +64,7 @@ class TestGenerators100Coverage:
                 msg = "Cannot get item"
                 raise AttributeError(msg)
 
-            def __iter__(self) -> object:  # type: ignore[return]
+            def __iter__(self) -> object:
                 return iter([])
 
             def __len__(self) -> int:
@@ -76,7 +76,7 @@ class TestGenerators100Coverage:
 
         mapping = BadMapping()
         with pytest.raises(TypeError, match=r".*Failed to convert Mapping.*"):
-            FlextUtilitiesGenerators._normalize_context_to_dict(mapping)
+            FlextUtilities.Generators._normalize_context_to_dict(mapping)
 
     def test_normalize_context_to_dict_with_basemodel(self) -> None:
         """Test _normalize_context_to_dict with BaseModel."""
@@ -85,7 +85,7 @@ class TestGenerators100Coverage:
             field: str = "value"
 
         model = TestModel()
-        result = FlextUtilitiesGenerators._normalize_context_to_dict(model)
+        result = FlextUtilities.Generators._normalize_context_to_dict(model)
         assert isinstance(result, dict)
         assert result == {"field": "value"}
 
@@ -111,25 +111,25 @@ class TestGenerators100Coverage:
             field: str = "value"
 
         model = GoodModel()
-        result = FlextUtilitiesGenerators._normalize_context_to_dict(model)
+        result = FlextUtilities.Generators._normalize_context_to_dict(model)
         assert isinstance(result, dict)
 
     def test_normalize_context_to_dict_with_none(self) -> None:
         """Test _normalize_context_to_dict with None."""
         with pytest.raises(TypeError, match=r".*Context cannot be None.*"):
-            FlextUtilitiesGenerators._normalize_context_to_dict(None)
+            FlextUtilities.Generators._normalize_context_to_dict(None)
 
     def test_normalize_context_to_dict_with_unsupported_type(self) -> None:
         """Test _normalize_context_to_dict with unsupported type."""
         with pytest.raises(
             TypeError, match=r".*Context must be dict, Mapping, or BaseModel.*"
         ):
-            FlextUtilitiesGenerators._normalize_context_to_dict(123)
+            FlextUtilities.Generators._normalize_context_to_dict(123)
 
     def test_enrich_context_fields_with_correlation_id(self) -> None:
         """Test _enrich_context_fields with correlation_id."""
         context_dict = {}
-        FlextUtilitiesGenerators._enrich_context_fields(
+        FlextUtilities.Generators._enrich_context_fields(
             context_dict, include_correlation_id=True
         )
         assert "correlation_id" in context_dict
@@ -139,7 +139,7 @@ class TestGenerators100Coverage:
     def test_enrich_context_fields_with_timestamp(self) -> None:
         """Test _enrich_context_fields with timestamp."""
         context_dict = {}
-        FlextUtilitiesGenerators._enrich_context_fields(
+        FlextUtilities.Generators._enrich_context_fields(
             context_dict, include_timestamp=True
         )
         assert "timestamp" in context_dict
@@ -149,7 +149,7 @@ class TestGenerators100Coverage:
     def test_enrich_context_fields_with_both(self) -> None:
         """Test _enrich_context_fields with both flags."""
         context_dict = {}
-        FlextUtilitiesGenerators._enrich_context_fields(
+        FlextUtilities.Generators._enrich_context_fields(
             context_dict, include_correlation_id=True, include_timestamp=True
         )
         assert "correlation_id" in context_dict
@@ -160,7 +160,7 @@ class TestGenerators100Coverage:
     def test_ensure_trace_context(self) -> None:
         """Test ensure_trace_context."""
         context = {}
-        result = FlextUtilitiesGenerators.ensure_trace_context(context)
+        result = FlextUtilities.Generators.ensure_trace_context(context)
         assert isinstance(result, dict)
         assert "trace_id" in result
         assert "span_id" in result
@@ -168,7 +168,7 @@ class TestGenerators100Coverage:
     def test_ensure_trace_context_with_correlation_id(self) -> None:
         """Test ensure_trace_context with correlation_id."""
         context = {}
-        result = FlextUtilitiesGenerators.ensure_trace_context(
+        result = FlextUtilities.Generators.ensure_trace_context(
             context, include_correlation_id=True
         )
         assert "correlation_id" in result
@@ -176,7 +176,7 @@ class TestGenerators100Coverage:
     def test_ensure_trace_context_with_timestamp(self) -> None:
         """Test ensure_trace_context with timestamp."""
         context = {}
-        result = FlextUtilitiesGenerators.ensure_trace_context(
+        result = FlextUtilities.Generators.ensure_trace_context(
             context, include_timestamp=True
         )
         assert "timestamp" in result
@@ -184,7 +184,7 @@ class TestGenerators100Coverage:
     def test_ensure_dict_with_dict(self) -> None:
         """Test ensure_dict with dict."""
         test_dict = {"key": "value"}
-        result = FlextUtilitiesGenerators.ensure_dict(test_dict)
+        result = FlextUtilities.Generators.ensure_dict(test_dict)
         assert result == test_dict
         assert result is test_dict  # Should return same object
 
@@ -195,7 +195,7 @@ class TestGenerators100Coverage:
             field: str = "value"
 
         model = TestModel()
-        result = FlextUtilitiesGenerators.ensure_dict(model)
+        result = FlextUtilities.Generators.ensure_dict(model)
         assert isinstance(result, dict)
         assert result == {"field": "value"}
 
@@ -221,13 +221,13 @@ class TestGenerators100Coverage:
             field: str = "value"
 
         model = GoodModel()
-        result = FlextUtilitiesGenerators.ensure_dict(model)
+        result = FlextUtilities.Generators.ensure_dict(model)
         assert isinstance(result, dict)
 
     def test_ensure_dict_with_mapping(self) -> None:
         """Test ensure_dict with Mapping."""
         mapping = UserDict({"key": "value"})
-        result = FlextUtilitiesGenerators.ensure_dict(mapping)
+        result = FlextUtilities.Generators.ensure_dict(mapping)
         assert isinstance(result, dict)
         assert result == {"key": "value"}
 
@@ -239,7 +239,7 @@ class TestGenerators100Coverage:
                 msg = "Cannot get item"
                 raise AttributeError(msg)
 
-            def __iter__(self) -> object:  # type: ignore[return]
+            def __iter__(self) -> object:
                 return iter([])
 
             def __len__(self) -> int:
@@ -251,14 +251,14 @@ class TestGenerators100Coverage:
 
         mapping = BadMapping()
         with pytest.raises(TypeError, match=r".*Failed to convert Mapping.*"):
-            FlextUtilitiesGenerators.ensure_dict(mapping)
+            FlextUtilities.Generators.ensure_dict(mapping)
 
     def test_ensure_dict_with_none(self) -> None:
         """Test ensure_dict with None."""
         with pytest.raises(TypeError, match=r".*Value cannot be None.*"):
-            FlextUtilitiesGenerators.ensure_dict(None)
+            FlextUtilities.Generators.ensure_dict(None)
 
     def test_ensure_dict_with_unsupported_type(self) -> None:
         """Test ensure_dict with unsupported type."""
         with pytest.raises(TypeError, match=r".*Cannot convert.*"):
-            FlextUtilitiesGenerators.ensure_dict(123)
+            FlextUtilities.Generators.ensure_dict(123)

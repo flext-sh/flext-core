@@ -281,7 +281,8 @@ class FlextTestDocker:
             elif container_name in self._container_configs:
                 # Cast is safe: dict[str, str] is compatible with dict[str, str | int]
                 config = cast(
-                    "dict[str, str | int]", self._container_configs[container_name]
+                    "dict[str, str | int]",
+                    self._container_configs[container_name],
                 )
 
             if config:
@@ -367,14 +368,15 @@ class FlextTestDocker:
 
             for container in containers:
                 container_name: str = getattr(container, "name", "unknown")
-                state = container.attrs.get("State", {})  # type: ignore[union-attr]
+                state = container.attrs.get("State", {})
                 health = state.get("Health", {})
                 health_status = health.get("Status", "none")
 
                 # Check for unhealthy containers
                 if health_status == "unhealthy":
                     self.logger.warning(
-                        f"Detected unhealthy container: {container_name}",
+                        "Detected unhealthy container: %s",
+                        container_name,
                         extra={
                             "container": container_name,
                             "health_status": health_status,
@@ -412,7 +414,8 @@ class FlextTestDocker:
         return FlextResult[dict[str, FlextTestDocker.ContainerInfo]].ok({})
 
     def get_container_status(
-        self, container_name: str
+        self,
+        container_name: str,
     ) -> FlextResult[FlextTestDocker.ContainerInfo]:
         """Get container status."""
         return self.get_container_info(container_name)
@@ -478,7 +481,7 @@ class FlextTestDocker:
                     stderr,
                 ))
             return FlextResult[tuple[int, str, str]].fail(
-                f"Command execution failed: {result.error}"
+                f"Command execution failed: {result.error}",
             )
 
         except Exception as e:
@@ -552,7 +555,7 @@ class FlextTestDocker:
                         try:
                             # Configure the compose file for this operation
                             docker_client.client_config.compose_files = [
-                                str(compose_path)
+                                str(compose_path),
                             ]
 
                             # First, clean up any existing containers from previous runs
@@ -570,16 +573,21 @@ class FlextTestDocker:
                                     project_name = compose_path.parent.name
                                     # List all containers with compose labels
                                     all_containers = docker_client.container.list(
-                                        all=True
+                                        all=True,
                                     )
                                     for container in all_containers:
                                         try:
-                                            labels = container.labels  # type: ignore[misc]
+                                            # Use getattr for dynamic attribute access
+                                            labels = getattr(container, "labels", {})
+                                            if not isinstance(labels, dict):
+                                                labels = {}
                                             compose_project = labels.get(
-                                                "com.docker.compose.project", ""
+                                                "com.docker.compose.project",
+                                                "",
                                             )
                                             compose_service = labels.get(
-                                                "com.docker.compose.service", ""
+                                                "com.docker.compose.service",
+                                                "",
                                             )
                                             # Match containers from this compose file
                                             if compose_project == project_name or (
@@ -624,7 +632,7 @@ class FlextTestDocker:
 
                 if thread.is_alive():
                     return FlextResult[str].fail(
-                        "docker compose up timed out after 5 minutes"
+                        "docker compose up timed out after 5 minutes",
                     )
 
                 # Check for exceptions from thread
@@ -644,10 +652,9 @@ class FlextTestDocker:
                 error_msg = str(e)
                 self.logger.exception(
                     f"docker compose up failed: {error_msg}",
-                    extra={
-                        "compose_file": compose_file,
-                        "service": service,
-                    },
+                    exception=e,
+                    compose_file=compose_file,
+                    service=service,
                 )
                 return FlextResult[str].fail(f"docker compose up failed: {error_msg}")
 
@@ -689,7 +696,7 @@ class FlextTestDocker:
                         try:
                             # Configure the compose file for this operation
                             docker_client.client_config.compose_files = [
-                                str(compose_path)
+                                str(compose_path),
                             ]
                             # Use down with volumes=True to remove containers AND their volumes
                             # Also remove orphans to clean up any leftover containers
@@ -712,7 +719,7 @@ class FlextTestDocker:
 
                 if thread.is_alive():
                     return FlextResult[str].fail(
-                        "docker compose down timed out after 2 minutes"
+                        "docker compose down timed out after 2 minutes",
                     )
 
                 # Check for exceptions from thread
@@ -729,10 +736,9 @@ class FlextTestDocker:
                 error_msg = str(e)
                 self.logger.exception(
                     f"docker compose down failed: {error_msg}",
-                    extra={
-                        "compose_file": compose_file,
-                        "error": error_msg,
-                    },
+                    exception=e,
+                    compose_file=compose_file,
+                    error=error_msg,
                 )
                 return FlextResult[str].fail(f"docker compose down failed: {error_msg}")
 
@@ -826,12 +832,15 @@ class FlextTestDocker:
                         remove_method(force=True)
                         removed_volumes.append(volume_name)
                         self.logger.info(
-                            f"Removed volume: {volume_name}",
+                            "Removed volume: %s",
+                            volume_name,
                             extra={"volume": volume_name},
                         )
                 except Exception as e:
                     self.logger.warning(
-                        f"Failed to remove volume {volume_name}: {e}",
+                        "Failed to remove volume %s: %s",
+                        volume_name,
+                        e,
                         extra={"volume": volume_name, "error": str(e)},
                     )
 
@@ -843,7 +852,7 @@ class FlextTestDocker:
         except Exception as e:
             self.logger.exception("Failed to cleanup volumes")
             return FlextResult[dict[str, int | list[str]]].fail(
-                f"Volume cleanup failed: {e}"
+                f"Volume cleanup failed: {e}",
             )
 
     def cleanup_images(
@@ -1137,7 +1146,8 @@ class FlextTestDocker:
         })
 
     def get_container_info(
-        self, name: str
+        self,
+        name: str,
     ) -> FlextResult[FlextTestDocker.ContainerInfo]:
         """Get container information."""
         try:
@@ -1170,12 +1180,12 @@ class FlextTestDocker:
             )
         except NotFound:
             return FlextResult[FlextTestDocker.ContainerInfo].fail(
-                f"Container {name} not found"
+                f"Container {name} not found",
             )
         except DockerException as e:
             self.logger.exception("Failed to get container info")
             return FlextResult[FlextTestDocker.ContainerInfo].fail(
-                f"Failed to get container info: {e}"
+                f"Failed to get container info: {e}",
             )
 
     def build_image(
@@ -1232,7 +1242,7 @@ class FlextTestDocker:
         except DockerException as e:
             self.logger.exception("Failed to run container")
             return FlextResult[FlextTestDocker.ContainerInfo].fail(
-                f"Failed to run container: {e}"
+                f"Failed to run container: {e}",
             )
 
     def remove_container(self, name: str, *, force: bool = False) -> FlextResult[str]:
@@ -1283,7 +1293,9 @@ class FlextTestDocker:
             logs_method = getattr(container, "logs", None)
             if logs_method is not None:
                 logs = cast("Callable[..., bytes]", logs_method)(
-                    tail=tail, follow=follow, stream=False
+                    tail=tail,
+                    follow=follow,
+                    stream=False,
                 )
             else:
                 logs = b""
@@ -1394,7 +1406,7 @@ class FlextTestDocker:
 
             if not env_path.exists():
                 return FlextResult[dict[str, str]].fail(
-                    f"Environment file not found: {env_path}"
+                    f"Environment file not found: {env_path}",
                 )
 
             env_vars: dict[str, str] = {}
@@ -1426,7 +1438,7 @@ class FlextTestDocker:
         except Exception as e:
             self.logger.exception("Failed to load environment file")
             return FlextResult[dict[str, str]].fail(
-                f"Failed to load environment file: {e}"
+                f"Failed to load environment file: {e}",
             )
 
     def set_container_env_vars(
@@ -1468,7 +1480,10 @@ class FlextTestDocker:
         except NotFound:
             return FlextResult[bool].fail(f"Container {container_name} not found")
         except DockerException as e:
-            self.logger.exception(f"Failed to set env vars for {container_name}")
+            self.logger.exception(
+                f"Failed to set env vars for {container_name}",
+                exception=e,
+            )
             return FlextResult[bool].fail(f"Failed to set environment variables: {e}")
 
     def get_container_env_vars(
@@ -1489,7 +1504,7 @@ class FlextTestDocker:
             container = client.containers.get(container_name)
 
             # Get container config
-            container_config = container.attrs.get("Config", {})  # type: ignore[union-attr]
+            container_config = container.attrs.get("Config", {})
             env_list = container_config.get("Env", [])
 
             # Parse ENV list into dict
@@ -1507,12 +1522,15 @@ class FlextTestDocker:
 
         except NotFound:
             return FlextResult[dict[str, str]].fail(
-                f"Container {container_name} not found"
+                f"Container {container_name} not found",
             )
         except DockerException as e:
-            self.logger.exception(f"Failed to get env vars for {container_name}")
+            self.logger.exception(
+                f"Failed to get env vars for {container_name}",
+                exception=e,
+            )
             return FlextResult[dict[str, str]].fail(
-                f"Failed to get environment variables: {e}"
+                f"Failed to get environment variables: {e}",
             )
 
     # ============================================================================
@@ -1538,7 +1556,7 @@ class FlextTestDocker:
             container = client.containers.get(container_name)
 
             # Get container state
-            state = container.attrs.get("State", {})  # type: ignore[union-attr]
+            state = container.attrs.get("State", {})
             running = state.get("Running", False)
             health = state.get("Health", {})
 
@@ -1574,7 +1592,9 @@ class FlextTestDocker:
                             return FlextResult[str].ok("stuck")
 
                 self.logger.info(
-                    f"Container {container_name} health: {status}",
+                    "Container %s health: %s",
+                    container_name,
+                    status,
                     extra={"container": container_name, "status": status},
                 )
                 return FlextResult[str].ok(status)
@@ -1587,7 +1607,10 @@ class FlextTestDocker:
         except NotFound:
             return FlextResult[str].fail(f"Container {container_name} not found")
         except DockerException as e:
-            self.logger.exception(f"Failed to check health for {container_name}")
+            self.logger.exception(
+                f"Failed to check health for {container_name}",
+                exception=e,
+            )
             return FlextResult[str].fail(f"Failed to check container health: {e}")
 
     def wait_for_container_healthy(
@@ -1629,11 +1652,13 @@ class FlextTestDocker:
                 # If custom command provided, execute it
                 if health_check_cmd:
                     exec_result = self.execute_command_in_container(
-                        container_name, health_check_cmd
+                        container_name,
+                        health_check_cmd,
                     )
                     if exec_result.is_success:
                         self.logger.info(
-                            f"Container {container_name} passed health check",
+                            "Container %s passed health check",
+                            container_name,
                             extra={"container": container_name},
                         )
                         return FlextResult[bool].ok(True)
@@ -1646,7 +1671,8 @@ class FlextTestDocker:
                         # Container is now healthy
                         if status == "healthy":
                             self.logger.info(
-                                f"Container {container_name} is healthy",
+                                "Container %s is healthy",
+                                container_name,
                                 extra={"container": container_name},
                             )
                             return FlextResult[bool].ok(True)
@@ -1654,8 +1680,8 @@ class FlextTestDocker:
                         # Container is stuck - mark dirty and fail
                         if status == "stuck":
                             self.logger.error(
-                                f"Container {container_name} stuck in starting "
-                                "state - marking dirty",
+                                "Container %s stuck in starting state - marking dirty",
+                                container_name,
                                 extra={"container": container_name},
                             )
                             self.mark_container_dirty(container_name)
@@ -1664,8 +1690,8 @@ class FlextTestDocker:
                         # Container is restarting - mark dirty and fail
                         if status == "restarting":
                             self.logger.error(
-                                f"Container {container_name} is restarting "
-                                "- marking dirty",
+                                "Container %s is restarting - marking dirty",
+                                container_name,
                                 extra={"container": container_name},
                             )
                             self.mark_container_dirty(container_name)
@@ -1674,8 +1700,8 @@ class FlextTestDocker:
                         # Container is unhealthy - mark dirty and fail
                         if status == "unhealthy":
                             self.logger.error(
-                                f"Container {container_name} is unhealthy "
-                                "- marking dirty",
+                                "Container %s is unhealthy - marking dirty",
+                                container_name,
                                 extra={"container": container_name},
                             )
                             self.mark_container_dirty(container_name)
@@ -1687,8 +1713,10 @@ class FlextTestDocker:
 
             # Timeout reached - mark container as dirty
             self.logger.error(
-                f"Container {container_name} health check TIMEOUT after "
-                f"{max_wait}s ({check_count} checks) - marking dirty",
+                "Container %s health check TIMEOUT after %ss (%s checks) - marking dirty",
+                container_name,
+                max_wait,
+                check_count,
                 extra={
                     "container": container_name,
                     "max_wait": max_wait,
@@ -1701,13 +1729,14 @@ class FlextTestDocker:
         except NotFound:
             self.logger.exception(
                 f"Container {container_name} not found - marking dirty",
-                extra={"container": container_name},
+                container=container_name,
             )
             self.mark_container_dirty(container_name)
             return FlextResult[bool].fail(f"Container {container_name} not found")
         except DockerException as e:
             self.logger.exception(
-                f"Failed to wait for health on {container_name} - marking dirty"
+                f"Failed to wait for health on {container_name} - marking dirty",
+                exception=e,
             )
             self.mark_container_dirty(container_name)
             return FlextResult[bool].fail(f"Failed to wait for container health: {e}")
@@ -1743,7 +1772,9 @@ class FlextTestDocker:
 
                     if result == 0:
                         self.logger.info(
-                            f"Port {host}:{port} is ready",
+                            "Port %s:%s is ready",
+                            host,
+                            port,
                             extra={"host": host, "port": port},
                         )
                         return FlextResult[bool].ok(True)
@@ -1753,13 +1784,19 @@ class FlextTestDocker:
                 time.sleep(2)
 
             self.logger.warning(
-                f"Port {host}:{port} not ready after {max_wait}s",
+                "Port %s:%s not ready after %ss",
+                host,
+                port,
+                max_wait,
                 extra={"host": host, "port": port, "max_wait": max_wait},
             )
             return FlextResult[bool].ok(False)
 
         except Exception as e:
-            self.logger.exception(f"Failed to wait for port {host}:{port}")
+            self.logger.exception(
+                f"Failed to wait for port {host}:{port}",
+                exception=e,
+            )
             return FlextResult[bool].fail(f"Failed to wait for port: {e}")
 
     # ============================================================================
@@ -1793,7 +1830,7 @@ class FlextTestDocker:
             issues: list[str] = []
 
             # Check container state
-            state = container.attrs.get("State", {})  # type: ignore[union-attr]
+            state = container.attrs.get("State", {})
             running = state.get("Running", False)
 
             # Check if restarting
@@ -1827,7 +1864,7 @@ class FlextTestDocker:
                         if elapsed > 300:  # 5 minutes
                             issues.append(
                                 f"Container stuck in starting state for "
-                                f"{elapsed:.0f}s (>{300}s)"
+                                f"{elapsed:.0f}s (>{300}s)",
                             )
 
             # Check for exit errors
@@ -1837,7 +1874,8 @@ class FlextTestDocker:
 
             if not issues:
                 self.logger.info(
-                    f"No issues detected for {container_name}",
+                    "No issues detected for %s",
+                    container_name,
                     extra={"container": container_name},
                 )
             else:
@@ -1851,7 +1889,10 @@ class FlextTestDocker:
         except NotFound:
             return FlextResult[list[str]].ok(["Container not found"])
         except DockerException as e:
-            self.logger.exception(f"Failed to detect issues for {container_name}")
+            self.logger.exception(
+                f"Failed to detect issues for {container_name}",
+                exception=e,
+            )
             return FlextResult[list[str]].fail(f"Failed to detect issues: {e}")
 
     def repair_container(
@@ -1881,9 +1922,9 @@ class FlextTestDocker:
 
             # First try to get the container to confirm it exists
             try:
-                container: Container = client.containers.get(container_name)  # type: ignore[assignment]
-                was_running = container.attrs.get("State", {}).get("Running", False)  # type: ignore[union-attr]
-                state = container.attrs.get("State", {})  # type: ignore[union-attr]
+                container: Container = client.containers.get(container_name)
+                was_running = container.attrs.get("State", {}).get("Running", False)
+                state = container.attrs.get("State", {})
                 health = state.get("Health", {})
                 health_status = health.get("Status", "unknown") if health else "none"
             except NotFound:
@@ -1892,34 +1933,39 @@ class FlextTestDocker:
             # Stop the container if running
             if was_running:
                 self.logger.warning(
-                    f"Stopping container {container_name} for repair "
-                    f"(health: {health_status})",
+                    "Stopping container %s for repair (health: %s)",
+                    container_name,
+                    health_status,
                     extra={"container": container_name, "health": health_status},
                 )
                 try:
                     # Try graceful stop first (30 second timeout)
                     container.stop(timeout=10)
                     self.logger.info(
-                        f"Container {container_name} stopped gracefully",
+                        "Container %s stopped gracefully",
+                        container_name,
                         extra={"container": container_name},
                     )
                 except Exception as e:
                     # If graceful stop fails, force kill
                     self.logger.warning(
-                        f"Graceful stop failed for {container_name}, "
-                        f"force killing: {e}",
+                        "Graceful stop failed for %s, force killing: %s",
+                        container_name,
+                        e,
                         extra={"container": container_name},
                     )
                     # Force kill container
                     container.kill(signal="SIGKILL")
                     self.logger.warning(
-                        f"Force killed container {container_name}",
+                        "Force killed container %s",
+                        container_name,
                         extra={"container": container_name},
                     )
 
             # Remove the container (with force if it doesn't stop)
             self.logger.info(
-                f"Removing container {container_name}",
+                "Removing container %s",
+                container_name,
                 extra={"container": container_name},
             )
             try:
@@ -1928,7 +1974,8 @@ class FlextTestDocker:
                 # Force remove if normal remove fails
                 container.remove(force=True)
                 self.logger.info(
-                    f"Force removed container {container_name}",
+                    "Force removed container %s",
+                    container_name,
                     extra={"container": container_name},
                 )
 
@@ -1951,7 +1998,8 @@ class FlextTestDocker:
                         )
                     except Exception as e:
                         self.logger.warning(
-                            f"Failed to prune volumes: {e}",
+                            "Failed to prune volumes: %s",
+                            e,
                             extra={"error": str(e)},
                         )
 
@@ -1961,11 +2009,14 @@ class FlextTestDocker:
                 )
 
             return FlextResult[str].ok(
-                f"Container {container_name} repaired (force killed and removed)"
+                f"Container {container_name} repaired (force killed and removed)",
             )
 
         except DockerException as e:
-            self.logger.exception(f"Failed to repair {container_name}")
+            self.logger.exception(
+                f"Failed to repair {container_name}",
+                exception=e,
+            )
             return FlextResult[str].fail(f"Failed to repair container: {e}")
 
     def auto_repair_if_needed(
@@ -1989,7 +2040,9 @@ class FlextTestDocker:
             # Detect issues
             issues_result = self.detect_container_issues(container_name)
             if issues_result.is_failure:
-                return FlextResult[str].fail(issues_result.error or "Failed to detect container issues")
+                return FlextResult[str].fail(
+                    issues_result.error or "Failed to detect container issues",
+                )
 
             issues = issues_result.unwrap()
             if not issues:
@@ -2008,7 +2061,10 @@ class FlextTestDocker:
             )
 
         except Exception as e:
-            self.logger.exception(f"Failed to auto-repair {container_name}")
+            self.logger.exception(
+                f"Failed to auto-repair {container_name}",
+                exception=e,
+            )
             return FlextResult[str].fail(f"Failed to auto-repair container: {e}")
 
     # ============================================================================
@@ -2053,11 +2109,12 @@ class FlextTestDocker:
             # Check if container exists and is running
             try:
                 container = client.containers.get(container_name)
-                is_running = container.attrs.get("State", {}).get("Running", False)  # type: ignore[union-attr]
+                is_running = container.attrs.get("State", {}).get("Running", False)
 
                 if is_running:
                     self.logger.info(
-                        f"Container {container_name} is already running",
+                        "Container %s is already running",
+                        container_name,
                         extra={"container": container_name},
                     )
                     # Wait for healthy if needed
@@ -2069,23 +2126,25 @@ class FlextTestDocker:
                         )
                         if health_result.is_success and health_result.unwrap():
                             return FlextResult[str].ok(
-                                f"Container {container_name} is running and healthy"
+                                f"Container {container_name} is running and healthy",
                             )
                     else:
                         return FlextResult[str].ok(
-                            f"Container {container_name} is running"
+                            f"Container {container_name} is running",
                         )
 
             except NotFound:
                 self.logger.info(
-                    f"Container {container_name} not found, will start",
+                    "Container %s not found, will start",
+                    container_name,
                     extra={"container": container_name},
                 )
 
             # Start container via compose if file provided
             if compose_file:
                 self.logger.info(
-                    f"Starting {container_name} via docker-compose",
+                    "Starting %s via docker-compose",
+                    container_name,
                     extra={"container": container_name, "compose_file": compose_file},
                 )
                 # Register container configuration for private/project-specific containers
@@ -2108,23 +2167,28 @@ class FlextTestDocker:
             # CRITICAL: If health check failed, fail startup
             # (container is marked dirty for recreation)
             if health_result.is_failure:
-                return FlextResult[str].fail(health_result.error or "Container health check failed")
+                return FlextResult[str].fail(
+                    health_result.error or "Container health check failed",
+                )
 
             # If health check returned False (unhealthy/stuck/restarting)
             # Container already marked dirty by wait_for_container_healthy
             if not health_result.unwrap():
                 return FlextResult[str].fail(
                     f"Container {container_name} failed health check "
-                    "(marked dirty for recreation)"
+                    "(marked dirty for recreation)",
                 )
 
             # Container is healthy
             return FlextResult[str].ok(
-                f"Container {container_name} is running and healthy"
+                f"Container {container_name} is running and healthy",
             )
 
         except DockerException as e:
-            self.logger.exception(f"Failed to ensure {container_name} running")
+            self.logger.exception(
+                f"Failed to ensure {container_name} running",
+                exception=e,
+            )
             return FlextResult[str].fail(f"Failed to ensure container running: {e}")
 
     def graceful_shutdown_container(
@@ -2154,35 +2218,41 @@ class FlextTestDocker:
                 return FlextResult[str].fail(f"Container {container_name} not found")
 
             # Stop the container gracefully
-            state = container.attrs.get("State", {})  # type: ignore[union-attr]
+            state = container.attrs.get("State", {})
             if state.get("Running", False):
                 self.logger.info(
-                    f"Stopping container {container_name}",
+                    "Stopping container %s",
+                    container_name,
                     extra={"container": container_name, "timeout": timeout},
                 )
-                container.stop(timeout=timeout)  # type: ignore[union-attr]
+                container.stop(timeout=timeout)
             else:
                 self.logger.info(
-                    f"Container {container_name} is already stopped",
+                    "Container %s is already stopped",
+                    container_name,
                     extra={"container": container_name},
                 )
 
             # Remove volumes if requested
             if remove_volumes:
                 self.logger.info(
-                    f"Removing volumes for {container_name}",
+                    "Removing volumes for %s",
+                    container_name,
                     extra={"container": container_name},
                 )
-                container.remove(v=True)  # type: ignore[union-attr]
+                container.remove(v=True)
             else:
-                container.remove()  # type: ignore[union-attr]
+                container.remove()
 
             return FlextResult[str].ok(
-                f"Container {container_name} stopped and removed"
+                f"Container {container_name} stopped and removed",
             )
 
         except DockerException as e:
-            self.logger.exception(f"Failed to shutdown {container_name}")
+            self.logger.exception(
+                f"Failed to shutdown {container_name}",
+                exception=e,
+            )
             return FlextResult[str].fail(f"Failed to shutdown container: {e}")
 
     @classmethod
@@ -2257,7 +2327,8 @@ class FlextTestDocker:
 
     @classmethod
     def register_pytest_fixtures(
-        cls, namespace: dict[str, object] | None = None
+        cls,
+        namespace: dict[str, object] | None = None,
     ) -> None:
         """Register pytest fixtures that wrap FlextTestDocker operations."""
         if cls._pytest_registered:
@@ -2565,7 +2636,8 @@ class FlextTestDocker:
 
         # Convert dict[str, ContainerInfo] to generic dict[str, object] for dict[str, object] compatibility
         status_info: dict[str, object] = cast(
-            "dict[str, object]", status_result.value.copy()
+            "dict[str, object]",
+            status_result.value.copy(),
         )
         running_services = self.get_running_services()
         if running_services.is_success:
@@ -3076,7 +3148,8 @@ class FlextTestDocker:
 
     @staticmethod
     def auto_cleanup_dirty_containers() -> Callable[
-        [Callable[..., object]], Callable[..., object]
+        [Callable[..., object]],
+        Callable[..., object],
     ]:
         """Decorator to automatically clean up all dirty containers before a test.
 

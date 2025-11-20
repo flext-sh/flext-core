@@ -1013,21 +1013,21 @@ class TestFlextModels:
 
     def test_context_data_model_creation(self) -> None:
         """Test ContextData model with validators."""
-        # ContextData has: data (dict), metadata (dict) with JSON-serializable validation
+        # ContextData has: data (dict), metadata (FlextModels.Metadata) with JSON-serializable validation
         ctx = FlextModels.ContextData(
             data={"request_id": "req-456", "user_id": "user-123"},
-            metadata={"source": "api"},
+            metadata=FlextModels.Metadata(attributes={"source": "api"}),
         )
 
         assert ctx.data["request_id"] == "req-456"
-        assert ctx.metadata["source"] == "api"
+        assert ctx.metadata.attributes["source"] == "api"
 
     def test_context_export_model_creation(self) -> None:
         """Test ContextExport model creation."""
-        # ContextExport has: data, metadata, statistics (all dicts) with JSON-serializable validation
+        # ContextExport has: data, metadata (FlextModels.Metadata), statistics (dict) with JSON-serializable validation
         export = FlextModels.ContextExport(
             data={"key": "value"},
-            metadata={"version": "1.0"},
+            metadata=FlextModels.Metadata(attributes={"version": "1.0"}),
             statistics={"sets": 10, "gets": 20},
         )
 

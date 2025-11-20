@@ -130,3 +130,64 @@ class TestFlextMixinsNestedClasses:
         service._with_operation_context("test_op")
         service._clear_operation_context()
         # No assertion - just test it doesn't crash
+
+    def test_model_conversion_to_dict_with_basemodel(self) -> None:
+        """Test ModelConversion.to_dict() with Pydantic BaseModel."""
+        from pydantic import BaseModel
+
+        class TestModel(BaseModel):
+            name: str
+            value: int
+
+        model = TestModel(name="test", value=42)
+        result = FlextMixins.ModelConversion.to_dict(model)
+
+        assert isinstance(result, dict)
+        assert result == {"name": "test", "value": 42}
+
+    def test_model_conversion_to_dict_with_dict(self) -> None:
+        """Test ModelConversion.to_dict() with plain dict."""
+        input_dict = {"key": "value", "number": 123}
+        result = FlextMixins.ModelConversion.to_dict(input_dict)
+
+        assert result is input_dict  # Should return same dict
+        assert result == {"key": "value", "number": 123}
+
+    def test_model_conversion_to_dict_with_none(self) -> None:
+        """Test ModelConversion.to_dict() with None."""
+        result = FlextMixins.ModelConversion.to_dict(None)
+
+        assert isinstance(result, dict)
+        assert result == {}  # Should return empty dict
+
+    def test_result_handling_ensure_result_with_raw_value(self) -> None:
+        """Test ResultHandling.ensure_result() with raw value."""
+        from flext_core import FlextResult
+
+        result = FlextMixins.ResultHandling.ensure_result(42)
+
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        assert result.value == 42
+
+    def test_result_handling_ensure_result_with_existing_result(self) -> None:
+        """Test ResultHandling.ensure_result() with existing FlextResult."""
+        from flext_core import FlextResult
+
+        original = FlextResult.ok(100)
+        result = FlextMixins.ResultHandling.ensure_result(original)
+
+        assert result is original  # Should return same instance
+        assert result.is_success
+        assert result.value == 100
+
+    def test_result_handling_ensure_result_preserves_type(self) -> None:
+        """Test ResultHandling.ensure_result() preserves generic type."""
+        # Test with different types
+        int_result = FlextMixins.ResultHandling.ensure_result(42)
+        str_result = FlextMixins.ResultHandling.ensure_result("hello")
+        list_result = FlextMixins.ResultHandling.ensure_result([1, 2, 3])
+
+        assert int_result.value == 42
+        assert str_result.value == "hello"
+        assert list_result.value == [1, 2, 3]

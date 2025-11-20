@@ -9,12 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, Generic, cast
+from typing import Annotated
 
 import structlog.contextvars
 from pydantic import BaseModel, Field, computed_field, field_validator
 
 from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.metadata import Metadata
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T
 
@@ -68,7 +69,7 @@ class FlextModelsContext:
             ),
         ] = None
 
-    class StructlogProxyContextVar(Generic[T]):
+    class StructlogProxyContextVar[T]:
         """ContextVar-like proxy using structlog as backend (single source of truth).
 
         ARCHITECTURAL NOTE: This proxy delegates ALL operations to structlog's
@@ -121,8 +122,7 @@ class FlextModelsContext:
             structlog_context = structlog.contextvars.get_contextvars()
             if not structlog_context:
                 return self._default
-            # Cast from structlog's untyped storage to our Generic[T] contract
-            return cast("T | None", structlog_context.get(self._key, self._default))
+            return structlog_context.get(self._key, self._default)
 
         def set(self, value: T | None) -> FlextModelsContext.StructlogProxyToken:
             """Set value in structlog context.
@@ -145,7 +145,8 @@ class FlextModelsContext:
 
             # Create token for reset functionality
             return FlextModelsContext.StructlogProxyToken(
-                key=self._key, previous_value=current_value
+                key=self._key,
+                previous_value=current_value,
             )
 
         def reset(self, token: FlextModelsContext.StructlogProxyToken) -> None:
@@ -165,7 +166,7 @@ class FlextModelsContext:
                 structlog.contextvars.unbind_contextvars(token.key)
             else:
                 structlog.contextvars.bind_contextvars(**{
-                    token.key: token.previous_value
+                    token.key: token.previous_value,
                 })
 
     class Token(FlextModelsEntity.Value):
@@ -221,13 +222,19 @@ class FlextModelsContext:
             metadata: Context metadata (creation time, source, etc.)
 
         Examples:
+            >>> from flext_core import FlextModels
             >>> context_data = FlextModelsContext.ContextData(
             ...     data={"user_id": "123", "correlation_id": "abc-xyz"},
-            ...     metadata={"source": "api", "created_at": "2025-01-01T00:00:00Z"},
+            ...     metadata=FlextModels.Metadata(
+            ...         attributes={
+            ...             "source": "api",
+            ...             "created_at": "2025-01-01T00:00:00Z",
+            ...         }
+            ...     ),
             ... )
             >>> context_data.data["user_id"]
             '123'
-            >>> context_data.metadata["source"]
+            >>> context_data.metadata.attributes["source"]
             'api'
 
         """
@@ -239,24 +246,44 @@ class FlextModelsContext:
                 description="Initial context data as key-value pairs",
             ),
         ] = Field(default_factory=dict)
-        metadata: Annotated[
-            dict[str, object],
-            Field(
-                default_factory=dict,
-                description="Context metadata (creation info, source, etc.)",
-            ),
-        ] = Field(default_factory=dict)
+        metadata: Metadata | dict[str, object] | None = Field(
+            default=None,
+            description="Context metadata (creation info, source, etc.)",
+        )
 
-        @field_validator("data", "metadata", mode="before")
+        @field_validator("metadata", mode="before")
+        @classmethod
+        def validate_metadata(cls, v: object) -> Metadata:
+            """Validate and normalize metadata to Metadata (STRICT mode).
+
+            Accepts: None, dict, or Metadata. Always returns Metadata.
+            Maintains advanced capability to convert dict → Metadata.
+            """
+            if v is None:
+                return Metadata(attributes={})
+            if FlextRuntime.is_dict_like(v):
+                return Metadata(attributes=v)
+            if isinstance(v, Metadata):
+                return v
+            msg = f"metadata must be None, dict, or Metadata, got {type(v).__name__}"
+            raise TypeError(msg)
+
+        @field_validator("data", mode="before")
         @classmethod
         def validate_dict_serializable(cls, v: object) -> dict[str, object]:
             """Validate that dict[str, object] values are JSON-serializable.
 
+            STRICT mode: Also accepts FlextModels.Metadata and converts to dict.
             Uses mode='before' to validate raw input before Pydantic processing.
             Only allows basic JSON-serializable types: str, int, float, bool, list, dict, None.
             """
+            # STRICT mode: Accept FlextModels.Metadata and convert to dict
+            if hasattr(v, "model_dump"):
+                # It's a Pydantic model (FlextModels.Metadata) - extract attributes dict
+                v = v.attributes if hasattr(v, "attributes") else v.model_dump()
+
             if not FlextRuntime.is_dict_like(v):
-                msg = f"Value must be a dictionary, got {type(v).__name__}"
+                msg = f"Value must be a dictionary or FlextModels.Metadata, got {type(v).__name__}"
                 raise TypeError(msg)
 
             # Recursively check all values are JSON-serializable
@@ -296,9 +323,12 @@ class FlextModelsContext:
             statistics: Usage statistics (set/get/remove counts, etc.)
 
         Examples:
+            >>> from flext_core import FlextModels
             >>> export = FlextModelsContext.ContextExport(
             ...     data={"user_id": "123", "correlation_id": "abc-xyz"},
-            ...     metadata={"source": "api", "version": "1.0"},
+            ...     metadata=FlextModels.Metadata(
+            ...         attributes={"source": "api", "version": "1.0"}
+            ...     ),
             ...     statistics={"sets": 5, "gets": 10, "removes": 2},
             ... )
             >>> export.data["user_id"]
@@ -315,13 +345,10 @@ class FlextModelsContext:
                 description="All context data from all scopes",
             ),
         ] = Field(default_factory=dict)
-        metadata: Annotated[
-            dict[str, object],
-            Field(
-                default_factory=dict,
-                description="Context metadata (creation info, source, version)",
-            ),
-        ] = Field(default_factory=dict)
+        metadata: Metadata | dict[str, object] | None = Field(
+            default=None,
+            description="Context metadata (creation info, source, version)",
+        )
         statistics: Annotated[
             dict[str, object],
             Field(
@@ -329,6 +356,23 @@ class FlextModelsContext:
                 description="Usage statistics (operation counts, timing info)",
             ),
         ] = Field(default_factory=dict)
+
+        @field_validator("metadata", mode="before")
+        @classmethod
+        def validate_metadata(cls, v: object) -> Metadata:
+            """Validate and normalize metadata to Metadata (STRICT mode).
+
+            Accepts: None, dict, or Metadata. Always returns Metadata.
+            Maintains advanced capability to convert dict → Metadata.
+            """
+            if v is None:
+                return Metadata(attributes={})
+            if FlextRuntime.is_dict_like(v):
+                return Metadata(attributes=v)
+            if isinstance(v, Metadata):
+                return v
+            msg = f"metadata must be None, dict, or Metadata, got {type(v).__name__}"
+            raise TypeError(msg)
 
         @staticmethod
         def _check_json_serializable(obj: object, path: str = "") -> None:
@@ -341,18 +385,20 @@ class FlextModelsContext:
                         msg = f"Dictionary keys must be strings at {path}.{key}"
                         raise TypeError(msg)
                     FlextModelsContext.ContextExport._check_json_serializable(  # noqa: SLF001
-                        val, f"{path}.{key}"
+                        val,
+                        f"{path}.{key}",
                     )
             elif FlextRuntime.is_list_like(obj):
                 for i, item in enumerate(obj):
                     FlextModelsContext.ContextExport._check_json_serializable(  # noqa: SLF001
-                        item, f"{path}[{i}]"
+                        item,
+                        f"{path}[{i}]",
                     )
             else:
                 msg = f"Non-JSON-serializable type {type(obj).__name__} at {path}"
                 raise TypeError(msg)
 
-        @field_validator("data", "metadata", "statistics", mode="before")
+        @field_validator("data", "statistics", mode="before")
         @classmethod
         def validate_dict_serializable(cls, v: object) -> dict[str, object]:
             """Validate that dict[str, object] values are JSON-serializable.
@@ -361,12 +407,13 @@ class FlextModelsContext:
             Accepts Pydantic models (converts via model_dump) or dict.
             Only allows basic JSON-serializable types: str, int, float, bool, list, dict, None.
             """
-            # Accept Pydantic models directly - convert to dict
-            model_dump_attr = (
-                getattr(v, "model_dump", None) if hasattr(v, "model_dump") else None
-            )
-            if callable(model_dump_attr):
-                v = model_dump_attr()
+            # Handle FlextModels.Metadata specially - extract only attributes dict
+            # (excludes datetime fields like created_at, modified_at which aren't JSON-serializable)
+            if hasattr(v, "model_dump") and hasattr(v, "attributes"):
+                v = v.attributes
+            # Accept other Pydantic models - convert to dict
+            elif hasattr(v, "model_dump") and callable(getattr(v, "model_dump", None)):
+                v = v.model_dump()
 
             if not FlextRuntime.is_dict_like(v):
                 msg = f"Value must be a dictionary or Pydantic model, got {type(v).__name__}"
@@ -399,11 +446,12 @@ class FlextModelsContext:
             metadata: Metadata associated with this scope
 
         Examples:
+            >>> from flext_core import FlextModels
             >>> scope = FlextModelsContext.ContextScopeData(
             ...     scope_name="request",
             ...     scope_type="http",
             ...     data={"method": "POST", "path": "/api/orders"},
-            ...     metadata={"trace_id": "trace-123"},
+            ...     metadata=FlextModels.Metadata(attributes={"trace_id": "trace-123"}),
             ... )
 
         """
@@ -430,7 +478,7 @@ class FlextModelsContext:
         def _validate_data(cls, v: object) -> dict[str, object]:
             """Validate scope data - direct validation without helper."""
             # Fast fail: direct validation instead of helper
-            if isinstance(v, dict):
+            if FlextRuntime.is_dict_like(v):
                 return v
             if isinstance(v, BaseModel):
                 return v.model_dump()
@@ -444,7 +492,7 @@ class FlextModelsContext:
         def _validate_metadata(cls, v: object) -> dict[str, object]:
             """Validate scope metadata - direct validation without helper."""
             # Fast fail: direct validation instead of helper
-            if isinstance(v, dict):
+            if FlextRuntime.is_dict_like(v):
                 return v
             if isinstance(v, BaseModel):
                 return v.model_dump()
@@ -510,7 +558,7 @@ class FlextModelsContext:
         def _validate_operations(cls, v: object) -> dict[str, object]:
             """Validate operations - direct validation without helper."""
             # Fast fail: direct validation instead of helper
-            if isinstance(v, dict):
+            if FlextRuntime.is_dict_like(v):
                 return v
             if isinstance(v, BaseModel):
                 return v.model_dump()
@@ -613,7 +661,7 @@ class FlextModelsContext:
         def _validate_custom_fields(cls, v: object) -> dict[str, object]:
             """Validate custom_fields - direct validation without helper."""
             # Fast fail: direct validation instead of helper
-            if isinstance(v, dict):
+            if FlextRuntime.is_dict_like(v):
                 return v
             if isinstance(v, BaseModel):
                 return v.model_dump()

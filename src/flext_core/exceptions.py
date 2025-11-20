@@ -14,13 +14,24 @@ from __future__ import annotations
 import contextvars
 import logging
 import time
+import uuid
 from collections.abc import Callable
 from typing import ClassVar, cast
 
 import structlog
 
+from flext_core._models.metadata import Metadata
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.protocols import FlextProtocols
+from flext_core.runtime import FlextRuntime
+
+# CRITICAL: NO import from utilities - causes circular import (exceptions → utilities → _utilities → result → exceptions)
+# CRITICAL: NO import from models - causes circular import (exceptions → models → _models → validation → result → exceptions)
+# CRITICAL: Use zero-dependency Metadata from _models/metadata.py - breaks circular import
+# CRITICAL: Use FlextProtocols.MetadataProtocol for TYPE HINTS (structural typing)
+# CRITICAL: Use Metadata class for INSTANTIATION (zero-dependency module, NO lazy imports)
+# CRITICAL: Use FlextRuntime for type guards (is_dict_like) - runtime.py is Layer 0.5, safe to import
 
 # Reserved keyword names used across all exception classes
 _EXCEPTION_RESERVED_KEYS: frozenset[str] = frozenset({
@@ -309,7 +320,8 @@ class FlextExceptions:
 
         @classmethod
         def set_global_level(
-            cls, level: FlextConstants.Exceptions.FailureLevel
+            cls,
+            level: FlextConstants.Exceptions.FailureLevel,
         ) -> None:
             """Set global failure level (lowest priority)."""
             cls._global_failure_level = level
@@ -325,11 +337,11 @@ class FlextExceptions:
                 config = FlextConfig.get_global_instance()
                 level_str = config.exception_failure_level
                 cls._global_failure_level = FlextConstants.Exceptions.FailureLevel(
-                    level_str.lower()
+                    level_str.lower(),
                 )
                 return cls._global_failure_level
             except (AttributeError, ValueError, TypeError):
-                # Fallback to default if config is not available or invalid
+                # Use default STRICT level if config unavailable or invalid
                 cls._global_failure_level = (
                     FlextConstants.Exceptions.FailureLevel.STRICT
                 )
@@ -413,24 +425,17 @@ class FlextExceptions:
             config: object | None = None,
             error_code: str | None = FlextConstants.Errors.UNKNOWN_ERROR,
             correlation_id: str | None = None,
-            metadata: dict[str, object] | None = None,
+            metadata: FlextProtocols.MetadataProtocol | dict[str, object] | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
             **extra_kwargs: object,
         ) -> None:
             """Initialize base error with structured logging.
 
-            NEW (Config Pattern):
-                raise FlextException(
-                    "Error occurred",
-                    config=FlextModels.Config.ExceptionConfig(
-                        error_code="ERR001",
-                        correlation_id="abc-123",
-                        auto_log=True
-                    )
-                )
-
-            OLD (Backward Compatible):
+            Config Pattern (Recommended):
+                # Note: ExceptionConfig is available via FlextModels.Config.ExceptionConfig
+                # but importing FlextModels here would cause circular import
+                # Use direct parameters instead or import ExceptionConfig separately
                 raise FlextException(
                     "Error occurred",
                     error_code="ERR001",
@@ -438,15 +443,24 @@ class FlextExceptions:
                     auto_log=True
                 )
 
+            Direct Parameters:
+                raise FlextException(
+                    "Error occurred",
+                    error_code="ERR001",
+                    correlation_id="abc-123",
+                    metadata=Metadata(attributes={"user_id": "123"}),
+                    auto_log=True
+                )
+
             Args:
                 message: Error message
-                config: ExceptionConfig instance (Pydantic v2) - NEW PATTERN
-                error_code: Optional error code (backward compat)
-                correlation_id: Optional correlation ID (backward compat)
-                metadata: Optional additional metadata (backward compat)
-                auto_log: Whether to automatically log (backward compat)
-                auto_correlation: Whether to auto-generate ID (backward compat)
-                **extra_kwargs: Additional kwargs (backward compat)
+                config: ExceptionConfig instance (Pydantic v2)
+                error_code: Optional error code
+                correlation_id: Optional correlation ID
+                metadata: MetadataProtocol instance (Pydantic model or compatible)
+                auto_log: Whether to automatically log
+                auto_correlation: Whether to auto-generate ID
+                **extra_kwargs: Additional kwargs merged into metadata
 
             """
             # Extract config values (config takes priority)
@@ -457,7 +471,7 @@ class FlextExceptions:
                 auto_log = getattr(config, "auto_log", auto_log)
                 auto_correlation = getattr(config, "auto_correlation", auto_correlation)
                 config_extra = getattr(config, "extra_kwargs", {})
-                if isinstance(config_extra, dict):
+                if FlextRuntime.is_dict_like(config_extra):
                     extra_kwargs = {**config_extra, **extra_kwargs}
 
             super().__init__(message)
@@ -465,30 +479,38 @@ class FlextExceptions:
             self.error_code = error_code
             self.correlation_id: str | None
             if auto_correlation and not correlation_id:
-                from flext_core.utilities import FlextUtilities
-
-                self.correlation_id = (
-                    f"exc_{FlextUtilities.Generators.generate_short_id()}"
-                )
+                # Generate short correlation ID inline (avoid circular import with utilities)
+                self.correlation_id = f"exc_{uuid.uuid4().hex[:8]}"
             else:
                 # Type narrowing: correlation_id is str | None, but we assign it directly
                 # The type checker will accept this as the attribute allows str | None
                 self.correlation_id = correlation_id
-            # Validate metadata - NO fallback, explicit validation
+            # STRICT mode: Convert dict to Metadata, merge extra_kwargs
+            # Always use Metadata directly (satisfies MetadataProtocol via structural typing)
             if metadata is None:
-                self.metadata = {}
-            elif isinstance(metadata, dict):
-                self.metadata = metadata.copy()  # Avoid mutating input
-            else:
-                # Fast fail: metadata must be dict or None
-                # Type checker may think this is unreachable, but it's reachable at runtime
-                # This handles cases where invalid types are passed at runtime
-                msg = (
-                    f"Invalid metadata type: {type(metadata).__name__}. "
-                    "Expected dict[str, object] | None"
+                self.metadata: Metadata = Metadata(
+                    attributes=extra_kwargs or {},
                 )
-                raise TypeError(msg)  # type: ignore[unreachable]
-            self.metadata.update(extra_kwargs)
+            elif FlextRuntime.is_dict_like(metadata):
+                # Convert dict to Metadata, merge with extra_kwargs
+                # Type narrowing: metadata is dict-like, safe to use directly
+                metadata_dict: dict[str, object] = (
+                    metadata if isinstance(metadata, dict) else dict(metadata.items())
+                )
+                merged_attrs = (
+                    {**metadata_dict, **extra_kwargs} if extra_kwargs else metadata_dict
+                )
+                self.metadata = Metadata(attributes=merged_attrs)
+            elif extra_kwargs:
+                # Merge extra_kwargs into Metadata.attributes
+                # Type narrowing: metadata is Metadata (not dict, not None)
+                metadata_obj = cast("Metadata", metadata)
+                merged_attrs = {**metadata_obj.attributes, **extra_kwargs}
+                self.metadata = Metadata(attributes=merged_attrs)
+            else:
+                # Type narrowing: metadata is already Metadata (satisfies MetadataProtocol structurally)
+                # Metadata satisfies MetadataProtocol via structural typing - use cast for mypy
+                self.metadata = cast("Metadata", metadata)
             self.timestamp = time.time()
             self.auto_log = auto_log
 
@@ -514,7 +536,8 @@ class FlextExceptions:
                 # Don't fail if logging fails, but log the error using standard logging
 
                 logging.getLogger(__name__).debug(
-                    "Logging failed in exception handler: %s", e
+                    "Logging failed in exception handler: %s",
+                    e,
                 )
 
         def __str__(self) -> str:
@@ -535,7 +558,7 @@ class FlextExceptions:
                 "error_code": self.error_code,
                 "correlation_id": self.correlation_id,
                 "timestamp": self.timestamp,
-                "metadata": self.metadata,
+                "metadata": self.metadata.attributes,  # Return attributes dict only (user-provided metadata)
             }
 
         def with_context(self, **context: object) -> FlextExceptions.BaseError:
@@ -553,7 +576,10 @@ class FlextExceptions:
                 ... )
 
             """
-            self.metadata.update(context)
+            # STRICT mode: metadata is Pydantic model, create new instance with merged attributes
+            existing_attrs = self.metadata.attributes
+            new_attrs = {**existing_attrs, **context}
+            self.metadata = Metadata(attributes=new_attrs)
             return self
 
         def chain_from(self, cause: Exception) -> FlextExceptions.BaseError:
@@ -577,7 +603,13 @@ class FlextExceptions:
             self.__cause__ = cause
             parent_correlation_id = getattr(cause, "correlation_id", None)
             if parent_correlation_id is not None:
-                self.metadata["parent_correlation_id"] = parent_correlation_id
+                # STRICT mode: metadata is Pydantic model, update attributes
+                existing_attrs = self.metadata.attributes
+                new_attrs = {
+                    **existing_attrs,
+                    "parent_correlation_id": parent_correlation_id,
+                }
+                self.metadata = Metadata(attributes=new_attrs)
 
             # Log exception chaining
             try:
@@ -594,7 +626,8 @@ class FlextExceptions:
                 import logging
 
                 logging.getLogger(__name__).debug(
-                    "Logging failed in exception handler: %s", e
+                    "Logging failed in exception handler: %s",
+                    e,
                 )
 
             return self
@@ -640,7 +673,8 @@ class FlextExceptions:
                 config,
                 extra_kwargs,
             ) = FlextExceptions.prepare_exception_kwargs(
-                kwargs, specific_params={"field": field, "value": value}
+                kwargs,
+                specific_params={"field": field, "value": value},
             )
             super().__init__(
                 message,
@@ -1278,7 +1312,7 @@ class FlextExceptions:
         specific_params: dict[str, object] | None = None,
     ) -> tuple[
         str | None,
-        dict[str, object] | None,
+        FlextProtocols.MetadataProtocol | dict[str, object] | None,
         bool,
         bool,
         object | None,
@@ -1306,15 +1340,21 @@ class FlextExceptions:
 
         # Extract common parameters with proper type casting
         correlation_id = cast("str | None", kwargs.get("correlation_id"))
-        metadata = cast("dict[str, object] | None", kwargs.get("metadata"))
+        # metadata removed - caller must create Metadata if needed
         auto_log = bool(kwargs.get("auto_log"))
         auto_correlation = bool(kwargs.get("auto_correlation"))
         config = kwargs.get("config")
 
-        # Filter out reserved keys
+        # Filter out reserved keys (keep metadata in kwargs if passed)
         extra_kwargs = {
             k: v for k, v in kwargs.items() if k not in _EXCEPTION_RESERVED_KEYS
         }
+
+        # Extract metadata from kwargs if present (must be MetadataProtocol)
+        metadata = cast(
+            "FlextProtocols.MetadataProtocol | dict[str, object] | None",
+            kwargs.get("metadata"),
+        )
 
         return (
             correlation_id,
@@ -1328,7 +1368,7 @@ class FlextExceptions:
     @staticmethod
     def extract_common_kwargs(
         kwargs: dict[str, object],
-    ) -> tuple[str | None, dict[str, object] | None]:
+    ) -> tuple[str | None, FlextProtocols.MetadataProtocol | dict[str, object] | None]:
         """Extract correlation_id and metadata from kwargs.
 
         Used by exception factory methods (e.g., create()) to extract
@@ -1342,7 +1382,10 @@ class FlextExceptions:
 
         """
         correlation_id = cast("str | None", kwargs.get("correlation_id"))
-        metadata = cast("dict[str, object] | None", kwargs.get("metadata"))
+        metadata = cast(
+            "FlextProtocols.MetadataProtocol | dict[str, object] | None",
+            kwargs.get("metadata"),
+        )
         return correlation_id, metadata
 
     @staticmethod
@@ -1392,7 +1435,7 @@ class FlextExceptions:
         error_code: str | None,
         kwargs: dict[str, object],
         correlation_id: str | None,
-        metadata: dict[str, object] | None,
+        metadata: FlextProtocols.MetadataProtocol | None,
     ) -> FlextExceptions.ValidationError:
         """Create ValidationError from kwargs."""
         return FlextExceptions.ValidationError(
@@ -1410,7 +1453,7 @@ class FlextExceptions:
         error_code: str | None,
         kwargs: dict[str, object],
         correlation_id: str | None,
-        metadata: dict[str, object] | None,
+        metadata: FlextProtocols.MetadataProtocol | None,
     ) -> FlextExceptions.ConfigurationError:
         """Create ConfigurationError from kwargs."""
         return FlextExceptions.ConfigurationError(
@@ -1428,7 +1471,7 @@ class FlextExceptions:
         error_code: str | None,
         kwargs: dict[str, object],
         correlation_id: str | None,
-        metadata: dict[str, object] | None,
+        metadata: FlextProtocols.MetadataProtocol | None,
     ) -> FlextExceptions.OperationError:
         """Create OperationError from kwargs."""
         return FlextExceptions.OperationError(
@@ -1446,7 +1489,7 @@ class FlextExceptions:
         error_code: str | None,
         kwargs: dict[str, object],
         correlation_id: str | None,
-        metadata: dict[str, object] | None,
+        metadata: FlextProtocols.MetadataProtocol | None,
     ) -> FlextExceptions.ConnectionError:
         """Create ConnectionError from kwargs."""
         return FlextExceptions.ConnectionError(
@@ -1465,7 +1508,7 @@ class FlextExceptions:
         error_code: str | None,
         kwargs: dict[str, object],
         correlation_id: str | None,
-        metadata: dict[str, object] | None,
+        metadata: FlextProtocols.MetadataProtocol | None,
     ) -> FlextExceptions.TimeoutError:
         """Create TimeoutError from kwargs."""
         return FlextExceptions.TimeoutError(
@@ -1483,7 +1526,7 @@ class FlextExceptions:
         error_code: str | None,
         kwargs: dict[str, object],
         correlation_id: str | None,
-        metadata: dict[str, object] | None,
+        metadata: FlextProtocols.MetadataProtocol | None,
     ) -> FlextExceptions.AuthorizationError:
         """Create AuthorizationError from kwargs."""
         final_error_code: str = error_code or FlextConstants.Errors.AUTHORIZATION_ERROR
@@ -1503,7 +1546,7 @@ class FlextExceptions:
         error_code: str | None,
         kwargs: dict[str, object],
         correlation_id: str | None,
-        metadata: dict[str, object] | None,
+        metadata: FlextProtocols.MetadataProtocol | None,
     ) -> FlextExceptions.AuthenticationError:
         """Create AuthenticationError from kwargs."""
         final_error_code: str = error_code or FlextConstants.Errors.AUTHENTICATION_ERROR
@@ -1522,7 +1565,7 @@ class FlextExceptions:
         error_code: str | None,
         kwargs: dict[str, object],
         correlation_id: str | None,
-        metadata: dict[str, object] | None,
+        metadata: FlextProtocols.MetadataProtocol | None,
     ) -> FlextExceptions.NotFoundError:
         """Create NotFoundError from kwargs."""
         final_error_code: str = error_code or FlextConstants.Errors.NOT_FOUND_ERROR
@@ -1541,7 +1584,7 @@ class FlextExceptions:
         error_code: str | None,
         kwargs: dict[str, object],
         correlation_id: str | None,
-        metadata: dict[str, object] | None,
+        metadata: FlextProtocols.MetadataProtocol | None,
     ) -> FlextExceptions.AttributeAccessError:
         """Create AttributeAccessError from kwargs."""
         final_error_code: str = error_code or FlextConstants.Errors.ATTRIBUTE_ERROR
@@ -1550,7 +1593,8 @@ class FlextExceptions:
             error_code=final_error_code,
             attribute_name=cast("str | None", kwargs.get("attribute_name")),
             attribute_context=cast(
-                "dict[str, object] | None", kwargs.get("attribute_context")
+                "dict[str, object] | None",
+                kwargs.get("attribute_context"),
             ),
             correlation_id=correlation_id,
             metadata=metadata,
@@ -1596,7 +1640,13 @@ class FlextExceptions:
         error_type: str | None,
     ) -> (
         Callable[
-            [str, str | None, dict[str, object], str | None, dict[str, object] | None],
+            [
+                str,
+                str | None,
+                dict[str, object],
+                str | None,
+                FlextProtocols.MetadataProtocol | None,
+            ],
             FlextExceptions.BaseError,
         ]
         | None
@@ -1618,7 +1668,7 @@ class FlextExceptions:
                     str | None,
                     dict[str, object],
                     str | None,
-                    dict[str, object] | None,
+                    FlextProtocols.MetadataProtocol | None,
                 ],
                 FlextExceptions.BaseError,
             ],
@@ -1642,7 +1692,7 @@ class FlextExceptions:
         error_code: str | None,
         kwargs: dict[str, object],
         correlation_id: str | None,
-        metadata: dict[str, object] | None,
+        metadata: FlextProtocols.MetadataProtocol | dict[str, object] | None,
     ) -> FlextExceptions.BaseError:
         """Create error instance by type.
 
@@ -1659,13 +1709,39 @@ class FlextExceptions:
 
         """
         creator = FlextExceptions._get_error_creator(error_type)
+
+        # Convert dict to Metadata for type safety
+        # Always use Metadata directly (satisfies MetadataProtocol via structural typing)
+        normalized_metadata: Metadata | None = None
+        if metadata is not None:
+            if FlextRuntime.is_dict_like(metadata):
+                normalized_metadata = Metadata(attributes=metadata)
+            else:
+                # Type narrowing: metadata is already Metadata (satisfies MetadataProtocol structurally)
+                # Metadata satisfies MetadataProtocol via structural typing - use cast for mypy
+                normalized_metadata = cast("Metadata", metadata)
+
+        # Cast Metadata to MetadataProtocol for function signature compatibility
+        # Metadata satisfies MetadataProtocol via structural typing
+        metadata_protocol: FlextProtocols.MetadataProtocol | None = cast(
+            "FlextProtocols.MetadataProtocol | None",
+            normalized_metadata,
+        )
+
         if creator:
-            return creator(message, error_code, kwargs, correlation_id, metadata)
-        metadata_value: dict[str, object] | None = None
-        if kwargs:
-            metadata_value = kwargs
+            return creator(
+                message,
+                error_code,
+                kwargs,
+                correlation_id,
+                metadata_protocol,
+            )
+        # Strict: metadata must be Metadata or None
         return FlextExceptions.BaseError(
-            message, error_code=error_code, metadata=metadata_value
+            message,
+            error_code=error_code,
+            metadata=metadata_protocol,
+            correlation_id=correlation_id,
         )
 
     @staticmethod
@@ -1691,7 +1767,12 @@ class FlextExceptions:
         correlation_id, metadata = FlextExceptions.extract_common_kwargs(kwargs)
         error_type = FlextExceptions._determine_error_type(kwargs)
         return FlextExceptions._create_error_by_type(
-            error_type, message, error_code, kwargs, correlation_id, metadata
+            error_type,
+            message,
+            error_code,
+            kwargs,
+            correlation_id,
+            metadata,
         )
 
     # Metrics tracking for exception monitoring

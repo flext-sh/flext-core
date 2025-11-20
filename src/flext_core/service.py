@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import inspect
+import logging
 import re
 import signal
 import time
@@ -36,9 +37,6 @@ from typing import (
 from beartype.door import is_bearable
 from pydantic import computed_field
 
-from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.reliability import FlextUtilitiesReliability
-from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
@@ -46,7 +44,9 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
 
 # =========================================================================
 # FLEXT SERVICE - Domain Service Base Class
@@ -232,10 +232,6 @@ class FlextService[TDomainResult](
         super().model_post_init(__context)
 
         # Auto-configure structlog if not already configured
-        import logging  # noqa: PLC0415
-
-        from flext_core.runtime import FlextRuntime  # noqa: PLC0415
-
         if not FlextRuntime._structlog_configured:  # noqa: SLF001
             FlextRuntime.configure_structlog(
                 log_level=logging.INFO,  # Default to INFO, can be overridden by CLI
@@ -284,7 +280,7 @@ class FlextService[TDomainResult](
         # Create typed subclass with proper namespace attributes for Pydantic v2
         # __module__ and __qualname__ must be in namespace dict for metaclass
         # Dynamic type creation using helper function - valid Python metaprogramming
-        return FlextUtilitiesGenerators.create_dynamic_type_subclass(
+        return FlextUtilities.Generators.create_dynamic_type_subclass(
             f"{cls_name}[{type_name}]",
             cls,
             {
@@ -295,7 +291,8 @@ class FlextService[TDomainResult](
         )
 
     def validate_domain_result(
-        self, result: FlextResult[TDomainResult]
+        self,
+        result: FlextResult[TDomainResult],
     ) -> FlextResult[TDomainResult]:
         """Validate execute() result matches expected domain result type.
 
@@ -315,13 +312,15 @@ class FlextService[TDomainResult](
                 # For simple type objects, isinstance is more reliable than beartype
                 if isinstance(self._expected_domain_result_type, type):
                     type_mismatch = not isinstance(
-                        result.value, self._expected_domain_result_type
+                        result.value,
+                        self._expected_domain_result_type,
                     )
                 else:
                     # For complex type hints (generics, unions), use beartype
                     # Type checker may think this is unreachable, but complex types are validated here
-                    type_mismatch = not is_bearable(  # type: ignore[unreachable]
-                        result.value, self._expected_domain_result_type
+                    type_mismatch = not is_bearable(
+                        result.value,
+                        self._expected_domain_result_type,
                     )
             except (TypeError, AttributeError):
                 # If type checking fails, assume type matches
@@ -393,6 +392,40 @@ class FlextService[TDomainResult](
     # =========================================================================
     # CLASS METHODS: Alternative Instantiation Patterns
     # =========================================================================
+
+    @classmethod
+    def v1(cls, **kwargs: object) -> Self:
+        """V1 compatibility method: Create service instance without auto-execution.
+
+        Returns a service instance that requires explicit .execute() call.
+        This provides backward compatibility with V1 usage patterns.
+
+        Args:
+            **kwargs: Service initialization parameters
+
+        Returns:
+            Self: Service instance (not executed)
+
+        Example:
+            >>> class UserService(FlextService[User]):
+            ...     auto_execute = True  # Even with auto_execute=True
+            ...     user_id: str
+            ...
+            ...     def execute(self) -> FlextResult[User]:
+            ...         return self.ok(User(id=self.user_id))
+            >>>
+            >>> # v1(): returns service instance (V1 pattern)
+            >>> service = UserService.v1(user_id="789")
+            >>> result = service.execute()  # Explicit execution
+            >>> assert result.is_success
+            >>> user = result.unwrap()
+
+        """
+        # Create instance using object.__new__ to bypass auto_execute
+        instance = object.__new__(cls)
+        # Initialize instance
+        type(instance).__init__(instance, **kwargs)
+        return instance
 
     @classmethod
     def with_result(cls, **kwargs: object) -> FlextResult[TDomainResult]:
@@ -509,7 +542,10 @@ class FlextService[TDomainResult](
 
     @classmethod
     def _resolve_dependencies(
-        cls, dependencies: dict[str, type], container: FlextContainer, service_name: str
+        cls,
+        dependencies: dict[str, type],
+        container: FlextContainer,
+        service_name: str,
     ) -> dict[str, object]:
         """Resolve dependencies from container.
 
@@ -765,7 +801,7 @@ class FlextService[TDomainResult](
                     # Factory with auto-DI
                     def factory() -> object:
                         return cls(
-                            **cls._resolve_dependencies(deps, container, service_name)
+                            **cls._resolve_dependencies(deps, container, service_name),
                         )
 
                     container.with_factory(service_name, factory)
@@ -913,7 +949,8 @@ class FlextService[TDomainResult](
     # =============================================================================
 
     def _validate_pre_execution(
-        self, request: FlextModels.OperationExecutionRequest
+        self,
+        request: FlextModels.OperationExecutionRequest,
     ) -> FlextResult[bool]:
         """Validate business rules, config, and request before execution.
 
@@ -943,9 +980,7 @@ class FlextService[TDomainResult](
                 resolution_hint="Fix business rules validation logic",
                 source="flext-core/src/flext_core/service.py",
             )
-            return self.fail(
-                f"Business rules validation failed: {error_msg}"
-            )
+            return self.fail(f"Business rules validation failed: {error_msg}")
 
         # Validate configuration
         self.logger.debug(
@@ -969,17 +1004,18 @@ class FlextService[TDomainResult](
             return self.fail(f"Configuration validation failed: {error_msg}")
 
         # Validate keyword_arguments is a dict
-        if not isinstance(request.keyword_arguments, dict):
+        if not FlextRuntime.is_dict_like(request.keyword_arguments):
             # Type checker may think this is unreachable, but it's reachable at runtime
-            return self.fail(  # type: ignore[unreachable]
-                f"Invalid keyword arguments: expected dict, got {type(request.keyword_arguments).__name__}"
+            return self.fail(
+                f"Invalid keyword arguments: expected dict, got {type(request.keyword_arguments).__name__}",
             )
 
         return self.ok(True)
 
     def _execute_callable_once(
         self,
-        request: FlextModels.OperationExecutionRequest | Callable[[object], TDomainResult],
+        request: FlextModels.OperationExecutionRequest
+        | Callable[[object], TDomainResult],
     ) -> TDomainResult:
         """Execute operation callable once (with timeout if specified).
 
@@ -1035,7 +1071,7 @@ class FlextService[TDomainResult](
         if operation_request.timeout_seconds and operation_request.timeout_seconds > 0:
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 future = executor.submit(
-                    operation_request.operation_callable,
+                    operation_request.operation_callable,  # type: ignore[arg-type]
                     *args_list,
                     **operation_request.keyword_arguments,
                 )
@@ -1044,7 +1080,8 @@ class FlextService[TDomainResult](
 
         # Execute without timeout
         result = operation_request.operation_callable(
-            *args_list, **operation_request.keyword_arguments
+            *args_list,
+            **operation_request.keyword_arguments,
         )
         return cast("TDomainResult", result)
 
@@ -1069,8 +1106,8 @@ class FlextService[TDomainResult](
 
         """
         # Use FlextUtilities for robust retry configuration validation and execution
-        return FlextUtilitiesValidation.create_retry_config(retry_config).flat_map(
-            lambda config: self._execute_with_retry_config(request, config)
+        return FlextUtilities.Validation.create_retry_config(retry_config).flat_map(
+            lambda config: self._execute_with_retry_config(request, config),
         )
 
     def _execute_with_retry_config(
@@ -1117,14 +1154,16 @@ class FlextService[TDomainResult](
                 attempt_num = attempt + 1
 
                 # Use FlextUtilities for exception type checking
-                should_retry = FlextUtilitiesValidation.is_exception_retryable(
-                    e, config.retry_on_exceptions
+                should_retry = FlextUtilities.Validation.is_exception_retryable(
+                    e,
+                    config.retry_on_exceptions,
                 )
 
                 if not should_retry or attempt_num >= config.max_attempts:
                     # Final failure - use FlextUtilities for error message formatting
-                    error_msg = FlextUtilitiesValidation.format_error_message(
-                        e, request.timeout_seconds
+                    error_msg = FlextUtilities.Validation.format_error_message(
+                        e,
+                        request.timeout_seconds,
                     )
 
                     self.logger.exception(
@@ -1141,12 +1180,13 @@ class FlextService[TDomainResult](
                         source="flext-core/src/flext_core/service.py",
                     )
                     return self.fail(
-                        f"Operation {request.operation_name} failed: {error_msg}"
+                        f"Operation {request.operation_name} failed: {error_msg}",
                     )
 
                 # Use FlextUtilities for delay calculation
-                delay = FlextUtilitiesReliability.calculate_delay(
-                    attempt=attempt, config=config
+                delay = FlextUtilities.Reliability.calculate_delay(
+                    attempt=attempt,
+                    config=config,
                 )
 
                 self.logger.warning(
@@ -1163,10 +1203,12 @@ class FlextService[TDomainResult](
                 )
                 time.sleep(delay)
 
-        # Fallback (should not reach here)
-        return self.fail(
-            f"Operation {request.operation_name} failed after {config.max_attempts} attempts"
+        # Fast fail: This code should never be reached - all paths return above
+        msg = (
+            f"BUG: Operation {request.operation_name} loop completed without return. "
+            f"This indicates a logic error in execute_with_retry_config()."
         )
+        raise RuntimeError(msg)
 
     def execute_operation(
         self,
@@ -1205,15 +1247,17 @@ class FlextService[TDomainResult](
             # Validate pre-execution requirements
             validation_result = self._validate_pre_execution(request)
             if validation_result.is_failure:
-                return self.fail(validation_result.error or "Pre-execution validation failed")
+                return self.fail(
+                    validation_result.error or "Pre-execution validation failed",
+                )
 
             # Execute with retry logic (delegated to private method)
             # Validate retry_config - NO fallback, explicit validation
             retry_config = request.retry_config
-            if not isinstance(retry_config, dict):
+            if not FlextRuntime.is_dict_like(retry_config):
                 # Fast fail: retry_config must be dict (Field default_factory ensures this)
                 # Type checker may think this is unreachable, but it's reachable at runtime
-                msg = (  # type: ignore[unreachable]
+                msg = (
                     f"Invalid retry_config type: {type(retry_config).__name__}. "
                     "Expected dict[str, object]"
                 )
@@ -1221,7 +1265,8 @@ class FlextService[TDomainResult](
             return self._retry_loop(request, retry_config)
 
     def execute_with_full_validation(
-        self, _request: FlextModels.DomainServiceExecutionRequest
+        self,
+        _request: FlextModels.DomainServiceExecutionRequest,
     ) -> FlextResult[TDomainResult]:
         """Execute operation with full validation including business rules and config.
 
@@ -1236,7 +1281,7 @@ class FlextService[TDomainResult](
         business_rules_result = self.validate_business_rules()
         if business_rules_result.is_failure:
             return self.fail(
-                f"Business rules validation failed: {business_rules_result.error}"
+                f"Business rules validation failed: {business_rules_result.error}",
             )
 
         config_result = self.validate_config()
@@ -1247,7 +1292,9 @@ class FlextService[TDomainResult](
         return self.execute()
 
     def _execute_action(
-        self, action: object, action_name: str
+        self,
+        action: object,
+        action_name: str,
     ) -> FlextResult[TDomainResult]:
         """Execute a conditional action (true or false).
 
@@ -1289,7 +1336,8 @@ class FlextService[TDomainResult](
             return self.fail(f"{action_name.capitalize()} action execution failed: {e}")
 
     def execute_conditionally(
-        self, request: FlextModels.ConditionalExecutionRequest
+        self,
+        request: FlextModels.ConditionalExecutionRequest,
     ) -> FlextResult[TDomainResult]:
         """Execute operation conditionally based on the provided condition.
 
@@ -1348,7 +1396,8 @@ class FlextService[TDomainResult](
             signal.signal(signal.SIGALRM, old_handler)
 
     def execute_with_timeout(
-        self, timeout_seconds: float
+        self,
+        timeout_seconds: float,
     ) -> FlextResult[TDomainResult]:
         """Execute operation with timeout handling.
 

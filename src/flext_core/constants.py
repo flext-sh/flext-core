@@ -824,7 +824,11 @@ class FlextConstants:
 
         # Handler mode Literal type for type-safe annotations
         HandlerModeLiteral: TypeAlias = Literal[
-            "command", "query", "event", "operation", "saga"
+            "command",
+            "query",
+            "event",
+            "operation",
+            "saga",
         ]
 
         # Message type Literal types for type-safe annotations
@@ -834,7 +838,11 @@ class FlextConstants:
 
         # Service metric type Literal for type-safe annotations
         ServiceMetricTypeLiteral: TypeAlias = Literal[
-            "performance", "errors", "throughput", "latency", "availability"
+            "performance",
+            "errors",
+            "throughput",
+            "latency",
+            "availability",
         ]
 
         # Processing mode StrEnum

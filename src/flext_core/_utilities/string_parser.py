@@ -45,9 +45,7 @@ class FlextUtilitiesStringParser:
     ...     values = result.unwrap()  # ["a", "b", "c"]
 
     >>> # Parse with escape character handling
-    >>> result = parser.split_on_char_with_escape(
-    ...     "cn=admin\\,dc=com", ",", "\\"
-    ... )
+    >>> result = parser.split_on_char_with_escape("cn=admin\\,dc=com", ",", "\\")
 
     >>> # Normalize whitespace
     >>> result = parser.normalize_whitespace("  hello   world  ")
@@ -395,9 +393,7 @@ class FlextUtilitiesStringParser:
 
         Example:
             >>> parser = FlextUtilitiesStringParser()
-            >>> result = parser.normalize_whitespace(
-            ...     "hello    world\\t\\nfoo"
-            ... )
+            >>> result = parser.normalize_whitespace("hello    world\\t\\nfoo")
             >>> normalized = result.unwrap()  # "hello world foo"
 
         """

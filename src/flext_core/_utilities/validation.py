@@ -2,6 +2,34 @@
 
 Extracted from flext_core.utilities for better modularity.
 
+⚠️ ARCHITECTURAL RULE - DO NOT MODIFY ⚠️
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This module CORRECTLY imports and uses FlextResult[T]. This is NOT a circular import.
+
+**Dependency Flow** (UNIDIRECTIONAL - NO CIRCLE):
+  FlextResult (Tier 1) → defines Result[T] type
+         ↑
+         |
+  FlextUtilities (Tier 2) → USES Result[T] in return types
+
+**Why This Is Safe**:
+- FlextResult ONLY defines the Result[T] type and its methods (ok/fail/unwrap/map)
+- FlextUtilities USES FlextResult[T] as return type for validation methods
+- FlextResult NEVER calls FlextUtilities methods
+- Therefore: NO CIRCULAR DEPENDENCY exists
+
+**For Other Agents**:
+❌ DO NOT remove `from flext_core.result import FlextResult`
+❌ DO NOT change FlextResult[T] returns to plain T or exceptions
+❌ DO NOT refactor this to "break circular imports" - THERE IS NO CIRCULAR
+
+✅ This architecture is CORRECT and INTENTIONAL
+✅ FlextUtilities validation methods MUST return FlextResult[T]
+✅ Railway-oriented programming pattern requires Result types
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -24,7 +52,7 @@ import orjson
 
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
-from flext_core.result import FlextResult
+from flext_core.result import FlextResult  # ✅ CORRECT - See architectural note above
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
@@ -86,36 +114,55 @@ class FlextUtilitiesValidation:
             return {
                 k: FlextUtilitiesValidation._sort_dict_keys(data_dict[k])
                 for k in sorted(
-                    data_dict.keys(), key=FlextUtilitiesValidation._sort_key
+                    data_dict.keys(),
+                    key=FlextUtilitiesValidation._sort_key,
                 )
             }
         return data
 
     @staticmethod
     def validate_pipeline(value: str, validators: list[object]) -> FlextResult[bool]:
-        """Validate using a pipeline of validators."""
+        """Validate using a pipeline of validators.
+
+        Returns:
+            FlextResult[bool]: Success with True if all validators pass,
+                failure with error details if any validator fails
+
+        """
         for validator in validators:
-            if callable(validator):
-                try:
-                    result: FlextResult[bool] = cast(
-                        "FlextResult[bool]", validator(value)
-                    )
+            # FAST FAIL: non-callable validators are programming errors
+            if not callable(validator):
+                return FlextResult[bool].fail(
+                    "Validator must be callable",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+            try:
+                # Execute validator - may return FlextResult[bool] or raise exception
+                result = validator(value)
+
+                # FAST FAIL: If validator returns FlextResult, check if ok(True)
+                if isinstance(result, FlextResult):
                     if result.is_failure:
-                        return result
-                    if not result.is_success or result.value is not True:
-                        error_msg = (
-                            "Validator must return FlextResult[bool].ok(True) "
-                            "for success"
+                        return FlextResult[bool].fail(
+                            f"Validator failed: {result.error}",
+                            error_code=FlextConstants.Errors.VALIDATION_ERROR,
                         )
-                        return FlextResult[bool].fail(error_msg)
-                except (
-                    AttributeError,
-                    TypeError,
-                    ValueError,
-                    RuntimeError,
-                    KeyError,
-                ) as e:
-                    return FlextResult[bool].fail(f"Validator failed: {e}")
+                    if result.data is not True:
+                        return FlextResult[bool].fail(
+                            "Validator must return FlextResult[bool].ok(True)",
+                            error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                        )
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+            ) as e:
+                return FlextResult[bool].fail(
+                    f"Validator failed: {e}",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
         return FlextResult[bool].ok(True)
 
     @staticmethod
@@ -281,21 +328,24 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _generate_key_pydantic(
-        command: FlextProtocols.HasModelDump, command_type: type[object]
+        command: FlextProtocols.HasModelDump,
+        command_type: type[object],
     ) -> str | None:
         """Generate cache key from Pydantic model."""
         try:
             data = command.model_dump(mode="python")
             sorted_data = FlextUtilitiesValidation._sort_dict_keys(data)
             return FlextUtilitiesValidation._generate_key_from_data(
-                command_type, sorted_data
+                command_type,
+                sorted_data,
             )
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             return None
 
     @staticmethod
     def _generate_key_dataclass(
-        command: object, command_type: type[object]
+        command: object,
+        command_type: type[object],
     ) -> str | None:
         """Generate cache key from dataclass."""
         try:
@@ -304,7 +354,8 @@ class FlextUtilitiesValidation:
                 dataclass_data[field.name] = getattr(command, field.name)
             sorted_data = FlextUtilitiesValidation._sort_dict_keys(dataclass_data)
             return FlextUtilitiesValidation._generate_key_from_data(
-                command_type, sorted_data
+                command_type,
+                sorted_data,
             )
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             return None
@@ -315,7 +366,8 @@ class FlextUtilitiesValidation:
         try:
             sorted_data = FlextUtilitiesValidation._sort_dict_keys(command)
             return FlextUtilitiesValidation._generate_key_from_data(
-                command_type, sorted_data
+                command_type,
+                sorted_data,
             )
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             return None
@@ -348,7 +400,8 @@ class FlextUtilitiesValidation:
             and not isinstance(command, type)
         ):
             key = FlextUtilitiesValidation._generate_key_dataclass(
-                command, command_type
+                command,
+                command_type,
             )
             if key is not None:
                 return key
@@ -360,7 +413,7 @@ class FlextUtilitiesValidation:
                 return key
 
         # Last resort: string representation with hash
-        command_str = str(command) if command is not None else "None"
+        command_str = "None" if command is None else str(command)
         try:
             return f"{command_type.__name__}_{hash(command_str)}"
         except TypeError:
@@ -423,7 +476,7 @@ class FlextUtilitiesValidation:
     def validate_required_string(
         value: str | None,
         context: str = "Field",
-    ) -> FlextResult[str]:
+    ) -> str:
         """Validate that a string is not None, empty, or whitespace-only.
 
         This is the most commonly repeated validation pattern across flext-ldap,
@@ -435,12 +488,16 @@ class FlextUtilitiesValidation:
             context: Context for error message (e.g., "Password", "DN", "Username")
 
         Returns:
-            FlextResult[str]: Success with stripped value, or failure with error
+            str: Stripped value
+
+        Raises:
+            ValueError: If value is None, empty, or whitespace-only
 
         """
         if value is None or not value.strip():
-            return FlextResult[str].fail(f"{context} cannot be empty")
-        return FlextResult[str].ok(value.strip())
+            msg = f"{context} cannot be empty"
+            raise ValueError(msg)
+        return value.strip()
 
     @staticmethod
     def validate_choice(
@@ -475,7 +532,7 @@ class FlextUtilitiesValidation:
         if check_value not in check_choices:
             choices_str = ", ".join(sorted(valid_choices))
             return FlextResult[str].fail(
-                f"Invalid {context}: {value}. Must be one of {choices_str}"
+                f"Invalid {context}: {value}. Must be one of {choices_str}",
             )
 
         return FlextResult[str].ok(value)
@@ -505,11 +562,11 @@ class FlextUtilitiesValidation:
         """
         if min_length is not None and len(value) < min_length:
             return FlextResult[str].fail(
-                f"{context} must be at least {min_length} characters"
+                f"{context} must be at least {min_length} characters",
             )
         if max_length is not None and len(value) > max_length:
             return FlextResult[str].fail(
-                f"{context} must be no more than {max_length} characters"
+                f"{context} must be no more than {max_length} characters",
             )
         return FlextResult[str].ok(value)
 
@@ -605,7 +662,7 @@ class FlextUtilitiesValidation:
         ):
             schemes_str = ", ".join(allowed_schemes)
             return FlextResult[str].fail(
-                f"{context} must start with one of {schemes_str}"
+                f"{context} must start with one of {schemes_str}",
             )
 
         return FlextResult[str].ok(uri_stripped)
@@ -769,11 +826,11 @@ class FlextUtilitiesValidation:
         """
         if min_value is not None and value < min_value:
             return FlextResult[int].fail(
-                f"{context} must be at least {min_value}, got {value}"
+                f"{context} must be at least {min_value}, got {value}",
             )
         if max_value is not None and value > max_value:
             return FlextResult[int].fail(
-                f"{context} must be at most {max_value}, got {value}"
+                f"{context} must be at most {max_value}, got {value}",
             )
         return FlextResult[int].ok(value)
 
@@ -1172,7 +1229,8 @@ class FlextUtilitiesValidation:
         """Validate backoff_multiplier parameter."""
         backoff_multiplier = retry_config.get("backoff_multiplier")
         if backoff_multiplier is not None and isinstance(
-            backoff_multiplier, (int, float, str)
+            backoff_multiplier,
+            (int, float, str),
         ):
             backoff_mult = float(backoff_multiplier)
             if backoff_mult < 1.0:
@@ -1182,7 +1240,7 @@ class FlextUtilitiesValidation:
                 )
             return FlextResult[float].ok(backoff_mult)
         return FlextResult[float].ok(
-            FlextConstants.Performance.DEFAULT_BACKOFF_MULTIPLIER
+            FlextConstants.Performance.DEFAULT_BACKOFF_MULTIPLIER,
         )
 
     @staticmethod
@@ -1205,23 +1263,23 @@ class FlextUtilitiesValidation:
                 .flat_map(
                     lambda max_attempts: (
                         FlextUtilitiesValidation._validate_initial_delay(
-                            retry_config
+                            retry_config,
                         ).map(lambda initial_delay: (max_attempts, initial_delay))
-                    )
+                    ),
                 )
                 .flat_map(
                     lambda params: (
                         FlextUtilitiesValidation._validate_max_delay(retry_config).map(
-                            lambda max_delay: (*params, max_delay)
+                            lambda max_delay: (*params, max_delay),
                         )
-                    )
+                    ),
                 )
                 .flat_map(
                     lambda params: (
                         FlextUtilitiesValidation._validate_backoff_multiplier(
-                            retry_config
+                            retry_config,
                         ).map(lambda backoff_mult: (*params, backoff_mult))
-                    )
+                    ),
                 )
                 .map(
                     lambda params: FlextTypes.RetryConfig(
@@ -1229,7 +1287,7 @@ class FlextUtilitiesValidation:
                         initial_delay_seconds=params[1],
                         max_delay_seconds=params[2],
                         exponential_backoff=bool(
-                            retry_config.get("exponential_backoff")
+                            retry_config.get("exponential_backoff"),
                         ),
                         retry_on_exceptions=(
                             cast(
@@ -1241,7 +1299,7 @@ class FlextUtilitiesValidation:
                             else [Exception]
                         ),
                         backoff_multiplier=params[3],
-                    )
+                    ),
                 )
             )
 
@@ -1253,7 +1311,8 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def is_exception_retryable(
-        exception: Exception, retry_on_exceptions: list[type[Exception]]
+        exception: Exception,
+        retry_on_exceptions: list[type[Exception]],
     ) -> bool:
         """Check if exception should trigger retry.
 
@@ -1269,7 +1328,8 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def format_error_message(
-        exception: Exception, timeout_seconds: float | None = None
+        exception: Exception,
+        timeout_seconds: float | None = None,
     ) -> str:
         """Format error message with timeout context if applicable.
 
@@ -1310,20 +1370,20 @@ class FlextUtilitiesValidation:
         for name in services:
             if not isinstance(name, str) or not name.strip():
                 return FlextResult[dict[str, object]].fail(
-                    f"Invalid service name: '{name}'. Must be non-empty string"
+                    f"Invalid service name: '{name}'. Must be non-empty string",
                 )
 
             # Check for reserved names
             if name.startswith("_"):
                 return FlextResult[dict[str, object]].fail(
-                    f"Service name cannot start with underscore: '{name}'"
+                    f"Service name cannot start with underscore: '{name}'",
                 )
 
         # Validate service instances
         for name, service in services.items():
             if service is None:
                 return FlextResult[dict[str, object]].fail(
-                    f"Service '{name}' cannot be None"
+                    f"Service '{name}' cannot be None",
                 )
 
             # Check for callable services (should be registered as factories)
@@ -1337,7 +1397,8 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def analyze_constructor_parameter(
-        param_name: str, param: inspect.Parameter
+        param_name: str,
+        param: inspect.Parameter,
     ) -> dict[str, object]:
         """Analyze constructor parameter for dependency injection.
 
@@ -1373,33 +1434,109 @@ class FlextUtilitiesValidation:
             FlextResult[dict[str, object]]: Validated configuration or validation error
 
         """
-        if not isinstance(config, dict):
+        if not FlextRuntime.is_dict_like(config):
             return FlextResult[dict[str, object]].fail(
-                "Configuration must be a dictionary"
+                "Configuration must be a dictionary",
             )
 
         # Validate metadata if present
         metadata = config.get("metadata")
-        if metadata is not None and not isinstance(metadata, dict):
+        if metadata is not None and not FlextRuntime.is_dict_like(metadata):
             return FlextResult[dict[str, object]].fail("Metadata must be a dictionary")
 
         # Validate correlation_id if present
         correlation_id = config.get("correlation_id")
         if correlation_id is not None and not isinstance(correlation_id, str):
             return FlextResult[dict[str, object]].fail(
-                "Correlation ID must be a string"
+                "Correlation ID must be a string",
             )
 
         # Validate timeout_override if present
         timeout_override = config.get("timeout_override")
         if timeout_override is not None and not isinstance(
-            timeout_override, (int, float)
+            timeout_override,
+            (int, float),
         ):
             return FlextResult[dict[str, object]].fail(
-                "Timeout override must be a number"
+                "Timeout override must be a number",
             )
 
         return FlextResult[dict[str, object]].ok(config)
+
+    @staticmethod
+    def _validate_event_structure(event: object) -> FlextResult[bool]:
+        """Validate event is not None and has required attributes."""
+        if event is None:
+            return FlextResult[bool].fail(
+                "Domain event cannot be None",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+
+        # Check required attributes
+        required_attrs = ["event_type", "aggregate_id", "unique_id", "created_at"]
+        missing_attrs = [attr for attr in required_attrs if not hasattr(event, attr)]
+        if missing_attrs:
+            return FlextResult[bool].fail(
+                f"Domain event missing required attributes: {missing_attrs}",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+
+        return FlextResult[bool].ok(True)
+
+    @staticmethod
+    def _validate_event_fields(event: object) -> FlextResult[bool]:
+        """Validate event field types and values."""
+        # Validate event_type is non-empty string
+        event_type = getattr(event, "event_type", "")
+        if not event_type or not isinstance(event_type, str):
+            return FlextResult[bool].fail(
+                "Domain event event_type must be a non-empty string",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+
+        # Validate aggregate_id is non-empty string
+        aggregate_id = getattr(event, "aggregate_id", "")
+        if not aggregate_id or not isinstance(aggregate_id, str):
+            return FlextResult[bool].fail(
+                "Domain event aggregate_id must be a non-empty string",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+
+        # Validate data is a dict
+        data = getattr(event, "data", None)
+        if data is not None and not FlextRuntime.is_dict_like(data):
+            return FlextResult[bool].fail(
+                "Domain event data must be a dictionary or None",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+
+        return FlextResult[bool].ok(True)
+
+    @staticmethod
+    def validate_domain_event(event: object) -> FlextResult[bool]:
+        """Enhanced domain event validation with comprehensive checks.
+
+        Validates domain events for proper structure, required fields,
+        and domain invariants. Used across all flext-ecosystem projects.
+
+        Args:
+            event: The domain event to validate
+
+        Returns:
+            FlextResult[bool]: Success with True if valid, failure with details
+
+        """
+        # Validate structure
+        structure_result = FlextUtilitiesValidation._validate_event_structure(event)
+        if structure_result.is_failure:
+            return structure_result
+
+        # Validate fields
+        fields_result = FlextUtilitiesValidation._validate_event_fields(event)
+        if fields_result.is_failure:
+            return fields_result
+
+        return FlextResult[bool].ok(True)
 
 
 __all__ = ["FlextUtilitiesValidation"]

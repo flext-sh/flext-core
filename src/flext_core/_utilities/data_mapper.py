@@ -38,6 +38,37 @@ class FlextUtilitiesDataMapper:
     """
 
     @staticmethod
+    def convert_to_int_safe(value: object, default: int) -> int:
+        """Convert value to int with safe fallback on error.
+
+        **Generic replacement for**: Manual int conversion with try/except
+
+        Args:
+            value: Value to convert (int, str, or other)
+            default: Default value to return on conversion failure
+
+        Returns:
+            Converted int or default value
+
+        Example:
+            >>> FlextUtilitiesDataMapper.convert_to_int_safe("123", 0)
+            123
+            >>> FlextUtilitiesDataMapper.convert_to_int_safe("invalid", 0)
+            0
+            >>> FlextUtilitiesDataMapper.convert_to_int_safe(42, 0)
+            42
+
+        """
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str):
+            try:
+                return int(value)
+            except ValueError:
+                return default
+        return default
+
+    @staticmethod
     def map_dict_keys(
         source: dict[str, object],
         key_mapping: dict[str, str],

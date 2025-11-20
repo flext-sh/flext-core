@@ -359,8 +359,9 @@ class TestContextManagement:
         """Test metadata is normalized correctly."""
         dispatcher = FlextDispatcher()
 
-        metadata = {"key": "value", "number": 123}
-        normalized = dispatcher._normalize_context_metadata(metadata)
+        # Test with dict (backward compatibility path)
+        metadata_dict = {"key": "value", "number": 123}
+        normalized = dispatcher._normalize_context_metadata(metadata_dict)
 
         assert normalized is not None
         assert normalized["key"] == "value"

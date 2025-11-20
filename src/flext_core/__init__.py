@@ -1,5 +1,8 @@
 """FLEXT Core - Foundation framework for enterprise domain-driven applications.
 
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
 ==============================================================================
 ROOT MODULE - ECOSYSTEM INTEGRATION POINT
 ==============================================================================
@@ -413,16 +416,6 @@ auto_register = FlextConfig.auto_register
 #
 # ENABLED via FlextRuntime.enable_runtime_checking() for package-wide validation.
 # Critical methods can also use @beartype decorator individually.
-#
-# To enable full package-wide checking in YOUR application:
-#   from flext_core import FlextRuntime
-#   FlextRuntime.enable_runtime_checking()  # Applies beartype to all modules
-#
-# Or use @beartype decorator manually in your code:
-#   from beartype import beartype
-#   @beartype
-#   def my_function(x: int) -> str:
-#       return str(x)
 #
 # Beartype provides O(log n) runtime validation with minimal overhead.
 # Static type checking (pyright strict mode) is ALWAYS active.

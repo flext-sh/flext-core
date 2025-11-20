@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import tempfile
+from collections.abc import Iterator
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -563,8 +564,14 @@ class TestDockerComposeWithPythonOnWhales:
     """
 
     @pytest.fixture
-    def docker_manager_with_fixtures(self, tmp_path: Path) -> FlextTestDocker:
-        """Create FlextTestDocker with access to docker-compose.yml fixture."""
+    def docker_manager_with_fixtures(self, tmp_path: Path) -> Iterator[FlextTestDocker]:
+        """Create FlextTestDocker with access to docker-compose.yml fixture.
+
+        Resilient, idempotent, and parallelizable:
+        - Cleans up any dirty/conflicting containers before tests
+        - Marks containers as dirty on failure for cleanup
+        - Uses isolated state file per test run
+        """
         with (
             patch("flext_tests.docker.docker.from_env"),
             patch.object(FlextTestDocker, "_load_dirty_state"),
@@ -578,7 +585,54 @@ class TestDockerComposeWithPythonOnWhales:
             manager._dirty_containers.clear()
             manager._registered_services.clear()
             manager._service_dependencies.clear()
-            return manager
+
+            # RESILIENCE: Register fixture containers for tracking
+            manager.register_container_config(
+                container_name="fixtures-web-1",
+                compose_file="docker-compose.yml",
+                service="web",
+            )
+
+            # IDEMPOTENCE: Force cleanup of any existing containers with conflicting names
+            # This ensures tests can run multiple times even if previous runs failed
+            try:
+                import docker as docker_lib
+
+                client = docker_lib.from_env()
+                for container in client.containers.list(all=True):
+                    if "fixtures-web" in container.name or "test-network" in str(
+                        container.attrs.get("NetworkSettings", {}).get("Networks", {})
+                    ):
+                        try:
+                            container.remove(force=True)
+                            manager.logger.info(
+                                f"Removed conflicting container: {container.name}"
+                            )
+                        except Exception as e:
+                            manager.logger.warning(
+                                f"Failed to remove {container.name}: {e}"
+                            )
+            except Exception as e:
+                manager.logger.warning(f"Pre-cleanup failed (non-fatal): {e}")
+
+            # YIELD for test execution with proper teardown
+            test_failed = False
+            try:
+                yield manager
+            except Exception:
+                # Mark container as dirty on test failure for next run
+                test_failed = True
+                raise
+            finally:
+                # CLEANUP: Always attempt to clean up, mark dirty on failure
+                try:
+                    manager.compose_down("docker-compose.yml")
+                    if test_failed:
+                        # Mark as dirty so next run will do full cleanup
+                        manager.mark_container_dirty("fixtures-web-1")
+                except Exception as e:
+                    manager.logger.warning(f"Teardown cleanup failed: {e}")
+                    manager.mark_container_dirty("fixtures-web-1")
 
     def test_compose_up_returns_flext_result(
         self, docker_manager_with_fixtures: FlextTestDocker

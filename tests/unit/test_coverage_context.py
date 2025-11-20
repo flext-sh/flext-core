@@ -29,7 +29,8 @@ class TestCorrelationDomain:
         correlation_id = FlextContext.Correlation.generate_correlation_id()
         assert isinstance(correlation_id, str)
         assert len(correlation_id) > 0
-        assert correlation_id.startswith("flext-")
+        # FlextUtilities.Generators.generate_correlation_id() uses "corr" prefix
+        assert correlation_id.startswith("corr_")
 
     def test_correlation_id_getter_setter(self) -> None:
         """Test correlation ID getter and setter."""
@@ -64,7 +65,8 @@ class TestCorrelationDomain:
 
         with FlextContext.Correlation.new_correlation() as correlation_id:
             assert isinstance(correlation_id, str)
-            assert correlation_id.startswith("flext-")
+            # FlextUtilities.Generators.generate_correlation_id() uses "corr" prefix
+            assert correlation_id.startswith("corr_")
 
             # Inside context, correlation ID should be set
             current_id = FlextContext.Correlation.get_correlation_id()
@@ -108,7 +110,8 @@ class TestCorrelationDomain:
         with FlextContext.Correlation.inherit_correlation() as inherited_id:
             assert inherited_id is not None
             assert isinstance(inherited_id, str)
-            assert inherited_id.startswith("flext-")
+            # FlextUtilities.Generators.generate_correlation_id() uses "corr" prefix
+            assert inherited_id.startswith("corr_")
 
 
 class TestServiceDomain:
@@ -439,7 +442,8 @@ class TestUtilitiesDomain:
         correlation_id = FlextContext.Utilities.ensure_correlation_id()
 
         assert isinstance(correlation_id, str)
-        assert correlation_id.startswith("flext-")
+        # FlextUtilities.Generators.generate_correlation_id() uses "corr" prefix
+        assert correlation_id.startswith("corr_")
 
     def test_ensure_correlation_id_uses_existing(self) -> None:
         """Test ensure correlation ID uses existing if present."""
@@ -519,7 +523,7 @@ class TestContextDataModel:
 
         assert isinstance(export_snapshot, FlextModels.ContextExport)
         assert export_snapshot.data.get("key1") == "value1"
-        assert export_snapshot.metadata.get("created_at") == "2025-01-01"
+        assert export_snapshot.metadata.attributes.get("created_at") == "2025-01-01"
 
 
 class TestContextIntegration:

@@ -1,7 +1,7 @@
-"""Comprehensive tests for FlextUtilitiesDataMapper - 100% coverage target.
+"""Comprehensive tests for FlextUtilities.DataMapper - 100% coverage target.
 
 This module provides real tests (no mocks) for all data mapping functions
-in FlextUtilitiesDataMapper to achieve 100% code coverage.
+in FlextUtilities.DataMapper to achieve 100% code coverage.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities.data_mapper import FlextUtilitiesDataMapper
+from flext_core import FlextUtilities
 
 # ============================================================================
 # Test Map Dict Keys
@@ -23,7 +23,7 @@ class TestFlextUtilitiesDataMapperMapDictKeys:
         """Test basic dict key mapping."""
         source = {"old_key": "value1", "foo": "value2"}
         mapping = {"old_key": "new_key", "foo": "bar"}
-        result = FlextUtilitiesDataMapper.map_dict_keys(source, mapping)
+        result = FlextUtilities.DataMapper.map_dict_keys(source, mapping)
         assert result.is_success
         assert result.unwrap() == {"new_key": "value1", "bar": "value2"}
 
@@ -31,7 +31,7 @@ class TestFlextUtilitiesDataMapperMapDictKeys:
         """Test mapping with keep_unmapped=True."""
         source = {"old_key": "value1", "unmapped": "value2"}
         mapping = {"old_key": "new_key"}
-        result = FlextUtilitiesDataMapper.map_dict_keys(
+        result = FlextUtilities.DataMapper.map_dict_keys(
             source, mapping, keep_unmapped=True
         )
         assert result.is_success
@@ -41,7 +41,7 @@ class TestFlextUtilitiesDataMapperMapDictKeys:
         """Test mapping with keep_unmapped=False."""
         source = {"old_key": "value1", "unmapped": "value2"}
         mapping = {"old_key": "new_key"}
-        result = FlextUtilitiesDataMapper.map_dict_keys(
+        result = FlextUtilities.DataMapper.map_dict_keys(
             source, mapping, keep_unmapped=False
         )
         assert result.is_success
@@ -57,7 +57,7 @@ class TestFlextUtilitiesDataMapperMapDictKeys:
                 raise RuntimeError(msg)
 
         bad = BadDict()
-        result = FlextUtilitiesDataMapper.map_dict_keys(bad, {})  # type: ignore[call-overload]
+        result = FlextUtilities.DataMapper.map_dict_keys(bad, {})
         assert result.is_failure
         assert "Failed to map" in result.error
 
@@ -74,7 +74,7 @@ class TestFlextUtilitiesDataMapperBuildFlagsDict:
         """Test basic flags dict building."""
         flags = ["read", "write"]
         mapping = {"read": "can_read", "write": "can_write", "delete": "can_delete"}
-        result = FlextUtilitiesDataMapper.build_flags_dict(flags, mapping)
+        result = FlextUtilities.DataMapper.build_flags_dict(flags, mapping)
         assert result.is_success
         flags_dict = result.unwrap()
         assert flags_dict["can_read"] is True
@@ -85,7 +85,7 @@ class TestFlextUtilitiesDataMapperBuildFlagsDict:
         """Test flags dict with custom default value."""
         flags = ["read"]
         mapping = {"read": "can_read", "write": "can_write"}
-        result = FlextUtilitiesDataMapper.build_flags_dict(
+        result = FlextUtilities.DataMapper.build_flags_dict(
             flags, mapping, default_value=True
         )
         assert result.is_success
@@ -103,7 +103,7 @@ class TestFlextUtilitiesDataMapperBuildFlagsDict:
                 raise RuntimeError(msg)
 
         bad = BadList()
-        result = FlextUtilitiesDataMapper.build_flags_dict(bad, {})  # type: ignore[call-overload]
+        result = FlextUtilities.DataMapper.build_flags_dict(bad, {})
         assert result.is_failure
         assert "Failed to build" in result.error
 
@@ -120,7 +120,7 @@ class TestFlextUtilitiesDataMapperCollectActiveKeys:
         """Test basic active keys collection."""
         source = {"read": True, "write": True, "delete": False}
         mapping = {"read": "r", "write": "w", "delete": "d"}
-        result = FlextUtilitiesDataMapper.collect_active_keys(source, mapping)
+        result = FlextUtilities.DataMapper.collect_active_keys(source, mapping)
         assert result.is_success
         assert result.unwrap() == ["r", "w"]
 
@@ -128,7 +128,7 @@ class TestFlextUtilitiesDataMapperCollectActiveKeys:
         """Test collection with no active keys."""
         source = {"read": False, "write": False}
         mapping = {"read": "r", "write": "w"}
-        result = FlextUtilitiesDataMapper.collect_active_keys(source, mapping)
+        result = FlextUtilities.DataMapper.collect_active_keys(source, mapping)
         assert result.is_success
         assert result.unwrap() == []
 
@@ -142,7 +142,7 @@ class TestFlextUtilitiesDataMapperCollectActiveKeys:
                 raise RuntimeError(msg)
 
         bad = BadDict()
-        result = FlextUtilitiesDataMapper.collect_active_keys(bad, {"key": "output"})  # type: ignore[call-overload]
+        result = FlextUtilities.DataMapper.collect_active_keys(bad, {"key": "output"})
         assert result.is_failure
         assert "Failed to collect" in result.error
 
@@ -158,7 +158,7 @@ class TestFlextUtilitiesDataMapperTransformValues:
     def test_transform_values_basic(self) -> None:
         """Test basic value transformation."""
         source = {"a": "hello", "b": "world"}
-        result = FlextUtilitiesDataMapper.transform_values(
+        result = FlextUtilities.DataMapper.transform_values(
             source, lambda v: str(v).upper()
         )
         assert result == {"a": "HELLO", "b": "WORLD"}
@@ -166,7 +166,7 @@ class TestFlextUtilitiesDataMapperTransformValues:
     def test_transform_values_numbers(self) -> None:
         """Test transforming numeric values."""
         source = {"a": 1, "b": 2, "c": 3}
-        result = FlextUtilitiesDataMapper.transform_values(source, lambda v: v * 2)
+        result = FlextUtilities.DataMapper.transform_values(source, lambda v: v * 2)
         assert result == {"a": 2, "b": 4, "c": 6}
 
 
@@ -181,19 +181,19 @@ class TestFlextUtilitiesDataMapperFilterDict:
     def test_filter_dict_basic(self) -> None:
         """Test basic dict filtering."""
         source = {"a": 1, "b": 2, "c": 3}
-        result = FlextUtilitiesDataMapper.filter_dict(source, lambda k, v: v > 1)
+        result = FlextUtilities.DataMapper.filter_dict(source, lambda k, v: v > 1)
         assert result == {"b": 2, "c": 3}
 
     def test_filter_dict_by_key(self) -> None:
         """Test filtering by key."""
         source = {"a": 1, "b": 2, "c": 3}
-        result = FlextUtilitiesDataMapper.filter_dict(source, lambda k, v: k != "b")
+        result = FlextUtilities.DataMapper.filter_dict(source, lambda k, v: k != "b")
         assert result == {"a": 1, "c": 3}
 
     def test_filter_dict_all_filtered(self) -> None:
         """Test filtering that removes all items."""
         source = {"a": 1, "b": 2}
-        result = FlextUtilitiesDataMapper.filter_dict(source, lambda k, v: False)
+        result = FlextUtilities.DataMapper.filter_dict(source, lambda k, v: False)
         assert result == {}
 
 
@@ -208,17 +208,19 @@ class TestFlextUtilitiesDataMapperInvertDict:
     def test_invert_dict_basic(self) -> None:
         """Test basic dict inversion."""
         source = {"a": "x", "b": "y"}
-        result = FlextUtilitiesDataMapper.invert_dict(source)
+        result = FlextUtilities.DataMapper.invert_dict(source)
         assert result == {"x": "a", "y": "b"}
 
     def test_invert_dict_collisions_last(self) -> None:
         """Test inversion with collisions, keep last."""
         source = {"a": "x", "b": "y", "c": "x"}
-        result = FlextUtilitiesDataMapper.invert_dict(source, handle_collisions="last")
+        result = FlextUtilities.DataMapper.invert_dict(source, handle_collisions="last")
         assert result == {"x": "c", "y": "b"}  # Last "x" kept
 
     def test_invert_dict_collisions_first(self) -> None:
         """Test inversion with collisions, keep first."""
         source = {"a": "x", "b": "y", "c": "x"}
-        result = FlextUtilitiesDataMapper.invert_dict(source, handle_collisions="first")
+        result = FlextUtilities.DataMapper.invert_dict(
+            source, handle_collisions="first"
+        )
         assert result == {"x": "a", "y": "b"}  # First "x" kept

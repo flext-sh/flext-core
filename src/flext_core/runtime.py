@@ -60,11 +60,12 @@ from __future__ import annotations
 import json
 import logging
 import re
+import secrets
+import string
 import typing
-import uuid
 from collections.abc import Callable, Sequence
 from types import ModuleType
-from typing import TypeGuard, cast
+from typing import Any, TypeGuard, cast
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
@@ -223,7 +224,7 @@ class FlextRuntime:
             # Verify it's actually dict-like by checking if it has dict methods
             try:
                 # Try to access items to verify it's dict-like
-                _ = value.items()  # type: ignore[attr-defined]
+                _ = value.items()
                 return True
             except (AttributeError, TypeError):
                 return False
@@ -472,13 +473,15 @@ class FlextRuntime:
                 # Extract the required level and actual key
                 # Format: _level_debug_config -> required_level='debug', actual_key='config'
                 parts = key.split(
-                    "_", FlextConstants.Validation.LEVEL_PREFIX_PARTS_COUNT
+                    "_",
+                    FlextConstants.Validation.LEVEL_PREFIX_PARTS_COUNT,
                 )  # Split into ['', 'level', 'debug', 'config']
                 if len(parts) >= FlextConstants.Validation.LEVEL_PREFIX_PARTS_COUNT:
                     required_level_name = parts[2]
                     actual_key = parts[3]
                     required_level = level_hierarchy.get(
-                        required_level_name.lower(), 10
+                        required_level_name.lower(),
+                        10,
                     )
 
                     # Only include if current level >= required level
@@ -543,16 +546,22 @@ class FlextRuntime:
             log_level = getattr(config, "log_level", log_level)
             console_renderer = getattr(config, "console_renderer", console_renderer)
             additional_processors_from_config = getattr(
-                config, "additional_processors", None
+                config,
+                "additional_processors",
+                None,
             )
             if additional_processors_from_config:
                 additional_processors = additional_processors_from_config
             wrapper_class_factory = getattr(
-                config, "wrapper_class_factory", wrapper_class_factory
+                config,
+                "wrapper_class_factory",
+                wrapper_class_factory,
             )
             logger_factory = getattr(config, "logger_factory", logger_factory)
             cache_logger_on_first_use = getattr(
-                config, "cache_logger_on_first_use", cache_logger_on_first_use
+                config,
+                "cache_logger_on_first_use",
+                cache_logger_on_first_use,
             )
 
         # Single guard - no redundant checks
@@ -582,21 +591,21 @@ class FlextRuntime:
             processors.append(module.processors.JSONRenderer())
 
         # Type-safe processor list - structlog processors have complex types
-        # that cannot be expressed without Any, so we use cast for type safety
+        # that cannot be expressed without Any, so we use Any for type safety
         module.configure(
-            processors=processors,  # type: ignore[arg-type]
+            processors=cast("Any", processors),
             wrapper_class=cast(
-                "type[object] | None",
+                "Any",
                 wrapper_class_factory
                 if wrapper_class_factory is not None
                 else module.make_filtering_bound_logger(level_to_use),
-            ),  # type: ignore[arg-type]
+            ),
             logger_factory=cast(
-                "Callable[[], object] | None",
+                "Any",
                 logger_factory
                 if logger_factory is not None
                 else module.PrintLoggerFactory(),
-            ),  # type: ignore[arg-type]
+            ),
             cache_logger_on_first_use=cache_logger_on_first_use,
         )
 
@@ -721,7 +730,9 @@ class FlextRuntime:
         # Log activation using structlog directly
         logger = structlog.get_logger(__name__)
         logger.info(
-            "Runtime type checking enabled", package="flext_core", strategy="Ologn"
+            "Runtime type checking enabled",
+            package="flext_core",
+            strategy="Ologn",
         )
 
         return True
@@ -856,7 +867,11 @@ class FlextRuntime:
 
             # Generate correlation ID if enabled
             if enable_context_correlation:
-                correlation_id = f"flext-{uuid.uuid4().hex[:12]}"
+                # Use secrets directly to avoid circular import (runtime.py is Layer 0.5, utilities.py is Layer 2)
+                alphabet = string.ascii_letters + string.digits
+                correlation_id = (
+                    f"flext-{''.join(secrets.choice(alphabet) for _ in range(12))}"
+                )
                 structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
 
             # Use structlog directly

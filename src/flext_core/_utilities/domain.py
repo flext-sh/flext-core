@@ -13,6 +13,8 @@ import logging
 from collections.abc import Callable, Hashable
 from typing import cast
 
+from flext_core.runtime import FlextRuntime
+
 _logger = logging.getLogger(__name__)
 
 
@@ -28,7 +30,9 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def compare_entities_by_id(
-        entity_a: object, entity_b: object, id_attr: str = "unique_id"
+        entity_a: object,
+        entity_b: object,
+        id_attr: str = "unique_id",
     ) -> bool:
         """Compare two entities by their unique ID attribute.
 
@@ -201,7 +205,7 @@ class FlextUtilitiesDomain:
         if hasattr(obj, "model_config"):
             try:
                 config = getattr(obj, "model_config", {})
-                if isinstance(config, dict) and config.get("frozen"):
+                if FlextRuntime.is_dict_like(config) and config.get("frozen"):
                     return True
             except (AttributeError, TypeError):
                 pass

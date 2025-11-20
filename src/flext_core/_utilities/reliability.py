@@ -103,7 +103,7 @@ class FlextUtilitiesReliability:
 
         if max_attempts_value < FlextConstants.Reliability.RETRY_COUNT_MIN:
             return FlextResult[TResult].fail(
-                f"Max attempts must be at least {FlextConstants.Reliability.RETRY_COUNT_MIN}"
+                f"Max attempts must be at least {FlextConstants.Reliability.RETRY_COUNT_MIN}",
             )
 
         last_error: str | None = None
@@ -161,7 +161,7 @@ class FlextUtilitiesReliability:
                 time.sleep(current_delay)
 
         return FlextResult[TResult].fail(
-            f"Operation failed after {max_attempts_value} attempts: {last_error}"
+            f"Operation failed after {max_attempts_value} attempts: {last_error}",
         )
 
     @staticmethod

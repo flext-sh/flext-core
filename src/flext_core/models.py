@@ -14,20 +14,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, Self
+from typing import Annotated
 
-from beartype.door import is_bearable
-from pydantic import Discriminator, model_validator
+from pydantic import Discriminator
 
 from flext_core._models.base import FlextModelsBase
+from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.config import FlextModelsConfig
 from flext_core._models.container import FlextModelsContainer
 from flext_core._models.context import FlextModelsContext
 from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.handler import FlextModelsHandler
+from flext_core._models.metadata import Metadata as MetadataBase
 from flext_core._models.service import FlextModelsService
 from flext_core._models.validation import FlextModelsValidation
+from flext_core.config import FlextConfig
+from flext_core.constants import FlextConstants
 
 
 class FlextModels:
@@ -265,6 +268,24 @@ class FlextModels:
     class VersionableMixin(FlextModelsEntity.VersionableMixin):
         """Mixin for versioning - wrapper class."""
 
+    # Generic classes - use simple assignment (not wrapper) to avoid type parameter conflicts
+    Categories = FlextModelsCollections.Categories
+
+    class Statistics(FlextModelsCollections.Statistics):
+        """Statistics model with common counters."""
+
+    class Config(FlextModelsCollections.Config):
+        """Configuration model with common fields."""
+
+    class Results(FlextModelsCollections.Results):
+        """Base for result models."""
+
+    class Rules(FlextModelsCollections.Rules):
+        """Rules model for configuration rules."""
+
+    class Options(FlextModelsCollections.Options):
+        """Options model for configuration options."""
+
     # =========================================================================
     # OFFICIAL NAMESPACE - CQRS Patterns
     # =========================================================================
@@ -286,111 +307,40 @@ class FlextModels:
         class Handler(FlextModelsCqrs.Handler):
             """Handler configuration model - wrapper class."""
 
-    # =========================================================================
-    # OFFICIAL NAMESPACE - Validation Patterns
-    # =========================================================================
-    class Validation:
-        """Validation namespace providing official access paths."""
+        # Internal utility functions exposed for testing
+        @staticmethod
+        def _get_command_timeout_default() -> int:
+            """Get command timeout from Config (priority) or Constants (default).
 
-        validate_business_rules = FlextModelsValidation.validate_business_rules
-        validate_cross_fields = FlextModelsValidation.validate_cross_fields
-        validate_performance = FlextModelsValidation.validate_performance
-        validate_batch = FlextModelsValidation.validate_batch
-        validate_domain_invariants = FlextModelsValidation.validate_domain_invariants
-        validate_aggregate_consistency_with_rules = (
-            FlextModelsValidation.validate_aggregate_consistency_with_rules
-        )
-        validate_event_sourcing = FlextModelsValidation.validate_event_sourcing
-        validate_cqrs_patterns = FlextModelsValidation.validate_cqrs_patterns
-        validate_domain_event = FlextModelsValidation.validate_domain_event
-        validate_aggregate_consistency = (
-            FlextModelsValidation.validate_aggregate_consistency
-        )
-        validate_entity_relationships = (
-            FlextModelsValidation.validate_entity_relationships
-        )
+            Internal utility function exposed for testing purposes.
+            """
+            timeout = FlextConfig.get_global_instance().dispatcher_timeout_seconds
+            return (
+                int(timeout)
+                if timeout > 0
+                else FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT
+            )
+
+        @staticmethod
+        def _get_max_command_retries_default() -> int:
+            """Get max retry attempts from Config (priority) or Constants (default).
+
+            Internal utility function exposed for testing purposes.
+            """
+            retries = FlextConfig.get_global_instance().max_retry_attempts
+            return (
+                retries
+                if retries > 0
+                else FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES
+            )
 
     # =========================================================================
     # NESTED WRAPPER CLASSES - Base Utility Models
     # =========================================================================
-    class Metadata(FlextModelsBase.Metadata):
+    class Metadata(MetadataBase):
         """Metadata model for structured information - wrapper class."""
 
-    class Payload[T](FlextModelsBase.Payload[T]):
-        """Payload model for data transfer with runtime type validation.
-
-        Runtime Type Validation:
-            Payload[User](data=user)    # ✅ Validates user is User type
-            Payload[User](data=product) # ❌ TypeError automatically
-        """
-
-        # Runtime type validation attribute (set by __class_getitem__)
-        _expected_data_type: ClassVar[type | None] = None
-
-        def __class_getitem__(cls, item: type | tuple[type, ...]) -> type[Self]:
-            """Intercept Payload[T] to create typed subclass for runtime validation.
-
-            Args:
-                item: The data type parameter (e.g., User, Product) or tuple of types
-
-            Returns:
-                A typed subclass with _expected_data_type set
-
-            """
-            # Handle tuple of types (for Pydantic compatibility) - use first type
-            actual_type = item[0] if isinstance(item, tuple) else item
-
-            # Create typed subclass dynamically using type() built-in
-            cls_name = getattr(cls, "__name__", "Payload")
-            cls_qualname = getattr(cls, "__qualname__", "Payload")
-            type_name = getattr(actual_type, "__name__", str(actual_type))
-
-            # Dynamic type creation using helper function - returns a subclass of cls
-            # This is valid Python metaprogramming - dynamically creating a class at runtime
-            from flext_core._utilities.generators import FlextUtilitiesGenerators
-
-            return FlextUtilitiesGenerators.create_dynamic_type_subclass(
-                f"{cls_name}[{type_name}]",
-                cls,
-                {
-                    "_expected_data_type": actual_type,
-                    "__module__": cls.__module__,
-                    "__qualname__": f"{cls_qualname}[{type_name}]",
-                },
-            )
-
-        @model_validator(mode="after")
-        def _validate_data_type(self) -> Self:
-            """Validate data field matches expected type."""
-            if self._expected_data_type is not None and self.data is not None:
-                try:
-                    # For simple type objects, isinstance is more reliable than beartype
-                    if isinstance(self._expected_data_type, type):
-                        type_mismatch = not isinstance(
-                            self.data, self._expected_data_type
-                        )
-                    else:
-                        # For complex type hints (generics, unions), use beartype
-                        type_mismatch = not is_bearable(
-                            self.data, self._expected_data_type
-                        )
-                except (TypeError, AttributeError):
-                    # If type checking fails, assume type matches
-                    type_mismatch = False
-
-                if type_mismatch:
-                    expected_name = getattr(
-                        self._expected_data_type,
-                        "__name__",
-                        str(self._expected_data_type),
-                    )
-                    actual_name = type(self.data).__name__
-                    msg = (
-                        f"Payload[{expected_name}] received data of type {actual_name} "
-                        f"instead of {expected_name}. Data: {self.data!r}"
-                    )
-                    raise TypeError(msg)
-            return self
+    Payload = FlextModelsBase.Payload
 
     class Url(FlextModelsBase.Url):
         """URL model with validation - wrapper class."""
@@ -440,8 +390,7 @@ class FlextModels:
     class StructlogProxyToken(FlextModelsContext.StructlogProxyToken):
         """Structlog proxy token model - wrapper class."""
 
-    class StructlogProxyContextVar[T](FlextModelsContext.StructlogProxyContextVar[T]):
-        """Structlog proxy context variable model - wrapper class."""
+    StructlogProxyContextVar = FlextModelsContext.StructlogProxyContextVar
 
     class Token(FlextModelsContext.Token):
         """Context token model - wrapper class."""
@@ -480,7 +429,7 @@ class FlextModels:
     # NESTED WRAPPER CLASSES - Domain Service Models
     # =========================================================================
     class DomainServiceExecutionRequest(
-        FlextModelsService.DomainServiceExecutionRequest
+        FlextModelsService.DomainServiceExecutionRequest,
     ):
         """Domain service execution request model - wrapper class."""
 
@@ -540,6 +489,45 @@ class FlextModels:
     Pydantic v2 automatically validates and routes messages to the correct
     type based on the discriminator field value.
     """
+
+    # =========================================================================
+    # OFFICIAL NAMESPACE - Validation Patterns
+    # =========================================================================
+    class Validation:
+        """Validation namespace providing official access paths."""
+
+        validate_business_rules = FlextModelsValidation.validate_business_rules
+        validate_cross_fields = FlextModelsValidation.validate_cross_fields
+        validate_performance = FlextModelsValidation.validate_performance
+        validate_batch = FlextModelsValidation.validate_batch
+        validate_domain_invariants = FlextModelsValidation.validate_domain_invariants
+        validate_aggregate_consistency_with_rules = (
+            FlextModelsValidation.validate_aggregate_consistency_with_rules
+        )
+        validate_event_sourcing = FlextModelsValidation.validate_event_sourcing
+        validate_cqrs_patterns = FlextModelsValidation.validate_cqrs_patterns
+        validate_domain_event = FlextModelsValidation.validate_domain_event
+        validate_aggregate_consistency = (
+            FlextModelsValidation.validate_aggregate_consistency
+        )
+        validate_entity_relationships = (
+            FlextModelsValidation.validate_entity_relationships
+        )
+
+
+# Resolve forward references for models with complex types (required by Pydantic v2)
+# This is done at module level after FlextModels class definition to ensure proper initialization
+# ruff: noqa: E402 - imports must be after class definition for model_rebuild() to work
+from collections.abc import Callable
+
+from flext_core._models.service import OperationCallable
+
+# Build types namespace dict for model_rebuild() - Pydantic v2 requires types to be in namespace
+_types_namespace = {
+    "Callable": Callable,
+    "OperationCallable": OperationCallable,
+}
+FlextModels.ConditionalExecutionRequest.model_rebuild(_types_namespace=_types_namespace)
 
 
 __all__ = [

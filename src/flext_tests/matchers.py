@@ -50,7 +50,9 @@ class FlextTestsMatchers:
             return self
 
         def with_configs(
-            self, *, production: bool = False
+            self,
+            *,
+            production: bool = False,
         ) -> FlextTestsMatchers.TestDataBuilder:
             """Add configuration to dataset."""
             self._data["configs"] = {
@@ -63,7 +65,8 @@ class FlextTestsMatchers:
             return self
 
         def with_validation_fields(
-            self, count: int = 5
+            self,
+            count: int = 5,
         ) -> FlextTestsMatchers.TestDataBuilder:
             """Add validation fields to dataset."""
             self._data["validation_fields"] = {
@@ -184,7 +187,8 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_config_valid(
-        config: dict[str, TConfigValue], message: str | None = None
+        config: dict[str, TConfigValue],
+        message: str | None = None,
     ) -> None:
         """Assert that a configuration dictionary is valid.
 

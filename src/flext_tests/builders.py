@@ -41,9 +41,7 @@ class FlextTestsBuilders:
         ]
         return self
 
-    def with_configs(
-        self, *, production: bool = False
-    ) -> FlextTestsBuilders:
+    def with_configs(self, *, production: bool = False) -> FlextTestsBuilders:
         """Add configuration to dataset.
 
         Args:
@@ -62,9 +60,7 @@ class FlextTestsBuilders:
         }
         return self
 
-    def with_validation_fields(
-        self, count: int = 5
-    ) -> FlextTestsBuilders:
+    def with_validation_fields(self, count: int = 5) -> FlextTestsBuilders:
         """Add validation fields to dataset.
 
         Args:

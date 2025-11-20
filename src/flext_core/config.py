@@ -16,7 +16,7 @@ import os
 import threading
 from collections.abc import Callable
 from pathlib import Path
-from typing import ClassVar, Self, TypeVar
+from typing import ClassVar, Self, TypeVar, cast
 
 from dependency_injector import providers
 from pydantic import (
@@ -34,10 +34,11 @@ from pydantic_settings import (
 try:
     from dotenv import dotenv_values
 except ImportError:
-    dotenv_values = None  # type: ignore[assignment, misc]
+    dotenv_values = None  # type: ignore[assignment]
 
 from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
+from flext_core.runtime import FlextRuntime
 
 _logger = logging.getLogger(__name__)
 
@@ -450,7 +451,10 @@ class FlextConfig(BaseSettings):
     def uppercase_log_level(cls, v: object) -> FlextConstants.Settings.LogLevel:
         """Convert log level to uppercase and validate against LogLevel enum."""
         # Convert to uppercase and return enum member (Pydantic handles conversion)
-        level_str = str(v).upper() if v is not None else "INFO"
+        # Fast fail: convert to string and uppercase
+        level_str = (
+            str(v).upper() if v is not None else FlextConstants.Settings.LogLevel.INFO
+        )
         return FlextConstants.Settings.LogLevel(level_str)
 
     @model_validator(mode="after")
@@ -557,11 +561,11 @@ class FlextConfig(BaseSettings):
         # Check both conditions together to avoid mypy unreachable warning
         is_base_model = issubclass(config_class, BaseModel)
         is_base_settings = issubclass(config_class, BaseSettings)
-        
+
         if not is_base_model:
             msg = f"{config_class} must be a Pydantic BaseModel"
             raise TypeError(msg)
-        
+
         if is_base_settings:
             msg = (
                 f"{config_class} inherits from BaseSettings. "
@@ -583,7 +587,10 @@ class FlextConfig(BaseSettings):
             else:
                 resolved_factory = factory
 
-            cls._namespace_factories[name] = resolved_factory  # type: ignore[assignment]
+            cls._namespace_factories[name] = cast(
+                "Callable[[], BaseModel]",
+                resolved_factory,
+            )
 
     @classmethod
     def _get_namespace_instance(cls, name: str) -> BaseModel:
@@ -661,9 +668,9 @@ class FlextConfig(BaseSettings):
             True if namespace registered, False otherwise
 
         Example:
-            >>> FlextConfig.has_namespace('ldap')
+            >>> FlextConfig.has_namespace("ldap")
             True
-            >>> FlextConfig.has_namespace('unknown')
+            >>> FlextConfig.has_namespace("unknown")
             False
 
         """
@@ -685,7 +692,9 @@ class FlextConfig(BaseSettings):
     # ===== AUTO-REGISTRATION PATTERN (ZERO-BOILERPLATE) =====
 
     @staticmethod
-    def auto_register(namespace: str) -> Callable[[type[T_Namespace]], type[T_Namespace]]:
+    def auto_register(
+        namespace: str,
+    ) -> Callable[[type[T_Namespace]], type[T_Namespace]]:
         """Decorator for automatic namespace registration at class definition time.
 
         This decorator enables zero-boilerplate config registration. Simply decorate
@@ -734,7 +743,10 @@ class FlextConfig(BaseSettings):
         return decorator
 
     @staticmethod
-    def config_default(config_class: type[BaseModel], field_name: str) -> Callable[[], object]:
+    def config_default(
+        config_class: type[BaseModel],
+        field_name: str,
+    ) -> Callable[[], object]:
         """Create a factory function for Pydantic default_factory from config singleton.
 
         Args:
@@ -750,7 +762,9 @@ class FlextConfig(BaseSettings):
             >>>
             >>> class ConnectionModel(BaseModel):
             ...     host: str = Field(
-            ...         default_factory=FlextConfig.config_default(FlextLdapConfig, "ldap_host"),
+            ...         default_factory=FlextConfig.config_default(
+            ...             FlextLdapConfig, "ldap_host"
+            ...         ),
             ...     )
 
         """
@@ -824,19 +838,31 @@ class FlextConfig(BaseSettings):
                 Tuple of (env_prefix, env_file, env_nested_delimiter, env_file_encoding)
 
             """
-            if isinstance(config_dict, dict):
-                return (
-                    config_dict.get("env_prefix"),
-                    config_dict.get("env_file"),
-                    config_dict.get("env_nested_delimiter", "__"),
-                    config_dict.get("env_file_encoding", "utf-8"),
+            if FlextRuntime.is_dict_like(config_dict):
+                env_prefix_value = config_dict.get("env_prefix")
+                env_file_value = config_dict.get("env_file")
+                env_nested_delimiter_value = config_dict.get(
+                    "env_nested_delimiter", "__"
                 )
-            # Fallback: try attribute access (for compatibility)
+                env_file_encoding_value = config_dict.get("env_file_encoding", "utf-8")
+                return (
+                    str(env_prefix_value) if env_prefix_value is not None else None,
+                    str(env_file_value) if env_file_value is not None else None,
+                    str(env_nested_delimiter_value),
+                    str(env_file_encoding_value),
+                )
+            # Try attribute access for non-dict config objects
+            env_prefix_attr = getattr(config_dict, "env_prefix", None)
+            env_file_attr = getattr(config_dict, "env_file", None)
+            env_nested_delimiter_attr = getattr(
+                config_dict, "env_nested_delimiter", "__"
+            )
+            env_file_encoding_attr = getattr(config_dict, "env_file_encoding", "utf-8")
             return (
-                getattr(config_dict, "env_prefix", None),
-                getattr(config_dict, "env_file", None),
-                getattr(config_dict, "env_nested_delimiter", "__"),
-                getattr(config_dict, "env_file_encoding", "utf-8"),
+                str(env_prefix_attr) if env_prefix_attr is not None else None,
+                str(env_file_attr) if env_file_attr is not None else None,
+                str(env_nested_delimiter_attr),
+                str(env_file_encoding_attr),
             )
 
         @staticmethod
@@ -866,7 +892,7 @@ class FlextConfig(BaseSettings):
             env_prefix: str,
             env_file: str | None,
             env_nested_delimiter: str,
-            env_file_encoding: str,
+            env_file_encoding: str,  # noqa: ARG004 - encoding parameter for future use
         ) -> dict[str, object]:
             """Load values from .env file and environment variables.
 
@@ -880,11 +906,14 @@ class FlextConfig(BaseSettings):
             # Load from .env file if it exists
             if env_file and Path(env_file).exists() and dotenv_values is not None:
                 try:
-                    env_file_values = dotenv_values(env_file, encoding=env_file_encoding)
+                    env_file_values = dotenv_values(env_file)
                     for key, value in env_file_values.items():
                         if key.startswith(env_prefix):
                             field_name = key[prefix_len:].lower()
-                            if env_nested_delimiter and env_nested_delimiter in field_name:
+                            if (
+                                env_nested_delimiter
+                                and env_nested_delimiter in field_name
+                            ):
                                 parts = field_name.split(env_nested_delimiter.lower())
                                 field_name = "_".join(parts)
                             loaded_values[field_name] = value
@@ -931,7 +960,10 @@ class FlextConfig(BaseSettings):
 
             resolved_env_file = self._resolve_env_file(env_prefix, env_file)
             loaded_values = self._load_env_values(
-                env_prefix, resolved_env_file, env_nested_delimiter, env_file_encoding
+                env_prefix,
+                resolved_env_file,
+                env_nested_delimiter,
+                env_file_encoding,
             )
 
             # Merge with kwargs (kwargs take precedence)
@@ -961,7 +993,7 @@ class FlextConfig(BaseSettings):
             if not isinstance(instance, cls):
                 msg = f"Instance is not of type {cls.__name__}"
                 raise TypeError(msg)
-            return instance  # type: ignore[return-value]
+            return instance
 
         @classmethod
         def _reset_instance(cls) -> None:
@@ -1030,8 +1062,19 @@ class FlextConfig(BaseSettings):
         return (
             self.debug
             or self.trace
-            or (hasattr(self, "log_level") and self.log_level == FlextConstants.Settings.LogLevel.DEBUG)
-            or (hasattr(self, "cli_log_level") and isinstance(getattr(self, "cli_log_level", None), FlextConstants.Settings.LogLevel) and self.cli_log_level == FlextConstants.Settings.LogLevel.DEBUG)
+            or (
+                hasattr(self, "log_level")
+                and self.log_level == FlextConstants.Settings.LogLevel.DEBUG
+            )
+            or (
+                hasattr(self, "cli_log_level")
+                and isinstance(
+                    getattr(self, "cli_log_level", None),
+                    FlextConstants.Settings.LogLevel,
+                )
+                and getattr(self, "cli_log_level", None)
+                == FlextConstants.Settings.LogLevel.DEBUG
+            )
         )
 
     @computed_field
@@ -1050,7 +1093,7 @@ class FlextConfig(BaseSettings):
             cli_log_level = self.cli_log_level
             if isinstance(cli_log_level, FlextConstants.Settings.LogLevel):
                 return cli_log_level
-        # Fallback to INFO if neither exists
+        # Default to INFO if no log level configured
         return FlextConstants.Settings.LogLevel.INFO
 
     @computed_field
