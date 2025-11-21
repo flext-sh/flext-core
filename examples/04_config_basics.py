@@ -113,7 +113,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
             },
         )
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Execute all FlextConfig demonstrations and return summary.
 
         Demonstrates inherited config property alongside other infrastructure

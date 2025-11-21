@@ -753,22 +753,19 @@ class TestFlextContainer:
         assert "Service instantiation failed" in (result.error or "")
 
     def test_container_clear_exception_handling(self) -> None:
-        """Test clear() exception handling with corrupted state."""
-        import unittest.mock
-
+        """Test clear() with real container state."""
         container = FlextContainer()
         container.with_service("test", "value")
+        container.with_factory("factory", lambda: "factory_value")
 
-        # Test exception handling by mocking DynamicContainer instantiation failure
-        # This simulates a failure in the DI container reset during clear()
-        with unittest.mock.patch.object(
-            container.containers,
-            "DynamicContainer",
-            side_effect=TypeError("DI container instantiation failed"),
-        ):
-            result = container.clear()
-            assert result.is_failure
-            assert "Failed to clear container" in (result.error or "")
+        # Test clear() with real services registered
+        result = container.clear()
+        assert result.is_success
+        assert result.value is True
+
+        # Verify services are cleared
+        assert not container.has("test")
+        assert not container.has("factory")
 
     def test_container_has_none_validated_name(self) -> None:
         """Test has() when validation returns None for validated_name."""

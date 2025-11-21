@@ -26,6 +26,7 @@
         "pybreaker>=0.8.0",
         "pydantic-settings>=2.10.1",
         "pydantic (>=2.12.3)",
+        "python-dotenv>=1.0.0",
         "pyyaml>=6.0.2",
         "returns>=0.26.0",
         "structlog>=25.4.0",

@@ -30,6 +30,7 @@ from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import (
     CallableInputT,
     CallableOutputT,
@@ -359,7 +360,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                         },
                     )
 
-                fallback_error = FlextExceptions.TypeError(
+                error = FlextExceptions.TypeError(
                     f"Invalid message type for {operation}: {type(message).__name__}",
                     expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
                     actual_type=type(message).__name__,
@@ -367,9 +368,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     correlation_id=f"type_validation_{FlextUtilities.Generators.generate_short_id(length=8)}",
                 )
                 return FlextResult[bool].fail(
-                    str(fallback_error),
-                    error_code=fallback_error.error_code,
-                    error_data={"exception_context": str(fallback_error)},
+                    str(error),
+                    error_code=error.error_code,
+                    error_data={"exception_context": str(error)},
                 )
 
             return FlextResult[bool].ok(True)
@@ -392,7 +393,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
             # Try different message types in order
             # Fast fail: type narrowing instead of cast
-            if isinstance(message, (dict, str, int, float, bool)):
+            if isinstance(message, (str, int, float, bool)):
+                return message
+            if FlextRuntime.is_dict_like(message):
                 return message
 
             if message is None:
@@ -469,7 +472,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 if callable(method):
                     try:
                         result_data = method()
-                        if FlextMixins.is_dict_like(result_data) and isinstance(
+                        if FlextRuntime.is_dict_like(result_data) and isinstance(
                             result_data,
                             dict,
                         ):
@@ -896,8 +899,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         """
         # Extract message ID
-        if isinstance(message, dict):
-            message_dict = message
+        if FlextRuntime.is_dict_like(message):
+            message_dict = dict(message) if not isinstance(message, dict) else message
             # Message ID extraction for logging/tracing (currently unused but reserved for future observability)
             _ = (
                 str(message_dict.get(f"{operation}_id", "unknown"))
@@ -1061,7 +1064,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             func: The callable function to wrap
             handler_name: Name for the handler (defaults to function name)
             handler_type: Type of handler (command, query, etc.)
-            mode: Handler mode (for compatibility)
+            mode: Handler mode
             handler_config: Optional handler configuration model (must be FlextModels.Cqrs.Handler)
 
         Returns:
@@ -1075,7 +1078,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             else getattr(func, "__name__", "unknown_handler")
         )
 
-        # Use mode if provided (compatibility), otherwise use handler_type
+        # Use mode if provided, otherwise use handler_type
         effective_type: FlextConstants.Cqrs.HandlerType = (
             cast("FlextConstants.Cqrs.HandlerType", mode)
             if mode is not None
@@ -1114,7 +1117,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 ) from e
 
-        # Create a wrapper class with proper generic types
+        # Create a handler class with proper generic types
         class CallableHandler(FlextHandlers[CallableInputT, CallableOutputT]):
             def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
                 super().__init__(config=config)

@@ -33,7 +33,7 @@ class DatabaseService(FlextService[dict[str, object]]):
         # ❌ WRONG: DO NOT pass config to _with_operation_context
         # self._with_operation_context("init", config=config)  # ← This binds config to ALL logs!
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Execute database operations.
 
         Returns:
@@ -82,7 +82,7 @@ class MigrationService(FlextService[dict[str, object]]):
         # ✅ CORRECT: Log config ONCE at initialization
         self._log_config_once(config, message="Migration configuration loaded")
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Execute migration.
 
         Returns:

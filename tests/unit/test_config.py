@@ -13,8 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextConfig, FlextUtilities
-from flext_core.constants import FlextConstants
+from flext_core import FlextConfig, FlextConstants, FlextUtilities
 
 
 class TestFlextConfig:
@@ -413,22 +412,19 @@ class TestFlextConfig:
                 if key in os.environ:
                     del os.environ[key]
 
-    def test_pydantic_dotenv_file_loading(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_pydantic_dotenv_file_loading(self, tmp_path: Path) -> None:
         """Test that FlextConfig automatically loads .env file."""
         import os
         from pathlib import Path
 
         original_dir = Path.cwd()
+        saved_env_vars = {
+            "FLEXT_LOG_LEVEL": os.environ.pop("FLEXT_LOG_LEVEL", None),
+            "FLEXT_DEBUG": os.environ.pop("FLEXT_DEBUG", None),
+            "FLEXT_APP_NAME": os.environ.pop("FLEXT_APP_NAME", None),
+        }
 
         try:
-            # Isolate environment variables for this test
-            # Remove FLEXT_LOG_LEVEL to ensure .env file is used
-            monkeypatch.delenv("FLEXT_LOG_LEVEL", raising=False)
-            monkeypatch.delenv("FLEXT_DEBUG", raising=False)
-            monkeypatch.delenv("FLEXT_APP_NAME", raising=False)
-
             # Change to temp directory
             os.chdir(tmp_path)
 
@@ -458,8 +454,13 @@ class TestFlextConfig:
             assert config.debug is True
 
         finally:
-            # Cleanup
+            # Cleanup - restore environment variables
             os.chdir(original_dir)
+            for key, value in saved_env_vars.items():
+                if value is not None:
+                    os.environ[key] = value
+                elif key in os.environ:
+                    del os.environ[key]
 
     def test_pydantic_env_var_precedence(self, tmp_path: Path) -> None:
         """Test that environment variables override .env file."""

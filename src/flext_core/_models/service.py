@@ -19,11 +19,11 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.utilities import FlextUtilities
 
-# Type alias for operation callables - avoids explicit Any while maintaining flexibility
+# Type alias for operation callables - supports variadic args and kwargs for executor.submit
 OperationCallable = (
-    Callable[[], object]
-    | Callable[[object], object]
-    | Callable[[object, object], object]
+    Callable[
+        ..., object
+    ]  # Flexible callable signature for executor.submit compatibility
 )
 
 

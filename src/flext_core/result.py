@@ -488,7 +488,7 @@ class FlextResult[T_co]:
             (cast("type", cls),),
             {"_expected_type": item},
         )
-        typed_subclass: type[Self] = typed_subclass_raw
+        typed_subclass: type[Self] = cast("type[Self]", typed_subclass_raw)
 
         # Preserve qualname for better debugging
         typed_subclass.__qualname__ = f"{cls_qualname}[{type_name}]"

@@ -125,7 +125,7 @@ class TestMigrationScenario4:
                 super().__init__()
                 self._logger = FlextLogger(__name__)
 
-            def execute(self) -> FlextResult[None]:
+            def execute(self, **_kwargs: object) -> FlextResult[None]:
                 """Execute method required by FlextService abstract class."""
                 return FlextResult[None].ok(None)
 

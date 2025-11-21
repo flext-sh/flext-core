@@ -224,7 +224,9 @@ class FlextRuntime:
             # Verify it's actually dict-like by checking if it has dict methods
             try:
                 # Try to access items to verify it's dict-like
-                _ = value.items()
+                items_method = getattr(value, "items", None)
+                if callable(items_method):
+                    _ = items_method()
                 return True
             except (AttributeError, TypeError):
                 return False
@@ -325,7 +327,7 @@ class FlextRuntime:
             if args:
                 return args
 
-            # Fallback for type aliases: check if it's a known type alias
+            # Check if it's a known type alias
             if hasattr(type_hint, "__name__"):
                 type_name = getattr(type_hint, "__name__", "")
                 # Handle common type aliases

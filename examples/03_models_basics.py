@@ -551,7 +551,7 @@ class ComprehensiveModelsService(FlextService[Order]):
             },
         )
 
-    def execute(self) -> FlextResult[Order]:
+    def execute(self, **_kwargs: object) -> FlextResult[Order]:
         """Execute method required by FlextService.
 
         This method satisfies the FlextService abstract interface while
@@ -835,7 +835,7 @@ class ComprehensiveModelsService(FlextService[Order]):
                 super().__init__()
                 self._storage: dict[str, Order] = {}
 
-            def execute(self) -> FlextResult[bool]:
+            def execute(self, **_kwargs: object) -> FlextResult[bool]:
                 """Execute the repository service."""
                 return FlextResult[bool].ok(True)
 

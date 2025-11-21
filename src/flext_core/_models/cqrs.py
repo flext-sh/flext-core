@@ -135,18 +135,14 @@ class FlextModelsCqrs:
             """Convert pagination to Pagination instance.
 
             Dynamically determines correct Pagination class based on context.
-            Uses wrapper Pagination if Query is accessed via FlextModels.Cqrs (public API).
-            Uses base Pagination if Query is accessed directly from FlextModelsCqrs (internal).
             """
-            # Detect if we're in wrapper context (uses wrapper Pagination)
-            # or base context (uses base Pagination)
             import sys  # noqa: PLC0415
 
             pagination_cls: type[FlextModelsCqrs.Pagination] = (
                 FlextModelsCqrs.Pagination
             )
 
-            # If cls is wrapper from models.py, get wrapper Pagination
+            # If cls is from models.py, get Pagination from models
             if cls.__module__ == "flext_core.models" and "." in cls.__qualname__:
                 parts = cls.__qualname__.split(".")
                 models_module = sys.modules.get("flext_core.models")
@@ -156,7 +152,11 @@ class FlextModelsCqrs:
                         if obj and hasattr(obj, part):
                             obj = getattr(obj, part)
                     if obj and hasattr(obj, "Pagination"):
-                        pagination_cls = obj.Pagination
+                        # obj is known to have "Pagination" attribute at runtime
+                        # Use getattr to access safely for type checker
+                        pagination_cls_attr = getattr(obj, "Pagination", None)
+                        if pagination_cls_attr is not None:
+                            pagination_cls = pagination_cls_attr
 
             # Return existing Pagination instance
             if isinstance(v, FlextModelsCqrs.Pagination):
@@ -207,9 +207,9 @@ class FlextModelsCqrs:
                 # Fast fail: query_id must be str or None
                 query_id_raw = query_payload.get("query_id")
                 query_id: str = (
-                    str(query_id_raw)
-                    if query_id_raw is not None
-                    else FlextUtilities.Generators.generate_uuid()
+                    FlextUtilities.Generators.generate_uuid()
+                    if query_id_raw is None
+                    else str(query_id_raw)
                 )
                 query_type: object = query_payload.get("query_type")
                 # Fast fail: filters must be dict-like
@@ -218,12 +218,14 @@ class FlextModelsCqrs:
                 elif isinstance(filters, dict):
                     filters_dict = filters
                 else:
-                    filters_dict = dict(filters.items())
+                    filters_dict = (
+                        dict(filters.items()) if hasattr(filters, "items") else {}
+                    )
                 query = cls(
                     filters=filters_dict,
                     pagination=pagination,
                     query_id=query_id,
-                    query_type=None if query_type is None else str(query_type),
+                    query_type=str(query_type) if query_type is not None else None,
                 )
                 return FlextResult[FlextModelsCqrs.Query].ok(query)
             except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:

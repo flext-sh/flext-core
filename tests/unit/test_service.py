@@ -21,7 +21,7 @@ from flext_core import FlextMixins, FlextModels, FlextResult, FlextService
 class SampleUserService(FlextService[object]):
     """Sample service for user operations used in tests."""
 
-    def execute(self) -> FlextResult[object]:
+    def execute(self, **_kwargs: object) -> FlextResult[object]:
         """Execute user operation.
 
         Returns:
@@ -86,7 +86,7 @@ class SampleComplexService(FlextService[object]):
             return FlextResult[bool].fail("Value too large")
         return FlextResult[bool].ok(True)
 
-    def execute(self) -> FlextResult[object]:
+    def execute(self, **_kwargs: object) -> FlextResult[object]:
         """Execute complex operation."""
         if not self.name:
             return FlextResult[object].fail("Name is required")
@@ -109,7 +109,7 @@ class SampleFailingService(FlextService[bool]):
         """Always fail validation."""
         return FlextResult[bool].fail("Validation always fails")
 
-    def execute(self) -> FlextResult[bool]:
+    def execute(self, **_kwargs: object) -> FlextResult[bool]:
         """Execute failing operation."""
         return FlextResult[bool].fail("Execution failed")
 
@@ -134,7 +134,7 @@ class SampleExceptionService(FlextService[str]):
             raise ValueError(msg)
         return FlextResult[bool].ok(True)
 
-    def execute(self) -> FlextResult[str]:
+    def execute(self, **_kwargs: object) -> FlextResult[str]:
         """Execute operation that can raise."""
         if self.should_raise:
             msg = "Execution exception"
@@ -148,7 +148,7 @@ class ComplexTypeService(FlextService[dict[str, object]]):
     data: dict[str, object] = Field(default_factory=dict)
     items: list[object] = Field(default_factory=list)
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Execute operation with complex types."""
         return FlextResult[dict[str, object]].ok({
             "data": self.data,
@@ -181,7 +181,7 @@ class TestDomainServicesFixed:
 
         # Create a concrete implementation to test abstract behavior
         class ConcreteService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
         # This should work since we implemented execute
@@ -629,7 +629,7 @@ class TestDomainServiceStaticMethods:
         """Test domain service configuration through inheritance."""
 
         class TestDomainService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("Executed successfully")
 
         service = TestDomainService()
@@ -644,7 +644,7 @@ class TestDomainServiceStaticMethods:
         """Test domain service with invalid configuration."""
 
         class InvalidDomainService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].fail("Invalid operation")
 
         service = InvalidDomainService()
@@ -657,7 +657,7 @@ class TestDomainServiceStaticMethods:
         """Test domain service configuration access."""
 
         class ConfigDomainService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("Configured service")
 
         service = ConfigDomainService()
@@ -670,11 +670,11 @@ class TestDomainServiceStaticMethods:
         """Test domain service environment configuration."""
 
         class DevDomainService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("Dev: test")
 
         class ProdDomainService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("Prod: test")
 
         # Test development service
@@ -693,7 +693,7 @@ class TestDomainServiceStaticMethods:
         """Test domain service performance optimization."""
 
         class OptimizedDomainService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 # Simulate optimized execution
                 return FlextResult[str].ok("Optimized: performance_test")
 
@@ -706,7 +706,7 @@ class TestDomainServiceStaticMethods:
         """Test domain service with invalid operation."""
 
         class ErrorDomainService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 # Simulate invalid operation for testing
                 return FlextResult[str].fail("Invalid operation")
 
@@ -723,7 +723,7 @@ class TestServiceCoverageImprovements:
         """Test execute_with_timeout with success."""
 
         class TimeoutService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("success")
 
             def execute_with_timeout(self, timeout_seconds: float) -> FlextResult[str]:
@@ -1013,7 +1013,7 @@ class TestServiceComprehensiveCoverage:
         """Test execute_operation with None arguments (uses defaults)."""
 
         class TestService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
             def test_operation(self) -> str:
@@ -1037,7 +1037,7 @@ class TestServiceComprehensiveCoverage:
         """Test execute_operation with arguments dict[str, object] containing single value."""
 
         class TestService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
             def test_operation(self, value: str) -> str:
@@ -1061,7 +1061,7 @@ class TestServiceComprehensiveCoverage:
         """Test execute_operation with non-dict keyword_arguments."""
 
         class TestService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
             def test_operation(self, **kwargs: object) -> str:
@@ -1090,7 +1090,7 @@ class TestServiceComprehensiveCoverage:
         """Test execute_operation with invalid backoff_multiplier (must be >= 1)."""
 
         class TestService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
             def test_operation(self) -> str:
@@ -1131,7 +1131,7 @@ class TestServiceComprehensiveCoverage:
         """Test execute_operation when operation returns FlextResult."""
 
         class TestService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
             def test_operation(self) -> FlextResult[str]:
@@ -1155,7 +1155,7 @@ class TestServiceComprehensiveCoverage:
         """Test execute_operation when operation returns non-FlextResult."""
 
         class TestService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
             def test_operation(self) -> str:
@@ -1179,7 +1179,7 @@ class TestServiceComprehensiveCoverage:
         """Test execute_operation when operation_callable is not provided properly."""
 
         class TestService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
         service = TestService()
@@ -1208,7 +1208,7 @@ class TestServiceComprehensiveCoverage:
         import time
 
         class SlowService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 time.sleep(0.5)  # Sleep for 500ms
                 return FlextResult[str].ok("completed")
 
@@ -1222,7 +1222,7 @@ class TestServiceComprehensiveCoverage:
         """Test argument handling with various types."""
 
         class TestService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
             def test_operation(self, arg1: str, arg2: str) -> str:
@@ -1248,7 +1248,7 @@ class TestServiceComprehensiveCoverage:
         import time
 
         class TimeoutService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
             def slow_operation(self) -> str:
@@ -1281,7 +1281,7 @@ class TestServiceComprehensiveCoverage:
         import time
 
         class VerySlowService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 time.sleep(2)  # Sleep longer than timeout
                 return FlextResult[str].ok("should not reach")
 
@@ -1297,7 +1297,7 @@ class TestServiceComprehensiveCoverage:
         """Test line 479: retry with no retry_config."""
 
         class FailingService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
             def failing_operation(self) -> str:
@@ -1327,7 +1327,7 @@ class TestServiceComprehensiveCoverage:
         """Test line 507: exponential backoff - just test it runs."""
 
         class RetryService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
             def retry_operation(self) -> str:
@@ -1366,7 +1366,7 @@ class TestServiceComprehensiveCoverage:
 class Executable:
     """Test class for execution."""
 
-    def execute(self) -> FlextResult[object]:
+    def execute(self, **_kwargs: object) -> FlextResult[object]:
         """Execute operation hronously."""
         return FlextResult[object].ok("success")
 
@@ -1374,7 +1374,7 @@ class Executable:
 class BatchService(FlextService[list[str]]):
     """Test service for batch processing."""
 
-    def execute(self) -> FlextResult[list[str]]:
+    def execute(self, **_kwargs: object) -> FlextResult[list[str]]:
         return FlextResult[list[str]].ok([
             "item1",
             "item2",
@@ -1385,7 +1385,7 @@ class BatchService(FlextService[list[str]]):
         """Test execute_operation with single non-iterable argument (line 369)."""
 
         class SingleArgService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("default")
 
             def process_single(self, value: int) -> FlextResult[str]:
@@ -1406,7 +1406,7 @@ class BatchService(FlextService[list[str]]):
         """Test execute_operation when operation has no keyword_arguments attr (line 373)."""
 
         class NoKwargsService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("default")
 
             def process(self, x: int) -> FlextResult[str]:
@@ -1432,7 +1432,7 @@ class BatchService(FlextService[list[str]]):
         class RetryService(FlextService[str]):
             attempt: int = 0
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("default")
 
             def failing_op(self) -> FlextResult[str]:
@@ -1464,7 +1464,7 @@ class BatchService(FlextService[list[str]]):
         class RetryNoFilterService(FlextService[str]):
             attempt: int = 0
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("default")
 
             def failing_op(self) -> FlextResult[str]:
@@ -1494,7 +1494,7 @@ class BatchService(FlextService[list[str]]):
         """Test TimeoutError handling when timeout_seconds > 0 (lines 519-520)."""
 
         class TimeoutService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("default")
 
             def slow_op(self) -> FlextResult[str]:
@@ -1517,7 +1517,7 @@ class BatchService(FlextService[list[str]]):
         """Test operation failure path without exception (lines 525-526)."""
 
         class NoExceptionFailService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("default")
 
             def always_fail(self) -> FlextResult[str]:
@@ -1538,7 +1538,7 @@ class BatchService(FlextService[list[str]]):
         """Test execute_with_timeout catches TimeoutError (lines 572-573)."""
 
         class TimeoutExecService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 # Simulate timeout by raising TimeoutError
                 msg = "Test timeout"
                 raise TimeoutError(msg)
@@ -1558,8 +1558,8 @@ class TestServicePropertiesAndConfig:
         """Test service_config computed_field returns global config (lines 83-101)."""
         service = SampleUserService()
 
-        # Test that service_config returns a FlextConfig instance
-        config = service.service_config
+        # Test that config returns a FlextConfig instance
+        config = service.config
         assert config is not None
 
         # Test that it's the global instance
@@ -1613,7 +1613,7 @@ class TestServiceContextAndLifecycle:
         """Test execute_with_context_cleanup cleans up operation context (lines 311-339)."""
 
         class ContextTestService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("Success with cleanup")
 
         service = ContextTestService()
@@ -1627,7 +1627,7 @@ class TestServiceContextAndLifecycle:
         """Test execute_with_context_cleanup cleans up even on failure."""
 
         class FailingContextService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].fail("Failure with cleanup")
 
         service = FailingContextService()
@@ -1641,7 +1641,7 @@ class TestServiceContextAndLifecycle:
         """Test execute_with_context_cleanup cleans up even on exception."""
 
         class ExceptionContextService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 msg = "Test exception"
                 raise ValueError(msg)
 
@@ -1660,7 +1660,7 @@ class TestServiceDependencyDetection:
         from flext_core import FlextContainer
 
         class AutoRegisterService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("Registered")
 
         # NOTE: Test classes are NOT auto-registered (see service.py:707-709)
@@ -1691,7 +1691,7 @@ class TestServiceDependencyDetection:
                 super().__init__()
                 self.test_value = test_value
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok(self.test_value)
 
         # Service should handle dependency gracefully
@@ -1706,7 +1706,7 @@ class TestServiceDependencyDetection:
         from flext_core import FlextContainer
 
         class SimpleService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("Simple")
 
         # NOTE: Test classes are NOT auto-registered (see service.py:707-709)
@@ -1796,7 +1796,7 @@ class TestServicePropertyResolution:
 
         # Service that matches naming pattern: TestService → TestServiceConfig
         class TestService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
         service = TestService()
@@ -1818,7 +1818,7 @@ class TestServicePropertyResolution:
         container.with_service("SampleServiceModels", SampleServiceModels)
 
         class SampleService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
         service = SampleService()
@@ -1844,7 +1844,7 @@ class TestServicePropertyResolution:
 
         # Service class name that matches: FlextPropertyTestService
         class FlextPropertyTestService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
         service = FlextPropertyTestService()
@@ -1867,7 +1867,7 @@ class TestServicePropertyResolution:
                 msg = "Container error"
                 raise RuntimeError(msg)
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
         service = ExceptionService()
@@ -1883,7 +1883,7 @@ class TestServicePropertyResolution:
         """Test project_models returns fallback type when not found (lines 183-188)."""
 
         class FallbackModelsService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
         service = FallbackModelsService()
@@ -1909,7 +1909,7 @@ class TestServiceDependencyResolution:
                 super().__init__()
                 self.dep = dep
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("success")
 
         container = FlextContainer.get_global()
@@ -1922,7 +1922,7 @@ class TestServiceDependencyResolution:
         from flext_core import FlextContainer
 
         class SimplestService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("simple")
 
         container = FlextContainer.get_global()
@@ -1940,7 +1940,7 @@ class TestServiceDependencyResolution:
                 super().__init__()
                 self.param = some_param
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("unannotated")
 
         container = FlextContainer.get_global()
@@ -1957,7 +1957,7 @@ class TestServiceComplexExecution:
         """Test execute_operation with successful execution (lines 409-598)."""
 
         class OperationService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("Operation successful")
 
         service = OperationService()
@@ -1980,7 +1980,7 @@ class TestServiceComplexExecution:
         """Test execute_operation with timeout configuration."""
 
         class TimeoutService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("Completed before timeout")
 
         service = TimeoutService()
@@ -2002,7 +2002,7 @@ class TestServiceComplexExecution:
         """Test execute_conditionally when condition is true (lines 630-705)."""
 
         class ConditionalService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("Condition met")
 
         service = ConditionalService()
@@ -2021,7 +2021,7 @@ class TestServiceComplexExecution:
         """Test execute_conditionally when condition is false."""
 
         class ConditionalService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("Condition met")
 
         service = ConditionalService()
@@ -2040,7 +2040,7 @@ class TestServiceComplexExecution:
         """Test execute_conditionally with false_action when condition is false."""
 
         class ConditionalService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("True action")
 
             def false_execute(self) -> FlextResult[str]:
@@ -2065,7 +2065,7 @@ class TestServiceComplexExecution:
             def validate_business_rules(self) -> FlextResult[bool]:
                 return FlextResult[bool].fail("Business rules validation failed")
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("Should not execute")
 
         service = FailingValidationService()
@@ -2081,7 +2081,7 @@ class TestServiceComplexExecution:
             def validate_config(self) -> FlextResult[bool]:
                 return FlextResult[bool].fail("Config validation failed")
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("Should not execute")
 
         service = FailingConfigService()
@@ -2094,7 +2094,7 @@ class TestServiceComplexExecution:
         """Test execute_conditionally handles condition evaluation errors."""
 
         class ExceptionConditionService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("Success")
 
         service = ExceptionConditionService()

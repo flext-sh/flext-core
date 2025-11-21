@@ -34,13 +34,13 @@ from abc import abstractmethod
 from collections.abc import Callable
 from datetime import datetime
 from typing import (
-    TYPE_CHECKING,
     Generic,
     Protocol,
     overload,
     runtime_checkable,
 )
 
+from flext_core.result import FlextResult
 from flext_core.typings import (
     FlextTypes,
     T,
@@ -48,12 +48,6 @@ from flext_core.typings import (
     TInput_Handler_Protocol_contra,
     TResult_Handler_Protocol,
 )
-
-# TYPE_CHECKING import pattern: protocols.py is Tier 0, result.py is Tier 1.
-# Using TYPE_CHECKING prevents runtime circular imports while enabling type checking.
-# This is the standard Python pattern (PEP 484) combined with PEP 563 (future annotations).
-if TYPE_CHECKING:
-    from flext_core.result import FlextResult
 
 
 class FlextProtocols:
@@ -554,7 +548,7 @@ class FlextProtocols:
 
         INTERFACE COMPLIANCE:
         ====================
-        Satisfies: FlextResult[T] (via structural typing)
+        Satisfies: "FlextResult[T]" (via structural typing)
         Used in: validation.py, _models/*.py
         """
 

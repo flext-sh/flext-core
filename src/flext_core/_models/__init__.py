@@ -1,7 +1,7 @@
 """Internal module for FlextModels nested classes.
 
 This module contains extracted nested classes from FlextModels to improve
-maintainability while preserving 100% API compatibility.
+maintainability.
 
 All classes are re-exported through FlextModels in models.py - users should
 NEVER import from this module directly.

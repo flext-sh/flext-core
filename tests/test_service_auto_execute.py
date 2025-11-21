@@ -34,7 +34,7 @@ class ManualUserService(FlextService[User]):
 
     user_id: str
 
-    def execute(self) -> FlextResult[User]:
+    def execute(self, **_kwargs: object) -> FlextResult[User]:
         """Get user by ID."""
         return FlextResult.ok(
             User(
@@ -51,7 +51,7 @@ class AutoUserService(FlextService[User]):
     auto_execute = True  # Enable auto-execution
     user_id: str
 
-    def execute(self) -> FlextResult[User]:
+    def execute(self, **_kwargs: object) -> FlextResult[User]:
         """Get user by ID."""
         return FlextResult.ok(
             User(
@@ -68,7 +68,7 @@ class FailingAutoService(FlextService[str]):
     auto_execute = True
     error_message: str = "Test error"
 
-    def execute(self) -> FlextResult[str]:
+    def execute(self, **_kwargs: object) -> FlextResult[str]:
         """Always fails."""
         return FlextResult.fail(self.error_message)
 

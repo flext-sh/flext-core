@@ -18,13 +18,17 @@ import uuid
 from collections.abc import Callable
 from typing import ClassVar, cast
 
+from typing import TYPE_CHECKING
+
 import structlog
 
 from flext_core._models.metadata import Metadata
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
-from flext_core.protocols import FlextProtocols
 from flext_core.runtime import FlextRuntime
+
+if TYPE_CHECKING:
+    from flext_core.protocols import FlextProtocols
 
 # CRITICAL: NO import from utilities - causes circular import (exceptions → utilities → _utilities → result → exceptions)
 # CRITICAL: NO import from models - causes circular import (exceptions → models → _models → validation → result → exceptions)
@@ -169,7 +173,6 @@ class FlextExceptions:
     - BaseError._log_exception() uses structlog.get_logger()
     - Exception chaining logged with chain_from()
     - All exception metadata included in structured logs
-    - Fallback to standard logging if structlog fails
 
     **Exception Factory Methods**:
     1. **create_error(error_type, message)**: By type name
@@ -494,9 +497,14 @@ class FlextExceptions:
             elif FlextRuntime.is_dict_like(metadata):
                 # Convert dict to Metadata, merge with extra_kwargs
                 # Type narrowing: metadata is dict-like, safe to use directly
-                metadata_dict: dict[str, object] = (
-                    metadata if isinstance(metadata, dict) else dict(metadata.items())
-                )
+                if FlextRuntime.is_dict_like(metadata):
+                    metadata_dict = (
+                        dict(metadata) if not isinstance(metadata, dict) else metadata
+                    )
+                else:
+                    metadata_dict = (
+                        dict(metadata.items()) if hasattr(metadata, "items") else {}
+                    )
                 merged_attrs = (
                     {**metadata_dict, **extra_kwargs} if extra_kwargs else metadata_dict
                 )
@@ -1721,7 +1729,6 @@ class FlextExceptions:
                 # Metadata satisfies MetadataProtocol via structural typing - use cast for mypy
                 normalized_metadata = cast("Metadata", metadata)
 
-        # Cast Metadata to MetadataProtocol for function signature compatibility
         # Metadata satisfies MetadataProtocol via structural typing
         metadata_protocol: FlextProtocols.MetadataProtocol | None = cast(
             "FlextProtocols.MetadataProtocol | None",

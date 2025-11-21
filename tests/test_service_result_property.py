@@ -35,7 +35,7 @@ class GetUserService(FlextService[User]):
 
     user_id: str
 
-    def execute(self) -> FlextResult[User]:
+    def execute(self, **_kwargs: object) -> FlextResult[User]:
         """Get user by ID."""
         return FlextResult.ok(
             User(
@@ -51,7 +51,7 @@ class FailingService(FlextService[str]):
 
     error_message: str = "Operation failed"
 
-    def execute(self) -> FlextResult[str]:
+    def execute(self, **_kwargs: object) -> FlextResult[str]:
         """Always fails."""
         return FlextResult.fail(self.error_message)
 
@@ -62,7 +62,7 @@ class ValidatingService(FlextService[str]):
     value_input: str
     min_length: int = 3
 
-    def execute(self) -> FlextResult[str]:
+    def execute(self, **_kwargs: object) -> FlextResult[str]:
         """Validate and return value."""
         if len(self.value_input) < self.min_length:
             return FlextResult.fail(

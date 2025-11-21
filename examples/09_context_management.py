@@ -77,7 +77,7 @@ class ContextManagementService(FlextService[dict[str, object]]):
             },
         )
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Execute all context management demonstrations.
 
         Demonstrates inherited infrastructure alongside context patterns:

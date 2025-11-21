@@ -363,7 +363,7 @@ class FlextRegistry(FlextMixins):
 
         Args:
             reg_data: Registration data dict from dispatcher
-            key: Handler key for fallback registration_id
+            key: Handler key for registration_id
 
         Returns:
             RegistrationDetails: Validated registration details model
@@ -645,7 +645,6 @@ class FlextRegistry(FlextMixins):
                 source="flext-core/src/flext_core/registry.py",
             )
             return self.ok(True)
-        # error property has fallback logic and guarantees non-None for failures
         error_msg = registration_result.error
         self.logger.warning(
             "Handler registration failed in batch",
@@ -890,11 +889,10 @@ class FlextRegistry(FlextMixins):
         message_type: type[object],
     ) -> str:
         base_key = self._resolve_handler_key(handler)
-        # Handle both type objects and string keys gracefully
+        # Handle both type objects and string keys
         if hasattr(message_type, "__name__"):
             type_name = message_type.__name__
         else:
-            # Fallback for string keys or other non-type objects
             type_name = str(message_type)
         return f"{base_key}::{type_name}"
 
@@ -913,11 +911,10 @@ class FlextRegistry(FlextMixins):
         if isinstance(entry, tuple):
             handler_func = entry[0]
             handler_name = getattr(handler_func, "__name__", str(handler_func))
-            # Handle both type objects and string keys gracefully
+            # Handle both type objects and string keys
             if hasattr(message_type, "__name__"):
                 type_name = message_type.__name__
             else:
-                # Fallback for string keys or other non-type objects
                 type_name = str(message_type)
             return f"{handler_name}::{type_name}"
         if isinstance(entry, FlextHandlers):
@@ -936,9 +933,6 @@ class FlextRegistry(FlextMixins):
         Delegates to the container's register method for dependency injection.
         Metadata is currently stored for future use but not actively used.
 
-        STRICT Mode: Accepts both dict[str, object] and FlextModels.Metadata for
-        backward compatibility during migration to STRICT metadata patterns.
-
         Args:
             name: Service name for later retrieval
             service: Service instance to register
@@ -948,16 +942,16 @@ class FlextRegistry(FlextMixins):
             FlextResult[bool]: Success (True) if registered or failure with error details.
 
         """
-        # Normalize metadata to dict for internal use (STRICT mode support)
+        # Normalize metadata to dict for internal use
         validated_metadata: dict[str, object] | None = None
         if metadata is not None:
             if FlextRuntime.is_dict_like(metadata):
-                validated_metadata = metadata
-            elif hasattr(metadata, "model_dump") and hasattr(metadata, "attributes"):
-                # FlextModels.Metadata - extract attributes dict
+                validated_metadata = (
+                    dict(metadata) if not isinstance(metadata, dict) else metadata
+                )
+            elif isinstance(metadata, FlextModels.Metadata):
                 validated_metadata = metadata.attributes
             else:
-                # Fast fail for invalid metadata type
                 return FlextResult[bool].fail(
                     f"metadata must be dict or FlextModels.Metadata, got {type(metadata).__name__}",
                 )

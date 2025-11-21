@@ -41,7 +41,7 @@ class UserService(FlextService[dict[str, object]]):
         super().__init__(**data)
         # Context now includes: service_type, service_module
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Required abstract method implementation."""
         return FlextResult[dict[str, object]].ok({"status": "initialized"})
 
@@ -73,7 +73,7 @@ class PaymentService(FlextService[dict[str, object]]):
         """Initialize with automatic context enrichment."""
         super().__init__(**data)
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Required abstract method implementation."""
         return FlextResult[dict[str, object]].ok({"status": "initialized"})
 
@@ -140,7 +140,7 @@ class OrderService(FlextService[dict[str, object]]):
         super().__init__(**data)
         self._order_data: dict[str, object] = {}
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Process order with business logic."""
         # Implement actual order processing
         self._order_data = {
@@ -211,7 +211,7 @@ class AutomationService(FlextService[dict[str, object]]):
         """Initialize automation service."""
         super().__init__(**data)
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Required abstract method implementation."""
         return FlextResult[dict[str, object]].ok({"status": "automation_ready"})
 

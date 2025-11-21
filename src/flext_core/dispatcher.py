@@ -1377,7 +1377,7 @@ class FlextDispatcher(FlextMixins):
             if FlextRuntime.is_dict_like(handler_entry) and "handler" in handler_entry:
                 handler_obj: object = handler_entry["handler"]
                 return handler_obj
-            # Return handler directly if it's not a dict (old API)
+            # Return handler directly if it's not a dict
             return handler_entry
 
         # Search auto-registered handlers (single-arg form)
@@ -1974,7 +1974,6 @@ class FlextDispatcher(FlextMixins):
             publish_funcs = [make_publish_func(event) for event in events]
             result = self.ok(True).flow_through(*publish_funcs)
             if result.is_failure:
-                # error property has fallback logic and guarantees non-None for failures
                 error_msg = result.error
                 raise RuntimeError(error_msg)
             # Fast fail: return bool True for success
@@ -2219,21 +2218,15 @@ class FlextDispatcher(FlextMixins):
     ) -> FlextResult[dict[str, object]]:
         """Register a handler dynamically.
 
-        Supports two calling patterns:
-        1. register_handler({"handler_name": "...", "handler": ..., ...}) - Dict/BaseModel
-        2. register_handler("message_type", handler) - Two-arg compatibility mode
-
         Args:
             request: Dict or Pydantic model containing registration details, or message_type string
-            handler: Handler instance (for two-arg compatibility mode)
+            handler: Handler instance
 
         Returns:
             FlextResult with registration details or error
 
         """
-        # Two-arg compatibility mode: register_handler("message_type", handler)
         if handler is not None:
-            # Delegate to layer1_register_handler for compatibility
             result = self.layer1_register_handler(request, handler)
             if result.is_failure:
                 return FlextResult[dict[str, object]].fail(
@@ -2251,7 +2244,7 @@ class FlextDispatcher(FlextMixins):
             # Delegate to register_handler_with_request (eliminates ~100 lines of duplication)
             return self.register_handler_with_request(request)
 
-        # Single handler object - delegate to layer1_register_handler for compatibility
+        # Single handler object - delegate to layer1_register_handler
         result = self.layer1_register_handler(request)
         if result.is_failure:
             return FlextResult[dict[str, object]].fail(
@@ -2694,13 +2687,11 @@ class FlextDispatcher(FlextMixins):
         correlation_id: str | None = None,
         timeout_override: int | None = None,
     ) -> FlextResult[object]:
-        """Dispatch message - supports both new (object) and old (type, data) APIs.
-
-        ARCHITECTURE: Unified API supporting backward compatibility.
+        """Dispatch message.
 
         Args:
-            message_or_type: Message object (new) or type string (old)
-            data: Message data (old API only)
+            message_or_type: Message object or type string
+            data: Message data
             config: DispatchConfig instance
             metadata: Optional execution context metadata
             correlation_id: Optional correlation ID for tracing
@@ -2710,18 +2701,15 @@ class FlextDispatcher(FlextMixins):
             FlextResult with execution result or error
 
         """
-        # ARCHITECTURE: Detect API pattern - old (type, data) vs new (object)
+        # Detect API pattern - (type, data) vs (object)
         message: object
         if data is not None or isinstance(message_or_type, str):
-            # Old API: dispatch("type", data)
-            # Create wrapper message with correct __name__ for routing
+            # dispatch("type", data) pattern
             message_type_str = str(message_or_type)
-
-            # Create message class dynamically with correct name for routing
             message_class = type(message_type_str, (), {"payload": data})
             message = message_class()
         else:
-            # New API: dispatch(message_object)
+            # dispatch(message_object) pattern
             message = message_or_type
 
         # Fast fail: message cannot be None
@@ -2930,7 +2918,7 @@ class FlextDispatcher(FlextMixins):
             msg = "Message cannot be None. Use dispatch(message_object), not dispatch(None, data)."
             raise TypeError(msg)
 
-        # Fast fail: message cannot be string (old API not supported)
+        # Fast fail: message cannot be string
         if isinstance(message, str):
             msg = (
                 "String message_type not supported. "
@@ -3305,13 +3293,13 @@ class FlextDispatcher(FlextMixins):
 
     def dispatch_batch(
         self,
-        message_type: str,  # noqa: ARG002 - kept for backward compatibility
+        _message_type: str,
         messages: list[object],
     ) -> list[FlextResult[object]]:
         """Dispatch multiple messages in batch.
 
         Args:
-            message_type: Type of messages to dispatch (kept for compatibility, not used)
+            _message_type: Type of messages to dispatch (unused - extracted from message object)
             messages: List of message objects to dispatch
 
         Returns:

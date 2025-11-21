@@ -269,7 +269,7 @@ class FlextService[TDomainResult](
             >>> result = service.execute()  # ✅ Validated automatically
 
         """
-        # Handle tuple of types (for Pydantic compatibility) - use first type
+        # Handle tuple of types - use first type
         actual_type = item[0] if isinstance(item, tuple) else item
 
         # Create typed subclass dynamically using type() built-in
@@ -360,7 +360,7 @@ class FlextService[TDomainResult](
 
         Note:
             When auto_execute=True, the actual runtime value is TDomainResult,
-            but it's cast to Self for type checker compatibility. Callers should
+            but it's cast to Self for type checker. Callers should
             type-annotate with the domain result type for auto_execute services.
 
         Example:
@@ -395,10 +395,9 @@ class FlextService[TDomainResult](
 
     @classmethod
     def v1(cls, **kwargs: object) -> Self:
-        """V1 compatibility method: Create service instance without auto-execution.
+        """Create service instance without auto-execution.
 
         Returns a service instance that requires explicit .execute() call.
-        This provides backward compatibility with V1 usage patterns.
 
         Args:
             **kwargs: Service initialization parameters
@@ -422,10 +421,12 @@ class FlextService[TDomainResult](
 
         """
         # Create instance using object.__new__ to bypass auto_execute
+        # Python type system: __new__(cls) returns object, but cls.type determines actual type
         instance = object.__new__(cls)
         # Initialize instance
         type(instance).__init__(instance, **kwargs)
-        return instance
+        # Type checker needs cast for Self return type (mypy sees as redundant but pyrefly needs it)
+        return cast("Self", instance)  # type: ignore[redundant-cast]
 
     @classmethod
     def with_result(cls, **kwargs: object) -> FlextResult[TDomainResult]:
@@ -585,12 +586,32 @@ class FlextService[TDomainResult](
 
         return resolved
 
+    @property
+    def config(self) -> FlextConfig:
+        """Standard config access property.
+
+        Provides unified access to FlextConfig. Subprojects can override
+        this to return typed config with namespace access.
+
+        Example:
+            >>> class OrderService(FlextService[Order]):
+            ...     def execute(self) -> FlextResult[Order]:
+            ...         debug = self.config.debug  # Access config
+            ...         return self.ok(Order())
+
+        Returns:
+            FlextConfig: Global configuration instance
+
+        """
+        return FlextConfig.get_global_instance()
+
     @computed_field  # Pydantic v2 computed_field already provides property behavior
     def service_config(self) -> FlextConfig:
         """Automatic config binding via Pydantic v2 computed_field.
 
-        Pure Pydantic v2 pattern - no wrappers, no descriptors, no boilerplate.
-        Config is transparently available via computed property.
+        DEPRECATED: Use self.config instead.
+
+        Pure Pydantic v2 pattern. Config is transparently available via computed property.
 
         Example:
             >>> class OrderService(FlextService[Order]):
@@ -603,7 +624,7 @@ class FlextService[TDomainResult](
             FlextConfig: Global configuration instance
 
         """
-        return FlextConfig.get_global_instance()
+        return self.config
 
     def _resolve_project_component(
         self,
@@ -837,6 +858,55 @@ class FlextService[TDomainResult](
         super().__init__(**data)
         # AUTOMATIC: All infrastructure via properties (zero boilerplate)
 
+        # Auto-init hook for subclass customization
+        self._auto_init_components()
+        self._on_service_init()
+
+    # =============================================================================
+    # SERVICE INITIALIZATION HOOKS - For subclass customization
+    # =============================================================================
+
+    def _auto_init_components(self) -> None:
+        """Auto-initialize service components with automatic logging.
+
+        Called automatically during __init__. Override in subclasses to add
+        custom component initialization.
+
+        Default implementation logs service initialization at DEBUG level,
+        providing visibility into service lifecycle without manual boilerplate.
+
+        Example:
+            >>> class MyService(FlextService[MyResult]):
+            ...     def _auto_init_components(self) -> None:
+            ...         super()._auto_init_components()
+            ...         # Custom initialization
+            ...         self._database = self.container.get("database").unwrap()
+
+        """
+        # Auto-log service initialization (DEBUG level for minimal verbosity)
+        service_name = self.__class__.__name__
+        self.logger.debug(
+            "service_initialized",
+            service_name=service_name,
+            module=self.__class__.__module__,
+        )
+
+    def _on_service_init(self) -> None:
+        """Hook called after service initialization is complete.
+
+        Override in subclasses to perform post-initialization setup.
+        This is called after _auto_init_components().
+
+        Example:
+            >>> class MyService(FlextService[MyResult]):
+            ...     def _on_service_init(self) -> None:
+            ...         self.logger.debug("Service initialized")
+            ...         # Validate configuration
+            ...         if not self.config.some_required_field:
+            ...             raise ValueError("Missing required config")
+
+        """
+
     # =============================================================================
     # ABSTRACT METHODS - Must be implemented by subclasses (Domain.Service protocol)
     # =============================================================================
@@ -853,8 +923,7 @@ class FlextService[TDomainResult](
             FlextResult[TDomainResult]: Success with domain result or failure with error
 
         Note:
-            Subclasses can extend this method with specific parameters while maintaining
-            compatibility with the base signature. When called without parameters,
+            Subclasses can extend this method with specific parameters. When called without parameters,
             performs the standard domain operation (health check or default behavior).
 
         """
@@ -1071,7 +1140,7 @@ class FlextService[TDomainResult](
         if operation_request.timeout_seconds and operation_request.timeout_seconds > 0:
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 future = executor.submit(
-                    operation_request.operation_callable,  # type: ignore[arg-type]
+                    operation_request.operation_callable,
                     *args_list,
                     **operation_request.keyword_arguments,
                 )
@@ -1252,7 +1321,6 @@ class FlextService[TDomainResult](
                 )
 
             # Execute with retry logic (delegated to private method)
-            # Validate retry_config - NO fallback, explicit validation
             retry_config = request.retry_config
             if not FlextRuntime.is_dict_like(retry_config):
                 # Fast fail: retry_config must be dict (Field default_factory ensures this)
@@ -1271,7 +1339,7 @@ class FlextService[TDomainResult](
         """Execute operation with full validation including business rules and config.
 
         Args:
-            _request: Domain service execution request (unused, for protocol compatibility)
+            _request: Domain service execution request (unused)
 
         Returns:
             FlextResult[TDomainResult]: Success with operation result or failure with validation/execution error
@@ -1288,7 +1356,6 @@ class FlextService[TDomainResult](
         if config_result.is_failure:
             return self.fail(f"Configuration validation failed: {config_result.error}")
 
-        # Execute the operation and cast to object result type for API compatibility
         return self.execute()
 
     def _execute_action(

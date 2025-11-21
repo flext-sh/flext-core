@@ -31,11 +31,6 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-try:
-    from dotenv import dotenv_values
-except ImportError:
-    dotenv_values = None  # type: ignore[assignment]
-
 from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
 from flext_core.runtime import FlextRuntime
@@ -153,7 +148,7 @@ class FlextConfig(BaseSettings):
     """
 
     # Class attributes for singleton pattern
-    _instances: ClassVar[dict[type, Self]] = {}
+    _instances: ClassVar[dict[type, object]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
 
     # Class attributes for namespace pattern
@@ -161,6 +156,7 @@ class FlextConfig(BaseSettings):
     _namespace_instances: ClassVar[dict[str, BaseModel]] = {}
     _namespace_factories: ClassVar[dict[str, Callable[[], BaseModel]]] = {}
     _namespace_lock: ClassVar[threading.RLock] = threading.RLock()
+    _namespace_by_class: ClassVar[dict[type[BaseModel], str]] = {}
 
     def __new__(cls, **_kwargs: object) -> Self:
         """Create or return singleton FlextConfig instance.
@@ -186,7 +182,7 @@ class FlextConfig(BaseSettings):
             **_kwargs: Configuration values (passed through Pydantic's MRO, only used on first instantiation)
 
         Returns:
-            Self: The singleton instance for the specific class
+            T_Config: The singleton instance for the specific class
 
         """
         base_class = cls  # Use the actual class, not hardcoded FlextConfig
@@ -195,7 +191,12 @@ class FlextConfig(BaseSettings):
                 if base_class not in cls._instances:
                     instance = super().__new__(cls)
                     cls._instances[base_class] = instance
-        return cls._instances[base_class]
+        # Retrieve instance and validate type
+        raw_instance = cls._instances[base_class]
+        if not isinstance(raw_instance, cls):
+            msg = f"Singleton instance is not of expected type {cls.__name__}"
+            raise TypeError(msg)
+        return raw_instance
 
     # Pydantic 2.11+ BaseSettings configuration with STRICT validation
     # Automatic environment variable type coercion is enabled via lax validation mode
@@ -486,9 +487,9 @@ class FlextConfig(BaseSettings):
             with cls._di_provider_lock:
                 if cls._di_config_provider is None:
                     cls._di_config_provider = providers.Configuration()
-                    instance = cls._instances.get(cls)
-                    if instance is not None:
-                        config_dict = instance.model_dump()
+                    raw_instance = cls._instances.get(cls)
+                    if raw_instance is not None and isinstance(raw_instance, cls):
+                        config_dict = raw_instance.model_dump()
                         cls._di_config_provider.from_dict(config_dict)
         return cls._di_config_provider
 
@@ -502,10 +503,13 @@ class FlextConfig(BaseSettings):
                 if base_class not in cls._instances:
                     instance = cls()
                     cls._instances[base_class] = instance
-        else:
-            cls._instances[base_class]
 
-        return cls._instances[base_class]
+        # Retrieve and validate instance
+        raw_instance = cls._instances[base_class]
+        if not isinstance(raw_instance, cls):
+            msg = f"Global instance is not of expected type {cls.__name__}"
+            raise TypeError(msg)
+        return raw_instance
 
     @classmethod
     def set_global_instance(cls, instance: Self) -> None:
@@ -592,6 +596,33 @@ class FlextConfig(BaseSettings):
                 resolved_factory,
             )
 
+            # Add typed property to FlextConfig for direct attribute access
+            # This enables: self.config.ldap → FlextLdapConfig (typed)
+            def make_property(
+                namespace_name: str,
+                config_cls: type[BaseModel],
+            ) -> object:
+                """Create typed property for namespace access."""
+
+                def getter(self: FlextConfig) -> BaseModel:
+                    instance = self._get_namespace_instance(namespace_name)
+                    # Runtime type check for safety (should always pass)
+                    if not isinstance(instance, config_cls):
+                        msg = f"Namespace '{namespace_name}' type mismatch"
+                        raise TypeError(msg)
+                    return instance
+
+                # Set proper return type annotation for type checkers
+                getter.__annotations__["return"] = config_cls
+                prop: object = property(getter)
+                return prop
+
+            # Only add property if it doesn't conflict with model fields or existing attributes
+            # Check model_fields first (Pydantic fields don't show up in hasattr)
+            model_fields = getattr(cls, "model_fields", {})
+            if name not in model_fields and not hasattr(cls, name):
+                setattr(cls, name, make_property(name, config_class))
+
     @classmethod
     def _get_namespace_instance(cls, name: str) -> BaseModel:
         """Get or create namespace instance (lazy singleton).
@@ -634,6 +665,19 @@ class FlextConfig(BaseSettings):
             AttributeError: If namespace not registered or invalid attribute
 
         """
+        # Skip private attributes and Pydantic internals
+        if name.startswith("_"):
+            msg = f"'{type(self).__name__}' object has no attribute '{name}'"
+            raise AttributeError(msg)
+
+        # Check if it's a Pydantic model field - don't intercept those
+        # model_fields is available on Pydantic BaseModel/BaseSettings
+        model_fields = getattr(type(self), "model_fields", {})
+        if name in model_fields:
+            # Let Pydantic handle this - raise AttributeError to trigger default behavior
+            msg = f"'{type(self).__name__}' object has no attribute '{name}'"
+            raise AttributeError(msg)
+
         # Check if it's a registered namespace
         if name in self._namespaces:
             return self._get_namespace_instance(name)
@@ -641,6 +685,37 @@ class FlextConfig(BaseSettings):
         # Not a namespace - raise standard AttributeError
         msg = f"'{type(self).__name__}' object has no attribute '{name}'"
         raise AttributeError(msg)
+
+    def get_namespace(self, name: str, config_type: type[T_Namespace]) -> T_Namespace:
+        """Get typed namespace config instance.
+
+        Type-safe alternative to dynamic attribute access (__getattr__).
+        Use this method when you need proper type inference from type checkers.
+
+        Args:
+            name: Namespace name (e.g., "ldap", "ldif", "client-a_oud_mig")
+            config_type: Expected config class type for type inference
+
+        Returns:
+            Namespace config instance with proper type
+
+        Raises:
+            KeyError: If namespace not registered
+            TypeError: If namespace instance is not of expected type
+
+        Example:
+            >>> config = FlextConfig.get_global_instance()
+            >>> ldap_config = config.get_namespace("ldap", FlextLdapConfig)
+            >>> # ldap_config is typed as FlextLdapConfig
+            >>> host = ldap_config.host  # Full type inference!
+
+        """
+        instance = self._get_namespace_instance(name)
+        if not isinstance(instance, config_type):
+            type_name = getattr(config_type, "__name__", str(config_type))
+            msg = f"Namespace '{name}' is {type(instance).__name__}, not {type_name}"
+            raise TypeError(msg)
+        return instance
 
     @classmethod
     def list_namespaces(cls) -> list[str]:
@@ -732,8 +807,8 @@ class FlextConfig(BaseSettings):
         """
 
         def decorator(cls: type[T_Namespace]) -> type[T_Namespace]:
-            # Store namespace for introspection
-            cls.__namespace__ = namespace  # type: ignore[attr-defined]
+            # Store namespace mapping for introspection (use class-level dict)
+            FlextConfig._namespace_by_class[cls] = namespace
 
             # Register immediately at class definition time
             FlextConfig.register_namespace(namespace, cls)
@@ -771,7 +846,11 @@ class FlextConfig(BaseSettings):
 
         def factory() -> object:
             if hasattr(config_class, "get_instance"):
-                instance = config_class.get_instance()
+                get_instance_method = getattr(config_class, "get_instance", None)
+                if callable(get_instance_method):
+                    instance = get_instance_method()
+                else:
+                    instance = config_class()
             else:
                 instance = config_class()
             return getattr(instance, field_name)
@@ -817,8 +896,8 @@ class FlextConfig(BaseSettings):
         """
 
         # Singleton storage: maps class to its instance
-        # Using dict instead of ClassVar[Self] for proper type inference
-        _instances: ClassVar[dict[type, FlextConfig.AutoConfig]] = {}
+        # Using dict[type, object] for type safety - narrowed via isinstance checks
+        _instances: ClassVar[dict[type, object]] = {}
         _lock: ClassVar[threading.RLock] = threading.RLock()
 
         model_config = SettingsConfigDict(
@@ -846,8 +925,8 @@ class FlextConfig(BaseSettings):
                 )
                 env_file_encoding_value = config_dict.get("env_file_encoding", "utf-8")
                 return (
-                    str(env_prefix_value) if env_prefix_value is not None else None,
-                    str(env_file_value) if env_file_value is not None else None,
+                    None if env_prefix_value is None else str(env_prefix_value),
+                    None if env_file_value is None else str(env_file_value),
                     str(env_nested_delimiter_value),
                     str(env_file_encoding_value),
                 )
@@ -859,8 +938,8 @@ class FlextConfig(BaseSettings):
             )
             env_file_encoding_attr = getattr(config_dict, "env_file_encoding", "utf-8")
             return (
-                str(env_prefix_attr) if env_prefix_attr is not None else None,
-                str(env_file_attr) if env_file_attr is not None else None,
+                None if env_prefix_attr is None else str(env_prefix_attr),
+                None if env_file_attr is None else str(env_file_attr),
                 str(env_nested_delimiter_attr),
                 str(env_file_encoding_attr),
             )
@@ -890,11 +969,14 @@ class FlextConfig(BaseSettings):
         @staticmethod
         def _load_env_values(
             env_prefix: str,
-            env_file: str | None,
+            env_file: str | None,  # noqa: ARG004 - kept for API compatibility, Pydantic handles .env
             env_nested_delimiter: str,
             env_file_encoding: str,  # noqa: ARG004 - encoding parameter for future use
         ) -> dict[str, object]:
-            """Load values from .env file and environment variables.
+            """Load values from environment variables.
+
+            Note: Pydantic BaseSettings automatically loads .env file via env_file parameter.
+            This method only loads from environment variables for manual processing.
 
             Returns:
                 Dictionary of field_name -> value
@@ -903,24 +985,9 @@ class FlextConfig(BaseSettings):
             loaded_values: dict[str, object] = {}
             prefix_len = len(env_prefix)
 
-            # Load from .env file if it exists
-            if env_file and Path(env_file).exists() and dotenv_values is not None:
-                try:
-                    env_file_values = dotenv_values(env_file)
-                    for key, value in env_file_values.items():
-                        if key.startswith(env_prefix):
-                            field_name = key[prefix_len:].lower()
-                            if (
-                                env_nested_delimiter
-                                and env_nested_delimiter in field_name
-                            ):
-                                parts = field_name.split(env_nested_delimiter.lower())
-                                field_name = "_".join(parts)
-                            loaded_values[field_name] = value
-                except Exception as e:
-                    _logger.debug("Failed to load .env file %s: %s", env_file, e)
-
-            # Load from environment variables (override .env file values)
+            # Pydantic BaseSettings automatically loads .env file via env_file parameter
+            # We only need to load from environment variables here
+            # The .env file is handled by Pydantic's BaseSettings automatically
             for key, value in os.environ.items():
                 if key.startswith(env_prefix):
                     field_name = key[prefix_len:].lower()
@@ -987,9 +1054,8 @@ class FlextConfig(BaseSettings):
                 with cls._lock:
                     if cls not in cls._instances:
                         cls._instances[cls] = cls()
-            # Type checkers understand that _instances[cls] returns an instance of cls
+            # Retrieve and validate instance
             instance = cls._instances[cls]
-            # Runtime check ensures type safety
             if not isinstance(instance, cls):
                 msg = f"Instance is not of type {cls.__name__}"
                 raise TypeError(msg)

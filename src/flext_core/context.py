@@ -36,8 +36,12 @@ from flext_core.utilities import FlextUtilities
 # Type aliases for MyPy compatibility
 if TYPE_CHECKING:
     _StructlogProxyStr: TypeAlias = FlextModelsContext.StructlogProxyContextVar[str]
-    _StructlogProxyDatetime: TypeAlias = FlextModelsContext.StructlogProxyContextVar[datetime]
-    _StructlogProxyDict: TypeAlias = FlextModelsContext.StructlogProxyContextVar[dict[str, object]]
+    _StructlogProxyDatetime: TypeAlias = FlextModelsContext.StructlogProxyContextVar[
+        datetime
+    ]
+    _StructlogProxyDict: TypeAlias = FlextModelsContext.StructlogProxyContextVar[
+        dict[str, object]
+    ]
 else:
     _StructlogProxyStr = FlextModels.StructlogProxyContextVar[str]
     _StructlogProxyDatetime = FlextModels.StructlogProxyContextVar[datetime]

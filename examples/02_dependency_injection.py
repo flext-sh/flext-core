@@ -202,9 +202,9 @@ class DatabaseService(FlextService[None]):
         self.connected = False
         self._query_count = 0
 
-    def execute(self) -> FlextResult[None]:
+    def execute(self, **_kwargs: object) -> FlextResult[None]:
         """Execute the database service."""
-        return FlextResult[bool].ok(True)
+        return FlextResult[None].ok(None)
 
     def connect(self) -> FlextResult[bool]:
         """Connect to database with state validation."""
@@ -333,7 +333,7 @@ class CacheService(FlextService[object]):
         self._hits = 0
         self._misses = 0
 
-    def execute(self) -> FlextResult[object]:
+    def execute(self, **_kwargs: object) -> FlextResult[object]:
         """Execute the cache service."""
         return FlextResult[object].ok(None)
 
@@ -472,7 +472,7 @@ class EmailService(FlextService[None]):
         super().__init__()
         self._smtp_host = smtp_host
 
-    def execute(self) -> FlextResult[None]:
+    def execute(self, **_kwargs: object) -> FlextResult[None]:
         """Execute the email service."""
         return FlextResult[bool].ok(True)
 
@@ -505,7 +505,7 @@ class UserRepository(FlextService[User]):
         self._database = container.get("database").unwrap_or(None)
         self._cache: dict[str, User] = {}
 
-    def execute(self) -> FlextResult[User]:
+    def execute(self, **_kwargs: object) -> FlextResult[User]:
         """Execute the main domain operation - find default user."""
         if self._database is None:
             return FlextResult[User].fail(
@@ -646,7 +646,7 @@ class ComprehensiveDIService(FlextService[User]):
             },
         )
 
-    def execute(self) -> FlextResult[User]:
+    def execute(self, **_kwargs: object) -> FlextResult[User]:
         """Execute with automatic error handling and monitoring.
 
         This method satisfies the FlextService abstract interface while

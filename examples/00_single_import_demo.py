@@ -17,6 +17,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
 
 from flext_core import (
     FlextConstants,
@@ -29,6 +31,12 @@ from flext_core import (
     FlextRuntime,
     FlextUtilities,
 )
+
+# Relative import setup: Add src/ to path for running examples without PYTHONPATH
+# (e.g., python -m examples.00_single_import_demo or direct execution)
+_src_path = str(Path(__file__).parent.parent / "src")
+if _src_path not in sys.path:
+    sys.path.insert(0, _src_path)
 
 os.environ.setdefault("FLEXT_DEBUG", "false")
 os.environ.setdefault("FLEXT_TRACE", "false")
@@ -130,8 +138,8 @@ def demonstrate_single_import_pattern() -> None:
     print("\n5. Validation Utilities:")
 
     # Cache management validation
-    test_obj = {"_cache": {"key": "value"}}
-    cache_result = FlextUtilities.Validation.clear_all_caches(test_obj)
+    test_obj = FlextModels.Entity(unique_id="test-cache")
+    cache_result = FlextUtilities.Cache.clear_object_cache(test_obj)
     print(f"   ✅ Cache clearing: {cache_result.is_success}")
 
     # ID generation utilities

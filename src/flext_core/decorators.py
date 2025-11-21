@@ -51,7 +51,6 @@ class FlextDecorators:
     1. **@inject**: Automatic dependency injection from FlextContainer
        - Eliminates manual container.resolve() calls
        - Keyword-only parameter injection
-       - Graceful fallback on resolution failure
        - Thread-safe via global container singleton
 
     2. **@log_operation**: Automatic operation logging with structured context
@@ -365,6 +364,8 @@ class FlextDecorators:
     @staticmethod
     def log_operation(
         operation_name: str | None = None,
+        *,
+        track_perf: bool = False,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically log operation execution with structured logging.
 
@@ -373,6 +374,8 @@ class FlextDecorators:
 
         Args:
             operation_name: Name for the operation (defaults to function name)
+            track_perf: If True, also tracks performance metrics (duration_ms,
+                duration_seconds). Default False for backward compatibility.
 
         Returns:
             Decorated function with automatic operation logging
@@ -388,6 +391,11 @@ class FlextDecorators:
                     # Automatic logging of start/complete/failure
                     # Automatic context propagation
                     return self._do_processing(user_id)
+
+                @FlextDecorators.log_operation("heavy_task", track_perf=True)
+                def heavy(self) -> FlextResult[dict]:
+                    # Also includes duration_ms and duration_seconds
+                    return self._compute()
             ```
 
         Note:
@@ -416,6 +424,9 @@ class FlextDecorators:
                     ensure_correlation=True,
                 )
 
+                # Track timing if requested
+                start_time = time.perf_counter() if track_perf else 0.0
+
                 try:
                     start_extra: dict[str, object] = {
                         "function": func.__name__,
@@ -439,12 +450,20 @@ class FlextDecorators:
                     )
 
                     result = func(*args, **kwargs)
+
                     completion_extra: dict[str, object] = {
                         "function": func.__name__,
                         "success": True,
                     }
                     if correlation_id is not None:
                         completion_extra["correlation_id"] = correlation_id
+
+                    # Add timing metrics if tracking performance
+                    if track_perf:
+                        duration = time.perf_counter() - start_time
+                        completion_extra["duration_ms"] = duration * 1000
+                        completion_extra["duration_seconds"] = duration
+
                     log_completion_result = result_logger.debug(
                         "%s_completed",
                         op_name,
@@ -475,6 +494,13 @@ class FlextDecorators:
                     }
                     if correlation_id is not None:
                         failure_extra["correlation_id"] = correlation_id
+
+                    # Add timing metrics if tracking performance
+                    if track_perf:
+                        duration = time.perf_counter() - start_time
+                        failure_extra["duration_ms"] = duration * 1000
+                        failure_extra["duration_seconds"] = duration
+
                     failure_result = result_logger.exception(
                         f"{op_name}_failed",
                         exception=e,
@@ -1155,7 +1181,7 @@ class FlextDecorators:
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Combined decorator applying multiple automation patterns at once.
 
-        Combines @inject, @log_operation, @track_performance, and optionally
+        Combines @inject, @log_operation (with optional track_perf), and optionally
         @railway into a single decorator for maximum code reduction.
 
         Args:
@@ -1216,17 +1242,12 @@ class FlextDecorators:
                 inject_result = FlextDecorators.inject(**inject_deps)(decorated)
                 decorated = inject_result
 
-            # Apply performance tracking
-            if track_perf:
-                perf_result = FlextDecorators.track_performance(
-                    operation_name=operation_name,
-                )(decorated)
-                decorated = perf_result
-
-            # Apply operation logging (innermost wrapper)
-            log_result = FlextDecorators.log_operation(operation_name=operation_name)(
-                decorated,
-            )
+            # Apply unified log_operation with optional performance tracking
+            # This replaces separate @track_performance + @log_operation calls
+            log_result = FlextDecorators.log_operation(
+                operation_name=operation_name,
+                track_perf=track_perf,
+            )(decorated)
             return cast("Callable[P, R]", log_result)
 
         return decorator
