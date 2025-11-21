@@ -99,7 +99,7 @@ class TestFlextProtocols:
         """Test that a class can implement Service protocol."""
 
         class UserService:
-            def execute(self, **kwargs: object) -> FlextResult[dict[str, object]]:
+            def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok({"status": "success"})
 
         service = UserService()
@@ -184,7 +184,7 @@ class TestFlextProtocols:
         class AdvancedService:
             """Service implementing multiple protocols."""
 
-            def execute(self, **kwargs: object) -> FlextResult[dict[str, object]]:
+            def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok({})
 
             def handle(

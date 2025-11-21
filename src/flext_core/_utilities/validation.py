@@ -175,7 +175,7 @@ class FlextUtilitiesValidation:
             # Use proper logger instead of root logger
             logger = logging.getLogger(__name__)
             logger.debug("orjson dumps failed: %s", e)
-        # Fallback to standard library json with sorted keys
+        # Use standard library json with sorted keys
         return json.dumps(value, sort_keys=True, default=str)
 
     @staticmethod
@@ -902,7 +902,6 @@ class FlextUtilitiesValidation:
 
         """
         if timeout > max_timeout:
-            # Fast fail: explicit default value instead of 'or' fallback
             msg: str = (
                 error_message
                 if error_message is not None
@@ -1161,7 +1160,6 @@ class FlextUtilitiesValidation:
 
         # Validate pattern
         if not re.match(pattern, normalized_name):
-            # Fast fail: explicit default value instead of 'or' fallback
             msg: str = (
                 error_message
                 if error_message is not None

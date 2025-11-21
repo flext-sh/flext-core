@@ -154,8 +154,23 @@ class FlextContainer(FlextProtocols.Configurable):
         self._sync_config_to_di()
 
     @property
+    def config(self) -> FlextConfig:
+        """Standard config access property.
+
+        Provides unified access to FlextConfig. Subprojects can override
+        this to return typed config with namespace access.
+
+        Returns:
+            FlextConfig: Current global configuration instance
+
+        """
+        return FlextConfig.get_global_instance()
+
+    @property
     def _flext_config(self) -> FlextConfig:
         """Get current global FlextConfig singleton.
+
+        DEPRECATED: Use self.config instead.
 
         Always returns the current global config instance, ensuring the
         container stays in sync even after FlextConfig.reset_global_instance()
@@ -168,7 +183,7 @@ class FlextContainer(FlextProtocols.Configurable):
             FlextConfig: Current global configuration instance
 
         """
-        return FlextConfig.get_global_instance()
+        return self.config
 
     def _create_container_config(self) -> FlextModels.ContainerConfig:
         """Create container configuration from FlextConfig defaults using Pydantic Model.

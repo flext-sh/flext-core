@@ -7,8 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
-
 import pytest
 
 from flext_core import FlextResult
@@ -181,24 +179,25 @@ class TestFlextTestsUtilitiesTestUtilities:
         with pytest.raises(AssertionError, match="Expected failure result"):
             FlextTestsUtilities.TestUtilities.assert_result_failure(result)
 
-    def test_create_mock_service_no_methods(self) -> None:
-        """Test create_mock_service with no methods specified."""
-        mock = FlextTestsUtilities.TestUtilities.create_mock_service()
+    def test_create_test_service_no_methods(self) -> None:
+        """Test create_test_service with no methods specified."""
+        service = FlextTestsUtilities.TestUtilities.create_test_service()
 
-        assert isinstance(mock, MagicMock)
+        assert service is not None
+        assert hasattr(service, "__class__")
 
-    def test_create_mock_service_with_methods(self) -> None:
-        """Test create_mock_service with method implementations."""
+    def test_create_test_service_with_methods(self) -> None:
+        """Test create_test_service with method implementations."""
 
-        def mock_method() -> str:
-            return "mocked"
+        def test_method() -> str:
+            return "test_result"
 
-        mock = FlextTestsUtilities.TestUtilities.create_mock_service(
-            test_method=mock_method,
+        service = FlextTestsUtilities.TestUtilities.create_test_service(
+            test_method=test_method,
         )
 
-        assert hasattr(mock, "test_method")
-        assert mock.test_method() == "mocked"
+        assert hasattr(service, "test_method")
+        assert service.test_method() == "test_result"
 
     def test_generate_test_id_default(self) -> None:
         """Test generate_test_id with default prefix."""

@@ -13,7 +13,6 @@ import uuid
 from collections.abc import Generator
 from contextlib import contextmanager
 from typing import TypeVar
-from unittest.mock import MagicMock
 
 from flext_core import FlextResult
 
@@ -140,20 +139,27 @@ class FlextTestsUtilities:
             assert result.is_failure, f"Expected failure result, got: {result}"
 
         @staticmethod
-        def create_mock_service(**methods: object) -> MagicMock:
-            """Create a mock service with specified methods.
+        def create_test_service(**methods: object) -> object:
+            """Create a test service with specified methods.
 
             Args:
-                **methods: Method implementations for the mock
+                **methods: Method implementations for the service
 
             Returns:
-                Configured MagicMock instance
+                Test service instance with specified methods
 
             """
-            mock = MagicMock()
-            for method_name, implementation in methods.items():
-                setattr(mock, method_name, implementation)
-            return mock
+
+            # Create a real service class dynamically
+            class TestService:
+                """Real test service implementation."""
+
+                def __init__(self, **method_impls: object) -> None:
+                    """Initialize test service with method implementations."""
+                    for method_name, implementation in method_impls.items():
+                        setattr(self, method_name, implementation)
+
+            return TestService(**methods)
 
         @staticmethod
         def generate_test_id(prefix: str = "test") -> str:

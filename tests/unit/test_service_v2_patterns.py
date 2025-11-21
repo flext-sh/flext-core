@@ -27,7 +27,7 @@ class SimpleV1Service(FlextService[str]):
 
     message: str = "default"
 
-    def execute(self) -> FlextResult[str]:
+    def execute(self, **_kwargs: object) -> FlextResult[str]:
         """Execute and return message."""
         return FlextResult.ok(f"V1: {self.message}")
 
@@ -37,7 +37,7 @@ class SimpleV2PropertyService(FlextService[str]):
 
     message: str = "default"
 
-    def execute(self) -> FlextResult[str]:
+    def execute(self, **_kwargs: object) -> FlextResult[str]:
         """Execute and return message."""
         return FlextResult.ok(f"V2 Property: {self.message}")
 
@@ -48,7 +48,7 @@ class SimpleV2AutoService(FlextService[str]):
     auto_execute = True
     message: str = "default"
 
-    def execute(self) -> FlextResult[str]:
+    def execute(self, **_kwargs: object) -> FlextResult[str]:
         """Execute and return message."""
         return FlextResult.ok(f"V2 Auto: {self.message}")
 
@@ -58,7 +58,7 @@ class ValidationService(FlextService[dict[str, object]]):
 
     value: int
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Execute with validation."""
         if self.value < 0:
             return FlextResult.fail("Value must be positive")
@@ -72,7 +72,7 @@ class AutoValidationService(FlextService[dict[str, object]]):
     auto_execute = True
     value: int
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Execute with validation."""
         if self.value < 0:
             return FlextResult.fail("Value must be positive")
@@ -86,7 +86,7 @@ class ComplexV1Service(FlextService[dict[str, object]]):
     items: list[str] = Field(default_factory=list)
     multiplier: int = 1
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Execute complex operation."""
         if not self.items:
             return FlextResult.fail("Items cannot be empty")
@@ -104,7 +104,7 @@ class ComplexV2Service(FlextService[dict[str, object]]):
     items: list[str] = Field(default_factory=list)
     multiplier: int = 1
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Execute complex operation."""
         if not self.items:
             return FlextResult.fail("Items cannot be empty")
@@ -366,7 +366,7 @@ class TestV1V2Interoperability:
 
             value: int
 
-            def execute(self) -> FlextResult[int]:
+            def execute(self, **_kwargs: object) -> FlextResult[int]:
                 return FlextResult.ok(self.value * 2)
 
         class V2PropertyPipelineService(FlextService[int]):
@@ -374,7 +374,7 @@ class TestV1V2Interoperability:
 
             value: int
 
-            def execute(self) -> FlextResult[int]:
+            def execute(self, **_kwargs: object) -> FlextResult[int]:
                 return FlextResult.ok(self.value + 10)
 
         # Pipeline mixing V1 and V2
@@ -446,7 +446,7 @@ class TestBackwardCompatibility:
             auto_execute = False  # Explicit V1 behavior
             message: str
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult.ok(f"Manual: {self.message}")
 
         # Returns service instance (V1 behavior)
@@ -472,7 +472,7 @@ class TestBackwardCompatibility:
             # No auto_execute attribute = defaults to False
             message: str
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult.ok(f"Default: {self.message}")
 
         # Returns service instance (V1 behavior)
@@ -508,7 +508,7 @@ class TestV2EdgeCases:
 
             auto_execute = True
 
-            def execute(self) -> FlextResult[bool]:
+            def execute(self, **_kwargs: object) -> FlextResult[bool]:
                 return FlextResult[bool].ok(True)
 
         # Returns True directly
@@ -521,7 +521,7 @@ class TestV2EdgeCases:
         class DictService(FlextService[dict[str, int]]):
             """Service returning dict."""
 
-            def execute(self) -> FlextResult[dict[str, int]]:
+            def execute(self, **_kwargs: object) -> FlextResult[dict[str, int]]:
                 return FlextResult.ok({"a": 1, "b": 2})
 
         service = DictService()
@@ -539,7 +539,7 @@ class TestV2EdgeCases:
 
             auto_execute = True
 
-            def execute(self) -> FlextResult[list[str]]:
+            def execute(self, **_kwargs: object) -> FlextResult[list[str]]:
                 return FlextResult.ok(["x", "y", "z"])
 
         # Returns list directly
@@ -564,7 +564,7 @@ class TestV2EdgeCases:
             user_id: str
             user_name: str
 
-            def execute(self) -> FlextResult[User]:
+            def execute(self, **_kwargs: object) -> FlextResult[User]:
                 return FlextResult.ok(User(unique_id=self.user_id, name=self.user_name))
 
         service = UserService(user_id="123", user_name="Test User")
@@ -627,7 +627,7 @@ class TestV2BestPractices:
 
             value: int
 
-            def execute(self) -> FlextResult[int]:
+            def execute(self, **_kwargs: object) -> FlextResult[int]:
                 if self.value < 0:
                     return FlextResult.fail("Must be positive")
                 return FlextResult.ok(self.value * 2)
@@ -637,7 +637,7 @@ class TestV2BestPractices:
 
             value: int
 
-            def execute(self) -> FlextResult[int]:
+            def execute(self, **_kwargs: object) -> FlextResult[int]:
                 if self.value > 100:
                     return FlextResult.fail("Too large")
                 return FlextResult.ok(self.value + 10)

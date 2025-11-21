@@ -250,7 +250,7 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
             },
         )
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Execute all FlextResult demonstrations and return summary.
 
         This method satisfies the FlextService abstract interface while
@@ -538,29 +538,29 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
         )
         print(f".chain_validations(): {result}")
 
-        def validate_not_empty_none(value: object) -> FlextResult[None]:
+        def validate_not_empty_bool(value: object) -> FlextResult[bool]:
             str_value = cast("str", value)
             if not str_value:
-                return FlextResult[None].fail("Empty string")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Empty string")
+            return FlextResult[bool].ok(True)
 
-        def validate_email_none(value: object) -> FlextResult[None]:
+        def validate_email_bool(value: object) -> FlextResult[bool]:
             str_value = cast("str", value)
             if "@" not in str_value:
-                return FlextResult[None].fail("Invalid email")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Invalid email")
+            return FlextResult[bool].ok(True)
 
-        def validate_domain_none(value: object) -> FlextResult[None]:
+        def validate_domain_bool(value: object) -> FlextResult[bool]:
             str_value = cast("str", value)
             if not str_value.endswith(".com"):
-                return FlextResult[None].fail("Must be .com domain")
-            return FlextResult[None].ok(None)
+                return FlextResult[bool].fail("Must be .com domain")
+            return FlextResult[bool].ok(True)
 
         all_results = FlextResult.validate_all(
             invalid_email,
-            validate_not_empty_none,
-            validate_email_none,
-            validate_domain_none,
+            validate_not_empty_bool,
+            validate_email_bool,
+            validate_domain_bool,
         )
         print(f".validate_all(): {all_results}")
 

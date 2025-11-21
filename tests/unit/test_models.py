@@ -10,7 +10,6 @@ from __future__ import annotations
 import threading
 from collections.abc import Callable
 from typing import ClassVar, cast
-from unittest.mock import patch
 
 import pytest
 from pydantic import Field, field_validator
@@ -506,17 +505,13 @@ class TestFlextModels:
                 lambda: True,  # Simple passing invariant for testing
             ]
 
-        # Disable automatic invariant checking for this test
-        with patch.object(TestAggregate, "model_post_init", new=lambda self, ctx: None):
-            try:
-                aggregate = TestAggregate(name="test", value=10)
-                # Should pass invariant check when called manually
-                aggregate.check_invariants()  # Should not raise
-            finally:
-                # Restore original method
-                pass
+        # Test invariant checking - create aggregate and test manually
+        aggregate = TestAggregate(name="test", value=10)
+        # Should pass invariant check when called manually
+        aggregate.check_invariants()  # Should not raise
 
-        # Test with failing invariant
+        # Test with failing invariant - invariant is checked automatically in model_post_init
+        # So we expect it to fail during creation
         class FailingAggregate(FlextModels.AggregateRoot):
             name: str
 
@@ -524,22 +519,11 @@ class TestFlextModels:
                 lambda: False,  # Always fails
             ]
 
-        # Disable automatic invariant checking
-        with patch.object(
-            FailingAggregate, "model_post_init", new=lambda self, ctx: None
-        ):
-            try:
-                failing_aggregate = FailingAggregate(name="test")
-                # Should fail invariant check when called manually
-                from flext_core import FlextExceptions
+        # Create aggregate - invariant will be checked automatically and should fail
+        from flext_core import FlextExceptions
 
-                with pytest.raises(
-                    FlextExceptions.ValidationError, match="Invariant violated"
-                ):
-                    failing_aggregate.check_invariants()
-            finally:
-                # Restore original method
-                pass
+        with pytest.raises(FlextExceptions.ValidationError, match="Invariant violated"):
+            FailingAggregate(name="test")
 
     def test_value_object_immutability(self) -> None:
         """Test Value object immutability and equality."""

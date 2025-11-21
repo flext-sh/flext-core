@@ -37,6 +37,10 @@ from flext_core import (
     FlextResult,
 )
 
+# Skip entire module if optional dependencies not available
+psycopg2 = pytest.importorskip("psycopg2")
+redis = pytest.importorskip("redis")
+
 # ==================== DOCKER SERVICE HELPERS ====================
 
 
@@ -78,9 +82,6 @@ class PostgreSQLService:
             )
 
         try:
-            # Try to connect to PostgreSQL service
-            import psycopg2
-
             self.connection_attempts += 1
             conn = psycopg2.connect(
                 host=self.host,
@@ -105,14 +106,6 @@ class PostgreSQLService:
                 "query": data["query"],
             })
 
-        except ImportError:
-            # psycopg2 not available - mock the result
-            self.query_count += 1
-            return FlextResult[dict[str, object]].ok({
-                "result": [],
-                "query": data["query"],
-                "mocked": True,
-            })
         except Exception as e:
             self.connection_attempts += 1
             return FlextResult[dict[str, object]].fail(

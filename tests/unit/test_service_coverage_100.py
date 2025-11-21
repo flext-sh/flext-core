@@ -43,7 +43,7 @@ class TestService(FlextService[TestDomainResult]):
         """Initialize test service."""
         super().__init__(**data)
 
-    def execute(self) -> FlextResult[TestDomainResult]:
+    def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
         """Execute service."""
         return self.ok(TestDomainResult("success"))
 
@@ -57,7 +57,7 @@ class TestServiceWithValidation(FlextService[TestDomainResult]):
         """Initialize test service."""
         super().__init__(**data)
 
-    def execute(self) -> FlextResult[TestDomainResult]:
+    def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
         """Execute service."""
         return self.ok(TestDomainResult("validated"))
 
@@ -71,7 +71,7 @@ class TestServiceWithTimeout(FlextService[TestDomainResult]):
         """Initialize test service."""
         super().__init__(**data)
 
-    def execute(self) -> FlextResult[TestDomainResult]:
+    def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
         """Execute service."""
         return self.ok(TestDomainResult("timeout_test"))
 
@@ -85,7 +85,7 @@ class TestServiceWithContext(FlextService[TestDomainResult]):
         """Initialize test service."""
         super().__init__(**data)
 
-    def execute(self) -> FlextResult[TestDomainResult]:
+    def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
         """Execute service."""
         return self.ok(TestDomainResult("context_test"))
 
@@ -121,7 +121,7 @@ class TestService100Coverage:
 
         # Create service without type parameter
         class UntypedService(FlextService):
-            def execute(self) -> FlextResult[object]:
+            def execute(self, **_kwargs: object) -> FlextResult[object]:
                 return self.ok("test")
 
         service = UntypedService()
@@ -333,7 +333,7 @@ class TestService100Coverage:
         """Test execute_with_timeout with timeout exceeded."""
 
         class SlowService(FlextService[TestDomainResult]):
-            def execute(self) -> FlextResult[TestDomainResult]:
+            def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
                 import time
 
                 time.sleep(0.1)  # Short delay
@@ -383,7 +383,7 @@ class TestService100Coverage:
         """Test validate_domain_result with complex type hint."""
 
         class ComplexService(FlextService[dict[str, object]]):
-            def execute(self) -> FlextResult[dict[str, object]]:
+            def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
                 return self.ok({"key": "value"})
 
         service = ComplexService()
@@ -618,7 +618,7 @@ class TestService100Coverage:
                 self.logger = logger
                 self.config = config
 
-            def execute(self) -> FlextResult[TestDomainResult]:
+            def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
                 return self.ok(TestDomainResult("test"))
 
         deps = ServiceWithDeps._extract_dependencies_from_signature()
@@ -638,7 +638,7 @@ class TestService100Coverage:
                 super().__init__(**data)
                 self.logger = logger
 
-            def execute(self) -> FlextResult[TestDomainResult]:
+            def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
                 return self.ok(TestDomainResult("test"))
 
         resolved = ServiceWithDeps._resolve_dependencies(
@@ -661,7 +661,7 @@ class TestService100Coverage:
                 super().__init__(**data)
                 self.logger = logger
 
-            def execute(self) -> FlextResult[TestDomainResult]:
+            def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
                 return self.ok(TestDomainResult("test"))
 
         deps = ServiceWithUnionDeps._extract_dependencies_from_signature()
@@ -681,7 +681,7 @@ class TestService100Coverage:
                 super().__init__(**data)
                 self.logger = logger
 
-            def execute(self) -> FlextResult[TestDomainResult]:
+            def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
                 return self.ok(TestDomainResult("test"))
 
         resolved = ServiceWithDeps._resolve_dependencies(
@@ -698,7 +698,7 @@ class TestService100Coverage:
                 super().__init__(**data)
                 self.missing_dep = missing_dep
 
-            def execute(self) -> FlextResult[TestDomainResult]:
+            def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
                 return self.ok(TestDomainResult("test"))
 
         with pytest.raises(Exception, match=r".*unresolved dependencies.*"):
@@ -727,7 +727,7 @@ class TestService100Coverage:
 
         # Create a service in a different module context
         class ModuleService(FlextService[TestDomainResult]):
-            def execute(self) -> FlextResult[TestDomainResult]:
+            def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
                 return self.ok(TestDomainResult("test"))
 
         # The __init_subclass__ should handle module normalization

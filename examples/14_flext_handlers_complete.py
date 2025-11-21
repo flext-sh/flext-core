@@ -111,7 +111,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         self._users: dict[str, User] = {}
         self._events: list[UserCreatedEvent] = []
 
-    def execute(self) -> FlextResult[dict[str, str | bool]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, str | bool]]:
         """Execute method required by FlextService."""
         self.logger.info("Executing FlextHandlers demo")
         return FlextResult[dict[str, str | bool]].ok({

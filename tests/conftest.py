@@ -19,7 +19,12 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextConfig, FlextContainer, FlextLogger, FlextResult
+from flext_core import (
+    FlextConfig,
+    FlextContainer,
+    FlextLogger,
+    FlextResult,
+)
 
 from .fixtures import (
     get_benchmark_data,

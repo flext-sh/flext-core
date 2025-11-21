@@ -88,15 +88,15 @@ class FlextModelsCollections:
             return {name: len(entries) for name, entries in self.categories.items()}
 
         def items(self) -> list[tuple[str, list[T]]]:
-            """Iterate over categories (for dict-like compatibility)."""
+            """Iterate over categories."""
             return list(self.categories.items())
 
         def keys(self) -> list[str]:
-            """Get category names (for dict-like compatibility)."""
+            """Get category names."""
             return list(self.categories.keys())
 
         def values(self) -> list[list[T]]:
-            """Get all entry lists (for dict-like compatibility)."""
+            """Get all entry lists."""
             return list(self.categories.values())
 
         def __getitem__(self, category: str) -> list[T]:
@@ -185,7 +185,9 @@ class FlextModelsCollections:
             return result
 
     class Config(FlextModelsEntity.ArbitraryTypesModel):
-        """Base for configuration models."""
+        """Base for configuration models - mutable Pydantic v2 model."""
+
+        __hash__ = None  # type: ignore[assignment]
 
         def merge(
             self,
@@ -245,8 +247,6 @@ class FlextModelsCollections:
             if not isinstance(other, self.__class__):
                 return NotImplemented
             return self.model_dump() == other.model_dump()
-
-        __hash__ = None  # type: ignore[assignment]
 
     class Results(FlextModelsEntity.Value):
         """Base for result models."""

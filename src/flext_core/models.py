@@ -236,37 +236,37 @@ class FlextModels:
     """
 
     # =========================================================================
-    # NESTED WRAPPER CLASSES - Entity & DDD Patterns
+    # NESTED CLASSES - Entity & DDD Patterns
     # =========================================================================
     class Entity(FlextModelsEntity.Core):
-        """Domain entity with identity and lifecycle - wrapper class."""
+        """Domain entity with identity and lifecycle."""
 
     class Value(FlextModelsEntity.Value):
-        """Immutable value object - wrapper class."""
+        """Immutable value object."""
 
     class AggregateRoot(FlextModelsEntity.AggregateRoot, Entity):
-        """Aggregate root consistency boundary - wrapper class."""
+        """Aggregate root consistency boundary."""
 
     class DomainEvent(FlextModelsEntity.DomainEvent):
-        """Domain event for event sourcing - wrapper class."""
+        """Domain event for event sourcing."""
 
     class ArbitraryTypesModel(FlextModelsEntity.ArbitraryTypesModel):
-        """Base model with arbitrary types support - wrapper class."""
+        """Base model with arbitrary types support."""
 
     class FrozenStrictModel(FlextModelsEntity.FrozenStrictModel):
-        """Immutable strict model - wrapper class."""
+        """Immutable strict model."""
 
     class IdentifiableMixin(FlextModelsEntity.IdentifiableMixin):
-        """Mixin for unique identifiers - wrapper class."""
+        """Mixin for unique identifiers."""
 
     class TimestampableMixin(FlextModelsEntity.TimestampableMixin):
-        """Mixin for timestamps - wrapper class."""
+        """Mixin for timestamps."""
 
     class TimestampedModel(FlextModelsEntity.TimestampedModel):
-        """Model with timestamp fields - wrapper class."""
+        """Model with timestamp fields."""
 
     class VersionableMixin(FlextModelsEntity.VersionableMixin):
-        """Mixin for versioning - wrapper class."""
+        """Mixin for versioning."""
 
     # Generic classes - use simple assignment (not wrapper) to avoid type parameter conflicts
     Categories = FlextModelsCollections.Categories
@@ -290,22 +290,22 @@ class FlextModels:
     # OFFICIAL NAMESPACE - CQRS Patterns
     # =========================================================================
     class Cqrs:
-        """CQRS namespace with nested wrapper classes."""
+        """CQRS namespace with nested classes."""
 
         class Command(FlextModelsCqrs.Command):
-            """Base class for CQRS commands - wrapper class."""
+            """Base class for CQRS commands."""
 
         class Pagination(FlextModelsCqrs.Pagination):
-            """Pagination model for query results - wrapper class."""
+            """Pagination model for query results."""
 
         class Query(FlextModelsCqrs.Query):
-            """Query model for CQRS query operations - wrapper class."""
+            """Query model for CQRS query operations."""
 
         class Bus(FlextModelsCqrs.Bus):
-            """Bus configuration model - wrapper class."""
+            """Bus configuration model."""
 
         class Handler(FlextModelsCqrs.Handler):
-            """Handler configuration model - wrapper class."""
+            """Handler configuration model."""
 
         # Internal utility functions exposed for testing
         @staticmethod
@@ -335,115 +335,115 @@ class FlextModels:
             )
 
     # =========================================================================
-    # NESTED WRAPPER CLASSES - Base Utility Models
+    # NESTED CLASSES - Base Utility Models
     # =========================================================================
     class Metadata(MetadataBase):
-        """Metadata model for structured information - wrapper class."""
+        """Metadata model for structured information."""
 
     Payload = FlextModelsBase.Payload
 
     class Url(FlextModelsBase.Url):
-        """URL model with validation - wrapper class."""
+        """URL model with validation."""
 
     class LogOperation(FlextModelsBase.LogOperation):
-        """Log operation model - wrapper class."""
+        """Log operation model."""
 
     class TimestampConfig(FlextModelsBase.TimestampConfig):
-        """Timestamp configuration model - wrapper class."""
+        """Timestamp configuration model."""
 
     class SerializationRequest(FlextModelsBase.SerializationRequest):
-        """Serialization request model - wrapper class."""
+        """Serialization request model."""
 
     class ConditionalExecutionRequest(FlextModelsBase.ConditionalExecutionRequest):
-        """Conditional execution request model - wrapper class."""
+        """Conditional execution request model."""
 
     class StateInitializationRequest(FlextModelsBase.StateInitializationRequest):
-        """State initialization request model - wrapper class."""
+        """State initialization request model."""
 
     # =========================================================================
-    # NESTED WRAPPER CLASSES - Configuration Models
+    # NESTED CLASSES - Configuration Models
     # =========================================================================
     class ProcessingRequest(FlextModelsConfig.ProcessingRequest):
-        """Processing request configuration model - wrapper class."""
+        """Processing request configuration model."""
 
     class RetryConfiguration(FlextModelsConfig.RetryConfiguration):
-        """Retry configuration model - wrapper class."""
+        """Retry configuration model."""
 
     class ValidationConfiguration(FlextModelsConfig.ValidationConfiguration):
-        """Validation configuration model - wrapper class."""
+        """Validation configuration model."""
 
     class BatchProcessingConfig(FlextModelsConfig.BatchProcessingConfig):
-        """Batch processing configuration model - wrapper class."""
+        """Batch processing configuration model."""
 
     class HandlerExecutionConfig(FlextModelsConfig.HandlerExecutionConfig):
-        """Handler execution configuration model - wrapper class."""
+        """Handler execution configuration model."""
 
     class MiddlewareConfig(FlextModelsConfig.MiddlewareConfig):
-        """Middleware configuration model - wrapper class."""
+        """Middleware configuration model."""
 
     class RateLimiterState(FlextModelsConfig.RateLimiterState):
-        """Rate limiter state model - wrapper class."""
+        """Rate limiter state model."""
 
     # =========================================================================
-    # NESTED WRAPPER CLASSES - Context Management Models
+    # NESTED CLASSES - Context Management Models
     # =========================================================================
     class StructlogProxyToken(FlextModelsContext.StructlogProxyToken):
-        """Structlog proxy token model - wrapper class."""
+        """Structlog proxy token model."""
 
     StructlogProxyContextVar = FlextModelsContext.StructlogProxyContextVar
 
     class Token(FlextModelsContext.Token):
-        """Context token model - wrapper class."""
+        """Context token model."""
 
     class ContextData(FlextModelsContext.ContextData):
-        """Context data model - wrapper class."""
+        """Context data model."""
 
     class ContextExport(FlextModelsContext.ContextExport):
-        """Context export model - wrapper class."""
+        """Context export model."""
 
     class ContextScopeData(FlextModelsContext.ContextScopeData):
-        """Context scope data model - wrapper class."""
+        """Context scope data model."""
 
     class ContextStatistics(FlextModelsContext.ContextStatistics):
-        """Context statistics model - wrapper class."""
+        """Context statistics model."""
 
     class ContextMetadata(FlextModelsContext.ContextMetadata):
-        """Context metadata model - wrapper class."""
+        """Context metadata model."""
 
     class ContextDomainData(FlextModelsContext.ContextDomainData):
-        """Context domain data model - wrapper class."""
+        """Context domain data model."""
 
     # =========================================================================
-    # NESTED WRAPPER CLASSES - Handler Management Models
+    # NESTED CLASSES - Handler Management Models
     # =========================================================================
     class HandlerRegistration(FlextModelsHandler.Registration):
-        """Handler registration model - wrapper class."""
+        """Handler registration model."""
 
     class RegistrationDetails(FlextModelsHandler.RegistrationDetails):
-        """Registration details model - wrapper class."""
+        """Registration details model."""
 
     class HandlerExecutionContext(FlextModelsHandler.ExecutionContext):
-        """Handler execution context model - wrapper class."""
+        """Handler execution context model."""
 
     # =========================================================================
-    # NESTED WRAPPER CLASSES - Domain Service Models
+    # NESTED CLASSES - Domain Service Models
     # =========================================================================
     class DomainServiceExecutionRequest(
         FlextModelsService.DomainServiceExecutionRequest,
     ):
-        """Domain service execution request model - wrapper class."""
+        """Domain service execution request model."""
 
     class DomainServiceBatchRequest(FlextModelsService.DomainServiceBatchRequest):
-        """Domain service batch request model - wrapper class."""
+        """Domain service batch request model."""
 
     class DomainServiceMetricsRequest(FlextModelsService.DomainServiceMetricsRequest):
-        """Domain service metrics request model - wrapper class."""
+        """Domain service metrics request model."""
 
     class DomainServiceResourceRequest(FlextModelsService.DomainServiceResourceRequest):
-        """Domain service resource request model - wrapper class."""
+        """Domain service resource request model."""
 
     class OperationExecutionRequest(FlextModelsService.OperationExecutionRequest):
-        """Operation execution request model - wrapper class."""
+        """Operation execution request model."""
 
     # =========================================================================
     # CONTAINER MODELS - Dependency Injection registry models

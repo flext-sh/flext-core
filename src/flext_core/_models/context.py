@@ -251,6 +251,25 @@ class FlextModelsContext:
             description="Context metadata (creation info, source, etc.)",
         )
 
+        @staticmethod
+        def _check_json_serializable(obj: object, path: str = "") -> None:
+            """Recursively check if object is JSON-serializable."""
+            if obj is None or isinstance(obj, (str, int, float, bool)):
+                return
+            check_recursive = FlextModelsContext.ContextData._check_json_serializable  # noqa: SLF001
+            if FlextRuntime.is_dict_like(obj):
+                for key, val in obj.items():
+                    if not isinstance(key, str):
+                        msg = f"Dictionary keys must be strings at {path}.{key}"
+                        raise TypeError(msg)
+                    check_recursive(val, f"{path}.{key}")
+            elif FlextRuntime.is_list_like(obj):
+                for i, item in enumerate(obj):
+                    check_recursive(item, f"{path}[{i}]")
+            else:
+                msg = f"Non-JSON-serializable type {type(obj).__name__} at {path}"
+                raise TypeError(msg)
+
         @field_validator("metadata", mode="before")
         @classmethod
         def validate_metadata(cls, v: object) -> Metadata:
@@ -278,33 +297,19 @@ class FlextModelsContext:
             Only allows basic JSON-serializable types: str, int, float, bool, list, dict, None.
             """
             # STRICT mode: Accept FlextModels.Metadata and convert to dict
-            if hasattr(v, "model_dump"):
-                # It's a Pydantic model (FlextModels.Metadata) - extract attributes dict
-                v = v.attributes if hasattr(v, "attributes") else v.model_dump()
+            if isinstance(v, Metadata):
+                v = v.attributes
+            elif hasattr(v, "model_dump"):
+                # Call model_dump on Pydantic model (safely via callable check)
+                model_dump_method = getattr(v, "model_dump", None)
+                if callable(model_dump_method):
+                    v = model_dump_method()
 
             if not FlextRuntime.is_dict_like(v):
                 msg = f"Value must be a dictionary or FlextModels.Metadata, got {type(v).__name__}"
                 raise TypeError(msg)
 
-            # Recursively check all values are JSON-serializable
-            def check_serializable(obj: object, path: str = "") -> None:
-                """Recursively check if object is JSON-serializable."""
-                if obj is None or isinstance(obj, (str, int, float, bool)):
-                    return
-                if FlextRuntime.is_dict_like(obj):
-                    for key, val in obj.items():
-                        if not isinstance(key, str):
-                            msg = f"Dictionary keys must be strings at {path}.{key}"
-                            raise TypeError(msg)
-                        check_serializable(val, f"{path}.{key}")
-                elif FlextRuntime.is_list_like(obj):
-                    for i, item in enumerate(obj):
-                        check_serializable(item, f"{path}[{i}]")
-                else:
-                    msg = f"Non-JSON-serializable type {type(obj).__name__} at {path}"
-                    raise TypeError(msg)
-
-            check_serializable(v)
+            FlextModelsContext.ContextData._check_json_serializable(v)  # noqa: SLF001
             return v
 
     class ContextExport(FlextModelsEntity.Value):
@@ -409,11 +414,13 @@ class FlextModelsContext:
             """
             # Handle FlextModels.Metadata specially - extract only attributes dict
             # (excludes datetime fields like created_at, modified_at which aren't JSON-serializable)
-            if hasattr(v, "model_dump") and hasattr(v, "attributes"):
+            if isinstance(v, Metadata):
                 v = v.attributes
             # Accept other Pydantic models - convert to dict
-            elif hasattr(v, "model_dump") and callable(getattr(v, "model_dump", None)):
-                v = v.model_dump()
+            elif hasattr(v, "model_dump"):
+                model_dump_method = getattr(v, "model_dump", None)
+                if callable(model_dump_method):
+                    v = model_dump_method()
 
             if not FlextRuntime.is_dict_like(v):
                 msg = f"Value must be a dictionary or Pydantic model, got {type(v).__name__}"

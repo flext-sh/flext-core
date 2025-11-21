@@ -74,7 +74,7 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
             },
         )
 
-    def execute(self) -> FlextResult[dict[str, object]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
         """Execute all FlextUtilities pattern demonstrations.
 
         Runs comprehensive utilities demonstrations:

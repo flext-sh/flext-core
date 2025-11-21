@@ -47,7 +47,7 @@ class TestServiceInstantiation:
         class SimpleService(FlextService[str]):
             """Simple test service."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 """Execute the service."""
                 return FlextResult[str].ok("success")
 
@@ -60,7 +60,7 @@ class TestServiceInstantiation:
         class TestService(FlextService[str]):
             """Service with container access."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("test")
 
         service = TestService()
@@ -74,7 +74,7 @@ class TestServiceInstantiation:
         class LoggingService(FlextService[str]):
             """Service with logger access."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("logged")
 
         service = LoggingService()
@@ -88,12 +88,12 @@ class TestServiceInstantiation:
         class ConfigService(FlextService[str]):
             """Service with config access."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("configured")
 
         service = ConfigService()
         # Config is provided via computed_field
-        config = service.service_config
+        config = service.config
         assert config is not None
 
 
@@ -106,7 +106,7 @@ class TestServiceRegistration:
         class RegisteredService(FlextService[str]):
             """Service that auto-registers."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("registered")
 
         # NOTE: Test classes are NOT auto-registered (see service.py:707-709)
@@ -146,7 +146,7 @@ class TestAbstractMethodEnforcement:
         class ConcreteService(FlextService[str]):
             """Concrete service implementing execute."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("concrete")
 
         service = ConcreteService()
@@ -164,7 +164,7 @@ class TestValidationMethods:
         class ValidatedService(FlextService[str]):
             """Service with default validation."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("valid")
 
         service = ValidatedService()
@@ -178,7 +178,7 @@ class TestValidationMethods:
         class CustomValidationService(FlextService[str]):
             """Service with custom validation."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("executed")
 
             def validate_business_rules(self) -> FlextResult[bool]:
@@ -195,7 +195,7 @@ class TestValidationMethods:
         class ConfigValidatedService(FlextService[str]):
             """Service with config validation."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("configured")
 
         service = ConfigValidatedService()
@@ -208,7 +208,7 @@ class TestValidationMethods:
         class AlwaysValidService(FlextService[str]):
             """Service that always validates successfully."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("valid")
 
         service = AlwaysValidService()
@@ -220,7 +220,7 @@ class TestValidationMethods:
         class InvalidService(FlextService[str]):
             """Service that fails validation."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("should_not_reach")
 
             def validate_business_rules(self) -> FlextResult[bool]:
@@ -236,7 +236,7 @@ class TestValidationMethods:
         class ExceptionThrowingService(FlextService[str]):
             """Service where validation throws exception."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("safe")
 
             def validate_business_rules(self) -> FlextResult[bool]:
@@ -258,7 +258,7 @@ class TestServiceInfo:
         class InfoService(FlextService[str]):
             """Service with info."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("info")
 
         service = InfoService()
@@ -277,7 +277,7 @@ class TestExecuteContextCleanup:
         class CleanupService(FlextService[str]):
             """Service with context cleanup."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("cleaned")
 
         service = CleanupService()
@@ -291,7 +291,7 @@ class TestExecuteContextCleanup:
         class FailingCleanupService(FlextService[str]):
             """Service that fails but cleanup is called."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].fail("execution failed")
 
         service = FailingCleanupService()
@@ -309,7 +309,7 @@ class TestExecuteFullValidation:
         class FullValidService(FlextService[str]):
             """Service with full validation."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("fully_valid")
 
         service = FullValidService()
@@ -326,7 +326,7 @@ class TestExecuteFullValidation:
         class InvalidBusinessRulesService(FlextService[str]):
             """Service with invalid business rules."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("should_not_reach")
 
             def validate_business_rules(self) -> FlextResult[bool]:
@@ -346,7 +346,7 @@ class TestExecuteFullValidation:
         class InvalidConfigService(FlextService[str]):
             """Service with invalid configuration."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("should_not_reach")
 
             def validate_config(self) -> FlextResult[bool]:
@@ -370,7 +370,7 @@ class TestExecuteOperation:
         class OperationService(FlextService[str]):
             """Service supporting operation execution."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("operation_executed")
 
         service = OperationService()
@@ -393,7 +393,7 @@ class TestExecuteOperation:
         class ArgOperationService(FlextService[int]):
             """Service with argument handling."""
 
-            def execute(self) -> FlextResult[int]:
+            def execute(self, **_kwargs: object) -> FlextResult[int]:
                 return FlextResult[int].ok(42)
 
         service = ArgOperationService()
@@ -413,7 +413,7 @@ class TestExecuteOperation:
         class CallableValidationService(FlextService[str]):
             """Service with callable validation."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("validated")
 
         service = CallableValidationService()
@@ -440,7 +440,7 @@ class TestConditionalExecution:
         class ConditionalService(FlextService[str]):
             """Service with conditional execution."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("default")
 
         service = ConditionalService()
@@ -462,7 +462,7 @@ class TestConditionalExecution:
         class FalseConditionService(FlextService[str]):
             """Service with false condition."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("default")
 
         service = FalseConditionService()
@@ -490,7 +490,7 @@ class TestConditionalExecution:
         class NoActionService(FlextService[str]):
             """Service with no false action."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("default")
 
         service = NoActionService()
@@ -511,7 +511,7 @@ class TestConditionalExecution:
         class DefaultExecuteService(FlextService[str]):
             """Service using default execute."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("default_executed")
 
         service = DefaultExecuteService()
@@ -536,7 +536,7 @@ class TestExecutionHelper:
         class HelperService(FlextService[str]):
             """Service for testing helpers."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("helper")
 
         service = HelperService()
@@ -553,7 +553,7 @@ class TestExecutionHelper:
         class CleanupHelperService(FlextService[str]):
             """Service for cleanup testing."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("cleaned")
 
         service = CleanupHelperService()
@@ -572,7 +572,7 @@ class TestMetadataHelper:
         class MetadataService(FlextService[str]):
             """Service for metadata extraction."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("metadata")
 
         service = MetadataService()
@@ -590,7 +590,7 @@ class TestMetadataHelper:
         class NoTimeService(FlextService[str]):
             """Service without timestamps."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("notimestamp")
 
         service = NoTimeService()
@@ -608,7 +608,7 @@ class TestMetadataHelper:
         class FormattedService(FlextService[str]):
             """Service for info formatting."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult[str].ok("formatted")
 
         service = FormattedService()
@@ -635,7 +635,7 @@ class TestServiceGenericType:
         class ValueObjectService(FlextService[SimpleResult]):
             """Service returning value object."""
 
-            def execute(self) -> FlextResult[SimpleResult]:
+            def execute(self, **_kwargs: object) -> FlextResult[SimpleResult]:
                 return FlextResult[SimpleResult].ok(SimpleResult(value="test_value"))
 
         service = ValueObjectService()
@@ -649,7 +649,7 @@ class TestServiceGenericType:
         class DictService(FlextService[dict[str, object]]):
             """Service returning dict."""
 
-            def execute(self) -> FlextResult[dict[str, object]]:
+            def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok({
                     "key": "value",
                     "count": 42,
@@ -693,7 +693,7 @@ class TestV2PropertyCoverage:
         class ValueService(FlextService[SimpleResult]):
             """Service returning value object."""
 
-            def execute(self) -> FlextResult[SimpleResult]:
+            def execute(self, **_kwargs: object) -> FlextResult[SimpleResult]:
                 return FlextResult.ok(SimpleResult(value="v2_property"))
 
         service = ValueService()
@@ -709,7 +709,7 @@ class TestV2PropertyCoverage:
         class DictService(FlextService[dict[str, object]]):
             """Service returning dict."""
 
-            def execute(self) -> FlextResult[dict[str, object]]:
+            def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
                 return FlextResult.ok({"status": "success", "count": 10})
 
         service = DictService()
@@ -728,7 +728,7 @@ class TestV2PropertyCoverage:
 
             value: int
 
-            def execute(self) -> FlextResult[int]:
+            def execute(self, **_kwargs: object) -> FlextResult[int]:
                 if self.value < 0:
                     return FlextResult.fail("Must be positive")
                 return FlextResult.ok(self.value * 2)
@@ -750,7 +750,7 @@ class TestV2PropertyCoverage:
         class FailingService(FlextService[str]):
             """Service that fails."""
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult.fail("Intentional failure")
 
         service = FailingService()
@@ -767,7 +767,7 @@ class TestV2PropertyCoverage:
         class BoolService(FlextService[bool]):
             """Service returning bool."""
 
-            def execute(self) -> FlextResult[bool]:
+            def execute(self, **_kwargs: object) -> FlextResult[bool]:
                 return FlextResult[bool].ok(True)
 
         service = BoolService()
@@ -788,7 +788,7 @@ class TestV2AutoCoverage:
 
             auto_execute = True
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult.ok("auto_result")
 
         # V2 Auto: Instantiation returns value
@@ -806,7 +806,7 @@ class TestV2AutoCoverage:
 
             auto_execute = True
 
-            def execute(self) -> FlextResult[SimpleResult]:
+            def execute(self, **_kwargs: object) -> FlextResult[SimpleResult]:
                 return FlextResult.ok(SimpleResult(value="auto_vo"))
 
         # V2 Auto: Returns value object directly
@@ -823,7 +823,7 @@ class TestV2AutoCoverage:
 
             auto_execute = True
 
-            def execute(self) -> FlextResult[dict[str, int]]:
+            def execute(self, **_kwargs: object) -> FlextResult[dict[str, int]]:
                 return FlextResult.ok({"a": 1, "b": 2})
 
         # V2 Auto: Returns dict directly
@@ -841,7 +841,7 @@ class TestV2AutoCoverage:
 
             auto_execute = True
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult.fail("Auto failure")
 
         # V2 Auto: Exception on instantiation
@@ -859,7 +859,7 @@ class TestV2AutoCoverage:
             auto_execute = True
             value: int
 
-            def execute(self) -> FlextResult[int]:
+            def execute(self, **_kwargs: object) -> FlextResult[int]:
                 return FlextResult.ok(self.value * 3)
 
         # V2 Auto: With parameters
@@ -876,7 +876,7 @@ class TestV2AutoCoverage:
 
             auto_execute = False
 
-            def execute(self) -> FlextResult[str]:
+            def execute(self, **_kwargs: object) -> FlextResult[str]:
                 return FlextResult.ok("manual")
 
         # Returns service instance (V1 behavior)

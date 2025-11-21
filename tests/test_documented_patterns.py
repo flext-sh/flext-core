@@ -63,7 +63,7 @@ class GetUserService(FlextService[User]):
 
     user_id: str
 
-    def execute(self) -> FlextResult[User]:
+    def execute(self, **_kwargs: object) -> FlextResult[User]:
         """Get user by ID."""
         if self.user_id == "invalid":
             return FlextResult.fail("User not found")
@@ -83,7 +83,7 @@ class AutoGetUserService(FlextService[User]):
     auto_execute = True  # Enable V2 Auto pattern
     user_id: str
 
-    def execute(self) -> FlextResult[User]:
+    def execute(self, **_kwargs: object) -> FlextResult[User]:
         """Get user by ID."""
         if self.user_id == "invalid":
             return FlextResult.fail("User not found")
@@ -103,7 +103,7 @@ class SendEmailService(FlextService[EmailResponse]):
     to: str
     subject: str
 
-    def execute(self) -> FlextResult[EmailResponse]:
+    def execute(self, **_kwargs: object) -> FlextResult[EmailResponse]:
         """Send email."""
         if "@" not in self.to:
             return FlextResult.fail("Invalid email address")
@@ -116,7 +116,7 @@ class ValidationService(FlextService[dict[str, Any]]):
 
     value: int
 
-    def execute(self) -> FlextResult[dict[str, Any]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, Any]]:
         """Validate value."""
         if self.value < 0:
             return FlextResult.fail("Value must be positive")
@@ -133,7 +133,7 @@ class MultiOperationService(FlextService[dict[str, Any]]):
     operation: str
     value: int
 
-    def execute(self) -> FlextResult[dict[str, Any]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, Any]]:
         """Execute based on operation."""
         if self.operation == "double":
             return FlextResult.ok({"operation": "double", "result": self.value * 2})
@@ -369,7 +369,7 @@ class TestPattern6RailwayV2Auto:
             auto_execute = False  # Manual mode for railway
             user_id: str
 
-            def execute(self) -> FlextResult[User]:
+            def execute(self, **_kwargs: object) -> FlextResult[User]:
                 """Get user."""
                 return FlextResult.ok(
                     User(unique_id=self.user_id, name="Test", email="test@example.com")
@@ -665,7 +665,7 @@ class TestAllPatternsIntegration:
             auto_execute = False
             user_id: str
 
-            def execute(self) -> FlextResult[User]:
+            def execute(self, **_kwargs: object) -> FlextResult[User]:
                 return FlextResult.ok(
                     User(unique_id=self.user_id, name="Test", email="test@example.com")
                 )

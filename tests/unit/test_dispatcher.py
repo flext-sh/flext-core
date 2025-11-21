@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Callable
 from typing import cast
 
@@ -1742,7 +1743,7 @@ class TestFlextDispatcherCoverage:
         execution_times = []
 
         def rate_limited_handler(msg: object) -> object:
-            execution_times.append(__import__("time").time())
+            execution_times.append(time.time())
             return msg
 
         dispatcher.register_handler("TestMessage", rate_limited_handler)

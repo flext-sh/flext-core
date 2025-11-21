@@ -120,7 +120,6 @@ class FlextMixins:
     - ClassVar: _logger_cache[str → FlextLogger]
     - ClassVar: _cache_lock (threading.Lock)
     - Pattern: Per-class logger reuse, thread-safe access
-    - Fallback: Create logger without DI if container unavailable
 
     **10. Infrastructure Integration Pattern**:
     - __init_subclass__ hook for auto-initialization (ABI compatibility)
@@ -165,7 +164,7 @@ class FlextMixins:
     **FlextContainer Integration**:
     - Uses global singleton via container property
     - Registers self for service discovery
-    - DI-backed logger retrieval with fallback
+    - DI-backed logger retrieval
 
     **FlextContext Integration**:
     - Correlation ID management and propagation
@@ -197,7 +196,7 @@ class FlextMixins:
     try:
         logger = container.get("logger")
     except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-        # Fallback: create logger without DI
+        # Create logger without DI if container unavailable
         logger = FlextLogger(__name__)
 
     **2. Already-Registered Service Handling**:
@@ -307,11 +306,11 @@ class FlextMixins:
                 finally:
                     self._clear_operation_context()
 
-    **Pattern 6: Logger DI with Fallback**:
+    **Pattern 6: Logger DI with Direct Creation**:
     class DatabaseService(FlextMixins):
         def __init__(self):
             # Logger automatically retrieved from DI container
-            # Fallback to direct creation if DI unavailable
+            # Direct creation if DI unavailable
             logger = self.logger  # ✅ Uses DI-backed caching
             logger.info("Database service initialized")
 
@@ -645,9 +644,104 @@ class FlextMixins:
 
     @contextmanager
     def track(self, operation_name: str) -> Iterator[dict[str, object]]:
-        """Track operation performance with automatic context integration."""
-        with FlextContext.Performance.timed_operation(operation_name) as metrics:
-            yield metrics
+        """Track operation performance with automatic context integration and cleanup.
+
+        Provides automatic:
+        - Performance timing (duration_ms, duration_seconds)
+        - Operation context cleanup (no manual finally blocks needed)
+        - Aggregated statistics per operation (count, error_count, success_rate)
+
+        Args:
+            operation_name: Name of the operation being tracked
+
+        Yields:
+            dict with metrics including duration_ms, duration_seconds,
+            and aggregated stats (operation_count, error_count, success_rate)
+
+        Example:
+            ```python
+            with self.track("process_entries") as metrics:
+                result = self._process(entries)
+            # metrics contains: duration_ms, operation_count, success_rate
+            ```
+
+        """
+        # Get or initialize stats storage for this operation
+        stats_attr = f"_stats_{operation_name}"
+        stats: dict[str, object] = getattr(
+            self,
+            stats_attr,
+            {
+                "operation_count": 0,
+                "error_count": 0,
+                "total_duration_ms": 0.0,
+            },
+        )
+
+        # Increment operation count - use cast for type safety
+        op_count_raw = stats.get("operation_count", 0)
+        stats["operation_count"] = (
+            int(op_count_raw if isinstance(op_count_raw, (int, float, str)) else 0) + 1
+        )
+
+        try:
+            with FlextContext.Performance.timed_operation(operation_name) as metrics:
+                # Add aggregated stats to metrics for visibility
+                metrics["operation_count"] = stats["operation_count"]
+                try:
+                    yield metrics
+                    # Success - update stats
+                    if "duration_ms" in metrics:
+                        total_dur_raw = stats.get("total_duration_ms", 0.0)
+                        dur_ms_raw = metrics.get("duration_ms", 0.0)
+                        total_dur = float(
+                            total_dur_raw
+                            if isinstance(total_dur_raw, (int, float, str))
+                            else 0.0
+                        )
+                        dur_ms = float(
+                            dur_ms_raw
+                            if isinstance(dur_ms_raw, (int, float, str))
+                            else 0.0
+                        )
+                        stats["total_duration_ms"] = total_dur + dur_ms
+                except Exception:
+                    # Failure - increment error count
+                    err_raw = stats.get("error_count", 0)
+                    stats["error_count"] = (
+                        int(err_raw if isinstance(err_raw, (int, float, str)) else 0)
+                        + 1
+                    )
+                    raise
+                finally:
+                    # Calculate success rate
+                    op_raw = stats.get("operation_count", 1)
+                    err_raw2 = stats.get("error_count", 0)
+                    op_count = int(
+                        op_raw if isinstance(op_raw, (int, float, str)) else 1
+                    )
+                    err_count = int(
+                        err_raw2 if isinstance(err_raw2, (int, float, str)) else 0
+                    )
+                    stats["success_rate"] = (op_count - err_count) / op_count
+                    if op_count > 0:
+                        total_raw = stats.get("total_duration_ms", 0.0)
+                        total_dur_final = float(
+                            total_raw
+                            if isinstance(total_raw, (int, float, str))
+                            else 0.0
+                        )
+                        stats["avg_duration_ms"] = total_dur_final / op_count
+                    # Update metrics with final stats
+                    metrics["error_count"] = stats["error_count"]
+                    metrics["success_rate"] = stats["success_rate"]
+                    if "avg_duration_ms" in stats:
+                        metrics["avg_duration_ms"] = stats["avg_duration_ms"]
+                    # Store updated stats
+                    setattr(self, stats_attr, stats)
+        finally:
+            # Auto-cleanup operation context
+            self._clear_operation_context()
 
     @property
     def config(self) -> FlextConfig:
