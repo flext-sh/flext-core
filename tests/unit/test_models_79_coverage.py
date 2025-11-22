@@ -95,7 +95,9 @@ class TestFlextModelsAggregateRoot:
             balance: Decimal
 
         account = Account(
-            unique_id="acc-1", owner_name="Alice", balance=Decimal("1000.00")
+            unique_id="acc-1",
+            owner_name="Alice",
+            balance=Decimal("1000.00"),
         )
         assert account.unique_id == "acc-1"
         assert account.owner_name == "Alice"
@@ -188,7 +190,9 @@ class TestFlextModelsCommand:
             email: str
 
         cmd = CreateUserCommand(
-            user_id="user-1", name="Alice", email="alice@example.com"
+            user_id="user-1",
+            name="Alice",
+            email="alice@example.com",
         )
         assert cmd.user_id == "user-1"
         assert cmd.name == "Alice"

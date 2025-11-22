@@ -185,7 +185,7 @@ class UpdateUserCommandHandler(
         return self.handle(command)
 
 
-class FailingCommandHandler(FlextCommandHandler[FailingCommand, None]):
+class FailingCommandHandler(FlextCommandHandler[FailingCommand, bool]):
     """Test handler that always fails."""
 
     def get_command_type(self) -> FlextCommandType:

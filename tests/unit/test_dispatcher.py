@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from collections.abc import Callable
 from typing import cast
@@ -240,7 +241,8 @@ class TestFlextDispatcherCoverage:
         # Create a batch handler using factory (eliminates 13 lines)
         handler = create_transform_handler("batch_handler", format_batch_message)
         registration_result = dispatcher.layer1_register_handler(
-            "batch_message", handler
+            "batch_message",
+            handler,
         )
         assert registration_result.is_success
 
@@ -261,7 +263,8 @@ class TestFlextDispatcherCoverage:
         # Create a failing handler using factory (eliminates 15 lines)
         handler = create_failing_handler("failing_handler", "Handler failed")
         registration_result = dispatcher.layer1_register_handler(
-            "failing_message", handler
+            "failing_message",
+            handler,
         )
         assert registration_result.is_success
 
@@ -632,7 +635,7 @@ class TestFlextDispatcherCoverage:
         except (AttributeError, TypeError, Exception) as e:
             # Log the exception for debugging but don't fail the test
             logger = logging.getLogger(__name__)
-            logger.debug(f"create_from_global_config failed as expected: {e}")
+            logger.debug("create_from_global_config failed as expected: %s", e)
 
     def test_dispatcher_with_request(self) -> None:
         """Test dispatch_with_request and register_handler_with_request methods."""
@@ -727,7 +730,8 @@ class TestFlextDispatcherCoverage:
 
             # Create handler using factory (eliminates 28 lines per iteration)
             def make_dynamic_handler(
-                msg_type_val: str, mode_val: str
+                msg_type_val: str,
+                mode_val: str,
             ) -> Callable[[object], FlextResult[object]]:
                 def process(message: object) -> FlextResult[object]:
                     return FlextResult[object].ok({
@@ -769,10 +773,8 @@ class TestFlextDispatcherCoverage:
                 assert dispatch_result.is_success or dispatch_result.is_failure
             except Exception as e:
                 # Some dispatches might fail, that's okay for coverage testing
-                import logging
-
                 logger = logging.getLogger(__name__)
-                logger.debug(f"Dispatch for {msg_type} failed as expected: {e}")
+                logger.debug("Dispatch for %s failed as expected: %s", msg_type, e)
 
     def test_dispatcher_error_scenarios(self) -> None:
         """Test various error scenarios in dispatcher."""
@@ -796,10 +798,8 @@ class TestFlextDispatcherCoverage:
             assert result.is_success or result.is_failure
         except Exception as e:
             # Some error scenarios might fail, that's okay for testing
-            import logging
-
             logger = logging.getLogger(__name__)
-            logger.debug(f"None data dispatch test failed as expected: {e}")
+            logger.debug("None data dispatch test failed as expected: %s", e)
 
     def test_dispatcher_concurrent_scenarios(self) -> None:
         """Test concurrent dispatch scenarios."""
@@ -1010,8 +1010,6 @@ class TestFlextDispatcherCoverage:
                 case _:
                     return msg
 
-        from typing import cast
-
         dispatcher.register_function(TestMessage, handler)
         large_batch = [str(i) for i in range(1000)]
         results = dispatcher.dispatch_batch("Batch", cast("list[object]", large_batch))
@@ -1072,8 +1070,6 @@ class TestFlextDispatcherCoverage:
 
     def test_dispatcher_concurrent_dispatches(self) -> None:
         """Test dispatcher with concurrent dispatch operations."""
-        import threading
-
         dispatcher = FlextDispatcher()
 
         def handler(msg: object) -> object:
@@ -1361,8 +1357,6 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         def slow_handler(msg: object) -> object:
-            import time
-
             time.sleep(0.1)
             return msg
 
@@ -1383,8 +1377,6 @@ class TestFlextDispatcherCoverage:
         dispatcher = FlextDispatcher()
 
         def very_slow_handler(msg: object) -> object:
-            import time
-
             time.sleep(2.0)  # Sleep longer than timeout
             return msg
 
@@ -1409,7 +1401,7 @@ class TestFlextDispatcherCoverage:
         def batch_handler(msg: object) -> object:
             processed.append(msg)
             match msg:
-                case int(n) if n < 0:
+                case int() if isinstance(msg, int) and msg < 0:
                     error_msg = "Negative number"
                     raise ValueError(error_msg)
                 case _:
@@ -1752,7 +1744,7 @@ class TestFlextDispatcherCoverage:
         for i in range(5):
             try:
                 result = dispatcher.dispatch(
-                    create_test_message("RateLimit", f"msg{i}")
+                    create_test_message("RateLimit", f"msg{i}"),
                 )
                 assert result is not None
             except Exception:
@@ -1798,7 +1790,6 @@ class TestFlextDispatcherCoverage:
     def test_dispatcher_handler_concurrent_same_type(self) -> None:
         """Test handler with concurrent calls of same type."""
         dispatcher = FlextDispatcher()
-        import threading
 
         concurrent_results = []
 
@@ -1810,7 +1801,7 @@ class TestFlextDispatcherCoverage:
         def dispatch_call(idx: int) -> None:
             try:
                 result = dispatcher.dispatch(
-                    create_test_message("Concurrent", f"msg{idx}")
+                    create_test_message("Concurrent", f"msg{idx}"),
                 )
                 if result:
                     concurrent_results.append(result)
@@ -1916,7 +1907,9 @@ class TestFlextDispatcherCoverage:
         try:
             # Use the process_parallel public method
             result = dispatcher.process_parallel(
-                "ParallelProc", [1, 2, 3], max_workers=2
+                "ParallelProc",
+                [1, 2, 3],
+                max_workers=2,
             )
             assert isinstance(result, object)
         except Exception:
@@ -1951,7 +1944,6 @@ class TestFlextDispatcherCoverage:
     def test_dispatcher_multiple_handler_types_concurrent(self) -> None:
         """Test dispatcher with multiple handler types and concurrent calls."""
         dispatcher = FlextDispatcher()
-        import threading
 
         def handler1(msg: object) -> object:
             return f"h1_{msg}"
@@ -1990,8 +1982,8 @@ class TestFlextDispatcherCoverage:
 
         def error_handler(msg: object) -> object:
             match msg:
-                case str(s) if s.startswith("error"):
-                    raise ValueError(f"Error processing: {s}")
+                case str() if isinstance(msg, str) and msg.startswith("error"):
+                    raise ValueError(f"Error processing: {msg}")
                 case _:
                     return msg
 

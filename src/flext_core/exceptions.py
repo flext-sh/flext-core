@@ -16,9 +16,7 @@ import logging
 import time
 import uuid
 from collections.abc import Callable
-from typing import ClassVar, cast
-
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import structlog
 
@@ -542,7 +540,6 @@ class FlextExceptions:
                 )
             except Exception as e:
                 # Don't fail if logging fails, but log the error using standard logging
-
                 logging.getLogger(__name__).debug(
                     "Logging failed in exception handler: %s",
                     e,
@@ -631,8 +628,6 @@ class FlextExceptions:
                 )
             except Exception as e:
                 # Don't fail if logging fails, but log the error using standard logging
-                import logging
-
                 logging.getLogger(__name__).debug(
                     "Logging failed in exception handler: %s",
                     e,

@@ -9,11 +9,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import cast
+
 import pytest
 
 from flext_core import (
+    FlextConfig,
     FlextContainer,
     FlextLogger,
+    FlextModels,
     FlextResult,
 )
 
@@ -80,7 +85,8 @@ class TestContainer100Coverage:
             raise RuntimeError(msg)
 
         result = container.safe_register_from_factory(
-            "failing_service", failing_factory
+            "failing_service",
+            failing_factory,
         )
         assert result.is_failure
         assert result.error is not None and "Factory execution failed" in result.error
@@ -119,7 +125,9 @@ class TestContainer100Coverage:
 
         # Service doesn't exist, should use recovery factory
         result = container.get_typed_with_recovery(
-            "missing_service", TestService, recovery_factory
+            "missing_service",
+            TestService,
+            recovery_factory,
         )
         assert result.is_success
         assert isinstance(result.unwrap(), TestService)
@@ -138,6 +146,7 @@ class TestContainer100Coverage:
         assert result.is_failure
         assert (
             result.error is not None
+            and result.error is not None
             and "Service 'missing_service' not found" in result.error
         )
 
@@ -149,11 +158,14 @@ class TestContainer100Coverage:
             return "not a TestService"
 
         result = container.get_typed_with_recovery(
-            "wrong_service", TestService, wrong_type_factory
+            "wrong_service",
+            TestService,
+            wrong_type_factory,
         )
         assert result.is_failure
         assert (
             result.error is not None
+            and result.error is not None
             and "Recovery factory returned wrong type" in result.error
         )
 
@@ -166,7 +178,9 @@ class TestContainer100Coverage:
             raise RuntimeError(msg)
 
         result = container.get_typed_with_recovery(
-            "missing_service", TestService, failing_recovery
+            "missing_service",
+            TestService,
+            failing_recovery,
         )
         assert result.is_failure
         assert result.error is not None and "Recovery factory failed" in result.error
@@ -242,7 +256,9 @@ class TestContainer100Coverage:
         service = TestService("with_module")
         container.with_service("module_service", service)
 
-        info = container._build_service_info("module_service", service, TestService)
+        info = container._build_service_info(
+            "module_service", service, cast("str", TestService)
+        )
         assert isinstance(info, dict)
         assert info["name"] == "module_service"
         assert info["type"] == TestService
@@ -263,7 +279,7 @@ class TestContainer100Coverage:
         original_module = ServiceWithoutModule.__module__
         try:
             # Set to None to trigger the error path
-            ServiceWithoutModule.__module__ = None
+            ServiceWithoutModule.__module__ = cast("str", None)
 
             # This should raise AttributeAccessError
             with pytest.raises(
@@ -271,7 +287,9 @@ class TestContainer100Coverage:
                 match=r".*(has no __module__ attribute|AttributeAccessError).*",
             ):
                 container._build_service_info(
-                    "no_module_service", service, ServiceWithoutModule
+                    "no_module_service",
+                    service,
+                    cast("str", ServiceWithoutModule),
                 )
         finally:
             # Restore original module
@@ -292,7 +310,7 @@ class TestContainer100Coverage:
         service2 = TestService("test2")
         result2 = container._store_service("test_service", service2)
         assert result2.is_failure
-        assert "already registered" in result2.error
+        assert result2.error is not None and "already registered" in result2.error
 
         # Verify first service is still there (no rollback on duplicate registration)
         get_result = container.get("test_service")
@@ -395,6 +413,7 @@ class TestContainer100Coverage:
         assert result.is_failure
         assert (
             result.error is not None
+            and result.error is not None
             and "Factory 'failing_factory' failed" in result.error
         )
 
@@ -438,8 +457,11 @@ class TestContainer100Coverage:
         result = container._validate_service_type(service, WrongType)
         assert result.is_failure
         assert result.error is not None and (
-            "type mismatch" in result.error.lower()
-            or "wrong type" in result.error.lower()
+            result.error is not None
+            and (
+                "type mismatch" in result.error.lower()
+                or "wrong type" in result.error.lower()
+            )
         )
 
     def test_store_factory_success(self) -> None:
@@ -460,7 +482,9 @@ class TestContainer100Coverage:
         container = FlextContainer()
 
         # Try to store None as factory
-        result = container._store_factory("invalid_factory", None)
+        result = container._store_factory(
+            "invalid_factory", cast("Callable[[], object]", None)
+        )
         # Should fail validation
         assert result.is_failure
 
@@ -505,7 +529,7 @@ class TestContainer100Coverage:
         }
 
         # This should work normally - use correct method name
-        result = container.batch_register(services)
+        result = container.batch_register(cast("dict[str, object]", services))
         assert result.is_success
 
         # Verify services were registered
@@ -538,7 +562,9 @@ class TestContainer100Coverage:
             "invalid-name!": TestService("test"),  # Invalid identifier
         }
 
-        result = container._process_batch_registrations(services)
+        result = container._process_batch_registrations(
+            cast("dict[str, object]", services)
+        )
         assert result.is_failure
         assert result.error is not None and "Invalid service name" in result.error
 
@@ -619,7 +645,6 @@ class TestContainer100Coverage:
     def test_configure_container_with_flextconfig(self) -> None:
         """Test configure_container with FlextConfig (line 1134)."""
         container = FlextContainer()
-        from flext_core import FlextConfig
 
         config = FlextConfig.get_global_instance()
         result = container.configure_container(config)
@@ -631,12 +656,10 @@ class TestContainer100Coverage:
 
         # Normal configure should work - use correct method name
         config = {"max_workers": 4}
-        result = container.configure_container(config)
+        result = container.configure_container(cast("dict[str, object]", config))
         assert result.is_success
 
         # Test with FlextConfig
-        from flext_core import FlextConfig
-
         config_obj = FlextConfig.get_global_instance()
         result2 = container.configure_container(config_obj)
         assert result2.is_success
@@ -659,7 +682,9 @@ class TestContainer100Coverage:
         def bad_validator(s: object) -> object:
             return "not a FlextResult"
 
-        result = container.validate_and_get("test_service", [bad_validator])
+        result = container.validate_and_get(
+            "test_service", cast("list", [bad_validator])
+        )
         assert result.is_failure
         assert result.error is not None and "must return FlextResult" in result.error
 
@@ -761,7 +786,7 @@ class TestContainer100Coverage:
         result = container.create_instance()
         # Should catch TypeError and return failure
         assert result.is_failure
-        assert (
+        assert result.error is not None and (
             "Factory creation failed" in result.error
             or "Factory failed" in result.error
         )
@@ -779,14 +804,19 @@ class TestContainer100Coverage:
         snapshot = {
             "services": {},
             "factories": {
-                "factory1": "not_a_factory_registration"
+                "factory1": "not_a_factory_registration",
             },  # Not a FactoryRegistration
         }
 
         # Should handle gracefully - _is_factory_registration_dict returns False
         # So line 790 won't execute (factories won't be restored)
         # The test is to ensure line 790 is NOT executed when dict is not FactoryRegistration
-        container._restore_registry_snapshot(snapshot)
+        container._restore_registry_snapshot(
+            cast(
+                "dict[str, dict[str, FlextModels.FactoryRegistration] | dict[str, FlextModels.ServiceRegistration]]",
+                snapshot,
+            ),
+        )
 
         # Factories should NOT be restored because _is_factory_registration_dict returns False
         # So original factory should still exist (not cleared)
@@ -816,7 +846,9 @@ class TestContainer100Coverage:
                 self.metadata: dict[str, object] = {}
 
         # Replace the factory registration with our non-callable version
-        container._factories["test_factory"] = NonCallableFactoryReg()
+        container._factories["test_factory"] = cast(
+            "FlextModels.FactoryRegistration", NonCallableFactoryReg()
+        )
 
         # Try to create instance - should fail with FACTORY_NOT_CALLABLE
         result = container.create_instance()
@@ -824,7 +856,10 @@ class TestContainer100Coverage:
         assert "FACTORY_NOT_CALLABLE" in (result.error_code or "")
 
         assert result.is_failure
-        assert "Factory test_factory is not callable" in result.error
+        assert (
+            result.error is not None
+            and "Factory test_factory is not callable" in result.error
+        )
 
     def test_has_with_exception_in_unwrap(self) -> None:
         """Test has() exception path when unwrap() raises (lines 1028-1029)."""
@@ -914,8 +949,6 @@ class TestContainer100Coverage:
         config = container._flext_config
 
         # Should return FlextConfig global instance
-        from flext_core import FlextConfig
-
         assert config is FlextConfig.get_global_instance()
 
     def test_configure_method_delegates(self) -> None:
@@ -924,7 +957,7 @@ class TestContainer100Coverage:
 
         # Use configure() method (not configure_container directly)
         config = {"max_workers": 8}
-        result = container.configure(config)
+        result = container.configure(cast("dict[str, object]", config))
 
         # Should succeed (delegates to configure_container)
         assert result.is_success
@@ -992,8 +1025,6 @@ class TestContainer100Coverage:
         config = container.get_config()
 
         # Verify it's a ContainerConfig instance with correct attributes
-        from flext_core import FlextModels
-
         assert isinstance(config, FlextModels.ContainerConfig)
         assert hasattr(config, "enable_singleton")
         assert hasattr(config, "validation_mode")

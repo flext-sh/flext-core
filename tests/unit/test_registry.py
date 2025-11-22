@@ -692,7 +692,8 @@ class TestFlextRegistry:
 
         # Create test handlers and message types
         config = FlextModels.Cqrs.Handler(
-            handler_id="binding_handler", handler_name="Binding Test Handler"
+            handler_id="binding_handler",
+            handler_name="Binding Test Handler",
         )
 
         class TestMessageType:
@@ -720,8 +721,9 @@ class TestFlextRegistry:
 
         another_handler = AnotherHandler(
             config=FlextModels.Cqrs.Handler(
-                handler_id="another_handler", handler_name="Another Handler"
-            )
+                handler_id="another_handler",
+                handler_name="Another Handler",
+            ),
         )
 
         bindings_multi: list[tuple[type[object], FlextHandlers[object, object]]] = [
@@ -757,7 +759,8 @@ class TestFlextRegistry:
 
         # Test with pre-built handler
         config = FlextModels.Cqrs.Handler(
-            handler_id="prebuilt_handler", handler_name="Pre-built Handler"
+            handler_id="prebuilt_handler",
+            handler_name="Pre-built Handler",
         )
 
         class PrebuiltHandler(FlextHandlers[object, object]):
@@ -781,7 +784,7 @@ class TestFlextRegistry:
             TestMessageType: (
                 simple_function,
                 {"handler_name": "test_handler"},
-            )
+            ),
         }
         result1 = registry.register_function_map(function_map1)
         assert result1.is_success
@@ -798,7 +801,7 @@ class TestFlextRegistry:
             TestMessageType: (
                 function_with_config,
                 config_dict,
-            )
+            ),
         }
         result2 = registry.register_function_map(function_map2)
         assert result2.is_success
@@ -806,7 +809,7 @@ class TestFlextRegistry:
 
         # Test pre-built handler
         function_map3: dict[type[object], FlextHandlers[object, object]] = {
-            TestMessageType: prebuilt_handler
+            TestMessageType: prebuilt_handler,
         }
         result3 = registry.register_function_map(function_map3)
         assert result3.is_success
@@ -818,8 +821,6 @@ class TestFlextRegistry:
         summary3: FlextRegistry.Summary = result3.unwrap()
 
         # Verify total registrations across all results
-        from typing import cast
-
         count1 = cast("int", summary1.successful_registrations)
         count2 = cast("int", summary2.successful_registrations)
         count3 = cast("int", summary3.successful_registrations)
@@ -890,7 +891,7 @@ class TestFlextRegistry:
             ValidMessageType: (
                 test_function,
                 FlextResult[object].ok("default"),
-            )
+            ),
         }
         result_valid_map = registry.register_function_map(valid_map)
         assert result_valid_map.is_success
@@ -902,7 +903,8 @@ class TestFlextRegistry:
 
         # Test with string message type
         config = FlextModels.Cqrs.Handler(
-            handler_id="string_handler", handler_name="String Handler"
+            handler_id="string_handler",
+            handler_name="String Handler",
         )
 
         class TestHandler(FlextHandlers[object, object]):
@@ -953,7 +955,7 @@ class TestFlextRegistry:
             TestMessageType: (
                 failing_function,
                 {"handler_name": "test_handler"},
-            )
+            ),
         }
         result_failing = registry.register_function_map(failing_map)
         # Registry handles function failures gracefully
@@ -979,7 +981,8 @@ class TestFlextRegistry:
         registry = FlextRegistry(dispatcher=dispatcher)
 
         config = FlextModels.Cqrs.Handler(
-            handler_id="duplicate_handler", handler_name="Duplicate Handler"
+            handler_id="duplicate_handler",
+            handler_name="Duplicate Handler",
         )
 
         class TestHandler(FlextHandlers[object, object]):
@@ -1072,7 +1075,7 @@ def test_registry_register_function_map_handler_creation_failure() -> None:
         pass
 
     mapping: dict[type[object], tuple[object, dict[str, str]]] = {
-        TestMessage: (invalid_handler, {})
+        TestMessage: (invalid_handler, {}),
     }
     result = registry.register_function_map(mapping)
     # Should handle error in creation
@@ -1092,7 +1095,7 @@ def test_registry_register_function_map_registration_failure() -> None:
         return msg
 
     mapping: dict[type[object], tuple[Callable[[object], object], dict[str, str]]] = {
-        TestMessage: (test_handler, {"invalid": "config"})
+        TestMessage: (test_handler, {"invalid": "config"}),
     }
     result = registry.register_function_map(mapping)
     assert isinstance(result, FlextResult)
@@ -1116,7 +1119,7 @@ def test_registry_register_function_map_exception_handling() -> None:
     # Use proper typing for the mapping
 
     mapping: dict[type[object], tuple[object, dict[str, object]]] = {
-        ProblematicMessage: (test_handler, {})
+        ProblematicMessage: (test_handler, {}),
     }
     result = registry.register_function_map(mapping)
     # Should handle exception and still return result
@@ -1129,7 +1132,8 @@ def test_registry_resolve_binding_key_string_fallback() -> None:
     registry = FlextRegistry(dispatcher=dispatcher)
 
     config = FlextModels.Cqrs.Handler(
-        handler_id="string_test", handler_name="String Test Handler"
+        handler_id="string_test",
+        handler_name="String Test Handler",
     )
 
     class StringTestHandler(FlextHandlers[object, object]):
@@ -1140,7 +1144,8 @@ def test_registry_resolve_binding_key_string_fallback() -> None:
 
     # Use string as message_type to trigger string fallback (line 553)
     key = registry._resolve_binding_key(
-        handler, cast("type[object]", "StringMessageType")
+        handler,
+        cast("type[object]", "StringMessageType"),
     )
     assert isinstance(key, str)
     assert "string_test" in key
@@ -1156,7 +1161,8 @@ def test_registry_resolve_binding_key_from_entry_string_fallback() -> None:
 
     # Use string as message_type to trigger string fallback (line 576)
     key = registry._resolve_binding_key_from_entry(
-        (test_func, {}), cast("type[object]", "StringType")
+        (test_func, {}),
+        cast("type[object]", "StringType"),
     )
     assert isinstance(key, str)
     assert "test_func" in key

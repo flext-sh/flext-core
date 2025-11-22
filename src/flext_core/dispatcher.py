@@ -2127,7 +2127,7 @@ class FlextDispatcher(FlextMixins):
         # Convert Pydantic model to dict if needed
         # Validate request type and convert using consolidated helper
         if not isinstance(request, BaseModel) and not FlextRuntime.is_dict_like(
-            request
+            request,
         ):
             return FlextResult[dict[str, object]].fail(
                 "Request must be dict or Pydantic model",
@@ -2471,7 +2471,7 @@ class FlextDispatcher(FlextMixins):
         # Convert Pydantic model to dict if needed
         # Validate request type and convert using consolidated helper
         if not isinstance(request, BaseModel) and not FlextRuntime.is_dict_like(
-            request
+            request,
         ):
             return FlextResult[dict[str, object]].fail(
                 "Request must be dict or Pydantic model",

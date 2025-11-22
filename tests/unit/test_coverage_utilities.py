@@ -209,7 +209,9 @@ class TestReliability:
             return FlextResult[str].ok("success")
 
         result = FlextUtilities.Reliability.retry(
-            flaky_op, max_attempts=3, delay_seconds=0.01
+            flaky_op,
+            max_attempts=3,
+            delay_seconds=0.01,
         )
         assert result.is_success
         assert attempt_count >= 2
@@ -280,7 +282,8 @@ class TestExternalCommand:
     def test_run_external_command_empty_cmd(self) -> None:
         """Test with empty command."""
         result = FlextUtilities.CommandExecution.run_external_command(
-            [], capture_output=True
+            [],
+            capture_output=True,
         )
         assert result.is_failure
 
@@ -315,7 +318,8 @@ class TestValidationErrorHandling:
             raise ValueError(msg)
 
         result = FlextUtilities.Validation.validate_pipeline(
-            "test_value", [failing_validator]
+            "test_value",
+            [failing_validator],
         )
         # Should fail with exception message
         assert result.is_failure

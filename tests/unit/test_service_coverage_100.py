@@ -9,12 +9,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import time
+from collections.abc import Callable
+from typing import cast
+
 import pytest
 
 from flext_core import (
     FlextConfig,
     FlextContainer,
     FlextExceptions,
+    FlextLogger,
     FlextModels,
     FlextResult,
     FlextService,
@@ -114,7 +119,9 @@ class TestService100Coverage:
             TypeError,
             match=r".*(returned FlextResult\[str\]|type mismatch).*",
         ):
-            service.validate_domain_result(result)
+            service.validate_domain_result(
+                cast("FlextResult[TestDomainResult]", result)
+            )
 
     def test_validate_domain_result_with_none_type(self) -> None:
         """Test validate_domain_result when _expected_domain_result_type is None."""
@@ -285,6 +292,7 @@ class TestService100Coverage:
 
         result = service.execute_operation(request)
         assert result.is_failure
+        assert result.error is not None
         assert "Operation failed" in result.error
 
     def test_execute_with_full_validation_success(self) -> None:
@@ -302,7 +310,7 @@ class TestService100Coverage:
         """Test execute_conditionally with True condition."""
         service = TestService()
 
-        def condition(svc: TestService) -> bool:
+        def condition(svc: object) -> bool:
             return True
 
         request = FlextModels.ConditionalExecutionRequest(condition=condition)
@@ -313,7 +321,7 @@ class TestService100Coverage:
         """Test execute_conditionally with False condition."""
         service = TestService()
 
-        def condition(svc: TestService) -> bool:
+        def condition(svc: object) -> bool:
             return False
 
         request = FlextModels.ConditionalExecutionRequest(condition=condition)
@@ -334,8 +342,6 @@ class TestService100Coverage:
 
         class SlowService(FlextService[TestDomainResult]):
             def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
-                import time
-
                 time.sleep(0.1)  # Short delay
                 return self.ok(TestDomainResult("slow"))
 
@@ -357,7 +363,7 @@ class TestService100Coverage:
     def test_set_context(self) -> None:
         """Test set_context."""
         service = TestService()
-        context_data = {"key1": "value1", "key2": "value2"}
+        context_data: dict[str, object] = {"key1": "value1", "key2": "value2"}
 
         result = service.set_context(context_data)
         assert result.is_success or result.is_failure
@@ -456,6 +462,7 @@ class TestService100Coverage:
 
         result = service._execute_action(failing_action, "failing_action")
         assert result.is_failure
+        assert result.error is not None
         assert "Action failed" in result.error
 
     def test_validate_pre_execution(self) -> None:
@@ -532,7 +539,7 @@ class TestService100Coverage:
             operation_name="test",
             operation_callable=operation,
         )
-        retry_config = {"max_retries": 3}
+        retry_config: dict[str, object] = {"max_retries": 3}
 
         result = service._retry_loop(request, retry_config)
         assert result.is_success
@@ -554,7 +561,10 @@ class TestService100Coverage:
             operation_name="test",
             operation_callable=operation,
         )
-        retry_config = {"max_attempts": 3, "initial_delay_seconds": 0.1}
+        retry_config: dict[str, object] = {
+            "max_attempts": 3,
+            "initial_delay_seconds": 0.1,
+        }
 
         result = service._retry_loop(request, retry_config)
         assert result.is_success
@@ -572,10 +582,14 @@ class TestService100Coverage:
             operation_name="test",
             operation_callable=always_failing,
         )
-        retry_config = {"max_attempts": 2, "initial_delay_seconds": 0.1}
+        retry_config: dict[str, object] = {
+            "max_attempts": 2,
+            "initial_delay_seconds": 0.1,
+        }
 
         result = service._retry_loop(request, retry_config)
         assert result.is_failure
+        assert result.error is not None
         assert "Always fails" in result.error
 
     def test_execute_with_retry_config(self) -> None:
@@ -615,8 +629,9 @@ class TestService100Coverage:
         class ServiceWithDeps(FlextService[TestDomainResult]):
             def __init__(self, logger: object, config: object, **data: object) -> None:
                 super().__init__(**data)
-                self.logger = logger
-                self.config = config
+                # Store dependencies directly, not as properties
+                object.__setattr__(self, "logger", logger)
+                object.__setattr__(self, "config", config)
 
             def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
                 return self.ok(TestDomainResult("test"))
@@ -628,21 +643,22 @@ class TestService100Coverage:
         """Test _resolve_dependencies."""
         container = FlextContainer.get_global()
         # Register a logger in the container so it can be resolved
-        from flext_core import FlextLogger
-
         logger = FlextLogger("test_logger")
         container.with_service("logger", logger)
 
         class ServiceWithDeps(FlextService[TestDomainResult]):
             def __init__(self, logger: object | None = None, **data: object) -> None:
                 super().__init__(**data)
-                self.logger = logger
+                # Store dependency directly, not as property
+                object.__setattr__(self, "logger", logger)
 
             def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
                 return self.ok(TestDomainResult("test"))
 
         resolved = ServiceWithDeps._resolve_dependencies(
-            {"logger": object}, container, "ServiceWithDeps"
+            {"logger": object},
+            container,
+            "ServiceWithDeps",
         )
         assert isinstance(resolved, dict)
         assert "logger" in resolved
@@ -650,16 +666,16 @@ class TestService100Coverage:
 
     def test_extract_dependencies_with_union_type(self) -> None:
         """Test _extract_dependencies_from_signature with Union type."""
-        from typing import Union
 
         class ServiceWithUnionDeps(FlextService[TestDomainResult]):
             def __init__(
                 self,
-                logger: Union[object, None] = None,
+                logger: object | None = None,
                 **data: object,
             ) -> None:
                 super().__init__(**data)
-                self.logger = logger
+                # Store dependency directly, not as property
+                object.__setattr__(self, "logger", logger)
 
             def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
                 return self.ok(TestDomainResult("test"))
@@ -670,8 +686,6 @@ class TestService100Coverage:
     def test_resolve_dependencies_with_type_name_fallback(self) -> None:
         """Test _resolve_dependencies with type name fallback."""
         container = FlextContainer.get_global()
-        from flext_core import FlextLogger
-
         logger = FlextLogger("test_logger")
         # Register by type name instead of param name
         container.with_service("object", logger)
@@ -679,13 +693,16 @@ class TestService100Coverage:
         class ServiceWithDeps(FlextService[TestDomainResult]):
             def __init__(self, logger: object | None = None, **data: object) -> None:
                 super().__init__(**data)
-                self.logger = logger
+                # Store dependency directly, not as property
+                object.__setattr__(self, "logger", logger)
 
             def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
                 return self.ok(TestDomainResult("test"))
 
         resolved = ServiceWithDeps._resolve_dependencies(
-            {"logger": object}, container, "ServiceWithDeps"
+            {"logger": object},
+            container,
+            "ServiceWithDeps",
         )
         assert isinstance(resolved, dict)
 
@@ -703,7 +720,9 @@ class TestService100Coverage:
 
         with pytest.raises(Exception, match=r".*unresolved dependencies.*"):
             ServiceWithDeps._resolve_dependencies(
-                {"missing_dep": object}, container, "ServiceWithDeps"
+                {"missing_dep": object},
+                container,
+                "ServiceWithDeps",
             )
 
     def test_resolve_project_component_type_check_failed(self) -> None:
@@ -742,7 +761,13 @@ class TestService100Coverage:
             return TestDomainResult("direct_callable")
 
         # Pass callable directly instead of OperationExecutionRequest
-        result = service._execute_callable_once(callable_func)
+        # Cast to expected type since we're testing direct callable execution
+        result = service._execute_callable_once(
+            cast(
+                "FlextModels.OperationExecutionRequest | Callable[[object], TestDomainResult]",
+                callable_func,
+            )
+        )
         assert isinstance(result, TestDomainResult)
         assert result.value == "direct_callable"
 
@@ -826,7 +851,7 @@ class TestService100Coverage:
             operation_callable=always_failing,
         )
         # Use config that might trigger fallback
-        retry_config = {"max_attempts": 0}  # Invalid config
+        retry_config: dict[str, object] = {"max_attempts": 0}  # Invalid config
 
         result = service._retry_loop(request, retry_config)
         # Should return failure

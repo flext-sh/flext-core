@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import threading
+
 from flext_core import FlextConfig
 
 
@@ -60,8 +62,6 @@ class TestConfigValidatorErrorPaths:
 
     def test_get_global_instance_thread_safe(self) -> None:
         """Test get_global_instance is thread-safe."""
-        import threading
-
         FlextConfig.reset_global_instance()
 
         instances: list[FlextConfig] = []

@@ -19,6 +19,7 @@ from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.metadata import Metadata
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextUtilities
 
@@ -47,23 +48,17 @@ class FlextModelsConfig:
         data: dict[str, object] = Field(default_factory=dict)
         context: dict[str, object] = Field(default_factory=dict)
         timeout_seconds: float = Field(
-            default_factory=(lambda: FlextConfig.get_global_instance().timeout_seconds),
+            default=FlextConstants.Defaults.TIMEOUT,
             gt=0,
             le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
-            description=(
-                "Operation timeout from FlextConfig "
-                "(Config has priority over Constants)"
-            ),
+            description=("Operation timeout from FlextConstants (Constants default)"),
         )
         retry_attempts: int = Field(
-            default_factory=(
-                lambda: FlextConfig.get_global_instance().max_retry_attempts
-            ),
+            default=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
             ge=0,
             le=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
             description=(
-                "Maximum retry attempts from FlextConfig "
-                "(Config has priority over Constants)"
+                "Maximum retry attempts from FlextConstants (Constants default)"
             ),
         )
         enable_validation: bool = True
@@ -92,14 +87,11 @@ class FlextModelsConfig:
         """Retry configuration with advanced validation."""
 
         max_attempts: int = Field(
-            default_factory=(
-                lambda: FlextConfig.get_global_instance().max_retry_attempts
-            ),
+            default=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
             ge=FlextConstants.Reliability.RETRY_COUNT_MIN,
             le=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
             description=(
-                "Maximum retry attempts from FlextConfig "
-                "(Config has priority over Constants)"
+                "Maximum retry attempts from FlextConstants (Constants default)"
             ),
         )
         initial_delay_seconds: float = Field(
@@ -181,8 +173,6 @@ class FlextModelsConfig:
         @classmethod
         def validate_additional_validators(cls, v: list[object]) -> list[object]:
             """Validate custom validators are callable."""
-            from flext_core.exceptions import FlextExceptions
-
             for validator in v:
                 result = FlextUtilities.Validation.validate_callable(
                     validator,
@@ -206,18 +196,16 @@ class FlextModelsConfig:
         """Enhanced batch processing configuration."""
 
         batch_size: int = Field(
-            default_factory=(lambda: FlextConfig.get_global_instance().max_batch_size),
-            description=(
-                "Batch size from FlextConfig (Config has priority over Constants)"
-            ),
+            default=FlextConstants.Processing.MAX_BATCH_SIZE,
+            description=("Batch size from FlextConstants (Constants default)"),
         )
         max_workers: int = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().max_workers,
+            default=FlextConstants.Processing.DEFAULT_MAX_WORKERS,
             le=FlextConstants.Settings.MAX_WORKERS_THRESHOLD,
             description="Maximum workers from FlextConfig (Config has priority over Constants)",
         )
         timeout_per_item: float = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds,
+            default=FlextConstants.Defaults.TIMEOUT,
             description="Timeout per item from FlextConfig (Config has priority over Constants)",
         )
         continue_on_error: bool = True
@@ -253,13 +241,13 @@ class FlextModelsConfig:
         input_data: dict[str, object] = Field(default_factory=dict)
         execution_context: dict[str, object] = Field(default_factory=dict)
         timeout_seconds: float = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds,
+            default=FlextConstants.Defaults.TIMEOUT,
             le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextConfig",
         )
         retry_on_failure: bool = True
         max_retries: int = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().max_retry_attempts,
+            default=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
             description="Max retries from FlextConfig",
         )
 
@@ -419,7 +407,7 @@ class FlextModelsConfig:
         """
 
         level: str = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().log_level.value,
+            default=FlextConstants.Logging.DEFAULT_LEVEL,
             description="Log level from FlextConfig (can be overridden)",
         )
         service_name: str | None = Field(

@@ -232,7 +232,7 @@ class FlextService[TDomainResult](
         super().model_post_init(__context)
 
         # Auto-configure structlog if not already configured
-        if not FlextRuntime._structlog_configured:  # noqa: SLF001
+        if not FlextRuntime.is_structlog_configured():
             FlextRuntime.configure_structlog(
                 log_level=logging.INFO,  # Default to INFO, can be overridden by CLI
                 console_renderer=True,
@@ -425,8 +425,12 @@ class FlextService[TDomainResult](
         instance = object.__new__(cls)
         # Initialize instance
         type(instance).__init__(instance, **kwargs)
-        # Type checker needs cast for Self return type (mypy sees as redundant but pyrefly needs it)
-        return cast("Self", instance)  # type: ignore[redundant-cast]
+        # Type narrowing: object.__new__(cls) always returns an instance of cls
+        # Use isinstance check for proper type narrowing without type: ignore
+        if not isinstance(instance, cls):
+            msg = f"Expected instance of {cls.__name__}, got {type(instance).__name__}"
+            raise TypeError(msg)
+        return instance
 
     @classmethod
     def with_result(cls, **kwargs: object) -> FlextResult[TDomainResult]:
@@ -1102,7 +1106,10 @@ class FlextService[TDomainResult](
         if callable(request):
             operation_request = FlextModels.OperationExecutionRequest(
                 operation_name="direct_callable",
-                operation_callable=cast("Callable[[object], object]", request),
+                operation_callable=cast(
+                    "Callable[..., FlextTypes.ResultLike[object]]",
+                    request,
+                ),
             )
         else:
             operation_request = request
@@ -1139,7 +1146,7 @@ class FlextService[TDomainResult](
         # Execute with timeout if specified
         if operation_request.timeout_seconds and operation_request.timeout_seconds > 0:
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(
+                future: concurrent.futures.Future[object] = executor.submit(
                     operation_request.operation_callable,
                     *args_list,
                     **operation_request.keyword_arguments,

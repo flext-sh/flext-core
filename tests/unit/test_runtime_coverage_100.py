@@ -11,7 +11,10 @@ from __future__ import annotations
 
 import logging
 from collections import UserDict
-from typing import Never
+from collections.abc import Sequence
+from typing import ClassVar, Never, cast
+
+import structlog
 
 from flext_core import FlextRuntime
 
@@ -169,8 +172,6 @@ class TestRuntime100Coverage:
 
     def test_level_based_context_filter_malformed_prefix(self) -> None:
         """Test level_based_context_filter with malformed prefix."""
-        import structlog
-
         # Configure structlog first
         FlextRuntime.configure_structlog()
 
@@ -180,7 +181,7 @@ class TestRuntime100Coverage:
         # A malformed one would be just "_level_" or "_level_debug" (not enough parts)
         # Create a key that starts with _level_ but has fewer parts than required
         malformed_key = "_level_"  # This will split into fewer parts than required
-        event_dict = {
+        event_dict: dict[str, object] = {
             malformed_key: "value1",  # Malformed - not enough parts after split
             "normal_key": "value2",  # Not prefixed
         }
@@ -199,8 +200,6 @@ class TestRuntime100Coverage:
 
         # Create config object with attributes
         class Config:
-            from typing import ClassVar
-
             log_level: ClassVar[int] = logging.DEBUG
             console_renderer: ClassVar[bool] = False
             additional_processors: ClassVar[list[object]] = []
@@ -257,21 +256,18 @@ class TestRuntime100Coverage:
                     raise AttributeError(msg)
                 return super().__getattribute__(name)
 
-        bad_type = BadType()
+        bad_type = cast("type", BadType)
         result = FlextRuntime.extract_generic_args(bad_type)
         assert result == ()
 
     def test_is_sequence_type_with_origin(self) -> None:
         """Test is_sequence_type with typing.get_origin returning Sequence."""
-        from collections.abc import Sequence
-
         # Test with actual sequence types
         assert FlextRuntime.is_sequence_type(Sequence[str]) is True
         assert FlextRuntime.is_sequence_type(Sequence[int]) is True
 
     def test_is_sequence_type_with_sequence_subclass(self) -> None:
         """Test is_sequence_type with type that is Sequence subclass."""
-        from collections.abc import Sequence
 
         class MySequence(Sequence):
             def __getitem__(self, index: int) -> object:
@@ -293,21 +289,19 @@ class TestRuntime100Coverage:
                     raise AttributeError(msg)
                 return super().__getattribute__(name)
 
-        bad_type = BadType()
+        bad_type = cast("type", BadType)
         result = FlextRuntime.is_sequence_type(bad_type)
         assert result is False
 
     def test_level_based_context_filter_with_level_prefixed(self) -> None:
         """Test level_based_context_filter with properly formatted level prefix."""
-        import structlog
-
         FlextRuntime.configure_structlog()
 
         # Create event dict with properly formatted level prefix
         # Format: _level_<level>_<key> where parts_count = 4
         # So "_level_debug_config" splits into ['', 'level', 'debug', 'config']
         # Level hierarchy: DEBUG (10) < INFO (20) < WARNING (30) < ERROR (40) < CRITICAL (50)
-        event_dict = {
+        event_dict: dict[str, object] = {
             "_level_debug_config": {"key": "value"},  # DEBUG level (10)
             "_level_info_status": "ok",  # INFO level (20)
             "_level_error_stack": "trace",  # ERROR level (40)
@@ -332,14 +326,14 @@ class TestRuntime100Coverage:
         FlextRuntime._structlog_configured = False
 
         def custom_processor(
-            logger: object, method_name: str, event_dict: dict[str, object]
+            logger: object,
+            method_name: str,
+            event_dict: dict[str, object],
         ) -> dict[str, object]:
             event_dict["custom"] = True
             return event_dict
 
         class Config:
-            from typing import ClassVar
-
             log_level: ClassVar[int] = logging.DEBUG
             console_renderer: ClassVar[bool] = True
             additional_processors: ClassVar[list[object]] = [custom_processor]

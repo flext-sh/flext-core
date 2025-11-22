@@ -185,9 +185,21 @@ class FlextModelsCollections:
             return result
 
     class Config(FlextModelsEntity.ArbitraryTypesModel):
-        """Base for configuration models - mutable Pydantic v2 model."""
+        """Base for configuration models - mutable Pydantic v2 model.
 
-        __hash__ = None  # type: ignore[assignment]
+        Pydantic v2 models are not hashable by default when not frozen.
+        Explicitly set __hash__ = None to make this clear to type checkers.
+        """
+
+        def __hash__(self) -> int:
+            """Make Config instances unhashable (mutable models should not be hashable).
+
+            Returns:
+                Never returns - always raises TypeError
+
+            """
+            msg = f"{self.__class__.__name__} instances are not hashable"
+            raise TypeError(msg)
 
         def merge(
             self,

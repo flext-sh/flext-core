@@ -664,6 +664,9 @@ class FlextConstants:
             MAX_ITEMS: Final[int] = 10000
             MAX_VALIDATION_SIZE: Final[int] = 1000
 
+        # Alias for backward compatibility
+        MAX_BATCH_SIZE: Final[int] = 10000
+
         # Pagination and processing
         DEFAULT_TIME_RANGE_SECONDS: Final[int] = 3600
         DEFAULT_TTL_SECONDS: Final[int] = 3600

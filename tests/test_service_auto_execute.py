@@ -41,7 +41,7 @@ class ManualUserService(FlextService[User]):
                 user_id=self.user_id,
                 name=f"User {self.user_id}",
                 email=f"user{self.user_id}@example.com",
-            )
+            ),
         )
 
 
@@ -58,7 +58,7 @@ class AutoUserService(FlextService[User]):
                 user_id=self.user_id,
                 name=f"User {self.user_id}",
                 email=f"user{self.user_id}@example.com",
-            )
+            ),
         )
 
 

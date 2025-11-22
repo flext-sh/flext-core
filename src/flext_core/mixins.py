@@ -697,12 +697,12 @@ class FlextMixins:
                         total_dur = float(
                             total_dur_raw
                             if isinstance(total_dur_raw, (int, float, str))
-                            else 0.0
+                            else 0.0,
                         )
                         dur_ms = float(
                             dur_ms_raw
                             if isinstance(dur_ms_raw, (int, float, str))
-                            else 0.0
+                            else 0.0,
                         )
                         stats["total_duration_ms"] = total_dur + dur_ms
                 except Exception:
@@ -718,10 +718,10 @@ class FlextMixins:
                     op_raw = stats.get("operation_count", 1)
                     err_raw2 = stats.get("error_count", 0)
                     op_count = int(
-                        op_raw if isinstance(op_raw, (int, float, str)) else 1
+                        op_raw if isinstance(op_raw, (int, float, str)) else 1,
                     )
                     err_count = int(
-                        err_raw2 if isinstance(err_raw2, (int, float, str)) else 0
+                        err_raw2 if isinstance(err_raw2, (int, float, str)) else 0,
                     )
                     stats["success_rate"] = (op_count - err_count) / op_count
                     if op_count > 0:
@@ -729,7 +729,7 @@ class FlextMixins:
                         total_dur_final = float(
                             total_raw
                             if isinstance(total_raw, (int, float, str))
-                            else 0.0
+                            else 0.0,
                         )
                         stats["avg_duration_ms"] = total_dur_final / op_count
                     # Update metrics with final stats

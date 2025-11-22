@@ -238,7 +238,10 @@ class FlextContainer(FlextProtocols.Configurable):
     # =========================================================================
 
     @override
-    def configure(self, config: dict[str, object] | FlextConfig) -> FlextResult[bool]:
+    def configure(
+        self,
+        config: dict[str, object] | FlextConfig,
+    ) -> FlextProtocols.ResultProtocol[bool]:
         """Configure component with provided settings - Configurable protocol implementation.
 
         Args:
@@ -246,10 +249,12 @@ class FlextContainer(FlextProtocols.Configurable):
                    Using FlextConfig is preferred.
 
         Returns:
-            FlextResult[bool]: Success with True if configured, failure with error details
+            ResultProtocol[bool]: Success with True if configured, failure with error details
 
         """
-        return self.configure_container(config)
+        return cast(
+            "FlextProtocols.ResultProtocol[bool]", self.configure_container(config)
+        )
 
     @property
     def services(self) -> dict[str, FlextModels.ServiceRegistration]:

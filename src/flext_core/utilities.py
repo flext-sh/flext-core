@@ -14,7 +14,7 @@ import logging
 import os
 import pathlib
 import shutil
-import subprocess
+import subprocess  # nosec B404 - legitimate system utility usage
 import threading
 from collections.abc import Callable
 from typing import Self, TypeVar

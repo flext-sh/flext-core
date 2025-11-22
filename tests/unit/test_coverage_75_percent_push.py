@@ -20,7 +20,7 @@ class TestEdgeCases:
     def test_clean_text_with_special_whitespace(self) -> None:
         """Test text cleaning with various whitespace characters."""
         result = FlextUtilities.TextProcessor.clean_text(
-            "  \t\n\r  hello  \n\t  world  \r\n  "
+            "  \t\n\r  hello  \n\t  world  \r\n  ",
         )
         assert result.is_success
         # clean_text removes various whitespace
@@ -93,6 +93,7 @@ class TestEdgeCases:
             [validator1, validator2],
         )
         assert result.is_failure
+        assert result.error is not None
         assert "Always fails" in result.error
 
     def test_generators_correlation_id_format(self) -> None:
@@ -210,7 +211,7 @@ class TestEdgeCases:
     def test_correlation_id_with_context(self) -> None:
         """Test correlation ID generation with context."""
         corr_id = FlextUtilities.Generators.generate_correlation_id_with_context(
-            "test_context"
+            "test_context",
         )
         assert isinstance(corr_id, str)
         assert "test_context" in corr_id

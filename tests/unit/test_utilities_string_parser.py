@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import FlextUtilities
 
 # ============================================================================
@@ -44,7 +46,8 @@ class TestFlextUtilitiesStringParserParseDelimited:
         """Test parsing with ParseOptions."""
         parser = FlextUtilities.StringParser()
         options = FlextUtilities.StringParser.ParseOptions(
-            strip=True, remove_empty=True
+            strip=True,
+            remove_empty=True,
         )
         result = parser.parse_delimited("a, b, c", ",", options=options)
         assert result.is_success
@@ -53,7 +56,8 @@ class TestFlextUtilitiesStringParserParseDelimited:
     def test_parse_delimited_options_no_strip(self) -> None:
         """Test parsing with options, strip=False."""
         options = FlextUtilities.StringParser.ParseOptions(
-            strip=False, remove_empty=True
+            strip=False,
+            remove_empty=True,
         )
         parser = FlextUtilities.StringParser()
         result = parser.parse_delimited("a, b, c", ",", options=options)
@@ -63,7 +67,8 @@ class TestFlextUtilitiesStringParserParseDelimited:
     def test_parse_delimited_options_no_remove_empty(self) -> None:
         """Test parsing with options, remove_empty=False."""
         options = FlextUtilities.StringParser.ParseOptions(
-            strip=True, remove_empty=False
+            strip=True,
+            remove_empty=False,
         )
         parser = FlextUtilities.StringParser()
         result = parser.parse_delimited("a,,c", ",", options=options)
@@ -77,7 +82,9 @@ class TestFlextUtilitiesStringParserParseDelimited:
             return len(s) > 0
 
         options = FlextUtilities.StringParser.ParseOptions(
-            strip=True, remove_empty=True, validator=is_valid
+            strip=True,
+            remove_empty=True,
+            validator=is_valid,
         )
         parser = FlextUtilities.StringParser()
         result = parser.parse_delimited("a,b,c", ",", options=options)
@@ -90,11 +97,14 @@ class TestFlextUtilitiesStringParserParseDelimited:
             return len(s) > 1  # Fail for single char
 
         options = FlextUtilities.StringParser.ParseOptions(
-            strip=True, remove_empty=True, validator=is_valid
+            strip=True,
+            remove_empty=True,
+            validator=is_valid,
         )
         parser = FlextUtilities.StringParser()
         result = parser.parse_delimited("a,b", ",", options=options)
         assert result.is_failure
+        assert result.error is not None
         assert "Invalid component" in result.error
 
     def test_parse_delimited_legacy_params(self) -> None:
@@ -125,8 +135,9 @@ class TestFlextUtilitiesStringParserParseDelimited:
 
         bad = BadString()
         parser = FlextUtilities.StringParser()
-        result = parser.parse_delimited(bad, ",")
+        result = parser.parse_delimited(cast("str", bad), ",")
         assert result.is_failure
+        assert result.error is not None
         assert "Failed to parse" in result.error
 
 
@@ -189,10 +200,11 @@ class TestFlextUtilitiesStringParserSplitWithEscape:
         bad = BadString()
         parser = FlextUtilities.StringParser()
         result = parser.split_on_char_with_escape(
-            bad,
+            cast("str", bad),
             ",",
         )
         assert result.is_failure
+        assert result.error is not None
         assert "Failed to split" in result.error
 
 
@@ -222,7 +234,9 @@ class TestFlextUtilitiesStringParserNormalizeWhitespace:
         """Test normalization with custom pattern."""
         parser = FlextUtilities.StringParser()
         result = parser.normalize_whitespace(
-            "hello---world", pattern=r"-+", replacement="-"
+            "hello---world",
+            pattern=r"-+",
+            replacement="-",
         )
         assert result.is_success
         assert result.unwrap() == "hello-world"
@@ -245,8 +259,11 @@ class TestFlextUtilitiesStringParserNormalizeWhitespace:
 
         bad = BadString()
         parser = FlextUtilities.StringParser()
-        result = parser.normalize_whitespace(bad)
+        # Cast to str for type checking, but runtime will fail
+        bad_str: str = cast("str", bad)
+        result = parser.normalize_whitespace(bad_str)
         assert result.is_failure
+        assert result.error is not None
         assert "Failed to normalize" in result.error
 
 
@@ -293,10 +310,15 @@ class TestFlextUtilitiesStringParserRegexPipeline:
     def test_apply_regex_pipeline_exception_handling(self) -> None:
         """Test pipeline exception handling."""
         # Pass invalid patterns to trigger exception
-        patterns: list[tuple[str | None, str]] = [(None, "replacement")]
+        # Cast to expected type since we're testing error handling
+        invalid_pattern: tuple[str, str] = cast(
+            "tuple[str, str]", (None, "replacement")
+        )
+        patterns: list[tuple[str, str]] = [invalid_pattern]
         parser = FlextUtilities.StringParser()
         result = parser.apply_regex_pipeline("test", patterns)
         assert result.is_failure
+        assert result.error is not None
         assert "Failed to apply" in result.error
 
 

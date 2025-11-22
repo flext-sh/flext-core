@@ -9,8 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
-from typing import TYPE_CHECKING, ClassVar, Self
+from typing import ClassVar, Self, TypeAlias
 
 from beartype.door import is_bearable
 from pydantic import Field, HttpUrl, computed_field, model_validator
@@ -21,10 +22,9 @@ from flext_core._models.metadata import Metadata
 from flext_core.constants import FlextConstants
 from flext_core.utilities import FlextUtilities
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from flext_core._models.service import OperationCallable
+# Type aliases for conditional execution callables
+ConditionCallable: TypeAlias = Callable[[object], bool]
+ActionCallable: TypeAlias = Callable[..., object]
 
 
 class FlextModelsBase:
@@ -140,7 +140,7 @@ class FlextModelsBase:
         message: str
         context: dict[str, object] = Field(default_factory=dict)
         timestamp: datetime = Field(
-            default_factory=FlextUtilities.Generators.generate_datetime_utc
+            default_factory=FlextUtilities.Generators.generate_datetime_utc,
         )
         source: str | None = None
         operation: str | None = None
@@ -181,16 +181,16 @@ class FlextModelsBase:
     class ConditionalExecutionRequest(FlextModelsEntity.ArbitraryTypesModel):
         """Conditional execution request."""
 
-        condition: Callable[[object], bool]
-        true_action: OperationCallable | None = None
-        false_action: OperationCallable | None = None
+        condition: ConditionCallable
+        true_action: ActionCallable | None = None
+        false_action: ActionCallable | None = None
         context: dict[str, object] = Field(default_factory=dict)
 
         @classmethod
         def validate_condition(
             cls,
-            v: OperationCallable | None,
-        ) -> OperationCallable | None:
+            v: ActionCallable | None,
+        ) -> ActionCallable | None:
             """Validate callables are properly defined (Pydantic v2 mode='after')."""
             return v
 

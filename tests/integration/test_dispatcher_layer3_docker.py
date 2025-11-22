@@ -27,6 +27,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
+import random
+import shutil
+import subprocess
 import time
 from typing import cast
 
@@ -78,7 +81,7 @@ class PostgreSQLService:
         """
         if not isinstance(data, dict) or "query" not in data:
             return FlextResult[dict[str, object]].fail(
-                "Data must be dict with 'query' key"
+                "Data must be dict with 'query' key",
             )
 
         try:
@@ -109,7 +112,7 @@ class PostgreSQLService:
         except Exception as e:
             self.connection_attempts += 1
             return FlextResult[dict[str, object]].fail(
-                f"PostgreSQL connection error: {type(e).__name__}: {e!s}"
+                f"PostgreSQL connection error: {type(e).__name__}: {e!s}",
             )
 
 
@@ -175,8 +178,6 @@ class FaultInjectionProcessor:
             FlextResult success or failure based on failure_rate
 
         """
-        import random
-
         self.attempt_count += 1
 
         if random.random() < self.failure_rate:
@@ -198,9 +199,6 @@ def docker_enabled() -> bool:
         True if Docker daemon is accessible, False otherwise
 
     """
-    import shutil
-    import subprocess
-
     docker_path = shutil.which("docker")
     if not docker_path:
         return False
@@ -271,7 +269,9 @@ class TestLayer3DockerServiceDiscovery:
     """Test Layer 3 operations with real Docker services."""
 
     def test_register_postgres_service(
-        self, dispatcher: FlextDispatcher, postgres_service: PostgreSQLService
+        self,
+        dispatcher: FlextDispatcher,
+        postgres_service: PostgreSQLService,
     ) -> None:
         """Test registering real PostgreSQL service processor.
 
@@ -287,7 +287,9 @@ class TestLayer3DockerServiceDiscovery:
         assert dispatcher.processor_metrics["postgres"]["executions"] == 0
 
     def test_register_latency_service(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test registering network latency service processor.
 
@@ -302,7 +304,9 @@ class TestLayer3DockerServiceDiscovery:
         assert "latency" in dispatcher.processor_metrics
 
     def test_register_fault_injection_service(
-        self, dispatcher: FlextDispatcher, fault_service: FaultInjectionProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        fault_service: FaultInjectionProcessor,
     ) -> None:
         """Test registering fault injection service processor.
 
@@ -324,7 +328,9 @@ class TestLayer3SingleItemProcessing:
     """Test single item processing with real services."""
 
     def test_process_through_postgres_service(
-        self, dispatcher: FlextDispatcher, postgres_service: PostgreSQLService
+        self,
+        dispatcher: FlextDispatcher,
+        postgres_service: PostgreSQLService,
     ) -> None:
         """Test processing query through real PostgreSQL service.
 
@@ -348,7 +354,9 @@ class TestLayer3SingleItemProcessing:
             assert postgres_service.query_count > 0
 
     def test_process_through_latency_service(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test processing with network latency.
 
@@ -368,7 +376,9 @@ class TestLayer3SingleItemProcessing:
         assert latency_service.process_count == 1
 
     def test_process_through_fault_injection(
-        self, dispatcher: FlextDispatcher, fault_service: FaultInjectionProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        fault_service: FaultInjectionProcessor,
     ) -> None:
         """Test processing with fault injection.
 
@@ -394,7 +404,9 @@ class TestLayer3BatchProcessing:
     """Test batch processing with real services."""
 
     def test_batch_process_through_latency_service(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test batch processing with network latency.
 
@@ -405,12 +417,12 @@ class TestLayer3BatchProcessing:
         """
         dispatcher.register_processor("latency", latency_service)
 
-        from typing import cast
-
         data_list = [{"value": i} for i in range(3)]
         start_time = time.time()
         result = dispatcher.process_batch(
-            "latency", cast("list[object]", data_list), batch_size=2
+            "latency",
+            cast("list[object]", data_list),
+            batch_size=2,
         )
         elapsed = time.time() - start_time
 
@@ -422,7 +434,9 @@ class TestLayer3BatchProcessing:
         assert latency_service.process_count == 3
 
     def test_batch_process_empty_list(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test batch processing with empty list.
 
@@ -440,7 +454,9 @@ class TestLayer3BatchProcessing:
         assert latency_service.process_count == 0
 
     def test_batch_process_large_dataset(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test batch processing with large dataset.
 
@@ -453,7 +469,9 @@ class TestLayer3BatchProcessing:
 
         data_list = [{"value": i} for i in range(100)]
         result = dispatcher.process_batch(
-            "latency", cast("list[object]", data_list), batch_size=10
+            "latency",
+            cast("list[object]", data_list),
+            batch_size=10,
         )
 
         assert result.is_success
@@ -469,7 +487,9 @@ class TestLayer3ParallelProcessing:
     """Test parallel processing with real services."""
 
     def test_parallel_process_through_latency_service(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test parallel processing with network latency.
 
@@ -483,7 +503,9 @@ class TestLayer3ParallelProcessing:
         data_list = [{"value": i} for i in range(4)]
         start_time = time.time()
         result = dispatcher.process_parallel(
-            "latency", cast("list[object]", data_list), max_workers=2
+            "latency",
+            cast("list[object]", data_list),
+            max_workers=2,
         )
         elapsed = time.time() - start_time
 
@@ -495,7 +517,9 @@ class TestLayer3ParallelProcessing:
         assert latency_service.process_count == 4
 
     def test_parallel_process_empty_list(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test parallel processing with empty list.
 
@@ -513,7 +537,9 @@ class TestLayer3ParallelProcessing:
         assert latency_service.process_count == 0
 
     def test_parallel_process_large_dataset(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test parallel processing with large dataset.
 
@@ -526,7 +552,9 @@ class TestLayer3ParallelProcessing:
 
         data_list = [{"value": i} for i in range(50)]
         result = dispatcher.process_parallel(
-            "latency", cast("list[object]", data_list), max_workers=4
+            "latency",
+            cast("list[object]", data_list),
+            max_workers=4,
         )
 
         assert result.is_success
@@ -542,7 +570,9 @@ class TestLayer3TimeoutEnforcement:
     """Test timeout enforcement with real services."""
 
     def test_execute_with_timeout_success(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test successful execution within timeout.
 
@@ -560,7 +590,9 @@ class TestLayer3TimeoutEnforcement:
         assert latency_service.process_count == 1
 
     def test_execute_with_timeout_exceeded(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test timeout exceeded scenario.
 
@@ -580,7 +612,8 @@ class TestLayer3TimeoutEnforcement:
         assert "timeout" in (result.error or "").lower()
 
     def test_execute_with_timeout_unregistered_processor(
-        self, dispatcher: FlextDispatcher
+        self,
+        dispatcher: FlextDispatcher,
     ) -> None:
         """Test timeout with unregistered processor.
 
@@ -589,7 +622,9 @@ class TestLayer3TimeoutEnforcement:
 
         """
         result = dispatcher.execute_with_timeout(
-            "nonexistent", {"value": 42}, timeout=1.0
+            "nonexistent",
+            {"value": 42},
+            timeout=1.0,
         )
 
         assert result.is_failure
@@ -602,7 +637,9 @@ class TestLayer3FallbackChains:
     """Test fallback chain execution with real services."""
 
     def test_process_primary_success(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test successful primary processor execution (fast fail, no fallback).
 
@@ -620,7 +657,9 @@ class TestLayer3FallbackChains:
         assert latency_service.process_count == 1
 
     def test_process_primary_failure_fast_fail(
-        self, dispatcher: FlextDispatcher, fault_service: FaultInjectionProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        fault_service: FaultInjectionProcessor,
     ) -> None:
         """Test primary processor failure returns error immediately (fast fail).
 
@@ -669,7 +708,8 @@ class TestLayer3FallbackChains:
         assert fallback2.attempt_count == 0
 
     def test_process_multiple_processors_independent(
-        self, dispatcher: FlextDispatcher
+        self,
+        dispatcher: FlextDispatcher,
     ) -> None:
         """Test multiple processors operate independently (no fallback pattern).
 
@@ -701,7 +741,9 @@ class TestLayer3MetricsAndObservability:
     """Test metrics collection with real services."""
 
     def test_processor_metrics_tracking(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test processor metrics collection.
 
@@ -722,7 +764,9 @@ class TestLayer3MetricsAndObservability:
         assert metrics["latency"]["successful_processes"] == 3
 
     def test_batch_performance_metrics(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test batch operation performance metrics.
 
@@ -742,7 +786,9 @@ class TestLayer3MetricsAndObservability:
         assert isinstance(batch_ops, int) and batch_ops >= 0
 
     def test_parallel_performance_metrics(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test parallel operation performance metrics.
 
@@ -762,7 +808,9 @@ class TestLayer3MetricsAndObservability:
         assert isinstance(parallel_ops, int) and parallel_ops >= 0
 
     def test_performance_analytics(
-        self, dispatcher: FlextDispatcher, latency_service: NetworkLatencyProcessor
+        self,
+        dispatcher: FlextDispatcher,
+        latency_service: NetworkLatencyProcessor,
     ) -> None:
         """Test comprehensive performance analytics.
 

@@ -8,12 +8,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
+import shutil
 import tempfile
+import time
 from collections.abc import Iterator
 from pathlib import Path
+from subprocess import run
 
+import docker
 import pytest
+from docker import DockerClient
 
+import flext_tests.docker as docker_module
 from flext_core import FlextResult, FlextUtilities
 from flext_tests.docker import FlextTestDocker
 
@@ -70,9 +76,6 @@ class TestFlextTestDocker:
     @pytest.fixture
     def docker_manager(self, tmp_path: Path) -> Iterator[FlextTestDocker]:
         """Create a FlextTestDocker instance for testing with automatic cleanup."""
-        import shutil
-        from subprocess import run
-
         docker_exe = shutil.which("docker")
 
         def _cleanup_container() -> None:
@@ -138,8 +141,6 @@ class TestFlextTestDocker:
         assert manager._client is not None
         assert client is manager._client
         # Verify it's a DockerClient instance
-        from docker import DockerClient
-
         assert isinstance(client, DockerClient)
 
     def test_get_client_cached(self) -> None:
@@ -159,7 +160,8 @@ class TestFlextTestDocker:
         assert client1 is client2  # Should be the same instance (cached)
 
     def test_load_dirty_state_file_not_exists(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test loading dirty state when file doesn't exist."""
         # Set state file to non-existent path and reload
@@ -168,13 +170,17 @@ class TestFlextTestDocker:
         assert docker_manager._dirty_containers == set()
 
     def test_load_dirty_state_file_exists(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test loading dirty state from existing file."""
         test_data = {"dirty_containers": ["container1", "container2"]}
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", delete=False, suffix=".json"
+            encoding="utf-8",
+            mode="w",
+            delete=False,
+            suffix=".json",
         ) as f:
             json.dump(test_data, f)
             temp_file = Path(f.name)
@@ -204,7 +210,8 @@ class TestFlextTestDocker:
                 assert "test_container" in data["dirty_containers"]
 
     def test_mark_container_dirty_success(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test marking container as dirty successfully with real state file."""
         # Ensure state file exists and is writable
@@ -221,7 +228,8 @@ class TestFlextTestDocker:
             assert "test_container" in data.get("dirty_containers", [])
 
     def test_mark_container_dirty_failure(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test marking container as dirty with failure when state file is read-only."""
         # Make state file directory read-only to simulate failure
@@ -237,7 +245,7 @@ class TestFlextTestDocker:
         except (PermissionError, OSError):
             # If we can't make it read-only, test with invalid path
             docker_manager._state_file = Path(
-                "/invalid/path/that/does/not/exist/state.json"
+                "/invalid/path/that/does/not/exist/state.json",
             )
             result = docker_manager.mark_container_dirty("test_container")
             # Should handle error gracefully
@@ -250,7 +258,8 @@ class TestFlextTestDocker:
                 pass
 
     def test_mark_container_clean_success(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test marking container as clean successfully with real state file."""
         docker_manager._dirty_containers.add("test_container")
@@ -267,14 +276,15 @@ class TestFlextTestDocker:
             assert "test_container" not in data.get("dirty_containers", [])
 
     def test_mark_container_clean_failure(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test marking container as clean with failure when state file is read-only."""
         docker_manager._dirty_containers.add("test_container")
         # Test with invalid path to simulate failure
         original_state_file = docker_manager._state_file
         docker_manager._state_file = Path(
-            "/invalid/path/that/does/not/exist/state.json"
+            "/invalid/path/that/does/not/exist/state.json",
         )
 
         result = docker_manager.mark_container_clean("test_container")
@@ -348,7 +358,8 @@ class TestFlextTestDocker:
         assert docker_manager._service_dependencies["test_service"] == []
 
     def test_register_service_with_dependencies(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test register_service with dependencies."""
         result = docker_manager.register_service(
@@ -439,7 +450,8 @@ class TestFlextTestDocker:
         assert "Services stopped for test test_session" in result.value["message"]
 
     def test_get_service_dependency_graph(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test get_service_dependency_graph method."""
         docker_manager._service_dependencies = {
@@ -501,7 +513,8 @@ class TestFlextTestDocker:
         container_name = f"flext-test-{FlextUtilities.Generators.generate_short_id()}"
         try:
             result = docker_manager.start_container(
-                container_name, image="alpine:latest"
+                container_name,
+                image="alpine:latest",
             )
 
             # Should succeed or fail gracefully based on Docker availability
@@ -520,13 +533,15 @@ class TestFlextTestDocker:
                 pass  # Container may not exist or already removed
 
     def test_start_container_docker_exception(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test start_container with invalid image to trigger Docker error."""
         # Use invalid image name to trigger Docker error
         container_name = f"flext-test-{FlextUtilities.Generators.generate_short_id()}"
         result = docker_manager.start_container(
-            container_name, image="invalid-image-name-that-does-not-exist:latest"
+            container_name,
+            image="invalid-image-name-that-does-not-exist:latest",
         )
 
         # Should fail with proper error message
@@ -549,7 +564,8 @@ class TestFlextTestDocker:
         try:
             # Start container
             start_result = docker_manager.start_container(
-                container_name, image="alpine:latest", detach=True
+                container_name,
+                image="alpine:latest",
             )
             if start_result.is_success:
                 # Now remove it
@@ -594,7 +610,8 @@ class TestFlextTestDocker:
             assert test_image in result.value or "removed" in result.value.lower()
 
     def test_container_logs_formatted_success(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test container_logs_formatted successfully with real Docker."""
         # Create a test container first
@@ -602,12 +619,11 @@ class TestFlextTestDocker:
         try:
             # Start container
             start_result = docker_manager.start_container(
-                container_name, image="alpine:latest"
+                container_name,
+                image="alpine:latest",
             )
             if start_result.is_success:
                 # Wait a bit for container to be ready
-                import time
-
                 time.sleep(1)
                 # Get logs
                 result = docker_manager.container_logs_formatted(container_name)
@@ -622,7 +638,8 @@ class TestFlextTestDocker:
                 pass
 
     def test_execute_command_in_container_success(
-        self, docker_manager: FlextTestDocker
+        self,
+        docker_manager: FlextTestDocker,
     ) -> None:
         """Test execute_command_in_container successfully with real Docker."""
         # Create a test container first using run_container which keeps it running
@@ -636,8 +653,6 @@ class TestFlextTestDocker:
             )
             if run_result.is_success:
                 # Wait for container to be fully started
-                import time
-
                 time.sleep(3)
                 # Verify container is running
                 client = docker_manager.get_client()
@@ -645,7 +660,8 @@ class TestFlextTestDocker:
                 if container.status == "running":
                     # Execute command
                     result = docker_manager.execute_command_in_container(
-                        container_name, "echo hello"
+                        container_name,
+                        "echo hello",
                     )
 
                     assert result.is_success
@@ -654,7 +670,8 @@ class TestFlextTestDocker:
                 else:
                     # Container not running - test error handling
                     result = docker_manager.execute_command_in_container(
-                        container_name, "echo hello"
+                        container_name,
+                        "echo hello",
                     )
                     # Should fail gracefully
                     assert isinstance(result, FlextResult)
@@ -703,24 +720,22 @@ class TestDockerComposeWithPythonOnWhales:
         # IDEMPOTENCE: Force cleanup of any existing containers with conflicting names
         # This ensures tests can run multiple times even if previous runs failed
         try:
-            import docker as docker_lib
-
-            client = docker_lib.from_env()
+            client = docker.from_env()
             for container in client.containers.list(all=True):
                 if "fixtures-web" in container.name or "test-network" in str(
-                    container.attrs.get("NetworkSettings", {}).get("Networks", {})
+                    container.attrs.get("NetworkSettings", {}).get("Networks", {}),
                 ):
                     try:
                         container.remove(force=True)
                         manager.logger.info(
-                            f"Removed conflicting container: {container.name}"
+                            f"Removed conflicting container: {container.name}",
                         )
                     except Exception as e:
                         manager.logger.warning(
-                            f"Failed to remove {container.name}: {e}"
+                            f"Failed to remove {container.name}: {e}",
                         )
         except Exception as e:
-            manager.logger.warning(f"Pre-cleanup failed (non-fatal): {e}")
+            manager.logger.warning("Pre-cleanup failed (non-fatal): %s", e)
 
         # YIELD for test execution with proper teardown
         test_failed = False
@@ -738,11 +753,12 @@ class TestDockerComposeWithPythonOnWhales:
                     # Mark as dirty so next run will do full cleanup
                     manager.mark_container_dirty("fixtures-web-1")
             except Exception as e:
-                manager.logger.warning(f"Teardown cleanup failed: {e}")
+                manager.logger.warning("Teardown cleanup failed: %s", e)
                 manager.mark_container_dirty("fixtures-web-1")
 
     def test_compose_up_returns_flext_result(
-        self, docker_manager_with_fixtures: FlextTestDocker
+        self,
+        docker_manager_with_fixtures: FlextTestDocker,
     ) -> None:
         """Test that compose_up returns FlextResult[str]."""
         result = docker_manager_with_fixtures.compose_up("docker-compose.yml")
@@ -758,7 +774,8 @@ class TestDockerComposeWithPythonOnWhales:
         assert "docker-compose.yml" in result.value
 
     def test_compose_down_returns_flext_result(
-        self, docker_manager_with_fixtures: FlextTestDocker
+        self,
+        docker_manager_with_fixtures: FlextTestDocker,
     ) -> None:
         """Test that compose_down returns FlextResult[str]."""
         result = docker_manager_with_fixtures.compose_down("docker-compose.yml")
@@ -774,11 +791,13 @@ class TestDockerComposeWithPythonOnWhales:
         assert "docker-compose.yml" in result.value
 
     def test_compose_up_with_service_parameter(
-        self, docker_manager_with_fixtures: FlextTestDocker
+        self,
+        docker_manager_with_fixtures: FlextTestDocker,
     ) -> None:
         """Test compose_up with specific service parameter."""
         result = docker_manager_with_fixtures.compose_up(
-            "docker-compose.yml", service="web"
+            "docker-compose.yml",
+            service="web",
         )
 
         assert result.is_success
@@ -786,7 +805,8 @@ class TestDockerComposeWithPythonOnWhales:
         assert "Compose stack started" in result.value
 
     def test_compose_up_resolves_relative_paths(
-        self, docker_manager_with_fixtures: FlextTestDocker
+        self,
+        docker_manager_with_fixtures: FlextTestDocker,
     ) -> None:
         """Test that compose_up correctly resolves relative paths."""
         # Use relative path - should be resolved to workspace_root
@@ -797,7 +817,8 @@ class TestDockerComposeWithPythonOnWhales:
         assert "Compose stack started" in result.value
 
     def test_compose_down_resolves_relative_paths(
-        self, docker_manager_with_fixtures: FlextTestDocker
+        self,
+        docker_manager_with_fixtures: FlextTestDocker,
     ) -> None:
         """Test that compose_down correctly resolves relative paths."""
         # Use relative path - should be resolved to workspace_root
@@ -808,7 +829,8 @@ class TestDockerComposeWithPythonOnWhales:
         assert "Compose stack stopped" in result.value
 
     def test_compose_up_invalid_file_error_handling(
-        self, docker_manager_with_fixtures: FlextTestDocker
+        self,
+        docker_manager_with_fixtures: FlextTestDocker,
     ) -> None:
         """Test compose_up error handling with non-existent file."""
         # Test with non-existent compose file
@@ -822,7 +844,8 @@ class TestDockerComposeWithPythonOnWhales:
             assert "subprocess" not in result.error.lower()
 
     def test_compose_up_uses_python_on_whales(
-        self, docker_manager_with_fixtures: FlextTestDocker
+        self,
+        docker_manager_with_fixtures: FlextTestDocker,
     ) -> None:
         """Verify that compose_up uses python-on-whales with real Docker."""
         result = docker_manager_with_fixtures.compose_up("docker-compose.yml")
@@ -834,7 +857,8 @@ class TestDockerComposeWithPythonOnWhales:
         assert isinstance(result, FlextResult)
 
     def test_compose_down_uses_python_on_whales(
-        self, docker_manager_with_fixtures: FlextTestDocker
+        self,
+        docker_manager_with_fixtures: FlextTestDocker,
     ) -> None:
         """Verify that compose_down uses python-on-whales with real Docker."""
         result = docker_manager_with_fixtures.compose_down("docker-compose.yml")
@@ -846,15 +870,14 @@ class TestDockerComposeWithPythonOnWhales:
         assert isinstance(result, FlextResult)
 
     def test_compose_operations_no_subprocess_import(
-        self, docker_manager_with_fixtures: FlextTestDocker
+        self,
+        docker_manager_with_fixtures: FlextTestDocker,
     ) -> None:
         """Verify that docker.py doesn't import subprocess for compose operations.
 
         This is a meta-test that checks the actual source code to ensure
         subprocess is not imported at module level.
         """
-        import flext_tests.docker as docker_module
-
         # Verify subprocess is not imported in the module
         # (it would only be in comments about why it's not used)
         module_source = Path(docker_module.__file__).read_text(encoding="utf-8")
@@ -870,7 +893,8 @@ class TestDockerComposeWithPythonOnWhales:
         )
 
     def test_compose_operations_use_flext_result_pattern(
-        self, docker_manager_with_fixtures: FlextTestDocker
+        self,
+        docker_manager_with_fixtures: FlextTestDocker,
     ) -> None:
         """Verify that compose operations use FlextResult[str] pattern."""
         # Test compose_up
@@ -890,15 +914,14 @@ class TestDockerComposeWithPythonOnWhales:
         assert hasattr(result_down, "error")
 
     def test_compose_operations_thread_based_timeout(
-        self, docker_manager_with_fixtures: FlextTestDocker
+        self,
+        docker_manager_with_fixtures: FlextTestDocker,
     ) -> None:
         """Verify that timeout handling uses threading, not subprocess.TimeoutExpired.
 
         The conversion from subprocess to python-on-whales requires using
         threading-based timeouts instead of subprocess.TimeoutExpired.
         """
-        import flext_tests.docker as docker_module
-
         module_source = Path(docker_module.__file__).read_text(encoding="utf-8")
 
         # Should use threading for timeout handling

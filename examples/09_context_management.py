@@ -648,7 +648,7 @@ class ContextManagementService(FlextService[dict[str, object]]):
             missing = [f for f in required if not data.get(f)]
             if missing:
                 return FlextResult[dict[str, object]].fail(
-                    f"Missing context fields: {missing}"
+                    f"Missing context fields: {missing}",
                 )
             return FlextResult[dict[str, object]].ok(data)
 
@@ -686,7 +686,7 @@ class ContextManagementService(FlextService[dict[str, object]]):
             user_id = FlextContext.Variables.Request.USER_ID.get()
             if not user_id:
                 return FlextResult[dict[str, object]].fail(
-                    "User not in request context"
+                    "User not in request context",
                 )
             return FlextResult[dict[str, object]].ok({
                 "user_id": user_id,
@@ -712,7 +712,7 @@ class ContextManagementService(FlextService[dict[str, object]]):
         if user_result.is_success:
             user_data = user_result.unwrap()
             print(
-                f"✅ User resolved: {user_data['user_id']} (source: {user_data['source']})"
+                f"✅ User resolved: {user_data['user_id']} (source: {user_data['source']})",
             )
         else:
             print(f"❌ All user resolution failed: {user_result.error}")
@@ -779,7 +779,7 @@ class ContextManagementService(FlextService[dict[str, object]]):
             "name": "Jane Cached",
         })
         cached_profile = cached_user.value_or_call(
-            load_expensive_user_profile
+            load_expensive_user_profile,
         )  # Won't execute
         print(f"✅ Cached profile used: {cached_profile}")
 

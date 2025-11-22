@@ -172,7 +172,7 @@ class TestFlextResult:
 
         # Test that None is not a valid success value
         with pytest.raises(TypeError, match="cannot accept None"):
-            FlextResult[int].ok(None)
+            FlextResult[int].ok(cast("int", None))
 
     def test_result_performance(self) -> None:
         """Test performance characteristics of FlextResult."""
@@ -978,7 +978,7 @@ class TestFlextResult:
         # Test calling as instance method through chain
         initial = FlextResult[int].ok(10)
         chained: FlextResult[int] = initial.flat_map(
-            lambda x: FlextResult[int].ok(x * 2)
+            lambda x: FlextResult[int].ok(x * 2),
         )
         assert chained.is_success
         assert chained.value == 20
@@ -1000,7 +1000,7 @@ class TestFlextResult:
     def test_result_error_with_none_values(self) -> None:
         """Test error property with None error message."""
         # Failure with explicit None error converts to "Unknown error occurred"
-        result = FlextResult[int].fail(None)
+        result = FlextResult[int].fail(cast("str", None))
         assert result.is_failure
         # None error is normalized to default message
         assert result.error == "Unknown error occurred"
@@ -1079,7 +1079,7 @@ class TestFlextResult:
         """Test context manager protocol with edge cases."""
         # None is not a valid success value - should raise TypeError
         with pytest.raises(TypeError, match="cannot accept None"):
-            FlextResult[int].ok(None)
+            FlextResult[int].ok(cast("int", None))
 
         # Test __exit__ is called properly
         success: FlextResult[int] = FlextResult[int].ok(42)
@@ -1215,7 +1215,10 @@ class TestFlextResultAdditionalCoverage:
         r5: FlextResult[int] = FlextResult[int].fail("error2")
 
         accumulated_fail: FlextResult[list[int]] = FlextResult.accumulate_errors(
-            r1, r4, r2, r5
+            r1,
+            r4,
+            r2,
+            r5,
         )
         assert accumulated_fail.is_failure
         # Should contain both errors
@@ -1244,7 +1247,8 @@ class TestFlextResultAdditionalCoverage:
             return success_result
 
         parallel_result: FlextResult[list[int]] = FlextResult.parallel_map(
-            data, process_with_failure
+            data,
+            process_with_failure,
         )
         assert parallel_result.is_failure
 
@@ -1371,7 +1375,8 @@ class TestFlextResultAdditionalCoverage:
     def test_result_unwrap_with_failure(self) -> None:
         """Test unwrap on failure raises exception (lines 938-939)."""
         failure: FlextResult[int] = FlextResult[int].fail(
-            "Cannot unwrap", error_code="UNWRAP_ERROR"
+            "Cannot unwrap",
+            error_code="UNWRAP_ERROR",
         )
 
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
@@ -1602,7 +1607,8 @@ class TestFlextResultFinalCoverage:
 
         # Accessing map as a method object without calling it
         method_obj: Callable[..., object] = cast(
-            "Callable[..., object]", FlextResult.map
+            "Callable[..., object]",
+            FlextResult.map,
         )
         assert callable(method_obj)
 
@@ -1615,7 +1621,7 @@ class TestFlextResultFinalCoverage:
         """Test that None is not a valid success value."""
         # None is not a valid success value - should raise TypeError
         with pytest.raises(TypeError, match="cannot accept None"):
-            FlextResult[int].ok(None)
+            FlextResult[int].ok(cast("int", None))
 
     def test_value_property_failure_path(self) -> None:
         """Test value property when result is failure (lines 552-553)."""
@@ -1669,10 +1675,10 @@ class TestFlextResultFinalCoverage:
         """Test __eq__ with complex nested data (lines 853-854, 861-862)."""
         # Test equality with nested dictionaries
         data1: dict[str, dict[str, object]] = {
-            "nested": {"value": 42, "list": [1, 2, 3]}
+            "nested": {"value": 42, "list": [1, 2, 3]},
         }
         data2: dict[str, dict[str, object]] = {
-            "nested": {"value": 42, "list": [1, 2, 3]}
+            "nested": {"value": 42, "list": [1, 2, 3]},
         }
 
         result1 = FlextResult[dict[str, dict[str, object]]].ok(data1)
@@ -2046,7 +2052,8 @@ class TestFlextResultFinalCoveragePush:
             return 42
 
         result: FlextResult[int] = cast(
-            "FlextResult[int]", FlextResult.safe_call(sync_func)
+            "FlextResult[int]",
+            FlextResult.safe_call(sync_func),
         )
         assert result.is_success
         assert result.unwrap() == 42
@@ -2139,7 +2146,8 @@ class TestFromCallable:
             raise RuntimeError(msg)
 
         result = FlextResult[str].create_from_callable(
-            failing_operation, error_code="CUSTOM_ERROR"
+            failing_operation,
+            error_code="CUSTOM_ERROR",
         )
 
         assert result.is_failure
@@ -2332,8 +2340,6 @@ class TestIOInterop:
 
     def test_to_io_success(self) -> None:
         """Test converting successful result to IO."""
-        from typing import cast
-
         result = FlextResult[str].ok("test_value")
         # Cast needed because to_io() returns object (returns.io.IO may not be available)
         io_container: IO[str] = cast("IO[str]", result.to_io())
@@ -2354,10 +2360,9 @@ class TestIOInterop:
         result = FlextResult[str].fail("error")
 
         # REAL behavior: to_io() raises ValidationError, not ValueError
-        from flext_core.exceptions import FlextExceptions
-
         with pytest.raises(
-            FlextExceptions.ValidationError, match="Cannot convert failure to IO"
+            FlextExceptions.ValidationError,
+            match="Cannot convert failure to IO",
         ):
             result.to_io()
 
@@ -2379,7 +2384,8 @@ class TestIOInterop:
         """Test creating result from IOSuccess."""
         io_success = IOSuccess(42)
         result: FlextResult[int] = cast(
-            "FlextResult[int]", FlextResult.from_io_result(io_success)
+            "FlextResult[int]",
+            FlextResult.from_io_result(io_success),
         )
 
         assert result.is_success
@@ -2389,7 +2395,8 @@ class TestIOInterop:
         """Test creating result from IOFailure."""
         io_failure: IOFailure[object] = IOFailure("io_error")
         result: FlextResult[object] = cast(
-            "FlextResult[object]", FlextResult.from_io_result(io_failure)
+            "FlextResult[object]",
+            FlextResult.from_io_result(io_failure),
         )
 
         assert result.is_failure
@@ -2412,7 +2419,8 @@ class TestIOInterop:
         original = FlextResult[int].fail("original_error")
         io_result = original.to_io_result()
         recovered: FlextResult[int] = cast(
-            "FlextResult[int]", FlextResult.from_io_result(io_result)
+            "FlextResult[int]",
+            FlextResult.from_io_result(io_result),
         )
 
         assert recovered.is_failure
@@ -2541,8 +2549,6 @@ class TestRailwayMethods:
 
     def test_value_or_call_exception_handling(self) -> None:
         """Test value_or_call when default computation raises exception."""
-        from flext_core import FlextExceptions
-
         result = FlextResult[int].fail("error")
 
         def failing_default() -> int:

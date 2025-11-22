@@ -40,7 +40,6 @@ from typing import (
     runtime_checkable,
 )
 
-from flext_core.result import FlextResult
 from flext_core.typings import (
     FlextTypes,
     T,
@@ -93,7 +92,7 @@ class FlextProtocols:
     Example of structural typing:
     class UserService:
         '''Satisfies FlextProtocols.Service through method implementation.'''
-        def execute(self, command: Command) -> FlextResult:
+        def execute(self, command: Command) -> "FlextProtocols.ResultProtocol[object]":
             '''Required method - protocol compliance verified.'''
             pass
 
@@ -196,7 +195,7 @@ class FlextProtocols:
         class Ldap:
             class LdapConnectionProtocol(FlextProtocols.Service):
                 '''LDAP-specific connection service.'''
-                def bind(self, username: str, password: str) -> FlextResult:
+                def bind(self, username: str, password: str) -> "FlextProtocols.ResultProtocol[object]":
                     '''Bind to LDAP server.'''
                     ...
             class LdapSearchRepositoryProtocol(FlextProtocols.Repository[LdapEntry]):
@@ -210,7 +209,7 @@ class FlextProtocols:
         class Cli:
             class CommandProtocol(FlextProtocols.Handler[CliArgs, CliOutput]):
                 '''CLI command handler.'''
-                def run(self, args: CliArgs) -> FlextResult[CliOutput]:
+                def run(self, args: CliArgs) -> "FlextProtocols.ResultProtocol[CliOutput]":
                     '''Execute CLI command.'''
                     ...
 
@@ -219,7 +218,7 @@ class FlextProtocols:
         class Auth:
             class UserServiceProtocol(FlextProtocols.Service):
                 '''User management service.'''
-                def authenticate(self, username: str, pwd: str) -> FlextResult[User]:
+                def authenticate(self, username: str, pwd: str) -> "FlextProtocols.ResultProtocol[User]":
                     '''Authenticate user.'''
                     ...
 
@@ -228,7 +227,7 @@ class FlextProtocols:
     ==============================================================================
 
     **FlextResult Integration**:
-    - All result-returning methods defined with FlextResult[T] return type
+    - All result-returning methods defined with FlextProtocols.ResultProtocol[T] return type
     - Enables railway pattern error handling throughout ecosystem
     - Type-safe success/failure composition
 
@@ -307,17 +306,17 @@ class FlextProtocols:
         result = service.execute()
 
     **Pattern 2: Function Signature with Protocol**
-    def process_service(svc: FlextProtocols.Service) -> FlextResult:
+    def process_service(svc: FlextProtocols.Service) -> "FlextProtocols.ResultProtocol[object]":
         '''Process any domain service.'''
         return svc.execute()
 
     **Pattern 3: Generic Protocol Usage**
-    def query_repository(repo: FlextProtocols.Repository[User]) -> FlextResult:
+    def query_repository(repo: FlextProtocols.Repository[User]) -> "FlextProtocols.ResultProtocol[object]":
         '''Query any repository.'''
         users = repo.find_all()
         # NOTE: This example shows conceptual usage only.
-        # In actual code, import FlextResult from flext_core.result
-        return FlextResult.ok(users)  # Illustrative - requires import
+        # In actual code, use ResultProtocol - no import needed
+        # return FlextProtocols.ResultProtocol[object].ok(users)  # Illustrative
 
     **Pattern 4: Handler Registration**
     bus: FlextProtocols.CommandBus
@@ -329,7 +328,7 @@ class FlextProtocols:
     class FlextAuthProtocols(FlextProtocols):
         class Auth:
             class UserService(FlextProtocols.Service):
-                def authenticate(self, creds) -> FlextResult[AuthToken]:
+                def authenticate(self, creds) -> FlextProtocols.ResultProtocol[AuthToken]:
                     ...
 
     **Pattern 6: Logger with Context**
@@ -347,7 +346,7 @@ class FlextProtocols:
     **Pattern 8: Circular Import Prevention**
     # In config.py, use ResultProtocol instead of importing FlextResult
     # def validate(self) -> ResultProtocol[bool]:
-    #     return FlextResult[bool].ok(True)
+    #     return FlextProtocols.ResultProtocol[bool].ok(True)
 
     ==============================================================================
     PRODUCTION-READY CHARACTERISTICS
@@ -393,12 +392,12 @@ class FlextProtocols:
         """Protocol for monadic types enabling functional composition.
 
         Monads provide bind/flat_map operations for composable error handling.
-        FlextResult[T] implements this protocol for railway-oriented patterns.
+        FlextProtocols.ResultProtocol[T] implements this protocol for railway-oriented patterns.
 
         Used in: result.py (FlextResult monad operations)
 
         Composition Example:
-            result = FlextResult[User].ok(user)
+            result = FlextProtocols.ResultProtocol[User].ok(user)
             composed = (
                 result
                 .flat_map(save_to_db)
@@ -510,7 +509,7 @@ class FlextProtocols:
 
     @runtime_checkable
     class ResultProtocol(Protocol, Generic[T]):
-        """Protocol for FlextResult[T] - prevents circular imports.
+        """Protocol for FlextProtocols.ResultProtocol[T] - prevents circular imports.
 
         Complete interface for Railway-Oriented Programming result type.
         Enables type checking without importing concrete FlextResult class.
@@ -528,14 +527,15 @@ class FlextProtocols:
 
         IMPLEMENTATION:
         ==============
-        FlextResult[T] implements this protocol via structural typing (@runtime_checkable).
+        FlextProtocols.ResultProtocol[T] implements this protocol via structural typing (@runtime_checkable).
         No explicit inheritance needed - duck typing validates interface compliance.
 
         USAGE PATTERN:
         =============
         In validation.py:
             def validate_timeout(timeout: float) -> ResultProtocol[bool]:
-                from flext_core.result import FlextResult  # Import inside function
+                # Import inside function to avoid circular imports
+                from flext_core.result import FlextResult
                 if timeout > MAX:
                     return FlextResult[bool].fail("Timeout too large")
                 return FlextResult[bool].ok(True)
@@ -548,7 +548,7 @@ class FlextProtocols:
 
         INTERFACE COMPLIANCE:
         ====================
-        Satisfies: "FlextResult[T]" (via structural typing)
+        Satisfies: "FlextProtocols.ResultProtocol[T]" (via structural typing)
         Used in: validation.py, _models/*.py
         """
 
@@ -659,8 +659,8 @@ class FlextProtocols:
         Used in: bus.py (command validation)
         """
 
-        def validate_command(self) -> FlextResult[bool]:
-            """Validate command and return FlextResult."""
+        def validate_command(self) -> FlextProtocols.ResultProtocol[bool]:
+            """Validate command and return FlextProtocols.ResultProtocol."""
             ...
 
     @runtime_checkable
@@ -692,7 +692,11 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def validate_type(self, value: T, expected_type: type[T]) -> FlextResult[T]:
+        def validate_type(
+            self,
+            value: T,
+            expected_type: type[T],
+        ) -> FlextProtocols.ResultProtocol[T]:
             """Validate value matches expected type.
 
             Args:
@@ -700,7 +704,7 @@ class FlextProtocols:
                 expected_type: Expected type for validation
 
             Returns:
-                FlextResult[T]: Validated value or error
+                FlextProtocols.ResultProtocol[T]: Validated value or error
 
             """
             ...
@@ -730,7 +734,11 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def register_service(self, name: str, service: object) -> FlextResult[bool]:
+        def register_service(
+            self,
+            name: str,
+            service: object,
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Register service with given name.
 
             Args:
@@ -738,20 +746,20 @@ class FlextProtocols:
                 service: Service instance
 
             Returns:
-                FlextResult[bool]: Success or registration error
+                FlextProtocols.ResultProtocol[bool]: Success or registration error
 
             """
             ...
 
         @abstractmethod
-        def get_service(self, name: str) -> FlextResult[object]:
+        def get_service(self, name: str) -> FlextProtocols.ResultProtocol[object]:
             """Retrieve registered service.
 
             Args:
                 name: Service identifier
 
             Returns:
-                FlextResult[object]: Service instance or error
+                FlextProtocols.ResultProtocol[object]: Service instance or error
 
             """
             ...
@@ -780,11 +788,11 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def create_instance(self) -> FlextResult[T]:
+        def create_instance(self) -> FlextProtocols.ResultProtocol[T]:
             """Create new instance using factory.
 
             Returns:
-                FlextResult[T]: Created instance or error
+                FlextProtocols.ResultProtocol[T]: Created instance or error
 
             """
             ...
@@ -794,21 +802,24 @@ class FlextProtocols:
         """Protocol for configurable components.
 
         Infrastructure protocol for components that can be configured with
-        dictionary-based settings. Returns FlextResult for error handling.
+        dictionary-based settings. Returns ResultProtocol for error handling.
 
         Used in: container.py (FlextContainer configuration)
 
         Note: Replaces duplicate Configurable in Infrastructure namespace.
         """
 
-        def configure(self, config: dict[str, object]) -> FlextResult[bool]:
+        def configure(
+            self,
+            config: dict[str, object],
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Configure component with provided settings.
 
             Args:
                 config: Configuration dictionary
 
             Returns:
-                FlextResult[bool]: Success if configured, failure with error details
+                FlextProtocols.ResultProtocol[bool]: Success if configured, failure with error details
 
             """
             ...
@@ -832,7 +843,9 @@ class FlextProtocols:
         Usage Pattern:
             >>> class FlextLdapConfig(BaseModel):
             ...     @classmethod
-            ...     def register_as_namespace(cls) -> FlextResult[bool]:
+            ...     def register_as_namespace(
+            ...         cls,
+            ...     ) -> FlextProtocols.ResultProtocol[bool]:
             ...         return FlextConfig.register_namespace("ldap", cls)
             >>> # Auto-register on module import
             >>> FlextLdapConfig.register_as_namespace()
@@ -852,14 +865,14 @@ class FlextProtocols:
 
         @classmethod
         @abstractmethod
-        def register_as_namespace(cls) -> FlextResult[bool]:
+        def register_as_namespace(cls) -> FlextProtocols.ResultProtocol[bool]:
             """Register this configuration class as a namespace.
 
             Subprojects implement this method to register their config classes
             as namespaces in the root FlextConfig singleton.
 
             Returns:
-                FlextResult[bool]: Success if registered, failure if already registered
+                FlextProtocols.ResultProtocol[bool]: Success if registered, failure if already registered
                     or if registration fails
 
             Example:
@@ -867,14 +880,16 @@ class FlextProtocols:
                 ...     # ... fields ...
                 ...
                 ...     @classmethod
-                ...     def register_as_namespace(cls) -> FlextResult[bool]:
+                ...     def register_as_namespace(
+                ...         cls,
+                ...     ) -> FlextProtocols.ResultProtocol[bool]:
                 ...         from flext_core import FlextConfig
                 ...
                 ...         try:
                 ...             FlextConfig.register_namespace("ldap", cls)
-                ...             return FlextResult[bool].ok(True)
+                ...             return FlextProtocols.ResultProtocol[bool].ok(True)
                 ...         except Exception as e:
-                ...             return FlextResult[bool].fail(str(e))
+                ...             return FlextProtocols.ResultProtocol[bool].fail(str(e))
                 >>> # In __init__.py of flext-ldap
                 >>> FlextLdapConfig.register_as_namespace()
 
@@ -899,11 +914,11 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def execute(self) -> FlextResult[T]:
+        def execute(self) -> FlextProtocols.ResultProtocol[T]:
             """Execute the main domain operation.
 
             Returns:
-                FlextResult[T]: Success with domain result or failure
+                FlextProtocols.ResultProtocol[T]: Success with domain result or failure
 
             """
             ...
@@ -917,20 +932,20 @@ class FlextProtocols:
             """
             ...
 
-        def validate_business_rules(self) -> FlextResult[bool]:
+        def validate_business_rules(self) -> FlextProtocols.ResultProtocol[bool]:
             """Validate business rules for the domain service.
 
             Returns:
-                FlextResult[bool]: Success if valid, failure with error details
+                FlextProtocols.ResultProtocol[bool]: Success if valid, failure with error details
 
             """
             ...
 
-        def validate_config(self) -> FlextResult[bool]:
+        def validate_config(self) -> FlextProtocols.ResultProtocol[bool]:
             """Validate service configuration.
 
             Returns:
-                FlextResult[bool]: Success if valid, failure with error details
+                FlextProtocols.ResultProtocol[bool]: Success if valid, failure with error details
 
             """
             ...
@@ -958,22 +973,22 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def get_by_id(self, entity_id: str) -> FlextResult[T]:
+        def get_by_id(self, entity_id: str) -> FlextProtocols.ResultProtocol[T]:
             """Retrieve an aggregate using the standardized identity lookup."""
             ...
 
         @abstractmethod
-        def save(self, entity: T) -> FlextResult[bool]:
+        def save(self, entity: T) -> FlextProtocols.ResultProtocol[bool]:
             """Persist an entity following modernization consistency rules."""
             ...
 
         @abstractmethod
-        def delete(self, entity_id: str) -> FlextResult[bool]:
+        def delete(self, entity_id: str) -> FlextProtocols.ResultProtocol[bool]:
             """Delete an entity while respecting modernization invariants."""
             ...
 
         @abstractmethod
-        def find_all(self) -> FlextResult[list[T]]:
+        def find_all(self) -> FlextProtocols.ResultProtocol[list[T]]:
             """Enumerate entities for modernization-aligned queries."""
             ...
 
@@ -988,21 +1003,21 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def execute_operation(self) -> FlextResult[T]:
+        def execute_operation(self) -> FlextProtocols.ResultProtocol[T]:
             """Execute operation with full validation and context.
 
             Returns:
-                FlextResult[T]: Operation result with rich error context
+                FlextProtocols.ResultProtocol[T]: Operation result with rich error context
 
             """
             ...
 
         @abstractmethod
-        def execute_with_validation(self) -> FlextResult[T]:
+        def execute_with_validation(self) -> FlextProtocols.ResultProtocol[T]:
             """Execute with comprehensive business rule validation.
 
             Returns:
-                FlextResult[T]: Result or validation error
+                FlextProtocols.ResultProtocol[T]: Result or validation error
 
             """
             ...
@@ -1018,27 +1033,33 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def with_correlation_id(self, correlation_id: str) -> FlextResult[bool]:
+        def with_correlation_id(
+            self,
+            correlation_id: str,
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Set correlation ID for distributed tracing.
 
             Args:
                 correlation_id: Unique trace identifier
 
             Returns:
-                FlextResult[bool]: Success or context error
+                FlextProtocols.ResultProtocol[bool]: Success or context error
 
             """
             ...
 
         @abstractmethod
-        def with_user_context(self, user_id: str) -> FlextResult[bool]:
+        def with_user_context(
+            self,
+            user_id: str,
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Set user context for audit trail.
 
             Args:
                 user_id: User identifier
 
             Returns:
-                FlextResult[bool]: Success or context error
+                FlextProtocols.ResultProtocol[bool]: Success or context error
 
             """
             ...
@@ -1064,14 +1085,14 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def with_timeout(self, seconds: float) -> FlextResult[bool]:
+        def with_timeout(self, seconds: float) -> FlextProtocols.ResultProtocol[bool]:
             """Set execution timeout in seconds.
 
             Args:
                 seconds: Timeout duration
 
             Returns:
-                FlextResult[bool]: Success or configuration error
+                FlextProtocols.ResultProtocol[bool]: Success or configuration error
 
             """
             ...
@@ -1108,14 +1129,14 @@ class FlextProtocols:
         def handle(
             self,
             message: TInput_Handler_Protocol_contra,
-        ) -> FlextResult[TResult_Handler_Protocol]:
+        ) -> FlextProtocols.ResultProtocol[TResult_Handler_Protocol]:
             """Handle the message and return result.
 
             Args:
                 message: The input message to process
 
             Returns:
-                FlextResult[TResult_Handler_Protocol]: Success with result or failure
+                FlextProtocols.ResultProtocol[TResult_Handler_Protocol]: Success with result or failure
 
             """
             ...
@@ -1123,8 +1144,8 @@ class FlextProtocols:
         def __call__(
             self,
             input_data: TInput_Handler_Protocol_contra,
-        ) -> FlextResult[TResult_Handler_Protocol]:
-            """Process input and return a FlextResult containing the output."""
+        ) -> FlextProtocols.ResultProtocol[TResult_Handler_Protocol]:
+            """Process input and return a ResultProtocol containing the output."""
             ...
 
         def can_handle(self, message_type: type) -> bool:
@@ -1134,25 +1155,28 @@ class FlextProtocols:
         def execute(
             self,
             message: TInput_Handler_Protocol_contra,
-        ) -> FlextResult[TResult_Handler_Protocol]:
+        ) -> FlextProtocols.ResultProtocol[TResult_Handler_Protocol]:
             """Execute the handler with the given message."""
             ...
 
         def validate_command(
             self,
             command: TInput_Handler_Protocol_contra,
-        ) -> FlextResult[bool]:
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Validate a command message."""
             ...
 
-        def validate(self, _data: TInput_Handler_Protocol_contra) -> FlextResult[bool]:
+        def validate(
+            self,
+            _data: TInput_Handler_Protocol_contra,
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Validate input before processing."""
             ...
 
         def validate_query(
             self,
             query: TInput_Handler_Protocol_contra,
-        ) -> FlextResult[bool]:
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Validate a query message."""
             ...
 
@@ -1175,7 +1199,7 @@ class FlextProtocols:
             self,
             handler: FlextTypes.HandlerCallableType,
             /,
-        ) -> FlextResult[bool]: ...
+        ) -> FlextProtocols.ResultProtocol[bool]: ...
 
         @overload
         def register_handler(
@@ -1183,18 +1207,18 @@ class FlextProtocols:
             command_type: type,
             handler: FlextTypes.HandlerCallableType,
             /,
-        ) -> FlextResult[bool]: ...
+        ) -> FlextProtocols.ResultProtocol[bool]: ...
 
         def register_handler(
             self,
             command_type_or_handler: type | FlextTypes.HandlerCallableType,
             handler: FlextTypes.HandlerCallableType | None = None,
             /,
-        ) -> FlextResult[bool]:
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Register command handler."""
             ...
 
-        def execute(self, command: T) -> FlextResult[T]:
+        def execute(self, command: T) -> FlextProtocols.ResultProtocol[T]:
             """Execute command and return result."""
             ...
 
@@ -1205,8 +1229,8 @@ class FlextProtocols:
         def process(
             self,
             command_or_query: object,
-            next_handler: Callable[[object], FlextResult[object]],
-        ) -> FlextResult[object]:
+            next_handler: Callable[[object], FlextProtocols.ResultProtocol[object]],
+        ) -> FlextProtocols.ResultProtocol[object]:
             """Process command/query through middleware chain."""
             ...
 
@@ -1221,14 +1245,17 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def validate_message(self, message: object) -> FlextResult[bool]:
+        def validate_message(
+            self,
+            message: object,
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Validate message structure and content.
 
             Args:
                 message: Message to validate
 
             Returns:
-                FlextResult[bool]: Success or validation error details
+                FlextProtocols.ResultProtocol[bool]: Success or validation error details
 
             """
             ...
@@ -1260,7 +1287,7 @@ class FlextProtocols:
             duration_ms: float,
             *,
             success: bool,
-        ) -> FlextResult[bool]:
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Record handler execution metrics.
 
             Args:
@@ -1269,7 +1296,7 @@ class FlextProtocols:
                 success: Whether execution succeeded
 
             Returns:
-                FlextResult[bool]: Success or recording error
+                FlextProtocols.ResultProtocol[bool]: Success or recording error
 
             """
             ...
@@ -1295,21 +1322,21 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def setup_context(self) -> FlextResult[bool]:
+        def setup_context(self) -> FlextProtocols.ResultProtocol[bool]:
             """Set up execution context before handler execution.
 
             Returns:
-                FlextResult[bool]: Success or setup error
+                FlextProtocols.ResultProtocol[bool]: Success or setup error
 
             """
             ...
 
         @abstractmethod
-        def cleanup_context(self) -> FlextResult[bool]:
+        def cleanup_context(self) -> FlextProtocols.ResultProtocol[bool]:
             """Clean up execution context after handler execution.
 
             Returns:
-                FlextResult[bool]: Success or cleanup error
+                FlextProtocols.ResultProtocol[bool]: Success or cleanup error
 
             """
             ...
@@ -1325,7 +1352,12 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def put(self, key: str, value: object, ttl_seconds: int) -> FlextResult[bool]:
+        def put(
+            self,
+            key: str,
+            value: object,
+            ttl_seconds: int,
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Store value in cache with TTL.
 
             Args:
@@ -1334,33 +1366,33 @@ class FlextProtocols:
                 ttl_seconds: Time to live in seconds
 
             Returns:
-                FlextResult[bool]: Success or cache error
+                FlextProtocols.ResultProtocol[bool]: Success or cache error
 
             """
             ...
 
         @abstractmethod
-        def get(self, key: str) -> FlextResult[object | None]:
+        def get(self, key: str) -> FlextProtocols.ResultProtocol[object | None]:
             """Retrieve value from cache.
 
             Args:
                 key: Cache key identifier
 
             Returns:
-                FlextResult[T | None]: Cached value or None if expired
+                FlextProtocols.ResultProtocol[T | None]: Cached value or None if expired
 
             """
             ...
 
         @abstractmethod
-        def invalidate(self, key: str) -> FlextResult[bool]:
+        def invalidate(self, key: str) -> FlextProtocols.ResultProtocol[bool]:
             """Invalidate cache entry.
 
             Args:
                 key: Cache key identifier
 
             Returns:
-                FlextResult[bool]: Success or invalidation error
+                FlextProtocols.ResultProtocol[bool]: Success or invalidation error
 
             """
             ...
@@ -1379,14 +1411,14 @@ class FlextProtocols:
         def add_middleware(
             self,
             middleware: FlextProtocols.Middleware,
-        ) -> FlextResult[bool]:
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Add middleware to processing chain.
 
             Args:
                 middleware: Middleware to add
 
             Returns:
-                FlextResult[bool]: Success or chain error
+                FlextProtocols.ResultProtocol[bool]: Success or chain error
 
             """
             ...
@@ -1395,8 +1427,8 @@ class FlextProtocols:
         def execute_chain(
             self,
             command_or_query: object,
-            final_handler: Callable[[object], FlextResult[object]],
-        ) -> FlextResult[object]:
+            final_handler: Callable[[object], FlextProtocols.ResultProtocol[object]],
+        ) -> FlextProtocols.ResultProtocol[object]:
             """Execute full middleware chain.
 
             Args:
@@ -1404,7 +1436,7 @@ class FlextProtocols:
                 final_handler: Final handler in chain
 
             Returns:
-                FlextResult: Result from processing chain
+                ResultProtocol: Result from processing chain
 
             """
             ...
@@ -1424,7 +1456,7 @@ class FlextProtocols:
             self,
             message_type: type,
             handler: object,
-        ) -> FlextResult[bool]:
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Track handler registration event.
 
             Args:
@@ -1432,7 +1464,7 @@ class FlextProtocols:
                 handler: Registered handler
 
             Returns:
-                FlextResult[bool]: Success or tracking error
+                FlextProtocols.ResultProtocol[bool]: Success or tracking error
 
             """
             ...
@@ -1464,14 +1496,17 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def call(self, operation: Callable[[], object]) -> FlextResult[object]:
+        def call(
+            self,
+            operation: Callable[[], object],
+        ) -> FlextProtocols.ResultProtocol[object]:
             """Execute operation through circuit breaker.
 
             Args:
                 operation: Callable to execute
 
             Returns:
-                FlextResult: Result or circuit breaker error
+                ResultProtocol: Result or circuit breaker error
 
             """
             ...
@@ -1497,11 +1532,11 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def allow_request(self) -> FlextResult[bool]:
+        def allow_request(self) -> FlextProtocols.ResultProtocol[bool]:
             """Check if request is allowed under rate limit.
 
             Returns:
-                FlextResult[bool]: True if allowed, False if rate limited
+                FlextProtocols.ResultProtocol[bool]: True if allowed, False if rate limited
 
             """
             ...
@@ -1568,7 +1603,7 @@ class FlextProtocols:
             self,
             operation: Callable[[], object],
             timeout_ms: float,
-        ) -> FlextResult[object]:
+        ) -> FlextProtocols.ResultProtocol[object]:
             """Execute operation with timeout constraint.
 
             Args:
@@ -1576,7 +1611,7 @@ class FlextProtocols:
                 timeout_ms: Timeout in milliseconds
 
             Returns:
-                FlextResult: Result or timeout error
+                ResultProtocol: Result or timeout error
 
             """
             ...
@@ -1620,7 +1655,7 @@ class FlextProtocols:
             metric_name: str,
             value: float,
             tags: dict[str, str] | None,
-        ) -> FlextResult[bool]:
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Record metric value with tags.
 
             Args:
@@ -1629,7 +1664,7 @@ class FlextProtocols:
                 tags: Optional metric tags
 
             Returns:
-                FlextResult[bool]: Success or collection error
+                FlextProtocols.ResultProtocol[bool]: Success or collection error
 
             """
             ...
@@ -1645,14 +1680,17 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def process_batch(self, items: list[object]) -> FlextResult[list[object]]:
+        def process_batch(
+            self,
+            items: list[object],
+        ) -> FlextProtocols.ResultProtocol[list[object]]:
             """Process batch of items.
 
             Args:
                 items: Items to process
 
             Returns:
-                FlextResult[list[T]]: Processed items or error
+                FlextProtocols.ResultProtocol[list[T]]: Processed items or error
 
             """
             ...
@@ -1678,14 +1716,14 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def publish_event(self, event: object) -> FlextResult[bool]:
+        def publish_event(self, event: object) -> FlextProtocols.ResultProtocol[bool]:
             """Publish domain event.
 
             Args:
                 event: Event to publish
 
             Returns:
-                FlextResult[bool]: Success or publishing error
+                FlextProtocols.ResultProtocol[bool]: Success or publishing error
 
             """
             ...
@@ -1695,7 +1733,7 @@ class FlextProtocols:
             self,
             event_type: type,
             handler: Callable[[object], object],
-        ) -> FlextResult[bool]:
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Subscribe to event type.
 
             Args:
@@ -1703,7 +1741,7 @@ class FlextProtocols:
                 handler: Event handler callable
 
             Returns:
-                FlextResult[bool]: Success or subscription error
+                FlextProtocols.ResultProtocol[bool]: Success or subscription error
 
             """
             ...
@@ -1719,14 +1757,17 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def validate_config(self, config: dict[str, object]) -> FlextResult[bool]:
+        def validate_config(
+            self,
+            config: dict[str, object],
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Validate configuration dictionary.
 
             Args:
                 config: Configuration to validate
 
             Returns:
-                FlextResult[bool]: Success or validation error
+                FlextProtocols.ResultProtocol[bool]: Success or validation error
 
             """
             ...
@@ -1752,7 +1793,11 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def update_config(self, key: str, value: object) -> FlextResult[bool]:
+        def update_config(
+            self,
+            key: str,
+            value: object,
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Update configuration dynamically.
 
             Args:
@@ -1760,7 +1805,7 @@ class FlextProtocols:
                 value: New value
 
             Returns:
-                FlextResult[bool]: Success or update error
+                FlextProtocols.ResultProtocol[bool]: Success or update error
 
             """
             ...
@@ -1788,21 +1833,21 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def get_instance(self) -> FlextResult[object]:
+        def get_instance(self) -> FlextProtocols.ResultProtocol[object]:
             """Get singleton instance.
 
             Returns:
-                FlextResult[T]: Singleton instance or error
+                FlextProtocols.ResultProtocol[T]: Singleton instance or error
 
             """
             ...
 
         @abstractmethod
-        def reset_instance(self) -> FlextResult[bool]:
+        def reset_instance(self) -> FlextProtocols.ResultProtocol[bool]:
             """Reset singleton instance (testing only).
 
             Returns:
-                FlextResult[bool]: Success or reset error
+                FlextProtocols.ResultProtocol[bool]: Success or reset error
 
             """
             ...
@@ -1818,14 +1863,17 @@ class FlextProtocols:
         """
 
         @abstractmethod
-        def bind_context(self, context: dict[str, object]) -> FlextResult[bool]:
+        def bind_context(
+            self,
+            context: dict[str, object],
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Bind context dictionary to logger.
 
             Args:
                 context: Context to bind
 
             Returns:
-                FlextResult[bool]: Success or binding error
+                FlextProtocols.ResultProtocol[bool]: Success or binding error
 
             """
             ...
@@ -1855,7 +1903,7 @@ class FlextProtocols:
             self,
             operation_name: str,
             duration_ms: float,
-        ) -> FlextResult[bool]:
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Record operation latency.
 
             Args:
@@ -1863,7 +1911,7 @@ class FlextProtocols:
                 duration_ms: Duration in milliseconds
 
             Returns:
-                FlextResult[bool]: Success or recording error
+                FlextProtocols.ResultProtocol[bool]: Success or recording error
 
             """
             ...
@@ -1964,14 +2012,14 @@ class FlextProtocols:
             self,
             message_type: type,
             handler: FlextTypes.HandlerCallableType,
-        ) -> FlextResult[bool]:
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Register handler for message type."""
             ...
 
         def get_handler(
             self,
             message_type: type,
-        ) -> FlextResult[FlextTypes.HandlerCallableType]:
+        ) -> FlextProtocols.ResultProtocol[FlextTypes.HandlerCallableType]:
             """Get handler for message type."""
             ...
 
@@ -1994,14 +2042,14 @@ class FlextProtocols:
         """
 
         @staticmethod
-        def validate_domain_event(event: object) -> FlextResult[bool]:
+        def validate_domain_event(event: object) -> FlextProtocols.ResultProtocol[bool]:
             """Validate domain event structure and fields.
 
             Args:
                 event: Domain event to validate
 
             Returns:
-                FlextResult[bool]: Success if valid, failure with error details
+                FlextProtocols.ResultProtocol[bool]: Success if valid, failure with error details
 
             """
             ...

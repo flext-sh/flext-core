@@ -221,6 +221,14 @@
             "tests",
         ]
 
+    [tool.pyrefly]
+        search-path = [
+            "src",
+            "tests",
+            "examples",
+            "scripts",
+        ]
+
     [tool.ruff]
         extend = "../ruff-shared.toml"
 

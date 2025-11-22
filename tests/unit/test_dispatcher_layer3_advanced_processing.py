@@ -101,7 +101,7 @@ class TestLayer3MessageProcessing:
         """Test processor registration with configuration."""
         dispatcher = FlextDispatcher()
         processor = DoubleProcessor()
-        config = {"timeout": 5.0, "retries": 3}
+        config: dict[str, object] = {"timeout": 5.0, "retries": 3}
 
         result = dispatcher.register_processor("double", processor, config)
 

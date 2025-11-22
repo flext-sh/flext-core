@@ -42,7 +42,8 @@ class TestFlextTestsUtilities:
     def test_create_test_result_failure_custom_error(self) -> None:
         """Test create_test_result failure with custom error."""
         result = FlextTestsUtilities.create_test_result(
-            success=False, error="Custom error"
+            success=False,
+            error="Custom error",
         )
 
         assert result.is_failure

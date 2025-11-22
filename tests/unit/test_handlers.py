@@ -11,10 +11,12 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable
+from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import cast
 
 import pytest
+from pydantic import BaseModel
 
 from flext_core import (
     FlextConstants,
@@ -253,7 +255,7 @@ class TestFlextHandlers:
             handler_id="test_handler_with_metadata",
             handler_name="Test Handler With Metadata",
             metadata=FlextModels.Metadata(
-                attributes={"test_key": "test_value", "priority": 1}
+                attributes={"test_key": "test_value", "priority": 1},
             ),
         )
         handler = ConcreteTestHandler(config=config)
@@ -779,7 +781,8 @@ class TestFlextHandlers:
         callable_obj = CallableObject()
 
         handler = FlextHandlers.create_from_callable(
-            callable_obj, handler_type=FlextConstants.Cqrs.HandlerType.COMMAND
+            callable_obj,
+            handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
 
         # Should default to "unknown_handler" when no __name__ attribute
@@ -1042,7 +1045,6 @@ class TestFlextHandlers:
 
     def test_handlers_pydantic_model_validation(self) -> None:
         """Test Pydantic model validation."""
-        from pydantic import BaseModel
 
         class TestMessage(BaseModel):
             value: str
@@ -1104,7 +1106,6 @@ class TestFlextHandlers:
 
     def test_handlers_dataclass_message_validation(self) -> None:
         """Test dataclass message validation."""
-        from dataclasses import dataclass
 
         @dataclass
         class DataClassMessage:

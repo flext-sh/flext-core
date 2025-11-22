@@ -98,7 +98,9 @@ class PaymentService(FlextService[dict[str, object]]):
 
         # Set user context for audit trail
         self._enrich_context(
-            user_id=user_id, payment_id=payment_id, operation="process_payment"
+            user_id=user_id,
+            payment_id=payment_id,
+            operation="process_payment",
         )
 
         # Set operation context
@@ -178,7 +180,9 @@ class OrderService(FlextService[dict[str, object]]):
             self._set_correlation_id(f"order_{order_id}_{customer_id}")
 
         self._enrich_context(
-            user_id=customer_id, order_id=order_id, operation="process_order"
+            user_id=customer_id,
+            order_id=order_id,
+            operation="process_order",
         )
 
         # Execute with tracking
@@ -242,7 +246,7 @@ class AutomationService(FlextService[dict[str, object]]):
 
         # Safe execution without try/except
         automation_result = FlextResult[dict[str, object]].from_callable(
-            risky_automation_task
+            risky_automation_task,
         )
         if automation_result.is_success:
             data = automation_result.unwrap()
@@ -261,7 +265,7 @@ class AutomationService(FlextService[dict[str, object]]):
             task_type = data.get("task_type", "")
             if not isinstance(task_type, str) or not task_type:
                 return FlextResult[dict[str, object]].fail(
-                    "Task type is required for automation"
+                    "Task type is required for automation",
                 )
             return FlextResult[dict[str, object]].ok(data)
 
@@ -336,7 +340,7 @@ class AutomationService(FlextService[dict[str, object]]):
 
         # Try primary, fall back on error
         strategy_result = primary_automation_strategy().lash(
-            fallback_automation_strategy
+            fallback_automation_strategy,
         )
         if strategy_result.is_success:
             value = strategy_result.unwrap()
@@ -363,7 +367,7 @@ class AutomationService(FlextService[dict[str, object]]):
 
         # Try cached, fall back to default
         config_result = get_cached_automation_config().alt(
-            get_default_automation_config()
+            get_default_automation_config(),
         )
         if config_result.is_success:
             config = config_result.unwrap()

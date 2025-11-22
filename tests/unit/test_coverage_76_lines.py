@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import warnings
+
 import pytest
 
 from flext_core import (
@@ -139,8 +141,6 @@ class TestCoverage76Lines:
 
     def test_result_failed_alias(self) -> None:
         """Test .failed property alias for .is_failure (deprecated)."""
-        import warnings
-
         r = FlextResult[int].fail("error")
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")

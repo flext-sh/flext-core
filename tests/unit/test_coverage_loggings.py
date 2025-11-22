@@ -26,11 +26,25 @@ from flext_core import FlextLogger, FlextLoggerResultAdapter, FlextResult
 
 
 def make_result_logger(
-    *args: object,
-    **kwargs: object,
+    name: str,
+    *,
+    config: object | None = None,
+    _level: str | None = None,
+    _service_name: str | None = None,
+    _service_version: str | None = None,
+    _correlation_id: str | None = None,
+    _force_new: bool = False,
 ) -> FlextLoggerResultAdapter:
     """Helper to build loggers returning FlextResult for logging tests."""
-    return FlextLogger(*args, **kwargs).with_result()
+    return FlextLogger(
+        name,
+        config=config,
+        _level=_level,
+        _service_name=_service_name,
+        _service_version=_service_version,
+        _correlation_id=_correlation_id,
+        _force_new=_force_new,
+    ).with_result()
 
 
 class TestGlobalContextManagement:
@@ -40,7 +54,8 @@ class TestGlobalContextManagement:
         """Test binding global context."""
         FlextLogger.clear_global_context()
         result = FlextLogger.bind_global_context(
-            request_id="req-123", user_id="usr-456"
+            request_id="req-123",
+            user_id="usr-456",
         )
         assert result.is_success
 
@@ -63,7 +78,9 @@ class TestGlobalContextManagement:
         """Test unbinding multiple keys at once."""
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(
-            request_id="req-123", user_id="usr-456", correlation_id="cor-789"
+            request_id="req-123",
+            user_id="usr-456",
+            correlation_id="cor-789",
         )
         result = FlextLogger.unbind_global_context("request_id", "user_id")
         assert result.is_success
@@ -89,7 +106,9 @@ class TestScopedContextManagement:
         """Test binding application-level context."""
         FlextLogger.clear_global_context()
         result = FlextLogger.bind_application_context(
-            app_name="test-app", app_version="1.0.0", environment="test"
+            app_name="test-app",
+            app_version="1.0.0",
+            environment="test",
         )
         assert result.is_success
 
@@ -97,7 +116,9 @@ class TestScopedContextManagement:
         """Test binding request-level context."""
         FlextLogger.clear_global_context()
         result = FlextLogger.bind_request_context(
-            correlation_id="flext-abc123", command="migrate", user_id="admin"
+            correlation_id="flext-abc123",
+            command="migrate",
+            user_id="admin",
         )
         assert result.is_success
 
@@ -105,7 +126,9 @@ class TestScopedContextManagement:
         """Test binding operation-level context."""
         FlextLogger.clear_global_context()
         result = FlextLogger.bind_operation_context(
-            operation="migrate", service="MigrationService", method="execute"
+            operation="migrate",
+            service="MigrationService",
+            method="execute",
         )
         assert result.is_success
 
@@ -209,7 +232,8 @@ class TestFactoryPatterns:
     def test_create_service_logger_with_correlation_id(self) -> None:
         """Test creating service logger with correlation ID."""
         logger = FlextLogger.create_service_logger(
-            "payment-service", correlation_id="flext-abc123"
+            "payment-service",
+            correlation_id="flext-abc123",
         )
         assert isinstance(logger, FlextLogger)
 
@@ -332,7 +356,9 @@ class TestLoggingMethods:
         """Test critical logging with context."""
         logger = make_result_logger("test")
         result = logger.critical(
-            "Critical with context", alert_level="high", system="payment"
+            "Critical with context",
+            alert_level="high",
+            system="payment",
         )
         assert result.is_success
 

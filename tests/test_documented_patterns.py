@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from pydantic import BaseModel
@@ -73,7 +73,7 @@ class GetUserService(FlextService[User]):
                 unique_id=self.user_id,
                 name=f"User {self.user_id}",
                 email=f"user{self.user_id}@example.com",
-            )
+            ),
         )
 
 
@@ -93,7 +93,7 @@ class AutoGetUserService(FlextService[User]):
                 unique_id=self.user_id,
                 name=f"User {self.user_id}",
                 email=f"user{self.user_id}@example.com",
-            )
+            ),
         )
 
 
@@ -270,7 +270,7 @@ class TestPattern4RailwayV1:
             GetUserService(user_id="123")
             .execute()
             .flat_map(
-                lambda user: SendEmailService(to=user.email, subject="Hello").execute()
+                lambda user: SendEmailService(to=user.email, subject="Hello").execute(),
             )
         )
 
@@ -307,7 +307,7 @@ class TestPattern4RailwayV1:
             .map(lambda user: user.email)
             .filter(lambda email: "@" in email, "Invalid email")
             .flat_map(
-                lambda email: SendEmailService(to=email, subject="Test").execute()
+                lambda email: SendEmailService(to=email, subject="Test").execute(),
             )
             .map(lambda response: response.status)
         )
@@ -342,7 +342,7 @@ class TestPattern5RailwayV2Property:
             GetUserService(user_id="456")
             .execute()
             .flat_map(
-                lambda user: SendEmailService(to=user.email, subject="Hello").execute()
+                lambda user: SendEmailService(to=user.email, subject="Hello").execute(),
             )
             .map(lambda response: response.message_id)
         )
@@ -372,7 +372,7 @@ class TestPattern6RailwayV2Auto:
             def execute(self, **_kwargs: object) -> FlextResult[User]:
                 """Get user."""
                 return FlextResult.ok(
-                    User(unique_id=self.user_id, name="Test", email="test@example.com")
+                    User(unique_id=self.user_id, name="Test", email="test@example.com"),
                 )
 
         # With auto_execute = False, returns service instance
@@ -409,7 +409,7 @@ class TestPattern7MonadicComposition:
             .execute()
             .flat_map(lambda user: FlextResult.ok(user.email))
             .flat_map(
-                lambda email: SendEmailService(to=email, subject="Test").execute()
+                lambda email: SendEmailService(to=email, subject="Test").execute(),
             )
         )
 
@@ -446,8 +446,10 @@ class TestPattern7MonadicComposition:
             .execute()
             .recover(
                 lambda _: User(
-                    unique_id="default", name="Default", email="default@example.com"
-                )
+                    unique_id="default",
+                    name="Default",
+                    email="default@example.com",
+                ),
             )
         )
 
@@ -468,7 +470,7 @@ class TestPattern7MonadicComposition:
             .filter(lambda email: "@" in email, "Invalid email")
             .tap(lambda _: executed_steps.append("3-validated-email"))
             .flat_map(
-                lambda email: SendEmailService(to=email, subject="Test").execute()
+                lambda email: SendEmailService(to=email, subject="Test").execute(),
             )
             .tap(lambda _: executed_steps.append("4-sent-email"))
             .map(lambda response: response.status)
@@ -503,8 +505,6 @@ class TestPattern8ErrorHandling:
 
     def test_error_handling_try_except_v2_auto(self) -> None:
         """Error Handling: try/except with V2 Auto."""
-        from typing import cast
-
         try:
             user = cast("User", AutoGetUserService(user_id="789"))
             assert user.entity_id == "789"
@@ -610,8 +610,9 @@ class TestPattern10MultipleOperations:
             .map(operator.itemgetter("result"))
             .flat_map(
                 lambda result: MultiOperationService(
-                    operation="square", value=result
-                ).execute()
+                    operation="square",
+                    value=result,
+                ).execute(),
             )
             .map(operator.itemgetter("result"))
         )
@@ -640,8 +641,6 @@ class TestAllPatternsIntegration:
         assert v2_user.entity_id == "456"
 
         # V2 Auto: Zero ceremony
-        from typing import cast
-
         auto_user = cast("User", AutoGetUserService(user_id="789"))
         assert auto_user.entity_id == "789"
 
@@ -667,7 +666,7 @@ class TestAllPatternsIntegration:
 
             def execute(self, **_kwargs: object) -> FlextResult[User]:
                 return FlextResult.ok(
-                    User(unique_id=self.user_id, name="Test", email="test@example.com")
+                    User(unique_id=self.user_id, name="Test", email="test@example.com"),
                 )
 
         v2_auto_pipeline = ManualService(user_id="789").execute().map(lambda u: u.email)

@@ -6,6 +6,8 @@ TypeVars, type aliases, and FlextTypes namespace work correctly.
 Per user requirement: Tests only test what exists in src/, not more.
 """
 
+from __future__ import annotations
+
 from flext_core import (
     Command,
     E,
@@ -14,7 +16,7 @@ from flext_core import (
     FlextTypes,
     K,
     Message,
-    # P is not exported due to ParamSpec limitations
+    P,
     Query,
     R,
     ResultT,
@@ -99,8 +101,6 @@ class TestTypeVars:
     def test_paramspec_defined(self) -> None:
         """Test ParamSpec is properly defined."""
         # P is defined at module level as ParamSpec
-        from flext_core import P
-
         assert P is not None
 
 

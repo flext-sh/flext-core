@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import abc
 import operator
 from typing import cast
 
@@ -134,8 +135,6 @@ class TestAbstractMethodEnforcement:
         # This test verifies the ABC pattern is enforced
 
         # Check that FlextService has abstract methods
-        import abc
-
         assert hasattr(FlextService, "__abstractmethods__")
         assert "execute" in FlextService.__abstractmethods__
         assert issubclass(FlextService, abc.ABC)
@@ -375,8 +374,10 @@ class TestExecuteOperation:
 
         service = OperationService()
 
-        def operation_func() -> str:
-            return "result"
+        def operation_func(
+            _obj: object = None, **_kwargs: object
+        ) -> FlextResult[object]:
+            return FlextResult[object].ok("result")
 
         request = FlextModels.OperationExecutionRequest(
             operation_name="test_operation",
@@ -418,8 +419,8 @@ class TestExecuteOperation:
 
         service = CallableValidationService()
 
-        def valid_func() -> str:
-            return "result"
+        def valid_func(_obj: object = None, **_kwargs: object) -> FlextResult[object]:
+            return FlextResult[object].ok("result")
 
         request = FlextModels.OperationExecutionRequest(
             operation_name="op",
@@ -596,7 +597,8 @@ class TestMetadataHelper:
         service = NoTimeService()
         service_obj: FlextService[object] = cast("FlextService[object]", service)
         metadata = FlextUtilities.ServiceHelpers.extract_service_metadata(
-            service_obj, include_timestamps=False
+            service_obj,
+            include_timestamps=False,
         )
         assert "created_at" not in metadata
         assert "extracted_at" not in metadata
@@ -618,7 +620,8 @@ class TestMetadataHelper:
             "service_name": "test_svc",
         }
         result = FlextUtilities.ServiceHelpers.format_service_info(
-            service_obj, metadata
+            service_obj,
+            metadata,
         )
         assert result.is_success
         formatted = result.unwrap()

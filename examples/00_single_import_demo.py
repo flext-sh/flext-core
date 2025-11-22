@@ -17,8 +17,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
-import sys
-from pathlib import Path
 
 from flext_core import (
     FlextConstants,
@@ -32,12 +30,23 @@ from flext_core import (
     FlextUtilities,
 )
 
-# Relative import setup: Add src/ to path for running examples without PYTHONPATH
-# (e.g., python -m examples.00_single_import_demo or direct execution)
-_src_path = str(Path(__file__).parent.parent / "src")
-if _src_path not in sys.path:
-    sys.path.insert(0, _src_path)
+"""00 - FlextSingle-Import Pattern Demo.
 
+This example demonstrates the NEW recommended single-import pattern
+where ALL framework functionality is accessed through Flext
+
+Key Benefits:
+- Complete framework access via namespace pattern
+- Python 3.13+ modern syntax with type parameters
+- Zero additional imports needed for basic usage
+- Cleaner example code with reduced import boilerplate
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+
+"""
+
+# Configuration
 os.environ.setdefault("FLEXT_DEBUG", "false")
 os.environ.setdefault("FLEXT_TRACE", "false")
 
@@ -191,42 +200,19 @@ def demonstrate_single_import_pattern() -> None:
     class DemoBase(FlextModels.ArbitraryTypesModel):
         """Demonstrate how domain libraries can extend Flext."""
 
-    # Use the proper method for creating success results
     print("\n" + "=" * 60)
     print("✨ SINGLE-IMPORT PATTERN COMPLETE!")
-    print(
-        "🎯 Domain extension ready via: class MyBase(FlextModels.BaseModel)   class MyBase(FlextModels.BaseModel):"
-    )
-    print(
-        "🎯 Domain extension ready via: class MyBase(FlextModels.ArbitraryTypesModel)   class MyBase(FlextModels.ArbitraryTypesModel):"
-    )
-    print(
-        "🎯 Domain extension ready via: class MyBase(FlextModels.ValueObject)   class MyBase(FlextModels.ValueObject):"
-    )
-    print(
-        "🎯 Domain extension ready via: class MyBase(FlextModels.Entity)   class MyBase(FlextModels.Entity):"
-    )
-    print(
-        "🎯 Domain extension ready via: class MyBase(FlextModels.AggregateRoot)   class MyBase(FlextModels.AggregateRoot):"
-    )
-    print(
-        "🎯 Domain extension ready via: class MyBase(FlextModels.Cqrs.Command)   class MyBase(FlextModels.Cqrs.Command):"
-    )
-    print(
-        "🎯 Domain extension ready via: class MyBase(FlextModels.Cqrs.Query)   class MyBase(FlextModels.Cqrs.Query):"
-    )
-    print(
-        "🎯 Domain extension ready via: class MyBase(FlextModels.DomainEvent)   class MyBase(FlextModels.DomainEvent):"
-    )
-    print(
-        "🎯 Domain extension ready via: class MyBase(FlextModels.Validation)   class MyBase(FlextModels.Validation):"
-    )
-    print(
-        "🎯 Domain extension ready via: class MyBase(FlextModels.Mixin)   class MyBase(FlextModels.Mixin):"
-    )
-    print(
-        "🎯 Domain extension ready via: class MyBase(FlextModels.Mixin)   class MyBase(FlextModels.Mixin):"
-    )
+    print("\n🎯 Domain extension ready via:")
+    print("   - class MyBase(FlextModels.BaseModel)")
+    print("   - class MyBase(FlextModels.ArbitraryTypesModel)")
+    print("   - class MyBase(FlextModels.ValueObject)")
+    print("   - class MyBase(FlextModels.Entity)")
+    print("   - class MyBase(FlextModels.AggregateRoot)")
+    print("   - class MyBase(FlextModels.Cqrs.Command)")
+    print("   - class MyBase(FlextModels.Cqrs.Query)")
+    print("   - class MyBase(FlextModels.DomainEvent)")
+    print("   - class MyBase(FlextModels.Validation)")
+    print("   - class MyBase(FlextModels.Mixin)")
     print("=" * 60)
 
 

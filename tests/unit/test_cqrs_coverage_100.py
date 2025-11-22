@@ -9,6 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections import UserDict
+from typing import cast
+
 from flext_core import (
     FlextConfig,
     FlextConstants,
@@ -141,24 +144,28 @@ class TestCqrs100Coverage:
     def test_query_validate_pagination_with_string_page(self) -> None:
         """Test Query.validate_pagination with string page."""
         query = FlextModels.Cqrs.Query(pagination={"page": "5", "size": 20})
-        assert query.pagination.page == 5
+        pagination = cast("FlextModels.Cqrs.Pagination", query.pagination)
+        assert pagination.page == 5
 
     def test_query_validate_pagination_with_string_size(self) -> None:
         """Test Query.validate_pagination with string size."""
         query = FlextModels.Cqrs.Query(pagination={"page": 1, "size": "25"})
-        assert query.pagination.size == 25
+        pagination = cast("FlextModels.Cqrs.Pagination", query.pagination)
+        assert pagination.size == 25
 
     def test_query_validate_pagination_with_invalid_string_page(self) -> None:
         """Test Query.validate_pagination with invalid string page."""
         # Invalid string should default to 1
         query = FlextModels.Cqrs.Query(pagination={"page": "invalid", "size": 20})
-        assert query.pagination.page == 1
+        pagination = cast("FlextModels.Cqrs.Pagination", query.pagination)
+        assert pagination.page == 1
 
     def test_query_validate_pagination_with_invalid_string_size(self) -> None:
         """Test Query.validate_pagination with invalid string size."""
         # Invalid string should default to 20
         query = FlextModels.Cqrs.Query(pagination={"page": 1, "size": "invalid"})
-        assert query.pagination.size == 20
+        pagination = cast("FlextModels.Cqrs.Pagination", query.pagination)
+        assert pagination.size == 20
 
     def test_query_validate_pagination_with_none(self) -> None:
         """Test Query.validate_pagination with None."""
@@ -197,19 +204,24 @@ class TestCqrs100Coverage:
             "query_id": "test-123",
             "query_type": "user_query",
         }
-        result = FlextModels.Cqrs.Query.validate_query(payload)
+        result = FlextModels.Cqrs.Query.validate_query(
+            cast("dict[str, object]", payload)
+        )
         assert result.is_success
         query = result.unwrap()
         assert query.filters == {"status": "active"}
-        assert query.pagination.page == 1
-        assert query.pagination.size == 10
+        pagination = cast("FlextModels.Cqrs.Pagination", query.pagination)
+        assert pagination.page == 1
+        assert pagination.size == 10
         assert query.query_id == "test-123"
         assert query.query_type == "user_query"
 
     def test_query_validate_query_with_none_filters(self) -> None:
         """Test Query.validate_query with None filters."""
         payload = {"filters": None, "pagination": {}}
-        result = FlextModels.Cqrs.Query.validate_query(payload)
+        result = FlextModels.Cqrs.Query.validate_query(
+            cast("dict[str, object]", payload)
+        )
         assert result.is_success
         query = result.unwrap()
         assert query.filters == {}
@@ -217,7 +229,9 @@ class TestCqrs100Coverage:
     def test_query_validate_query_with_non_dict_filters(self) -> None:
         """Test Query.validate_query with non-dict filters."""
         payload = {"filters": "not_a_dict", "pagination": {}}
-        result = FlextModels.Cqrs.Query.validate_query(payload)
+        result = FlextModels.Cqrs.Query.validate_query(
+            cast("dict[str, object]", payload)
+        )
         assert result.is_success
         query = result.unwrap()
         assert query.filters == {}
@@ -225,41 +239,55 @@ class TestCqrs100Coverage:
     def test_query_validate_query_with_none_pagination(self) -> None:
         """Test Query.validate_query with None pagination."""
         payload = {"filters": {}, "pagination": None}
-        result = FlextModels.Cqrs.Query.validate_query(payload)
+        result = FlextModels.Cqrs.Query.validate_query(
+            cast("dict[str, object]", payload)
+        )
         assert result.is_success
         query = result.unwrap()
-        assert query.pagination.page == 1
-        assert query.pagination.size == 20
+        pagination = cast("FlextModels.Cqrs.Pagination", query.pagination)
+        assert pagination.page == 1
+        assert pagination.size == 20
 
     def test_query_validate_query_with_non_dict_pagination(self) -> None:
         """Test Query.validate_query with non-dict pagination."""
         payload = {"filters": {}, "pagination": "not_a_dict"}
-        result = FlextModels.Cqrs.Query.validate_query(payload)
+        result = FlextModels.Cqrs.Query.validate_query(
+            cast("dict[str, object]", payload)
+        )
         assert result.is_success
         query = result.unwrap()
-        assert query.pagination.page == 1
-        assert query.pagination.size == 20
+        pagination = cast("FlextModels.Cqrs.Pagination", query.pagination)
+        assert pagination.page == 1
+        assert pagination.size == 20
 
     def test_query_validate_query_with_string_page_in_pagination(self) -> None:
         """Test Query.validate_query with string page in pagination."""
         payload = {"filters": {}, "pagination": {"page": "2", "size": 15}}
-        result = FlextModels.Cqrs.Query.validate_query(payload)
+        result = FlextModels.Cqrs.Query.validate_query(
+            cast("dict[str, object]", payload)
+        )
         assert result.is_success
         query = result.unwrap()
-        assert query.pagination.page == 2
+        pagination = cast("FlextModels.Cqrs.Pagination", query.pagination)
+        assert pagination.page == 2
 
     def test_query_validate_query_with_string_size_in_pagination(self) -> None:
         """Test Query.validate_query with string size in pagination."""
         payload = {"filters": {}, "pagination": {"page": 1, "size": "25"}}
-        result = FlextModels.Cqrs.Query.validate_query(payload)
+        result = FlextModels.Cqrs.Query.validate_query(
+            cast("dict[str, object]", payload)
+        )
         assert result.is_success
         query = result.unwrap()
-        assert query.pagination.size == 25
+        pagination = cast("FlextModels.Cqrs.Pagination", query.pagination)
+        assert pagination.size == 25
 
     def test_query_validate_query_with_none_query_id(self) -> None:
         """Test Query.validate_query with None query_id."""
         payload = {"filters": {}, "pagination": {}}
-        result = FlextModels.Cqrs.Query.validate_query(payload)
+        result = FlextModels.Cqrs.Query.validate_query(
+            cast("dict[str, object]", payload)
+        )
         assert result.is_success
         query = result.unwrap()
         # query_id should be auto-generated UUID
@@ -269,21 +297,24 @@ class TestCqrs100Coverage:
     def test_query_validate_query_with_none_query_type(self) -> None:
         """Test Query.validate_query with None query_type."""
         payload = {"filters": {}, "pagination": {}}
-        result = FlextModels.Cqrs.Query.validate_query(payload)
+        result = FlextModels.Cqrs.Query.validate_query(
+            cast("dict[str, object]", payload)
+        )
         assert result.is_success
         query = result.unwrap()
         assert query.query_type is None
 
     def test_query_validate_query_with_non_dict_like_filters(self) -> None:
         """Test Query.validate_query with non-dict-like filters."""
-        from collections import UserDict
 
         class DictLike(UserDict):
             pass
 
         # DictLike is dict-like, so it should work
         payload = {"filters": DictLike({"key": "value"}), "pagination": {}}
-        result = FlextModels.Cqrs.Query.validate_query(payload)
+        result = FlextModels.Cqrs.Query.validate_query(
+            cast("dict[str, object]", payload)
+        )
         assert result.is_success
         query = result.unwrap()
         assert isinstance(query.filters, dict)
@@ -301,6 +332,8 @@ class TestCqrs100Coverage:
                 raise AttributeError(msg)
 
         payload = BadPayload()
-        result = FlextModels.Cqrs.Query.validate_query(payload)
+        result = FlextModels.Cqrs.Query.validate_query(
+            cast("dict[str, object]", payload)
+        )
         assert result.is_failure
-        assert "Query validation failed" in result.error
+        assert result.error is not None and "Query validation failed" in result.error

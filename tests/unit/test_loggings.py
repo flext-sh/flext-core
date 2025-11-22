@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 import threading
 import time
+from typing import cast
 
 import pytest
 
@@ -17,11 +18,28 @@ from flext_core import FlextLogger, FlextLoggerResultAdapter, FlextResult
 
 
 def make_result_logger(
-    *args: object,
-    **kwargs: object,
+    name: str,
+    _level: str | None = None,
+    _service_name: str | None = None,
+    _service_version: str | None = None,
+    _correlation_id: str | None = None,
+    _force_new: bool = False,
 ) -> FlextLoggerResultAdapter:
     """Helper to create loggers that expose FlextResult outputs."""
-    return FlextLogger(*args, **kwargs).with_result()
+    kwargs: dict[str, str | bool | None] = {}
+    if _level is not None:
+        kwargs["_level"] = _level
+    if _service_name is not None:
+        kwargs["_service_name"] = _service_name
+    if _service_version is not None:
+        kwargs["_service_version"] = _service_version
+    if _correlation_id is not None:
+        kwargs["_correlation_id"] = _correlation_id
+    if _force_new:
+        kwargs["_force_new"] = _force_new
+    if kwargs:
+        return FlextLogger(name, **cast("dict[str, object]", kwargs)).with_result()
+    return FlextLogger(name).with_result()
 
 
 class TestFlextLogger:
@@ -582,7 +600,9 @@ class TestFlextLoggerAdvancedFeatures:
         FlextLogger.clear_global_context()
 
         result = FlextLogger.bind_global_context(
-            request_id="req-123", user_id="usr-456", correlation_id="cor-789"
+            request_id="req-123",
+            user_id="usr-456",
+            correlation_id="cor-789",
         )
         assert result.is_success
 
@@ -641,7 +661,9 @@ class TestFlextLoggerAdvancedFeatures:
     def test_create_service_logger_with_full_context(self) -> None:
         """Test creating service logger with full context."""
         logger = FlextLogger.create_service_logger(
-            "payment-service", version="2.1.0", correlation_id="cor-abc123"
+            "payment-service",
+            version="2.1.0",
+            correlation_id="cor-abc123",
         )
 
         assert logger.name == "payment-service"
@@ -748,7 +770,8 @@ class TestFlextLoggerAdvancedFeatures:
         logger = make_result_logger("result_logger")
 
         failure_result = FlextResult[str].fail(
-            "Validation failed", error_code="VAL_001"
+            "Validation failed",
+            error_code="VAL_001",
         )
         log_result = logger.log_result(failure_result, operation="user_validation")
 
@@ -894,14 +917,18 @@ class TestFlextLoggerAdvancedFeatures:
     def test_bind_application_context_success(self) -> None:
         """Test bind_application_context with valid context."""
         result = FlextLogger.bind_application_context(
-            app_name="test-app", app_version="1.0.0", environment="testing"
+            app_name="test-app",
+            app_version="1.0.0",
+            environment="testing",
         )
         assert result.is_success, "Application context binding should succeed"
 
     def test_bind_request_context_success(self) -> None:
         """Test bind_request_context with valid context."""
         result = FlextLogger.bind_request_context(
-            correlation_id="req-123", command="test_command", user_id="test_user"
+            correlation_id="req-123",
+            command="test_command",
+            user_id="test_user",
         )
         assert result.is_success, "Request context binding should succeed"
 
@@ -1123,7 +1150,9 @@ class TestFlextLoggerAdvancedFeatures:
     def test_logger_factory_methods_create_service_logger(self) -> None:
         """Test create_service_logger factory method with full parameters."""
         logger = FlextLogger.create_service_logger(
-            "test-service", version="1.0.0", correlation_id="test-corr-123"
+            "test-service",
+            version="1.0.0",
+            correlation_id="test-corr-123",
         )
         assert logger is not None
         assert isinstance(logger, FlextLogger)
@@ -1225,7 +1254,8 @@ class TestFlextLoggerAdvancedFeatures:
     def test_bind_context_for_level_debug(self) -> None:
         """Test bind_context_for_level for DEBUG level."""
         result = FlextLogger.bind_context_for_level(
-            "DEBUG", debug_config={"key": "value"}
+            "DEBUG",
+            debug_config={"key": "value"},
         )
         assert result.is_success or result.is_failure  # Either is acceptable
 

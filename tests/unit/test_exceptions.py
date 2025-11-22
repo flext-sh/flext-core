@@ -11,12 +11,15 @@ import time
 
 import pytest
 
-from flext_core import FlextExceptions, FlextModels
+from flext_core import FlextExceptions
 
 
-def create_metadata(**kwargs: object) -> FlextModels.Metadata:
-    """Helper to create FlextModels.Metadata from kwargs (STRICT mode)."""
-    return FlextModels.Metadata(attributes=dict(kwargs))
+def create_metadata(**kwargs: object) -> dict[str, object]:
+    """Helper to create metadata dict from kwargs (STRICT mode).
+
+    Returns a plain dict compatible with MetadataProtocol expectations.
+    """
+    return dict(kwargs)
 
 
 class TestFlextExceptions:
@@ -29,7 +32,8 @@ class TestFlextExceptions:
         assert error.error_code == "UNKNOWN_ERROR"  # Default error code
         assert error.correlation_id is None
         assert isinstance(
-            error.metadata.attributes, dict
+            error.metadata.attributes,
+            dict,
         )  # metadata.attributes is dict
         assert isinstance(error.timestamp, float)
 
@@ -89,7 +93,9 @@ class TestFlextExceptions:
     def test_validation_error(self) -> None:
         """Test ValidationError exception type."""
         error = FlextExceptions.ValidationError(
-            "Invalid email", field="email", error_code="VAL_EMAIL"
+            "Invalid email",
+            field="email",
+            error_code="VAL_EMAIL",
         )
         assert isinstance(error, FlextExceptions.BaseError)
         assert error.message == "Invalid email"
@@ -99,7 +105,8 @@ class TestFlextExceptions:
     def test_configuration_error(self) -> None:
         """Test ConfigurationError exception type."""
         error = FlextExceptions.ConfigurationError(
-            "Missing config", config_key="database.host"
+            "Missing config",
+            config_key="database.host",
         )
         assert isinstance(error, FlextExceptions.BaseError)
         assert error.message == "Missing config"
@@ -109,7 +116,9 @@ class TestFlextExceptions:
     def test_connection_error(self) -> None:
         """Test ConnectionError exception type."""
         error = FlextExceptions.ConnectionError(
-            "Connection failed", host="localhost", port=5432
+            "Connection failed",
+            host="localhost",
+            port=5432,
         )
         assert isinstance(error, FlextExceptions.BaseError)
         assert error.message == "Connection failed"
@@ -131,7 +140,9 @@ class TestFlextExceptions:
     def test_authentication_error(self) -> None:
         """Test AuthenticationError exception type."""
         error = FlextExceptions.AuthenticationError(
-            "Invalid credentials", user_id="testuser", auth_method="password"
+            "Invalid credentials",
+            user_id="testuser",
+            auth_method="password",
         )
         assert isinstance(error, FlextExceptions.BaseError)
         assert error.message == "Invalid credentials"
@@ -155,7 +166,9 @@ class TestFlextExceptions:
     def test_not_found_error(self) -> None:
         """Test NotFoundError exception type."""
         error = FlextExceptions.NotFoundError(
-            "Resource not found", resource_type="User", resource_id="123"
+            "Resource not found",
+            resource_type="User",
+            resource_id="123",
         )
         assert isinstance(error, FlextExceptions.BaseError)
         assert error.message == "Resource not found"
@@ -177,7 +190,9 @@ class TestFlextExceptions:
     def test_rate_limit_error(self) -> None:
         """Test RateLimitError exception type."""
         error = FlextExceptions.RateLimitError(
-            "Rate limit exceeded", limit=100, window_seconds=60
+            "Rate limit exceeded",
+            limit=100,
+            window_seconds=60,
         )
         assert isinstance(error, FlextExceptions.BaseError)
         assert error.message == "Rate limit exceeded"
@@ -199,7 +214,9 @@ class TestFlextExceptions:
     def test_type_error(self) -> None:
         """Test TypeError exception type."""
         error = FlextExceptions.TypeError(
-            "Invalid type", expected_type="str", actual_type="int"
+            "Invalid type",
+            expected_type="str",
+            actual_type="int",
         )
         assert isinstance(error, FlextExceptions.BaseError)
         assert error.message == "Invalid type"
@@ -209,7 +226,9 @@ class TestFlextExceptions:
     def test_operation_error(self) -> None:
         """Test OperationError exception type."""
         error = FlextExceptions.OperationError(
-            "Operation failed", operation="backup", reason="disk_full"
+            "Operation failed",
+            operation="backup",
+            reason="disk_full",
         )
         assert isinstance(error, FlextExceptions.BaseError)
         assert error.message == "Operation failed"
@@ -273,7 +292,8 @@ class TestFlextExceptions:
     def test_create_error_circuit_breaker(self) -> None:
         """Test create_error factory for CircuitBreakerError."""
         error = FlextExceptions.create_error(
-            "CircuitBreakerError", "Circuit breaker error"
+            "CircuitBreakerError",
+            "Circuit breaker error",
         )
         assert isinstance(error, FlextExceptions.CircuitBreakerError)
         assert error.message == "Circuit breaker error"
@@ -320,7 +340,9 @@ class TestFlextExceptions:
         """Test that metadata and kwargs are properly merged."""
         metadata = create_metadata(existing="value")
         error = FlextExceptions.BaseError(
-            "Test error", metadata=metadata, new_field="new_value"
+            "Test error",
+            metadata=metadata,
+            new_field="new_value",
         )
         assert error.metadata.attributes["existing"] == "value"
         assert error.metadata.attributes["new_field"] == "new_value"
@@ -391,17 +413,20 @@ class TestFlextExceptionsComprehensive:
     def test_exception_with_error_codes(self) -> None:
         """Test exceptions with custom error codes."""
         validation_exc = FlextExceptions.ValidationError(
-            "Validation error", error_code="VALIDATION_FAILED"
+            "Validation error",
+            error_code="VALIDATION_FAILED",
         )
         assert validation_exc.error_code == "VALIDATION_FAILED"
 
         not_found_exc = FlextExceptions.NotFoundError(
-            "Not found", error_code="RESOURCE_NOT_FOUND"
+            "Not found",
+            error_code="RESOURCE_NOT_FOUND",
         )
         assert not_found_exc.error_code == "RESOURCE_NOT_FOUND"
 
         timeout_exc = FlextExceptions.TimeoutError(
-            "Timeout", error_code="TIMEOUT_EXCEEDED"
+            "Timeout",
+            error_code="TIMEOUT_EXCEEDED",
         )
         assert timeout_exc.error_code == "TIMEOUT_EXCEEDED"
 
@@ -409,12 +434,14 @@ class TestFlextExceptionsComprehensive:
         """Test exceptions with additional metadata."""
         metadata = create_metadata(resource_id="123", user_id="456")
         not_found_exc = FlextExceptions.NotFoundError(
-            "Resource not found", metadata=metadata
+            "Resource not found",
+            metadata=metadata,
         )
-        assert not_found_exc.metadata.attributes == metadata.attributes
+        assert not_found_exc.metadata.attributes == metadata
 
         validation_exc = FlextExceptions.ValidationError(
-            "Invalid", metadata=create_metadata(field="email")
+            "Invalid",
+            metadata=create_metadata(field="email"),
         )
         assert validation_exc.metadata.attributes["field"] == "email"
 
@@ -424,7 +451,8 @@ class TestFlextExceptionsComprehensive:
         assert issubclass(FlextExceptions.ValidationError, FlextExceptions.BaseError)
         assert issubclass(FlextExceptions.NotFoundError, FlextExceptions.BaseError)
         assert issubclass(
-            FlextExceptions.AuthenticationError, FlextExceptions.BaseError
+            FlextExceptions.AuthenticationError,
+            FlextExceptions.BaseError,
         )
         assert issubclass(FlextExceptions.TimeoutError, FlextExceptions.BaseError)
 
@@ -456,7 +484,7 @@ class TestFlextExceptionsComprehensive:
         # Test that OperationError properly chains from ConfigurationError
         with pytest.raises(FlextExceptions.OperationError) as exc_info:
             raise FlextExceptions.OperationError(
-                operation_error_msg
+                operation_error_msg,
             ) from FlextExceptions.ConfigurationError(error_msg)
 
         assert exc_info.value.__cause__ is not None
@@ -474,13 +502,15 @@ class TestFlextExceptionsComprehensive:
 
         # List metadata
         exc = FlextExceptions.BaseError(
-            "Error", metadata=create_metadata(items=[1, 2, 3])
+            "Error",
+            metadata=create_metadata(items=[1, 2, 3]),
         )
         assert exc.metadata.attributes["items"] == [1, 2, 3]
 
         # Nested dict[str, object] metadata
         exc = FlextExceptions.BaseError(
-            "Error", metadata=create_metadata(nested={"key": "val"})
+            "Error",
+            metadata=create_metadata(nested={"key": "val"}),
         )
         nested_dict = exc.metadata.attributes["nested"]
         assert isinstance(nested_dict, dict) and nested_dict["key"] == "val"

@@ -475,7 +475,8 @@ class FlextRegistry(FlextMixins):
             # Format timestamp without microseconds to match pattern
             default_timestamp = (
                 FlextUtilities.Generators.generate_iso_timestamp().replace(
-                    "+00:00", "Z"
+                    "+00:00",
+                    "Z",
                 )
             )
             # Get timestamp from dispatcher or use default - ensure it matches pattern

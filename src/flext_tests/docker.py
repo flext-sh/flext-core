@@ -10,12 +10,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import functools
 import json
 import shlex
+import socket
 import threading
+import time
 from collections.abc import Callable, Iterator
-from datetime import UTC
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from types import ModuleType
@@ -655,6 +658,7 @@ class FlextTestDocker:
                     exception=e,
                     compose_file=compose_file,
                     service=service,
+                    error=error_msg,
                 )
                 return FlextResult[str].fail(f"docker compose up failed: {error_msg}")
 
@@ -819,11 +823,8 @@ class FlextTestDocker:
                 volume_name: str = getattr(volume, "name", "unknown")
 
                 # Skip volumes that don't match pattern if pattern specified
-                if volume_pattern:
-                    import fnmatch
-
-                    if not fnmatch.fnmatch(volume_name, volume_pattern):
-                        continue
+                if volume_pattern and not fnmatch.fnmatch(volume_name, volume_pattern):
+                    continue
 
                 # Try to remove volume
                 try:
@@ -1573,8 +1574,6 @@ class FlextTestDocker:
                 if status == "starting":
                     start_time = state.get("StartedAt", "")
                     if start_time:
-                        from datetime import datetime
-
                         started = datetime.fromisoformat(start_time)
                         now = datetime.now(UTC)
                         elapsed = (now - started).total_seconds()
@@ -1638,8 +1637,6 @@ class FlextTestDocker:
             FlextResult with True if healthy, False if timeout/stuck
 
         """
-        import time
-
         try:
             client = self.get_client()
             _container = client.containers.get(container_name)
@@ -1758,9 +1755,6 @@ class FlextTestDocker:
             FlextResult with True if port ready, False if timeout
 
         """
-        import socket
-        import time
-
         try:
             start_time = time.time()
             while time.time() - start_time < max_wait:
@@ -1855,8 +1849,6 @@ class FlextTestDocker:
                 if status == "starting" and running:
                     start_time = state.get("StartedAt", "")
                     if start_time:
-                        from datetime import datetime
-
                         started = datetime.fromisoformat(start_time)
                         now = datetime.now(UTC)
                         elapsed = (now - started).total_seconds()
@@ -1955,7 +1947,7 @@ class FlextTestDocker:
                         extra={"container": container_name},
                     )
                     # Force kill container
-                    container.kill(signal="SIGKILL")
+                    container.kill(signal="SIGKILL")  # type: ignore[no-untyped-call]
                     self.logger.warning(
                         "Force killed container %s",
                         container_name,

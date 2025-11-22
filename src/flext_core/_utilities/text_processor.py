@@ -58,7 +58,7 @@ class FlextUtilitiesTextProcessor:
         return FlextResult[str].ok(truncated)
 
     @staticmethod
-    def safe_string(text: str) -> str:
+    def safe_string(text: str | None) -> str:
         """Validate and clean text string.
 
         ⚠️ PRIMITIVE FUNCTION - Returns str directly, raises on validation failure.

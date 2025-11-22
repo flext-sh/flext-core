@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import time
 
-from flext_core import FlextContext, FlextMixins
+from pydantic import BaseModel
+
+from flext_core import FlextContext, FlextMixins, FlextResult
 
 
 class TestFlextMixinsNestedClasses:
@@ -133,7 +135,6 @@ class TestFlextMixinsNestedClasses:
 
     def test_model_conversion_to_dict_with_basemodel(self) -> None:
         """Test ModelConversion.to_dict() with Pydantic BaseModel."""
-        from pydantic import BaseModel
 
         class TestModel(BaseModel):
             name: str
@@ -162,8 +163,6 @@ class TestFlextMixinsNestedClasses:
 
     def test_result_handling_ensure_result_with_raw_value(self) -> None:
         """Test ResultHandling.ensure_result() with raw value."""
-        from flext_core import FlextResult
-
         result = FlextMixins.ResultHandling.ensure_result(42)
 
         assert isinstance(result, FlextResult)
@@ -172,8 +171,6 @@ class TestFlextMixinsNestedClasses:
 
     def test_result_handling_ensure_result_with_existing_result(self) -> None:
         """Test ResultHandling.ensure_result() with existing FlextResult."""
-        from flext_core import FlextResult
-
         original = FlextResult.ok(100)
         result = FlextMixins.ResultHandling.ensure_result(original)
 

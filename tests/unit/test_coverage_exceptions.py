@@ -275,7 +275,7 @@ class TestExceptionEdgeCases:
     def test_exception_with_special_characters(self) -> None:
         """Test exception message with special characters."""
         error = FlextExceptions.ValidationError(
-            "Message with \"quotes\" and 'apostrophes'"
+            "Message with \"quotes\" and 'apostrophes'",
         )
         assert "quotes" in str(error)
 
@@ -348,7 +348,10 @@ class TestExceptionContext:
         assert original is not None
         error = FlextExceptions.OperationError("Operation failed").chain_from(original)
         assert error.__cause__ is original
-        assert "parent_correlation_id" in error.metadata or error.__cause__ is not None
+        assert (
+            "parent_correlation_id" in error.metadata.attributes
+            or error.__cause__ is not None
+        )
 
     def test_exception_preservation(self) -> None:
         """Test that exception information is preserved."""
@@ -540,10 +543,13 @@ class TestHierarchicalExceptionSystem:
         failure_level = FlextConstants.Exceptions.FailureLevel
 
         config.register_library_exception_level(
-            "test_lib", ValueError, failure_level.WARN
+            "test_lib",
+            ValueError,
+            failure_level.WARN,
         )
         level = config.get_effective_level(
-            library_name="test_lib", exception_type=ValueError
+            library_name="test_lib",
+            exception_type=ValueError,
         )
         assert level == failure_level.WARN
 
@@ -703,13 +709,16 @@ class TestHierarchicalExceptionSystem:
         try:
             config.set_global_level(failure_level.PERMISSIVE)
             config.register_library_exception_level(
-                "test_lib", ValueError, failure_level.WARN
+                "test_lib",
+                ValueError,
+                failure_level.WARN,
             )
 
             # Library level should be set for test_lib/ValueError
             assert (
                 config.get_effective_level(
-                    library_name="test_lib", exception_type=ValueError
+                    library_name="test_lib",
+                    exception_type=ValueError,
                 )
                 == failure_level.WARN
             )
@@ -726,13 +735,16 @@ class TestHierarchicalExceptionSystem:
         try:
             config.set_global_level(failure_level.PERMISSIVE)
             config.register_library_exception_level(
-                "test_lib", ValueError, failure_level.WARN
+                "test_lib",
+                ValueError,
+                failure_level.WARN,
             )
 
             # Library level should override global level
             assert (
                 config.get_effective_level(
-                    library_name="test_lib", exception_type=ValueError
+                    library_name="test_lib",
+                    exception_type=ValueError,
                 )
                 == failure_level.WARN
             )

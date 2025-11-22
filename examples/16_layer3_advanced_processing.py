@@ -15,6 +15,8 @@ Key Features:
 All operations use FlextResult[T] for composable error handling.
 """
 
+from __future__ import annotations
+
 import time
 from typing import cast
 
@@ -199,7 +201,10 @@ def example_5_fallback_chains() -> None:
     dispatcher.register_processor("squarer", squarer)
 
     # Try primary, fall back to secondary
-    result = dispatcher.execute_with_fallback("doubler", 5, fallback_names=["squarer"])
+    result = dispatcher.process("doubler", 5)
+    if result.is_failure:
+        # Fallback to squarer
+        result = dispatcher.process("squarer", 5)
     if result.is_failure:
         print(f"❌ Fallback chain failed: {result.error}")
         return
@@ -212,11 +217,11 @@ def example_5_fallback_chains() -> None:
     validator = DataValidator()
     dispatcher.register_processor("validator", validator)
 
-    result = dispatcher.execute_with_fallback(
-        "validator",
-        -5,  # Negative - will fail validation
-        fallback_names=["doubler"],
-    )
+    # Try validator, fall back to doubler if validation fails
+    result = dispatcher.process("validator", -5)
+    if result.is_failure:
+        # Fallback to doubler
+        result = dispatcher.process("doubler", -5)
     if result.is_failure:
         print(f"❌ Fallback chain failed: {result.error}")
         return
@@ -224,7 +229,7 @@ def example_5_fallback_chains() -> None:
         print(f"❌ Expected -10 from fallback, got {result.unwrap()}")
         return
     print(
-        f"✅ Fallback executed: validator failed, doubler succeeded: -5 → {result.unwrap()}"
+        f"✅ Fallback executed: validator failed, doubler succeeded: -5 → {result.unwrap()}",
     )
 
 
@@ -304,7 +309,9 @@ def example_7_integrated_workflow() -> None:
 
     # Step 3: Process with parallel squarer
     parallel_result = dispatcher.process_parallel(
-        "squarer", [1, 2, 3, 4, 5], max_workers=2
+        "squarer",
+        [1, 2, 3, 4, 5],
+        max_workers=2,
     )
     if parallel_result.is_failure:
         print(f"❌ Parallel processing failed: {parallel_result.error}")
@@ -313,9 +320,10 @@ def example_7_integrated_workflow() -> None:
     print(f"✅ Parallel squared: {parallel_processed}")
 
     # Step 4: Fallback pattern
-    fallback_result = dispatcher.execute_with_fallback(
-        "doubler", 10, fallback_names=["squarer"]
-    )
+    fallback_result = dispatcher.process("doubler", 10)
+    if fallback_result.is_failure:
+        # Fallback to squarer
+        fallback_result = dispatcher.process("squarer", 10)
     if fallback_result.is_failure:
         print(f"❌ Fallback execution failed: {fallback_result.error}")
         return

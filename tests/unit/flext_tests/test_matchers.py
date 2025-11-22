@@ -182,7 +182,8 @@ class TestFlextTestsMatchers:
         result = FlextResult[str].fail("Database error")
 
         with pytest.raises(
-            AssertionError, match="Expected error containing 'connection'"
+            AssertionError,
+            match="Expected error containing 'connection'",
         ):
             FlextTestsMatchers.assert_result_failure(result, "connection")
 
@@ -272,7 +273,8 @@ class TestFlextTestsMatchers:
         config = {"service_type": "api"}  # Missing environment
 
         with pytest.raises(
-            AssertionError, match="Required config key 'environment' missing"
+            AssertionError,
+            match="Required config key 'environment' missing",
         ):
             FlextTestsMatchers.assert_config_valid(config)
 
@@ -285,7 +287,8 @@ class TestFlextTestsMatchers:
         }
 
         with pytest.raises(
-            AssertionError, match="Config timeout must be positive integer"
+            AssertionError,
+            match="Config timeout must be positive integer",
         ):
             FlextTestsMatchers.assert_config_valid(config)
 
@@ -298,7 +301,8 @@ class TestFlextTestsMatchers:
         }
 
         with pytest.raises(
-            AssertionError, match="Config timeout must be positive integer"
+            AssertionError,
+            match="Config timeout must be positive integer",
         ):
             FlextTestsMatchers.assert_config_valid(config)
 

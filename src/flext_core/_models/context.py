@@ -251,24 +251,26 @@ class FlextModelsContext:
             description="Context metadata (creation info, source, etc.)",
         )
 
-        @staticmethod
-        def _check_json_serializable(obj: object, path: str = "") -> None:
+        @classmethod
+        def check_json_serializable(cls, obj: object, path: str = "") -> None:
             """Recursively check if object is JSON-serializable."""
             if obj is None or isinstance(obj, (str, int, float, bool)):
                 return
-            check_recursive = FlextModelsContext.ContextData._check_json_serializable  # noqa: SLF001
             if FlextRuntime.is_dict_like(obj):
                 for key, val in obj.items():
                     if not isinstance(key, str):
                         msg = f"Dictionary keys must be strings at {path}.{key}"
                         raise TypeError(msg)
-                    check_recursive(val, f"{path}.{key}")
-            elif FlextRuntime.is_list_like(obj):
+                    # Recursive call using cls for mypy compatibility
+                    cls.check_json_serializable(val, f"{path}.{key}")
+                return  # All dict items validated successfully
+            if FlextRuntime.is_list_like(obj):
                 for i, item in enumerate(obj):
-                    check_recursive(item, f"{path}[{i}]")
-            else:
-                msg = f"Non-JSON-serializable type {type(obj).__name__} at {path}"
-                raise TypeError(msg)
+                    # Recursive call using cls for mypy compatibility
+                    cls.check_json_serializable(item, f"{path}[{i}]")
+                return  # All list items validated successfully
+            msg = f"Non-JSON-serializable type {type(obj).__name__} at {path}"
+            raise TypeError(msg)
 
         @field_validator("metadata", mode="before")
         @classmethod
@@ -309,7 +311,9 @@ class FlextModelsContext:
                 msg = f"Value must be a dictionary or FlextModels.Metadata, got {type(v).__name__}"
                 raise TypeError(msg)
 
-            FlextModelsContext.ContextData._check_json_serializable(v)  # noqa: SLF001
+            # Use class method for mypy compatibility
+            # Access via full class path since we're in a nested class
+            FlextModelsContext.ContextData.check_json_serializable(v)
             return v
 
     class ContextExport(FlextModelsEntity.Value):
@@ -379,8 +383,8 @@ class FlextModelsContext:
             msg = f"metadata must be None, dict, or Metadata, got {type(v).__name__}"
             raise TypeError(msg)
 
-        @staticmethod
-        def _check_json_serializable(obj: object, path: str = "") -> None:
+        @classmethod
+        def check_json_serializable(cls, obj: object, path: str = "") -> None:
             """Recursively check if object is JSON-serializable."""
             if obj is None or isinstance(obj, (str, int, float, bool)):
                 return
@@ -389,13 +393,15 @@ class FlextModelsContext:
                     if not isinstance(key, str):
                         msg = f"Dictionary keys must be strings at {path}.{key}"
                         raise TypeError(msg)
-                    FlextModelsContext.ContextExport._check_json_serializable(  # noqa: SLF001
+                    # Recursive call using cls for mypy compatibility
+                    cls.check_json_serializable(
                         val,
                         f"{path}.{key}",
                     )
             elif FlextRuntime.is_list_like(obj):
                 for i, item in enumerate(obj):
-                    FlextModelsContext.ContextExport._check_json_serializable(  # noqa: SLF001
+                    # Recursive call using cls for mypy compatibility
+                    cls.check_json_serializable(
                         item,
                         f"{path}[{i}]",
                     )
@@ -427,7 +433,8 @@ class FlextModelsContext:
                 raise TypeError(msg)
 
             # Recursively check all values are JSON-serializable
-            FlextModelsContext.ContextExport._check_json_serializable(v)  # noqa: SLF001
+            # Access via class name since we're in a nested class
+            FlextModelsContext.ContextExport.check_json_serializable(v)
             return v
 
         @computed_field
