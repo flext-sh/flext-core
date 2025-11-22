@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import gc
 import time
 from collections.abc import Callable, Container, Iterator, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
@@ -33,7 +34,8 @@ def mark_test_pattern(
 
     def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
         # Use setattr for dynamic attribute setting to avoid mypy error
-        func._test_pattern = pattern
+        # Type: ignore needed because mypy doesn't recognize dynamic attributes on Callable
+        setattr(func, "_test_pattern", pattern)  # noqa: B010
         return func
 
     return decorator
@@ -384,7 +386,7 @@ class TestPropertyBasedPatterns:
             "id": st.uuids().map(str),
             "name": st.text(),
             "email": st.emails(),
-        })
+        }),
     )
     def test_user_profile_property_based(self, profile: dict[str, str]) -> None:
         """Property-based test for user profiles."""
@@ -421,7 +423,7 @@ class TestPropertyBasedPatterns:
             alphabet=st.characters(exclude_categories=("C", "Cs")),
             min_size=1,
             max_size=100,
-        )
+        ),
     )
     def test_unicode_handling_property_based(self, unicode_text: str) -> None:
         """Property-based test for Unicode handling."""
@@ -500,8 +502,6 @@ class TestPerformanceAnalysis:
     def test_memory_profiling_advanced(self) -> None:
         """Demonstrate advanced memory profiling."""
         # Simple memory profiling without external library
-        import gc
-
         gc.collect()  # Clean up before measurement
 
         # Create and manipulate large data structures
@@ -790,7 +790,7 @@ class TestRealWorldScenarios:
                 "staging",
                 "production",
             ]),
-        )
+        ),
     )
     @settings()
     def test_configuration_validation_comprehensive(

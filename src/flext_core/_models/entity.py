@@ -18,6 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, field_seriali
 
 from flext_core._models.validation import FlextModelsValidation
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -280,7 +281,7 @@ class FlextModelsEntity:
                 # Validate domain event using FlextUtilitiesValidation
                 # (imported at module level - safe because validation.py uses ResultProtocol)
                 validation_result = FlextUtilities.Validation.validate_domain_event(
-                    domain_event
+                    domain_event,
                 )
                 if validation_result.is_failure:
                     return FlextResult[FlextModelsEntity.DomainEvent].fail(
@@ -613,9 +614,6 @@ class FlextModelsEntity:
             """Check all business invariants."""
             for invariant in self._invariants:
                 if not invariant():
-                    # Late import to avoid circular dependency
-                    from flext_core.exceptions import FlextExceptions  # noqa: PLC0415
-
                     msg = f"Invariant violated: {invariant.__name__}"
                     raise FlextExceptions.ValidationError(
                         message=msg,

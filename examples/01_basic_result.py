@@ -238,7 +238,7 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
         self._dataset: dict[str, object] = self._scenarios.dataset()
         self._validation: dict[str, object] = self._scenarios.validation_data()
         self._metadata: dict[str, object] = self._scenarios.metadata(
-            tags=["result", "demo"]
+            tags=["result", "demo"],
         )
 
         # Demonstrate inherited logger (no manual instantiation needed!)
@@ -322,7 +322,8 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
             error_msg = f"Demonstration failed: {e}"
             self.logger.exception(error_msg)
             return FlextResult[dict[str, object]].fail(
-                error_msg, error_code="VALIDATION_ERROR"
+                error_msg,
+                error_code="VALIDATION_ERROR",
             )
 
     # ========== BASIC OPERATIONS ==========
@@ -437,7 +438,7 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
             )
         )
         print(
-            f".filter(>{FlextConstants.Validation.FILTER_THRESHOLD}): {filtered_result}"
+            f".filter(>{FlextConstants.Validation.FILTER_THRESHOLD}): {filtered_result}",
         )
 
         # Using operators (syntactic sugar)
@@ -590,7 +591,7 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
         # NOTE: @ (matmul) and & (and) operators removed in optimization
         # They were over-engineering - use .map()/.flat_map() or manual tuples instead
         print(
-            "⚠️  @ and & operators removed - use .map()/.flat_map() or manual patterns"
+            "⚠️  @ and & operators removed - use .map()/.flat_map() or manual patterns",
         )
 
         # | operator (or_else)
@@ -681,7 +682,7 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
 
         result = FlextResult[float].from_callable(risky_division)
         print(
-            f"✅ Caught exception: {result.error if result.is_failure else 'Unexpected success'}"
+            f"✅ Caught exception: {result.error if result.is_failure else 'Unexpected success'}",
         )
 
         # Successful callable
@@ -689,7 +690,7 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
             return 5 + 10
 
         addition_result: FlextResult[int] = FlextResult[int].from_callable(
-            safe_addition
+            safe_addition,
         )
         print(f".from_callable(safe): {addition_result.unwrap()}")
 
@@ -879,7 +880,7 @@ def main() -> None:
     print("FlextResult COMPLETE API DEMONSTRATION")
     print("Foundation for 32+ FLEXT Ecosystem Projects")
     print(
-        "With Layer 0.5-3 Integration (FlextRuntime → FlextConstants → FlextProtocols → FlextExceptions)"
+        "With Layer 0.5-3 Integration (FlextRuntime → FlextConstants → FlextProtocols → FlextExceptions)",
     )
     print("=" * 60)
 
@@ -917,10 +918,10 @@ def main() -> None:
     print("\n" + "=" * 60)
     print("✅ ALL FlextResult methods demonstrated!")
     print(
-        "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call"
+        "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call",
     )
     print(
-        "🎯 Layer Integration: FlextRuntime (0.5) → FlextConstants (1) → FlextExceptions (2)"
+        "🎯 Layer Integration: FlextRuntime (0.5) → FlextConstants (1) → FlextExceptions (2)",
     )
     print("🎯 Next: See 02_dependency_injection.py for FlextContainer patterns")
     print("=" * 60)

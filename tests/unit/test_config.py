@@ -7,11 +7,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import os
 import threading
 import time
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from flext_core import FlextConfig, FlextConstants, FlextUtilities
 
@@ -241,7 +243,7 @@ class TestFlextConfig:
                 "effective_timeout",
                 "has_database",
                 "has_cache",
-            }
+            },
         )
         assert isinstance(json_str, str)
         assert "serialize_app" in json_str
@@ -255,8 +257,6 @@ class TestFlextConfig:
         """Test log level validation with invalid level (line 597-601)."""
         # Test with invalid log level
         # Pydantic v2 Literal type raises ValidationError with descriptive message
-        from pydantic import ValidationError
-
         with pytest.raises(ValidationError) as exc_info:
             # Test with invalid log level using model_validate to bypass strict typing
             FlextConfig.model_validate({"log_level": "INVALID"})
@@ -267,8 +267,6 @@ class TestFlextConfig:
     def test_config_validate_trace_requires_debug(self) -> None:
         """Test trace requires debug to be enabled (line 616-620)."""
         # Test trace=True with debug=False should fail - Pydantic wraps ValueError as ValidationError
-        from pydantic import ValidationError
-
         with pytest.raises(ValidationError) as exc_info:
             FlextConfig(trace=True, debug=False)
 
@@ -320,14 +318,17 @@ class TestFlextConfig:
 
         # Test with debug enabled - log_level unchanged
         debug_config = FlextConfig(
-            log_level=FlextConstants.Settings.LogLevel.INFO, debug=True
+            log_level=FlextConstants.Settings.LogLevel.INFO,
+            debug=True,
         )
         assert debug_config.log_level == FlextConstants.Settings.LogLevel.INFO
         assert debug_config.debug is True
 
         # Test with trace enabled - check both fields directly
         trace_config = FlextConfig(
-            log_level=FlextConstants.Settings.LogLevel.INFO, debug=True, trace=True
+            log_level=FlextConstants.Settings.LogLevel.INFO,
+            debug=True,
+            trace=True,
         )
         assert trace_config.trace is True
         # When trace is enabled, application should use DEBUG level
@@ -371,8 +372,6 @@ class TestFlextConfig:
 
     def test_pydantic_env_prefix(self) -> None:
         """Test that FlextConfig uses FLEXT_ prefix for environment variables."""
-        import os
-
         # Cleanup any existing env vars
         for key in list(os.environ.keys()):
             if key.startswith("FLEXT_"):
@@ -414,9 +413,6 @@ class TestFlextConfig:
 
     def test_pydantic_dotenv_file_loading(self, tmp_path: Path) -> None:
         """Test that FlextConfig automatically loads .env file."""
-        import os
-        from pathlib import Path
-
         original_dir = Path.cwd()
         saved_env_vars = {
             "FLEXT_LOG_LEVEL": os.environ.pop("FLEXT_LOG_LEVEL", None),
@@ -431,13 +427,11 @@ class TestFlextConfig:
             # Create .env file with FLEXT_ prefix
             env_file = tmp_path / ".env"
             env_file.write_text(
-                "FLEXT_APP_NAME=from-dotenv\nFLEXT_LOG_LEVEL=WARNING\nFLEXT_DEBUG=true\n"
+                "FLEXT_APP_NAME=from-dotenv\nFLEXT_LOG_LEVEL=WARNING\nFLEXT_DEBUG=true\n",
             )
 
             # Reset singleton to force reload from .env
-            # Import here to avoid circular dependency
-            from flext_core.config import FlextConfig
-
+            # Note: FlextConfig is imported at top of file
             # Clear singleton to force reload
             if hasattr(FlextConfig, "_instances"):
                 FlextConfig._instances.clear()
@@ -464,9 +458,6 @@ class TestFlextConfig:
 
     def test_pydantic_env_var_precedence(self, tmp_path: Path) -> None:
         """Test that environment variables override .env file."""
-        import os
-        from pathlib import Path
-
         original_dir = Path.cwd()
         saved_env_vars = {
             "FLEXT_APP_NAME": os.environ.pop("FLEXT_APP_NAME", None),
@@ -510,9 +501,6 @@ class TestFlextConfig:
         3. .env file
         4. Field defaults (lowest)
         """
-        import os
-        from pathlib import Path
-
         original_dir = Path.cwd()
         saved_env_vars = {
             "FLEXT_TIMEOUT_SECONDS": os.environ.pop("FLEXT_TIMEOUT_SECONDS", None),
@@ -555,8 +543,6 @@ class TestFlextConfig:
 
     def test_pydantic_env_var_naming(self) -> None:
         """Test that environment variables follow correct naming convention."""
-        import os
-
         saved_env = os.environ.pop("FLEXT_DEBUG", None)
 
         try:
@@ -580,8 +566,6 @@ class TestFlextConfig:
 
     def test_pydantic_effective_log_level_with_precedence(self) -> None:
         """Test that effective_log_level respects debug mode precedence."""
-        import os
-
         saved_env_vars = {
             "FLEXT_LOG_LEVEL": os.environ.pop("FLEXT_LOG_LEVEL", None),
             "FLEXT_DEBUG": os.environ.pop("FLEXT_DEBUG", None),
@@ -616,7 +600,7 @@ class TestFlextConfig:
     def test_validate_config_class_success(self) -> None:
         """Test validate_config_class with valid config class."""
         is_valid, error = FlextUtilities.Configuration.validate_config_class(
-            FlextConfig
+            FlextConfig,
         )
         assert is_valid is True
         assert error is None
@@ -624,7 +608,7 @@ class TestFlextConfig:
     def test_validate_config_class_non_class(self) -> None:
         """Test validate_config_class with non-class input."""
         is_valid, error = FlextUtilities.Configuration.validate_config_class(
-            "not_a_class"
+            "not_a_class",
         )
         assert is_valid is False
         assert error is not None
@@ -656,7 +640,7 @@ class TestFlextConfig:
         # This method creates a Pydantic SettingsConfigDict
         # It's a static method that returns configuration for settings
         config_settings = FlextUtilities.Configuration.create_settings_config(
-            env_prefix="TEST_"
+            env_prefix="TEST_",
         )
         # Method should return a valid settings configuration object
         assert config_settings is not None
@@ -665,8 +649,6 @@ class TestFlextConfig:
 
     def test_config_with_all_fields(self) -> None:
         """Test config initialization with all fields set."""
-        import os
-
         saved_vars = {}
         field_names = ["FLEXT_DEBUG", "FLEXT_LOG_LEVEL"]
 

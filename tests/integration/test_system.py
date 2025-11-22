@@ -86,7 +86,7 @@ class TestCompleteFlextSystemIntegration:
         assert failure_result.is_success is False
         assert failure_result.is_failure is True
         assert failure_result.error == "erro_de_processamento"
-        assert failure_result.unwrap_or(None) is None
+        assert failure_result.unwrap_or("") == ""
 
         # Teste de flat_map para operações que podem falhar
         def operacao_que_pode_falhar(data: str) -> FlextResult[str]:

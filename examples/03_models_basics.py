@@ -592,7 +592,8 @@ class ComprehensiveModelsService(FlextService[Order]):
 
         validation_data = self._validation
         sample_email = cast(
-            "str", cast("list[object]", validation_data["valid_emails"])[0]
+            "str",
+            cast("list[object]", validation_data["valid_emails"])[0],
         )
         email_result = Email.create_email(sample_email)
         if email_result.is_success:
@@ -1045,7 +1046,8 @@ class ComprehensiveModelsService(FlextService[Order]):
         # Pipeline: create → validate → assign VIP
         validation_data = self._validation
         sample_email = cast(
-            "str", cast("list[object]", validation_data["valid_emails"])[0]
+            "str",
+            cast("list[object]", validation_data["valid_emails"])[0],
         )
         users_list = cast("list[dict[str, object]]", self._dataset["users"])
         user_data = users_list[0]
@@ -1063,7 +1065,7 @@ class ComprehensiveModelsService(FlextService[Order]):
         if result.is_success:
             customer = result.unwrap()
             print(
-                f"✅ Customer pipeline success: {customer.name}, VIP: {customer.is_vip}"
+                f"✅ Customer pipeline success: {customer.name}, VIP: {customer.is_vip}",
             )
 
     def demonstrate_lash(self) -> None:
@@ -1140,7 +1142,7 @@ class ComprehensiveModelsService(FlextService[Order]):
         # Success case - expensive_default NOT called
         order = success.value_or_call(expensive_default)
         print(
-            f"✅ Success: {order.order_number}, expensive_created={expensive_created}"
+            f"✅ Success: {order.order_number}, expensive_created={expensive_created}",
         )
 
         # Failure case - expensive_default IS called
@@ -1148,7 +1150,7 @@ class ComprehensiveModelsService(FlextService[Order]):
         failure = FlextResult[Order].fail("Order not found")
         order = failure.value_or_call(expensive_default)
         print(
-            f"✅ Failure recovered: {order.order_number}, expensive_created={expensive_created}"
+            f"✅ Failure recovered: {order.order_number}, expensive_created={expensive_created}",
         )
 
     def demonstrate_deprecated_patterns(self) -> None:
@@ -1242,10 +1244,10 @@ def main() -> None:
     print("\n" + "=" * 60)
     print("✅ ALL FlextModels methods demonstrated!")
     print(
-        "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call"
+        "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call",
     )
     print(
-        "🔧 Including foundation integration: FlextRuntime (Layer 0.5), FlextExceptions (Layer 2)"
+        "🔧 Including foundation integration: FlextRuntime (Layer 0.5), FlextExceptions (Layer 2)",
     )
     print("🎯 Next: See 04_config_basics.py for FlextConfig patterns")
     print("=" * 60)

@@ -7,13 +7,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import builtins
 from collections import UserDict
 from collections.abc import Callable
 from typing import Never, cast
 
 import pytest
 
-from flext_core import FlextContainer, FlextModels, FlextResult
+from flext_core import FlextContainer, FlextExceptions, FlextModels, FlextResult
 
 
 class TestFlextContainer:
@@ -36,7 +37,8 @@ class TestFlextContainer:
 
         service_instance = TestService()
         container.with_service(
-            "test_service", service_instance
+            "test_service",
+            service_instance,
         )  # Returns Self for chaining
 
     def test_container_create_service(self) -> None:
@@ -302,8 +304,6 @@ class TestFlextContainer:
         assert "factory" in service_names
 
         # Check types - ServiceRegistration has .service, FactoryRegistration has .factory
-        from flext_core.models import FlextModels
-
         has_service = any(
             isinstance(s, FlextModels.ServiceRegistration) for s in services
         )
@@ -334,7 +334,7 @@ class TestFlextContainer:
         # Direct access pattern - build info dict[str, object] manually
         info: dict[str, object] = {
             "service_count": len(
-                set(container._services.keys()) | set(container._factories.keys())
+                set(container._services.keys()) | set(container._factories.keys()),
             ),
             "direct_services": len(container._services),
             "factories": len(container._factories),
@@ -559,7 +559,8 @@ class TestFlextContainer:
         # Test global registration
         global_container = FlextContainer()
         global_container.with_service(
-            "global_service", "global_value"
+            "global_service",
+            "global_value",
         )  # Returns Self for chaining
 
         # Should be accessible from global container
@@ -705,8 +706,6 @@ class TestFlextContainer:
             return original_getattr(obj, name, default)
 
         # Monkey-patch getattr temporarily
-        import builtins
-
         original_builtin_getattr = builtins.getattr
         builtins.getattr = mock_getattr
 
@@ -781,8 +780,6 @@ class TestFlextContainer:
         container.with_service("test", "value")
 
         # Corrupt _services to trigger exception
-        from flext_core.models import FlextModels
-
         class FailingDict(UserDict[str, FlextModels.ServiceRegistration]):
             def values(self) -> Never:
                 msg = "Values failed"
@@ -803,8 +800,6 @@ class TestFlextContainer:
 
     def test_container_build_service_info_exception_fast_fail(self) -> None:
         """Test _build_service_info exception handling - fast fail (no fallback)."""
-        from flext_core import FlextExceptions
-
         container = FlextContainer()
 
         # Create an object that raises exception when accessing __class__
@@ -946,7 +941,8 @@ class TestServiceRegistrationSync:
 
         # Register service
         container.with_service(
-            "test_service", test_service
+            "test_service",
+            test_service,
         )  # Returns Self for chaining
 
         # Verify stored in tracking dict as ServiceRegistration Model
@@ -971,7 +967,8 @@ class TestServiceRegistrationSync:
 
         # Register factory
         container.with_factory(
-            "test_factory", test_factory
+            "test_factory",
+            test_factory,
         )  # Returns Self for chaining
 
         # Verify stored in tracking dict as FactoryRegistration Model

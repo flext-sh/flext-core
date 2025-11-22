@@ -170,7 +170,8 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
             error_msg = f"Configuration demonstration failed: {e}"
             self.logger.exception(error_msg)
             return FlextResult[dict[str, object]].fail(
-                error_msg, error_code=FlextConstants.Errors.VALIDATION_ERROR
+                error_msg,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
 
     # ========== GLOBAL SINGLETON ACCESS ==========
@@ -484,7 +485,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
             """Step 3: Validate logging configuration."""
             if config.log_level not in FlextConstants.Logging.VALID_LEVELS:
                 return FlextResult[FlextConfig].fail(
-                    f"Invalid log level: {config.log_level}"
+                    f"Invalid log level: {config.log_level}",
                 )
             return FlextResult[FlextConfig].ok(config)
 
@@ -506,7 +507,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         if result.is_success:
             config = result.unwrap()
             print(
-                f"✅ Config validation pipeline success: log={config.log_level}, workers={config.max_workers}"
+                f"✅ Config validation pipeline success: log={config.log_level}, workers={config.max_workers}",
             )
 
     def demonstrate_lash(self) -> None:
@@ -564,7 +565,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         # Success case - expensive_default NOT called
         config = success.value_or_call(expensive_default)
         print(
-            f"✅ Success: log_level={config.log_level}, expensive_created={expensive_created}"
+            f"✅ Success: log_level={config.log_level}, expensive_created={expensive_created}",
         )
 
         # Failure case - expensive_default IS called
@@ -572,7 +573,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         failure = FlextResult[FlextConfig].fail("Config load failed")
         config = failure.value_or_call(expensive_default)
         print(
-            f"✅ Failure recovered: log_level={config.log_level}, expensive_created={expensive_created}"
+            f"✅ Failure recovered: log_level={config.log_level}, expensive_created={expensive_created}",
         )
 
     # ========== FOUNDATION LAYER INTEGRATION (Layer 0.5 - 2) ==========
@@ -757,7 +758,7 @@ def demonstrate_flextcore_config_access() -> None:
     container = FlextContainer.get_global()
 
     logger.info("Configuration loaded", extra={"log_level": config.log_level})
-    container.register("config", config)
+    container.with_service("config", config)
 
     print(f"  ✅ Logger integrated: {type(logger).__name__}")
     print("  ✅ Config registered in container")
@@ -771,7 +772,7 @@ def demonstrate_flextcore_config_access() -> None:
 
     # Service would typically get config injected via DI container
     container = FlextContainer.get_global()
-    container.register("config", custom_config)
+    container.with_service("config", custom_config)
 
     print("  ✅ Service initialized with custom config:")
     print(f"     - Config type: {type(custom_config).__name__}")
@@ -835,10 +836,10 @@ def main() -> None:
     print("\n" + "=" * 60)
     print("✅ ALL FlextConfig methods demonstrated!")
     print(
-        "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call"
+        "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call",
     )
     print(
-        "🔧 Including foundation integration: FlextRuntime (Layer 0.5), FlextConstants (Layer 1), FlextExceptions (Layer 2)"
+        "🔧 Including foundation integration: FlextRuntime (Layer 0.5), FlextConstants (Layer 1), FlextExceptions (Layer 2)",
     )
     print("🎯 Next: See 05_logging_basics.py for FlextLogger patterns")
     print("=" * 60)

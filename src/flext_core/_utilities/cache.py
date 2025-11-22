@@ -14,6 +14,7 @@ from typing import cast
 
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
+from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
@@ -68,9 +69,6 @@ class FlextUtilitiesCache:
         obj: FlextTypes.CachedObjectType,
     ) -> FlextProtocols.ResultProtocol[bool]:
         """Clear any caches on an object."""
-        # Lazy import to avoid circular dependency (cache → result → _utilities → cache)
-        from flext_core.result import FlextResult  # noqa: PLC0415
-
         try:
             # Common cache attribute names to check and clear
             cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES

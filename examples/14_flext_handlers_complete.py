@@ -143,7 +143,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     command_timeout=5000,
                     max_command_retries=3,
                     metadata=FlextModels.Metadata(
-                        attributes={"description": "Handles user creation commands"}
+                        attributes={"description": "Handles user creation commands"},
                     ),
                 )
                 super().__init__(config=config)
@@ -202,7 +202,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     command_timeout=3000,
                     max_command_retries=2,
                     metadata=FlextModels.Metadata(
-                        attributes={"description": "Handles user update commands"}
+                        attributes={"description": "Handles user update commands"},
                     ),
                 )
                 super().__init__(config=config)
@@ -294,7 +294,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     command_timeout=1000,
                     max_command_retries=1,
                     metadata=FlextModels.Metadata(
-                        attributes={"description": "Handles single user queries"}
+                        attributes={"description": "Handles single user queries"},
                     ),
                 )
                 super().__init__(config=config)
@@ -329,7 +329,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     metadata=FlextModels.Metadata(
                         attributes={
                             "description": "Handles user list[object] queries with pagination",
-                        }
+                        },
                     ),
                 )
                 super().__init__(config=config)
@@ -410,7 +410,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             command_timeout=1000,
             max_command_retries=1,
             metadata=FlextModels.Metadata(
-                attributes={"description": "Validates email addresses"}
+                attributes={"description": "Validates email addresses"},
             ),
         )
 
@@ -446,7 +446,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             command_timeout=500,
             max_command_retries=1,
             metadata=FlextModels.Metadata(
-                attributes={"description": "Processes strings"}
+                attributes={"description": "Processes strings"},
             ),
         )
 
@@ -491,15 +491,16 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     max_command_retries=2,
                     metadata=FlextModels.Metadata(
                         attributes={
-                            "description": "Demonstrates error handling patterns"
-                        }
+                            "description": "Demonstrates error handling patterns",
+                        },
                     ),
                 )
                 super().__init__(config=config)
                 self._logger = FlextLogger.create_module_logger(__name__)
 
             def _validate_required_fields(
-                self, message: dict[str, object]
+                self,
+                message: dict[str, object],
             ) -> FlextResult[None]:
                 """Validate required fields are present."""
                 if not message.get("id"):
@@ -514,7 +515,8 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 return FlextResult[None].ok(None)
 
             def _validate_amount_type(
-                self, message: dict[str, object]
+                self,
+                message: dict[str, object],
             ) -> FlextResult[int | float]:
                 """Validate amount field type."""
                 amount_value = message.get("amount")
@@ -553,8 +555,13 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 # Validate required fields
                 field_result = self._validate_required_fields(message)
                 if field_result.is_failure:
+                    error_msg = (
+                        field_result.error
+                        if field_result.error is not None
+                        else "Field validation failed"
+                    )
                     return FlextResult[dict[str, object]].fail(
-                        field_result.error,
+                        error_msg,
                         error_code=field_result.error_code,
                         error_data=field_result.error_data,
                     )
@@ -562,8 +569,13 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 # Validate amount type
                 amount_result = self._validate_amount_type(message)
                 if amount_result.is_failure:
+                    error_msg = (
+                        amount_result.error
+                        if amount_result.error is not None
+                        else "Amount validation failed"
+                    )
                     return FlextResult[dict[str, object]].fail(
-                        amount_result.error,
+                        error_msg,
                         error_code=amount_result.error_code,
                         error_data=amount_result.error_data,
                     )
@@ -572,8 +584,13 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                 # Validate business rules
                 rule_result = self._validate_business_rules(amount)
                 if rule_result.is_failure:
+                    error_msg = (
+                        rule_result.error
+                        if rule_result.error is not None
+                        else "Business rule validation failed"
+                    )
                     return FlextResult[dict[str, object]].fail(
-                        rule_result.error,
+                        error_msg,
                         error_code=rule_result.error_code,
                         error_data=rule_result.error_data,
                     )
@@ -647,7 +664,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     command_timeout=3000,
                     max_command_retries=1,
                     metadata=FlextModels.Metadata(
-                        attributes={"stage": "validation", "pipeline_order": 1}
+                        attributes={"stage": "validation", "pipeline_order": 1},
                     ),
                 )
                 super().__init__(config=config)
@@ -683,7 +700,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     command_timeout=5000,
                     max_command_retries=2,
                     metadata=FlextModels.Metadata(
-                        attributes={"stage": "enrichment", "pipeline_order": 2}
+                        attributes={"stage": "enrichment", "pipeline_order": 2},
                     ),
                 )
                 super().__init__(config=config)
@@ -723,7 +740,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
                     command_timeout=10000,
                     max_command_retries=3,
                     metadata=FlextModels.Metadata(
-                        attributes={"stage": "persistence", "pipeline_order": 3}
+                        attributes={"stage": "persistence", "pipeline_order": 3},
                     ),
                 )
                 super().__init__(config=config)
@@ -816,7 +833,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
         # Safe execution without try/except
         handler_result = FlextResult[dict[str, object]].from_callable(
-            risky_handler_operation
+            risky_handler_operation,
         )
         if handler_result.is_success:
             data = handler_result.unwrap()
@@ -923,7 +940,8 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         def get_cached_handler() -> FlextResult[dict[str, object]]:
             """Try to get cached handler result."""
             return FlextResult[dict[str, object]].fail(
-                "Cache miss", error_code=FlextConstants.Errors.OPERATION_ERROR
+                "Cache miss",
+                error_code=FlextConstants.Errors.OPERATION_ERROR,
             )
 
         def execute_fresh_handler() -> FlextResult[dict[str, object]]:
@@ -974,7 +992,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         handler_success_result = FlextResult[dict[str, object]].ok(existing_handler)
         handler_cached = handler_success_result.value_or_call(create_expensive_handler)
         print(
-            f"✅ Existing handler used: {handler_cached.get('handler_id', 'unknown')}"
+            f"✅ Existing handler used: {handler_cached.get('handler_id', 'unknown')}",
         )
         print(f"   Memory: {handler_cached.get('memory_mb', 0)}MB")
         print("   No expensive initialization needed")

@@ -21,12 +21,9 @@ FlextLogLevel = FlextConstants.Settings.LogLevel
 EXPECTED_BULK_SIZE = 2
 
 
-def make_result_logger(
-    *args: object,
-    **kwargs: object,
-) -> FlextLoggerResultAdapter:
+def make_result_logger(name: str) -> FlextLoggerResultAdapter:
     """Helper to create loggers with FlextResult outputs."""
-    return FlextLogger(*args, **kwargs).with_result()
+    return FlextLogger(name).with_result()
 
 
 class TestFlextContext:

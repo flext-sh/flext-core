@@ -11,7 +11,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
-from typing import ClassVar
+from dataclasses import dataclass
+from typing import ClassVar, cast
+
+from pydantic import BaseModel
 
 from flext_core import FlextConfig, FlextResult, FlextUtilities
 
@@ -122,7 +125,8 @@ class TestFlextUtilitiesComprehensive:
         assert result.is_failure
 
         # None should fail (fast fail pattern)
-        result = FlextUtilities.TextProcessor.safe_string(None)
+        # Cast to str for type checking, but runtime will fail
+        result = FlextUtilities.TextProcessor.safe_string(cast("str", None))
         assert result.is_failure
 
     def test_type_guards_operations(self) -> None:
@@ -285,7 +289,9 @@ class TestFlextUtilitiesComprehensive:
         config = FlextConfig.get_global_instance()
         # Try to set a parameter
         result = FlextUtilities.Configuration.set_parameter(
-            config, "test_param", "test_value"
+            config,
+            "test_param",
+            "test_value",
         )
         assert isinstance(result, bool)
 
@@ -297,7 +303,9 @@ class TestFlextUtilitiesComprehensive:
     def test_configuration_set_singleton(self) -> None:
         """Test FlextUtilities.Configuration.set_singleton static method."""
         result = FlextUtilities.Configuration.set_singleton(
-            FlextConfig, "test_param", "test_value"
+            FlextConfig,
+            "test_param",
+            "test_value",
         )
         # set_singleton now returns FlextResult[bool]
         assert (
@@ -668,7 +676,8 @@ class TestFlextUtilitiesEdgeCases:
     def test_text_processor_truncate_with_ellipsis(self) -> None:
         """Test truncate adds ellipsis to long text."""
         result = FlextUtilities.TextProcessor.truncate_text(
-            "VeryLongText", max_length=5
+            "VeryLongText",
+            max_length=5,
         )
         assert result.is_success
         assert "..." in result.value or len(result.value) <= 8
@@ -751,7 +760,8 @@ class TestFlextUtilitiesEdgeCases:
     def test_text_processor_safe_string_with_none(self) -> None:
         """Test safe_string with None - should fail (fast fail pattern)."""
         # None should fail (fast fail pattern - no fallback)
-        result = FlextUtilities.TextProcessor.safe_string(None)
+        # Cast to str for type checking, but runtime will fail
+        result = FlextUtilities.TextProcessor.safe_string(cast("str", None))
         assert result.is_failure
 
     def test_text_processor_safe_string_empty_with_default(self) -> None:
@@ -798,7 +808,8 @@ class TestFlextValidationAndCacheMethods:
             return FlextResult[bool].ok(True)
 
         result = FlextUtilities.Validation.validate_pipeline(
-            "abc123", [validator1, validator2]
+            "abc123",
+            [validator1, validator2],
         )
         assert result.is_success
 
@@ -815,7 +826,8 @@ class TestFlextValidationAndCacheMethods:
             # Validates successfully
 
         result = FlextUtilities.Validation.validate_pipeline(
-            "test", [validator1, validator2]
+            "test",
+            [validator1, validator2],
         )
         assert result.is_failure
         assert "First failed" in str(result.error)
@@ -835,9 +847,11 @@ class TestFlextValidationAndCacheMethods:
         """Test validate_pipeline fails on non-callable - FAST FAIL expected."""
         # Non-callable validators should FAIL immediately (FAST FAIL, not defensive programming)
         result = FlextUtilities.Validation.validate_pipeline(
-            "test", [None, "not_callable"]
+            "test",
+            [None, "not_callable"],
         )
         assert result.is_failure
+        assert result.error is not None
         assert "Validator must be callable" in result.error
 
     def test_validate_pipeline_empty_validators(self) -> None:
@@ -851,9 +865,11 @@ class TestFlextValidationAndCacheMethods:
         class MockObject:
             """Mock object with cache attributes."""
 
-            _cache: ClassVar[dict[str, object]] = {}
+            def __init__(self) -> None:
+                self._cache: dict[str, object] = {}
 
         obj = MockObject()
+        # Set cache attribute directly on instance
         obj._cache = {"key": "value"}
         result = FlextUtilities.Cache.clear_object_cache(obj)
         assert result.is_success
@@ -987,7 +1003,6 @@ class TestFlextValidationAndCacheMethods:
 
     def test_normalize_component_with_pydantic_model(self) -> None:
         """Test normalize_component with Pydantic model."""
-        from pydantic import BaseModel
 
         class TestModel(BaseModel):
             """Simple test model."""
@@ -1025,7 +1040,8 @@ class TestFlextValidationAndCacheMethods:
             return FlextResult[bool].ok(True)
 
         result = FlextUtilities.Validation.validate_pipeline(
-            "test", [first_validator, second_validator]
+            "test",
+            [first_validator, second_validator],
         )
         # Both validators should be called in order
         assert result.is_success
@@ -1048,7 +1064,6 @@ class TestFlextValidationAndCacheMethods:
 
     def test_normalize_component_with_dataclass(self) -> None:
         """Test normalize_component with dataclass instances."""
-        from dataclasses import dataclass
 
         @dataclass
         class Person:
@@ -1129,10 +1144,12 @@ class TestFlextValidationAndCacheMethods:
     def test_validate_pipeline_with_all_non_callable(self) -> None:
         """Test validate_pipeline fails on first non-callable - FAST FAIL expected."""
         result = FlextUtilities.Validation.validate_pipeline(
-            "test", [None, "string", 42, {}, []]
+            "test",
+            [None, "string", 42, {}, []],
         )
         # Should FAIL on first non-callable (FAST FAIL, not defensive programming)
         assert result.is_failure
+        assert result.error is not None
         assert "Validator must be callable" in result.error
 
     def test_sort_key_with_boolean_values(self) -> None:
@@ -1179,7 +1196,8 @@ class TestFlextValidationAndCacheMethods:
             raise KeyError(msg)
 
         result = FlextUtilities.Validation.validate_pipeline(
-            "test", [key_error_validator]
+            "test",
+            [key_error_validator],
         )
         assert result.is_failure
 
@@ -1192,7 +1210,8 @@ class TestFlextValidationAndCacheMethods:
             raise AttributeError(msg)
 
         result = FlextUtilities.Validation.validate_pipeline(
-            "test", [attr_error_validator]
+            "test",
+            [attr_error_validator],
         )
         assert result.is_failure
 
@@ -1337,32 +1356,24 @@ class TestServiceMetadataBuilder:
 
     def test_empty_builder(self) -> None:
         """Test building empty metadata."""
-        from flext_core import FlextUtilities
-
         builder = FlextUtilities.ServiceMetadataBuilder()
         metadata = builder.build()
         assert metadata == {}
 
     def test_with_service_type(self) -> None:
         """Test adding service type."""
-        from flext_core import FlextUtilities
-
         builder = FlextUtilities.ServiceMetadataBuilder()
         metadata = builder.with_service_type("UserService").build()
         assert metadata["service_type"] == "UserService"
 
     def test_with_service_name(self) -> None:
         """Test adding service name."""
-        from flext_core import FlextUtilities
-
         builder = FlextUtilities.ServiceMetadataBuilder()
         metadata = builder.with_service_name("user_manager").build()
         assert metadata["service_name"] == "user_manager"
 
     def test_with_timestamps(self) -> None:
         """Test adding timestamps."""
-        from flext_core import FlextUtilities
-
         builder = FlextUtilities.ServiceMetadataBuilder()
         metadata = builder.with_timestamps().build()
 
@@ -1373,11 +1384,10 @@ class TestServiceMetadataBuilder:
 
     def test_with_timestamps_selective(self) -> None:
         """Test adding selective timestamps."""
-        from flext_core import FlextUtilities
-
         builder = FlextUtilities.ServiceMetadataBuilder()
         metadata = builder.with_timestamps(
-            include_created=True, include_extracted=False
+            include_created=True,
+            include_extracted=False,
         ).build()
 
         assert "created_at" in metadata
@@ -1385,15 +1395,12 @@ class TestServiceMetadataBuilder:
 
     def test_with_custom_data(self) -> None:
         """Test adding custom data."""
-        from flext_core import FlextUtilities
-
         builder = FlextUtilities.ServiceMetadataBuilder()
         metadata = builder.with_custom_data("version", "1.0.0").build()
         assert metadata["version"] == "1.0.0"
 
     def test_with_service_instance(self) -> None:
         """Test extracting metadata from service instance."""
-        from flext_core import FlextUtilities
 
         class TestService:
             pass
@@ -1407,7 +1414,6 @@ class TestServiceMetadataBuilder:
 
     def test_with_service_instance_with_name(self) -> None:
         """Test extracting metadata from service with custom name."""
-        from flext_core import FlextUtilities
 
         class TestService:
             _service_name = "custom_name"
@@ -1421,8 +1427,6 @@ class TestServiceMetadataBuilder:
 
     def test_fluent_chaining(self) -> None:
         """Test fluent method chaining."""
-        from flext_core import FlextUtilities
-
         builder = FlextUtilities.ServiceMetadataBuilder()
         metadata = (
             builder.with_service_type("UserService")
@@ -1440,8 +1444,6 @@ class TestServiceMetadataBuilder:
 
     def test_method_returns_self(self) -> None:
         """Test that methods return self for chaining."""
-        from flext_core import FlextUtilities
-
         builder = FlextUtilities.ServiceMetadataBuilder()
         result = builder.with_service_type("Test")
         assert result is builder
@@ -1523,8 +1525,6 @@ class TestImprovedFlextUtilities:
 
     def test_create_service_metadata_builder(self) -> None:
         """Test creating service metadata builder."""
-        from flext_core import FlextUtilities
-
         builder = FlextUtilities.ServiceHelpers.create_service_metadata_builder()
 
         assert isinstance(builder, FlextUtilities.ServiceMetadataBuilder)

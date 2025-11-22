@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import time
 from datetime import UTC, datetime
 from typing import cast
 
@@ -78,7 +79,7 @@ class TestCorrelationDomain:
 
         explicit_id = "explicit-corr-789"
         with FlextContext.Correlation.new_correlation(
-            correlation_id=explicit_id
+            correlation_id=explicit_id,
         ) as correlation_id:
             assert correlation_id == explicit_id
             assert FlextContext.Correlation.get_correlation_id() == explicit_id
@@ -312,8 +313,6 @@ class TestPerformanceDomain:
         """Test timed operation context manager."""
         FlextContext.Utilities.clear_context()
 
-        import time
-
         with FlextContext.Performance.timed_operation("database_query") as metadata:
             assert "start_time" in metadata
             assert "operation_name" in metadata
@@ -329,8 +328,6 @@ class TestPerformanceDomain:
     def test_timed_operation_duration_calculation(self) -> None:
         """Test timed operation calculates duration correctly."""
         FlextContext.Utilities.clear_context()
-
-        import time
 
         with FlextContext.Performance.timed_operation("slow_operation") as metadata:
             time.sleep(0.05)
@@ -501,7 +498,7 @@ class TestContextDataModel:
     def test_context_with_context_data_model(self) -> None:
         """Test FlextContext initialization with ContextData model."""
         context_data = FlextModels.ContextData(
-            data={"key1": "value1", "key2": "value2"}
+            data={"key1": "value1", "key2": "value2"},
         )
         context = FlextContext(context_data)
 
@@ -523,7 +520,13 @@ class TestContextDataModel:
 
         assert isinstance(export_snapshot, FlextModels.ContextExport)
         assert export_snapshot.data.get("key1") == "value1"
-        assert export_snapshot.metadata.attributes.get("created_at") == "2025-01-01"
+        # Pydantic converts metadata_dict to Metadata object in ContextExport model
+        assert export_snapshot.metadata is not None
+        metadata = export_snapshot.metadata
+        if isinstance(metadata, dict):
+            assert metadata.get("created_at") == "2025-01-01"
+        else:
+            assert metadata.attributes.get("created_at") == "2025-01-01"
 
 
 class TestContextIntegration:

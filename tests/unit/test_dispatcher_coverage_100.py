@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import override
+from typing import cast, override
 
 import pytest
 
@@ -126,7 +126,7 @@ class TestDispatcher100Coverage:
         dispatcher = FlextDispatcher()
         result = dispatcher.dispatch(None)
         assert result.is_failure
-        assert "Message cannot be None" in result.error
+        assert result.error is not None and "Message cannot be None" in result.error
 
     def test_dispatch_with_string_message_fails(self) -> None:
         """Test dispatch with string message - should fail in normalize."""
@@ -144,9 +144,11 @@ class TestDispatcher100Coverage:
 
         message = MetadataTestMessage("test")
         # Pass invalid metadata type (not dict)
-        result = dispatcher.dispatch(message, metadata="invalid")
+        result = dispatcher.dispatch(
+            message, metadata=cast("dict[str, object]", "invalid")
+        )
         assert result.is_failure
-        assert "Invalid metadata type" in result.error
+        assert result.error is not None and "Invalid metadata type" in result.error
 
     def test_dispatch_with_config_object(self) -> None:
         """Test dispatch with config object."""
@@ -178,7 +180,9 @@ class TestDispatcher100Coverage:
         result = dispatcher.dispatch(message, timeout_override=1)
         # Should fail due to timeout
         assert result.is_failure
-        assert "timeout" in result.error.lower() or "Timeout" in result.error
+        assert result.error is not None and (
+            "timeout" in result.error.lower() or "Timeout" in result.error
+        )
 
     def test_circuit_breaker_recovery_half_open_to_closed(self) -> None:
         """Test circuit breaker recovery from HALF_OPEN to CLOSED."""
@@ -267,7 +271,10 @@ class TestDispatcher100Coverage:
         result = dispatcher.dispatch(message, config=config)
         # Should handle exception gracefully
         assert result.is_failure
-        assert "Configuration extraction failed" in result.error
+        assert (
+            result.error is not None
+            and "Configuration extraction failed" in result.error
+        )
 
     def test_normalize_dispatch_message_none_raises(self) -> None:
         """Test _normalize_dispatch_message raises on None."""
@@ -305,20 +312,23 @@ class TestDispatcher100Coverage:
 
         # Test retriable error
         should_retry = dispatcher._should_retry_on_error(
-            1, error_message="timeout error"
+            1,
+            error_message="timeout error",
         )
         assert should_retry is True
 
         # Test non-retriable error
         should_retry = dispatcher._should_retry_on_error(
-            1, error_message="Invalid input"
+            1,
+            error_message="Invalid input",
         )
         assert should_retry is False
 
         # Test max attempts reached
         max_attempts = dispatcher._retry_policy.get_max_attempts()
         should_retry = dispatcher._should_retry_on_error(
-            max_attempts + 1, error_message="timeout"
+            max_attempts + 1,
+            error_message="timeout",
         )
         assert should_retry is False
 
@@ -342,7 +352,7 @@ class TestDispatcher100Coverage:
                 self.call_count = 0
 
             @override
-            def handle(self, command: TestMessage100) -> FlextResult[dict[str, bool]]:
+            def handle(self, message: TestMessage100) -> FlextResult[dict[str, bool]]:
                 self.call_count += 1
                 if self.call_count <= 5:  # Fail first 5 times (threshold = 5)
                     return FlextResult[dict[str, bool]].fail("Error to open circuit")
@@ -513,7 +523,10 @@ class TestDispatcher100Coverage:
         # Validation should fail - line 765
         validation_result = dispatcher._validate_processor_interface(processor)
         assert validation_result.is_failure
-        assert "must have 'process' method" in validation_result.error
+        assert (
+            validation_result.error is not None
+            and "must have 'process' method" in validation_result.error
+        )
 
         # Register processor (bypassing validation for test purposes)
         dispatcher._processors["invalid_processor"] = processor
@@ -521,7 +534,10 @@ class TestDispatcher100Coverage:
         # Execution should fail - line 858
         result = dispatcher.process("invalid_processor", "test_data")
         assert result.is_failure
-        assert "processor must be callable or have 'process' method" in result.error
+        assert (
+            result.error is not None
+            and "processor must be callable or have 'process' method" in result.error
+        )
 
     def test_processor_validation_process_not_callable(self) -> None:
         """Test processor validation when process attribute is not callable (lines 772, 855)."""
@@ -536,7 +552,10 @@ class TestDispatcher100Coverage:
         # Validation should fail - line 772
         validation_result = dispatcher._validate_processor_interface(processor)
         assert validation_result.is_failure
-        assert "must have 'process' method" in validation_result.error
+        assert (
+            validation_result.error is not None
+            and "must have 'process' method" in validation_result.error
+        )
 
         # Register processor (bypassing validation for test purposes)
         dispatcher._processors["invalid_processor"] = processor
@@ -544,7 +563,10 @@ class TestDispatcher100Coverage:
         # Execution should fail - line 864
         result = dispatcher.process("invalid_processor", "test_data")
         assert result.is_failure
-        assert "'process' attribute must be callable" in result.error
+        assert (
+            result.error is not None
+            and "'process' attribute must be callable" in result.error
+        )
 
     def test_processor_metrics_initialization_on_first_execution(self) -> None:
         """Test processor metrics are initialized on first execution (line 877)."""
@@ -596,8 +618,8 @@ class TestDispatcher100Coverage:
 
         # Should return failure result
         assert result.is_failure
-        assert "Processor execution failed" in result.error
-        assert "Processor error" in result.error
+        assert result.error is not None and "Processor execution failed" in result.error
+        assert result.error is not None and "Processor error" in result.error
 
         # Verify execution time was recorded even on failure (line 893-896)
         assert "failing_processor" in dispatcher._processor_execution_times

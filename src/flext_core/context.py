@@ -17,7 +17,6 @@ from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from datetime import datetime
 from typing import (
-    TYPE_CHECKING,
     Final,
     Self,
     TypeAlias,
@@ -34,18 +33,14 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 # Type aliases for MyPy compatibility
-if TYPE_CHECKING:
-    _StructlogProxyStr: TypeAlias = FlextModelsContext.StructlogProxyContextVar[str]
-    _StructlogProxyDatetime: TypeAlias = FlextModelsContext.StructlogProxyContextVar[
-        datetime
-    ]
-    _StructlogProxyDict: TypeAlias = FlextModelsContext.StructlogProxyContextVar[
-        dict[str, object]
-    ]
-else:
-    _StructlogProxyStr = FlextModels.StructlogProxyContextVar[str]
-    _StructlogProxyDatetime = FlextModels.StructlogProxyContextVar[datetime]
-    _StructlogProxyDict = FlextModels.StructlogProxyContextVar[dict[str, object]]
+# Use direct import from _models to avoid mypy issues with nested class aliases
+_StructlogProxyStr: TypeAlias = FlextModelsContext.StructlogProxyContextVar[str]
+_StructlogProxyDatetime: TypeAlias = FlextModelsContext.StructlogProxyContextVar[
+    datetime
+]
+_StructlogProxyDict: TypeAlias = FlextModelsContext.StructlogProxyContextVar[
+    dict[str, object]
+]
 
 
 def _create_str_proxy(key: str, default: str | None = None) -> _StructlogProxyStr:
@@ -193,10 +188,11 @@ class FlextContext:
         # Type narrowing: always create FlextModels.ContextData instance
         if FlextRuntime.is_dict_like(initial_data):
             context_data: FlextModels.ContextData = FlextModels.ContextData(
-                data=initial_data
+                data=initial_data,
             )
         elif initial_data is not None and isinstance(
-            initial_data, FlextModels.ContextData
+            initial_data,
+            FlextModels.ContextData,
         ):
             # Already a ContextData instance - explicit type check for MyPy
             context_data = initial_data
@@ -419,7 +415,7 @@ class FlextContext:
             current_value = ctx_var.get()
             # Fast fail: contextvar must contain dict or None (uninitialized)
             if current_value is not None and not FlextRuntime.is_dict_like(
-                current_value
+                current_value,
             ):
                 msg = (
                     f"Invalid contextvar value type in scope '{scope}': "
@@ -709,7 +705,7 @@ class FlextContext:
                 current_value = ctx_var.get()
                 # Fast fail: contextvar must contain dict or None (uninitialized)
                 if current_value is not None and not FlextRuntime.is_dict_like(
-                    current_value
+                    current_value,
                 ):
                     msg = (
                         f"Invalid contextvar value type in scope '{scope_name}': "
@@ -1181,46 +1177,55 @@ class FlextContext:
             """Correlation variables for distributed tracing."""
 
             CORRELATION_ID: Final[_StructlogProxyStr] = _create_str_proxy(
-                "correlation_id", default=None
+                "correlation_id",
+                default=None,
             )
             PARENT_CORRELATION_ID: Final[_StructlogProxyStr] = _create_str_proxy(
-                "parent_correlation_id", default=None
+                "parent_correlation_id",
+                default=None,
             )
 
         class Service:
             """Service context variables for identification."""
 
             SERVICE_NAME: Final[_StructlogProxyStr] = _create_str_proxy(
-                "service_name", default=None
+                "service_name",
+                default=None,
             )
             SERVICE_VERSION: Final[_StructlogProxyStr] = _create_str_proxy(
-                "service_version", default=None
+                "service_version",
+                default=None,
             )
 
         class Request:
             """Request context variables for metadata."""
 
             USER_ID: Final[_StructlogProxyStr] = _create_str_proxy(
-                "user_id", default=None
+                "user_id",
+                default=None,
             )
             REQUEST_ID: Final[_StructlogProxyStr] = _create_str_proxy(
-                "request_id", default=None
+                "request_id",
+                default=None,
             )
             REQUEST_TIMESTAMP: Final[_StructlogProxyDatetime] = _create_datetime_proxy(
-                "request_timestamp", default=None
+                "request_timestamp",
+                default=None,
             )
 
         class Performance:
             """Performance context variables for timing."""
 
             OPERATION_NAME: Final[_StructlogProxyStr] = _create_str_proxy(
-                "operation_name", default=None
+                "operation_name",
+                default=None,
             )
             OPERATION_START_TIME: Final[_StructlogProxyDatetime] = (
                 _create_datetime_proxy("operation_start_time", default=None)
             )
             OPERATION_METADATA: Final[_StructlogProxyDict] = _create_dict_proxy(
-                "operation_metadata", default=None
+                "operation_metadata",
+                default=None,
             )
 
     # =========================================================================
@@ -1585,7 +1590,7 @@ class FlextContext:
             metadata_value = FlextContext.Variables.Performance.OPERATION_METADATA.get()
             # Fast fail: metadata must be dict or None (uninitialized)
             if metadata_value is not None and not FlextRuntime.is_dict_like(
-                metadata_value
+                metadata_value,
             ):
                 msg = (
                     f"Invalid OPERATION_METADATA type: {type(metadata_value).__name__}. "

@@ -248,7 +248,9 @@ class TestStructlogConfiguration:
 
         # Custom processor
         def custom_processor(
-            logger: object, method_name: str, event_dict: dict[str, object]
+            logger: object,
+            method_name: str,
+            event_dict: dict[str, object],
         ) -> dict[str, object]:
             event_dict["custom"] = True
             return event_dict
@@ -260,7 +262,8 @@ class TestStructlogConfiguration:
         """Test configure_structlog with JSON renderer explicitly set."""
         FlextRuntime._structlog_configured = False
         FlextRuntime.configure_structlog(
-            console_renderer=False, log_level=logging.WARNING
+            console_renderer=False,
+            log_level=logging.WARNING,
         )
         assert FlextRuntime._structlog_configured is True
 
@@ -340,8 +343,6 @@ class TestContextIntegrationPatterns:
 
     def test_track_service_resolution_without_correlation(self) -> None:
         """Test track_service_resolution works without pre-existing correlation ID."""
-        import structlog
-
         FlextRuntime.configure_structlog()
 
         # Clear any existing correlation using structlog
@@ -431,8 +432,6 @@ class TestContextIntegrationPatterns:
 
     def test_setup_service_infrastructure_without_correlation(self) -> None:
         """Test setup_service_infrastructure without correlation generation."""
-        import structlog
-
         FlextRuntime.configure_structlog()
 
         # Clear any existing correlation using structlog

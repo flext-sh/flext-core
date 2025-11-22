@@ -82,7 +82,9 @@ class TestFlextUtilitiesDomainCompareEntities:
         entity1 = CustomEntity("id1")
         entity2 = CustomEntity("id1")
         result = FlextUtilities.Domain.compare_entities_by_id(
-            entity1, entity2, id_attr="custom_id"
+            entity1,
+            entity2,
+            id_attr="custom_id",
         )
         assert result is True
 
@@ -188,7 +190,7 @@ class TestFlextUtilitiesDomainCompareValueObjects:
                 object.__setattr__(self, "value", value)
 
             def __repr__(self) -> str:
-                return f"NoDict({self.value})"
+                return f"NoDict({getattr(self, 'value', None)})"
 
         obj1 = NoDict(5)
         obj2 = NoDict(5)
@@ -257,7 +259,7 @@ class TestFlextUtilitiesDomainHashValueObject:
                 object.__setattr__(self, "value", value)
 
             def __repr__(self) -> str:
-                return f"NoDict({self.value})"
+                return f"NoDict({getattr(self, 'value', None)})"
 
         obj = NoDict(5)
         hash_val = FlextUtilities.Domain.hash_value_object_by_value(obj)
@@ -296,7 +298,8 @@ class TestFlextUtilitiesDomainValidateEntityHasId:
 
         entity = CustomEntity("id1")
         result = FlextUtilities.Domain.validate_entity_has_id(
-            entity, id_attr="custom_id"
+            entity,
+            id_attr="custom_id",
         )
         assert result is True
 

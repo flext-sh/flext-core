@@ -21,7 +21,8 @@ class TestFlextProtocols:
         # Check it's a Protocol
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
+            protocol,
+            "__annotations__",
         )
 
     def test_has_result_value_implementation(self) -> None:
@@ -47,7 +48,8 @@ class TestFlextProtocols:
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
+            protocol,
+            "__annotations__",
         )
 
     def test_has_model_dump_protocol(self) -> None:
@@ -56,7 +58,8 @@ class TestFlextProtocols:
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
+            protocol,
+            "__annotations__",
         )
 
     # Domain Protocols Tests
@@ -66,7 +69,8 @@ class TestFlextProtocols:
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
+            protocol,
+            "__annotations__",
         )
 
     def test_repository_implementation(self) -> None:
@@ -114,7 +118,8 @@ class TestFlextProtocols:
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
+            protocol,
+            "__annotations__",
         )
 
     # Application Protocols Tests
@@ -124,7 +129,8 @@ class TestFlextProtocols:
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
+            protocol,
+            "__annotations__",
         )
 
     def test_handler_implementation(self) -> None:
@@ -132,7 +138,8 @@ class TestFlextProtocols:
 
         class CreateUserHandler:
             def handle(
-                self, command: dict[str, object]
+                self,
+                command: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok({"user_id": "123"})
 
@@ -148,7 +155,8 @@ class TestFlextProtocols:
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
+            protocol,
+            "__annotations__",
         )
 
     def test_command_bus_protocol(self) -> None:
@@ -157,7 +165,8 @@ class TestFlextProtocols:
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
+            protocol,
+            "__annotations__",
         )
 
     def test_commands_middleware_protocol(self) -> None:
@@ -166,7 +175,8 @@ class TestFlextProtocols:
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
+            protocol,
+            "__annotations__",
         )
 
     def test_extensions_middleware_protocol(self) -> None:
@@ -175,7 +185,8 @@ class TestFlextProtocols:
         assert protocol is not None
         # For runtime-checkable protocols, check for protocol attributes
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
+            protocol,
+            "__annotations__",
         )
 
     def test_multiple_protocol_implementation(self) -> None:
@@ -188,7 +199,8 @@ class TestFlextProtocols:
                 return FlextResult[dict[str, object]].ok({})
 
             def handle(
-                self, command: dict[str, object]
+                self,
+                command: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 return FlextResult[dict[str, object]].ok({})
 

@@ -9,11 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import cast
 
 from pydantic import BaseModel
 
 from flext_core import FlextResult, FlextUtilities
+from flext_core.protocols import FlextProtocols
 
 # ==================== COVERAGE TESTS ====================
 
@@ -42,9 +45,11 @@ class TestValidation100Coverage:
         """Test validate_pipeline with non-callable validator - FAST FAIL expected."""
         # Non-callable validators should FAIL immediately (FAST FAIL, not defensive programming)
         result = FlextUtilities.Validation.validate_pipeline(
-            "test", validators=[123, "not_callable"]
+            "test",
+            validators=[123, "not_callable"],
         )
         assert result.is_failure
+        assert result.error is not None
         assert "Validator must be callable" in result.error
 
     def test_validate_pipeline_with_validator_returning_false(self) -> None:
@@ -56,9 +61,11 @@ class TestValidation100Coverage:
             raise ValueError(msg)
 
         result = FlextUtilities.Validation.validate_pipeline(
-            "test", validators=[validator]
+            "test",
+            validators=[validator],
         )
         assert result.is_failure
+        assert result.error is not None
         assert "Validator failed:" in result.error
         assert "Validation failed" in result.error
 
@@ -70,9 +77,11 @@ class TestValidation100Coverage:
             raise ValueError(msg)
 
         result = FlextUtilities.Validation.validate_pipeline(
-            "test", validators=[validator]
+            "test",
+            validators=[validator],
         )
         assert result.is_failure
+        assert result.error is not None
         assert "Validator failed" in result.error
 
     def test_sort_key_with_orjson_failure(self) -> None:
@@ -101,25 +110,31 @@ class TestValidation100Coverage:
         """Test _normalize_pydantic_value with model_dump failure."""
 
         class BadPydanticModel(BaseModel):
-            @property
-            def model_dump(self) -> dict[str, object]:
+            """Model with model_dump that raises TypeError."""
+
+            def model_dump(self, **kwargs: object) -> dict[str, object]:
+                """Model dump that fails."""
                 msg = "Cannot dump"
                 raise TypeError(msg)
-
-        try:
-            model = BadPydanticModel()
-            # Access model_dump to trigger the error
-            _ = model.model_dump()
-        except Exception:
-            # Expected - model_dump should fail
-            pass
 
         # Test with a real Pydantic model that works
         class GoodPydanticModel(BaseModel):
             field: str = "value"
 
+        # Test that BadPydanticModel raises TypeError when model_dump is called
+        bad_model = BadPydanticModel()
+        try:
+            _ = bad_model.model_dump()
+        except TypeError:
+            # Expected - model_dump should fail
+            pass
+
+        # Test with a real Pydantic model that works
         model = GoodPydanticModel()
-        result = FlextUtilities.Validation._normalize_pydantic_value(model)
+        # Cast to HasModelDump protocol since BaseModel.model_dump has more parameters
+        result = FlextUtilities.Validation._normalize_pydantic_value(
+            cast("FlextProtocols.HasModelDump", model)
+        )
         assert isinstance(result, tuple)
         assert result[0] == "pydantic"
 
@@ -139,7 +154,9 @@ class TestValidation100Coverage:
 
     def test_normalize_mapping(self) -> None:
         """Test _normalize_mapping."""
-        test_mapping = {"key1": "value1", "key2": "value2"}
+        test_mapping: Mapping[object, object] = cast(
+            "Mapping[object, object]", {"key1": "value1", "key2": "value2"}
+        )
         result = FlextUtilities.Validation._normalize_mapping(test_mapping)
         assert isinstance(result, dict)
         # Keys should be normalized
@@ -160,7 +177,8 @@ class TestValidation100Coverage:
 
     def test_normalize_set(self) -> None:
         """Test _normalize_set."""
-        test_set = {1, 2, 3}
+        # Create set with object types to match expected signature
+        test_set: set[object] = {1, 2, 3}
         result = FlextUtilities.Validation._normalize_set(test_set)
         assert isinstance(result, tuple)
         assert result[0] == "set"

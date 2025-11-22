@@ -182,7 +182,8 @@ class TestMessageDispatch:
 
         messages = [SimpleMessage(value=f"msg{i}") for i in range(3)]
         results = dispatcher.dispatch_batch(
-            "SimpleMessage", cast("list[object]", messages)
+            "SimpleMessage",
+            cast("list[object]", messages),
         )
 
         assert len(results) == 3
@@ -372,7 +373,7 @@ class TestContextManagement:
         dispatcher = FlextDispatcher()
 
         metadata_obj = FlextModels.Metadata(
-            attributes={"test": "value", "number": "42"}
+            attributes={"test": "value", "number": "42"},
         )
         normalized = dispatcher._normalize_context_metadata(metadata_obj)
 

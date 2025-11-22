@@ -15,16 +15,9 @@ from typing import Annotated, cast
 from pydantic import Field, field_validator
 
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
-
-# Type alias for operation callables - supports variadic args and kwargs for executor.submit
-OperationCallable = (
-    Callable[
-        ..., object
-    ]  # Flexible callable signature for executor.submit compatibility
-)
 
 
 class FlextModelsService:
@@ -42,7 +35,7 @@ class FlextModelsService:
         parameters: dict[str, object] = Field(default_factory=dict)
         context: dict[str, object] = Field(default_factory=dict)
         timeout_seconds: float = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds,
+            default=FlextConstants.Defaults.TIMEOUT,
             gt=0,
             le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextConfig (Config has priority over Constants)",
@@ -84,11 +77,11 @@ class FlextModelsService:
         parallel_execution: bool = False
         stop_on_error: bool = True
         batch_size: int = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().max_batch_size,
+            default=FlextConstants.Processing.MAX_BATCH_SIZE,
             description="Batch size from FlextConfig (Config has priority over Constants)",
         )
         timeout_per_operation: float = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds,
+            default=FlextConstants.Defaults.TIMEOUT,
             description="Timeout per operation from FlextConfig (Config has priority over Constants)",
         )
 
@@ -136,11 +129,11 @@ class FlextModelsService:
             min_length=1,
             description="Operation name",
         )
-        operation_callable: OperationCallable
+        operation_callable: Callable[..., FlextTypes.ResultLike[object]]
         arguments: dict[str, object] = Field(default_factory=dict)
         keyword_arguments: dict[str, object] = Field(default_factory=dict)
         timeout_seconds: float = Field(
-            default_factory=lambda: FlextConfig.get_global_instance().timeout_seconds,
+            default=FlextConstants.Defaults.TIMEOUT,
             gt=0,
             le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextConfig (Config has priority over Constants)",
@@ -149,7 +142,9 @@ class FlextModelsService:
 
         @field_validator("operation_callable", mode="after")
         @classmethod
-        def validate_operation_callable(cls, v: object) -> OperationCallable:
+        def validate_operation_callable(
+            cls, v: object
+        ) -> Callable[..., FlextTypes.ResultLike[object]]:
             """Validate operation is callable (using FlextUtilities.Validation)."""
             result = FlextUtilities.Validation.validate_callable(
                 v,
@@ -163,7 +158,7 @@ class FlextModelsService:
                     else "Operation must be callable (validation failed)",
                 )
             # Type-safe return: v is confirmed callable by validation
-            return cast("OperationCallable", v)
+            return cast("Callable[..., FlextTypes.ResultLike[object]]", v)
 
 
 __all__ = ["FlextModelsService"]

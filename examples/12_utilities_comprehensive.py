@@ -330,7 +330,7 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
         if pipeline_result.is_success:
             final_data = pipeline_result.unwrap()
             print(
-                f"✅ Validation pipeline complete: ID {final_data.get('validation_id', 'N/A')}"
+                f"✅ Validation pipeline complete: ID {final_data.get('validation_id', 'N/A')}",
             )
             print(f"   Fields validated: {final_data.get('fields_validated', 0)}")
             print(f"   Email: {final_data.get('email', 'N/A')}")
@@ -364,7 +364,7 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
         def get_custom_validator() -> FlextResult[dict[str, object]]:
             """Try to get custom validator configuration."""
             return FlextResult[dict[str, object]].fail(
-                "Custom validator not configured"
+                "Custom validator not configured",
             )
 
         def get_default_validator() -> FlextResult[dict[str, object]]:
@@ -384,10 +384,10 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
             validator_config = validator_result.unwrap()
             print(f"✅ Validator configured: {validator_config['validator_type']}")
             print(
-                f"   Email validation: {validator_config.get('email_validation', False)}"
+                f"   Email validation: {validator_config.get('email_validation', False)}",
             )
             print(
-                f"   Hostname validation: {validator_config.get('hostname_validation', False)}"
+                f"   Hostname validation: {validator_config.get('hostname_validation', False)}",
             )
         else:
             print(f"❌ No validator available: {validator_result.error}")

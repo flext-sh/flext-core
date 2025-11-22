@@ -921,7 +921,8 @@ class FlextConfig(BaseSettings):
                 env_prefix_value = config_dict.get("env_prefix")
                 env_file_value = config_dict.get("env_file")
                 env_nested_delimiter_value = config_dict.get(
-                    "env_nested_delimiter", "__"
+                    "env_nested_delimiter",
+                    "__",
                 )
                 env_file_encoding_value = config_dict.get("env_file_encoding", "utf-8")
                 return (
@@ -934,7 +935,9 @@ class FlextConfig(BaseSettings):
             env_prefix_attr = getattr(config_dict, "env_prefix", None)
             env_file_attr = getattr(config_dict, "env_file", None)
             env_nested_delimiter_attr = getattr(
-                config_dict, "env_nested_delimiter", "__"
+                config_dict,
+                "env_nested_delimiter",
+                "__",
             )
             env_file_encoding_attr = getattr(config_dict, "env_file_encoding", "utf-8")
             return (
@@ -969,9 +972,9 @@ class FlextConfig(BaseSettings):
         @staticmethod
         def _load_env_values(
             env_prefix: str,
-            env_file: str | None,  # noqa: ARG004 - kept for API compatibility, Pydantic handles .env
+            _env_file: str | None,  # Kept for API compatibility, Pydantic handles .env
             env_nested_delimiter: str,
-            env_file_encoding: str,  # noqa: ARG004 - encoding parameter for future use
+            _env_file_encoding: str,  # Encoding parameter for future use
         ) -> dict[str, object]:
             """Load values from environment variables.
 
@@ -1151,14 +1154,16 @@ class FlextConfig(BaseSettings):
         if self.debug:
             return FlextConstants.Settings.LogLevel.INFO
         # Support both log_level (FlextConfig) and cli_log_level (FlextCliConfig)
-        if hasattr(self, "log_level"):
-            log_level = self.log_level
-            if isinstance(log_level, FlextConstants.Settings.LogLevel):
-                return log_level
-        if hasattr(self, "cli_log_level"):
-            cli_log_level = self.cli_log_level
-            if isinstance(cli_log_level, FlextConstants.Settings.LogLevel):
-                return cli_log_level
+        # Direct attribute access - attributes are typed in class definition
+        # Use getattr with cast for type safety when attribute may not exist on all subclasses
+        log_level_attr = getattr(self, "log_level", None)
+        if log_level_attr is not None:
+            # Cast to LogLevel since it's typed as such in the class definition
+            return cast("FlextConstants.Settings.LogLevel", log_level_attr)
+        cli_log_level_attr = getattr(self, "cli_log_level", None)
+        if cli_log_level_attr is not None:
+            # Cast to LogLevel since it's typed as such in the class definition
+            return cast("FlextConstants.Settings.LogLevel", cli_log_level_attr)
         # Default to INFO if no log level configured
         return FlextConstants.Settings.LogLevel.INFO
 

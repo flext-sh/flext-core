@@ -42,7 +42,7 @@ class GetUserService(FlextService[User]):
                 user_id=self.user_id,
                 name=f"User {self.user_id}",
                 email=f"user{self.user_id}@example.com",
-            )
+            ),
         )
 
 
@@ -66,7 +66,7 @@ class ValidatingService(FlextService[str]):
         """Validate and return value."""
         if len(self.value_input) < self.min_length:
             return FlextResult.fail(
-                f"Value must be at least {self.min_length} characters"
+                f"Value must be at least {self.min_length} characters",
             )
         return FlextResult.ok(self.value_input.upper())
 

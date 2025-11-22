@@ -11,10 +11,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings
 
 from flext_core import FlextConfig, FlextResult
 
@@ -162,7 +163,9 @@ class TestFlextConfigNamespaces:
         """Test namespace registration with custom factory function."""
         # MockCliConfig uses get_instance() factory
         FlextConfig.register_namespace(
-            "cli", MockCliConfig, factory=MockCliConfig.get_instance
+            "cli",
+            MockCliConfig,
+            factory=MockCliConfig.get_instance,
         )
 
         config = FlextConfig()
@@ -223,11 +226,12 @@ class TestFlextConfigNamespaces:
             pass
 
         with pytest.raises(TypeError, match="must be a Pydantic BaseModel"):
-            FlextConfig.register_namespace("invalid", NotABaseModel)
+            FlextConfig.register_namespace(
+                "invalid", cast("type[BaseModel]", NotABaseModel)
+            )
 
     def test_register_basesettings_raises_error(self) -> None:
         """Test registering BaseSettings (instead of BaseModel) raises TypeError."""
-        from pydantic_settings import BaseSettings
 
         class SettingsConfig(BaseSettings):
             field: str = "value"
@@ -267,7 +271,7 @@ class TestFlextConfigNamespaces:
         accessed_configs: list[MockLdapConfig] = []
 
         def access_namespace() -> None:
-            ldap_config = config.ldap
+            ldap_config = cast("MockLdapConfig", config.ldap)
             accessed_configs.append(ldap_config)
 
         # Access namespace from multiple threads
@@ -318,7 +322,7 @@ class TestFlextConfigNamespaces:
         FlextConfig.register_namespace("ldap", MockLdapConfig)
 
         config = FlextConfig()
-        ldap_config = config.ldap
+        ldap_config = cast("MockLdapConfig", config.ldap)
 
         # Check default values
         assert ldap_config.host == "localhost"
@@ -334,7 +338,7 @@ class TestFlextConfigNamespaces:
         FlextConfig.register_namespace("ldap", MockLdapConfig, factory=custom_factory)
 
         config = FlextConfig()
-        ldap_config = config.ldap
+        ldap_config = cast("MockLdapConfig", config.ldap)
 
         # Check custom values from factory
         assert ldap_config.host == "custom.server.com"

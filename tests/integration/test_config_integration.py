@@ -419,7 +419,8 @@ class TestFlextConfigSingletonIntegration:
 
             # Test with debug=False to verify log_level is respected
             config_no_debug = FlextConfig(
-                log_level=FlextConstants.Settings.LogLevel.WARNING, debug=False
+                log_level=FlextConstants.Settings.LogLevel.WARNING,
+                debug=False,
             )
             assert (
                 config_no_debug.effective_log_level

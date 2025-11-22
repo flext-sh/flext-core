@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, TypeAlias
 
 from pydantic import Discriminator
 
@@ -29,7 +29,6 @@ from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.metadata import Metadata as MetadataBase
 from flext_core._models.service import FlextModelsService
 from flext_core._models.validation import FlextModelsValidation
-from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 
 
@@ -310,29 +309,19 @@ class FlextModels:
         # Internal utility functions exposed for testing
         @staticmethod
         def _get_command_timeout_default() -> int:
-            """Get command timeout from Config (priority) or Constants (default).
+            """Get command timeout from Constants (default).
 
             Internal utility function exposed for testing purposes.
             """
-            timeout = FlextConfig.get_global_instance().dispatcher_timeout_seconds
-            return (
-                int(timeout)
-                if timeout > 0
-                else FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT
-            )
+            return FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT
 
         @staticmethod
         def _get_max_command_retries_default() -> int:
-            """Get max retry attempts from Config (priority) or Constants (default).
+            """Get max retry attempts from Constants (default).
 
             Internal utility function exposed for testing purposes.
             """
-            retries = FlextConfig.get_global_instance().max_retry_attempts
-            return (
-                retries
-                if retries > 0
-                else FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES
-            )
+            return FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES
 
     # =========================================================================
     # NESTED CLASSES - Base Utility Models
@@ -520,7 +509,8 @@ class FlextModels:
 # ruff: noqa: E402 - imports must be after class definition for model_rebuild() to work
 from collections.abc import Callable
 
-from flext_core._models.service import OperationCallable
+# Type alias for operation callables - used in OperationExecutionRequest
+OperationCallable: TypeAlias = Callable[..., object]
 
 # Build types namespace dict for model_rebuild() - Pydantic v2 requires types to be in namespace
 _types_namespace = {

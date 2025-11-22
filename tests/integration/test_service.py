@@ -101,7 +101,7 @@ class FunctionalUserService:
 
         if user_id in self.users:
             return FlextResult[dict[str, object]].ok(
-                self.users[user_id],
+                cast("dict[str, object]", self.users[user_id]),
             )
 
         # Default user data for testing
@@ -254,11 +254,11 @@ class TestServiceIntegrationPatterns:
         """
         # Arrange - Create real benchmark data if not present
         if isinstance(benchmark_data, dict) and "large_dataset" in benchmark_data:
-            large_dataset = benchmark_data["large_dataset"]
+            large_dataset = cast("list[int]", benchmark_data["large_dataset"])
         else:
             # Create real benchmark data for testing
             large_dataset: list[int] = list(
-                range(1000)
+                range(1000),
             )  # 1000 integers for performance test
 
         def process_pipeline(
@@ -399,7 +399,8 @@ class TestServiceIntegrationPatterns:
                 return FlextResult[str].fail("Service unavailable")
 
             retrieved_user_service = cast(
-                "FunctionalUserService", user_service_result.value
+                "FunctionalUserService",
+                user_service_result.value,
             )
             retrieved_notification_service = cast(
                 "FunctionalNotificationService",

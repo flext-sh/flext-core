@@ -5,6 +5,8 @@ SPDX-License-Identifier: MIT
 
 """
 
+from __future__ import annotations
+
 import operator
 import signal
 import time
@@ -14,7 +16,14 @@ from typing import Never, cast
 import pytest
 from pydantic import Field, ValidationError
 
-from flext_core import FlextMixins, FlextModels, FlextResult, FlextService
+from flext_core import (
+    FlextConfig,
+    FlextContainer,
+    FlextMixins,
+    FlextModels,
+    FlextResult,
+    FlextService,
+)
 
 
 # Test Domain Service Implementations
@@ -98,7 +107,7 @@ class SampleComplexService(FlextService[object]):
             return FlextResult[object].fail("Value too large")
 
         return FlextResult[object].ok(
-            f"Processed: {self.name} with amount {self.amount}"
+            f"Processed: {self.name} with amount {self.amount}",
         )
 
 
@@ -172,9 +181,12 @@ class TestDomainServicesFixed:
         service = SampleUserService()
 
         # Test that assignment raises error on frozen model (Pydantic raises ValidationError for frozen models)
-        with pytest.raises((ValidationError, AttributeError)):
+        with pytest.raises((
+            ValidationError,
+            AttributeError,
+        )):  # Pydantic v2 raises ValidationError or AttributeError on frozen models
             # Try to add a new attribute to frozen model - should fail
-            service.new_field = "not_allowed"
+            service.new_field = "not_allowed"  # type: ignore[attr-defined]
 
     def test_execute_method_abstract(self) -> None:
         """Test that execute method is abstract."""
@@ -242,8 +254,7 @@ class TestDomainServicesFixed:
 
         result = service.validate_business_rules()
         assert result.is_failure
-        assert result.error is not None
-        assert "Name is required" in result.error
+        assert result.error is not None and "Name is required" in result.error
 
     def test_validate_business_rules_multiple_conditions(self) -> None:
         """Test validate_business_rules with multiple conditions."""
@@ -255,8 +266,7 @@ class TestDomainServicesFixed:
 
         result = service.validate_business_rules()
         assert result.is_failure
-        assert result.error is not None
-        assert "Name is required" in result.error
+        assert result.error is not None and "Name is required" in result.error
 
     def test_validate_config_default(self) -> None:
         """Test default configuration validation."""
@@ -278,8 +288,7 @@ class TestDomainServicesFixed:
 
         result = service.validate_config()
         assert result.is_failure
-        assert result.error is not None
-        assert "Name too long" in result.error
+        assert result.error is not None and "Name too long" in result.error
 
     def test_execute_operation_success(self) -> None:
         """Test execute_operation with successful operation."""
@@ -793,7 +802,7 @@ class TestServiceComprehensiveCoverage:
         result = service.execute_operation(operation_request)
         # Fast fail: should return failure with ValidationError
         assert result.is_failure
-        assert "cannot be None" in result.error
+        assert result.error is not None and "cannot be None" in result.error
 
     def test_execute_operation_args_single_value(self) -> None:
         """Test execute_operation with single amount args."""
@@ -1071,7 +1080,8 @@ class TestServiceComprehensiveCoverage:
 
         # Create operation with model_construct to bypass validation and set invalid data
         invalid_kwargs = cast(
-            "dict[str, object]", 123
+            "dict[str, object]",
+            123,
         )  # Invalid type to test error handling
         operation = FlextModels.OperationExecutionRequest.model_construct(
             operation_name="test_operation",
@@ -1205,7 +1215,6 @@ class TestServiceComprehensiveCoverage:
 
     def test_execute_with_timeout_signal_handling(self) -> None:
         """Test execute_with_timeout with actual timeout (quick test)."""
-        import time
 
         class SlowService(FlextService[str]):
             def execute(self, **_kwargs: object) -> FlextResult[str]:
@@ -1245,7 +1254,6 @@ class TestServiceComprehensiveCoverage:
 
     def test_execute_operation_timeout_with_retry(self) -> None:
         """Test lines 518-526: retry exhausted with timeout."""
-        import time
 
         class TimeoutService(FlextService[str]):
             def execute(self, **_kwargs: object) -> FlextResult[str]:
@@ -1278,7 +1286,6 @@ class TestServiceComprehensiveCoverage:
 
     def test_execute_with_timeout_actual_timeout(self) -> None:
         """Test lines 559-560, 572-573: actual timeout signal handling."""
-        import time
 
         class VerySlowService(FlextService[str]):
             def execute(self, **_kwargs: object) -> FlextResult[str]:
@@ -1563,7 +1570,6 @@ class TestServicePropertiesAndConfig:
         assert config is not None
 
         # Test that it's the global instance
-        from flext_core import FlextConfig
 
         assert config is FlextConfig.get_global_instance()
 
@@ -1577,7 +1583,6 @@ class TestServicePropertiesAndConfig:
         assert project_config is not None
 
         # Should be a FlextConfig instance
-        from flext_core import FlextConfig
 
         assert isinstance(project_config, FlextConfig)
 
@@ -1599,8 +1604,6 @@ class TestServicePropertiesAndConfig:
         # Without a matching config in container, should fallback to global
         config = service.project_config
         assert config is not None
-
-        from flext_core import FlextConfig
 
         # Should return a FlextConfig instance (global or fallback)
         assert isinstance(config, FlextConfig) or hasattr(config, "model_dump")
@@ -1657,7 +1660,6 @@ class TestServiceDependencyDetection:
 
     def test_basic_service_registration(self) -> None:
         """Test that services are auto-registered via __init_subclass__ (line 193+)."""
-        from flext_core import FlextContainer
 
         class AutoRegisterService(FlextService[str]):
             def execute(self, **_kwargs: object) -> FlextResult[str]:
@@ -1684,7 +1686,6 @@ class TestServiceDependencyDetection:
 
     def test_service_registration_with_dependencies(self) -> None:
         """Test service with constructor dependencies (lines 241, 251-270)."""
-        from flext_core import FlextContainer
 
         class DependencyService(FlextService[str]):
             def __init__(self, test_value: str = "default") -> None:
@@ -1703,7 +1704,6 @@ class TestServiceDependencyDetection:
 
     def test_service_registration_fallback(self) -> None:
         """Test service registration falls back on signature inspection failure (lines 276-280)."""
-        from flext_core import FlextContainer
 
         class SimpleService(FlextService[str]):
             def execute(self, **_kwargs: object) -> FlextResult[str]:
@@ -1785,7 +1785,6 @@ class TestServicePropertyResolution:
 
     def test_project_config_from_container(self) -> None:
         """Test project_config resolves from container by naming convention (lines 128-145)."""
-        from flext_core import FlextConfig, FlextContainer
 
         # Register a custom config with matching name
         class TestServiceConfig(FlextConfig):
@@ -1808,7 +1807,6 @@ class TestServicePropertyResolution:
 
     def test_project_models_from_container(self) -> None:
         """Test project_models resolves from container by naming convention (lines 172-191)."""
-        from flext_core import FlextContainer
 
         # Register a models class with matching name
         class SampleServiceModels:
@@ -1829,7 +1827,6 @@ class TestServicePropertyResolution:
 
     def test_property_resolution_naming_pattern(self) -> None:
         """Test property resolution with exact naming pattern (FlextXyzService → FlextXyzConfig/Models)."""
-        from flext_core import FlextConfig, FlextContainer
 
         # Register configs and models with proper naming
         class FlextPropertyTestConfig(FlextConfig):
@@ -1875,7 +1872,6 @@ class TestServicePropertyResolution:
 
         # Should fallback to global
         assert config is not None
-        from flext_core import FlextConfig
 
         assert isinstance(config, FlextConfig)
 
@@ -1899,7 +1895,6 @@ class TestServiceDependencyResolution:
 
     def test_service_with_annotated_dependencies(self) -> None:
         """Test service registration with annotated constructor parameters (line 241+)."""
-        from flext_core import FlextContainer
 
         class CustomDependency:
             """A custom dependency."""
@@ -1919,7 +1914,6 @@ class TestServiceDependencyResolution:
 
     def test_service_registration_with_no_dependencies(self) -> None:
         """Test service registration with no constructor dependencies (lines 276-280)."""
-        from flext_core import FlextContainer
 
         class SimplestService(FlextService[str]):
             def execute(self, **_kwargs: object) -> FlextResult[str]:
@@ -1933,7 +1927,6 @@ class TestServiceDependencyResolution:
 
     def test_service_without_annotations(self) -> None:
         """Test service with parameters that have no type annotations."""
-        from flext_core import FlextContainer
 
         class UnannnotatedService(FlextService[str]):
             def __init__(self, some_param: object | None = None) -> None:

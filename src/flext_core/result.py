@@ -42,6 +42,7 @@ from returns.result import Failure, Result, Success, safe
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.runtime import FlextRuntime
+from flext_core.typings import FlextTypes
 
 #
 # This module INTENTIONALLY imports _utilities for TYPE CHECKING ONLY.
@@ -238,7 +239,8 @@ class FlextResult[T_co]:
     _error_data: dict[str, object]
 
     # Runtime type validation attribute (set by __class_getitem__)
-    _expected_type: type | None = None
+    # Can be type, Union, Generic, etc. - use TypeHintSpecifier from FlextTypes
+    _expected_type: FlextTypes.TypeHintSpecifier = None
 
     # =========================================================================
     # PRIVATE MEMBERS - Internal helpers to avoid circular imports
@@ -330,13 +332,27 @@ class FlextResult[T_co]:
             return
 
         # Primary validation: use isinstance for simple types, beartype for complex hints
+        # _expected_type can be type, Union, Generic, etc.
         is_valid = False
         try:
-            if isinstance(self._expected_type, type):
+            # Try isinstance first for simple types (faster)
+            if self._expected_type is not None and isinstance(
+                self._expected_type, type
+            ):
                 is_valid = isinstance(data, self._expected_type)
-            else:
-                # Type checker may think this is unreachable, but complex types are validated here
-                is_valid = is_bearable(data, self._expected_type)
+            # For complex types (Union, Generic, etc.), use beartype
+            # This is reachable when _expected_type is a type hint (str, UnionType), not a type class
+            if not is_valid and self._expected_type is not None:
+                # Type narrowing: _expected_type is not None and not a simple type
+                # Use beartype for complex type hints
+                # beartype.door.is_bearable accepts TypeForm[T] which includes type hints
+                # At runtime, _expected_type is a valid type hint, so we validate directly
+                try:
+                    # Direct call - beartype accepts any type hint at runtime
+                    # The type checker cannot infer this, but runtime validation works correctly
+                    is_valid = bool(is_bearable(data, self._expected_type))  # type: ignore[arg-type]
+                except Exception:
+                    is_valid = False
         except (TypeError, AttributeError):
             is_valid = False
 
@@ -2247,61 +2263,3 @@ class FlextResult[T_co]:
 __all__ = [
     "FlextResult",
 ]
-
-
-# ============================================================================
-# ARCHITECTURAL INVERSION: Forward Reference Imports
-# ============================================================================
-# ⚠️ CRITICAL - DO NOT REMOVE THESE IMPORTS ⚠️
-#
-# **Why These Imports Are Here**:
-# These imports are placed AFTER FlextResult class definition to break circular
-# dependency. We import only _utilities/* modules that DON'T import result back.
-#
-# **The Problem We're Solving**:
-# Many _utilities/* modules ALREADY import FlextResult for Railway pattern:
-# - validation.py, cache.py, configuration.py, reliability.py, etc.
-# We can't import those directly from result.py (would create circular).
-#
-# **The Solution**:
-# Import only _utilities modules that are "safe" (don't import result):
-# - generators, domain, type_checker, type_guards
-# This establishes namespace and breaks circular dependency.
-#
-# **Dependency Flow** (CORRECT - NO CIRCULAR):
-#   1. FlextResult class defined (lines 33-2199)
-#   2. Import safe _utilities/* (generators, domain, etc.) ✅
-#   3. Other _utilities/* can import FlextResult safely ✅
-#
-# **For Other Agents - DO NOT "FIX" THIS**:
-# ❌ DO NOT remove these imports (they establish namespace)
-# ❌ DO NOT move to top of file (creates circular import!)
-# ❌ DO NOT use `if False:` or TYPE_CHECKING (must be real import)
-# ❌ DO NOT import utilities or _utilities/* that import result
-# ❌ DO NOT import validation, cache, configuration (they import result!)
-#
-# ✅ This architecture is CORRECT and INTENTIONAL
-# ✅ Import-after-definition + safe-modules-only pattern
-# ✅ Leave this exactly as is
-#
-# **Architecture Benefits**:
-# - validation.py can import FlextResult for return types ✅
-# - cache.py can import FlextResult for cache operations ✅
-# - configuration.py can import FlextResult safely ✅
-# - No circular imports: result → safe _utilities only ✅
-#
-# ============================================================================
-# Import only _utilities modules that DON'T import result (safe imports)
-# CRITICAL: Import DIRECTLY from submodules (bypasses __init__.py to avoid circular import)
-from flext_core._utilities.domain import (  # noqa: E402
-    FlextUtilitiesDomain as _domain,  # noqa: F401, N813
-)
-from flext_core._utilities.generators import (  # noqa: E402
-    FlextUtilitiesGenerators as _generators,  # noqa: F401, N813
-)
-from flext_core._utilities.type_checker import (  # noqa: E402
-    FlextUtilitiesTypeChecker as _type_checker,  # noqa: F401, N813
-)
-from flext_core._utilities.type_guards import (  # noqa: E402
-    FlextUtilitiesTypeGuards as _type_guards,  # noqa: F401, N813
-)

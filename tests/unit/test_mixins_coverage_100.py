@@ -145,7 +145,8 @@ class TestMixins100Coverage:
             return FlextResult[bool].ok(True)
 
         result = FlextMixins.Validation.validate_with_result(
-            "test_data", [validator1, validator2]
+            "test_data",
+            [validator1, validator2],
         )
         assert result.is_success
         assert result.unwrap() == "test_data"
@@ -160,7 +161,8 @@ class TestMixins100Coverage:
             return FlextResult[bool].fail("Validation failed", error_code="ERR001")
 
         result = FlextMixins.Validation.validate_with_result(
-            "test_data", [validator1, validator2]
+            "test_data",
+            [validator1, validator2],
         )
         assert result.is_failure
         assert "Validation failed" in result.error
@@ -221,7 +223,8 @@ class TestMixins100Coverage:
 
         handler = HandlerImpl()
         result = FlextMixins.ProtocolValidation.validate_protocol_compliance(
-            handler, "Handler"
+            handler,
+            "Handler",
         )
         # Result depends on actual protocol implementation
         assert isinstance(result, FlextResult)
@@ -230,7 +233,8 @@ class TestMixins100Coverage:
         """Test validate_protocol_compliance with unknown protocol."""
         obj = object()
         result = FlextMixins.ProtocolValidation.validate_protocol_compliance(
-            obj, "UnknownProtocol"
+            obj,
+            "UnknownProtocol",
         )
         assert result.is_failure
         assert "Unknown protocol" in result.error
@@ -239,7 +243,8 @@ class TestMixins100Coverage:
         """Test validate_protocol_compliance with object not satisfying protocol."""
         obj = object()
         result = FlextMixins.ProtocolValidation.validate_protocol_compliance(
-            obj, "Handler"
+            obj,
+            "Handler",
         )
         # Should fail if object doesn't satisfy protocol
         assert isinstance(result, FlextResult)

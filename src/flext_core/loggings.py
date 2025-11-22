@@ -833,7 +833,8 @@ class FlextLogger:
             if "." in qualname:
                 # Extract class name from qualname (e.g., "ClassName.method_name")
                 parts = qualname.rsplit(".", 1)
-                if len(parts) == 2:  # noqa: PLR2004
+                expected_parts = 2
+                if len(parts) == expected_parts:
                     potential_class = parts[0]
                     # Verify it's likely a class (not a nested function)
                     if potential_class and potential_class[0].isupper():
@@ -1496,12 +1497,14 @@ class FlextLoggerResultAdapter:
             FlextResult[bool]: Success with True if logged
 
         """
+        # Filter out return_result from kwargs to avoid duplicate kwarg error
+        kwargs_for_error = {k: v for k, v in kwargs.items() if k != "return_result"}
         return self._base_logger.error(
             message,
             exception=exception,
             exc_info=exc_info,
             return_result=True,
-            **kwargs,
+            **kwargs_for_error,  # type: ignore[arg-type]
         )
 
 

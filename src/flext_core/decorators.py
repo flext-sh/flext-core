@@ -501,10 +501,11 @@ class FlextDecorators:
                         failure_extra["duration_ms"] = duration * 1000
                         failure_extra["duration_seconds"] = duration
 
+                    # Log with exception details; convert dict[str, object] to proper kwargs
                     failure_result = result_logger.exception(
                         f"{op_name}_failed",
                         exception=e,
-                        extra=failure_extra,
+                        **failure_extra,  # type: ignore[arg-type]  # dict[str, object] compatible with **kwargs
                     )
                     FlextDecorators._handle_log_result(
                         result=failure_result,
@@ -821,7 +822,7 @@ class FlextDecorators:
     @staticmethod
     def _resolve_logger(
         args: tuple[object, ...],
-        func: Callable[..., object],
+        func: Callable[P, R],
     ) -> FlextLogger:
         """Resolve logger from first argument or create module logger."""
         first_arg = args[0] if args else None
@@ -941,7 +942,7 @@ class FlextDecorators:
     @staticmethod
     def _handle_retry_exhaustion(
         last_exception: Exception,
-        func: Callable[..., object],
+        func: Callable[P, R],
         attempts: int,
         error_code: str | None,
         logger: FlextLogger,
@@ -1228,14 +1229,14 @@ class FlextDecorators:
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             # Start with the base function
-            decorated: Callable[..., R] = func
+            decorated: Callable[P, R] = func
 
             # Apply railway pattern first if requested (outermost wrapper)
             if use_railway:
                 railway_result = FlextDecorators.railway(error_code=error_code)(
                     decorated,
                 )
-                decorated = cast("Callable[..., R]", railway_result)
+                decorated = railway_result  # type: ignore[assignment]  # Railway wrapper preserves signature
 
             # Apply dependency injection
             if inject_deps:
@@ -1244,11 +1245,10 @@ class FlextDecorators:
 
             # Apply unified log_operation with optional performance tracking
             # This replaces separate @track_performance + @log_operation calls
-            log_result = FlextDecorators.log_operation(
+            return FlextDecorators.log_operation(
                 operation_name=operation_name,
                 track_perf=track_perf,
             )(decorated)
-            return cast("Callable[P, R]", log_result)
 
         return decorator
 

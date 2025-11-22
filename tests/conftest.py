@@ -25,6 +25,7 @@ from flext_core import (
     FlextLogger,
     FlextResult,
 )
+from flext_core.runtime import FlextRuntime
 
 from .fixtures import (
     get_benchmark_data,
@@ -40,7 +41,9 @@ from .fixtures import (
 
 # Suppress pkg_resources deprecation warning from fs package
 warnings.filterwarnings(
-    "ignore", message="pkg_resources is deprecated", category=UserWarning
+    "ignore",
+    message="pkg_resources is deprecated",
+    category=UserWarning,
 )
 
 
@@ -53,8 +56,6 @@ def reset_container_singleton() -> Generator[None]:
     preventing test contamination from shared state. Critical for test idempotency
     and parallel execution.
     """
-    from flext_core.runtime import FlextRuntime
-
     # Clear singletons before test
     FlextContainer._global_instance = None
     FlextConfig.reset_global_instance()
@@ -350,8 +351,8 @@ def logging_test_env() -> Generator[None]:
         # Clear both config and logger singleton states
         FlextConfig.reset_global_instance()
 
-        # Reset logger singleton state
-        FlextLogger._structlog_configured = False
+        # Reset logger singleton state via runtime
+        FlextRuntime._structlog_configured = False
 
         # Set the expected log level for logging tests
         os.environ["FLEXT_LOG_LEVEL"] = "WARNING"
@@ -359,7 +360,7 @@ def logging_test_env() -> Generator[None]:
     finally:
         # Clear both singleton states again and restore original value
         FlextConfig.reset_global_instance()
-        FlextLogger._structlog_configured = False
+        FlextRuntime._structlog_configured = False
 
         if original_log_level is not None:
             os.environ["FLEXT_LOG_LEVEL"] = original_log_level

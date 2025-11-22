@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast
+from typing import Any, cast
 
 import pytest
 
@@ -38,8 +38,9 @@ def mark_test_pattern(pattern: str) -> Callable[[object], object]:
         Returns: The decorated function with pattern attribute.
 
         """
-        # Use setattr to dynamically assign the pattern attribute
-        func._test_pattern = pattern
+        # Use cast to allow dynamic attribute assignment
+        func_obj = cast("Any", func)
+        func_obj._test_pattern = pattern
         return func
 
     return decorator

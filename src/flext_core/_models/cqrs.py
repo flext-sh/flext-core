@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import sys
 from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -16,7 +17,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.metadata import Metadata
 from flext_core._utilities.data_mapper import FlextUtilitiesDataMapper
-from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -136,8 +136,6 @@ class FlextModelsCqrs:
 
             Dynamically determines correct Pagination class based on context.
             """
-            import sys  # noqa: PLC0415
-
             pagination_cls: type[FlextModelsCqrs.Pagination] = (
                 FlextModelsCqrs.Pagination
             )
@@ -166,10 +164,12 @@ class FlextModelsCqrs:
             if FlextRuntime.is_dict_like(v):
                 v_dict = v
                 page = FlextUtilitiesDataMapper.convert_to_int_safe(
-                    v_dict.get("page"), 1
+                    v_dict.get("page"),
+                    1,
                 )
                 size = FlextUtilitiesDataMapper.convert_to_int_safe(
-                    v_dict.get("size"), 20
+                    v_dict.get("size"),
+                    20,
                 )
                 return pagination_cls(page=page, size=size)
 
@@ -212,17 +212,9 @@ class FlextModelsCqrs:
                     else str(query_id_raw)
                 )
                 query_type: object = query_payload.get("query_type")
-                # Fast fail: filters must be dict-like
-                if not FlextRuntime.is_dict_like(filters):
-                    filters_dict: dict[str, object] = {}
-                elif isinstance(filters, dict):
-                    filters_dict = filters
-                else:
-                    filters_dict = (
-                        dict(filters.items()) if hasattr(filters, "items") else {}
-                    )
+                # filters is already guaranteed to be dict[str, object] from earlier validation
                 query = cls(
-                    filters=filters_dict,
+                    filters=filters,
                     pagination=pagination,
                     query_id=query_id,
                     query_type=str(query_type) if query_type is not None else None,
@@ -285,24 +277,12 @@ class FlextModelsCqrs:
             description="Handler mode",
         )
         command_timeout: int = Field(
-            default_factory=lambda: (
-                int(timeout)
-                if (
-                    timeout
-                    := FlextConfig.get_global_instance().dispatcher_timeout_seconds
-                )
-                > 0
-                else FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT
-            ),
-            description="Command timeout from FlextConfig (priority) or FlextConstants (default). Models use Config values in initialization.",
+            default=FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT,
+            description="Command timeout from FlextConstants (default). Models use Config values in initialization.",
         )
         max_command_retries: int = Field(
-            default_factory=lambda: (
-                retries
-                if (retries := FlextConfig.get_global_instance().max_retry_attempts) > 0
-                else FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES
-            ),
-            description="Maximum retry attempts from FlextConfig (priority) or FlextConstants (default). Models use Config values in initialization.",
+            default=FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
+            description="Maximum retry attempts from FlextConstants (default). Models use Config values in initialization.",
         )
         metadata: Metadata | None = Field(
             default=None,

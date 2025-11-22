@@ -65,15 +65,18 @@ import string
 import typing
 from collections.abc import Callable, Sequence
 from types import ModuleType
-from typing import Any, TypeGuard, cast
+from typing import ParamSpec, TypeGuard
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
 from beartype.claw import beartype_package
 from dependency_injector import containers, providers
+from structlog.typing import BindableLogger
 
 from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes
+
+P = ParamSpec("P")
 
 
 class FlextRuntime:
@@ -172,6 +175,16 @@ class FlextRuntime:
     LEVEL_PREFIX_PARTS_COUNT: int = FlextConstants.Validation.LEVEL_PREFIX_PARTS_COUNT
 
     _structlog_configured: bool = False
+
+    @classmethod
+    def is_structlog_configured(cls) -> bool:
+        """Check if structlog has been configured.
+
+        Returns:
+            bool: True if structlog is configured, False otherwise
+
+        """
+        return cls._structlog_configured
 
     # Log level constants using FlextConstants (production-ready, not test-only)
     LOG_LEVEL_DEBUG: str = FlextConstants.Settings.LogLevel.DEBUG
@@ -508,8 +521,8 @@ class FlextRuntime:
         log_level: int | None = None,
         console_renderer: bool = True,
         additional_processors: Sequence[object] | None = None,
-        wrapper_class_factory: Callable[[], object] | None = None,
-        logger_factory: Callable[[], object] | None = None,
+        wrapper_class_factory: Callable[[], type[BindableLogger]] | None = None,
+        logger_factory: Callable[P, object] | None = None,
         cache_logger_on_first_use: bool = True,
     ) -> None:
         """Configure structlog once using FLEXT defaults.
@@ -592,22 +605,28 @@ class FlextRuntime:
             # Tested but not covered: structlog configures once per process
             processors.append(module.processors.JSONRenderer())
 
-        # Type-safe processor list - structlog processors have complex types
-        # that cannot be expressed without Any, so we use Any for type safety
+        # Configure structlog with processors and logger factory
+        # structlog.configure accepts specific types, but we construct them dynamically
+        # Type: processors is Iterable[Processor] where Processor is a callable with specific signature
+        # Type: wrapper_class is type[BindableLogger] | None
+        wrapper_arg: type[BindableLogger] | None = (
+            wrapper_class_factory()
+            if wrapper_class_factory is not None
+            else module.make_filtering_bound_logger(level_to_use)
+        )
+        factory_arg = (
+            logger_factory
+            if logger_factory is not None
+            else module.PrintLoggerFactory()
+        )
+        # Call configure directly with constructed arguments
+        # Processors are dynamically constructed callables that match structlog's Processor protocol
+        # We use list[object] which is compatible with Iterable[Processor] at runtime
+        # The actual processors are callables with the correct signature
         module.configure(
-            processors=cast("Any", processors),
-            wrapper_class=cast(
-                "Any",
-                wrapper_class_factory
-                if wrapper_class_factory is not None
-                else module.make_filtering_bound_logger(level_to_use),
-            ),
-            logger_factory=cast(
-                "Any",
-                logger_factory
-                if logger_factory is not None
-                else module.PrintLoggerFactory(),
-            ),
+            processors=processors,  # type: ignore[arg-type]  # Dynamic construction, compatible at runtime
+            wrapper_class=wrapper_arg,
+            logger_factory=factory_arg,
             cache_logger_on_first_use=cache_logger_on_first_use,
         )
 

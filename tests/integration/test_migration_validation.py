@@ -17,6 +17,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+
+# Add src to path for imports (required for tests/examples structure)
 from flext_core import (
     FlextConfig,
     FlextConstants,

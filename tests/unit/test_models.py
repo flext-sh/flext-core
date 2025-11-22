@@ -7,15 +7,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import datetime
+import json
 import threading
 from collections.abc import Callable
 from typing import ClassVar, cast
 
 import pytest
-from pydantic import Field, field_validator
+from pydantic import Field, ValidationError, field_validator
 
 from flext_core import (
     FlextConstants,
+    FlextExceptions,
     FlextModels,
 )
 
@@ -85,7 +88,7 @@ class TestFlextModels:
 
         # Test validation - should work with valid email (exclude extra fields from base Entity class and computed fields)
         entity_dict = entity.model_dump(
-            exclude={"is_initial_version", "is_modified", "uncommitted_events"}
+            exclude={"is_initial_version", "is_modified", "uncommitted_events"},
         )
         validated_entity = entity.model_validate(entity_dict)
         assert validated_entity.email == "test@example.com"
@@ -123,9 +126,6 @@ class TestFlextModels:
 
     def test_models_aggregate_root_creation(self) -> None:
         """Test aggregate root creation and basic functionality."""
-        # Import the actual FlextModels class
-        from flext_core import FlextModels
-
         # Test that AggregateRoot inherits from Entity properly
         assert issubclass(FlextModels.AggregateRoot, FlextModels.Entity)
 
@@ -172,9 +172,6 @@ class TestFlextModels:
 
     def test_models_domain_events(self) -> None:
         """Test domain events functionality on Entity base class."""
-        # Import the actual FlextModels class
-        from flext_core import FlextModels
-
         # Test that Entity has add_domain_event method
         assert hasattr(FlextModels.Entity, "add_domain_event")
         assert callable(FlextModels.Entity.add_domain_event)
@@ -387,14 +384,15 @@ class TestFlextModels:
         # Empty event name should fail
         result = entity.add_domain_event("", {"data": "value"})
         assert result.is_failure
-        if result.error is not None:
-            assert "Domain event name must be a non-empty string" in result.error
+        assert (
+            result.error is not None
+            and "Domain event name must be a non-empty string" in result.error
+        )
 
         # Non-serializable data should fail
-        import datetime
-
         result = entity.add_domain_event(
-            "test", {"date": datetime.datetime.now(tz=datetime.UTC)}
+            "test",
+            {"date": datetime.datetime.now(tz=datetime.UTC)},
         )
         # This might pass or fail depending on serialization, but let's test valid case
         result = entity.add_domain_event("valid", {"string": "value", "number": 42})
@@ -430,8 +428,6 @@ class TestFlextModels:
         assert '"updated_at"' in json_data or '"updated_at":null' in json_data
 
         # Test that timestamps are serialized as ISO strings
-        import json
-
         parsed = json.loads(json_data)
         if parsed.get("created_at"):
             assert "T" in parsed["created_at"]  # ISO format has 'T'
@@ -520,7 +516,6 @@ class TestFlextModels:
             ]
 
         # Create aggregate - invariant will be checked automatically and should fail
-        from flext_core import FlextExceptions
 
         with pytest.raises(FlextExceptions.ValidationError, match="Invariant violated"):
             FailingAggregate(name="test")
@@ -545,14 +540,11 @@ class TestFlextModels:
         assert len(value_set) == 2  # value1 and value2 are same, value3 is different
 
         # Should be immutable (frozen)
-        from pydantic import ValidationError
-
         with pytest.raises((
             ValidationError,
             AttributeError,
-            TypeError,
-        )):  # Pydantic v2 may raise ValidationError or frozen model errors
-            value1.value = 100
+        )):  # Pydantic v2 raises ValidationError or AttributeError on frozen models
+            value1.value = 100  # type: ignore[misc]
 
     def test_command_creation_with_mixins(self) -> None:
         """Test Command creation with all mixins."""
@@ -580,7 +572,9 @@ class TestFlextModels:
     def test_domain_event_creation(self) -> None:
         """Test DomainEvent creation."""
         event = FlextModels.DomainEvent(
-            event_type="user_created", aggregate_id="user-123", data={"name": "test"}
+            event_type="user_created",
+            aggregate_id="user-123",
+            data={"name": "test"},
         )
 
         # Should have IdentifiableMixin properties
@@ -600,7 +594,8 @@ class TestFlextModels:
     def test_query_creation(self) -> None:
         """Test Query creation."""
         query = FlextModels.Cqrs.Query(
-            query_type="find_users", filters={"active": "true"}
+            query_type="find_users",
+            filters={"active": "true"},
         )
 
         # Should have query_id
@@ -696,31 +691,30 @@ class TestFlextModels:
 
         # Test invalid input type
         result = aggregate.add_domain_events_bulk(
-            cast("list[tuple[str, dict[str, object]]]", "not a list")
+            cast("list[tuple[str, dict[str, object]]]", "not a list"),
         )
         assert result.is_failure
-        if result.error is not None:  # Check for None before 'in'
-            assert "Events must be a list" in result.error
+        assert result.error is not None and "Events must be a list" in result.error
 
         # Test empty event name
         result = aggregate.add_domain_events_bulk([
-            ("", cast("dict[str, object]", {"data": "value"}))
+            ("", cast("dict[str, object]", {"data": "value"})),
         ])
         assert result.is_failure
-        if result.error is not None:  # Check for None before 'in'
-            assert "name must be non-empty string" in result.error
+        assert (
+            result.error is not None and "name must be non-empty string" in result.error
+        )
 
         # Test invalid data type
         result = aggregate.add_domain_events_bulk([
-            ("event", cast("dict[str, object]", "not a dict"))
+            ("event", cast("dict[str, object]", "not a dict")),
         ])
         assert result.is_failure
-        if result.error is not None:  # Check for None before 'in'
-            assert "data must be dict" in result.error
+        assert result.error is not None and "data must be dict" in result.error
 
         # Test None data (should be converted to empty dict)
         result = aggregate.add_domain_events_bulk([
-            ("event", cast("dict[str, object]", {}))
+            ("event", cast("dict[str, object]", {})),
         ])
         assert result.is_success
 
@@ -741,8 +735,7 @@ class TestFlextModels:
 
         result = aggregate.add_domain_events_bulk(events)
         assert result.is_failure
-        if result.error is not None:  # Check for None before 'in'
-            assert "would exceed max events" in result.error
+        assert result.error is not None and "would exceed max events" in result.error
 
     def test_aggregate_root_domain_event_handler_execution(self) -> None:
         """Test domain event handler execution."""
@@ -761,7 +754,8 @@ class TestFlextModels:
 
         # Add event that should trigger handler (event_type in data)
         result = aggregate.add_domain_event(
-            "user_action", {"event_type": "test_event", "key": "value"}
+            "user_action",
+            {"event_type": "test_event", "key": "value"},
         )
         assert result.is_success
 
@@ -790,7 +784,9 @@ class TestFlextModels:
     def test_domain_event_model_creation(self) -> None:
         """Test DomainEvent model creation and properties."""
         event = FlextModels.DomainEvent(
-            event_type="test_event", aggregate_id="aggregate-123", data={"key": "value"}
+            event_type="test_event",
+            aggregate_id="aggregate-123",
+            data={"key": "value"},
         )
 
         assert event.event_type == "test_event"
@@ -809,7 +805,8 @@ class TestFlextModels:
         """Test Command model creation with correct fields."""
         # Command has: message_type, command_type, issuer_id (+ id, created_at from mixins)
         command = FlextModels.Cqrs.Command(
-            command_type="CreateOrder", issuer_id="issuer-123"
+            command_type="CreateOrder",
+            issuer_id="issuer-123",
         )
 
         assert command.command_type == "CreateOrder"
@@ -837,7 +834,8 @@ class TestFlextModels:
         """Test Payload model creation with required data field."""
         # Payload[T] has: data (required), metadata, expires_at, correlation_id, source_service, message_type
         payload = FlextModels.Payload(
-            data={"order_id": "123"}, correlation_id="corr-abc"
+            data={"order_id": "123"},
+            correlation_id="corr-abc",
         )
 
         assert payload.data == {"order_id": "123"}
@@ -848,7 +846,8 @@ class TestFlextModels:
         """Test ProcessingRequest model with correct fields."""
         # ProcessingRequest has: operation_id, data, context, timeout_seconds, retry_attempts, enable_validation
         request = FlextModels.ProcessingRequest(
-            data={"input": "data"}, enable_validation=True
+            data={"input": "data"},
+            enable_validation=True,
         )
 
         assert request.data == {"input": "data"}
@@ -877,7 +876,9 @@ class TestFlextModels:
         """Test BatchProcessingConfig model with correct fields."""
         # BatchProcessingConfig has: batch_size, max_workers, timeout_per_item, continue_on_error, data_items
         config = FlextModels.BatchProcessingConfig(
-            batch_size=100, continue_on_error=True, data_items=[1, 2, 3]
+            batch_size=100,
+            continue_on_error=True,
+            data_items=[1, 2, 3],
         )
 
         assert config.batch_size == 100
@@ -935,7 +936,9 @@ class TestFlextModels:
             pass
 
         cond_req = FlextModels.ConditionalExecutionRequest(
-            condition=condition_func, true_action=true_func, context={"test": "value"}
+            condition=condition_func,
+            true_action=true_func,
+            context={"test": "value"},
         )
 
         assert callable(cond_req.condition)
@@ -1004,7 +1007,8 @@ class TestFlextModels:
         )
 
         assert ctx.data["request_id"] == "req-456"
-        assert ctx.metadata.attributes["source"] == "api"
+        # attributes is always dict[str, object] with default_factory=dict, never None
+        assert ctx.metadata.attributes.get("source") == "api"  # type: ignore[attr-defined]
 
     def test_context_export_model_creation(self) -> None:
         """Test ContextExport model creation."""
@@ -1022,7 +1026,8 @@ class TestFlextModels:
         """Test HandlerExecutionContext model creation."""
         # HandlerExecutionContext has: handler_name, handler_mode (+ private attributes for timing)
         context = FlextModels.HandlerExecutionContext.create_for_handler(
-            handler_name="ProcessOrderCommand", handler_mode="command"
+            handler_name="ProcessOrderCommand",
+            handler_mode="command",
         )
 
         assert context.handler_name == "ProcessOrderCommand"

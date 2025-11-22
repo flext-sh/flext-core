@@ -11,7 +11,7 @@ import threading
 import time
 from typing import cast
 
-from flext_core import FlextContext, FlextModels
+from flext_core import FlextContext, FlextModels, FlextResult
 
 
 class TestFlextContext:
@@ -25,10 +25,8 @@ class TestFlextContext:
 
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
-        from flext_core import FlextResult
-
         initial_data = FlextModels.ContextData(
-            data={"user_id": "123", "session_id": "abc"}
+            data={"user_id": "123", "session_id": "abc"},
         )
         context = FlextContext(initial_data)
         assert context is not None
@@ -45,8 +43,6 @@ class TestFlextContext:
 
     def test_context_set_get_value(self) -> None:
         """Test context set/get value operations."""
-        from flext_core import FlextResult
-
         context = FlextContext()
 
         context.set("test_key", "test_value").unwrap()
@@ -57,8 +53,6 @@ class TestFlextContext:
 
     def test_context_get_with_default(self) -> None:
         """Test context get with default value using monadic operations."""
-        from flext_core import FlextResult
-
         context = FlextContext()
 
         result = context.get("nonexistent_key")
@@ -226,7 +220,7 @@ class TestFlextContext:
         # Empty key should return failure (not raise exception)
         result = context.set("", "empty_key")
         assert result.is_failure
-        assert "must be a non-empty string" in result.error
+        assert result.error is not None and "must be a non-empty string" in result.error
 
         # Validate should still pass since no invalid keys were actually set
         validation_result = context.validate()
@@ -279,11 +273,12 @@ class TestFlextContext:
         # Test invalid key (None) - should return failure with message
         result = context.set(cast("str", None), "value")
         assert result.is_failure
-        assert "must be a non-empty string" in result.error
+        assert result.error is not None and "must be a non-empty string" in result.error
 
         # Test invalid value (object) - should return failure with message
         result = context.set("key", object())
         assert result.is_failure
+        assert result.error is not None
         assert "must be serializable" in result.error
 
     def test_context_scoped_access(self) -> None:
@@ -431,8 +426,6 @@ class TestFlextContext:
     def test_context_singleton_pattern(self) -> None:
         """Test context singleton pattern - manage explicitly."""
         # Create manual singleton pattern
-        import threading
-
         context_lock = threading.RLock()
         context_instance: FlextContext | None = None
 
@@ -451,8 +444,6 @@ class TestFlextContext:
     def test_context_singleton_reset(self) -> None:
         """Test context singleton reset - manage explicitly."""
         # Create manual singleton pattern with reset
-        import threading
-
         context_lock = threading.RLock()
         context_instance: FlextContext | None = None
 
@@ -735,6 +726,7 @@ class TestFlextContext:
         result = context.get("key_none")
         # FlextResult.ok() cannot accept None, so get() should fail
         assert result.is_failure
+        assert result.error is not None
         assert "None value" in result.error or "not found" in result.error.lower()
 
     def test_context_edge_case_empty_string(self) -> None:
@@ -952,12 +944,11 @@ class TestFlextContext:
 
     def test_context_get_metadata_nonexistent(self) -> None:
         """Test getting metadata that doesn't exist - fast fail."""
-        from flext_core import FlextResult
-
         context = FlextContext()
         result = context.get_metadata("nonexistent_meta")
         assert isinstance(result, FlextResult)
         assert result.is_failure
+        assert result.error is not None
         assert "not found" in result.error.lower()
 
     def test_context_get_metadata_with_default(self) -> None:
@@ -970,8 +961,6 @@ class TestFlextContext:
 
     def test_context_set_get_metadata(self) -> None:
         """Test setting and getting metadata."""
-        from flext_core import FlextResult
-
         context = FlextContext()
         context.set_metadata("meta_key", "meta_value")
         result = context.get_metadata("meta_key")

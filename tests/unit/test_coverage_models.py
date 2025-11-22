@@ -471,7 +471,7 @@ class TestMetadata:
     def test_metadata_creation(self) -> None:
         """Test creating metadata."""
         metadata = FlextModels.Metadata(
-            attributes={"user_id": "123", "operation": "create"}
+            attributes={"user_id": "123", "operation": "create"},
         )
         assert metadata.attributes["user_id"] == "123"
 
@@ -483,7 +483,7 @@ class TestMetadata:
                 "number": 42,
                 "float": math.pi,
                 "bool": True,
-            }
+            },
         )
         assert metadata.attributes["string"] == "value"
         assert metadata.attributes["number"] == 42
@@ -632,7 +632,7 @@ class TestModelIntegration:
                 "is_initial_version",
                 "is_modified",
                 "uncommitted_events",  # Computed field
-            }
+            },
         )
 
         # Validate by creating new instance from dict data

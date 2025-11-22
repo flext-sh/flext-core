@@ -18,6 +18,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_core import (
@@ -230,7 +232,9 @@ class TestLayer1CqrsRouting:
     """Test CQRS routing functionality (Layer 1)."""
 
     def test_auto_discovery_registration(
-        self, dispatcher: FlextDispatcher, command_handler: CommandHandler
+        self,
+        dispatcher: FlextDispatcher,
+        command_handler: CommandHandler,
     ) -> None:
         """Test single-arg handler registration for auto-discovery."""
         result = dispatcher.layer1_register_handler(command_handler)
@@ -240,7 +244,9 @@ class TestLayer1CqrsRouting:
         assert len(dispatcher._auto_handlers) == 1
 
     def test_explicit_registration(
-        self, dispatcher: FlextDispatcher, command_handler: CommandHandler
+        self,
+        dispatcher: FlextDispatcher,
+        command_handler: CommandHandler,
     ) -> None:
         """Test two-arg handler registration with explicit command type."""
         result = dispatcher.layer1_register_handler(Command, command_handler)
@@ -250,7 +256,8 @@ class TestLayer1CqrsRouting:
         assert dispatcher._handlers["Command"] == command_handler
 
     def test_handler_interface_validation_missing_handle(
-        self, dispatcher: FlextDispatcher
+        self,
+        dispatcher: FlextDispatcher,
     ) -> None:
         """Test handler validation rejects handler without handle() method."""
         invalid_handler = InvalidHandler()
@@ -261,7 +268,8 @@ class TestLayer1CqrsRouting:
         assert len(dispatcher._auto_handlers) == 0
 
     def test_handler_interface_validation_explicit_mode(
-        self, dispatcher: FlextDispatcher
+        self,
+        dispatcher: FlextDispatcher,
     ) -> None:
         """Test handler validation in explicit registration mode."""
         invalid_handler = InvalidHandler()
@@ -272,7 +280,9 @@ class TestLayer1CqrsRouting:
         assert "Command" not in dispatcher._handlers
 
     def test_command_routing_via_explicit_registration(
-        self, dispatcher: FlextDispatcher, command_handler: CommandHandler
+        self,
+        dispatcher: FlextDispatcher,
+        command_handler: CommandHandler,
     ) -> None:
         """Test command routing finds handler via explicit registration."""
         dispatcher.layer1_register_handler(Command, command_handler)
@@ -283,7 +293,9 @@ class TestLayer1CqrsRouting:
         assert handler == command_handler
 
     def test_command_routing_via_auto_discovery(
-        self, dispatcher: FlextDispatcher, command_handler: CommandHandler
+        self,
+        dispatcher: FlextDispatcher,
+        command_handler: CommandHandler,
     ) -> None:
         """Test command routing finds handler via auto-discovery."""
         dispatcher.layer1_register_handler(command_handler)
@@ -302,7 +314,9 @@ class TestLayer1CqrsRouting:
         assert handler is None
 
     def test_handler_execution_success(
-        self, dispatcher: FlextDispatcher, command_handler: CommandHandler
+        self,
+        dispatcher: FlextDispatcher,
+        command_handler: CommandHandler,
     ) -> None:
         """Test successful handler execution."""
         dispatcher.layer1_register_handler(Command, command_handler)
@@ -321,7 +335,9 @@ class TestLayer1QueryCaching:
     """Test query result caching functionality (Layer 1)."""
 
     def test_query_cache_miss_on_first_execution(
-        self, dispatcher: FlextDispatcher, query_handler: QueryHandler
+        self,
+        dispatcher: FlextDispatcher,
+        query_handler: QueryHandler,
     ) -> None:
         """Test first query execution does not use cache."""
         dispatcher.layer1_register_handler(Query, query_handler)
@@ -333,7 +349,9 @@ class TestLayer1QueryCaching:
         assert len(dispatcher._cache) == 1  # Should be cached after execution
 
     def test_query_cache_hit_on_second_execution(
-        self, dispatcher: FlextDispatcher, query_handler: QueryHandler
+        self,
+        dispatcher: FlextDispatcher,
+        query_handler: QueryHandler,
     ) -> None:
         """Test second query execution uses cached result."""
         dispatcher.layer1_register_handler(Query, query_handler)
@@ -350,7 +368,9 @@ class TestLayer1QueryCaching:
         assert result2.value == result1.value
 
     def test_command_not_cached(
-        self, dispatcher: FlextDispatcher, command_handler: CommandHandler
+        self,
+        dispatcher: FlextDispatcher,
+        command_handler: CommandHandler,
     ) -> None:
         """Test commands are not cached."""
         dispatcher.layer1_register_handler(Command, command_handler)
@@ -363,7 +383,8 @@ class TestLayer1QueryCaching:
         assert len(dispatcher._cache) == 0
 
     def test_cache_key_generation_deterministic(
-        self, dispatcher: FlextDispatcher
+        self,
+        dispatcher: FlextDispatcher,
     ) -> None:
         """Test cache key generation produces deterministic keys for equal objects."""
         query1 = Query("test")
@@ -409,7 +430,9 @@ class TestLayer1Middleware:
     """Test middleware pipeline functionality (Layer 1)."""
 
     def test_add_middleware(
-        self, dispatcher: FlextDispatcher, test_middleware: Middleware
+        self,
+        dispatcher: FlextDispatcher,
+        test_middleware: Middleware,
     ) -> None:
         """Test adding middleware to pipeline."""
         result = dispatcher.layer1_add_middleware(test_middleware)
@@ -430,7 +453,8 @@ class TestLayer1Middleware:
 
         # Get sorted middleware
         sorted_configs = sorted(
-            dispatcher._middleware_configs, key=lambda c: int(c.get("order", 0))
+            dispatcher._middleware_configs,
+            key=lambda c: cast("int", c.get("order", 0)),
         )
 
         assert sorted_configs[0].get("order") == 10
@@ -438,7 +462,9 @@ class TestLayer1Middleware:
         assert sorted_configs[2].get("order") == 30
 
     def test_middleware_enable_disable(
-        self, dispatcher: FlextDispatcher, test_middleware: Middleware
+        self,
+        dispatcher: FlextDispatcher,
+        test_middleware: Middleware,
     ) -> None:
         """Test middleware can be enabled/disabled."""
         dispatcher.layer1_add_middleware(test_middleware, {"enabled": True})
@@ -511,7 +537,9 @@ class TestLayer1Events:
     """Test event publishing protocol (Layer 1)."""
 
     def test_publish_single_event(
-        self, dispatcher: FlextDispatcher, command_handler: CommandHandler
+        self,
+        dispatcher: FlextDispatcher,
+        command_handler: CommandHandler,
     ) -> None:
         """Test publishing single event."""
         dispatcher.layer1_register_handler(Event, command_handler)
@@ -522,7 +550,9 @@ class TestLayer1Events:
         assert result.is_success
 
     def test_subscribe_to_event(
-        self, dispatcher: FlextDispatcher, command_handler: CommandHandler
+        self,
+        dispatcher: FlextDispatcher,
+        command_handler: CommandHandler,
     ) -> None:
         """Test subscribing to event type."""
         result = dispatcher.subscribe("Event", command_handler)
@@ -531,7 +561,9 @@ class TestLayer1Events:
         assert "Event" in dispatcher._handlers
 
     def test_unsubscribe_from_event(
-        self, dispatcher: FlextDispatcher, command_handler: CommandHandler
+        self,
+        dispatcher: FlextDispatcher,
+        command_handler: CommandHandler,
     ) -> None:
         """Test unsubscribing from event type."""
         dispatcher.subscribe("Event", command_handler)
@@ -548,7 +580,9 @@ class TestLayer1Events:
         assert "not found" in (result.error or "").lower()
 
     def test_publish_multiple_events(
-        self, dispatcher: FlextDispatcher, command_handler: CommandHandler
+        self,
+        dispatcher: FlextDispatcher,
+        command_handler: CommandHandler,
     ) -> None:
         """Test publishing multiple events in batch."""
         dispatcher.layer1_register_handler(Event, command_handler)
@@ -576,7 +610,9 @@ class TestLayer1Integration:
     """Test Layer 1 full integration scenarios."""
 
     def test_full_execution_flow_command_to_response(
-        self, dispatcher: FlextDispatcher, command_handler: CommandHandler
+        self,
+        dispatcher: FlextDispatcher,
+        command_handler: CommandHandler,
     ) -> None:
         """Test complete execution flow from command to response."""
         dispatcher.layer1_register_handler(Command, command_handler)
@@ -605,7 +641,9 @@ class TestLayer1Integration:
         assert test_middleware.process_called
 
     def test_execution_with_error_handler(
-        self, dispatcher: FlextDispatcher, error_handler: ErrorHandler
+        self,
+        dispatcher: FlextDispatcher,
+        error_handler: ErrorHandler,
     ) -> None:
         """Test execution with error-returning handler."""
         dispatcher.layer1_register_handler(Command, error_handler)
@@ -638,7 +676,9 @@ class TestLayer1Integration:
         assert len(dispatcher._cache) == 1  # Only query cached
 
     def test_handler_execution_count_tracking(
-        self, dispatcher: FlextDispatcher, command_handler: CommandHandler
+        self,
+        dispatcher: FlextDispatcher,
+        command_handler: CommandHandler,
     ) -> None:
         """Test execution count is tracked correctly."""
         dispatcher.layer1_register_handler(Command, command_handler)
@@ -675,7 +715,10 @@ class TestLayer1Parametrized:
 
     @pytest.mark.parametrize("order", [1, 5, 10, 20])
     def test_middleware_with_different_orders(
-        self, dispatcher: FlextDispatcher, test_middleware: Middleware, order: int
+        self,
+        dispatcher: FlextDispatcher,
+        test_middleware: Middleware,
+        order: int,
     ) -> None:
         """Test adding middleware with different order values."""
         result = dispatcher.layer1_add_middleware(test_middleware, {"order": order})

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import warnings
 from collections import UserDict
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from typing import Never
 
 import pytest
@@ -45,7 +45,7 @@ class TestGenerators100Coverage:
             def __getitem__(self, key: str) -> object:
                 return self._data[key]
 
-            def __iter__(self) -> object:
+            def __iter__(self) -> Iterator[str]:
                 return iter(self._data)
 
             def __len__(self) -> int:
@@ -64,7 +64,7 @@ class TestGenerators100Coverage:
                 msg = "Cannot get item"
                 raise AttributeError(msg)
 
-            def __iter__(self) -> object:
+            def __iter__(self) -> Iterator[object]:
                 return iter([])
 
             def __len__(self) -> int:
@@ -93,18 +93,12 @@ class TestGenerators100Coverage:
         """Test _normalize_context_to_dict with BaseModel that fails."""
 
         class BadModel(BaseModel):
-            @property
-            def model_dump(self) -> object:
+            """Model with model_dump that raises AttributeError."""
+
+            def model_dump(self, **kwargs: object) -> dict[str, object]:
+                """Model dump that fails."""
                 msg = "Cannot dump"
                 raise AttributeError(msg)
-
-        try:
-            model = BadModel()
-            # Access model_dump to trigger error
-            _ = model.model_dump()
-        except Exception:
-            # Expected - model_dump should fail
-            pass
 
         # Test with a real model that works
         class GoodModel(BaseModel):
@@ -122,15 +116,17 @@ class TestGenerators100Coverage:
     def test_normalize_context_to_dict_with_unsupported_type(self) -> None:
         """Test _normalize_context_to_dict with unsupported type."""
         with pytest.raises(
-            TypeError, match=r".*Context must be dict, Mapping, or BaseModel.*"
+            TypeError,
+            match=r".*Context must be dict, Mapping, or BaseModel.*",
         ):
             FlextUtilities.Generators._normalize_context_to_dict(123)
 
     def test_enrich_context_fields_with_correlation_id(self) -> None:
         """Test _enrich_context_fields with correlation_id."""
-        context_dict = {}
+        context_dict: dict[str, object] = {}
         FlextUtilities.Generators._enrich_context_fields(
-            context_dict, include_correlation_id=True
+            context_dict,
+            include_correlation_id=True,
         )
         assert "correlation_id" in context_dict
         assert "trace_id" in context_dict
@@ -138,9 +134,10 @@ class TestGenerators100Coverage:
 
     def test_enrich_context_fields_with_timestamp(self) -> None:
         """Test _enrich_context_fields with timestamp."""
-        context_dict = {}
+        context_dict: dict[str, object] = {}
         FlextUtilities.Generators._enrich_context_fields(
-            context_dict, include_timestamp=True
+            context_dict,
+            include_timestamp=True,
         )
         assert "timestamp" in context_dict
         assert "trace_id" in context_dict
@@ -148,9 +145,11 @@ class TestGenerators100Coverage:
 
     def test_enrich_context_fields_with_both(self) -> None:
         """Test _enrich_context_fields with both flags."""
-        context_dict = {}
+        context_dict: dict[str, object] = {}
         FlextUtilities.Generators._enrich_context_fields(
-            context_dict, include_correlation_id=True, include_timestamp=True
+            context_dict,
+            include_correlation_id=True,
+            include_timestamp=True,
         )
         assert "correlation_id" in context_dict
         assert "timestamp" in context_dict
@@ -159,7 +158,7 @@ class TestGenerators100Coverage:
 
     def test_ensure_trace_context(self) -> None:
         """Test ensure_trace_context."""
-        context = {}
+        context: dict[str, object] = {}
         result = FlextUtilities.Generators.ensure_trace_context(context)
         assert isinstance(result, dict)
         assert "trace_id" in result
@@ -167,17 +166,19 @@ class TestGenerators100Coverage:
 
     def test_ensure_trace_context_with_correlation_id(self) -> None:
         """Test ensure_trace_context with correlation_id."""
-        context = {}
+        context: dict[str, object] = {}
         result = FlextUtilities.Generators.ensure_trace_context(
-            context, include_correlation_id=True
+            context,
+            include_correlation_id=True,
         )
         assert "correlation_id" in result
 
     def test_ensure_trace_context_with_timestamp(self) -> None:
         """Test ensure_trace_context with timestamp."""
-        context = {}
+        context: dict[str, object] = {}
         result = FlextUtilities.Generators.ensure_trace_context(
-            context, include_timestamp=True
+            context,
+            include_timestamp=True,
         )
         assert "timestamp" in result
 
@@ -203,18 +204,12 @@ class TestGenerators100Coverage:
         """Test ensure_dict with BaseModel that fails."""
 
         class BadModel(BaseModel):
-            @property
-            def model_dump(self) -> object:
+            """Model with model_dump that raises AttributeError."""
+
+            def model_dump(self, **kwargs: object) -> dict[str, object]:
+                """Model dump that fails."""
                 msg = "Cannot dump"
                 raise AttributeError(msg)
-
-        try:
-            model = BadModel()
-            # Access model_dump to trigger error
-            _ = model.model_dump()
-        except Exception:
-            # Expected - model_dump should fail
-            pass
 
         # Test with a real model that works
         class GoodModel(BaseModel):
@@ -239,7 +234,7 @@ class TestGenerators100Coverage:
                 msg = "Cannot get item"
                 raise AttributeError(msg)
 
-            def __iter__(self) -> object:
+            def __iter__(self) -> Iterator[object]:
                 return iter([])
 
             def __len__(self) -> int:

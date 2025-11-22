@@ -48,7 +48,6 @@ from .test_contexts import get_test_contexts
 from .test_payloads import get_test_payloads
 
 __all__ = [
-    "FlextBus",
     "FlextConfig",
     "FlextConstants",
     "FlextContainer",
@@ -60,7 +59,6 @@ __all__ = [
     "FlextLogger",
     "FlextMixins",
     "FlextModels",
-    "FlextProcessors",
     "FlextProtocols",
     "FlextRegistry",
     "FlextResult",

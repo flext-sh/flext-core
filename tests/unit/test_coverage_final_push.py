@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import warnings
+
 import pytest
 
 from flext_core import (
@@ -103,8 +105,6 @@ class TestCoverageFinalPush:
 
     def test_result_properties_consistency(self) -> None:
         """Test result properties are consistent."""
-        import warnings
-
         r = FlextResult[str].ok("test")
         assert r.success == r.is_success
         with warnings.catch_warnings():
