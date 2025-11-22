@@ -148,7 +148,7 @@
 		    [tool.poetry.group.dev.dependencies]
 		        click = "^8.3.0"
 		        docker = "^7.1.0"
-		        pyrefly = "^0.34.0"
+		        pyrefly = "^0.42.3"
 		        pytest = "^8.4.0"
 		        python-on-whales = "^0.78.0"
 		        rich = "=14.2.0"
