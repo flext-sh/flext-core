@@ -2692,15 +2692,15 @@ files = [
 
 [[package]]
 name = "types-psutil"
-version = "7.0.0.20251111"
+version = "7.1.1.20251122"
 description = "Typing stubs for psutil"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"typings\""
 files = [
-    {file = "types_psutil-7.0.0.20251111-py3-none-any.whl", hash = "sha256:85ba00205dcfa3c73685122e5a360205d2fbc9b56f942b591027bf401ce0cc47"},
-    {file = "types_psutil-7.0.0.20251111.tar.gz", hash = "sha256:d109ee2da4c0a9b69b8cefc46e195db8cf0fc0200b6641480df71e7f3f51a239"},
+    {file = "types_psutil-7.1.1.20251122-py3-none-any.whl", hash = "sha256:9a5d074b472dee08c97891c986549f6ef4f0896fbdd6cdc0686c6663721995fe"},
+    {file = "types_psutil-7.1.1.20251122.tar.gz", hash = "sha256:cdb39c30a81ce6e433aa672922d59b78c4c6a9c64cd9936f1f6894d26c82ae0f"},
 ]
 
 [[package]]
