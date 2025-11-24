@@ -9,6 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
+from pydantic import Field
+
 from flext_core import FlextModels
 
 
@@ -72,7 +76,7 @@ class TestFlextModelsCollectionsCategories:
         categories = FlextModels.Categories[str]()
         categories.add_entries("users", ["user1"])
         categories.add_entries("groups", ["group1"])
-        names = categories.category_names()
+        names = categories.category_names
         assert "users" in names
         assert "groups" in names
         assert len(names) == 2
@@ -194,7 +198,7 @@ class TestFlextModelsCollectionsStatistics:
         """Test aggregate with list values."""
 
         class TestStats(FlextModels.Statistics):
-            items: list[str] = []
+            items: list[str] = Field(default_factory=list)
 
         stats1 = TestStats(items=["a", "b"])
         stats2 = TestStats(items=["c"])
@@ -206,7 +210,7 @@ class TestFlextModelsCollectionsStatistics:
 
         class TestStats(FlextModels.Statistics):
             count: int = 0
-            items: list[str] = []
+            items: list[str] = Field(default_factory=list)
             name: str = ""
 
         stats1 = TestStats(count=10, items=["a"], name="first")
@@ -242,7 +246,7 @@ class TestFlextModelsCollectionsConfig:
 
         config1 = TestConfig(timeout=30, retries=3)
         config2 = TestConfig(timeout=60)
-        merged = config1.merge(config2)
+        merged: TestConfig = config1.merge(config2)
         assert merged.timeout == 60
         assert merged.retries == 3
 
@@ -253,7 +257,7 @@ class TestFlextModelsCollectionsConfig:
             timeout: int = 30
 
         data = {"timeout": 60}
-        config = TestConfig.from_dict(data)
+        config: TestConfig = TestConfig.from_dict(cast("dict[str, object]", data))
         assert config.timeout == 60
 
     def test_config_to_dict(self) -> None:
@@ -274,7 +278,7 @@ class TestFlextModelsCollectionsConfig:
             retries: int = 3
 
         config = TestConfig(timeout=30, retries=3)
-        updated = config.with_updates(timeout=60)
+        updated: TestConfig = config.with_updates(timeout=60)
         assert updated.timeout == 60
         assert updated.retries == 3
         assert config.timeout == 30  # Original unchanged
@@ -357,7 +361,7 @@ class TestFlextModelsCollectionsResults:
         """Test aggregate with list values."""
 
         class TestResult(FlextModels.Results):
-            errors: list[str] = []
+            errors: list[str] = Field(default_factory=list)
 
         result1 = TestResult(errors=["error1"])
         result2 = TestResult(errors=["error2"])
@@ -368,7 +372,7 @@ class TestFlextModelsCollectionsResults:
         """Test aggregate with dict values."""
 
         class TestResult(FlextModels.Results):
-            metadata: dict[str, str] = {}
+            metadata: dict[str, str] = Field(default_factory=dict)
 
         result1 = TestResult(metadata={"key1": "value1"})
         result2 = TestResult(metadata={"key2": "value2"})
@@ -380,7 +384,7 @@ class TestFlextModelsCollectionsResults:
 
         class TestResult(FlextModels.Results):
             processed: int = 0
-            errors: list[str] = []
+            errors: list[str] = Field(default_factory=list)
             status: str = ""
 
         result1 = TestResult(processed=10, errors=["a"], status="ok")

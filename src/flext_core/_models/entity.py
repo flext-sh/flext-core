@@ -18,7 +18,6 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, field_seriali
 
 from flext_core._models.validation import FlextModelsValidation
 from flext_core.constants import FlextConstants
-from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -612,6 +611,8 @@ class FlextModelsEntity:
 
         def check_invariants(self) -> None:
             """Check all business invariants."""
+            from flext_core.exceptions import FlextExceptions
+
             for invariant in self._invariants:
                 if not invariant():
                     msg = f"Invariant violated: {invariant.__name__}"

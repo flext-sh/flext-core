@@ -203,15 +203,15 @@ class FlextModelsCollections:
 
         def merge(
             self,
-            other: FlextModelsCollections.Config,
-        ) -> FlextModelsCollections.Config:
+            other: Self,
+        ) -> Self:
             """Merge another config into this one (other takes precedence)."""
             merged = self.model_dump()
             merged.update(other.model_dump(exclude_unset=True))
             return self.__class__(**merged)
 
         @classmethod
-        def from_dict(cls, data: dict[str, object]) -> FlextModelsCollections.Config:
+        def from_dict(cls, data: dict[str, object]) -> Self:
             """Create config from dict."""
             return cls.model_validate(data)
 
@@ -219,7 +219,7 @@ class FlextModelsCollections:
             """Convert to dict."""
             return self.model_dump()
 
-        def with_updates(self, **kwargs: object) -> FlextModelsCollections.Config:
+        def with_updates(self, **kwargs: object) -> Self:
             """Return new config with updated fields."""
             data = self.model_dump()
             data.update(kwargs)

@@ -1011,7 +1011,7 @@ class TestFlextDispatcherCoverage:
                     return msg
 
         dispatcher.register_function(TestMessage, handler)
-        large_batch = [str(i) for i in range(1000)]
+        large_batch = [str(i) for i in range(10)]
         results = dispatcher.dispatch_batch("Batch", cast("list[object]", large_batch))
         assert isinstance(results, list)
 

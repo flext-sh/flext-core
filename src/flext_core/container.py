@@ -20,7 +20,6 @@ from typing import Self, TypeGuard, cast, override
 from dependency_injector.containers import DynamicContainer
 from dependency_injector.providers import Object, Singleton
 
-from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
@@ -29,6 +28,7 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FactoryT, T
+from flext_core.utilities import FlextUtilities
 
 
 class FlextContainer(FlextProtocols.Configurable):
@@ -325,7 +325,7 @@ class FlextContainer(FlextProtocols.Configurable):
             ```
 
         """
-        result = FlextUtilitiesValidation.validate_identifier(name).flat_map(
+        result = FlextUtilities.Validation.validate_identifier(name).flat_map(
             lambda validated_name: self._store_service(validated_name, service),
         )
         if result.is_failure:
@@ -415,7 +415,7 @@ class FlextContainer(FlextProtocols.Configurable):
             ```
 
         """
-        result = FlextUtilitiesValidation.validate_identifier(name).flat_map(
+        result = FlextUtilities.Validation.validate_identifier(name).flat_map(
             lambda validated_name: self._store_factory(validated_name, factory),
         )
         if result.is_failure:
@@ -491,7 +491,7 @@ class FlextContainer(FlextProtocols.Configurable):
             FlextResult[bool]: Success with True if unregistered, failure with error details.
 
         """
-        return FlextUtilitiesValidation.validate_identifier(name).flat_map(
+        return FlextUtilities.Validation.validate_identifier(name).flat_map(
             self._remove_service,
         )
 
@@ -529,7 +529,7 @@ class FlextContainer(FlextProtocols.Configurable):
             FlextResult[object]: Success with service instance or failure with error.
 
         """
-        return FlextUtilitiesValidation.validate_identifier(name).flat_map(
+        return FlextUtilities.Validation.validate_identifier(name).flat_map(
             self._resolve_service,
         )
 
@@ -680,7 +680,7 @@ class FlextContainer(FlextProtocols.Configurable):
         # Allow empty dictionaries for batch_register flexibility
 
         # Use FlextUtilities for comprehensive validation
-        validation_result = FlextUtilitiesValidation.validate_batch_services(services)
+        validation_result = FlextUtilities.Validation.validate_batch_services(services)
         if validation_result.is_failure:
             return FlextResult[dict[str, object]].fail(
                 f"Batch validation failed: {validation_result.error}",
@@ -746,7 +746,7 @@ class FlextContainer(FlextProtocols.Configurable):
         """
         for name, service in services.items():
             # Validate service name
-            validation_result = FlextUtilitiesValidation.validate_identifier(name)
+            validation_result = FlextUtilities.Validation.validate_identifier(name)
             if validation_result.is_failure:
                 base_msg = f"Invalid service name: {name}"
                 error_msg = (
@@ -962,7 +962,7 @@ class FlextContainer(FlextProtocols.Configurable):
                     continue
 
                 # Use FlextUtilities for parameter analysis
-                param_info = FlextUtilitiesValidation.analyze_constructor_parameter(
+                param_info = FlextUtilities.Validation.analyze_constructor_parameter(
                     param_name,
                     param,
                 )
@@ -1052,7 +1052,7 @@ class FlextContainer(FlextProtocols.Configurable):
             bool: True if service is registered, False otherwise.
 
         """
-        normalized = FlextUtilitiesValidation.validate_identifier(name)
+        normalized = FlextUtilities.Validation.validate_identifier(name)
         if normalized.is_failure:
             return False
         try:

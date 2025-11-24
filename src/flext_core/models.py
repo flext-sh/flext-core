@@ -29,6 +29,7 @@ from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.metadata import Metadata as MetadataBase
 from flext_core._models.service import FlextModelsService
 from flext_core._models.validation import FlextModelsValidation
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 
 
@@ -309,18 +310,30 @@ class FlextModels:
         # Internal utility functions exposed for testing
         @staticmethod
         def _get_command_timeout_default() -> int:
-            """Get command timeout from Constants (default).
+            """Get command timeout from global config, fallback to Constants.
 
             Internal utility function exposed for testing purposes.
+            Reads FlextConfig.get_global_instance().dispatcher_timeout_seconds first,
+            then falls back to FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT if zero or negative.
             """
+            config = FlextConfig.get_global_instance()
+            timeout = config.dispatcher_timeout_seconds
+            if timeout > 0:
+                return int(timeout)
             return FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT
 
         @staticmethod
         def _get_max_command_retries_default() -> int:
-            """Get max retry attempts from Constants (default).
+            """Get max retry attempts from global config, fallback to Constants.
 
             Internal utility function exposed for testing purposes.
+            Reads FlextConfig.get_global_instance().max_retry_attempts first,
+            then falls back to FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES if zero or negative.
             """
+            config = FlextConfig.get_global_instance()
+            retries = config.max_retry_attempts
+            if retries > 0:
+                return retries
             return FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES
 
     # =========================================================================
@@ -401,6 +414,25 @@ class FlextModels:
 
     class ContextDomainData(FlextModelsContext.ContextDomainData):
         """Context domain data model."""
+
+    # Context facade class - provides unified access to context-related models
+    class Context:
+        """Context management facade class.
+
+        This class provides unified access to all context-related models and utilities
+        from the underlying _models.context module, following the facade pattern.
+        """
+
+        # Expose all context-related classes and utilities
+        StructlogProxyToken = FlextModelsContext.StructlogProxyToken
+        StructlogProxyContextVar = FlextModelsContext.StructlogProxyContextVar
+        Token = FlextModelsContext.Token
+        ContextData = FlextModelsContext.ContextData
+        ContextExport = FlextModelsContext.ContextExport
+        ContextScopeData = FlextModelsContext.ContextScopeData
+        ContextStatistics = FlextModelsContext.ContextStatistics
+        ContextMetadata = FlextModelsContext.ContextMetadata
+        ContextDomainData = FlextModelsContext.ContextDomainData
 
     # =========================================================================
     # NESTED CLASSES - Handler Management Models

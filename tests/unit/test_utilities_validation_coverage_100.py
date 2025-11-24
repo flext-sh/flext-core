@@ -32,6 +32,14 @@ class TestValidation100Coverage:
         assert isinstance(result, set)
         assert len(result) == 3
 
+    def test_normalize_component_with_list(self) -> None:
+        """Test _normalize_component with list."""
+        test_list = [1, 2, 3]
+        result = FlextUtilities.Validation._normalize_component(test_list)
+        # List should be converted to list of normalized items
+        assert isinstance(result, list)
+        assert len(result) == 3
+
     def test_sort_dict_keys_with_dict(self) -> None:
         """Test _sort_dict_keys with dict."""
         test_dict = {"c": 3, "a": 1, "b": 2}
@@ -40,6 +48,18 @@ class TestValidation100Coverage:
         assert isinstance(result, dict)
         keys = list(result.keys())
         assert keys == sorted(keys, key=lambda x: (str(x).casefold(), str(x)))
+
+    def test_sort_dict_keys_with_nested_dict(self) -> None:
+        """Test _sort_dict_keys with nested dict."""
+        test_dict = {"b": {"z": 1, "a": 2}, "a": 3}
+        result = FlextUtilities.Validation._sort_dict_keys(test_dict)
+        # Keys should be sorted recursively
+        assert isinstance(result, dict)
+        keys = list(result.keys())
+        assert keys == ["a", "b"]
+        assert isinstance(result["b"], dict)
+        nested_keys = list(result["b"].keys())
+        assert nested_keys == ["a", "z"]
 
     def test_validate_pipeline_with_non_callable_validator(self) -> None:
         """Test validate_pipeline with non-callable validator - FAST FAIL expected."""
@@ -67,7 +87,36 @@ class TestValidation100Coverage:
         assert result.is_failure
         assert result.error is not None
         assert "Validator failed:" in result.error
-        assert "Validation failed" in result.error
+
+    def test_validate_pipeline_with_flextresult_failure(self) -> None:
+        """Test validate_pipeline with validator returning FlextResult.fail."""
+
+        def validator(value: str) -> FlextResult[bool]:
+            """Validator that returns FlextResult failure."""
+            return FlextResult[bool].fail("Custom validation error")
+
+        result = FlextUtilities.Validation.validate_pipeline(
+            "test",
+            validators=[validator],
+        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "Validator failed: Custom validation error" in result.error
+
+    def test_validate_pipeline_with_flextresult_wrong_data(self) -> None:
+        """Test validate_pipeline with validator returning FlextResult.ok(False)."""
+
+        def validator(value: str) -> FlextResult[bool]:
+            """Validator that returns FlextResult with wrong data."""
+            return FlextResult[bool].ok(False)
+
+        result = FlextUtilities.Validation.validate_pipeline(
+            "test",
+            validators=[validator],
+        )
+        assert result.is_failure
+        assert result.error is not None
+        assert "Validator must return FlextResult[bool].ok(True)" in result.error
 
     def test_validate_pipeline_with_validator_exception(self) -> None:
         """Test validate_pipeline with validator raising exception."""
@@ -226,7 +275,7 @@ class TestValidation100Coverage:
         result = FlextUtilities.Validation.normalize_component(test_dict)
         assert isinstance(result, dict)
 
-    def test_normalize_component_with_list(self) -> None:
+    def test_normalize_component_public_with_list(self) -> None:
         """Test normalize_component with list."""
         test_list = [1, 2, 3]
         result = FlextUtilities.Validation.normalize_component(test_list)
@@ -268,3 +317,31 @@ class TestValidation100Coverage:
         # str
         result = FlextUtilities.Validation.normalize_component("test")
         assert result == "test"
+
+    def test_validate_pipeline_with_failing_validator_result(self) -> None:
+        """Test validate_pipeline with validator that returns failed FlextResult."""
+
+        def failing_validator(value: object) -> FlextResult[bool]:
+            return FlextResult[bool].fail("Validation failed")
+
+        result = FlextUtilities.Validation.validate_pipeline(
+            "test_value",
+            validators=[failing_validator],
+        )
+
+        assert result.is_failure
+        assert "Validator failed: Validation failed" in str(result.error)
+
+    def test_validate_pipeline_with_non_true_validator_result(self) -> None:
+        """Test validate_pipeline with validator that returns FlextResult.ok(False)."""
+
+        def false_validator(value: object) -> FlextResult[bool]:
+            return FlextResult[bool].ok(False)
+
+        result = FlextUtilities.Validation.validate_pipeline(
+            "test_value",
+            validators=[false_validator],
+        )
+
+        assert result.is_failure
+        assert "Validator must return FlextResult[bool].ok(True)" in str(result.error)

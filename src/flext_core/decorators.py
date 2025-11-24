@@ -501,11 +501,12 @@ class FlextDecorators:
                         failure_extra["duration_ms"] = duration * 1000
                         failure_extra["duration_seconds"] = duration
 
-                    # Log with exception details; convert dict[str, object] to proper kwargs
-                    failure_result = result_logger.exception(
+                    # Log with exception details; bind extra data to logger
+                    failure_result = result_logger.bind(
+                        **cast("dict[str, str | float]", failure_extra)
+                    ).exception(
                         f"{op_name}_failed",
                         exception=e,
-                        **failure_extra,  # type: ignore[arg-type]  # dict[str, object] compatible with **kwargs
                     )
                     FlextDecorators._handle_log_result(
                         result=failure_result,
@@ -1236,7 +1237,7 @@ class FlextDecorators:
                 railway_result = FlextDecorators.railway(error_code=error_code)(
                     decorated,
                 )
-                decorated = railway_result  # type: ignore[assignment]  # Railway wrapper preserves signature
+                decorated = cast("Callable[P, R]", railway_result)
 
             # Apply dependency injection
             if inject_deps:

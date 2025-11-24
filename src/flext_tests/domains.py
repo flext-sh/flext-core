@@ -18,6 +18,37 @@ class FlextTestsDomains:
     Provides common test data and domain objects used across FLEXT test suites.
     """
 
+    class TestDomainResult:
+        """Simple domain result for testing services.
+
+        Implements ResultLike protocol for compatibility with FlextResult operations.
+        """
+
+        __test__ = False  # Not a test class, just a helper class
+
+        def __init__(self, value: str) -> None:
+            """Initialize domain result."""
+            self.value = value
+
+        @property
+        def is_success(self) -> bool:
+            """Check if success."""
+            return True
+
+        @property
+        def is_failure(self) -> bool:
+            """Check if failure."""
+            return False
+
+        @property
+        def error(self) -> str | None:
+            """Get error."""
+            return None
+
+        def unwrap(self) -> FlextTestsDomains.TestDomainResult:
+            """Unwrap the result value."""
+            return self
+
     @staticmethod
     def create_configuration(
         service_type: str = "api",

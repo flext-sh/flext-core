@@ -793,34 +793,62 @@ class ComprehensiveModelsService(FlextService[Order]):
     # ========== SERIALIZATION ==========
 
     def demonstrate_serialization(self) -> None:
-        """Show model serialization patterns."""
-        print("\n=== Model Serialization ===")
+        """Show model serialization patterns with from_callable."""
+        print("\n=== Model Serialization with from_callable ===")
 
-        order_data: RealisticOrderDict = self._realistic["order"]
-        order = Order(
-            id=str(order_data["order_id"]),
-            customer_id=str(order_data["customer_id"]),
-            order_number=str(order_data["order_id"])[:12],
-            lines=[
-                OrderLine(
-                    product_id=str(item["product_id"]),
-                    product_name=str(item["name"]),
-                    quantity=int(item["quantity"]),
-                    unit_price=Money(amount=Decimal(item["price"]), currency="USD"),
-                )
-                for item in order_data["items"]
-            ],
-            total_amount=Money(amount=Decimal(order_data["total"]), currency="USD"),
-        )
+        # NEW: Use from_callable for safe model creation
+        def create_order_from_data() -> Order:
+            """Create order from realistic data - may raise validation errors."""
+            order_data: RealisticOrderDict = self._realistic["order"]
+            return Order(
+                id=str(order_data["order_id"]),
+                customer_id=str(order_data["customer_id"]),
+                order_number=str(order_data["order_id"])[:12],
+                lines=[
+                    OrderLine(
+                        product_id=str(item["product_id"]),
+                        product_name=str(item["name"]),
+                        quantity=int(item["quantity"]),
+                        unit_price=Money(amount=Decimal(item["price"]), currency="USD"),
+                    )
+                    for item in order_data["items"]
+                ],
+                total_amount=Money(amount=Decimal(order_data["total"]), currency="USD"),
+            )
 
-        order_dict = order.model_dump()
-        print(f"Serialized keys: {list(order_dict.keys())}")
+        # Create order safely with from_callable
+        order_result = FlextResult[Order].from_callable(create_order_from_data)
+        if order_result.is_failure:
+            print(f"❌ Order creation failed: {order_result.error}")
+            return
 
+        order = order_result.unwrap()
+
+        # NEW: Use from_callable for safe JSON serialization
+        def serialize_to_json() -> str:
+            """Serialize order to JSON - may raise JSON encoding errors."""
+            return json.dumps(order.model_dump())
+
+        json_result = FlextResult[str].from_callable(serialize_to_json)
+        if json_result.is_success:
+            print(
+                f"✅ JSON serialization successful: {len(json_result.unwrap())} chars"
+            )
+
+        # NEW: Use from_callable for safe model deserialization
+        def deserialize_from_dict() -> Order:
+            """Deserialize order from dict - may raise validation errors."""
+            order_dict = order.model_dump()
+            return Order(**order_dict)
+
+        deserialize_result = FlextResult[Order].from_callable(deserialize_from_dict)
+        if deserialize_result.is_success:
+            new_order = deserialize_result.unwrap()
+            print(f"✅ Deserialized order: {new_order.order_number}")
+
+        # Show minimal serialization (existing functionality)
         order_dict_minimal = order.model_dump(exclude={"lines", "domain_events"})
-        print(f"Minimal serialization: {list(order_dict_minimal.keys())}")
-
-        new_order = Order(**order_dict)
-        print(f"✅ Deserialized order: {new_order.order_number}")
+        print(f"✅ Minimal serialization: {list(order_dict_minimal.keys())}")
 
     # ========== REPOSITORY PATTERN ==========
 
@@ -899,18 +927,21 @@ class ComprehensiveModelsService(FlextService[Order]):
         )
         print(f"✅ Valid UUID for entity: {product.entity_id[:8]}...")
 
-        # JSON validation for serialized models
-        order_json = json.dumps(
-            {
-                "id": str(uuid4()),
-                "customer_id": str(uuid4()),
-                "order_number": "ORD-001",
-                "status": "DRAFT",
-            },
-        )
-        # JSON parsing validated by Pydantic v2 when parsing models
-        if FlextRuntime.is_valid_json(order_json):
-            print("✅ Valid JSON for model serialization")
+        # NEW: JSON validation with from_callable for safe operations
+        def create_order_json() -> str:
+            """Create JSON representation of order data."""
+            return json.dumps(
+                {
+                    "id": str(uuid4()),
+                    "customer_id": str(uuid4()),
+                    "order_number": "ORD-001",
+                    "status": "DRAFT",
+                },
+            )
+
+        json_result = FlextResult[str].from_callable(create_order_json)
+        if json_result.is_success and FlextRuntime.is_valid_json(json_result.unwrap()):
+            print("✅ Valid JSON for model serialization (with from_callable)")
 
         # Configuration defaults for domain limits
         max_stock = FlextConstants.Utilities.DEFAULT_BATCH_SIZE
@@ -1231,7 +1262,7 @@ def main() -> None:
     service.demonstrate_flext_runtime_integration()
     service.demonstrate_flext_exceptions_integration()
 
-    # New FlextResult methods (v0.9.9+)
+    # New FlextResult methods (v0.9.9+) - Serialization enhanced with from_callable
     service.demonstrate_from_callable()
     service.demonstrate_flow_through()
     service.demonstrate_lash()
@@ -1244,11 +1275,12 @@ def main() -> None:
     print("\n" + "=" * 60)
     print("✅ ALL FlextModels methods demonstrated!")
     print(
-        "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call",
+        "✨ NEW v0.9.9+ methods prominently featured: from_callable, flow_through, lash, alt, value_or_call",
     )
     print(
         "🔧 Including foundation integration: FlextRuntime (Layer 0.5), FlextExceptions (Layer 2)",
     )
+    print("🎯 Serialization operations: Manual patterns → from_callable for safety")
     print("🎯 Next: See 04_config_basics.py for FlextConfig patterns")
     print("=" * 60)
 

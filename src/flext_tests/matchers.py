@@ -28,6 +28,59 @@ class FlextTestsMatchers:
     Provides pytest-compatible matchers for common FLEXT patterns.
     """
 
+    @staticmethod
+    def assert_success(
+        result: FlextResult[T_co],
+        error_msg: str | None = None,
+    ) -> T_co:
+        """Assert result is success and return unwrapped value.
+
+        Args:
+            result: FlextResult to check
+            error_msg: Optional custom error message
+
+        Returns:
+            Unwrapped value from result
+
+        Raises:
+            AssertionError: If result is failure
+
+        """
+        if not result.is_success:
+            msg = error_msg or f"Expected success but got failure: {result.error}"
+            raise AssertionError(msg)
+        return result.unwrap()
+
+    @staticmethod
+    def assert_failure(
+        result: FlextResult[object],
+        expected_error: str | None = None,
+    ) -> str:
+        """Assert result is failure and return error message.
+
+        Args:
+            result: FlextResult to check
+            expected_error: Optional expected error substring
+
+        Returns:
+            Error message from result
+
+        Raises:
+            AssertionError: If result is success
+
+        """
+        if result.is_success:
+            msg = f"Expected failure but got success: {result.unwrap()}"
+            raise AssertionError(msg)
+        error = result.error
+        if error is None:
+            msg = "Expected error but got None"
+            raise AssertionError(msg)
+        if expected_error and expected_error not in error:
+            msg = f"Expected error containing '{expected_error}' but got: {error}"
+            raise AssertionError(msg)
+        return error
+
     class TestDataBuilder:
         """Builder for test datasets."""
 
@@ -80,6 +133,58 @@ class FlextTestsMatchers:
         def build(self) -> dict[str, object]:
             """Build the dataset."""
             return dict[str, object](self._data)
+
+    def assert_true(self, condition: bool, message: str | None = None) -> None:
+        """Assert that a condition is true.
+
+        Args:
+            condition: Condition to check
+            message: Custom error message
+
+        Raises:
+            AssertionError: If condition is not true
+
+        """
+        assert condition, message or "Assertion failed: condition is not true"
+
+    def assert_false(self, condition: bool, message: str | None = None) -> None:
+        """Assert that a condition is false.
+
+        Args:
+            condition: Condition to check
+            message: Custom error message
+
+        Raises:
+            AssertionError: If condition is not false
+
+        """
+        assert not condition, message or "Assertion failed: condition is not false"
+
+    def assert_is_none(self, value: object, message: str | None = None) -> None:
+        """Assert that a value is None.
+
+        Args:
+            value: Value to check
+            message: Custom error message
+
+        Raises:
+            AssertionError: If value is not None
+
+        """
+        assert value is None, message or f"Expected None, got {value}"
+
+    def assert_is_not_none(self, value: object, message: str | None = None) -> None:
+        """Assert that a value is not None.
+
+        Args:
+            value: Value to check
+            message: Custom error message
+
+        Raises:
+            AssertionError: If value is None
+
+        """
+        assert value is not None, message or f"Expected not None, got {value}"
 
     def assert_result_success(
         self,
@@ -208,3 +313,64 @@ class FlextTestsMatchers:
         assert isinstance(timeout, int) and timeout > 0, (
             message or "Config timeout must be positive integer"
         )
+
+    @staticmethod
+    def validate_required_string(value: str, field_name: str) -> str:
+        """Generic string validation for tests.
+
+        Args:
+            value: String to validate
+            field_name: Field name for error messages
+
+        Returns:
+            Validated string
+
+        Raises:
+            ValueError: If validation fails
+
+        """
+        if not value or not value.strip():
+            msg = f"{field_name} cannot be empty"
+            raise ValueError(msg)
+        return value.strip()
+
+    @staticmethod
+    def validate_enum(value: str, allowed: set[str], field_name: str) -> str:
+        """Generic enum validation for tests.
+
+        Args:
+            value: Value to validate
+            allowed: Set of allowed values
+            field_name: Field name for error messages
+
+        Returns:
+            Validated value
+
+        Raises:
+            ValueError: If validation fails
+
+        """
+        if value not in allowed:
+            msg = f"Invalid {field_name}: {value}"
+            raise ValueError(msg)
+        return value
+
+    @staticmethod
+    def validate_list_not_empty(value: list[object], field_name: str) -> list[object]:
+        """Generic list validation for tests.
+
+        Args:
+            value: List to validate
+            field_name: Field name for error messages
+
+        Returns:
+            Validated list
+
+        Raises:
+            ValueError: If validation fails
+
+        """
+        if not value:
+            msg = f"{field_name} cannot be empty"
+            raise ValueError(msg)
+        return value
