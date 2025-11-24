@@ -75,9 +75,9 @@ class FlextModelsValidation:
                     if result.error
                     else f"{base_msg} (validation rule failed)"
                 )
-                return FlextResult.fail(error_msg)
+                return _get_flext_result().fail(error_msg)
 
-        return FlextResult.ok(model)
+        return _get_flext_result().ok(model)
 
     @staticmethod
     def validate_cross_fields(
@@ -171,15 +171,15 @@ class FlextModelsValidation:
             validation_time = (time_module.time() - start_time) * 1000
 
             if validation_time > timeout_ms:
-                return FlextResult.fail(
+                return _get_flext_result().fail(
                     f"Validation too slow: {validation_time:.2f}ms > {timeout_ms}ms",
                     error_code="PERFORMANCE_VALIDATION_FAILED",
                     error_data={"validation_time_ms": validation_time},
                 )
 
-            return FlextResult.ok(validated_model)
+            return _get_flext_result().ok(validated_model)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[BaseModel].fail(
+            return _get_flext_result()[BaseModel].fail(
                 f"Validation failed: {e}",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
@@ -232,11 +232,11 @@ class FlextModelsValidation:
                             if result.error
                             else f"{base_msg} (item validation failed)"
                         )
-                        return FlextResult.fail(error_msg)
+                        return _get_flext_result().fail(error_msg)
 
                 valid_models.append(model)
 
-            return FlextResult.ok(valid_models)
+            return _get_flext_result().ok(valid_models)
         # Accumulate all errors
         validated_models: FlextTypes.ObjectList = []
         all_errors: list[str] = []
@@ -267,13 +267,13 @@ class FlextModelsValidation:
                 all_errors.append(error_msg)
 
         if all_errors:
-            return FlextResult.fail(
+            return _get_flext_result().fail(
                 f"Batch validation failed: {'; '.join(all_errors)}",
                 error_code="BATCH_VALIDATION_FAILED",
                 error_data={"error_count": len(all_errors), "errors": all_errors},
             )
 
-        return FlextResult.ok(validated_models)
+        return _get_flext_result().ok(validated_models)
 
     @staticmethod
     def validate_domain_invariants(
@@ -627,7 +627,7 @@ class FlextModelsValidation:
                     )
 
         # Return validated entity
-        return FlextResult.ok(entity)
+        return _get_flext_result().ok(entity)
 
 
 __all__ = ["FlextModelsValidation"]

@@ -25,41 +25,23 @@ from typing import (
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
 from flext_core.loggings import FlextLogger
-
-
-# Lazy import to avoid circular dependency
-def _get_flext_models():
-    from flext_core.models import FlextModels
-
-    return FlextModels
-
-
+from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
-
-# Type aliases for MyPy compatibility - using string literals to avoid circular import
-_StructlogProxyStr: TypeAlias = "_get_flext_models().StructlogProxyContextVar[str]"
-_StructlogProxyDatetime: TypeAlias = (
-    "_get_flext_models().StructlogProxyContextVar[datetime]"
-)
-_StructlogProxyDict: TypeAlias = (
-    "_get_flext_models().StructlogProxyContextVar[dict[str, object]]"
-)
-
-
-def _get_flext_models():
-    """Lazy import to avoid circular dependency."""
-    from flext_core.models import FlextModels
-
-    return FlextModels
+_StructlogProxyStr: TypeAlias = FlextModelsContext.StructlogProxyContextVar[str]
+_StructlogProxyDatetime: TypeAlias = FlextModelsContext.StructlogProxyContextVar[
+    datetime
+]
+_StructlogProxyDict: TypeAlias = FlextModelsContext.StructlogProxyContextVar[
+    dict[str, object]
+]
 
 
 def _create_str_proxy(key: str, default: str | None = None) -> _StructlogProxyStr:
     """Helper to create StructlogProxyContextVar[str] instances."""
-    models = _get_flext_models()
-    return models.StructlogProxyContextVar[str](key, default=default)
+    return FlextModelsContext.StructlogProxyContextVar[str](key, default=default)
 
 
 def _create_datetime_proxy(
@@ -67,7 +49,7 @@ def _create_datetime_proxy(
     default: datetime | None = None,
 ) -> _StructlogProxyDatetime:
     """Helper to create StructlogProxyContextVar[datetime] instances."""
-    return _get_flext_models().StructlogProxyContextVar[datetime](
+    return FlextModelsContext.StructlogProxyContextVar[datetime](
         key,
         default=default,
     )
@@ -78,7 +60,7 @@ def _create_dict_proxy(
     default: dict[str, object] | None = None,
 ) -> _StructlogProxyDict:
     """Helper to create StructlogProxyContextVar[dict[str, object]] instances."""
-    return _get_flext_models().StructlogProxyContextVar[dict[str, object]](
+    return FlextModelsContext.StructlogProxyContextVar[dict[str, object]](
         key,
         default=default,
     )
@@ -98,7 +80,7 @@ class FlextContext:
         - Hierarchical scopes (global, user, session) with scope-based access
         - Delegation to FlextLogger for structured logging integration
         - Container integration via FlextContext.Service for DI pattern
-        - _get_flext_models().StructlogProxyContextVar for direct logging system integration
+        - FlextModels.StructlogProxyContextVar for direct logging system integration
 
     Core Features:
         - Hierarchical context scopes (global, request, session, transaction)
@@ -170,14 +152,14 @@ class FlextContext:
 
     Context Variable Compliance:
         - Uses Python contextvars for inherent thread-safety and async support
-        - _get_flext_models().StructlogProxyContextVar wraps contextvars with
+        - FlextModels.StructlogProxyContextVar wraps contextvars with
           structlog integration
         - No explicit protocol inheritance needed - implements context management patterns
         - Automatic FlextLogger delegation for logging consistency across ecosystem
     """
 
     # Instance attributes
-    _metadata: _get_flext_models().ContextMetadata
+    _metadata: FlextModels.ContextMetadata
 
     # =========================================================================
     # LIFECYCLE METHODS
@@ -185,7 +167,7 @@ class FlextContext:
 
     def __init__(
         self,
-        initial_data: _get_flext_models().ContextData | dict[str, object] | None = None,
+        initial_data: FlextModels.ContextData | dict[str, object] | None = None,
     ) -> None:
         """Initialize FlextContext with optional initial data.
 
@@ -194,35 +176,33 @@ class FlextContext:
         integration, maintaining clear separation of concerns.
 
         Args:
-            initial_data: Optional `_get_flext_models().ContextData` instance or dict
+            initial_data: Optional `FlextModels.ContextData` instance or dict
 
         """
         super().__init__()
         # Use Pydantic directly - NO redundant helpers (Pydantic validates dict/None/model)
-        # Type narrowing: always create _get_flext_models().ContextData instance
+        # Type narrowing: always create FlextModels.ContextData instance
         if FlextRuntime.is_dict_like(initial_data):
-            context_data: _get_flext_models().ContextData = (
-                _get_flext_models().ContextData(
-                    data=initial_data,
-                )
+            context_data: FlextModels.ContextData = FlextModels.ContextData(
+                data=initial_data,
             )
         elif initial_data is not None and isinstance(
             initial_data,
-            _get_flext_models().ContextData,
+            FlextModels.ContextData,
         ):
             # Already a ContextData instance - explicit type check for MyPy
             context_data = initial_data
         else:
             # None or uninitialized - create empty ContextData
-            context_data = _get_flext_models().ContextData()
+            context_data = FlextModels.ContextData()
         # Initialize context-specific metadata (separate from ContextData.metadata)
         # ContextData.metadata = generic creation/modification metadata (Metadata)
         # FlextContext._metadata = context-specific tracing metadata (ContextMetadata)
-        self._metadata = _get_flext_models().ContextMetadata()
+        self._metadata = FlextModels.ContextMetadata()
 
         self._hooks: FlextTypes.HookRegistry = {}
-        self._statistics: _get_flext_models().ContextStatistics = (
-            _get_flext_models().ContextStatistics()
+        self._statistics: FlextModels.ContextStatistics = (
+            FlextModels.ContextStatistics()
         )
         self._active = True
         self._suspended = False
@@ -250,7 +230,7 @@ class FlextContext:
 
         # Initialize contextvars with initial data if provided
         # Note: No self._lock needed - contextvars are thread-safe by design
-        # Type narrowing: context_data is always _get_flext_models().ContextData at this point
+        # Type narrowing: context_data is always FlextModels.ContextData at this point
         if context_data.data:
             # Set initial data in global context
             self._set_in_contextvar(
@@ -782,8 +762,8 @@ class FlextContext:
         # Clone metadata and statistics
         cloned._metadata = (
             self._metadata.model_copy()
-            if isinstance(self._metadata, _get_flext_models().ContextMetadata)
-            else _get_flext_models().ContextMetadata()
+            if isinstance(self._metadata, FlextModels.ContextMetadata)
+            else FlextModels.ContextMetadata()
         )
         cloned._statistics = self._statistics.model_copy()
 
@@ -926,7 +906,7 @@ class FlextContext:
                 FlextLogger.clear_global_context()
 
         # Clear metadata and hooks
-        self._metadata = _get_flext_models().ContextMetadata()  # Reset model
+        self._metadata = FlextModels.ContextMetadata()  # Reset model
         self._hooks.clear()
 
     def add_hook(self, event: str, hook: FlextTypes.HookCallableType) -> None:
@@ -951,7 +931,7 @@ class FlextContext:
             value: The metadata value
 
         """
-        if isinstance(self._metadata, _get_flext_models().ContextMetadata):
+        if isinstance(self._metadata, FlextModels.ContextMetadata):
             # Directly update custom_fields dict to avoid deprecation warning
             # and object recreation
             self._metadata.custom_fields[key] = value
@@ -983,7 +963,7 @@ class FlextContext:
             >>> value = context.get_metadata("key").unwrap_or("default")
 
         """
-        if not isinstance(self._metadata, _get_flext_models().ContextMetadata):
+        if not isinstance(self._metadata, FlextModels.ContextMetadata):
             return FlextResult[object].fail(
                 "Context metadata not initialized",
                 error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
@@ -1010,7 +990,7 @@ class FlextContext:
             Dictionary of all metadata (flattened including custom_fields)
 
         """
-        if isinstance(self._metadata, _get_flext_models().ContextMetadata):
+        if isinstance(self._metadata, FlextModels.ContextMetadata):
             result = self._metadata.model_dump()
             # Flatten custom_fields into top-level dict for backward compatibility
             custom_fields = result.pop("custom_fields", {})
@@ -1043,7 +1023,7 @@ class FlextContext:
                 all_data.update(scope_value)
         return all_data
 
-    def get_statistics(self) -> _get_flext_models().ContextStatistics:
+    def get_statistics(self) -> FlextModels.ContextStatistics:
         """Get context statistics.
 
         Returns:
@@ -1068,7 +1048,7 @@ class FlextContext:
                 FlextLogger.clear_global_context()
 
         # Reset metadata model
-        self._metadata = _get_flext_models().ContextMetadata()
+        self._metadata = FlextModels.ContextMetadata()
 
     def export(self) -> dict[str, object]:
         """Export context data as a dictionary for compatibility consumers.
@@ -1079,7 +1059,7 @@ class FlextContext:
         export_snapshot = self.export_snapshot()
         return export_snapshot.data
 
-    def export_snapshot(self) -> _get_flext_models().ContextExport:
+    def export_snapshot(self) -> FlextModels.ContextExport:
         """Return typed export snapshot including metadata and statistics.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -1102,18 +1082,18 @@ class FlextContext:
                 all_data.update(scope_value)
 
         # Fast fail: metadata must be ContextMetadata instance
-        if not isinstance(self._metadata, _get_flext_models().ContextMetadata):
+        if not isinstance(self._metadata, FlextModels.ContextMetadata):
             msg = (
                 f"Invalid metadata type: {type(self._metadata).__name__}. "
-                "Expected _get_flext_models().ContextMetadata"
+                "Expected FlextModels.ContextMetadata"
             )
             raise TypeError(msg)
 
         # Fast fail: statistics must be ContextStatistics instance
-        if not isinstance(self._statistics, _get_flext_models().ContextStatistics):
+        if not isinstance(self._statistics, FlextModels.ContextStatistics):
             msg = (
                 f"Invalid statistics type: {type(self._statistics).__name__}. "
-                "Expected _get_flext_models().ContextStatistics"
+                "Expected FlextModels.ContextStatistics"
             )
             raise TypeError(msg)
 
@@ -1121,7 +1101,7 @@ class FlextContext:
         metadata_dict = self.get_all_metadata()
 
         # Convert statistics to dict - use model_dump() for Pydantic model
-        if isinstance(self._statistics, _get_flext_models().ContextStatistics):
+        if isinstance(self._statistics, FlextModels.ContextStatistics):
             statistics_dict = self._statistics.model_dump()
         else:
             statistics_dict = {}
@@ -1140,7 +1120,7 @@ class FlextContext:
             )
             raise TypeError(msg)
 
-        return _get_flext_models().ContextExport(
+        return FlextModels.ContextExport(
             data=all_data,
             metadata=metadata_dict,
             statistics=statistics_dict,
@@ -1261,7 +1241,7 @@ class FlextContext:
         def set_correlation_id(correlation_id: str) -> None:
             """Set correlation ID.
 
-            Note: Uses structlog as single source of truth (via _get_flext_models().StructlogProxyContextVar).
+            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
             FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
 
@@ -1270,7 +1250,7 @@ class FlextContext:
             """Generate unique correlation ID.
 
             Note: Uses FlextUtilities.Generators.generate_correlation_id() for ID generation.
-            Sets the correlation ID in context variables (via _get_flext_models().StructlogProxyContextVar).
+            Sets the correlation ID in context variables (via FlextModels.StructlogProxyContextVar).
             """
             correlation_id = FlextUtilities.Generators.generate_correlation_id()
             FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
@@ -1369,7 +1349,7 @@ class FlextContext:
         def set_service_name(service_name: str) -> None:
             """Set service name.
 
-            Note: Uses structlog as single source of truth (via _get_flext_models().StructlogProxyContextVar).
+            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
             FlextContext.Variables.Service.SERVICE_NAME.set(service_name)
 
@@ -1383,7 +1363,7 @@ class FlextContext:
         def set_service_version(version: str) -> None:
             """Set service version.
 
-            Note: Uses structlog as single source of truth (via _get_flext_models().StructlogProxyContextVar).
+            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
             FlextContext.Variables.Service.SERVICE_VERSION.set(version)
 
@@ -1486,7 +1466,7 @@ class FlextContext:
         def set_user_id(user_id: str) -> None:
             """Set user ID in context.
 
-            Note: Uses structlog as single source of truth (via _get_flext_models().StructlogProxyContextVar).
+            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
             FlextContext.Variables.Request.USER_ID.set(user_id)
 
@@ -1499,7 +1479,7 @@ class FlextContext:
         def set_operation_name(operation_name: str) -> None:
             """Set operation name in context.
 
-            Note: Uses structlog as single source of truth (via _get_flext_models().StructlogProxyContextVar).
+            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
             FlextContext.Variables.Performance.OPERATION_NAME.set(operation_name)
 
@@ -1512,7 +1492,7 @@ class FlextContext:
         def set_request_id(request_id: str) -> None:
             """Set request ID in context.
 
-            Note: Uses structlog as single source of truth (via _get_flext_models().StructlogProxyContextVar).
+            Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
             FlextContext.Variables.Request.REQUEST_ID.set(request_id)
 
@@ -1783,7 +1763,7 @@ class FlextContext:
             FlextContext.Variables.Performance.OPERATION_METADATA.set(None)
             FlextContext.Variables.Request.REQUEST_TIMESTAMP.set(None)
 
-            # Note: All variables use structlog as single source (via _get_flext_models().StructlogProxyContextVar)
+            # Note: All variables use structlog as single source (via FlextModels.StructlogProxyContextVar)
 
         @staticmethod
         def ensure_correlation_id() -> str:

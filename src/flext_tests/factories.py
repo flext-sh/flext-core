@@ -273,3 +273,50 @@ class FlextTestsFactories:
                 return super().validate_config()
 
         return TestService
+
+    @staticmethod
+    def create_flext_cli_app_base(
+        app_name: str = "test-app",
+        app_help: str = "Test application",
+        config_class: type | None = None,
+        **overrides: object,
+    ) -> type:
+        """Create a test FlextCliAppBase subclass.
+
+        Args:
+            app_name: Application name
+            app_help: Application help text
+            config_class: Configuration class to use
+            **overrides: Additional attributes for the app base
+
+        Returns:
+            Test FlextCliAppBase subclass
+        """
+        # Import here to avoid circular imports
+        try:
+            from flext_cli import FlextCliAppBase, FlextCliConfig
+        except ImportError:
+            # Fallback for when flext_cli is not available
+            return type
+
+        actual_config_class = config_class or FlextCliConfig
+
+        class TestFlextCliApp(FlextCliAppBase):
+            """Test FlextCliAppBase subclass."""
+
+            app_name = app_name
+            app_help = app_help
+            config_class = actual_config_class
+
+            def __init__(self, **init_overrides: object) -> None:
+                super().__init__()
+                # Apply overrides
+                for key, value in {**overrides, **init_overrides}.items():
+                    if hasattr(self, key):
+                        setattr(self, key, value)
+
+            def _register_commands(self) -> None:
+                # Default empty implementation
+                pass
+
+        return TestFlextCliApp
