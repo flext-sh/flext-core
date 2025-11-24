@@ -375,13 +375,14 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
         def risky_operation() -> int:
             return 1 // 0  # Will raise ZeroDivisionError
 
-        from_exc = FlextResult[int].safe_call(risky_operation)
-        print(f"🔥 .safe_call() for exceptions: {from_exc}")
+        # NEW: Using from_callable instead of manual try/except
+        from_callable_result = FlextResult[int].from_callable(risky_operation)
+        print(f"🔥 .from_callable() for exceptions: {from_callable_result}")
 
         # Log factory method demonstration
         self.logger.info(
             "FlextResult factory methods demonstrated",
-            extra={"methods": ["ok", "fail", "safe_call"]},
+            extra={"methods": ["ok", "fail", "from_callable"]},
         )
 
     def demonstrate_value_extraction(self) -> None:
@@ -400,6 +401,29 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
 
         print(f".value property: {success.value['name']}")
         print(f".expect('Must have value'): {success.expect('Must have value')}")
+
+        # NEW: value_or_call for lazy expensive defaults
+        expensive_computed = False
+
+        def compute_expensive_default() -> dict[str, object]:
+            nonlocal expensive_computed
+            expensive_computed = True
+            print("  Computing expensive default user...")
+            return {"email": "default@example.com", "name": "Default User"}
+
+        # Success case - expensive default NOT computed
+        expensive_computed = False
+        result = success.value_or_call(compute_expensive_default)
+        print(
+            f".value_or_call() success: {result['name']}, computed={expensive_computed}"
+        )
+
+        # Failure case - expensive default IS computed
+        expensive_computed = False
+        result = failure.value_or_call(compute_expensive_default)
+        print(
+            f".value_or_call() failure: {cast('dict[str, object]', result)['name']}, computed={expensive_computed}"
+        )
 
     # ========== RAILWAY OPERATIONS ==========
 
@@ -427,6 +451,20 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
             FlextResult[str].ok("hello").flat_map(validate_length).flat_map(add_prefix)
         )
         print(f".flat_map chain: {result.unwrap()}")
+
+        # NEW: flow_through for clean pipeline composition
+        def to_upper_result(s: str) -> FlextResult[str]:
+            return FlextResult[str].ok(s.upper())
+
+        def double_length(s: str) -> FlextResult[str]:
+            return FlextResult[str].ok(s * 2)
+
+        result = (
+            FlextResult[str]
+            .ok("hello")
+            .flow_through(validate_length, to_upper_result, double_length, add_prefix)
+        )
+        print(f".flow_through pipeline: {result.unwrap()}")
 
         # Filter: conditional success
         filtered_result: FlextResult[int] = (
@@ -460,6 +498,23 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
         # OrElse: provide fallback value
         fallback = failure.or_else(FlextResult[str].ok("fallback"))
         print(f".or_else(): {fallback.unwrap()}")
+
+        # NEW: alt - alternative result (same as or_else but cleaner)
+        alternative = failure.alt(FlextResult[str].ok("alternative"))
+        print(f".alt(): {alternative.unwrap()}")
+
+        # NEW: lash - apply function to error (opposite of flat_map)
+        def log_and_recover(error: str) -> FlextResult[str]:
+            print(f"  Logging error: {error}")
+            return FlextResult[str].ok("Recovered via lash")
+
+        lashed = failure.lash(log_and_recover)
+        print(f".lash(): {lashed.unwrap()}")
+
+        # Success case - lash not applied
+        success = FlextResult[str].ok("Success value")
+        success_lashed = success.lash(log_and_recover)
+        print(f"Success with .lash() (unchanged): {success_lashed.unwrap()}")
 
     # ========== ADVANCED COMBINATORS ==========
 
@@ -823,7 +878,7 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
 
         # OLD: Manual try/except (DEPRECATED)
         warnings.warn(
-            "Manual try/except is DEPRECATED! Use FlextResult.safe_call() instead.",
+            "Manual try/except is DEPRECATED! Use FlextResult.from_callable() instead.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -833,15 +888,22 @@ class ComprehensiveResultService(FlextService[dict[str, object]]):
         print("except Exception as e:")
         print("    handle_error(e)")
 
-        # NEW: FlextResult pattern
+        # NEW: FlextResult pattern with from_callable
         print("\n✅ CORRECT WAY (FlextResult):")
 
         def risky_function() -> int:
             error_message = "Division by zero"
             raise ZeroDivisionError(error_message)  # Will raise
 
-        result = FlextResult[int].safe_call(risky_function)
-        print(f"FlextResult.safe_call(): {result}")
+        result = FlextResult[int].from_callable(risky_function)
+        print(f"FlextResult.from_callable(): {result}")
+
+        # Show the clean new pattern
+        print("\n✨ NEW PATTERN (from_callable with error code):")
+        result_with_code = FlextResult[int].from_callable(
+            risky_function, error_code=FlextConstants.Errors.VALIDATION_ERROR
+        )
+        print(f"With custom error code: {result_with_code.error_code}")
 
         # OLD: Multiple return types (DEPRECATED)
         warnings.warn(
@@ -918,7 +980,10 @@ def main() -> None:
     print("\n" + "=" * 60)
     print("✅ ALL FlextResult methods demonstrated!")
     print(
-        "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call",
+        "✨ NEW v0.9.9+ methods prominently featured: from_callable, flow_through, lash, alt, value_or_call",
+    )
+    print(
+        "🎯 Railway patterns: Replaced manual try/except with functional composition",
     )
     print(
         "🎯 Layer Integration: FlextRuntime (0.5) → FlextConstants (1) → FlextExceptions (2)",

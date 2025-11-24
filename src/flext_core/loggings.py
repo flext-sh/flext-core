@@ -1504,8 +1504,89 @@ class FlextLoggerResultAdapter:
             exception=exception,
             exc_info=exc_info,
             return_result=True,
-            **kwargs_for_error,  # type: ignore[arg-type]
+            **kwargs_for_error,
         )
+
+    def track_performance(self, operation_name: str) -> FlextLogger.PerformanceTracker:
+        """Track operation performance returning context manager.
+
+        Args:
+            operation_name: Name of operation being tracked
+
+        Returns:
+            PerformanceTracker: Context manager for performance tracking
+
+        """
+        return self._base_logger.track_performance(operation_name)
+
+    def log_result(
+        self,
+        result: FlextResult[T],
+        *,
+        operation: str | None = None,
+        level: str = "info",
+    ) -> FlextResult[bool]:
+        """Log FlextResult with automatic success/failure handling.
+
+        Args:
+            result: FlextResult to log
+            operation: Optional operation name for context
+            level: Log level (default: info)
+
+        Returns:
+            FlextResult[bool]: Success with True if logged
+
+        """
+        return self._base_logger.log_result(
+            result,
+            operation=operation,
+            level=level,
+        )
+
+    def bind_context(self, context: dict[str, object]) -> FlextResult[bool]:
+        """Bind context to logger (ContextBinder protocol).
+
+        Args:
+            context: Context dictionary to bind
+
+        Returns:
+            FlextResult[bool]: Success with True if bound
+
+        """
+        return self._base_logger.bind_context(context)
+
+    def get_context(self) -> FlextResult[dict[str, object]]:
+        """Get current logger context.
+
+        Returns:
+            FlextResult[dict[str, object]]: Current context fields
+
+        """
+        return self._base_logger.get_context()
+
+    def start_tracking(self, _operation: str) -> FlextResult[bool]:
+        """Start tracking an operation.
+
+        Args:
+            _operation: Operation name to track
+
+        Returns:
+            FlextResult[bool]: Success with True if tracking started
+
+        """
+        return self._base_logger.start_tracking(_operation)
+
+    def stop_tracking(self, _operation: str) -> FlextResult[float]:
+        """Stop tracking an operation.
+
+        Args:
+            _operation: Operation name to stop tracking
+
+        Returns:
+            FlextResult[float]: Success with elapsed time
+
+        """
+        return self._base_logger.stop_tracking(_operation)
 
 
 __all__: list[str] = [

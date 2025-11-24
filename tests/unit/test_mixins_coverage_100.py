@@ -138,10 +138,10 @@ class TestMixins100Coverage:
     def test_validate_with_result_success(self) -> None:
         """Test Validation.validate_with_result with successful validators."""
 
-        def validator1(data: str) -> FlextResult[bool]:
+        def validator1(data: object) -> FlextResult[bool]:
             return FlextResult[bool].ok(True)
 
-        def validator2(data: str) -> FlextResult[bool]:
+        def validator2(data: object) -> FlextResult[bool]:
             return FlextResult[bool].ok(True)
 
         result = FlextMixins.Validation.validate_with_result(
@@ -154,10 +154,10 @@ class TestMixins100Coverage:
     def test_validate_with_result_failure(self) -> None:
         """Test Validation.validate_with_result with failing validator."""
 
-        def validator1(data: str) -> FlextResult[bool]:
+        def validator1(data: object) -> FlextResult[bool]:
             return FlextResult[bool].ok(True)
 
-        def validator2(data: str) -> FlextResult[bool]:
+        def validator2(data: object) -> FlextResult[bool]:
             return FlextResult[bool].fail("Validation failed", error_code="ERR001")
 
         result = FlextMixins.Validation.validate_with_result(
@@ -165,17 +165,22 @@ class TestMixins100Coverage:
             [validator1, validator2],
         )
         assert result.is_failure
+        assert result.error is not None
         assert "Validation failed" in result.error
         assert result.error_code == "ERR001"
 
     def test_validate_with_result_false_result(self) -> None:
         """Test Validation.validate_with_result with validator returning False."""
 
-        def validator(data: str) -> FlextResult[bool]:
+        def validator(data: object) -> FlextResult[bool]:
             return FlextResult[bool].ok(False)  # Not True
 
-        result = FlextMixins.Validation.validate_with_result("test_data", [validator])
+        result = FlextMixins.Validation.validate_with_result(
+            "test_data",
+            [validator],
+        )
         assert result.is_failure
+        assert result.error is not None
         assert "must return FlextResult[bool].ok(True)" in result.error
 
     def test_protocol_validation_is_handler(self) -> None:
@@ -237,6 +242,7 @@ class TestMixins100Coverage:
             "UnknownProtocol",
         )
         assert result.is_failure
+        assert result.error is not None
         assert "Unknown protocol" in result.error
 
     def test_validate_protocol_compliance_not_satisfied(self) -> None:
@@ -277,6 +283,7 @@ class TestMixins100Coverage:
         processor = BadProcessor()
         result = FlextMixins.ProtocolValidation.validate_processor_protocol(processor)
         assert result.is_failure
+        assert result.error is not None
         assert "missing required method" in result.error
 
     def test_validate_processor_protocol_non_callable(self) -> None:
@@ -291,4 +298,5 @@ class TestMixins100Coverage:
         processor = BadProcessor()
         result = FlextMixins.ProtocolValidation.validate_processor_protocol(processor)
         assert result.is_failure
+        assert result.error is not None
         assert "is not callable" in result.error

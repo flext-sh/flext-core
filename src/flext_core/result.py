@@ -32,7 +32,7 @@ import types
 import warnings
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import suppress
-from typing import Never, Self, cast, override
+from typing import Any, Never, Self, cast, override
 
 from beartype.door import is_bearable
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -350,7 +350,8 @@ class FlextResult[T_co]:
                 try:
                     # Direct call - beartype accepts any type hint at runtime
                     # The type checker cannot infer this, but runtime validation works correctly
-                    is_valid = bool(is_bearable(data, self._expected_type))  # type: ignore[arg-type]
+                    expected_type = cast("Any", self._expected_type)
+                    is_valid = bool(is_bearable(data, expected_type))
                 except Exception:
                     is_valid = False
         except (TypeError, AttributeError):
@@ -971,6 +972,21 @@ class FlextResult[T_co]:
 
         Part of Monad[T] protocol implementation.
         Delegates to flat_map() for actual implementation.
+
+        Args:
+            func: Function returning FlextResult[U]
+
+        Returns:
+            FlextResult[U]: Result of applying function to wrapped value
+
+        """
+        return self.flat_map(func)
+
+    def and_then[U](self, func: Callable[[T_co], FlextResult[U]]) -> FlextResult[U]:
+        """Monadic and_then operation (alias for flat_map/bind).
+
+        Common functional programming alias for flat_map operation.
+        Enables chaining of operations that return FlextResult.
 
         Args:
             func: Function returning FlextResult[U]

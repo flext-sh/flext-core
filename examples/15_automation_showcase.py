@@ -409,9 +409,133 @@ class AutomationService(FlextService[dict[str, object]]):
         print(f"   Workers: {engine_cached.get('worker_count', 0)}")
         print("   No expensive initialization needed")
 
+        # 6. Advanced Automation Scenarios
+        print("\n=== 6. ADVANCED AUTOMATION SCENARIOS ===")
+
+        # Scenario 1: Data Pipeline with Error Recovery
+        print("\n--- Data Pipeline with Error Recovery ---")
+
+        def extract_data() -> FlextResult[list[dict[str, object]]]:
+            """Extract data from source."""
+            # Simulate data extraction that might fail
+            return FlextResult[list[dict[str, object]]].ok([
+                {"id": 1, "name": "Item A", "value": 100},
+                {"id": 2, "name": "Item B", "value": 200},
+            ])
+
+        def transform_data(
+            data: list[dict[str, object]],
+        ) -> FlextResult[list[dict[str, object]]]:
+            """Transform data."""
+            transformed = []
+            for item in data:
+                transformed_item = {
+                    **item,
+                    "processed": True,
+                    "timestamp": "2025-01-01T12:00:00Z",
+                }
+                transformed.append(transformed_item)
+            return FlextResult[list[dict[str, object]]].ok(transformed)
+
+        def load_data(
+            data: list[dict[str, object]],
+        ) -> FlextResult[list[dict[str, object]]]:
+            """Load data to destination."""
+            print(f"   💾 Loaded {len(data)} records successfully")
+            return FlextResult[list[dict[str, object]]].ok(data)
+
+        def retry_on_failure(error: str) -> FlextResult[list[dict[str, object]]]:
+            """Retry strategy for load failures."""
+            print(f"   🔄 Load failed: {error}, retrying...")
+            return FlextResult[list[dict[str, object]]].ok([])
+
+        # Complete ETL pipeline with error recovery
+        etl_result = (
+            extract_data()
+            .flow_through(transform_data, load_data)
+            .lash(retry_on_failure)
+        )
+
+        if etl_result.is_success:
+            print(f"✅ ETL Pipeline: {etl_result.unwrap()}")
+        else:
+            print(f"❌ ETL Pipeline failed: {etl_result.error}")
+
+        # Scenario 2: Multi-Service Coordination
+        print("\n--- Multi-Service Coordination ---")
+
+        def start_service_a() -> FlextResult[str]:
+            """Start service A."""
+            return FlextResult[str].ok("Service A started")
+
+        def start_service_b() -> FlextResult[str]:
+            """Start service B (depends on A)."""
+            return FlextResult[str].ok("Service B started")
+
+        def start_service_c() -> FlextResult[str]:
+            """Start service C (depends on B)."""
+            return FlextResult[str].fail("Service C startup failed")
+
+        def start_backup_service(error: str) -> FlextResult[str]:
+            """Start backup service on failure."""
+            print(f"   🔄 Service failed: {error}, starting backup...")
+            return FlextResult[str].ok("Backup service started")
+
+        # Service orchestration with fallback
+        orchestration_result = (
+            start_service_a()
+            .flow_through(lambda _: start_service_b(), lambda _: start_service_c())
+            .lash(start_backup_service)
+        )
+
+        if orchestration_result.is_success:
+            print(f"✅ Service Orchestration: {orchestration_result.unwrap()}")
+        else:
+            print(f"❌ Service Orchestration failed: {orchestration_result.error}")
+
+        # Scenario 3: Configuration with Lazy Loading
+        print("\n--- Configuration with Lazy Loading ---")
+
+        config_cache: dict[str, object] | None = None
+
+        def load_config_from_file() -> dict[str, object]:
+            """Expensive config loading."""
+            print("   📄 Loading configuration from file...")
+            return {
+                "database_url": "postgresql://localhost:5432/app",
+                "cache_ttl": 3600,
+                "features": ["auth", "logging", "metrics"],
+            }
+
+        def get_automation_config() -> dict[str, object]:
+            """Get config with lazy loading."""
+            nonlocal config_cache
+            if config_cache is None:
+                config_cache = load_config_from_file()
+            return config_cache
+
+        # Try cache first, load lazily if needed
+        config_attempt = FlextResult[dict[str, object]].fail("No cached config")
+        final_config = config_attempt.value_or_call(get_automation_config)
+
+        print(f"✅ Config loaded: {len(final_config)} settings")
+        db_url = str(final_config.get("database_url", ""))
+        print(f"   Database: {db_url[:20]}...")
+
+        # Second attempt uses cached version
+        config_attempt2 = FlextResult[dict[str, object]].fail("No cached config")
+        config_attempt2.value_or_call(get_automation_config)
+
+        print("✅ Second config access used cached version (no file loading)")
+
+        print("\n" + "=" * 60)
+        print("✅ ADVANCED AUTOMATION SCENARIOS COMPLETE!")
+        print("Demonstrated: ETL pipelines, service orchestration, lazy config loading")
+        print("=" * 60)
+
         print("\n" + "=" * 60)
         print("✅ NEW FlextResult METHODS AUTOMATION DEMO COMPLETE!")
-        print("All 5 methods demonstrated with automation patterns")
+        print("All 5 methods + 3 advanced scenarios demonstrated")
         print("=" * 60)
 
 
@@ -470,7 +594,12 @@ def main() -> None:
     print("✅ Operation context tracking")
     print("✅ Automatic context cleanup")
     print("✅ Structured logging with full context")
-    print("✅ Helper method for complete automation")
+    print(
+        "✅ NEW FlextResult methods: from_callable, flow_through, lash, alt, value_or_call"
+    )
+    print(
+        "✅ Advanced automation scenarios: ETL pipelines, service orchestration, lazy loading"
+    )
     print("✅ Zero boilerplate infrastructure code")
     print("=" * 80)
 

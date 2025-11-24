@@ -20,13 +20,14 @@ from typing import TYPE_CHECKING, ClassVar, cast
 
 import structlog
 
+if TYPE_CHECKING:
+    from flext_core.protocols import FlextProtocols
+
+# Zero-dependency Metadata import to break circular import
 from flext_core._models.metadata import Metadata
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.runtime import FlextRuntime
-
-if TYPE_CHECKING:
-    from flext_core.protocols import FlextProtocols
 
 # CRITICAL: NO import from utilities - causes circular import (exceptions → utilities → _utilities → result → exceptions)
 # CRITICAL: NO import from models - causes circular import (exceptions → models → _models → validation → result → exceptions)

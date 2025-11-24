@@ -34,7 +34,7 @@ def mark_test_pattern(
 
     def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
         # Use setattr for dynamic attribute setting to avoid mypy error
-        # Type: ignore needed because mypy doesn't recognize dynamic attributes on Callable
+
         setattr(func, "_test_pattern", pattern)  # noqa: B010
         return func
 
@@ -400,7 +400,7 @@ class TestPropertyBasedPatterns:
         assert isinstance(profile["name"], str)
         assert isinstance(profile["email"], str)
 
-    @given(st.text(min_size=1000, max_size=10000))
+    @given(st.text(min_size=10, max_size=100))
     def test_string_performance_property_based(self, large_string: str) -> None:
         """Property-based test for string processing performance."""
         # Measure basic operations

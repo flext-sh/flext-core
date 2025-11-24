@@ -10,7 +10,6 @@ from __future__ import annotations
 import os
 import threading
 import time
-from typing import cast
 
 import pytest
 
@@ -23,10 +22,10 @@ def make_result_logger(
     _service_name: str | None = None,
     _service_version: str | None = None,
     _correlation_id: str | None = None,
-    _force_new: bool = False,
+    _force_new: bool = False,  # noqa: FBT002
 ) -> FlextLoggerResultAdapter:
     """Helper to create loggers that expose FlextResult outputs."""
-    kwargs: dict[str, str | bool | None] = {}
+    kwargs: dict[str, object] = {}
     if _level is not None:
         kwargs["_level"] = _level
     if _service_name is not None:
@@ -38,7 +37,7 @@ def make_result_logger(
     if _force_new:
         kwargs["_force_new"] = _force_new
     if kwargs:
-        return FlextLogger(name, **cast("dict[str, object]", kwargs)).with_result()
+        return FlextLogger(name, **kwargs).with_result()  # type: ignore [arg-type]
     return FlextLogger(name).with_result()
 
 

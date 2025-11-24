@@ -24,25 +24,10 @@ from flext_core import (
     FlextResult,
     FlextService,
 )
+from flext_tests import FlextTestsFactories
 
-
-# Test Domain Service Implementations
-class SampleUserService(FlextService[object]):
-    """Sample service for user operations used in tests."""
-
-    def execute(self, **_kwargs: object) -> FlextResult[object]:
-        """Execute user operation.
-
-        Returns:
-            FlextResult[object]: Success with user headers
-
-        """
-        return FlextResult[object].ok(
-            {
-                "user_id": "default_123",
-                "email": "test@example.com",
-            },
-        )
+# Create service classes using factory for reusability
+SampleUserService = FlextTestsFactories.create_test_service("user", default=True)
 
 
 class SampleComplexService(FlextService[object]):
@@ -181,12 +166,9 @@ class TestDomainServicesFixed:
         service = SampleUserService()
 
         # Test that assignment raises error on frozen model (Pydantic raises ValidationError for frozen models)
-        with pytest.raises((
-            ValidationError,
-            AttributeError,
-        )):  # Pydantic v2 raises ValidationError or AttributeError on frozen models
+        with pytest.raises((ValidationError, AttributeError)):  # type: ignore[arg-type]  # Pydantic v2 raises ValidationError or AttributeError on frozen models
             # Try to add a new attribute to frozen model - should fail
-            service.new_field = "not_allowed"  # type: ignore[attr-defined]
+            service.new_field = "not_allowed"
 
     def test_execute_method_abstract(self) -> None:
         """Test that execute method is abstract."""
@@ -394,14 +376,12 @@ class TestDomainServicesFixed:
         """Test execute_operation with type error."""
         service = SampleUserService()
 
-        def type_error_operation() -> str:
-            msg = "Wrong type"
-            raise TypeError(msg)
-
-        # Create operation request
+        # Create operation request using factory
         operation_request = FlextModels.OperationExecutionRequest(
             operation_name="type_error_op",
-            operation_callable=type_error_operation,
+            operation_callable=FlextTestsFactories.create_test_operation(
+                "type_error", error_message="Wrong type"
+            ),
         )
 
         result = service.execute_operation(operation_request)
@@ -439,13 +419,13 @@ class TestDomainServicesFixed:
         service = SampleUserService()
 
         def slow_operation() -> str:
-            time.sleep(2)
+            time.sleep(0.2)  # Short sleep for fast test
             return "finished"
 
         operation_request = FlextModels.OperationExecutionRequest(
             operation_name="slow_op",
             operation_callable=slow_operation,
-            timeout_seconds=1,
+            timeout_seconds=0.1,  # Short timeout
         )
 
         result = service.execute_operation(operation_request)
@@ -509,7 +489,7 @@ class TestDomainServicesFixed:
         service = SampleUserService()
         info = service.get_service_info()
 
-        assert info == {"service_type": "SampleUserService"}
+        assert info == {"service_type": "TestService"}
 
     def test_get_service_info_with_validation(self) -> None:
         """Test get_service_info with validation failure."""
@@ -1289,11 +1269,11 @@ class TestServiceComprehensiveCoverage:
 
         class VerySlowService(FlextService[str]):
             def execute(self, **_kwargs: object) -> FlextResult[str]:
-                time.sleep(2)  # Sleep longer than timeout
+                time.sleep(0.1)  # Sleep longer to ensure timeout
                 return FlextResult[str].ok("should not reach")
 
         service = VerySlowService()
-        result = service.execute_with_timeout(1)
+        result = service.execute_with_timeout(0.01)
 
         # Should timeout and return failure
         assert result.is_failure

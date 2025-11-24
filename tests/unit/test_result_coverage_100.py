@@ -927,7 +927,7 @@ class TestResult100Coverage:
 
     def test_chain_validations_empty(self) -> None:
         """Test chain_validations with no validators (line 2009)."""
-        chained = FlextResult[str].chain_validations()
+        chained: FlextResult[object] = FlextResult[str].chain_validations()
         assert chained.is_failure
         assert chained.error is not None and "No validators provided" in chained.error
 

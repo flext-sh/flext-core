@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from typing import cast
 
 from pydantic import BaseModel
 
@@ -149,7 +150,9 @@ class TestFlextMixinsNestedClasses:
     def test_model_conversion_to_dict_with_dict(self) -> None:
         """Test ModelConversion.to_dict() with plain dict."""
         input_dict = {"key": "value", "number": 123}
-        result = FlextMixins.ModelConversion.to_dict(input_dict)
+        result = FlextMixins.ModelConversion.to_dict(
+            cast("dict[str, object]", input_dict)
+        )
 
         assert result is input_dict  # Should return same dict
         assert result == {"key": "value", "number": 123}

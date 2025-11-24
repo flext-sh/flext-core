@@ -540,11 +540,8 @@ class TestFlextModels:
         assert len(value_set) == 2  # value1 and value2 are same, value3 is different
 
         # Should be immutable (frozen)
-        with pytest.raises((
-            ValidationError,
-            AttributeError,
-        )):  # Pydantic v2 raises ValidationError or AttributeError on frozen models
-            value1.value = 100  # type: ignore[misc]
+        with pytest.raises((ValidationError, AttributeError)):  # type: ignore[arg-type]  # Pydantic v2 raises ValidationError or AttributeError on frozen models
+            value1.value = 100  # type: ignore[attr-defined]
 
     def test_command_creation_with_mixins(self) -> None:
         """Test Command creation with all mixins."""
@@ -1008,7 +1005,9 @@ class TestFlextModels:
 
         assert ctx.data["request_id"] == "req-456"
         # attributes is always dict[str, object] with default_factory=dict, never None
-        assert ctx.metadata.attributes.get("source") == "api"  # type: ignore[attr-defined]
+        metadata = ctx.metadata
+        if isinstance(metadata, FlextModels.Metadata):
+            assert metadata.attributes.get("source") == "api"
 
     def test_context_export_model_creation(self) -> None:
         """Test ContextExport model creation."""

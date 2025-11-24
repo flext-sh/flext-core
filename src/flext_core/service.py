@@ -16,7 +16,7 @@ import concurrent.futures
 import inspect
 import logging
 import re
-import signal
+import threading
 import time
 import warnings
 from abc import ABC, abstractmethod
@@ -911,6 +911,32 @@ class FlextService[TDomainResult](
 
         """
 
+    @contextmanager
+    def _timeout_context(self, timeout_seconds: float) -> Iterator[None]:
+        """Context manager for timeout operations.
+
+        Args:
+            timeout_seconds: Timeout duration in seconds
+
+        Yields:
+            None: Context for timeout operations
+
+        """
+        # Store original timeout if any
+        original_timeout = getattr(self, "_current_timeout", None)
+
+        try:
+            # Set current timeout for the context
+            self._current_timeout = timeout_seconds
+            yield
+        finally:
+            # Restore original timeout
+            if original_timeout is not None:
+                self._current_timeout = original_timeout
+            # Remove the attribute if there was no original timeout
+            elif hasattr(self, "_current_timeout"):
+                delattr(self, "_current_timeout")
+
     # =============================================================================
     # ABSTRACT METHODS - Must be implemented by subclasses (Domain.Service protocol)
     # =============================================================================
@@ -1445,35 +1471,10 @@ class FlextService[TDomainResult](
         # No specific action, execute the default operation
         return self.execute()
 
-    @contextmanager
-    def _timeout_context(self, timeout_seconds: float) -> Iterator[None]:
-        """Context manager for signal-based timeout handling.
-
-        Args:
-            timeout_seconds: Timeout duration in seconds
-
-        """
-
-        def timeout_handler(_signum: object, _frame: object) -> None:
-            msg = f"Operation timed out after {timeout_seconds} seconds"
-            raise TimeoutError(msg)
-
-        # Set up the timeout
-        old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(int(timeout_seconds))
-
-        try:
-            yield
-        finally:
-            # Restore the old handler and cancel the alarm
-            signal.alarm(0)
-            signal.signal(signal.SIGALRM, old_handler)
-
-    def execute_with_timeout(
-        self,
-        timeout_seconds: float,
+    def _execute_with_timeout_threading(
+        self, timeout_seconds: float
     ) -> FlextResult[TDomainResult]:
-        """Execute operation with timeout handling.
+        """Execute operation with timeout using threading approach.
 
         Args:
             timeout_seconds: Maximum execution time in seconds
@@ -1482,11 +1483,53 @@ class FlextService[TDomainResult](
             FlextResult[TDomainResult]: Success with result or failure with timeout error
 
         """
-        try:
-            with self._timeout_context(timeout_seconds):
-                return self.execute()
-        except TimeoutError as e:
-            return self.fail(str(e))
+        result: FlextResult[TDomainResult] | None = None
+        execution_error: Exception | None = None
+
+        def execute_in_thread() -> None:
+            nonlocal result, execution_error
+            try:
+                result = self.execute()
+            except Exception as e:
+                execution_error = e
+
+        thread = threading.Thread(target=execute_in_thread, daemon=True)
+        thread.start()
+        thread.join(timeout=timeout_seconds)
+
+        if thread.is_alive():
+            # Thread still running - timeout occurred
+            return self.fail(
+                f"Operation timed out after {timeout_seconds} seconds",
+                error_code="OPERATION_TIMEOUT",
+                error_data={"timeout_seconds": timeout_seconds},
+            )
+
+        if execution_error:
+            # Execution failed with an exception
+            if isinstance(execution_error, TimeoutError):
+                return self.fail(str(execution_error))
+            raise execution_error
+
+        if result is None:
+            msg = "Unexpected: result not set"
+            raise RuntimeError(msg)
+        return result
+
+    def execute_with_timeout(
+        self,
+        timeout_seconds: float,
+    ) -> FlextResult[TDomainResult]:
+        """Execute operation with timeout handling using threading.
+
+        Args:
+            timeout_seconds: Maximum execution time in seconds
+
+        Returns:
+            FlextResult[TDomainResult]: Success with result or failure with timeout error
+
+        """
+        return self._execute_with_timeout_threading(timeout_seconds)
 
     # =========================================================================
     # Protocol Implementation: ExecutableService[T]

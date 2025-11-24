@@ -498,4 +498,5 @@ __all__ = [
     "__version__",
     "__version_info__",
     "auto_register",
+    "flext_tests",
 ]

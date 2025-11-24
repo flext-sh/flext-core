@@ -85,7 +85,9 @@ class FlextTestDocker:
     ]
     _pytest_registered: ClassVar[bool] = False
 
-    def __init__(self, workspace_root: Path | None = None) -> None:
+    def __init__(
+        self, workspace_root: Path | None = None, worker_id: str | None = None
+    ) -> None:
         """Initialize Docker client with dirty state tracking."""
         self._client: DockerClient | None = None
         self.logger: FlextLogger = FlextLogger(__name__)
@@ -103,8 +105,11 @@ class FlextTestDocker:
 
         # Dirty state tracking
         super().__init__()
+        self.worker_id = worker_id or "master"
         self._dirty_containers: set[str] = set()
-        self._state_file = Path.home() / ".flext" / "docker_state.json"
+        self._state_file = (
+            Path.home() / ".flext" / f"docker_state_{self.worker_id}.json"
+        )
         self._load_dirty_state()
 
         # Container configuration tracking (for private/project-specific containers)
@@ -1947,7 +1952,7 @@ class FlextTestDocker:
                         extra={"container": container_name},
                     )
                     # Force kill container
-                    container.kill(signal="SIGKILL")  # type: ignore[no-untyped-call]
+                    container.kill(signal="SIGKILL")
                     self.logger.warning(
                         "Force killed container %s",
                         container_name,

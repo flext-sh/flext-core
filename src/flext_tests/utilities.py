@@ -15,6 +15,7 @@ from contextlib import contextmanager
 from typing import TypeVar
 
 from flext_core import FlextResult
+from flext_tests.matchers import FlextTestsMatchers
 
 TResult = TypeVar("TResult")
 
@@ -244,3 +245,13 @@ class FlextTestsUtilities:
             }
 
         return response
+
+    @classmethod
+    def utilities(cls) -> FlextTestsUtilities:
+        """Get utilities instance."""
+        return cls()
+
+    @classmethod
+    def assertion(cls) -> object:
+        """Get assertion instance (for compatibility - returns matchers instance)."""
+        return FlextTestsMatchers()

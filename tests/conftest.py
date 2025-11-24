@@ -15,6 +15,10 @@ import shutil
 import tempfile
 import warnings
 from collections.abc import Generator
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -26,6 +30,7 @@ from flext_core import (
     FlextResult,
 )
 from flext_core.runtime import FlextRuntime
+from flext_tests.docker import FlextTestDocker
 
 from .fixtures import (
     get_benchmark_data,
@@ -45,6 +50,35 @@ warnings.filterwarnings(
     message="pkg_resources is deprecated",
     category=UserWarning,
 )
+
+
+# Docker Test Infrastructure
+@pytest.fixture(scope="session", autouse=True)
+def test_docker_containers() -> Generator[FlextTestDocker | None]:
+    """Session-scoped fixture for Docker test containers.
+
+    Starts test containers at the beginning of the test session and keeps them
+    running throughout all tests. Containers are only recreated if there are
+    real infrastructure failures inside them.
+
+    Yields:
+        FlextTestDocker or None: Configured docker controller instance or None if docker unavailable
+
+    Note:
+        Containers remain running after test completion for debugging and
+        iterative development. They are only stopped on explicit teardown
+        or system shutdown.
+
+    """
+    try:
+        docker_controller = FlextTestDocker()
+        # Start containers - they will stay running
+        docker_controller.start_all()
+        yield docker_controller
+    except Exception:
+        # Docker not available, yield None
+        yield None
+    # Note: No teardown - containers stay running as per requirements
 
 
 # Core Fixtures

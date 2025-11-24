@@ -18,12 +18,14 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import (
+    FlextConfig,
     FlextConstants,
     FlextDispatcher,
     FlextHandlers,
     FlextModels,
     FlextResult,
 )
+from flext_tests.docker import FlextTestDocker
 
 
 class SimpleMessage(FlextModels.Value):
@@ -49,6 +51,446 @@ class TestDispatcherBasics:
         config = dispatcher.dispatcher_config
         assert isinstance(config, dict)
         assert "timeout_seconds" in config or "dispatcher_enable_logging" in config
+
+    def test_dispatcher_config_keys(self) -> None:
+        """Test dispatcher config contains expected keys."""
+        dispatcher = FlextDispatcher()
+        config = dispatcher.dispatcher_config
+        expected_keys = [
+            "dispatcher_enable_logging",
+            "dispatcher_enable_metrics",
+            "dispatcher_timeout_seconds",
+            "enable_timeout_executor",
+            "executor_workers",
+            "dispatcher_auto_context",
+            "circuit_breaker_threshold",
+            "rate_limit_max_requests",
+            "rate_limit_window_seconds",
+            "max_retry_attempts",
+            "retry_delay",
+        ]
+        for key in expected_keys:
+            assert key in config, f"Missing config key: {key}"
+
+    def test_dispatcher_config_values(self) -> None:
+        """Test dispatcher config values are reasonable."""
+        dispatcher = FlextDispatcher()
+        config = dispatcher.dispatcher_config
+        assert config["dispatcher_timeout_seconds"] > 0
+        assert config["executor_workers"] >= 1
+        assert isinstance(config["dispatcher_enable_logging"], bool)
+        assert isinstance(config["dispatcher_enable_metrics"], bool)
+        assert isinstance(config["enable_timeout_executor"], bool)
+        assert config["circuit_breaker_threshold"] >= 1
+        assert config["rate_limit_max_requests"] >= 1
+        assert config["rate_limit_window_seconds"] > 0
+        assert config["max_retry_attempts"] >= 0
+        assert config["retry_delay"] >= 0
+
+
+class TestCircuitBreakerManager:
+    """Test circuit breaker manager functionality."""
+
+    def test_circuit_breaker_initialization(self) -> None:
+        """Test circuit breaker manager initialization."""
+        dispatcher = FlextDispatcher()
+        cb_manager = dispatcher._circuit_breaker
+
+        assert cb_manager._threshold == dispatcher.config.circuit_breaker_threshold
+        assert (
+            cb_manager._recovery_timeout
+            == FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT
+        )
+        assert (
+            cb_manager._success_threshold
+            == FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD
+        )
+
+    def test_circuit_breaker_get_state_default(self) -> None:
+        """Test getting default state for new message type."""
+        dispatcher = FlextDispatcher()
+        cb_manager = dispatcher._circuit_breaker
+
+        state = cb_manager.get_state("test_message")
+        assert state == FlextConstants.Reliability.CircuitBreakerState.CLOSED
+
+    def test_circuit_breaker_set_state(self) -> None:
+        """Test setting state for message type."""
+        dispatcher = FlextDispatcher()
+        cb_manager = dispatcher._circuit_breaker
+
+        cb_manager.set_state(
+            "test_message", FlextConstants.Reliability.CircuitBreakerState.OPEN
+        )
+        assert (
+            cb_manager.get_state("test_message")
+            == FlextConstants.Reliability.CircuitBreakerState.OPEN
+        )
+
+    def test_circuit_breaker_is_open(self) -> None:
+        """Test checking if circuit breaker is open."""
+        dispatcher = FlextDispatcher()
+        cb_manager = dispatcher._circuit_breaker
+
+        assert not cb_manager.is_open("test_message")
+
+        cb_manager.set_state(
+            "test_message", FlextConstants.Reliability.CircuitBreakerState.OPEN
+        )
+        assert cb_manager.is_open("test_message")
+
+    def test_circuit_breaker_record_success(self) -> None:
+        """Test recording successful operation."""
+        dispatcher = FlextDispatcher()
+        cb_manager = dispatcher._circuit_breaker
+
+        # Initially closed
+        assert (
+            cb_manager.get_state("test_message")
+            == FlextConstants.Reliability.CircuitBreakerState.CLOSED
+        )
+
+        # Record success on closed circuit
+        cb_manager.record_success("test_message")
+        assert (
+            cb_manager.get_state("test_message")
+            == FlextConstants.Reliability.CircuitBreakerState.CLOSED
+        )
+        assert cb_manager._total_successes.get("test_message", 0) == 1
+
+    def test_circuit_breaker_record_failure(self) -> None:
+        """Test recording failed operation."""
+        dispatcher = FlextDispatcher()
+        cb_manager = dispatcher._circuit_breaker
+
+        threshold = cb_manager._threshold
+
+        # Record failures up to threshold
+        for i in range(threshold):
+            cb_manager.record_failure("test_message")
+            if i < threshold - 1:
+                assert (
+                    cb_manager.get_state("test_message")
+                    == FlextConstants.Reliability.CircuitBreakerState.CLOSED
+                )
+            else:
+                assert (
+                    cb_manager.get_state("test_message")
+                    == FlextConstants.Reliability.CircuitBreakerState.OPEN
+                )
+
+        assert cb_manager._failures.get("test_message", 0) == threshold
+
+    def test_circuit_breaker_get_failure_count(self) -> None:
+        """Test getting failure count."""
+        dispatcher = FlextDispatcher()
+        cb_manager = dispatcher._circuit_breaker
+
+        assert cb_manager.get_failure_count("test_message") == 0
+
+        cb_manager.record_failure("test_message")
+        assert cb_manager.get_failure_count("test_message") == 1
+
+    def test_circuit_breaker_get_threshold(self) -> None:
+        """Test getting threshold value."""
+        dispatcher = FlextDispatcher()
+        cb_manager = dispatcher._circuit_breaker
+
+        assert cb_manager.get_threshold() == cb_manager._threshold
+
+    def test_circuit_breaker_cleanup(self) -> None:
+        """Test cleanup functionality."""
+        dispatcher = FlextDispatcher()
+        cb_manager = dispatcher._circuit_breaker
+
+        # Add some state
+        cb_manager.record_failure("test_message")
+        cb_manager.set_state(
+            "test_message", FlextConstants.Reliability.CircuitBreakerState.OPEN
+        )
+
+        # Cleanup
+        cb_manager.cleanup()
+
+        # Should be reset
+        assert (
+            cb_manager.get_state("test_message")
+            == FlextConstants.Reliability.CircuitBreakerState.CLOSED
+        )
+        assert cb_manager.get_failure_count("test_message") == 0
+
+
+class TestRateLimiterManager:
+    """Test rate limiter manager functionality."""
+
+    def test_rate_limiter_initialization(self) -> None:
+        """Test rate limiter manager initialization."""
+        dispatcher = FlextDispatcher()
+        rl_manager = dispatcher._rate_limiter
+
+        assert rl_manager._max_requests == dispatcher.config.rate_limit_max_requests
+        assert rl_manager._window_seconds == dispatcher.config.rate_limit_window_seconds
+
+    def test_rate_limiter_check_rate_limit(self) -> None:
+        """Test checking rate limit."""
+        dispatcher = FlextDispatcher()
+        rl_manager = dispatcher._rate_limiter
+
+        # Initially should allow requests
+        result = rl_manager.check_rate_limit("test_message")
+        assert result.is_success
+        assert result.value is True
+
+    def test_rate_limiter_get_max_requests(self) -> None:
+        """Test getting max requests."""
+        dispatcher = FlextDispatcher()
+        rl_manager = dispatcher._rate_limiter
+
+        assert rl_manager.get_max_requests() == rl_manager._max_requests
+
+    def test_rate_limiter_get_window_seconds(self) -> None:
+        """Test getting window seconds."""
+        dispatcher = FlextDispatcher()
+        rl_manager = dispatcher._rate_limiter
+
+        assert rl_manager.get_window_seconds() == rl_manager._window_seconds
+
+    def test_rate_limiter_cleanup(self) -> None:
+        """Test cleanup functionality."""
+        dispatcher = FlextDispatcher()
+        rl_manager = dispatcher._rate_limiter
+
+        # Trigger some rate limiting
+        for _ in range(rl_manager._max_requests + 1):
+            rl_manager.check_rate_limit("test_message")
+
+        # Cleanup
+        rl_manager.cleanup()
+
+        # Should allow requests again
+        result = rl_manager.check_rate_limit("test_message")
+        assert result.is_success
+
+
+class TestRetryPolicy:
+    """Test retry policy functionality."""
+
+    def test_retry_policy_initialization(self) -> None:
+        """Test retry policy initialization."""
+        dispatcher = FlextDispatcher()
+        retry_policy = dispatcher._retry_policy
+
+        config = FlextConfig()
+        assert retry_policy.get_max_attempts() == config.max_retry_attempts
+        assert retry_policy.get_retry_delay() == config.retry_delay
+
+    def test_retry_policy_should_retry(self) -> None:
+        """Test should retry logic."""
+        dispatcher = FlextDispatcher()
+        retry_policy = dispatcher._retry_policy
+
+        max_attempts = retry_policy.get_max_attempts()
+
+        # Should retry up to max_attempts - 1 (0-based)
+        for attempt in range(max_attempts):
+            if attempt < max_attempts - 1:
+                assert retry_policy.should_retry(attempt), (
+                    f"Should retry attempt {attempt}"
+                )
+            else:
+                assert not retry_policy.should_retry(attempt), (
+                    f"Should not retry attempt {attempt}"
+                )
+
+    def test_retry_policy_is_retriable_error(self) -> None:
+        """Test checking if error is retriable."""
+        dispatcher = FlextDispatcher()
+        retry_policy = dispatcher._retry_policy
+
+        # Common retriable errors
+        assert retry_policy.is_retriable_error("TimeoutError")
+        assert retry_policy.is_retriable_error("Temporary failure")
+        assert retry_policy.is_retriable_error("temporarily unavailable")
+
+        # Non-retriable errors
+        assert not retry_policy.is_retriable_error("ValueError")
+        assert not retry_policy.is_retriable_error("TypeError")
+        assert not retry_policy.is_retriable_error("CustomError")
+
+    def test_retry_policy_get_max_attempts(self) -> None:
+        """Test getting max attempts."""
+        dispatcher = FlextDispatcher()
+        retry_policy = dispatcher._retry_policy
+
+        assert retry_policy.get_max_attempts() == retry_policy._max_attempts
+
+    def test_retry_policy_get_retry_delay(self) -> None:
+        """Test getting retry delay."""
+        dispatcher = FlextDispatcher()
+        retry_policy = dispatcher._retry_policy
+
+        config = FlextConfig()
+        assert retry_policy.get_retry_delay() == config.retry_delay
+
+    def test_retry_policy_cleanup(self) -> None:
+        """Test cleanup functionality."""
+        dispatcher = FlextDispatcher()
+        retry_policy = dispatcher._retry_policy
+
+        # Record some attempts
+        retry_policy.record_attempt("test_message")
+
+        # Cleanup
+        retry_policy.cleanup()
+
+        # Should be reset (no direct way to verify, but shouldn't error)
+
+
+class TestTimeoutEnforcer:
+    """Test timeout enforcer functionality."""
+
+    def test_timeout_enforcer_initialization(self) -> None:
+        """Test timeout enforcer initialization."""
+        dispatcher = FlextDispatcher()
+        timeout_enforcer = dispatcher._timeout_enforcer
+
+        assert (
+            timeout_enforcer._use_timeout_executor
+            == dispatcher.config.enable_timeout_executor
+        )
+        assert timeout_enforcer._executor_workers == dispatcher.config.executor_workers
+
+    def test_timeout_enforcer_should_use_executor(self) -> None:
+        """Test should use executor logic."""
+        dispatcher = FlextDispatcher()
+        timeout_enforcer = dispatcher._timeout_enforcer
+
+        result = timeout_enforcer.should_use_executor()
+        assert isinstance(result, bool)
+
+    def test_timeout_enforcer_reset_executor(self) -> None:
+        """Test resetting executor."""
+        dispatcher = FlextDispatcher()
+        timeout_enforcer = dispatcher._timeout_enforcer
+
+        # Should not error
+        timeout_enforcer.reset_executor()
+
+    def test_timeout_enforcer_resolve_workers(self) -> None:
+        """Test resolving worker count."""
+        dispatcher = FlextDispatcher()
+        timeout_enforcer = dispatcher._timeout_enforcer
+
+        workers = timeout_enforcer.resolve_workers()
+        assert workers >= 1
+
+    def test_timeout_enforcer_get_executor_status(self) -> None:
+        """Test getting executor status."""
+        dispatcher = FlextDispatcher()
+        timeout_enforcer = dispatcher._timeout_enforcer
+
+        status = timeout_enforcer.get_executor_status()
+        assert isinstance(status, dict)
+
+    def test_timeout_enforcer_cleanup(self) -> None:
+        """Test cleanup functionality."""
+        dispatcher = FlextDispatcher()
+        timeout_enforcer = dispatcher._timeout_enforcer
+
+        # Should not error
+        timeout_enforcer.cleanup()
+
+
+class TestDispatcherAdvanced:
+    """Test advanced dispatcher functionality with real Docker integration."""
+
+    def test_dispatcher_with_docker_integration(self) -> None:
+        """Test dispatcher with real Docker container management."""
+        # This test uses real Docker containers for integration testing
+        docker_manager = FlextTestDocker()
+
+        # Test basic container operations
+        containers_result = docker_manager.list_containers()
+        assert containers_result.is_success
+        containers = containers_result.value
+        assert isinstance(containers, list)
+
+        # Test dispatcher with container context
+        dispatcher = FlextDispatcher()
+
+        # Register a simple handler
+        def test_handler(message: SimpleMessage) -> str:
+            return f"processed: {message.value}"
+
+        result = dispatcher.register_function(
+            SimpleMessage, test_handler, mode=FlextConstants.Cqrs.HandlerType.COMMAND
+        )
+        assert result.is_success
+
+        # Dispatch with context - use the correct message type
+        message = SimpleMessage(value="test message")
+        result = dispatcher.dispatch(message)
+        assert result.is_success
+        assert result.value == "processed: test message"
+
+    def test_dispatcher_batch_processing(self) -> None:
+        """Test batch processing capabilities."""
+        dispatcher = FlextDispatcher()
+
+        def batch_handler(message: SimpleMessage) -> str:
+            return f"batch_{message.value}"
+
+        result = dispatcher.register_function(
+            SimpleMessage, batch_handler, mode=FlextConstants.Cqrs.HandlerType.COMMAND
+        )
+        assert result.is_success
+
+        # Test batch dispatch
+        messages = [SimpleMessage(value=f"msg{i}") for i in range(3)]
+        results = dispatcher.dispatch_batch("SimpleMessage", messages)
+        assert len(results) == 3
+        for result in results:
+            assert result.is_success
+            assert "batch_" in result.value
+
+    def test_dispatcher_error_handling(self) -> None:
+        """Test comprehensive error handling."""
+        dispatcher = FlextDispatcher()
+
+        def failing_handler(message: SimpleMessage) -> str:
+            error_msg = "Test error"
+            raise ValueError(error_msg)
+
+        result = dispatcher.register_function(
+            SimpleMessage, failing_handler, mode=FlextConstants.Cqrs.HandlerType.COMMAND
+        )
+        assert result.is_success
+
+        # Dispatch should handle error gracefully
+        message = SimpleMessage(value="test message")
+        result = dispatcher.dispatch(message)
+        assert result.is_failure
+        assert "Test error" in str(result.error)
+
+    def test_dispatcher_metrics_collection(self) -> None:
+        """Test metrics collection during dispatch."""
+        dispatcher = FlextDispatcher()
+
+        def success_handler(message: SimpleMessage) -> str:
+            return f"ok: {message.value}"
+
+        result = dispatcher.register_function(
+            SimpleMessage, success_handler, mode=FlextConstants.Cqrs.HandlerType.COMMAND
+        )
+        assert result.is_success
+
+        # Dispatch and check metrics
+        message = SimpleMessage(value="test")
+        result = dispatcher.dispatch(message)
+        assert result.is_success
+
+        # Metrics should be updated (implementation dependent)
+        # This tests the metrics integration without mocking
 
     @classmethod
     def setup_method(cls) -> None:
@@ -146,7 +588,7 @@ class TestHandlerRegistration:
         result = dispatcher.register_function(
             SimpleMessage,
             handler_func,
-            mode=cast("FlextConstants.Cqrs.HandlerModeSimple", "invalid_mode"),
+            mode=cast("FlextConstants.Cqrs.HandlerType", "invalid_mode"),
         )
         assert result.is_failure
 
@@ -443,7 +885,7 @@ class TestDispatcherErrorHandling:
         result = dispatcher.register_function(
             SimpleMessage,
             handler_func,
-            mode=cast("FlextConstants.Cqrs.HandlerModeSimple", "INVALID"),
+            mode=cast("FlextConstants.Cqrs.HandlerType", "INVALID"),
         )
         assert result.is_failure
 
@@ -484,8 +926,7 @@ class TestHandlerCreation:
             return "handled"
 
         result = dispatcher.create_handler_from_function(
-            handler_func,
-            mode=cast("FlextConstants.Cqrs.HandlerModeSimple", "INVALID"),
+            handler_func, mode=cast("FlextConstants.Cqrs.HandlerType", "INVALID")
         )
 
         assert result.is_failure

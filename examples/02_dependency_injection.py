@@ -195,12 +195,13 @@ class HasCacheGet(Protocol):
 class DatabaseService(FlextService[None]):
     """Concrete database service implementation with enhanced error handling."""
 
+    connected: bool = False
+    _query_count: int = 0
+
     def __init__(self, connection_string: str = "sqlite:///:memory:") -> None:
         """Initialize with connection string using FLEXT patterns."""
         super().__init__()
         self._connection_string = connection_string
-        self.connected = False
-        self._query_count = 0
 
     def execute(self, **_kwargs: object) -> FlextResult[None]:
         """Execute the database service."""
@@ -321,72 +322,108 @@ class DatabaseService(FlextService[None]):
 
 
 class CacheService(FlextService[object]):
-    """Concrete cache service implementation with advanced FLEXT patterns."""
+    """Concrete cache service implementation with advanced FLEXT patterns.
+
+    This service demonstrates the NEW v0.9.9+ FlextResult methods:
+    - from_callable: Replace manual try/except with functional composition
+    - flow_through: Clean pipeline patterns for complex operations
+    - value_or_call: Lazy evaluation of expensive defaults
+    """
+
+    max_size: int = 1000
+    _ttl_seconds: int = 3600
+    _hits: int = 0
+    _misses: int = 0
 
     def __init__(self, max_size: int = 1000, ttl_seconds: int = 3600) -> None:
         """Initialize cache with size and TTL limits."""
         super().__init__()
-        self._cache: dict[str, object] = {}
-        self._metadata: dict[str, object] = {}
         self.max_size = max_size
         self._ttl_seconds = ttl_seconds
-        self._hits = 0
-        self._misses = 0
+        self._cache: dict[str, object] = {}
+        self._metadata: dict[str, object] = {}
 
     def execute(self, **_kwargs: object) -> FlextResult[object]:
         """Execute the cache service."""
         return FlextResult[object].ok(None)
 
     def get(self, key: str) -> FlextResult[object]:
-        """Get value from cache with TTL validation."""
-        if not key or not key.strip():
-            return FlextResult[object].fail(
-                "Cache key cannot be empty",
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
-            )
+        """Get value from cache with TTL validation using functional composition."""
 
-        # Check if key exists
-        if key not in self._cache:
-            self._misses += 1
-            self.logger.debug("Cache miss: %s", key)
-            return FlextResult[object].fail(
-                f"Key not found: {key}",
-                error_code=FlextConstants.Errors.NOT_FOUND,
-            )
+        def validate_key() -> str:
+            """Validate cache key."""
+            if not key or not key.strip():
+                error_msg = "Cache key cannot be empty"
+                raise ValueError(error_msg)
+            return key
 
-        # Check TTL if metadata exists
-        if key in self._metadata:
-            metadata = self._metadata[key]
-            current_time = time.time()
-            created_at_raw = 0
-            if isinstance(metadata, dict):
-                created_at_raw = metadata.get("created_at", 0)
-            created_at = 0.0
-            if created_at_raw is not None:
-                try:
-                    # Safe conversion with type checking
-                    if isinstance(created_at_raw, (int, float, str)):
-                        created_at = float(created_at_raw)
-                    else:
-                        created_at = 0.0
-                except (TypeError, ValueError):
-                    created_at = 0.0
-
-            if current_time - created_at > self._ttl_seconds:
-                # Expired - remove from cache
-                del self._cache[key]
-                del self._metadata[key]
+        def check_existence(valid_key: str) -> FlextResult[str]:
+            """Check if key exists in cache."""
+            if valid_key not in self._cache:
                 self._misses += 1
-                self.logger.debug("Cache expired: %s", key)
-                return FlextResult[object].fail(
-                    f"Key expired: {key}",
-                    error_code=FlextConstants.Errors.OPERATION_ERROR,
+                self.logger.debug("Cache miss: %s", valid_key)
+                error_msg = f"Key not found: {valid_key}"
+                return FlextResult[str].fail(
+                    error_msg, error_code=FlextConstants.Errors.NOT_FOUND
                 )
+            return FlextResult[str].ok(valid_key)
 
-        # Valid hit
-        self._hits += 1
-        self.logger.debug("Cache hit: %s", key)
-        return FlextResult[object].ok(self._cache[key])
+        def validate_ttl(valid_key: str) -> FlextResult[str]:
+            """Validate TTL for existing key."""
+            if valid_key in self._metadata:
+                metadata = self._metadata[valid_key]
+                current_time = time.time()
+                created_at_raw = 0
+                if isinstance(metadata, dict):
+                    created_at_raw = metadata.get("created_at", 0)
+
+                # Use from_callable for safe conversion
+                def convert_timestamp() -> float:
+                    if created_at_raw is not None and isinstance(
+                        created_at_raw, (int, float, str)
+                    ):
+                        return float(created_at_raw)
+                    return 0.0
+
+                created_at_result = FlextResult[float].from_callable(convert_timestamp)
+
+                if created_at_result.is_success:
+                    created_at = created_at_result.unwrap()
+                    if current_time - created_at > self._ttl_seconds:
+                        # Expired - remove from cache
+                        del self._cache[valid_key]
+                        del self._metadata[valid_key]
+                        self._misses += 1
+                        self.logger.debug("Cache expired: %s", valid_key)
+                        error_msg = f"Key expired: {valid_key}"
+                        return FlextResult[str].fail(
+                            error_msg, error_code=FlextConstants.Errors.TIMEOUT_ERROR
+                        )
+
+            return FlextResult[str].ok(valid_key)
+
+        def get_value(valid_key: str) -> FlextResult[object]:
+            """Get the actual cached value."""
+            self._hits += 1
+            self.logger.debug("Cache hit: %s", valid_key)
+            return FlextResult[object].ok(self._cache[valid_key])
+
+        # NEW: Use flow_through for clean pipeline composition
+        result = (
+            FlextResult[str]
+            .from_callable(
+                validate_key, error_code=FlextConstants.Errors.VALIDATION_ERROR
+            )
+            .flow_through(
+                check_existence,
+                validate_ttl,
+            )
+        )
+        if result.is_success:
+            return get_value(result.unwrap())
+        return FlextResult[object].fail(
+            result.error or "Unknown error", error_code=result.error_code
+        )
 
     def set(
         self,
@@ -424,31 +461,51 @@ class CacheService(FlextService[object]):
         return FlextResult[bool].ok(True)
 
     def _evict_oldest(self) -> None:
-        """Evict the oldest cache entry using LRU strategy."""
-        if not self._metadata:
-            return
+        """Evict the oldest cache entry using LRU strategy with functional patterns."""
 
-        # Find oldest entry
-        def get_timestamp(key: str) -> float:
-            metadata = self._metadata[key]
-            created_at_raw = 0
-            if isinstance(metadata, dict):
-                created_at_raw = metadata.get("created_at", 0)
-            if created_at_raw is not None:
-                try:
-                    # Safe conversion with type checking
-                    if isinstance(created_at_raw, (int, float, str)):
+        def find_oldest_key() -> str:
+            """Find the oldest key using functional composition."""
+            if not self._metadata:
+                error_msg = "No cache entries to evict"
+                raise ValueError(error_msg)
+
+            def get_timestamp(key: str) -> float:
+                """Get timestamp for a key using from_callable."""
+
+                def extract_timestamp() -> float:
+                    metadata = self._metadata[key]
+                    created_at_raw = 0
+                    if isinstance(metadata, dict):
+                        created_at_raw = metadata.get("created_at", 0)
+                    if created_at_raw is not None and isinstance(
+                        created_at_raw, (int, float, str)
+                    ):
                         return float(created_at_raw)
                     return 0.0
-                except (TypeError, ValueError):
-                    return 0.0
-            return 0.0
 
-        oldest_key = min(self._metadata.keys(), key=get_timestamp)
+                # Use from_callable for safe timestamp extraction
+                result = FlextResult[float].from_callable(extract_timestamp)
+                return result.value_or_call(lambda: 0.0)
 
-        del self._cache[oldest_key]
-        del self._metadata[oldest_key]
-        self.logger.debug("Cache evicted: %s", oldest_key)
+            return min(self._metadata.keys(), key=get_timestamp)
+
+        def perform_eviction(oldest_key: str) -> FlextResult[str]:
+            """Perform the actual eviction."""
+            del self._cache[oldest_key]
+            del self._metadata[oldest_key]
+            self.logger.debug("Cache evicted: %s", oldest_key)
+            return FlextResult[str].ok(oldest_key)
+
+        # NEW: Use from_callable and flow_through for eviction
+        eviction_result = (
+            FlextResult[str]
+            .from_callable(find_oldest_key)
+            .flow_through(perform_eviction)
+        )
+
+        # For void methods, we just execute the flow but don't return the result
+        if eviction_result.is_failure:
+            self.logger.warning("Cache eviction failed: %s", eviction_result.error)
 
     def get_stats(self) -> dict[str, object]:
         """Get cache service statistics."""
@@ -1334,8 +1391,9 @@ def main() -> None:
     print("\n" + "=" * 60)
     print("✅ FlextContainer dependency injection demonstration complete!")
     print(
-        "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call",
+        "✨ NEW v0.9.9+ methods prominently featured: from_callable, flow_through, lash, alt, value_or_call",
     )
+    print("🎯 CacheService refactored: Manual try/except → functional composition")
     print("🎯 Next: See 03_models_basics.py for FlextModels patterns")
     print("=" * 60)
 

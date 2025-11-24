@@ -555,7 +555,7 @@ class TestV2EdgeCases:
         class User(FlextModels.Entity):
             """User entity."""
 
-            unique_id: str
+            unique_id: str = "test_id"
             name: str
 
         class UserService(FlextService[User]):

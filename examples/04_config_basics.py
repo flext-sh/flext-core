@@ -369,32 +369,62 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
     # ========== CONFIGURATION VALIDATION ==========
 
     def demonstrate_validation(self) -> None:
-        """Show configuration validation."""
-        print("\n=== Configuration Validation ===")
+        """Show configuration validation with from_callable."""
+        print("\n=== Configuration Validation with from_callable ===")
 
-        config = FlextConfig()
+        def validate_config() -> FlextConfig:
+            """Validate configuration - may raise validation errors."""
+            config = FlextConfig()
 
-        validations = [
-            (
-                "log_level",
-                config.log_level in FlextConstants.Logging.VALID_LEVELS,
-            ),
-            ("timeout_seconds", config.timeout_seconds > 0),
-            ("max_workers", config.max_workers > 0),
-            ("cache_ttl", config.cache_ttl >= 0),
-            (
-                "reference_database",
-                bool(self._reference_config.get("database_url")),
-            ),
-        ]
+            # Validate log level
+            if config.log_level not in FlextConstants.Logging.VALID_LEVELS:
+                error_msg = f"Invalid log level: {config.log_level}"
+                raise ValueError(error_msg)
 
-        for field, is_valid in validations:
-            status = "✅" if is_valid else "❌"
+            # Validate performance settings
+            if config.timeout_seconds <= 0:
+                error_msg = "Timeout seconds must be positive"
+                raise ValueError(error_msg)
+            if config.max_workers <= 0:
+                error_msg = "Max workers must be positive"
+                raise ValueError(error_msg)
+            if config.cache_ttl < 0:
+                error_msg = "Cache TTL cannot be negative"
+                raise ValueError(error_msg)
+
+            # Validate database reference
+            if not self._reference_config.get("database_url"):
+                error_msg = "Database URL not configured"
+                raise ValueError(error_msg)
+
+            return config
+
+        # NEW: Use from_callable for safe validation
+        validation_result = FlextResult[FlextConfig].from_callable(validate_config)
+
+        if validation_result.is_success:
+            config = validation_result.unwrap()
             print(
-                f"{status} {field}: Valid"
-                if is_valid
-                else f"{status} {field}: Invalid",
+                f"✅ All validations passed: log_level={config.log_level}, workers={config.max_workers}"
             )
+        else:
+            print(f"❌ Validation failed: {validation_result.error}")
+            return
+
+        # Additional individual validations using from_callable
+        def check_database_url() -> str:
+            """Check database URL availability."""
+            db_url = cast("str", self._reference_config.get("database_url", ""))
+            if not db_url:
+                error_msg = "Database URL is missing"
+                raise ValueError(error_msg)
+            return db_url
+
+        db_result = FlextResult[str].from_callable(check_database_url)
+        if db_result.is_success:
+            print(f"✅ Database URL valid: {db_result.unwrap()[:20]}...")
+        else:
+            print(f"❌ Database validation failed: {db_result.error}")
 
     # ========== DYNAMIC CONFIGURATION ==========
 
@@ -473,42 +503,60 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
 
     def demonstrate_flow_through(self) -> None:
         """Show pipeline composition for multi-step config operations."""
-        print("\n=== flow_through(): Configuration Validation Pipeline ===")
+        print("\n=== flow_through(): Configuration Setup Pipeline ===")
 
-        def load_config(_: object) -> FlextResult[FlextConfig]:
-            """Step 1: Load configuration."""
-            return FlextResult[FlextConfig].ok(FlextConfig())
+        def load_base_config() -> FlextResult[FlextConfig]:
+            """Step 1: Load base configuration."""
 
-        def validate_logging(
-            config: FlextConfig,
-        ) -> FlextResult[FlextConfig]:
-            """Step 3: Validate logging configuration."""
-            if config.log_level not in FlextConstants.Logging.VALID_LEVELS:
-                return FlextResult[FlextConfig].fail(
-                    f"Invalid log level: {config.log_level}",
-                )
+            def create_config() -> FlextConfig:
+                return FlextConfig()
+
+            return FlextResult.from_callable(create_config)
+
+        def validate_environment(config: FlextConfig) -> FlextResult[FlextConfig]:
+            """Step 2: Validate environment-specific settings."""
+            if not config.log_level:
+                return FlextResult[FlextConfig].fail("Log level must be configured")
             return FlextResult[FlextConfig].ok(config)
 
-        def validate_performance(
+        def validate_performance_settings(
             config: FlextConfig,
         ) -> FlextResult[FlextConfig]:
-            """Step 4: Validate performance settings."""
-            if config.max_workers <= 0 or config.timeout_seconds <= 0:
-                return FlextResult[FlextConfig].fail("Invalid performance settings")
+            """Step 3: Validate performance and timeout settings."""
+            if config.max_workers <= 0:
+                return FlextResult[FlextConfig].fail("Max workers must be positive")
+            if config.timeout_seconds <= 0:
+                return FlextResult[FlextConfig].fail("Timeout seconds must be positive")
             return FlextResult[FlextConfig].ok(config)
 
-        # Pipeline: load → validate logging → validate performance
-        result = (
-            load_config(True)  # Start with load_config
-            .flat_map(validate_logging)
-            .flat_map(validate_performance)
+        def validate_database_config(config: FlextConfig) -> FlextResult[FlextConfig]:
+            """Step 4: Validate database configuration."""
+            # In a real scenario, this would check actual database connectivity
+            # For demo, we just ensure basic config exists
+            if not hasattr(config, "database_url"):
+                return FlextResult[FlextConfig].fail("Database URL required")
+            return FlextResult[FlextConfig].ok(config)
+
+        def finalize_config(config: FlextConfig) -> FlextResult[FlextConfig]:
+            """Step 5: Finalize configuration with computed values."""
+            # This could set derived values, validate cross-dependencies, etc.
+            return FlextResult[FlextConfig].ok(config)
+
+        # NEW: Use flow_through for clean configuration pipeline
+        result = load_base_config().flow_through(
+            validate_environment,
+            validate_performance_settings,
+            validate_database_config,
+            finalize_config,
         )
 
         if result.is_success:
             config = result.unwrap()
             print(
-                f"✅ Config validation pipeline success: log={config.log_level}, workers={config.max_workers}",
+                f"✅ Config pipeline success: log={config.log_level}, workers={config.max_workers}, timeout={config.timeout_seconds}s",
             )
+        else:
+            print(f"❌ Config pipeline failed: {result.error}")
 
     def demonstrate_lash(self) -> None:
         """Show error recovery in configuration operations."""
@@ -836,12 +884,14 @@ def main() -> None:
     print("\n" + "=" * 60)
     print("✅ ALL FlextConfig methods demonstrated!")
     print(
-        "✨ Including new v0.9.9+ methods: from_callable, flow_through, lash, alt, value_or_call",
+        "✨ NEW v0.9.9+ methods prominently featured: from_callable, flow_through, lash, alt, value_or_call",
     )
     print(
         "🔧 Including foundation integration: FlextRuntime (Layer 0.5), FlextConstants (Layer 1), FlextExceptions (Layer 2)",
     )
-    print("🎯 Next: See 05_logging_basics.py for FlextLogger patterns")
+    print("🎯 Config operations: Manual validation → from_callable patterns")
+    print("🎯 Pipeline operations: flat_map chains → flow_through composition")
+    print("🎯 Next: See 15_automation_showcase.py for automation patterns")
     print("=" * 60)
 
 

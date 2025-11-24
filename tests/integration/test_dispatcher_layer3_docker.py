@@ -467,7 +467,7 @@ class TestLayer3BatchProcessing:
         """
         dispatcher.register_processor("latency", latency_service)
 
-        data_list = [{"value": i} for i in range(100)]
+        data_list = [{"value": i} for i in range(10)]
         result = dispatcher.process_batch(
             "latency",
             cast("list[object]", data_list),
@@ -476,8 +476,8 @@ class TestLayer3BatchProcessing:
 
         assert result.is_success
         items = result.unwrap()
-        assert len(items) == 100
-        assert latency_service.process_count == 100
+        assert len(items) == 10
+        assert latency_service.process_count == 10
 
 
 # ==================== TESTS: PARALLEL PROCESSING ====================

@@ -60,7 +60,7 @@ class TestCqrs100Coverage:
         try:
             config.max_retry_attempts = 3
             retries = FlextModels.Cqrs._get_max_command_retries_default()
-            assert retries == 3
+            assert retries == 3  # Should return config value
         finally:
             config.max_retry_attempts = original_retries
 

@@ -25,18 +25,13 @@ from flext_core import (
     FlextService,
     FlextTypes,
 )
+from flext_tests.domains import FlextTestsDomains
 
 # ==================== REAL SERVICE CLASSES ====================
 
 
-class TestDomainResult:
-    """Simple domain result for testing."""
-
-    __test__ = False  # Not a test class, just a helper class
-
-    def __init__(self, value: str) -> None:
-        """Initialize domain result."""
-        self.value = value
+# Use shared TestDomainResult from flext_tests
+TestDomainResult = FlextTestsDomains.TestDomainResult
 
 
 class TestService(FlextService[TestDomainResult]):

@@ -65,7 +65,7 @@ import string
 import typing
 from collections.abc import Callable, Sequence
 from types import ModuleType
-from typing import ParamSpec, TypeGuard
+from typing import ParamSpec, TypeGuard, cast
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
@@ -587,7 +587,7 @@ class FlextRuntime:
 
         module = structlog
 
-        processors: list[object] = [
+        processors: list[Callable] = [
             module.contextvars.merge_contextvars,
             module.processors.add_log_level,
             # CRITICAL: Level-based context filter (must be after merge_contextvars and add_log_level)
@@ -597,7 +597,7 @@ class FlextRuntime:
         ]
         if additional_processors:  # pragma: no cover
             # Tested but not covered: structlog configures once per process
-            processors.extend(additional_processors)
+            processors.extend(cast("Sequence[Callable]", additional_processors))
 
         if console_renderer:
             processors.append(module.dev.ConsoleRenderer(colors=True))
@@ -607,8 +607,7 @@ class FlextRuntime:
 
         # Configure structlog with processors and logger factory
         # structlog.configure accepts specific types, but we construct them dynamically
-        # Type: processors is Iterable[Processor] where Processor is a callable with specific signature
-        # Type: wrapper_class is type[BindableLogger] | None
+
         wrapper_arg: type[BindableLogger] | None = (
             wrapper_class_factory()
             if wrapper_class_factory is not None
@@ -624,7 +623,7 @@ class FlextRuntime:
         # We use list[object] which is compatible with Iterable[Processor] at runtime
         # The actual processors are callables with the correct signature
         module.configure(
-            processors=processors,  # type: ignore[arg-type]  # Dynamic construction, compatible at runtime
+            processors=processors,
             wrapper_class=wrapper_arg,
             logger_factory=factory_arg,
             cache_logger_on_first_use=cache_logger_on_first_use,

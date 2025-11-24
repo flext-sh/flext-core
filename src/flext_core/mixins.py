@@ -1132,9 +1132,9 @@ class FlextMixins:
 
         @staticmethod
         def validate_with_result(
-            data: FlextMixins.Validation.T,
-            validators: list[Callable[[FlextMixins.Validation.T], FlextResult[bool]]],
-        ) -> FlextResult[FlextMixins.Validation.T]:
+            data: object,
+            validators: list[Callable[[object], FlextResult[bool]]],
+        ) -> FlextResult[object]:
             """Chain multiple validators using railway-oriented programming.
 
             Applies validators sequentially using monadic composition with
@@ -1156,17 +1156,17 @@ class FlextMixins:
             All validators return FlextResult[bool].ok(True) → Returns FlextResult[T].ok(data)
 
             **Failure Path**:
-            Any validator returns FlextResult[bool].fail(msg) → Returns FlextResult[T].fail(msg)
+            Any validator returns FlextResult[bool].fail(msg) → Returns FlextResult[object].fail(msg)
 
             """
-            result: FlextResult[FlextMixins.Validation.T] = FlextResult.ok(data)
+            result: FlextResult[object] = FlextResult.ok(data)
 
             for validator in validators:
                 # Create helper function with proper closure to validate and preserve data
                 def validate_and_preserve(
-                    data: FlextMixins.Validation.T,
-                    v: Callable[[FlextMixins.Validation.T], FlextResult[bool]],
-                ) -> FlextResult[FlextMixins.Validation.T]:
+                    data: object,
+                    v: Callable[[object], FlextResult[bool]],
+                ) -> FlextResult[object]:
                     validation_result = v(data)
                     if validation_result.is_failure:
                         base_msg = "Validation failed"
@@ -1175,17 +1175,17 @@ class FlextMixins:
                             if validation_result.error
                             else f"{base_msg} (validation rule failed)"
                         )
-                        return FlextResult[FlextMixins.Validation.T].fail(
+                        return FlextResult[object].fail(
                             error_msg,
                             error_code=validation_result.error_code,
                             error_data=validation_result.error_data,
                         )
                     # Check that validation returned True
                     if validation_result.value is not True:
-                        return FlextResult[FlextMixins.Validation.T].fail(
+                        return FlextResult[object].fail(
                             f"Validator must return FlextResult[bool].ok(True) for success, got {validation_result.value!r}",
                         )
-                    return FlextResult[FlextMixins.Validation.T].ok(data)
+                    return FlextResult[object].ok(data)
 
                 # Use partial to bind validator while passing data through flat_map
                 result = result.flat_map(partial(validate_and_preserve, v=validator))

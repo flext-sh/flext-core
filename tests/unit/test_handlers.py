@@ -697,7 +697,7 @@ class TestFlextHandlers:
             FlextHandlers.create_from_callable(
                 cast("Callable[[object], object]", invalid_handler),
                 handler_name="invalid_handler",
-                mode=cast("FlextConstants.Cqrs.HandlerModeSimple", "invalid_mode"),
+                mode="invalid_mode",
             )
 
         assert "Invalid handler mode: invalid_mode" in str(exc_info.value)
@@ -723,6 +723,7 @@ class TestFlextHandlers:
 
         assert handler.handler_name == "Custom Name"
         assert handler._config_model.handler_id == "custom_id"
+        assert handler._config_model.metadata is not None
         assert handler._config_model.metadata.attributes == {"test": "value"}
 
     def test_handlers_create_from_callable_with_pydantic_config(self) -> None:
@@ -969,7 +970,7 @@ class TestFlextHandlers:
         handler = ConcreteTestHandler(config=config)
 
         context = {"user_id": "123", "operation": "test"}
-        result = handler.push_context(context)
+        result = handler.push_context(cast("dict[str, object]", context))
         assert result.is_success
 
     def test_handlers_pop_context(self) -> None:
