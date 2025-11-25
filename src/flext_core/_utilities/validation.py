@@ -54,7 +54,9 @@ from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult  # ✅ CORRECT - See architectural note above
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
+
+# Import RetryConfig directly to avoid type issues
+from flext_core.typings import FlextTypes, RetryConfig
 
 _logger = logging.getLogger(__name__)
 
@@ -333,7 +335,7 @@ class FlextUtilitiesValidation:
     ) -> str | None:
         """Generate cache key from Pydantic model."""
         try:
-            data = command.model_dump(mode="python")
+            data = command.model_dump()
             sorted_data = FlextUtilitiesValidation._sort_dict_keys(data)
             return FlextUtilitiesValidation._generate_key_from_data(
                 command_type,
@@ -655,6 +657,19 @@ class FlextUtilitiesValidation:
             return FlextResult[str].fail(f"{context} cannot be empty")
 
         uri_stripped = uri.strip()
+
+        # Basic URI format validation using regex
+        # RFC 3986 compliant URI pattern (simplified but stricter)
+        uri_pattern = re.compile(
+            r"^([a-zA-Z][a-zA-Z0-9+.-]*):"  # scheme
+            r"//([^/?#]+)"  # authority (required for validation)
+            r"([^?#]*)"  # path
+            r"(?:\?([^#]*))?"  # query (optional)
+            r"(?:#(.*))?$"  # fragment (optional)
+        )
+
+        if not uri_pattern.match(uri_stripped):
+            return FlextResult[str].fail(f"{context} is not a valid URI format")
 
         # Validate scheme if specified
         if allowed_schemes and not any(
@@ -1073,6 +1088,16 @@ class FlextUtilitiesValidation:
 
         normalized_hostname = hostname.strip()
 
+        # Validate hostname format (RFC 1035: basic pattern)
+        hostname_pattern = re.compile(
+            r"^(?!-)(?!.*--)(?!.*\.$)(?!.*\.\.)[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*$"
+        )
+        if not hostname_pattern.match(normalized_hostname):
+            return FlextResult[str].fail(
+                f"Invalid hostname format: '{normalized_hostname}'",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
+
         # Validate hostname length (RFC 1035: max 253 characters)
         if len(normalized_hostname) > FlextConstants.Network.MAX_HOSTNAME_LENGTH:
             error_msg = (
@@ -1105,7 +1130,7 @@ class FlextUtilitiesValidation:
     def validate_identifier(
         name: str,
         *,
-        pattern: str = r"^[a-zA-Z0-9_:\- ]+$",
+        pattern: str = r"^[a-zA-Z_][a-zA-Z0-9_: ]*$",
         allow_empty: bool = False,
         strip: bool = True,
         error_message: str | None = None,
@@ -1116,13 +1141,16 @@ class FlextUtilitiesValidation:
         container.py (_validate_service_name) and provides flexible validation
         for names, identifiers, service names, etc.
 
-        Default pattern allows: alphanumeric, underscore, hyphen, colon, and space
+        Default pattern follows Python identifier rules: start with letter/underscore,
+        followed by letters, digits, underscores, colons, and spaces
         - Useful for service names with namespacing (e.g., "logger:module_name")
         - Useful for handler names with spaces (e.g., "Pre-built Handler")
+        - Cannot start with digit (like Python identifiers)
+        - Does not allow hyphens (unlike some systems)
 
         Args:
             name: Identifier/name string to validate
-            pattern: Regex pattern for validation (default: alphanumeric + _:-  + space)
+            pattern: Regex pattern for validation (default: alphanumeric + _: + space)
             allow_empty: If True, allow empty strings (default: False)
             strip: If True, strip whitespace before validation (default: True)
             error_message: Custom error message (optional)
@@ -1244,65 +1272,82 @@ class FlextUtilitiesValidation:
     @staticmethod
     def create_retry_config(
         retry_config: dict[str, object],
-    ) -> FlextResult[FlextTypes.RetryConfig]:
+    ) -> FlextResult[RetryConfig]:
         """Create and validate retry configuration using railway pattern.
 
         Args:
             retry_config: Raw retry configuration dictionary
 
         Returns:
-            FlextResult[FlextTypes.RetryConfig]: Validated retry configuration or error
+            FlextResult[RetryConfig]: Validated retry configuration or error
 
         """
         try:
             # Validate each parameter using railway pattern (DRY consolidation)
-            return (
-                FlextUtilitiesValidation._validate_max_attempts(retry_config)
-                .flat_map(
-                    lambda max_attempts: (
-                        FlextUtilitiesValidation._validate_initial_delay(
-                            retry_config,
-                        ).map(lambda initial_delay: (max_attempts, initial_delay))
-                    ),
+            result = FlextUtilitiesValidation._validate_max_attempts(retry_config)
+            if result.is_failure:
+                return FlextResult[RetryConfig].fail(
+                    result.error or "Max attempts validation failed"
                 )
-                .flat_map(
-                    lambda params: (
-                        FlextUtilitiesValidation._validate_max_delay(retry_config).map(
-                            lambda max_delay: (*params, max_delay),
+
+            max_attempts = result.value
+
+            delay_result = FlextUtilitiesValidation._validate_initial_delay(
+                retry_config
+            )
+            if delay_result.is_failure:
+                return FlextResult[RetryConfig].fail(
+                    delay_result.error or "Initial delay validation failed"
+                )
+
+            initial_delay = delay_result.value
+            params_2 = (max_attempts, initial_delay)
+
+            max_delay_result = FlextUtilitiesValidation._validate_max_delay(
+                retry_config
+            )
+            if max_delay_result.is_failure:
+                return FlextResult[RetryConfig].fail(
+                    max_delay_result.error or "Max delay validation failed"
+                )
+
+            max_delay = max_delay_result.value
+            params_3 = (*params_2, max_delay)
+
+            backoff_result = FlextUtilitiesValidation._validate_backoff_multiplier(
+                retry_config
+            )
+            if backoff_result.is_failure:
+                return FlextResult[RetryConfig].fail(
+                    backoff_result.error or "Backoff multiplier validation failed"
+                )
+
+            backoff_mult = backoff_result.value
+            params_4 = (*params_3, backoff_mult)
+
+            return FlextResult[RetryConfig].ok(
+                RetryConfig(
+                    max_attempts=params_4[0],
+                    initial_delay_seconds=params_4[1],
+                    max_delay_seconds=params_4[2],
+                    exponential_backoff=bool(
+                        retry_config.get("exponential_backoff"),
+                    ),
+                    retry_on_exceptions=(
+                        cast(
+                            "list[type[Exception]]",
+                            retry_config["retry_on_exceptions"],
                         )
+                        if "retry_on_exceptions" in retry_config
+                        and retry_config["retry_on_exceptions"] is not None
+                        else [Exception]
                     ),
-                )
-                .flat_map(
-                    lambda params: (
-                        FlextUtilitiesValidation._validate_backoff_multiplier(
-                            retry_config,
-                        ).map(lambda backoff_mult: (*params, backoff_mult))
-                    ),
-                )
-                .map(
-                    lambda params: FlextTypes.RetryConfig(
-                        max_attempts=params[0],
-                        initial_delay_seconds=params[1],
-                        max_delay_seconds=params[2],
-                        exponential_backoff=bool(
-                            retry_config.get("exponential_backoff"),
-                        ),
-                        retry_on_exceptions=(
-                            cast(
-                                "list[type[Exception]]",
-                                retry_config["retry_on_exceptions"],
-                            )
-                            if "retry_on_exceptions" in retry_config
-                            and retry_config["retry_on_exceptions"] is not None
-                            else [Exception]
-                        ),
-                        backoff_multiplier=params[3],
-                    ),
+                    backoff_multiplier=params_4[3],
                 )
             )
 
         except (ValueError, TypeError) as e:
-            return FlextResult[FlextTypes.RetryConfig].fail(
+            return FlextResult[RetryConfig].fail(
                 f"Invalid retry configuration: {e}",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )

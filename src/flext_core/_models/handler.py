@@ -218,8 +218,8 @@ class FlextModelsHandler:
             """
             self._start_time = time_module.time()
 
-        @property
         @computed_field
+        @property
         def execution_time_ms(self) -> float:
             """Get execution time in milliseconds.
 
@@ -243,8 +243,8 @@ class FlextModelsHandler:
             elapsed = time_module.time() - self._start_time
             return round(elapsed * 1000, 2)
 
-        @property
         @computed_field
+        @property
         def metrics_state(self) -> dict[str, object]:
             """Get current metrics state.
 

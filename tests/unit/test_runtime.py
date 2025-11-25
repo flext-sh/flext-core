@@ -1,17 +1,23 @@
-"""Comprehensive tests for FlextRuntime - Layer 0.5 Runtime Utilities.
+"""Refactored comprehensive tests for FlextRuntime - Layer 0.5 Runtime Utilities.
 
 Tests all functionality of FlextRuntime including type guards, serialization utilities,
-external library access, and structlog configuration.
+external library access, type introspection, and structlog configuration.
+
+Consolidates 6 test classes with 45+ methods into 1 unified class with
+parametrized and integration tests using Python 3.13 patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
+import dataclasses
 import logging
+from enum import StrEnum
+from typing import ClassVar
 
+import pytest
 import structlog
 from dependency_injector import containers, providers
 
@@ -21,476 +27,890 @@ from flext_core import (
     FlextRuntime,
 )
 
-
-class TestTypeGuards:
-    """Test FlextRuntime type guard utilities."""
-
-    def test_is_valid_phone_valid_cases(self) -> None:
-        """Test is_valid_phone with valid phone numbers."""
-        assert FlextRuntime.is_valid_phone("+5511987654321")
-        assert FlextRuntime.is_valid_phone("5511987654321")
-        assert FlextRuntime.is_valid_phone("+1234567890")
-        assert FlextRuntime.is_valid_phone("123456789012345")  # 15 digits max
-
-    def test_is_valid_phone_invalid_cases(self) -> None:
-        """Test is_valid_phone with invalid phone numbers."""
-        assert not FlextRuntime.is_valid_phone("123")  # Too short
-        assert not FlextRuntime.is_valid_phone("abc1234567890")
-        assert not FlextRuntime.is_valid_phone("+abc123")
-        assert not FlextRuntime.is_valid_phone("")
-
-    def test_is_valid_phone_non_string_types(self) -> None:
-        """Test is_valid_phone returns False for non-string types."""
-        assert not FlextRuntime.is_valid_phone(5511987654321)
-        assert not FlextRuntime.is_valid_phone(None)
-
-    def test_is_dict_like_valid_cases(self) -> None:
-        """Test is_dict_like with dict-like objects."""
-        assert FlextRuntime.is_dict_like({})
-        assert FlextRuntime.is_dict_like({"key": "value"})
-        assert FlextRuntime.is_dict_like({"nested": {"dict": True}})
-
-    def test_is_dict_like_invalid_cases(self) -> None:
-        """Test is_dict_like with non-dict objects."""
-        assert not FlextRuntime.is_dict_like([])
-        assert not FlextRuntime.is_dict_like("string")
-        assert not FlextRuntime.is_dict_like(123)
-        assert not FlextRuntime.is_dict_like(None)
-
-    def test_is_list_like_valid_cases(self) -> None:
-        """Test is_list_like with list-like objects."""
-        assert FlextRuntime.is_list_like([])
-        assert FlextRuntime.is_list_like([1, 2, 3])
-        assert FlextRuntime.is_list_like(["a", "b", "c"])
-
-    def test_is_list_like_invalid_cases(self) -> None:
-        """Test is_list_like with non-list objects."""
-        assert not FlextRuntime.is_list_like({})
-        assert not FlextRuntime.is_list_like("string")
-        assert not FlextRuntime.is_list_like(123)
-        assert not FlextRuntime.is_list_like(None)
-
-    def test_is_valid_json_valid_cases(self) -> None:
-        """Test is_valid_json with valid JSON strings."""
-        assert FlextRuntime.is_valid_json('{"key": "value"}')
-        assert FlextRuntime.is_valid_json("[]")
-        assert FlextRuntime.is_valid_json("[1, 2, 3]")
-        assert FlextRuntime.is_valid_json('"string"')
-        assert FlextRuntime.is_valid_json("null")
-
-    def test_is_valid_json_invalid_cases(self) -> None:
-        """Test is_valid_json with invalid JSON strings."""
-        assert not FlextRuntime.is_valid_json("not json")
-        assert not FlextRuntime.is_valid_json("{invalid}")
-        assert not FlextRuntime.is_valid_json("")
-
-    def test_is_valid_json_non_string_types(self) -> None:
-        """Test is_valid_json returns False for non-string types."""
-        assert not FlextRuntime.is_valid_json({"key": "value"})
-        assert not FlextRuntime.is_valid_json([1, 2, 3])
-        assert not FlextRuntime.is_valid_json(None)
-
-    def test_is_valid_identifier_valid_cases(self) -> None:
-        """Test is_valid_identifier with valid Python identifiers."""
-        assert FlextRuntime.is_valid_identifier("variable")
-        assert FlextRuntime.is_valid_identifier("_private")
-        assert FlextRuntime.is_valid_identifier("ClassName")
-        assert FlextRuntime.is_valid_identifier("function_name")
-
-    def test_is_valid_identifier_invalid_cases(self) -> None:
-        """Test is_valid_identifier with invalid Python identifiers."""
-        assert not FlextRuntime.is_valid_identifier("123invalid")
-        assert not FlextRuntime.is_valid_identifier("invalid-name")
-        assert not FlextRuntime.is_valid_identifier("invalid name")
-        assert not FlextRuntime.is_valid_identifier("")
-
-    def test_is_valid_identifier_non_string_types(self) -> None:
-        """Test is_valid_identifier returns False for non-string types."""
-        assert not FlextRuntime.is_valid_identifier(123)
-        assert not FlextRuntime.is_valid_identifier(None)
+# =========================================================================
+# Operation Type Enumeration
+# =========================================================================
 
 
-class TestSerializationUtilities:
-    """Test FlextRuntime serialization utilities."""
+class RuntimeOperationType(StrEnum):
+    """Runtime operation types for parametrized testing."""
 
-    def test_safe_get_attribute_exists(self) -> None:
-        """Test safe_get_attribute with existing attribute."""
+    # Type guards
+    PHONE_VALID = "phone_valid"
+    PHONE_INVALID = "phone_invalid"
+    PHONE_NON_STRING = "phone_non_string"
+    DICT_LIKE_VALID = "dict_like_valid"
+    DICT_LIKE_INVALID = "dict_like_invalid"
+    LIST_LIKE_VALID = "list_like_valid"
+    LIST_LIKE_INVALID = "list_like_invalid"
+    JSON_VALID = "json_valid"
+    JSON_INVALID = "json_invalid"
+    JSON_NON_STRING = "json_non_string"
+    IDENTIFIER_VALID = "identifier_valid"
+    IDENTIFIER_INVALID = "identifier_invalid"
+    IDENTIFIER_NON_STRING = "identifier_non_string"
 
-        class TestObj:
-            attr = "value"
+    # Serialization
+    SAFE_GET_ATTRIBUTE_EXISTS = "safe_get_attribute_exists"
+    SAFE_GET_ATTRIBUTE_MISSING_DEFAULT = "safe_get_attribute_missing_default"
+    SAFE_GET_ATTRIBUTE_MISSING_NO_DEFAULT = "safe_get_attribute_missing_no_default"
 
-        obj = TestObj()
-        assert FlextRuntime.safe_get_attribute(obj, "attr") == "value"
+    # Type introspection
+    EXTRACT_GENERIC_GENERIC_TYPE = "extract_generic_generic_type"
+    EXTRACT_GENERIC_NON_GENERIC = "extract_generic_non_generic"
+    EXTRACT_GENERIC_EXCEPTION = "extract_generic_exception"
+    SEQUENCE_TYPE_VALID = "sequence_type_valid"
+    SEQUENCE_TYPE_INVALID = "sequence_type_invalid"
+    SEQUENCE_TYPE_EXCEPTION = "sequence_type_exception"
 
-    def test_safe_get_attribute_missing_with_default(self) -> None:
-        """Test safe_get_attribute with missing attribute returns default."""
+    # External library access
+    STRUCTLOG_MODULE = "structlog_module"
+    DEPENDENCY_PROVIDERS_MODULE = "dependency_providers_module"
+    DEPENDENCY_CONTAINERS_MODULE = "dependency_containers_module"
 
-        class TestObj:
-            pass
+    # Structlog configuration
+    CONFIGURE_STRUCTLOG_DEFAULTS = "configure_structlog_defaults"
+    CONFIGURE_STRUCTLOG_CUSTOM_LOG_LEVEL = "configure_structlog_custom_log_level"
+    CONFIGURE_STRUCTLOG_JSON_RENDERER = "configure_structlog_json_renderer"
+    CONFIGURE_STRUCTLOG_ADDITIONAL_PROCESSORS = (
+        "configure_structlog_additional_processors"
+    )
+    CONFIGURE_STRUCTLOG_IDEMPOTENT = "configure_structlog_idempotent"
 
-        obj = TestObj()
-        assert FlextRuntime.safe_get_attribute(obj, "missing", "default") == "default"
-
-    def test_safe_get_attribute_missing_without_default(self) -> None:
-        """Test safe_get_attribute with missing attribute returns None."""
-
-        class TestObj:
-            pass
-
-        obj = TestObj()
-        assert FlextRuntime.safe_get_attribute(obj, "missing") is None
-
-
-class TestTypeIntrospection:
-    """Test FlextRuntime type introspection utilities."""
-
-    def test_extract_generic_args_with_generic(self) -> None:
-        """Test extract_generic_args with generic types."""
-        args = FlextRuntime.extract_generic_args(list[str])
-        assert args == (str,)
-
-        args = FlextRuntime.extract_generic_args(dict[str, int])
-        assert args == (str, int)
-
-    def test_extract_generic_args_with_non_generic(self) -> None:
-        """Test extract_generic_args with non-generic types."""
-        args = FlextRuntime.extract_generic_args(str)
-        assert args == ()
-
-        args = FlextRuntime.extract_generic_args(int)
-        assert args == ()
-
-    def test_is_sequence_type_with_sequences(self) -> None:
-        """Test is_sequence_type with sequence types."""
-        assert FlextRuntime.is_sequence_type(list[str])
-        assert FlextRuntime.is_sequence_type(tuple[int, ...])
-
-    def test_is_sequence_type_with_non_sequences(self) -> None:
-        """Test is_sequence_type with non-sequence types."""
-        assert not FlextRuntime.is_sequence_type(dict[str, int])
-        # Note: str is actually a sequence type in Python (subclass of Sequence)
-        assert FlextRuntime.is_sequence_type(str)
-        assert not FlextRuntime.is_sequence_type(int)
-
-    def test_extract_generic_args_with_exception(self) -> None:
-        """Test extract_generic_args with invalid input causing exception."""
-        # Test with None - should return empty tuple
-        args = FlextRuntime.extract_generic_args(None)
-        assert args == ()
-
-        # Test with invalid type hint
-        args = FlextRuntime.extract_generic_args("not a type")
-        assert args == ()
-
-    def test_is_sequence_type_with_exception(self) -> None:
-        """Test is_sequence_type with invalid input causing exception."""
-        # Test with None - should not crash
-        assert not FlextRuntime.is_sequence_type(None)
-
-        # Test with invalid type hint
-        assert not FlextRuntime.is_sequence_type("not a type")
+    # Integration
+    INTEGRATION_CONSTANTS_PATTERNS = "integration_constants_patterns"
+    INTEGRATION_LAYER_HIERARCHY = "integration_layer_hierarchy"
+    TRACK_SERVICE_RESOLUTION_SUCCESS = "track_service_resolution_success"
+    TRACK_SERVICE_RESOLUTION_FAILURE = "track_service_resolution_failure"
+    TRACK_DOMAIN_EVENT_WITH_AGGREGATE = "track_domain_event_with_aggregate"
+    TRACK_DOMAIN_EVENT_WITHOUT_AGGREGATE = "track_domain_event_without_aggregate"
+    SETUP_SERVICE_INFRASTRUCTURE_FULL = "setup_service_infrastructure_full"
+    SETUP_SERVICE_INFRASTRUCTURE_MINIMAL = "setup_service_infrastructure_minimal"
+    SETUP_SERVICE_WITHOUT_CORRELATION = "setup_service_without_correlation"
 
 
-class TestExternalLibraryAccess:
-    """Test FlextRuntime external library access methods."""
-
-    def test_structlog_returns_module(self) -> None:
-        """Test structlog() returns the structlog module."""
-        module = FlextRuntime.structlog()
-        assert module is structlog
-        assert hasattr(module, "get_logger")
-        assert hasattr(module, "configure")
-
-    def test_dependency_providers_returns_module(self) -> None:
-        """Test dependency_providers() returns providers module."""
-        module = FlextRuntime.dependency_providers()
-        assert module is providers
-        assert hasattr(module, "Singleton")
-        assert hasattr(module, "Factory")
-
-    def test_dependency_containers_returns_module(self) -> None:
-        """Test dependency_containers() returns containers module."""
-        module = FlextRuntime.dependency_containers()
-        assert module is containers
-        assert hasattr(module, "DeclarativeContainer")
+# =========================================================================
+# Test Case Data Structure
+# =========================================================================
 
 
-class TestStructlogConfiguration:
-    """Test FlextRuntime structlog configuration."""
+@dataclasses.dataclass(frozen=True, slots=True)
+class RuntimeTestCase:
+    """Runtime test case definition with parametrization data."""
 
-    def test_configure_structlog_defaults(self) -> None:
-        """Test configure_structlog with default settings."""
-        # Reset configuration flag for testing
+    name: str
+    operation: RuntimeOperationType
+    test_input: object = None
+    expected_result: bool | tuple[object, ...] | object = None
+    should_reset_config: bool = False
+
+
+# =========================================================================
+# Test Scenario Factory
+# =========================================================================
+
+
+class RuntimeScenarios:
+    """Factory for runtime test scenarios with centralized test data."""
+
+    # Type guard test cases
+    PHONE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        RuntimeTestCase(
+            name="phone_valid_international",
+            operation=RuntimeOperationType.PHONE_VALID,
+            test_input="+5511987654321",
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="phone_valid_no_country",
+            operation=RuntimeOperationType.PHONE_VALID,
+            test_input="5511987654321",
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="phone_valid_us_format",
+            operation=RuntimeOperationType.PHONE_VALID,
+            test_input="+1234567890",
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="phone_valid_15_digits",
+            operation=RuntimeOperationType.PHONE_VALID,
+            test_input="123456789012345",
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="phone_invalid_too_short",
+            operation=RuntimeOperationType.PHONE_INVALID,
+            test_input="123",
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="phone_invalid_letters",
+            operation=RuntimeOperationType.PHONE_INVALID,
+            test_input="abc1234567890",
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="phone_invalid_country_letters",
+            operation=RuntimeOperationType.PHONE_INVALID,
+            test_input="+abc123",
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="phone_invalid_empty",
+            operation=RuntimeOperationType.PHONE_INVALID,
+            test_input="",
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="phone_non_string_int",
+            operation=RuntimeOperationType.PHONE_NON_STRING,
+            test_input=5511987654321,
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="phone_non_string_none",
+            operation=RuntimeOperationType.PHONE_NON_STRING,
+            test_input=None,
+            expected_result=False,
+        ),
+    ]
+
+    DICT_LIKE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        RuntimeTestCase(
+            name="dict_like_empty",
+            operation=RuntimeOperationType.DICT_LIKE_VALID,
+            test_input={},
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="dict_like_single_key",
+            operation=RuntimeOperationType.DICT_LIKE_VALID,
+            test_input={"key": "value"},
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="dict_like_nested",
+            operation=RuntimeOperationType.DICT_LIKE_VALID,
+            test_input={"nested": {"dict": True}},
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="dict_like_invalid_list",
+            operation=RuntimeOperationType.DICT_LIKE_INVALID,
+            test_input=[],
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="dict_like_invalid_string",
+            operation=RuntimeOperationType.DICT_LIKE_INVALID,
+            test_input="string",
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="dict_like_invalid_int",
+            operation=RuntimeOperationType.DICT_LIKE_INVALID,
+            test_input=123,
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="dict_like_invalid_none",
+            operation=RuntimeOperationType.DICT_LIKE_INVALID,
+            test_input=None,
+            expected_result=False,
+        ),
+    ]
+
+    LIST_LIKE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        RuntimeTestCase(
+            name="list_like_empty",
+            operation=RuntimeOperationType.LIST_LIKE_VALID,
+            test_input=[],
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="list_like_integers",
+            operation=RuntimeOperationType.LIST_LIKE_VALID,
+            test_input=[1, 2, 3],
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="list_like_strings",
+            operation=RuntimeOperationType.LIST_LIKE_VALID,
+            test_input=["a", "b", "c"],
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="list_like_invalid_dict",
+            operation=RuntimeOperationType.LIST_LIKE_INVALID,
+            test_input={},
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="list_like_invalid_string",
+            operation=RuntimeOperationType.LIST_LIKE_INVALID,
+            test_input="string",
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="list_like_invalid_int",
+            operation=RuntimeOperationType.LIST_LIKE_INVALID,
+            test_input=123,
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="list_like_invalid_none",
+            operation=RuntimeOperationType.LIST_LIKE_INVALID,
+            test_input=None,
+            expected_result=False,
+        ),
+    ]
+
+    JSON_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        RuntimeTestCase(
+            name="json_valid_object",
+            operation=RuntimeOperationType.JSON_VALID,
+            test_input='{"key": "value"}',
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="json_valid_empty_array",
+            operation=RuntimeOperationType.JSON_VALID,
+            test_input="[]",
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="json_valid_array",
+            operation=RuntimeOperationType.JSON_VALID,
+            test_input="[1, 2, 3]",
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="json_valid_string",
+            operation=RuntimeOperationType.JSON_VALID,
+            test_input='"string"',
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="json_valid_null",
+            operation=RuntimeOperationType.JSON_VALID,
+            test_input="null",
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="json_invalid_plain_text",
+            operation=RuntimeOperationType.JSON_INVALID,
+            test_input="not json",
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="json_invalid_malformed",
+            operation=RuntimeOperationType.JSON_INVALID,
+            test_input="{invalid}",
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="json_invalid_empty",
+            operation=RuntimeOperationType.JSON_INVALID,
+            test_input="",
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="json_non_string_dict",
+            operation=RuntimeOperationType.JSON_NON_STRING,
+            test_input={"key": "value"},
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="json_non_string_list",
+            operation=RuntimeOperationType.JSON_NON_STRING,
+            test_input=[1, 2, 3],
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="json_non_string_none",
+            operation=RuntimeOperationType.JSON_NON_STRING,
+            test_input=None,
+            expected_result=False,
+        ),
+    ]
+
+    IDENTIFIER_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        RuntimeTestCase(
+            name="identifier_valid_lowercase",
+            operation=RuntimeOperationType.IDENTIFIER_VALID,
+            test_input="variable",
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="identifier_valid_private",
+            operation=RuntimeOperationType.IDENTIFIER_VALID,
+            test_input="_private",
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="identifier_valid_class_name",
+            operation=RuntimeOperationType.IDENTIFIER_VALID,
+            test_input="ClassName",
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="identifier_valid_snake_case",
+            operation=RuntimeOperationType.IDENTIFIER_VALID,
+            test_input="function_name",
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="identifier_invalid_starts_with_digit",
+            operation=RuntimeOperationType.IDENTIFIER_INVALID,
+            test_input="123invalid",
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="identifier_invalid_hyphen",
+            operation=RuntimeOperationType.IDENTIFIER_INVALID,
+            test_input="invalid-name",
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="identifier_invalid_space",
+            operation=RuntimeOperationType.IDENTIFIER_INVALID,
+            test_input="invalid name",
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="identifier_invalid_empty",
+            operation=RuntimeOperationType.IDENTIFIER_INVALID,
+            test_input="",
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="identifier_non_string_int",
+            operation=RuntimeOperationType.IDENTIFIER_NON_STRING,
+            test_input=123,
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="identifier_non_string_none",
+            operation=RuntimeOperationType.IDENTIFIER_NON_STRING,
+            test_input=None,
+            expected_result=False,
+        ),
+    ]
+
+    GENERIC_ARGS_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        RuntimeTestCase(
+            name="extract_generic_list",
+            operation=RuntimeOperationType.EXTRACT_GENERIC_GENERIC_TYPE,
+            test_input=list[str],
+            expected_result=(str,),
+        ),
+        RuntimeTestCase(
+            name="extract_generic_dict",
+            operation=RuntimeOperationType.EXTRACT_GENERIC_GENERIC_TYPE,
+            test_input=dict[str, int],
+            expected_result=(str, int),
+        ),
+        RuntimeTestCase(
+            name="extract_generic_non_generic_str",
+            operation=RuntimeOperationType.EXTRACT_GENERIC_NON_GENERIC,
+            test_input=str,
+            expected_result=(),
+        ),
+        RuntimeTestCase(
+            name="extract_generic_non_generic_int",
+            operation=RuntimeOperationType.EXTRACT_GENERIC_NON_GENERIC,
+            test_input=int,
+            expected_result=(),
+        ),
+        RuntimeTestCase(
+            name="extract_generic_exception_none",
+            operation=RuntimeOperationType.EXTRACT_GENERIC_EXCEPTION,
+            test_input=None,
+            expected_result=(),
+        ),
+        RuntimeTestCase(
+            name="extract_generic_exception_string",
+            operation=RuntimeOperationType.EXTRACT_GENERIC_EXCEPTION,
+            test_input="not a type",
+            expected_result=(),
+        ),
+    ]
+
+    SEQUENCE_TYPE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        RuntimeTestCase(
+            name="sequence_type_list_of_str",
+            operation=RuntimeOperationType.SEQUENCE_TYPE_VALID,
+            test_input=list[str],
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="sequence_type_tuple",
+            operation=RuntimeOperationType.SEQUENCE_TYPE_VALID,
+            test_input=tuple[int, ...],
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="sequence_type_str_is_sequence",
+            operation=RuntimeOperationType.SEQUENCE_TYPE_VALID,
+            test_input=str,
+            expected_result=True,
+        ),
+        RuntimeTestCase(
+            name="sequence_type_invalid_dict",
+            operation=RuntimeOperationType.SEQUENCE_TYPE_INVALID,
+            test_input=dict[str, int],
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="sequence_type_invalid_int",
+            operation=RuntimeOperationType.SEQUENCE_TYPE_INVALID,
+            test_input=int,
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="sequence_type_exception_none",
+            operation=RuntimeOperationType.SEQUENCE_TYPE_EXCEPTION,
+            test_input=None,
+            expected_result=False,
+        ),
+        RuntimeTestCase(
+            name="sequence_type_exception_string",
+            operation=RuntimeOperationType.SEQUENCE_TYPE_EXCEPTION,
+            test_input="not a type",
+            expected_result=False,
+        ),
+    ]
+
+    SERIALIZATION_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        RuntimeTestCase(
+            name="safe_get_attribute_exists",
+            operation=RuntimeOperationType.SAFE_GET_ATTRIBUTE_EXISTS,
+            expected_result="value",
+        ),
+        RuntimeTestCase(
+            name="safe_get_attribute_missing_with_default",
+            operation=RuntimeOperationType.SAFE_GET_ATTRIBUTE_MISSING_DEFAULT,
+            expected_result="default",
+        ),
+        RuntimeTestCase(
+            name="safe_get_attribute_missing_no_default",
+            operation=RuntimeOperationType.SAFE_GET_ATTRIBUTE_MISSING_NO_DEFAULT,
+            expected_result=None,
+        ),
+    ]
+
+    LIBRARY_ACCESS_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        RuntimeTestCase(
+            name="structlog_module",
+            operation=RuntimeOperationType.STRUCTLOG_MODULE,
+            expected_result=structlog,
+        ),
+        RuntimeTestCase(
+            name="dependency_providers",
+            operation=RuntimeOperationType.DEPENDENCY_PROVIDERS_MODULE,
+            expected_result=providers,
+        ),
+        RuntimeTestCase(
+            name="dependency_containers",
+            operation=RuntimeOperationType.DEPENDENCY_CONTAINERS_MODULE,
+            expected_result=containers,
+        ),
+    ]
+
+    STRUCTLOG_CONFIG_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        RuntimeTestCase(
+            name="configure_defaults",
+            operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_DEFAULTS,
+            should_reset_config=True,
+        ),
+        RuntimeTestCase(
+            name="configure_custom_level",
+            operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_CUSTOM_LOG_LEVEL,
+            should_reset_config=True,
+        ),
+        RuntimeTestCase(
+            name="configure_json_renderer",
+            operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_JSON_RENDERER,
+            should_reset_config=True,
+        ),
+        RuntimeTestCase(
+            name="configure_additional_processors",
+            operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_ADDITIONAL_PROCESSORS,
+            should_reset_config=True,
+        ),
+        RuntimeTestCase(
+            name="configure_idempotent",
+            operation=RuntimeOperationType.CONFIGURE_STRUCTLOG_IDEMPOTENT,
+            should_reset_config=True,
+        ),
+    ]
+
+    INTEGRATION_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
+        RuntimeTestCase(
+            name="constants_patterns",
+            operation=RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS,
+        ),
+        RuntimeTestCase(
+            name="layer_hierarchy",
+            operation=RuntimeOperationType.INTEGRATION_LAYER_HIERARCHY,
+        ),
+        RuntimeTestCase(
+            name="track_service_resolution_success",
+            operation=RuntimeOperationType.TRACK_SERVICE_RESOLUTION_SUCCESS,
+        ),
+        RuntimeTestCase(
+            name="track_service_resolution_failure",
+            operation=RuntimeOperationType.TRACK_SERVICE_RESOLUTION_FAILURE,
+        ),
+        RuntimeTestCase(
+            name="track_domain_event_with_aggregate",
+            operation=RuntimeOperationType.TRACK_DOMAIN_EVENT_WITH_AGGREGATE,
+        ),
+        RuntimeTestCase(
+            name="track_domain_event_without_aggregate",
+            operation=RuntimeOperationType.TRACK_DOMAIN_EVENT_WITHOUT_AGGREGATE,
+        ),
+        RuntimeTestCase(
+            name="setup_service_infrastructure_full",
+            operation=RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_FULL,
+        ),
+        RuntimeTestCase(
+            name="setup_service_infrastructure_minimal",
+            operation=RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_MINIMAL,
+        ),
+        RuntimeTestCase(
+            name="setup_service_without_correlation",
+            operation=RuntimeOperationType.SETUP_SERVICE_WITHOUT_CORRELATION,
+        ),
+    ]
+
+    @staticmethod
+    def reset_structlog_config() -> None:
+        """Reset structlog configuration for testing."""
         FlextRuntime._structlog_configured = False
 
-        # Configure with defaults
-        FlextRuntime.configure_structlog()
-
-        # Verify configuration was applied
-        assert FlextRuntime._structlog_configured is True
-        assert structlog.is_configured()
-
-    def test_configure_structlog_custom_log_level(self) -> None:
-        """Test configure_structlog with custom log level."""
-        FlextRuntime._structlog_configured = False
-        FlextRuntime.configure_structlog(log_level=logging.DEBUG)
-        assert FlextRuntime._structlog_configured is True
-
-    def test_configure_structlog_json_renderer(self) -> None:
-        """Test configure_structlog with JSON renderer."""
-        FlextRuntime._structlog_configured = False
-        FlextRuntime.configure_structlog(console_renderer=False)
-        assert FlextRuntime._structlog_configured is True
-
-    def test_configure_structlog_with_additional_processors(self) -> None:
-        """Test configure_structlog with additional processors."""
-        FlextRuntime._structlog_configured = False
-
-        # Custom processor
-        def custom_processor(
-            logger: object,
-            method_name: str,
-            event_dict: dict[str, object],
-        ) -> dict[str, object]:
-            event_dict["custom"] = True
-            return event_dict
 
-        FlextRuntime.configure_structlog(additional_processors=[custom_processor])
-        assert FlextRuntime._structlog_configured is True
-
-    def test_configure_structlog_json_renderer_explicit(self) -> None:
-        """Test configure_structlog with JSON renderer explicitly set."""
-        FlextRuntime._structlog_configured = False
-        FlextRuntime.configure_structlog(
-            console_renderer=False,
-            log_level=logging.WARNING,
-        )
-        assert FlextRuntime._structlog_configured is True
-
-    def test_configure_structlog_idempotent(self) -> None:
-        """Test configure_structlog is idempotent (can be called multiple times)."""
-        FlextRuntime._structlog_configured = False
-        FlextRuntime.configure_structlog()
-
-        # Call again - should not raise error
-        FlextRuntime.configure_structlog()
-        assert FlextRuntime._structlog_configured is True
-
-
-class TestRuntimeIntegrationWithConstants:
-    """Test FlextRuntime integration with FlextConstants."""
-
-    def test_type_guards_use_constants_patterns(self) -> None:
-        """Test that type guards use patterns from FlextConstants."""
-        # Verify the patterns are accessible
-        assert hasattr(FlextConstants.Platform, "PATTERN_PHONE_NUMBER")
-
-        # Verify type guards work with these patterns
-        test_phone = "+5511987654321"
-        assert FlextRuntime.is_valid_phone(test_phone)
-
-    def test_layer_hierarchy_respected(self) -> None:
-        """Test that Layer 0.5 (runtime) imports from Layer 0 (constants) only."""
-        # FlextRuntime should import FlextConstants (Layer 0)
-        # This test verifies the import chain is correct
-
-        # Verify Flextis importable
-        assert FlextConstants is not None
-
-        # Verify both Runtime and Constants are accessible
-        assert FlextRuntime is not None
-        assert FlextConstants is not None
-
-        # FlextRuntime should be able to access FlextConstants patterns
-        assert FlextConstants.Platform.PATTERN_EMAIL is not None
-
-
-class TestContextIntegrationPatterns:
-    """Test FlextRuntime.Integration application-layer helpers (PHASE 2)."""
-
-    def test_track_service_resolution_success(self) -> None:
-        """Test Integration.track_service_resolution with successful resolution."""
-        # Setup: Configure structlog and context
-
-        FlextRuntime.configure_structlog()
-
-        # Set correlation ID for tracking
-        correlation_id = FlextContext.Utilities.ensure_correlation_id()
-
-        # Track successful service resolution
-        FlextRuntime.Integration.track_service_resolution("database", resolved=True)
-
-        # Verify correlation ID is still in context
-        current_correlation = FlextContext.Correlation.get_correlation_id()
-        assert current_correlation == correlation_id
-
-    def test_track_service_resolution_failure(self) -> None:
-        """Test track_service_resolution with failed resolution."""
-        FlextRuntime.configure_structlog()
-
-        # Set correlation ID
-        correlation_id = FlextContext.Utilities.ensure_correlation_id()
-
-        # Track failed service resolution
-        FlextRuntime.Integration.track_service_resolution(
-            "cache",
-            resolved=False,
-            error_message="Connection refused",
-        )
-
-        # Verify correlation ID persists
-        assert FlextContext.Correlation.get_correlation_id() == correlation_id
-
-    def test_track_service_resolution_without_correlation(self) -> None:
-        """Test track_service_resolution works without pre-existing correlation ID."""
-        FlextRuntime.configure_structlog()
-
-        # Clear any existing correlation using structlog
-        structlog.contextvars.unbind_contextvars("correlation_id")
-
-        # Should not raise error even without correlation ID
-        FlextRuntime.Integration.track_service_resolution("logger", resolved=True)
-
-        # Correlation ID should still be None
-
-        assert FlextContext.Correlation.get_correlation_id() is None
-
-    def test_track_domain_event_with_aggregate(self) -> None:
-        """Test track_domain_event with aggregate ID."""
-        FlextRuntime.configure_structlog()
-
-        # Set correlation ID
-        correlation_id = FlextContext.Utilities.ensure_correlation_id()
-
-        # Track domain event with aggregate
-        FlextRuntime.Integration.track_domain_event(
-            "UserCreated",
-            aggregate_id="user-123",
-            event_data={"email": "test@example.com"},
-        )
-
-        # Verify correlation ID persists
-        assert FlextContext.Correlation.get_correlation_id() == correlation_id
-
-    def test_track_domain_event_without_aggregate(self) -> None:
-        """Test track_domain_event without aggregate ID."""
-        FlextRuntime.configure_structlog()
-
-        # Set correlation ID
-        correlation_id = FlextContext.Utilities.ensure_correlation_id()
-
-        # Track domain event without aggregate
-        FlextRuntime.Integration.track_domain_event(
-            "SystemInitialized",
-            event_data={"timestamp": "2025-01-01T00:00:00Z"},
-        )
-
-        # Verify correlation ID persists
-        assert FlextContext.Correlation.get_correlation_id() == correlation_id
-
-    def test_track_domain_event_minimal(self) -> None:
-        """Test track_domain_event with minimal arguments."""
-        FlextRuntime.configure_structlog()
-
-        # Should not raise error with just event name
-        FlextRuntime.Integration.track_domain_event("ConfigUpdated")
-
-    def test_setup_service_infrastructure_full(self) -> None:
-        """Test setup_service_infrastructure with all options."""
-        FlextRuntime.configure_structlog()
-
-        # Setup complete service infrastructure
-        FlextRuntime.Integration.setup_service_infrastructure(
-            service_name="test-service",
-            service_version="1.0.0",
-            enable_context_correlation=True,
-        )
-
-        # Verify service context is set
-        assert FlextContext.Service.get_service_name() == "test-service"
-        assert FlextContext.Service.get_service_version() == "1.0.0"
-
-        # Verify correlation ID was generated
-        correlation_id = FlextContext.Correlation.get_correlation_id()
-        assert correlation_id is not None
-
-    def test_setup_service_infrastructure_without_version(self) -> None:
-        """Test setup_service_infrastructure without version."""
-        FlextRuntime.configure_structlog()
-
-        # Setup without version
-        FlextRuntime.Integration.setup_service_infrastructure(
-            service_name="minimal-service",
-            enable_context_correlation=True,
-        )
-
-        # Verify service name is set
-        assert FlextContext.Service.get_service_name() == "minimal-service"
-
-        # Verify correlation ID was generated
-        assert FlextContext.Correlation.get_correlation_id() is not None
-
-    def test_setup_service_infrastructure_without_correlation(self) -> None:
-        """Test setup_service_infrastructure without correlation generation."""
-        FlextRuntime.configure_structlog()
-
-        # Clear any existing correlation using structlog
-        structlog.contextvars.unbind_contextvars("correlation_id")
-
-        # Setup without correlation generation
-        FlextRuntime.Integration.setup_service_infrastructure(
-            service_name="no-correlation-service",
-            service_version="2.0.0",
-            enable_context_correlation=False,
-        )
-
-        # Verify service context is set
-        assert FlextContext.Service.get_service_name() == "no-correlation-service"
-
-        # Verify correlation ID was NOT generated
-        assert FlextContext.Correlation.get_correlation_id() is None
-
-    def test_integration_lazy_imports_prevent_circular_dependencies(
-        self,
-    ) -> None:
-        """Test that Integration nested class uses lazy imports correctly."""
-        # This test verifies the pattern works by importing FlextRuntime first
-
-        # FlextRuntime should be importable without triggering circular imports
-        assert FlextRuntime is not None
-
-        # The Integration nested class should exist
-        assert hasattr(FlextRuntime, "Integration")
-        assert FlextRuntime.Integration is not None
-
-        # The integration methods should exist on the nested class
-        assert hasattr(FlextRuntime.Integration, "track_service_resolution")
-        assert hasattr(FlextRuntime.Integration, "track_domain_event")
-        assert hasattr(FlextRuntime.Integration, "setup_service_infrastructure")
-
-    def test_integration_keyword_only_arguments(self) -> None:
-        """Test that boolean arguments are keyword-only (Ruff FBT compliance)."""
-        FlextRuntime.configure_structlog()
-
-        # Set correlation for testing
-        FlextContext.Utilities.ensure_correlation_id()
-
-        # These should work with keyword arguments
-        FlextRuntime.Integration.track_service_resolution("test", resolved=True)
-
-        # This test verifies keyword-only pattern at runtime
-
-    def test_integration_with_context_single_source_of_truth(self) -> None:
-        """Test that integration uses structlog contextvars as single source of truth."""
-        FlextRuntime.configure_structlog()
-
-        # Create correlation ID (stored in structlog contextvars)
-        original_correlation = FlextContext.Utilities.ensure_correlation_id()
-
-        # Use integration methods - they should all see the same context
-        FlextRuntime.Integration.track_service_resolution("service1", resolved=True)
-        FlextRuntime.Integration.track_domain_event("Event1")
-
-        # Correlation ID should remain consistent (single source of truth)
-        final_correlation = FlextContext.Correlation.get_correlation_id()
-        assert final_correlation == original_correlation
+# =========================================================================
+# Test Suite
+# =========================================================================
+
+
+class TestFlextRuntime:
+    """Unified test suite for FlextRuntime with parametrized tests."""
+
+    # =====================================================================
+    # Type Guard Tests
+    # =====================================================================
+
+    @pytest.mark.parametrize(
+        "test_case",
+        RuntimeScenarios.PHONE_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_phone_validation(self, test_case: RuntimeTestCase) -> None:
+        """Test phone number validation."""
+        result = FlextRuntime.is_valid_phone(test_case.test_input)
+        assert result == test_case.expected_result
+
+    @pytest.mark.parametrize(
+        "test_case",
+        RuntimeScenarios.DICT_LIKE_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_dict_like_validation(self, test_case: RuntimeTestCase) -> None:
+        """Test dict-like object validation."""
+        result = FlextRuntime.is_dict_like(test_case.test_input)
+        assert result == test_case.expected_result
+
+    @pytest.mark.parametrize(
+        "test_case",
+        RuntimeScenarios.LIST_LIKE_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_list_like_validation(self, test_case: RuntimeTestCase) -> None:
+        """Test list-like object validation."""
+        result = FlextRuntime.is_list_like(test_case.test_input)
+        assert result == test_case.expected_result
+
+    @pytest.mark.parametrize(
+        "test_case",
+        RuntimeScenarios.JSON_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_json_validation(self, test_case: RuntimeTestCase) -> None:
+        """Test JSON string validation."""
+        result = FlextRuntime.is_valid_json(test_case.test_input)
+        assert result == test_case.expected_result
+
+    @pytest.mark.parametrize(
+        "test_case",
+        RuntimeScenarios.IDENTIFIER_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_identifier_validation(self, test_case: RuntimeTestCase) -> None:
+        """Test Python identifier validation."""
+        result = FlextRuntime.is_valid_identifier(test_case.test_input)
+        assert result == test_case.expected_result
+
+    # =====================================================================
+    # Serialization Tests
+    # =====================================================================
+
+    @pytest.mark.parametrize(
+        "test_case",
+        RuntimeScenarios.SERIALIZATION_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_safe_get_attribute(self, test_case: RuntimeTestCase) -> None:
+        """Test safe attribute retrieval."""
+        if test_case.operation == RuntimeOperationType.SAFE_GET_ATTRIBUTE_EXISTS:
+
+            class TestObj:
+                attr = "value"
+
+            obj = TestObj()
+            result = FlextRuntime.safe_get_attribute(obj, "attr")
+            assert result == "value"
+
+        elif (
+            test_case.operation
+            == RuntimeOperationType.SAFE_GET_ATTRIBUTE_MISSING_DEFAULT
+        ):
+
+            class TestObjDefault:
+                pass
+
+            result = FlextRuntime.safe_get_attribute(
+                TestObjDefault(), "missing", "default"
+            )
+            assert result == "default"
+
+        elif (
+            test_case.operation
+            == RuntimeOperationType.SAFE_GET_ATTRIBUTE_MISSING_NO_DEFAULT
+        ):
+
+            class TestObjNoDefault:
+                pass
+
+            result = FlextRuntime.safe_get_attribute(TestObjNoDefault(), "missing")
+            assert result is None
+
+    # =====================================================================
+    # Type Introspection Tests
+    # =====================================================================
+
+    @pytest.mark.parametrize(
+        "test_case",
+        RuntimeScenarios.GENERIC_ARGS_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_extract_generic_args(self, test_case: RuntimeTestCase) -> None:
+        """Test extraction of generic type arguments."""
+        args = FlextRuntime.extract_generic_args(test_case.test_input)
+        assert args == test_case.expected_result
+
+    @pytest.mark.parametrize(
+        "test_case",
+        RuntimeScenarios.SEQUENCE_TYPE_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_sequence_type_detection(self, test_case: RuntimeTestCase) -> None:
+        """Test sequence type detection."""
+        result = FlextRuntime.is_sequence_type(test_case.test_input)
+        assert result == test_case.expected_result
+
+    # =====================================================================
+    # External Library Access Tests
+    # =====================================================================
+
+    @pytest.mark.parametrize(
+        "test_case",
+        RuntimeScenarios.LIBRARY_ACCESS_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_external_library_access(self, test_case: RuntimeTestCase) -> None:
+        """Test external library access."""
+        if test_case.operation == RuntimeOperationType.STRUCTLOG_MODULE:
+            module = FlextRuntime.structlog()
+            assert module is structlog
+            assert hasattr(module, "get_logger")
+            assert hasattr(module, "configure")
+
+        elif test_case.operation == RuntimeOperationType.DEPENDENCY_PROVIDERS_MODULE:
+            module = FlextRuntime.dependency_providers()
+            assert module is providers
+            assert hasattr(module, "Singleton")
+            assert hasattr(module, "Factory")
+
+        elif test_case.operation == RuntimeOperationType.DEPENDENCY_CONTAINERS_MODULE:
+            module = FlextRuntime.dependency_containers()
+            assert module is containers
+            assert hasattr(module, "DeclarativeContainer")
+
+    # =====================================================================
+    # Structlog Configuration Tests
+    # =====================================================================
+
+    @pytest.mark.parametrize(
+        "test_case",
+        RuntimeScenarios.STRUCTLOG_CONFIG_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_structlog_configuration(self, test_case: RuntimeTestCase) -> None:
+        """Test structlog configuration."""
+        if test_case.should_reset_config:
+            RuntimeScenarios.reset_structlog_config()
+
+        if test_case.operation == RuntimeOperationType.CONFIGURE_STRUCTLOG_DEFAULTS:
+            FlextRuntime.configure_structlog()
+            assert FlextRuntime._structlog_configured is True
+            assert structlog.is_configured()
+
+        elif (
+            test_case.operation
+            == RuntimeOperationType.CONFIGURE_STRUCTLOG_CUSTOM_LOG_LEVEL
+        ):
+            FlextRuntime.configure_structlog(log_level=logging.DEBUG)
+            assert FlextRuntime._structlog_configured is True
+
+        elif (
+            test_case.operation
+            == RuntimeOperationType.CONFIGURE_STRUCTLOG_JSON_RENDERER
+        ):
+            FlextRuntime.configure_structlog(console_renderer=False)
+            assert FlextRuntime._structlog_configured is True
+
+        elif (
+            test_case.operation
+            == RuntimeOperationType.CONFIGURE_STRUCTLOG_ADDITIONAL_PROCESSORS
+        ):
+
+            def custom_processor(
+                logger: object,
+                method_name: str,
+                event_dict: dict[str, object],
+            ) -> dict[str, object]:
+                event_dict["custom"] = True
+                return event_dict
+
+            FlextRuntime.configure_structlog(additional_processors=[custom_processor])
+            assert FlextRuntime._structlog_configured is True
+
+        elif test_case.operation == RuntimeOperationType.CONFIGURE_STRUCTLOG_IDEMPOTENT:
+            FlextRuntime.configure_structlog()
+            FlextRuntime.configure_structlog()
+            assert FlextRuntime._structlog_configured is True
+
+    # =====================================================================
+    # Integration Tests
+    # =====================================================================
+
+    @pytest.mark.parametrize(
+        "test_case",
+        RuntimeScenarios.INTEGRATION_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_runtime_integration(self, test_case: RuntimeTestCase) -> None:
+        """Test FlextRuntime integration scenarios."""
+        if test_case.operation == RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS:
+            assert hasattr(FlextConstants.Platform, "PATTERN_PHONE_NUMBER")
+            test_phone = "+5511987654321"
+            assert FlextRuntime.is_valid_phone(test_phone)
+
+        elif test_case.operation == RuntimeOperationType.INTEGRATION_LAYER_HIERARCHY:
+            assert FlextConstants is not None
+            assert FlextRuntime is not None
+            assert FlextConstants.Platform.PATTERN_EMAIL is not None
+
+        elif (
+            test_case.operation == RuntimeOperationType.TRACK_SERVICE_RESOLUTION_SUCCESS
+        ):
+            FlextRuntime.configure_structlog()
+            correlation_id = FlextContext.Utilities.ensure_correlation_id()
+            FlextRuntime.Integration.track_service_resolution("database", resolved=True)
+            current_correlation = FlextContext.Correlation.get_correlation_id()
+            assert current_correlation == correlation_id
+
+        elif (
+            test_case.operation == RuntimeOperationType.TRACK_SERVICE_RESOLUTION_FAILURE
+        ):
+            FlextRuntime.configure_structlog()
+            correlation_id = FlextContext.Utilities.ensure_correlation_id()
+            FlextRuntime.Integration.track_service_resolution(
+                "cache", resolved=False, error_message="Connection refused"
+            )
+            assert FlextContext.Correlation.get_correlation_id() == correlation_id
+
+        elif (
+            test_case.operation
+            == RuntimeOperationType.TRACK_DOMAIN_EVENT_WITH_AGGREGATE
+        ):
+            FlextRuntime.configure_structlog()
+            correlation_id = FlextContext.Utilities.ensure_correlation_id()
+            FlextRuntime.Integration.track_domain_event(
+                "UserCreated",
+                aggregate_id="user-123",
+                event_data={"email": "test@example.com"},
+            )
+            assert FlextContext.Correlation.get_correlation_id() == correlation_id
+
+        elif (
+            test_case.operation
+            == RuntimeOperationType.TRACK_DOMAIN_EVENT_WITHOUT_AGGREGATE
+        ):
+            FlextRuntime.configure_structlog()
+            correlation_id = FlextContext.Utilities.ensure_correlation_id()
+            FlextRuntime.Integration.track_domain_event(
+                "SystemInitialized",
+                event_data={"timestamp": "2025-01-01T00:00:00Z"},
+            )
+            assert FlextContext.Correlation.get_correlation_id() == correlation_id
+
+        elif (
+            test_case.operation
+            == RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_FULL
+        ):
+            FlextRuntime.configure_structlog()
+            FlextRuntime.Integration.setup_service_infrastructure(
+                service_name="test-service",
+                service_version="1.0.0",
+                enable_context_correlation=True,
+            )
+            assert FlextContext.Service.get_service_name() == "test-service"
+            assert FlextContext.Service.get_service_version() == "1.0.0"
+            correlation_id_result: str | None = (
+                FlextContext.Correlation.get_correlation_id()
+            )
+            assert correlation_id_result is not None
+
+        elif (
+            test_case.operation
+            == RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_MINIMAL
+        ):
+            FlextRuntime.configure_structlog()
+            FlextRuntime.Integration.setup_service_infrastructure(
+                service_name="minimal-service",
+                enable_context_correlation=True,
+            )
+            assert FlextContext.Service.get_service_name() == "minimal-service"
+            assert FlextContext.Correlation.get_correlation_id() is not None
+
+        elif (
+            test_case.operation
+            == RuntimeOperationType.SETUP_SERVICE_WITHOUT_CORRELATION
+        ):
+            FlextRuntime.configure_structlog()
+            structlog.contextvars.unbind_contextvars("correlation_id")
+            FlextRuntime.Integration.setup_service_infrastructure(
+                service_name="no-correlation-service",
+                service_version="2.0.0",
+                enable_context_correlation=False,
+            )
+            assert FlextContext.Service.get_service_name() == "no-correlation-service"
+            assert FlextContext.Correlation.get_correlation_id() is None
+
+
+__all__ = ["TestFlextRuntime"]

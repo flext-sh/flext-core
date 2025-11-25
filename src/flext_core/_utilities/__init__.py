@@ -11,7 +11,7 @@ from __future__ import annotations
 
 # Import all extracted classes
 from flext_core._utilities.cache import FlextUtilitiesCache
-from flext_core._utilities.configuration import FlextUtilitiesConfiguration
+from flext_core._utilities.configuration import FlextUtilitiesConfiguration, T_Model
 from flext_core._utilities.data_mapper import FlextUtilitiesDataMapper
 from flext_core._utilities.domain import FlextUtilitiesDomain
 from flext_core._utilities.generators import FlextUtilitiesGenerators
@@ -34,4 +34,5 @@ __all__ = [
     "FlextUtilitiesTypeChecker",
     "FlextUtilitiesTypeGuards",
     "FlextUtilitiesValidation",
+    "T_Model",
 ]

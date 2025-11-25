@@ -17,7 +17,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-
 # Add src to path for imports (required for tests/examples structure)
 from flext_core import (
     FlextConfig,
@@ -37,6 +36,7 @@ from flext_core import (
     FlextTypes,
     FlextUtilities,
 )
+
 
 class TestMigrationScenario1:
     """Test Scenario 1: Existing Application Using FlextResult (No Changes Required)."""

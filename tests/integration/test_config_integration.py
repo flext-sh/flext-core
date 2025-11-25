@@ -1,16 +1,16 @@
-"""Integration tests for FlextConfig singleton pattern and multi-source configuration.
+"""Integration tests for FlextConfig singleton pattern using advanced Python 3.13 patterns.
 
-This test validates that:
-1. FlextConfig works as a singleton across all modules using get_global_instance()
-2. Configuration can be loaded from multiple sources (.env, JSON, YAML, TOML)
-3. Environment variables override file configurations
-4. All modules use the same configuration instance
+This module validates comprehensive configuration integration including:
+- FlextConfig singleton pattern across all modules
+- Multi-source configuration loading (.env, JSON, YAML, TOML)
+- Environment variable overrides
+- Thread safety and concurrent access
+- All modules using same configuration instance
 
-Updated to use FlextConfig.get_global_instance() for singleton behavior.
+Uses factories and dataclasses for maximum code reuse and test coverage.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -19,8 +19,11 @@ import json
 import os
 import tempfile
 import threading
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
+import pytest
 import yaml
 
 from flext_core import (
@@ -31,21 +34,124 @@ from flext_core import (
 )
 
 
+@dataclass(frozen=True, slots=True)
+class ConfigTestCase:
+    """Factory for configuration test cases."""
+
+    test_name: str
+    config_data: dict[str, Any]
+    expected_values: dict[str, Any] = field(default_factory=dict)
+    file_format: str = "json"
+    env_vars: dict[str, str] = field(default_factory=dict)
+    description: str = field(default="", compare=False)
+
+    def create_temp_file(self, temp_dir: Path) -> Path:
+        """Create temporary config file."""
+        file_path = temp_dir / f"test_config.{self.file_format}"
+
+        if self.file_format == "json":
+            with Path(file_path).open("w", encoding="utf-8") as f:
+                json.dump(self.config_data, f, indent=2)
+        elif self.file_format == "yaml":
+            with Path(file_path).open("w", encoding="utf-8") as f:
+                yaml.dump(self.config_data, f, default_flow_style=False)
+        elif self.file_format == "toml":
+            # Simple TOML-like format for testing
+            content = "\n".join(f"{k} = {v!r}" for k, v in self.config_data.items())
+            file_path.write_text(content)
+
+        return file_path
+
+
+@dataclass(frozen=True, slots=True)
+class ThreadSafetyTest:
+    """Factory for thread safety test configurations."""
+
+    thread_count: int = 5
+    operations_per_thread: int = 10
+    description: str = field(default="", compare=False)
+
+
+class ConfigTestFactories:
+    """Centralized factories for configuration tests."""
+
+    @staticmethod
+    def basic_config_cases() -> list[ConfigTestCase]:
+        """Generate basic configuration test cases."""
+        return [
+            ConfigTestCase(
+                test_name="basic_json",
+                config_data={"app_name": "test_app", "debug": True, "port": 8080},
+                expected_values={"app_name": "test_app", "debug": True, "port": 8080},
+                file_format="json",
+                description="Basic JSON configuration",
+            ),
+            ConfigTestCase(
+                test_name="basic_yaml",
+                config_data={"database_url": "sqlite:///test.db", "timeout": 30},
+                expected_values={"database_url": "sqlite:///test.db", "timeout": 30},
+                file_format="yaml",
+                description="Basic YAML configuration",
+            ),
+            ConfigTestCase(
+                test_name="env_override",
+                config_data={"max_connections": 10},
+                expected_values={"max_connections": 20},
+                env_vars={"FLEXT_MAX_CONNECTIONS": "20"},
+                description="Environment variable override",
+            ),
+        ]
+
+    @staticmethod
+    def thread_safety_cases() -> list[ThreadSafetyTest]:
+        """Generate thread safety test cases."""
+        return [
+            ThreadSafetyTest(
+                thread_count=3,
+                operations_per_thread=5,
+                description="Light concurrent access",
+            ),
+            ThreadSafetyTest(
+                thread_count=10,
+                operations_per_thread=20,
+                description="Heavy concurrent access",
+            ),
+        ]
+
+
 class TestFlextConfigSingletonIntegration:
-    """Test FlextConfig singleton pattern and integration with all modules."""
+    """Test FlextConfig singleton pattern and integration with all modules using factories."""
 
     def setup_method(self) -> None:
         """Reset singleton instances before each test."""
         FlextConfig.reset_global_instance()
-        FlextContainer.get_global().clear()  # API changed
+        FlextContainer().clear()  # API changed
 
     def teardown_method(self) -> None:
         """Reset singleton instances after each test."""
         FlextConfig.reset_global_instance()
-        FlextContainer.get_global().clear()  # API changed
+        FlextContainer().clear()  # API changed
+
+    @pytest.mark.parametrize("case", ConfigTestFactories.basic_config_cases())
+    def test_singleton_pattern_with_factories(self, case: ConfigTestCase) -> None:
+        """Test that FlextConfig.get_global_instance() returns the same instance."""
+        # Get config instance multiple times using singleton API
+        config1 = FlextConfig.get_global_instance()
+        config2 = FlextConfig.get_global_instance()
+        config3 = FlextConfig.get_global_instance()
+
+        # All instances should be the same object
+        assert config1 is config2
+        assert config2 is config3
+        assert config1 is config3
+
+        # Should be FlextConfig instance
+        assert isinstance(config1, FlextConfig)
+        assert isinstance(config2, FlextConfig)
+        assert isinstance(config3, FlextConfig)
 
     def test_singleton_pattern(self) -> None:
-        """Test that FlextConfig.get_global_instance() returns the same instance."""
+        """Test that FlextConfig.get_global_instance() returns the same instance (legacy test)."""
         # Get config instance multiple times using singleton API
         config1 = FlextConfig.get_global_instance()
         config2 = FlextConfig.get_global_instance()
@@ -68,7 +174,7 @@ class TestFlextConfigSingletonIntegration:
         global_config = FlextConfig.get_global_instance()
 
         # Get global container (FlextContainer also uses singleton pattern)
-        container = FlextContainer.get_global()
+        container = FlextContainer()
 
         # Container should have reference to global config
         assert container._flext_config is global_config

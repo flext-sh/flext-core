@@ -41,7 +41,7 @@ class FlextModelsConfig:
         )
 
         operation_id: str = Field(
-            default_factory=FlextUtilities.Generators.generate_uuid,
+            default_factory=FlextUtilities.Generators.generate_id,
             min_length=1,
             description="Unique operation identifier",
         )
@@ -368,7 +368,7 @@ class FlextModelsConfig:
         log_level: int = Field(
             default_factory=lambda: getattr(
                 logging,
-                FlextConfig().log_level.value.upper(),
+                FlextConfig().log_level.upper(),
                 logging.INFO,
             ),
             ge=0,

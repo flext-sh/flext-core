@@ -166,7 +166,7 @@ class TestLibraryIntegration:
 
         # Act - Test global container access
         # API changed: use get_global() instead of ensure_global_manager()
-        global_container = FlextContainer.get_global()
+        global_container = FlextContainer()
 
         # Assert - Global container availability
         assert isinstance(global_container, FlextContainer)

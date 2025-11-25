@@ -13,7 +13,6 @@ import secrets
 import string
 import time
 import uuid
-import warnings
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import cast
@@ -70,27 +69,6 @@ class FlextUtilitiesGenerators:
     def generate_id() -> str:
         """Generate a unique ID using UUID4."""
         return str(uuid.uuid4())
-
-    @staticmethod
-    def generate_uuid() -> str:
-        """Generate a UUID string."""
-        return str(uuid.uuid4())
-
-    @staticmethod
-    def generate_timestamp() -> str:
-        """Generate ISO format timestamp without microseconds.
-
-        .. deprecated:: 0.9.9
-            Use :func:`generate_iso_timestamp` instead. This method is identical
-            and will be removed in version 2.0.0.
-
-        """
-        warnings.warn(
-            "generate_timestamp() is deprecated, use generate_iso_timestamp() instead",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return FlextUtilitiesGenerators.generate_iso_timestamp()
 
     @staticmethod
     def generate_iso_timestamp() -> str:
@@ -287,13 +265,13 @@ class FlextUtilitiesGenerators:
 
         """
         if "trace_id" not in context_dict:
-            context_dict["trace_id"] = FlextUtilitiesGenerators.generate_uuid()
+            context_dict["trace_id"] = FlextUtilitiesGenerators.generate_id()
         if "span_id" not in context_dict:
-            context_dict["span_id"] = FlextUtilitiesGenerators.generate_uuid()
+            context_dict["span_id"] = FlextUtilitiesGenerators.generate_id()
 
         # Optionally ensure correlation_id
         if include_correlation_id and "correlation_id" not in context_dict:
-            context_dict["correlation_id"] = FlextUtilitiesGenerators.generate_uuid()
+            context_dict["correlation_id"] = FlextUtilitiesGenerators.generate_id()
 
         # Optionally ensure timestamp (ISO 8601 format)
         if include_timestamp and "timestamp" not in context_dict:

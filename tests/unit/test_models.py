@@ -1,8 +1,23 @@
-"""Comprehensive tests for FlextModels - Data Models.
+"""FlextModels comprehensive functionality tests.
+
+Module: flext_core.models
+Scope: FlextModels module - Pydantic-based data models, validation, serialization,
+domain entities, value objects, aggregates, commands, queries, events, metadata,
+and payload structures.
+
+Tests core FlextModels functionality including:
+- Model creation, validation, and serialization
+- Domain-driven design patterns (entities, value objects, aggregates)
+- CQRS patterns (commands, queries, events)
+- Thread safety and immutability
+- Custom validators and field processing
+- JSON serialization and deserialization
+
+Uses Python 3.13 patterns (StrEnum, frozen dataclasses with slots),
+centralized test constants, and parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -11,7 +26,9 @@ import datetime
 import json
 import threading
 from collections.abc import Callable
-from typing import ClassVar, cast
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import ClassVar
 
 import pytest
 from pydantic import Field, ValidationError, field_validator
@@ -22,7 +39,33 @@ from flext_core import (
     FlextModels,
 )
 
+# ========== Test Parametrization Data Structures ==========
 
+
+class ModelType(StrEnum):
+    """Model types for parametrized testing."""
+
+    ENTITY = "entity"
+    VALUE = "value"
+    AGGREGATE = "aggregate"
+    COMMAND = "command"
+    QUERY = "query"
+    EVENT = "event"
+    METADATA = "metadata"
+    PAYLOAD = "payload"
+
+
+@dataclass(frozen=True, slots=True)
+class ModelCreationScenario:
+    """Scenario for testing model creation."""
+
+    model_type: ModelType
+    field_data: dict[str, object]
+    expected_checks: list[str]
+    description: str = ""
+
+
+# ========== Test Fixture Classes ==========
 # Test fixture classes defined at module level for proper Pydantic resolution
 # (Renamed to avoid pytest collection - they're not test classes)
 class SampleAggregate(FlextModels.AggregateRoot):
@@ -492,13 +535,17 @@ class TestFlextModels:
         """Test AggregateRoot invariant checking."""
 
         # Test with passing invariant
+        def passing_invariant() -> bool:
+            """Simple passing invariant for testing."""
+            return True
+
         class TestAggregate(FlextModels.AggregateRoot):
             name: str
             value: int
 
             # Define invariants as class-level callables that return bool
             _invariants: ClassVar[list[Callable[[], bool]]] = [
-                lambda: True,  # Simple passing invariant for testing
+                passing_invariant,
             ]
 
         # Test invariant checking - create aggregate and test manually
@@ -508,11 +555,15 @@ class TestFlextModels:
 
         # Test with failing invariant - invariant is checked automatically in model_post_init
         # So we expect it to fail during creation
+        def failing_invariant() -> bool:
+            """Invariant that always fails."""
+            return False
+
         class FailingAggregate(FlextModels.AggregateRoot):
             name: str
 
             _invariants: ClassVar[list[Callable[[], bool]]] = [
-                lambda: False,  # Always fails
+                failing_invariant,
             ]
 
         # Create aggregate - invariant will be checked automatically and should fail
@@ -540,7 +591,7 @@ class TestFlextModels:
         assert len(value_set) == 2  # value1 and value2 are same, value3 is different
 
         # Should be immutable (frozen)
-        with pytest.raises((ValidationError, AttributeError)):  # type: ignore[arg-type]  # Pydantic v2 raises ValidationError or AttributeError on frozen models
+        with pytest.raises(ValidationError):
             value1.value = 100  # type: ignore[attr-defined]
 
     def test_command_creation_with_mixins(self) -> None:
@@ -657,13 +708,13 @@ class TestFlextModels:
         aggregate = TestAggregate(name="test")
 
         # Bulk add events
-        events = [
-            ("event1", cast("dict[str, object]", {"data": "value1"})),
-            ("event2", cast("dict[str, object]", {"data": "value2"})),
-            ("event3", cast("dict[str, object]", {"data": "value3"})),
+        events: list[object] = [
+            ("event1", {"data": "value1"}),
+            ("event2", {"data": "value2"}),
+            ("event3", {"data": "value3"}),
         ]
 
-        result = aggregate.add_domain_events_bulk(events)
+        result = aggregate.add_domain_events_bulk(events)  # type: ignore[arg-type]
         assert result.is_success
 
         # Should have added all events
@@ -687,32 +738,34 @@ class TestFlextModels:
         assert result.is_success
 
         # Test invalid input type
-        result = aggregate.add_domain_events_bulk(
-            cast("list[tuple[str, dict[str, object]]]", "not a list"),
-        )
+        invalid_input: object = "not a list"
+        result = aggregate.add_domain_events_bulk(invalid_input)  # type: ignore[arg-type]
         assert result.is_failure
         assert result.error is not None and "Events must be a list" in result.error
 
         # Test empty event name
-        result = aggregate.add_domain_events_bulk([
-            ("", cast("dict[str, object]", {"data": "value"})),
-        ])
+        invalid_empty_name: list[object] = [
+            ("", {"data": "value"}),
+        ]
+        result = aggregate.add_domain_events_bulk(invalid_empty_name)  # type: ignore[arg-type]
         assert result.is_failure
         assert (
             result.error is not None and "name must be non-empty string" in result.error
         )
 
         # Test invalid data type
-        result = aggregate.add_domain_events_bulk([
-            ("event", cast("dict[str, object]", "not a dict")),
-        ])
+        invalid_data_type: list[object] = [
+            ("event", "not a dict"),
+        ]
+        result = aggregate.add_domain_events_bulk(invalid_data_type)  # type: ignore[arg-type]
         assert result.is_failure
         assert result.error is not None and "data must be dict" in result.error
 
         # Test None data (should be converted to empty dict)
-        result = aggregate.add_domain_events_bulk([
-            ("event", cast("dict[str, object]", {})),
-        ])
+        valid_empty_dict: list[object] = [
+            ("event", {}),
+        ]
+        result = aggregate.add_domain_events_bulk(valid_empty_dict)  # type: ignore[arg-type]
         assert result.is_success
 
     def test_aggregate_root_bulk_domain_events_limit(self) -> None:
@@ -725,12 +778,11 @@ class TestFlextModels:
 
         # Try to add more than max events
         max_events = 1000  # From FlextConstants.Validation.MAX_UNCOMMITTED_EVENTS
-        events = [
-            (f"event{i}", cast("dict[str, object]", {"data": f"value{i}"}))
-            for i in range(max_events + 1)
+        events: list[object] = [
+            (f"event{i}", {"data": f"value{i}"}) for i in range(max_events + 1)
         ]
 
-        result = aggregate.add_domain_events_bulk(events)
+        result = aggregate.add_domain_events_bulk(events)  # type: ignore[arg-type]
         assert result.is_failure
         assert result.error is not None and "would exceed max events" in result.error
 
@@ -981,17 +1033,18 @@ class TestFlextModels:
     def test_query_model_creation(self) -> None:
         """Test Query model with validators."""
         # Query has: message_type, filters, pagination, query_id, query_type
+        pagination = FlextModels.Cqrs.Pagination(page=1, size=20)
         query = FlextModels.Cqrs.Query(
             filters={"user_id": "user-456"},
-            pagination={"page": 1, "size": 20},
+            pagination=pagination,
             query_type="GetOrdersByUser",
         )
 
         assert query.filters["user_id"] == "user-456"
         assert query.query_type == "GetOrdersByUser"
-        # Verify pagination has correct attributes (duck typing)
-        assert hasattr(query.pagination, "page")
-        assert hasattr(query.pagination, "size")
+        # Verify pagination has correct attributes
+        assert query.pagination is not None
+        assert isinstance(query.pagination, FlextModels.Cqrs.Pagination)
         assert query.pagination.page == 1
         assert query.pagination.size == 20
 

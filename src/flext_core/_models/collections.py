@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Self
 
-from pydantic import ConfigDict, Field, computed_field
+from pydantic import ConfigDict, Field
 
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.runtime import FlextRuntime
@@ -72,17 +72,17 @@ class FlextModelsCollections:
             if category in self.categories:
                 del self.categories[category]
 
-        @computed_field
+        @property
         def category_names(self) -> list[str]:
             """Get list of all category names."""
             return list(self.categories.keys())
 
-        @computed_field
+        @property
         def total_entries(self) -> int:
             """Get total number of entries across all categories."""
             return sum(len(entries) for entries in self.categories.values())
 
-        @computed_field
+        @property
         def summary(self) -> dict[str, int]:
             """Get summary with entry count per category."""
             return {name: len(entries) for name, entries in self.categories.items()}

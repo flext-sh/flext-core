@@ -1,11 +1,11 @@
 """Comprehensive test configuration for flext-core with advanced pytest features.
 
 Provides centralized fixtures, test utilities, and configuration for all flext-core tests
-using the consolidated tests/support/ infrastructure for maximum testing efficiency.
+using consolidated infrastructure for maximum testing efficiency and reduced code duplication.
+Includes Docker integration, singleton management, and advanced pytest patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -15,10 +15,6 @@ import shutil
 import tempfile
 import warnings
 from collections.abc import Generator
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -28,8 +24,8 @@ from flext_core import (
     FlextContainer,
     FlextLogger,
     FlextResult,
+    FlextRuntime,
 )
-from flext_core.runtime import FlextRuntime
 from flext_tests.docker import FlextTestDocker
 
 from .fixtures import (
@@ -92,8 +88,7 @@ def reset_container_singleton() -> Generator[None]:
     """
     # Clear singletons before test
     FlextContainer._global_instance = None
-    FlextConfig.reset_global_instance()
-    FlextConfig._di_config_provider = None
+    FlextConfig._instances.clear()
 
     # Reset FlextRuntime structlog configuration state
     FlextRuntime._structlog_configured = False
@@ -109,8 +104,7 @@ def reset_container_singleton() -> Generator[None]:
 
     # Clear singletons after test
     FlextContainer._global_instance = None
-    FlextConfig.reset_global_instance()
-    FlextConfig._di_config_provider = None
+    FlextConfig._instances.clear()
 
     # Reset FlextRuntime state after test
     FlextRuntime._structlog_configured = False
@@ -383,7 +377,7 @@ def logging_test_env() -> Generator[None]:
 
     try:
         # Clear both config and logger singleton states
-        FlextConfig.reset_global_instance()
+        FlextConfig._instances.clear()
 
         # Reset logger singleton state via runtime
         FlextRuntime._structlog_configured = False
@@ -393,7 +387,7 @@ def logging_test_env() -> Generator[None]:
         yield
     finally:
         # Clear both singleton states again and restore original value
-        FlextConfig.reset_global_instance()
+        FlextConfig._instances.clear()
         FlextRuntime._structlog_configured = False
 
         if original_log_level is not None:

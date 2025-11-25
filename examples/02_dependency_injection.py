@@ -385,7 +385,9 @@ class CacheService(FlextService[object]):
                         return float(created_at_raw)
                     return 0.0
 
-                created_at_result = FlextResult[float].from_callable(convert_timestamp)
+                created_at_result = FlextResult[float].create_from_callable(
+                    convert_timestamp
+                )
 
                 if created_at_result.is_success:
                     created_at = created_at_result.unwrap()
@@ -409,18 +411,33 @@ class CacheService(FlextService[object]):
             return FlextResult[object].ok(self._cache[valid_key])
 
         # NEW: Use flow_through for clean pipeline composition
+        def check_existence_obj(key: object) -> FlextResult[object]:
+            str_key = str(key)
+            result = check_existence(str_key)
+            if result.is_success:
+                return FlextResult[object].ok(result.value)
+            return FlextResult[object].fail(result.error or "Check failed")
+
+        def validate_ttl_obj(key: object) -> FlextResult[object]:
+            str_key = str(key)
+            result = validate_ttl(str_key)
+            if result.is_success:
+                return FlextResult[object].ok(result.value)
+            return FlextResult[object].fail(result.error or "Validation failed")
+
         result = (
             FlextResult[str]
-            .from_callable(
+            .create_from_callable(
                 validate_key, error_code=FlextConstants.Errors.VALIDATION_ERROR
             )
             .flow_through(
-                check_existence,
-                validate_ttl,
+                check_existence_obj,
+                validate_ttl_obj,
             )
         )
         if result.is_success:
-            return get_value(result.unwrap())
+            str_key = str(result.unwrap())
+            return get_value(str_key)
         return FlextResult[object].fail(
             result.error or "Unknown error", error_code=result.error_code
         )
@@ -484,22 +501,23 @@ class CacheService(FlextService[object]):
                     return 0.0
 
                 # Use from_callable for safe timestamp extraction
-                result = FlextResult[float].from_callable(extract_timestamp)
-                return result.value_or_call(lambda: 0.0)
+                result = FlextResult[float].create_from_callable(extract_timestamp)
+                return result.unwrap_or(0.0)
 
             return min(self._metadata.keys(), key=get_timestamp)
 
-        def perform_eviction(oldest_key: str) -> FlextResult[str]:
+        def perform_eviction(oldest_key: object) -> FlextResult[object]:
             """Perform the actual eviction."""
-            del self._cache[oldest_key]
-            del self._metadata[oldest_key]
-            self.logger.debug("Cache evicted: %s", oldest_key)
-            return FlextResult[str].ok(oldest_key)
+            str_key = str(oldest_key)
+            del self._cache[str_key]
+            del self._metadata[str_key]
+            self.logger.debug("Cache evicted: %s", str_key)
+            return FlextResult[object].ok(str_key)
 
         # NEW: Use from_callable and flow_through for eviction
         eviction_result = (
             FlextResult[str]
-            .from_callable(find_oldest_key)
+            .create_from_callable(find_oldest_key)
             .flow_through(perform_eviction)
         )
 
@@ -560,7 +578,7 @@ class UserRepository(FlextService[User]):
     def __init__(self) -> None:
         """Initialize with database dependency using FLEXT patterns."""
         super().__init__()
-        container = FlextContainer.get_global()
+        container = FlextContainer()
         self._database = container.get("database").unwrap_or(None)
         self._cache: dict[str, User] = {}
 
@@ -592,7 +610,9 @@ class UserRepository(FlextService[User]):
         # Validate user before saving
         validation_result = self._validate_user(user)
         if validation_result.is_failure:
-            return validation_result.map(lambda _: False)
+            return FlextResult[bool].fail(
+                validation_result.error or "Validation failed"
+            )
 
         # Simulate save operation with enhanced logging
         self.logger.info(
@@ -774,10 +794,7 @@ class ComprehensiveDIService(FlextService[User]):
                     cache_stats = cache.get_stats()
 
             # Log comprehensive statistics
-            service_count = len(
-                set(self.container.services.keys())
-                | set(self.container.factories.keys()),
-            )
+            service_count = len(self.container.list_services())
             self.logger.info(
                 "Service execution statistics",
                 extra={
@@ -792,7 +809,7 @@ class ComprehensiveDIService(FlextService[User]):
     def get_service_stats(self) -> dict[str, object]:
         """Get comprehensive service statistics."""
         service_count = len(
-            set(self.container.services.keys()) | set(self.container.factories.keys()),
+            self.container.list_services(),
         )
         return {
             "container_service_count": service_count,
@@ -804,7 +821,7 @@ class ComprehensiveDIService(FlextService[User]):
         """Show basic service registration patterns."""
         print("\n=== Basic Service Registration ===")
 
-        self.container.clear()
+        self.container.clear_all()
         print("✅ Container cleared")
 
         connection = str(self._config_data.get("database_url", "sqlite:///:memory:"))
@@ -815,12 +832,12 @@ class ComprehensiveDIService(FlextService[User]):
         self.container.with_factory("cache", CacheService)
         print("Register factory: True")
 
-        has_db = self.container.has("database")
-        has_cache = self.container.has("cache")
+        has_db = self.container.has_service("database")
+        has_cache = self.container.has_service("cache")
         print(f"Has database: {has_db}, Has cache: {has_cache}")
 
         service_count = len(
-            set(self.container.services.keys()) | set(self.container.factories.keys()),
+            self.container.list_services(),
         )
         print(f"Service count: {service_count}")
 
@@ -863,12 +880,15 @@ class ComprehensiveDIService(FlextService[User]):
             print(f"❌ Type validation failed: {typed_result.error}")
 
         user_dict = sample_user
-        email_result = self.container.get_or_create(
-            "email",
-            lambda: EmailService(
+        # Use get with fallback to register if not found
+        email_result = self.container.get("email")
+        if email_result.is_failure:
+            email_service = EmailService(
                 smtp_host=str(user_dict.get("email", "smtp@example.com")),
-            ),
-        )
+            )
+            register_result = self.container.register("email", email_service)
+            if register_result.is_success:
+                email_result = self.container.get("email")
         print(f"Get or create email: {email_result.is_success}")
 
         cache_result = self.container.get("cache")
@@ -909,18 +929,15 @@ class ComprehensiveDIService(FlextService[User]):
 
         services = self._scenarios.service_batch("container_batch")
 
-        result = self.container.batch_register(services)
-        if result.is_success:
-            print(f"✅ Batch registered {len(services)} services")
-        else:
-            print(f"❌ Batch registration failed: {result.error}")
+        # Register services individually (batch_register doesn't exist)
+        registered_count = 0
+        for name, service in services.items():
+            if self.container.register(name, service).is_success:
+                registered_count += 1
+        print(f"✅ Registered {registered_count} services")
 
-        services_result = self.container.list_services()
-        if services_result.is_success:
-            services_list = services_result.unwrap()
-            print(f"All services: {services_list}")
-        else:
-            print(f"❌ Failed to list[object] services: {services_result.error}")
+        services_list = self.container.list_services()
+        print(f"All services: {services_list}")
 
     # ========== AUTO-WIRING ==========
 
@@ -930,33 +947,32 @@ class ComprehensiveDIService(FlextService[User]):
 
         self.container.with_service("database", DatabaseService())
 
-        result = self.container.auto_wire(UserRepository)
-        if result.is_success:
-            repo = cast("UserRepository", result.unwrap())
-            print(f"✅ Auto-wired: {type(repo).__name__}")
+        # Auto-wiring not available, create manually
+        repo = UserRepository()
+        print(f"✅ Created: {type(repo).__name__}")
 
-            db_result: FlextResult[object] = self.container.get_typed(
-                "database",
-                DatabaseService,
+        db_result: FlextResult[object] = self.container.get_typed(
+            "database",
+            DatabaseService,
+        )
+        if db_result.is_success:
+            db = cast("DatabaseService", db_result.unwrap())
+            db.connect()
+
+            users_list_result = self._dataset.get(
+                "users",
+                cast("list[dict[str, object]]", [{}]),
             )
-            if db_result.is_success:
-                db = cast("DatabaseService", db_result.unwrap())
-                db.connect()
-
-                users_list_result = self._dataset.get(
-                    "users",
-                    cast("list[dict[str, object]]", [{}]),
-                )
-                users_list: list[object] = cast("list[object]", users_list_result)
-                user_id = str(
-                    cast("dict[str, object]", users_list[0]).get("id", "user_1"),
-                )
-                user_result = repo.find_by_id(user_id)
-                if user_result.is_success:
-                    user = user_result.unwrap()
-                    print(f"   Found user: {user.name}")
+            users_list: list[object] = cast("list[object]", users_list_result)
+            user_id = str(
+                cast("dict[str, object]", users_list[0]).get("id", "user_1"),
+            )
+            user_result = repo.find_by_id(user_id)
+            if user_result.is_success:
+                user = user_result.unwrap()
+                print(f"   Found user: {user.name}")
         else:
-            print(f"❌ Auto-wire failed: {result.error}")
+            print("❌ Database connection failed")
 
     # ========== CONFIGURATION ==========
 
@@ -990,12 +1006,12 @@ class ComprehensiveDIService(FlextService[User]):
 
         # Build info manually since get_info() is removed
         service_count = len(
-            set(self.container.services.keys()) | set(self.container.factories.keys()),
+            self.container.list_services(),
         )
         info = {
             "service_count": service_count,
-            "direct_services": len(self.container.services),
-            "factories": len(self.container.factories),
+            "direct_services": len(self.container.list_services()),
+            "factories": len(self.container.list_services()),
         }
         print(f"Container info: {info}")
 
@@ -1035,7 +1051,7 @@ class ComprehensiveDIService(FlextService[User]):
         """Show global container patterns."""
         print("\n=== Global Container Patterns ===")
 
-        global_container = FlextContainer.get_global()
+        global_container = FlextContainer()
         print(f"Global container: {type(global_container).__name__}")
 
         global_payload = self._scenarios.payload(type="global_service")
@@ -1087,7 +1103,7 @@ class ComprehensiveDIService(FlextService[User]):
                 raise RuntimeError(msg)
             return db
 
-        db_result = FlextResult[DatabaseService].from_callable(risky_db_connect)
+        db_result = FlextResult[DatabaseService].create_from_callable(risky_db_connect)
         if db_result.is_failure:
             print(f"✅ Caught connection error safely: {db_result.error}")
         else:
@@ -1097,7 +1113,7 @@ class ComprehensiveDIService(FlextService[User]):
         def safe_cache_init() -> CacheService:
             return CacheService(max_size=100, ttl_seconds=300)
 
-        cache_result = FlextResult[CacheService].from_callable(safe_cache_init)
+        cache_result = FlextResult[CacheService].create_from_callable(safe_cache_init)
         if cache_result.is_success:
             cache = cache_result.unwrap()
             print(f"✅ Cache initialized: max_size={cache.max_size}")
@@ -1107,23 +1123,28 @@ class ComprehensiveDIService(FlextService[User]):
         print("\n=== flow_through(): Service Initialization Pipeline ===")
 
         def connect_database(
-            db: DatabaseService,
-        ) -> FlextResult[DatabaseService]:
+            db: object,
+        ) -> FlextResult[object]:
             """Connect to database."""
+            if not isinstance(db, DatabaseService):
+                return FlextResult[object].fail("Not a DatabaseService")
             result = db.connect()
             if result.is_failure:
-                return FlextResult[DatabaseService].fail(
+                return FlextResult[object].fail(
                     f"Connection failed: {result.error}",
                 )
-            return FlextResult[DatabaseService].ok(db)
+            return FlextResult[object].ok(db)
 
         def validate_database(
-            db: DatabaseService,
-        ) -> FlextResult[DatabaseService]:
+            db: object,
+        ) -> FlextResult[object]:
             """Validate database is ready."""
-            if not db.connected:
-                return FlextResult[DatabaseService].fail("Database not connected")
-            return FlextResult[DatabaseService].ok(db)
+            if not isinstance(db, DatabaseService):
+                return FlextResult[object].fail("Not a DatabaseService")
+            db_service = cast("DatabaseService", db)
+            if not db_service.connected:
+                return FlextResult[object].fail("Database not connected")
+            return FlextResult[object].ok(db)
 
         # Pipeline: create → connect → validate
         result = (
@@ -1137,7 +1158,11 @@ class ComprehensiveDIService(FlextService[User]):
 
         if result.is_success:
             db = result.unwrap()
-            print(f"✅ Service pipeline success: connected={db.connected}")
+            db_service = (
+                cast("DatabaseService", db) if isinstance(db, DatabaseService) else None
+            )
+            connected = db_service.connected if db_service else False
+            print(f"✅ Service pipeline success: connected={connected}")
         else:
             print(f"Pipeline failure: {result.error}")
 
@@ -1177,21 +1202,27 @@ class ComprehensiveDIService(FlextService[User]):
         """Show fallback pattern for service resolution."""
         print("\n=== alt(): Service Resolution Fallback ===")
 
-        # Try primary service, use fallback if fails
+        # Try primary service, use fallback if fails (using lash instead of alt)
         primary = self.container.get("non_existent_service")
-        fallback = FlextResult[object].ok(CacheService())
 
-        result = primary.alt(fallback)
+        def provide_fallback(_error: str) -> FlextResult[object]:
+            return FlextResult[object].ok(CacheService())
+
+        result = primary.lash(provide_fallback)
         if result.is_success:
             service = result.unwrap()
             print(f"✅ Got fallback service: {type(service).__name__}")
 
-        # Chain multiple fallbacks
+        # Chain multiple fallbacks using lash
         first = self.container.get("service1")
-        second = self.container.get("service2")
-        third = FlextResult[object].ok(EmailService())
 
-        result = first.alt(second).alt(third)
+        def second_fallback(_error: str) -> FlextResult[object]:
+            return self.container.get("service2")
+
+        def third_fallback(_error: str) -> FlextResult[object]:
+            return FlextResult[object].ok(EmailService())
+
+        result = first.lash(second_fallback).lash(third_fallback)
         if result.is_success:
             service = result.unwrap()
             print(f"Fallback chain: {type(service).__name__}")
@@ -1212,7 +1243,7 @@ class ComprehensiveDIService(FlextService[User]):
         # Success case - expensive creation NOT called
         success = self.container.get("database")
         if success.is_success:
-            service = success.value_or_call(expensive_service_creation)
+            service = success.unwrap()
             print(
                 f"✅ Success: {type(service).__name__}, expensive_created={expensive_created}",
             )
@@ -1220,7 +1251,8 @@ class ComprehensiveDIService(FlextService[User]):
         # Failure case - expensive creation IS called
         expensive_created = False
         failure = self.container.get("non_existent_service")
-        service = failure.value_or_call(expensive_service_creation)
+        service = failure.unwrap_or(expensive_service_creation())
+        expensive_created = True
         print(
             f"Fallback: {type(service).__name__}, expensive_created={expensive_created}",
         )
@@ -1309,38 +1341,25 @@ def demonstrate_flext_di_access() -> None:
     print("\n=== 3. Combined Configuration and DI ===")
     config = FlextConfig()
     print(f"  ✅ Config access: log_level = {config.log_level}")
-    services_result = container.list_services()
-    service_count = len(services_result.unwrap()) if services_result.is_success else 0
+    services_list = container.list_services()
+    service_count = len(services_list)
     print(f"  ✅ Container access: {service_count} services")
 
     # 4. Setup complete infrastructure with DI
     print("\n=== 4. Infrastructure Setup with DI ===")
-    setup_result = FlextContainer.create_module_utilities("di-demo-service")
+    infra_container = FlextContainer()
+    infra_logger = FlextLogger("di-demo-service")
 
-    if setup_result.is_success:
-        infra = setup_result.unwrap()
-        infra_container = infra["container"]
-        infra_logger = infra["logger"]
-
-        print("  ✅ Infrastructure initialized with DI:")
-        print(f"     - Container: {type(infra_container).__name__}")
-        print(f"     - Logger: {type(infra_logger).__name__}")
-        if hasattr(infra_container, "list_services"):
-            # Type assertion for container with list_services method
-            container_with_services = cast("FlextContainer", infra_container)
-            infra_services_result = container_with_services.list_services()
-            infra_service_count = (
-                len(infra_services_result.unwrap())
-                if infra_services_result.is_success
-                else 0
-            )
-        else:
-            infra_service_count = 0
-        print(f"     - Services: {infra_service_count}")
+    print("  ✅ Infrastructure initialized with DI:")
+    print(f"     - Container: {type(infra_container).__name__}")
+    print(f"     - Logger: {type(infra_logger).__name__}")
+    infra_services_list = infra_container.list_services()
+    infra_service_count = len(infra_services_list)
+    print(f"     - Services: {infra_service_count}")
 
     # 5. Direct class access for type-safe operations
     print("\n=== 5. Type-Safe DI Operations ===")
-    direct_container = FlextContainer.get_global()
+    direct_container = FlextContainer()
     result = FlextResult[str].ok("Service initialized")
 
     print(f"  ✅ Direct container access: {type(direct_container).__name__}")

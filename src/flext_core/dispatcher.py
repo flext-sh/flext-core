@@ -17,11 +17,12 @@ import threading
 import time
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
-from typing import cast, override
+from typing import TypedDict, cast, override
 
 from cachetools import LRUCache
 from pydantic import BaseModel
 
+from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
 from flext_core.handlers import FlextHandlers
@@ -31,6 +32,22 @@ from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
+
+
+class DispatcherConfig(TypedDict):
+    """Typed dictionary for dispatcher configuration values."""
+
+    dispatcher_timeout_seconds: float
+    executor_workers: int
+    circuit_breaker_threshold: int
+    rate_limit_max_requests: int
+    rate_limit_window_seconds: float
+    max_retry_attempts: int
+    retry_delay: float
+    enable_timeout_executor: bool
+    dispatcher_enable_logging: bool
+    dispatcher_auto_context: bool
+    dispatcher_enable_metrics: bool
 
 
 class FlextDispatcher(FlextMixins):
@@ -670,22 +687,22 @@ class FlextDispatcher(FlextMixins):
 
         # ==================== LAYER 1: CQRS ROUTING INITIALIZATION ====================
 
-        # Handler registry (from FlextBus dual-mode registration)
+        # Handler registry (from FlextDispatcher dual-mode registration)
         self._handlers: dict[object, object] = {}  # Handler mappings
         self._auto_handlers: list[object] = []  # Auto-discovery handlers
 
-        # Middleware pipeline (from FlextBus)
+        # Middleware pipeline (from FlextDispatcher)
         self._middleware_configs: list[dict[str, object]] = []  # Config + ordering
         self._middleware_instances: dict[str, object] = {}  # Keyed by middleware_id
 
-        # Query result caching (from FlextBus - LRU cache)
+        # Query result caching (from FlextDispatcher - LRU cache)
         # Fast fail: use constant directly, no fallback
         max_cache_size = FlextConstants.Container.MAX_CACHE_SIZE
         self._cache: LRUCache[str, FlextResult[object]] = LRUCache(
             maxsize=max_cache_size,
         )
 
-        # Event subscribers (from FlextBus event protocol)
+        # Event subscribers (from FlextDispatcher event protocol)
         self._event_subscribers: dict[str, list[object]] = {}  # event_type → handlers
 
         # Execution counter for metrics
@@ -747,9 +764,11 @@ class FlextDispatcher(FlextMixins):
         ] = {}  # Per-processor times
 
     @property
-    def dispatcher_config(self) -> dict[str, object]:
+    def dispatcher_config(self) -> DispatcherConfig:
         """Access the dispatcher configuration."""
-        return self.config.model_dump()
+        config_dict = self.config.model_dump()
+        # Cast to DispatcherConfig for type safety
+        return cast("DispatcherConfig", config_dict)
 
     # ==================== LAYER 3: ADVANCED PROCESSING INTERNAL METHODS ====================
 
@@ -1316,7 +1335,7 @@ class FlextDispatcher(FlextMixins):
     # ==================== LAYER 1: CQRS ROUTING INTERNAL METHODS ====================
 
     def _normalize_command_key(self, command_type_obj: object) -> str:
-        """Create comparable key for command identifiers (from FlextBus).
+        """Create comparable key for command identifiers (from FlextDispatcher).
 
         Args:
             command_type_obj: Object to create key from
@@ -1480,15 +1499,19 @@ class FlextDispatcher(FlextMixins):
         self,
         handler: object,
         command: object,
+        operation: str = "command",
     ) -> FlextResult[object]:
-        """Execute the handler using standard handle() method.
+        """Execute the handler using FlextHandlers pipeline when available.
 
-        Requires handlers to implement handle(message) -> FlextResult[object].
-        This eliminates the fallback pattern for type consistency.
+        Delegates to FlextHandlers._run_pipeline() for full CQRS support including
+        mode validation, can_handle check, message validation, context tracking,
+        and metrics recording. Falls back to direct handle()/execute() for
+        non-FlextHandlers instances.
 
         Args:
-            handler: The handler instance to execute (must have handle() method)
+            handler: The handler instance to execute
             command: The command/query to process
+            operation: Operation type (command, query, event)
 
         Returns:
             FlextResult: Handler execution result
@@ -1504,8 +1527,11 @@ class FlextDispatcher(FlextMixins):
             source="flext-core/src/flext_core/dispatcher.py",
         )
 
-        # Try standard handle() method first, then execute() as fallback
-        # Consistent with registration validation that accepts both
+        # Delegate to FlextHandlers.dispatch_message() for full CQRS support
+        if isinstance(handler, FlextHandlers):
+            return handler.dispatch_message(command, operation=operation)
+
+        # Fallback for non-FlextHandlers: try handle() then execute()
         method_name = None
         if hasattr(handler, "handle"):
             handle_method = getattr(handler, "handle", None)
@@ -1523,8 +1549,9 @@ class FlextDispatcher(FlextMixins):
             )
         handle_method = getattr(handler, method_name)
         if not callable(handle_method):
+            error_msg = f"Handler '{method_name}' must be callable"
             return self.fail(
-                f"Handler '{method_name}' must be callable",
+                error_msg,
                 error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
             )
 
@@ -1535,8 +1562,9 @@ class FlextDispatcher(FlextMixins):
             # TypeError: method signature mismatch
             # AttributeError: missing method attribute
             # ValueError: handler validation failed
+            error_msg = f"Handler execution failed: {e}"
             return self.fail(
-                f"Handler execution failed: {e}",
+                error_msg,
                 error_code=FlextConstants.Errors.COMMAND_PROCESSING_FAILED,
             )
 
@@ -1676,7 +1704,8 @@ class FlextDispatcher(FlextMixins):
                 consequence="Command will not be processed by handler",
                 source="flext-core/src/flext_core/dispatcher.py",
             )
-            return self.fail(result.unwrap_error())
+            error_msg = result.error
+            return self.fail(error_msg if error_msg is not None else "Unknown error")
 
         return self.ok(True)
 
@@ -1753,12 +1782,15 @@ class FlextDispatcher(FlextMixins):
             if middleware_result.is_failure:
                 # Fast fail: use unwrap_error() for type-safe str
                 return self.fail(
-                    middleware_result.unwrap_error(),
+                    middleware_result.error or "Unknown error",
                     error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
                 )
 
-            # Execute handler and cache results
-            result: FlextResult[object] = self._execute_handler(handler, command)
+            # Execute handler with appropriate operation type
+            operation = "query" if is_query else "command"
+            result: FlextResult[object] = self._execute_handler(
+                handler, command, operation=operation
+            )
 
             # Cache successful query results
             cache_key: str | None = None
@@ -1776,7 +1808,7 @@ class FlextDispatcher(FlextMixins):
             return result
 
     def layer1_register_handler(self, *args: object) -> FlextResult[bool]:
-        """Register handler with dual-mode support (from FlextBus).
+        """Register handler with dual-mode support (from FlextDispatcher).
 
         Supports:
         - Single-arg: register_handler(handler) - Auto-discovery with can_handle()
@@ -1868,7 +1900,7 @@ class FlextDispatcher(FlextMixins):
         middleware: object,
         middleware_config: dict[str, object] | None = None,
     ) -> FlextResult[bool]:
-        """Add middleware to processing pipeline (from FlextBus).
+        """Add middleware to processing pipeline (from FlextDispatcher).
 
         Args:
             middleware: The middleware instance to add
@@ -1924,7 +1956,7 @@ class FlextDispatcher(FlextMixins):
     # ==================== LAYER 1 EVENT PUBLISHING PROTOCOL ====================
 
     def publish_event(self, event: object) -> FlextResult[bool]:
-        """Publish domain event to subscribers (from FlextBus).
+        """Publish domain event to subscribers (from FlextDispatcher).
 
         Args:
             event: Domain event to publish
@@ -1948,7 +1980,7 @@ class FlextDispatcher(FlextMixins):
             return self.fail(f"Event publishing error: {e}")
 
     def publish_events(self, events: list[object]) -> FlextResult[bool]:
-        """Publish multiple domain events (from FlextBus).
+        """Publish multiple domain events (from FlextDispatcher).
 
         Uses FlextResult.from_callable() to eliminate try/except and
         flow_through() for declarative event processing pipeline.
@@ -1971,18 +2003,33 @@ class FlextDispatcher(FlextMixins):
 
                 return publish_func
 
-            publish_funcs = [make_publish_func(event) for event in events]
+            # Convert functions to match flow_through signature: Callable[[object], FlextResult[object]]
+            publish_funcs: list[Callable[[object], FlextResult[object]]] = []
+            for event in events:
+                publish_func = make_publish_func(event)
+
+                def make_wrapper(
+                    func: Callable[[object], FlextResult[bool]],
+                ) -> Callable[[object], FlextResult[object]]:
+                    def wrapper(_unused: object) -> FlextResult[object]:
+                        bool_result = func(_unused)
+                        return bool_result.map(lambda _x: object())
+
+                    return wrapper
+
+                publish_funcs.append(make_wrapper(publish_func))
+
             result = self.ok(True).flow_through(*publish_funcs)
             if result.is_failure:
                 error_msg = result.error
-                raise RuntimeError(error_msg)
+                raise RuntimeError(error_msg or "Unknown error")
             # Fast fail: return bool True for success
             return True
 
-        return FlextResult[bool].from_callable(publish_all)
+        return FlextResult[bool].create_from_callable(publish_all)
 
     def subscribe(self, event_type: str, handler: object) -> FlextResult[bool]:
-        """Subscribe handler to event type (from FlextBus).
+        """Subscribe handler to event type (from FlextDispatcher).
 
         Args:
             event_type: Type of event to subscribe to
@@ -2006,7 +2053,7 @@ class FlextDispatcher(FlextMixins):
         event_type: str,
         _handler: object | None = None,
     ) -> FlextResult[bool]:
-        """Unsubscribe from an event type (from FlextBus).
+        """Unsubscribe from an event type (from FlextDispatcher).
 
         Args:
             event_type: Type of event to unsubscribe from
@@ -2039,7 +2086,7 @@ class FlextDispatcher(FlextMixins):
         event_name: str,
         data: dict[str, object],
     ) -> FlextResult[bool]:
-        """Publish a named event with data (from FlextBus).
+        """Publish a named event with data (from FlextDispatcher).
 
         Convenience method for publishing events by name with associated data.
 
@@ -2263,7 +2310,7 @@ class FlextDispatcher(FlextMixins):
         message_type: type[object],
         handler: FlextHandlers[object, object],
         handler_mode: str,
-        handler_config: FlextTypes.HandlerConfigurationType = None,
+        handler_config: FlextTypes.Bus.HandlerConfigurationType = None,
     ) -> FlextResult[dict[str, object]]:
         """Register handler with specific mode (DRY helper).
 
@@ -2295,7 +2342,7 @@ class FlextDispatcher(FlextMixins):
         command_type: type[object],
         handler: FlextHandlers[object, object],
         *,
-        handler_config: FlextTypes.HandlerConfigurationType = None,
+        handler_config: FlextTypes.Bus.HandlerConfigurationType = None,
     ) -> FlextResult[dict[str, object]]:
         """Register command handler using structured model internally.
 
@@ -2320,7 +2367,7 @@ class FlextDispatcher(FlextMixins):
         query_type: type[object],
         handler: FlextHandlers[object, object],
         *,
-        handler_config: FlextTypes.HandlerConfigurationType = None,
+        handler_config: FlextTypes.Bus.HandlerConfigurationType = None,
     ) -> FlextResult[dict[str, object]]:
         """Register query handler using structured model internally.
 
@@ -2343,9 +2390,9 @@ class FlextDispatcher(FlextMixins):
     def register_function(
         self,
         message_type: type[object],
-        handler_func: FlextTypes.HandlerCallableType,
+        handler_func: FlextTypes.Bus.HandlerCallableType,
         *,
-        handler_config: FlextTypes.HandlerConfigurationType = None,
+        handler_config: FlextTypes.Bus.HandlerConfigurationType = None,
         mode: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
     ) -> FlextResult[dict[str, object]]:
         """Register function as handler using factory pattern.
@@ -2398,8 +2445,8 @@ class FlextDispatcher(FlextMixins):
 
     def create_handler_from_function(
         self,
-        handler_func: FlextTypes.HandlerCallableType,
-        _handler_config: FlextTypes.HandlerConfigurationType = None,
+        handler_func: FlextTypes.Bus.HandlerCallableType,
+        _handler_config: FlextTypes.Bus.HandlerConfigurationType = None,
         mode: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
     ) -> FlextResult[FlextHandlers[object, object]]:
         """Create handler from function using FlextHandlers constructor.
@@ -2414,9 +2461,23 @@ class FlextDispatcher(FlextMixins):
 
         """
         try:
-            handler = FlextHandlers.create_from_callable(
-                func=handler_func,
-                handler_name=getattr(handler_func, "__name__", "FunctionHandler"),
+            # Create concrete handler class that implements handle method
+            handler_name = getattr(handler_func, "__name__", "FunctionHandler")
+
+            class FunctionHandler(FlextHandlers[object, object]):
+                """Concrete handler implementation for function-based handlers."""
+
+                def handle(self, message: object) -> FlextResult[object]:
+                    """Handle message by calling the wrapped function."""
+                    result = handler_func(message)
+                    # Ensure result is FlextResult
+                    if isinstance(result, FlextResult):
+                        return result
+                    # Wrap non-FlextResult return values
+                    return FlextResult[object].ok(result)
+
+            handler = FunctionHandler(
+                handler_name=handler_name,
                 handler_type=mode,
             )
             return FlextResult[FlextHandlers[object, object]].ok(handler)
@@ -2749,10 +2810,18 @@ class FlextDispatcher(FlextMixins):
                     message,
                     None,
                     dispatch_config,
+                ).map(lambda _x: object()),
+            )
+            .flat_map(
+                lambda context: self._validate_pre_dispatch_conditions(
+                    cast("dict[str, object]", context),
+                ).map(lambda _x: object()),
+            )
+            .flat_map(
+                lambda context: self._execute_with_retry_policy(
+                    cast("dict[str, object]", context),
                 ),
             )
-            .flat_map(self._validate_pre_dispatch_conditions)
-            .flat_map(self._execute_with_retry_policy)
         )
 
     def _extract_dispatch_config(
@@ -2796,7 +2865,7 @@ class FlextDispatcher(FlextMixins):
                 "timeout_override": timeout_override,
             }
 
-            validation_result = FlextUtilities.Validation.validate_dispatch_config(
+            validation_result = FlextUtilitiesValidation.validate_dispatch_config(
                 config_dict,
             )
             if validation_result.is_failure:
@@ -3038,7 +3107,7 @@ class FlextDispatcher(FlextMixins):
         """
         if bus_result.is_failure:
             # Use unwrap_error() for type-safe str
-            error_msg = bus_result.unwrap_error()
+            error_msg = bus_result.error or "Unknown error"
             if "Executor was shutdown" in error_msg:
                 return self.fail(error_msg)
             self._circuit_breaker.record_failure(message_type)

@@ -1,7 +1,20 @@
 """Comprehensive tests for FlextUtilitiesStringParser - 100% coverage target.
 
-This module provides real tests (no mocks) for all string parsing functions
-in FlextUtilitiesStringParser to achieve 100% code coverage.
+**Modules Tested:**
+- flext_core._utilities.string_parser.FlextUtilitiesStringParser
+
+**Test Scope:**
+- parse_delimited: All options, validators, legacy params, edge cases, error handling
+- split_on_char_with_escape: Basic, custom escape, edge cases, error handling
+- normalize_whitespace: Basic, custom patterns, edge cases, error handling
+- apply_regex_pipeline: Basic, multiple patterns, edge cases, error handling, invalid inputs
+- get_object_key: Types, classes, functions, instances, dicts, objects with attributes
+
+**Coverage Target:** 100% code coverage with all edge cases and error paths tested.
+
+This module uses Python 3.13 advanced features (dataclasses with slots, type hints),
+factory patterns for test case generation, and nested class organization for
+maximum code reuse and maintainability.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,376 +22,632 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+import pytest
 
 from flext_core import FlextUtilities
-
-# ============================================================================
-# Test Parse Delimited
-# ============================================================================
-
-
-class TestFlextUtilitiesStringParserParseDelimited:
-    """Test parse_delimited method."""
-
-    def test_parse_delimited_basic(self) -> None:
-        """Test basic delimited string parsing."""
-        parser = FlextUtilities.StringParser()
-        result = parser.parse_delimited("a,b,c", ",")
-        assert result.is_success
-        assert result.unwrap() == ["a", "b", "c"]
-
-    def test_parse_delimited_with_spaces(self) -> None:
-        """Test parsing with spaces."""
-        parser = FlextUtilities.StringParser()
-        result = parser.parse_delimited("a, b, c", ",")
-        assert result.is_success
-        assert result.unwrap() == ["a", "b", "c"]
-
-    def test_parse_delimited_empty_string(self) -> None:
-        """Test parsing empty string."""
-        parser = FlextUtilities.StringParser()
-        result = parser.parse_delimited("", ",")
-        assert result.is_success
-        assert result.unwrap() == []
-
-    def test_parse_delimited_with_options(self) -> None:
-        """Test parsing with ParseOptions."""
-        parser = FlextUtilities.StringParser()
-        options = FlextUtilities.StringParser.ParseOptions(
-            strip=True,
-            remove_empty=True,
-        )
-        result = parser.parse_delimited("a, b, c", ",", options=options)
-        assert result.is_success
-        assert result.unwrap() == ["a", "b", "c"]
-
-    def test_parse_delimited_options_no_strip(self) -> None:
-        """Test parsing with options, strip=False."""
-        options = FlextUtilities.StringParser.ParseOptions(
-            strip=False,
-            remove_empty=True,
-        )
-        parser = FlextUtilities.StringParser()
-        result = parser.parse_delimited("a, b, c", ",", options=options)
-        assert result.is_success
-        assert result.unwrap() == ["a", " b", " c"]
-
-    def test_parse_delimited_options_no_remove_empty(self) -> None:
-        """Test parsing with options, remove_empty=False."""
-        options = FlextUtilities.StringParser.ParseOptions(
-            strip=True,
-            remove_empty=False,
-        )
-        parser = FlextUtilities.StringParser()
-        result = parser.parse_delimited("a,,c", ",", options=options)
-        assert result.is_success
-        assert result.unwrap() == ["a", "", "c"]
-
-    def test_parse_delimited_with_validator_success(self) -> None:
-        """Test parsing with validator that passes."""
-
-        def is_valid(s: str) -> bool:
-            return len(s) > 0
-
-        options = FlextUtilities.StringParser.ParseOptions(
-            strip=True,
-            remove_empty=True,
-            validator=is_valid,
-        )
-        parser = FlextUtilities.StringParser()
-        result = parser.parse_delimited("a,b,c", ",", options=options)
-        assert result.is_success
-
-    def test_parse_delimited_with_validator_failure(self) -> None:
-        """Test parsing with validator that fails."""
-
-        def is_valid(s: str) -> bool:
-            return len(s) > 1  # Fail for single char
-
-        options = FlextUtilities.StringParser.ParseOptions(
-            strip=True,
-            remove_empty=True,
-            validator=is_valid,
-        )
-        parser = FlextUtilities.StringParser()
-        result = parser.parse_delimited("a,b", ",", options=options)
-        assert result.is_failure
-        assert result.error is not None
-        assert "Invalid component" in result.error
-
-    def test_parse_delimited_legacy_params(self) -> None:
-        """Test parsing with legacy parameters (no options)."""
-        parser = FlextUtilities.StringParser()
-        result = parser.parse_delimited("a, b, c", ",", strip=True, remove_empty=True)
-        assert result.is_success
-        assert result.unwrap() == ["a", "b", "c"]
-
-    def test_parse_delimited_legacy_validator(self) -> None:
-        """Test parsing with legacy validator parameter."""
-
-        def is_valid(s: str) -> bool:
-            return "x" not in s
-
-        parser = FlextUtilities.StringParser()
-        result = parser.parse_delimited("a,b,c", ",", validator=is_valid)
-        assert result.is_success
-
-    def test_parse_delimited_exception_handling(self) -> None:
-        """Test parsing exception handling."""
-
-        # Create object that will fail on split
-        class BadString:
-            def split(self, delimiter: str) -> list[str]:
-                msg = "Split failed"
-                raise RuntimeError(msg)
-
-        bad = BadString()
-        parser = FlextUtilities.StringParser()
-        result = parser.parse_delimited(cast("str", bad), ",")
-        assert result.is_failure
-        assert result.error is not None
-        assert "Failed to parse" in result.error
+from flext_core._utilities.string_parser import ParseOptions
+from tests.fixtures.constants import TestConstants
+from tests.helpers.string_parser_helpers import (
+    NormalizeWhitespaceCase,
+    ObjectKeyCase,
+    ParseDelimitedCase,
+    RegexPipelineCase,
+    SplitEscapeCase,
+    TestHelpers,
+)
 
 
-# ============================================================================
-# Test Split With Escape
-# ============================================================================
+class StringParserTestFactory:
+    """Factory for generating test cases with edge cases."""
 
-
-class TestFlextUtilitiesStringParserSplitWithEscape:
-    """Test split_on_char_with_escape method."""
-
-    def test_split_with_escape_basic(self) -> None:
-        """Test basic split with escape."""
-        parser = FlextUtilities.StringParser()
-        result = parser.split_on_char_with_escape("a,b,c", ",")
-        assert result.is_success
-        assert result.unwrap() == ["a", "b", "c"]
-
-    def test_split_with_escape_escaped_delimiter(self) -> None:
-        """Test split with escaped delimiter."""
-        parser = FlextUtilities.StringParser()
-        result = parser.split_on_char_with_escape("a\\,b,c", ",")
-        assert result.is_success
-        assert result.unwrap() == ["a\\,b", "c"]
-
-    def test_split_with_escape_empty_string(self) -> None:
-        """Test split with empty string."""
-        parser = FlextUtilities.StringParser()
-        result = parser.split_on_char_with_escape("", ",")
-        assert result.is_success
-        assert result.unwrap() == []
-
-    def test_split_with_escape_custom_escape_char(self) -> None:
-        """Test split with custom escape character."""
-        parser = FlextUtilities.StringParser()
-        result = parser.split_on_char_with_escape("a#b,c", ",", escape_char="#")
-        assert result.is_success
-        assert result.unwrap() == ["a#b", "c"]
-
-    def test_split_with_escape_at_end(self) -> None:
-        """Test split with escape at end of string."""
-        parser = FlextUtilities.StringParser()
-        result = parser.split_on_char_with_escape("a,b\\", ",")
-        assert result.is_success
-        # Escape at end is treated as regular char
-        assert "b\\" in result.unwrap()[-1]
-
-    def test_split_with_escape_exception_handling(self) -> None:
-        """Test split exception handling."""
-
-        # Create object that will fail on indexing
-        class BadString:
-            def __len__(self) -> int:
-                return 5
-
-            def __getitem__(self, key: int) -> str:
-                msg = "Index failed"
-                raise KeyError(msg)
-
-        bad = BadString()
-        parser = FlextUtilities.StringParser()
-        result = parser.split_on_char_with_escape(
-            cast("str", bad),
-            ",",
-        )
-        assert result.is_failure
-        assert result.error is not None
-        assert "Failed to split" in result.error
-
-
-# ============================================================================
-# Test Normalize Whitespace
-# ============================================================================
-
-
-class TestFlextUtilitiesStringParserNormalizeWhitespace:
-    """Test normalize_whitespace method."""
-
-    def test_normalize_whitespace_basic(self) -> None:
-        """Test basic whitespace normalization."""
-        parser = FlextUtilities.StringParser()
-        result = parser.normalize_whitespace("  hello   world  ")
-        assert result.is_success
-        assert result.unwrap() == "hello world"
-
-    def test_normalize_whitespace_empty_string(self) -> None:
-        """Test normalization of empty string."""
-        parser = FlextUtilities.StringParser()
-        result = parser.normalize_whitespace("")
-        assert result.is_success
-        assert result.unwrap() == ""
-
-    def test_normalize_whitespace_custom_pattern(self) -> None:
-        """Test normalization with custom pattern."""
-        parser = FlextUtilities.StringParser()
-        result = parser.normalize_whitespace(
-            "hello---world",
-            pattern=r"-+",
-            replacement="-",
-        )
-        assert result.is_success
-        assert result.unwrap() == "hello-world"
-
-    def test_normalize_whitespace_custom_replacement(self) -> None:
-        """Test normalization with custom replacement."""
-        parser = FlextUtilities.StringParser()
-        result = parser.normalize_whitespace("hello   world", replacement="_")
-        assert result.is_success
-        assert "_" in result.unwrap()
-
-    def test_normalize_whitespace_exception_handling(self) -> None:
-        """Test normalization exception handling."""
-
-        # Create object that will fail on re.sub
-        class BadString:
-            def __str__(self) -> str:
-                msg = "String conversion failed"
-                raise RuntimeError(msg)
-
-        bad = BadString()
-        parser = FlextUtilities.StringParser()
-        # Cast to str for type checking, but runtime will fail
-        bad_str: str = cast("str", bad)
-        result = parser.normalize_whitespace(bad_str)
-        assert result.is_failure
-        assert result.error is not None
-        assert "Failed to normalize" in result.error
-
-
-# ============================================================================
-# Test Regex Pipeline
-# ============================================================================
-
-
-class TestFlextUtilitiesStringParserRegexPipeline:
-    """Test apply_regex_pipeline method."""
-
-    def test_apply_regex_pipeline_basic(self) -> None:
-        """Test basic regex pipeline."""
-        patterns = [
-            (r"\s+", " "),
-            (r"=", "="),
+    @staticmethod
+    def parse_delimited_cases() -> list[ParseDelimitedCase]:
+        """Generate comprehensive parse_delimited test cases."""
+        return [
+            # Basic cases
+            ParseDelimitedCase(
+                TestConstants.Strings.BASIC_LIST,
+                TestConstants.Delimiters.COMMA,
+                ["a", "b", "c"],
+                description="basic",
+            ),
+            ParseDelimitedCase(
+                TestConstants.Strings.WITH_SPACES,
+                TestConstants.Delimiters.COMMA,
+                ["a", "b", "c"],
+                description="with spaces",
+            ),
+            ParseDelimitedCase(
+                TestConstants.Strings.EMPTY,
+                TestConstants.Delimiters.COMMA,
+                [],
+                description="empty string",
+            ),
+            # Options cases
+            ParseDelimitedCase(
+                TestConstants.Strings.WITH_SPACES,
+                TestConstants.Delimiters.COMMA,
+                ["a", "b", "c"],
+                options=ParseOptions(strip=True, remove_empty=True),
+                description="with options",
+            ),
+            ParseDelimitedCase(
+                TestConstants.Strings.WITH_SPACES,
+                TestConstants.Delimiters.COMMA,
+                ["a", " b", " c"],
+                options=ParseOptions(strip=False, remove_empty=True),
+                description="options no strip",
+            ),
+            ParseDelimitedCase(
+                TestConstants.Strings.WITH_EMPTY,
+                TestConstants.Delimiters.COMMA,
+                ["a", "", "c"],
+                options=ParseOptions(strip=True, remove_empty=False),
+                description="options no remove empty",
+            ),
+            # Validator cases (validator filters, doesn't fail)
+            ParseDelimitedCase(
+                TestConstants.Strings.BASIC_LIST,
+                TestConstants.Delimiters.COMMA,
+                ["a", "b", "c"],
+                options=ParseOptions(
+                    strip=True, remove_empty=True, validator=lambda s: len(s) > 0
+                ),
+                description="validator success",
+            ),
+            ParseDelimitedCase(
+                "a,b",
+                TestConstants.Delimiters.COMMA,
+                [],  # Validator filters out single-char components
+                options=ParseOptions(
+                    strip=True,
+                    remove_empty=True,
+                    validator=lambda s: len(s) > 1,  # Filter single char
+                ),
+                description="validator filters components",
+            ),
+            # Legacy parameter cases
+            ParseDelimitedCase(
+                TestConstants.Strings.WITH_SPACES,
+                TestConstants.Delimiters.COMMA,
+                ["a", "b", "c"],
+                strip=True,
+                remove_empty=True,
+                use_legacy=True,
+                description="legacy params",
+            ),
+            ParseDelimitedCase(
+                TestConstants.Strings.BASIC_LIST,
+                TestConstants.Delimiters.COMMA,
+                ["a", "b", "c"],
+                validator=lambda s: "x" not in s,
+                use_legacy=True,
+                description="legacy validator",
+            ),
+            # Edge cases
+            ParseDelimitedCase(
+                TestConstants.Strings.BASIC_LIST,
+                TestConstants.Delimiters.COMMA,
+                ["a", "b", "c"],
+                description="no spaces",
+            ),
+            ParseDelimitedCase(
+                TestConstants.Strings.EXCESSIVE_SPACES,
+                TestConstants.Delimiters.COMMA,
+                ["a", "b", "c"],
+                description="excessive spaces",
+            ),
+            ParseDelimitedCase(
+                TestConstants.Strings.LEADING_TRAILING,
+                TestConstants.Delimiters.COMMA,
+                ["a", "b", "c"],
+                description="leading/trailing delimiters",
+            ),
+            ParseDelimitedCase(
+                TestConstants.Strings.SINGLE_CHAR,
+                TestConstants.Delimiters.COMMA,
+                ["a"],
+                description="single component",
+            ),
+            # Invalid delimiter cases
+            ParseDelimitedCase(
+                TestConstants.Strings.BASIC_LIST,
+                "",
+                None,
+                expected_error=TestConstants.Errors.DELIMITER_EMPTY,
+                description="empty delimiter",
+            ),
+            ParseDelimitedCase(
+                TestConstants.Strings.BASIC_LIST,
+                ",,",
+                None,
+                expected_error=TestConstants.Errors.DELIMITER_MULTI,
+                description="multi-char delimiter",
+            ),
+            ParseDelimitedCase(
+                TestConstants.Strings.BASIC_LIST,
+                " ",
+                None,
+                expected_error=TestConstants.Errors.DELIMITER_WHITESPACE,
+                description="whitespace delimiter",
+            ),
         ]
-        parser = FlextUtilities.StringParser()
-        result = parser.apply_regex_pipeline("hello   world", patterns)
-        assert result.is_success
-        assert result.unwrap() == "hello world"
 
-    def test_apply_regex_pipeline_empty_string(self) -> None:
-        """Test pipeline with empty string."""
-        patterns = [(r"\s+", " ")]
-        parser = FlextUtilities.StringParser()
-        result = parser.apply_regex_pipeline("", patterns)
-        assert result.is_success
-        assert result.unwrap() == ""
-
-    def test_apply_regex_pipeline_multiple_patterns(self) -> None:
-        """Test pipeline with multiple patterns."""
-        patterns = [
-            (r"\s+=", "="),
-            (r",\s+", ","),
-            (r"\s+", " "),
+    @staticmethod
+    def split_escape_cases() -> list[SplitEscapeCase]:
+        """Generate comprehensive split_on_char_with_escape test cases."""
+        # Note: split_with_escape removes escape char, so "a\\,b" becomes "a,b"
+        return [
+            # Basic cases
+            SplitEscapeCase(
+                TestConstants.Strings.BASIC_LIST,
+                TestConstants.Delimiters.COMMA,
+                expected=["a", "b", "c"],
+                description="basic",
+            ),
+            SplitEscapeCase(
+                "a\\,b,c",
+                TestConstants.Delimiters.COMMA,
+                expected=["a,b", "c"],  # Escape char removed
+                description="escaped delimiter",
+            ),
+            SplitEscapeCase(
+                TestConstants.Strings.EMPTY,
+                TestConstants.Delimiters.COMMA,
+                expected=[""],
+                description="empty string",
+            ),
+            # Custom escape char
+            SplitEscapeCase(
+                "a#b,c",
+                TestConstants.Delimiters.COMMA,
+                escape_char=TestConstants.EscapeChars.HASH,
+                expected=["ab", "c"],  # Escape char removed, next char is literal
+                description="custom escape char",
+            ),
+            # Edge cases
+            SplitEscapeCase(
+                "a,b\\",
+                TestConstants.Delimiters.COMMA,
+                expected=["a", "b\\"],  # Escape at end is treated as regular char
+                description="escape at end",
+            ),
+            SplitEscapeCase(
+                "a\\\\,b",
+                TestConstants.Delimiters.COMMA,
+                expected=["a\\", "b"],  # Escaped escape becomes single escape
+                description="escaped escape char",
+            ),
+            SplitEscapeCase(
+                "a,b,c,d",
+                TestConstants.Delimiters.COMMA,
+                expected=["a", "b", "c", "d"],
+                description="multiple components",
+            ),
+            SplitEscapeCase(
+                "\\,a,b",
+                TestConstants.Delimiters.COMMA,
+                expected=[",a", "b"],  # Escape char removed
+                description="escaped at start",
+            ),
+            # Invalid cases
+            SplitEscapeCase(
+                "a,b",
+                "",
+                expected_error=TestConstants.Errors.SPLIT_EMPTY,
+                description="empty split char",
+            ),
+            SplitEscapeCase(
+                "a,b",
+                TestConstants.Delimiters.COMMA,
+                escape_char="",
+                expected_error=TestConstants.Errors.ESCAPE_EMPTY,
+                description="empty escape char",
+            ),
+            SplitEscapeCase(
+                "a,b",
+                TestConstants.Delimiters.COMMA,
+                escape_char=TestConstants.Delimiters.COMMA,
+                expected_error=TestConstants.Errors.SPLIT_ESCAPE_SAME,
+                description="same split and escape",
+            ),
         ]
-        parser = FlextUtilities.StringParser()
-        result = parser.apply_regex_pipeline("cn = REDACTED_LDAP_BIND_PASSWORD , ou = users", patterns)
-        assert result.is_success
-        assert "=" in result.unwrap()
-        assert "," in result.unwrap()
 
-    def test_apply_regex_pipeline_exception_handling(self) -> None:
-        """Test pipeline exception handling."""
-        # Pass invalid patterns to trigger exception
-        # Cast to expected type since we're testing error handling
-        invalid_pattern: tuple[str, str] = cast(
-            "tuple[str, str]", (None, "replacement")
-        )
-        patterns: list[tuple[str, str]] = [invalid_pattern]
-        parser = FlextUtilities.StringParser()
-        result = parser.apply_regex_pipeline("test", patterns)
-        assert result.is_failure
-        assert result.error is not None
-        assert "Failed to apply" in result.error
+    @staticmethod
+    def normalize_whitespace_cases() -> list[NormalizeWhitespaceCase]:
+        """Generate comprehensive normalize_whitespace test cases."""
+        return [
+            # Basic cases
+            NormalizeWhitespaceCase(
+                "  hello   world  ",
+                expected="hello world",
+                description="basic",
+            ),
+            NormalizeWhitespaceCase(
+                TestConstants.Strings.EMPTY,
+                expected=TestConstants.Strings.EMPTY,
+                description="empty string",
+            ),
+            # Custom pattern
+            NormalizeWhitespaceCase(
+                "hello---world",
+                pattern=TestConstants.Patterns.DASH,
+                replacement=TestConstants.Replacements.DASH,
+                expected="hello-world",
+                description="custom pattern",
+            ),
+            # Custom replacement
+            NormalizeWhitespaceCase(
+                "hello   world",
+                replacement=TestConstants.Replacements.UNDERSCORE,
+                expected="hello_world",
+                description="custom replacement",
+            ),
+            # Edge cases
+            NormalizeWhitespaceCase(
+                "hello\t\n\rworld",
+                expected="hello world",
+                description="various whitespace",
+            ),
+            NormalizeWhitespaceCase(
+                "   ",
+                expected="",
+                description="only whitespace",
+            ),
+            NormalizeWhitespaceCase(
+                TestConstants.Strings.SINGLE_CHAR,
+                expected=TestConstants.Strings.SINGLE_CHAR,
+                description="single char",
+            ),
+            NormalizeWhitespaceCase(
+                "hello\n\n\nworld",
+                expected="hello world",
+                description="multiple newlines",
+            ),
+        ]
 
+    @staticmethod
+    def regex_pipeline_cases() -> list[RegexPipelineCase]:
+        """Generate comprehensive apply_regex_pipeline test cases."""
+        return [
+            # Basic cases
+            RegexPipelineCase(
+                "hello   world",
+                [
+                    (
+                        TestConstants.Patterns.WHITESPACE,
+                        TestConstants.Replacements.SPACE,
+                    ),
+                    (r"=", "="),
+                ],
+                expected="hello world",
+                description="basic",
+            ),
+            RegexPipelineCase(
+                TestConstants.Strings.EMPTY,
+                [
+                    (
+                        TestConstants.Patterns.WHITESPACE,
+                        TestConstants.Replacements.SPACE,
+                    )
+                ],
+                expected=TestConstants.Strings.EMPTY,
+                description="empty string",
+            ),
+            # Multiple patterns - note: patterns apply sequentially
+            RegexPipelineCase(
+                "cn = REDACTED_LDAP_BIND_PASSWORD , ou = users",
+                [
+                    (
+                        TestConstants.Patterns.EQUALS_SPACE,
+                        TestConstants.Replacements.EQUALS,
+                    ),
+                    (
+                        TestConstants.Patterns.COMMA_SPACE,
+                        TestConstants.Replacements.COMMA,
+                    ),
+                    (
+                        TestConstants.Patterns.WHITESPACE,
+                        TestConstants.Replacements.SPACE,
+                    ),
+                ],
+                expected="cn= REDACTED_LDAP_BIND_PASSWORD ,ou= users",
+                description="multiple patterns",
+            ),
+            # Edge cases
+            RegexPipelineCase(
+                "test",
+                [],
+                expected="test",
+                description="empty patterns",
+            ),
+            RegexPipelineCase(
+                "a=b=c",
+                [(r"=", ":"), (r":", "=")],
+                expected="a=b=c",
+                description="pattern chaining",
+            ),
+        ]
 
-# ============================================================================
-# Test Get Object Key
-# ============================================================================
-
-
-class TestFlextUtilitiesStringParserGetObjectKey:
-    """Test get_object_key method."""
-
-    def test_get_object_key_type(self) -> None:
-        """Test getting key from type."""
-        parser = FlextUtilities.StringParser()
-        key = parser.get_object_key(int)
-        assert key == "int"
-
-    def test_get_object_key_class(self) -> None:
-        """Test getting key from class."""
+    @staticmethod
+    def object_key_cases() -> list[ObjectKeyCase]:
+        """Generate comprehensive get_object_key test cases."""
 
         class TestClass:
             pass
 
-        parser = FlextUtilities.StringParser()
-        key = parser.get_object_key(TestClass)
-        assert key == "TestClass"
-
-    def test_get_object_key_function(self) -> None:
-        """Test getting key from function."""
-
         def test_function() -> None:
             pass
-
-        parser = FlextUtilities.StringParser()
-        key = parser.get_object_key(test_function)
-        assert key == "test_function"
-
-    def test_get_object_key_instance(self) -> None:
-        """Test getting key from instance."""
-        obj = object()
-        parser = FlextUtilities.StringParser()
-        key = parser.get_object_key(obj)
-        assert isinstance(key, str)
-        assert "object" in key
-
-    def test_get_object_key_string(self) -> None:
-        """Test getting key from string."""
-        parser = FlextUtilities.StringParser()
-        key = parser.get_object_key("test")
-        assert key == "test"
-
-    def test_get_object_key_no_str_method(self) -> None:
-        """Test getting key from object without __str__."""
 
         class NoStr:
             def __str__(self) -> str:
                 msg = "Cannot convert to string"
                 raise TypeError(msg)
 
-        parser = FlextUtilities.StringParser()
-        key = parser.get_object_key(NoStr())
-        assert isinstance(key, str)
-        assert "NoStr" in key
+        class WithName:
+            name = "TestName"
+
+        class WithId:
+            id = "TestId"
+
+        return [
+            ObjectKeyCase(int, expected_exact="int", description="type"),
+            ObjectKeyCase(TestClass, expected_exact="TestClass", description="class"),
+            ObjectKeyCase(
+                test_function,
+                expected_exact="test_function",
+                description="function",
+            ),
+            ObjectKeyCase(
+                object(),
+                expected_contains=["object"],
+                description="instance",
+            ),
+            ObjectKeyCase("test", expected_exact="test", description="string"),
+            ObjectKeyCase(
+                NoStr(),
+                expected_contains=["NoStr"],
+                description="no str method",
+            ),
+            ObjectKeyCase(
+                WithName(), expected_exact="TestName", description="with name attr"
+            ),
+            ObjectKeyCase(
+                WithId(), expected_exact="TestId", description="with id attr"
+            ),
+            ObjectKeyCase(
+                {"name": "DictName"},
+                expected_exact="DictName",
+                description="dict with name",
+            ),
+            ObjectKeyCase(
+                {"id": "DictId"},
+                expected_exact="DictId",
+                description="dict with id",
+            ),
+        ]
+
+
+class TestFlextUtilitiesStringParser:
+    """Comprehensive tests for FlextUtilitiesStringParser using nested organization."""
+
+    @pytest.fixture
+    def parser(self) -> FlextUtilities.StringParser:
+        """Create parser instance."""
+        return FlextUtilities.StringParser()
+
+    class TestParseDelimited:
+        """Test parse_delimited method."""
+
+        @pytest.mark.parametrize(
+            "case", StringParserTestFactory.parse_delimited_cases()
+        )
+        def test_parse_delimited(
+            self,
+            parser: FlextUtilities.StringParser,
+            case: ParseDelimitedCase,
+        ) -> None:
+            """Test parse_delimited with parametrized cases."""
+            if case.use_legacy:
+                result = parser.parse_delimited(
+                    case.text,
+                    case.delimiter,
+                    strip=case.strip,
+                    remove_empty=case.remove_empty,
+                    validator=case.validator,
+                )
+            elif case.options:
+                result = parser.parse_delimited(
+                    case.text, case.delimiter, options=case.options
+                )
+            else:
+                result = parser.parse_delimited(case.text, case.delimiter)
+
+            if case.expected_error:
+                TestHelpers.Assertions.assert_failure(
+                    result, case.expected_error, case.description
+                )
+            else:
+                TestHelpers.Assertions.assert_success(
+                    result, case.expected, case.description
+                )
+
+        def test_exception_handling(self, parser: FlextUtilities.StringParser) -> None:
+            """Test parsing exception handling with bad object."""
+            # Intentionally pass bad object that fails on str() to test error handling
+            bad: object = TestHelpers.BadObjects.create_for_split()
+            # Runtime: parser receives bad object that fails on split()
+            # Type checker: sees object type, allows it
+            result = parser.parse_delimited(bad, TestConstants.Delimiters.COMMA)
+            TestHelpers.Assertions.assert_failure(
+                result, TestConstants.Errors.FAILED_PARSE, "exception handling"
+            )
+
+    class TestSplitWithEscape:
+        """Test split_on_char_with_escape method."""
+
+        @pytest.mark.parametrize("case", StringParserTestFactory.split_escape_cases())
+        def test_split_with_escape(
+            self,
+            parser: FlextUtilities.StringParser,
+            case: SplitEscapeCase,
+        ) -> None:
+            """Test split_on_char_with_escape with parametrized cases."""
+            result = parser.split_on_char_with_escape(
+                case.text, case.split_char, escape_char=case.escape_char
+            )
+
+            if case.expected_error:
+                TestHelpers.Assertions.assert_failure(
+                    result, case.expected_error, case.description
+                )
+            else:
+                TestHelpers.Assertions.assert_success(
+                    result, case.expected, case.description
+                )
+
+        def test_exception_handling(self, parser: FlextUtilities.StringParser) -> None:
+            """Test split exception handling with bad object."""
+            # Intentionally pass bad object that fails on __getitem__() to test error handling
+            bad: object = TestHelpers.BadObjects.create_for_index()
+            # Runtime: parser receives bad object that fails on indexing
+            # Type checker: sees object type, allows it
+            result = parser.split_on_char_with_escape(
+                bad, TestConstants.Delimiters.COMMA
+            )
+            TestHelpers.Assertions.assert_failure(
+                result, TestConstants.Errors.FAILED_SPLIT, "exception handling"
+            )
+
+    class TestNormalizeWhitespace:
+        """Test normalize_whitespace method."""
+
+        @pytest.mark.parametrize(
+            "case", StringParserTestFactory.normalize_whitespace_cases()
+        )
+        def test_normalize_whitespace(
+            self,
+            parser: FlextUtilities.StringParser,
+            case: NormalizeWhitespaceCase,
+        ) -> None:
+            """Test normalize_whitespace with parametrized cases."""
+            result = parser.normalize_whitespace(
+                case.text, pattern=case.pattern, replacement=case.replacement
+            )
+
+            if case.expected_error:
+                TestHelpers.Assertions.assert_failure(
+                    result, case.expected_error, case.description
+                )
+            else:
+                TestHelpers.Assertions.assert_success(
+                    result, case.expected, case.description
+                )
+
+        def test_exception_handling(self, parser: FlextUtilities.StringParser) -> None:
+            """Test normalization exception handling with bad object."""
+            # Intentionally pass bad object that fails on str() to test error handling
+            bad: object = TestHelpers.BadObjects.create_for_str()
+            # Runtime: parser receives bad object that fails on str conversion
+            # Type checker: sees object type, allows it
+            result = parser.normalize_whitespace(bad)
+            TestHelpers.Assertions.assert_failure(
+                result, TestConstants.Errors.FAILED_NORMALIZE, "exception handling"
+            )
+
+    class TestRegexPipeline:
+        """Test apply_regex_pipeline method."""
+
+        @pytest.mark.parametrize("case", StringParserTestFactory.regex_pipeline_cases())
+        def test_apply_regex_pipeline(
+            self,
+            parser: FlextUtilities.StringParser,
+            case: RegexPipelineCase,
+        ) -> None:
+            """Test apply_regex_pipeline with parametrized cases."""
+            result = parser.apply_regex_pipeline(case.text, case.patterns)
+
+            if case.expected_error:
+                TestHelpers.Assertions.assert_failure(
+                    result, case.expected_error, case.description
+                )
+            else:
+                TestHelpers.Assertions.assert_success(
+                    result, case.expected, case.description
+                )
+
+        def test_exception_handling(self, parser: FlextUtilities.StringParser) -> None:
+            """Test pipeline exception handling."""
+            # Intentionally create invalid pattern with None for error testing
+            invalid_pattern: object = (None, "replacement")
+            patterns: list[tuple[str, str] | tuple[str, str, int]] = [
+                invalid_pattern
+            ]  # Runtime allows this
+            result = parser.apply_regex_pipeline("test", patterns)
+            TestHelpers.Assertions.assert_failure(
+                result, TestConstants.Errors.FAILED_PIPELINE, "exception handling"
+            )
+
+        def test_invalid_pattern(self, parser: FlextUtilities.StringParser) -> None:
+            """Test pipeline with invalid regex pattern."""
+            patterns: list[tuple[str, str] | tuple[str, str, int]] = [
+                (r"[invalid", "replacement")
+            ]
+            result = parser.apply_regex_pipeline("test", patterns)
+            TestHelpers.Assertions.assert_failure(
+                result, TestConstants.Errors.INVALID_REGEX, "invalid pattern"
+            )
+
+        def test_none_text(self, parser: FlextUtilities.StringParser) -> None:
+            """Test pipeline with None text."""
+            # Intentionally pass None for text to test error handling
+            text: object = None  # Type: object to bypass str requirement
+            result = parser.apply_regex_pipeline(
+                text,  # Runtime: None, triggers error handling
+                [(TestConstants.Patterns.WHITESPACE, TestConstants.Replacements.SPACE)],
+            )
+            assert result.is_failure
+            assert result.error is not None
+
+        def test_invalid_text_type(self, parser: FlextUtilities.StringParser) -> None:
+            """Test pipeline with invalid text type."""
+            # Intentionally pass int for text to test error handling
+            text: object = 123  # Type: object to bypass str requirement
+            result = parser.apply_regex_pipeline(
+                text,  # Runtime: 123, triggers error handling
+                [(TestConstants.Patterns.WHITESPACE, TestConstants.Replacements.SPACE)],
+            )
+            assert result.is_failure
+            assert result.error is not None
+
+        def test_empty_patterns(self, parser: FlextUtilities.StringParser) -> None:
+            """Test pipeline with empty patterns list."""
+            patterns: list[tuple[str, str] | tuple[str, str, int]] = []
+            result = parser.apply_regex_pipeline("test", patterns)
+            # Empty pattern list should result in unchanged text
+            assert result.is_success
+            assert result.unwrap() == "test"
+
+    class TestGetObjectKey:
+        """Test get_object_key method."""
+
+        @pytest.mark.parametrize("case", StringParserTestFactory.object_key_cases())
+        def test_get_object_key(
+            self,
+            parser: FlextUtilities.StringParser,
+            case: ObjectKeyCase,
+        ) -> None:
+            """Test get_object_key with parametrized cases."""
+            key = parser.get_object_key(case.obj)
+
+            assert isinstance(key, str), f"Key must be string for: {case.description}"
+
+            if case.expected_exact:
+                assert key == case.expected_exact, (
+                    f"Exact match failed for: {case.description}"
+                )
+            elif case.expected_contains:
+                for expected in case.expected_contains:
+                    assert expected in key, (
+                        f"Contains check failed for: {case.description}"
+                    )

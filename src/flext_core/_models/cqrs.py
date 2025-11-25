@@ -123,7 +123,7 @@ class FlextModelsCqrs:
         pagination: FlextModelsCqrs.Pagination | dict[str, int] = Field(
             default_factory=dict,
         )
-        query_id: str = Field(default_factory=FlextUtilities.Generators.generate_uuid)
+        query_id: str = Field(default_factory=FlextUtilities.Generators.generate_id)
         query_type: str | None = None
 
         @field_validator("pagination", mode="before")
@@ -207,7 +207,7 @@ class FlextModelsCqrs:
                 # Fast fail: query_id must be str or None
                 query_id_raw = query_payload.get("query_id")
                 query_id: str = (
-                    FlextUtilities.Generators.generate_uuid()
+                    FlextUtilities.Generators.generate_id()
                     if query_id_raw is None
                     else str(query_id_raw)
                 )
@@ -252,7 +252,7 @@ class FlextModelsCqrs:
         )
         max_cache_size: int = Field(default=100, description="Maximum cache size")
         implementation_path: str = Field(
-            default="flext_core.bus:FlextBus",
+            default="flext_core.dispatcher:FlextDispatcher",
             pattern=r"^[^:]+:[^:]+$",
             description="Implementation path",
         )

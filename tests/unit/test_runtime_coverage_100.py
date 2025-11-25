@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from collections import UserDict
 from collections.abc import Sequence
-from typing import ClassVar, Never, cast
+from typing import ClassVar, Never, cast, overload
 
 import structlog
 
@@ -269,9 +269,15 @@ class TestRuntime100Coverage:
     def test_is_sequence_type_with_sequence_subclass(self) -> None:
         """Test is_sequence_type with type that is Sequence subclass."""
 
-        class MySequence(Sequence):
-            def __getitem__(self, index: int) -> object:
-                return None
+        class MySequence(Sequence[object]):
+            @overload
+            def __getitem__(self, index: int) -> object: ...
+
+            @overload
+            def __getitem__(self, index: slice) -> Sequence[object]: ...
+
+            def __getitem__(self, index: int | slice) -> object | Sequence[object]:
+                return None if isinstance(index, int) else MySequence()
 
             def __len__(self) -> int:
                 return 0

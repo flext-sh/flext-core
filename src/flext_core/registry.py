@@ -657,7 +657,7 @@ class FlextRegistry(FlextMixins):
             source="flext-core/src/flext_core/registry.py",
         )
         # Use unwrap_error() for type-safe str
-        error_str = registration_result.unwrap_error()
+        error_str = registration_result.error or "Unknown error"
         self._add_registration_error(key, error_str, summary)
         return self.fail(error_str)
 
@@ -748,7 +748,7 @@ class FlextRegistry(FlextMixins):
             type[object],
             FlextHandlers[object, object]
             | tuple[
-                FlextTypes.HandlerCallableType,
+                FlextTypes.Bus.HandlerCallableType,
                 object | FlextResult[object],
             ]
             | dict[str, object]
@@ -779,7 +779,7 @@ class FlextRegistry(FlextMixins):
                 if isinstance(entry, tuple) and len(entry) == tuple_entry_size:
                     # Type narrowing: verify it's a 2-tuple before passing
                     tuple_entry = cast(
-                        "tuple[FlextTypes.HandlerCallableType, object | FlextResult[object]]",
+                        "tuple[FlextTypes.Bus.HandlerCallableType, object | FlextResult[object]]",
                         entry,
                     )
                     result = self._register_tuple_entry(tuple_entry, key)
@@ -807,7 +807,7 @@ class FlextRegistry(FlextMixins):
     # ------------------------------------------------------------------
     def _register_tuple_entry(
         self,
-        entry: tuple[FlextTypes.HandlerCallableType, object | FlextResult[object]],
+        entry: tuple[FlextTypes.Bus.HandlerCallableType, object | FlextResult[object]],
         key: str,
     ) -> FlextResult[FlextModels.RegistrationDetails]:
         """Register tuple (function, config) entry - DRY helper reduces nesting."""
@@ -901,7 +901,7 @@ class FlextRegistry(FlextMixins):
         self,
         entry: FlextHandlers[object, object]
         | tuple[
-            FlextTypes.HandlerCallableType,
+            FlextTypes.Bus.HandlerCallableType,
             object | FlextResult[object],
         ]
         | dict[str, object]

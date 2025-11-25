@@ -65,7 +65,7 @@ import string
 import typing
 from collections.abc import Callable, Sequence
 from types import ModuleType
-from typing import ParamSpec, TypeGuard, cast
+from typing import TypeGuard, cast
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
@@ -74,9 +74,7 @@ from dependency_injector import containers, providers
 from structlog.typing import BindableLogger
 
 from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes
-
-P = ParamSpec("P")
+from flext_core.typings import FlextTypes, P
 
 
 class FlextRuntime:
@@ -304,10 +302,10 @@ class FlextRuntime:
 
     @staticmethod
     def safe_get_attribute(
-        obj: FlextTypes.SerializableType,
+        obj: FlextTypes.Utility.SerializableType,
         attr: str,
-        default: FlextTypes.SerializableType = None,
-    ) -> FlextTypes.SerializableType:
+        default: FlextTypes.Utility.SerializableType = None,
+    ) -> FlextTypes.Utility.SerializableType:
         """Safe attribute access without raising AttributeError.
 
         Args:
@@ -323,8 +321,8 @@ class FlextRuntime:
 
     @staticmethod
     def extract_generic_args(
-        type_hint: FlextTypes.TypeHintSpecifier,
-    ) -> tuple[FlextTypes.GenericTypeArgument, ...]:
+        type_hint: FlextTypes.Utility.TypeHintSpecifier,
+    ) -> tuple[FlextTypes.Utility.GenericTypeArgument, ...]:
         """Extract generic type arguments from a type hint.
 
         Args:
@@ -344,7 +342,9 @@ class FlextRuntime:
             if hasattr(type_hint, "__name__"):
                 type_name = getattr(type_hint, "__name__", "")
                 # Handle common type aliases
-                type_mapping: dict[str, tuple[FlextTypes.GenericTypeArgument, ...]] = {
+                type_mapping: dict[
+                    str, tuple[FlextTypes.Utility.GenericTypeArgument, ...]
+                ] = {
                     "StringList": (str,),
                     "IntList": (int,),
                     "FloatList": (float,),
@@ -372,7 +372,7 @@ class FlextRuntime:
             return ()
 
     @staticmethod
-    def is_sequence_type(type_hint: FlextTypes.TypeHintSpecifier) -> bool:
+    def is_sequence_type(type_hint: FlextTypes.Utility.TypeHintSpecifier) -> bool:
         """Check if type hint represents a sequence type (list, tuple, etc.).
 
         Args:
@@ -384,7 +384,7 @@ class FlextRuntime:
         """
         try:
             origin = typing.get_origin(type_hint)
-            if origin is not None:
+            if origin is not None and isinstance(origin, type):
                 return issubclass(origin, Sequence)
 
             # Check if the type itself is a sequence subclass (for type aliases)
@@ -432,7 +432,7 @@ class FlextRuntime:
 
     @staticmethod
     def level_based_context_filter(
-        _logger: FlextTypes.LoggerContextType,
+        _logger: FlextTypes.Logging.LoggerContextType,
         method_name: str,
         event_dict: dict[str, object],
     ) -> dict[str, object]:
@@ -587,7 +587,7 @@ class FlextRuntime:
 
         module = structlog
 
-        processors: list[Callable] = [
+        processors: list[object] = [
             module.contextvars.merge_contextvars,
             module.processors.add_log_level,
             # CRITICAL: Level-based context filter (must be after merge_contextvars and add_log_level)
@@ -597,7 +597,7 @@ class FlextRuntime:
         ]
         if additional_processors:  # pragma: no cover
             # Tested but not covered: structlog configures once per process
-            processors.extend(cast("Sequence[Callable]", additional_processors))
+            processors.extend(additional_processors)
 
         if console_renderer:
             processors.append(module.dev.ConsoleRenderer(colors=True))
@@ -620,10 +620,10 @@ class FlextRuntime:
         )
         # Call configure directly with constructed arguments
         # Processors are dynamically constructed callables that match structlog's Processor protocol
-        # We use list[object] which is compatible with Iterable[Processor] at runtime
-        # The actual processors are callables with the correct signature
+        # Cast is needed because structlog's Processor type is complex and our callables
+        # are valid at runtime but mypy can't verify the exact signature
         module.configure(
-            processors=processors,
+            processors=cast("list[typing.Any]", processors),
             wrapper_class=wrapper_arg,
             logger_factory=factory_arg,
             cache_logger_on_first_use=cache_logger_on_first_use,

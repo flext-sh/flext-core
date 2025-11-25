@@ -1,231 +1,262 @@
-"""Tests for FlextService .result property (V2 pattern).
+"""Tests for FlextService .result property (V2 zero-ceremony pattern).
+
+Module: flext_core.service.FlextService[T]
+Scope: .result property, V2 pattern, V1 backward compatibility, property behavior
+Pattern: Railway-Oriented, zero-ceremony result access with exception handling
+
+Tests validate:
+- Success cases with direct result unwrapping
+- Failure handling with exception raising
+- Validation scenarios with multiple inputs
+- Type inference for generic services
+- Lazy evaluation and property behavior
+- V1 and V2 pattern equivalence
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
-from flext_core import FlextExceptions, FlextModels, FlextResult, FlextService
+from flext_core import FlextExceptions, FlextResult
+from tests.fixtures.factories import (
+    FailingService,
+    GetUserService,
+    ServiceTestCase,
+    ServiceTestCases,
+    User,
+    ValidatingService,
+)
 
 # =========================================================================
-# Test Models
-# =========================================================================
-
-
-class User(FlextModels.Entity):
-    """Test user entity."""
-
-    user_id: str
-    name: str
-    email: str
-    is_active: bool = True
-
-
-# =========================================================================
-# Test Services
-# =========================================================================
-
-
-class GetUserService(FlextService[User]):
-    """Service to get a user by ID."""
-
-    user_id: str
-
-    def execute(self, **_kwargs: object) -> FlextResult[User]:
-        """Get user by ID."""
-        return FlextResult.ok(
-            User(
-                user_id=self.user_id,
-                name=f"User {self.user_id}",
-                email=f"user{self.user_id}@example.com",
-            ),
-        )
-
-
-class FailingService(FlextService[str]):
-    """Service that always fails."""
-
-    error_message: str = "Operation failed"
-
-    def execute(self, **_kwargs: object) -> FlextResult[str]:
-        """Always fails."""
-        return FlextResult.fail(self.error_message)
-
-
-class ValidatingService(FlextService[str]):
-    """Service with validation."""
-
-    value_input: str
-    min_length: int = 3
-
-    def execute(self, **_kwargs: object) -> FlextResult[str]:
-        """Validate and return value."""
-        if len(self.value_input) < self.min_length:
-            return FlextResult.fail(
-                f"Value must be at least {self.min_length} characters",
-            )
-        return FlextResult.ok(self.value_input.upper())
-
-
-# =========================================================================
-# Test V2 Property Pattern
+# Test Suite - Result Property Pattern
 # =========================================================================
 
 
 class TestServiceResultProperty:
-    """Test .result property (V2 zero-ceremony pattern)."""
+    """Unified test suite for FlextService .result property.
 
-    def test_result_property_returns_unwrapped_result(self) -> None:
-        """V2: .result returns unwrapped domain result."""
-        # V2: Direct result access
-        user = GetUserService(user_id="123").result
+    Tests cover:
+    - V2 zero-ceremony pattern (.result property)
+    - V1 backward compatibility (.execute() method)
+    - Property behavior (computed_field)
+    - Type inference and lazy evaluation
+    - Edge cases and error handling
+    """
 
-        # Assert it's the domain object directly
+    # =====================================================================
+    # V2 Pattern Tests - Zero-Ceremony Result Access
+    # =====================================================================
+
+    @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
+    def test_result_property_returns_unwrapped_value(
+        self, case: ServiceTestCase
+    ) -> None:
+        """V2: .result returns unwrapped domain result directly."""
+        service = ServiceTestCases.create_service(case)
+        assert isinstance(service, GetUserService)
+        user = cast("User", service.result)
+
         assert isinstance(user, User)
-        assert user.user_id == "123"
-        assert user.name == "User 123"
-        assert user.email == "user123@example.com"
+        assert user.user_id == case.input_value
+
+    @pytest.mark.parametrize("case", ServiceTestCases.VALIDATE_SUCCESS)
+    def test_result_property_with_validation_success(
+        self, case: ServiceTestCase
+    ) -> None:
+        """V2: Validation success returns unwrapped value."""
+        service = ServiceTestCases.create_service(case)
+        assert isinstance(service, ValidatingService)
+        result = service.result
+
+        assert isinstance(result, str)
+        assert result == case.input_value.upper()
+
+    @pytest.mark.parametrize("case", ServiceTestCases.VALIDATE_FAILURE)
+    def test_result_property_with_validation_failure(
+        self, case: ServiceTestCase
+    ) -> None:
+        """V2: Validation failure raises exception."""
+        service = ServiceTestCases.create_service(case)
+        assert isinstance(service, ValidatingService)
+
+        with pytest.raises(FlextExceptions.BaseError) as exc_info:
+            _ = service.result
+
+        assert case.expected_error and case.expected_error in str(exc_info.value)
 
     def test_result_property_raises_on_failure(self) -> None:
-        """V2: .result raises exception on failure."""
-        # V2: Failures are raised as exceptions
+        """V2: Failures raise exceptions immediately."""
+        service = FailingService(error_message="Test error")
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            FailingService(error_message="Test error").result
+            _ = service.result
 
         assert "Test error" in str(exc_info.value)
 
-    def test_result_property_with_validation_success(self) -> None:
-        """V2: Validation success returns value."""
-        # Valid input
-        result = ValidatingService(value_input="hello").result
-
-        # Result is the unwrapped string
-        assert isinstance(result, str)
-        assert result == "HELLO"
-
-    def test_result_property_with_validation_failure(self) -> None:
-        """V2: Validation failure raises exception."""
-        with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            ValidatingService(value_input="ab").result  # Too short
-
-        assert "must be at least 3 characters" in str(exc_info.value)
-
-    def test_result_property_type_inference(self) -> None:
+    @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
+    def test_result_property_type_inference(self, case: ServiceTestCase) -> None:
         """V2: Type checkers infer correct type."""
-        # This should type-check correctly (mypy/pyright validate this)
-        user: User = GetUserService(user_id="456").result
+        service = ServiceTestCases.create_service(case)
+        assert isinstance(service, GetUserService)
+        user: User = cast("User", service.result)
 
         assert isinstance(user, User)
-        assert user.user_id == "456"
-        assert user.name == "User 456"
+        assert user.user_id == case.input_value
 
-    def test_result_property_lazy_evaluation(self) -> None:
+    @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
+    def test_result_property_lazy_evaluation(self, case: ServiceTestCase) -> None:
         """V2: Property is lazily evaluated (executes only when accessed)."""
-        # Create service instance (no execution yet)
-        service = GetUserService(user_id="789")
-
-        # execute() is not called until .result is accessed
-        # We can verify this by checking that the service itself doesn't have the result
+        service = ServiceTestCases.create_service(case)
+        assert isinstance(service, GetUserService)
         assert hasattr(service, "result")
 
-        # Now access .result (triggers execution)
-        user = service.result
-        assert user.user_id == "789"
+        user = cast("User", service.result)
+        assert isinstance(user, User)
+        assert user.user_id == case.input_value
 
+    # =====================================================================
+    # V1 Pattern Tests - Backward Compatibility
+    # =====================================================================
 
-# =========================================================================
-# Test V1 Compatibility (Backward Compatibility)
-# =========================================================================
-
-
-class TestV1Compatibility:
-    """Test that V1 pattern still works (backward compatibility)."""
-
-    def test_v1_execute_still_works(self) -> None:
+    @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
+    def test_v1_execute_still_works(self, case: ServiceTestCase) -> None:
         """V1: .execute() continues to work."""
-        # V1: Explicit mode
-        service = GetUserService(user_id="999")
+        service = ServiceTestCases.create_service(case)
+        assert isinstance(service, GetUserService)
         result = service.execute()
 
-        # Assert it's a FlextResult
         assert isinstance(result, FlextResult)
         assert result.is_success
 
-        # Unwrap to get domain result
         user = result.unwrap()
         assert isinstance(user, User)
-        assert user.user_id == "999"
+        assert user.user_id == case.input_value
 
     def test_v1_error_handling_with_flext_result(self) -> None:
         """V1: Error handling via FlextResult pattern."""
-        # V1: Get result
-        result = FailingService(error_message="Test failure").execute()
+        service = FailingService(error_message="Test failure")
+        result = service.execute()
 
-        # Assert it's a failure
         assert isinstance(result, FlextResult)
         assert result.is_failure
         assert "Test failure" in str(result.error)
 
-    def test_v1_railway_pattern_composition(self) -> None:
-        """V1: Railway pattern composition with map/flat_map."""
-        # V1: Execute and compose with monadic methods
+    @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
+    def test_v1_railway_pattern_composition(self, case: ServiceTestCase) -> None:
+        """V1: Railway pattern composition with map."""
+        service = ServiceTestCases.create_service(case)
+        assert isinstance(service, GetUserService)
         result = (
-            GetUserService(user_id="111")
-            .execute()
+            service.execute()
             .map(lambda user: user.name)
-            .map(lambda name: name.upper())
+            .map(lambda name: str(name).upper())
             .map(lambda name: f"Hello, {name}!")
         )
 
-        # Assert successful composition
         assert result.is_success
         greeting = result.unwrap()
-        assert greeting == "Hello, USER 111!"
+        assert greeting == f"Hello, USER {case.input_value}!"
 
-    def test_v2_and_v1_return_same_result(self) -> None:
+    @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
+    def test_v2_and_v1_return_same_result(self, case: ServiceTestCase) -> None:
         """V2 and V1 should return equivalent results."""
-        # V2
-        user_v2 = GetUserService(user_id="555").result
+        service1 = ServiceTestCases.create_service(case)
+        service2 = ServiceTestCases.create_service(case)
+        assert isinstance(service1, GetUserService)
+        assert isinstance(service2, GetUserService)
 
-        # V1
-        user_v1 = GetUserService(user_id="555").execute().unwrap()
+        user_v2 = cast("User", service1.result)
+        user_v1 = service2.execute().unwrap()
 
-        # Both should be equivalent
         assert user_v2.user_id == user_v1.user_id
         assert user_v2.name == user_v1.name
         assert user_v2.email == user_v1.email
 
+    def test_v1_compatibility_edge_cases(self) -> None:
+        """Test V1 compatibility edge cases."""
+        v1_result = ValidatingService(value_input="hello").execute()
+        assert v1_result.is_success
+        assert v1_result.unwrap() == "HELLO"
 
-# =========================================================================
-# Test Property Behavior
-# =========================================================================
+        fail_result = FailingService(error_message="V1 fail").execute()
+        assert fail_result.is_failure
+        assert fail_result.error is not None
 
+        railway = (
+            GetUserService(user_id="railway")
+            .execute()
+            .map(lambda u: u.email)
+            .filter(lambda e: "@" in str(e))
+        )
+        assert railway.is_success
 
-class TestPropertyBehavior:
-    """Test Pydantic @computed_field behavior."""
+    # =====================================================================
+    # Property Behavior Tests - Computed Field
+    # =====================================================================
 
-    def test_result_is_computed_field(self) -> None:
+    @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
+    def test_result_is_computed_field(self, case: ServiceTestCase) -> None:
         """Verify .result is a Pydantic computed_field."""
-        # Check that value is accessible as a property
-        service = GetUserService(user_id="123")
+        service = ServiceTestCases.create_service(case)
+        assert isinstance(service, GetUserService)
         assert hasattr(service, "result")
 
-        # Access should trigger execution
-        user = service.result
+        user = cast("User", service.result)
         assert isinstance(user, User)
+        assert user.user_id == case.input_value
 
-    def test_result_property_in_model_dump(self) -> None:
-        """Computed fields can be included in model_dump if configured."""
-        service = GetUserService(user_id="123")
-
-        # By default, computed fields are excluded
+    @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
+    def test_result_property_in_model_dump(self, case: ServiceTestCase) -> None:
+        """Computed fields behavior in model_dump."""
+        service = ServiceTestCases.create_service(case)
+        assert isinstance(service, GetUserService)
         dump = service.model_dump()
         assert "user_id" in dump
 
-        # value is computed on access, not stored
-        user = service.result
+        user = cast("User", service.result)
         assert isinstance(user, User)
+        assert user.user_id == case.input_value
+
+    def test_property_behavior_edge_cases(self) -> None:
+        """Test property behavior edge cases."""
+        service = GetUserService(user_id="prop")
+
+        user1 = service.result
+        user2 = service.result
+        assert isinstance(user1, User)
+        assert isinstance(user2, User)
+        assert user1.user_id == user2.user_id
+
+        assert hasattr(service, "result")
+
+        dump = service.model_dump()
+        assert isinstance(dump, dict)
+        assert "user_id" in dump
+
+    # =====================================================================
+    # Edge Case Tests
+    # =====================================================================
+
+    def test_result_property_comprehensive_edge_cases(self) -> None:
+        """Test comprehensive edge cases."""
+        # Different service types
+        user_result = GetUserService(user_id="edge").result
+        assert isinstance(user_result, User)
+
+        validation_result = ValidatingService(value_input="edge").result
+        assert isinstance(validation_result, str)
+        assert validation_result == "EDGE"
+
+        # Failure edge case
+        with pytest.raises(FlextExceptions.BaseError):
+            FailingService(error_message="").result
+
+        # Empty service operations
+        service = FailingService(error_message="fail")
+        assert isinstance(service.execute(), FlextResult)
+        with pytest.raises(FlextExceptions.BaseError):
+            _ = service.result

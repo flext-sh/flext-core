@@ -40,7 +40,7 @@ class FlextMixins:
     typing), not inheritance.
 
     **Architecture Position**: Layer 2 (Domain Layer)
-    - Higher layer: Layer 3 (Application - FlextHandlers, FlextBus)
+    - Higher layer: Layer 3 (Application - FlextHandlers, FlextDispatcher)
     - Lower layer: Layer 1 (Foundation - FlextResult, FlextContainer)
     - Peer layer: FlextModels, FlextService, FlextUtilities
 
@@ -451,23 +451,9 @@ class FlextMixins:
     # Factory methods - Use: self.ok(value) or self.fail("error")
     ok = FlextResult.ok
     fail = FlextResult.fail
-    from_exception = FlextResult.from_exception
-    from_callable = FlextResult.from_callable
-    safe_call = FlextResult.safe_call
-
-    # Collection operations - Work with multiple results
-    collect_successes = FlextResult.collect_successes
-    collect_failures = FlextResult.collect_failures
-    sequence = FlextResult.sequence
     traverse = FlextResult.traverse
-
-    # Batch operations - Process multiple items efficiently
     parallel_map = FlextResult.parallel_map
-    batch_process = FlextResult.batch_process
-
-    # Validation pipelines
-    chain_validations = FlextResult.chain_validations
-    validate_all = FlextResult.validate_all
+    accumulate_errors = FlextResult.accumulate_errors
 
     # =========================================================================
     # MODEL CONVERSION UTILITIES (New in Phase 0 - Consolidation)
@@ -621,7 +607,7 @@ class FlextMixins:
     @property
     def container(self) -> FlextContainer:
         """Get global FlextContainer instance with lazy initialization."""
-        return FlextContainer.get_global()
+        return FlextContainer()
 
     @property
     def context(self) -> FlextContext:
@@ -820,7 +806,7 @@ class FlextMixins:
 
         # Try to get from DI container
         try:
-            container = FlextContainer.get_global()
+            container = FlextContainer()
             logger_key = f"logger:{logger_name}"
 
             # Attempt to retrieve logger from container
