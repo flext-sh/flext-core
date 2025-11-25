@@ -15,6 +15,7 @@ import functools
 import json
 import shlex
 import socket
+import subprocess
 import threading
 import time
 from collections.abc import Callable, Iterator
@@ -45,7 +46,6 @@ from flext_core import (
     FlextLogger,
     FlextModels,
     FlextResult,
-    FlextUtilities,
 )
 
 pytest_module: ModuleType | None = pytest
@@ -468,8 +468,8 @@ class FlextTestDocker:
             # Extract capture_output from kwargs
             capture_output = kwargs.get("capture_output", False)
 
-            # Run the command
-            result = FlextUtilities.CommandExecution.run_external_command(
+            # Run the command using subprocess directly
+            process = subprocess.run(
                 ["docker"] + shlex.split(script_path),
                 check=False,
                 capture_output=bool(capture_output),
@@ -477,20 +477,15 @@ class FlextTestDocker:
                 timeout=timeout,
             )
 
-            if result.is_success:
-                process = result.value
-                # Return (exit_code, stdout, stderr) tuple
-                stdout = process.stdout if capture_output else ""
-                stderr = process.stderr if capture_output else ""
+            # Return (exit_code, stdout, stderr) tuple
+            stdout = process.stdout if capture_output and process.stdout else ""
+            stderr = process.stderr if capture_output and process.stderr else ""
 
-                return FlextResult[tuple[int, str, str]].ok((
-                    process.returncode,
-                    stdout,
-                    stderr,
-                ))
-            return FlextResult[tuple[int, str, str]].fail(
-                f"Command execution failed: {result.error}",
-            )
+            return FlextResult[tuple[int, str, str]].ok((
+                process.returncode,
+                stdout,
+                stderr,
+            ))
 
         except Exception as e:
             return FlextResult[tuple[int, str, str]].fail(f"Command failed: {e}")

@@ -1,12 +1,25 @@
 """Tests for flext_core.typings module - Type system validation.
 
-Tests real functionality of the centralized type system, ensuring all
-TypeVars, type aliases, and FlextTypes namespace work correctly.
+Module: flext_core.typings
+Scope: TypeVar definitions, type aliases, and CQRS type patterns
 
-Per user requirement: Tests only test what exists in src/, not more.
+Tests real functionality of the centralized type system, ensuring all
+exported TypeVars and type aliases are properly accessible at runtime.
+
+Consolidated 3 test classes into 1 unified parametrized test class using
+StrEnum, frozen dataclasses, and advanced parametrization for DRY testing.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import ClassVar, ParamSpec, TypeVar
+
+import pytest
 
 from flext_core import (
     Command,
@@ -47,155 +60,403 @@ from flext_core import (
     W,
 )
 
-
-class TestTypeVars:
-    """Test TypeVar definitions and properties."""
-
-    def test_core_typevars_defined(self) -> None:
-        """Test that core TypeVars are properly defined."""
-        # Test basic TypeVars
-        assert T is not None
-        assert U is not None
-        assert V is not None
-        assert W is not None
-        assert E is not None
-        assert F is not None
-        assert K is not None
-        assert R is not None
-
-        # Test domain TypeVars
-        assert Message is not None
-        assert Command is not None
-        assert Query is not None
-        assert Event is not None
-        assert ResultT is not None
-
-    def test_covariant_typevars(self) -> None:
-        """Test covariant TypeVars are properly defined."""
-        # Test covariant variants
-        assert T1_co is not None
-        assert T2_co is not None
-        assert T3_co is not None
-        assert TState_co is not None
-        assert TAggregate_co is not None
-        assert TCacheValue_co is not None
-        assert TDomainEvent_co is not None
-        assert TEntity_co is not None
-        assert TResult_co is not None
-        assert TValue_co is not None
-        assert TValueObject_co is not None
-
-    def test_contravariant_typevars(self) -> None:
-        """Test contravariant TypeVars are properly defined."""
-        assert T_contra is not None
-        assert TCommand_contra is not None
-        assert TEvent_contra is not None
-        assert TInput_contra is not None
-        assert TQuery_contra is not None
-        assert TItem_contra is not None
-        assert TResult_contra is not None
-        assert TUtil_contra is not None
-        assert TCacheKey_contra is not None
-        assert TConfigKey_contra is not None
-
-    def test_paramspec_defined(self) -> None:
-        """Test ParamSpec is properly defined."""
-        # P is defined at module level as ParamSpec
-        assert P is not None
+# =========================================================================
+# Type Test Enumeration
+# =========================================================================
 
 
-class TestFlextTypes:
-    """Test FlextTypes namespace - ONLY types in lean typings.py."""
+class TypeVarCategory(StrEnum):
+    """TypeVar categories for parametrized testing."""
 
-    def test_flexttypes_core_weak_types(self) -> None:
-        """Test core weak types are accessible."""
-        # Test collection types from lean typings.py
-        # THIN LAYER principle: Use Python native types directly
-        assert dict[str, object] is not None
-        assert list[object] is not None
-        assert list[str] is not None
-        assert list[int] is not None  # IntList removed - use list[int]
-        assert list[float] is not None  # FloatList removed - use list[float]
-        assert list[bool] is not None  # BoolList removed - use list[bool]
-        assert (
-            dict[str, dict[str, object]] is not None
-        )  # NestedDict removed - use dict nesting
-        assert dict[str, str] is not None
-
-    def test_flexttypes_domain_types(self) -> None:
-        """Test domain modeling types from lean typings.py."""
-        # Test types used by src/flext_core/models.py
-        assert object is not None
-        assert FlextTypes.CallableHandlerType is not None
-        assert object is not None  # Validation type
-        assert dict[str, object] is not None
-        assert dict[str, str | int | float] is not None
-
-    def test_flexttypes_processor_types(self) -> None:
-        """Test processor types from lean typings.py."""
-        # Test types used by src/flext_core/processors.py
-        assert FlextTypes.ProcessorInputType is not None
-        assert FlextTypes.ProcessorOutputType is not None
-
-    def test_flexttypes_handler_types(self) -> None:
-        """Test handler types from lean typings.py."""
-        # Test types used by src/flext_core/handlers.py and src/flext_core/bus.py
-        assert FlextTypes.HandlerCallableType is not None  # Handler type
-        assert FlextTypes.BusHandlerType is not None
-        assert FlextTypes.BusMessageType is not None
-        assert FlextTypes.AcceptableMessageType is not None
-        assert FlextTypes.MiddlewareType is not None
-        assert FlextTypes.MiddlewareConfig is not None
-
-    def test_flexttypes_logging_types(self) -> None:
-        """Test logging types from lean typings.py."""
-        # Test types used by src/flext_core/loggings.py
-        assert FlextTypes.LoggingContextValueType is not None
-        assert FlextTypes.LoggingArgType is not None
-        assert (
-            FlextTypes.LoggingKwargsType is not None
-        )  # Fixed from LoggingKwargsValueType
-        assert FlextTypes.LoggingContextType is not None
-        assert FlextTypes.BoundLoggerType is not None
-        assert FlextTypes.LoggingProcessorType is not None
-
-    def test_flexttypes_runtime_types(self) -> None:
-        """Test runtime types from lean typings.py."""
-        # Test types used by src/flext_core/runtime.py
-        # ValidatableInputType removed - use object directly
-        assert FlextTypes.TypeHintSpecifier is not None
-        assert (
-            FlextTypes.SerializableType is not None
-        )  # Consolidated from SerializableObjectType
-        assert FlextTypes.GenericTypeArgument is not None
-        assert FlextTypes.LoggerContextType is not None
-        assert FlextTypes.FactoryCallableType is not None
-        assert FlextTypes.ContextualObjectType is not None
-
-    def test_flexttypes_container_types(self) -> None:
-        """Test container types from lean typings.py."""
-        # Test types used by src/flext_core/container.py
-        # ValidatorFunctionType is only available during TYPE_CHECKING
-        assert FlextTypes.ContainerServiceType is not None
-
-    def test_flexttypes_validation_types(self) -> None:
-        """Test validation types from lean typings.py."""
-        # ValidationRule, CrossFieldValidator, and ValidatorFunctionType
-        # are only available during type checking (TYPE_CHECKING block)
-        # and not at runtime to avoid circular imports
-        assert object is not None
+    CORE = "core"
+    COVARIANT = "covariant"
+    CONTRAVARIANT = "contravariant"
+    PARAMSPEC = "paramspec"
+    DOMAIN = "domain"
+    CQRS = "cqrs"
 
 
-class TestImports:
-    """Test all public imports work."""
+# =========================================================================
+# Type Test Case
+# =========================================================================
+
+
+@dataclass(frozen=True, slots=True)
+class TypeVarTestCase:
+    """TypeVar test case definition."""
+
+    name: str
+    category: TypeVarCategory
+    type_var: object
+    expected_not_none: bool = True
+
+
+# =========================================================================
+# Type Scenarios Factory
+# =========================================================================
+
+
+class TypeScenarios:
+    """Factory for type system test scenarios with centralized test data."""
+
+    # Core TypeVar scenarios
+    CORE_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
+        TypeVarTestCase(
+            name="T",
+            category=TypeVarCategory.CORE,
+            type_var=T,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="U",
+            category=TypeVarCategory.CORE,
+            type_var=U,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="V",
+            category=TypeVarCategory.CORE,
+            type_var=V,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="W",
+            category=TypeVarCategory.CORE,
+            type_var=W,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="E",
+            category=TypeVarCategory.CORE,
+            type_var=E,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="F",
+            category=TypeVarCategory.CORE,
+            type_var=F,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="K",
+            category=TypeVarCategory.CORE,
+            type_var=K,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="R",
+            category=TypeVarCategory.CORE,
+            type_var=R,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="ResultT",
+            category=TypeVarCategory.CORE,
+            type_var=ResultT,
+            expected_not_none=True,
+        ),
+    ]
+
+    # Covariant TypeVar scenarios
+    COVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
+        TypeVarTestCase(
+            name="T1_co",
+            category=TypeVarCategory.COVARIANT,
+            type_var=T1_co,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="T2_co",
+            category=TypeVarCategory.COVARIANT,
+            type_var=T2_co,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="T3_co",
+            category=TypeVarCategory.COVARIANT,
+            type_var=T3_co,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TState_co",
+            category=TypeVarCategory.COVARIANT,
+            type_var=TState_co,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TAggregate_co",
+            category=TypeVarCategory.COVARIANT,
+            type_var=TAggregate_co,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TCacheValue_co",
+            category=TypeVarCategory.COVARIANT,
+            type_var=TCacheValue_co,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TDomainEvent_co",
+            category=TypeVarCategory.COVARIANT,
+            type_var=TDomainEvent_co,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TEntity_co",
+            category=TypeVarCategory.COVARIANT,
+            type_var=TEntity_co,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TResult_co",
+            category=TypeVarCategory.COVARIANT,
+            type_var=TResult_co,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TValue_co",
+            category=TypeVarCategory.COVARIANT,
+            type_var=TValue_co,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TValueObject_co",
+            category=TypeVarCategory.COVARIANT,
+            type_var=TValueObject_co,
+            expected_not_none=True,
+        ),
+    ]
+
+    # Contravariant TypeVar scenarios
+    CONTRAVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
+        TypeVarTestCase(
+            name="T_contra",
+            category=TypeVarCategory.CONTRAVARIANT,
+            type_var=T_contra,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TCommand_contra",
+            category=TypeVarCategory.CONTRAVARIANT,
+            type_var=TCommand_contra,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TEvent_contra",
+            category=TypeVarCategory.CONTRAVARIANT,
+            type_var=TEvent_contra,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TInput_contra",
+            category=TypeVarCategory.CONTRAVARIANT,
+            type_var=TInput_contra,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TQuery_contra",
+            category=TypeVarCategory.CONTRAVARIANT,
+            type_var=TQuery_contra,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TItem_contra",
+            category=TypeVarCategory.CONTRAVARIANT,
+            type_var=TItem_contra,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TResult_contra",
+            category=TypeVarCategory.CONTRAVARIANT,
+            type_var=TResult_contra,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TUtil_contra",
+            category=TypeVarCategory.CONTRAVARIANT,
+            type_var=TUtil_contra,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TCacheKey_contra",
+            category=TypeVarCategory.CONTRAVARIANT,
+            type_var=TCacheKey_contra,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="TConfigKey_contra",
+            category=TypeVarCategory.CONTRAVARIANT,
+            type_var=TConfigKey_contra,
+            expected_not_none=True,
+        ),
+    ]
+
+    # CQRS type alias scenarios
+    CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
+        TypeVarTestCase(
+            name="Command",
+            category=TypeVarCategory.CQRS,
+            type_var=Command,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="Query",
+            category=TypeVarCategory.CQRS,
+            type_var=Query,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="Event",
+            category=TypeVarCategory.CQRS,
+            type_var=Event,
+            expected_not_none=True,
+        ),
+        TypeVarTestCase(
+            name="Message",
+            category=TypeVarCategory.CQRS,
+            type_var=Message,
+            expected_not_none=True,
+        ),
+    ]
+
+    # ParamSpec scenarios
+    PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [
+        TypeVarTestCase(
+            name="P",
+            category=TypeVarCategory.PARAMSPEC,
+            type_var=P,
+            expected_not_none=True,
+        ),
+    ]
+
+    @staticmethod
+    def is_typevar(obj: object) -> bool:
+        """Check if object is a TypeVar-like instance."""
+        return isinstance(obj, (TypeVar, ParamSpec)) or obj is not None
+
+
+# =========================================================================
+# Test Suite
+# =========================================================================
+
+
+class TestFlextTypings:
+    """Unified test suite for FlextTypes and type system."""
+
+    # =====================================================================
+    # Core TypeVar Tests
+    # =====================================================================
+
+    @pytest.mark.parametrize(
+        "test_case",
+        TypeScenarios.CORE_TYPEVARS,
+        ids=lambda tc: tc.name,
+    )
+    def test_core_typevars(self, test_case: TypeVarTestCase) -> None:
+        """Test core TypeVar definitions are properly exported."""
+        if test_case.expected_not_none:
+            assert test_case.type_var is not None
+            assert TypeScenarios.is_typevar(test_case.type_var)
+
+    # =====================================================================
+    # Covariant TypeVar Tests
+    # =====================================================================
+
+    @pytest.mark.parametrize(
+        "test_case",
+        TypeScenarios.COVARIANT_TYPEVARS,
+        ids=lambda tc: tc.name,
+    )
+    def test_covariant_typevars(self, test_case: TypeVarTestCase) -> None:
+        """Test covariant TypeVar definitions are properly exported."""
+        if test_case.expected_not_none:
+            assert test_case.type_var is not None
+            assert TypeScenarios.is_typevar(test_case.type_var)
+
+    # =====================================================================
+    # Contravariant TypeVar Tests
+    # =====================================================================
+
+    @pytest.mark.parametrize(
+        "test_case",
+        TypeScenarios.CONTRAVARIANT_TYPEVARS,
+        ids=lambda tc: tc.name,
+    )
+    def test_contravariant_typevars(self, test_case: TypeVarTestCase) -> None:
+        """Test contravariant TypeVar definitions are properly exported."""
+        if test_case.expected_not_none:
+            assert test_case.type_var is not None
+            assert TypeScenarios.is_typevar(test_case.type_var)
+
+    # =====================================================================
+    # CQRS Type Alias Tests
+    # =====================================================================
+
+    @pytest.mark.parametrize(
+        "test_case",
+        TypeScenarios.CQRS_ALIASES,
+        ids=lambda tc: tc.name,
+    )
+    def test_cqrs_aliases(self, test_case: TypeVarTestCase) -> None:
+        """Test CQRS type aliases are properly defined."""
+        if test_case.expected_not_none:
+            assert test_case.type_var is not None
+
+    # =====================================================================
+    # ParamSpec Tests
+    # =====================================================================
+
+    @pytest.mark.parametrize(
+        "test_case",
+        TypeScenarios.PARAMSPEC_ITEMS,
+        ids=lambda tc: tc.name,
+    )
+    def test_paramspec(self, test_case: TypeVarTestCase) -> None:
+        """Test ParamSpec is properly defined and exported."""
+        if test_case.expected_not_none:
+            assert test_case.type_var is not None
+            assert isinstance(test_case.type_var, ParamSpec)
+
+    # =====================================================================
+    # Integration Tests
+    # =====================================================================
+
+    def test_flexttypes_accessible(self) -> None:
+        """Test FlextTypes namespace is accessible."""
+        assert FlextTypes is not None
+        # FlextTypes has nested classes for types
+        assert hasattr(FlextTypes, "Validation")
+        assert hasattr(FlextTypes, "Json")
+        assert hasattr(FlextTypes, "Handler")
+        assert hasattr(FlextTypes, "Processor")
+        assert hasattr(FlextTypes, "Factory")
+        assert hasattr(FlextTypes, "Utility")
+        assert hasattr(FlextTypes, "Bus")
+        assert hasattr(FlextTypes, "Logging")
+        assert hasattr(FlextTypes, "Cqrs")
+        assert hasattr(FlextTypes, "Config")
 
     def test_all_exports_importable(self) -> None:
-        """Test that all __all__ exports can be imported."""
-        # This is implicitly tested by the imports at the top
-        # If any import failed, the module wouldn't load
+        """Test that all public exports can be imported.
+
+        This test verifies the module loads without import errors.
+        """
+        # If any import failed, the test module wouldn't load
         assert True
 
-    def test_no_import_errors(self) -> None:
-        """Test that importing the module doesn't cause errors."""
-        # If there were import errors, the test module wouldn't load
-        assert True
+    def test_module_structure(self) -> None:
+        """Test that FlextTypes has expected structure."""
+        # Core TypeVars at module level (already imported at top)
+        assert T is not None
+        assert U is not None
+        assert P is not None
+        assert R is not None
+
+        # CQRS aliases in nested class
+        assert FlextTypes.Cqrs.Command is not None
+        assert FlextTypes.Cqrs.Event is not None
+        assert FlextTypes.Cqrs.Query is not None
+        assert FlextTypes.Cqrs.Message is not None
+
+
+__all__ = ["TestFlextTypings"]

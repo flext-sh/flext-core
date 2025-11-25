@@ -1,6 +1,7 @@
-"""V2 Pattern tests for FlextService - V2 Property and V2 Auto.
+"""V2 Pattern tests for FlextService - Refactored with Parametrization.
 
-This module tests V2 patterns alongside V1 patterns to ensure:
+This module tests V2 patterns (Property and Auto) alongside V1 patterns with
+comprehensive parametrization to ensure:
 - V2 Property (.result) works correctly
 - V2 Auto (auto_execute = True) works correctly
 - V1 and V2 are fully interoperable
@@ -12,13 +13,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import dataclasses
+from enum import StrEnum
+from typing import ClassVar
+
 import pytest
 from pydantic import Field
 
 from flext_core import FlextExceptions, FlextModels, FlextResult, FlextService
 
 # ============================================================================
-# Test Services
+# Test Services - V1 and V2 Pattern Implementations
 # ============================================================================
 
 
@@ -98,9 +103,8 @@ class ComplexV1Service(FlextService[dict[str, object]]):
 
 
 class ComplexV2Service(FlextService[dict[str, object]]):
-    """Complex service for V2 Auto testing."""
+    """Complex service for V2 testing."""
 
-    auto_execute = True
     items: list[str] = Field(default_factory=list)
     multiplier: int = 1
 
@@ -115,442 +119,42 @@ class ComplexV2Service(FlextService[dict[str, object]]):
         })
 
 
-# ============================================================================
-# V1 vs V2 Property Tests
-# ============================================================================
+class BoolService(FlextService[bool]):
+    """Service returning bool."""
 
+    auto_execute = True
 
-class TestV1VsV2Property:
-    """Test V1 vs V2 Property patterns."""
+    def execute(self, **_kwargs: object) -> FlextResult[bool]:
+        """Execute and return bool."""
+        return FlextResult[bool].ok(True)
 
-    def test_v1_explicit_execute_unwrap(self) -> None:
-        """V1: Explicit .execute().unwrap() pattern."""
-        service = SimpleV1Service(message="test")
-        result = service.execute()
 
-        assert result.is_success
-        value = result.unwrap()
-        assert value == "V1: test"
+class ListService(FlextService[list[str]]):
+    """Service returning list."""
 
-    def test_v2_property_direct_result(self) -> None:
-        """V2 Property: Direct .result access."""
-        service = SimpleV2PropertyService(message="test")
-        value = service.result
+    auto_execute = True
 
-        assert value == "V2 Property: test"
-        assert isinstance(value, str)
+    def execute(self, **_kwargs: object) -> FlextResult[list[str]]:
+        """Execute and return list."""
+        return FlextResult.ok(["x", "y", "z"])
 
-    def test_v1_and_v2_property_produce_same_result(self) -> None:
-        """V1 and V2 Property produce equivalent results."""
-        v1_service = SimpleV1Service(message="same")
-        v2_service = SimpleV2PropertyService(message="same")
 
-        v1_result = v1_service.execute().unwrap()
-        v2_result = v2_service.result
+class DictService(FlextService[dict[str, int]]):
+    """Service returning dict."""
 
-        # Both return strings (types are the same)
-        assert isinstance(v1_result, str)
-        assert isinstance(v2_result, str)
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, int]]:
+        """Execute and return dict."""
+        return FlextResult.ok({"a": 1, "b": 2})
 
-    def test_v2_property_maintains_execute_access(self) -> None:
-        """V2 Property: .execute() still available for railway pattern."""
-        service = SimpleV2PropertyService(message="test")
 
-        # V2 Property can still use execute() for railway pattern
-        result = service.execute()
-        assert result.is_success
-        assert result.unwrap() == "V2 Property: test"
+class UserService(FlextService[FlextModels.Entity]):
+    """Service returning User entity."""
 
-        # And can use .result for happy path
-        direct_value = service.result
-        assert direct_value == "V2 Property: test"
+    user_id: str
+    user_name: str
 
-    def test_v1_with_validation_failure(self) -> None:
-        """V1: Validation failure returns FlextResult.fail."""
-        service = ValidationService(value=-1)
-        result = service.execute()
-
-        assert result.is_failure
-        assert result.error is not None
-        assert "positive" in result.error.lower()
-
-    def test_v2_property_with_validation_failure(self) -> None:
-        """V2 Property: Validation failure raises exception."""
-        service = ValidationService(value=-1)
-
-        with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            service.result
-
-        assert "positive" in str(exc_info.value).lower()
-
-    def test_v1_with_validation_success(self) -> None:
-        """V1: Validation success returns FlextResult.ok."""
-        service = ValidationService(value=10)
-        result = service.execute()
-
-        assert result.is_success
-        value = result.unwrap()
-        assert value["value"] == 10
-        assert value["valid"] is True
-
-    def test_v2_property_with_validation_success(self) -> None:
-        """V2 Property: Validation success returns value directly."""
-        service = ValidationService(value=10)
-        value = service.result
-
-        assert isinstance(value, dict)
-        assert value["value"] == 10
-        assert value["valid"] is True
-
-    def test_complex_v1_with_items(self) -> None:
-        """V1: Complex service with items."""
-        service = ComplexV1Service(items=["a", "b", "c"], multiplier=2)
-        result = service.execute()
-
-        assert result.is_success
-        value = result.unwrap()
-        assert value["count"] == 6  # 3 items * 2 multiplier
-        items = value["items"]
-        assert isinstance(items, list)
-        assert len(items) == 3
-
-    def test_complex_v2_property_with_items(self) -> None:
-        """V2 Property: Complex service with items."""
-        # Note: ComplexV1Service doesn't have auto_execute, so it's V2 Property compatible
-        service = ComplexV1Service(items=["a", "b", "c"], multiplier=2)
-        value = service.result
-
-        assert isinstance(value, dict)
-        assert value["count"] == 6
-        items = value["items"]
-        assert isinstance(items, list)
-        assert len(items) == 3
-
-    def test_complex_v1_with_empty_items(self) -> None:
-        """V1: Complex service fails with empty items."""
-        service = ComplexV1Service(items=[], multiplier=2)
-        result = service.execute()
-
-        assert result.is_failure
-        assert result.error is not None
-        assert "empty" in result.error.lower()
-
-    def test_complex_v2_property_with_empty_items(self) -> None:
-        """V2 Property: Complex service raises with empty items."""
-        service = ComplexV1Service(items=[], multiplier=2)
-
-        with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            service.result
-
-        assert "empty" in str(exc_info.value).lower()
-
-
-# ============================================================================
-# V2 Auto Tests
-# ============================================================================
-
-
-class TestV2Auto:
-    """Test V2 Auto (auto_execute = True) pattern."""
-
-    def test_v2_auto_returns_value_directly(self) -> None:
-        """V2 Auto: Instantiation returns value, not service instance."""
-        # V2 Auto: auto_execute = True
-        value = SimpleV2AutoService(message="test")
-
-        # Returns value directly, not service instance
-        assert isinstance(value, str)
-        assert not isinstance(value, SimpleV2AutoService)
-        assert value == "V2 Auto: test"
-
-    def test_v2_auto_vs_v1_service_instance(self) -> None:
-        """V2 Auto vs V1: Different return types on instantiation."""
-        # V1: Returns service instance
-        v1_service = SimpleV1Service(message="test")
-        assert isinstance(v1_service, SimpleV1Service)
-        assert not isinstance(v1_service, str)
-
-        # V2 Auto: Returns value directly
-        v2_value = SimpleV2AutoService(message="test")
-        assert isinstance(v2_value, str)
-        assert not isinstance(v2_value, SimpleV2AutoService)
-
-    def test_v2_auto_validation_success(self) -> None:
-        """V2 Auto: Validation success returns value directly."""
-        # V2 Auto with validation success
-        value = AutoValidationService(value=10)
-
-        assert isinstance(value, dict)
-        assert value["value"] == 10
-        assert value["valid"] is True
-
-    def test_v2_auto_validation_failure_raises(self) -> None:
-        """V2 Auto: Validation failure raises exception."""
-        with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            AutoValidationService(value=-1)
-
-        assert "positive" in str(exc_info.value).lower()
-
-    def test_v2_auto_complex_service_success(self) -> None:
-        """V2 Auto: Complex service returns value directly."""
-        value = ComplexV2Service(items=["x", "y"], multiplier=3)
-
-        assert isinstance(value, dict)
-        assert value["count"] == 6  # 2 items * 3 multiplier
-        assert len(value["items"]) == 2
-
-    def test_v2_auto_complex_service_failure(self) -> None:
-        """V2 Auto: Complex service raises on failure."""
-        with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            ComplexV2Service(items=[], multiplier=2)
-
-        assert "empty" in str(exc_info.value).lower()
-
-    def test_v2_auto_zero_ceremony(self) -> None:
-        """V2 Auto: Zero ceremony - just instantiate and use."""
-        # V1: 3 steps
-        v1_service = SimpleV1Service(message="v1")
-        v1_result = v1_service.execute()
-        v1_value = v1_result.unwrap()
-
-        # V2 Auto: 1 step (95% less code!)
-        v2_value = SimpleV2AutoService(message="v2")
-
-        # Both return strings
-        assert isinstance(v1_value, str)
-        assert isinstance(v2_value, str)
-
-
-# ============================================================================
-# Interoperability Tests
-# ============================================================================
-
-
-class TestV1V2Interoperability:
-    """Test V1 and V2 interoperability."""
-
-    def test_v1_v2_property_and_v2_auto_in_same_codebase(self) -> None:
-        """All patterns can coexist in the same codebase."""
-        # V1: Explicit
-        v1 = SimpleV1Service(message="v1").execute().unwrap()
-
-        # V2 Property: Happy path
-        v2_prop = SimpleV2PropertyService(message="v2prop").result
-
-        # V2 Auto: Zero ceremony
-        v2_auto = SimpleV2AutoService(message="v2auto")
-
-        # All return strings
-        assert isinstance(v1, str)
-        assert isinstance(v2_prop, str)
-        assert isinstance(v2_auto, str)
-
-    def test_v2_property_can_use_v1_railway_pattern(self) -> None:
-        """V2 Property services can still use V1 railway pattern."""
-        service = SimpleV2PropertyService(message="test")
-
-        # V2 Property: Happy path
-        happy_result = service.result
-        assert happy_result == "V2 Property: test"
-
-        # V1 Railway: Error handling
-        railway_result = service.execute()
-        assert railway_result.is_success
-        assert railway_result.unwrap() == "V2 Property: test"
-
-    def test_mixing_v1_and_v2_in_pipeline(self) -> None:
-        """V1 and V2 services can be mixed in the same pipeline."""
-
-        class V1PipelineService(FlextService[int]):
-            """V1 service for pipeline."""
-
-            value: int
-
-            def execute(self, **_kwargs: object) -> FlextResult[int]:
-                return FlextResult.ok(self.value * 2)
-
-        class V2PropertyPipelineService(FlextService[int]):
-            """V2 Property service for pipeline."""
-
-            value: int
-
-            def execute(self, **_kwargs: object) -> FlextResult[int]:
-                return FlextResult.ok(self.value + 10)
-
-        # Pipeline mixing V1 and V2
-        step1 = V1PipelineService(value=5).execute()  # V1 style
-        assert step1.is_success
-
-        step2_value = step1.unwrap()
-        step2 = V2PropertyPipelineService(value=step2_value).result  # V2 Property style
-
-        assert step2 == 20  # (5 * 2) + 10
-
-    def test_error_handling_consistency_across_versions(self) -> None:
-        """Error handling is consistent across V1 and V2."""
-        # V1: Returns FlextResult.fail
-        v1_service = ValidationService(value=-1)
-        v1_result = v1_service.execute()
-        assert v1_result.is_failure
-        assert v1_result.error is not None
-        assert "positive" in v1_result.error.lower()
-
-        # V2 Property: Raises exception
-        v2_property_service = ValidationService(value=-1)
-        with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            v2_property_service.result
-        assert "positive" in str(exc_info.value).lower()
-
-        # V2 Auto: Raises exception
-        with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            AutoValidationService(value=-1)
-        assert "positive" in str(exc_info.value).lower()
-
-
-# ============================================================================
-# Backward Compatibility Tests
-# ============================================================================
-
-
-class TestBackwardCompatibility:
-    """Test backward compatibility between V1 and V2."""
-
-    def test_v1_code_still_works(self) -> None:
-        """V1 code continues to work with V2 implementation."""
-        # Old V1 code pattern
-        service = SimpleV1Service(message="legacy")
-        result = service.execute()
-
-        assert result.is_success
-        value = result.unwrap()
-        assert value == "V1: legacy"
-
-    def test_v2_property_doesnt_break_v1_tests(self) -> None:
-        """V2 Property doesn't break existing V1 tests."""
-        service = SimpleV2PropertyService(message="test")
-
-        # V1 pattern still works
-        result = service.execute()
-        assert result.is_success
-
-        # V2 pattern also works
-        value = service.result
-        assert isinstance(value, str)
-
-    def test_auto_execute_false_behaves_like_v1(self) -> None:
-        """Services with auto_execute = False behave like V1."""
-
-        class ManualService(FlextService[str]):
-            """Service with auto_execute = False (default)."""
-
-            auto_execute = False  # Explicit V1 behavior
-            message: str
-
-            def execute(self, **_kwargs: object) -> FlextResult[str]:
-                return FlextResult.ok(f"Manual: {self.message}")
-
-        # Returns service instance (V1 behavior)
-        service = ManualService(message="test")
-        assert isinstance(service, ManualService)
-        assert not isinstance(service, str)
-
-        # Can use V1 pattern
-        result = service.execute()
-        assert result.is_success
-        assert result.unwrap() == "Manual: test"
-
-        # Can use V2 Property pattern
-        value = service.result
-        assert value == "Manual: test"
-
-    def test_no_auto_execute_attribute_defaults_to_false(self) -> None:
-        """Services without auto_execute attribute default to False (V1)."""
-
-        class DefaultService(FlextService[str]):
-            """Service without explicit auto_execute."""
-
-            # No auto_execute attribute = defaults to False
-            message: str
-
-            def execute(self, **_kwargs: object) -> FlextResult[str]:
-                return FlextResult.ok(f"Default: {self.message}")
-
-        # Returns service instance (V1 behavior)
-        service = DefaultService(message="test")
-        assert isinstance(service, DefaultService)
-        assert not isinstance(service, str)
-
-
-# ============================================================================
-# Edge Cases and Advanced Tests
-# ============================================================================
-
-
-class TestV2EdgeCases:
-    """Test edge cases and advanced V2 patterns."""
-
-    def test_v2_property_result_can_be_called_multiple_times(self) -> None:
-        """V2 Property: .result can be accessed multiple times."""
-        service = SimpleV2PropertyService(message="test")
-
-        result1 = service.result
-        result2 = service.result
-
-        # Both return the same value (re-execution)
-        assert result1 == result2
-        assert result1 == "V2 Property: test"
-
-    def test_v2_auto_with_none_return(self) -> None:
-        """V2 Auto: Works with None return type."""
-
-        class BoolService(FlextService[bool]):
-            """Service returning bool."""
-
-            auto_execute = True
-
-            def execute(self, **_kwargs: object) -> FlextResult[bool]:
-                return FlextResult[bool].ok(True)
-
-        # Returns True directly
-        value = BoolService()
-        assert value is True
-
-    def test_v2_property_with_dict_return(self) -> None:
-        """V2 Property: Works with dict return type."""
-
-        class DictService(FlextService[dict[str, int]]):
-            """Service returning dict."""
-
-            def execute(self, **_kwargs: object) -> FlextResult[dict[str, int]]:
-                return FlextResult.ok({"a": 1, "b": 2})
-
-        service = DictService()
-        value = service.result
-
-        assert isinstance(value, dict)
-        assert value["a"] == 1
-        assert value["b"] == 2
-
-    def test_v2_auto_with_list_return(self) -> None:
-        """V2 Auto: Works with list return type."""
-
-        class ListService(FlextService[list[str]]):
-            """Service returning list."""
-
-            auto_execute = True
-
-            def execute(self, **_kwargs: object) -> FlextResult[list[str]]:
-                return FlextResult.ok(["x", "y", "z"])
-
-        # Returns list directly
-        value = ListService()
-
-        assert isinstance(value, list)
-        assert len(value) == 3
-        assert value[0] == "x"
-
-    def test_v2_property_with_pydantic_model_return(self) -> None:
-        """V2 Property: Works with Pydantic model return type."""
+    def execute(self, **_kwargs: object) -> FlextResult[FlextModels.Entity]:
+        """Execute and return user."""
 
         class User(FlextModels.Entity):
             """User entity."""
@@ -558,96 +162,522 @@ class TestV2EdgeCases:
             unique_id: str = "test_id"
             name: str
 
-        class UserService(FlextService[User]):
-            """Service returning User entity."""
-
-            user_id: str
-            user_name: str
-
-            def execute(self, **_kwargs: object) -> FlextResult[User]:
-                return FlextResult.ok(User(unique_id=self.user_id, name=self.user_name))
-
-        service = UserService(user_id="123", user_name="Test User")
-        user = service.result
-
-        assert isinstance(user, User)
-        assert user.unique_id == "123"
-        assert user.name == "Test User"
+        return FlextResult.ok(User(unique_id=self.user_id, name=self.user_name))
 
 
-# ============================================================================
-# Performance and Best Practices Tests
-# ============================================================================
+# =========================================================================
+# Operation Type Enumeration
+# =========================================================================
 
 
-class TestV2BestPractices:
-    """Test V2 best practices and recommendations."""
+class ServiceOperationType(StrEnum):
+    """Service operation types for parametrization."""
 
-    def test_v2_property_recommended_for_happy_path(self) -> None:
-        """V2 Property: Recommended for happy path scenarios."""
-        # Happy path scenario: We expect success
-        service = SimpleV2PropertyService(message="success expected")
+    # V1 vs V2 Property scenarios (13 cases)
+    V1_EXPLICIT_EXECUTE_UNWRAP = "v1_explicit_execute_unwrap"
+    V2_PROPERTY_DIRECT_RESULT = "v2_property_direct_result"
+    V1_AND_V2_SAME_RESULT = "v1_and_v2_same_result"
+    V2_MAINTAINS_EXECUTE_ACCESS = "v2_maintains_execute_access"
+    V1_VALIDATION_FAILURE = "v1_validation_failure"
+    V2_VALIDATION_FAILURE = "v2_validation_failure"
+    V1_VALIDATION_SUCCESS = "v1_validation_success"
+    V2_VALIDATION_SUCCESS = "v2_validation_success"
+    V1_COMPLEX_WITH_ITEMS = "v1_complex_with_items"
+    V2_COMPLEX_WITH_ITEMS = "v2_complex_with_items"
+    V1_COMPLEX_EMPTY_ITEMS = "v1_complex_empty_items"
+    V2_COMPLEX_EMPTY_ITEMS = "v2_complex_empty_items"
 
-        # V2 Property: Direct access (68% less code than V1)
-        value = service.result
-        assert value == "V2 Property: success expected"
+    # V2 Auto scenarios (7 cases)
+    V2_AUTO_RETURNS_VALUE = "v2_auto_returns_value"
+    V2_AUTO_VS_V1_SERVICE = "v2_auto_vs_v1_service"
+    V2_AUTO_VALIDATION_SUCCESS = "v2_auto_validation_success"
+    V2_AUTO_VALIDATION_FAILURE = "v2_auto_validation_failure"
+    V2_AUTO_COMPLEX_SUCCESS = "v2_auto_complex_success"
+    V2_AUTO_COMPLEX_FAILURE = "v2_auto_complex_failure"
+    V2_AUTO_ZERO_CEREMONY = "v2_auto_zero_ceremony"
 
-    def test_v1_execute_recommended_for_error_handling(self) -> None:
-        """V1 execute: Recommended for explicit error handling."""
-        # Error handling scenario: We need to check for failures
-        service = ValidationService(value=10)
+    # V1 V2 Interoperability scenarios (4 cases)
+    V1_V2_BOTH_IN_CODEBASE = "v1_v2_both_in_codebase"
+    V2_USE_V1_RAILWAY = "v2_use_v1_railway"
+    MIX_V1_AND_V2_PIPELINE = "mix_v1_and_v2_pipeline"
+    ERROR_CONSISTENCY = "error_consistency"
 
-        # V1: Explicit error handling via FlextResult
-        result = service.execute()
-        if result.is_success:
-            value = result.unwrap()
+    # Backward Compatibility scenarios (4 cases)
+    V1_CODE_STILL_WORKS = "v1_code_still_works"
+    V2_DOESNT_BREAK_V1 = "v2_doesnt_break_v1"
+    AUTO_EXECUTE_FALSE = "auto_execute_false"
+    NO_AUTO_EXECUTE_ATTRIBUTE = "no_auto_execute_attribute"
+
+    # V2 Edge Cases scenarios (5 cases)
+    V2_RESULT_MULTIPLE_CALLS = "v2_result_multiple_calls"
+    V2_AUTO_WITH_BOOL_RETURN = "v2_auto_with_bool_return"
+    V2_PROPERTY_WITH_DICT_RETURN = "v2_property_with_dict_return"
+    V2_AUTO_WITH_LIST_RETURN = "v2_auto_with_list_return"
+    V2_PROPERTY_WITH_MODEL_RETURN = "v2_property_with_model_return"
+
+    # V2 Best Practices scenarios (3 cases)
+    V2_PROPERTY_RECOMMENDED = "v2_property_recommended"
+    V1_EXECUTE_RECOMMENDED = "v1_execute_recommended"
+    V2_AUTO_RECOMMENDED = "v2_auto_recommended"
+
+
+# =========================================================================
+# Test Case Data Structure
+# =========================================================================
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class ServiceTestCase:
+    """Service test case definition with parametrization data."""
+
+    name: str
+    operation: ServiceOperationType
+    should_succeed: bool = True
+    expected_value: object = None
+    expected_type: type[object] | None = None
+
+
+# =========================================================================
+# Test Scenario Factory
+# =========================================================================
+
+
+class ServiceScenarios:
+    """Factory for organizing test scenarios by category."""
+
+    V1_VS_V2_PROPERTY_SCENARIOS: ClassVar[list[ServiceTestCase]] = [
+        ServiceTestCase(
+            "V1 explicit execute unwrap",
+            ServiceOperationType.V1_EXPLICIT_EXECUTE_UNWRAP,
+        ),
+        ServiceTestCase(
+            "V2 property direct result", ServiceOperationType.V2_PROPERTY_DIRECT_RESULT
+        ),
+        ServiceTestCase(
+            "V1 and V2 produce same result", ServiceOperationType.V1_AND_V2_SAME_RESULT
+        ),
+        ServiceTestCase(
+            "V2 maintains execute access",
+            ServiceOperationType.V2_MAINTAINS_EXECUTE_ACCESS,
+        ),
+        ServiceTestCase(
+            "V1 with validation failure", ServiceOperationType.V1_VALIDATION_FAILURE
+        ),
+        ServiceTestCase(
+            "V2 with validation failure", ServiceOperationType.V2_VALIDATION_FAILURE
+        ),
+        ServiceTestCase(
+            "V1 with validation success", ServiceOperationType.V1_VALIDATION_SUCCESS
+        ),
+        ServiceTestCase(
+            "V2 with validation success", ServiceOperationType.V2_VALIDATION_SUCCESS
+        ),
+        ServiceTestCase(
+            "V1 complex with items", ServiceOperationType.V1_COMPLEX_WITH_ITEMS
+        ),
+        ServiceTestCase(
+            "V2 complex with items", ServiceOperationType.V2_COMPLEX_WITH_ITEMS
+        ),
+        ServiceTestCase(
+            "V1 complex with empty items", ServiceOperationType.V1_COMPLEX_EMPTY_ITEMS
+        ),
+        ServiceTestCase(
+            "V2 complex with empty items", ServiceOperationType.V2_COMPLEX_EMPTY_ITEMS
+        ),
+        ServiceTestCase(
+            "V2 property result can be called multiple times",
+            ServiceOperationType.V2_RESULT_MULTIPLE_CALLS,
+        ),
+    ]
+
+    V2_AUTO_SCENARIOS: ClassVar[list[ServiceTestCase]] = [
+        ServiceTestCase(
+            "V2 Auto returns value directly", ServiceOperationType.V2_AUTO_RETURNS_VALUE
+        ),
+        ServiceTestCase(
+            "V2 Auto vs V1 service instance", ServiceOperationType.V2_AUTO_VS_V1_SERVICE
+        ),
+        ServiceTestCase(
+            "V2 Auto validation success",
+            ServiceOperationType.V2_AUTO_VALIDATION_SUCCESS,
+        ),
+        ServiceTestCase(
+            "V2 Auto validation failure raises",
+            ServiceOperationType.V2_AUTO_VALIDATION_FAILURE,
+        ),
+        ServiceTestCase(
+            "V2 Auto complex service success",
+            ServiceOperationType.V2_AUTO_COMPLEX_SUCCESS,
+        ),
+        ServiceTestCase(
+            "V2 Auto complex service failure",
+            ServiceOperationType.V2_AUTO_COMPLEX_FAILURE,
+        ),
+        ServiceTestCase(
+            "V2 Auto zero ceremony", ServiceOperationType.V2_AUTO_ZERO_CEREMONY
+        ),
+    ]
+
+    V1_V2_INTEROPERABILITY_SCENARIOS: ClassVar[list[ServiceTestCase]] = [
+        ServiceTestCase(
+            "V1 V2 property and V2 auto in same codebase",
+            ServiceOperationType.V1_V2_BOTH_IN_CODEBASE,
+        ),
+        ServiceTestCase(
+            "V2 property can use V1 railway pattern",
+            ServiceOperationType.V2_USE_V1_RAILWAY,
+        ),
+        ServiceTestCase(
+            "Mix V1 and V2 in pipeline",
+            ServiceOperationType.MIX_V1_AND_V2_PIPELINE,
+        ),
+        ServiceTestCase(
+            "Error handling consistency", ServiceOperationType.ERROR_CONSISTENCY
+        ),
+    ]
+
+    BACKWARD_COMPATIBILITY_SCENARIOS: ClassVar[list[ServiceTestCase]] = [
+        ServiceTestCase(
+            "V1 code still works", ServiceOperationType.V1_CODE_STILL_WORKS
+        ),
+        ServiceTestCase(
+            "V2 property doesn't break V1 tests",
+            ServiceOperationType.V2_DOESNT_BREAK_V1,
+        ),
+        ServiceTestCase(
+            "Auto execute false behaves like V1",
+            ServiceOperationType.AUTO_EXECUTE_FALSE,
+        ),
+        ServiceTestCase(
+            "No auto execute attribute defaults to false",
+            ServiceOperationType.NO_AUTO_EXECUTE_ATTRIBUTE,
+        ),
+    ]
+
+    V2_EDGE_CASES_SCENARIOS: ClassVar[list[ServiceTestCase]] = [
+        ServiceTestCase(
+            "V2 auto with bool return", ServiceOperationType.V2_AUTO_WITH_BOOL_RETURN
+        ),
+        ServiceTestCase(
+            "V2 property with dict return",
+            ServiceOperationType.V2_PROPERTY_WITH_DICT_RETURN,
+        ),
+        ServiceTestCase(
+            "V2 auto with list return", ServiceOperationType.V2_AUTO_WITH_LIST_RETURN
+        ),
+        ServiceTestCase(
+            "V2 property with pydantic model return",
+            ServiceOperationType.V2_PROPERTY_WITH_MODEL_RETURN,
+        ),
+    ]
+
+    V2_BEST_PRACTICES_SCENARIOS: ClassVar[list[ServiceTestCase]] = [
+        ServiceTestCase(
+            "V2 property recommended for happy path",
+            ServiceOperationType.V2_PROPERTY_RECOMMENDED,
+        ),
+        ServiceTestCase(
+            "V1 execute recommended for error handling",
+            ServiceOperationType.V1_EXECUTE_RECOMMENDED,
+        ),
+        ServiceTestCase(
+            "V2 auto recommended for simple services",
+            ServiceOperationType.V2_AUTO_RECOMMENDED,
+        ),
+    ]
+
+
+# =========================================================================
+# Unified Test Class with Parametrization
+# =========================================================================
+
+
+class TestFlextServiceV2Patterns:
+    """Unified test class for V2 Service patterns with parametrization."""
+
+    @pytest.mark.parametrize(
+        "test_case",
+        ServiceScenarios.V1_VS_V2_PROPERTY_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_v1_vs_v2_property_patterns(self, test_case: ServiceTestCase) -> None:
+        """Test V1 vs V2 Property pattern comparisons."""
+        if test_case.operation == ServiceOperationType.V1_EXPLICIT_EXECUTE_UNWRAP:
+            result = SimpleV1Service(message="test").execute()
+            assert result.is_success
+            assert result.unwrap() == "V1: test"
+
+        elif test_case.operation == ServiceOperationType.V2_PROPERTY_DIRECT_RESULT:
+            value = SimpleV2PropertyService(message="test").result
+            assert value == "V2 Property: test"
+
+        elif test_case.operation == ServiceOperationType.V1_AND_V2_SAME_RESULT:
+            v1_service: SimpleV1Service = SimpleV1Service(message="test")
+            v1_result = v1_service.execute().unwrap()
+
+            v2_service_prop: SimpleV2PropertyService = SimpleV2PropertyService(
+                message="test"
+            )
+            v2_result = v2_service_prop.result
+
+            assert v1_result == "V1: test"
+            assert v2_result == "V2 Property: test"
+
+        elif test_case.operation == ServiceOperationType.V2_MAINTAINS_EXECUTE_ACCESS:
+            service_v2: SimpleV2PropertyService = SimpleV2PropertyService(
+                message="test"
+            )
+            result_via_property = service_v2.result
+            result_via_execute = service_v2.execute().unwrap()
+            assert result_via_property == result_via_execute
+
+        elif test_case.operation == ServiceOperationType.V1_VALIDATION_FAILURE:
+            val_service_v1: ValidationService = ValidationService(value=-1)
+            result = val_service_v1.execute()
+            assert result.is_failure
+
+        elif test_case.operation == ServiceOperationType.V2_VALIDATION_FAILURE:
+            val_service_v2: ValidationService = ValidationService(value=-1)
+            try:
+                _ = val_service_v2.result
+                pytest.fail("Should raise exception")
+            except FlextExceptions.BaseError:
+                pass
+
+        elif test_case.operation == ServiceOperationType.V1_VALIDATION_SUCCESS:
+            val_service_v1s: ValidationService = ValidationService(value=10)
+            result = val_service_v1s.execute()
+            assert result.is_success
+            assert result.unwrap()["value"] == 10
+
+        elif test_case.operation == ServiceOperationType.V2_VALIDATION_SUCCESS:
+            val_service_v2s: ValidationService = ValidationService(value=10)
+            value = val_service_v2s.result
+            assert isinstance(value, dict)
             assert value["value"] == 10
-        else:
-            pytest.fail("Should succeed")
 
-    def test_v2_auto_recommended_for_simple_services(self) -> None:
-        """V2 Auto: Recommended for simple, always-succeed services."""
-        # Simple service that always succeeds - auto_execute returns unwrapped value
-        value = SimpleV2AutoService(message="simple")
+        elif test_case.operation == ServiceOperationType.V1_COMPLEX_WITH_ITEMS:
+            service = ComplexV1Service(items=["a", "b", "c"], multiplier=2)
+            result = service.execute()
+            assert result.is_success
+            value = result.unwrap()
+            assert value["count"] == 6
 
-        # V2 Auto: Zero ceremony (95% less code than V1)
-        # With auto_execute=True, we get the unwrapped value directly
-        assert value == "V2 Auto: simple"
+        elif test_case.operation == ServiceOperationType.V2_COMPLEX_WITH_ITEMS:
+            service = ComplexV2Service(items=["a", "b", "c"], multiplier=2)
+            value = service.result
+            assert isinstance(value, dict)
+            assert value["count"] == 6
 
-        # If you need FlextResult, use .with_result()
-        result = SimpleV2AutoService.with_result(message="simple")
-        assert result.is_success
-        assert result.unwrap() == "V2 Auto: simple"
+        elif test_case.operation == ServiceOperationType.V1_COMPLEX_EMPTY_ITEMS:
+            service = ComplexV1Service(items=[], multiplier=2)
+            result = service.execute()
+            assert result.is_failure
 
-    def test_v1_railway_pattern_for_complex_pipelines(self) -> None:
-        """V1 Railway: Recommended for complex pipelines."""
+        elif test_case.operation == ServiceOperationType.V2_COMPLEX_EMPTY_ITEMS:
+            service = ComplexV2Service(items=[], multiplier=2)
+            try:
+                _ = service.result
+                pytest.fail("Should raise exception")
+            except FlextExceptions.BaseError:
+                pass
 
-        class Step1Service(FlextService[int]):
-            """First step in pipeline."""
+        elif test_case.operation == ServiceOperationType.V2_RESULT_MULTIPLE_CALLS:
+            service = SimpleV2PropertyService(message="test")
+            result1 = service.result
+            result2 = service.result
+            assert result1 == result2
+            assert result1 == "V2 Property: test"
 
-            value: int
+    @pytest.mark.parametrize(
+        "test_case",
+        ServiceScenarios.V2_AUTO_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_v2_auto_pattern(self, test_case: ServiceTestCase) -> None:
+        """Test V2 Auto pattern with auto_execute."""
+        if test_case.operation == ServiceOperationType.V2_AUTO_RETURNS_VALUE:
+            value = SimpleV2AutoService(message="test")
+            assert value == "V2 Auto: test"
 
-            def execute(self, **_kwargs: object) -> FlextResult[int]:
-                if self.value < 0:
-                    return FlextResult.fail("Must be positive")
-                return FlextResult.ok(self.value * 2)
+        elif test_case.operation == ServiceOperationType.V2_AUTO_VS_V1_SERVICE:
+            v1_service = SimpleV1Service(message="test")
+            assert isinstance(v1_service, FlextService)
 
-        class Step2Service(FlextService[int]):
-            """Second step in pipeline."""
+            v2_auto_value = SimpleV2AutoService(message="test")
+            assert isinstance(v2_auto_value, str)
 
-            value: int
+        elif test_case.operation == ServiceOperationType.V2_AUTO_VALIDATION_SUCCESS:
+            result_value = AutoValidationService(value=10)
+            assert isinstance(result_value, dict)
+            assert result_value["value"] == 10
 
-            def execute(self, **_kwargs: object) -> FlextResult[int]:
-                if self.value > 100:
-                    return FlextResult.fail("Too large")
-                return FlextResult.ok(self.value + 10)
+        elif test_case.operation == ServiceOperationType.V2_AUTO_VALIDATION_FAILURE:
+            try:
+                _ = AutoValidationService(value=-1)
+                pytest.fail("Should raise exception")
+            except FlextExceptions.BaseError:
+                pass
 
-        # V1 Railway: Complex pipeline with error handling
-        pipeline = (
-            Step1Service(value=5)
-            .execute()
-            .flat_map(lambda v: Step2Service(value=v).execute())
-        )
+        elif test_case.operation == ServiceOperationType.V2_AUTO_COMPLEX_SUCCESS:
+            result_value = AutoValidationService(value=10)
+            assert isinstance(result_value, dict)
+            assert result_value["value"] == 10
 
-        assert pipeline.is_success
-        assert pipeline.unwrap() == 20  # (5 * 2) + 10
+        elif test_case.operation == ServiceOperationType.V2_AUTO_COMPLEX_FAILURE:
+            try:
+                _ = AutoValidationService(value=-5)
+                pytest.fail("Should raise exception")
+            except FlextExceptions.BaseError:
+                pass
+
+        elif test_case.operation == ServiceOperationType.V2_AUTO_ZERO_CEREMONY:
+            value = SimpleV2AutoService(message="simple")
+            assert value == "V2 Auto: simple"
+
+    @pytest.mark.parametrize(
+        "test_case",
+        ServiceScenarios.V1_V2_INTEROPERABILITY_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_v1_v2_interoperability(self, test_case: ServiceTestCase) -> None:
+        """Test interoperability between V1 and V2 patterns."""
+        if test_case.operation == ServiceOperationType.V1_V2_BOTH_IN_CODEBASE:
+            v1 = SimpleV1Service(message="v1")
+            v2 = SimpleV2PropertyService(message="v2")
+            v2_auto = SimpleV2AutoService(message="auto")
+
+            assert isinstance(v1, FlextService)
+            assert isinstance(v2, FlextService)
+            assert isinstance(v2_auto, str)
+
+        elif test_case.operation == ServiceOperationType.V2_USE_V1_RAILWAY:
+            service_rail: SimpleV2PropertyService = SimpleV2PropertyService(
+                message="test"
+            )
+            chained_result = SimpleV1Service(message="chained").execute()
+            result: FlextResult[str] = service_rail.execute().flat_map(
+                lambda _: chained_result
+            )
+            assert result.is_success
+
+        elif test_case.operation == ServiceOperationType.MIX_V1_AND_V2_PIPELINE:
+            step2_result = SimpleV2PropertyService(message="step2").execute()
+            result_mix: FlextResult[str] = (
+                SimpleV1Service(message="step1")
+                .execute()
+                .flat_map(lambda _: step2_result)
+            )
+            assert result_mix.is_success
+
+        elif test_case.operation == ServiceOperationType.ERROR_CONSISTENCY:
+            v1_error = ValidationService(value=-1).execute()
+            assert v1_error.is_failure
+
+            try:
+                _ = ValidationService(value=-1).result
+                pytest.fail("Should raise")
+            except FlextExceptions.BaseError:
+                pass
+
+    @pytest.mark.parametrize(
+        "test_case",
+        ServiceScenarios.BACKWARD_COMPATIBILITY_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_backward_compatibility(self, test_case: ServiceTestCase) -> None:
+        """Test backward compatibility with V1 patterns."""
+        if test_case.operation == ServiceOperationType.V1_CODE_STILL_WORKS:
+            service = SimpleV1Service(message="test")
+            result = service.execute()
+            assert result.is_success
+            assert result.unwrap() == "V1: test"
+
+        elif test_case.operation == ServiceOperationType.V2_DOESNT_BREAK_V1:
+            v1 = SimpleV1Service(message="works")
+            v2 = SimpleV2PropertyService(message="also_works")
+            assert v1.execute().unwrap() == "V1: works"
+            assert v2.result == "V2 Property: also_works"
+
+        elif test_case.operation == ServiceOperationType.AUTO_EXECUTE_FALSE:
+
+            class NoAutoService(FlextService[str]):
+                """Service without auto_execute."""
+
+                auto_execute = False
+
+                def execute(self, **_kwargs: object) -> FlextResult[str]:
+                    return FlextResult.ok("no_auto")
+
+            service = NoAutoService()
+            assert isinstance(service, FlextService)
+            result = service.execute()
+            assert result.unwrap() == "no_auto"
+
+        elif test_case.operation == ServiceOperationType.NO_AUTO_EXECUTE_ATTRIBUTE:
+
+            class DefaultService(FlextService[str]):
+                """Service without explicit auto_execute."""
+
+                def execute(self, **_kwargs: object) -> FlextResult[str]:
+                    return FlextResult.ok("default")
+
+            service = DefaultService()
+            assert isinstance(service, FlextService)
+
+    @pytest.mark.parametrize(
+        "test_case",
+        ServiceScenarios.V2_EDGE_CASES_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_v2_edge_cases(self, test_case: ServiceTestCase) -> None:
+        """Test edge cases with various return types."""
+        if test_case.operation == ServiceOperationType.V2_AUTO_WITH_BOOL_RETURN:
+            value = BoolService()
+            assert value is True
+
+        elif test_case.operation == ServiceOperationType.V2_PROPERTY_WITH_DICT_RETURN:
+            service = DictService()
+            value = service.result
+            assert isinstance(value, dict)
+            assert value["a"] == 1
+            assert value["b"] == 2
+
+        elif test_case.operation == ServiceOperationType.V2_AUTO_WITH_LIST_RETURN:
+            value = ListService()
+            assert isinstance(value, list)
+            assert len(value) == 3
+            assert value[0] == "x"
+
+        elif test_case.operation == ServiceOperationType.V2_PROPERTY_WITH_MODEL_RETURN:
+            service = UserService(user_id="123", user_name="Test User")
+            user = service.result
+            assert isinstance(user, FlextModels.Entity)
+            assert user.unique_id == "123"
+            assert user.name == "Test User"
+
+    @pytest.mark.parametrize(
+        "test_case",
+        ServiceScenarios.V2_BEST_PRACTICES_SCENARIOS,
+        ids=lambda tc: tc.name,
+    )
+    def test_v2_best_practices(self, test_case: ServiceTestCase) -> None:
+        """Test V2 best practice recommendations."""
+        if test_case.operation == ServiceOperationType.V2_PROPERTY_RECOMMENDED:
+            service = SimpleV2PropertyService(message="test")
+            value = service.result
+            assert value == "V2 Property: test"
+
+        elif test_case.operation == ServiceOperationType.V1_EXECUTE_RECOMMENDED:
+            service = ValidationService(value=10)
+            result = service.execute()
+            if result.is_success:
+                value = result.unwrap()
+                assert value["value"] == 10
+
+        elif test_case.operation == ServiceOperationType.V2_AUTO_RECOMMENDED:
+            value = SimpleV2AutoService(message="simple")
+            assert value == "V2 Auto: simple"
+
+
+__all__ = ["TestFlextServiceV2Patterns"]

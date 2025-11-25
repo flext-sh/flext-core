@@ -1,7 +1,5 @@
 """Final push to 75% coverage - simple, focused tests.
 
-Target: Cover 89 uncovered lines to reach exactly 75% coverage.
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -48,19 +46,20 @@ class TestCoveragePush75Percent:
     def test_result_flat_map_fail(self) -> None:
         """Test result flat_map with failure."""
         r = FlextResult[int].ok(5)
-        r2 = r.flat_map(lambda x: FlextResult[int].fail("error"))
+        r2 = r.flat_map(lambda _: FlextResult[int].fail("error"))
         assert r2.is_failure
 
-    def test_result_or_else_with_success(self) -> None:
-        """Test or_else_get on success."""
+    def test_result_lash_on_success(self) -> None:
+        """Test lash passes through success."""
         r = FlextResult[int].ok(42)
-        r2 = r.or_else_get(lambda: FlextResult[int].ok(99))
+        r2 = r.lash(lambda _: FlextResult[int].ok(99))
         assert r2.value == 42
 
-    def test_result_or_else_with_failure(self) -> None:
-        """Test or_else_get on failure."""
+    def test_result_lash_on_failure(self) -> None:
+        """Test lash recovers failure."""
         r = FlextResult[int].fail("error")
-        r2 = r.or_else_get(lambda: FlextResult[int].ok(99))
+        r2 = r.lash(lambda _: FlextResult[int].ok(99))
+        assert r2.is_success
         assert r2.value == 99
 
     # FlextContainer coverage
@@ -81,11 +80,19 @@ class TestCoveragePush75Percent:
         r = c.get("nonexistent")
         assert r.is_failure
 
-    def test_container_clear(self) -> None:
-        """Test container clear."""
+    def test_container_clear_all(self) -> None:
+        """Test container clear_all."""
         c = FlextContainer()
         c.with_service("test", "value")
-        c.clear()
+        c.clear_all()
+        r = c.get("test")
+        assert r.is_failure
+
+    def test_container_unregister(self) -> None:
+        """Test container unregister."""
+        c = FlextContainer()
+        c.with_service("test", "value")
+        c.unregister("test")
         r = c.get("test")
         assert r.is_failure
 
@@ -112,12 +119,12 @@ class TestCoveragePush75Percent:
         assert "OPERATION_ERROR" in str(exc)
 
     # FlextUtilities coverage
-    def test_utilities_uuid(self) -> None:
-        """Test UUID generation."""
-        uuid1 = FlextUtilities.Generators.generate_uuid()
-        uuid2 = FlextUtilities.Generators.generate_uuid()
-        assert uuid1 != uuid2
-        assert len(uuid1) == 36
+    def test_utilities_id(self) -> None:
+        """Test ID generation."""
+        id1 = FlextUtilities.Generators.generate_id()
+        id2 = FlextUtilities.Generators.generate_id()
+        assert id1 != id2
+        assert len(id1) == 36
 
     def test_utilities_timestamp(self) -> None:
         """Test timestamp generation."""
@@ -187,41 +194,6 @@ class TestCoveragePush75Percent:
         r2 = FlextResult[int].ok(10)
         assert r2.unwrap_or(42) == 10
 
-    def test_result_expect(self) -> None:
-        """Test expect method."""
-        r = FlextResult[str].ok("value")
-        assert r.expect("message") == "value"
-
-    def test_result_tap(self) -> None:
-        """Test tap for side effects."""
-        called: list[int] = []
-        r = FlextResult[int].ok(42)
-        r.tap(called.append)
-        assert 42 in called
-
-    def test_result_lash(self) -> None:
-        """Test lash for error handling."""
-        r = FlextResult[int].fail("error")
-        r2 = r.lash(lambda e: FlextResult[int].ok(99))
-        assert r2.is_success
-        assert r2.value == 99
-
-    def test_result_from_callable(self) -> None:
-        """Test from_callable factory."""
-
-        def factory() -> str:
-            return "result"
-
-        r = FlextResult.from_callable(factory)
-        assert r.is_success
-        assert r.value == "result"
-
-    def test_result_iter(self) -> None:
-        """Test iteration over result."""
-        r = FlextResult[str].ok("value")
-        items = list(r)
-        assert "value" in items
-
     def test_result_bool(self) -> None:
         """Test result as boolean."""
         success = FlextResult[int].ok(42)
@@ -236,30 +208,35 @@ class TestCoveragePush75Percent:
         result = r | 42
         assert result == 42
 
-    def test_result_xor_operator(self) -> None:
-        """Test ^ operator for recovery."""
-        r = FlextResult[int].fail("error")
-        r2 = r ^ (lambda e: 99)
-        assert r2.is_success
-        assert r2.value == 99
-
-    def test_result_getitem(self) -> None:
-        """Test indexing result."""
-        r = FlextResult[int].ok(42)
-        assert r[0] == 42
-        assert r[1] == ""  # Success case returns empty string for error index
-
-    def test_result_eq(self) -> None:
-        """Test result equality."""
-        r1 = FlextResult[int].ok(42)
-        r2 = FlextResult[int].ok(42)
-        assert r1 == r2
-
     def test_result_repr(self) -> None:
         """Test result repr."""
         r = FlextResult[int].ok(42)
         repr_str = repr(r)
         assert "FlextResult" in repr_str
+
+    def test_result_filter(self) -> None:
+        """Test filter method."""
+        r = FlextResult[int].ok(42)
+        r2 = r.filter(lambda x: x > 0)
+        assert r2.is_success
+        assert r2.value == 42
+
+        r3 = r.filter(lambda x: x > 100)
+        assert r3.is_failure
+
+    def test_result_safe_factory(self) -> None:
+        """Test safe factory method."""
+
+        @FlextResult.safe
+        def divide(a: int, b: int) -> int:
+            return a // b
+
+        r = divide(10, 2)
+        assert r.is_success
+        assert r.value == 5
+
+        r2 = divide(10, 0)
+        assert r2.is_failure
 
 
 __all__ = ["TestCoveragePush75Percent"]

@@ -1,20 +1,21 @@
-"""Domain models for domain-driven design patterns.
+"""FlextModels - Domain-Driven Design (DDD) patterns with Pydantic validation.
 
 This module provides FlextModels, a comprehensive collection of base classes
 and utilities for implementing domain-driven design (DDD) patterns in the
-FLEXT ecosystem.
+FLEXT ecosystem. All models use Pydantic for validation and serialization.
 
-All models use Pydantic for validation and serialization, providing type-safe
-domain modeling with automatic validation and error handling.
+Architecture: Layer 2 (Domain)
+Provides base classes for DDD patterns: Entity, Value, AggregateRoot, Command,
+Query, DomainEvent with Pydantic v2 validation and CQRS integration.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-from typing import Annotated, TypeAlias
+from collections.abc import Callable
+from typing import Annotated, ClassVar, TypeAlias
 
 from pydantic import Discriminator
 
@@ -37,207 +38,23 @@ class FlextModels:
     """Domain-Driven Design (DDD) patterns with Pydantic validation.
 
     Architecture: Layer 2 (Domain)
-    ==============================
     Provides comprehensive base classes for implementing Domain-Driven Design
     patterns with Pydantic v2 validation, event sourcing support, and CQRS
     integration across the FLEXT ecosystem.
 
-    Structural Typing and Protocol Compliance:
-    ===========================================
-    FlextModels implements multiple FlextProtocols interfaces via structural
-    typing (duck typing) through nested classes:
-
-    - Entity (satisfies FlextProtocols.Entity):
-      * id: Unique identifier for entity tracking
-      * created_at: Creation timestamp
-      * updated_at: Modification timestamp
-      * is_valid(): Validate entity state
-      * to_dict(): Serialize to dictionary
-
-    - Value (satisfies FlextProtocols.Value):
-      * Immutable value objects (frozen Pydantic models)
-      * Compared by value, not identity
-      * No mutable state after creation
-      * Hashable for use in collections
-
-    - AggregateRoot (satisfies FlextProtocols.AggregateRoot):
-      * Consistency boundary enforcement
-      * Transactional invariant protection
-      * Event sourcing support
-      * Domain event publishing
-
-    - Command (satisfies FlextProtocols.Command):
-      * Represents domain operations
-      * Command validation
-      * Handler mapping
-      * Idempotency support
-
-    - Query (satisfies FlextProtocols.Query):
-      * Read-side operations
-      * Non-mutating operations
-      * Result projection
-      * Caching support
-
-    - DomainEvent (satisfies FlextProtocols.DomainEvent):
-      * Event sourcing backbone
-      * Immutable past events
-      * Event replay support
-      * Audit trail
-
     Core DDD Concepts:
-    ==================
-    1. **Entity**: Domain object with identity and lifecycle
-       - Changes tracked through updated_at
-       - Compared by id, not value equality
-       - Supports domain logic and invariants
-       - Integrated with FlextResult for operations
-
-    2. **Value Object**: Immutable domain values
-       - No identity (compared by value)
-       - Immutable after creation (frozen Pydantic)
-       - Composable building blocks
-       - Hashable for collections
-
-    3. **Aggregate Root**: Consistency boundary
-       - Contains entities and value objects
-       - Enforces transactional invariants
-       - Single root for external references
-       - Event sourcing support
-
-    4. **Command**: Domain operation request
-       - Represents "I want X to happen"
-       - Immutable command object
-       - Handler determines execution
-       - Async command bus support
-
-    5. **Query**: Domain read operation
-       - Represents "I want to know X"
-       - Non-mutating read projection
-       - Result optimization via caching
-       - Query bus support
-
-    6. **Domain Event**: Significant domain occurrence
-       - Represents "X happened"
-       - Event sourcing backbone
-       - Event replay for reconstruction
-       - Audit trail support
-
-    Pydantic v2 Integration:
-    =======================
-    - Full Pydantic BaseModel support
-    - Automatic validation via field_validator
-    - Model validation via model_validator
-    - Computed fields for derived properties
-    - Custom serializers for domain logic
-    - Config inheritance via ConfigDict
-    - Immutable models (frozen=True)
-
-    Features and Components:
-    ========================
-    - Entity: Base domain entity with lifecycle
+    - Entity: Domain object with identity and lifecycle
     - Value: Immutable value objects
-    - AggregateRoot: Consistency boundary root
-    - Command: CQRS command pattern
-    - Query: CQRS query pattern
-    - DomainEvent: Event sourcing events
-    - Validation: Business rule validators
-    - Timestamps: Automatic created_at/updated_at
-    - Serialization: JSON and dict conversion
-    - Type validation: Complete type safety
+    - AggregateRoot: Consistency boundary
+    - Command: Domain operation request
+    - Query: Domain read operation
+    - DomainEvent: Significant domain occurrence
 
-    Advanced Patterns:
-    ==================
-    - Event Sourcing: Replay events to reconstruct state
-    - CQRS: Separate read/write models with Command/Query
-    - Transactional Invariants: Enforce business rules
-    - Aggregate Roots: Consistency boundary enforcement
-    - Value Objects: Rich domain types
-    - Domain Events: Capture domain state changes
-
-    Error Handling:
-    ===============
-    - FlextResult[object] wrapping for operations
-    - Validation errors caught in is_valid()
-    - Business rule violations in invariants
-    - Structured error information
-
-    Usage Patterns:
-    ===============
-        >>> from flext_core.models import FlextModels
-        >>> from flext_core.result import FlextResult
-        >>>
-        >>> # Value Object - immutable by design
-        >>> from pydantic import EmailStr
-        >>> class Email(FlextModels.Value):
-        ...     address: EmailStr  # Pydantic v2 EmailStr validates format natively
-        >>>
-        >>> # Entity - with identity and lifecycle
-        >>> class User(FlextModels.Entity):
-        ...     name: str
-        ...     email: Email
-        ...     is_active: bool = False
-        ...
-        ...     def activate(self) -> FlextResult[bool]:
-        ...         if self.is_active:
-        ...             return FlextResult.fail("Already active")
-        ...         self.is_active = True
-        ...         return FlextResult[bool].ok(True)
-        >>>
-        >>> # Aggregate Root - consistency boundary
-        >>> class Account(FlextModels.AggregateRoot):
-        ...     owner: User
-        ...     balance: float = 0.0
-        ...
-        ...     def deposit(self, amount: float) -> FlextResult[bool]:
-        ...         if amount <= 0:
-        ...             return FlextResult.fail("Amount must be positive")
-        ...         self.balance += amount
-        ...         return FlextResult[bool].ok(True)
-        >>>
-        >>> # Command - CQRS pattern
-        >>> class CreateUserCommand(FlextModels.Cqrs.Command):
-        ...     name: str
-        ...     email: str
-        >>>
-        >>> # Query - CQRS pattern
-        >>> class GetUserQuery(FlextModels.Cqrs.Query):
-        ...     user_id: str
-        >>>
-        >>> # Domain Event - Event sourcing
-        >>> class UserCreatedEvent(FlextModels.DomainEvent):
-        ...     user_id: str
-        ...     name: str
-        ...     email: str
-
-    Integration with FLEXT Ecosystem:
-    ==================================
-    - Service Layer: Services receive FlextResult[object] from models
-    - Handler Layer: CQRS handlers process Commands/Queries
-    - Bus Layer: Command/Event buses route through aggregates
-    - Logger Integration: Automatic audit logging
-    - Protocol Compliance: Structural typing satisfaction
-    - Validation Layer: Business rule enforcement
-
-    Thread Safety:
-    ==============
-    - Pydantic models are immutable when frozen=True
-    - Value objects are always immutable
-    - Entities are mutable but thread-safe for creation
-    - Aggregate roots manage transactional boundaries
-    - Event sourcing provides replay safety
-
-    Performance Characteristics:
-    ===========================
-    - O(1) entity/value creation via Pydantic
-    - O(1) identity comparison for entities
-    - O(1) timestamp tracking (automatic)
-    - O(n) event replay for aggregate reconstruction
-    - O(1) command/query dispatch via handler registry
+    Pydantic v2 Integration: Full BaseModel support with validation, computed fields,
+    custom serializers, and immutable models (frozen=True).
     """
 
-    # =========================================================================
-    # NESTED CLASSES - Entity & DDD Patterns
-    # =========================================================================
+    # Entity & DDD Patterns
     class Entity(FlextModelsEntity.Core):
         """Domain entity with identity and lifecycle."""
 
@@ -268,7 +85,7 @@ class FlextModels:
     class VersionableMixin(FlextModelsEntity.VersionableMixin):
         """Mixin for versioning."""
 
-    # Generic classes - use simple assignment (not wrapper) to avoid type parameter conflicts
+    # Collections
     Categories = FlextModelsCollections.Categories
 
     class Statistics(FlextModelsCollections.Statistics):
@@ -286,9 +103,7 @@ class FlextModels:
     class Options(FlextModelsCollections.Options):
         """Options model for configuration options."""
 
-    # =========================================================================
-    # OFFICIAL NAMESPACE - CQRS Patterns
-    # =========================================================================
+    # CQRS Patterns
     class Cqrs:
         """CQRS namespace with nested classes."""
 
@@ -307,38 +122,25 @@ class FlextModels:
         class Handler(FlextModelsCqrs.Handler):
             """Handler configuration model."""
 
-        # Internal utility functions exposed for testing
         @staticmethod
         def _get_command_timeout_default() -> int:
-            """Get command timeout from global config, fallback to Constants.
-
-            Internal utility function exposed for testing purposes.
-            Reads FlextConfig.get_global_instance().dispatcher_timeout_seconds first,
-            then falls back to FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT if zero or negative.
-            """
+            """Get command timeout from config or constants."""
             config = FlextConfig.get_global_instance()
-            timeout = config.dispatcher_timeout_seconds
-            if timeout > 0:
-                return int(timeout)
-            return FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT
+            return (
+                int(config.dispatcher_timeout_seconds)
+                or FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT
+            )
 
         @staticmethod
         def _get_max_command_retries_default() -> int:
-            """Get max retry attempts from global config, fallback to Constants.
-
-            Internal utility function exposed for testing purposes.
-            Reads FlextConfig.get_global_instance().max_retry_attempts first,
-            then falls back to FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES if zero or negative.
-            """
+            """Get max retries from config or constants."""
             config = FlextConfig.get_global_instance()
-            retries = config.max_retry_attempts
-            if retries > 0:
-                return retries
-            return FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES
+            return (
+                config.max_retry_attempts
+                or FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES
+            )
 
-    # =========================================================================
-    # NESTED CLASSES - Base Utility Models
-    # =========================================================================
+    # Base Utility Models
     class Metadata(MetadataBase):
         """Metadata model for structured information."""
 
@@ -362,9 +164,7 @@ class FlextModels:
     class StateInitializationRequest(FlextModelsBase.StateInitializationRequest):
         """State initialization request model."""
 
-    # =========================================================================
-    # NESTED CLASSES - Configuration Models
-    # =========================================================================
+    # Configuration Models
     class ProcessingRequest(FlextModelsConfig.ProcessingRequest):
         """Processing request configuration model."""
 
@@ -386,9 +186,7 @@ class FlextModels:
     class RateLimiterState(FlextModelsConfig.RateLimiterState):
         """Rate limiter state model."""
 
-    # =========================================================================
-    # NESTED CLASSES - Context Management Models
-    # =========================================================================
+    # Context Management Models
     class StructlogProxyToken(FlextModelsContext.StructlogProxyToken):
         """Structlog proxy token model."""
 
@@ -415,28 +213,34 @@ class FlextModels:
     class ContextDomainData(FlextModelsContext.ContextDomainData):
         """Context domain data model."""
 
-    # Context facade class - provides unified access to context-related models
     class Context:
-        """Context management facade class.
+        """Context management facade with DRY mapping."""
 
-        This class provides unified access to all context-related models and utilities
-        from the underlying _models.context module, following the facade pattern.
-        """
+        # DRY mapping for context classes
+        _CONTEXT_CLASSES: ClassVar[dict[str, type]] = {
+            "StructlogProxyToken": FlextModelsContext.StructlogProxyToken,
+            "StructlogProxyContextVar": FlextModelsContext.StructlogProxyContextVar,
+            "Token": FlextModelsContext.Token,
+            "ContextData": FlextModelsContext.ContextData,
+            "ContextExport": FlextModelsContext.ContextExport,
+            "ContextScopeData": FlextModelsContext.ContextScopeData,
+            "ContextStatistics": FlextModelsContext.ContextStatistics,
+            "ContextMetadata": FlextModelsContext.ContextMetadata,
+            "ContextDomainData": FlextModelsContext.ContextDomainData,
+        }
 
-        # Expose all context-related classes and utilities
-        StructlogProxyToken = FlextModelsContext.StructlogProxyToken
-        StructlogProxyContextVar = FlextModelsContext.StructlogProxyContextVar
-        Token = FlextModelsContext.Token
-        ContextData = FlextModelsContext.ContextData
-        ContextExport = FlextModelsContext.ContextExport
-        ContextScopeData = FlextModelsContext.ContextScopeData
-        ContextStatistics = FlextModelsContext.ContextStatistics
-        ContextMetadata = FlextModelsContext.ContextMetadata
-        ContextDomainData = FlextModelsContext.ContextDomainData
+        # DRY assignment
+        StructlogProxyToken = _CONTEXT_CLASSES["StructlogProxyToken"]
+        StructlogProxyContextVar = _CONTEXT_CLASSES["StructlogProxyContextVar"]
+        Token = _CONTEXT_CLASSES["Token"]
+        ContextData = _CONTEXT_CLASSES["ContextData"]
+        ContextExport = _CONTEXT_CLASSES["ContextExport"]
+        ContextScopeData = _CONTEXT_CLASSES["ContextScopeData"]
+        ContextStatistics = _CONTEXT_CLASSES["ContextStatistics"]
+        ContextMetadata = _CONTEXT_CLASSES["ContextMetadata"]
+        ContextDomainData = _CONTEXT_CLASSES["ContextDomainData"]
 
-    # =========================================================================
-    # NESTED CLASSES - Handler Management Models
-    # =========================================================================
+    # Handler Management Models
     class HandlerRegistration(FlextModelsHandler.Registration):
         """Handler registration model."""
 
@@ -446,11 +250,9 @@ class FlextModels:
     class HandlerExecutionContext(FlextModelsHandler.ExecutionContext):
         """Handler execution context model."""
 
-    # =========================================================================
-    # NESTED CLASSES - Domain Service Models
-    # =========================================================================
+    # Domain Service Models
     class DomainServiceExecutionRequest(
-        FlextModelsService.DomainServiceExecutionRequest,
+        FlextModelsService.DomainServiceExecutionRequest
     ):
         """Domain service execution request model."""
 
@@ -466,10 +268,7 @@ class FlextModels:
     class OperationExecutionRequest(FlextModelsService.OperationExecutionRequest):
         """Operation execution request model."""
 
-    # =========================================================================
-    # CONTAINER MODELS - Dependency Injection registry models
-    # =========================================================================
-
+    # Container Models
     class ServiceRegistration(FlextModelsContainer.ServiceRegistration):
         """Service registration model - DI container service entry."""
 
@@ -479,79 +278,53 @@ class FlextModels:
     class ContainerConfig(FlextModelsContainer.ContainerConfig):
         """Container configuration model - DI container settings."""
 
-    # =========================================================================
-    # PYDANTIC V2 DISCRIMINATED UNION - Type-safe message routing
-    # =========================================================================
-    # Discriminated union for CQRS message types eliminating object types
-    # Uses Pydantic v2's most innovative feature: discriminated unions with
-    # Discriminator field for automatic routing based on message_type
-    # Note: Uses raw assignment to support runtime introspection across ecosystem
-    _MessageUnion = Annotated[
-        Cqrs.Command | Cqrs.Query | DomainEvent,
-        Discriminator("message_type"),
+    # Pydantic v2 discriminated union using modern typing
+    MessageUnion: TypeAlias = Annotated[
+        Cqrs.Command | Cqrs.Query | DomainEvent, Discriminator("message_type")
     ]
-    MessageUnion = _MessageUnion
-    """Pydantic v2 discriminated union for type-safe CQRS message routing.
 
-    This union type enables automatic message type detection and routing
-    based on the 'message_type' field discriminator, replacing all object
-    types in message handling across the entire FLEXT ecosystem.
-
-    Usage:
-        def process_message(message: MessageUnion) -> FlextResult[object]:
-            match message.message_type:
-                case "command":
-                    return handle_command(message)
-                case "query":
-                    return handle_query(message)
-                case "event":
-                    return handle_event(message)
-
-    Pydantic v2 automatically validates and routes messages to the correct
-    type based on the discriminator field value.
-    """
-
-    # =========================================================================
-    # OFFICIAL NAMESPACE - Validation Patterns
-    # =========================================================================
+    # Validation Patterns - DRY mapping for method delegation
     class Validation:
-        """Validation namespace providing official access paths."""
+        """Validation namespace with DRY method delegation."""
 
-        validate_business_rules = FlextModelsValidation.validate_business_rules
-        validate_cross_fields = FlextModelsValidation.validate_cross_fields
-        validate_performance = FlextModelsValidation.validate_performance
-        validate_batch = FlextModelsValidation.validate_batch
-        validate_domain_invariants = FlextModelsValidation.validate_domain_invariants
-        validate_aggregate_consistency_with_rules = (
-            FlextModelsValidation.validate_aggregate_consistency_with_rules
-        )
-        validate_event_sourcing = FlextModelsValidation.validate_event_sourcing
-        validate_cqrs_patterns = FlextModelsValidation.validate_cqrs_patterns
-        validate_domain_event = FlextModelsValidation.validate_domain_event
-        validate_aggregate_consistency = (
-            FlextModelsValidation.validate_aggregate_consistency
-        )
-        validate_entity_relationships = (
-            FlextModelsValidation.validate_entity_relationships
-        )
+        # Mapping for DRY validation method assignment
+        _VALIDATION_METHODS: ClassVar[dict[str, object]] = {
+            "validate_business_rules": FlextModelsValidation.validate_business_rules,
+            "validate_cross_fields": FlextModelsValidation.validate_cross_fields,
+            "validate_performance": FlextModelsValidation.validate_performance,
+            "validate_batch": FlextModelsValidation.validate_batch,
+            "validate_domain_invariants": FlextModelsValidation.validate_domain_invariants,
+            "validate_aggregate_consistency_with_rules": FlextModelsValidation.validate_aggregate_consistency_with_rules,
+            "validate_event_sourcing": FlextModelsValidation.validate_event_sourcing,
+            "validate_cqrs_patterns": FlextModelsValidation.validate_cqrs_patterns,
+            "validate_domain_event": FlextModelsValidation.validate_domain_event,
+            "validate_aggregate_consistency": FlextModelsValidation.validate_aggregate_consistency,
+            "validate_entity_relationships": FlextModelsValidation.validate_entity_relationships,
+        }
+
+        # DRY assignment using mapping
+        validate_business_rules = _VALIDATION_METHODS["validate_business_rules"]
+        validate_cross_fields = _VALIDATION_METHODS["validate_cross_fields"]
+        validate_performance = _VALIDATION_METHODS["validate_performance"]
+        validate_batch = _VALIDATION_METHODS["validate_batch"]
+        validate_domain_invariants = _VALIDATION_METHODS["validate_domain_invariants"]
+        validate_aggregate_consistency_with_rules = _VALIDATION_METHODS[
+            "validate_aggregate_consistency_with_rules"
+        ]
+        validate_event_sourcing = _VALIDATION_METHODS["validate_event_sourcing"]
+        validate_cqrs_patterns = _VALIDATION_METHODS["validate_cqrs_patterns"]
+        validate_domain_event = _VALIDATION_METHODS["validate_domain_event"]
+        validate_aggregate_consistency = _VALIDATION_METHODS[
+            "validate_aggregate_consistency"
+        ]
+        validate_entity_relationships = _VALIDATION_METHODS[
+            "validate_entity_relationships"
+        ]
 
 
-# Resolve forward references for models with complex types (required by Pydantic v2)
-# This is done at module level after FlextModels class definition to ensure proper initialization
-# ruff: noqa: E402 - imports must be after class definition for model_rebuild() to work
-from collections.abc import Callable
-
-# Type alias for operation callables - used in OperationExecutionRequest
+# Resolve forward references with DRY namespace building
 OperationCallable: TypeAlias = Callable[..., object]
-
-# Build types namespace dict for model_rebuild() - Pydantic v2 requires types to be in namespace
-_types_namespace = {
-    "Callable": Callable,
-    "OperationCallable": OperationCallable,
-}
+_types_namespace = {"Callable": Callable, "OperationCallable": OperationCallable}
 FlextModels.ConditionalExecutionRequest.model_rebuild(_types_namespace=_types_namespace)
 
-
-__all__ = [
-    "FlextModels",
-]
+__all__ = ["FlextModels", "FlextModelsCollections"]

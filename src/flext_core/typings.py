@@ -1,434 +1,367 @@
-"""Layer 0: Thin Layer Type System Using Pydantic Native Types.
+"""FlextTypes - Type System Module.
 
-**ARCHITECTURE LAYER 0** - Pure Constants (Zero Dependencies)
+This module provides the type system foundation for the FLEXT ecosystem,
+defining TypeVars, domain-specific types, and complex type aliases using Pydantic.
 
-This module provides a THIN LAYER over Pydantic's native type system:
-- TypeVars at module level (Python 3.13+ native support)
-- FlextTypes class with ONLY domain-specific complex types
-- Direct use of Pydantic constrained types (PositiveInt, EmailStr, etc.)
-- NO unnecessary type aliases - use Python native types directly
-
-**THIN LAYER PRINCIPLE**:
-- Remove: type Dict = dict[str, object] → Use dict[str, object] directly
-- Remove: type StringList = list[str] → Use list[str] directly
-- Add: Only domain-specific types not covered by Pydantic
-- Use: Pydantic native types (PositiveInt, EmailStr, HttpUrl, etc.)
+Scope: Type variables, type aliases, validation types, JSON types, handler types,
+processor types, factory types, predicate types, decorator types, utility types,
+CQRS type aliases, and retry configuration models.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
 import socket
 from collections.abc import Callable
-from types import UnionType
-from typing import (
-    Annotated,
-    ParamSpec,
-    Protocol,
-    TypeAlias,
-    TypeVar,
-)
+from typing import Annotated, Any, ParamSpec, TypeAlias, TypeVar
 
-# Pydantic utilities - ONLY validators and Field (NOT re-exporting types)
-# Users should import specialized types directly from pydantic:
-#   from pydantic import EmailStr, PositiveInt, HttpUrl, etc.
-from pydantic import (
-    AfterValidator,
-    BaseModel,
-    ConfigDict,
-    Field,
-)
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
-# =============================================================================
-# CORE TYPEVARS - Python 3.13+ Native (PEP 696 defaults)
-# =============================================================================
+# ============================================================================
+# Module-Level TypeVars - Core and Domain-Specific
+# ============================================================================
+# All TypeVars are defined at module level for clarity and accessibility
 
-# Core invariant TypeVars
+# Core TypeVars - covariant, contravariant, and generic type variables
 T = TypeVar("T")
-E = TypeVar("E")
-F = TypeVar("F")
-K = TypeVar("K")
-P = ParamSpec("P")
-R = TypeVar("R")
-U = TypeVar("U")
-V = TypeVar("V")
-W = TypeVar("W")
-
-# Covariant TypeVars (_co suffix)
 T_co = TypeVar("T_co", covariant=True)
+T_contra = TypeVar("T_contra", contravariant=True)
+P = ParamSpec("P")  # ParamSpec for decorator patterns
+R = TypeVar("R")  # Return type for decorators
+
+# Handler-specific TypeVars for protocol compliance
+TInput_Handler_Protocol_contra = TypeVar(
+    "TInput_Handler_Protocol_contra", contravariant=True
+)
+TResult_Handler_Protocol = TypeVar("TResult_Handler_Protocol")
+CallableInputT = TypeVar("CallableInputT")  # Input type for callable handlers
+CallableOutputT = TypeVar("CallableOutputT")  # Output type for callable handlers
+
+# Domain TypeVars for CQRS and domain-driven design patterns
+TEntity_co = TypeVar("TEntity_co", covariant=True)
+TResult_co = TypeVar("TResult_co", covariant=True)
+TCommand_contra = TypeVar("TCommand_contra", contravariant=True)
+TQuery_contra = TypeVar("TQuery_contra", contravariant=True)
+MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
+TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True)
+TInput_Handler_contra = TypeVar("TInput_Handler_contra", contravariant=True)
+
+# Generic TypeVars for utility and collection operations
+E = TypeVar("E")  # Element type
+F = TypeVar("F")  # Function type
+K = TypeVar("K")  # Key type
+ResultT = TypeVar("ResultT")  # Result type
+U = TypeVar("U")  # Utility type
+V = TypeVar("V")  # Value type
+W = TypeVar("W")  # Wrapper type
+
+# Additional domain TypeVars for advanced patterns
 T1_co = TypeVar("T1_co", covariant=True)
 T2_co = TypeVar("T2_co", covariant=True)
 T3_co = TypeVar("T3_co", covariant=True)
 TAggregate_co = TypeVar("TAggregate_co", covariant=True)
-TCacheValue_co = TypeVar("TCacheValue_co", covariant=True)
-TDomainEvent_co = TypeVar("TDomainEvent_co", covariant=True)
-TEntity_co = TypeVar("TEntity_co", covariant=True)
-TResult_co = TypeVar("TResult_co", covariant=True)
-TState_co = TypeVar("TState_co", covariant=True)
-TValue_co = TypeVar("TValue_co", covariant=True)
-TValueObject_co = TypeVar("TValueObject_co", covariant=True)
-T_Service_co = TypeVar("T_Service_co", covariant=True)
-TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True)
-
-# TypeVars specifically for Protocol definitions (Pyright requirement)
-# Input must be contravariant, Result must be invariant for Protocol
-TInput_Handler_Protocol_contra = TypeVar(
-    "TInput_Handler_Protocol_contra",
-    contravariant=True,
-)
-TResult_Handler_Protocol = TypeVar("TResult_Handler_Protocol")
-
-# Contravariant TypeVars (_contra suffix)
-T_contra = TypeVar("T_contra", contravariant=True)
 TCacheKey_contra = TypeVar("TCacheKey_contra", contravariant=True)
-TCommand_contra = TypeVar("TCommand_contra", contravariant=True)
+TCacheValue_co = TypeVar("TCacheValue_co", covariant=True)
 TConfigKey_contra = TypeVar("TConfigKey_contra", contravariant=True)
+TDomainEvent_co = TypeVar("TDomainEvent_co", covariant=True)
 TEvent_contra = TypeVar("TEvent_contra", contravariant=True)
 TInput_contra = TypeVar("TInput_contra", contravariant=True)
 TItem_contra = TypeVar("TItem_contra", contravariant=True)
-TQuery_contra = TypeVar("TQuery_contra", contravariant=True)
-TResult_contra = TypeVar("TResult_contra", contravariant=True)
+TState_co = TypeVar("TState_co", covariant=True)
 TUtil_contra = TypeVar("TUtil_contra", contravariant=True)
-T_Validator_contra = TypeVar("T_Validator_contra", contravariant=True)
-T_Repository_contra = TypeVar("T_Repository_contra", contravariant=True)
-TInput_Handler_contra = TypeVar("TInput_Handler_contra", contravariant=True)
-MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
+TValue_co = TypeVar("TValue_co", covariant=True)
+TValueObject_co = TypeVar("TValueObject_co", covariant=True)
+TResult_contra = TypeVar("TResult_contra", contravariant=True)
 
-# Invariant advanced TypeVars
-T_ResultProtocol = TypeVar("T_ResultProtocol")
-CallableInputT = TypeVar("CallableInputT")
-CallableOutputT = TypeVar("CallableOutputT")
+# Factory TypeVar for dependency injection patterns
+FactoryT = TypeVar("FactoryT", bound=Callable[[], object])
 
-# Domain-specific TypeVars
-Command = TypeVar("Command")
-Event = TypeVar("Event")
-Message = TypeVar("Message")
-Query = TypeVar("Query")
-ResultT = TypeVar("ResultT")
-
-# Module-level TypeVars (for compatibility)
-MessageT = TypeVar("MessageT")
-FactoryT = TypeVar("FactoryT")
-TValidateAll = TypeVar("TValidateAll")
-
-# TypeVars for generic processor operations
-ProcessedDataT = TypeVar("ProcessedDataT")
-ProcessorResultT = TypeVar("ProcessorResultT")
-RegistryHandlerT = TypeVar("RegistryHandlerT")
-
-
-# =============================================================================
-# FLEXT TYPES - THIN LAYER (Domain-Specific Complex Types Only)
-# =============================================================================
+# Config-specific TypeVars
+T_Config = TypeVar("T_Config")  # Bound removed - forward ref causes circular import
+T_Namespace = TypeVar("T_Namespace")
 
 
 class FlextTypes:
-    """THIN LAYER over Pydantic types - domain-specific complex types ONLY.
+    """Type system foundation for FLEXT ecosystem - Complex Type Aliases Only.
 
-    This class contains ONLY domain-specific types that are NOT covered by
-    Pydantic's native type system. For standard validation, use Pydantic
-    types directly:
+    NOTE: All TypeVars are now defined at module level (see above).
+    This class contains only complex type aliases, domain validation types,
+    and nested helper classes.
 
-    **USE PYDANTIC DIRECTLY** (not FlextTypes):
-    - PositiveInt, NegativeInt, NonNegativeInt
-    - PositiveFloat, NegativeFloat, NonPositiveFloat
-    - EmailStr, HttpUrl, AnyUrl
-    - SecretStr, UUID4
-    - FilePath, DirectoryPath
-    - constr(min_length=1), conint(gt=0, lt=100)
-    - conlist(str, min_length=1, max_length=10)
-
-    **USE PYTHON NATIVE** (not FlextTypes):
-    - dict[str, object] instead of FlextTypes.Dict
-    - list[str] instead of FlextTypes.StringList
-    - dict[str, str] instead of FlextTypes.StringDict
-
-    **ONLY IN FLEXT TYPES**:
-    - FlextResult-specific types
-    - Railway pattern types
-    - CQRS/Event Sourcing types
-    - Complex handler/callable signatures
+    Architecture: Nested type definitions for:
+    - Domain validation types (PortNumber, TimeoutSeconds, etc.)
+    - JSON types (JsonPrimitive, JsonValue, etc.)
+    - Handler types (HandlerCallable, BusHandlerType, etc.)
+    - Utility types (SerializableType, MetadataDict, etc.)
+    - CQRS pattern types (Command, Event, Message, Query)
+    - Configuration models (RetryConfig)
     """
 
-    # =========================================================================
-    # DOMAIN VALIDATION TYPES - Annotated constraints (Phase 3 - Best Practices)
-    # =========================================================================
-
-    # Network types with Pydantic v2 constraints
-    type PortNumber = Annotated[
-        int,
-        Field(ge=1, le=65535, description="Network port (1-65535)"),
-    ]
-
-    type TimeoutSeconds = Annotated[
-        float,
-        Field(gt=0, le=300, description="Timeout in seconds (max 5 min)"),
-    ]
-
-    type RetryCount = Annotated[
-        int,
-        Field(ge=0, le=10, description="Retry attempts (0-10)"),
-    ]
-
-    # String types with constraints
-    type NonEmptyStr = Annotated[
-        str,
-        Field(min_length=1, description="Non-empty string"),
-    ]
-
-    # LogLevel moved to FlextConstants.Settings.LogLevel (StrEnum)
-    # Use: from flext_core import FlextConstants; FlextConstants.Settings.LogLevel.INFO
-
-    # Complex validators (with AfterValidator for DNS checks)
-    @staticmethod
-    def _validate_hostname(value: str) -> str:
-        """Validate hostname can be resolved via DNS."""
-        try:
-            socket.gethostbyname(value)
-            return value
-        except socket.gaierror as e:
-            msg = f"Cannot resolve hostname '{value}': {e}"
-            raise ValueError(msg) from e
-
-    type HostName = Annotated[
-        str,
-        Field(min_length=1, max_length=253, description="Valid hostname"),
-        AfterValidator(_validate_hostname),
-    ]
-
-    # =========================================================================
-    # JSON TYPES - Python native with JSON compatibility
-    # =========================================================================
-
-    type JsonPrimitive = str | int | float | bool | None
-    # JSON recursive type using Union (Pyrefly compatible)
-    # Python 3.13 native syntax would be: JsonPrimitive | dict[str, JsonValue] | list[JsonValue]
-    # But Pyrefly doesn't support PEP 695 recursive types yet, so we use Any for recursion
-    JsonValue = JsonPrimitive | dict[str, object] | list[object]
-    type JsonList = list[JsonValue]
-    type JsonDict = dict[str, JsonValue]
-
-    # =========================================================================
-    # FLEXT RESULT TYPES - Railway pattern (domain-specific)
-    # =========================================================================
-    # Note: We define a minimal structural protocol to avoid circular imports
-    # with FlextResult (Tier 1) while providing useful typing guarantees.
-
-    class ResultLike(Protocol[T_co]):
-        """Structural protocol satisfied by FlextResult[T]."""
-
-        @property
-        def is_success(self) -> bool:
-            """Check if result represents success."""
-            ...
-
-        @property
-        def is_failure(self) -> bool:
-            """Check if result represents failure."""
-            ...
-
-        @property
-        def value(self) -> T_co:
-            """Get the success value."""
-            ...
-
-        @property
-        def error(self) -> str | None:
-            """Get the error message if failure."""
-            ...
-
-        def unwrap(self) -> T_co:
-            """Unwrap the result value or raise exception."""
-            ...
-
-    # TypeAlias is correct inside class scope - PEP 695 type statement doesn't work here
-    FlextResultType: TypeAlias = "ResultLike[T]"
-    # Validator type aliases - these are callable types, not generic type constructors
-    # Use them directly without subscripting (they're already parameterized by T)
-    ValidationRule: TypeAlias = Callable[[T], "ResultLike[T]"]
-    CrossFieldValidator: TypeAlias = Callable[[T], "ResultLike[T]"]
-    ValidatorFunction: TypeAlias = Callable[[T], "ResultLike[T]"]
-
-    # =========================================================================
-    # HANDLER TYPES - CQRS/Bus patterns (domain-specific)
-    # =========================================================================
-
-    HandlerCallable: TypeAlias = (
-        "Callable[[CallableInputT], ResultLike[CallableOutputT]]"
-    )
-    # Generic handler types with explicit TypeVar declarations
-    CallableHandlerType: TypeAlias = (
-        "Callable[[TInput_Handler_contra], ResultLike[TResult_Handler_co]]"
-    )
-    BusHandlerType: TypeAlias = (
-        "Callable[[MessageT_contra], ResultLike[TResult_Handler_co]]"
-    )
-    MiddlewareType: TypeAlias = (
-        "Callable[[MessageT_contra], ResultLike[TResult_Handler_co]]"
-    )
-    MiddlewareConfig: TypeAlias = JsonDict
-
-    # =========================================================================
-    # PROCESSOR TYPES - Data processing (domain-specific)
-    # =========================================================================
-
-    type ProcessorInputType = object | dict[str, object] | str | int | float | bool
-    type ProcessorOutputType = (
-        object | dict[str, object] | str | int | float | bool | None
-    )
-
-    # =========================================================================
-    # FACTORY TYPES - Dependency injection (domain-specific)
-    # =========================================================================
-
-    type FactoryCallableType = Callable[[], object]
-
-    # =========================================================================
-    # PREDICATE TYPES - Business rules (domain-specific)
-    # =========================================================================
-
-    type PredicateType = Callable[[object], bool]
-
-    # =========================================================================
-    # DECORATOR TYPES - Cross-cutting concerns (domain-specific)
-    # =========================================================================
-
-    type DecoratorReturnType = Callable[
-        [Callable[[object], object]],
-        Callable[[object], object],
-    ]
-
-    # =========================================================================
-    # UTILITY TYPES - FlextUtilities domain-specific types
-    # =========================================================================
-
-    # Complex types that provide semantic value
-    type SerializableType = (
+    # Direct type aliases for compatibility (used by pyrefly)
+    ObjectList: TypeAlias = list[object]
+    GenericDetailsType: TypeAlias = object | dict[str, object]
+    SortableObjectType: TypeAlias = object
+    CachedObjectType: TypeAlias = object
+    ParameterValueType: TypeAlias = object
+    MessageTypeSpecifier: TypeAlias = object
+    TypeOriginSpecifier: TypeAlias = object
+    SerializableType: TypeAlias = (
         object | dict[str, object] | list[object] | str | int | float | bool | None
     )
-    type TypeOriginSpecifier = object
-    type GenericTypeArgument = type | str | object
-    type TypeHintSpecifier = type | str | UnionType | None
-    type ContextualObjectType = object
-    type ContainerServiceType = object
-
-    # Cache and validation utility types
-    type ObjectList = list[object]
-    type CachedObjectType = (
-        object  # Object with cache attributes (e.g., _cache, __cache__)
+    AcceptableMessageType: TypeAlias = (
+        object | dict[str, object] | str | int | float | bool
     )
-    type ParameterValueType = object  # Configuration parameter value
-    type SortableObjectType = object  # Object that can be sorted/ordered
-    type GenericDetailsType = object | dict[str, object]  # Generic details/metadata
-    type MetadataDict = dict[str, object]  # Generic metadata dictionary
+    HookRegistry: TypeAlias = dict[str, list[Callable[[object], object]]]
+    ScopeRegistry: TypeAlias = dict[str, object]
+    HookCallableType: TypeAlias = Callable[[object], object]
+    # Forward reference for RetryConfig (defined later in Config class)
+    RetryConfig = Any  # Placeholder - will be replaced with actual type
 
-    # Container/DI types
-    type ServiceRegistry = dict[str, object]  # Service instance registry
-    type FactoryRegistry = dict[str, Callable[[], object]]  # Factory function registry
-    type ContainerConfig = dict[str, object]  # Container configuration
+    class Validation:
+        """Domain validation types using Pydantic Field annotations."""
 
-    # CQRS Payload types
-    type EventPayload = dict[str, object]  # Event data payload
-    type CommandPayload = dict[str, object]  # Command data payload
-    type QueryPayload = dict[str, object]  # Query data payload
+        # Network validation types
+        type PortNumber = Annotated[
+            int, Field(ge=1, le=65535, description="Network port")
+        ]
+        type TimeoutSeconds = Annotated[
+            float, Field(gt=0, le=300, description="Timeout in seconds")
+        ]
+        type RetryCount = Annotated[
+            int, Field(ge=0, le=10, description="Retry attempts")
+        ]
 
-    # =========================================================================
-    # BUS/HANDLER TYPES - Extended CQRS/Event Sourcing types
-    # =========================================================================
+        # String validation types
+        type NonEmptyStr = Annotated[
+            str, Field(min_length=1, description="Non-empty string")
+        ]
 
-    type BusMessageType = object | dict[str, object]
-    # Accepts plain types, generic aliases (e.g., dict[str, object]), and string references
-    type MessageTypeSpecifier = object
-    type MessageTypeOrHandlerType = type | str | Callable[[object], object]
-    type HandlerOrCallableType = Callable[[object], object] | object
-    type HandlerConfigurationType = dict[str, object] | None
-    type HandlerCallableType = Callable[[object], object]
-    type AcceptableMessageType = object | dict[str, object]
+        @staticmethod
+        def _validate_hostname(value: str) -> str:
+            """Validate hostname by attempting DNS resolution."""
+            try:
+                socket.gethostbyname(value)
+                return value
+            except socket.gaierror as e:
+                msg = f"Cannot resolve hostname '{value}': {e}"
+                raise ValueError(msg) from e
 
-    # =========================================================================
-    # LOGGING TYPES - FlextLogger domain-specific types
-    # =========================================================================
+        type HostName = Annotated[
+            str,
+            Field(min_length=1, max_length=253, description="Valid hostname"),
+            AfterValidator(_validate_hostname),
+        ]
 
-    type LoggingContextType = dict[str, object]
-    type LoggingContextValueType = object | str | int | float | bool | None
-    type LoggerContextType = dict[str, object]
-    type LoggingProcessorType = Callable[[object, str, dict[str, object]], None]
-    type LoggingArgType = object
-    type LoggingKwargsType = dict[str, object]
-    type BoundLoggerType = object  # structlog.BoundLogger type
+    class Json:
+        """JSON serialization types for API and data exchange."""
 
-    # =========================================================================
-    # HOOK/REGISTRY TYPES - Plugin/Extension system types
-    # =========================================================================
+        # Primitive JSON types
+        type JsonPrimitive = str | int | float | bool | None
 
-    type HookCallableType = Callable[[object], object]
-    type HookRegistry = dict[str, list[Callable[[object], object]]]
-    type ScopeRegistry = dict[str, object]
+        # Complex JSON types with recursive definitions
+        JsonValue: TypeAlias = "JsonPrimitive | dict[str, object] | list[object]"
+        type JsonList = list[JsonValue]
+        type JsonDict = dict[str, JsonValue]
 
-    # =========================================================================
-    # VALIDATOR TYPES - Validation framework types
-    # =========================================================================
-    # Note: Validator types defined above using forward references to FlextResult
+    # JSON types for convenience (after Json class definition)
+    JsonValue: TypeAlias = Json.JsonValue
+    JsonDict: TypeAlias = Json.JsonDict
 
-    class RetryConfig(BaseModel):
-        """Configuration for retry operations.
+    class Handler:
+        """Handler and middleware type definitions for CQRS patterns."""
 
-        Uses Pydantic v2 for validation and immutability.
-        Converted from @dataclass to leverage Pydantic validation.
+        # Protocol-based handler types using simplified type aliases
+        ValidationRule: TypeAlias = Callable[[object], object]
+        CrossFieldValidator: TypeAlias = Callable[[object], object]
+        ValidatorFunction: TypeAlias = Callable[[object], object]
 
-        Attributes:
-            max_attempts: Maximum number of retry attempts
-            initial_delay_seconds: Initial delay between retries
-            max_delay_seconds: Maximum delay between retries
-            exponential_backoff: Whether to use exponential backoff
-            retry_on_exceptions: List of exception types to retry on
-            backoff_multiplier: Multiplier for backoff calculation (default: 2.0)
+        # Callable handler types with contravariant input, covariant output
+        HandlerCallable: TypeAlias = Callable[[object], object]
+        CallableHandlerType: TypeAlias = Callable[[object], object]
+        BusHandlerType: TypeAlias = Callable[[object], object]
+        MiddlewareType: TypeAlias = Callable[[object], object]
 
-        """
+        # Middleware configuration types
+        MiddlewareConfig: TypeAlias = dict[str, object]
 
-        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+    class Processor:
+        """Processor types for data transformation pipelines."""
 
-        max_attempts: int = Field(
-            ge=1,
-            description="Maximum retry attempts (minimum 1)",
-        )
-        initial_delay_seconds: float = Field(
-            gt=0.0,
-            description="Initial delay in seconds",
-        )
-        max_delay_seconds: float = Field(gt=0.0, description="Maximum delay in seconds")
-        exponential_backoff: bool = Field(description="Enable exponential backoff")
-        retry_on_exceptions: list[type[Exception]] = Field(
-            description="Exception types to retry on",
-        )
-        backoff_multiplier: float = Field(
-            default=2.0,
-            gt=0.0,
-            description="Backoff multiplier (minimum 0)",
+        # Input/output types for processing operations
+        type ProcessorInputType = object | dict[str, object] | str | int | float | bool
+        type ProcessorOutputType = (
+            object | dict[str, object] | str | int | float | bool | None
         )
 
-    # =========================================================================
+    class Factory:
+        """Factory pattern types for dependency injection."""
+
+        # Factory callable and type variable definitions
+        type FactoryCallableType = Callable[[], object]
+        FactoryT = TypeVar("FactoryT", bound=Callable[[], object])
+
+    class Predicate:
+        """Predicate types for filtering and validation operations."""
+
+        type PredicateType = Callable[[object], bool]
+
+    class Decorator:
+        """Decorator pattern types for function enhancement."""
+
+        type DecoratorReturnType = Callable[
+            [Callable[[object], object]], Callable[[object], object]
+        ]
+
+    class Utility:
+        """General utility types for common operations."""
+
+        # Serialization and type hinting types
+        type SerializableType = (
+            object | dict[str, object] | list[object] | str | int | float | bool | None
+        )
+        type TypeOriginSpecifier = object
+        type TypeHintSpecifier = object
+        type GenericTypeArgument = str | object
+        type ContextualObjectType = object
+        type ContainerServiceType = object
+
+        # Collection and caching types
+        type ObjectList = list[object]
+        CachedObjectType: TypeAlias = object
+        type ParameterValueType = object
+        type SortableObjectType = object
+        type GenericDetailsType = object | dict[str, object]
+
+        # Additional utility types for compatibility
+
+        # Registry and configuration types
+        type MetadataDict = dict[str, object]
+        type ServiceRegistry = dict[str, object]
+        type FactoryRegistry = dict[str, Callable[[], object]]
+        type ContainerConfig = dict[str, object]
+
+        # Event and payload types
+        type EventPayload = dict[str, object]
+        type CommandPayload = dict[str, object]
+        type QueryPayload = dict[str, object]
+
+    class Bus:
+        """Message bus and handler type definitions."""
+
+        # Message and handler types for bus operations
+        type BusMessageType = object | dict[str, object]
+        type MessageTypeOrHandlerType = type | str | Callable[[object], object]
+        type HandlerOrCallableType = Callable[[object], object] | object
+        type HandlerConfigurationType = dict[str, object] | None
+        type HandlerCallableType = Callable[[object], object]
+        type AcceptableMessageType = object | dict[str, object]
+
+    class Logging:
+        """Logging and context type definitions."""
+
+        # Context and processor types for logging operations
+        type LoggingContextType = dict[str, object]
+        type LoggingContextValueType = object | str | int | float | bool | None
+        type LoggerContextType = dict[str, object]
+        type LoggingProcessorType = Callable[[object, str, dict[str, object]], None]
+        type LoggingArgType = object
+        type LoggingKwargsType = dict[str, object]
+        type BoundLoggerType = object
+
+    class Hook:
+        """Hook and registry types for extensibility."""
+
+        # Hook callable and registry types
+        type HookCallableType = Callable[[object], object]
+        type HookRegistry = dict[str, list[Callable[[object], object]]]
+        type ScopeRegistry = dict[str, object]
+
+    class Config:
+        """Configuration models for operational settings."""
+
+        class RetryConfig(BaseModel):
+            """Configuration for retry operations with exponential backoff.
+
+            Defines retry behavior for operations that may fail and need
+            automatic retry with configurable backoff strategies.
+            """
+
+            model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+            # Retry attempt limits
+            max_attempts: int = Field(ge=1, description="Maximum retry attempts")
+
+            # Timing configuration
+            initial_delay_seconds: float = Field(
+                gt=0.0, description="Initial delay in seconds"
+            )
+            max_delay_seconds: float = Field(
+                gt=0.0, description="Maximum delay in seconds"
+            )
+
+            # Backoff strategy configuration
+            exponential_backoff: bool = Field(description="Enable exponential backoff")
+            backoff_multiplier: float = Field(
+                default=2.0, gt=0.0, description="Backoff multiplier"
+            )
+
+            # Exception handling configuration
+            retry_on_exceptions: list[type[Exception]] = Field(
+                description="Exception types to retry on"
+            )
+
+    class Cqrs:
+        """CQRS pattern type aliases with simplified forward references."""
+
+        # Simplified forward references to avoid circular imports
+        Command: TypeAlias = object  # Simplified for type resolution
+        Event: TypeAlias = object
+        Message: TypeAlias = object
+        Query: TypeAlias = object
 
 
-# =============================================================================
-# MODULE-LEVEL EXPORTS - Domain validation types for convenient importing
-# =============================================================================
-# These are re-exported from FlextTypes for direct import:
-# from flext_core import PortNumber, TimeoutSeconds, RetryCount, NonEmptyStr, LogLevel, HostName
+# NOTE: All TypeVars are defined at module level (lines 28-81)
+# No re-export needed - they're already available for direct import
 
-PortNumber = FlextTypes.PortNumber
-TimeoutSeconds = FlextTypes.TimeoutSeconds
-RetryCount = FlextTypes.RetryCount
-NonEmptyStr = FlextTypes.NonEmptyStr
-# LogLevel moved to FlextConstants.Settings.LogLevel (StrEnum)
-HostName = FlextTypes.HostName
+# Type aliases from nested classes (these ARE inside FlextTypes)
+Command: TypeAlias = FlextTypes.Cqrs.Command
+Event: TypeAlias = FlextTypes.Cqrs.Event
+Message: TypeAlias = FlextTypes.Cqrs.Message
+Query: TypeAlias = FlextTypes.Cqrs.Query
 
+# Validation types
+RetryCount: TypeAlias = FlextTypes.Validation.RetryCount
+TimeoutSeconds: TypeAlias = FlextTypes.Validation.TimeoutSeconds
 
-__all__: list[str] = [
-    # TypeVars (domain-specific for FlextCore architecture)
+# Utility types
+ObjectList: TypeAlias = FlextTypes.Utility.ObjectList
+GenericDetailsType: TypeAlias = FlextTypes.Utility.GenericDetailsType
+SortableObjectType: TypeAlias = FlextTypes.Utility.SortableObjectType
+CachedObjectType: TypeAlias = FlextTypes.Utility.CachedObjectType
+ParameterValueType: TypeAlias = FlextTypes.Utility.ParameterValueType
+AcceptableMessageType: TypeAlias = FlextTypes.AcceptableMessageType
+
+# Bus types
+MessageTypeSpecifier: TypeAlias = FlextTypes.MessageTypeSpecifier
+TypeOriginSpecifier: TypeAlias = FlextTypes.Utility.TypeOriginSpecifier
+
+# JSON types
+JsonValue: TypeAlias = FlextTypes.Json.JsonValue
+JsonDict: TypeAlias = FlextTypes.Json.JsonDict
+
+# Hook types
+HookRegistry: TypeAlias = FlextTypes.Hook.HookRegistry
+ScopeRegistry: TypeAlias = FlextTypes.Hook.ScopeRegistry
+HookCallableType: TypeAlias = FlextTypes.Hook.HookCallableType
+
+# Config types
+RetryConfig: TypeAlias = FlextTypes.Config.RetryConfig
+
+__all__ = [
+    "AcceptableMessageType",
+    "CachedObjectType",
     "CallableInputT",
     "CallableOutputT",
     "Command",
@@ -437,22 +370,25 @@ __all__: list[str] = [
     "F",
     "FactoryT",
     "FlextTypes",
-    # Domain validation types (Phase 3 - Annotated constraints)
-    "HostName",
+    "GenericDetailsType",
+    "HookCallableType",
+    "HookRegistry",
+    "JsonDict",
+    "JsonValue",
     "K",
     "Message",
-    "MessageT",
     "MessageT_contra",
-    "NonEmptyStr",
+    "MessageTypeSpecifier",
+    "ObjectList",
     "P",
-    "PortNumber",
-    "ProcessedDataT",
-    "ProcessorResultT",
+    "ParameterValueType",
     "Query",
     "R",
-    "RegistryHandlerT",
     "ResultT",
+    "RetryConfig",
     "RetryCount",
+    "ScopeRegistry",
+    "SortableObjectType",
     "T",
     "T1_co",
     "T2_co",
@@ -465,25 +401,23 @@ __all__: list[str] = [
     "TDomainEvent_co",
     "TEntity_co",
     "TEvent_contra",
+    "TInput_Handler_Protocol_contra",
     "TInput_Handler_contra",
     "TInput_contra",
     "TItem_contra",
     "TQuery_contra",
+    "TResult_Handler_Protocol",
     "TResult_Handler_co",
     "TResult_co",
     "TResult_contra",
     "TState_co",
     "TUtil_contra",
-    "TValidateAll",
     "TValueObject_co",
     "TValue_co",
-    "T_Repository_contra",
-    "T_ResultProtocol",
-    "T_Service_co",
-    "T_Validator_contra",
     "T_co",
     "T_contra",
     "TimeoutSeconds",
+    "TypeOriginSpecifier",
     "U",
     "V",
     "W",

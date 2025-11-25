@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -51,7 +52,7 @@ class Metadata(BaseModel):
         default_factory=list,
         description="Tags for categorization and filtering",
     )
-    attributes: dict[str, object] = Field(
+    attributes: dict[str, Any] = Field(
         default_factory=dict,
         description="Additional metadata attributes (JSON-serializable)",
     )

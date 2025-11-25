@@ -16,7 +16,7 @@ from pydantic import Field, field_validator
 
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes
+from flext_core.protocols import FlextProtocols
 from flext_core.utilities import FlextUtilities
 
 
@@ -129,7 +129,7 @@ class FlextModelsService:
             min_length=1,
             description="Operation name",
         )
-        operation_callable: Callable[..., FlextTypes.ResultLike[object]]
+        operation_callable: Callable[..., FlextProtocols.ResultLike[object]]
         arguments: dict[str, object] = Field(default_factory=dict)
         keyword_arguments: dict[str, object] = Field(default_factory=dict)
         timeout_seconds: float = Field(
@@ -144,7 +144,7 @@ class FlextModelsService:
         @classmethod
         def validate_operation_callable(
             cls, v: object
-        ) -> Callable[..., FlextTypes.ResultLike[object]]:
+        ) -> Callable[..., FlextProtocols.ResultLike[object]]:
             """Validate operation is callable (using FlextUtilities.Validation)."""
             result = FlextUtilities.Validation.validate_callable(
                 v,
@@ -158,7 +158,7 @@ class FlextModelsService:
                     else "Operation must be callable (validation failed)",
                 )
             # Type-safe return: v is confirmed callable by validation
-            return cast("Callable[..., FlextTypes.ResultLike[object]]", v)
+            return cast("Callable[..., FlextProtocols.ResultLike[object]]", v)
 
 
 __all__ = ["FlextModelsService"]

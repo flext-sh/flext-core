@@ -56,7 +56,7 @@ class TestValueObjects:
 
         # Attempting to modify should raise error
         with pytest.raises(ValidationError):
-            point.x = 3.0  # type: ignore [attr-defined]
+            point.x = 3.0
 
     def test_value_object_equality_by_value(self) -> None:
         """Test value objects compared by value."""

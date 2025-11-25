@@ -12,12 +12,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import ClassVar, override
+from typing import ClassVar, Literal, override
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
 from flext_core._models.validation import FlextModelsValidation
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -53,7 +54,7 @@ class FlextModelsEntity:
             },
         )
 
-        unique_id: str = Field(default_factory=FlextUtilities.Generators.generate_uuid)
+        unique_id: str = Field(default_factory=FlextUtilities.Generators.generate_id)
 
     class TimestampableMixin(BaseModel):
         """Mixin for models with creation and update timestamps."""
@@ -177,7 +178,7 @@ class FlextModelsEntity:
     class DomainEvent(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
         """Base class for domain events."""
 
-        message_type: FlextConstants.Cqrs.EventMessageTypeLiteral = Field(
+        message_type: Literal["event"] = Field(
             default="event",
             frozen=True,
             description="Message type discriminator for union routing - always 'event'",
@@ -611,8 +612,6 @@ class FlextModelsEntity:
 
         def check_invariants(self) -> None:
             """Check all business invariants."""
-            from flext_core.exceptions import FlextExceptions
-
             for invariant in self._invariants:
                 if not invariant():
                     msg = f"Invariant violated: {invariant.__name__}"

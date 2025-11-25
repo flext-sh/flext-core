@@ -22,6 +22,7 @@ from typing import (
     TypeAlias,
 )
 
+from flext_core._models.context import FlextModelsContext
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
 from flext_core.loggings import FlextLogger
@@ -30,13 +31,15 @@ from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
-_StructlogProxyStr: TypeAlias = FlextModelsContext.StructlogProxyContextVar[str]
-_StructlogProxyDatetime: TypeAlias = FlextModelsContext.StructlogProxyContextVar[
-    datetime
-]
-_StructlogProxyDict: TypeAlias = FlextModelsContext.StructlogProxyContextVar[
-    dict[str, object]
-]
+
+# Type aliases for MyPy compatibility
+_StructlogProxyStr: TypeAlias = "FlextModelsContext.StructlogProxyContextVar[str]"
+_StructlogProxyDatetime: TypeAlias = (
+    "FlextModelsContext.StructlogProxyContextVar[datetime]"
+)
+_StructlogProxyDict: TypeAlias = (
+    "FlextModelsContext.StructlogProxyContextVar[dict[str, object]]"
+)
 
 
 def _create_str_proxy(key: str, default: str | None = None) -> _StructlogProxyStr:
@@ -1159,7 +1162,7 @@ class FlextContext:
 
         """
         if cls._container is None:
-            cls._container = FlextContainer.get_global()
+            cls._container = FlextContainer()
         return cls._container
 
     # ==========================================================================

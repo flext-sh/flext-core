@@ -9,13 +9,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from typing import cast
+from collections.abc import Callable
+from typing import TypeVar, cast
+
+from pydantic import BaseModel
 
 from flext_core.exceptions import FlextExceptions
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
+
+# TypeVar for generic Pydantic model type
+T_Model = TypeVar("T_Model", bound=BaseModel)
 
 _logger = logging.getLogger(__name__)
 
@@ -100,8 +106,11 @@ class FlextUtilitiesConfiguration:
             # Check if parameter exists in model fields for Pydantic objects
             if isinstance(obj, FlextProtocols.HasModelFields):
                 # Access model_fields from class, not instance (Pydantic 2.11+ compatibility)
-                model_fields = type(obj).model_fields
-                if parameter not in model_fields:
+                model_fields_dict = getattr(type(obj), "model_fields", {})
+                if (
+                    not isinstance(model_fields_dict, dict)
+                    or parameter not in model_fields_dict
+                ):
                     return False
 
             # Use setattr which triggers Pydantic validation if applicable
@@ -254,5 +263,122 @@ class FlextUtilitiesConfiguration:
             "validate_default": True,
         }
 
+    @staticmethod
+    def build_options_from_kwargs(
+        model_class: type[T_Model],
+        explicit_options: T_Model | None,
+        default_factory: Callable[[], T_Model],
+        **kwargs: object,
+    ) -> FlextResult[T_Model]:
+        """Build Pydantic options model from explicit options or kwargs.
 
-__all__ = ["FlextUtilitiesConfiguration"]
+        Generic utility for the Options+Config+kwargs pattern. Handles three cases:
+        1. If explicit_options provided: use it (with kwargs overrides)
+        2. Otherwise: get defaults from config via default_factory()
+        3. Apply kwargs overrides to either case
+
+        Architecture:
+            - WriteFormatOptions/ParseFormatOptions remain as Pydantic Models
+            - Config provides defaults via to_write_options() / to_parse_options()
+            - Public methods accept **kwargs for convenience
+            - This method converts kwargs → validated Pydantic model
+
+        Example Usage:
+            def write(
+                self,
+                entries: list[Entry],
+                format_options: WriteFormatOptions | None = None,
+                **format_kwargs: object,
+            ) -> FlextResult[str]:
+                options_result = FlextUtilities.Configuration.build_options_from_kwargs(
+                    model_class=WriteFormatOptions,
+                    explicit_options=format_options,
+                    default_factory=lambda: self.config.ldif.to_write_options(),
+                    **format_kwargs,
+                )
+                if options_result.is_failure:
+                    return FlextResult[str].fail(options_result.error)
+                options = options_result.unwrap()
+                # ... use options
+
+        Args:
+            model_class: The Pydantic model class (e.g., WriteFormatOptions)
+            explicit_options: Explicitly provided options instance, or None
+            default_factory: Callable that returns default options from config
+            **kwargs: Individual option overrides (snake_case field names)
+
+        Returns:
+            FlextResult[T_Model]: Validated options model or error
+
+        """
+        try:
+            # Step 1: Get base options (explicit or from config defaults)
+            if explicit_options is not None:
+                base_options = explicit_options
+            else:
+                base_options = default_factory()
+
+            # Step 2: If no kwargs, return base options directly
+            if not kwargs:
+                return FlextResult[T_Model].ok(base_options)
+
+            # Step 3: Get valid field names from model class
+            # Access model_fields as class attribute for type safety
+            model_fields_attr = getattr(model_class, "model_fields", {})
+            model_fields: dict[str, object] = (
+                model_fields_attr if isinstance(model_fields_attr, dict) else {}
+            )
+            valid_field_names = set(model_fields.keys())
+
+            # Step 4: Filter kwargs to only valid field names
+            valid_kwargs: dict[str, object] = {}
+            invalid_kwargs: list[str] = []
+
+            for key, value in kwargs.items():
+                if key in valid_field_names:
+                    valid_kwargs[key] = value
+                else:
+                    invalid_kwargs.append(key)
+
+            # Get class name for logging
+            class_name = getattr(model_class, "__name__", "UnknownModel")
+
+            # Step 5: Log warning for invalid kwargs (don't fail)
+            if invalid_kwargs:
+                _logger.warning(
+                    "Ignored invalid kwargs for %s: %s. Valid fields: %s",
+                    class_name,
+                    invalid_kwargs,
+                    sorted(valid_field_names),
+                )
+
+            # Step 6: If no valid overrides, return base options
+            if not valid_kwargs:
+                return FlextResult[T_Model].ok(base_options)
+
+            # Step 7: Create new model with base values + kwargs overrides
+            # Use model_dump to get base values, then update with kwargs
+            base_dict = base_options.model_dump()
+            base_dict.update(valid_kwargs)
+
+            # Step 8: Validate and create new model instance
+            merged_options = model_class(**base_dict)
+
+            return FlextResult[T_Model].ok(merged_options)
+
+        except (TypeError, ValueError) as e:
+            # Pydantic validation error
+            class_name = getattr(model_class, "__name__", "UnknownModel")
+            return FlextResult[T_Model].fail(
+                f"Failed to build {class_name}: {e}",
+            )
+        except Exception as e:
+            # Unexpected error
+            class_name = getattr(model_class, "__name__", "UnknownModel")
+            _logger.exception("Unexpected error building options model")
+            return FlextResult[T_Model].fail(
+                f"Unexpected error building {class_name}: {e}",
+            )
+
+
+__all__ = ["FlextUtilitiesConfiguration", "T_Model"]

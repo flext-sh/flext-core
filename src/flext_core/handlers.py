@@ -1,1273 +1,608 @@
-"""Base classes for CQRS command and query handlers.
+"""FlextHandlers - CQRS Command and Query Handler Foundation Module.
 
-This module provides FlextHandlers, the base class for implementing
-Command Query Responsibility Segregation (CQRS) handlers throughout
-the FLEXT ecosystem.
+This module provides FlextHandlers, the base class for implementing Command Query
+Responsibility Segregation (CQRS) handlers throughout the FLEXT ecosystem. It implements
+structural typing via FlextProtocols.Handler[MessageT_contra] through duck typing,
+providing a foundation for command/query/event handlers with validation pipelines,
+execution context management, and configuration support.
+
+Scope: Abstract base class for CQRS handlers, message validation, type checking,
+handler execution pipeline, command/query/event processing with FlextResult-based
+error handling and comprehensive logging/metrics integration.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-import inspect
 from abc import ABC, abstractmethod
-from dataclasses import asdict, is_dataclass
-from typing import (
-    ClassVar,
-    Self,
-    cast,
-    override,
-)
-
-from beartype.door import is_bearable
-from pydantic import BaseModel
+from collections.abc import Callable
+from typing import ClassVar
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
-from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import (
-    CallableInputT,
-    CallableOutputT,
-    FlextTypes,
-)
-from flext_core.utilities import FlextUtilities
+from flext_core.typings import FlextTypes
 
 
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
-    """Base class for CQRS command and query handlers.
+    """CQRS Command and Query Handler Foundation for FLEXT ecosystem.
 
-    Implements FlextProtocols.Handler[MessageT_contra] through structural typing.
-    All handler subclasses automatically satisfy the Handler protocol by
-    implementing the required methods: handle(), validate(), __call__(),
-    can_handle(), execute(), validate_command(), and validate_query().
+    Provides the base implementation for Command Query Responsibility Segregation
+    (CQRS) handlers, implementing structural typing via FlextProtocols.Handler[MessageT_contra]
+    through duck typing (no inheritance required). This class serves as the foundation
+    for implementing command, query, and event handlers with comprehensive validation,
+    execution pipelines, metrics collection, and configuration management.
 
-    Provides the foundation for implementing CQRS handlers with validation,
-    execution context, metrics collection, and configuration management.
-    Supports commands, queries, events, and sagas with type safety.
+    Core Features:
+    - Abstract base class for command/query/event handlers using generics
+    - Railway-oriented programming with FlextResult for error handling
+    - Message validation pipeline with extensible validation methods
+    - Type checking for message compatibility using duck typing
+    - Execution context management with tracing and correlation IDs
+    - Callable interface for seamless integration with dispatchers
+    - Configuration-driven behavior through FlextConstants
 
-    Protocol Compliance:
-        ✅ STRUCTURAL TYPING: Implements FlextProtocols.Handler[MessageT_contra]
+    Architecture:
+    - Single class with nested type definitions and validation logic
+    - DRY principle applied through shared validation methods
+    - SOLID principles: Open/Closed for extensibility, Single Responsibility for focused methods
+    - Railway pattern for error handling without exceptions
+    - Structural typing for protocol compliance without inheritance
 
-        Implemented Protocol Methods:
-        - handle(message: MessageT_contra) -> object - Abstract method for subclasses
-        - execute(message: MessageT_contra) -> object - Execute handler with message
-        - __call__(input_data: MessageT_contra) -> object - Callable interface
-        - validate(data: FlextTypes.AcceptableMessageType) -> FlextResult[bool] - Validate input
-        - validate_command(command: FlextTypes.AcceptableMessageType) -> FlextResult[bool] - Validate command
-        - validate_query(query: FlextTypes.AcceptableMessageType) -> FlextResult[bool] - Validate query
-        - can_handle(message_type: object) -> bool - Check handler capability
+    Type Parameters:
+    - MessageT_contra: Contravariant message type (commands, queries, events)
+    - ResultT: Covariant result type returned by handler execution
 
-    Features:
-    - Abstract base for command/query/event handlers
-    - Handler execution with validation pipeline
-    - Type checking for message compatibility
-    - Metrics collection for handler performance
-    - Configuration via handler models
-    - Execution context tracking per handler
-    - Message validation with FlextResult
-    - Logger integration for handler operations
-    - Automatic protocol satisfaction via structural typing
-
-    Usage:
-        >>> from flext_core import FlextHandlers, FlextResult
-        >>> from flext_core.protocols import FlextProtocols
+    Example Usage:
+        >>> from flext_core.handlers import FlextHandlers
+        >>> from flext_core.result import FlextResult
         >>>
-        >>> class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
-        ...     def handle(self, command: CreateUserCommand) -> FlextResult[User]:
-        ...         return self.ok(User(name=command.name))
+        >>> class UserCommand:
+        ...     user_id: str
+        ...     action: str
         >>>
-        >>> handler = CreateUserHandler(config=...)
-        >>> # FlextHandlers explicitly implements FlextProtocols.Handler
-        >>> assert isinstance(handler, FlextProtocols.Handler)  # ✅ Protocol satisfied
-        >>> assert handler.can_handle(CreateUserCommand)  # ✅ Handler validation
-        >>> result = handler.execute(CreateUserCommand(name="Alice"))  # ✅ Execution
+        >>> class UserHandler(FlextHandlers[UserCommand, bool]):
+        ...     def handle(self, message: UserCommand) -> FlextResult[bool]:
+        ...         # Implement command handling logic
+        ...         return FlextResult[bool].ok(True)
+        ...
+        ...     def validate(
+        ...         self, data: FlextTypes.AcceptableMessageType
+        ...     ) -> FlextResult[bool]:
+        ...         # Custom validation logic
+        ...         if not isinstance(data, UserCommand):
+        ...             return FlextResult[bool].fail("Invalid message type")
+        ...         return FlextResult[bool].ok(True)
     """
 
-    # Class-level logger for internal operations (not for subclass use)
-    _internal_logger: FlextLogger = FlextLogger(__name__)
-
-    # Runtime type validation attributes
+    # Class variables for message type expectations (configurable via inheritance)
     _expected_message_type: ClassVar[type | None] = None
     _expected_result_type: ClassVar[type | None] = None
 
-    # Type parameter count for generic subscription
-    _REQUIRED_TYPE_PARAM_COUNT: ClassVar[int] = 2
+    def __init__(self, **kwargs: object) -> None:
+        """Initialize handler with configuration and context.
 
-    def __class_getitem__(cls, item: tuple[type, type] | type) -> type[Self]:
-        """Intercept FlextHandlers[M, R] to create typed subclass with validation.
-
-        This enables automatic runtime type validation for handlers:
-        - FlextHandlers[CreateUserCommand, User] validates message and result types
-        - FlextHandlers[Query, Report] validates both input and output types
+        Sets up the handler with optional configuration parameters passed
+        through **kwargs. The kwargs can include 'config' for handler configuration.
 
         Args:
-            item: Either tuple of (MessageType, ResultType) or single ResultType
-
-        Returns:
-            Typed subclass with expected types stored as class variables
-
-        Examples:
-            >>> class UserHandler(FlextHandlers[CreateUserCommand, User]):
-            ...     def handle(self, msg: CreateUserCommand) -> FlextResult[User]:
-            ...         return self.ok(User(name=msg.name))
-            >>>
-            >>> # ✅ Correct types - passes validation
-            >>> handler = UserHandler(config=...)
-            >>> result = handler.execute(CreateUserCommand(name="Alice"))
-            >>>
-            >>> # ❌ Wrong result type - automatic rejection
-            >>> class BadHandler(FlextHandlers[CreateUserCommand, User]):
-            ...     def handle(self, msg: CreateUserCommand) -> FlextResult[User]:
-            ...         return self.ok(Product(id="123"))  # Wrong type!
+            **kwargs: Configuration parameters for handler setup (e.g., config)
 
         """
-        # Handle both single and tuple types
-        message_type: type | None
-        result_type: type
-
-        if isinstance(item, tuple):
-            if len(item) != cls._REQUIRED_TYPE_PARAM_COUNT:
-                msg = "FlextHandlers requires exactly 2 type parameters: FlextHandlers[MessageType, ResultType]"
-                raise TypeError(msg)
-            message_type, result_type = item
-        else:
-            # Single type parameter - assume it's result type, message type is Any
-            message_type = None
-            result_type = item
-
-        # Create typed subclass dynamically using type() built-in
-        cls_name = getattr(cls, "__name__", "FlextHandlers")
-        cls_qualname = getattr(cls, "__qualname__", "FlextHandlers")
-        msg_name = getattr(message_type, "__name__", "Any") if message_type else "Any"
-        res_name = getattr(result_type, "__name__", str(result_type))
-
-        # Create typed subclass using helper function - valid Python metaprogramming
-        typed_subclass_raw = FlextUtilities.Generators.create_dynamic_type_subclass(
-            f"{cls_name}[{msg_name}, {res_name}]",
-            cls,
-            {
-                "_expected_message_type": message_type,
-                "_expected_result_type": result_type,
-            },
-        )
-        typed_subclass: type[Self] = typed_subclass_raw
-
-        # Preserve qualname for better debugging
-        typed_subclass.__qualname__ = f"{cls_qualname}[{msg_name}, {res_name}]"
-
-        return typed_subclass
-
-    class _MessageValidator:
-        """Private message validation utilities for FlextHandlers."""
-
-        _SERIALIZABLE_MESSAGE_EXPECTATION = (
-            "dict, str, int, float, bool, dataclass, attrs class, or object exposing "
-            "model_dump/dict/as_dict/__slots__ representations"
-        )
-
-        @classmethod
-        def validate_message(
-            cls,
-            message: object,
-            *,
-            operation: str,
-            revalidate_pydantic_messages: bool = False,
-        ) -> FlextResult[bool]:
-            """Validate a message for the given operation.
-
-            Args:
-                message: The message object to validate
-                operation: The operation name for context
-                revalidate_pydantic_messages: Whether to revalidate Pydantic models
-
-            Returns:
-                FlextResult[bool]: Success with True if valid, failure with error details if invalid
-
-            """
-            # Check for custom validation methods first
-            custom_validation = cls._validate_custom_method(message, operation)
-            if custom_validation.is_failure:
-                return custom_validation
-
-            # Validate Pydantic models
-            pydantic_validation = cls._validate_pydantic_model(
-                message,
-                operation,
-                revalidate=revalidate_pydantic_messages,
-            )
-            if pydantic_validation.is_failure:
-                return pydantic_validation
-
-            # Validate message serialization for non-Pydantic objects
-            serialization_result = cls._validate_message_serialization(
-                message,
-                operation,
-            )
-            if serialization_result.is_success:
-                return FlextResult[bool].ok(True)
-            return serialization_result
-
-        @classmethod
-        def _validate_custom_method(
-            cls,
-            message: object,
-            operation: str,
-        ) -> FlextResult[bool]:
-            """Check for and execute custom validation method.
-
-            Args:
-                message: The message object to validate
-                operation: The operation name
-
-            Returns:
-                FlextResult[bool]: Success with True if validation passed or no custom validation,
-                failure if custom validation failed
-
-            """
-            validation_method_name = f"validate_{operation}"
-            if not hasattr(message, validation_method_name):
-                return FlextResult[bool].ok(True)
-
-            validation_method = getattr(message, validation_method_name)
-            if not callable(validation_method):
-                return FlextResult[bool].ok(True)
-
-            try:
-                sig = inspect.signature(validation_method)
-                if len(sig.parameters) != 0:
-                    return FlextResult[bool].ok(True)
-
-                validation_result_obj = validation_method()
-                # Fast fail: type narrowing instead of cast
-                if not isinstance(validation_result_obj, FlextResult):
-                    return FlextResult[bool].ok(True)
-
-                # Type narrowing: validation_result_obj is FlextResult
-                validation_result: FlextResult[object] = validation_result_obj
-                if validation_result.is_failure:
-                    base_msg = f"{operation} validation failed"
-                    error_msg = (
-                        f"{base_msg}: {validation_result.error}"
-                        if validation_result.error
-                        else f"{base_msg} (validation rule failed)"
-                    )
-                    return FlextResult[bool].fail(
-                        error_msg,
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-            except Exception as e:
-                # VALIDATION HIERARCHY - User data validation (HIGH)
-                # Validation methods on user data can raise any exception
-                # Safe behavior: log and continue with next validation
-                FlextHandlers._internal_logger.debug(
-                    "Skipping validation method due to exception",
-                    operation="validate_custom_method",
-                    validation_method=validation_method_name,
-                    error_type=type(e).__name__,
-                    error=str(e),
-                    source="flext-core/src/flext_core/handlers.py",
-                )
-
-            return FlextResult[bool].ok(True)
-
-        @classmethod
-        def _validate_pydantic_model(
-            cls,
-            message: object,
-            operation: str,
-            *,
-            revalidate: bool,
-        ) -> FlextResult[bool]:
-            """Validate Pydantic models.
-
-            Args:
-                message: The message object
-                operation: The operation name
-                revalidate: Whether to revalidate Pydantic models
-
-            Returns:
-                FlextResult[bool]: Success with True if validation passed or not a Pydantic model,
-                failure if validation failed
-
-            """
-            if not isinstance(message, BaseModel):
-                return FlextResult[bool].ok(True)
-
-            if not revalidate:
-                return FlextResult[bool].ok(True)
-
-            try:
-                message.__class__.model_validate(message.model_dump(mode="python"))
-                return FlextResult[bool].ok(True)
-            except Exception as e:
-                # VALIDATION HIERARCHY - Pydantic model revalidation (HIGH)
-                # User model_validate() can raise any exception
-                # Safe behavior: capture validation error with full context
-                validation_error = FlextExceptions.ValidationError(
-                    f"Pydantic revalidation failed: {e}",
-                    field="pydantic_model",
-                    value=str(message)[: FlextConstants.Defaults.MAX_MESSAGE_LENGTH]
-                    if hasattr(message, "__str__")
-                    else "unknown",
-                    correlation_id=f"pydantic_validation_{FlextUtilities.Generators.generate_short_id(length=8)}",
-                    metadata=FlextModels.Metadata(
-                        attributes={
-                            "validation_details": f"pydantic_exception: {e!s}, model_class: {message.__class__.__name__}, revalidated: True",
-                            "context": f"operation: {operation}, message_type: {type(message).__name__}, validation_type: pydantic_revalidation",
-                        },
-                    ),
-                )
-                return FlextResult[bool].fail(
-                    str(validation_error),
-                    error_code=validation_error.error_code,
-                    error_data={"exception_context": str(validation_error)},
-                )
-
-        @classmethod
-        def _validate_message_serialization(
-            cls,
-            message: object,
-            operation: str,
-        ) -> FlextResult[bool]:
-            """Validate message serialization for non-Pydantic objects.
-
-            Args:
-                message: The message object
-                operation: The operation name
-
-            Returns:
-                FlextResult[bool]: Success with True if serializable, failure otherwise
-
-            """
-            try:
-                cls._build_serializable_message_payload(message, operation=operation)
-            except Exception as exc:
-                # VALIDATION HIERARCHY - Message serialization (HIGH)
-                # User message serialization can raise any exception
-                # Safe behavior: check exception type and respond appropriately
-                if isinstance(exc, FlextExceptions.TypeError):
-                    return FlextResult[bool].fail(
-                        str(exc),
-                        error_code=exc.error_code,
-                        error_data={
-                            "exception_context": getattr(exc, "context", str(exc)),
-                        },
-                    )
-
-                error = FlextExceptions.TypeError(
-                    f"Invalid message type for {operation}: {type(message).__name__}",
-                    expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
-                    actual_type=type(message).__name__,
-                    context=f"operation: {operation}, message_type: {type(message).__name__}, validation_type: serializable_check, original_exception: {exc!s}",
-                    correlation_id=f"type_validation_{FlextUtilities.Generators.generate_short_id(length=8)}",
-                )
-                return FlextResult[bool].fail(
-                    str(error),
-                    error_code=error.error_code,
-                    error_data={"exception_context": str(error)},
-                )
-
-            return FlextResult[bool].ok(True)
-
-        @classmethod
-        def _build_serializable_message_payload(
-            cls,
-            message: object,
-            *,
-            operation: str | None = None,
-        ) -> object:
-            """Build a serializable representation for message validation heuristics.
-
-            Fast fail: operation is optional for logging purposes only.
-            Uses explicit default values instead of 'or' fallback.
-            """
-            # Fast fail: explicit default values for optional operation parameter
-            operation_name: str = operation if operation is not None else "message"
-            context_operation: str = operation if operation is not None else "unknown"
-
-            # Try different message types in order
-            # Fast fail: type narrowing instead of cast
-            if isinstance(message, (str, int, float, bool)):
-                return message
-            if FlextRuntime.is_dict_like(message):
-                return message
-
-            if message is None:
-                cls._raise_invalid_message_type(
-                    operation_name,
-                    context_operation,
-                    "NoneType",
-                )
-
-            if isinstance(message, BaseModel):
-                return FlextMixins.ModelConversion.to_dict(message)
-
-            if is_dataclass(message) and not isinstance(message, type):
-                return asdict(message)
-
-            # Handle attrs classes
-            attrs_result = cls._try_attrs_serialization(message)
-            if attrs_result is not None:
-                return attrs_result
-
-            # Try common serialization methods
-            common_result = cls._try_common_serialization_methods(message)
-            if common_result is not None:
-                return common_result
-
-            # Handle __slots__
-            slots_result = cls._try_slots_serialization(message)
-            if slots_result is not None:
-                return slots_result
-
-            if hasattr(message, "__dict__"):
-                return vars(message)
-
-            # Fast fail: raise exception - no return None
-            cls._raise_invalid_message_type(
-                operation_name,
-                context_operation,
-                type(message).__name__,
-            )
-            # This line should never be reached - _raise_invalid_message_type raises exception
-            msg = f"Serialization failed for {type(message).__name__}"
-            raise FlextExceptions.TypeError(
-                msg,
-                expected_type="serializable type",
-                actual_type=type(message).__name__,
-            )
-
-        @classmethod
-        def _try_attrs_serialization(cls, message: object) -> dict[str, object] | None:
-            """Try to serialize attrs class."""
-            attrs_fields = getattr(message, "__attrs_attrs__", None)
-            if (
-                attrs_fields is not None
-                and not isinstance(message, type)
-                and hasattr(message, "__attrs_attrs__")
-                and hasattr(message, "__class__")
-            ):
-                result: dict[str, object] = {}
-                for attr_field in attrs_fields:
-                    field_name = attr_field.name
-                    if hasattr(message, field_name):
-                        result[field_name] = getattr(message, field_name)
-                return result
-            return None
-
-        @classmethod
-        def _try_common_serialization_methods(
-            cls,
-            message: object,
-        ) -> dict[str, object] | None:
-            """Try common serialization methods."""
-            for method_name in ("model_dump", "dict", "as_dict"):
-                method = getattr(message, method_name, None)
-                if callable(method):
-                    try:
-                        result_data = method()
-                        if FlextRuntime.is_dict_like(result_data) and isinstance(
-                            result_data,
-                            dict,
-                        ):
-                            # Type narrowed by TypeGuard - use narrowed type directly
-                            typed_result: dict[str, object] = result_data
-                            return typed_result
-                    except Exception as e:
-                        FlextHandlers._internal_logger.debug(
-                            "Serialization method failed, trying next method",
-                            operation="try_common_serialization_methods",
-                            method_name=method_name,
-                            error_type=type(e).__name__,
-                            error=str(e),
-                            source="flext-core/src/flext_core/handlers.py",
-                        )
-                        continue
-            return None
-
-        @classmethod
-        def _try_slots_serialization(cls, message: object) -> dict[str, object] | None:
-            """Try to serialize object with __slots__."""
-            slots = getattr(message, "__slots__", None)
-            if not slots:
-                return None
-
-            # Fast fail: type narrowing instead of cast
-            if isinstance(slots, str):
-                slot_names: tuple[str, ...] = (slots,)
-            elif isinstance(slots, (list, tuple)):
-                # Type narrowing: slots is list or tuple, convert to tuple[str, ...]
-                slot_names = tuple(str(s) for s in slots)
-            else:
-                msg = f"Invalid __slots__ type: {type(slots).__name__}"
-                raise FlextExceptions.TypeError(
-                    msg,
-                    expected_type="str, list, or tuple",
-                    actual_type=type(slots).__name__,
-                    context=f"message_type: {type(message).__name__}, __slots__: {slots!r}",
-                    correlation_id=f"message_serialization_{FlextUtilities.Generators.generate_short_id(length=8)}",
-                )
-
-            def get_slot_value(slot_name: str) -> object:
-                return getattr(message, slot_name)
-
-            return {
-                slot_name: get_slot_value(slot_name)
-                for slot_name in slot_names
-                if hasattr(message, slot_name)
-            }
-
-        @classmethod
-        def _raise_invalid_message_type(
-            cls,
-            operation: str,
-            context: str,
-            actual_type: str,
-        ) -> None:
-            """Raise TypeError for invalid message type."""
-            msg = f"Invalid message type for {operation}: {actual_type}"
-            raise FlextExceptions.TypeError(
-                msg,
-                expected_type=cls._SERIALIZABLE_MESSAGE_EXPECTATION,
-                actual_type=actual_type,
-                context=f"operation: {context}, message_type: {actual_type}, validation_type: serializable_check",
-                correlation_id=f"message_serialization_{FlextUtilities.Generators.generate_short_id(length=8)}",
-            )
-
-    @override
-    def __init__(self, *, config: FlextModels.Cqrs.Handler) -> None:
-        """Initialize handler with simplified single-config approach.
-
-        Args:
-            config: Handler configuration object (required)
-
-        """
+        # Do not pass kwargs to super() - FlextMixins and ABC don't accept them
         super().__init__()
-
-        # Initialize service infrastructure (DI, Context, Logging, Metrics)
-        self._init_service(f"flext_handler_{config.handler_name}")
-
-        # Enrich context with handler metadata (Phase 1 enhancement)
-        # This automatically adds handler information to all logs
-        self._enrich_context(
-            handler_name=config.handler_name,
-            handler_type=config.handler_type,
-            handler_class=self.__class__.__name__,
-        )
-
-        self._config_model: FlextModels.Cqrs.Handler = config
-        handler_mode_value = (
-            config.handler_mode.value
-            if hasattr(config.handler_mode, "value")
-            else str(config.handler_mode)
-        )
-        self._execution_context = FlextModels.HandlerExecutionContext(
-            handler_name=config.handler_name,
-            handler_mode=cast(
-                "FlextConstants.Cqrs.HandlerModeLiteral",
-                handler_mode_value,
-            ),
-        )
-        self._accepted_message_types = (
-            FlextUtilities.TypeChecker.compute_accepted_message_types(type(self))
-        )
-        self._revalidate_pydantic_messages = self._extract_revalidation_setting()
-        self._type_warning_emitted = False
-
-    def _extract_revalidation_setting(self) -> bool:
-        """Extract revalidation setting from configuration."""
-        # Check metadata first (metadata is now FlextModels.Metadata, not dict)
-        if hasattr(self._config_model, "metadata") and self._config_model.metadata:
-            # Access attributes dict from Pydantic model
-            metadata_value = self._config_model.metadata.attributes.get(
-                "revalidate_pydantic_messages",
+        # Store config model if provided
+        config = kwargs.get("config")
+        if isinstance(config, FlextModels.Cqrs.Handler):
+            self._config_model = config
+        else:
+            # Create default config if not provided or invalid type
+            self._config_model = FlextModels.Cqrs.Handler(
+                handler_id=f"handler_{id(self)}",
+                handler_name=self.__class__.__name__,
             )
-            if metadata_value is not None:
-                # Handle string values
-                if isinstance(metadata_value, str):
-                    return metadata_value.lower() in {"true", "1", "yes"}
-                return bool(metadata_value)
 
-        # Default to False if not specified
-        return False
-
-    def can_handle(self, message_type: object) -> bool:
-        """Check if this handler can handle the given message type.
-
-        Implements FlextProtocols.Handler.can_handle() with type checking.
-
-        Args:
-            message_type: The type of message to check
-
-        Returns:
-            bool: True if this handler can handle the message type
-
-        """
-        # Cast to type for internal checking
-        if not isinstance(message_type, type):
-            return False
-        return FlextUtilities.TypeChecker.can_handle_message_type(
-            self._accepted_message_types,
-            message_type,
+        # Initialize execution context
+        self._execution_context = FlextModels.HandlerExecutionContext(
+            handler_name=self._config_model.handler_name,
+            handler_mode=self._config_model.handler_mode.value,
         )
 
-    # NOTE: logger property inherited from FlextMixins
-    # Provides per-class logger instance via lazy initialization
-
-    @property
-    def handler_id(self) -> str:
-        """Get handler ID from config.
-
-        Returns:
-            str: Handler ID
-
-        """
-        return self._config_model.handler_id
+        # Initialize handler state
+        self._accepted_message_types: list[type] = []
+        self._revalidate_pydantic_messages: bool = False
+        self._type_warning_emitted: bool = False
+        self._context_stack: list[dict[str, object]] = []
+        self._metrics: dict[str, object] = {}
 
     @property
     def handler_name(self) -> str:
-        """Get handler name from config.
+        """Get handler name from configuration.
 
         Returns:
-            str: Handler name
+            str: The handler name
 
         """
         return self._config_model.handler_name
 
-    @property
-    def mode(self) -> str:
-        """Get handler mode from config.
+    @classmethod
+    def create_from_callable(
+        cls,
+        handler_callable: Callable[[object], object],
+        handler_name: str | None = None,
+        handler_type: FlextConstants.Cqrs.HandlerType | None = None,
+        mode: FlextConstants.Cqrs.HandlerType | str | None = None,
+        handler_config: FlextModels.Cqrs.Handler | None = None,
+    ) -> FlextHandlers[object, object]:
+        """Create a handler instance from a callable function.
 
-        Returns:
-            str: Handler mode (command or query)
-
-        """
-        # handler_mode is always defined as FlextConstants.HandlerMode.TypeSimple
-        return self._config_model.handler_mode
-
-    @property
-    def handler_config(self) -> FlextModels.Cqrs.Handler:
-        """Get handler configuration.
-
-        Returns:
-            FlextModels.Cqrs.Handler: Handler configuration
-
-        """
-        return self._config_model
-
-    def validate_command(
-        self,
-        command: FlextTypes.AcceptableMessageType,
-    ) -> FlextResult[bool]:
-        """Validate a command message with type-safe parameter.
+        Factory method that wraps a callable function in a FlextHandlers instance,
+        enabling the use of simple functions as CQRS handlers.
 
         Args:
-            command: The command to validate (typed parameter)
+            handler_callable: Callable that takes a message and returns result
+            handler_name: Optional handler name (defaults to function name)
+            handler_type: Optional handler type (command, query, event)
+            mode: Optional handler mode (compatibility alias for handler_type)
+            handler_config: Optional FlextModels.Cqrs.Handler configuration
 
         Returns:
-            FlextResult[bool]: Success with True if valid, failure otherwise
+            FlextHandlers[object, object]: Handler instance wrapping the callable
+
+        Raises:
+            FlextExceptions.ValidationError: If invalid mode is provided
+
+        Example:
+            >>> def my_handler(msg: str) -> FlextResult[str]:
+            ...     return FlextResult[str].ok(f"processed_{msg}")
+            >>> handler = FlextHandlers.create_from_callable(my_handler)
+            >>> result = handler.handle("test")
 
         """
-        return FlextHandlers._MessageValidator.validate_message(
-            command,
-            operation=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-            revalidate_pydantic_messages=self._revalidate_pydantic_messages,
-        )
+        # Create a concrete handler class dynamically
+        class CallableHandler(FlextHandlers[object, object]):
+            """Dynamic handler created from callable."""
 
-    def validate_query(
-        self,
-        query: FlextTypes.AcceptableMessageType,
-    ) -> FlextResult[bool]:
-        """Validate a query message with type-safe parameter.
+            _handler_fn: Callable[[object], object]
 
-        Args:
-            query: The query to validate (typed parameter)
+            def __init__(
+                self,
+                handler_fn: Callable[[object], object],
+                **kwargs: object,
+            ) -> None:
+                super().__init__(**kwargs)
+                self._handler_fn = handler_fn
 
-        Returns:
-            FlextResult[bool]: Success with True if valid, failure otherwise
+            def handle(self, message: object) -> FlextResult[object]:
+                """Execute the wrapped callable."""
+                try:
+                    result = self._handler_fn(message)
+                    # If result is already FlextResult, return it
+                    if isinstance(result, FlextResult):
+                        return result
+                    # Otherwise wrap it in FlextResult
+                    return FlextResult[object].ok(result)
+                except Exception as exc:
+                    return FlextResult[object].fail(str(exc))
 
-        """
-        return FlextHandlers._MessageValidator.validate_message(
-            query,
-            operation=FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
-            revalidate_pydantic_messages=self._revalidate_pydantic_messages,
-        )
+        # Use handler_config if provided
+        if handler_config is not None:
+            return CallableHandler(handler_fn=handler_callable, config=handler_config)
 
-    def validate(self, _data: object) -> FlextResult[bool]:
-        """Validate input data based on handler mode with generic type support.
-
-        Generic validation that delegates to mode-specific validation methods.
-        Part of FlextProtocols.Handler protocol implementation.
-        Type parameter MessageT_contra ensures type consistency.
-
-        Args:
-            _data: The data to validate (generic type MessageT_contra)
-
-        Returns:
-            FlextResult[bool]: Success with True if valid, failure with error details
-
-        Examples:
-            >>> handler = MyCommandHandler()
-            >>> result = handler.validate(command_data)
-            >>> if result.is_success:
-            ...     # Validation passed
-            ...     pass
-
-        """
-        if self.mode == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE:
-            return self.validate_command(_data)
-        if self.mode == FlextConstants.Cqrs.QUERY_HANDLER_TYPE:
-            return self.validate_query(_data)
-        # For event and saga handlers, use generic validation
-        return FlextHandlers._MessageValidator.validate_message(
-            _data,
-            operation=self.mode,
-            revalidate_pydantic_messages=self._revalidate_pydantic_messages,
-        )
-
-    def execute(self, message: MessageT_contra) -> FlextResult[ResultT]:
-        """Execute the handler with the message.
-
-        Args:
-            message: The message to execute
-
-        Returns:
-            FlextResult containing the execution result or error
-
-        """
-        return self._run_pipeline(message, operation=self.mode)
-
-    def __call__(self, input_data: MessageT_contra) -> FlextResult[ResultT]:
-        """Callable interface for Application.Handler protocol.
-
-        Makes the handler callable as a function, delegating to execute() method
-        for consistent handler invocation. Part of FlextProtocols.Handler
-        protocol implementation.
-
-        Args:
-            input_data: The input message to process
-
-        Returns:
-            FlextResult[ResultT]: Execution result
-
-        Examples:
-            >>> handler = MyCommandHandler()
-            >>> result = handler(command)  # Callable interface
-            >>> # Equivalent to: handler.execute(command)
-
-        """
-        return self.execute(input_data)
-
-    def _validate_handler_result(
-        self,
-        message: MessageT_contra,
-        result: FlextResult[ResultT],
-    ) -> FlextResult[ResultT]:
-        """Validate handler result matches expected types.
-
-        Performs runtime type validation for both message input and result output:
-        1. Validates message type matches _expected_message_type (if set)
-        2. Validates result value type matches _expected_result_type (if set and successful)
-
-        Args:
-            message: The message that was handled
-            result: The FlextResult returned by handle()
-
-        Returns:
-            FlextResult[ResultT]: Original result if validation passes, failure otherwise
-
-        Examples:
-            >>> # ✅ Validation passes for correct types
-            >>> message = CreateUserCommand(name="Alice")
-            >>> result = self.ok(User(name="Alice"))
-            >>> validated = self._validate_handler_result(message, result)
-            >>> assert validated.is_success
-            >>>
-            >>> # ❌ Validation fails for wrong result type
-            >>> result = self.ok(Product(id="123"))  # Wrong type!
-            >>> validated = self._validate_handler_result(message, result)
-            >>> assert validated.is_failure
-
-        """
-        # Validate message type - use isinstance for simple types, beartype for complex hints
-        if self._expected_message_type is not None:
-            try:
-                # For simple type objects, isinstance is more reliable than beartype
-                if isinstance(self._expected_message_type, type):
-                    type_mismatch = not isinstance(message, self._expected_message_type)
-                else:
-                    # For complex type hints (generics, unions), use beartype
-                    # Type checker may think this is unreachable, but complex types are validated here
-                    type_mismatch = not is_bearable(
-                        message,
-                        self._expected_message_type,
-                    )
-            except (TypeError, AttributeError):
-                # If type checking fails, assume type matches
-                type_mismatch = False
-
-            if type_mismatch:
-                expected_name = getattr(
-                    self._expected_message_type,
-                    "__name__",
-                    str(self._expected_message_type),
-                )
-                actual_name = type(message).__name__
-                self.logger.error(
-                    "FAILED: Message type mismatch - VALIDATION ABORTED",
-                    operation="validate_handler_result",
-                    handler_name=self.handler_name,
-                    expected_message_type=expected_name,
-                    actual_message_type=actual_name,
-                    consequence="Handler cannot process this message type",
-                    resolution_hint="Ensure message type matches handler's expected type",
-                    source="flext-core/src/flext_core/handlers.py",
-                )
-                msg = (
-                    f"{self.__class__.__name__}.handle() received message of type "
-                    f"{actual_name} instead of {expected_name}. "
-                    f"Message: {message!r}"
-                )
-                return self.fail(msg, error_code="TYPE_MISMATCH")
-
-        # Validate result type (only on success - errors don't need type validation)
-        if self._expected_result_type is not None and result.is_success:
-            try:
-                # For simple type objects, isinstance is more reliable than beartype
-                if isinstance(self._expected_result_type, type):
-                    type_mismatch = not isinstance(
-                        result.value,
-                        self._expected_result_type,
-                    )
-                else:
-                    # For complex type hints (generics, unions), use beartype
-                    # Type checker may think this is unreachable, but complex types are validated here
-                    type_mismatch = not is_bearable(
-                        result.value,
-                        self._expected_result_type,
-                    )
-            except (TypeError, AttributeError):
-                # If type checking fails, assume type matches
-                type_mismatch = False
-
-            if type_mismatch:
-                expected_name = getattr(
-                    self._expected_result_type,
-                    "__name__",
-                    str(self._expected_result_type),
-                )
-                actual_name = type(result.value).__name__
-                self.logger.error(
-                    "FAILED: Result type mismatch - VALIDATION ABORTED",
-                    operation="validate_handler_result",
-                    handler_name=self.handler_name,
-                    expected_result_type=expected_name,
-                    actual_result_type=actual_name,
-                    consequence="Handler returned incorrect result type",
-                    resolution_hint="Ensure handle() method returns correct result type",
-                    source="flext-core/src/flext_core/handlers.py",
-                )
-                msg = (
-                    f"{self.__class__.__name__}.handle() returned "
-                    f"FlextResult[{actual_name}] instead of "
-                    f"FlextResult[{expected_name}]. "
-                    f"Data: {result.value!r}"
-                )
-                return self.fail(msg, error_code="TYPE_MISMATCH")
-
-        return result
-
-    def _run_pipeline(
-        self,
-        message: MessageT_contra | dict[str, object],
-        operation: str = "command",
-    ) -> FlextResult[ResultT]:
-        """Run the handler pipeline with message processing.
-
-        Args:
-            message: The message to process
-            operation: The operation type (command or query)
-
-        Returns:
-            FlextResult containing the processing result or error
-
-        """
-        # Extract message ID
-        if FlextRuntime.is_dict_like(message):
-            message_dict = dict(message) if not isinstance(message, dict) else message
-            # Message ID extraction for logging/tracing (currently unused but reserved for future observability)
-            _ = (
-                str(message_dict.get(f"{operation}_id", "unknown"))
-                or str(message_dict.get("message_id", "unknown"))
-                or "unknown"
-            )
-        elif hasattr(message, f"{operation}_id"):
-            str(getattr(message, f"{operation}_id", "unknown"))
-        elif hasattr(message, "message_id"):
-            str(getattr(message, "message_id", "unknown"))
-
-        message_type: str = str(type(message).__name__)
-
-        self.logger.debug(
-            "Starting handler pipeline execution",
-            operation="run_pipeline",
-            handler_name=self.handler_name,
-            handler_mode=self.mode,
-            requested_operation=operation,
-            message_type=message_type,
-            source="flext-core/src/flext_core/handlers.py",
-        )
-
-        # Validate operation matches handler mode
-        if operation != self.mode:
-            self.logger.error(
-                "FAILED: Handler mode mismatch - PIPELINE ABORTED",
-                operation="run_pipeline",
-                handler_name=self.handler_name,
-                handler_mode=self.mode,
-                requested_operation=operation,
-                consequence="Handler cannot execute this operation type",
-                resolution_hint="Use handler with matching mode or change operation type",
-                source="flext-core/src/flext_core/handlers.py",
-            )
-            return self.fail(
-                f"Handler with mode '{self.mode}' cannot execute {operation} pipelines",
-            )
-
-        # Validate message can be handled
-        message_type_obj: type[object] = type(message)
-        if not self.can_handle(cast("type[MessageT_contra]", message_type_obj)):
-            self.logger.error(
-                "FAILED: Handler cannot handle message type - PIPELINE ABORTED",
-                operation="run_pipeline",
-                handler_name=self.handler_name,
-                message_type=message_type,
-                handler_mode=self.mode,
-                consequence="Message cannot be processed by this handler",
-                resolution_hint="Register appropriate handler for this message type",
-                source="flext-core/src/flext_core/handlers.py",
-            )
-            return self.fail(f"Handler cannot handle message type {message_type}")
-
-        # Validate message
-        self.logger.debug(
-            "Validating message",
-            operation="run_pipeline",
-            handler_name=self.handler_name,
-            message_type=message_type,
-            operation_type=operation,
-            source="flext-core/src/flext_core/handlers.py",
-        )
-        validation_result = (
-            self.validate_command(cast("object", message))
-            if operation == "command"
-            else self.validate_query(cast("object", message))
-        )
-        if validation_result.is_failure:
-            error_msg = validation_result.error or "Unknown validation error"
-            self.logger.warning(
-                "Message validation failed - pipeline stopped",
-                operation="run_pipeline",
-                handler_name=self.handler_name,
-                message_type=message_type,
-                validation_error=error_msg,
-                consequence="Message will not be processed",
-                source="flext-core/src/flext_core/handlers.py",
-            )
-            return self.fail(f"Message validation failed: {error_msg}")
-
-        # Execute handler with runtime type validation
-        self.logger.debug(
-            "Executing handler handle() method",
-            operation="run_pipeline",
-            handler_name=self.handler_name,
-            message_type=message_type,
-            source="flext-core/src/flext_core/handlers.py",
-        )
-        try:
-            result = self.handle(cast("MessageT_contra", message))
-            # Validate result types if __class_getitem__ was used
-            validated_result = self._validate_handler_result(
-                cast("MessageT_contra", message),
-                result,
-            )
-
-            if validated_result.is_success:
-                self.logger.info(
-                    "Handler pipeline completed successfully",
-                    operation="run_pipeline",
-                    handler_name=self.handler_name,
-                    message_type=message_type,
-                    handler_mode=self.mode,
-                    source="flext-core/src/flext_core/handlers.py",
-                )
+        # Resolve handler type from mode or handler_type
+        resolved_type = FlextConstants.Cqrs.HandlerType.COMMAND
+        if mode is not None:
+            if isinstance(mode, str):
+                # Validate string mode
+                valid_modes = {t.value for t in FlextConstants.Cqrs.HandlerType}
+                if mode not in valid_modes:
+                    error_msg = f"Invalid handler mode: {mode}"
+                    raise FlextExceptions.ValidationError(error_msg)
+                resolved_type = FlextConstants.Cqrs.HandlerType(mode)
             else:
-                self.logger.warning(
-                    "Handler pipeline completed with validation warnings",
-                    operation="run_pipeline",
-                    handler_name=self.handler_name,
-                    message_type=message_type,
-                    validation_error=validated_result.error,
-                    source="flext-core/src/flext_core/handlers.py",
-                )
+                resolved_type = mode
+        elif handler_type is not None:
+            resolved_type = handler_type
 
-            return validated_result
-        except Exception as e:
-            # VALIDATION HIERARCHY - User handler execution (CRITICAL)
-            # User-registered handlers can raise any exception
-            # Safe behavior: capture error, return failure result
-            self.logger.exception(
-                "FATAL ERROR during handler execution - PIPELINE ABORTED",
-                operation="run_pipeline",
-                handler_name=self.handler_name,
-                message_type=message_type,
-                error=str(e),
-                error_type=type(e).__name__,
-                consequence="Handler execution failed completely - no result returned",
-                severity="critical",
-                resolution_hint="Check handler implementation for bugs or invalid assumptions",
-                source="flext-core/src/flext_core/handlers.py",
-            )
-            return self.fail(f"Critical handler failure: {e!s}")
+        # Get handler name from function if not provided
+        resolved_name: str = handler_name or str(
+            getattr(handler_callable, "__name__", "unknown_handler")
+        )
+
+        # Create config
+        config = FlextModels.Cqrs.Handler(
+            handler_id=f"callable_{id(handler_callable)}",
+            handler_name=resolved_name,
+            handler_type=resolved_type,
+            handler_mode=resolved_type,
+        )
+
+        return CallableHandler(handler_fn=handler_callable, config=config)
 
     @abstractmethod
     def handle(self, message: MessageT_contra) -> FlextResult[ResultT]:
-        """Handle a message and return a result.
+        """Handle the message - abstract method to be implemented by subclasses.
+
+        This is the core business logic method that must be implemented by all
+        concrete handler subclasses. It contains the actual command/query/event
+        processing logic specific to each handler implementation.
 
         Args:
-            message: The message to handle
+            message: The message (command, query, or event) to handle
 
         Returns:
-            FlextResult containing the result or error
+            FlextResult[ResultT]: Success with result or failure with error details
+
+        Note:
+            This method should focus on business logic only. Validation should
+            be handled separately in the validate() method and executed via execute().
 
         """
         ...
 
-    @classmethod
-    def create_from_callable(
-        cls,
-        func: FlextTypes.HandlerCallableType,
-        handler_name: str | None = None,
-        handler_type: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-        mode: str | None = None,
-        handler_config: FlextModels.Cqrs.Handler | None = None,
-    ) -> FlextHandlers[object, object]:
-        """Create a handler from a callable function.
+    def execute(self, message: MessageT_contra) -> FlextResult[ResultT]:
+        """Execute handler with complete validation and error handling pipeline.
+
+        Implements the railway-oriented programming pattern by first validating
+        the input message, then executing the business logic if validation passes.
+        Uses FlextResult for consistent error handling without exceptions.
+
+        Execution Pipeline:
+        1. Validate input message using validate() method
+        2. If validation fails, return failure result with error details
+        3. If validation passes, execute handle() method with business logic
+        4. Return result from handle() method (success or failure)
 
         Args:
-            func: The callable function to wrap
-            handler_name: Name for the handler (defaults to function name)
-            handler_type: Type of handler (command, query, etc.)
-            mode: Handler mode
-            handler_config: Optional handler configuration model (must be FlextModels.Cqrs.Handler)
+            message: The message to execute handler for
 
         Returns:
-            A FlextHandlers instance wrapping the callable
+            FlextResult[ResultT]: Success with handler result or failure with validation/business error
+
+        Example:
+            >>> handler = UserHandler()
+            >>> result = handler.execute(UserCommand(user_id="123", action="create"))
+            >>> if result.is_success:
+            ...     print(f"Success: {result.value}")
+            ... else:
+            ...     print(f"Failed: {result.error}")
 
         """
-        # Ensure handler_name is always a string
-        resolved_handler_name: str = (
-            handler_name
-            if handler_name is not None
-            else getattr(func, "__name__", "unknown_handler")
-        )
+        validation = self.validate(message)
+        if validation.is_failure:
+            return FlextResult[ResultT].fail(validation.error or "Validation failed")
+        return self.handle(message)
 
-        # Use mode if provided, otherwise use handler_type
-        effective_type: FlextConstants.Cqrs.HandlerType = (
-            cast("FlextConstants.Cqrs.HandlerType", mode)
-            if mode is not None
-            else handler_type
-        )
+    def validate(self, data: FlextTypes.AcceptableMessageType) -> FlextResult[bool]:
+        """Validate input data using extensible validation pipeline.
 
-        # Validate mode/handler_type
-        if effective_type not in {
-            FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
-            FlextConstants.Cqrs.QUERY_HANDLER_TYPE,
-        }:
-            msg = f"Invalid handler mode: {effective_type}. Must be '{FlextConstants.Cqrs.COMMAND_HANDLER_TYPE}' or '{FlextConstants.Cqrs.QUERY_HANDLER_TYPE}'"
-            raise FlextExceptions.ValidationError(
-                message=msg,
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
-            )
+        Base validation method that can be overridden by subclasses to implement
+        custom validation logic. By default, performs basic type checking and
+        returns success. Subclasses should extend this method for domain-specific
+        validation rules.
 
-        # Use provided config or create default
-        if handler_config is not None:
-            config = handler_config
-        else:
-            try:
-                config = FlextModels.Cqrs.Handler(
-                    handler_id=f"{resolved_handler_name}_{id(func)}",
-                    handler_name=resolved_handler_name,
-                    handler_type=effective_type,
-                    handler_mode=effective_type,
-                )
-            except Exception as e:
-                # VALIDATION HIERARCHY - Handler config creation (MEDIUM)
-                # Model creation can raise validation exceptions
-                # Safe behavior: re-raise as ValidationError with context
-                msg = f"Failed to create handler config: {e}"
-                raise FlextExceptions.ValidationError(
-                    message=msg,
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                ) from e
+        The validation follows railway-oriented programming principles, returning
+        FlextResult[bool] to allow for detailed error reporting and chaining.
 
-        # Create a handler class with proper generic types
-        class CallableHandler(FlextHandlers[CallableInputT, CallableOutputT]):
-            def __init__(self, config: FlextModels.Cqrs.Handler) -> None:
-                super().__init__(config=config)
-                # Store callable as object - type variables are method-local, not class-scoped
-                self.original_callable: object = func
+        Args:
+            data: Input data to validate (message, command, query, or event)
 
-            @override
-            def handle(self, message: CallableInputT) -> FlextResult[CallableOutputT]:
-                try:
-                    result = func(message)
-                    if isinstance(result, FlextResult):
-                        return cast("FlextResult[CallableOutputT]", result)
-                    return self.ok(cast("CallableOutputT", result))
-                except Exception as e:
-                    # VALIDATION HIERARCHY - User callable execution (CRITICAL)
-                    # User-provided callable can raise any exception
-                    # Safe behavior: wrap exception in self.fail()
-                    return self.fail(str(e))
+        Returns:
+            FlextResult[bool]: Success (True) if valid, failure with error details if invalid
 
-            @override
-            def can_handle(self, message_type: object) -> bool:
-                """Override can_handle for callable wrappers to enable auto-discovery.
+        Example:
+            >>> handler = UserHandler()
+            >>> result = handler.validate(invalid_data)
+            >>> if result.is_failure:
+            ...     print(f"Validation error: {result.error}")
 
-                Callable wrappers created via from_callable may have method-local TypeVars
-                that can't be introspected by compute_accepted_message_types(), resulting
-                in empty _accepted_message_types. Instead, we rely on validation to catch
-                type incompatibility, allowing auto-discovery to find this handler.
-                """
-                # Always return True for auto-discovery - validation will fail if incompatible
-                return True
+        """
+        # Reject None values
+        if data is None:
+            return FlextResult[bool].fail("Message cannot be None")
 
-        return CallableHandler(config=config)
+        # Base validation - accept any AcceptableMessageType
+        # Subclasses should override for specific validation rules
+        return FlextResult[bool].ok(True)
 
-    # =========================================================================
-    # Protocol Implementation: MessageValidator, MetricsCollector, ExecutionContextManager
-    # =========================================================================
+    def validate_command(
+        self, command: FlextTypes.AcceptableMessageType
+    ) -> FlextResult[bool]:
+        """Validate command message with command-specific rules.
 
-    def validate_message(self, message: MessageT_contra) -> FlextResult[bool]:
-        """Validate message (MessageValidator protocol).
+        Convenience method for command validation that delegates to the base
+        validate() method. Commands typically have stricter validation requirements
+        than queries or events. Subclasses can override this method for command-specific
+        validation logic.
 
-        Part of MessageValidator protocol implementation.
+        Args:
+            command: Command message to validate
+
+        Returns:
+            FlextResult[bool]: Success if command is valid, failure with error details
+
+        Note:
+            By default delegates to validate(). Override for command-specific validation.
+
+        """
+        return self.validate(command)
+
+    def validate_query(
+        self, query: FlextTypes.AcceptableMessageType
+    ) -> FlextResult[bool]:
+        """Validate query message with query-specific rules.
+
+        Convenience method for query validation that delegates to the base
+        validate() method. Queries typically have different validation requirements
+        than commands (e.g., read permissions vs write permissions).
+
+        Args:
+            query: Query message to validate
+
+        Returns:
+            FlextResult[bool]: Success if query is valid, failure with error details
+
+        Note:
+            By default delegates to validate(). Override for query-specific validation.
+
+        """
+        return self.validate(query)
+
+    def validate_message(
+        self, message: FlextTypes.AcceptableMessageType
+    ) -> FlextResult[bool]:
+        """Validate message using type checking and validation rules.
+
+        Validates the message against accepted message types and custom
+        validation rules. Uses duck typing for flexible message validation.
 
         Args:
             message: Message to validate
 
         Returns:
-            FlextResult[bool]: Success with True if valid, failure otherwise
+            FlextResult[bool]: Success if message is valid, failure with error details
 
         """
+        # Check accepted message types if specified
+        if self._accepted_message_types:
+            message_type = type(message)
+            if not any(
+                isinstance(message, t) for t in self._accepted_message_types
+            ):
+                msg = f"Message type {message_type.__name__} not in accepted types"
+                return FlextResult[bool].fail(msg)
+
+        # Delegate to base validation
         return self.validate(message)
 
-    def record_metric(self, name: str, value: float) -> FlextResult[bool]:
-        """Record metric (MetricsCollector protocol).
+    def can_handle(self, message_type: object) -> bool:
+        """Check if handler can handle the specified message type.
 
-        Part of MetricsCollector protocol implementation.
+        Determines message type compatibility using duck typing and class hierarchy.
+        If _expected_message_type is set, checks if the message_type is a subclass
+        of the expected type. If not set, accepts any message type (flexible handler).
+
+        This method enables handler registration and routing in dispatcher systems,
+        allowing handlers to declare their capabilities through configuration.
+
+        Args:
+            message_type: The message type to check compatibility for
+
+        Returns:
+            bool: True if handler can handle this message type, False otherwise
+
+        Example:
+            >>> class UserCommand:
+            ...     pass
+            >>> class AdminCommand:
+            ...     pass
+            >>> handler = UserHandler()
+            >>> handler.can_handle(UserCommand)  # True
+            >>> handler.can_handle(AdminCommand)  # Depends on _expected_message_type
+
+        """
+        if self._expected_message_type is None:
+            # Flexible handler - accepts any message type
+            return True
+
+        # Strict handler - check type compatibility
+        return isinstance(message_type, type) and issubclass(
+            message_type, self._expected_message_type
+        )
+
+    @property
+    def mode(self) -> FlextConstants.Cqrs.HandlerType:
+        """Get handler mode from configuration.
+
+        Returns:
+            FlextConstants.Cqrs.HandlerType: The handler mode (command, query, event, saga)
+
+        """
+        return self._config_model.handler_mode
+
+    def push_context(self, context: dict[str, object]) -> FlextResult[bool]:
+        """Push execution context onto the stack.
+
+        Args:
+            context: Context dictionary to push onto the stack
+
+        Returns:
+            FlextResult[bool]: Success if context was pushed
+
+        """
+        self._context_stack.append(context)
+        return FlextResult[bool].ok(True)
+
+    def pop_context(self) -> FlextResult[dict[str, object]]:
+        """Pop execution context from the stack.
+
+        Returns:
+            FlextResult[dict[str, object]]: Success with popped context or empty dict
+
+        """
+        if self._context_stack:
+            return FlextResult[dict[str, object]].ok(self._context_stack.pop())
+        return FlextResult[dict[str, object]].ok({})
+
+    def get_metrics(self) -> FlextResult[dict[str, object]]:
+        """Get current metrics dictionary.
+
+        Returns:
+            FlextResult[dict[str, object]]: Success with metrics collection
+
+        """
+        return FlextResult[dict[str, object]].ok(self._metrics.copy())
+
+    def record_metric(self, name: str, value: object) -> FlextResult[bool]:
+        """Record a metric value.
 
         Args:
             name: Metric name
-            value: Metric value
+            value: Metric value to record
 
         Returns:
-            FlextResult[bool]: Success with True if recorded, failure otherwise
+            FlextResult[bool]: Success if metric was recorded
 
         """
-        try:
-            if not hasattr(self, "_metrics"):
-                self._metrics: dict[str, float] = {}
-            self._metrics[name] = value
-            return FlextResult[bool].ok(True)
-        except Exception as e:
-            # VALIDATION HIERARCHY - Metrics recording (MEDIUM)
-            # Dict operations with user data can raise any exception
-            # Safe behavior: wrap in FlextResult with error code
-            return FlextResult[bool].fail(
-                f"Metric recording failed: {e}",
-                error_code="METRICS_ERROR",
-            )
+        self._metrics[name] = value
+        return FlextResult[bool].ok(True)
 
-    def get_metrics(self) -> FlextResult[dict[str, object]]:
-        """Get metrics (MetricsCollector protocol).
+    def dispatch_message(
+        self, message: MessageT_contra, operation: str = "command"
+    ) -> FlextResult[ResultT]:
+        """Dispatch message through the handler execution pipeline.
 
-        Part of MetricsCollector protocol implementation.
+        Public method that executes the full handler pipeline including
+        mode validation, can_handle check, message validation, execution,
+        context tracking, and metrics recording.
 
-        Returns:
-            FlextResult[dict]: Metrics dictionary or error
-
-        """
-        try:
-            metrics = getattr(self, "_metrics", {})
-            return FlextResult[dict[str, object]].ok(metrics)
-        except Exception as e:
-            # VALIDATION HIERARCHY - Metrics retrieval (MEDIUM)
-            # Getattr operations can raise unexpected exceptions
-            # Safe behavior: wrap in FlextResult with error code
-            return FlextResult[dict[str, object]].fail(
-                f"Metrics retrieval failed: {e}",
-                error_code="METRICS_ERROR",
-            )
-
-    def push_context(self, context: dict[str, object]) -> FlextResult[bool]:
-        """Push context (ExecutionContextManager protocol).
-
-        Part of ExecutionContextManager protocol implementation.
+        This method is the primary entry point for external systems (like
+        FlextDispatcher) to execute handlers with full CQRS support.
 
         Args:
-            context: Context dictionary
+            message: The message to process
+            operation: Operation type (command, query, event)
 
         Returns:
-            FlextResult[bool]: Success with True if pushed, failure otherwise
+            FlextResult[ResultT]: Handler execution result
 
         """
-        try:
-            if not hasattr(self, "_context_stack"):
-                self._context_stack: list[dict[str, object]] = []
-            self._context_stack.append(context)
-            return FlextResult[bool].ok(True)
-        except Exception as e:
-            # VALIDATION HIERARCHY - Context push (MEDIUM)
-            # List operations with user data can raise any exception
-            # Safe behavior: wrap in FlextResult with error code
-            return FlextResult[bool].fail(
-                f"Context push failed: {e}",
-                error_code="CONTEXT_ERROR",
-            )
+        return self._run_pipeline(message, operation)
 
-    def pop_context(self) -> FlextResult[bool]:
-        """Pop context (ExecutionContextManager protocol).
+    def _run_pipeline(
+        self, message: MessageT_contra, operation: str = "command"
+    ) -> FlextResult[ResultT]:
+        """Run the handler execution pipeline (internal).
 
-        Part of ExecutionContextManager protocol implementation.
+        Internal implementation that executes the full handler pipeline including
+        mode validation, can_handle check, message validation, execution,
+        context tracking, and metrics recording.
+
+        Args:
+            message: The message to process
+            operation: Operation type (command, query, event)
 
         Returns:
-            FlextResult[bool]: Success with True if popped, failure otherwise
+            FlextResult[ResultT]: Handler execution result
 
         """
-        try:
-            if not hasattr(self, "_context_stack"):
-                self._context_stack = []
-            if self._context_stack:
-                self._context_stack.pop()
-            return self.ok(True)
-        except Exception as e:
-            # VALIDATION HIERARCHY - Context pop (MEDIUM)
-            # List operations can raise unexpected exceptions
-            # Safe behavior: wrap in FlextResult with error code
-            return self.fail(
-                f"Context pop failed: {e}",
-                error_code="CONTEXT_ERROR",
+        # Validate handler mode matches operation
+        handler_mode = self._config_model.handler_mode.value
+        if operation != handler_mode and operation in {"command", "query", "event"}:
+            error_msg = (
+                f"Handler with mode '{handler_mode}' "
+                f"cannot execute {operation} pipelines"
             )
+            return FlextResult[ResultT].fail(error_msg)
+
+        # Check if handler can handle message type
+        message_type = type(message)
+        if not self.can_handle(message_type):
+            type_name = message_type.__name__
+            error_msg = f"Handler cannot handle message type {type_name}"
+            return FlextResult[ResultT].fail(error_msg)
+
+        # Validate message based on operation type
+        if operation == "command":
+            validation = self.validate_command(message)
+        elif operation == "query":
+            validation = self.validate_query(message)
+        else:
+            validation = self.validate(message)
+
+        if validation.is_failure:
+            error_detail = validation.error or "Validation failed"
+            error_msg = f"Message validation failed: {error_detail}"
+            return FlextResult[ResultT].fail(error_msg)
+
+        # Start execution timing
+        self._execution_context.start_execution()
+
+        # Extract message ID if available
+        message_id: str | None = None
+        if isinstance(message, dict):
+            message_id = str(
+                message.get("command_id") or message.get("message_id") or ""
+            )
+        elif hasattr(message, "command_id"):
+            message_id = str(getattr(message, "command_id", ""))
+        elif hasattr(message, "message_id"):
+            message_id = str(getattr(message, "message_id", ""))
+
+        # Push execution context
+        self.push_context(
+            {
+                "operation": operation,
+                "message_id": message_id,
+                "handler_name": self._config_model.handler_name,
+            }
+        )
+
+        try:
+            # Execute handler
+            result = self.handle(message)
+
+            # Record execution metrics (execution_time_ms is a property)
+            exec_time = self._execution_context.execution_time_ms
+            self.record_metric("execution_time_ms", exec_time)
+            self.record_metric("success", result.is_success)
+
+            return result
+        except Exception as exc:
+            # Record failure metrics
+            exec_time = self._execution_context.execution_time_ms
+            self.record_metric("execution_time_ms", exec_time)
+            self.record_metric("success", False)
+            self.record_metric("error", str(exc))
+            error_msg = f"Critical handler failure: {exc}"
+            return FlextResult[ResultT].fail(error_msg)
+        finally:
+            # Pop execution context
+            self.pop_context()
+
+    def __call__(self, input_data: MessageT_contra) -> FlextResult[ResultT]:
+        """Callable interface for seamless integration with dispatchers.
+
+        Enables handlers to be used as callable objects, providing a clean
+        interface for dispatcher systems and middleware. Internally delegates
+        to the execute() method for full validation and error handling pipeline.
+
+        Args:
+            input_data: Input message to handle
+
+        Returns:
+            FlextResult[ResultT]: Handler execution result
+
+        Example:
+            >>> handler = UserHandler()
+            >>> result = handler(command)  # Equivalent to handler.execute(command)
+
+        """
+        return self.execute(input_data)
 
 
-__all__: list[str] = [
-    "FlextHandlers",
-]
+__all__ = ["FlextHandlers"]

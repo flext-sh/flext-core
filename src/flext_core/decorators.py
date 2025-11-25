@@ -124,7 +124,7 @@ class FlextDecorators:
     ```
 
         return func(*args, **kwargs)
-    - All decorators use thread-safe FlextContainer.get_global()
+    - All decorators use thread-safe FlextContainer singleton
     - Context binding is thread-safe via FlextContext.contextvars
     - FlextLogger context binding is thread-safe
     - No decorator maintains mutable state across calls
@@ -341,7 +341,7 @@ class FlextDecorators:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 # Get container from self if available, otherwise use global
-                container = FlextContainer.get_global()
+                container = FlextContainer()
 
                 # Inject dependencies that aren't already provided
                 for name, service_key in dependencies.items():

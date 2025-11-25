@@ -342,6 +342,7 @@ from __future__ import annotations
 from beartype import BeartypeConf, BeartypeStrategy
 
 from flext_core.__version__ import __version__, __version_info__
+from flext_core._models.collections import FlextModelsCollections
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
@@ -359,17 +360,18 @@ from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
 from flext_core.typings import (
+    CallableInputT,
+    CallableOutputT,
     Command,
     E,
     Event,
     F,
+    FactoryT,
     FlextTypes,
-    HostName,
     K,
     Message,
-    NonEmptyStr,
+    MessageT_contra,
     P,
-    PortNumber,
     Query,
     R,
     ResultT,
@@ -379,7 +381,9 @@ from flext_core.typings import (
     T2_co,
     T3_co,
     T_co,
+    T_Config,
     T_contra,
+    T_Namespace,
     TAggregate_co,
     TCacheKey_contra,
     TCacheValue_co,
@@ -390,10 +394,14 @@ from flext_core.typings import (
     TEvent_contra,
     TimeoutSeconds,
     TInput_contra,
+    TInput_Handler_contra,
+    TInput_Handler_Protocol_contra,
     TItem_contra,
     TQuery_contra,
     TResult_co,
     TResult_contra,
+    TResult_Handler_co,
+    TResult_Handler_Protocol,
     TState_co,
     TUtil_contra,
     TValue_co,
@@ -405,7 +413,6 @@ from flext_core.typings import (
 from flext_core.utilities import FlextUtilities
 
 # Type aliases for nested FlextConfig attributes (pyrefly compatibility)
-# These enable proper type-checking for @FlextConfig.auto_register() pattern
 AutoConfig = FlextConfig.AutoConfig
 auto_register = FlextConfig.auto_register
 
@@ -435,10 +442,13 @@ BEARTYPE_CONF = BeartypeConf(
 __all__ = [
     "BEARTYPE_CONF",
     "AutoConfig",
+    "CallableInputT",
+    "CallableOutputT",
     "Command",
     "E",
     "Event",
     "F",
+    "FactoryT",
     "FlextConfig",
     "FlextConstants",
     "FlextContainer",
@@ -451,6 +461,7 @@ __all__ = [
     "FlextLoggerResultAdapter",
     "FlextMixins",
     "FlextModels",
+    "FlextModelsCollections",
     "FlextProtocols",
     "FlextRegistry",
     "FlextResult",
@@ -458,12 +469,10 @@ __all__ = [
     "FlextService",
     "FlextTypes",
     "FlextUtilities",
-    "HostName",
     "K",
     "Message",
-    "NonEmptyStr",
+    "MessageT_contra",
     "P",
-    "PortNumber",
     "Query",
     "R",
     "ResultT",
@@ -480,15 +489,21 @@ __all__ = [
     "TDomainEvent_co",
     "TEntity_co",
     "TEvent_contra",
+    "TInput_Handler_Protocol_contra",
+    "TInput_Handler_contra",
     "TInput_contra",
     "TItem_contra",
     "TQuery_contra",
+    "TResult_Handler_Protocol",
+    "TResult_Handler_co",
     "TResult_co",
     "TResult_contra",
     "TState_co",
     "TUtil_contra",
     "TValueObject_co",
     "TValue_co",
+    "T_Config",
+    "T_Namespace",
     "T_co",
     "T_contra",
     "TimeoutSeconds",
@@ -498,5 +513,4 @@ __all__ = [
     "__version__",
     "__version_info__",
     "auto_register",
-    "flext_tests",
 ]

@@ -255,3 +255,63 @@ class FlextTestsUtilities:
     def assertion(cls) -> object:
         """Get assertion instance (for compatibility - returns matchers instance)."""
         return FlextTestsMatchers()
+
+    class ResultHelpers:
+        """Helpers for FlextResult testing."""
+
+        @staticmethod
+        def create_success_result(value: object) -> FlextResult[object]:
+            """Create a successful FlextResult with given value."""
+            return FlextResult[object].ok(value)
+
+        @staticmethod
+        def create_failure_result(
+            error: str,
+            error_code: str | None = None,
+        ) -> FlextResult[object]:
+            """Create a failed FlextResult with given error."""
+            return FlextResult[object].fail(error, error_code=error_code)
+
+        @staticmethod
+        def assert_success_with_value(
+            result: FlextResult[object],
+            expected_value: object,
+        ) -> None:
+            """Assert result is success and has expected value."""
+            assert result.is_success, f"Expected success, got failure: {result.error}"
+            assert result.value == expected_value
+
+        @staticmethod
+        def assert_failure_with_error(
+            result: FlextResult[object],
+            expected_error: str | None = None,
+        ) -> None:
+            """Assert result is failure and has expected error."""
+            assert result.is_failure, f"Expected failure, got success: {result.value}"
+            if expected_error:
+                assert result.error is not None
+                assert expected_error in result.error
+
+        @staticmethod
+        def create_test_cases(
+            success_cases: list[tuple[object, object]],
+            failure_cases: list[tuple[str, str | None]],
+        ) -> list[tuple[object, bool, object | None, str | None]]:
+            """Create parametrized test cases for Result testing.
+
+            Args:
+                success_cases: List of (value, expected_value) tuples
+                failure_cases: List of (error, error_code) tuples
+
+            Returns:
+                List of (result, is_success, expected_value, expected_error) tuples
+
+            """
+            cases: list[tuple[object, bool, object | None, str | None]] = []
+            for value, expected in success_cases:
+                result = FlextResult[object].ok(value)
+                cases.append((result, True, expected, None))
+            for error, error_code in failure_cases:
+                result = FlextResult[object].fail(error, error_code=error_code)
+                cases.append((result, False, None, error))
+            return cases

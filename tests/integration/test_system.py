@@ -148,14 +148,14 @@ class TestCompleteFlextSystemIntegration:
 
     def _test_utilities(self) -> None:
         """Test utilities and helper functions."""
-        # Geração de UUID
-        generated_uuid = FlextUtilities.Generators.generate_uuid()
-        assert isinstance(generated_uuid, str)
-        assert len(generated_uuid) == 36  # Formato padrão UUID
+        # Geração de ID
+        generated_id = FlextUtilities.Generators.generate_id()
+        assert isinstance(generated_id, str)
+        assert len(generated_id) == 36  # Formato padrão UUID
 
         # Verificar que é um UUID válido
-        uuid_obj = uuid.UUID(generated_uuid)
-        assert str(uuid_obj) == generated_uuid
+        uuid_obj = uuid.UUID(generated_id)
+        assert str(uuid_obj) == generated_id
 
         # Geração de timestamp
         timestamp = FlextUtilities.Generators.generate_iso_timestamp()
@@ -179,7 +179,7 @@ class TestCompleteFlextSystemIntegration:
         """Test container system (Dependency Injection)."""
         # Teste do sistema de container
         # API changed: use get_global() instead of ensure_global_manager()
-        container = FlextContainer.get_global()
+        container = FlextContainer()
 
         # Registrar serviço
         register_result = container.with_service("test_service", "test_value")

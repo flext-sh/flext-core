@@ -1,7 +1,12 @@
 """Comprehensive tests for FlextUtilities.DataMapper - 100% coverage target.
 
+Tested modules: flext_core._utilities.data_mapper
+Test scope: Data mapping utilities for dict key mapping, flags building, active keys
+collection, value transformation, dict filtering, and inversion with full edge case coverage.
+
 This module provides real tests (no mocks) for all data mapping functions
-in FlextUtilities.DataMapper to achieve 100% code coverage.
+in FlextUtilities.DataMapper to achieve 100% code coverage using advanced Python
+patterns for code reduction and maintainability.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,247 +16,420 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextUtilities
+import pytest
 
-# ============================================================================
-# Test Map Dict Keys
-# ============================================================================
+from flext_core import FlextResult
+from tests.fixtures.constants import TestConstants
+from tests.helpers import (
+    BadDict,
+    BadDictGet,
+    BadList,
+    DataMapperTestCase,
+    DataMapperTestHelpers,
+    DataMapperTestType,
+)
 
 
-class TestFlextUtilitiesDataMapperMapDictKeys:
-    """Test map_dict_keys method."""
+class TestFlextUtilitiesDataMapper:
+    """Comprehensive tests for FlextUtilities.DataMapper using advanced patterns."""
 
-    def test_map_dict_keys_basic(self) -> None:
-        """Test basic dict key mapping."""
-        source: dict[str, object] = {"old_key": "value1", "foo": "value2"}
-        mapping: dict[str, str] = {"old_key": "new_key", "foo": "bar"}
-        result = FlextUtilities.DataMapper.map_dict_keys(source, mapping)
-        assert result.is_success
-        assert result.unwrap() == {"new_key": "value1", "bar": "value2"}
+    # ============================================================================
+    # Factory Methods for Test Cases
+    # ============================================================================
 
-    def test_map_dict_keys_keep_unmapped(self) -> None:
-        """Test mapping with keep_unmapped=True."""
-        source: dict[str, object] = {"old_key": "value1", "unmapped": "value2"}
-        mapping: dict[str, str] = {"old_key": "new_key"}
-        result = FlextUtilities.DataMapper.map_dict_keys(
-            source,
-            mapping,
-            keep_unmapped=True,
+    @staticmethod
+    def create_map_dict_keys_cases() -> list[DataMapperTestCase]:
+        """Create test cases for dict key mapping."""
+        return [
+            DataMapperTestCase(
+                test_type=DataMapperTestType.MAP_DICT_KEYS,
+                description="basic",
+                input_data={
+                    "source": {
+                        TestConstants.DataMapper.OLD_KEY: TestConstants.DataMapper.VALUE1,
+                        TestConstants.DataMapper.FOO: TestConstants.DataMapper.VALUE2,
+                    },
+                    "mapping": {
+                        TestConstants.DataMapper.OLD_KEY: TestConstants.DataMapper.NEW_KEY,
+                        TestConstants.DataMapper.FOO: TestConstants.DataMapper.BAR,
+                    },
+                },
+                expected_result={
+                    TestConstants.DataMapper.NEW_KEY: TestConstants.DataMapper.VALUE1,
+                    TestConstants.DataMapper.BAR: TestConstants.DataMapper.VALUE2,
+                },
+            ),
+            DataMapperTestCase(
+                test_type=DataMapperTestType.MAP_DICT_KEYS,
+                description="keep_unmapped",
+                input_data={
+                    "source": {
+                        TestConstants.DataMapper.OLD_KEY: TestConstants.DataMapper.VALUE1,
+                        TestConstants.DataMapper.UNMAPPED: TestConstants.DataMapper.VALUE2,
+                    },
+                    "mapping": {
+                        TestConstants.DataMapper.OLD_KEY: TestConstants.DataMapper.NEW_KEY
+                    },
+                    "keep_unmapped": True,
+                },
+                expected_result={
+                    TestConstants.DataMapper.NEW_KEY: TestConstants.DataMapper.VALUE1,
+                    TestConstants.DataMapper.UNMAPPED: TestConstants.DataMapper.VALUE2,
+                },
+            ),
+            DataMapperTestCase(
+                test_type=DataMapperTestType.MAP_DICT_KEYS,
+                description="no_keep_unmapped",
+                input_data={
+                    "source": {
+                        TestConstants.DataMapper.OLD_KEY: TestConstants.DataMapper.VALUE1,
+                        TestConstants.DataMapper.UNMAPPED: TestConstants.DataMapper.VALUE2,
+                    },
+                    "mapping": {
+                        TestConstants.DataMapper.OLD_KEY: TestConstants.DataMapper.NEW_KEY
+                    },
+                    "keep_unmapped": False,
+                },
+                expected_result={
+                    TestConstants.DataMapper.NEW_KEY: TestConstants.DataMapper.VALUE1
+                },
+            ),
+            DataMapperTestCase(
+                test_type=DataMapperTestType.MAP_DICT_KEYS,
+                description="exception_handling",
+                input_data={
+                    "source": cast("dict[str, object]", BadDict()),
+                    "mapping": {},
+                },
+                expected_result=None,
+                expected_success=False,
+            ),
+        ]
+
+    @staticmethod
+    def create_build_flags_dict_cases() -> list[DataMapperTestCase]:
+        """Create test cases for flags dict building."""
+        return [
+            DataMapperTestCase(
+                test_type=DataMapperTestType.BUILD_FLAGS_DICT,
+                description="basic",
+                input_data={
+                    "flags": [
+                        TestConstants.DataMapper.FLAGS_READ,
+                        TestConstants.DataMapper.FLAGS_WRITE,
+                    ],
+                    "mapping": {
+                        TestConstants.DataMapper.FLAGS_READ: TestConstants.DataMapper.CAN_READ,
+                        TestConstants.DataMapper.FLAGS_WRITE: TestConstants.DataMapper.CAN_WRITE,
+                        TestConstants.DataMapper.FLAGS_DELETE: TestConstants.DataMapper.CAN_DELETE,
+                    },
+                },
+                expected_result={
+                    TestConstants.DataMapper.CAN_READ: True,
+                    TestConstants.DataMapper.CAN_WRITE: True,
+                    TestConstants.DataMapper.CAN_DELETE: False,
+                },
+            ),
+            DataMapperTestCase(
+                test_type=DataMapperTestType.BUILD_FLAGS_DICT,
+                description="custom_default",
+                input_data={
+                    "flags": [TestConstants.DataMapper.FLAGS_READ],
+                    "mapping": {
+                        TestConstants.DataMapper.FLAGS_READ: TestConstants.DataMapper.CAN_READ,
+                        TestConstants.DataMapper.FLAGS_WRITE: TestConstants.DataMapper.CAN_WRITE,
+                    },
+                    "default_value": True,
+                },
+                expected_result={
+                    TestConstants.DataMapper.CAN_READ: True,
+                    TestConstants.DataMapper.CAN_WRITE: True,
+                },
+            ),
+            DataMapperTestCase(
+                test_type=DataMapperTestType.BUILD_FLAGS_DICT,
+                description="exception_handling",
+                input_data={"flags": cast("list[str]", BadList()), "mapping": {}},
+                expected_result=None,
+                expected_success=False,
+            ),
+        ]
+
+    @staticmethod
+    def create_collect_active_keys_cases() -> list[DataMapperTestCase]:
+        """Create test cases for active keys collection."""
+        return [
+            DataMapperTestCase(
+                test_type=DataMapperTestType.COLLECT_ACTIVE_KEYS,
+                description="basic",
+                input_data={
+                    "source": {
+                        TestConstants.DataMapper.FLAGS_READ: True,
+                        TestConstants.DataMapper.FLAGS_WRITE: True,
+                        TestConstants.DataMapper.FLAGS_DELETE: False,
+                    },
+                    "mapping": {
+                        TestConstants.DataMapper.FLAGS_READ: "r",
+                        TestConstants.DataMapper.FLAGS_WRITE: "w",
+                        TestConstants.DataMapper.FLAGS_DELETE: "d",
+                    },
+                },
+                expected_result=["r", "w"],
+            ),
+            DataMapperTestCase(
+                test_type=DataMapperTestType.COLLECT_ACTIVE_KEYS,
+                description="none_active",
+                input_data={
+                    "source": {
+                        TestConstants.DataMapper.FLAGS_READ: False,
+                        TestConstants.DataMapper.FLAGS_WRITE: False,
+                    },
+                    "mapping": {
+                        TestConstants.DataMapper.FLAGS_READ: "r",
+                        TestConstants.DataMapper.FLAGS_WRITE: "w",
+                    },
+                },
+                expected_result=[],
+            ),
+            DataMapperTestCase(
+                test_type=DataMapperTestType.COLLECT_ACTIVE_KEYS,
+                description="exception_handling",
+                input_data={
+                    "source": cast("dict[str, bool]", BadDictGet()),
+                    "mapping": {"key": "output"},
+                },
+                expected_result=None,
+                expected_success=False,
+            ),
+        ]
+
+    @staticmethod
+    def create_transform_values_cases() -> list[DataMapperTestCase]:
+        """Create test cases for value transformation."""
+        return [
+            DataMapperTestCase(
+                test_type=DataMapperTestType.TRANSFORM_VALUES,
+                description="basic",
+                input_data={
+                    "source": {
+                        TestConstants.DataMapper.A: TestConstants.DataMapper.HELLO,
+                        TestConstants.DataMapper.B: TestConstants.DataMapper.WORLD,
+                    },
+                    "transform_func": lambda v: str(v).upper(),
+                },
+                expected_result={
+                    TestConstants.DataMapper.A: TestConstants.DataMapper.HELLO_UPPER,
+                    TestConstants.DataMapper.B: TestConstants.DataMapper.WORLD_UPPER,
+                },
+            ),
+            DataMapperTestCase(
+                test_type=DataMapperTestType.TRANSFORM_VALUES,
+                description="numbers",
+                input_data={
+                    "source": {
+                        TestConstants.DataMapper.A: TestConstants.DataMapper.NUM_1,
+                        TestConstants.DataMapper.B: TestConstants.DataMapper.NUM_2,
+                        TestConstants.DataMapper.C: TestConstants.DataMapper.NUM_3,
+                    },
+                    "transform_func": lambda v: v * 2 if isinstance(v, int) else v,
+                },
+                expected_result={
+                    TestConstants.DataMapper.A: 2,
+                    TestConstants.DataMapper.B: 4,
+                    TestConstants.DataMapper.C: 6,
+                },
+            ),
+        ]
+
+    @staticmethod
+    def create_filter_dict_cases() -> list[DataMapperTestCase]:
+        """Create test cases for dict filtering."""
+        return [
+            DataMapperTestCase(
+                test_type=DataMapperTestType.FILTER_DICT,
+                description="basic",
+                input_data={
+                    "source": {
+                        TestConstants.DataMapper.A: TestConstants.DataMapper.NUM_1,
+                        TestConstants.DataMapper.B: TestConstants.DataMapper.NUM_2,
+                        TestConstants.DataMapper.C: TestConstants.DataMapper.NUM_3,
+                    },
+                    "filter_func": lambda k, v: v > 1 if isinstance(v, int) else False,
+                },
+                expected_result={
+                    TestConstants.DataMapper.B: TestConstants.DataMapper.NUM_2,
+                    TestConstants.DataMapper.C: TestConstants.DataMapper.NUM_3,
+                },
+            ),
+            DataMapperTestCase(
+                test_type=DataMapperTestType.FILTER_DICT,
+                description="by_key",
+                input_data={
+                    "source": {
+                        TestConstants.DataMapper.A: TestConstants.DataMapper.NUM_1,
+                        TestConstants.DataMapper.B: TestConstants.DataMapper.NUM_2,
+                        TestConstants.DataMapper.C: TestConstants.DataMapper.NUM_3,
+                    },
+                    "filter_func": lambda k, v: k != TestConstants.DataMapper.B,
+                },
+                expected_result={
+                    TestConstants.DataMapper.A: TestConstants.DataMapper.NUM_1,
+                    TestConstants.DataMapper.C: TestConstants.DataMapper.NUM_3,
+                },
+            ),
+            DataMapperTestCase(
+                test_type=DataMapperTestType.FILTER_DICT,
+                description="all_filtered",
+                input_data={
+                    "source": {
+                        TestConstants.DataMapper.A: TestConstants.DataMapper.NUM_1,
+                        TestConstants.DataMapper.B: TestConstants.DataMapper.NUM_2,
+                    },
+                    "filter_func": lambda k, v: False,
+                },
+                expected_result={},
+            ),
+        ]
+
+    @staticmethod
+    def create_invert_dict_cases() -> list[DataMapperTestCase]:
+        """Create test cases for dict inversion."""
+        return [
+            DataMapperTestCase(
+                test_type=DataMapperTestType.INVERT_DICT,
+                description="basic",
+                input_data={
+                    "source": {
+                        TestConstants.DataMapper.A: TestConstants.DataMapper.X,
+                        TestConstants.DataMapper.B: TestConstants.DataMapper.Y,
+                    },
+                },
+                expected_result={
+                    TestConstants.DataMapper.X: TestConstants.DataMapper.A,
+                    TestConstants.DataMapper.Y: TestConstants.DataMapper.B,
+                },
+            ),
+            DataMapperTestCase(
+                test_type=DataMapperTestType.INVERT_DICT,
+                description="collisions_last",
+                input_data={
+                    "source": {
+                        TestConstants.DataMapper.A: TestConstants.DataMapper.X,
+                        TestConstants.DataMapper.B: TestConstants.DataMapper.Y,
+                        TestConstants.DataMapper.C: TestConstants.DataMapper.X,
+                    },
+                    "handle_collisions": "last",
+                },
+                expected_result={
+                    TestConstants.DataMapper.X: TestConstants.DataMapper.C,
+                    TestConstants.DataMapper.Y: TestConstants.DataMapper.B,
+                },
+            ),
+            DataMapperTestCase(
+                test_type=DataMapperTestType.INVERT_DICT,
+                description="collisions_first",
+                input_data={
+                    "source": {
+                        TestConstants.DataMapper.A: TestConstants.DataMapper.X,
+                        TestConstants.DataMapper.B: TestConstants.DataMapper.Y,
+                        TestConstants.DataMapper.C: TestConstants.DataMapper.X,
+                    },
+                    "handle_collisions": "first",
+                },
+                expected_result={
+                    TestConstants.DataMapper.X: TestConstants.DataMapper.A,
+                    TestConstants.DataMapper.Y: TestConstants.DataMapper.B,
+                },
+            ),
+        ]
+
+    # ============================================================================
+    # Parametrized Tests
+    # ============================================================================
+
+    @pytest.mark.parametrize(
+        "test_case",
+        create_map_dict_keys_cases.__func__(),
+        ids=lambda case: f"map_dict_keys_{case.description}",
+    )
+    def test_map_dict_keys(self, test_case: DataMapperTestCase) -> None:
+        """Test map_dict_keys with various scenarios."""
+        result = cast(
+            "FlextResult[object]",
+            DataMapperTestHelpers.execute_data_mapper_test(test_case),
         )
-        assert result.is_success
-        assert result.unwrap() == {"new_key": "value1", "unmapped": "value2"}
+        if test_case.expected_success:
+            assert result.is_success
+            assert result.unwrap() == test_case.expected_result
+        else:
+            assert result.is_failure
+            assert result.error is not None
+            assert "Failed to map" in result.error
 
-    def test_map_dict_keys_no_keep_unmapped(self) -> None:
-        """Test mapping with keep_unmapped=False."""
-        source: dict[str, object] = {"old_key": "value1", "unmapped": "value2"}
-        mapping: dict[str, str] = {"old_key": "new_key"}
-        result = FlextUtilities.DataMapper.map_dict_keys(
-            source,
-            mapping,
-            keep_unmapped=False,
+    @pytest.mark.parametrize(
+        "test_case",
+        create_build_flags_dict_cases.__func__(),
+        ids=lambda case: f"build_flags_dict_{case.description}",
+    )
+    def test_build_flags_dict(self, test_case: DataMapperTestCase) -> None:
+        """Test build_flags_dict with various scenarios."""
+        result = cast(
+            "FlextResult[object]",
+            DataMapperTestHelpers.execute_data_mapper_test(test_case),
         )
-        assert result.is_success
-        assert result.unwrap() == {"new_key": "value1"}
+        if test_case.expected_success:
+            assert result.is_success
+            assert result.unwrap() == test_case.expected_result
+        else:
+            assert result.is_failure
+            assert result.error is not None
+            assert "Failed to build" in result.error
 
-    def test_map_dict_keys_exception_handling(self) -> None:
-        """Test mapping exception handling."""
-
-        # Create dict that will fail on items()
-        class BadDict:
-            def items(self) -> list[tuple[str, object]]:
-                msg = "Items failed"
-                raise RuntimeError(msg)
-
-        bad = BadDict()
-        result = FlextUtilities.DataMapper.map_dict_keys(
-            cast("dict[str, object]", bad), {}
+    @pytest.mark.parametrize(
+        "test_case",
+        create_collect_active_keys_cases.__func__(),
+        ids=lambda case: f"collect_active_keys_{case.description}",
+    )
+    def test_collect_active_keys(self, test_case: DataMapperTestCase) -> None:
+        """Test collect_active_keys with various scenarios."""
+        result = cast(
+            "FlextResult[object]",
+            DataMapperTestHelpers.execute_data_mapper_test(test_case),
         )
-        assert result.is_failure
-        assert result.error is not None
-        assert "Failed to map" in result.error
+        if test_case.expected_success:
+            assert result.is_success
+            assert result.unwrap() == test_case.expected_result
+        else:
+            assert result.is_failure
+            assert result.error is not None
+            assert "Failed to collect" in result.error
 
+    @pytest.mark.parametrize(
+        "test_case",
+        create_transform_values_cases.__func__(),
+        ids=lambda case: f"transform_values_{case.description}",
+    )
+    def test_transform_values(self, test_case: DataMapperTestCase) -> None:
+        """Test transform_values with various scenarios."""
+        result = DataMapperTestHelpers.execute_data_mapper_test(test_case)
+        assert result == test_case.expected_result
 
-# ============================================================================
-# Test Build Flags Dict
-# ============================================================================
+    @pytest.mark.parametrize(
+        "test_case",
+        create_filter_dict_cases.__func__(),
+        ids=lambda case: f"filter_dict_{case.description}",
+    )
+    def test_filter_dict(self, test_case: DataMapperTestCase) -> None:
+        """Test filter_dict with various scenarios."""
+        result = DataMapperTestHelpers.execute_data_mapper_test(test_case)
+        assert result == test_case.expected_result
 
-
-class TestFlextUtilitiesDataMapperBuildFlagsDict:
-    """Test build_flags_dict method."""
-
-    def test_build_flags_dict_basic(self) -> None:
-        """Test basic flags dict building."""
-        flags = ["read", "write"]
-        mapping = {"read": "can_read", "write": "can_write", "delete": "can_delete"}
-        result = FlextUtilities.DataMapper.build_flags_dict(flags, mapping)
-        assert result.is_success
-        flags_dict = result.unwrap()
-        assert flags_dict["can_read"] is True
-        assert flags_dict["can_write"] is True
-        assert flags_dict["can_delete"] is False
-
-    def test_build_flags_dict_custom_default(self) -> None:
-        """Test flags dict with custom default value."""
-        flags = ["read"]
-        mapping = {"read": "can_read", "write": "can_write"}
-        result = FlextUtilities.DataMapper.build_flags_dict(
-            flags,
-            mapping,
-            default_value=True,
-        )
-        assert result.is_success
-        flags_dict = result.unwrap()
-        assert flags_dict["can_read"] is True
-        assert flags_dict["can_write"] is True  # Default is True
-
-    def test_build_flags_dict_exception_handling(self) -> None:
-        """Test flags dict exception handling."""
-
-        # Create list that will fail on iteration
-        class BadList:
-            def __iter__(self) -> object:
-                msg = "Iteration failed"
-                raise RuntimeError(msg)
-
-        bad = BadList()
-        result = FlextUtilities.DataMapper.build_flags_dict(cast("list[str]", bad), {})
-        assert result.is_failure
-        assert result.error is not None
-        assert "Failed to build" in result.error
-
-
-# ============================================================================
-# Test Collect Active Keys
-# ============================================================================
-
-
-class TestFlextUtilitiesDataMapperCollectActiveKeys:
-    """Test collect_active_keys method."""
-
-    def test_collect_active_keys_basic(self) -> None:
-        """Test basic active keys collection."""
-        source = {"read": True, "write": True, "delete": False}
-        mapping = {"read": "r", "write": "w", "delete": "d"}
-        result = FlextUtilities.DataMapper.collect_active_keys(source, mapping)
-        assert result.is_success
-        assert result.unwrap() == ["r", "w"]
-
-    def test_collect_active_keys_none_active(self) -> None:
-        """Test collection with no active keys."""
-        source = {"read": False, "write": False}
-        mapping = {"read": "r", "write": "w"}
-        result = FlextUtilities.DataMapper.collect_active_keys(source, mapping)
-        assert result.is_success
-        assert result.unwrap() == []
-
-    def test_collect_active_keys_exception_handling(self) -> None:
-        """Test collection exception handling."""
-
-        # Create dict that will fail on get()
-        class BadDict:
-            def get(self, key: str) -> bool:
-                msg = "Get failed"
-                raise RuntimeError(msg)
-
-        bad = BadDict()
-        result = FlextUtilities.DataMapper.collect_active_keys(
-            cast("dict[str, bool]", bad), {"key": "output"}
-        )
-        assert result.is_failure
-        assert result.error is not None
-        assert "Failed to collect" in result.error
-
-
-# ============================================================================
-# Test Transform Values
-# ============================================================================
-
-
-class TestFlextUtilitiesDataMapperTransformValues:
-    """Test transform_values method."""
-
-    def test_transform_values_basic(self) -> None:
-        """Test basic value transformation."""
-        source: dict[str, object] = {"a": "hello", "b": "world"}
-        result = FlextUtilities.DataMapper.transform_values(
-            source,
-            lambda v: str(v).upper(),
-        )
-        assert result == {"a": "HELLO", "b": "WORLD"}
-
-    def test_transform_values_numbers(self) -> None:
-        """Test transforming numeric values."""
-        source: dict[str, object] = {"a": 1, "b": 2, "c": 3}
-        # Transform function needs to handle object type
-
-        def transform_func(v: object) -> object:
-            if isinstance(v, int):
-                return v * 2
-            return v
-
-        result = FlextUtilities.DataMapper.transform_values(source, transform_func)
-        assert result == {"a": 2, "b": 4, "c": 6}
-
-
-# ============================================================================
-# Test Filter Dict
-# ============================================================================
-
-
-class TestFlextUtilitiesDataMapperFilterDict:
-    """Test filter_dict method."""
-
-    def test_filter_dict_basic(self) -> None:
-        """Test basic dict filtering."""
-        source: dict[str, object] = {"a": 1, "b": 2, "c": 3}
-        # Filter function needs to handle object type
-
-        def filter_func(k: str, v: object) -> bool:
-            if isinstance(v, int):
-                return v > 1
-            return False
-
-        result = FlextUtilities.DataMapper.filter_dict(source, filter_func)
-        assert result == {"b": 2, "c": 3}
-
-    def test_filter_dict_by_key(self) -> None:
-        """Test filtering by key."""
-        source: dict[str, object] = {"a": 1, "b": 2, "c": 3}
-        result = FlextUtilities.DataMapper.filter_dict(source, lambda k, v: k != "b")
-        assert result == {"a": 1, "c": 3}
-
-    def test_filter_dict_all_filtered(self) -> None:
-        """Test filtering that removes all items."""
-        source: dict[str, object] = {"a": 1, "b": 2}
-        result = FlextUtilities.DataMapper.filter_dict(source, lambda k, v: False)
-        assert result == {}
-
-
-# ============================================================================
-# Test Invert Dict
-# ============================================================================
-
-
-class TestFlextUtilitiesDataMapperInvertDict:
-    """Test invert_dict method."""
-
-    def test_invert_dict_basic(self) -> None:
-        """Test basic dict inversion."""
-        source = {"a": "x", "b": "y"}
-        result = FlextUtilities.DataMapper.invert_dict(source)
-        assert result == {"x": "a", "y": "b"}
-
-    def test_invert_dict_collisions_last(self) -> None:
-        """Test inversion with collisions, keep last."""
-        source = {"a": "x", "b": "y", "c": "x"}
-        result = FlextUtilities.DataMapper.invert_dict(source, handle_collisions="last")
-        assert result == {"x": "c", "y": "b"}  # Last "x" kept
-
-    def test_invert_dict_collisions_first(self) -> None:
-        """Test inversion with collisions, keep first."""
-        source = {"a": "x", "b": "y", "c": "x"}
-        result = FlextUtilities.DataMapper.invert_dict(
-            source,
-            handle_collisions="first",
-        )
-        assert result == {"x": "a", "y": "b"}  # First "x" kept
+    @pytest.mark.parametrize(
+        "test_case",
+        create_invert_dict_cases.__func__(),
+        ids=lambda case: f"invert_dict_{case.description}",
+    )
+    def test_invert_dict(self, test_case: DataMapperTestCase) -> None:
+        """Test invert_dict with various scenarios."""
+        result = DataMapperTestHelpers.execute_data_mapper_test(test_case)
+        assert result == test_case.expected_result
