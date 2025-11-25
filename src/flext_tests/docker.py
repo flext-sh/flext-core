@@ -330,7 +330,10 @@ class FlextTestDocker:
                     service = str(service_value)
 
                 # Recreate container with compose up (fresh volumes)
-                restart_result = self.compose_up(compose_file, service)
+                # Use force_recreate=True because dirty containers need full recreation
+                restart_result = self.compose_up(
+                    compose_file, service, force_recreate=True
+                )
                 if restart_result.is_success:
                     # Mark as clean
                     self.mark_container_clean(container_name)
@@ -522,12 +525,19 @@ class FlextTestDocker:
         self,
         compose_file: str,
         service: str | None = None,
+        force_recreate: bool = False,
     ) -> FlextResult[str]:
         """Start services using docker-compose via Docker Python API.
+
+        This method is designed to work with shared test containers:
+        - If containers are already running and healthy, does nothing
+        - If containers exist but are stopped, starts them without recreating
+        - Only destroys containers if force_recreate=True (for dirty containers)
 
         Args:
             compose_file: Path to docker-compose file (relative or absolute)
             service: Optional specific service to start (if None, starts all)
+            force_recreate: If True, destroys and recreates containers (for dirty state)
 
         Returns:
             FlextResult with status message
@@ -561,63 +571,25 @@ class FlextTestDocker:
                                 str(compose_path),
                             ]
 
-                            # First, clean up any existing containers from previous runs
-                            # This is necessary because --force-recreate doesn't remove stopped containers
-                            try:
-                                # Try to stop and remove containers
-                                docker_client.compose.down(
-                                    remove_orphans=True,
-                                    volumes=True,
-                                )
-                            except Exception:
-                                # If compose.down fails, try to remove containers directly
+                            # Only destroy containers if force_recreate is True
+                            # This is for dirty containers that need full recreation
+                            if force_recreate:
                                 try:
-                                    # Get project name from compose file directory
-                                    project_name = compose_path.parent.name
-                                    # List all containers with compose labels
-                                    all_containers = docker_client.container.list(
-                                        all=True,
+                                    docker_client.compose.down(
+                                        remove_orphans=True,
+                                        volumes=True,
                                     )
-                                    for container in all_containers:
-                                        try:
-                                            # Use getattr for dynamic attribute access
-                                            labels = getattr(container, "labels", {})
-                                            if not isinstance(labels, dict):
-                                                labels = {}
-                                            compose_project = labels.get(
-                                                "com.docker.compose.project",
-                                                "",
-                                            )
-                                            compose_service = labels.get(
-                                                "com.docker.compose.service",
-                                                "",
-                                            )
-                                            # Match containers from this compose file
-                                            if compose_project == project_name or (
-                                                compose_service
-                                                and compose_path.name
-                                                in str(compose_path)
-                                            ):
-                                                try:
-                                                    container.stop()
-                                                except Exception:
-                                                    pass  # May already be stopped
-                                                try:
-                                                    container.remove(force=True)
-                                                except Exception:
-                                                    pass  # May already be removed
-                                        except Exception:
-                                            pass  # Skip containers without labels
                                 except Exception:
-                                    pass  # Ignore errors if compose stack doesn't exist yet
+                                    pass  # Ignore if stack doesn't exist
 
-                            # Now start the services
+                            # Start the services without force-recreate
+                            # This preserves running containers and their volumes
                             services = [service] if service else []
                             docker_client.compose.up(
                                 services=services,
                                 detach=True,
-                                # Use force_recreate to ensure clean start
-                                recreate=True,
+                                # Don't force recreate - reuse running containers
+                                recreate=force_recreate,
                                 remove_orphans=True,
                             )
                         finally:
@@ -647,6 +619,7 @@ class FlextTestDocker:
                     extra={
                         "compose_file": compose_file,
                         "service": service,
+                        "force_recreate": force_recreate,
                     },
                 )
                 return FlextResult[str].ok(f"Compose stack started from {compose_file}")
@@ -1027,28 +1000,79 @@ class FlextTestDocker:
         return FlextResult[list[str]].ok([])
 
     # Class attributes that are expected
+    # compose_file paths are relative to the FLEXT workspace root (/home/marlonsc/flext)
     SHARED_CONTAINERS: ClassVar[dict[str, dict[str, str | int]]] = {
         "flext-openldap-test": {
-            "compose_file": "docker/docker-compose.yml",
+            "compose_file": "flext-ldap/docker/docker-compose.yml",
             "service": "openldap",
             "port": 3390,
         },
         "flext-postgres-test": {
-            "compose_file": "docker/docker-compose.postgres.yml",
+            "compose_file": "flext-db-postgres/docker/docker-compose.yml",
             "service": "postgres",
             "port": 5433,
         },
         "flext-redis-test": {
-            "compose_file": "docker/docker-compose.redis.yml",
+            "compose_file": "flext-redis/docker/docker-compose.yml",
             "service": "redis",
             "port": 6380,
         },
         "flext-oracle-db-test": {
-            "compose_file": "docker/docker-compose.oracle-db.yml",
+            "compose_file": "flext-db-oracle/docker/docker-compose.yml",
             "service": "oracle-db",
             "port": 1522,
         },
     }
+
+    def start_existing_container(self, name: str) -> FlextResult[str]:
+        """Start an existing stopped container without recreating it.
+
+        This method starts a container that already exists but is stopped.
+        Unlike compose_up, it does NOT remove and recreate the container.
+        Use this to preserve container data/state between test sessions.
+
+        Args:
+            name: Name of the existing container to start
+
+        Returns:
+            FlextResult with status message
+
+        """
+        try:
+            client = self.get_client()
+            try:
+                container = client.containers.get(name)
+                container_status = getattr(container, "status", "unknown")
+
+                if container_status == "running":
+                    self.logger.debug(
+                        "Container already running",
+                        extra={"container": name},
+                    )
+                    return FlextResult[str].ok(f"Container {name} already running")
+
+                if container_status in ("exited", "created", "paused"):
+                    # Start the existing container
+                    container.start()
+                    self.logger.info(
+                        "Started existing container",
+                        extra={"container": name, "previous_status": container_status},
+                    )
+                    return FlextResult[str].ok(f"Container {name} started")
+
+                # Unknown state
+                return FlextResult[str].fail(
+                    f"Container {name} in unexpected state: {container_status}"
+                )
+
+            except NotFound:
+                return FlextResult[str].fail(
+                    f"Container {name} not found - use compose_up to create it"
+                )
+
+        except DockerException as e:
+            self.logger.exception("Failed to start existing container")
+            return FlextResult[str].fail(f"Failed to start container: {e}")
 
     def start_container(
         self,
