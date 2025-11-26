@@ -11,8 +11,8 @@ Tests core FlextService functionality including:
 - Business rules validation (success, failure, exception handling)
 - Service metadata retrieval
 
-Uses Python 3.13 patterns (StrEnum, frozen dataclasses with slots),
-centralized test constants, and parametrization for DRY testing.
+Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -28,11 +28,6 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core import FlextResult, FlextService
-from tests.fixtures.constants import TestConstants  # noqa: import-error
-
-# =========================================================================
-# Service Scenario Type Enumeration
-# =========================================================================
 
 
 class ServiceScenarioType(StrEnum):
@@ -45,11 +40,6 @@ class ServiceScenarioType(StrEnum):
     EXCEPTION = "exception"
 
 
-# =========================================================================
-# Test Case Structure
-# =========================================================================
-
-
 @dataclass(frozen=True, slots=True)
 class ServiceScenario:
     """Service test scenario definition."""
@@ -58,11 +48,6 @@ class ServiceScenario:
     scenario_type: ServiceScenarioType
     is_valid_expected: bool
     service_kwargs: dict[str, bool | str] | None = None
-
-
-# =========================================================================
-# Service Implementations
-# =========================================================================
 
 
 class UserService(FlextService[dict]):
@@ -76,22 +61,22 @@ class UserService(FlextService[dict]):
 class ComplexService(FlextService[object]):
     """Service with custom validation rules."""
 
-    name: str = TestConstants.Strings.BASIC_WORD
-    amount: int = TestConstants.Validation.MIN_VALUE
+    name: str = "test"
+    amount: int = 0
     enabled: bool = True
 
     def validate_business_rules(self) -> FlextResult[bool]:
         """Validate business rules."""
         if not self.name:
-            return FlextResult[bool].fail(TestConstants.Result.MISSING_VALUE)
+            return FlextResult[bool].fail("Missing value")
         if self.amount < 0:
-            return FlextResult[bool].fail(TestConstants.Errors.VALUE_TOO_LOW)
+            return FlextResult[bool].fail("Value too low")
         return FlextResult[bool].ok(True)
 
     def execute(self, **_kwargs: object) -> FlextResult[object]:
         """Execute operation."""
         if not self.name:
-            return FlextResult[object].fail(TestConstants.Result.MISSING_VALUE)
+            return FlextResult[object].fail("Missing value")
         return FlextResult[object].ok(f"Processed: {self.name}")
 
 
@@ -100,11 +85,11 @@ class FailingService(FlextService[bool]):
 
     def validate_business_rules(self) -> FlextResult[bool]:
         """Always fail validation."""
-        return FlextResult[bool].fail(TestConstants.Errors.PROCESSING_ERROR)
+        return FlextResult[bool].fail("Processing error")
 
     def execute(self, **_kwargs: object) -> FlextResult[bool]:
         """Execute failing operation."""
-        return FlextResult[bool].fail(TestConstants.Errors.PROCESSING_ERROR)
+        return FlextResult[bool].fail("Processing error")
 
 
 class ExceptionService(FlextService[str]):
@@ -115,52 +100,35 @@ class ExceptionService(FlextService[str]):
     def validate_business_rules(self) -> FlextResult[bool]:
         """Validation that can raise exceptions."""
         if self.should_raise:
-            raise ValueError(TestConstants.Errors.PROCESSING_ERROR)
+            error_msg = "Processing error"
+            raise ValueError(error_msg)
         return FlextResult[bool].ok(True)
 
     def execute(self, **_kwargs: object) -> FlextResult[str]:
         """Execute operation that can raise."""
         if self.should_raise:
-            raise RuntimeError(TestConstants.Errors.PROCESSING_ERROR)
-        return FlextResult[str].ok(TestConstants.Result.TEST_VALUE)
-
-
-# =========================================================================
-# Test Scenario Factory
-# =========================================================================
+            error_msg = "Processing error"
+            raise RuntimeError(error_msg)
+        return FlextResult[str].ok("test_value")
 
 
 class ServiceScenarios:
-    """Factory for service test scenarios."""
+    """Centralized service test scenarios using FlextConstants."""
 
     SCENARIOS: ClassVar[list[ServiceScenario]] = [
+        ServiceScenario("basic_user_service", ServiceScenarioType.BASIC_USER, True),
         ServiceScenario(
-            name="basic_user_service",
-            scenario_type=ServiceScenarioType.BASIC_USER,
-            is_valid_expected=True,
+            "complex_valid", ServiceScenarioType.COMPLEX_VALID, True, {"name": "test"}
         ),
         ServiceScenario(
-            name="complex_valid",
-            scenario_type=ServiceScenarioType.COMPLEX_VALID,
-            is_valid_expected=True,
-            service_kwargs={"name": TestConstants.Strings.BASIC_WORD},
+            "complex_invalid", ServiceScenarioType.COMPLEX_INVALID, False, {"name": ""}
         ),
+        ServiceScenario("failing_service", ServiceScenarioType.FAILING, False),
         ServiceScenario(
-            name="complex_invalid",
-            scenario_type=ServiceScenarioType.COMPLEX_INVALID,
-            is_valid_expected=False,
-            service_kwargs={"name": TestConstants.Strings.EMPTY},
-        ),
-        ServiceScenario(
-            name="failing_service",
-            scenario_type=ServiceScenarioType.FAILING,
-            is_valid_expected=False,
-        ),
-        ServiceScenario(
-            name="exception_handling",
-            scenario_type=ServiceScenarioType.EXCEPTION,
-            is_valid_expected=False,
-            service_kwargs={"should_raise": True},
+            "exception_handling",
+            ServiceScenarioType.EXCEPTION,
+            False,
+            {"should_raise": True},
         ),
     ]
 
@@ -169,26 +137,21 @@ class ServiceScenarios:
         """Create service instance for scenario."""
         kwargs = scenario.service_kwargs or {}
         if scenario.scenario_type == ServiceScenarioType.BASIC_USER:
-            return UserService()  # type: ignore[return-value]
+            return UserService()
         if scenario.scenario_type == ServiceScenarioType.COMPLEX_VALID:
-            return ComplexService(**kwargs)  # type: ignore[arg-type,return-value]
+            return ComplexService(**kwargs)
         if scenario.scenario_type == ServiceScenarioType.COMPLEX_INVALID:
-            return ComplexService(**kwargs)  # type: ignore[arg-type,return-value]
+            return ComplexService(**kwargs)
         if scenario.scenario_type == ServiceScenarioType.FAILING:
-            return FailingService()  # type: ignore[return-value]
+            return FailingService()
         if scenario.scenario_type == ServiceScenarioType.EXCEPTION:
-            return ExceptionService(**kwargs)  # type: ignore[arg-type,return-value]
-        msg = f"Unknown scenario type: {scenario.scenario_type}"
-        raise ValueError(msg)
-
-
-# =========================================================================
-# Test Suite
-# =========================================================================
+            return ExceptionService(**kwargs)
+        error_msg = f"Unknown scenario type: {scenario.scenario_type}"
+        raise ValueError(error_msg)
 
 
 class TestFlextServiceCore:
-    """Unified test suite for FlextService core functionality."""
+    """Unified test suite for FlextService using FlextTestsUtilities."""
 
     def test_basic_service_creation(self) -> None:
         """Test basic service creation and Pydantic configuration."""
@@ -201,26 +164,26 @@ class TestFlextServiceCore:
         """Test service immutability (frozen model)."""
         service = UserService()
         with pytest.raises(ValidationError):
-            service.new_field = TestConstants.Strings.BASIC_WORD  # type: ignore[attr-defined]
+            service.new_field = "test"
 
     def test_execute_abstract_method(self) -> None:
         """Test execute method implementation."""
 
         class ConcreteService(FlextService[str]):
             def execute(self, **_kwargs: object) -> FlextResult[str]:
-                return FlextResult[str].ok(TestConstants.Result.TEST_VALUE)
+                return FlextResult[str].ok("test_value")
 
         service = ConcreteService()
         result = service.execute()
         assert result.is_success
-        assert result.unwrap() == TestConstants.Result.TEST_VALUE
+        assert result.value == "test_value"
 
     def test_basic_execution(self) -> None:
         """Test basic service execution returns expected type."""
         service = UserService()
         result = service.execute()
         assert result.is_success
-        data = result.unwrap()
+        data = result.value
         assert isinstance(data, dict)
         assert "user_id" in data
 
@@ -240,16 +203,17 @@ class TestFlextServiceCore:
 
     def test_validate_business_rules_custom_success(self) -> None:
         """Test custom business rules validation success."""
-        service = ComplexService(name=TestConstants.Strings.BASIC_WORD)
+        service = ComplexService(name="test")
         result = service.validate_business_rules()
         assert result.is_success
 
     def test_validate_business_rules_custom_failure(self) -> None:
         """Test custom business rules validation failure."""
-        service = ComplexService(name=TestConstants.Strings.EMPTY)
+        service = ComplexService(name="")
         result = service.validate_business_rules()
         assert result.is_failure
-        assert TestConstants.Result.MISSING_VALUE in str(result.error)
+        assert result.error is not None
+        assert "Missing value" in result.error
 
     def test_get_service_info(self) -> None:
         """Test get_service_info returns proper metadata."""

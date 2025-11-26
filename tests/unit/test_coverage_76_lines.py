@@ -127,7 +127,14 @@ class TestCoverage76Lines:
 
     def test_result_flat_map_chains_results(self) -> None:
         """Test flat_map chains multiple results."""
-        r = FlextResult[int].ok(1).flat_map(lambda x: FlextResult[int].ok(x + 1))
+        def increment_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, int):
+                result = FlextResult[int].ok(x + 1)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Increment failed")
+            return FlextResult[object].fail("Invalid input")
+        r = FlextResult[int].ok(1).flat_map(increment_wrapper)
         assert r.value == 2
 
     def test_result_error_property(self) -> None:
@@ -151,9 +158,7 @@ class TestCoverage76Lines:
         r_no_data = FlextResult[int].fail("error")
         assert r_no_data.error_data is None
         # With error_data, it's a dict
-        r_with_data = FlextResult[int].fail(
-            "error", error_data={"detail": "info"}
-        )
+        r_with_data = FlextResult[int].fail("error", error_data={"detail": "info"})
         assert isinstance(r_with_data.error_data, dict)
         assert r_with_data.error_data == {"detail": "info"}
 

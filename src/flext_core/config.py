@@ -18,7 +18,7 @@ import os
 import threading
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, ClassVar, Self, cast
+from typing import Any, ClassVar, Self, TypeVar
 
 from dependency_injector import providers
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
@@ -29,6 +29,9 @@ from flext_core.constants import FlextConstants
 from flext_core.typings import T_Namespace
 
 _logger = logging.getLogger(__name__)
+
+# TypeVar for decorator type preservation - bound to BaseSettings
+_TSettings = TypeVar("_TSettings", bound=BaseSettings)
 
 
 def _resolve_env_file_impl() -> str | None:
@@ -365,19 +368,24 @@ class FlextConfig(BaseSettings):
     _namespace_registry: ClassVar[dict[str, type[BaseSettings]]] = {}
 
     @staticmethod
-    def auto_register(namespace: str) -> Callable[[type[BaseSettings]], type[BaseSettings]]:
+    def auto_register(
+        namespace: str,
+    ) -> Callable[[type[_TSettings]], type[_TSettings]]:
         """Decorator for auto-registering configuration classes.
+
+        Uses TypeVar to preserve the original class type through the decorator,
+        ensuring type checkers (pyright/mypy) see the specific class type, not BaseSettings.
 
         Args:
             namespace: Namespace identifier for the configuration
 
         Returns:
-            Decorator function that registers the class
+            Decorator function that registers the class while preserving its type
 
         """
 
-        def decorator(cls: type[BaseSettings]) -> type[BaseSettings]:
-            """Register the configuration class."""
+        def decorator(cls: type[_TSettings]) -> type[_TSettings]:
+            """Register the configuration class while preserving type."""
             # Register in namespace registry (namespace stored in registry key, not on class)
             FlextConfig._namespace_registry[namespace] = cls
             return cls
@@ -427,16 +435,17 @@ class FlextConfig(BaseSettings):
             TypeError: If type mismatch
 
         """
-        config_class = self.get_namespace_config(namespace)
-        if config_class is None:
+        config_class_raw = self.get_namespace_config(namespace)
+        if config_class_raw is None:
             msg = f"Namespace '{namespace}' not registered"
             raise ValueError(msg)
-        if not issubclass(config_class, config_type):
-            msg = f"Namespace '{namespace}' config class {config_class} is not subclass of {config_type}"
+        if not issubclass(config_class_raw, config_type):
+            msg = f"Namespace '{namespace}' config class {config_class_raw} is not subclass of {config_type}"
             raise TypeError(msg)
         # Instantiate the config class properly - Pydantic models need regular instantiation
-        typed_class: type[T_Namespace] = cast("type[T_Namespace]", config_class)
-        return typed_class()
+        # config_class is already validated as subclass of config_type, safe to instantiate
+        config_class: type[T_Namespace] = config_class_raw
+        return config_class()
 
     def __getattr__(self, name: str) -> BaseSettings:
         """Auto-resolve registered namespaces via attribute access.

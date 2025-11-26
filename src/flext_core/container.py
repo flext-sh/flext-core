@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable
-from typing import Self, cast
+from typing import Self
 
 from flext_core.config import FlextConfig
 from flext_core.models import FlextModels
@@ -29,7 +29,7 @@ class FlextContainer(FlextProtocols.Configurable):
     type-safe registration and resolution, and automatic dependency injection.
     """
 
-    _global_instance: FlextContainer | None = None
+    _global_instance: Self | None = None
     _global_lock: threading.RLock = threading.RLock()
 
     def __new__(cls) -> Self:
@@ -39,7 +39,10 @@ class FlextContainer(FlextProtocols.Configurable):
                 if cls._global_instance is None:
                     instance = super().__new__(cls)
                     cls._global_instance = instance
-        return cast("Self", cls._global_instance)
+        if cls._global_instance is None:
+            msg = "Failed to create global instance"
+            raise RuntimeError(msg)
+        return cls._global_instance
 
     def __init__(self) -> None:
         """Initialize container."""
@@ -155,9 +158,7 @@ class FlextContainer(FlextProtocols.Configurable):
             return FlextResult[T].fail(result.error or "Unknown error")
         if not isinstance(result.value, type_cls):
             type_name = getattr(type_cls, "__name__", str(type_cls))
-            return FlextResult[T].fail(
-                f"Service '{name}' is not of type {type_name}"
-            )
+            return FlextResult[T].fail(f"Service '{name}' is not of type {type_name}")
         return FlextResult[T].ok(result.value)
 
     def has_service(self, name: str) -> bool:

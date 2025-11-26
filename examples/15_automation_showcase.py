@@ -245,7 +245,7 @@ class AutomationService(FlextService[dict[str, object]]):
             return task_data
 
         # Safe execution without try/except
-        automation_result = FlextResult[dict[str, object]].from_callable(
+        automation_result = FlextResult[dict[str, object]].create_from_callable(
             risky_automation_task,
         )
         if automation_result.is_success:
@@ -307,19 +307,53 @@ class AutomationService(FlextService[dict[str, object]]):
             "task_type": "batch_processing",
             "source": "database",
         }
+        # Type cast functions to match flow_through signature
+
+        def validate_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = validate_automation_input(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Validation failed")
+            return FlextResult[object].fail("Invalid input")
+
+        def enrich_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = enrich_automation_context(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Enrichment failed")
+            return FlextResult[object].fail("Invalid input")
+
+        def execute_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = execute_automation(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Execution failed")
+            return FlextResult[object].fail("Invalid input")
+
+        def finalize_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = finalize_automation(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Finalization failed")
+            return FlextResult[object].fail("Invalid input")
         pipeline_result = (
             FlextResult[dict[str, object]]
             .ok(automation_input)
             .flow_through(
-                validate_automation_input,
-                enrich_automation_context,
-                execute_automation,
-                finalize_automation,
+                validate_wrapper,
+                enrich_wrapper,
+                execute_wrapper,
+                finalize_wrapper,
             )
         )
 
         if pipeline_result.is_success:
-            final_data = pipeline_result.unwrap()
+            final_data_raw = pipeline_result.unwrap()
+            final_data = final_data_raw if isinstance(final_data_raw, dict) else {}
             print(f"✅ Pipeline complete: {final_data.get('task_type', 'N/A')}")
             print(f"   Duration: {final_data.get('duration_ms', 0)}ms")
             print(f"   Result ID: {final_data.get('result_id', 'N/A')}")
@@ -366,9 +400,12 @@ class AutomationService(FlextService[dict[str, object]]):
             return FlextResult[dict[str, object]].ok(config)
 
         # Try cached, fall back to default
-        config_result = get_cached_automation_config().alt(
-            get_default_automation_config(),
-        )
+        cached_result = get_cached_automation_config()
+        if cached_result.is_failure:
+            default_result = get_default_automation_config()
+            config_result = default_result
+        else:
+            config_result = cached_result
         if config_result.is_success:
             config = config_result.unwrap()
             print(f"✅ Config acquired: {config.get('automation_mode', 'unknown')}")
@@ -391,7 +428,11 @@ class AutomationService(FlextService[dict[str, object]]):
 
         # Try to get existing engine, create if not available
         engine_fail_result = FlextResult[dict[str, object]].fail("No existing engine")
-        engine = engine_fail_result.value_or_call(create_automation_engine)
+        engine = (
+            engine_fail_result.unwrap()
+            if engine_fail_result.is_success
+            else create_automation_engine()
+        )
         print(f"✅ Engine acquired: {engine.get('engine_id', 'unknown')}")
         print(f"   Type: {engine.get('engine_type', 'unknown')}")
         print(f"   Workers: {engine.get('worker_count', 0)}")
@@ -404,7 +445,11 @@ class AutomationService(FlextService[dict[str, object]]):
             "worker_count": 4,
         }
         engine_success_result = FlextResult[dict[str, object]].ok(existing_engine)
-        engine_cached = engine_success_result.value_or_call(create_automation_engine)
+        engine_cached = (
+            engine_success_result.unwrap()
+            if engine_success_result.is_success
+            else create_automation_engine()
+        )
         print(f"✅ Existing engine used: {engine_cached.get('engine_id', 'unknown')}")
         print(f"   Workers: {engine_cached.get('worker_count', 0)}")
         print("   No expensive initialization needed")
@@ -450,10 +495,31 @@ class AutomationService(FlextService[dict[str, object]]):
             return FlextResult[list[dict[str, object]]].ok([])
 
         # Complete ETL pipeline with error recovery
+        def transform_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, list):
+                result = transform_data(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Transform failed")
+            return FlextResult[object].fail("Invalid input")
+
+        def load_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, list):
+                result = load_data(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Load failed")
+            return FlextResult[object].fail("Invalid input")
+
+        def retry_wrapper(e: str) -> FlextResult[object]:
+            result = retry_on_failure(e)
+            if result.is_success:
+                return FlextResult[object].ok(result.value)
+            return FlextResult[object].fail(result.error or "Retry failed")
         etl_result = (
             extract_data()
-            .flow_through(transform_data, load_data)
-            .lash(retry_on_failure)
+            .flow_through(transform_wrapper, load_wrapper)
+            .lash(retry_wrapper)
         )
 
         if etl_result.is_success:
@@ -482,10 +548,27 @@ class AutomationService(FlextService[dict[str, object]]):
             return FlextResult[str].ok("Backup service started")
 
         # Service orchestration with fallback
+        def service_b_wrapper(_: object) -> FlextResult[object]:
+            result = start_service_b()
+            if result.is_success:
+                return FlextResult[object].ok(result.value)
+            return FlextResult[object].fail(result.error or "Service B failed")
+
+        def service_c_wrapper(_: object) -> FlextResult[object]:
+            result = start_service_c()
+            if result.is_success:
+                return FlextResult[object].ok(result.value)
+            return FlextResult[object].fail(result.error or "Service C failed")
+
+        def backup_wrapper(e: str) -> FlextResult[object]:
+            result = start_backup_service(e)
+            if result.is_success:
+                return FlextResult[object].ok(result.value)
+            return FlextResult[object].fail(result.error or "Backup service failed")
         orchestration_result = (
             start_service_a()
-            .flow_through(lambda _: start_service_b(), lambda _: start_service_c())
-            .lash(start_backup_service)
+            .flow_through(service_b_wrapper, service_c_wrapper)
+            .lash(backup_wrapper)
         )
 
         if orchestration_result.is_success:
@@ -516,7 +599,11 @@ class AutomationService(FlextService[dict[str, object]]):
 
         # Try cache first, load lazily if needed
         config_attempt = FlextResult[dict[str, object]].fail("No cached config")
-        final_config = config_attempt.value_or_call(get_automation_config)
+        final_config = (
+            config_attempt.unwrap()
+            if config_attempt.is_success
+            else get_automation_config()
+        )
 
         print(f"✅ Config loaded: {len(final_config)} settings")
         db_url = str(final_config.get("database_url", ""))
@@ -524,7 +611,11 @@ class AutomationService(FlextService[dict[str, object]]):
 
         # Second attempt uses cached version
         config_attempt2 = FlextResult[dict[str, object]].fail("No cached config")
-        config_attempt2.value_or_call(get_automation_config)
+        _ = (
+            config_attempt2.unwrap()
+            if config_attempt2.is_success
+            else get_automation_config()
+        )
 
         print("✅ Second config access used cached version (no file loading)")
 

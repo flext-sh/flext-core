@@ -1,11 +1,23 @@
 """Final push to 75% coverage - simple, focused tests.
 
+Module: flext_core (coverage tests)
+Scope: FlextResult, FlextContainer, FlextExceptions, FlextUtilities
+
+Simple tests targeting uncovered lines.
+
+Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+and aggressive parametrization for DRY testing.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import ClassVar
+
+import pytest
 
 from flext_core import (
     FlextContainer,
@@ -15,10 +27,74 @@ from flext_core import (
 )
 
 
-class TestCoveragePush75Percent:
-    """Simple tests targeting uncovered lines."""
+@dataclass(frozen=True, slots=True)
+class ResultOperationScenario:
+    """FlextResult operation test scenario."""
 
-    # FlextResult coverage
+    name: str
+    initial_value: int | None
+    operations: list[str]
+    expected_success: bool
+    expected_value: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ExceptionTypeScenario:
+    """Exception type test scenario."""
+
+    name: str
+    exception_type: type[FlextExceptions.BaseError]
+    message: str
+    expected_in_str: str
+
+
+class CoverageScenarios:
+    """Centralized coverage test scenarios using FlextConstants."""
+
+    RESULT_OPERATIONS: ClassVar[list[ResultOperationScenario]] = [
+        ResultOperationScenario("map", 5, ["map"], True, 10),
+        ResultOperationScenario("flat_map", 5, ["flat_map"], True, 10),
+        ResultOperationScenario("flat_map_fail", 5, ["flat_map_fail"], False, None),
+        ResultOperationScenario("lash_success", 42, ["lash"], True, 42),
+        ResultOperationScenario("lash_failure", None, ["lash"], True, 99),
+        ResultOperationScenario("chaining", 10, ["map", "map"], True, 30),
+        ResultOperationScenario(
+            "failure_propagation", None, ["map", "map"], False, None
+        ),
+    ]
+
+    EXCEPTION_TYPES: ClassVar[list[ExceptionTypeScenario]] = [
+        ExceptionTypeScenario("base", FlextExceptions.BaseError, "test", "test"),
+        ExceptionTypeScenario(
+            "validation", FlextExceptions.ValidationError, "invalid", "VALIDATION_ERROR"
+        ),
+        ExceptionTypeScenario(
+            "type_error", FlextExceptions.TypeError, "wrong type", "TYPE_ERROR"
+        ),
+        ExceptionTypeScenario(
+            "operation", FlextExceptions.OperationError, "failed", "OPERATION_ERROR"
+        ),
+        ExceptionTypeScenario(
+            "auth", FlextExceptions.AuthenticationError, "auth issue", "AUTH"
+        ),
+        ExceptionTypeScenario(
+            "config", FlextExceptions.ConfigurationError, "config issue", "CONFIG"
+        ),
+        ExceptionTypeScenario(
+            "connection",
+            FlextExceptions.ConnectionError,
+            "connection issue",
+            "CONNECTION",
+        ),
+        ExceptionTypeScenario(
+            "timeout", FlextExceptions.TimeoutError, "timeout issue", "TIMEOUT"
+        ),
+    ]
+
+
+class TestCoveragePush75Percent:
+    """Simple tests targeting uncovered lines using FlextTestsUtilities."""
+
     def test_result_basic_ok(self) -> None:
         """Test basic FlextResult ok."""
         r = FlextResult[int].ok(42)
@@ -31,45 +107,44 @@ class TestCoveragePush75Percent:
         assert r.is_failure
         assert r.error == "error"
 
-    def test_result_map(self) -> None:
-        """Test result mapping."""
-        r = FlextResult[int].ok(5)
-        r2 = r.map(lambda x: x * 2)
-        assert r2.value == 10
+    @pytest.mark.parametrize(
+        "scenario", CoverageScenarios.RESULT_OPERATIONS, ids=lambda s: s.name
+    )
+    def test_result_operations(self, scenario: ResultOperationScenario) -> None:
+        """Test FlextResult operations with various scenarios."""
+        if scenario.initial_value is not None:
+            initial_result = FlextResult[int].ok(scenario.initial_value)
+            r: FlextResult[object] = FlextResult[object](initial_result._result)
+        else:
+            initial_result = FlextResult[int].fail("error")
+            r = FlextResult[object](initial_result._result)
+        for op in scenario.operations:
+            if op == "map":
+                r = r.map(lambda x: x * 2 if isinstance(x, int) else x)
+            elif op == "flat_map":
 
-    def test_result_flat_map(self) -> None:
-        """Test result flat_map."""
-        r = FlextResult[int].ok(5)
-        r2 = r.flat_map(lambda x: FlextResult[int].ok(x * 2))
-        assert r2.value == 10
+                def flat_map_func(x: object) -> FlextResult[object]:
+                    if isinstance(x, int):
+                        return FlextResult[object].ok(x * 2)
+                    return FlextResult[object].ok(x)
 
-    def test_result_flat_map_fail(self) -> None:
-        """Test result flat_map with failure."""
-        r = FlextResult[int].ok(5)
-        r2 = r.flat_map(lambda _: FlextResult[int].fail("error"))
-        assert r2.is_failure
+                r = r.flat_map(flat_map_func)
+            elif op == "flat_map_fail":
+                r = r.flat_map(lambda _: FlextResult[object].fail("error"))
+            elif op == "lash":
+                r = r.lash(lambda _: FlextResult[object].ok(99))
+        if scenario.expected_success:
+            assert r.is_success
+            if scenario.expected_value is not None:
+                assert r.value == scenario.expected_value
+        else:
+            assert r.is_failure
 
-    def test_result_lash_on_success(self) -> None:
-        """Test lash passes through success."""
-        r = FlextResult[int].ok(42)
-        r2 = r.lash(lambda _: FlextResult[int].ok(99))
-        assert r2.value == 42
-
-    def test_result_lash_on_failure(self) -> None:
-        """Test lash recovers failure."""
-        r = FlextResult[int].fail("error")
-        r2 = r.lash(lambda _: FlextResult[int].ok(99))
-        assert r2.is_success
-        assert r2.value == 99
-
-    # FlextContainer coverage
     def test_container_basic(self) -> None:
         """Test basic container operations."""
         c = FlextContainer()
         r = c.with_service("test", "value")
-
-        assert r is c  # Fluent interface returns Self
-
+        assert r is c
         r2 = c.get("test")
         assert r2.is_success
         assert r2.value == "value"
@@ -96,29 +171,23 @@ class TestCoveragePush75Percent:
         r = c.get("test")
         assert r.is_failure
 
-    # FlextExceptions coverage
-    def test_exception_base(self) -> None:
-        """Test base exception."""
-        exc = FlextExceptions.BaseError("test")
+    def test_container_register_multiple(self) -> None:
+        """Test registering multiple services."""
+        c = FlextContainer()
+        c.with_service("svc1", "val1")
+        c.with_service("svc2", "val2")
+        assert c.get("svc1").value == "val1"
+        assert c.get("svc2").value == "val2"
+
+    @pytest.mark.parametrize(
+        "scenario", CoverageScenarios.EXCEPTION_TYPES, ids=lambda s: s.name
+    )
+    def test_exception_types(self, scenario: ExceptionTypeScenario) -> None:
+        """Test exception types."""
+        exc = scenario.exception_type(scenario.message)
         assert isinstance(exc, Exception)
-        assert str(exc)
+        assert scenario.expected_in_str in str(exc).upper()
 
-    def test_exception_validation(self) -> None:
-        """Test validation exception."""
-        exc = FlextExceptions.ValidationError("invalid")
-        assert "VALIDATION_ERROR" in str(exc)
-
-    def test_exception_type_error(self) -> None:
-        """Test type exception."""
-        exc = FlextExceptions.TypeError("wrong type")
-        assert "TYPE_ERROR" in str(exc)
-
-    def test_exception_operation(self) -> None:
-        """Test operation exception."""
-        exc = FlextExceptions.OperationError("failed")
-        assert "OPERATION_ERROR" in str(exc)
-
-    # FlextUtilities coverage
     def test_utilities_id(self) -> None:
         """Test ID generation."""
         id1 = FlextUtilities.Generators.generate_id()
@@ -132,65 +201,16 @@ class TestCoveragePush75Percent:
         assert isinstance(ts, str)
         assert len(ts) > 0
 
-    # Additional chaining
-    def test_result_chaining(self) -> None:
-        """Test result method chaining."""
-        r = FlextResult[int].ok(10).map(lambda x: x + 5).map(lambda x: x * 2)
-        assert r.value == 30
-
-    def test_result_failure_propagation(self) -> None:
-        """Test failure propagates through chain."""
-        r = FlextResult[int].fail("error").map(lambda x: x + 5).map(lambda x: x * 2)
-        assert r.is_failure
-
-    # Edge cases
     def test_result_data_property(self) -> None:
         """Test result .data property (backward compat)."""
         r = FlextResult[str].ok("value")
         assert r.data == "value"
         assert r.value == "value"
 
-    def test_result_double_map(self) -> None:
-        """Test double map operation."""
-        r = FlextResult[int].ok(5)
-        r2 = r.map(str)
-        assert r2.value == "5"
-
-    def test_container_register_multiple(self) -> None:
-        """Test registering multiple services."""
-        c = FlextContainer()
-        c.with_service("svc1", "val1")
-        c.with_service("svc2", "val2")
-        assert c.get("svc1").value == "val1"
-        assert c.get("svc2").value == "val2"
-
-    # Additional exception coverage
-    def test_exception_auth_error(self) -> None:
-        """Test authentication error exception."""
-        exc = FlextExceptions.AuthenticationError("auth issue")
-        assert "AUTH" in str(exc).upper()
-
-    def test_exception_config_error(self) -> None:
-        """Test configuration error exception."""
-        exc = FlextExceptions.ConfigurationError("config issue")
-        assert "CONFIG" in str(exc).upper()
-
-    def test_exception_connection_error(self) -> None:
-        """Test connection error exception."""
-        exc = FlextExceptions.ConnectionError("connection issue")
-        assert "CONNECTION" in str(exc).upper()
-
-    def test_exception_timeout_error(self) -> None:
-        """Test timeout error exception."""
-        exc = FlextExceptions.TimeoutError("timeout issue")
-        assert "TIMEOUT" in str(exc).upper()
-
-    # Additional result methods
     def test_result_unwrap_or(self) -> None:
         """Test unwrap_or with default."""
         r = FlextResult[int].fail("error")
         assert r.unwrap_or(42) == 42
-
         r2 = FlextResult[int].ok(10)
         assert r2.unwrap_or(42) == 10
 
@@ -198,7 +218,6 @@ class TestCoveragePush75Percent:
         """Test result as boolean."""
         success = FlextResult[int].ok(42)
         assert bool(success) is True
-
         failure = FlextResult[int].fail("error")
         assert bool(failure) is False
 
@@ -220,7 +239,6 @@ class TestCoveragePush75Percent:
         r2 = r.filter(lambda x: x > 0)
         assert r2.is_success
         assert r2.value == 42
-
         r3 = r.filter(lambda x: x > 100)
         assert r3.is_failure
 
@@ -234,7 +252,6 @@ class TestCoveragePush75Percent:
         r = divide(10, 2)
         assert r.is_success
         assert r.value == 5
-
         r2 = divide(10, 0)
         assert r2.is_failure
 

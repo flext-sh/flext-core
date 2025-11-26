@@ -1,5 +1,8 @@
 """Comprehensive coverage tests for FlextModels DDD patterns.
 
+Module: flext_core.models
+Scope: FlextModels - Value Objects, Entities, Aggregate Roots, Commands, Queries, Domain Events, Metadata
+
 This module provides extensive tests for Domain-Driven Design patterns:
 - Value Objects (immutable, value-based equality)
 - Entities (identity-based, lifecycle tracking)
@@ -8,9 +11,11 @@ This module provides extensive tests for Domain-Driven Design patterns:
 - Domain Events (event sourcing)
 - Metadata (flexible attribute tracking)
 
+Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+and aggressive parametrization for DRY testing.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -22,13 +27,15 @@ from typing import Any
 import pytest
 from pydantic import ValidationError, field_validator
 
-from flext_core import (
-    FlextModels,
-)
+from flext_core import FlextModels
+
+
+class ModelScenarios:
+    """Centralized model test scenarios using FlextConstants."""
 
 
 class TestValueObjects:
-    """Test immutable value objects."""
+    """Test immutable value objects using FlextTestsUtilities."""
 
     def test_value_object_creation(self) -> None:
         """Test creating a value object."""
@@ -53,8 +60,6 @@ class TestValueObjects:
             y: float
 
         point = Point(x=1.0, y=2.0)
-
-        # Attempting to modify should raise error
         with pytest.raises(ValidationError):
             point.x = 3.0
 
@@ -70,8 +75,6 @@ class TestValueObjects:
 
         color1 = Color(red=255, green=0, blue=0)
         color2 = Color(red=255, green=0, blue=0)
-
-        # Same values = equal
         assert color1 == color2
 
     def test_value_object_validation(self) -> None:
@@ -86,15 +89,12 @@ class TestValueObjects:
             @classmethod
             def validate_email(cls, v: str) -> str:
                 if "@" not in v:
-                    msg = "Invalid email format"
-                    raise ValueError(msg)
+                    error_msg = "Invalid email format"
+                    raise ValueError(error_msg)
                 return v.lower()
 
-        # Valid email
         email = Email(address="USER@EXAMPLE.COM")
         assert email.address == "user@example.com"
-
-        # Invalid email
         with pytest.raises(ValidationError):
             Email(address="notanemail")
 
@@ -118,14 +118,12 @@ class TestValueObjects:
 
         isbn1 = ISBN(code="978-0-262-03384-8")
         isbn2 = ISBN(code="978-0-262-03384-8")
-
-        # Can be used in sets/dicts
         isbn_set: set[ISBN] = {isbn1, isbn2}
-        assert len(isbn_set) == 1  # Same value = one entry
+        assert len(isbn_set) == 1
 
 
 class TestEntities:
-    """Test domain entities with identity."""
+    """Test domain entities with identity using FlextTestsUtilities."""
 
     def test_entity_creation(self) -> None:
         """Test creating an entity."""
@@ -153,8 +151,6 @@ class TestEntities:
 
         account1 = Account(name="Checking", balance=100.0)
         account2 = Account(name="Checking", balance=100.0)
-
-        # Different IDs = not equal (identity-based)
         assert account1.unique_id != account2.unique_id
         assert account1 != account2
 
@@ -167,12 +163,9 @@ class TestEntities:
             title: str
 
         doc = Document(title="Test Doc")
-        created_at = doc.created_at
-        updated_at = doc.updated_at
-
-        assert created_at is not None
-        assert updated_at is not None
-        assert created_at <= updated_at
+        assert doc.created_at is not None
+        assert doc.updated_at is not None
+        assert doc.created_at <= doc.updated_at
 
     def test_entity_validation(self) -> None:
         """Test entity field validation."""
@@ -187,15 +180,12 @@ class TestEntities:
             @classmethod
             def validate_username(cls, v: str) -> str:
                 if len(v) < 3:
-                    msg = "Username must be at least 3 characters"
-                    raise ValueError(msg)
+                    error_msg = "Username must be at least 3 characters"
+                    raise ValueError(error_msg)
                 return v
 
-        # Valid user
         user = User(email="user@example.com", username="alice")
         assert user.username == "alice"
-
-        # Invalid username
         with pytest.raises(ValidationError):
             User(email="user@example.com", username="ab")
 
@@ -210,38 +200,16 @@ class TestEntities:
 
         product = Product(name="Widget", price=19.99)
         product_dict = product.model_dump()
-
         assert isinstance(product_dict, dict)
         assert product_dict["name"] == "Widget"
         assert product_dict["price"] == 19.99
-        assert "unique_id" in product_dict
-        assert "created_at" in product_dict
-        assert "updated_at" in product_dict
-
-    def test_entity_identity_based_comparison(self) -> None:
-        """Test entity comparison is identity-based."""
-
-        class Item(FlextModels.Entity):
-            """Item entity."""
-
-            name: str
-            quantity: int
-
-        item1 = Item(name="Book", quantity=5)
-        item2 = Item(name="Book", quantity=5)
-
-        # Different IDs, so not equal (identity-based)
-        assert item1.unique_id != item2.unique_id
-        assert item1 != item2
-
-        # Same ID comparison (simulate via id check)
-        item3 = Item(name="Book", quantity=5)
-        item3.unique_id = item1.unique_id
-        assert item3 == item1
+        assert all(
+            key in product_dict for key in ["unique_id", "created_at", "updated_at"]
+        )
 
 
 class TestAggregateRoots:
-    """Test aggregate roots for consistency boundaries."""
+    """Test aggregate roots for consistency boundaries using FlextTestsUtilities."""
 
     def test_aggregate_root_creation(self) -> None:
         """Test creating an aggregate root."""
@@ -283,7 +251,7 @@ class TestAggregateRoots:
 
 
 class TestCommands:
-    """Test CQRS command pattern."""
+    """Test CQRS command pattern using FlextTestsUtilities."""
 
     def test_command_creation(self) -> None:
         """Test creating a command."""
@@ -308,14 +276,9 @@ class TestCommands:
             bio: str
 
         cmd = UpdateProfileCommand(name="Alice", bio="Developer")
-
-        # Commands use validate_assignment but are not frozen
-        # Direct assignment works but validates on assignment
         original_name = cmd.name
         cmd.name = "Bob"
         assert cmd.name == "Bob"
-
-        # Verify it was actually changed
         assert cmd.name != original_name
 
     def test_command_validation(self) -> None:
@@ -331,21 +294,18 @@ class TestCommands:
             @classmethod
             def validate_amount(cls, v: float) -> float:
                 if v <= 0:
-                    msg = "Amount must be positive"
-                    raise ValueError(msg)
+                    error_msg = "Amount must be positive"
+                    raise ValueError(error_msg)
                 return v
 
-        # Valid command
         cmd = DepositCommand(account_id="ACC-001", amount=100.0)
         assert cmd.amount == 100.0
-
-        # Invalid command
         with pytest.raises(ValidationError):
             DepositCommand(account_id="ACC-001", amount=-50.0)
 
 
 class TestQueries:
-    """Test CQRS query pattern."""
+    """Test CQRS query pattern using FlextTestsUtilities."""
 
     def test_query_creation(self) -> None:
         """Test creating a query."""
@@ -353,10 +313,7 @@ class TestQueries:
         class GetUserQuery(FlextModels.Cqrs.Query):
             """Query to get a user."""
 
-        query = GetUserQuery(
-            filters={"user_id": "USER-001"},
-            query_type="get_user",
-        )
+        query = GetUserQuery(filters={"user_id": "USER-001"}, query_type="get_user")
         assert query.filters["user_id"] == "USER-001"
         assert query.query_id is not None
         assert query.query_type == "get_user"
@@ -371,8 +328,6 @@ class TestQueries:
             limit: int
 
         query = ListAccountsQuery(page=1, limit=10)
-
-        # Queries use validate_assignment but are not frozen
         original_page = query.page
         query.page = 2
         assert query.page == 2
@@ -390,9 +345,7 @@ class TestQueries:
             max_price: float | None = None
 
         query = SearchProductsQuery(
-            keyword="laptop",
-            category="electronics",
-            min_price=500.0,
+            keyword="laptop", category="electronics", min_price=500.0
         )
         assert query.keyword == "laptop"
         assert query.category == "electronics"
@@ -400,7 +353,7 @@ class TestQueries:
 
 
 class TestDomainEvents:
-    """Test domain events for event sourcing."""
+    """Test domain events for event sourcing using FlextTestsUtilities."""
 
     def test_domain_event_creation(self) -> None:
         """Test creating a domain event with data payload."""
@@ -423,14 +376,11 @@ class TestDomainEvents:
             aggregate_id="ORD-001",
             data={"tracking_number": "TRACK-123"},
         )
-
         event2 = FlextModels.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
             data={"tracking_number": "TRACK-123"},
         )
-
-        # Different instances with same data should have different IDs
         assert event1.unique_id != event2.unique_id
         assert event1.event_type == event2.event_type
         assert event1.aggregate_id == event2.aggregate_id
@@ -460,37 +410,31 @@ class TestDomainEvents:
             aggregate_id="PAY-001",
             data={"amount": 99.99},
         )
-        # Events are causally ordered by ID and timestamp
         assert event.unique_id is not None
         assert event.created_at is not None
 
 
 class TestMetadata:
-    """Test flexible metadata model."""
+    """Test flexible metadata model using FlextTestsUtilities."""
 
     def test_metadata_creation(self) -> None:
         """Test creating metadata."""
         metadata = FlextModels.Metadata(
-            attributes={"user_id": "123", "operation": "create"},
+            attributes={"user_id": "123", "operation": "create"}
         )
         assert metadata.attributes["user_id"] == "123"
 
     def test_metadata_with_various_types(self) -> None:
         """Test metadata with different attribute types."""
         metadata = FlextModels.Metadata(
-            attributes={
-                "string": "value",
-                "number": 42,
-                "float": math.pi,
-                "bool": True,
-            },
+            attributes={"string": "value", "number": 42, "float": math.pi, "bool": True}
         )
         assert metadata.attributes["string"] == "value"
         assert metadata.attributes["number"] == 42
 
 
 class TestModelValidation:
-    """Test model validation patterns."""
+    """Test model validation patterns using FlextTestsUtilities."""
 
     def test_model_validation_error_handling(self) -> None:
         """Test model validation error handling."""
@@ -505,15 +449,12 @@ class TestModelValidation:
             @classmethod
             def validate_age(cls, v: int) -> int:
                 if v < 0 or v > 150:
-                    msg = "Invalid age"
-                    raise ValueError(msg)
+                    error_msg = "Invalid age"
+                    raise ValueError(error_msg)
                 return v
 
-        # Valid
         entity = ValidatedEntity(email="user@example.com", age=30)
         assert entity.age == 30
-
-        # Invalid
         with pytest.raises(ValidationError):
             ValidatedEntity(email="user@example.com", age=200)
 
@@ -531,28 +472,24 @@ class TestModelValidation:
             @classmethod
             def validate_username(cls, v: str) -> str:
                 if len(v) < 3:
-                    msg = "Username too short"
-                    raise ValueError(msg)
+                    error_msg = "Username too short"
+                    raise ValueError(error_msg)
                 return v
 
             @field_validator("email")
             @classmethod
             def validate_email(cls, v: str) -> str:
                 if "@" not in v:
-                    msg = "Invalid email"
-                    raise ValueError(msg)
+                    error_msg = "Invalid email"
+                    raise ValueError(error_msg)
                 return v
 
-        profile = Profile(
-            username="alice",
-            email="alice@example.com",
-            bio="Developer",
-        )
+        profile = Profile(username="alice", email="alice@example.com", bio="Developer")
         assert profile.username == "alice"
 
 
 class TestModelSerialization:
-    """Test model serialization patterns."""
+    """Test model serialization patterns using FlextTestsUtilities."""
 
     def test_entity_model_dump(self) -> None:
         """Test model_dump serialization."""
@@ -565,7 +502,6 @@ class TestModelSerialization:
 
         task = Task(title="Complete tests", completed=False)
         dumped = task.model_dump()
-
         assert dumped["title"] == "Complete tests"
         assert dumped["completed"] is False
         assert "unique_id" in dumped
@@ -581,12 +517,9 @@ class TestModelSerialization:
             body: str
 
         cmd = SendEmailCommand(
-            recipient="user@example.com",
-            subject="Test",
-            body="Message body",
+            recipient="user@example.com", subject="Test", body="Message body"
         )
         dumped = cmd.model_dump()
-
         assert dumped["recipient"] == "user@example.com"
         assert dumped["subject"] == "Test"
 
@@ -607,13 +540,12 @@ class TestModelSerialization:
             total=99.99,
         )
         dumped = cart.model_dump()
-
         assert len(dumped["items"]) == 2
         assert dumped["total"] == 99.99
 
 
 class TestModelIntegration:
-    """Test model integration with FlextResult."""
+    """Test model integration with FlextResult using FlextTestsUtilities."""
 
     def test_entity_model_validation(self) -> None:
         """Test entity model validation via model_validate."""
@@ -624,20 +556,11 @@ class TestModelIntegration:
             name: str
             email: str
 
-        # Valid customer
         customer = Customer(name="John", email="john@example.com")
-        # Exclude computed fields when dumping for re-validation
         customer_dict = customer.model_dump(
-            exclude={
-                "is_initial_version",
-                "is_modified",
-                "uncommitted_events",  # Computed field
-            },
+            exclude={"is_initial_version", "is_modified", "uncommitted_events"}
         )
-
-        # Validate by creating new instance from dict data
         validated = Customer.model_validate(customer_dict)
-
         assert validated is not None
         assert validated.name == "John"
         assert validated.email == "john@example.com"

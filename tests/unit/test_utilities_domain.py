@@ -369,7 +369,7 @@ class TestFlextUtilitiesDomain:
 
     @pytest.mark.parametrize(
         "test_case",
-        create_compare_entities_cases.__func__(),
+        create_compare_entities_cases(),
         ids=lambda case: f"compare_entities_{case.description}",
     )
     def test_compare_entities_by_id(self, test_case: DomainTestCase) -> None:
@@ -382,7 +382,7 @@ class TestFlextUtilitiesDomain:
 
     @pytest.mark.parametrize(
         "test_case",
-        create_hash_entity_cases.__func__(),
+        create_hash_entity_cases(),
         ids=lambda case: f"hash_entity_{case.description}",
     )
     def test_hash_entity_by_id(self, test_case: DomainTestCase) -> None:
@@ -392,7 +392,7 @@ class TestFlextUtilitiesDomain:
 
     @pytest.mark.parametrize(
         "test_case",
-        create_compare_value_objects_cases.__func__(),
+        create_compare_value_objects_cases(),
         ids=lambda case: f"compare_value_objects_{case.description}",
     )
     def test_compare_value_objects_by_value(self, test_case: DomainTestCase) -> None:
@@ -405,7 +405,7 @@ class TestFlextUtilitiesDomain:
 
     @pytest.mark.parametrize(
         "test_case",
-        create_hash_value_object_cases.__func__(),
+        create_hash_value_object_cases(),
         ids=lambda case: f"hash_value_object_{case.description}",
     )
     def test_hash_value_object_by_value(self, test_case: DomainTestCase) -> None:
@@ -415,7 +415,7 @@ class TestFlextUtilitiesDomain:
 
     @pytest.mark.parametrize(
         "test_case",
-        create_validate_entity_has_id_cases.__func__(),
+        create_validate_entity_has_id_cases(),
         ids=lambda case: f"validate_entity_has_id_{case.description}",
     )
     def test_validate_entity_has_id(self, test_case: DomainTestCase) -> None:
@@ -425,7 +425,7 @@ class TestFlextUtilitiesDomain:
 
     @pytest.mark.parametrize(
         "test_case",
-        create_validate_value_object_immutable_cases.__func__(),
+        create_validate_value_object_immutable_cases(),
         ids=lambda case: f"validate_value_object_immutable_{case.description}",
     )
     def test_validate_value_object_immutable(self, test_case: DomainTestCase) -> None:

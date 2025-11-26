@@ -65,7 +65,7 @@ import string
 import typing
 from collections.abc import Callable, Sequence
 from types import ModuleType
-from typing import TypeGuard, cast
+from typing import TypeGuard
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
@@ -620,14 +620,17 @@ class FlextRuntime:
         )
         # Call configure directly with constructed arguments
         # Processors are dynamically constructed callables that match structlog's Processor protocol
-        # Cast is needed because structlog's Processor type is complex and our callables
-        # are valid at runtime but mypy can't verify the exact signature
-        module.configure(
-            processors=cast("list[typing.Any]", processors),
-            wrapper_class=wrapper_arg,
-            logger_factory=factory_arg,
-            cache_logger_on_first_use=cache_logger_on_first_use,
-        )
+        # structlog.configure accepts processors as Sequence[Processor] or list[Processor]
+        # Our processors list contains valid Processor objects, pass directly
+        # Use getattr to call configure with processors as Sequence
+        configure_fn = getattr(module, "configure", None)
+        if configure_fn is not None and callable(configure_fn):
+            configure_fn(
+                processors=processors,
+                wrapper_class=wrapper_arg,
+                logger_factory=factory_arg,
+                cache_logger_on_first_use=cache_logger_on_first_use,
+            )
 
         cls._structlog_configured = True
 

@@ -393,6 +393,39 @@ class FlextConstants:
         DEFAULT_USERNAME: Final[str] = "testuser"
         NONEXISTENT_USERNAME: Final[str] = "nonexistent"
 
+        class Docker:
+            """Docker test infrastructure constants."""
+
+            DEFAULT_LOG_TAIL: Final[int] = 100
+            DEFAULT_CONTAINER_CHOICES: Final[tuple[str, ...]] = (
+                "flext-shared-ldap",
+                "flext-postgres",
+                "flext-redis",
+                "flext-oracle",
+            )
+            SHARED_CONTAINERS: Final[dict[str, dict[str, str | int]]] = {
+                "flext-openldap-test": {
+                    "compose_file": "flext-ldap/docker/docker-compose.yml",
+                    "service": "openldap",
+                    "port": 3390,
+                },
+                "flext-postgres-test": {
+                    "compose_file": "flext-db-postgres/docker/docker-compose.yml",
+                    "service": "postgres",
+                    "port": 5433,
+                },
+                "flext-redis-test": {
+                    "compose_file": "flext-redis/docker/docker-compose.yml",
+                    "service": "redis",
+                    "port": 6380,
+                },
+                "flext-oracle-db-test": {
+                    "compose_file": "flext-db-oracle/docker/docker-compose.yml",
+                    "service": "oracle-db",
+                    "port": 1522,
+                },
+            }
+
     class Exceptions:
         """Exception handling configuration."""
 
@@ -492,7 +525,9 @@ class FlextConstants:
 
         ENV_PREFIX: Final[str] = "FLEXT_"
         ENV_FILE_DEFAULT: Final[str] = ".env"
-        ENV_FILE_ENV_VAR: Final[str] = "FLEXT_ENV_FILE"  # Env var to customize .env path
+        ENV_FILE_ENV_VAR: Final[str] = (
+            "FLEXT_ENV_FILE"  # Env var to customize .env path
+        )
         ENV_NESTED_DELIMITER: Final[str] = "__"
         FLEXT_API_PORT: Final[int] = 8000
         DEFAULT_HOST: Final[str] = "localhost"
@@ -656,6 +691,15 @@ class FlextConstants:
         EVENT_HANDLER_TYPE: HandlerType = HandlerType.EVENT
         OPERATION_HANDLER_TYPE: HandlerType = HandlerType.OPERATION
         SAGA_HANDLER_TYPE: HandlerType = HandlerType.SAGA
+
+        # Valid handler modes as frozenset for validation without enum iteration
+        VALID_HANDLER_MODES: frozenset[str] = frozenset({
+            "command",
+            "query",
+            "event",
+            "operation",
+            "saga",
+        })
 
         class ProcessingMode(StrEnum):
             """CQRS processing modes enumeration."""

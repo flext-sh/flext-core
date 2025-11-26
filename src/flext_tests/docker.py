@@ -1,6 +1,15 @@
 """Docker container control for FLEXT test infrastructure.
 
-Provides unified start/stop/reset functionality for all FLEXT Docker test containers.
+Provides comprehensive Docker container management for FLEXT test suites including
+unified start/stop/reset functionality, compose operations, container health monitoring,
+volume and network management, and CLI integration. Supports both shared and private
+container configurations with dependency resolution and dirty state tracking.
+
+Scope: Complete Docker testing infrastructure including container lifecycle management,
+compose stack operations with timeout handling, container health checks and status
+monitoring, volume/network/image cleanup, port mapping, command execution, and CLI
+commands for container control. Integrates with FlextTestsUtilities.DockerHelpers
+for generalized Docker operations and uses FlextConstants for shared container configs.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,27 +19,23 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
-import fnmatch
 import functools
 import json
 import shlex
 import socket
 import subprocess
-import threading
 import time
 from collections.abc import Callable, Iterator
-from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from types import ModuleType
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import click
 import docker
 import pytest
 from docker import DockerClient
 from docker.errors import DockerException, NotFound
-from docker.models.containers import Container
 
 # subprocess only used for command execution in containers, not docker-compose
 # Import python_on_whales - docker is a pre-instantiated DockerClient instance
@@ -43,10 +48,12 @@ from rich.console import Console
 from rich.table import Table
 
 from flext_core import (
+    FlextConstants,
     FlextLogger,
     FlextModels,
     FlextResult,
 )
+from flext_tests.utilities import FlextTestsUtilities
 
 pytest_module: ModuleType | None = pytest
 
@@ -76,14 +83,12 @@ class FlextTestDocker:
     _console: ClassVar[Console] = Console()
     _cli_group: ClassVar[click.Group | None] = None
     _workspace_parser: ClassVar[argparse.ArgumentParser | None] = None
-    _DEFAULT_LOG_TAIL: ClassVar[int] = 100
-    _CLI_CONTAINER_CHOICES: ClassVar[list[str]] = [
-        "flext-shared-ldap",
-        "flext-postgres",
-        "flext-redis",
-        "flext-oracle",
-    ]
     _pytest_registered: ClassVar[bool] = False
+
+    # Shared container configuration - class attribute for direct access
+    SHARED_CONTAINERS: ClassVar[dict[str, dict[str, str | int]]] = (
+        FlextConstants.Test.Docker.SHARED_CONTAINERS
+    )
 
     def __init__(
         self, workspace_root: Path | None = None, worker_id: str | None = None
@@ -104,7 +109,6 @@ class FlextTestDocker:
         self._image_manager = None
 
         # Dirty state tracking
-        super().__init__()
         self.worker_id = worker_id or "master"
         self._dirty_containers: set[str] = set()
         self._state_file = (
@@ -172,16 +176,21 @@ class FlextTestDocker:
             FlextResult[bool]: Success with True if marked, failure with error
 
         """
-        try:
+
+        def operation() -> None:
             self._dirty_containers.add(container_name)
             self._save_dirty_state()
             self.logger.info(
                 "Container marked as dirty",
                 extra={"container": container_name},
             )
-            return FlextResult[bool].ok(True)
-        except Exception as e:
-            return FlextResult[bool].fail(f"Failed to mark container dirty: {e}")
+
+        return FlextTestsUtilities.DockerHelpers.execute_docker_operation(
+            operation=operation,
+            success_value=True,
+            operation_name="mark container dirty",
+            logger=self.logger,
+        )
 
     def mark_container_clean(self, container_name: str) -> FlextResult[bool]:
         """Mark a container as clean after successful recreation.
@@ -193,16 +202,21 @@ class FlextTestDocker:
             FlextResult[bool]: Success with True if marked, failure with error
 
         """
-        try:
+
+        def operation() -> None:
             self._dirty_containers.discard(container_name)
             self._save_dirty_state()
             self.logger.info(
                 "Container marked as clean",
                 extra={"container": container_name},
             )
-            return FlextResult[bool].ok(True)
-        except Exception as e:
-            return FlextResult[bool].fail(f"Failed to mark container clean: {e}")
+
+        return FlextTestsUtilities.DockerHelpers.execute_docker_operation(
+            operation=operation,
+            success_value=True,
+            operation_name="mark container clean",
+            logger=self.logger,
+        )
 
     def is_container_dirty(self, container_name: str) -> bool:
         """Check if a container is marked as dirty.
@@ -245,7 +259,8 @@ class FlextTestDocker:
             FlextResult[bool]: Success with True if registered, failure with error
 
         """
-        try:
+
+        def operation() -> None:
             self._container_configs[container_name] = {
                 "compose_file": compose_file,
                 "service": service or "",
@@ -258,9 +273,13 @@ class FlextTestDocker:
                     "service": service,
                 },
             )
-            return FlextResult[bool].ok(True)
-        except Exception as e:
-            return FlextResult[bool].fail(f"Failed to register container config: {e}")
+
+        return FlextTestsUtilities.DockerHelpers.execute_docker_operation(
+            operation=operation,
+            success_value=True,
+            operation_name="register container config",
+            logger=self.logger,
+        )
 
     def cleanup_dirty_containers(self) -> FlextResult[dict[str, str]]:
         """Clean up all dirty containers by recreating them with fresh volumes.
@@ -270,6 +289,7 @@ class FlextTestDocker:
 
         """
         results: dict[str, str] = {}
+        helpers = FlextTestsUtilities.DockerHelpers
 
         for container_name in list(self._dirty_containers):
             self.logger.info(
@@ -277,39 +297,26 @@ class FlextTestDocker:
                 extra={"container": container_name},
             )
 
-            # Use docker-compose down to remove container AND its volumes
-            # This is the proper Docker Compose way to handle cleanup
-            # (don't use manual stop/remove - let compose manage the lifecycle)
-
-            # Get container config from SHARED_CONTAINERS or registered private configs
-            # SHARED_CONTAINERS has str|int values, _container_configs has str values
-            config: dict[str, str | int] | None = None
-            if container_name in self.SHARED_CONTAINERS:
-                config = self.SHARED_CONTAINERS[container_name]
-            elif container_name in self._container_configs:
-                # Cast is safe: dict[str, str] is compatible with dict[str, str | int]
-                config = cast(
-                    "dict[str, str | int]",
-                    self._container_configs[container_name],
-                )
+            config = helpers.get_container_config(
+                container_name,
+                self.shared_containers,
+                self._container_configs,
+            )
 
             if config:
-                # Ensure compose_file is str for Path operation
-                compose_file_value = config["compose_file"]
+                compose_file_value = config.get("compose_file")
                 if not isinstance(compose_file_value, str):
                     results[container_name] = (
                         f"Invalid compose_file type: {type(compose_file_value)}"
                     )
                     continue
 
-                # Handle both absolute and relative paths
-                if Path(compose_file_value).is_absolute():
-                    compose_file = compose_file_value
-                else:
-                    compose_file = str(self.workspace_root / compose_file_value)
+                compose_file = helpers.resolve_compose_file_path(
+                    compose_file_value,
+                    self.workspace_root,
+                )
+                service = helpers.extract_service_from_config(config)
 
-                # Use docker-compose down --volumes to properly remove containers + volumes
-                # This is the correct Docker Compose way to handle full cleanup
                 self.logger.info(
                     "Running docker-compose down --volumes",
                     extra={"container": container_name, "compose_file": compose_file},
@@ -321,21 +328,10 @@ class FlextTestDocker:
                         extra={"container": container_name},
                     )
 
-                # Ensure service is str or None for compose_up
-                service_value = config.get("service")
-                service: str | None = None
-                if isinstance(service_value, str):
-                    service = service_value
-                elif isinstance(service_value, int):
-                    service = str(service_value)
-
-                # Recreate container with compose up (fresh volumes)
-                # Use force_recreate=True because dirty containers need full recreation
                 restart_result = self.compose_up(
                     compose_file, service, force_recreate=True
                 )
                 if restart_result.is_success:
-                    # Mark as clean
                     self.mark_container_clean(container_name)
                     results[container_name] = (
                         "Successfully recreated with fresh volumes"
@@ -343,7 +339,6 @@ class FlextTestDocker:
                 else:
                     results[container_name] = f"Restart failed: {restart_result.error}"
             else:
-                # Try to restart generic container
                 start_result = self.start_container(container_name)
                 if start_result.is_success:
                     self.mark_container_clean(container_name)
@@ -525,6 +520,7 @@ class FlextTestDocker:
         self,
         compose_file: str,
         service: str | None = None,
+        *,
         force_recreate: bool = False,
     ) -> FlextResult[str]:
         """Start services using docker-compose via Docker Python API.
@@ -543,100 +539,34 @@ class FlextTestDocker:
             FlextResult with status message
 
         """
-        try:
-            compose_path = Path(compose_file)
+        helpers = FlextTestsUtilities.DockerHelpers
+        compose_path = helpers.resolve_compose_path(compose_file, self.workspace_root)
+        docker_client: PowDockerClient = pow_docker
 
-            # Resolve relative paths against workspace_root
-            if not compose_path.is_absolute():
-                compose_path = self.workspace_root / compose_path
-
-            # Use python-on-whales for docker-compose operations
-            # pow_docker is a pre-instantiated PowDockerClient from python_on_whales
-            docker_client: PowDockerClient = pow_docker
-
-            try:
-                # Capture exceptions from thread
-                thread_exceptions: list[Exception] = []
-
-                # Run docker compose up with timeout
-                def run_compose_up() -> None:
+        def compose_operation() -> None:
+            def up_op() -> None:
+                if force_recreate:
                     try:
-                        # Set compose file in client config
-                        original_compose_files = (
-                            docker_client.client_config.compose_files
-                        )
-                        try:
-                            # Configure the compose file for this operation
-                            docker_client.client_config.compose_files = [
-                                str(compose_path),
-                            ]
+                        docker_client.compose.down(remove_orphans=True, volumes=True)
+                    except Exception:
+                        pass
 
-                            # Only destroy containers if force_recreate is True
-                            # This is for dirty containers that need full recreation
-                            if force_recreate:
-                                try:
-                                    docker_client.compose.down(
-                                        remove_orphans=True,
-                                        volumes=True,
-                                    )
-                                except Exception:
-                                    pass  # Ignore if stack doesn't exist
-
-                            # Start the services without force-recreate
-                            # This preserves running containers and their volumes
-                            services = [service] if service else []
-                            docker_client.compose.up(
-                                services=services,
-                                detach=True,
-                                # Don't force recreate - reuse running containers
-                                recreate=force_recreate,
-                                remove_orphans=True,
-                            )
-                        finally:
-                            # Restore original compose files
-                            docker_client.client_config.compose_files = (
-                                original_compose_files
-                            )
-                    except Exception as e:
-                        # Capture exception for main thread
-                        thread_exceptions.append(e)
-
-                thread = threading.Thread(target=run_compose_up, daemon=False)
-                thread.start()
-                thread.join(timeout=300)  # 5 minute timeout
-
-                if thread.is_alive():
-                    return FlextResult[str].fail(
-                        "docker compose up timed out after 5 minutes",
-                    )
-
-                # Check for exceptions from thread
-                if thread_exceptions:
-                    raise thread_exceptions[0]
-
-                self.logger.info(
-                    "docker compose up succeeded",
-                    extra={
-                        "compose_file": compose_file,
-                        "service": service,
-                        "force_recreate": force_recreate,
-                    },
+                services = [service] if service else []
+                docker_client.compose.up(
+                    services=services,
+                    detach=True,
+                    remove_orphans=True,
                 )
-                return FlextResult[str].ok(f"Compose stack started from {compose_file}")
 
-            except Exception as e:
-                error_msg = str(e)
-                self.logger.exception(
-                    f"docker compose up failed: {error_msg}",
-                    exception=e,
-                    compose_file=compose_file,
-                    service=service,
-                    error=error_msg,
-                )
-                return FlextResult[str].fail(f"docker compose up failed: {error_msg}")
+            helpers.with_compose_file_config(docker_client, compose_path, up_op)
 
-        except Exception as e:
-            return FlextResult[str].fail(f"docker compose up failed: {e}")
+        return helpers.execute_compose_operation_with_timeout(
+            operation=compose_operation,
+            timeout_seconds=300,
+            operation_name="up",
+            compose_file=compose_file,
+            logger=self.logger,
+        )
 
     def compose_down(self, compose_file: str) -> FlextResult[str]:
         """Stop services using docker-compose via python-on-whales.
@@ -648,79 +578,23 @@ class FlextTestDocker:
             FlextResult with status message
 
         """
-        try:
-            compose_path = Path(compose_file)
+        helpers = FlextTestsUtilities.DockerHelpers
+        compose_path = helpers.resolve_compose_path(compose_file, self.workspace_root)
+        docker_client: PowDockerClient = pow_docker
 
-            # Resolve relative paths against workspace_root
-            if not compose_path.is_absolute():
-                compose_path = self.workspace_root / compose_path
+        def compose_operation() -> None:
+            def down_op() -> None:
+                docker_client.compose.down(volumes=True, remove_orphans=True)
 
-            # Use python-on-whales for docker-compose operations
-            # pow_docker is a pre-instantiated PowDockerClient from python_on_whales
-            docker_client: PowDockerClient = pow_docker
+            helpers.with_compose_file_config(docker_client, compose_path, down_op)
 
-            try:
-                # Capture exceptions from thread
-                thread_exceptions: list[Exception] = []
-
-                # Run docker compose down with --volumes flag (removes containers AND volumes)
-                def run_compose_down() -> None:
-                    try:
-                        # Set compose file in client config
-                        original_compose_files = (
-                            docker_client.client_config.compose_files
-                        )
-                        try:
-                            # Configure the compose file for this operation
-                            docker_client.client_config.compose_files = [
-                                str(compose_path),
-                            ]
-                            # Use down with volumes=True to remove containers AND their volumes
-                            # Also remove orphans to clean up any leftover containers
-                            docker_client.compose.down(
-                                volumes=True,
-                                remove_orphans=True,  # Clean up orphaned containers
-                            )
-                        finally:
-                            # Restore original compose files
-                            docker_client.client_config.compose_files = (
-                                original_compose_files
-                            )
-                    except Exception as e:
-                        # Store exception for main thread to handle
-                        thread_exceptions.append(e)
-
-                thread = threading.Thread(target=run_compose_down, daemon=False)
-                thread.start()
-                thread.join(timeout=120)  # 2 minute timeout
-
-                if thread.is_alive():
-                    return FlextResult[str].fail(
-                        "docker compose down timed out after 2 minutes",
-                    )
-
-                # Check for exceptions from thread
-                if thread_exceptions:
-                    raise thread_exceptions[0]
-
-                self.logger.info(
-                    "docker compose down succeeded",
-                    extra={"compose_file": compose_file},
-                )
-                return FlextResult[str].ok(f"Compose stack stopped from {compose_file}")
-
-            except Exception as e:
-                error_msg = str(e)
-                self.logger.exception(
-                    f"docker compose down failed: {error_msg}",
-                    exception=e,
-                    compose_file=compose_file,
-                    error=error_msg,
-                )
-                return FlextResult[str].fail(f"docker compose down failed: {error_msg}")
-
-        except Exception as e:
-            return FlextResult[str].fail(f"docker compose down failed: {e}")
+        return helpers.execute_compose_operation_with_timeout(
+            operation=compose_operation,
+            timeout_seconds=120,
+            operation_name="down",
+            compose_file=compose_file,
+            logger=self.logger,
+        )
 
     def compose_logs(self, compose_file: str) -> FlextResult[str]:
         """Get compose logs."""
@@ -756,7 +630,21 @@ class FlextTestDocker:
 
     def cleanup_networks(self) -> FlextResult[list[str]]:
         """Clean up unused networks."""
-        return FlextResult[list[str]].ok([])
+        result = FlextTestsUtilities.DockerHelpers.cleanup_docker_resources(
+            client=self.get_client(),
+            resource_type="network",
+            list_attr="networks",
+            remove_attr="remove",
+            resource_name_attr="name",
+            filter_pattern=None,
+            logger=self.logger,
+        )
+        if result.is_success:
+            networks = result.value.get("network", [])
+            return FlextResult[list[str]].ok(
+                networks if isinstance(networks, list) else []
+            )
+        return FlextResult[list[str]].fail(result.error or "Network cleanup failed")
 
     def cleanup_volumes(
         self,
@@ -771,63 +659,24 @@ class FlextTestDocker:
             FlextResult with dict containing removed count and list of removed volumes
 
         """
-        try:
-            client = self.get_client()
-            removed_volumes: list[str] = []
-
-            # Get all volumes
-            volumes_api = getattr(client, "volumes", None)
-            if not volumes_api:
-                return FlextResult[dict[str, int | list[str]]].ok({
-                    "removed": 0,
-                    "volumes": [],
-                })
-
-            list_method = getattr(volumes_api, "list", None)
-            if not list_method:
-                return FlextResult[dict[str, int | list[str]]].ok({
-                    "removed": 0,
-                    "volumes": [],
-                })
-
-            all_volumes = list_method()
-
-            for volume in all_volumes:
-                volume_name: str = getattr(volume, "name", "unknown")
-
-                # Skip volumes that don't match pattern if pattern specified
-                if volume_pattern and not fnmatch.fnmatch(volume_name, volume_pattern):
-                    continue
-
-                # Try to remove volume
-                try:
-                    remove_method = getattr(volume, "remove", None)
-                    if remove_method:
-                        remove_method(force=True)
-                        removed_volumes.append(volume_name)
-                        self.logger.info(
-                            "Removed volume: %s",
-                            volume_name,
-                            extra={"volume": volume_name},
-                        )
-                except Exception as e:
-                    self.logger.warning(
-                        "Failed to remove volume %s: %s",
-                        volume_name,
-                        e,
-                        extra={"volume": volume_name, "error": str(e)},
-                    )
-
+        result = FlextTestsUtilities.DockerHelpers.cleanup_docker_resources(
+            client=self.get_client(),
+            resource_type="volume",
+            list_attr="volumes",
+            remove_attr="remove",
+            resource_name_attr="name",
+            filter_pattern=volume_pattern,
+            logger=self.logger,
+        )
+        if result.is_success:
+            # Transform result to match test expectations: use "volumes" key
+            value = result.value
+            volumes = value.get("volume", [])
             return FlextResult[dict[str, int | list[str]]].ok({
-                "removed": len(removed_volumes),
-                "volumes": removed_volumes,
+                "removed": value.get("removed", 0),
+                "volumes": volumes if isinstance(volumes, list) else [],
             })
-
-        except Exception as e:
-            self.logger.exception("Failed to cleanup volumes")
-            return FlextResult[dict[str, int | list[str]]].fail(
-                f"Volume cleanup failed: {e}",
-            )
+        return result
 
     def cleanup_images(
         self,
@@ -999,30 +848,11 @@ class FlextTestDocker:
         """List Docker networks."""
         return FlextResult[list[str]].ok([])
 
-    # Class attributes that are expected
-    # compose_file paths are relative to the FLEXT workspace root (/home/marlonsc/flext)
-    SHARED_CONTAINERS: ClassVar[dict[str, dict[str, str | int]]] = {
-        "flext-openldap-test": {
-            "compose_file": "flext-ldap/docker/docker-compose.yml",
-            "service": "openldap",
-            "port": 3390,
-        },
-        "flext-postgres-test": {
-            "compose_file": "flext-db-postgres/docker/docker-compose.yml",
-            "service": "postgres",
-            "port": 5433,
-        },
-        "flext-redis-test": {
-            "compose_file": "flext-redis/docker/docker-compose.yml",
-            "service": "redis",
-            "port": 6380,
-        },
-        "flext-oracle-db-test": {
-            "compose_file": "flext-db-oracle/docker/docker-compose.yml",
-            "service": "oracle-db",
-            "port": 1522,
-        },
-    }
+    # Shared container configuration for FLEXT ecosystem tests
+    @property
+    def shared_containers(self) -> dict[str, dict[str, str | int]]:
+        """Get shared containers configuration from FlextConstants."""
+        return FlextConstants.Test.Docker.SHARED_CONTAINERS
 
     def start_existing_container(self, name: str) -> FlextResult[str]:
         """Start an existing stopped container without recreating it.
@@ -1038,41 +868,47 @@ class FlextTestDocker:
             FlextResult with status message
 
         """
-        try:
-            client = self.get_client()
-            try:
-                container = client.containers.get(name)
-                container_status = getattr(container, "status", "unknown")
+        helpers = FlextTestsUtilities.DockerHelpers
 
-                if container_status == "running":
-                    self.logger.debug(
-                        "Container already running",
-                        extra={"container": name},
-                    )
-                    return FlextResult[str].ok(f"Container {name} already running")
+        def operation(client: object) -> str:
+            containers_api = getattr(client, "containers", None)
+            if containers_api:
+                get_method = getattr(containers_api, "get", None)
+                if get_method:
+                    container = get_method(name)
+                    container_status = getattr(container, "status", "unknown")
 
-                if container_status in ("exited", "created", "paused"):
-                    # Start the existing container
-                    container.start()
-                    self.logger.info(
-                        "Started existing container",
-                        extra={"container": name, "previous_status": container_status},
-                    )
-                    return FlextResult[str].ok(f"Container {name} started")
+                    if container_status == "running":
+                        if self.logger and hasattr(self.logger, "debug"):
+                            self.logger.debug(
+                                "Container already running",
+                                extra={"container": name},
+                            )
+                        return f"Container {name} already running"
 
-                # Unknown state
-                return FlextResult[str].fail(
-                    f"Container {name} in unexpected state: {container_status}"
-                )
+                    if container_status in {"exited", "created", "paused"}:
+                        start_method = getattr(container, "start", None)
+                        if start_method:
+                            start_method()
+                        if self.logger and hasattr(self.logger, "info"):
+                            self.logger.info(
+                                "Started existing container",
+                                extra={
+                                    "container": name,
+                                    "previous_status": container_status,
+                                },
+                            )
+                        return f"Container {name} started"
 
-            except NotFound:
-                return FlextResult[str].fail(
-                    f"Container {name} not found - use compose_up to create it"
-                )
+                    return f"Container {name} in unexpected state: {container_status}"
+            raise RuntimeError(f"Failed to start container {name}")
 
-        except DockerException as e:
-            self.logger.exception("Failed to start existing container")
-            return FlextResult[str].fail(f"Failed to start container: {e}")
+        return helpers.execute_docker_client_operation(
+            get_client_fn=self.get_client,
+            operation=operation,
+            operation_name=f"start existing container {name}",
+            logger=self.logger,
+        )
 
     def start_container(
         self,
@@ -1116,8 +952,8 @@ class FlextTestDocker:
                 error_code="CONTAINER_NOT_RUNNING",
             )
 
-        if container_name in self.SHARED_CONTAINERS:
-            config = self.SHARED_CONTAINERS[container_name]
+        if container_name in self.shared_containers:
+            config = self.shared_containers[container_name]
 
             # Ensure compose_file is str for Path operation
             compose_file_value = config["compose_file"]
@@ -1175,43 +1011,35 @@ class FlextTestDocker:
         name: str,
     ) -> FlextResult[FlextTestDocker.ContainerInfo]:
         """Get container information."""
-        try:
-            client = self.get_client()
-            # Docker SDK returns Container but docker-stubs types as Model - narrow type
-            container = client.containers.get(name)
-            # Get status attribute using getattr for proper typing
-            container_status = getattr(container, "status", "unknown")
-            status = (
-                FlextTestDocker.ContainerStatus.RUNNING
-                if container_status == "running"
-                else FlextTestDocker.ContainerStatus.STOPPED
-            )
-            # Extract image name from Image object
-            container_image = getattr(container, "image", None)
-            image_tags: list[str] = (
-                container_image.tags
-                if container_image and hasattr(container_image, "tags")
-                else []
-            )
-            image_name: str = image_tags[0] if image_tags else "unknown"
-            return FlextResult[FlextTestDocker.ContainerInfo].ok(
-                FlextTestDocker.ContainerInfo(
-                    name=name,
-                    status=status,
-                    ports={},
-                    image=image_name,
-                    container_id=getattr(container, "id", "unknown") or "unknown",
-                ),
-            )
-        except NotFound:
-            return FlextResult[FlextTestDocker.ContainerInfo].fail(
-                f"Container {name} not found",
-            )
-        except DockerException as e:
-            self.logger.exception("Failed to get container info")
-            return FlextResult[FlextTestDocker.ContainerInfo].fail(
-                f"Failed to get container info: {e}",
-            )
+        helpers = FlextTestsUtilities.DockerHelpers
+
+        def operation(client: object) -> FlextTestDocker.ContainerInfo:
+            containers_api = getattr(client, "containers", None)
+            if containers_api:
+                get_method = getattr(containers_api, "get", None)
+                if get_method:
+                    container = get_method(name)
+                    info_dict = helpers.extract_container_info(container, name)
+                    status_enum = (
+                        FlextTestDocker.ContainerStatus.RUNNING
+                        if info_dict["status"] == "running"
+                        else FlextTestDocker.ContainerStatus.STOPPED
+                    )
+                    return FlextTestDocker.ContainerInfo(
+                        name=str(info_dict["name"]),
+                        status=status_enum,
+                        ports=info_dict["ports"],
+                        image=str(info_dict["image"]),
+                        container_id=str(info_dict["container_id"]),
+                    )
+            raise RuntimeError(f"Failed to get container {name}")
+
+        return helpers.execute_docker_client_operation(
+            get_client_fn=self.get_client,
+            operation=operation,
+            operation_name=f"get info for container {name}",
+            logger=self.logger,
+        )
 
     def build_image(
         self,
@@ -1272,35 +1100,44 @@ class FlextTestDocker:
 
     def remove_container(self, name: str, *, force: bool = False) -> FlextResult[str]:
         """Remove a Docker container."""
-        try:
-            client = self.get_client()
-            # Docker SDK returns Container but docker-stubs types as Model - narrow type
-            container = client.containers.get(name)
-            if hasattr(container, "remove"):
-                container.remove(force=force)
-            return FlextResult[str].ok(f"Container {name} removed")
-        except NotFound:
-            return FlextResult[str].fail(f"Container {name} not found")
-        except DockerException as e:
-            self.logger.exception("Failed to remove container")
-            return FlextResult[str].fail(f"Failed to remove container: {e}")
+        helpers = FlextTestsUtilities.DockerHelpers
+
+        def operation(client: object) -> str:
+            containers_api = getattr(client, "containers", None)
+            if containers_api:
+                get_method = getattr(containers_api, "get", None)
+                if get_method:
+                    container = get_method(name)
+                    remove_method = getattr(container, "remove", None)
+                    if remove_method:
+                        remove_method(force=force)
+            return f"Container {name} removed"
+
+        return helpers.execute_docker_client_operation(
+            get_client_fn=self.get_client,
+            operation=operation,
+            operation_name=f"remove container {name}",
+            logger=self.logger,
+        )
 
     def remove_image(self, image: str, *, force: bool = False) -> FlextResult[str]:
         """Remove a Docker image."""
-        try:
-            client = self.get_client()
-            # Use getattr to access the remove method safely
+        helpers = FlextTestsUtilities.DockerHelpers
+
+        def operation(client: object) -> str:
             images_api = getattr(client, "images", None)
             if images_api:
                 remove_method = getattr(images_api, "remove", None)
                 if remove_method:
                     remove_method(image, force=force)
-            return FlextResult[str].ok(f"Image {image} removed")
-        except NotFound:
-            return FlextResult[str].fail(f"Image {image} not found")
-        except DockerException as e:
-            self.logger.exception("Failed to remove image")
-            return FlextResult[str].fail(f"Failed to remove image: {e}")
+            return f"Image {image} removed"
+
+        return helpers.execute_docker_client_operation(
+            get_client_fn=self.get_client,
+            operation=operation,
+            operation_name=f"remove image {image}",
+            logger=self.logger,
+        )
 
     def container_logs_formatted(
         self,
@@ -1310,26 +1147,30 @@ class FlextTestDocker:
         follow: bool = False,
     ) -> FlextResult[str]:
         """Get formatted container logs."""
-        try:
-            client = self.get_client()
-            # Docker SDK returns Container but docker-stubs types as Model - narrow type
-            container = client.containers.get(container_name)
-            # Use getattr to access logs method safely
-            logs_method = getattr(container, "logs", None)
-            if logs_method is not None:
-                logs = cast("Callable[..., bytes]", logs_method)(
-                    tail=tail,
-                    follow=follow,
-                    stream=False,
-                )
-            else:
-                logs = b""
-            return FlextResult[str].ok(logs.decode("utf-8"))
-        except NotFound:
-            return FlextResult[str].fail(f"Container {container_name} not found")
-        except DockerException as e:
-            self.logger.exception("Failed to get container logs")
-            return FlextResult[str].fail(f"Failed to get container logs: {e}")
+        helpers = FlextTestsUtilities.DockerHelpers
+        tail_count = tail or FlextConstants.Test.Docker.DEFAULT_LOG_TAIL
+
+        def operation(client: object) -> str:
+            containers_api = getattr(client, "containers", None)
+            if containers_api:
+                get_method = getattr(containers_api, "get", None)
+                if get_method:
+                    container = get_method(container_name)
+                    logs_method = getattr(container, "logs", None)
+                    if logs_method and callable(logs_method):
+                        logs_raw = logs_method(
+                            tail=tail_count, follow=follow, stream=False
+                        )
+                        logs_bytes = logs_raw if isinstance(logs_raw, bytes) else b""
+                        return logs_bytes.decode("utf-8")
+            return ""
+
+        return helpers.execute_docker_client_operation(
+            get_client_fn=self.get_client,
+            operation=operation,
+            operation_name=f"get logs for container {container_name}",
+            logger=self.logger,
+        )
 
     def execute_command_in_container(
         self,
@@ -1339,24 +1180,32 @@ class FlextTestDocker:
         user: str | None = None,
     ) -> FlextResult[str]:
         """Execute command in container."""
-        try:
-            client = self.get_client()
-            # Docker SDK returns Container but docker-stubs types as Model - narrow type
-            container = client.containers.get(container_name)
-            # exec_run not fully typed in docker stubs
-            exec_run_method = getattr(container, "exec_run", None)
-            if exec_run_method:
-                result = exec_run_method(
-                    command,
-                    user=user if user is not None else "root",
-                )
-                return FlextResult[str].ok(result.output.decode("utf-8"))
-            return FlextResult[str].fail("exec_run method not available")
-        except NotFound:
-            return FlextResult[str].fail(f"Container {container_name} not found")
-        except DockerException as e:
-            self.logger.exception("Failed to execute command in container")
-            return FlextResult[str].fail(f"Failed to execute command in container: {e}")
+        helpers = FlextTestsUtilities.DockerHelpers
+
+        def operation(client: object) -> str:
+            containers_api = getattr(client, "containers", None)
+            if containers_api:
+                get_method = getattr(containers_api, "get", None)
+                if get_method:
+                    container = get_method(container_name)
+                    exec_run_method = getattr(container, "exec_run", None)
+                    if exec_run_method:
+                        exec_user = user if user is not None else "root"
+                        result = exec_run_method(command, user=exec_user)
+                        output_attr = getattr(result, "output", b"")
+                        return (
+                            output_attr.decode("utf-8")
+                            if isinstance(output_attr, bytes)
+                            else str(output_attr)
+                        )
+            return ""
+
+        return helpers.execute_docker_client_operation(
+            get_client_fn=self.get_client,
+            operation=operation,
+            operation_name=f"execute command in container {container_name}",
+            logger=self.logger,
+        )
 
     def list_containers(
         self,
@@ -1364,46 +1213,40 @@ class FlextTestDocker:
         all_containers: bool = False,
     ) -> FlextResult[list[FlextTestDocker.ContainerInfo]]:
         """List containers."""
-        try:
-            client = self.get_client()
-            # Use getattr to access the list method safely
+        helpers = FlextTestsUtilities.DockerHelpers
+
+        def operation(client: object) -> list[FlextTestDocker.ContainerInfo]:
             containers_api = getattr(client, "containers", None)
             list_method = (
                 getattr(containers_api, "list", None) if containers_api else None
             )
             containers = list_method(all=all_containers) if list_method else []
+
             container_infos: list[FlextTestDocker.ContainerInfo] = []
             for container in containers:
-                # Container attributes not fully typed in docker stubs
-                container_status: str = getattr(container, "status", "unknown")
-                status = (
+                info_dict = helpers.extract_container_info(container)
+                status_enum = (
                     FlextTestDocker.ContainerStatus.RUNNING
-                    if container_status == "running"
+                    if info_dict["status"] == "running"
                     else FlextTestDocker.ContainerStatus.STOPPED
                 )
-                container_image = getattr(container, "image", None)
-                image_tags: list[str] = (
-                    container_image.tags
-                    if container_image and hasattr(container_image, "tags")
-                    else []
-                )
-                image_name: str = image_tags[0] if image_tags else "unknown"
-                container_name_attr = getattr(container, "name", "unknown")
                 container_infos.append(
                     FlextTestDocker.ContainerInfo(
-                        name=str(container_name_attr),
-                        status=status,
-                        ports={},
-                        image=image_name,
-                        container_id=getattr(container, "id", "unknown") or "unknown",
+                        name=str(info_dict["name"]),
+                        status=status_enum,
+                        ports=info_dict["ports"],
+                        image=str(info_dict["image"]),
+                        container_id=str(info_dict["container_id"]),
                     ),
                 )
-            return FlextResult[list[FlextTestDocker.ContainerInfo]].ok(container_infos)
-        except DockerException as e:
-            self.logger.exception("Failed to list containers")
-            return FlextResult[list[FlextTestDocker.ContainerInfo]].fail(
-                f"Failed to list containers: {e}",
-            )
+            return container_infos
+
+        return helpers.execute_docker_client_operation(
+            get_client_fn=self.get_client,
+            operation=operation,
+            operation_name="list containers",
+            logger=self.logger,
+        )
 
     # ============================================================================
     # PHASE 1: ENVIRONMENT VARIABLE MANAGEMENT
@@ -1524,39 +1367,38 @@ class FlextTestDocker:
             FlextResult with dict of environment variables
 
         """
-        try:
-            client = self.get_client()
-            container = client.containers.get(container_name)
+        helpers = FlextTestsUtilities.DockerHelpers
 
-            # Get container config
-            container_config = container.attrs.get("Config", {})
-            env_list = container_config.get("Env", [])
+        def operation(client: object) -> dict[str, str]:
+            containers_api = getattr(client, "containers", None)
+            if containers_api:
+                get_method = getattr(containers_api, "get", None)
+                if get_method:
+                    container = get_method(container_name)
+                    attrs = getattr(container, "attrs", {})
+                    container_config = (
+                        attrs.get("Config", {}) if isinstance(attrs, dict) else {}
+                    )
+                    env_list = (
+                        container_config.get("Env", [])
+                        if isinstance(container_config, dict)
+                        else []
+                    )
+                    env_vars = helpers.parse_env_list_to_dict(env_list)
+                    if self.logger and hasattr(self.logger, "info"):
+                        self.logger.info(
+                            f"Retrieved {len(env_vars)} env vars from {container_name}",
+                            extra={"container": container_name},
+                        )
+                    return env_vars
+            return {}
 
-            # Parse ENV list into dict
-            env_vars: dict[str, str] = {}
-            for env_str in env_list:
-                if "=" in env_str:
-                    key, value = env_str.split("=", 1)
-                    env_vars[key] = value
-
-            self.logger.info(
-                f"Retrieved {len(env_vars)} env vars from {container_name}",
-                extra={"container": container_name},
-            )
-            return FlextResult[dict[str, str]].ok(env_vars)
-
-        except NotFound:
-            return FlextResult[dict[str, str]].fail(
-                f"Container {container_name} not found",
-            )
-        except DockerException as e:
-            self.logger.exception(
-                f"Failed to get env vars for {container_name}",
-                exception=e,
-            )
-            return FlextResult[dict[str, str]].fail(
-                f"Failed to get environment variables: {e}",
-            )
+        return helpers.execute_docker_client_operation(
+            get_client_fn=self.get_client,
+            operation=operation,
+            operation_name=f"get env vars for container {container_name}",
+            logger=self.logger,
+        )
 
     # ============================================================================
     # PHASE 2: ENHANCED HEALTH CHECK SYSTEM
@@ -1576,65 +1418,48 @@ class FlextTestDocker:
             Possible values: healthy, unhealthy, starting, stuck, running, stopped
 
         """
-        try:
-            client = self.get_client()
-            container = client.containers.get(container_name)
+        helpers = FlextTestsUtilities.DockerHelpers
 
-            # Get container state
-            state = container.attrs.get("State", {})
-            running = state.get("Running", False)
-            health = state.get("Health", {})
+        def operation(client: object) -> str:
+            containers_api = getattr(client, "containers", None)
+            if containers_api:
+                get_method = getattr(containers_api, "get", None)
+                if get_method:
+                    container = get_method(container_name)
+                    state = helpers.extract_container_state(container)
 
-            # Check if container is restarting
-            restarting = state.get("Restarting", False)
-            if restarting:
-                return FlextResult[str].ok("restarting")
+                    if state.get("restarting", False):
+                        return "restarting"
 
-            if health:
-                status = health.get("Status", "unknown")
+                    health = state.get("health", {})
+                    if health and isinstance(health, dict):
+                        started_at = str(state.get("started_at", ""))
+                        status = helpers.get_health_status(health, started_at)
 
-                # Detect containers stuck in "starting" state
-                # If health check has been running for > 5 minutes, mark as stuck
-                if status == "starting":
-                    start_time = state.get("StartedAt", "")
-                    if start_time:
-                        started = datetime.fromisoformat(start_time)
-                        now = datetime.now(UTC)
-                        elapsed = (now - started).total_seconds()
-
-                        # If health check has been "starting" for >300 seconds
-                        if elapsed > 300:
+                        if status == "stuck":
                             self.logger.warning(
-                                f"Container {container_name} stuck in starting "
-                                f"state for {elapsed:.0f}s",
-                                extra={
-                                    "container": container_name,
-                                    "elapsed": elapsed,
-                                },
+                                f"Container {container_name} stuck in starting state",
+                                extra={"container": container_name},
                             )
-                            return FlextResult[str].ok("stuck")
+                        else:
+                            self.logger.info(
+                                f"Container {container_name} health: {status}",
+                                extra={"container": container_name, "status": status},
+                            )
+                        return status
 
-                self.logger.info(
-                    "Container %s health: %s",
-                    container_name,
-                    status,
-                    extra={"container": container_name, "status": status},
-                )
-                return FlextResult[str].ok(status)
+                    # No health check configured, check running state
+                    if state.get("running", False):
+                        return "running"
+                    return "stopped"
+            raise RuntimeError(f"Failed to get container {container_name}")
 
-            # No health check configured, check running state
-            if running:
-                return FlextResult[str].ok("running")
-            return FlextResult[str].ok("stopped")
-
-        except NotFound:
-            return FlextResult[str].fail(f"Container {container_name} not found")
-        except DockerException as e:
-            self.logger.exception(
-                f"Failed to check health for {container_name}",
-                exception=e,
-            )
-            return FlextResult[str].fail(f"Failed to check container health: {e}")
+        return helpers.execute_docker_client_operation(
+            get_client_fn=self.get_client,
+            operation=operation,
+            operation_name=f"check health for container {container_name}",
+            logger=self.logger,
+        )
 
     def wait_for_container_healthy(
         self,
@@ -1661,92 +1486,32 @@ class FlextTestDocker:
             FlextResult with True if healthy, False if timeout/stuck
 
         """
+        helpers = FlextTestsUtilities.DockerHelpers
+
+        def check_health() -> FlextResult[str]:
+            if health_check_cmd:
+                exec_result = self.execute_command_in_container(
+                    container_name, health_check_cmd
+                )
+                if exec_result.is_success:
+                    return FlextResult[str].ok("healthy")
+                return FlextResult[str].ok("checking")
+            return self.check_container_health(container_name)
+
+        def is_healthy(status: str) -> bool:
+            return status == "healthy"
+
+        def should_mark_dirty(status: str) -> bool:
+            return status in {"stuck", "restarting", "unhealthy"}
+
+        # Verify container exists first
         try:
             client = self.get_client()
-            _container = client.containers.get(container_name)
-
-            start_time = time.time()
-            elapsed: float = 0.0
-            check_count = 0
-
-            while elapsed < max_wait:
-                # If custom command provided, execute it
-                if health_check_cmd:
-                    exec_result = self.execute_command_in_container(
-                        container_name,
-                        health_check_cmd,
-                    )
-                    if exec_result.is_success:
-                        self.logger.info(
-                            "Container %s passed health check",
-                            container_name,
-                            extra={"container": container_name},
-                        )
-                        return FlextResult[bool].ok(True)
-                else:
-                    # Use Docker's built-in health check
-                    health_result = self.check_container_health(container_name)
-                    if health_result.is_success:
-                        status = health_result.unwrap()
-
-                        # Container is now healthy
-                        if status == "healthy":
-                            self.logger.info(
-                                "Container %s is healthy",
-                                container_name,
-                                extra={"container": container_name},
-                            )
-                            return FlextResult[bool].ok(True)
-
-                        # Container is stuck - mark dirty and fail
-                        if status == "stuck":
-                            self.logger.error(
-                                "Container %s stuck in starting state - marking dirty",
-                                container_name,
-                                extra={"container": container_name},
-                            )
-                            self.mark_container_dirty(container_name)
-                            return FlextResult[bool].ok(False)
-
-                        # Container is restarting - mark dirty and fail
-                        if status == "restarting":
-                            self.logger.error(
-                                "Container %s is restarting - marking dirty",
-                                container_name,
-                                extra={"container": container_name},
-                            )
-                            self.mark_container_dirty(container_name)
-                            return FlextResult[bool].ok(False)
-
-                        # Container is unhealthy - mark dirty and fail
-                        if status == "unhealthy":
-                            self.logger.error(
-                                "Container %s is unhealthy - marking dirty",
-                                container_name,
-                                extra={"container": container_name},
-                            )
-                            self.mark_container_dirty(container_name)
-                            return FlextResult[bool].ok(False)
-
-                elapsed = time.time() - start_time
-                check_count += 1
-                time.sleep(check_interval)
-
-            # Timeout reached - mark container as dirty
-            self.logger.error(
-                "Container %s health check TIMEOUT after %ss (%s checks) - marking dirty",
-                container_name,
-                max_wait,
-                check_count,
-                extra={
-                    "container": container_name,
-                    "max_wait": max_wait,
-                    "checks": check_count,
-                },
-            )
-            self.mark_container_dirty(container_name)
-            return FlextResult[bool].ok(False)
-
+            containers_api = getattr(client, "containers", None)
+            if containers_api:
+                get_method = getattr(containers_api, "get", None)
+                if get_method:
+                    get_method(container_name)  # Verify exists
         except NotFound:
             self.logger.exception(
                 f"Container {container_name} not found - marking dirty",
@@ -1754,13 +1519,39 @@ class FlextTestDocker:
             )
             self.mark_container_dirty(container_name)
             return FlextResult[bool].fail(f"Container {container_name} not found")
-        except DockerException as e:
-            self.logger.exception(
-                f"Failed to wait for health on {container_name} - marking dirty",
-                exception=e,
+
+        # Wait for health with retry
+        success, result, error = helpers.wait_with_retry(
+            check_fn=check_health,
+            max_wait_seconds=max_wait,
+            check_interval_seconds=check_interval,
+            success_condition=is_healthy,
+            logger=self.logger,
+        )
+
+        if success and result and result == "healthy":
+            self.logger.info(
+                f"Container {container_name} is healthy",
+                extra={"container": container_name},
+            )
+            return FlextResult[bool].ok(True)
+
+        # Check if we should mark dirty based on status
+        if result and isinstance(result, str) and should_mark_dirty(result):
+            self.logger.error(
+                f"Container {container_name} {result} - marking dirty",
+                extra={"container": container_name, "status": result},
             )
             self.mark_container_dirty(container_name)
-            return FlextResult[bool].fail(f"Failed to wait for container health: {e}")
+            return FlextResult[bool].ok(False)
+
+        # Timeout or other failure - mark dirty
+        self.logger.error(
+            f"Container {container_name} health check TIMEOUT - marking dirty: {error}",
+            extra={"container": container_name, "error": error},
+        )
+        self.mark_container_dirty(container_name)
+        return FlextResult[bool].ok(False)
 
     def wait_for_port_ready(
         self,
@@ -1841,75 +1632,45 @@ class FlextTestDocker:
             FlextResult with list of detected issues
 
         """
-        try:
-            client = self.get_client()
-            container = client.containers.get(container_name)
+        helpers = FlextTestsUtilities.DockerHelpers
 
-            issues: list[str] = []
+        def operation(client: object) -> list[str]:
+            containers_api = getattr(client, "containers", None)
+            if containers_api:
+                get_method = getattr(containers_api, "get", None)
+                if get_method:
+                    container = get_method(container_name)
+                    state = helpers.extract_container_state(container)
+                    issues = helpers.detect_container_state_issues(
+                        state, container_name
+                    )
 
-            # Check container state
-            state = container.attrs.get("State", {})
-            running = state.get("Running", False)
+                    if not issues:
+                        self.logger.info(
+                            f"No issues detected for {container_name}",
+                            extra={"container": container_name},
+                        )
+                    else:
+                        self.logger.warning(
+                            f"Detected {len(issues)} issues for {container_name}",
+                            extra={"container": container_name, "issues": issues},
+                        )
 
-            # Check if restarting
-            if state.get("Restarting", False):
-                issues.append("Container is restarting")
+                    return issues
+            return []
 
-            # Check if running
-            if not running:
-                issues.append("Container is stopped")
+        result = helpers.execute_docker_client_operation(
+            get_client_fn=self.get_client,
+            operation=operation,
+            operation_name=f"detect issues for container {container_name}",
+            logger=self.logger,
+        )
 
-            # Check health if available
-            health = state.get("Health", {})
-            if health:
-                status = health.get("Status", "unknown")
-
-                # Check for unhealthy
-                if status == "unhealthy":
-                    failing_streak = health.get("FailingStreak", 0)
-                    issues.append(f"Container is unhealthy: {failing_streak} failures")
-
-                # Check for stuck in "starting" state (>5 minutes)
-                if status == "starting" and running:
-                    start_time = state.get("StartedAt", "")
-                    if start_time:
-                        started = datetime.fromisoformat(start_time)
-                        now = datetime.now(UTC)
-                        elapsed = (now - started).total_seconds()
-
-                        if elapsed > 300:  # 5 minutes
-                            issues.append(
-                                f"Container stuck in starting state for "
-                                f"{elapsed:.0f}s (>{300}s)",
-                            )
-
-            # Check for exit errors
-            exit_code = state.get("ExitCode")
-            if exit_code and exit_code != 0:
-                issues.append(f"Container exited with code {exit_code}")
-
-            if not issues:
-                self.logger.info(
-                    "No issues detected for %s",
-                    container_name,
-                    extra={"container": container_name},
-                )
-            else:
-                self.logger.warning(
-                    f"Detected {len(issues)} issues for {container_name}",
-                    extra={"container": container_name, "issues": issues},
-                )
-
-            return FlextResult[list[str]].ok(issues)
-
-        except NotFound:
+        # NotFound returns empty list, not failure
+        if result.is_failure and "not found" in (result.error or "").lower():
             return FlextResult[list[str]].ok(["Container not found"])
-        except DockerException as e:
-            self.logger.exception(
-                f"Failed to detect issues for {container_name}",
-                exception=e,
-            )
-            return FlextResult[list[str]].fail(f"Failed to detect issues: {e}")
+
+        return result
 
     def repair_container(
         self,
@@ -1933,107 +1694,91 @@ class FlextTestDocker:
             FlextResult with repair status message
 
         """
-        try:
-            client = self.get_client()
+        helpers = FlextTestsUtilities.DockerHelpers
 
-            # First try to get the container to confirm it exists
-            try:
-                container: Container = client.containers.get(container_name)
-                was_running = container.attrs.get("State", {}).get("Running", False)
-                state = container.attrs.get("State", {})
-                health = state.get("Health", {})
-                health_status = health.get("Status", "unknown") if health else "none"
-            except NotFound:
-                return FlextResult[str].fail(f"Container {container_name} not found")
+        # Get container and check if running
+        get_result = helpers.execute_docker_client_operation(
+            get_client_fn=self.get_client,
+            operation=lambda client: helpers._get_container_with_state(
+                client, container_name
+            ),
+            operation_name=f"get container {container_name} for repair",
+            logger=self.logger,
+        )
 
-            # Stop the container if running
-            if was_running:
-                self.logger.warning(
-                    "Stopping container %s for repair (health: %s)",
-                    container_name,
-                    health_status,
-                    extra={"container": container_name, "health": health_status},
-                )
-                try:
-                    # Try graceful stop first (30 second timeout)
-                    container.stop(timeout=10)
-                    self.logger.info(
-                        "Container %s stopped gracefully",
-                        container_name,
-                        extra={"container": container_name},
-                    )
-                except Exception as e:
-                    # If graceful stop fails, force kill
-                    self.logger.warning(
-                        "Graceful stop failed for %s, force killing: %s",
-                        container_name,
-                        e,
-                        extra={"container": container_name},
-                    )
-                    # Force kill container
-                    container.kill(signal="SIGKILL")
-                    self.logger.warning(
-                        "Force killed container %s",
-                        container_name,
-                        extra={"container": container_name},
-                    )
-
-            # Remove the container (with force if it doesn't stop)
-            self.logger.info(
-                "Removing container %s",
-                container_name,
-                extra={"container": container_name},
+        if get_result.is_failure:
+            return FlextResult[str].fail(
+                f"Container {container_name} not found for repair"
             )
-            try:
-                container.remove()
-            except Exception:
-                # Force remove if normal remove fails
-                container.remove(force=True)
-                self.logger.info(
-                    "Force removed container %s",
-                    container_name,
+
+        container, state = get_result.unwrap()
+        was_running = state.get("running", False)
+        health = state.get("health", {})
+        health_status = (
+            health.get("Status", "none") if isinstance(health, dict) else "none"
+        )
+
+        # Stop container if running
+        if was_running:
+            self.logger.warning(
+                f"Stopping container {container_name} for repair (health: {health_status})",
+                extra={"container": container_name, "health": health_status},
+            )
+            stop_result = helpers.execute_container_stop_operation(
+                container,
+                container_name,
+                timeout=10,
+                force_kill=True,
+                logger=self.logger,
+            )
+            if stop_result.is_failure:
+                self.logger.warning(
+                    f"Stop failed during repair: {stop_result.error}",
                     extra={"container": container_name},
                 )
 
-            # If compose file provided, restart via docker-compose
-            if compose_file:
-                compose_result = self.compose_down(compose_file)
-                if compose_result.is_failure:
-                    self.logger.warning(
-                        f"compose_down failed: {compose_result.error}",
-                        extra={"error": compose_result.error},
-                    )
-                    # Continue anyway, try to start
+        # Remove container
+        self.logger.info(
+            f"Removing container {container_name}",
+            extra={"container": container_name},
+        )
+        remove_result = helpers.execute_container_remove_operation(
+            container, container_name, force=True, logger=self.logger
+        )
+        if remove_result.is_failure:
+            return FlextResult[str].fail(
+                f"Failed to remove container during repair: {remove_result.error}"
+            )
 
-                # Recreate volumes if requested
-                if recreate_volumes:
-                    try:
-                        client.volumes.prune()
-                        self.logger.info(
-                            "Pruned unused volumes",
-                        )
-                    except Exception as e:
-                        self.logger.warning(
-                            "Failed to prune volumes: %s",
-                            e,
-                            extra={"error": str(e)},
-                        )
-
-                return self.compose_up(
-                    compose_file,
-                    service=service,
+        # Restart via compose if provided
+        if compose_file:
+            compose_result = self.compose_down(compose_file)
+            if compose_result.is_failure:
+                self.logger.warning(
+                    f"compose_down failed: {compose_result.error}",
+                    extra={"error": compose_result.error},
                 )
 
-            return FlextResult[str].ok(
-                f"Container {container_name} repaired (force killed and removed)",
-            )
+            if recreate_volumes:
+                client = self.get_client()
+                volumes_api = getattr(client, "volumes", None)
+                if volumes_api:
+                    prune_method = getattr(volumes_api, "prune", None)
+                    if prune_method:
+                        try:
+                            prune_method()
+                            self.logger.info("Pruned unused volumes")
+                        except Exception as e:
+                            self.logger.warning(
+                                f"Failed to prune volumes: {e}",
+                                extra={"error": str(e)},
+                            )
 
-        except DockerException as e:
-            self.logger.exception(
-                f"Failed to repair {container_name}",
-                exception=e,
-            )
-            return FlextResult[str].fail(f"Failed to repair container: {e}")
+            return self.compose_up(compose_file, service=service)
+
+        return FlextResult[str].ok(
+            f"Container {container_name} repaired (force killed and removed)"
+        )
 
     def auto_repair_if_needed(
         self,
@@ -2110,102 +1855,83 @@ class FlextTestDocker:
             FlextResult with container status message
 
         """
-        try:
-            client = self.get_client()
+        helpers = FlextTestsUtilities.DockerHelpers
 
-            # Load environment variables if provided
-            if env_file:
-                env_result = self.load_env_file(env_file)
-                if env_result.is_failure:
-                    self.logger.warning(
-                        f"Failed to load env file: {env_result.error}",
-                    )
-                # Continue even if env load fails
+        # Load environment variables if provided
+        if env_file:
+            env_result = self.load_env_file(env_file)
+            if env_result.is_failure:
+                self.logger.warning(
+                    f"Failed to load env file: {env_result.error}",
+                )
 
-            # Check if container exists and is running
-            try:
-                container = client.containers.get(container_name)
-                is_running = container.attrs.get("State", {}).get("Running", False)
+        # Check if container exists and is running
+        check_result = helpers.execute_docker_client_operation(
+            get_client_fn=self.get_client,
+            operation=lambda client: helpers._get_container_with_state(
+                client, container_name
+            ),
+            operation_name=f"check container {container_name} status",
+            logger=self.logger,
+        )
 
-                if is_running:
-                    self.logger.info(
-                        "Container %s is already running",
-                        container_name,
-                        extra={"container": container_name},
-                    )
-                    # Wait for healthy if needed
-                    if health_check_cmd or compose_file:
-                        health_result = self.wait_for_container_healthy(
-                            container_name,
-                            max_wait=max_wait,
-                            health_check_cmd=health_check_cmd,
-                        )
-                        if health_result.is_success and health_result.unwrap():
-                            return FlextResult[str].ok(
-                                f"Container {container_name} is running and healthy",
-                            )
-                    else:
-                        return FlextResult[str].ok(
-                            f"Container {container_name} is running",
-                        )
-
-            except NotFound:
+        if check_result.is_success:
+            _container, state = check_result.unwrap()
+            if state.get("running", False):
                 self.logger.info(
-                    "Container %s not found, will start",
-                    container_name,
+                    f"Container {container_name} is already running",
                     extra={"container": container_name},
                 )
-
-            # Start container via compose if file provided
-            if compose_file:
-                self.logger.info(
-                    "Starting %s via docker-compose",
-                    container_name,
-                    extra={"container": container_name, "compose_file": compose_file},
-                )
-                # Register container configuration for private/project-specific containers
-                # This enables cleanup_dirty_containers to properly recreate them
-                self._container_configs[container_name] = {
-                    "compose_file": compose_file,
-                    "service": service or "",
-                }
-                compose_result = self.compose_up(compose_file, service=service)
-                if compose_result.is_failure:
-                    return compose_result
-
-            # Wait for container to be healthy
-            health_result = self.wait_for_container_healthy(
-                container_name,
-                max_wait=max_wait,
-                health_check_cmd=health_check_cmd,
+                # Wait for healthy if needed
+                if health_check_cmd or compose_file:
+                    health_result = self.wait_for_container_healthy(
+                        container_name,
+                        max_wait=max_wait,
+                        health_check_cmd=health_check_cmd,
+                    )
+                    if health_result.is_success and health_result.unwrap():
+                        return FlextResult[str].ok(
+                            f"Container {container_name} is running and healthy"
+                        )
+                else:
+                    return FlextResult[str].ok(f"Container {container_name} is running")
+        else:
+            self.logger.info(
+                f"Container {container_name} not found, will start",
+                extra={"container": container_name},
             )
 
-            # CRITICAL: If health check failed, fail startup
-            # (container is marked dirty for recreation)
-            if health_result.is_failure:
-                return FlextResult[str].fail(
-                    health_result.error or "Container health check failed",
-                )
+        # Start container via compose if file provided
+        if compose_file:
+            self.logger.info(
+                f"Starting {container_name} via docker-compose",
+                extra={"container": container_name, "compose_file": compose_file},
+            )
+            self._container_configs[container_name] = {
+                "compose_file": compose_file,
+                "service": service or "",
+            }
+            compose_result = self.compose_up(compose_file, service=service)
+            if compose_result.is_failure:
+                return compose_result
 
-            # If health check returned False (unhealthy/stuck/restarting)
-            # Container already marked dirty by wait_for_container_healthy
-            if not health_result.unwrap():
-                return FlextResult[str].fail(
-                    f"Container {container_name} failed health check "
-                    "(marked dirty for recreation)",
-                )
+        # Wait for container to be healthy
+        health_result = self.wait_for_container_healthy(
+            container_name, max_wait=max_wait, health_check_cmd=health_check_cmd
+        )
 
-            # Container is healthy
-            return FlextResult[str].ok(
-                f"Container {container_name} is running and healthy",
+        if health_result.is_failure:
+            return FlextResult[str].fail(
+                health_result.error or "Container health check failed"
             )
 
-        except DockerException as e:
-            self.logger.exception(
-                f"Failed to ensure {container_name} running",
-                exception=e,
+        if not health_result.unwrap():
+            return FlextResult[str].fail(
+                f"Container {container_name} failed health check "
+                "(marked dirty for recreation)"
             )
-            return FlextResult[str].fail(f"Failed to ensure container running: {e}")
+
+        return FlextResult[str].ok(f"Container {container_name} is running and healthy")
 
     def graceful_shutdown_container(
         self,
@@ -2225,51 +1951,71 @@ class FlextTestDocker:
             FlextResult with shutdown status message
 
         """
-        try:
-            client = self.get_client()
+        helpers = FlextTestsUtilities.DockerHelpers
 
-            try:
-                container = client.containers.get(container_name)
-            except NotFound:
-                return FlextResult[str].fail(f"Container {container_name} not found")
+        # Get container
+        get_result = helpers.execute_docker_client_operation(
+            get_client_fn=self.get_client,
+            operation=lambda client: helpers._get_container_with_state(
+                client, container_name
+            ),
+            operation_name=f"get container {container_name} for shutdown",
+            logger=self.logger,
+        )
 
-            # Stop the container gracefully
-            state = container.attrs.get("State", {})
-            if state.get("Running", False):
-                self.logger.info(
-                    "Stopping container %s",
-                    container_name,
-                    extra={"container": container_name, "timeout": timeout},
+        if get_result.is_failure:
+            return FlextResult[str].fail(f"Container {container_name} not found")
+
+        container, state = get_result.unwrap()
+
+        # Stop container if running
+        if state.get("running", False):
+            self.logger.info(
+                f"Stopping container {container_name}",
+                extra={"container": container_name, "timeout": timeout},
+            )
+            stop_result = helpers.execute_container_stop_operation(
+                container,
+                container_name,
+                timeout=timeout,
+                force_kill=False,
+                logger=self.logger,
+            )
+            if stop_result.is_failure:
+                return FlextResult[str].fail(
+                    f"Failed to stop container: {stop_result.error}"
                 )
-                container.stop(timeout=timeout)
-            else:
-                self.logger.info(
-                    "Container %s is already stopped",
-                    container_name,
-                    extra={"container": container_name},
-                )
-
-            # Remove volumes if requested
-            if remove_volumes:
-                self.logger.info(
-                    "Removing volumes for %s",
-                    container_name,
-                    extra={"container": container_name},
-                )
-                container.remove(v=True)
-            else:
-                container.remove()
-
-            return FlextResult[str].ok(
-                f"Container {container_name} stopped and removed",
+        else:
+            self.logger.info(
+                f"Container {container_name} is already stopped",
+                extra={"container": container_name},
             )
 
-        except DockerException as e:
-            self.logger.exception(
-                f"Failed to shutdown {container_name}",
-                exception=e,
+        # Remove container with optional volumes
+        if remove_volumes:
+            self.logger.info(
+                f"Removing volumes for {container_name}",
+                extra={"container": container_name},
             )
-            return FlextResult[str].fail(f"Failed to shutdown container: {e}")
+
+        remove_result = helpers.execute_container_remove_operation(
+            container, container_name, force=False, logger=self.logger
+        )
+        if remove_result.is_failure:
+            return FlextResult[str].fail(
+                f"Failed to remove container: {remove_result.error}"
+            )
+
+        # Handle volume removal if requested (Docker API uses v=True parameter)
+        if remove_volumes:
+            remove_method = getattr(container, "remove", None)
+            if remove_method:
+                try:
+                    remove_method(v=True)
+                except Exception:
+                    pass  # Already removed above
+
+        return FlextResult[str].ok(f"Container {container_name} stopped and removed")
 
     @classmethod
     def _status_icon(cls, status: ContainerStatus) -> str:
@@ -2327,19 +2073,31 @@ class FlextTestDocker:
         tail: int | None = None,
     ) -> FlextResult[str]:
         """Fetch logs for a specific container."""
-        tail_count = tail or self._DEFAULT_LOG_TAIL
-        try:
-            client = self.get_client()
-            # Docker SDK returns Container - get container for logs
-            container = client.containers.get(container_name)
-            logs_method = getattr(container, "logs", None)
-            logs_bytes = logs_method(tail=tail_count) if logs_method else b""
-            return FlextResult[str].ok(logs_bytes.decode("utf-8", errors="ignore"))
-        except NotFound:
-            return FlextResult[str].fail(f"Container {container_name} not found")
-        except DockerException as exc:
-            self.logger.exception("Failed to fetch container logs")
-            return FlextResult[str].fail(f"Failed to fetch logs: {exc}")
+        helpers = FlextTestsUtilities.DockerHelpers
+        tail_count = tail or FlextConstants.Test.Docker.DEFAULT_LOG_TAIL
+
+        def operation(client: object) -> str:
+            containers_api = getattr(client, "containers", None)
+            if containers_api:
+                get_method = getattr(containers_api, "get", None)
+                if get_method:
+                    container = get_method(container_name)
+                    logs_method = getattr(container, "logs", None)
+                    if logs_method:
+                        logs_bytes = logs_method(tail=tail_count)
+                        return (
+                            logs_bytes.decode("utf-8", errors="ignore")
+                            if isinstance(logs_bytes, bytes)
+                            else str(logs_bytes)
+                        )
+            return ""
+
+        return helpers.execute_docker_client_operation(
+            get_client_fn=self.get_client,
+            operation=operation,
+            operation_name=f"fetch logs for container {container_name}",
+            logger=self.logger,
+        )
 
     @classmethod
     def register_pytest_fixtures(
@@ -2651,10 +2409,11 @@ class FlextTestDocker:
             )
 
         # Convert dict[str, ContainerInfo] to generic dict[str, object] for dict[str, object] compatibility
-        status_info: dict[str, object] = cast(
-            "dict[str, object]",
-            status_result.value.copy(),
-        )
+        status_result_copy = status_result.value.copy()
+        status_info: dict[str, object] = {}
+        if isinstance(status_result_copy, dict):
+            # Create explicit conversion: dict[str, ContainerInfo] -> dict[str, object]
+            status_info = dict(status_result_copy.items())
         running_services = self.get_running_services()
         if running_services.is_success:
             status_info["auto_managed_services"] = running_services.value

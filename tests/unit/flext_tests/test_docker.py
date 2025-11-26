@@ -504,7 +504,7 @@ class TestFlextTestDocker:
 
         # Check structure of one container config
         ldap_config = shared["flext-openldap-test"]
-        assert ldap_config["compose_file"] == "docker/docker-compose.yml"
+        assert ldap_config["compose_file"] == "flext-ldap/docker/docker-compose.yml"
         assert ldap_config["service"] == "openldap"
         assert ldap_config["port"] == 3390
 
@@ -921,13 +921,17 @@ class TestDockerComposeWithPythonOnWhales:
         The conversion from subprocess to python-on-whales requires using
         threading-based timeouts instead of subprocess.TimeoutExpired.
         """
-        module_source = Path(docker_module.__file__).read_text(encoding="utf-8")
+        # Import utilities module to check threading implementation
+        from flext_tests import utilities as utilities_module
 
-        # Should use threading for timeout handling
-        assert "threading.Thread" in module_source
+        utilities_source = Path(utilities_module.__file__).read_text(encoding="utf-8")
+        docker_source = Path(docker_module.__file__).read_text(encoding="utf-8")
 
-        # Should NOT use subprocess.TimeoutExpired
-        assert "subprocess.TimeoutExpired" not in module_source
+        # Should use threading for timeout handling (in utilities module)
+        assert "threading.Thread" in utilities_source
 
-        # Should have timeout parameter in threading.join()
-        assert "thread.join(timeout=" in module_source
+        # Should NOT use subprocess.TimeoutExpired (in docker module)
+        assert "subprocess.TimeoutExpired" not in docker_source
+
+        # Should have timeout parameter in threading.join() (in utilities module)
+        assert "thread.join(timeout=" in utilities_source

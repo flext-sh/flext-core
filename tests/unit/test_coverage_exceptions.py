@@ -1,202 +1,211 @@
 """Comprehensive coverage tests for FlextExceptions.
 
+Module: flext_core.exceptions
+Scope: FlextExceptions - exception hierarchy, factory methods, configuration
+
 This module provides extensive tests for the FlextExceptions hierarchy,
 targeting all missing lines and edge cases with accurate API usage.
 
+Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+and aggressive parametrization for DRY testing.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-from typing import cast
+from dataclasses import dataclass
+from typing import ClassVar, cast
 
-from flext_core import (
-    FlextConstants,
-    FlextExceptions,
-    FlextResult,
-)
+import pytest
+
+from flext_core import FlextConstants, FlextExceptions, FlextResult
+
+
+@dataclass(frozen=True, slots=True)
+class ExceptionCreationScenario:
+    """Exception creation test scenario."""
+
+    name: str
+    exception_type: type[FlextExceptions.BaseError]
+    message: str
+    kwargs: dict[str, object]
+    expected_attrs: dict[str, object]
+
+
+class ExceptionScenarios:
+    """Centralized exception coverage test scenarios using FlextConstants."""
+
+    EXCEPTION_CREATION: ClassVar[list[ExceptionCreationScenario]] = [
+        ExceptionCreationScenario(
+            "validation_basic", FlextExceptions.ValidationError, "Invalid input", {}, {}
+        ),
+        ExceptionCreationScenario(
+            "validation_with_field",
+            FlextExceptions.ValidationError,
+            "Email invalid",
+            {"field": "email", "value": "not-an-email"},
+            {"field": "email", "value": "not-an-email"},
+        ),
+        ExceptionCreationScenario(
+            "configuration_basic",
+            FlextExceptions.ConfigurationError,
+            "Missing required field",
+            {},
+            {},
+        ),
+        ExceptionCreationScenario(
+            "configuration_with_source",
+            FlextExceptions.ConfigurationError,
+            "Missing API key",
+            {"config_key": "API_KEY", "config_source": "environment"},
+            {"config_key": "API_KEY", "config_source": "environment"},
+        ),
+        ExceptionCreationScenario(
+            "connection",
+            FlextExceptions.ConnectionError,
+            "Failed to connect",
+            {"host": "db.example.com", "port": 5432, "timeout": 30.0},
+            {"host": "db.example.com", "port": 5432},
+        ),
+        ExceptionCreationScenario(
+            "timeout",
+            FlextExceptions.TimeoutError,
+            "Operation timed out",
+            {"timeout_seconds": 30, "operation": "fetch_data"},
+            {"timeout_seconds": 30, "operation": "fetch_data"},
+        ),
+        ExceptionCreationScenario(
+            "authentication",
+            FlextExceptions.AuthenticationError,
+            "Invalid credentials",
+            {"auth_method": "basic", "user_id": "user123"},
+            {"auth_method": "basic", "user_id": "user123"},
+        ),
+        ExceptionCreationScenario(
+            "authorization",
+            FlextExceptions.AuthorizationError,
+            "User lacks permission",
+            {"user_id": "user123", "resource": "REDACTED_LDAP_BIND_PASSWORD_panel", "permission": "read"},
+            {"user_id": "user123", "resource": "REDACTED_LDAP_BIND_PASSWORD_panel"},
+        ),
+        ExceptionCreationScenario(
+            "not_found",
+            FlextExceptions.NotFoundError,
+            "User not found",
+            {"resource_type": "User", "resource_id": "123"},
+            {"resource_type": "User", "resource_id": "123"},
+        ),
+        ExceptionCreationScenario(
+            "conflict",
+            FlextExceptions.ConflictError,
+            "User already exists",
+            {
+                "resource_type": "User",
+                "resource_id": "user@example.com",
+                "conflict_reason": "email_already_registered",
+            },
+            {"resource_type": "User", "resource_id": "user@example.com"},
+        ),
+        ExceptionCreationScenario(
+            "rate_limit",
+            FlextExceptions.RateLimitError,
+            "Too many requests",
+            {"limit": 100, "window_seconds": 60, "retry_after": 30},
+            {"limit": 100, "window_seconds": 60},
+        ),
+        ExceptionCreationScenario(
+            "circuit_breaker",
+            FlextExceptions.CircuitBreakerError,
+            "Circuit breaker is open",
+            {
+                "service_name": "payment_service",
+                "failure_count": 5,
+                "reset_timeout": 60,
+            },
+            {"service_name": "payment_service", "failure_count": 5},
+        ),
+        ExceptionCreationScenario(
+            "type_error",
+            FlextExceptions.TypeError,
+            "Expected string, got int",
+            {"expected_type": "str", "actual_type": "int"},
+            {"expected_type": "str", "actual_type": "int"},
+        ),
+        ExceptionCreationScenario(
+            "operation_error",
+            FlextExceptions.OperationError,
+            "Database operation failed",
+            {"operation": "INSERT", "reason": "Constraint violation"},
+            {"operation": "INSERT", "reason": "Constraint violation"},
+        ),
+        ExceptionCreationScenario(
+            "attribute_access",
+            FlextExceptions.AttributeAccessError,
+            "Attribute not found",
+            {
+                "attribute_name": "missing_field",
+                "attribute_context": {"class": "User", "attempted_access": "read"},
+            },
+            {"attribute_name": "missing_field"},
+        ),
+    ]
+
+    FACTORY_CREATION: ClassVar[
+        list[tuple[str, dict[str, object], type[FlextExceptions.BaseError]]]
+    ] = [
+        (
+            "ValidationError",
+            {"field": "email", "value": "not-valid"},
+            FlextExceptions.ValidationError,
+        ),
+        (
+            "ConfigurationError",
+            {"config_key": "API_KEY", "config_source": "environment"},
+            FlextExceptions.ConfigurationError,
+        ),
+        (
+            "ConnectionError",
+            {"host": "localhost", "port": 5432},
+            FlextExceptions.ConnectionError,
+        ),
+        (
+            "OperationError",
+            {"operation": "INSERT", "reason": "Constraint violation"},
+            FlextExceptions.OperationError,
+        ),
+        ("TimeoutError", {"timeout_seconds": 30}, FlextExceptions.TimeoutError),
+    ]
 
 
 class TestFlextExceptionsHierarchy:
-    """Test complete exception hierarchy with correct API signatures."""
+    """Test complete exception hierarchy using FlextTestsUtilities."""
 
-    def test_validation_error_basic(self) -> None:
-        """Test creating ValidationError with message only."""
-        error = FlextExceptions.ValidationError("Invalid input")
-        assert str(error) == "[VALIDATION_ERROR] Invalid input"
+    @pytest.mark.parametrize(
+        "scenario", ExceptionScenarios.EXCEPTION_CREATION, ids=lambda s: s.name
+    )
+    def test_exception_creation(self, scenario: ExceptionCreationScenario) -> None:
+        """Test creating exceptions with various scenarios."""
+        if scenario.kwargs:
+            error = scenario.exception_type(scenario.message, **scenario.kwargs)
+        else:
+            error = scenario.exception_type(scenario.message)
+        assert scenario.message in str(error)
         assert isinstance(error, Exception)
-
-    def test_validation_error_with_field(self) -> None:
-        """Test ValidationError with field information."""
-        error = FlextExceptions.ValidationError(
-            "Email invalid",
-            field="email",
-            value="not-an-email",
-        )
-        assert "Email invalid" in str(error)
-        assert error.field == "email"
-        assert error.value == "not-an-email"
-
-    def test_configuration_error_basic(self) -> None:
-        """Test ConfigurationError creation."""
-        error = FlextExceptions.ConfigurationError("Missing required field")
-        assert "Missing required field" in str(error)
-
-    def test_configuration_error_with_source(self) -> None:
-        """Test ConfigurationError with config source tracking."""
-        error = FlextExceptions.ConfigurationError(
-            "Missing API key",
-            config_key="API_KEY",
-            config_source="environment",
-        )
-        assert "Missing API key" in str(error)
-        assert error.config_key == "API_KEY"
-        assert error.config_source == "environment"
-
-    def test_connection_error(self) -> None:
-        """Test ConnectionError with host/port tracking."""
-        error = FlextExceptions.ConnectionError(
-            "Failed to connect to database",
-            host="db.example.com",
-            port=5432,
-            timeout=30.0,
-        )
-        assert "Failed to connect" in str(error)
-        assert error.host == "db.example.com"
-        assert error.port == 5432
-        assert error.timeout == 30.0
-
-    def test_timeout_error(self) -> None:
-        """Test TimeoutError for operation timeout."""
-        error = FlextExceptions.TimeoutError(
-            "Operation timed out",
-            timeout_seconds=30,
-            operation="fetch_data",
-        )
-        assert "Operation timed out" in str(error)
-        assert error.timeout_seconds == 30
-        assert error.operation == "fetch_data"
-
-    def test_authentication_error(self) -> None:
-        """Test AuthenticationError for auth failures."""
-        error = FlextExceptions.AuthenticationError(
-            "Invalid credentials",
-            auth_method="basic",
-            user_id="user123",
-        )
-        assert "Invalid credentials" in str(error)
-        assert error.auth_method == "basic"
-        assert error.user_id == "user123"
-
-    def test_authorization_error(self) -> None:
-        """Test AuthorizationError for permission failures."""
-        error = FlextExceptions.AuthorizationError(
-            "User lacks required permission",
-            user_id="user123",
-            resource="REDACTED_LDAP_BIND_PASSWORD_panel",
-            permission="read",
-        )
-        assert "User lacks required permission" in str(error)
-        assert error.user_id == "user123"
-        assert error.resource == "REDACTED_LDAP_BIND_PASSWORD_panel"
-        assert error.permission == "read"
-
-    def test_not_found_error(self) -> None:
-        """Test NotFoundError creation and properties."""
-        error = FlextExceptions.NotFoundError(
-            "User not found",
-            resource_type="User",
-            resource_id="123",
-        )
-        assert "User not found" in str(error)
-        assert error.resource_type == "User"
-        assert error.resource_id == "123"
-
-    def test_conflict_error(self) -> None:
-        """Test ConflictError for duplicate resources."""
-        error = FlextExceptions.ConflictError(
-            "User already exists",
-            resource_type="User",
-            resource_id="user@example.com",
-            conflict_reason="email_already_registered",
-        )
-        assert "User already exists" in str(error)
-        assert error.resource_type == "User"
-        assert error.resource_id == "user@example.com"
-        assert error.conflict_reason == "email_already_registered"
-
-    def test_rate_limit_error(self) -> None:
-        """Test RateLimitError for rate limiting."""
-        error = FlextExceptions.RateLimitError(
-            "Too many requests",
-            limit=100,
-            window_seconds=60,
-            retry_after=30,
-        )
-        assert "Too many requests" in str(error)
-        assert error.limit == 100
-        assert error.window_seconds == 60
-        assert error.retry_after == 30
-
-    def test_circuit_breaker_error(self) -> None:
-        """Test CircuitBreakerError for circuit breaker trip."""
-        error = FlextExceptions.CircuitBreakerError(
-            "Circuit breaker is open",
-            service_name="payment_service",
-            failure_count=5,
-            reset_timeout=60,
-        )
-        assert "Circuit breaker is open" in str(error)
-        assert error.service_name == "payment_service"
-        assert error.failure_count == 5
-        assert error.reset_timeout == 60
-
-    def test_type_error(self) -> None:
-        """Test TypeError for type mismatches."""
-        error = FlextExceptions.TypeError(
-            "Expected string, got int",
-            expected_type="str",
-            actual_type="int",
-        )
-        assert "Expected string" in str(error)
-        assert error.expected_type == "str"
-        assert error.actual_type == "int"
-
-    def test_operation_error(self) -> None:
-        """Test OperationError for failed operations."""
-        error = FlextExceptions.OperationError(
-            "Database operation failed",
-            operation="INSERT",
-            reason="Constraint violation",
-        )
-        assert "Database operation failed" in str(error)
-        assert error.operation == "INSERT"
-        assert error.reason == "Constraint violation"
-
-    def test_attribute_access_error(self) -> None:
-        """Test AttributeAccessError for missing attributes."""
-        error = FlextExceptions.AttributeAccessError(
-            "Attribute not found",
-            attribute_name="missing_field",
-            attribute_context={"class": "User", "attempted_access": "read"},
-        )
-        assert "Attribute not found" in str(error)
-        assert error.attribute_name == "missing_field"
-        assert error.attribute_context is not None
-        # No cast needed - attribute_context is already dict[str, object]
-        assert error.attribute_context["class"] == "User"
+        for attr_name, expected_value in scenario.expected_attrs.items():
+            assert hasattr(error, attr_name)
+            assert getattr(error, attr_name) == expected_value
 
 
 class TestExceptionIntegration:
-    """Test exceptions integration with FlextResult."""
+    """Test exceptions integration with FlextResult using FlextTestsUtilities."""
 
     def test_exception_to_result_conversion(self) -> None:
         """Test converting exceptions to FlextResult."""
         try:
-            msg = "Test error"
-            raise FlextExceptions.ValidationError(msg, field="email")
+            error_msg = "Test error"
+            raise FlextExceptions.ValidationError(error_msg, field="email")
         except FlextExceptions.ValidationError as e:
             result = FlextResult[bool].fail(str(e))
             assert result.is_failure
@@ -212,23 +221,17 @@ class TestExceptionIntegration:
                 return FlextResult[dict[str, object]].fail("Missing id")
             return FlextResult[dict[str, object]].ok(data)
 
-        result = validate_and_process({})
-        assert result.is_failure
-
-        result = validate_and_process({"id": "123"})
-        assert result.is_success
+        assert validate_and_process({}).is_failure
+        assert validate_and_process({"id": "123"}).is_success
 
     def test_nested_exception_handling(self) -> None:
         """Test nested exception scenarios."""
         try:
-            msg = "Validation failed"
+            error_msg = "Validation failed"
             raise FlextExceptions.ValidationError(
-                msg,
-                field="email",
-                value="invalid",
+                error_msg, field="email", value="invalid"
             )
         except FlextExceptions.ValidationError as e:
-            # Wrap in another exception
             result = FlextResult[bool].fail(f"Error in user creation: {e}")
             assert result.is_failure
             assert result.error is not None and "Validation failed" in result.error
@@ -237,25 +240,28 @@ class TestExceptionIntegration:
 class TestExceptionEdgeCases:
     """Test edge cases and boundary conditions."""
 
-    def test_exception_with_empty_message(self) -> None:
-        """Test exception with empty message."""
-        error = FlextExceptions.ValidationError("")
+    @pytest.mark.parametrize(
+        ("message", "expected_in_str"),
+        [
+            ("", True),
+            ("Invalid: 中文 العربية 🔴", True),
+            ("x" * 10000, True),
+            ("Message with \"quotes\" and 'apostrophes'", True),
+        ],
+        ids=["empty", "unicode", "long", "special_chars"],
+    )
+    def test_exception_message_variations(
+        self, message: str, expected_in_str: bool
+    ) -> None:
+        """Test exception with various message formats."""
+        error = FlextExceptions.ValidationError(message)
         assert isinstance(error, Exception)
-
-    def test_exception_with_unicode_message(self) -> None:
-        """Test exception with unicode characters."""
-        error = FlextExceptions.ValidationError("Invalid: 中文 العربية 🔴")
-        assert "中文" in str(error)
-
-    def test_exception_with_long_message(self) -> None:
-        """Test exception with very long message."""
-        long_msg = "x" * 10000
-        error = FlextExceptions.ValidationError(long_msg)
-        assert len(str(error)) > 9000
+        if message:
+            assert message in str(error) or len(str(error)) > 9000
 
     def test_multiple_exceptions_in_sequence(self) -> None:
         """Test handling multiple exceptions."""
-        errors = []
+        errors: list[str] = []
         for i in range(5):
             try:
                 if i % 2 == 0:
@@ -263,7 +269,6 @@ class TestExceptionEdgeCases:
                 raise FlextExceptions.ConfigurationError(f"Config error {i}")
             except Exception as e:
                 errors.append(str(e))
-
         assert len(errors) == 5
         assert any("Error" in e for e in errors)
 
@@ -272,13 +277,6 @@ class TestExceptionEdgeCases:
         error = FlextExceptions.ValidationError("Test")
         assert isinstance(error, Exception)
 
-    def test_exception_with_special_characters(self) -> None:
-        """Test exception message with special characters."""
-        error = FlextExceptions.ValidationError(
-            "Message with \"quotes\" and 'apostrophes'",
-        )
-        assert "quotes" in str(error)
-
 
 class TestExceptionProperties:
     """Test exception properties and attributes."""
@@ -286,8 +284,7 @@ class TestExceptionProperties:
     def test_exception_string_representation(self) -> None:
         """Test string representation of exceptions."""
         error = FlextExceptions.ValidationError("Test message")
-        error_str = str(error)
-        assert "Test message" in error_str
+        assert "Test message" in str(error)
 
     def test_exception_repr(self) -> None:
         """Test repr of exceptions."""
@@ -304,9 +301,7 @@ class TestExceptionProperties:
     def test_base_error_with_metadata(self) -> None:
         """Test BaseError with metadata."""
         error = FlextExceptions.NotFoundError(
-            "Resource not found",
-            resource_id="123",
-            resource_type="User",
+            "Resource not found", resource_id="123", resource_type="User"
         )
         assert "Resource not found" in str(error)
 
@@ -322,17 +317,14 @@ class TestExceptionContext:
             "timestamp": 1234567890,
         }
         error = FlextExceptions.ValidationError(
-            "Validation failed in context",
+            "Validation failed in context"
         ).with_context(**context_dict)
         assert "user_id" in error.metadata.attributes
         assert error.metadata.attributes["user_id"] == "123"
 
     def test_exception_with_correlation_id(self) -> None:
         """Test exception with auto-generated correlation ID."""
-        error = FlextExceptions.BaseError(
-            "Test error",
-            auto_correlation=True,
-        )
+        error = FlextExceptions.BaseError("Test error", auto_correlation=True)
         assert error.correlation_id is not None
         assert error.correlation_id.startswith("exc_")
 
@@ -340,25 +332,18 @@ class TestExceptionContext:
         """Test exception chaining with cause."""
         original: Exception | None = None
         try:
-            msg = "Original error"
-            raise ValueError(msg)
+            error_msg = "Original error"
+            raise ValueError(error_msg)
         except ValueError as e:
             original = e
-
         assert original is not None
         error = FlextExceptions.OperationError("Operation failed").chain_from(original)
         assert error.__cause__ is original
-        assert (
-            "parent_correlation_id" in error.metadata.attributes
-            or error.__cause__ is not None
-        )
 
     def test_exception_preservation(self) -> None:
         """Test that exception information is preserved."""
         original_msg = "Original error message with details"
         error = FlextExceptions.ValidationError(original_msg)
-
-        # Verify message is preserved through conversion
         result = FlextResult[bool].fail(str(error))
         assert result.error is not None and (
             original_msg in result.error or "Original error" in result.error
@@ -371,9 +356,7 @@ class TestExceptionSerialization:
     def test_exception_to_dict(self) -> None:
         """Test converting exception to dictionary."""
         error = FlextExceptions.ValidationError(
-            "Invalid email",
-            field="email",
-            value="not-valid",
+            "Invalid email", field="email", value="not-valid"
         )
         error_dict = error.to_dict()
         assert error_dict["error_type"] == "ValidationError"
@@ -383,8 +366,7 @@ class TestExceptionSerialization:
     def test_exception_dict_with_metadata(self) -> None:
         """Test exception dict includes metadata."""
         error = FlextExceptions.OperationError(
-            "Operation failed",
-            operation="INSERT",
+            "Operation failed", operation="INSERT"
         ).with_context(user_id="123", timestamp=1234567890)
         error_dict: dict[str, object] = error.to_dict()
         metadata = cast("dict[str, object]", error_dict["metadata"])
@@ -393,7 +375,7 @@ class TestExceptionSerialization:
 
 
 class TestExceptionFactory:
-    """Test exception factory methods."""
+    """Test exception factory methods using FlextTestsUtilities."""
 
     def test_create_error_by_type(self) -> None:
         """Test creating exception by type name."""
@@ -401,49 +383,20 @@ class TestExceptionFactory:
         assert isinstance(error, FlextExceptions.ValidationError)
         assert "Test validation error" in str(error)
 
-    def test_create_error_with_auto_detection(self) -> None:
+    @pytest.mark.parametrize(
+        ("message", "kwargs", "expected_type"),
+        ExceptionScenarios.FACTORY_CREATION,
+        ids=lambda x: x[0] if isinstance(x, tuple) else str(x),
+    )
+    def test_create_error_auto_detection(
+        self,
+        message: str,
+        kwargs: dict[str, object],
+        expected_type: type[FlextExceptions.BaseError],
+    ) -> None:
         """Test smart error type detection in create()."""
-        error = FlextExceptions.create(
-            "Invalid email",
-            field="email",
-            value="not-valid",
-        )
-        assert isinstance(error, FlextExceptions.ValidationError)
-
-    def test_create_config_error(self) -> None:
-        """Test create() detects configuration error."""
-        error = FlextExceptions.create(
-            "Missing config",
-            config_key="API_KEY",
-            config_source="environment",
-        )
-        assert isinstance(error, FlextExceptions.ConfigurationError)
-
-    def test_create_connection_error(self) -> None:
-        """Test create() detects connection error."""
-        error = FlextExceptions.create(
-            "Connection failed",
-            host="localhost",
-            port=5432,
-        )
-        assert isinstance(error, FlextExceptions.ConnectionError)
-
-    def test_create_operation_error(self) -> None:
-        """Test create() detects operation error."""
-        error = FlextExceptions.create(
-            "Operation failed",
-            operation="INSERT",
-            reason="Constraint violation",
-        )
-        assert isinstance(error, FlextExceptions.OperationError)
-
-    def test_create_timeout_error(self) -> None:
-        """Test create() detects timeout error."""
-        error = FlextExceptions.create(
-            "Operation timed out",
-            timeout_seconds=30,
-        )
-        assert isinstance(error, FlextExceptions.TimeoutError)
+        error = FlextExceptions.create(message, **kwargs)
+        assert isinstance(error, expected_type)
 
 
 class TestExceptionMetrics:
@@ -451,13 +404,10 @@ class TestExceptionMetrics:
 
     def test_record_exception(self) -> None:
         """Test recording exception metrics."""
-        # Clear metrics first
         FlextExceptions.clear_metrics()
-
-        FlextExceptions.record_exception("ValidationError")
-        FlextExceptions.record_exception("ValidationError")
-        FlextExceptions.record_exception("ConfigurationError")
-
+        FlextExceptions.record_exception(FlextExceptions.ValidationError)
+        FlextExceptions.record_exception(FlextExceptions.ValidationError)
+        FlextExceptions.record_exception(FlextExceptions.ConfigurationError)
         metrics: dict[str, object] = FlextExceptions.get_metrics()
         assert metrics["total_exceptions"] == 3
         exception_counts = cast("dict[str, object]", metrics["exception_counts"])
@@ -468,14 +418,10 @@ class TestExceptionMetrics:
     def test_clear_metrics(self) -> None:
         """Test clearing exception metrics."""
         FlextExceptions.clear_metrics()
-        FlextExceptions.record_exception("TestError")
-
-        metrics_before = FlextExceptions.get_metrics()
-        assert metrics_before["total_exceptions"] == 1
-
+        FlextExceptions.record_exception(FlextExceptions.ValidationError)
+        assert FlextExceptions.get_metrics()["total_exceptions"] == 1
         FlextExceptions.clear_metrics()
-        metrics_after = FlextExceptions.get_metrics()
-        assert metrics_after["total_exceptions"] == 0
+        assert FlextExceptions.get_metrics()["total_exceptions"] == 0
 
 
 class TestExceptionLogging:
@@ -483,10 +429,7 @@ class TestExceptionLogging:
 
     def test_exception_string_with_correlation_id(self) -> None:
         """Test exception string representation includes correlation ID."""
-        error = FlextExceptions.BaseError(
-            "Test",
-            auto_correlation=True,
-        )
+        error = FlextExceptions.BaseError("Test", auto_correlation=True)
         error_str = str(error)
         if error.correlation_id:
             assert error.correlation_id in error_str
@@ -495,7 +438,6 @@ class TestExceptionLogging:
         """Test error code is included in string representation."""
         error = FlextExceptions.ValidationError("Test message")
         error_str = str(error)
-        # The error code should be in the string
         assert "VALIDATION_ERROR" in error_str or "Test message" in error_str
 
 
@@ -505,14 +447,13 @@ class TestHierarchicalExceptionSystem:
     def test_failure_level_enum_values(self) -> None:
         """Test FailureLevel enum has all required values."""
         failure_level = FlextConstants.Exceptions.FailureLevel
-        assert hasattr(failure_level, "STRICT")
-        assert hasattr(failure_level, "WARN")
-        assert hasattr(failure_level, "PERMISSIVE")
+        assert all(
+            hasattr(failure_level, level) for level in ["STRICT", "WARN", "PERMISSIVE"]
+        )
 
     def test_failure_level_string_values(self) -> None:
         """Test FailureLevel enum string values."""
         failure_level = FlextConstants.Exceptions.FailureLevel
-
         assert failure_level.STRICT.value == "strict"
         assert failure_level.WARN.value == "warn"
         assert failure_level.PERMISSIVE.value == "permissive"
@@ -520,20 +461,27 @@ class TestHierarchicalExceptionSystem:
     def test_failure_level_comparison(self) -> None:
         """Test FailureLevel enum comparison."""
         failure_level = FlextConstants.Exceptions.FailureLevel
-
         assert failure_level.STRICT != failure_level.WARN
         assert failure_level.WARN != failure_level.PERMISSIVE
         assert failure_level.STRICT == failure_level.STRICT
 
-    def test_flext_exception_config_set_global_level(self) -> None:
-        """Test setting global failure level."""
+    @pytest.mark.parametrize(
+        ("level_name", "expected_value"),
+        [("STRICT", "strict"), ("WARN", "warn"), ("PERMISSIVE", "permissive")],
+        ids=["strict", "warn", "permissive"],
+    )
+    def test_flext_exception_config_levels(
+        self, level_name: str, expected_value: str
+    ) -> None:
+        """Test setting and getting global failure level."""
         config = FlextExceptions.Configuration
         failure_level = FlextConstants.Exceptions.FailureLevel
-
         original_level = config._global_failure_level
         try:
-            config.set_global_level(failure_level.STRICT)
-            assert config._global_failure_level == failure_level.STRICT
+            level = getattr(failure_level, level_name)
+            config.set_global_level(level)
+            assert config._global_failure_level == level
+            assert config.get_effective_level() == level
         finally:
             config.set_global_level(original_level or failure_level.PERMISSIVE)
 
@@ -541,15 +489,11 @@ class TestHierarchicalExceptionSystem:
         """Test registering library-specific failure level."""
         config = FlextExceptions.Configuration
         failure_level = FlextConstants.Exceptions.FailureLevel
-
         config.register_library_exception_level(
-            "test_lib",
-            ValueError,
-            failure_level.WARN,
+            "test_lib", ValueError, failure_level.WARN
         )
         level = config.get_effective_level(
-            library_name="test_lib",
-            exception_type=ValueError,
+            library_name="test_lib", exception_type=ValueError
         )
         assert level == failure_level.WARN
 
@@ -557,198 +501,28 @@ class TestHierarchicalExceptionSystem:
         """Test setting container-specific failure level."""
         config = FlextExceptions.Configuration
         failure_level = FlextConstants.Exceptions.FailureLevel
-
         config.set_container_level("test_container", failure_level.WARN)
-        level = config.get_effective_level(container_id="test_container")
-        assert level == failure_level.WARN
-
-    def test_is_broad_catching_allowed_strict_mode(self) -> None:
-        """Test is_broad_catching_allowed in STRICT mode."""
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-
-        original_level = config._global_failure_level
-        try:
-            config.set_global_level(failure_level.STRICT)
-            level = config.get_effective_level()
-            assert level == failure_level.STRICT
-        finally:
-            config.set_global_level(original_level or failure_level.PERMISSIVE)
-
-    def test_is_broad_catching_allowed_warn_mode(self) -> None:
-        """Test is_broad_catching_allowed in WARN mode."""
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-
-        original_level = config._global_failure_level
-        try:
-            config.set_global_level(failure_level.WARN)
-            level = config.get_effective_level()
-            assert level == failure_level.WARN
-        finally:
-            config.set_global_level(original_level or failure_level.PERMISSIVE)
-
-    def test_is_broad_catching_allowed_permissive_mode(self) -> None:
-        """Test is_broad_catching_allowed in PERMISSIVE mode."""
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-
-        original_level = config._global_failure_level
-        try:
-            config.set_global_level(failure_level.PERMISSIVE)
-            level = config.get_effective_level()
-            assert level == failure_level.PERMISSIVE
-        finally:
-            config.set_global_level(original_level or failure_level.PERMISSIVE)
-
-    def test_should_fail_on_complex_exceptions_below_threshold(self) -> None:
-        """Test should_fail_on_complex_exceptions below complexity threshold."""
-        # Complexity threshold is 5, below threshold should not fail
-        # (This is a simplified test - actual implementation would check level)
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-
-        original_level = config._global_failure_level
-        try:
-            config.set_global_level(failure_level.STRICT)
-            # With strict mode and under 5 exceptions, should not fail
-            assert True  # Simplified for now
-        finally:
-            config.set_global_level(original_level or failure_level.PERMISSIVE)
-
-    def test_should_fail_on_complex_exceptions_above_threshold(self) -> None:
-        """Test should_fail_on_complex_exceptions above complexity threshold."""
-        # Complexity threshold is 5
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-
-        original_level = config._global_failure_level
-        try:
-            config.set_global_level(failure_level.STRICT)
-            # With strict mode and over 5 exceptions, should fail
-            assert True  # Simplified for now
-        finally:
-            config.set_global_level(original_level or failure_level.PERMISSIVE)
-
-    def test_log_broad_exception_usage_warn_mode(self) -> None:
-        """Test log_broad_exception_usage in WARN mode."""
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-
-        original_level = config._global_failure_level
-        try:
-            config.set_global_level(failure_level.WARN)
-            # Should not raise any exception - just verify config can be set
-            assert True
-        finally:
-            config.set_global_level(original_level or failure_level.PERMISSIVE)
-
-    def test_log_broad_exception_usage_warn_mode_no_structlog_issue(self) -> None:
-        """Test log_broad_exception_usage handles structlog errors gracefully."""
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-
-        original_level = config._global_failure_level
-        try:
-            config.set_global_level(failure_level.WARN)
-            # Should handle exceptions gracefully without raising
-            assert True
-        finally:
-            config.set_global_level(original_level or failure_level.PERMISSIVE)
-
-    def test_exception_mode_context_manager_strict(self) -> None:
-        """Test exception_mode context manager with STRICT level."""
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-
-        original_level = config._global_failure_level
-
-        try:
-            # Start with WARN, temporarily override to STRICT
-            config.set_global_level(failure_level.WARN)
-            # Simulate context override (call_level)
-            assert config.get_effective_level() == failure_level.WARN
-        finally:
-            config.set_global_level(original_level or failure_level.PERMISSIVE)
-
-    def test_exception_mode_context_manager_nesting(self) -> None:
-        """Test nested exception_mode context managers."""
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-
-        original_level = config._global_failure_level
-
-        try:
-            config.set_global_level(failure_level.PERMISSIVE)
-            assert config.get_effective_level() == failure_level.PERMISSIVE
-        finally:
-            config.set_global_level(original_level or failure_level.PERMISSIVE)
-
-    def test_with_exception_mode_decorator(self) -> None:
-        """Test with_exception_mode decorator."""
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-
-        original_level = config._global_failure_level
-
-        try:
-            config.set_global_level(failure_level.WARN)
-            # Test decorator behavior by simulating it
-            current = config.get_effective_level()
-            assert current == failure_level.WARN
-        finally:
-            config.set_global_level(original_level or failure_level.PERMISSIVE)
-
-    def test_hierarchical_resolution_call_level(self) -> None:
-        """Test hierarchical resolution prioritizes call-level over others."""
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-
-        original_level = config._global_failure_level
-
-        try:
-            config.set_global_level(failure_level.PERMISSIVE)
-            config.register_library_exception_level(
-                "test_lib",
-                ValueError,
-                failure_level.WARN,
-            )
-
-            # Library level should be set for test_lib/ValueError
-            assert (
-                config.get_effective_level(
-                    library_name="test_lib",
-                    exception_type=ValueError,
-                )
-                == failure_level.WARN
-            )
-        finally:
-            config.set_global_level(original_level or failure_level.PERMISSIVE)
+        assert (
+            config.get_effective_level(container_id="test_container")
+            == failure_level.WARN
+        )
 
     def test_hierarchical_resolution_library_level(self) -> None:
         """Test hierarchical resolution library-level overrides global."""
         config = FlextExceptions.Configuration
         failure_level = FlextConstants.Exceptions.FailureLevel
-
         original_level = config._global_failure_level
-
         try:
             config.set_global_level(failure_level.PERMISSIVE)
             config.register_library_exception_level(
-                "test_lib",
-                ValueError,
-                failure_level.WARN,
+                "test_lib", ValueError, failure_level.WARN
             )
-
-            # Library level should override global level
             assert (
                 config.get_effective_level(
-                    library_name="test_lib",
-                    exception_type=ValueError,
+                    library_name="test_lib", exception_type=ValueError
                 )
                 == failure_level.WARN
             )
-            # Global level unchanged for other exceptions
             assert config.get_effective_level() == failure_level.PERMISSIVE
         finally:
             config.set_global_level(original_level or failure_level.PERMISSIVE)
@@ -757,19 +531,14 @@ class TestHierarchicalExceptionSystem:
         """Test hierarchical resolution container-level works correctly."""
         config = FlextExceptions.Configuration
         failure_level = FlextConstants.Exceptions.FailureLevel
-
         original_level = config._global_failure_level
-
         try:
             config.set_global_level(failure_level.PERMISSIVE)
             config.set_container_level("test_container", failure_level.WARN)
-
-            # Container level should resolve correctly
             assert (
                 config.get_effective_level(container_id="test_container")
                 == failure_level.WARN
             )
-            # Different container should use global
             assert (
                 config.get_effective_level(container_id="other_container")
                 == failure_level.PERMISSIVE

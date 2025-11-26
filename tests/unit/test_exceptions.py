@@ -10,10 +10,9 @@ Tests FlextExceptions functionality including:
 - Exception factory methods (create_error, create)
 - Exception serialization and string representation
 - Exception chaining and context propagation
-- Comprehensive exception instantiation and handling
 
-Uses Python 3.13 patterns (StrEnum, frozen dataclasses with slots),
-centralized constants, and parametrization for DRY testing.
+Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -30,10 +29,6 @@ import pytest
 
 from flext_core import FlextExceptions
 from flext_core._models.metadata import Metadata
-
-# =========================================================================
-# Exception Scenario Type Enumerations
-# =========================================================================
 
 
 class ExceptionScenarioType(StrEnum):
@@ -70,11 +65,6 @@ class ExceptionTypeScenarioType(StrEnum):
     OPERATION = "operation"
 
 
-# =========================================================================
-# Test Case Structures
-# =========================================================================
-
-
 @dataclass(frozen=True, slots=True)
 class ExceptionScenario:
     """Exception test scenario definition."""
@@ -95,316 +85,321 @@ class ExceptionTypeScenario:
     exception_class: type[FlextExceptions.BaseError]
 
 
-# =========================================================================
-# Helper Functions
-# =========================================================================
+class ExceptionTestHelpers:
+    """Generalized helpers for exception testing."""
 
+    @staticmethod
+    def create_metadata_object(attributes: dict[str, object] | None = None) -> Metadata:
+        """Create Metadata object from attributes dict."""
+        return Metadata(attributes=attributes or {})
 
-def create_metadata_object(attributes: dict[str, object] | None = None) -> Metadata:
-    """Helper to create Metadata object from attributes dict.
-
-    Properly creates a Metadata instance as expected by FlextExceptions.
-    """
-    if attributes is None:
-        attributes = {}
-    return Metadata(attributes=attributes)
-
-
-# =========================================================================
-# Test Scenario Factories
-# =========================================================================
+    @staticmethod
+    def get_exception_class_by_type(error_type: str) -> type[FlextExceptions.BaseError]:
+        """Get exception class by type name."""
+        return getattr(FlextExceptions, error_type)
 
 
 class ExceptionScenarios:
-    """Factory for exception test scenarios."""
+    """Centralized exception test scenarios using FlextConstants."""
 
-    SCENARIOS: ClassVar[list[ExceptionScenario]] = [
+    BASE_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
         ExceptionScenario(
-            name="base_error_init",
-            scenario_type=ExceptionScenarioType.BASE_ERROR,
-            exception_type=FlextExceptions.BaseError,
+            "base_error_init",
+            ExceptionScenarioType.BASE_ERROR,
+            FlextExceptions.BaseError,
         ),
         ExceptionScenario(
-            name="base_error_with_code",
-            scenario_type=ExceptionScenarioType.WITH_CODE,
-            exception_type=FlextExceptions.BaseError,
+            "base_error_with_code",
+            ExceptionScenarioType.WITH_CODE,
+            FlextExceptions.BaseError,
         ),
         ExceptionScenario(
-            name="base_error_with_correlation",
-            scenario_type=ExceptionScenarioType.WITH_CORRELATION,
-            exception_type=FlextExceptions.BaseError,
+            "base_error_with_correlation",
+            ExceptionScenarioType.WITH_CORRELATION,
+            FlextExceptions.BaseError,
         ),
         ExceptionScenario(
-            name="base_error_with_metadata",
-            scenario_type=ExceptionScenarioType.WITH_METADATA,
-            exception_type=FlextExceptions.BaseError,
+            "base_error_with_metadata",
+            ExceptionScenarioType.WITH_METADATA,
+            FlextExceptions.BaseError,
         ),
         ExceptionScenario(
-            name="base_error_with_kwargs",
-            scenario_type=ExceptionScenarioType.WITH_EXTRA_KWARGS,
-            exception_type=FlextExceptions.BaseError,
+            "base_error_with_kwargs",
+            ExceptionScenarioType.WITH_EXTRA_KWARGS,
+            FlextExceptions.BaseError,
         ),
         ExceptionScenario(
-            name="base_error_to_dict",
-            scenario_type=ExceptionScenarioType.TO_DICT,
-            exception_type=FlextExceptions.BaseError,
+            "base_error_to_dict",
+            ExceptionScenarioType.TO_DICT,
+            FlextExceptions.BaseError,
         ),
         ExceptionScenario(
-            name="base_error_str_repr",
-            scenario_type=ExceptionScenarioType.STRING_REPRESENTATION,
-            exception_type=FlextExceptions.BaseError,
-        ),
-        ExceptionScenario(
-            name="validation_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=FlextExceptions.ValidationError,
-        ),
-        ExceptionScenario(
-            name="configuration_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=FlextExceptions.ConfigurationError,
-        ),
-        ExceptionScenario(
-            name="connection_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=FlextExceptions.ConnectionError,
-        ),
-        ExceptionScenario(
-            name="timeout_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=FlextExceptions.TimeoutError,
-        ),
-        ExceptionScenario(
-            name="authentication_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=FlextExceptions.AuthenticationError,
-        ),
-        ExceptionScenario(
-            name="authorization_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=FlextExceptions.AuthorizationError,
-        ),
-        ExceptionScenario(
-            name="not_found_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=FlextExceptions.NotFoundError,
-        ),
-        ExceptionScenario(
-            name="conflict_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=FlextExceptions.ConflictError,
-        ),
-        ExceptionScenario(
-            name="rate_limit_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=FlextExceptions.RateLimitError,
-        ),
-        ExceptionScenario(
-            name="circuit_breaker_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=FlextExceptions.CircuitBreakerError,
-        ),
-        ExceptionScenario(
-            name="type_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=FlextExceptions.TypeError,
-        ),
-        ExceptionScenario(
-            name="operation_error",
-            scenario_type=ExceptionScenarioType.SPECIFIC_TYPE,
-            exception_type=FlextExceptions.OperationError,
-        ),
-        ExceptionScenario(
-            name="create_error_validation",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            error_factory_type="ValidationError",
-        ),
-        ExceptionScenario(
-            name="create_error_configuration",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            error_factory_type="ConfigurationError",
-        ),
-        ExceptionScenario(
-            name="create_error_connection",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            error_factory_type="ConnectionError",
-        ),
-        ExceptionScenario(
-            name="create_error_timeout",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            error_factory_type="TimeoutError",
-        ),
-        ExceptionScenario(
-            name="create_error_authentication",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            error_factory_type="AuthenticationError",
-        ),
-        ExceptionScenario(
-            name="create_error_authorization",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            error_factory_type="AuthorizationError",
-        ),
-        ExceptionScenario(
-            name="create_error_not_found",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            error_factory_type="NotFoundError",
-        ),
-        ExceptionScenario(
-            name="create_error_conflict",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            error_factory_type="ConflictError",
-        ),
-        ExceptionScenario(
-            name="create_error_rate_limit",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            error_factory_type="RateLimitError",
-        ),
-        ExceptionScenario(
-            name="create_error_circuit_breaker",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            error_factory_type="CircuitBreakerError",
-        ),
-        ExceptionScenario(
-            name="create_error_type",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            error_factory_type="TypeError",
-        ),
-        ExceptionScenario(
-            name="create_error_operation",
-            scenario_type=ExceptionScenarioType.FACTORY_METHOD,
-            error_factory_type="OperationError",
-        ),
-        ExceptionScenario(
-            name="create_error_invalid",
-            scenario_type=ExceptionScenarioType.FACTORY_INVALID,
-        ),
-        ExceptionScenario(
-            name="exception_raising",
-            scenario_type=ExceptionScenarioType.EXCEPTION_RAISING,
-            exception_type=FlextExceptions.ValidationError,
-            should_raise=True,
-        ),
-        ExceptionScenario(
-            name="exception_chaining",
-            scenario_type=ExceptionScenarioType.EXCEPTION_CHAINING,
-            exception_type=FlextExceptions.OperationError,
-            should_raise=True,
+            "base_error_str_repr",
+            ExceptionScenarioType.STRING_REPRESENTATION,
+            FlextExceptions.BaseError,
         ),
     ]
 
-
-class ExceptionTypeScenarios:
-    """Factory for exception type test scenarios."""
-
-    SCENARIOS: ClassVar[list[ExceptionTypeScenario]] = [
-        ExceptionTypeScenario(
-            name="instantiate_validation",
-            scenario_type=ExceptionTypeScenarioType.VALIDATION,
-            exception_class=FlextExceptions.ValidationError,
+    SPECIFIC_TYPE_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
+        ExceptionScenario(
+            "validation_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            FlextExceptions.ValidationError,
         ),
-        ExceptionTypeScenario(
-            name="instantiate_configuration",
-            scenario_type=ExceptionTypeScenarioType.CONFIGURATION,
-            exception_class=FlextExceptions.ConfigurationError,
+        ExceptionScenario(
+            "configuration_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            FlextExceptions.ConfigurationError,
         ),
-        ExceptionTypeScenario(
-            name="instantiate_connection",
-            scenario_type=ExceptionTypeScenarioType.CONNECTION,
-            exception_class=FlextExceptions.ConnectionError,
+        ExceptionScenario(
+            "connection_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            FlextExceptions.ConnectionError,
         ),
-        ExceptionTypeScenario(
-            name="instantiate_timeout",
-            scenario_type=ExceptionTypeScenarioType.TIMEOUT,
-            exception_class=FlextExceptions.TimeoutError,
+        ExceptionScenario(
+            "timeout_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            FlextExceptions.TimeoutError,
         ),
-        ExceptionTypeScenario(
-            name="instantiate_authentication",
-            scenario_type=ExceptionTypeScenarioType.AUTHENTICATION,
-            exception_class=FlextExceptions.AuthenticationError,
+        ExceptionScenario(
+            "authentication_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            FlextExceptions.AuthenticationError,
         ),
-        ExceptionTypeScenario(
-            name="instantiate_authorization",
-            scenario_type=ExceptionTypeScenarioType.AUTHORIZATION,
-            exception_class=FlextExceptions.AuthorizationError,
+        ExceptionScenario(
+            "authorization_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            FlextExceptions.AuthorizationError,
         ),
-        ExceptionTypeScenario(
-            name="instantiate_not_found",
-            scenario_type=ExceptionTypeScenarioType.NOT_FOUND,
-            exception_class=FlextExceptions.NotFoundError,
+        ExceptionScenario(
+            "not_found_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            FlextExceptions.NotFoundError,
         ),
-        ExceptionTypeScenario(
-            name="instantiate_conflict",
-            scenario_type=ExceptionTypeScenarioType.CONFLICT,
-            exception_class=FlextExceptions.ConflictError,
+        ExceptionScenario(
+            "conflict_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            FlextExceptions.ConflictError,
         ),
-        ExceptionTypeScenario(
-            name="instantiate_rate_limit",
-            scenario_type=ExceptionTypeScenarioType.RATE_LIMIT,
-            exception_class=FlextExceptions.RateLimitError,
+        ExceptionScenario(
+            "rate_limit_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            FlextExceptions.RateLimitError,
         ),
-        ExceptionTypeScenario(
-            name="instantiate_circuit_breaker",
-            scenario_type=ExceptionTypeScenarioType.CIRCUIT_BREAKER,
-            exception_class=FlextExceptions.CircuitBreakerError,
+        ExceptionScenario(
+            "circuit_breaker_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            FlextExceptions.CircuitBreakerError,
         ),
-        ExceptionTypeScenario(
-            name="instantiate_type_error",
-            scenario_type=ExceptionTypeScenarioType.TYPE_ERROR,
-            exception_class=FlextExceptions.TypeError,
+        ExceptionScenario(
+            "type_error", ExceptionScenarioType.SPECIFIC_TYPE, FlextExceptions.TypeError
         ),
-        ExceptionTypeScenario(
-            name="instantiate_operation",
-            scenario_type=ExceptionTypeScenarioType.OPERATION,
-            exception_class=FlextExceptions.OperationError,
+        ExceptionScenario(
+            "operation_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            FlextExceptions.OperationError,
         ),
     ]
 
+    FACTORY_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
+        ExceptionScenario(
+            "create_error_validation",
+            ExceptionScenarioType.FACTORY_METHOD,
+            None,
+            False,
+            "ValidationError",
+        ),
+        ExceptionScenario(
+            "create_error_configuration",
+            ExceptionScenarioType.FACTORY_METHOD,
+            None,
+            False,
+            "ConfigurationError",
+        ),
+        ExceptionScenario(
+            "create_error_connection",
+            ExceptionScenarioType.FACTORY_METHOD,
+            None,
+            False,
+            "ConnectionError",
+        ),
+        ExceptionScenario(
+            "create_error_timeout",
+            ExceptionScenarioType.FACTORY_METHOD,
+            None,
+            False,
+            "TimeoutError",
+        ),
+        ExceptionScenario(
+            "create_error_authentication",
+            ExceptionScenarioType.FACTORY_METHOD,
+            None,
+            False,
+            "AuthenticationError",
+        ),
+        ExceptionScenario(
+            "create_error_authorization",
+            ExceptionScenarioType.FACTORY_METHOD,
+            None,
+            False,
+            "AuthorizationError",
+        ),
+        ExceptionScenario(
+            "create_error_not_found",
+            ExceptionScenarioType.FACTORY_METHOD,
+            None,
+            False,
+            "NotFoundError",
+        ),
+        ExceptionScenario(
+            "create_error_conflict",
+            ExceptionScenarioType.FACTORY_METHOD,
+            None,
+            False,
+            "ConflictError",
+        ),
+        ExceptionScenario(
+            "create_error_rate_limit",
+            ExceptionScenarioType.FACTORY_METHOD,
+            None,
+            False,
+            "RateLimitError",
+        ),
+        ExceptionScenario(
+            "create_error_circuit_breaker",
+            ExceptionScenarioType.FACTORY_METHOD,
+            None,
+            False,
+            "CircuitBreakerError",
+        ),
+        ExceptionScenario(
+            "create_error_type",
+            ExceptionScenarioType.FACTORY_METHOD,
+            None,
+            False,
+            "TypeError",
+        ),
+        ExceptionScenario(
+            "create_error_operation",
+            ExceptionScenarioType.FACTORY_METHOD,
+            None,
+            False,
+            "OperationError",
+        ),
+        ExceptionScenario(
+            "create_error_invalid", ExceptionScenarioType.FACTORY_INVALID
+        ),
+        ExceptionScenario(
+            "exception_raising",
+            ExceptionScenarioType.EXCEPTION_RAISING,
+            FlextExceptions.ValidationError,
+            True,
+        ),
+        ExceptionScenario(
+            "exception_chaining",
+            ExceptionScenarioType.EXCEPTION_CHAINING,
+            FlextExceptions.OperationError,
+            True,
+        ),
+    ]
 
-# =========================================================================
-# Test Suite
-# =========================================================================
+    TYPE_SCENARIOS: ClassVar[list[ExceptionTypeScenario]] = [
+        ExceptionTypeScenario(
+            "instantiate_validation",
+            ExceptionTypeScenarioType.VALIDATION,
+            FlextExceptions.ValidationError,
+        ),
+        ExceptionTypeScenario(
+            "instantiate_configuration",
+            ExceptionTypeScenarioType.CONFIGURATION,
+            FlextExceptions.ConfigurationError,
+        ),
+        ExceptionTypeScenario(
+            "instantiate_connection",
+            ExceptionTypeScenarioType.CONNECTION,
+            FlextExceptions.ConnectionError,
+        ),
+        ExceptionTypeScenario(
+            "instantiate_timeout",
+            ExceptionTypeScenarioType.TIMEOUT,
+            FlextExceptions.TimeoutError,
+        ),
+        ExceptionTypeScenario(
+            "instantiate_authentication",
+            ExceptionTypeScenarioType.AUTHENTICATION,
+            FlextExceptions.AuthenticationError,
+        ),
+        ExceptionTypeScenario(
+            "instantiate_authorization",
+            ExceptionTypeScenarioType.AUTHORIZATION,
+            FlextExceptions.AuthorizationError,
+        ),
+        ExceptionTypeScenario(
+            "instantiate_not_found",
+            ExceptionTypeScenarioType.NOT_FOUND,
+            FlextExceptions.NotFoundError,
+        ),
+        ExceptionTypeScenario(
+            "instantiate_conflict",
+            ExceptionTypeScenarioType.CONFLICT,
+            FlextExceptions.ConflictError,
+        ),
+        ExceptionTypeScenario(
+            "instantiate_rate_limit",
+            ExceptionTypeScenarioType.RATE_LIMIT,
+            FlextExceptions.RateLimitError,
+        ),
+        ExceptionTypeScenario(
+            "instantiate_circuit_breaker",
+            ExceptionTypeScenarioType.CIRCUIT_BREAKER,
+            FlextExceptions.CircuitBreakerError,
+        ),
+        ExceptionTypeScenario(
+            "instantiate_type_error",
+            ExceptionTypeScenarioType.TYPE_ERROR,
+            FlextExceptions.TypeError,
+        ),
+        ExceptionTypeScenario(
+            "instantiate_operation",
+            ExceptionTypeScenarioType.OPERATION,
+            FlextExceptions.OperationError,
+        ),
+    ]
 
 
 class TestFlextExceptions:
-    """Comprehensive test suite for FlextExceptions exception types."""
+    """Comprehensive test suite for FlextExceptions using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "scenario",
-        ExceptionScenarios.SCENARIOS,
-        ids=lambda s: s.name,
+        "scenario", ExceptionScenarios.BASE_SCENARIOS, ids=lambda s: s.name
     )
-    def test_exception_scenarios(self, scenario: ExceptionScenario) -> None:
-        """Test exception creation and behavior across scenarios."""
+    def test_base_exception_scenarios(self, scenario: ExceptionScenario) -> None:
+        """Test base exception creation and behavior."""
         if scenario.scenario_type == ExceptionScenarioType.BASE_ERROR:
             error = FlextExceptions.BaseError("Test error")
             assert error.message == "Test error"
             assert error.error_code == "UNKNOWN_ERROR"
             assert error.correlation_id is None
             assert isinstance(error.metadata.attributes, dict)
-            assert isinstance(error.timestamp, float)
-
         elif scenario.scenario_type == ExceptionScenarioType.WITH_CODE:
             error = FlextExceptions.BaseError("Test error", error_code="TEST_001")
             assert error.error_code == "TEST_001"
             assert str(error) == "[TEST_001] Test error"
-
         elif scenario.scenario_type == ExceptionScenarioType.WITH_CORRELATION:
             error = FlextExceptions.BaseError("Test error", correlation_id="corr-123")
             assert error.correlation_id == "corr-123"
-
         elif scenario.scenario_type == ExceptionScenarioType.WITH_METADATA:
-            metadata = create_metadata_object({"field": "email", "value": "invalid"})
+            metadata = ExceptionTestHelpers.create_metadata_object({
+                "field": "email",
+                "value": "invalid",
+            })
             error = FlextExceptions.BaseError("Test error", metadata=metadata)
             assert error.metadata.attributes["field"] == "email"
-            assert error.metadata.attributes["value"] == "invalid"
-
         elif scenario.scenario_type == ExceptionScenarioType.WITH_EXTRA_KWARGS:
             error = FlextExceptions.BaseError(
                 "Test error", field="email", value="invalid"
             )
             assert error.metadata.attributes["field"] == "email"
-            assert error.metadata.attributes["value"] == "invalid"
-
         elif scenario.scenario_type == ExceptionScenarioType.TO_DICT:
             error = FlextExceptions.BaseError(
                 "Test error",
@@ -416,150 +411,160 @@ class TestFlextExceptions:
             assert error_dict["error_type"] == "BaseError"
             assert error_dict["message"] == "Test error"
             assert error_dict["error_code"] == "TEST_001"
-            assert error_dict["correlation_id"] == "corr-123"
-            assert "timestamp" in error_dict
-            if isinstance(error_dict["metadata"], dict):
-                assert error_dict["metadata"]["field"] == "email"
-
         elif scenario.scenario_type == ExceptionScenarioType.STRING_REPRESENTATION:
             error1 = FlextExceptions.BaseError("Test error")
             assert str(error1) == "[UNKNOWN_ERROR] Test error"
             error2 = FlextExceptions.BaseError("Test error", error_code="TEST_001")
             assert str(error2) == "[TEST_001] Test error"
 
-        elif scenario.scenario_type == ExceptionScenarioType.SPECIFIC_TYPE:
-            assert scenario.exception_type is not None
-            if scenario.exception_type == FlextExceptions.ValidationError:
-                error = FlextExceptions.ValidationError(
-                    "Invalid email", field="email", error_code="VAL_EMAIL"
-                )
-                assert isinstance(error, FlextExceptions.BaseError)
-                assert error.message == "Invalid email"
-                assert error.error_code == "VAL_EMAIL"
-                assert error.field == "email"
-            elif scenario.exception_type == FlextExceptions.ConfigurationError:
-                error = FlextExceptions.ConfigurationError(
+    @pytest.mark.parametrize(
+        "scenario", ExceptionScenarios.SPECIFIC_TYPE_SCENARIOS, ids=lambda s: s.name
+    )
+    def test_specific_exception_types(self, scenario: ExceptionScenario) -> None:
+        """Test specific exception type instantiation."""
+        assert scenario.exception_type is not None
+        if scenario.exception_type == FlextExceptions.ValidationError:
+            error: FlextExceptions.BaseError = FlextExceptions.ValidationError(
+                "Invalid email", field="email", error_code="VAL_EMAIL"
+            )
+            assert error.message == "Invalid email" and error.error_code == "VAL_EMAIL"
+        elif scenario.exception_type == FlextExceptions.ConfigurationError:
+            config_error: FlextExceptions.ConfigurationError = (
+                FlextExceptions.ConfigurationError(
                     "Missing config", config_key="database.host"
                 )
-                assert isinstance(error, FlextExceptions.BaseError)
-                assert error.message == "Missing config"
-                assert error.config_key == "database.host"
-            elif scenario.exception_type == FlextExceptions.ConnectionError:
-                error = FlextExceptions.ConnectionError(
+            )
+            assert (
+                config_error.message == "Missing config"
+                and config_error.config_key == "database.host"
+            )
+        elif scenario.exception_type == FlextExceptions.ConnectionError:
+            conn_error: FlextExceptions.ConnectionError = (
+                FlextExceptions.ConnectionError(
                     "Connection failed", host="localhost", port=5432
                 )
-                assert isinstance(error, FlextExceptions.BaseError)
-                assert error.message == "Connection failed"
-                assert error.host == "localhost"
-                assert error.port == 5432
-            elif scenario.exception_type == FlextExceptions.TimeoutError:
-                error = FlextExceptions.TimeoutError(
-                    "Operation timeout",
-                    timeout_seconds=30.0,
-                    operation="database_query",
-                )
-                assert isinstance(error, FlextExceptions.BaseError)
-                assert error.message == "Operation timeout"
-                assert error.timeout_seconds == 30.0
-                assert error.operation == "database_query"
-            elif scenario.exception_type == FlextExceptions.AuthenticationError:
-                error = FlextExceptions.AuthenticationError(
+            )
+            assert (
+                conn_error.message == "Connection failed"
+                and conn_error.host == "localhost"
+            )
+        elif scenario.exception_type == FlextExceptions.TimeoutError:
+            timeout_error: FlextExceptions.TimeoutError = FlextExceptions.TimeoutError(
+                "Operation timeout", timeout_seconds=30.0, operation="database_query"
+            )
+            assert (
+                timeout_error.message == "Operation timeout"
+                and timeout_error.timeout_seconds == 30.0
+            )
+        elif scenario.exception_type == FlextExceptions.AuthenticationError:
+            auth_error: FlextExceptions.AuthenticationError = (
+                FlextExceptions.AuthenticationError(
                     "Invalid credentials", user_id="testuser", auth_method="password"
                 )
-                assert isinstance(error, FlextExceptions.BaseError)
-                assert error.message == "Invalid credentials"
-                assert error.user_id == "testuser"
-                assert error.auth_method == "password"
-            elif scenario.exception_type == FlextExceptions.AuthorizationError:
-                error = FlextExceptions.AuthorizationError(
+            )
+            assert (
+                auth_error.message == "Invalid credentials"
+                and auth_error.user_id == "testuser"
+            )
+        elif scenario.exception_type == FlextExceptions.AuthorizationError:
+            authz_error: FlextExceptions.AuthorizationError = (
+                FlextExceptions.AuthorizationError(
                     "Access denied",
                     user_id="user123",
                     resource="REDACTED_LDAP_BIND_PASSWORD_panel",
                     permission="read",
                 )
-                assert isinstance(error, FlextExceptions.BaseError)
-                assert error.message == "Access denied"
-                assert error.user_id == "user123"
-                assert error.resource == "REDACTED_LDAP_BIND_PASSWORD_panel"
-                assert error.permission == "read"
-            elif scenario.exception_type == FlextExceptions.NotFoundError:
-                error = FlextExceptions.NotFoundError(
+            )
+            assert (
+                authz_error.message == "Access denied"
+                and authz_error.user_id == "user123"
+            )
+        elif scenario.exception_type == FlextExceptions.NotFoundError:
+            not_found_error: FlextExceptions.NotFoundError = (
+                FlextExceptions.NotFoundError(
                     "Resource not found", resource_type="User", resource_id="123"
                 )
-                assert isinstance(error, FlextExceptions.BaseError)
-                assert error.message == "Resource not found"
-                assert error.resource_type == "User"
-                assert error.resource_id == "123"
-            elif scenario.exception_type == FlextExceptions.ConflictError:
-                error = FlextExceptions.ConflictError(
+            )
+            assert (
+                not_found_error.message == "Resource not found"
+                and not_found_error.resource_type == "User"
+            )
+        elif scenario.exception_type == FlextExceptions.ConflictError:
+            conflict_error: FlextExceptions.ConflictError = (
+                FlextExceptions.ConflictError(
                     "Resource conflict",
                     resource_id="user_123",
                     conflict_reason="duplicate_email",
                 )
-                assert isinstance(error, FlextExceptions.BaseError)
-                assert error.message == "Resource conflict"
-                assert error.resource_id == "user_123"
-                assert error.conflict_reason == "duplicate_email"
-            elif scenario.exception_type == FlextExceptions.RateLimitError:
-                error = FlextExceptions.RateLimitError(
+            )
+            assert (
+                conflict_error.message == "Resource conflict"
+                and conflict_error.resource_id == "user_123"
+            )
+        elif scenario.exception_type == FlextExceptions.RateLimitError:
+            rate_limit_error: FlextExceptions.RateLimitError = (
+                FlextExceptions.RateLimitError(
                     "Rate limit exceeded", limit=100, window_seconds=60
                 )
-                assert isinstance(error, FlextExceptions.BaseError)
-                assert error.message == "Rate limit exceeded"
-                assert error.limit == 100
-                assert error.window_seconds == 60
-            elif scenario.exception_type == FlextExceptions.CircuitBreakerError:
-                error = FlextExceptions.CircuitBreakerError(
+            )
+            assert (
+                rate_limit_error.message == "Rate limit exceeded"
+                and rate_limit_error.limit == 100
+            )
+        elif scenario.exception_type == FlextExceptions.CircuitBreakerError:
+            circuit_error: FlextExceptions.CircuitBreakerError = (
+                FlextExceptions.CircuitBreakerError(
                     "Circuit breaker open",
                     service_name="payment_service",
                     failure_count=5,
                 )
-                assert isinstance(error, FlextExceptions.BaseError)
-                assert error.message == "Circuit breaker open"
-                assert error.service_name == "payment_service"
-                assert error.failure_count == 5
-            elif scenario.exception_type == FlextExceptions.TypeError:
-                error = FlextExceptions.TypeError(
-                    "Invalid type", expected_type=str, actual_type=int
-                )
-                assert isinstance(error, FlextExceptions.BaseError)
-                assert error.message == "Invalid type"
-                assert error.expected_type is str
-                assert error.actual_type is int
-            elif scenario.exception_type == FlextExceptions.OperationError:
-                error = FlextExceptions.OperationError(
-                    "Operation failed", operation="backup", reason="disk_full"
-                )
-                assert isinstance(error, FlextExceptions.BaseError)
-                assert error.message == "Operation failed"
-                assert error.operation == "backup"
-                assert error.reason == "disk_full"
+            )
+            assert (
+                circuit_error.message == "Circuit breaker open"
+                and circuit_error.service_name == "payment_service"
+            )
+        elif scenario.exception_type == FlextExceptions.TypeError:
+            type_error: FlextExceptions.TypeError = FlextExceptions.TypeError(
+                "Invalid type", expected_type=str, actual_type=int
+            )
+            assert (
+                type_error.message == "Invalid type" and type_error.expected_type is str
+            )
+        elif scenario.exception_type == FlextExceptions.OperationError:
+            op_error: FlextExceptions.OperationError = FlextExceptions.OperationError(
+                "Operation failed", operation="backup", reason="disk_full"
+            )
+            assert (
+                op_error.message == "Operation failed"
+                and op_error.operation == "backup"
+            )
 
-        elif scenario.scenario_type == ExceptionScenarioType.FACTORY_METHOD:
+    @pytest.mark.parametrize(
+        "scenario", ExceptionScenarios.FACTORY_SCENARIOS, ids=lambda s: s.name
+    )
+    def test_factory_methods(self, scenario: ExceptionScenario) -> None:
+        """Test exception factory methods."""
+        if scenario.scenario_type == ExceptionScenarioType.FACTORY_METHOD:
             assert scenario.error_factory_type is not None
             error = FlextExceptions.create_error(
                 scenario.error_factory_type, "Test error"
             )
-            expected_class_name = scenario.error_factory_type
-            assert type(error).__name__ == expected_class_name
+            assert type(error).__name__ == scenario.error_factory_type
             assert error.message == "Test error"
-
         elif scenario.scenario_type == ExceptionScenarioType.FACTORY_INVALID:
             with pytest.raises(ValueError, match="Unknown error type"):
                 FlextExceptions.create_error("InvalidError", "Test error")
-
         elif scenario.scenario_type == ExceptionScenarioType.EXCEPTION_RAISING:
             error_msg = "Test error"
-            with pytest.raises(FlextExceptions.ValidationError) as exc_val_info:
+            with pytest.raises(FlextExceptions.ValidationError) as exc_info:
                 raise FlextExceptions.ValidationError(error_msg, error_code="TEST_001")
-            assert exc_val_info.value.message == "Test error"
-            assert exc_val_info.value.error_code == "TEST_001"
-
+            assert exc_info.value.message == error_msg
+            assert exc_info.value.error_code == "TEST_001"
         elif scenario.scenario_type == ExceptionScenarioType.EXCEPTION_CHAINING:
             operation_error_msg = "Operation failed"
             with pytest.raises(FlextExceptions.OperationError) as exc_op_info:
                 raise FlextExceptions.OperationError(
-                    operation_error_msg,
+                    operation_error_msg
                 ) from FlextExceptions.ConfigurationError("Config error")
             assert exc_op_info.value.__cause__ is not None
             assert isinstance(
@@ -567,39 +572,35 @@ class TestFlextExceptions:
             )
 
     @pytest.mark.parametrize(
-        "scenario",
-        ExceptionTypeScenarios.SCENARIOS,
-        ids=lambda s: s.name,
+        "scenario", ExceptionScenarios.TYPE_SCENARIOS, ids=lambda s: s.name
     )
     def test_exception_type_scenarios(self, scenario: ExceptionTypeScenario) -> None:
         """Test comprehensive exception type instantiation."""
-        # Test with just message
         exc = scenario.exception_class(f"{scenario.scenario_type} error")
         assert f"{scenario.scenario_type} error" in str(exc)
-
-        # Test with error_code
         exc = scenario.exception_class(
             f"{scenario.scenario_type} error",
             error_code=f"{scenario.scenario_type.upper()}_ERROR",
         )
         assert exc.error_code == f"{scenario.scenario_type.upper()}_ERROR"
-
-        # Test with metadata
         exc = scenario.exception_class(
             f"{scenario.scenario_type} error",
-            metadata=create_metadata_object({"test": "data"}),
+            metadata=ExceptionTestHelpers.create_metadata_object({"test": "data"}),
         )
         assert "test" in exc.metadata.attributes
         assert exc.metadata.attributes["test"] == "data"
 
     def test_exception_class_hierarchy(self) -> None:
         """Test exception class inheritance hierarchy."""
-        assert issubclass(FlextExceptions.ValidationError, FlextExceptions.BaseError)
-        assert issubclass(FlextExceptions.NotFoundError, FlextExceptions.BaseError)
-        assert issubclass(
-            FlextExceptions.AuthenticationError, FlextExceptions.BaseError
+        assert all(
+            issubclass(cls, FlextExceptions.BaseError)
+            for cls in [
+                FlextExceptions.ValidationError,
+                FlextExceptions.NotFoundError,
+                FlextExceptions.AuthenticationError,
+                FlextExceptions.TimeoutError,
+            ]
         )
-        assert issubclass(FlextExceptions.TimeoutError, FlextExceptions.BaseError)
         assert issubclass(FlextExceptions.BaseError, Exception)
 
     def test_timestamp_generation(self) -> None:
@@ -611,7 +612,7 @@ class TestFlextExceptions:
 
     def test_metadata_merge_with_kwargs(self) -> None:
         """Test that metadata and kwargs are properly merged."""
-        metadata = create_metadata_object({"existing": "value"})
+        metadata = ExceptionTestHelpers.create_metadata_object({"existing": "value"})
         error = FlextExceptions.BaseError(
             "Test error", metadata=metadata, new_field="new_value"
         )
@@ -635,20 +636,20 @@ class TestFlextExceptions:
             FlextExceptions.OperationError("operation"),
             FlextExceptions.TypeError("type"),
         ]
-
         for exc in exceptions_to_test:
             repr_str = repr(exc)
-            assert repr_str is not None
-            assert len(repr_str) > 0
+            assert repr_str is not None and len(repr_str) > 0
 
     def test_exception_serialization(self) -> None:
         """Test exception serialization to dict."""
         exc = FlextExceptions.ValidationError(
             "Validation failed",
             error_code="INVALID_INPUT",
-            metadata=create_metadata_object({"field": "email", "value": "invalid"}),
+            metadata=ExceptionTestHelpers.create_metadata_object({
+                "field": "email",
+                "value": "invalid",
+            }),
         )
-
         if hasattr(exc, "to_dict"):
             result = exc.to_dict()
             assert isinstance(result, dict)

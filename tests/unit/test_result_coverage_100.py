@@ -25,9 +25,8 @@ from __future__ import annotations
 import math
 
 import pytest
-from returns.io import IOFailure, IOSuccess
+from returns.io import IOFailure, IOResult, IOSuccess
 from returns.maybe import Nothing, Some
-from returns.result import Failure, Success
 
 from flext_core import FlextExceptions, FlextResult
 
@@ -81,7 +80,7 @@ class TestFlextResultCoverage:
 
     def test_fail_with_error_data(self) -> None:
         """Test creating failure with error data."""
-        error_data = {"status": "failed", "count": 5}
+        error_data: dict[str, object] = {"status": "failed", "count": 5}
         result = FlextResult[str].fail("Error", error_data=error_data)
         assert result.is_failure
         assert result.error_data == error_data
@@ -375,14 +374,14 @@ class TestFlextResultCoverage:
     def test_from_io_result_success(self) -> None:
         """Test creation from IOResult success - wraps returns IOSuccess/IOFailure."""
         # IOResult wraps returns.result Success/Failure
-        io_result = IOSuccess(Success("test"))
+        io_result: IOResult[str, str] = IOResult.from_value("test")
         result = FlextResult[str].from_io_result(io_result)
         assert result.is_success
 
     def test_from_io_result_failure(self) -> None:
         """Test creation from IOResult failure - wraps returns IOFailure/Failure."""
         # IOResult wraps returns.result Success/Failure
-        io_result = IOFailure(Failure("error"))
+        io_result: IOResult[str, str] = IOResult.from_failure("error")
         result = FlextResult[str].from_io_result(io_result)
         assert result.is_failure
 

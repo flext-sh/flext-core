@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time as time_module
 from collections.abc import Callable
-from typing import Annotated, Self, cast
+from typing import Annotated, Self
 
 from pydantic import (
     BaseModel,
@@ -63,8 +63,8 @@ class FlextModelsHandler:
             if not callable(v):
                 msg = f"Handler must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
-            # Type-safe return: v is confirmed callable by validation
-            return cast("HandlerCallable", v)
+            # Type-safe return: v is confirmed callable by validation above
+            return v
 
     class RegistrationDetails(BaseModel):
         """Registration details for handler registration tracking.
@@ -219,7 +219,6 @@ class FlextModelsHandler:
             self._start_time = time_module.time()
 
         @computed_field
-        @property
         def execution_time_ms(self) -> float:
             """Get execution time in milliseconds.
 
@@ -244,7 +243,6 @@ class FlextModelsHandler:
             return round(elapsed * 1000, 2)
 
         @computed_field
-        @property
         def metrics_state(self) -> dict[str, object]:
             """Get current metrics state.
 

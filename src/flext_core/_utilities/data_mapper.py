@@ -283,5 +283,180 @@ class FlextUtilitiesDataMapper:
         # last
         return {v: k for k, v in source.items()}
 
+    @staticmethod
+    def is_json_primitive(value: object) -> bool:
+        """Check if value is a JSON primitive type (str, int, float, bool, None)."""
+        return isinstance(value, (str, int, float, bool, type(None)))
+
+    @classmethod
+    def convert_to_json_value(cls, value: object) -> object:
+        """Convert any value to JSON-compatible type.
+
+        **Generic replacement for**: Manual type conversion to JSON values
+
+        Conversion Strategy:
+            1. Primitives (str, int, float, bool, None) → return as-is
+            2. dict-like → recursively convert keys to str, values to JSON
+            3. list-like → recursively convert items to JSON
+            4. Other → convert to str()
+
+        Args:
+            value: Any value to convert
+
+        Returns:
+            JSON-compatible value (str, int, float, bool, None, dict, list)
+
+        Example:
+            >>> FlextUtilitiesDataMapper.convert_to_json_value({"a": 1})
+            {'a': 1}
+            >>> FlextUtilitiesDataMapper.convert_to_json_value([1, 2, "three"])
+            [1, 2, 'three']
+
+        """
+        if cls.is_json_primitive(value):
+            return value
+        if isinstance(value, dict):
+            return {str(k): cls.convert_to_json_value(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [cls.convert_to_json_value(item) for item in value]
+        # Fallback: convert to string
+        return str(value)
+
+    @classmethod
+    def convert_dict_to_json(
+        cls,
+        data: dict[str, object],
+    ) -> dict[str, object]:
+        """Convert dict with any values to JSON-compatible dict.
+
+        **Generic replacement for**: Manual dict-to-JSON conversion loops
+
+        Args:
+            data: Source dictionary with any values
+
+        Returns:
+            Dictionary with all values converted to JSON-compatible types
+
+        Example:
+            >>> data = {"name": "test", "value": CustomObject()}
+            >>> result = FlextUtilitiesDataMapper.convert_dict_to_json(data)
+            >>> # {"name": "test", "value": "str(CustomObject())"}
+
+        """
+        return {
+            key: cls.convert_to_json_value(value)
+            for key, value in data.items()
+            if isinstance(key, str)
+        }
+
+    @classmethod
+    def convert_list_to_json(
+        cls,
+        data: list[object],
+    ) -> list[dict[str, object]]:
+        """Convert list of dict-like items to JSON-compatible list.
+
+        **Generic replacement for**: Manual list-to-JSON conversion loops
+
+        Args:
+            data: Source list of dict-like items
+
+        Returns:
+            List with all dict items converted to JSON-compatible format
+
+        Example:
+            >>> data = [{"a": 1}, {"b": 2}]
+            >>> result = FlextUtilitiesDataMapper.convert_list_to_json(data)
+
+        """
+        return [
+            cls.convert_dict_to_json(item) for item in data if isinstance(item, dict)
+        ]
+
+    @staticmethod
+    def ensure_str(value: object, default: str = "") -> str:
+        """Ensure value is a string, converting if needed.
+
+        **Generic replacement for**: Manual str() conversions with isinstance checks
+
+        Args:
+            value: Value to convert to string
+            default: Default value if None or conversion fails
+
+        Returns:
+            String value or default
+
+        Example:
+            >>> FlextUtilitiesDataMapper.ensure_str("hello")
+            'hello'
+            >>> FlextUtilitiesDataMapper.ensure_str(123)
+            '123'
+            >>> FlextUtilitiesDataMapper.ensure_str(None, "default")
+            'default'
+
+        """
+        if value is None:
+            return default
+        if isinstance(value, str):
+            return value
+        return str(value)
+
+    @staticmethod
+    def ensure_str_list(value: object, default: list[str] | None = None) -> list[str]:
+        """Ensure value is a list of strings, converting if needed.
+
+        **Generic replacement for**: [str(item) for item in list] patterns
+
+        Args:
+            value: Value to convert (list, tuple, set, or single value)
+            default: Default value if None (empty list if not specified)
+
+        Returns:
+            List of strings
+
+        Example:
+            >>> FlextUtilitiesDataMapper.ensure_str_list(["a", "b"])
+            ['a', 'b']
+            >>> FlextUtilitiesDataMapper.ensure_str_list([1, 2, 3])
+            ['1', '2', '3']
+            >>> FlextUtilitiesDataMapper.ensure_str_list("single")
+            ['single']
+            >>> FlextUtilitiesDataMapper.ensure_str_list(None)
+            []
+
+        """
+        if default is None:
+            default = []
+        if value is None:
+            return default
+        if isinstance(value, str):
+            return [value]
+        if isinstance(value, (list, tuple, set)):
+            return [str(item) for item in value]
+        return [str(value)]
+
+    @staticmethod
+    def ensure_str_or_none(value: object) -> str | None:
+        """Ensure value is a string or None.
+
+        **Generic replacement for**: value if isinstance(value, str) else None
+
+        Args:
+            value: Value to check/convert
+
+        Returns:
+            String value or None
+
+        Example:
+            >>> FlextUtilitiesDataMapper.ensure_str_or_none("hello")
+            'hello'
+            >>> FlextUtilitiesDataMapper.ensure_str_or_none(123)
+            None
+            >>> FlextUtilitiesDataMapper.ensure_str_or_none(None)
+            None
+
+        """
+        return value if isinstance(value, str) else None
+
 
 __all__ = ["FlextUtilitiesDataMapper"]

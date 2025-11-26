@@ -22,7 +22,7 @@ import logging
 import time
 import uuid
 from collections.abc import Callable
-from typing import ClassVar, Self, cast
+from typing import ClassVar, Self
 
 import structlog
 
@@ -915,8 +915,14 @@ class FlextExceptions:
                 "config",
             }
         }
+        correlation_id_raw = kwargs.get("correlation_id")
+        correlation_id: str | None = (
+            str(correlation_id_raw)
+            if correlation_id_raw is not None and isinstance(correlation_id_raw, str)
+            else None
+        )
         return (
-            cast("str | None", kwargs.get("correlation_id")),
+            correlation_id,
             kwargs.get("metadata"),
             bool(kwargs.get("auto_log")),
             bool(kwargs.get("auto_correlation")),
@@ -1112,12 +1118,13 @@ class FlextExceptions:
             else None
         )
         if creator:
+            # creator expects object as last parameter, normalized_metadata is Metadata | None which is compatible
             return creator(
                 message,
                 error_code,
                 kwargs,
                 correlation_id,
-                cast("str | None", normalized_metadata),
+                normalized_metadata,
             )
         return FlextExceptions.BaseError(
             message,
@@ -1133,10 +1140,10 @@ class FlextExceptions:
         """Create an appropriate exception instance based on kwargs context."""
         correlation_id_obj, metadata_obj = FlextExceptions.extract_common_kwargs(kwargs)
         error_type = FlextExceptions._determine_error_type(kwargs)
-        # Convert metadata to str | None if it's a dict-like object
+        # Convert correlation_id_obj to str | None
         correlation_id: str | None = (
-            cast("str | None", correlation_id_obj)
-            if isinstance(correlation_id_obj, str)
+            str(correlation_id_obj)
+            if correlation_id_obj is not None and isinstance(correlation_id_obj, str)
             else None
         )
         metadata_str: str | None = None

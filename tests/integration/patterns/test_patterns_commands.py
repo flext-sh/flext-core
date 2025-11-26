@@ -323,8 +323,9 @@ class TestFlextCommandHandler:
         """Test creating command handler."""
         handler = CreateUserCommandHandler()
 
-        if handler.handler_id != "create_user_handler":
-            msg = f"Expected {'create_user_handler'}, got {handler.handler_id}"
+        handler_id = handler._config_model.handler_id if hasattr(handler, "_config_model") else ""
+        if handler_id != "create_user_handler":
+            msg = f"Expected {'create_user_handler'}, got {handler_id}"
             raise AssertionError(
                 msg,
             )

@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import cast
 
 from .constants import TestConstants
 
@@ -163,7 +162,7 @@ class ErrorScenarioFactories:
     def get_all_scenarios_dict() -> dict[str, dict[str, object]]:
         """Get all scenarios in dict format for backward compatibility."""
         return {
-            key: cast("dict[str, object]", scenario.to_dict())
+            key: scenario.to_dict()
             for key, scenario in ErrorScenarioFactories.get_all_scenarios().items()
         }
 

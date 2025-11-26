@@ -99,7 +99,7 @@ class TestCaseFactory(ABC):
 
 
 @dataclass(frozen=True, slots=True)
-class ServiceTestCase:
+class ServiceTestCase[TService]:
     """Generic service test case factory."""
 
     service_class: type[TService]
@@ -111,7 +111,8 @@ class ServiceTestCase:
 
     def create_service(self) -> TService:
         """Create service instance with input data."""
-        return self.service_class(**self.input_data)
+        instance: TService = self.service_class(**self.input_data)
+        return instance
 
     def assert_result(self, result: object) -> None:
         """Assert result matches expectations."""
@@ -120,13 +121,15 @@ class ServiceTestCase:
                 f"Expected {self.expected_result}, got {result}"
             )
         else:
-            assert isinstance(result, Exception) or (
-                hasattr(result, "error") and result.error
-            ), f"Expected failure, got {result}"
+            if isinstance(result, Exception):
+                error_msg = str(result)
+            elif isinstance(result, FlextResult):
+                assert result.is_failure, f"Expected failure, got {result}"
+                error_msg = result.error or ""
+            else:
+                msg = f"Expected Exception or FlextResult, got {type(result)}"
+                raise TypeError(msg)
             if self.expected_error:
-                error_msg = (
-                    str(result) if isinstance(result, Exception) else str(result.error)
-                )
                 assert self.expected_error in error_msg, (
                     f"Expected error containing '{self.expected_error}', got '{error_msg}'"
                 )
@@ -140,10 +143,10 @@ class GenericTestFactories:
         service_class: type[TService],
         input_variations: list[dict[str, object]],
         expected_results: list[object],
-    ) -> list[ServiceTestCase]:
+    ) -> list[ServiceTestCase[TService]]:
         """Generate success test cases for a service."""
         return [
-            ServiceTestCase(
+            ServiceTestCase[TService](
                 service_class=service_class,
                 input_data=inputs,
                 expected_result=result,
@@ -159,10 +162,10 @@ class GenericTestFactories:
         service_class: type[TService],
         input_variations: list[dict[str, object]],
         error_messages: list[str],
-    ) -> list[ServiceTestCase]:
+    ) -> list[ServiceTestCase[TService]]:
         """Generate failure test cases for a service."""
         return [
-            ServiceTestCase(
+            ServiceTestCase[TService](
                 service_class=service_class,
                 input_data=inputs,
                 expected_success=False,
@@ -271,32 +274,31 @@ class TestHelpers:
             description: str = "",
         ) -> None:
             """Assert service result with flexible checking."""
-            if expected_success:
-                if hasattr(service_result, "is_success"):
-                    assert service_result.is_success, (
-                        f"Expected success for: {description}"
-                    )
+            if isinstance(service_result, FlextResult):
+                result_obj: FlextResult[object] = service_result
+                if expected_success:
+                    assert result_obj.is_success, f"Expected success for: {description}"
                     if expected_value is not None:
-                        assert service_result.unwrap() == expected_value
+                        unwrapped = result_obj.unwrap()
+                        assert unwrapped == expected_value
                 else:
-                    # Direct result (auto_execute=True)
-                    assert service_result == expected_value, (
-                        f"Expected {expected_value}, got {service_result}"
-                    )
-            # Check for exception or error
-            elif hasattr(service_result, "is_failure"):
-                assert service_result.is_failure, f"Expected failure for: {description}"
-                if expected_error:
-                    assert (
-                        service_result.error and expected_error in service_result.error
-                    )
-            else:
+                    assert result_obj.is_failure, f"Expected failure for: {description}"
+                    if expected_error:
+                        error_attr = result_obj.error
+                        assert error_attr is not None
+                        assert expected_error in error_attr
+            elif isinstance(service_result, Exception):
                 # Should be an exception
-                assert isinstance(service_result, Exception), (
-                    f"Expected exception, got {type(service_result)}"
-                )
                 if expected_error:
                     assert expected_error in str(service_result)
+            # Direct result (auto_execute=True)
+            elif expected_success:
+                assert service_result == expected_value, (
+                    f"Expected {expected_value}, got {service_result}"
+                )
+            else:
+                msg = f"Expected FlextResult or Exception, got {type(service_result)}"
+                raise TypeError(msg)
 
         @staticmethod
         def assert_type_and_value(

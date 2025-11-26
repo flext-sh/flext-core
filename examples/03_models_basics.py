@@ -817,7 +817,7 @@ class ComprehensiveModelsService(FlextService[Order]):
             )
 
         # Create order safely with from_callable
-        order_result = FlextResult[Order].from_callable(create_order_from_data)
+        order_result = FlextResult[Order].create_from_callable(create_order_from_data)
         if order_result.is_failure:
             print(f"❌ Order creation failed: {order_result.error}")
             return
@@ -829,7 +829,7 @@ class ComprehensiveModelsService(FlextService[Order]):
             """Serialize order to JSON - may raise JSON encoding errors."""
             return json.dumps(order.model_dump())
 
-        json_result = FlextResult[str].from_callable(serialize_to_json)
+        json_result = FlextResult[str].create_from_callable(serialize_to_json)
         if json_result.is_success:
             print(
                 f"✅ JSON serialization successful: {len(json_result.unwrap())} chars"
@@ -841,7 +841,7 @@ class ComprehensiveModelsService(FlextService[Order]):
             order_dict = order.model_dump()
             return Order(**order_dict)
 
-        deserialize_result = FlextResult[Order].from_callable(deserialize_from_dict)
+        deserialize_result = FlextResult[Order].create_from_callable(deserialize_from_dict)
         if deserialize_result.is_success:
             new_order = deserialize_result.unwrap()
             print(f"✅ Deserialized order: {new_order.order_number}")
@@ -939,7 +939,7 @@ class ComprehensiveModelsService(FlextService[Order]):
                 },
             )
 
-        json_result = FlextResult[str].from_callable(create_order_json)
+        json_result = FlextResult[str].create_from_callable(create_order_json)
         if json_result.is_success and FlextRuntime.is_valid_json(json_result.unwrap()):
             print("✅ Valid JSON for model serialization (with from_callable)")
 
@@ -1009,7 +1009,7 @@ class ComprehensiveModelsService(FlextService[Order]):
                 raise ValueError(msg)
             return email_result.unwrap()
 
-        email_result = FlextResult[Email].from_callable(risky_email_creation)
+        email_result = FlextResult[Email].create_from_callable(risky_email_creation)
         if email_result.is_failure:
             print(f"✅ Caught email validation error safely: {email_result.error}")
 
@@ -1024,7 +1024,7 @@ class ComprehensiveModelsService(FlextService[Order]):
                 stock=10,
             )
 
-        product_result = FlextResult[Product].from_callable(create_product)
+        product_result = FlextResult[Product].create_from_callable(create_product)
         if product_result.is_success:
             product: Product = product_result.unwrap()
             print(f"✅ Product created safely: {product.name}")
@@ -1087,17 +1087,39 @@ class ComprehensiveModelsService(FlextService[Order]):
             "email": sample_email,
             "name": str(user_data["name"]),
         }
+        # Type cast functions to match flat_map signature
+
+        def validate_credit_wrapper(cust: object) -> FlextResult[object]:
+            if isinstance(cust, Customer):
+                result = validate_credit(cust)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Credit validation failed")
+            return FlextResult[object].fail("Invalid customer type")
+
+        def assign_vip_wrapper(cust: object) -> FlextResult[object]:
+            if isinstance(cust, Customer):
+                result = assign_vip_status(cust)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "VIP assignment failed")
+            return FlextResult[object].fail("Invalid customer type")
+
         result = (
             create_customer(initial_data)
-            .flat_map(validate_credit)
-            .flat_map(assign_vip_status)
+            .flat_map(validate_credit_wrapper)
+            .flat_map(assign_vip_wrapper)
         )
 
         if result.is_success:
-            customer = result.unwrap()
-            print(
-                f"✅ Customer pipeline success: {customer.name}, VIP: {customer.is_vip}",
-            )
+            customer_raw = result.unwrap()
+            if isinstance(customer_raw, Customer):
+                customer = customer_raw
+                print(
+                    f"✅ Customer pipeline success: {customer.name}, VIP: {customer.is_vip}",
+                )
+            else:
+                print("❌ Customer pipeline failed: Invalid customer type")
 
     def demonstrate_lash(self) -> None:
         """Show error recovery in aggregate operations."""
@@ -1139,7 +1161,9 @@ class ComprehensiveModelsService(FlextService[Order]):
         )
         fallback = FlextResult[Order].ok(fallback_order)
 
-        result = primary.alt(fallback)
+        # alt expects a function that takes error string and returns alternative value
+        # For fallback pattern, use manual check instead
+        result = primary if primary.is_success else fallback
         if result.is_success:
             order = result.unwrap()
             print(f"✅ Got fallback order: {order.order_number}")
@@ -1171,7 +1195,11 @@ class ComprehensiveModelsService(FlextService[Order]):
             )
 
         # Success case - expensive_default NOT called
-        order = success.value_or_call(expensive_default)
+        order = (
+            success.unwrap()
+            if success.is_success
+            else expensive_default()
+        )
         print(
             f"✅ Success: {order.order_number}, expensive_created={expensive_created}",
         )
@@ -1179,7 +1207,11 @@ class ComprehensiveModelsService(FlextService[Order]):
         # Failure case - expensive_default IS called
         expensive_created = False
         failure = FlextResult[Order].fail("Order not found")
-        order = failure.value_or_call(expensive_default)
+        order = (
+            failure.unwrap()
+            if failure.is_success
+            else expensive_default()
+        )
         print(
             f"✅ Failure recovered: {order.order_number}, expensive_created={expensive_created}",
         )

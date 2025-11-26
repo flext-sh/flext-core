@@ -15,7 +15,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast
 
 from flext_core._utilities import (
     FlextUtilitiesCache,
@@ -224,6 +223,14 @@ class FlextUtilities:
         transform_values = staticmethod(FlextUtilitiesDataMapper.transform_values)
         filter_dict = staticmethod(FlextUtilitiesDataMapper.filter_dict)
         invert_dict = staticmethod(FlextUtilitiesDataMapper.invert_dict)
+        is_json_primitive = staticmethod(FlextUtilitiesDataMapper.is_json_primitive)
+        convert_to_json_value = FlextUtilitiesDataMapper.convert_to_json_value
+        convert_dict_to_json = FlextUtilitiesDataMapper.convert_dict_to_json
+        convert_list_to_json = FlextUtilitiesDataMapper.convert_list_to_json
+        # Type-safe converters
+        ensure_str = staticmethod(FlextUtilitiesDataMapper.ensure_str)
+        ensure_str_list = staticmethod(FlextUtilitiesDataMapper.ensure_str_list)
+        ensure_str_or_none = staticmethod(FlextUtilitiesDataMapper.ensure_str_or_none)
 
     class Domain:
         """Domain-specific utilities."""
@@ -253,53 +260,41 @@ class FlextUtilities:
         return types for railway-oriented error handling.
         """
 
-        # Export ParseOptions for public use
-        ParseOptions = ParseOptions
-
         def __init__(self) -> None:
             """Initialize StringParser with internal implementation."""
             self._parser = FlextUtilitiesStringParser()
 
         def parse_delimited(
-            self, text: str, delimiter: str, **kwargs: object
+            self,
+            text: str,
+            delimiter: str,
+            *,
+            options: ParseOptions | None = None,
+            strip: bool = True,
+            remove_empty: bool = True,
+            validator: Callable[[str], bool] | None = None,
         ) -> FlextResult[list[str]]:
             """Parse delimited text with flexible options.
 
             Args:
                 text: Text to parse
                 delimiter: Delimiter character/string
-                **kwargs: Additional options (strip, remove_empty, validator, options)
+                options: ParseOptions for advanced configuration
+                strip: Strip whitespace from each component
+                remove_empty: Remove empty components after stripping
+                validator: Optional validation function for each component
 
             Returns:
                 FlextResult[list[str]]: Parsed components or error
 
             """
-            options = kwargs.get("options")
-            strip = kwargs.get("strip", True)
-            remove_empty = kwargs.get("remove_empty", True)
-            validator = kwargs.get("validator")
-
-            # Type-safe extraction from kwargs
-            options_typed: ParseOptions | None = (
-                options if isinstance(options, ParseOptions) else None
-            )
-            strip_typed: bool = bool(strip) if isinstance(strip, bool) else True
-            remove_empty_typed: bool = (
-                bool(remove_empty) if isinstance(remove_empty, bool) else True
-            )
-            validator_typed: Callable[[str], bool] | None = (
-                cast("Callable[[str], bool]", validator)
-                if callable(validator)
-                else None
-            )
-
             return self._parser.parse_delimited(
                 text,
                 delimiter,
-                options=options_typed,
-                strip=strip_typed,
-                remove_empty=remove_empty_typed,
-                validator=validator_typed,
+                options=options,
+                strip=strip,
+                remove_empty=remove_empty,
+                validator=validator,
             )
 
         def normalize_whitespace(

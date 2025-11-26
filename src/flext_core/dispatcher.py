@@ -17,11 +17,15 @@ import threading
 import time
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
-from typing import TypedDict, cast, override
+from typing import override
 
 from cachetools import LRUCache
 from pydantic import BaseModel
 
+from flext_core._dispatcher import (
+    CircuitBreakerManager,
+    DispatcherConfig,
+)
 from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
@@ -32,22 +36,6 @@ from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
-
-
-class DispatcherConfig(TypedDict):
-    """Typed dictionary for dispatcher configuration values."""
-
-    dispatcher_timeout_seconds: float
-    executor_workers: int
-    circuit_breaker_threshold: int
-    rate_limit_max_requests: int
-    rate_limit_window_seconds: float
-    max_retry_attempts: int
-    retry_delay: float
-    enable_timeout_executor: bool
-    dispatcher_enable_logging: bool
-    dispatcher_auto_context: bool
-    dispatcher_enable_metrics: bool
 
 
 class FlextDispatcher(FlextMixins):
@@ -100,237 +88,14 @@ class FlextDispatcher(FlextMixins):
         >>> assert callable(dispatcher.dispatch)
     """
 
-    class CircuitBreakerManager:
-        """Manages circuit breaker state machine per message type.
+    # Class alias for backwards compatibility (CircuitBreakerManager is extracted)
+    CircuitBreakerManager = CircuitBreakerManager
 
-        Handles state transitions (CLOSED → OPEN → HALF_OPEN → CLOSED) with
-        configurable thresholds and recovery timeouts.
-        """
+    # Note: TimeoutEnforcer, RateLimiterManager, and RetryPolicy are defined as
+    # nested classes below. The external versions from _dispatcher/ are imported
+    # for module-level access but the nested versions are the actual implementations.
 
-        def __init__(
-            self,
-            threshold: int,
-            recovery_timeout: float,
-            success_threshold: int,
-        ) -> None:
-            """Initialize circuit breaker manager.
-
-            Args:
-                threshold: Failure count before opening circuit
-                recovery_timeout: Seconds before attempting recovery
-                success_threshold: Successes needed to close from half-open
-
-            """
-            self._failures: dict[str, int] = {}
-            self._states: dict[str, str] = {}
-            self._opened_at: dict[str, float] = {}
-            self._success_counts: dict[str, int] = {}
-            self._threshold = threshold
-            self._recovery_timeout = recovery_timeout
-            self._success_threshold = success_threshold
-            # Advanced metrics tracking
-            self._recovery_successes: dict[str, int] = {}  # HALF_OPEN → CLOSED
-            self._recovery_failures: dict[str, int] = {}  # HALF_OPEN → OPEN
-            self._total_successes: dict[str, int] = {}  # Successful operations
-
-        def get_state(self, message_type: str) -> str:
-            """Get current state for message type."""
-            return self._states.get(
-                message_type,
-                FlextConstants.Reliability.CircuitBreakerState.CLOSED,
-            )
-
-        def set_state(self, message_type: str, state: str) -> None:
-            """Set state for message type."""
-            self._states[message_type] = state
-
-        def is_open(self, message_type: str) -> bool:
-            """Check if circuit breaker is open for message type."""
-            return (
-                self.get_state(message_type)
-                == FlextConstants.Reliability.CircuitBreakerState.OPEN
-            )
-
-        def record_success(self, message_type: str) -> None:
-            """Record successful operation and update state."""
-            current_state = self.get_state(message_type)
-            # Track all successful operations
-            self._total_successes[message_type] = (
-                self._total_successes.get(message_type, 0) + 1
-            )
-
-            if (
-                current_state
-                == FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN
-            ):
-                success_count = self._success_counts.get(message_type, 0) + 1
-                self._success_counts[message_type] = success_count
-
-                if success_count >= self._success_threshold:
-                    # Track successful recovery (HALF_OPEN → CLOSED)
-                    self._recovery_successes[message_type] = (
-                        self._recovery_successes.get(message_type, 0) + 1
-                    )
-                    self.transition_to_closed(message_type)
-
-            elif current_state == FlextConstants.Reliability.CircuitBreakerState.CLOSED:
-                self._failures[message_type] = 0
-
-        def record_failure(self, message_type: str) -> None:
-            """Record failed operation and update state."""
-            current_state = self.get_state(message_type)
-            current_failures = self._failures.get(message_type, 0) + 1
-            self._failures[message_type] = current_failures
-
-            # Track failed recovery attempts (failure in HALF_OPEN state)
-            if (
-                current_state
-                == FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN
-            ):
-                self._recovery_failures[message_type] = (
-                    self._recovery_failures.get(message_type, 0) + 1
-                )
-                self.transition_to_open(message_type)
-            elif (
-                current_state == FlextConstants.Reliability.CircuitBreakerState.CLOSED
-                and current_failures >= self._threshold
-            ):
-                self.transition_to_open(message_type)
-
-        def transition_to_state(self, message_type: str, new_state: str) -> None:
-            """Transition to specified state."""
-            self.set_state(message_type, new_state)
-            if new_state == FlextConstants.Reliability.CircuitBreakerState.CLOSED:
-                self._failures[message_type] = 0
-                self._success_counts[message_type] = 0
-                if message_type in self._opened_at:
-                    del self._opened_at[message_type]
-            elif new_state == FlextConstants.Reliability.CircuitBreakerState.OPEN:
-                self._opened_at[message_type] = time.time()
-                self._success_counts[message_type] = 0
-            elif new_state == FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN:
-                self._success_counts[message_type] = 0
-
-        def transition_to_closed(self, message_type: str) -> None:
-            """Transition to CLOSED state."""
-            self.transition_to_state(
-                message_type,
-                FlextConstants.Reliability.CircuitBreakerState.CLOSED,
-            )
-
-        def transition_to_open(self, message_type: str) -> None:
-            """Transition to OPEN state."""
-            self.transition_to_state(
-                message_type,
-                FlextConstants.Reliability.CircuitBreakerState.OPEN,
-            )
-
-        def transition_to_half_open(self, message_type: str) -> None:
-            """Transition to HALF_OPEN state."""
-            self.transition_to_state(
-                message_type,
-                FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN,
-            )
-
-        def attempt_reset(self, message_type: str) -> None:
-            """Attempt recovery if circuit is open."""
-            if self.is_open(message_type):
-                opened_at = self._opened_at.get(message_type, 0.0)
-                if (time.time() - opened_at) >= self._recovery_timeout:
-                    self.transition_to_half_open(message_type)
-
-        def check_before_dispatch(self, message_type: str) -> FlextResult[bool]:
-            """Check if dispatch is allowed.
-
-            Returns:
-                FlextResult[bool]: Success with True if allowed, failure if circuit breaker is open
-
-            """
-            self.attempt_reset(message_type)
-            if self.is_open(message_type):
-                return FlextResult[bool].fail(
-                    f"Circuit breaker is open for message type '{message_type}'",
-                    error_code=FlextConstants.Errors.OPERATION_ERROR,
-                    error_data={
-                        "message_type": message_type,
-                        "state": self.get_state(message_type),
-                        "failure_count": self.get_failure_count(message_type),
-                    },
-                )
-            return FlextResult[bool].ok(True)
-
-        def get_failure_count(self, message_type: str) -> int:
-            """Get current failure count."""
-            return self._failures.get(message_type, 0)
-
-        def get_threshold(self) -> int:
-            """Get circuit breaker threshold."""
-            return self._threshold
-
-        def cleanup(self) -> None:
-            """Clear all state."""
-            self._failures.clear()
-            self._states.clear()
-            self._opened_at.clear()
-            self._success_counts.clear()
-            # Clear advanced metrics
-            self._recovery_successes.clear()
-            self._recovery_failures.clear()
-            self._total_successes.clear()
-
-        def get_metrics(self) -> dict[str, object]:
-            """Get circuit breaker metrics including advanced metrics.
-
-            Returns metrics including:
-            - failures: Count of tracked message types with failures
-            - states: Count of tracked message types
-            - open_count: Count of open circuits
-            - recovery_success_rate: % of successful recovery attempts
-            - failure_rate: % of failed operations
-            - total_recovery_attempts: Total HALF_OPEN transitions
-            """
-            # Calculate recovery success rate
-            total_recovery_attempts = sum(
-                self._recovery_successes.get(mt, 0) + self._recovery_failures.get(mt, 0)
-                for mt in self._states
-            )
-            total_recovery_successes = sum(
-                self._recovery_successes.get(mt, 0) for mt in self._states
-            )
-            recovery_success_rate = (
-                (total_recovery_successes / total_recovery_attempts * 100)
-                if total_recovery_attempts > 0
-                else 0.0
-            )
-
-            # Calculate failure rate
-            total_failures = sum(self._failures.values())
-            total_successes = sum(self._total_successes.values())
-            total_operations = total_failures + total_successes
-            failure_rate = (
-                (total_failures / total_operations * 100)
-                if total_operations > 0
-                else 0.0
-            )
-
-            return {
-                # Legacy metrics (backward compatible)
-                "failures": len(self._failures),
-                "states": len(self._states),
-                "open_count": sum(
-                    1
-                    for state in self._states.values()
-                    if state == FlextConstants.Reliability.CircuitBreakerState.OPEN
-                ),
-                # Advanced metrics
-                "recovery_success_rate": recovery_success_rate,
-                "failure_rate": failure_rate,
-                "total_recovery_attempts": total_recovery_attempts,
-                "total_recovery_successes": total_recovery_successes,
-                "total_operations": total_operations,
-            }
-
-    class TimeoutEnforcer:
+    class _TimeoutEnforcer:
         """Manages timeout enforcement and thread pool execution."""
 
         def __init__(
@@ -404,7 +169,7 @@ class FlextDispatcher(FlextMixins):
                 self._executor.shutdown(wait=False, cancel_futures=True)
                 self._executor = None
 
-    class RateLimiterManager:
+    class _RateLimiterManager:
         """Manages rate limiting with simplified sliding window implementation."""
 
         def __init__(
@@ -503,7 +268,7 @@ class FlextDispatcher(FlextMixins):
             """Clear all rate limit windows."""
             self._windows.clear()
 
-    class RetryPolicy:
+    class _RetryPolicy:
         """Manages retry logic with configurable attempts and exponential backoff."""
 
         def __init__(self, max_attempts: int, retry_delay: float) -> None:
@@ -623,6 +388,11 @@ class FlextDispatcher(FlextMixins):
         def cleanup(self) -> None:
             """Clear all attempt tracking."""
             self._attempts.clear()
+
+    # Class aliases for backwards compatibility (nested classes with public names)
+    TimeoutEnforcer = _TimeoutEnforcer
+    RateLimiterManager = _RateLimiterManager
+    RetryPolicy = _RetryPolicy
 
     @override
     def __init__(
@@ -767,8 +537,28 @@ class FlextDispatcher(FlextMixins):
     def dispatcher_config(self) -> DispatcherConfig:
         """Access the dispatcher configuration."""
         config_dict = self.config.model_dump()
-        # Cast to DispatcherConfig for type safety
-        return cast("DispatcherConfig", config_dict)
+        # Construct DispatcherConfig TypedDict from config values
+        return DispatcherConfig(
+            dispatcher_timeout_seconds=config_dict.get(
+                "dispatcher_timeout_seconds", 30.0
+            ),
+            executor_workers=config_dict.get("executor_workers", 4),
+            circuit_breaker_threshold=config_dict.get("circuit_breaker_threshold", 5),
+            rate_limit_max_requests=config_dict.get("rate_limit_max_requests", 100),
+            rate_limit_window_seconds=config_dict.get(
+                "rate_limit_window_seconds", 60.0
+            ),
+            max_retry_attempts=config_dict.get("max_retry_attempts", 3),
+            retry_delay=config_dict.get("retry_delay", 1.0),
+            enable_timeout_executor=config_dict.get("enable_timeout_executor", True),
+            dispatcher_enable_logging=config_dict.get(
+                "dispatcher_enable_logging", True
+            ),
+            dispatcher_auto_context=config_dict.get("dispatcher_auto_context", True),
+            dispatcher_enable_metrics=config_dict.get(
+                "dispatcher_enable_metrics", True
+            ),
+        )
 
     # ==================== LAYER 3: ADVANCED PROCESSING INTERNAL METHODS ====================
 
@@ -2182,7 +1972,12 @@ class FlextDispatcher(FlextMixins):
         request_dict = FlextMixins.ModelConversion.to_dict(request)
 
         # Validate handler mode using consolidated helper
-        handler_mode = cast("str | None", request_dict.get("handler_mode"))
+        handler_mode_raw = request_dict.get("handler_mode")
+        handler_mode: str | None = (
+            handler_mode_raw
+            if isinstance(handler_mode_raw, (str, type(None)))
+            else None
+        )
         mode_validation = self._validate_handler_mode(handler_mode)
         if mode_validation.is_failure:
             return FlextResult[dict[str, object]].fail(
@@ -2792,37 +2587,51 @@ class FlextDispatcher(FlextMixins):
         message_type = type(message)
         if message_type in self._handlers:
             try:
-                handler = cast("Callable[..., object]", self._handlers[message_type])
+                handler_raw = self._handlers[message_type]
+                if not callable(handler_raw):
+                    return FlextResult.fail(
+                        f"Handler for {message_type} is not callable"
+                    )
+                handler: Callable[..., object] = handler_raw
                 result = handler(message)
                 return FlextResult.ok(result)
             except Exception as e:
                 return FlextResult.fail(str(e))
 
-        return (
-            self._extract_dispatch_config(
-                config,
-                metadata,
-                correlation_id,
-                timeout_override,
-            )
-            .flat_map(
-                lambda dispatch_config: self._prepare_dispatch_context(
-                    message,
-                    None,
-                    dispatch_config,
-                ).map(lambda _x: object()),
-            )
-            .flat_map(
-                lambda context: self._validate_pre_dispatch_conditions(
-                    cast("dict[str, object]", context),
-                ).map(lambda _x: object()),
-            )
-            .flat_map(
-                lambda context: self._execute_with_retry_policy(
-                    cast("dict[str, object]", context),
-                ),
-            )
+        # Extract dispatch config
+        config_result: FlextResult[dict[str, object]] = self._extract_dispatch_config(
+            config,
+            metadata,
+            correlation_id,
+            timeout_override,
         )
+        if config_result.is_failure:
+            return FlextResult[object].fail(
+                config_result.error or "Config extraction failed"
+            )
+
+        # Prepare dispatch context
+        context_result: FlextResult[dict[str, object]] = self._prepare_dispatch_context(
+            message,
+            None,
+            config_result.value,
+        )
+        if context_result.is_failure:
+            return FlextResult[object].fail(
+                context_result.error or "Context preparation failed"
+            )
+
+        # Validate pre-dispatch conditions
+        validated_result: FlextResult[dict[str, object]] = (
+            self._validate_pre_dispatch_conditions(context_result.value)
+        )
+        if validated_result.is_failure:
+            return FlextResult[object].fail(
+                validated_result.error or "Pre-dispatch validation failed"
+            )
+
+        # Execute with retry policy
+        return self._execute_with_retry_policy(validated_result.value)
 
     def _extract_dispatch_config(
         self,

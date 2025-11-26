@@ -46,7 +46,7 @@ import socket
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import fields as get_dataclass_fields, is_dataclass
 from datetime import datetime
-from typing import TypeGuard, cast
+from typing import TypeGuard
 
 import orjson
 
@@ -87,12 +87,14 @@ class FlextUtilitiesValidation:
                 for k, v in component_dict.items()
             }
         if isinstance(component, (list, tuple)):
-            sequence = cast("Sequence[object]", component)
+            # Component is confirmed to be list or tuple, iterate directly
+            sequence: Sequence[object] = component
             return [
                 FlextUtilitiesValidation._normalize_component(item) for item in sequence
             ]
         if isinstance(component, set):
-            set_component = cast("set[object]", component)
+            # Component is confirmed to be set, iterate directly
+            set_component: set[object] = component
             return {
                 FlextUtilitiesValidation._normalize_component(item)
                 for item in set_component
@@ -261,11 +263,11 @@ class FlextUtilitiesValidation:
         ensuring it's not a type (via isinstance(value, type) check).
         """
         # Caller guarantees value is a dataclass instance via
-        # _is_dataclass_instance check. Using manual field extraction -
-        # cast to satisfy mypy strict mode
+        # _is_dataclass_instance check. Using manual field extraction
         field_dict: dict[str, object] = {}
-        # Cast value.__class__ to type since we know it's a dataclass instance
-        for field in get_dataclass_fields(cast("type", value.__class__)):
+        # value.__class__ is type for dataclass instances
+        value_class: type = value.__class__
+        for field in get_dataclass_fields(value_class):
             field_dict[field.name] = getattr(value, field.name)
 
         normalized_dict = FlextUtilitiesValidation._normalize_component(field_dict)
@@ -307,10 +309,12 @@ class FlextUtilitiesValidation:
     def _normalize_vars(value: object) -> tuple[str, object]:
         """Normalize object attributes to cache-friendly structure."""
         try:
-            value_vars_dict: dict[str, object] = cast(
-                "dict[str, object]",
-                vars(value),
-            )
+            vars_result = vars(value)
+            # vars() returns dict[str, object] when successful
+            if isinstance(vars_result, dict):
+                value_vars_dict: dict[str, object] = vars_result
+            else:
+                return ("repr", repr(value))
         except TypeError:
             return ("repr", repr(value))
 
@@ -352,7 +356,9 @@ class FlextUtilitiesValidation:
         """Generate cache key from dataclass."""
         try:
             dataclass_data: dict[str, object] = {}
-            for field in get_dataclass_fields(cast("type", command.__class__)):
+            # command.__class__ is type for class instances
+            command_class: type = command.__class__
+            for field in get_dataclass_fields(command_class):
                 dataclass_data[field.name] = getattr(command, field.name)
             sorted_data = FlextUtilitiesValidation._sort_dict_keys(dataclass_data)
             return FlextUtilitiesValidation._generate_key_from_data(
@@ -438,8 +444,10 @@ class FlextUtilitiesValidation:
         """
         if FlextRuntime.is_dict_like(obj):
             dict_obj: dict[str, object] = obj
+            # Convert items() view to list for sorting
+            items_list: list[tuple[str, object]] = list(dict_obj.items())
             sorted_items: list[tuple[str, object]] = sorted(
-                cast("list[tuple[str, object]]", dict_obj.items()),
+                items_list,
                 key=lambda x: str(x[0]),
             )
             return {
@@ -450,7 +458,8 @@ class FlextUtilitiesValidation:
             obj_list: list[object] = obj
             return [FlextUtilitiesValidation._sort_dict_keys(item) for item in obj_list]
         if isinstance(obj, tuple):
-            obj_tuple: tuple[object, ...] = cast("tuple[object, ...]", obj)
+            # obj is confirmed to be tuple, iterate directly
+            obj_tuple: tuple[object, ...] = obj
             return tuple(
                 FlextUtilitiesValidation._sort_dict_keys(item) for item in obj_tuple
             )
@@ -1334,12 +1343,17 @@ class FlextUtilitiesValidation:
                         retry_config.get("exponential_backoff"),
                     ),
                     retry_on_exceptions=(
-                        cast(
-                            "list[type[Exception]]",
-                            retry_config["retry_on_exceptions"],
-                        )
+                        [
+                            exc_type
+                            for exc_type in retry_config["retry_on_exceptions"]
+                            if isinstance(exc_type, type)
+                            and issubclass(exc_type, Exception)
+                        ]
                         if "retry_on_exceptions" in retry_config
                         and retry_config["retry_on_exceptions"] is not None
+                        and isinstance(
+                            retry_config["retry_on_exceptions"], (list, tuple)
+                        )
                         else [Exception]
                     ),
                     backoff_multiplier=params_4[3],

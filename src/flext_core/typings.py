@@ -1,21 +1,29 @@
-"""FlextTypes - Type System Module.
+"""Type system foundation module for FLEXT ecosystem.
 
-This module provides the type system foundation for the FLEXT ecosystem,
-defining TypeVars, domain-specific types, and complex type aliases using Pydantic.
+Provides FlextTypes, a comprehensive type system foundation defining TypeVars at
+module level and complex type aliases organized in nested namespaces within the
+FlextTypes class. Uses Pydantic Field annotations for domain validation types and
+provides type aliases for CQRS patterns, JSON serialization, handlers, processors,
+factories, predicates, decorators, utilities, logging, hooks, and configuration.
 
-Scope: Type variables, type aliases, validation types, JSON types, handler types,
-processor types, factory types, predicate types, decorator types, utility types,
-CQRS type aliases, and retry configuration models.
+Scope: Module-level TypeVars for generic programming (T, T_co, T_contra, P, R,
+domain-specific TypeVars), and FlextTypes class with nested namespaces (Validation,
+Json, Handler, Processor, Factory, Predicate, Decorator, Utility, Bus, Logging,
+Hook, Config, Cqrs) containing type aliases and validation models. Type aliases
+are also exported at module level for convenience. Follows single-class pattern
+with nested namespaces for organization. TypeVars use appropriate variance (covariant,
+contravariant) for protocol compliance and type safety.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
 import socket
 from collections.abc import Callable
-from typing import Annotated, Any, ParamSpec, TypeAlias, TypeVar
+from typing import Annotated, ParamSpec, TypeAlias, TypeVar
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
@@ -116,8 +124,6 @@ class FlextTypes:
     HookRegistry: TypeAlias = dict[str, list[Callable[[object], object]]]
     ScopeRegistry: TypeAlias = dict[str, object]
     HookCallableType: TypeAlias = Callable[[object], object]
-    # Forward reference for RetryConfig (defined later in Config class)
-    RetryConfig = Any  # Placeholder - will be replaced with actual type
 
     class Validation:
         """Domain validation types using Pydantic Field annotations."""
@@ -160,8 +166,8 @@ class FlextTypes:
         # Primitive JSON types
         type JsonPrimitive = str | int | float | bool | None
 
-        # Complex JSON types with recursive definitions
-        JsonValue: TypeAlias = "JsonPrimitive | dict[str, object] | list[object]"
+        # Complex JSON types - direct reference (no string annotation)
+        JsonValue: TypeAlias = JsonPrimitive | dict[str, object] | list[object]
         type JsonList = list[JsonValue]
         type JsonDict = dict[str, JsonValue]
 

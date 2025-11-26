@@ -17,7 +17,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import ClassVar, Self, cast
 
 from pydantic import computed_field
 
@@ -59,11 +58,6 @@ class FlextService[TDomainResult](
     Type Parameters:
     - TDomainResult: The type of result returned by service execution
 
-    Auto-Execution Pattern:
-    When auto_execute is True, service instantiation triggers immediate execution,
-    returning the result directly instead of the service instance. This enables
-    functional programming patterns where services act like functions.
-
     Usage Examples:
         >>> # Standard service usage
         >>> class UserService(FlextService[User]):
@@ -73,24 +67,10 @@ class FlextService[TDomainResult](
         ...         return self.ok(user)
         >>>
         >>> service = UserService()
-        >>> result = service.execute()  # or service.result
+        >>> result = service.execute()
         >>> if result.is_success:
         ...     user = result.value
-        >>>
-        >>> # Auto-execution pattern
-        >>> class QuickUserService(FlextService[User]):
-        ...     auto_execute = True
-        ...
-        ...     def execute(self) -> FlextResult[User]:
-        ...         return self.ok(User(id=1, name="John"))
-        >>>
-        >>> # Returns User instance directly, not service
-        >>> user = QuickUserService()
-        >>> assert isinstance(user, User)  # True
     """
-
-    # Class configuration
-    auto_execute: ClassVar[bool] = False
 
     def __init__(self, **data: object) -> None:
         """Initialize service with configuration data.
@@ -104,43 +84,6 @@ class FlextService[TDomainResult](
 
         """
         super().__init__(**data)
-
-    def __new__(cls, **data: object) -> Self:
-        """Handle auto-execution pattern and instance creation.
-
-        Implements the auto-execution pattern where services can execute
-        immediately upon instantiation when auto_execute is True. This enables
-        functional programming patterns where services behave like functions.
-
-        When auto_execute is False: Returns normal service instance
-        When auto_execute is True: Executes service and returns result value directly
-
-        Args:
-            **data: Initialization data passed to service
-
-        Returns:
-            Self: Service instance (normal case) or TDomainResult (auto-execute case)
-
-        Raises:
-            FlextExceptions.BaseError: When auto-execution fails
-
-        """
-        instance = super().__new__(cls)
-        if cls.auto_execute:
-            # Auto-execution pattern: create, initialize, execute, return result
-            object.__init__(instance)
-            cls.__init__(instance, **data)
-            # Call execute via object.__getattribute__ to bypass abstract method check
-            # (concrete subclass will have execute() implemented when auto_execute=True)
-            execute_fn = object.__getattribute__(instance, "execute")
-            result = execute_fn()
-            if result.is_success:
-                # Return result directly instead of service instance
-                # Note: auto_execute returns TDomainResult, not Self, which is type-safe
-                # at runtime because auto_execute=True subclasses define concrete types
-                return cast("Self", result.value)
-            raise FlextExceptions.BaseError(result.error or "Service execution failed")
-        return instance
 
     @abstractmethod
     def execute(self) -> FlextResult[TDomainResult]:
@@ -238,13 +181,12 @@ class FlextService[TDomainResult](
         """Get service metadata and configuration information.
 
         Returns comprehensive metadata about the service instance including
-        type information, configuration settings, and execution parameters.
+        type information and execution parameters.
         Used by monitoring, logging, and debugging infrastructure.
 
         Returns:
             dict[str, object]: Service metadata dictionary containing:
                 - service_type: Class name of the service
-                - auto_execute: Whether auto-execution is enabled
                 - Additional metadata can be added by subclasses
 
         Example:
@@ -255,7 +197,6 @@ class FlextService[TDomainResult](
         """
         return {
             "service_type": self.__class__.__name__,
-            "auto_execute": self.auto_execute,
         }
 
 

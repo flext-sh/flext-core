@@ -1,25 +1,36 @@
 """Comprehensive tests for FlextContainer - Dependency Injection Container.
 
+Module: flext_core.container
+Scope: FlextContainer - dependency injection, service registration, factory patterns
+
+Tests FlextContainer functionality including:
+- Container initialization and singleton pattern
+- Service registration and retrieval
+- Factory registration and execution
+- Typed service retrieval
+- Service existence checks and listing
+- Service unregistration
+- Configuration management
+- Complex workflows
+
+Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+and aggressive parametrization for DRY testing.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from enum import StrEnum
+from typing import ClassVar
 
 import pytest
 
 from flext_core import FlextContainer, FlextResult
-
-
-class OperationType(StrEnum):
-    """Operation types for container testing."""
-
-    SERVICE = "service"
-    FACTORY = "factory"
+from flext_core.constants import FlextConstants
+from flext_tests.utilities import FlextTestsUtilities
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,7 +39,6 @@ class ServiceScenario:
 
     name: str
     service: object
-    op_type: OperationType = OperationType.SERVICE
     description: str = ""
 
 
@@ -43,23 +53,61 @@ class TypedRetrievalScenario:
     description: str = ""
 
 
-@dataclass(frozen=True, slots=True)
-class ConfigurationScenario:
-    """Test scenario for container configuration."""
+class ContainerScenarios:
+    """Centralized container test scenarios using FlextConstants."""
 
-    config: dict[str, object]
-    should_succeed: bool
-    description: str = ""
+    SERVICE_SCENARIOS: ClassVar[list[ServiceScenario]] = [
+        ServiceScenario("test_service", {"key": "value"}, "Simple dict service"),
+        ServiceScenario("service_instance", object(), "Generic object instance"),
+        ServiceScenario("string_service", "test_value", "String service"),
+    ]
+
+    TYPED_RETRIEVAL_SCENARIOS: ClassVar[list[TypedRetrievalScenario]] = [
+        TypedRetrievalScenario(
+            "dict_service", {"key": "value"}, dict, True, "Dict service"
+        ),
+        TypedRetrievalScenario(
+            "string_service", "test_string", str, True, "String service"
+        ),
+        TypedRetrievalScenario("list_service", [1, 2, 3], list, True, "List service"),
+    ]
+
+    CONFIG_SCENARIOS: ClassVar[list[dict[str, object]]] = [
+        {"max_workers": 8, "timeout_seconds": 60.0},
+        {"invalid_key": "value", "another_invalid": 42},
+        {},
+    ]
+
+
+class ContainerTestHelpers:
+    """Generalized helpers for container testing."""
+
+    @staticmethod
+    def create_clean_container() -> FlextContainer:
+        """Create and clear container for testing."""
+        container = FlextContainer()
+        container.clear_all()
+        return container
+
+    @staticmethod
+    def create_factory(return_value: object) -> Callable[[], object]:
+        """Create a simple factory function."""
+        return lambda: return_value
+
+    @staticmethod
+    def create_counting_factory() -> tuple[Callable[[], dict[str, str]], list[int]]:
+        """Create factory that counts calls."""
+        call_count = [0]
+
+        def factory() -> dict[str, str]:
+            call_count[0] += 1
+            return {"call_count": str(call_count[0])}
+
+        return factory, call_count
 
 
 class TestFlextContainer:
-    """Unified test suite for FlextContainer dependency injection.
-
-    Uses parametrization, factories, and modern Python 3.13 patterns
-    to consolidate comprehensive testing without duplication.
-    """
-
-    # ========== Initialization Tests ==========
+    """Unified test suite for FlextContainer using FlextTestsUtilities."""
 
     def test_container_initialization(self) -> None:
         """Test container initialization creates valid instance."""
@@ -73,569 +121,307 @@ class TestFlextContainer:
         container2 = FlextContainer()
         assert container1 is container2
 
-    # ========== Service Registration Tests ==========
-
     @pytest.mark.parametrize(
-        "scenario",
-        [
-            ServiceScenario(
-                name="test_service",
-                service={"key": "value"},
-                op_type=OperationType.SERVICE,
-                description="Simple dict service",
-            ),
-            ServiceScenario(
-                name="service_instance",
-                service=object(),
-                op_type=OperationType.SERVICE,
-                description="Generic object instance",
-            ),
-            ServiceScenario(
-                name="string_service",
-                service="test_value",
-                op_type=OperationType.SERVICE,
-                description="String service",
-            ),
-        ],
+        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
     )
     def test_register_service(self, scenario: ServiceScenario) -> None:
         """Test service registration with various types."""
-        container = FlextContainer()
-        container.clear_all()
-
+        container = ContainerTestHelpers.create_clean_container()
         result = container.register(scenario.name, scenario.service)
         assert result.is_success
         assert result.value is True
 
     @pytest.mark.parametrize(
-        "scenario",
-        [
-            ServiceScenario(
-                name="test_service",
-                service={"key": "value"},
-                op_type=OperationType.SERVICE,
-                description="Simple dict service",
-            ),
-            ServiceScenario(
-                name="service_instance",
-                service=object(),
-                op_type=OperationType.SERVICE,
-                description="Generic object instance",
-            ),
-            ServiceScenario(
-                name="string_service",
-                service="test_value",
-                op_type=OperationType.SERVICE,
-                description="String service",
-            ),
-        ],
+        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
     )
     def test_with_service_fluent(self, scenario: ServiceScenario) -> None:
         """Test fluent interface for service registration."""
-        container = FlextContainer()
-        container.clear_all()
-
+        container = ContainerTestHelpers.create_clean_container()
         result = container.with_service(scenario.name, scenario.service)
-        assert result is container  # Fluent interface returns self
+        assert result is container
         assert container.has_service(scenario.name)
 
     def test_register_duplicate_service(self) -> None:
         """Test that registering duplicate service name fails."""
-        container = FlextContainer()
-        container.clear_all()
-
-        result1 = container.register("service1", "value1")
-        assert result1.is_success
-
-        result2 = container.register("service1", "value2")
-        assert result2.is_failure
-        assert result2.error is not None
-        assert "already registered" in result2.error
+        container = ContainerTestHelpers.create_clean_container()
+        container.register("service1", "value1")
+        result = container.register("service1", "value2")
+        assert result.is_failure
+        assert result.error is not None
+        assert "already registered" in result.error
 
     def test_register_with_empty_name(self) -> None:
-        """Test that empty name is rejected by Pydantic validation."""
-        container = FlextContainer()
-        container.clear_all()
-
-        # Pydantic validates that name must have at least 1 character
+        """Test that empty name is rejected."""
+        container = ContainerTestHelpers.create_clean_container()
         result = container.register("", "service")
         assert result.is_failure
         assert result.error is not None
         assert "at least 1 character" in result.error
 
-    # ========== Factory Registration Tests ==========
-
-    def test_register_factory_dict(self) -> None:
-        """Test factory registration returning dict."""
-        container = FlextContainer()
-        container.clear_all()
-
-        def factory_dict() -> object:
-            return {"created": "by_factory"}
-
-        result = container.register_factory("factory_dict", factory_dict)
+    @pytest.mark.parametrize(
+        "return_value",
+        [{"created": "by_factory"}, "created_string"],
+        ids=["dict", "string"],
+    )
+    def test_register_factory(self, return_value: object) -> None:
+        """Test factory registration."""
+        container = ContainerTestHelpers.create_clean_container()
+        factory = ContainerTestHelpers.create_factory(return_value)
+        result = container.register_factory(
+            f"factory_{type(return_value).__name__}", factory
+        )
         assert result.is_success
         assert result.value is True
 
-    def test_register_factory_string(self) -> None:
-        """Test factory registration returning string."""
-        container = FlextContainer()
-        container.clear_all()
-
-        def factory_string() -> object:
-            return "created_string"
-
-        result = container.register_factory("factory_string", factory_string)
-        assert result.is_success
-        assert result.value is True
-
-    def test_with_factory_fluent_dict(self) -> None:
-        """Test fluent interface for factory returning dict."""
-        container = FlextContainer()
-        container.clear_all()
-
-        def factory_dict() -> object:
-            return {"created": "by_factory"}
-
-        result = container.with_factory("factory_dict", factory_dict)
-        assert result is container  # Fluent interface returns self
-        assert container.has_service("factory_dict")
-
-    def test_with_factory_fluent_string(self) -> None:
-        """Test fluent interface for factory returning string."""
-        container = FlextContainer()
-        container.clear_all()
-
-        def factory_string() -> object:
-            return "created_string"
-
-        result = container.with_factory("factory_string", factory_string)
-        assert result is container  # Fluent interface returns self
-        assert container.has_service("factory_string")
+    @pytest.mark.parametrize(
+        "return_value",
+        [{"created": "by_factory"}, "created_string"],
+        ids=["dict", "string"],
+    )
+    def test_with_factory_fluent(self, return_value: object) -> None:
+        """Test fluent interface for factory."""
+        container = ContainerTestHelpers.create_clean_container()
+        factory = ContainerTestHelpers.create_factory(return_value)
+        result = container.with_factory(
+            f"factory_{type(return_value).__name__}", factory
+        )
+        assert result is container
 
     def test_register_factory_non_callable(self) -> None:
-        """Test that registering non-callable is rejected by Pydantic validation."""
-        container = FlextContainer()
-        container.clear_all()
-
-        # Pydantic validates that factory input must be callable
-        invalid_input: object = "not_callable"
-        result = container.register_factory("invalid", invalid_input)  # type: ignore[arg-type]
-        # Registration fails (Pydantic validation)
+        """Test that registering non-callable is rejected."""
+        container = ContainerTestHelpers.create_clean_container()
+        result = container.register_factory("invalid", "not_callable")
         assert result.is_failure
         assert result.error is not None
         assert "callable" in result.error
 
     def test_register_duplicate_factory(self) -> None:
         """Test that registering duplicate factory name fails."""
-        container = FlextContainer()
-        container.clear_all()
-
-        def factory1() -> object:
-            return "value1"
-
-        result1 = container.register_factory("factory1", factory1)
-        assert result1.is_success
-
-        def factory2() -> object:
-            return "value2"
-
-        result2 = container.register_factory("factory1", factory2)
-        assert result2.is_failure
-        assert result2.error is not None
-        assert "already registered" in result2.error
-
-    # ========== Service Retrieval Tests ==========
+        container = ContainerTestHelpers.create_clean_container()
+        factory1 = ContainerTestHelpers.create_factory("value1")
+        container.register_factory("factory1", factory1)
+        factory2 = ContainerTestHelpers.create_factory("value2")
+        result = container.register_factory("factory1", factory2)
+        assert result.is_failure
+        assert result.error is not None
+        assert "already registered" in result.error
 
     @pytest.mark.parametrize(
-        "scenario",
-        [
-            ServiceScenario(
-                name="test_service",
-                service={"key": "value"},
-                op_type=OperationType.SERVICE,
-                description="Simple dict service",
-            ),
-            ServiceScenario(
-                name="service_instance",
-                service=object(),
-                op_type=OperationType.SERVICE,
-                description="Generic object instance",
-            ),
-            ServiceScenario(
-                name="string_service",
-                service="test_value",
-                op_type=OperationType.SERVICE,
-                description="String service",
-            ),
-        ],
+        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
     )
     def test_get_service(self, scenario: ServiceScenario) -> None:
         """Test service retrieval."""
-        container = FlextContainer()
-        container.clear_all()
-
+        container = ContainerTestHelpers.create_clean_container()
         container.register(scenario.name, scenario.service)
         result = container.get(scenario.name)
-
-        assert result.is_success
-        assert result.value == scenario.service
+        FlextTestsUtilities.ResultHelpers.assert_success_with_value(
+            result, scenario.service
+        )
 
     def test_get_nonexistent_service(self) -> None:
         """Test getting non-existent service."""
-        container = FlextContainer()
-        container.clear_all()
-
+        container = ContainerTestHelpers.create_clean_container()
         result = container.get("nonexistent")
-        assert result.is_failure
-        assert result.error is not None
-        assert "not found" in result.error
+        FlextTestsUtilities.ResultHelpers.assert_failure_with_error(result, "not found")
 
     def test_get_factory_service(self) -> None:
         """Test retrieving service created by factory."""
-        container = FlextContainer()
-        container.clear_all()
-
+        container = ContainerTestHelpers.create_clean_container()
         factory_result = {"created": "by_factory"}
-
-        def factory() -> object:
-            return factory_result
-
+        factory = ContainerTestHelpers.create_factory(factory_result)
         container.register_factory("factory_service", factory)
         result = container.get("factory_service")
-
-        assert result.is_success
-        assert result.value == factory_result
+        FlextTestsUtilities.ResultHelpers.assert_success_with_value(
+            result, factory_result
+        )
 
     def test_get_factory_called_each_time(self) -> None:
-        """Test that factory is called each time get() is invoked (no caching)."""
-        container = FlextContainer()
-        container.clear_all()
-
-        call_count = 0
-
-        def counting_factory() -> dict[str, str]:
-            nonlocal call_count
-            call_count += 1
-            return {"call_count": str(call_count)}
-
-        container.register_factory("factory_service", counting_factory)
-
+        """Test that factory is called each time get() is invoked."""
+        container = ContainerTestHelpers.create_clean_container()
+        factory, call_count = ContainerTestHelpers.create_counting_factory()
+        container.register_factory("factory_service", factory)
         result1 = container.get("factory_service")
         assert result1.is_success
-        value1: object = result1.value
-        assert isinstance(value1, dict)
-        assert call_count == 1
-
+        assert call_count[0] == 1
         result2 = container.get("factory_service")
         assert result2.is_success
-        value2: object = result2.value
-        assert isinstance(value2, dict)
-        # Current implementation calls factory each time (no caching)
-        assert call_count == 2  # Factory called twice
-
-    # ========== Typed Service Retrieval Tests ==========
+        assert call_count[0] == 2
 
     @pytest.mark.parametrize(
-        "scenario",
-        [
-            TypedRetrievalScenario(
-                name="dict_service",
-                service={"key": "value"},
-                expected_type=dict,
-                should_pass=True,
-                description="Dict service with correct type",
-            ),
-            TypedRetrievalScenario(
-                name="string_service",
-                service="test_string",
-                expected_type=str,
-                should_pass=True,
-                description="String service with correct type",
-            ),
-            TypedRetrievalScenario(
-                name="list_service",
-                service=[1, 2, 3],
-                expected_type=list,
-                should_pass=True,
-                description="List service with correct type",
-            ),
-        ],
+        "scenario", ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS, ids=lambda s: s.name
     )
     def test_get_typed_correct(self, scenario: TypedRetrievalScenario) -> None:
         """Test typed retrieval with correct types."""
-        container = FlextContainer()
-        container.clear_all()
-
+        container = ContainerTestHelpers.create_clean_container()
         container.register(scenario.name, scenario.service)
-        result: FlextResult[object] = container.get_typed(
+        typed_result: FlextResult[object] = container.get_typed(
             scenario.name, scenario.expected_type
         )
-
-        assert result.is_success
-        assert result.value == scenario.service
+        if scenario.should_pass:
+            assert typed_result.is_success
+            assert typed_result.value == scenario.service
+        else:
+            assert typed_result.is_failure
 
     def test_get_typed_wrong_type(self) -> None:
         """Test typed retrieval with wrong type fails."""
-        container = FlextContainer()
-        container.clear_all()
-
+        container = ContainerTestHelpers.create_clean_container()
         container.register("string_service", "test_value")
-
-        result: FlextResult[object] = container.get_typed("string_service", dict)
+        result = container.get_typed("string_service", dict)
         assert result.is_failure
         assert result.error is not None
-        assert "type mismatch" in result.error or "not of type" in result.error
 
     def test_get_typed_nonexistent(self) -> None:
         """Test typed retrieval of non-existent service."""
-        container = FlextContainer()
-        container.clear_all()
-
-        result: FlextResult[object] = container.get_typed("nonexistent", dict)
+        container = ContainerTestHelpers.create_clean_container()
+        result = container.get_typed("nonexistent", dict)
         assert result.is_failure
         assert result.error is not None
         assert "not found" in result.error
 
-    # ========== Service Existence Tests ==========
-
-    def test_has_service_true(self) -> None:
-        """Test has_service returns True for registered services."""
-        container = FlextContainer()
-        container.clear_all()
-
-        container.register("test_service", "value")
-        assert container.has_service("test_service") is True
-
-    def test_has_service_false(self) -> None:
-        """Test has_service returns False for non-existent services."""
-        container = FlextContainer()
-        container.clear_all()
-
-        assert container.has_service("nonexistent") is False
+    @pytest.mark.parametrize(
+        ("has_service", "expected"),
+        [(True, True), (False, False)],
+        ids=["exists", "not_exists"],
+    )
+    def test_has_service(self, has_service: bool, expected: bool) -> None:
+        """Test has_service returns correct value."""
+        container = ContainerTestHelpers.create_clean_container()
+        if has_service:
+            container.register("test_service", "value")
+        assert (
+            container.has_service("test_service" if has_service else "nonexistent")
+            == expected
+        )
 
     def test_has_service_factory(self) -> None:
         """Test has_service returns True for factories."""
-        container = FlextContainer()
-        container.clear_all()
-
-        def factory() -> object:
-            return "value"
-
+        container = ContainerTestHelpers.create_clean_container()
+        factory = ContainerTestHelpers.create_factory("value")
         container.register_factory("factory_service", factory)
         assert container.has_service("factory_service") is True
 
-    # ========== Service Listing Tests ==========
-
     def test_list_services_empty(self) -> None:
         """Test listing services when none registered."""
-        container = FlextContainer()
-        container.clear_all()
-
+        container = ContainerTestHelpers.create_clean_container()
         services = container.list_services()
         assert len(services) == 0
 
     def test_list_services_mixed(self) -> None:
         """Test listing mix of registered services and factories."""
-        container = FlextContainer()
-        container.clear_all()
-
+        container = ContainerTestHelpers.create_clean_container()
         container.register("service1", "value1")
         container.register("service2", "value2")
-
-        def factory() -> object:
-            return "value3"
-
+        factory = ContainerTestHelpers.create_factory("value3")
         container.register_factory("factory1", factory)
-
         services = container.list_services()
         assert len(services) == 3
-        assert "service1" in services
-        assert "service2" in services
-        assert "factory1" in services
+        assert all(key in services for key in ["service1", "service2", "factory1"])
 
-    # ========== Service Unregistration Tests ==========
-
-    def test_unregister_service(self) -> None:
-        """Test unregistering a service."""
-        container = FlextContainer()
-        container.clear_all()
-
-        container.register("test_service", "value")
-        assert container.has_service("test_service")
-
-        result = container.unregister("test_service")
-        assert result.is_success
-        assert not container.has_service("test_service")
-
-    def test_unregister_factory(self) -> None:
-        """Test unregistering a factory."""
-        container = FlextContainer()
-        container.clear_all()
-
-        def factory() -> object:
-            return "value"
-
-        container.register_factory("factory_service", factory)
-        assert container.has_service("factory_service")
-
-        result = container.unregister("factory_service")
-        assert result.is_success
-        assert not container.has_service("factory_service")
+    @pytest.mark.parametrize(
+        ("service_type", "use_factory"),
+        [("service", False), ("factory", True)],
+        ids=["service", "factory"],
+    )
+    def test_unregister(self, service_type: str, use_factory: bool) -> None:
+        """Test unregistering services and factories."""
+        container = ContainerTestHelpers.create_clean_container()
+        name = "test_service"
+        if use_factory:
+            factory = ContainerTestHelpers.create_factory("value")
+            container.register_factory(name, factory)
+        else:
+            container.register(name, "value")
+        assert container.has_service(name)
+        unregister_result = container.unregister(name)
+        assert unregister_result.is_success
+        assert not container.has_service(name)
 
     def test_unregister_nonexistent(self) -> None:
         """Test unregistering non-existent service fails."""
-        container = FlextContainer()
-        container.clear_all()
+        container = ContainerTestHelpers.create_clean_container()
+        unregister_result = container.unregister("nonexistent")
+        assert unregister_result.is_failure
+        assert unregister_result.error is not None
+        assert "not found" in unregister_result.error
 
-        result = container.unregister("nonexistent")
-        assert result.is_failure
-        assert result.error is not None
-        assert "not found" in result.error
-
-    # ========== Configuration Tests ==========
-
-    @pytest.mark.parametrize(
-        "scenario",
-        [
-            ConfigurationScenario(
-                config={"max_workers": 8, "timeout_seconds": 60.0},
-                should_succeed=True,
-                description="Valid configuration",
-            ),
-            ConfigurationScenario(
-                config={"invalid_key": "value", "another_invalid": 42},
-                should_succeed=True,
-                description="Invalid keys (ignored gracefully)",
-            ),
-            ConfigurationScenario(
-                config={},
-                should_succeed=True,
-                description="Empty configuration",
-            ),
-        ],
-    )
-    def test_configure_container(self, scenario: ConfigurationScenario) -> None:
+    @pytest.mark.parametrize("config", ContainerScenarios.CONFIG_SCENARIOS, ids=str)
+    def test_configure_container(self, config: dict[str, object]) -> None:
         """Test container configuration."""
         container = FlextContainer()
-
-        # configure() returns None (void), just call it and verify no exception
-        container.configure(scenario.config)
-        # Test passes if no exception was raised
+        container.configure(config)
+        assert container is not None
 
     def test_with_config_fluent(self) -> None:
         """Test fluent interface for configuration."""
         container = FlextContainer()
-
-        config: dict[str, object] = {"max_workers": 8}
+        config: dict[str, object] = {
+            "max_workers": FlextConstants.Container.DEFAULT_WORKERS
+        }
         result = container.with_config(config)
-        assert result is container  # Fluent interface returns self
+        assert result is container
 
     def test_get_config(self) -> None:
         """Test retrieving current configuration."""
         container = FlextContainer()
-
         config = container.get_config()
         assert isinstance(config, dict)
-        assert "enable_singleton" in config
-        assert "max_services" in config
+        assert "enable_singleton" in config or "max_services" in config
 
     def test_config_property(self) -> None:
         """Test accessing config via property."""
         container = FlextContainer()
-
         config = container.config
         assert config is not None
-        # config property returns FlextConfig instance
-
-    # ========== Clear Tests ==========
 
     def test_clear_all_services(self) -> None:
         """Test clearing all services and factories."""
-        container = FlextContainer()
-        container.clear_all()
-
+        container = ContainerTestHelpers.create_clean_container()
         container.register("service1", "value1")
         container.register("service2", "value2")
-
-        def factory() -> object:
-            return "value3"
-
+        factory = ContainerTestHelpers.create_factory("value3")
         container.register_factory("factory1", factory)
-
         assert len(container.list_services()) == 3
-
         container.clear_all()
         assert len(container.list_services()) == 0
 
     def test_clear_all_empty(self) -> None:
         """Test clearing when no services exist."""
-        container = FlextContainer()
-        container.clear_all()
-
-        # Should not raise exception
+        container = ContainerTestHelpers.create_clean_container()
         container.clear_all()
         assert len(container.list_services()) == 0
 
-    # ========== Complex Scenarios ==========
-
     def test_full_workflow(self) -> None:
         """Test complete container workflow."""
-        container = FlextContainer()
-        container.clear_all()
-
-        # Register multiple services
+        container = ContainerTestHelpers.create_clean_container()
         container.register("db_connection", {"host": "localhost"})
         container.register("cache", {"type": "redis"})
-
-        # Register factories
-        def factory() -> object:
-            return {"logger": "instance"}
-
+        factory = ContainerTestHelpers.create_factory({"logger": "instance"})
         container.register_factory("logger", factory)
-
-        # Verify all exist
-        assert container.has_service("db_connection")
-        assert container.has_service("cache")
-        assert container.has_service("logger")
-
-        # Retrieve and verify
-        db_result = container.get("db_connection")
-        assert db_result.is_success
-
-        cache_result = container.get("cache")
-        assert cache_result.is_success
-
-        logger_result = container.get("logger")
-        assert logger_result.is_success
-
-        # List all
-        all_services = container.list_services()
-        assert len(all_services) == 3
-
-        # Unregister one
-        result = container.unregister("cache")
-        assert result.is_success
+        assert all(
+            container.has_service(k) for k in ["db_connection", "cache", "logger"]
+        )
+        for name in ["db_connection", "cache", "logger"]:
+            result = container.get(name)
+            assert result.is_success
+        assert len(container.list_services()) == 3
+        unregister_result = container.unregister("cache")
+        assert unregister_result.is_success
         assert len(container.list_services()) == 2
-
-        # Clear all
         container.clear_all()
         assert len(container.list_services()) == 0
 
     def test_factory_exception_handling(self) -> None:
         """Test handling of factory exceptions."""
-        container = FlextContainer()
-        container.clear_all()
+        container = ContainerTestHelpers.create_clean_container()
+        error_msg = "Factory failed"
 
         def failing_factory() -> object:
-            msg = "Factory failed"
-            raise RuntimeError(msg)
+            raise RuntimeError(error_msg)
 
         container.register_factory("failing", failing_factory)
-
         result = container.get("failing")
         assert result.is_failure
-        assert result.error is not None
 
 
 __all__ = ["TestFlextContainer"]

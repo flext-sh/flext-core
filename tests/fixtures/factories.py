@@ -16,8 +16,9 @@ from typing import ClassVar, Generic, TypeVar
 
 import factory
 from factory import Faker
-
 from flext_core import FlextModels, FlextResult, FlextService
+from pydantic import BaseModel
+
 from tests.fixtures.constants import TestConstants
 
 # =========================================================================
@@ -39,6 +40,25 @@ class User(FlextModels.Entity):
     name: str
     email: str
     is_active: bool = True
+
+
+# =========================================================================
+# Pydantic BaseModel Test Models (for Payload testing)
+# =========================================================================
+
+
+class PayloadUser(BaseModel):
+    """Pydantic User model for Payload testing."""
+
+    id: str
+    name: str
+
+
+class PayloadProduct(BaseModel):
+    """Pydantic Product model for Payload testing."""
+
+    id: str
+    title: str
 
 
 class ServiceTestType(StrEnum):
@@ -111,19 +131,19 @@ class FailingService(FlextService[str]):
 class GetUserServiceAuto(GetUserService):
     """Auto-executing GetUserService."""
 
-    auto_execute = True
+    auto_execute: ClassVar[bool] = True
 
 
 class ValidatingServiceAuto(ValidatingService):
     """Auto-executing ValidatingService."""
 
-    auto_execute = True
+    auto_execute: ClassVar[bool] = True
 
 
 class FailingServiceAuto(FailingService):
     """Auto-executing FailingService."""
 
-    auto_execute = True
+    auto_execute: ClassVar[bool] = True
 
 
 # =========================================================================
@@ -137,10 +157,57 @@ class UserFactory(factory.Factory):
     class Meta:
         model = User
 
-    user_id = factory.Sequence(lambda n: f"user_{n:03d}")  # type: ignore[var-annotated,assignment]
-    name = Faker("name")  # type: ignore[var-annotated,assignment]
-    email = factory.LazyAttribute(lambda obj: f"{obj.user_id}@example.com")  # type: ignore[var-annotated,assignment]
+    user_id = factory.Sequence(lambda n: f"user_{n:03d}")
+    name = Faker("name")
+    email = factory.LazyAttribute(lambda obj: f"{obj.user_id}@example.com")
     is_active = True
+
+
+# =========================================================================
+# Payload Model Factories
+# =========================================================================
+
+
+class PayloadUserFactory:
+    """Factory for PayloadUser model."""
+
+    @staticmethod
+    def create(id: str, name: str) -> PayloadUser:
+        """Create PayloadUser instance."""
+        return PayloadUser(id=id, name=name)
+
+    @staticmethod
+    def create_test() -> PayloadUser:
+        """Create test PayloadUser."""
+        return PayloadUserFactory.create(
+            id=TestConstants.Payload.USER_ID_123,
+            name=TestConstants.Payload.USER_NAME_TEST,
+        )
+
+
+class PayloadProductFactory:
+    """Factory for PayloadProduct model."""
+
+    @staticmethod
+    def create(id: str, title: str) -> PayloadProduct:
+        """Create PayloadProduct instance."""
+        return PayloadProduct(id=id, title=title)
+
+    @staticmethod
+    def create_test() -> PayloadProduct:
+        """Create test PayloadProduct."""
+        return PayloadProductFactory.create(
+            id=TestConstants.Payload.PRODUCT_ID_456,
+            title=TestConstants.Payload.PRODUCT_TITLE_TEST,
+        )
+
+    @staticmethod
+    def create_wrong() -> PayloadProduct:
+        """Create wrong PayloadProduct for type mismatch testing."""
+        return PayloadProductFactory.create(
+            id=TestConstants.Payload.PRODUCT_ID_456,
+            title=TestConstants.Payload.PRODUCT_TITLE_WRONG,
+        )
 
 
 class GetUserServiceFactory(factory.Factory):
@@ -158,7 +225,7 @@ class ValidatingServiceFactory(factory.Factory):
     class Meta:
         model = ValidatingService
 
-    value_input = Faker("word")  # type: ignore[var-annotated,assignment]
+    value_input = Faker("word")
     min_length = TestConstants.Validation.MIN_LENGTH_DEFAULT
 
 
@@ -186,7 +253,7 @@ class ValidatingServiceAutoFactory(factory.Factory):
     class Meta:
         model = ValidatingServiceAuto
 
-    value_input = Faker("word")  # type: ignore[var-annotated,assignment]
+    value_input = Faker("word")
     min_length = TestConstants.Validation.MIN_LENGTH_DEFAULT
 
 
@@ -205,12 +272,12 @@ class ServiceTestCaseFactory(factory.Factory):
     class Meta:
         model = ServiceTestCase
 
-    service_type = factory.Iterator(ServiceTestType)  # type: ignore[var-annotated,assignment]
-    input_value = Faker("word")  # type: ignore[var-annotated,assignment]
+    service_type = factory.Iterator(ServiceTestType)
+    input_value = Faker("word")
     expected_success = True
     expected_error = None
     extra_param = TestConstants.Validation.MIN_LENGTH_DEFAULT
-    description = factory.LazyAttribute(  # type: ignore[var-annotated,assignment]
+    description = factory.LazyAttribute(
         lambda obj: f"Test case for {obj.service_type} with {obj.input_value}"
     )
 

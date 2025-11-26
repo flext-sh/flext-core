@@ -7,6 +7,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import cast
+
 import pytest
 
 from flext_core import FlextResult
@@ -103,7 +106,8 @@ class TestFlextTestsUtilities:
 
         with FlextTestsUtilities.test_context(obj, "new_attr", "new_value"):
             assert hasattr(obj, "new_attr")
-            assert obj.new_attr == "new_value"
+            # Attribute is added dynamically, use getattr for type safety
+            assert getattr(obj, "new_attr", None) == "new_value"
 
         # Should remove the attribute
         assert not hasattr(obj, "new_attr")
@@ -198,7 +202,14 @@ class TestFlextTestsUtilitiesTestUtilities:
         )
 
         assert hasattr(service, "test_method")
-        assert service.test_method() == "test_result"
+        # Method is added dynamically, use getattr for type safety
+        test_method_func: object = getattr(service, "test_method", None)
+        assert test_method_func is not None
+        assert callable(test_method_func)
+        # Type narrowing: test_method_func is callable
+        # Use cast to satisfy type checkers for dynamically added methods
+        callable_method = cast("Callable[[], str]", test_method_func)
+        assert callable_method() == "test_result"
 
     def test_generate_test_id_default(self) -> None:
         """Test generate_test_id with default prefix."""

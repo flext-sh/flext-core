@@ -399,8 +399,8 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
 
             return config
 
-        # NEW: Use from_callable for safe validation
-        validation_result = FlextResult[FlextConfig].from_callable(validate_config)
+        # NEW: Use create_from_callable for safe validation
+        validation_result = FlextResult[FlextConfig].create_from_callable(validate_config)
 
         if validation_result.is_success:
             config = validation_result.unwrap()
@@ -420,7 +420,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
                 raise ValueError(error_msg)
             return db_url
 
-        db_result = FlextResult[str].from_callable(check_database_url)
+        db_result = FlextResult[str].create_from_callable(check_database_url)
         if db_result.is_success:
             print(f"✅ Database URL valid: {db_result.unwrap()[:20]}...")
         else:
@@ -495,7 +495,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
 
         config_result = cast(
             "FlextResult[FlextConfig]",
-            FlextResult.from_callable(risky_config_load),
+            FlextResult[FlextConfig].create_from_callable(risky_config_load),
         )
         if config_result.is_success:
             config = config_result.unwrap()
@@ -511,7 +511,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
             def create_config() -> FlextConfig:
                 return FlextConfig()
 
-            return FlextResult.from_callable(create_config)
+            return FlextResult[FlextConfig].create_from_callable(create_config)
 
         def validate_environment(config: FlextConfig) -> FlextResult[FlextConfig]:
             """Step 2: Validate environment-specific settings."""
@@ -543,15 +543,49 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
             return FlextResult[FlextConfig].ok(config)
 
         # NEW: Use flow_through for clean configuration pipeline
+        # Type cast functions to match flow_through signature
+        def validate_env_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, FlextConfig):
+                result = validate_environment(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Environment validation failed")
+            return FlextResult[object].fail("Invalid config type")
+
+        def validate_perf_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, FlextConfig):
+                result = validate_performance_settings(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Performance validation failed")
+            return FlextResult[object].fail("Invalid config type")
+
+        def validate_db_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, FlextConfig):
+                result = validate_database_config(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Database validation failed")
+            return FlextResult[object].fail("Invalid config type")
+
+        def finalize_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, FlextConfig):
+                result = finalize_config(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Finalization failed")
+            return FlextResult[object].fail("Invalid config type")
+
         result = load_base_config().flow_through(
-            validate_environment,
-            validate_performance_settings,
-            validate_database_config,
-            finalize_config,
+            validate_env_wrapper,
+            validate_perf_wrapper,
+            validate_db_wrapper,
+            finalize_wrapper,
         )
 
         if result.is_success:
-            config = result.unwrap()
+            config_raw = result.unwrap()
+            config = config_raw if isinstance(config_raw, FlextConfig) else FlextConfig()
             print(
                 f"✅ Config pipeline success: log={config.log_level}, workers={config.max_workers}, timeout={config.timeout_seconds}s",
             )
@@ -588,7 +622,9 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         fallback_config = FlextConfig()
         fallback = FlextResult[FlextConfig].ok(fallback_config)
 
-        result = primary.alt(fallback)
+        # alt expects a function that takes error string and returns alternative value
+        # For fallback pattern, use manual check instead
+        result = primary if primary.is_success else fallback
         if result.is_success:
             config = result.unwrap()
             print(f"✅ Got fallback config: log_level={config.log_level}")
@@ -611,7 +647,11 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
             return FlextConfig()
 
         # Success case - expensive_default NOT called
-        config = success.value_or_call(expensive_default)
+        config = (
+            success.unwrap()
+            if success.is_success
+            else expensive_default()
+        )
         print(
             f"✅ Success: log_level={config.log_level}, expensive_created={expensive_created}",
         )
@@ -619,7 +659,11 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         # Failure case - expensive_default IS called
         expensive_created = False
         failure = FlextResult[FlextConfig].fail("Config load failed")
-        config = failure.value_or_call(expensive_default)
+        config = (
+            failure.unwrap()
+            if failure.is_success
+            else expensive_default()
+        )
         print(
             f"✅ Failure recovered: log_level={config.log_level}, expensive_created={expensive_created}",
         )
@@ -803,15 +847,15 @@ def demonstrate_flextcore_config_access() -> None:
     # 4. Combined config with other components
     print("\n=== 4. Config with Integrated Components ===")
     logger = FlextLogger.create_module_logger(__name__)
-    container = FlextContainer.get_global()
+    container = FlextContainer()
 
     logger.info("Configuration loaded", extra={"log_level": config.log_level})
     container.with_service("config", config)
 
     print(f"  ✅ Logger integrated: {type(logger).__name__}")
     print("  ✅ Config registered in container")
-    services_result = container.list_services()
-    service_count = len(services_result.unwrap()) if services_result.is_success else 0
+    services_list = container.list_services()
+    service_count = len(services_list)
     print(f"  ✅ Services: {service_count}")
 
     # 5. Infrastructure setup with configuration
@@ -819,7 +863,7 @@ def demonstrate_flextcore_config_access() -> None:
     custom_config = FlextConfig()
 
     # Service would typically get config injected via DI container
-    container = FlextContainer.get_global()
+    container = FlextContainer()
     container.with_service("config", custom_config)
 
     print("  ✅ Service initialized with custom config:")

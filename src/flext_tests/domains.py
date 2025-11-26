@@ -1,6 +1,13 @@
-"""Test domain objects and fixtures for FLEXT ecosystem.
+"""Test domain objects and fixtures for FLEXT ecosystem tests.
 
-Provides reusable domain objects, test data, and fixtures.
+Provides reusable domain objects, test data structures, and fixtures for
+domain-specific testing scenarios. Includes payloads, API responses,
+validation test cases, and domain result helpers.
+
+Scope: Domain-specific test data generators for creating configurations,
+payloads, API responses, user data, service configurations, and validation
+test cases. Integrates with FlextTestsFactories for consistent test data
+generation using Models.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,6 +17,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+
+from flext_tests.factories import FlextTestsFactories
 
 
 class FlextTestsDomains:
@@ -55,7 +64,7 @@ class FlextTestsDomains:
         environment: str = "test",
         **overrides: object,
     ) -> dict[str, object]:
-        """Create test configuration data.
+        """Create test configuration data using factories.
 
         Args:
             service_type: Type of service configuration
@@ -66,13 +75,17 @@ class FlextTestsDomains:
             Configuration dictionary
 
         """
+        config = FlextTestsFactories.create_config(
+            service_type=service_type,
+            environment=environment,
+        )
         base_config: dict[str, object] = {
-            "service_type": service_type,
-            "environment": environment,
-            "debug": True,
-            "log_level": "DEBUG",
-            "timeout": 30,
-            "max_retries": 3,
+            "service_type": config.service_type,
+            "environment": config.environment,
+            "debug": config.debug,
+            "log_level": config.log_level,
+            "timeout": config.timeout,
+            "max_retries": config.max_retries,
             "namespace": f"test_{service_type}_{uuid.uuid4().hex[:8]}",
             "storage_backend": "memory",
             "enable_caching": True,
@@ -201,7 +214,7 @@ class FlextTestsDomains:
 
     @staticmethod
     def create_user(**overrides: str | bool) -> dict[str, str | bool]:
-        """Create test user data.
+        """Create test user data using factories.
 
         Args:
             **overrides: User field overrides
@@ -210,13 +223,21 @@ class FlextTestsDomains:
             User data dictionary
 
         """
+        first_name = str(overrides.get("first_name", "Test"))
+        last_name = str(overrides.get("last_name", "User"))
+        email = str(overrides.get("email", "test@example.com"))
+
+        user_model = FlextTestsFactories.create_user(
+            name=f"{first_name} {last_name}",
+            email=email,
+        )
         user: dict[str, str | bool] = {
-            "id": str(uuid.uuid4()),
-            "username": "testuser",
-            "email": "test@example.com",
-            "first_name": "Test",
-            "last_name": "User",
-            "active": True,
+            "id": user_model.id,
+            "username": str(overrides.get("username", "testuser")),
+            "email": user_model.email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "active": user_model.active,
             "created_at": "2025-01-01T00:00:00Z",
             "updated_at": "2025-01-01T00:00:00Z",
         }

@@ -83,17 +83,17 @@ class TestMigrationScenario2:
     """Test Scenario 2: Using FlextContainer for Dependency Injection."""
 
     def test_container_global_instance(self) -> None:
-        """Verify FlextContainer.get_global() continues working."""
-        container = FlextContainer.get_global()
+        """Verify FlextContainer() continues working."""
+        container = FlextContainer()
         assert container is not None
 
         # Verify singleton pattern
-        container2 = FlextContainer.get_global()
+        container2 = FlextContainer()
         assert container is container2
 
     def test_container_registration_and_resolution(self) -> None:
         """Verify service registration and resolution."""
-        container = FlextContainer.get_global()
+        container = FlextContainer()
 
         # Register a simple service
         class TestService:
@@ -227,7 +227,7 @@ class TestBackwardCompatibility:
         assert mapped.value == "TEST"
 
         # Container patterns work
-        container = FlextContainer.get_global()
+        container = FlextContainer()
         assert container is not None
 
 
@@ -244,7 +244,7 @@ class TestMigrationComplexity:
             def __init__(self) -> None:
                 super().__init__()
                 self.logger = FlextLogger(__name__)
-                self.container = FlextContainer.get_global()
+                self.container = FlextContainer()
 
             def process_data(self, data: dict[str, str]) -> FlextResult[dict[str, object]]:
                 """Typical data processing method."""
@@ -273,7 +273,7 @@ class TestMigrationComplexity:
         assert result.value == "test"
 
         # Test FlextContainer works
-        container = FlextContainer.get_global()
+        container = FlextContainer()
         assert container is not None
 
         # Test FlextLogger works

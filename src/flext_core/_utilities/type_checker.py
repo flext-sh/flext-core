@@ -10,8 +10,7 @@ from __future__ import annotations
 
 import inspect
 import logging
-from collections.abc import Callable
-from typing import cast, get_origin, get_type_hints
+from typing import get_origin, get_type_hints
 
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
@@ -87,12 +86,11 @@ class FlextUtilitiesTypeChecker:
     def _get_method_signature(cls, handle_method: object) -> inspect.Signature | None:
         """Extract signature from handle method."""
         try:
-            # Cast to Callable for inspect.signature
+            # inspect.signature accepts any callable
             if not callable(handle_method):
                 return None
-            # Use Protocol to avoid explicit Any - inspect.signature accepts any callable
-            callable_method = cast("Callable[[object], object]", handle_method)
-            return inspect.signature(callable_method)
+            # Pass directly - inspect.signature accepts any callable
+            return inspect.signature(handle_method)
         except (TypeError, ValueError):
             return None
 
@@ -128,8 +126,8 @@ class FlextUtilitiesTypeChecker:
         annotation = parameter.annotation
         if annotation is not inspect.Signature.empty:
             # Accept all type forms - compatibility check happens later
-            # Cast to object since annotation could be Any from inspect
-            return cast("object", annotation)
+            # annotation is already object-like, return directly
+            return annotation
 
         return None
 

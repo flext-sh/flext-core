@@ -1,6 +1,12 @@
-"""Test data builders for FLEXT ecosystem.
+"""Test data builders for FLEXT ecosystem tests.
 
-Provides builder pattern for creating complex test data structures.
+Provides builder pattern implementation for creating complex test data structures
+with fluent interface for method chaining. Supports building datasets with users,
+configurations, and validation fields using Models and factories.
+
+Scope: Builder class for constructing test datasets with fluent interface,
+supporting method chaining for complex data assembly. Integrates with
+FlextTestsFactories for consistent test data generation using Models.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -8,6 +14,10 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from typing import Self
+
+from flext_tests.factories import FlextTestsFactories
 
 
 class FlextTestsBuilders:
@@ -20,8 +30,8 @@ class FlextTestsBuilders:
         """Initialize test data builder."""
         self._data: dict[str, object] = {}
 
-    def with_users(self, count: int = 5) -> FlextTestsBuilders:
-        """Add users to dataset.
+    def with_users(self, count: int = 5) -> Self:
+        """Add users to dataset using factories.
 
         Args:
             count: Number of users to create
@@ -30,19 +40,20 @@ class FlextTestsBuilders:
             Self for method chaining
 
         """
+        users = FlextTestsFactories.batch_users(count)
         self._data["users"] = [
             {
-                "id": f"USER-{i}",
-                "name": f"User {i}",
-                "email": f"user{i}@example.com",
-                "age": 20 + i,
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "active": user.active,
             }
-            for i in range(count)
+            for user in users
         ]
         return self
 
-    def with_configs(self, *, production: bool = False) -> FlextTestsBuilders:
-        """Add configuration to dataset.
+    def with_configs(self, *, production: bool = False) -> Self:
+        """Add configuration to dataset using factories.
 
         Args:
             production: Whether to use production config
@@ -51,16 +62,25 @@ class FlextTestsBuilders:
             Self for method chaining
 
         """
+        config = FlextTestsFactories.create_config(
+            service_type="api",
+            environment="production" if production else "development",
+            debug=not production,
+            timeout=30,
+        )
         self._data["configs"] = {
-            "environment": "production" if production else "development",
-            "debug": not production,
+            "service_type": config.service_type,
+            "environment": config.environment,
+            "debug": config.debug,
+            "log_level": config.log_level,
+            "timeout": config.timeout,
+            "max_retries": config.max_retries,
             "database_url": "postgresql://localhost/testdb",
-            "api_timeout": 30,
             "max_connections": 10,
         }
         return self
 
-    def with_validation_fields(self, count: int = 5) -> FlextTestsBuilders:
+    def with_validation_fields(self, count: int = 5) -> Self:
         """Add validation fields to dataset.
 
         Args:
@@ -87,7 +107,7 @@ class FlextTestsBuilders:
         """
         return dict(self._data)
 
-    def reset(self) -> FlextTestsBuilders:
+    def reset(self) -> Self:
         """Reset builder state.
 
         Returns:

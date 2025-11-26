@@ -1,6 +1,13 @@
-"""Test data factories for FLEXT ecosystem.
+"""Test data factories for FLEXT ecosystem tests.
 
-Provides factory pattern for creating test objects.
+Provides factory pattern implementation for creating test objects using Models.
+Factories generate validated test data with sensible defaults and support
+field overrides for test scenarios.
+
+Scope: Factory methods for creating test users, configurations, services,
+and test operation callables. Includes Models for User, Config, and Service
+test data structures. Supports batch generation and test service class creation
+with validation logic.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,14 +21,40 @@ import uuid
 from collections.abc import Callable
 from typing import Never
 
-from flext_core import FlextResult, FlextService
+from flext_core import FlextModels, FlextResult, FlextService, FlextUtilities
 
 
 class FlextTestsFactories:
     """Test data factories using factory pattern.
 
-    Provides factory methods for creating test objects.
+    Provides factory methods for creating test objects using Models.
     """
+
+    class User(FlextModels.Value):
+        """Test user model."""
+
+        id: str
+        name: str
+        email: str
+        active: bool = True
+
+    class Config(FlextModels.Value):
+        """Test configuration model."""
+
+        service_type: str = "api"
+        environment: str = "test"
+        debug: bool = True
+        log_level: str = "DEBUG"
+        timeout: int = 30
+        max_retries: int = 3
+
+    class Service(FlextModels.Value):
+        """Test service model."""
+
+        id: str
+        type: str = "api"
+        name: str = ""
+        status: str = "active"
 
     @staticmethod
     def create_user(
@@ -29,7 +62,7 @@ class FlextTestsFactories:
         name: str | None = None,
         email: str | None = None,
         **overrides: object,
-    ) -> dict[str, object]:
+    ) -> FlextTestsFactories.User:
         """Create a test user.
 
         Args:
@@ -39,24 +72,25 @@ class FlextTestsFactories:
             **overrides: Additional field overrides
 
         Returns:
-            User dictionary
+            User model instance
 
         """
-        user: dict[str, object] = {
+        user_data: dict[str, object] = {
             "id": user_id or str(uuid.uuid4()),
             "name": name or "Test User",
-            "email": email or f"user_{uuid.uuid4().hex[:8]}@example.com",
+            "email": email
+            or f"user_{FlextUtilities.Generators.generate_short_id()}@example.com",
             "active": True,
         }
-        user.update(overrides)
-        return user
+        user_data.update(overrides)
+        return FlextTestsFactories.User.model_validate(user_data)
 
     @staticmethod
     def create_config(
         service_type: str = "api",
         environment: str = "test",
         **overrides: object,
-    ) -> dict[str, object]:
+    ) -> FlextTestsFactories.Config:
         """Create a test configuration.
 
         Args:
@@ -65,26 +99,22 @@ class FlextTestsFactories:
             **overrides: Additional field overrides
 
         Returns:
-            Configuration dictionary
+            Config model instance
 
         """
-        config: dict[str, object] = {
+        config_data: dict[str, object] = {
             "service_type": service_type,
             "environment": environment,
-            "debug": True,
-            "log_level": "DEBUG",
-            "timeout": 30,
-            "max_retries": 3,
         }
-        config.update(overrides)
-        return config
+        config_data.update(overrides)
+        return FlextTestsFactories.Config.model_validate(config_data)
 
     @staticmethod
     def create_service(
         service_type: str = "api",
         service_id: str | None = None,
         **overrides: object,
-    ) -> dict[str, object]:
+    ) -> FlextTestsFactories.Service:
         """Create a test service.
 
         Args:
@@ -93,27 +123,28 @@ class FlextTestsFactories:
             **overrides: Additional field overrides
 
         Returns:
-            Service dictionary
+            Service model instance
 
         """
-        service: dict[str, object] = {
+        service_data: dict[str, object] = {
             "id": service_id or str(uuid.uuid4()),
             "type": service_type,
-            "name": f"Test {service_type} Service",
             "status": "active",
         }
-        service.update(overrides)
-        return service
+        if "name" not in overrides:
+            service_data["name"] = f"Test {service_type} Service"
+        service_data.update(overrides)
+        return FlextTestsFactories.Service.model_validate(service_data)
 
     @staticmethod
-    def batch_users(count: int = 5) -> list[dict[str, object]]:
+    def batch_users(count: int = 5) -> list[FlextTestsFactories.User]:
         """Create a batch of test users.
 
         Args:
             count: Number of users to create
 
         Returns:
-            List of user dictionaries
+            List of user model instances
 
         """
         return [
@@ -186,8 +217,46 @@ class FlextTestsFactories:
 
             def __init__(self, **data: object) -> None:
                 super().__init__(**data)
-                # Store overrides for use in methods
                 self._overrides = overrides
+
+            def _validate_name_not_empty(self) -> FlextResult[bool]:
+                """Validate name is not empty."""
+                if self.name is not None and not self.name:
+                    return FlextResult[bool].fail("Name is required")
+                return FlextResult[bool].ok(True)
+
+            def _validate_amount_non_negative(self) -> FlextResult[bool]:
+                """Validate amount is non-negative."""
+                if self.amount is not None and self.amount < 0:
+                    return FlextResult[bool].fail("Amount must be non-negative")
+                return FlextResult[bool].ok(True)
+
+            def _validate_disabled_without_amount(self) -> FlextResult[bool]:
+                """Validate disabled service doesn't have amount."""
+                if (
+                    self.enabled is not None
+                    and not self.enabled
+                    and self.amount is not None
+                    and self.amount > 0
+                ):
+                    return FlextResult[bool].fail("Cannot have amount when disabled")
+                return FlextResult[bool].ok(True)
+
+            def _validate_business_rules_complex(self) -> FlextResult[bool]:
+                """Validate business rules for complex service."""
+                name_result = self._validate_name_not_empty()
+                if name_result.is_failure:
+                    return name_result
+
+                amount_result = self._validate_amount_non_negative()
+                if amount_result.is_failure:
+                    return amount_result
+
+                disabled_result = self._validate_disabled_without_amount()
+                if disabled_result.is_failure:
+                    return disabled_result
+
+                return FlextResult[bool].ok(True)
 
             def execute(self, **_kwargs: object) -> FlextResult[object]:
                 """Execute test operation."""
@@ -198,76 +267,26 @@ class FlextTestsFactories:
                         "email": "test@example.com",
                     })
                 if service_type == "complex":
-                    # Simulate complex service with validation
-                    if (
-                        hasattr(self, "name")
-                        and self.name is not None
-                        and not self.name
-                    ):
-                        return FlextResult.fail("Name is required")
-                    if (
-                        hasattr(self, "amount")
-                        and self.amount is not None
-                        and self.amount < 0
-                    ):
-                        return FlextResult.fail("Amount must be non-negative")
-                    is_disabled_with_amount = (
-                        hasattr(self, "enabled")
-                        and self.enabled is not None
-                        and not self.enabled
-                        and hasattr(self, "amount")
-                        and self.amount is not None
-                        and self.amount > 0
-                    )
-                    if is_disabled_with_amount:
-                        return FlextResult.fail("Cannot have amount when disabled")
+                    validation = self._validate_business_rules_complex()
+                    if validation.is_failure:
+                        return FlextResult[object].fail(
+                            validation.error or "Validation failed"
+                        )
                     return FlextResult[object].ok({"result": "success"})
                 return FlextResult[object].ok({"service_type": service_type})
 
             def validate_business_rules(self) -> FlextResult[bool]:
                 """Validate business rules for complex service."""
                 if service_type == "complex":
-                    if (
-                        hasattr(self, "name")
-                        and self.name is not None
-                        and not self.name
-                    ):
-                        return FlextResult[bool].fail("Name is required")
-                    if (
-                        hasattr(self, "amount")
-                        and self.amount is not None
-                        and self.amount < 0
-                    ):
-                        return FlextResult[bool].fail("Value must be non-negative")
-                    is_disabled_with_amount = (
-                        hasattr(self, "enabled")
-                        and self.enabled is not None
-                        and not self.enabled
-                        and hasattr(self, "amount")
-                        and self.amount is not None
-                        and self.amount > 0
-                    )
-                    if is_disabled_with_amount:
-                        return FlextResult[bool].fail(
-                            "Cannot have amount when disabled"
-                        )
-                    return FlextResult[bool].ok(True)
+                    return self._validate_business_rules_complex()
                 return super().validate_business_rules()
 
             def validate_config(self) -> FlextResult[bool]:
                 """Validate config for complex service."""
                 if service_type == "complex":
-                    if (
-                        hasattr(self, "name")
-                        and self.name is not None
-                        and len(self.name) > 50
-                    ):
+                    if self.name is not None and len(self.name) > 50:
                         return FlextResult[bool].fail("Name too long")
-                    if (
-                        hasattr(self, "amount")
-                        and self.amount is not None
-                        and self.amount > 1000
-                    ):
+                    if self.amount is not None and self.amount > 1000:
                         return FlextResult[bool].fail("Value too large")
                     return FlextResult[bool].ok(True)
                 return FlextResult[bool].ok(True)
