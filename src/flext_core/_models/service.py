@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Annotated, cast
+from typing import Annotated
 
 from pydantic import Field, field_validator
 
@@ -143,9 +143,13 @@ class FlextModelsService:
         @field_validator("operation_callable", mode="after")
         @classmethod
         def validate_operation_callable(
-            cls, v: object
+            cls, v: Callable[..., FlextProtocols.ResultLike[object]]
         ) -> Callable[..., FlextProtocols.ResultLike[object]]:
-            """Validate operation is callable (using FlextUtilities.Validation)."""
+            """Validate operation is callable (using FlextUtilities.Validation).
+
+            With mode="after", Pydantic has already validated v as Callable type.
+            This validator performs additional runtime checks.
+            """
             result = FlextUtilities.Validation.validate_callable(
                 v,
                 error_message="Operation must be callable",
@@ -157,8 +161,7 @@ class FlextModelsService:
                     if result.error
                     else "Operation must be callable (validation failed)",
                 )
-            # Type-safe return: v is confirmed callable by validation
-            return cast("Callable[..., FlextProtocols.ResultLike[object]]", v)
+            return v
 
 
 __all__ = ["FlextModelsService"]

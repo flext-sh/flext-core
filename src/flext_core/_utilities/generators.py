@@ -15,7 +15,6 @@ import time
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import cast
 
 from pydantic import BaseModel
 
@@ -338,7 +337,10 @@ class FlextUtilitiesGenerators:
         return context_dict
 
     @staticmethod
-    def ensure_dict(value: object) -> dict[str, object]:
+    def ensure_dict(
+        value: object,
+        default: dict[str, object] | None = None,
+    ) -> dict[str, object]:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
 
         This generic helper consolidates duplicate dict normalization logic
@@ -346,25 +348,29 @@ class FlextUtilitiesGenerators:
         handling. Supports Pydantic models and dict-like objects.
 
         Conversion Strategy:
-            1. Already dict → return as-is
-            2. Pydantic BaseModel → call model_dump()
-            3. Dict-like (has .items()) → convert via dict()
-            4. None → fast fail (raises TypeError)
-            5. Other → fast fail (raises TypeError)
+            1. None + default provided → return default
+            2. Already dict → return as-is
+            3. Pydantic BaseModel → call model_dump()
+            4. Dict-like (has .items()) → convert via dict()
+            5. None (no default) → fast fail (raises TypeError)
+            6. Other → fast fail (raises TypeError)
 
         Args:
             value: Value to normalize (dict, BaseModel, or dict-like)
+            default: Default value to return if value is None (optional)
 
         Returns:
-            dict[str, object]: Normalized dict
+            dict[str, object]: Normalized dict or default
 
         Raises:
-            TypeError: If value is None or cannot be converted to dict
+            TypeError: If value is None (and no default) or cannot be converted
 
         Example:
             >>> from flext_core.utilities import FlextUtilities
             >>> FlextUtilities.Generators.ensure_dict({"a": 1})
             {'a': 1}
+            >>> FlextUtilities.Generators.ensure_dict(None, default={})
+            {}
             >>> # Pydantic model
             >>> from pydantic import BaseModel
             >>> class MyModel(BaseModel):
@@ -402,11 +408,13 @@ class FlextUtilitiesGenerators:
                 )
                 raise TypeError(msg) from e
 
-        # Strategy 4: None - fast fail (no fallback)
+        # Strategy 4: None - use default or fast fail
         if value is None:
+            if default is not None:
+                return default
             msg = (
                 "Value cannot be None. Use explicit empty dict {} "
-                "or handle None in calling code."
+                "or pass default={} parameter."
             )
             raise TypeError(msg)
 
@@ -455,7 +463,12 @@ class FlextUtilitiesGenerators:
         """
         # pyrefly doesn't understand type() for dynamic class creation
         # This is valid Python metaprogramming
-        return type(name, (cast("type", base_class),), attributes)
+        # Validate base_class is a type before using
+        if not isinstance(base_class, type):
+            msg = f"base_class must be a type, got {type(base_class).__name__}"
+            raise TypeError(msg)
+        base_type: type = base_class
+        return type(name, (base_type,), attributes)
 
 
 __all__ = ["FlextUtilitiesGenerators"]

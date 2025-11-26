@@ -75,11 +75,11 @@ class TestCompleteFlextSystemIntegration:
         pipeline_result = (
             success_result.map(lambda x: x.upper())
             .map(lambda x: f"processado_{x}")
-            .map(lambda x: x.replace("_", "-"))
+            .map(lambda x: str(x).replace("_", "-"))
         )
 
         assert pipeline_result.is_success is True
-        assert pipeline_result.value == "processado-DADOS-INICIAIS"
+        assert str(pipeline_result.value) == "processado-DADOS-INICIAIS"
 
         # Cenário de falha
         failure_result = FlextResult[str].fail("erro_de_processamento")
@@ -89,14 +89,16 @@ class TestCompleteFlextSystemIntegration:
         assert failure_result.unwrap_or("") == ""
 
         # Teste de flat_map para operações que podem falhar
-        def operacao_que_pode_falhar(data: str) -> FlextResult[str]:
-            if "invalido" in data:
-                return FlextResult[str].fail("dados_invalidos")
-            return FlextResult[str].ok(f"validado_{data}")
+        def operacao_que_pode_falhar(data: object) -> FlextResult[object]:
+            if isinstance(data, str) and "invalido" in data:
+                return FlextResult[object].fail("dados_invalidos")
+            if isinstance(data, str):
+                return FlextResult[object].ok(f"validado_{data}")
+            return FlextResult[object].fail("tipo_invalido")
 
         flat_map_success = success_result.flat_map(operacao_que_pode_falhar)
         assert flat_map_success.is_success is True
-        assert flat_map_success.value == "validado_dados_iniciais"
+        assert str(flat_map_success.value) == "validado_dados_iniciais"
 
         invalid_data = FlextResult[str].ok("dados_invalido")
         flat_map_failure = invalid_data.flat_map(operacao_que_pode_falhar)
@@ -262,24 +264,30 @@ class TestCompleteFlextSystemIntegration:
     def _test_error_recovery(self) -> None:
         """Test error recovery scenarios."""
         resultado_com_erro = FlextResult[str].fail("erro_original")
-        # Use or_else_get for error recovery instead of flat_map
-        resultado_recuperado = resultado_com_erro.or_else_get(
-            lambda: FlextResult[str].ok("valor_recuperado"),
+        # Use lash for error recovery
+        resultado_recuperado = resultado_com_erro.lash(
+            lambda _error: FlextResult[str].ok("valor_recuperado"),
         )
         assert resultado_recuperado.is_success is True
         assert resultado_recuperado.value == "valor_recuperado"
 
         # Teste de múltiplas operações em cadeia com possibilidade de falha
-        def operacao_1(data: str) -> FlextResult[str]:
-            return FlextResult[str].ok(f"etapa1_{data}")
+        def operacao_1(data: object) -> FlextResult[object]:
+            if isinstance(data, str):
+                return FlextResult[object].ok(f"etapa1_{data}")
+            return FlextResult[object].fail("tipo_invalido")
 
-        def operacao_2(data: str) -> FlextResult[str]:
-            if "erro" in data:
-                return FlextResult[str].fail("erro_na_etapa2")
-            return FlextResult[str].ok(f"etapa2_{data}")
+        def operacao_2(data: object) -> FlextResult[object]:
+            if isinstance(data, str):
+                if "erro" in data:
+                    return FlextResult[object].fail("erro_na_etapa2")
+                return FlextResult[object].ok(f"etapa2_{data}")
+            return FlextResult[object].fail("tipo_invalido")
 
-        def operacao_3(data: str) -> FlextResult[str]:
-            return FlextResult[str].ok(f"final_{data}")
+        def operacao_3(data: object) -> FlextResult[object]:
+            if isinstance(data, str):
+                return FlextResult[object].ok(f"final_{data}")
+            return FlextResult[object].fail("tipo_invalido")
 
         # Pipeline de sucesso
         pipeline_sucesso = (
@@ -291,7 +299,7 @@ class TestCompleteFlextSystemIntegration:
         )
 
         assert pipeline_sucesso.is_success is True
-        assert pipeline_sucesso.value == "final_etapa2_etapa1_dados_iniciais"
+        assert str(pipeline_sucesso.value) == "final_etapa2_etapa1_dados_iniciais"
 
         # Pipeline com falha
         pipeline_falha = (
@@ -315,8 +323,8 @@ class TestCompleteFlextSystemIntegration:
         assert FlextTypes is not None
 
         # Verificar que o sistema está pronto para uso em produção
-        # API changed: use get_global() instead of ensure_global_manager()
-        container_final = FlextContainer.get_global()
+        # Create a new container instance for testing
+        container_final = FlextContainer()
         assert container_final is not None
 
         # Teste final de integração

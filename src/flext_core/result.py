@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import types
 from collections.abc import Callable, Sequence
-from typing import Self, cast
+from typing import Self
 
 from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
@@ -161,7 +161,9 @@ class FlextResult[T_co]:
         self, *funcs: Callable[[object], FlextResult[object]]
     ) -> FlextResult[object]:
         """Chain multiple operations in a pipeline."""
-        current = cast("FlextResult[object]", self)
+        # Due to covariance, FlextResult[T_co] is a subtype of FlextResult[object]
+        # Convert explicitly by creating new instance with same internal result
+        current = FlextResult[object](self._result)
         for func in funcs:
             if current.is_failure:
                 return current
@@ -222,8 +224,14 @@ class FlextResult[T_co]:
     def from_io_result(cls, io_result: IOResult[T_co, str]) -> FlextResult[T_co]:
         """Create from returns.io.IOResult."""
         if isinstance(io_result, IOSuccess):
-            return cls.ok(cast("T_co", io_result.unwrap()))
-        return cls.fail(cast("str", io_result.failure()))
+            io_value = io_result.unwrap()
+            # Access internal value from IO wrapper
+            value: T_co = io_value._inner_value  # noqa: SLF001
+            return cls.ok(value)
+        io_error = io_result.failure()
+        # Access internal value from IO wrapper
+        error_msg: str = io_error._inner_value  # noqa: SLF001
+        return cls.fail(error_msg)
 
     @classmethod
     def safe(cls, func: Callable[..., T_co]) -> Callable[..., FlextResult[T_co]]:

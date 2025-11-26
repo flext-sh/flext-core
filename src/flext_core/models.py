@@ -1,15 +1,21 @@
-"""FlextModels - Domain-Driven Design (DDD) patterns with Pydantic validation.
+"""Domain-Driven Design (DDD) patterns with Pydantic validation for FLEXT ecosystem.
 
-This module provides FlextModels, a comprehensive collection of base classes
-and utilities for implementing domain-driven design (DDD) patterns in the
-FLEXT ecosystem. All models use Pydantic for validation and serialization.
+Provides FlextModels, a comprehensive collection of base classes, utilities, and
+facades for implementing Domain-Driven Design patterns with Pydantic v2 validation
+and CQRS integration. All models use Pydantic BaseModel for validation, serialization,
+and type safety throughout the FLEXT ecosystem.
 
-Architecture: Layer 2 (Domain)
-Provides base classes for DDD patterns: Entity, Value, AggregateRoot, Command,
-Query, DomainEvent with Pydantic v2 validation and CQRS integration.
+Scope: Facade module organizing DDD base classes including Entity, Value, AggregateRoot,
+Command, Query, DomainEvent, Collections, CQRS patterns, Context management, Handler
+models, Service models, Container models, and Validation patterns. Uses DRY mapping
+for method delegation and class assignment to reduce duplication. All implementations
+are delegated to specialized modules in _models subpackage. Follows single-class pattern
+with FlextModels as the main facade class containing nested namespaces (Cqrs, Context,
+Validation) and direct class aliases for immediate access.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

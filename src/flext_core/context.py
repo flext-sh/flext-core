@@ -268,54 +268,18 @@ class FlextContext:
         return self._scope_vars[scope]
 
     def _set_in_contextvar(self, scope: str, data: dict[str, object]) -> None:
-        """Set multiple values in contextvar scope.
-
-        Args:
-            scope: Scope name
-            data: Dictionary of key-value pairs to set
-
-        """
+        """Set multiple values in contextvar scope."""
         ctx_var = self._get_or_create_scope_var(scope)
-        current_value = ctx_var.get()
-        # Fast fail: contextvar must contain dict or None (uninitialized)
-        if current_value is not None and not FlextRuntime.is_dict_like(current_value):
-            msg = (
-                f"Invalid contextvar value type in scope '{scope}': "
-                f"{type(current_value).__name__}. Expected dict[str, object] | None"
-            )
-            raise TypeError(msg)
-        # Initialize with empty dict if None (first use)
-        current: dict[str, object] = (
-            current_value if FlextRuntime.is_dict_like(current_value) else {}
-        )
-        updated = {**current, **data}
-        ctx_var.set(updated)
-
-        # DELEGATION: Propagate global scope to FlextLogger for logging integration
+        current = FlextUtilities.Generators.ensure_dict(ctx_var.get(), default={})
+        ctx_var.set({**current, **data})
         if scope == FlextConstants.Context.SCOPE_GLOBAL:
             FlextLogger.bind_global_context(**data)
 
     def _get_from_contextvar(self, scope: str) -> dict[str, object]:
-        """Get all values from contextvar scope.
-
-        Args:
-            scope: Scope name
-
-        Returns:
-            Dictionary of all key-value pairs in scope
-
-        """
-        ctx_var = self._get_or_create_scope_var(scope)
-        value = ctx_var.get()
-        # Fast fail: contextvar must contain dict or None (uninitialized)
-        if value is not None and not FlextRuntime.is_dict_like(value):
-            msg = (
-                f"Invalid contextvar value type in scope '{scope}': "
-                f"{type(value).__name__}. Expected dict[str, object] | None"
-            )
-            raise TypeError(msg)
-        # Return empty dict if None (uninitialized scope)
-        return value if FlextRuntime.is_dict_like(value) else {}
+        """Get all values from contextvar scope."""
+        return FlextUtilities.Generators.ensure_dict(
+            self._get_or_create_scope_var(scope).get(), default={}
+        )
 
     def _update_statistics(self, operation: str) -> None:
         """Update statistics counter for an operation (DRY helper).
@@ -409,31 +373,15 @@ class FlextContext:
             return FlextResult[bool].fail("Value must be serializable")
 
         try:
-            # Set in contextvar (thread-safe by design, no lock needed)
             ctx_var = self._get_or_create_scope_var(scope)
-            current_value = ctx_var.get()
-            # Fast fail: contextvar must contain dict or None (uninitialized)
-            if current_value is not None and not FlextRuntime.is_dict_like(
-                current_value,
-            ):
-                msg = (
-                    f"Invalid contextvar value type in scope '{scope}': "
-                    f"{type(current_value).__name__}. Expected dict[str, object] | None"
-                )
-                return FlextResult[bool].fail(msg)
-            # Initialize with empty dict if None (first use)
-            current: dict[str, object] = (
-                current_value if FlextRuntime.is_dict_like(current_value) else {}
-            )
-            updated = {**current, key: value}
-            ctx_var.set(updated)
-
-            # DELEGATION: Propagate to logger, update stats, execute hooks
+            current = FlextUtilities.Generators.ensure_dict(ctx_var.get(), default={})
+            ctx_var.set({**current, key: value})
             self._propagate_to_logger(key, value, scope)
             self._update_statistics("set")
             self._execute_hooks("set", {"key": key, "value": value})
-
             return FlextResult[bool].ok(True)
+        except TypeError as e:
+            return FlextResult[bool].fail(str(e))
         except Exception as e:
             return FlextResult[bool].fail(f"Failed to set context value: {e}")
 
@@ -522,46 +470,17 @@ class FlextContext:
         return key in scope_data
 
     def remove(
-        self,
-        key: str,
-        scope: str = FlextConstants.Context.SCOPE_GLOBAL,
+        self, key: str, scope: str = FlextConstants.Context.SCOPE_GLOBAL
     ) -> None:
-        """Remove a key from the context.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
-        FlextLogger for logging integration (global scope only).
-
-        Args:
-            key: The key to remove
-            scope: The scope to remove from (global, user, session)
-
-        """
+        """Remove a key from the context."""
         if not self._active:
             return
-
-        # Remove from contextvar
         ctx_var = self._get_or_create_scope_var(scope)
-        current_value = ctx_var.get()
-        # Fast fail: contextvar must contain dict or None (uninitialized)
-        if current_value is not None and not FlextRuntime.is_dict_like(current_value):
-            msg = (
-                f"Invalid contextvar value type in scope '{scope}': "
-                f"{type(current_value).__name__}. Expected dict[str, object] | None"
-            )
-            raise TypeError(msg)
-        # Initialize with empty dict if None (first use)
-        current: dict[str, object] = (
-            current_value if FlextRuntime.is_dict_like(current_value) else {}
-        )
+        current = FlextUtilities.Generators.ensure_dict(ctx_var.get(), default={})
         if key in current:
-            updated = {k: v for k, v in current.items() if k != key}
-            ctx_var.set(updated)
-
-            # DELEGATION: Propagate removal to FlextLogger for global scope
+            ctx_var.set({k: v for k, v in current.items() if k != key})
             if scope == FlextConstants.Context.SCOPE_GLOBAL:
                 FlextLogger.unbind_global_context(key)
-
-            # Update statistics
             self._update_statistics("remove")
 
     def clear(self) -> None:
@@ -606,19 +525,11 @@ class FlextContext:
 
         # Get keys from all contextvar scopes
         all_keys: set[str] = set()
-        for scope_name, ctx_var in self._scope_vars.items():
-            scope_value = ctx_var.get()
-            # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
-                msg = (
-                    f"Invalid contextvar value type in scope '{scope_name}': "
-                    f"{type(scope_value).__name__}. Expected dict[str, object] | None"
-                )
-                raise TypeError(msg)
-            # Skip None (uninitialized scopes)
-            if FlextRuntime.is_dict_like(scope_value):
-                all_keys.update(scope_value.keys())
-
+        for ctx_var in self._scope_vars.values():
+            scope_dict = FlextUtilities.Generators.ensure_dict(
+                ctx_var.get(), default={}
+            )
+            all_keys.update(scope_dict.keys())
         return list(all_keys)
 
     def values(self) -> list[object]:
@@ -632,22 +543,12 @@ class FlextContext:
         """
         if not self._active:
             return []
-
-        # Get values from all contextvar scopes
         all_values: list[object] = []
-        for scope_name, ctx_var in self._scope_vars.items():
-            scope_value = ctx_var.get()
-            # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
-                msg = (
-                    f"Invalid contextvar value type in scope '{scope_name}': "
-                    f"{type(scope_value).__name__}. Expected dict[str, object] | None"
-                )
-                raise TypeError(msg)
-            # Skip None (uninitialized scopes)
-            if FlextRuntime.is_dict_like(scope_value):
-                all_values.extend(scope_value.values())
-
+        for ctx_var in self._scope_vars.values():
+            scope_dict = FlextUtilities.Generators.ensure_dict(
+                ctx_var.get(), default={}
+            )
+            all_values.extend(scope_dict.values())
         return all_values
 
     def items(self) -> list[tuple[str, object]]:
@@ -661,22 +562,12 @@ class FlextContext:
         """
         if not self._active:
             return []
-
-        # Get items from all contextvar scopes
         all_items: list[tuple[str, object]] = []
-        for scope_name, ctx_var in self._scope_vars.items():
-            scope_value = ctx_var.get()
-            # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
-                msg = (
-                    f"Invalid contextvar value type in scope '{scope_name}': "
-                    f"{type(scope_value).__name__}. Expected dict[str, object] | None"
-                )
-                raise TypeError(msg)
-            # Skip None (uninitialized scopes)
-            if FlextRuntime.is_dict_like(scope_value):
-                all_items.extend(scope_value.items())
-
+        for ctx_var in self._scope_vars.values():
+            scope_dict = FlextUtilities.Generators.ensure_dict(
+                ctx_var.get(), default={}
+            )
+            all_items.extend(scope_dict.items())
         return all_items
 
     def merge(self, other: FlextContext | dict[str, object]) -> Self:
@@ -701,35 +592,15 @@ class FlextContext:
             for scope_name, scope_data in other_scopes.items():
                 # Merge into contextvar
                 ctx_var = self._get_or_create_scope_var(scope_name)
-                current_value = ctx_var.get()
-                # Fast fail: contextvar must contain dict or None (uninitialized)
-                if current_value is not None and not FlextRuntime.is_dict_like(
-                    current_value,
-                ):
-                    msg = (
-                        f"Invalid contextvar value type in scope '{scope_name}': "
-                        f"{type(current_value).__name__}. Expected dict[str, object] | None"
-                    )
-                    raise TypeError(msg)
-                # Fast fail: scope_data must be dict
-                if not FlextRuntime.is_dict_like(scope_data):
-                    msg = (
-                        f"Invalid scope_data type in scope '{scope_name}': "
-                        f"{type(scope_data).__name__}. Expected dict[str, object]"
-                    )
-                    raise TypeError(msg)
-                # Initialize with empty dict if None (first use)
-                current_dict: dict[str, object] = (
-                    dict(current_value)
-                    if FlextRuntime.is_dict_like(current_value)
-                    else {}
+                current_dict = FlextUtilities.Generators.ensure_dict(
+                    ctx_var.get(), default={}
                 )
-                updated = {**current_dict, **scope_data}
-                ctx_var.set(updated)
+                scope_dict = FlextUtilities.Generators.ensure_dict(scope_data)
+                ctx_var.set({**current_dict, **scope_dict})
 
                 # DELEGATION: Propagate global scope to FlextLogger
                 if scope_name == FlextConstants.Context.SCOPE_GLOBAL:
-                    FlextLogger.bind_global_context(**scope_data)
+                    FlextLogger.bind_global_context(**scope_dict)
         else:
             # Merge dictionary into global scope
             self._set_in_contextvar(FlextConstants.Context.SCOPE_GLOBAL, other)
@@ -746,22 +617,12 @@ class FlextContext:
 
         """
         cloned = FlextContext()
-
-        # Clone all contextvar scopes from this instance
         for scope_name, ctx_var in self._scope_vars.items():
-            scope_value = ctx_var.get()
-            # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
-                msg = (
-                    f"Invalid contextvar value type in scope '{scope_name}': "
-                    f"{type(scope_value).__name__}. Expected dict[str, object] | None"
-                )
-                raise TypeError(msg)
-            # Skip None (uninitialized scopes)
-            if FlextRuntime.is_dict_like(scope_value) and scope_value:
-                cloned_ctx_var = cloned._get_or_create_scope_var(scope_name)
-                cloned_ctx_var.set(scope_value.copy())
-
+            scope_dict = FlextUtilities.Generators.ensure_dict(
+                ctx_var.get(), default={}
+            )
+            if scope_dict:
+                cloned._get_or_create_scope_var(scope_name).set(scope_dict.copy())
         # Clone metadata and statistics
         cloned._metadata = (
             self._metadata.model_copy()
@@ -783,10 +644,11 @@ class FlextContext:
         """
         scopes: FlextTypes.ScopeRegistry = {}
         for scope_name, ctx_var in self._scope_vars.items():
-            scope_value = ctx_var.get()
-            scope_data = scope_value if FlextRuntime.is_dict_like(scope_value) else {}
-            if scope_data:  # Only include non-empty scopes
-                scopes[scope_name] = scope_data.copy()
+            scope_dict = FlextUtilities.Generators.ensure_dict(
+                ctx_var.get(), default={}
+            )
+            if scope_dict:
+                scopes[scope_name] = scope_dict.copy()
         return scopes
 
     def validate(self) -> FlextResult[bool]:
@@ -800,22 +662,16 @@ class FlextContext:
         """
         if not self._active:
             return FlextResult[bool].fail("Context is not active")
-
-        # Check for empty keys in all contextvar scopes
-        for scope_name, ctx_var in self._scope_vars.items():
-            scope_value = ctx_var.get()
-            # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
-                msg = (
-                    f"Invalid contextvar value type in scope '{scope_name}': "
-                    f"{type(scope_value).__name__}. Expected dict[str, object] | None"
+        for ctx_var in self._scope_vars.values():
+            try:
+                scope_dict = FlextUtilities.Generators.ensure_dict(
+                    ctx_var.get(), default={}
                 )
-                return FlextResult[bool].fail(msg)
-            # Skip None (uninitialized scopes)
-            if FlextRuntime.is_dict_like(scope_value):
-                for key in scope_value:
-                    if not key:
-                        return FlextResult[bool].fail("Invalid key found in context")
+            except TypeError as e:
+                return FlextResult[bool].fail(str(e))
+            for key in scope_dict:
+                if not key:
+                    return FlextResult[bool].fail("Invalid key found in context")
         return FlextResult[bool].ok(True)
 
     def to_json(self) -> str:
@@ -827,20 +683,12 @@ class FlextContext:
             JSON string representation of the context
 
         """
-        # Combine all contextvar scopes into a single flat dictionary for backward compatibility
         all_data: dict[str, object] = {}
-        for scope_name, ctx_var in self._scope_vars.items():
-            scope_value = ctx_var.get()
-            # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
-                msg = (
-                    f"Invalid contextvar value type in scope '{scope_name}': "
-                    f"{type(scope_value).__name__}. Expected dict[str, object] | None"
-                )
-                raise TypeError(msg)
-            # Skip None (uninitialized scopes)
-            if FlextRuntime.is_dict_like(scope_value):
-                all_data.update(scope_value)
+        for ctx_var in self._scope_vars.values():
+            scope_dict = FlextUtilities.Generators.ensure_dict(
+                ctx_var.get(), default={}
+            )
+            all_data.update(scope_dict)
         return json.dumps(all_data, default=str)
 
     @classmethod
@@ -1010,20 +858,12 @@ class FlextContext:
             Dictionary of all context data across all scopes
 
         """
-        # Combine all contextvar scopes
         all_data: dict[str, object] = {}
-        for scope_name, ctx_var in self._scope_vars.items():
-            scope_value = ctx_var.get()
-            # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
-                msg = (
-                    f"Invalid contextvar value type in scope '{scope_name}': "
-                    f"{type(scope_value).__name__}. Expected dict[str, object] | None"
-                )
-                raise TypeError(msg)
-            # Skip None (uninitialized scopes)
-            if FlextRuntime.is_dict_like(scope_value):
-                all_data.update(scope_value)
+        for ctx_var in self._scope_vars.values():
+            scope_dict = FlextUtilities.Generators.ensure_dict(
+                ctx_var.get(), default={}
+            )
+            all_data.update(scope_dict)
         return all_data
 
     def get_statistics(self) -> FlextModels.ContextStatistics:
@@ -1069,45 +909,14 @@ class FlextContext:
         Pydantic v2 field_validator accepts models directly - no model_dump() needed.
 
         """
-        # Combine all contextvar scopes
         all_data: dict[str, object] = {}
-        for scope_name, ctx_var in self._scope_vars.items():
-            scope_value = ctx_var.get()
-            # Fast fail: contextvar must contain dict or None (uninitialized)
-            if scope_value is not None and not FlextRuntime.is_dict_like(scope_value):
-                msg = (
-                    f"Invalid contextvar value type in scope '{scope_name}': "
-                    f"{type(scope_value).__name__}. Expected dict[str, object] | None"
-                )
-                raise TypeError(msg)
-            # Skip None (uninitialized scopes)
-            if FlextRuntime.is_dict_like(scope_value):
-                all_data.update(scope_value)
-
-        # Fast fail: metadata must be ContextMetadata instance
-        if not isinstance(self._metadata, FlextModels.ContextMetadata):
-            msg = (
-                f"Invalid metadata type: {type(self._metadata).__name__}. "
-                "Expected FlextModels.ContextMetadata"
+        for ctx_var in self._scope_vars.values():
+            scope_dict = FlextUtilities.Generators.ensure_dict(
+                ctx_var.get(), default={}
             )
-            raise TypeError(msg)
-
-        # Fast fail: statistics must be ContextStatistics instance
-        if not isinstance(self._statistics, FlextModels.ContextStatistics):
-            msg = (
-                f"Invalid statistics type: {type(self._statistics).__name__}. "
-                "Expected FlextModels.ContextStatistics"
-            )
-            raise TypeError(msg)
-
-        # Convert metadata to dict using get_all_metadata() for proper API usage
+            all_data.update(scope_dict)
         metadata_dict = self.get_all_metadata()
-
-        # Convert statistics to dict - use model_dump() for Pydantic model
-        if isinstance(self._statistics, FlextModels.ContextStatistics):
-            statistics_dict = self._statistics.model_dump()
-        else:
-            statistics_dict = {}
+        statistics_dict = self._statistics.model_dump()
 
         # Fast fail: metadata and statistics must be dict
         if not FlextRuntime.is_dict_like(metadata_dict):
@@ -1586,19 +1395,8 @@ class FlextContext:
         @staticmethod
         def add_operation_metadata(key: str, value: object) -> None:
             """Add single metadata entry to operation context."""
-            metadata_value = FlextContext.Variables.Performance.OPERATION_METADATA.get()
-            # Fast fail: metadata must be dict or None (uninitialized)
-            if metadata_value is not None and not FlextRuntime.is_dict_like(
-                metadata_value,
-            ):
-                msg = (
-                    f"Invalid OPERATION_METADATA type: {type(metadata_value).__name__}. "
-                    "Expected dict[str, object] | None"
-                )
-                raise TypeError(msg)
-            # Initialize with empty dict if None (first use)
-            current_metadata: dict[str, object] = (
-                metadata_value if FlextRuntime.is_dict_like(metadata_value) else {}
+            current_metadata = FlextUtilities.Generators.ensure_dict(
+                FlextContext.Variables.Performance.OPERATION_METADATA.get(), default={}
             )
             current_metadata[key] = value
             FlextContext.Variables.Performance.OPERATION_METADATA.set(current_metadata)

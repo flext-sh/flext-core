@@ -265,10 +265,16 @@ class TestServiceIntegrationPatterns:
             data: list[int]
             | dict[str, str]
             | dict[str, dict[str, dict[str, list[int]]]],
-        ) -> FlextResult[str]:
+        ) -> FlextResult[object]:
             # Simulate service pipeline with realistic operations
             result = FlextResult[object].ok(data)
-            return result.flat_map(mock_external_service.process).map(
+
+            def process_wrapper(x: object) -> FlextResult[object]:
+                result_inner = mock_external_service.process(x)
+                if result_inner.is_success:
+                    return FlextResult[object].ok(result_inner.value)
+                return FlextResult[object].fail(result_inner.error or "Processing failed")
+            return result.flat_map(process_wrapper).map(
                 lambda _r: f"pipeline_result_{len(str(data))}",
             )
 
@@ -325,11 +331,16 @@ class TestServiceIntegrationPatterns:
         error_message = f"Service error: {error_context['error_code']}"
         mock_external_service.set_failure_mode(should_fail=True, message=error_message)
 
-        def failing_pipeline(data: str) -> FlextResult[str]:
+        def failing_pipeline(data: str) -> FlextResult[object]:
+            def process_wrapper(x: object) -> FlextResult[object]:
+                result_inner = mock_external_service.process(x)
+                if result_inner.is_success:
+                    return FlextResult[object].ok(result_inner.value)
+                return FlextResult[object].fail(result_inner.error or "Processing failed")
             return (
                 FlextResult[str]
                 .ok(data)
-                .flat_map(mock_external_service.process)
+                .flat_map(process_wrapper)
                 .map(lambda _r: f"processed_{_r}")
             )
 
@@ -500,7 +511,7 @@ class TestServiceIntegrationPatterns:
         assert service.shutdown_called is True
 
         # Act - Clear container
-        clean_container.clear()
+        clean_container.clear_all()
 
         # Assert - Container is empty after clear
         empty_result = clean_container.get("lifecycle_service")

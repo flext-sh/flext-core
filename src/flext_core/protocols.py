@@ -1,22 +1,20 @@
-"""FlextProtocols - Protocol definitions for interface contracts and type safety.
+"""Protocol definitions for interface contracts and type safety in FLEXT ecosystem.
 
-This module provides FlextProtocols, a hierarchical collection of protocol
-definitions that establish interface contracts and enable type-safe
-implementations throughout the FLEXT ecosystem.
+Provides FlextProtocols, a hierarchical collection of runtime-checkable protocol
+definitions that establish interface contracts and enable type-safe structural
+typing throughout the FLEXT ecosystem. All protocols use @runtime_checkable for
+runtime validation and follow a layered architecture pattern.
 
-Architecture Layers:
-- Layer 0: Foundation protocols (used within flext-core)
-- Layer 1: Domain protocols (services, repositories)
-- Layer 2: Application protocols (command/query patterns)
-- Layer 3: Infrastructure protocols (external integrations)
-
-Protocol Inheritance: Protocols use inheritance to reduce duplication.
-Example: HasModelFields extends HasModelDump, adding model_fields attribute.
-
-Usage in Projects: Domain libraries extend FlextProtocols with domain-specific protocols.
+Scope: Foundation protocols organized in architectural layers (Layer 0: Foundation,
+Layer 0.5: Circular Import Prevention, Layer 1: Domain, Layer 2: Application,
+Layer 3: Infrastructure, Layer 4: Extensions). Protocols enable type-safe
+implementations across 32+ dependent projects without requiring explicit
+inheritance, using structural typing and protocol composition. All protocols
+are nested within the FlextProtocols class following the single-class pattern.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations

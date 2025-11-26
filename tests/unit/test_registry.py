@@ -1,10 +1,19 @@
 """Refactored comprehensive tests for FlextRegistry - Service Registry.
 
-Tests the actual FlextRegistry API with real functionality testing using
-Python 3.13 patterns, StrEnum, frozen dataclasses, and advanced parametrization.
+Module: flext_core.registry
+Scope: FlextRegistry - handler registration, bindings, function maps, key resolution
 
-Consolidates 56 test methods into 8 parametrized tests with comprehensive
-coverage via ClassVar test data and factory patterns.
+Tests FlextRegistry functionality including:
+- Handler registration (single and batch)
+- Binding registration
+- Function map registration
+- Key resolution
+- Summary management
+- Error handling
+- Dispatcher integration
+
+Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -27,10 +36,6 @@ from flext_core import (
     FlextResult,
 )
 
-# =========================================================================
-# Operation Type Enumeration
-# =========================================================================
-
 
 class RegistryOperationType(StrEnum):
     """Registry operation types for test parametrization."""
@@ -43,11 +48,6 @@ class RegistryOperationType(StrEnum):
     RESOLVE_HANDLER_KEY = "resolve_handler_key"
     SUMMARY_MANAGEMENT = "summary_management"
     ERROR_HANDLING = "error_handling"
-
-
-# =========================================================================
-# Test Case Data Structure
-# =========================================================================
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,11 +65,6 @@ class RegistryTestCase:
     duplicate_registration: bool = False
 
 
-# =========================================================================
-# Handler Implementation
-# =========================================================================
-
-
 class ConcreteTestHandler(FlextHandlers[object, object]):
     """Concrete implementation of FlextHandlers for testing."""
 
@@ -78,171 +73,179 @@ class ConcreteTestHandler(FlextHandlers[object, object]):
         return FlextResult[object].ok(f"processed_{message}")
 
 
-# =========================================================================
-# Test Scenario Factory
-# =========================================================================
-
-
 class RegistryScenarios:
-    """Factory for registry test scenarios with centralized test data."""
+    """Centralized registry test scenarios using FlextConstants."""
 
-    # Handler registration scenarios
     HANDLER_REGISTRATION: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            name="single_handler_success",
-            operation=RegistryOperationType.REGISTER_HANDLER,
-            handler_count=1,
-            should_succeed=True,
+            "single_handler_success", RegistryOperationType.REGISTER_HANDLER, 1, True
         ),
         RegistryTestCase(
-            name="idempotent_registration",
-            operation=RegistryOperationType.REGISTER_HANDLER,
-            handler_count=1,
-            duplicate_registration=True,
-            should_succeed=True,
+            "idempotent_registration",
+            RegistryOperationType.REGISTER_HANDLER,
+            1,
+            True,
+            None,
+            False,
+            False,
+            False,
+            True,
         ),
         RegistryTestCase(
-            name="none_handler_failure",
-            operation=RegistryOperationType.REGISTER_HANDLER,
-            handler_count=0,
-            should_succeed=False,
-            error_pattern="Handler cannot be None",
+            "none_handler_failure",
+            RegistryOperationType.REGISTER_HANDLER,
+            0,
+            False,
+            "Handler cannot be None",
         ),
     ]
 
-    # Batch registration scenarios
     BATCH_REGISTRATION: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            name="multiple_handlers_success",
-            operation=RegistryOperationType.REGISTER_HANDLERS,
-            handler_count=2,
-            should_succeed=True,
+            "multiple_handlers_success",
+            RegistryOperationType.REGISTER_HANDLERS,
+            2,
+            True,
         ),
         RegistryTestCase(
-            name="empty_handlers_list",
-            operation=RegistryOperationType.REGISTER_HANDLERS,
-            handler_count=0,
-            should_succeed=True,
+            "empty_handlers_list", RegistryOperationType.REGISTER_HANDLERS, 0, True
         ),
         RegistryTestCase(
-            name="duplicate_handlers",
-            operation=RegistryOperationType.REGISTER_HANDLERS,
-            handler_count=2,
-            duplicate_registration=True,
-            should_succeed=True,
+            "duplicate_handlers",
+            RegistryOperationType.REGISTER_HANDLERS,
+            2,
+            True,
+            None,
+            False,
+            False,
+            False,
+            True,
         ),
     ]
 
-    # Binding registration scenarios
     BINDING_REGISTRATION: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            name="single_binding_success",
-            operation=RegistryOperationType.REGISTER_BINDINGS,
-            handler_count=1,
-            with_bindings=True,
-            should_succeed=True,
+            "single_binding_success",
+            RegistryOperationType.REGISTER_BINDINGS,
+            1,
+            True,
+            None,
+            True,
         ),
         RegistryTestCase(
-            name="empty_bindings_list",
-            operation=RegistryOperationType.REGISTER_BINDINGS,
-            handler_count=0,
-            with_bindings=True,
-            should_succeed=True,
+            "empty_bindings_list",
+            RegistryOperationType.REGISTER_BINDINGS,
+            0,
+            True,
+            None,
+            True,
         ),
         RegistryTestCase(
-            name="duplicate_bindings",
-            operation=RegistryOperationType.REGISTER_BINDINGS,
-            handler_count=1,
-            with_bindings=True,
-            duplicate_registration=True,
-            should_succeed=True,
+            "duplicate_bindings",
+            RegistryOperationType.REGISTER_BINDINGS,
+            1,
+            True,
+            None,
+            True,
+            False,
+            False,
+            True,
         ),
     ]
 
-    # Function map scenarios
     FUNCTION_MAP_SCENARIOS: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            name="function_map_with_handler",
-            operation=RegistryOperationType.REGISTER_FUNCTION_MAP,
-            handler_count=1,
-            with_function_map=True,
-            should_succeed=True,
+            "function_map_with_handler",
+            RegistryOperationType.REGISTER_FUNCTION_MAP,
+            1,
+            True,
+            None,
+            False,
+            True,
         ),
         RegistryTestCase(
-            name="empty_function_map",
-            operation=RegistryOperationType.REGISTER_FUNCTION_MAP,
-            handler_count=0,
-            with_function_map=True,
-            should_succeed=True,
+            "empty_function_map",
+            RegistryOperationType.REGISTER_FUNCTION_MAP,
+            0,
+            True,
+            None,
+            False,
+            True,
         ),
         RegistryTestCase(
-            name="duplicate_function_map",
-            operation=RegistryOperationType.REGISTER_FUNCTION_MAP,
-            handler_count=1,
-            with_function_map=True,
-            duplicate_registration=True,
-            should_succeed=True,
+            "duplicate_function_map",
+            RegistryOperationType.REGISTER_FUNCTION_MAP,
+            1,
+            True,
+            None,
+            False,
+            True,
+            False,
+            True,
         ),
     ]
 
-    # Summary management scenarios
     SUMMARY_SCENARIOS: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            name="empty_summary",
-            operation=RegistryOperationType.SUMMARY_MANAGEMENT,
-            handler_count=0,
-            with_summary=True,
-            should_succeed=True,
+            "empty_summary",
+            RegistryOperationType.SUMMARY_MANAGEMENT,
+            0,
+            True,
+            None,
+            False,
+            False,
+            True,
         ),
         RegistryTestCase(
-            name="summary_with_registrations",
-            operation=RegistryOperationType.SUMMARY_MANAGEMENT,
-            handler_count=2,
-            with_summary=True,
-            should_succeed=True,
+            "summary_with_registrations",
+            RegistryOperationType.SUMMARY_MANAGEMENT,
+            2,
+            True,
+            None,
+            False,
+            False,
+            True,
         ),
         RegistryTestCase(
-            name="summary_with_errors",
-            operation=RegistryOperationType.SUMMARY_MANAGEMENT,
-            handler_count=1,
-            with_summary=True,
-            should_succeed=False,
+            "summary_with_errors",
+            RegistryOperationType.SUMMARY_MANAGEMENT,
+            1,
+            False,
+            None,
+            False,
+            False,
+            True,
         ),
     ]
 
-    # Key resolution scenarios
     KEY_RESOLUTION: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            name="resolve_handler_key_string_type",
-            operation=RegistryOperationType.RESOLVE_HANDLER_KEY,
-            should_succeed=True,
+            "resolve_handler_key_string_type",
+            RegistryOperationType.RESOLVE_HANDLER_KEY,
+            1,
+            True,
         ),
         RegistryTestCase(
-            name="resolve_handler_key_class_type",
-            operation=RegistryOperationType.RESOLVE_HANDLER_KEY,
-            should_succeed=True,
+            "resolve_handler_key_class_type",
+            RegistryOperationType.RESOLVE_HANDLER_KEY,
+            1,
+            True,
         ),
         RegistryTestCase(
-            name="resolve_binding_key",
-            operation=RegistryOperationType.RESOLVE_BINDING_KEY,
-            should_succeed=True,
+            "resolve_binding_key", RegistryOperationType.RESOLVE_BINDING_KEY, 1, True
         ),
     ]
 
-    # Error handling scenarios
     ERROR_SCENARIOS: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            name="register_none_handler",
-            operation=RegistryOperationType.ERROR_HANDLING,
-            handler_count=0,
-            should_succeed=False,
-            error_pattern="Handler cannot be None",
+            "register_none_handler",
+            RegistryOperationType.ERROR_HANDLING,
+            0,
+            False,
+            "Handler cannot be None",
         ),
         RegistryTestCase(
-            name="dispatcher_integration",
-            operation=RegistryOperationType.ERROR_HANDLING,
-            handler_count=1,
-            should_succeed=True,
+            "dispatcher_integration", RegistryOperationType.ERROR_HANDLING, 1, True
         ),
     ]
 
@@ -265,148 +268,106 @@ class RegistryScenarios:
         """Create test function map using str message type."""
         result: dict[type[object], FlextHandlers[object, object]] = {}
         for idx, handler in enumerate(handlers):
-            # Use different types for each handler to avoid key collision
             result[str if idx == 0 else int] = handler
         return result
 
 
-# =========================================================================
-# Test Suite
-# =========================================================================
+class RegistryTestHelpers:
+    """Generalized helpers for registry testing."""
+
+    @staticmethod
+    def create_test_registry() -> FlextRegistry:
+        """Create test registry with dispatcher."""
+        dispatcher = FlextDispatcher()
+        return FlextRegistry(dispatcher=dispatcher)
+
+    @staticmethod
+    def assert_registration_result(
+        result: FlextResult[object],
+        should_succeed: bool,
+        error_pattern: str | None = None,
+    ) -> None:
+        """Assert registration result matches expectations."""
+        assert result.is_success == should_succeed
+        if error_pattern:
+            assert result.error is not None
+            assert error_pattern in result.error
 
 
 class TestFlextRegistry:
-    """Refactored registry test suite with parametrized tests."""
-
-    # =====================================================================
-    # Handler Registration Tests
-    # =====================================================================
+    """Refactored registry test suite using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "test_case",
-        RegistryScenarios.HANDLER_REGISTRATION,
-        ids=lambda tc: tc.name,
+        "test_case", RegistryScenarios.HANDLER_REGISTRATION, ids=lambda tc: tc.name
     )
     def test_handler_registration(self, test_case: RegistryTestCase) -> None:
         """Test handler registration with various scenarios."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
-
+        registry = RegistryTestHelpers.create_test_registry()
         if test_case.handler_count == 0:
             result = registry.register_handler(None)
         else:
             handler = ConcreteTestHandler()
             result = registry.register_handler(handler)
-
             if test_case.duplicate_registration:
-                # Register again to test idempotence
                 result = registry.register_handler(handler)
-
-        # Assert result
         assert result.is_success == test_case.should_succeed
         if test_case.error_pattern:
-            assert test_case.error_pattern in (result.error or "")
-
-    # =====================================================================
-    # Batch Registration Tests
-    # =====================================================================
+            assert result.error is not None
+            assert test_case.error_pattern in result.error
 
     @pytest.mark.parametrize(
-        "test_case",
-        RegistryScenarios.BATCH_REGISTRATION,
-        ids=lambda tc: tc.name,
+        "test_case", RegistryScenarios.BATCH_REGISTRATION, ids=lambda tc: tc.name
     )
     def test_batch_registration(self, test_case: RegistryTestCase) -> None:
         """Test batch handler registration."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
-
+        registry = RegistryTestHelpers.create_test_registry()
         handlers = RegistryScenarios.create_handlers(test_case.handler_count)
-
         if test_case.duplicate_registration and handlers:
-            # Register first time
-            result1 = registry.register_handlers(handlers)
-            assert result1.is_success
-            # Register again to test idempotence
+            registry.register_handlers(handlers)
             result = registry.register_handlers(handlers)
         else:
             result = registry.register_handlers(handlers)
-
         assert result.is_success == test_case.should_succeed
         assert isinstance(result.value, FlextRegistry.Summary)
 
-    # =====================================================================
-    # Binding Registration Tests
-    # =====================================================================
-
     @pytest.mark.parametrize(
-        "test_case",
-        RegistryScenarios.BINDING_REGISTRATION,
-        ids=lambda tc: tc.name,
+        "test_case", RegistryScenarios.BINDING_REGISTRATION, ids=lambda tc: tc.name
     )
     def test_binding_registration(self, test_case: RegistryTestCase) -> None:
         """Test binding registration."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
-
+        registry = RegistryTestHelpers.create_test_registry()
         handlers = RegistryScenarios.create_handlers(test_case.handler_count)
         bindings = RegistryScenarios.create_bindings(handlers)
-
         if test_case.duplicate_registration and bindings:
-            # Register first time
-            result1 = registry.register_bindings(bindings)
-            assert result1.is_success
-            # Register again to test idempotence
+            registry.register_bindings(bindings)
             result = registry.register_bindings(bindings)
         else:
             result = registry.register_bindings(bindings)
-
         assert result.is_success == test_case.should_succeed
         assert isinstance(result.value, FlextRegistry.Summary)
 
-    # =====================================================================
-    # Function Map Tests
-    # =====================================================================
-
     @pytest.mark.parametrize(
-        "test_case",
-        RegistryScenarios.FUNCTION_MAP_SCENARIOS,
-        ids=lambda tc: tc.name,
+        "test_case", RegistryScenarios.FUNCTION_MAP_SCENARIOS, ids=lambda tc: tc.name
     )
     def test_function_map_registration(self, test_case: RegistryTestCase) -> None:
         """Test function map registration."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
-
+        registry = RegistryTestHelpers.create_test_registry()
         handlers = RegistryScenarios.create_handlers(test_case.handler_count)
         function_map = RegistryScenarios.create_function_map(handlers)
-
         if test_case.duplicate_registration and function_map:
-            # Register first time
-            result1 = registry.register_function_map(function_map)
-            assert result1.is_success
-            # Register again to test idempotence
+            registry.register_function_map(function_map)
             result = registry.register_function_map(function_map)
         else:
             result = registry.register_function_map(function_map)
-
         assert result.is_success == test_case.should_succeed
         assert isinstance(result.value, FlextRegistry.Summary)
 
-    # =====================================================================
-    # Summary Management Tests
-    # =====================================================================
-
     @pytest.mark.parametrize(
-        "test_case",
-        RegistryScenarios.SUMMARY_SCENARIOS,
-        ids=lambda tc: tc.name,
+        "test_case", RegistryScenarios.SUMMARY_SCENARIOS, ids=lambda tc: tc.name
     )
     def test_summary_management(self, test_case: RegistryTestCase) -> None:
         """Test registry summary creation and properties."""
         summary = FlextRegistry.Summary()
-
-        # Add test data based on scenario
         if test_case.handler_count > 0:
             for i in range(test_case.handler_count):
                 summary.registered.append(
@@ -415,128 +376,89 @@ class TestFlextRegistry:
                         handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                         timestamp="2025-01-01T00:00:00Z",
                         status=FlextConstants.Cqrs.Status.RUNNING,
-                    ),
+                    )
                 )
-
         if not test_case.should_succeed:
             summary.errors.append("test_error")
-
-        # Test properties - use len() directly to avoid Pydantic v2 typing issues
         assert len(summary.registered) == test_case.handler_count
         assert (len(summary.errors) > 0) == (not test_case.should_succeed)
         assert (not summary) == (not test_case.should_succeed)
 
-    # =====================================================================
-    # Key Resolution Tests
-    # =====================================================================
-
     @pytest.mark.parametrize(
-        "test_case",
-        RegistryScenarios.KEY_RESOLUTION,
-        ids=lambda tc: tc.name,
+        "test_case", RegistryScenarios.KEY_RESOLUTION, ids=lambda tc: tc.name
     )
     def test_key_resolution(self, test_case: RegistryTestCase) -> None:
         """Test binding and handler key resolution."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
-
+        registry = RegistryTestHelpers.create_test_registry()
         handler = ConcreteTestHandler()
-
         if test_case.operation == RegistryOperationType.RESOLVE_HANDLER_KEY:
             key = registry._resolve_handler_key(handler)
-            assert isinstance(key, str)
-            assert len(key) > 0
-
+            assert isinstance(key, str) and len(key) > 0
         elif test_case.operation == RegistryOperationType.RESOLVE_BINDING_KEY:
             key = registry._resolve_binding_key(handler, str)
-            assert isinstance(key, str)
-            assert len(key) > 0
-
-    # =====================================================================
-    # Error Handling Tests
-    # =====================================================================
+            assert isinstance(key, str) and len(key) > 0
 
     @pytest.mark.parametrize(
-        "test_case",
-        RegistryScenarios.ERROR_SCENARIOS,
-        ids=lambda tc: tc.name,
+        "test_case", RegistryScenarios.ERROR_SCENARIOS, ids=lambda tc: tc.name
     )
     def test_error_handling(self, test_case: RegistryTestCase) -> None:
         """Test error handling scenarios."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
-
-        if test_case.operation == RegistryOperationType.ERROR_HANDLING:
-            if test_case.handler_count == 0:
-                # Test None handler
-                result = registry.register_handler(None)
-                assert result.is_failure
-                assert "Handler cannot be None" in (result.error or "")
-            else:
-                # Test dispatcher integration
-                handler = ConcreteTestHandler()
-                result = registry.register_handler(handler)
-                assert result.is_success
-                assert isinstance(result.value, FlextModels.RegistrationDetails)
-
-    # =====================================================================
-    # Integration Tests
-    # =====================================================================
+        registry = RegistryTestHelpers.create_test_registry()
+        if test_case.handler_count == 0:
+            result = registry.register_handler(None)
+            assert result.is_failure
+            assert "Handler cannot be None" in (result.error or "")
+        else:
+            handler = ConcreteTestHandler()
+            result = registry.register_handler(handler)
+            assert result.is_success
+            assert isinstance(result.value, FlextModels.RegistrationDetails)
 
     def test_registry_initialization(self) -> None:
         """Test registry initialization."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        registry = RegistryTestHelpers.create_test_registry()
         assert registry is not None
         assert isinstance(registry, FlextRegistry)
 
     def test_registry_with_dispatcher(self) -> None:
         """Test registry integration with dispatcher."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        registry = RegistryTestHelpers.create_test_registry()
         handler = ConcreteTestHandler()
-
         result = registry.register_handler(handler)
         assert result.is_success
         assert isinstance(result.value, FlextModels.RegistrationDetails)
 
-    def test_safe_handler_mode_extraction(self) -> None:
+    @pytest.mark.parametrize(
+        ("mode", "expected"),
+        [
+            ("command", FlextConstants.Cqrs.HandlerType.COMMAND),
+            ("query", FlextConstants.Cqrs.HandlerType.QUERY),
+            ("invalid", FlextConstants.Cqrs.HandlerType.COMMAND),
+            (None, FlextConstants.Cqrs.HandlerType.COMMAND),
+        ],
+        ids=["command", "query", "invalid", "none"],
+    )
+    def test_safe_handler_mode_extraction(
+        self, mode: str | None, expected: str
+    ) -> None:
         """Test safe handler mode extraction."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        registry = RegistryTestHelpers.create_test_registry()
+        assert registry._safe_get_handler_mode(mode) == expected
 
-        # Test valid modes
-        assert (
-            registry._safe_get_handler_mode("command")
-            == FlextConstants.Cqrs.HandlerType.COMMAND
-        )
-        assert (
-            registry._safe_get_handler_mode("query")
-            == FlextConstants.Cqrs.HandlerType.QUERY
-        )
-
-        # Test invalid mode (should default to command)
-        assert (
-            registry._safe_get_handler_mode("invalid")
-            == FlextConstants.Cqrs.HandlerType.COMMAND
-        )
-        assert (
-            registry._safe_get_handler_mode(None)
-            == FlextConstants.Cqrs.HandlerType.COMMAND
-        )
-
-    def test_safe_status_extraction(self) -> None:
+    @pytest.mark.parametrize(
+        ("status", "expected"),
+        [
+            ("active", "running"),
+            ("inactive", "completed"),
+            ("invalid", "running"),
+            (None, "running"),
+        ],
+        ids=["active", "inactive", "invalid", "none"],
+    )
+    def test_safe_status_extraction(self, status: str | None, expected: str) -> None:
         """Test safe status extraction."""
-        dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
-
-        # Test status mapping
-        assert registry._safe_get_status("active") == "running"
-        assert registry._safe_get_status("inactive") == "completed"
-
-        # Test invalid status (should default to running)
-        assert registry._safe_get_status("invalid") == "running"
-        assert registry._safe_get_status(None) == "running"
+        registry = RegistryTestHelpers.create_test_registry()
+        assert registry._safe_get_status(status) == expected
 
 
 __all__ = ["ConcreteTestHandler", "TestFlextRegistry"]

@@ -1,6 +1,13 @@
-"""Test matchers and assertions for FLEXT ecosystem.
+"""Test matchers and assertions for FLEXT ecosystem tests.
 
-Provides custom pytest matchers and assertion helpers.
+Provides custom pytest-compatible matchers and assertion helpers for validating
+FlextResult patterns, data structures, and common test scenarios. Includes
+builder pattern for test datasets and validation utilities.
+
+Scope: Custom assertion methods for FlextResult success/failure validation,
+dictionary/list containment checks, email format validation, configuration
+validation, and test data builders using Models. Supports method chaining
+and reusable validation helpers.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,11 +17,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import (
-    TypeVar,
-)
+from typing import Self, TypeVar
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextUtilities
 
 T_co = TypeVar("T_co", covariant=True)
 TKey = TypeVar("TKey")
@@ -53,7 +58,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_failure(
-        result: FlextResult[object],
+        result: FlextResult[T_co],
         expected_error: str | None = None,
     ) -> str:
         """Assert result is failure and return error message.
@@ -86,10 +91,9 @@ class FlextTestsMatchers:
 
         def __init__(self) -> None:
             """Initialize test data builder."""
-            super().__init__()
             self._data: dict[str, object] = {}
 
-        def with_users(self, count: int = 5) -> FlextTestsMatchers.TestDataBuilder:
+        def with_users(self, count: int = 5) -> Self:
             """Add users to dataset."""
             self._data["users"] = [
                 {
@@ -106,7 +110,7 @@ class FlextTestsMatchers:
             self,
             *,
             production: bool = False,
-        ) -> FlextTestsMatchers.TestDataBuilder:
+        ) -> Self:
             """Add configuration to dataset."""
             self._data["configs"] = {
                 "environment": "production" if production else "development",
@@ -120,7 +124,7 @@ class FlextTestsMatchers:
         def with_validation_fields(
             self,
             count: int = 5,
-        ) -> FlextTestsMatchers.TestDataBuilder:
+        ) -> Self:
             """Add validation fields to dataset."""
             self._data["validation_fields"] = {
                 "valid_emails": [f"user{i}@example.com" for i in range(count)],
@@ -285,7 +289,6 @@ class FlextTestsMatchers:
 
         """
         email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-
         assert re.match(email_pattern, email), (
             message or f"Invalid email format: '{email}'"
         )
@@ -370,7 +373,7 @@ class FlextTestsMatchers:
             ValueError: If validation fails
 
         """
-        if not value:
+        if not FlextUtilities.TypeGuards.is_list_non_empty(value):
             msg = f"{field_name} cannot be empty"
             raise ValueError(msg)
         return value

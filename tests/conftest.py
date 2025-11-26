@@ -138,12 +138,13 @@ def clean_container() -> Generator[object]:
 
     """
     # Clear any existing singleton state before test
+    # Reset singleton for clean test state
     FlextContainer._global_instance = None
     container = FlextContainer()
-    container.clear()  # Ensure it starts clean
+    container.clear_all()  # Ensure it starts clean
     yield container
     # Cleanup: Clear the container and reset singleton after test
-    container.clear()
+    container.clear_all()
     FlextContainer._global_instance = None
 
 

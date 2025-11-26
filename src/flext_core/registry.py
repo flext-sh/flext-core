@@ -12,10 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
-from typing import (
-    Annotated,
-    cast,
-)
+from typing import Annotated
 
 from pydantic import Field, computed_field
 
@@ -778,11 +775,18 @@ class FlextRegistry(FlextMixins):
                 tuple_entry_size = 2
                 if isinstance(entry, tuple) and len(entry) == tuple_entry_size:
                     # Type narrowing: verify it's a 2-tuple before passing
-                    tuple_entry = cast(
-                        "tuple[FlextTypes.Bus.HandlerCallableType, object | FlextResult[object]]",
-                        entry,
-                    )
-                    result = self._register_tuple_entry(tuple_entry, key)
+                    # Extract elements and pass to method
+                    handler_elem = entry[0]
+                    config_elem = entry[1]
+                    # Type narrowing: handler_elem should be HandlerCallableType
+                    if isinstance(handler_elem, type) or callable(handler_elem):
+                        tuple_entry: tuple[
+                            FlextTypes.Bus.HandlerCallableType,
+                            object | FlextResult[object],
+                        ] = (handler_elem, config_elem)
+                        result = self._register_tuple_entry(tuple_entry, key)
+                    else:
+                        result = self._register_other_entry(key)
                 elif isinstance(entry, FlextHandlers):
                     result = self._register_handler_entry(entry, key)
                 else:
@@ -814,9 +818,14 @@ class FlextRegistry(FlextMixins):
         handler_func, handler_config = entry
 
         # Create handler from function
+        # handler_config is object | FlextResult[object], convert to dict[str, object] | None
+        config_dict: dict[str, object] | None = None
+        if handler_config is not None and isinstance(handler_config, dict):
+            config_dict = handler_config
+            # If it's FlextResult, skip (not supported for config)
         handler_result = self._dispatcher.create_handler_from_function(
             handler_func,
-            cast("dict[str, object] | None", handler_config),
+            config_dict,
             FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
         )
         if handler_result.is_failure:

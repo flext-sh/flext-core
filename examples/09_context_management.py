@@ -599,7 +599,7 @@ class ContextManagementService(FlextService[dict[str, object]]):
         FlextContext.Variables.Service.SERVICE_NAME.set("context-service")
 
         # Safe context extraction without try/except
-        result = FlextResult[dict[str, object]].from_callable(risky_context_operation)
+        result = FlextResult[dict[str, object]].create_from_callable(risky_context_operation)
         if result.is_success:
             context_data = result.unwrap()
             print(f"✅ Context extracted safely: user={context_data['user_id']}")
@@ -657,19 +657,54 @@ class ContextManagementService(FlextService[dict[str, object]]):
             "user_id": FlextContext.Variables.Request.USER_ID.get(),
             "timestamp": time.time(),
         }
+        # Type cast functions to match flow_through signature
+
+        def validate_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = validate_user_context(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Validation failed")
+            return FlextResult[object].fail("Invalid input")
+
+        def enrich_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = enrich_with_correlation(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Enrichment failed")
+            return FlextResult[object].fail("Invalid input")
+
+        def metadata_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = add_service_metadata(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Metadata addition failed")
+            return FlextResult[object].fail("Invalid input")
+
+        def validate_complete_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = validate_complete_context(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Complete validation failed")
+            return FlextResult[object].fail("Invalid input")
+
         pipeline_result = (
             FlextResult[dict[str, object]]
             .ok(pipeline_context_data)
             .flow_through(
-                validate_user_context,
-                enrich_with_correlation,
-                add_service_metadata,
-                validate_complete_context,
+                validate_wrapper,
+                enrich_wrapper,
+                metadata_wrapper,
+                validate_complete_wrapper,
             )
         )
 
         if pipeline_result.is_success:
-            enriched_context = pipeline_result.unwrap()
+            enriched_context_raw = pipeline_result.unwrap()
+            enriched_context = enriched_context_raw if isinstance(enriched_context_raw, dict) else {}
             print(f"✅ Context pipeline complete: {len(enriched_context)} fields")
             print(f"   User: {enriched_context.get('user_id')}")
             print(f"   Correlation: {enriched_context.get('correlation_id')}")
@@ -736,7 +771,11 @@ class ContextManagementService(FlextService[dict[str, object]]):
             })
 
         # Try cached config, fall back to default
-        config = get_cached_service_config().alt(get_default_service_config())
+        cached_config_result = get_cached_service_config()
+        if cached_config_result.is_failure:
+            config = get_default_service_config()
+        else:
+            config = cached_config_result
 
         if config.is_success:
             config_data = config.unwrap()
@@ -768,7 +807,11 @@ class ContextManagementService(FlextService[dict[str, object]]):
         )
 
         # Only loads if result is failure
-        user_profile = user_context.value_or_call(load_expensive_user_profile)
+        user_profile = (
+            user_context.unwrap()
+            if user_context.is_success
+            else load_expensive_user_profile()
+        )
         print(f"✅ User profile loaded: {user_profile.get('name')}")
         print(f"   Email: {user_profile.get('email')}")
         print(f"   Role: {user_profile.get('role')}")
@@ -778,8 +821,10 @@ class ContextManagementService(FlextService[dict[str, object]]):
             "user_id": "USER-CACHED-789",
             "name": "Jane Cached",
         })
-        cached_profile = cached_user.value_or_call(
-            load_expensive_user_profile,
+        cached_profile = (
+            cached_user.unwrap()
+            if cached_user.is_success
+            else load_expensive_user_profile()
         )  # Won't execute
         print(f"✅ Cached profile used: {cached_profile}")
 

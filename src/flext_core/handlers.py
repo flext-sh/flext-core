@@ -163,6 +163,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             >>> result = handler.handle("test")
 
         """
+
         # Create a concrete handler class dynamically
         class CallableHandler(FlextHandlers[object, object]):
             """Dynamic handler created from callable."""
@@ -197,9 +198,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         resolved_type = FlextConstants.Cqrs.HandlerType.COMMAND
         if mode is not None:
             if isinstance(mode, str):
-                # Validate string mode
-                valid_modes = {t.value for t in FlextConstants.Cqrs.HandlerType}
-                if mode not in valid_modes:
+                # Validate string mode using pre-defined frozenset
+                if mode not in FlextConstants.Cqrs.VALID_HANDLER_MODES:
                     error_msg = f"Invalid handler mode: {mode}"
                     raise FlextExceptions.ValidationError(error_msg)
                 resolved_type = FlextConstants.Cqrs.HandlerType(mode)
@@ -370,9 +370,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         # Check accepted message types if specified
         if self._accepted_message_types:
             message_type = type(message)
-            if not any(
-                isinstance(message, t) for t in self._accepted_message_types
-            ):
+            if not any(isinstance(message, t) for t in self._accepted_message_types):
                 msg = f"Message type {message_type.__name__} not in accepted types"
                 return FlextResult[bool].fail(msg)
 
@@ -471,6 +469,30 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         self._metrics[name] = value
         return FlextResult[bool].ok(True)
 
+    def _extract_message_id(self, message: object) -> str | None:
+        """Extract message ID from message object without type narrowing.
+
+        Helper method to avoid type narrowing issues when checking message
+        type before passing to handle().
+
+        Args:
+            message: Message object to extract ID from
+
+        Returns:
+            Message ID string or None if not available
+
+        """
+        if isinstance(message, dict):
+            return (
+                str(message.get("command_id") or message.get("message_id") or "")
+                or None
+            )
+        if hasattr(message, "command_id"):
+            return str(getattr(message, "command_id", "")) or None
+        if hasattr(message, "message_id"):
+            return str(getattr(message, "message_id", "")) or None
+        return None
+
     def dispatch_message(
         self, message: MessageT_contra, operation: str = "command"
     ) -> FlextResult[ResultT]:
@@ -542,25 +564,15 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         # Start execution timing
         self._execution_context.start_execution()
 
-        # Extract message ID if available
-        message_id: str | None = None
-        if isinstance(message, dict):
-            message_id = str(
-                message.get("command_id") or message.get("message_id") or ""
-            )
-        elif hasattr(message, "command_id"):
-            message_id = str(getattr(message, "command_id", ""))
-        elif hasattr(message, "message_id"):
-            message_id = str(getattr(message, "message_id", ""))
+        # Extract message ID if available using helper to avoid type narrowing
+        message_id: str | None = self._extract_message_id(message)
 
         # Push execution context
-        self.push_context(
-            {
-                "operation": operation,
-                "message_id": message_id,
-                "handler_name": self._config_model.handler_name,
-            }
-        )
+        self.push_context({
+            "operation": operation,
+            "message_id": message_id,
+            "handler_name": self._config_model.handler_name,
+        })
 
         try:
             # Execute handler

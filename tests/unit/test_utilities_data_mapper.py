@@ -349,7 +349,7 @@ class TestFlextUtilitiesDataMapper:
 
     @pytest.mark.parametrize(
         "test_case",
-        create_map_dict_keys_cases.__func__(),
+        create_map_dict_keys_cases(),
         ids=lambda case: f"map_dict_keys_{case.description}",
     )
     def test_map_dict_keys(self, test_case: DataMapperTestCase) -> None:
@@ -368,7 +368,7 @@ class TestFlextUtilitiesDataMapper:
 
     @pytest.mark.parametrize(
         "test_case",
-        create_build_flags_dict_cases.__func__(),
+        create_build_flags_dict_cases(),
         ids=lambda case: f"build_flags_dict_{case.description}",
     )
     def test_build_flags_dict(self, test_case: DataMapperTestCase) -> None:
@@ -387,7 +387,7 @@ class TestFlextUtilitiesDataMapper:
 
     @pytest.mark.parametrize(
         "test_case",
-        create_collect_active_keys_cases.__func__(),
+        create_collect_active_keys_cases(),
         ids=lambda case: f"collect_active_keys_{case.description}",
     )
     def test_collect_active_keys(self, test_case: DataMapperTestCase) -> None:
@@ -406,7 +406,7 @@ class TestFlextUtilitiesDataMapper:
 
     @pytest.mark.parametrize(
         "test_case",
-        create_transform_values_cases.__func__(),
+        create_transform_values_cases(),
         ids=lambda case: f"transform_values_{case.description}",
     )
     def test_transform_values(self, test_case: DataMapperTestCase) -> None:
@@ -416,7 +416,7 @@ class TestFlextUtilitiesDataMapper:
 
     @pytest.mark.parametrize(
         "test_case",
-        create_filter_dict_cases.__func__(),
+        create_filter_dict_cases(),
         ids=lambda case: f"filter_dict_{case.description}",
     )
     def test_filter_dict(self, test_case: DataMapperTestCase) -> None:
@@ -426,7 +426,7 @@ class TestFlextUtilitiesDataMapper:
 
     @pytest.mark.parametrize(
         "test_case",
-        create_invert_dict_cases.__func__(),
+        create_invert_dict_cases(),
         ids=lambda case: f"invert_dict_{case.description}",
     )
     def test_invert_dict(self, test_case: DataMapperTestCase) -> None:

@@ -733,7 +733,11 @@ class FlextUtilitiesStringParser:
                 tuple_list = list(pattern_tuple)
                 pattern = str(tuple_list[0])
                 replacement = str(tuple_list[1])
-                flags_value = tuple_list[2] if len(tuple_list) > self.PATTERN_TUPLE_MIN_LENGTH else 0
+                flags_value = (
+                    tuple_list[2]
+                    if len(tuple_list) > self.PATTERN_TUPLE_MIN_LENGTH
+                    else 0
+                )
                 flags = int(flags_value) if isinstance(flags_value, (int, str)) else 0
             else:
                 return FlextResult[tuple[str, str, int]].fail(

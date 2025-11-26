@@ -258,7 +258,7 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
         # Safe validation without try/except
         validation_result = cast(
             "FlextResult[dict[str, object]]",
-            FlextResult.from_callable(risky_validation_operation),
+            FlextResult[dict[str, object]].create_from_callable(risky_validation_operation),
         )
         if validation_result.is_success:
             validated_data = validation_result.unwrap()
@@ -316,19 +316,54 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
             "hostname": "server.internal.com",
             "username": "testuser",
         }
+        # Type cast functions to match flow_through signature
+
+        def validate_email_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = validate_email_format(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Email validation failed")
+            return FlextResult[object].fail("Invalid input")
+
+        def validate_hostname_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = validate_hostname_format(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Hostname validation failed")
+            return FlextResult[object].fail("Invalid input")
+
+        def enrich_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = enrich_with_metadata(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Enrichment failed")
+            return FlextResult[object].fail("Invalid input")
+
+        def finalize_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = finalize_validation(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Finalization failed")
+            return FlextResult[object].fail("Invalid input")
+
         pipeline_result = (
             FlextResult[dict[str, object]]
             .ok(test_data)
             .flow_through(
-                validate_email_format,
-                validate_hostname_format,
-                enrich_with_metadata,
-                finalize_validation,
+                validate_email_wrapper,
+                validate_hostname_wrapper,
+                enrich_wrapper,
+                finalize_wrapper,
             )
         )
 
         if pipeline_result.is_success:
-            final_data = pipeline_result.unwrap()
+            final_data_raw = pipeline_result.unwrap()
+            final_data = final_data_raw if isinstance(final_data_raw, dict) else {}
             print(
                 f"✅ Validation pipeline complete: ID {final_data.get('validation_id', 'N/A')}",
             )
@@ -379,7 +414,11 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
             return FlextResult[dict[str, object]].ok(config)
 
         # Try custom validator, fall back to default
-        validator_result = get_custom_validator().alt(get_default_validator())
+        custom_validator_result = get_custom_validator()
+        if custom_validator_result.is_failure:
+            validator_result = get_default_validator()
+        else:
+            validator_result = custom_validator_result
         if validator_result.is_success:
             validator_config = validator_result.unwrap()
             print(f"✅ Validator configured: {validator_config['validator_type']}")
@@ -408,7 +447,11 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
 
         # Try to get existing cache, create new one if not available
         cache_fail_result = FlextResult[dict[str, object]].fail("No existing cache")
-        cache = cache_fail_result.value_or_call(create_expensive_cache)
+        cache = (
+            cache_fail_result.unwrap()
+            if cache_fail_result.is_success
+            else create_expensive_cache()
+        )
         print(f"✅ Cache acquired: {cache.get('cache_type', 'unknown')}")
         print(f"   Max size: {cache.get('max_size', 0)}")
         print(f"   TTL: {cache.get('ttl', 0)}s")
@@ -419,7 +462,11 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
             "initialized": True,
         }
         cache_success_result = FlextResult[dict[str, object]].ok(existing_cache)
-        cache_cached = cache_success_result.value_or_call(create_expensive_cache)
+        cache_cached = (
+            cache_success_result.unwrap()
+            if cache_success_result.is_success
+            else create_expensive_cache()
+        )
         print(f"✅ Existing cache used: {cache_cached.get('cache_type', 'unknown')}")
         print("   No expensive creation needed")
 

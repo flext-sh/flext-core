@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from typing import TypeVar, cast
+from typing import TypeVar
 
 from pydantic import BaseModel
 
@@ -57,9 +57,12 @@ class FlextUtilitiesConfiguration:
         model_dump_method = getattr(obj, "model_dump", None)
         if model_dump_method is not None and callable(model_dump_method):
             try:
-                # Cast to protocol with model_dump for type safety
-                pydantic_obj = cast("FlextProtocols.HasModelDump", obj)
-                model_data: dict[str, object] = pydantic_obj.model_dump()
+                # obj has model_dump method, call it directly
+                model_data_raw = model_dump_method()
+                if not isinstance(model_data_raw, dict):
+                    msg = f"model_dump() must return dict, got {type(model_data_raw).__name__}"
+                    raise TypeError(msg)
+                model_data: dict[str, object] = model_data_raw
                 if parameter not in model_data:
                     msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
                     raise FlextExceptions.NotFoundError(msg, resource_id=parameter)

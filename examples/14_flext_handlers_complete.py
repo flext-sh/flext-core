@@ -416,7 +416,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
         # Use from_callable factory method with wrapper
         email_handler = FlextHandlers.create_from_callable(
-            func=validate_email_wrapper,
+            handler_callable=validate_email_wrapper,
             mode="command",
             handler_config=handler_config,
         )
@@ -458,7 +458,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             return FlextResult[str].ok(data.upper() if data else "")
 
         string_handler = FlextHandlers.create_from_callable(
-            func=string_processor_wrapper,
+            handler_callable=string_processor_wrapper,
             mode="command",
             handler_config=lambda_config,
         )
@@ -776,12 +776,36 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
         print(f"  📦 Processing order: {order.order_id}")
 
         # Execute pipeline using railway pattern
+        def validator_wrapper(cmd: object) -> FlextResult[object]:
+            if isinstance(cmd, ProcessOrderCommand):
+                result = validator.handle(cmd)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Validation failed")
+            return FlextResult[object].fail("Invalid command type")
+
+        def enricher_wrapper(cmd: object) -> FlextResult[object]:
+            if isinstance(cmd, ProcessOrderCommand):
+                result = enricher.handle(cmd)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Enrichment failed")
+            return FlextResult[object].fail("Invalid command type")
+
+        def persister_wrapper(cmd: object) -> FlextResult[object]:
+            if isinstance(cmd, ProcessOrderCommand):
+                result = persister.handle(cmd)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Persistence failed")
+            return FlextResult[object].fail("Invalid command type")
+
         pipeline_result = (
             FlextResult[ProcessOrderCommand]
             .ok(order)
-            .flat_map(validator.handle)
-            .flat_map(enricher.handle)
-            .flat_map(persister.handle)
+            .flat_map(validator_wrapper)
+            .flat_map(enricher_wrapper)
+            .flat_map(persister_wrapper)
         )
 
         if pipeline_result.is_success:
@@ -832,7 +856,7 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             return user_data
 
         # Safe execution without try/except
-        handler_result = FlextResult[dict[str, object]].from_callable(
+        handler_result = FlextResult[dict[str, object]].create_from_callable(
             risky_handler_operation,
         )
         if handler_result.is_success:
@@ -892,19 +916,54 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             "email": "test@example.com",
             "command_type": "CreateUser",
         }
+        # Type cast functions to match flow_through signature
+
+        def validate_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = validate_command(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Validation failed")
+            return FlextResult[object].fail("Invalid input")
+
+        def auth_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = check_authorization(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Authorization failed")
+            return FlextResult[object].fail("Invalid input")
+
+        def execute_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = execute_command(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Execution failed")
+            return FlextResult[object].fail("Invalid input")
+
+        def persist_wrapper(x: object) -> FlextResult[object]:
+            if isinstance(x, dict):
+                result = persist_result(x)
+                if result.is_success:
+                    return FlextResult[object].ok(result.value)
+                return FlextResult[object].fail(result.error or "Persistence failed")
+            return FlextResult[object].fail("Invalid input")
+
         pipeline_result = (
             FlextResult[dict[str, object]]
             .ok(command_input)
             .flow_through(
-                validate_command,
-                check_authorization,
-                execute_command,
-                persist_result,
+                validate_wrapper,
+                auth_wrapper,
+                execute_wrapper,
+                persist_wrapper,
             )
         )
 
         if pipeline_result.is_success:
-            final_data = pipeline_result.unwrap()
+            final_data_raw = pipeline_result.unwrap()
+            final_data = final_data_raw if isinstance(final_data_raw, dict) else {}
             print(f"✅ Pipeline complete: {final_data.get('username', 'N/A')}")
             print(f"   Status: {final_data.get('status', 'N/A')}")
             print(f"   DB ID: {final_data.get('db_id', 'N/A')}")
@@ -954,9 +1013,14 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             return FlextResult[dict[str, object]].ok(handler_result)
 
         # Try cached, fall back to fresh execution
-        handler_exec_result = get_cached_handler().alt(execute_fresh_handler())
+        cached_handler_result = get_cached_handler()
+        if cached_handler_result.is_failure:
+            handler_exec_result = execute_fresh_handler()
+        else:
+            handler_exec_result = cached_handler_result
         if handler_exec_result.is_success:
-            result = handler_exec_result.unwrap()
+            result_raw = handler_exec_result.unwrap()
+            result = result_raw if isinstance(result_raw, dict) else {}
             print(f"✅ Handler executed: {result.get('handler_type', 'unknown')}")
             print(f"   Time: {result.get('execution_time', 'N/A')}")
         else:
@@ -977,7 +1041,11 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
 
         # Try to get existing handler, create if not available
         handler_fail_result = FlextResult[dict[str, object]].fail("No existing handler")
-        handler = handler_fail_result.value_or_call(create_expensive_handler)
+        handler = (
+            handler_fail_result.unwrap()
+            if handler_fail_result.is_success
+            else create_expensive_handler()
+        )
         print(f"✅ Handler acquired: {handler.get('handler_id', 'unknown')}")
         print(f"   Type: {handler.get('handler_type', 'unknown')}")
         print(f"   Memory: {handler.get('memory_mb', 0)}MB")
@@ -990,7 +1058,11 @@ class FlextHandlersService(FlextService[dict[str, str | bool]]):
             "memory_mb": 64,
         }
         handler_success_result = FlextResult[dict[str, object]].ok(existing_handler)
-        handler_cached = handler_success_result.value_or_call(create_expensive_handler)
+        handler_cached = (
+            handler_success_result.unwrap()
+            if handler_success_result.is_success
+            else create_expensive_handler()
+        )
         print(
             f"✅ Existing handler used: {handler_cached.get('handler_id', 'unknown')}",
         )

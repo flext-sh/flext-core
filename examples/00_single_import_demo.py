@@ -82,7 +82,21 @@ def demonstrate_single_import_pattern() -> None:
     def to_upper(s: str) -> str:
         return s.upper()
 
-    chain_result = FlextResult[str].ok("hello").flat_map(validate_length).map(to_upper)
+    # Type cast functions to match flat_map and map signatures
+    def validate_wrapper(x: object) -> FlextResult[object]:
+        if isinstance(x, str):
+            result = validate_length(x)
+            if result.is_success:
+                return FlextResult[object].ok(result.value)
+            return FlextResult[object].fail(result.error or "Validation failed")
+        return FlextResult[object].fail("Invalid input")
+
+    def to_upper_wrapper(x: object) -> object:
+        if isinstance(x, str):
+            return to_upper(x)
+        return x
+
+    chain_result = FlextResult[str].ok("hello").flat_map(validate_wrapper).map(to_upper_wrapper)
     print(f"   🚂 Railway chain: {chain_result.unwrap()}")
 
     # ========================================
@@ -96,7 +110,7 @@ def demonstrate_single_import_pattern() -> None:
     print(f"   ✅ create_module_logger: {type(logger).__name__}")
 
     # Container - simplified accessor
-    container = FlextContainer.get_global()
+    container = FlextContainer()
     print(f"   ✅ get_container: {type(container).__name__}")
 
     # Runtime type guards

@@ -10,8 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Hashable
-from typing import cast
+from collections.abc import Hashable
 
 from flext_core.runtime import FlextRuntime
 
@@ -116,9 +115,13 @@ class FlextUtilitiesDomain:
                 model_dump_a = getattr(obj_a, "model_dump", None)
                 model_dump_b = getattr(obj_b, "model_dump", None)
                 if callable(model_dump_a) and callable(model_dump_b):
-                    dump_a = cast("Callable[[], dict[str, object]]", model_dump_a)()
-                    dump_b = cast("Callable[[], dict[str, object]]", model_dump_b)()
-                    return bool(dump_a == dump_b)
+                    # Call the method directly - it returns dict[str, object]
+                    dump_a_raw = model_dump_a()
+                    dump_b_raw = model_dump_b()
+                    if isinstance(dump_a_raw, dict) and isinstance(dump_b_raw, dict):
+                        dump_a: dict[str, object] = dump_a_raw
+                        dump_b: dict[str, object] = dump_b_raw
+                        return bool(dump_a == dump_b)
             except (AttributeError, TypeError):
                 pass
 
@@ -152,9 +155,12 @@ class FlextUtilitiesDomain:
                 # Type check: ensure the method is callable
                 model_dump = getattr(obj, "model_dump", None)
                 if callable(model_dump):
-                    data = cast("Callable[[], dict[str, object]]", model_dump)()
-                    # Convert to hashable tuple of items
-                    return hash(tuple(sorted(data.items())))
+                    # Call the method directly - it returns dict[str, object]
+                    data_raw = model_dump()
+                    if isinstance(data_raw, dict):
+                        data: dict[str, object] = data_raw
+                        # Convert to hashable tuple of items
+                        return hash(tuple(sorted(data.items())))
             except (AttributeError, TypeError):
                 pass
 

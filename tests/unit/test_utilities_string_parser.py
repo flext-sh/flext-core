@@ -22,6 +22,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_core import FlextUtilities
@@ -468,6 +470,7 @@ class TestFlextUtilitiesStringParser:
                     result, case.expected_error, case.description
                 )
             else:
+                assert case.expected is not None, "Expected value must not be None"
                 TestHelpers.Assertions.assert_success(
                     result, case.expected, case.description
                 )
@@ -475,10 +478,11 @@ class TestFlextUtilitiesStringParser:
         def test_exception_handling(self, parser: FlextUtilities.StringParser) -> None:
             """Test parsing exception handling with bad object."""
             # Intentionally pass bad object that fails on str() to test error handling
-            bad: object = TestHelpers.BadObjects.create_for_split()
+            bad_obj = TestHelpers.BadObjects.create_for_split()
             # Runtime: parser receives bad object that fails on split()
-            # Type checker: sees object type, allows it
-            result = parser.parse_delimited(bad, TestConstants.Delimiters.COMMA)
+            # Type checker: cast to str to test runtime error handling
+            bad_str = cast("str", bad_obj)
+            result = parser.parse_delimited(bad_str, TestConstants.Delimiters.COMMA)
             TestHelpers.Assertions.assert_failure(
                 result, TestConstants.Errors.FAILED_PARSE, "exception handling"
             )
@@ -502,6 +506,7 @@ class TestFlextUtilitiesStringParser:
                     result, case.expected_error, case.description
                 )
             else:
+                assert case.expected is not None, "Expected value must not be None"
                 TestHelpers.Assertions.assert_success(
                     result, case.expected, case.description
                 )
@@ -509,11 +514,12 @@ class TestFlextUtilitiesStringParser:
         def test_exception_handling(self, parser: FlextUtilities.StringParser) -> None:
             """Test split exception handling with bad object."""
             # Intentionally pass bad object that fails on __getitem__() to test error handling
-            bad: object = TestHelpers.BadObjects.create_for_index()
+            bad_obj = TestHelpers.BadObjects.create_for_index()
             # Runtime: parser receives bad object that fails on indexing
-            # Type checker: sees object type, allows it
+            # Type checker: cast to str to test runtime error handling
+            bad_str = cast("str", bad_obj)
             result = parser.split_on_char_with_escape(
-                bad, TestConstants.Delimiters.COMMA
+                bad_str, TestConstants.Delimiters.COMMA
             )
             TestHelpers.Assertions.assert_failure(
                 result, TestConstants.Errors.FAILED_SPLIT, "exception handling"
@@ -540,6 +546,7 @@ class TestFlextUtilitiesStringParser:
                     result, case.expected_error, case.description
                 )
             else:
+                assert case.expected is not None, "Expected value must not be None"
                 TestHelpers.Assertions.assert_success(
                     result, case.expected, case.description
                 )
@@ -547,10 +554,11 @@ class TestFlextUtilitiesStringParser:
         def test_exception_handling(self, parser: FlextUtilities.StringParser) -> None:
             """Test normalization exception handling with bad object."""
             # Intentionally pass bad object that fails on str() to test error handling
-            bad: object = TestHelpers.BadObjects.create_for_str()
+            bad_obj = TestHelpers.BadObjects.create_for_str()
             # Runtime: parser receives bad object that fails on str conversion
-            # Type checker: sees object type, allows it
-            result = parser.normalize_whitespace(bad)
+            # Type checker: cast to str to test runtime error handling
+            bad_str = cast("str", bad_obj)
+            result = parser.normalize_whitespace(bad_str)
             TestHelpers.Assertions.assert_failure(
                 result, TestConstants.Errors.FAILED_NORMALIZE, "exception handling"
             )
@@ -572,6 +580,7 @@ class TestFlextUtilitiesStringParser:
                     result, case.expected_error, case.description
                 )
             else:
+                assert case.expected is not None, "Expected value must not be None"
                 TestHelpers.Assertions.assert_success(
                     result, case.expected, case.description
                 )
@@ -579,7 +588,8 @@ class TestFlextUtilitiesStringParser:
         def test_exception_handling(self, parser: FlextUtilities.StringParser) -> None:
             """Test pipeline exception handling."""
             # Intentionally create invalid pattern with None for error testing
-            invalid_pattern: object = (None, "replacement")
+            # Type checker: cast to bypass type checking for runtime error testing
+            invalid_pattern = cast("tuple[str, str]", (None, "replacement"))
             patterns: list[tuple[str, str] | tuple[str, str, int]] = [
                 invalid_pattern
             ]  # Runtime allows this
@@ -601,7 +611,8 @@ class TestFlextUtilitiesStringParser:
         def test_none_text(self, parser: FlextUtilities.StringParser) -> None:
             """Test pipeline with None text."""
             # Intentionally pass None for text to test error handling
-            text: object = None  # Type: object to bypass str requirement
+            # Type checker: cast to str to test runtime error handling
+            text = cast("str", None)
             result = parser.apply_regex_pipeline(
                 text,  # Runtime: None, triggers error handling
                 [(TestConstants.Patterns.WHITESPACE, TestConstants.Replacements.SPACE)],
@@ -612,7 +623,8 @@ class TestFlextUtilitiesStringParser:
         def test_invalid_text_type(self, parser: FlextUtilities.StringParser) -> None:
             """Test pipeline with invalid text type."""
             # Intentionally pass int for text to test error handling
-            text: object = 123  # Type: object to bypass str requirement
+            # Type checker: cast to str to test runtime error handling
+            text = cast("str", 123)
             result = parser.apply_regex_pipeline(
                 text,  # Runtime: 123, triggers error handling
                 [(TestConstants.Patterns.WHITESPACE, TestConstants.Replacements.SPACE)],
