@@ -340,6 +340,7 @@ class AutomationService(FlextService[dict[str, object]]):
                     return FlextResult[object].ok(result.value)
                 return FlextResult[object].fail(result.error or "Finalization failed")
             return FlextResult[object].fail("Invalid input")
+
         pipeline_result = (
             FlextResult[dict[str, object]]
             .ok(automation_input)
@@ -516,6 +517,7 @@ class AutomationService(FlextService[dict[str, object]]):
             if result.is_success:
                 return FlextResult[object].ok(result.value)
             return FlextResult[object].fail(result.error or "Retry failed")
+
         etl_result = (
             extract_data()
             .flow_through(transform_wrapper, load_wrapper)
@@ -565,6 +567,7 @@ class AutomationService(FlextService[dict[str, object]]):
             if result.is_success:
                 return FlextResult[object].ok(result.value)
             return FlextResult[object].fail(result.error or "Backup service failed")
+
         orchestration_result = (
             start_service_a()
             .flow_through(service_b_wrapper, service_c_wrapper)

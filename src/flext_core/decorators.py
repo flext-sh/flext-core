@@ -263,7 +263,7 @@ class FlextDecorators:
                     # If already a FlextResult, return as-is
                     # Create new instance with correct type to avoid cast
                     if isinstance(result, FlextResult):
-                        return FlextResult[T](result._result)  # noqa: SLF001
+                        return FlextResult[T](result._result)
 
                     # Wrap successful result
                     return FlextResult[T].ok(result)

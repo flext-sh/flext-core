@@ -20,7 +20,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import Annotated, ClassVar, TypeAlias
 
 from pydantic import Discriminator
@@ -328,9 +327,7 @@ class FlextModels:
         ]
 
 
-# Resolve forward references with DRY namespace building
-OperationCallable: TypeAlias = Callable[..., object]
-_types_namespace = {"Callable": Callable, "OperationCallable": OperationCallable}
-FlextModels.ConditionalExecutionRequest.model_rebuild(_types_namespace=_types_namespace)
+# Pydantic v2 with 'from __future__ import annotations' automatically resolves forward references
+# No manual model_rebuild() needed - annotations are stringified and resolved at runtime
 
 __all__ = ["FlextModels", "FlextModelsCollections"]

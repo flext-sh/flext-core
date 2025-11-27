@@ -400,7 +400,9 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
             return config
 
         # NEW: Use create_from_callable for safe validation
-        validation_result = FlextResult[FlextConfig].create_from_callable(validate_config)
+        validation_result = FlextResult[FlextConfig].create_from_callable(
+            validate_config
+        )
 
         if validation_result.is_success:
             config = validation_result.unwrap()
@@ -549,7 +551,9 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
                 result = validate_environment(x)
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
-                return FlextResult[object].fail(result.error or "Environment validation failed")
+                return FlextResult[object].fail(
+                    result.error or "Environment validation failed"
+                )
             return FlextResult[object].fail("Invalid config type")
 
         def validate_perf_wrapper(x: object) -> FlextResult[object]:
@@ -557,7 +561,9 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
                 result = validate_performance_settings(x)
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
-                return FlextResult[object].fail(result.error or "Performance validation failed")
+                return FlextResult[object].fail(
+                    result.error or "Performance validation failed"
+                )
             return FlextResult[object].fail("Invalid config type")
 
         def validate_db_wrapper(x: object) -> FlextResult[object]:
@@ -565,7 +571,9 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
                 result = validate_database_config(x)
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
-                return FlextResult[object].fail(result.error or "Database validation failed")
+                return FlextResult[object].fail(
+                    result.error or "Database validation failed"
+                )
             return FlextResult[object].fail("Invalid config type")
 
         def finalize_wrapper(x: object) -> FlextResult[object]:
@@ -585,7 +593,9 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
 
         if result.is_success:
             config_raw = result.unwrap()
-            config = config_raw if isinstance(config_raw, FlextConfig) else FlextConfig()
+            config = (
+                config_raw if isinstance(config_raw, FlextConfig) else FlextConfig()
+            )
             print(
                 f"✅ Config pipeline success: log={config.log_level}, workers={config.max_workers}, timeout={config.timeout_seconds}s",
             )
@@ -647,11 +657,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
             return FlextConfig()
 
         # Success case - expensive_default NOT called
-        config = (
-            success.unwrap()
-            if success.is_success
-            else expensive_default()
-        )
+        config = success.unwrap() if success.is_success else expensive_default()
         print(
             f"✅ Success: log_level={config.log_level}, expensive_created={expensive_created}",
         )
@@ -659,11 +665,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
         # Failure case - expensive_default IS called
         expensive_created = False
         failure = FlextResult[FlextConfig].fail("Config load failed")
-        config = (
-            failure.unwrap()
-            if failure.is_success
-            else expensive_default()
-        )
+        config = failure.unwrap() if failure.is_success else expensive_default()
         print(
             f"✅ Failure recovered: log_level={config.log_level}, expensive_created={expensive_created}",
         )

@@ -528,7 +528,7 @@ class FlextConfig(BaseSettings):
 
         """
         # Import here to avoid circular import (FlextRuntime imports from config)
-        from flext_core.runtime import FlextRuntime  # noqa: PLC0415
+        from flext_core.runtime import FlextRuntime
 
         if FlextConfig._logging_initialized and not force:
             return

@@ -127,6 +127,7 @@ class TestCoverage76Lines:
 
     def test_result_flat_map_chains_results(self) -> None:
         """Test flat_map chains multiple results."""
+
         def increment_wrapper(x: object) -> FlextResult[object]:
             if isinstance(x, int):
                 result = FlextResult[int].ok(x + 1)
@@ -134,6 +135,7 @@ class TestCoverage76Lines:
                     return FlextResult[object].ok(result.value)
                 return FlextResult[object].fail(result.error or "Increment failed")
             return FlextResult[object].fail("Invalid input")
+
         r = FlextResult[int].ok(1).flat_map(increment_wrapper)
         assert r.value == 2
 

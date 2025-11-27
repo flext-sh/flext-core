@@ -95,22 +95,22 @@ class FlextUtilities:
             FlextUtilitiesValidation.validate_domain_event
         )
         normalize_component = staticmethod(
-            FlextUtilitiesValidation._normalize_component  # noqa: SLF001
+            FlextUtilitiesValidation._normalize_component
         )
-        sort_key = staticmethod(FlextUtilitiesValidation._sort_key)  # noqa: SLF001
-        sort_dict_keys = staticmethod(FlextUtilitiesValidation._sort_dict_keys)  # noqa: SLF001
+        sort_key = staticmethod(FlextUtilitiesValidation._sort_key)
+        sort_dict_keys = staticmethod(FlextUtilitiesValidation._sort_dict_keys)
         _normalize_pydantic_value = staticmethod(
-            FlextUtilitiesValidation._normalize_pydantic_value  # noqa: SLF001
+            FlextUtilitiesValidation._normalize_pydantic_value
         )
         _normalize_dataclass_value_instance = staticmethod(
-            FlextUtilitiesValidation._normalize_dataclass_value_instance  # noqa: SLF001
+            FlextUtilitiesValidation._normalize_dataclass_value_instance
         )
-        _normalize_mapping = staticmethod(FlextUtilitiesValidation._normalize_mapping)  # noqa: SLF001
-        _normalize_sequence = staticmethod(FlextUtilitiesValidation._normalize_sequence)  # noqa: SLF001
-        _normalize_set = staticmethod(FlextUtilitiesValidation._normalize_set)  # noqa: SLF001
-        _normalize_vars = staticmethod(FlextUtilitiesValidation._normalize_vars)  # noqa: SLF001
+        _normalize_mapping = staticmethod(FlextUtilitiesValidation._normalize_mapping)
+        _normalize_sequence = staticmethod(FlextUtilitiesValidation._normalize_sequence)
+        _normalize_set = staticmethod(FlextUtilitiesValidation._normalize_set)
+        _normalize_vars = staticmethod(FlextUtilitiesValidation._normalize_vars)
         _generate_key_pydantic = staticmethod(
-            FlextUtilitiesValidation._generate_key_pydantic  # noqa: SLF001
+            FlextUtilitiesValidation._generate_key_pydantic
         )
 
     class Generators:

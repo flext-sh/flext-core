@@ -35,7 +35,7 @@ def mark_test_pattern(
     def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
         # Use setattr for dynamic attribute setting to avoid mypy error
 
-        setattr(func, "_test_pattern", pattern)  # noqa: B010
+        func._test_pattern = pattern
         return func
 
     return decorator

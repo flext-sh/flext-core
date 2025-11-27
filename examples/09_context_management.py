@@ -599,7 +599,9 @@ class ContextManagementService(FlextService[dict[str, object]]):
         FlextContext.Variables.Service.SERVICE_NAME.set("context-service")
 
         # Safe context extraction without try/except
-        result = FlextResult[dict[str, object]].create_from_callable(risky_context_operation)
+        result = FlextResult[dict[str, object]].create_from_callable(
+            risky_context_operation
+        )
         if result.is_success:
             context_data = result.unwrap()
             print(f"✅ Context extracted safely: user={context_data['user_id']}")
@@ -680,7 +682,9 @@ class ContextManagementService(FlextService[dict[str, object]]):
                 result = add_service_metadata(x)
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
-                return FlextResult[object].fail(result.error or "Metadata addition failed")
+                return FlextResult[object].fail(
+                    result.error or "Metadata addition failed"
+                )
             return FlextResult[object].fail("Invalid input")
 
         def validate_complete_wrapper(x: object) -> FlextResult[object]:
@@ -688,7 +692,9 @@ class ContextManagementService(FlextService[dict[str, object]]):
                 result = validate_complete_context(x)
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
-                return FlextResult[object].fail(result.error or "Complete validation failed")
+                return FlextResult[object].fail(
+                    result.error or "Complete validation failed"
+                )
             return FlextResult[object].fail("Invalid input")
 
         pipeline_result = (
@@ -704,7 +710,9 @@ class ContextManagementService(FlextService[dict[str, object]]):
 
         if pipeline_result.is_success:
             enriched_context_raw = pipeline_result.unwrap()
-            enriched_context = enriched_context_raw if isinstance(enriched_context_raw, dict) else {}
+            enriched_context = (
+                enriched_context_raw if isinstance(enriched_context_raw, dict) else {}
+            )
             print(f"✅ Context pipeline complete: {len(enriched_context)} fields")
             print(f"   User: {enriched_context.get('user_id')}")
             print(f"   Correlation: {enriched_context.get('correlation_id')}")

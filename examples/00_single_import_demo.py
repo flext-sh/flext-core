@@ -96,7 +96,9 @@ def demonstrate_single_import_pattern() -> None:
             return to_upper(x)
         return x
 
-    chain_result = FlextResult[str].ok("hello").flat_map(validate_wrapper).map(to_upper_wrapper)
+    chain_result = (
+        FlextResult[str].ok("hello").flat_map(validate_wrapper).map(to_upper_wrapper)
+    )
     print(f"   🚂 Railway chain: {chain_result.unwrap()}")
 
     # ========================================

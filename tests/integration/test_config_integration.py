@@ -527,7 +527,11 @@ class TestFlextConfigSingletonIntegration:
                 config_explicit.effective_log_level
                 == FlextConstants.Settings.LogLevel.INFO
             )  # Debug mode forces INFO
-            debug_enabled_explicit: bool = bool(config_explicit.is_debug_enabled) if hasattr(config_explicit, "is_debug_enabled") else config_explicit.debug
+            debug_enabled_explicit: bool = (
+                bool(config_explicit.is_debug_enabled)
+                if hasattr(config_explicit, "is_debug_enabled")
+                else config_explicit.debug
+            )
             assert debug_enabled_explicit
             assert config_explicit.trace is False  # Trace mode disabled
 
@@ -540,7 +544,11 @@ class TestFlextConfigSingletonIntegration:
                 config_no_debug.effective_log_level
                 == FlextConstants.Settings.LogLevel.WARNING
             )
-            debug_enabled_no_debug: bool = bool(config_no_debug.is_debug_enabled) if hasattr(config_no_debug, "is_debug_enabled") else config_no_debug.debug
+            debug_enabled_no_debug: bool = (
+                bool(config_no_debug.is_debug_enabled)
+                if hasattr(config_no_debug, "is_debug_enabled")
+                else config_no_debug.debug
+            )
             assert not debug_enabled_no_debug
 
             # === VALIDATION: Precedence Order Summary ===
