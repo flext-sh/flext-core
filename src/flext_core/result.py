@@ -134,7 +134,7 @@ class FlextResult[T_co]:
 
         def inner(value: T_co) -> Result[object, str]:
             result = func(value)
-            return result._result  # noqa: SLF001
+            return result._result
 
         return FlextResult(self._result.bind(inner))
 
@@ -153,7 +153,7 @@ class FlextResult[T_co]:
 
         def inner(error: str) -> Result[T_co, str]:
             result = func(error)
-            return result._result  # noqa: SLF001
+            return result._result
 
         return FlextResult(self._result.lash(inner))
 
@@ -226,11 +226,11 @@ class FlextResult[T_co]:
         if isinstance(io_result, IOSuccess):
             io_value = io_result.unwrap()
             # Access internal value from IO wrapper
-            value: T_co = io_value._inner_value  # noqa: SLF001
+            value: T_co = io_value._inner_value
             return cls.ok(value)
         io_error = io_result.failure()
         # Access internal value from IO wrapper
-        error_msg: str = io_error._inner_value  # noqa: SLF001
+        error_msg: str = io_error._inner_value
         return cls.fail(error_msg)
 
     @classmethod

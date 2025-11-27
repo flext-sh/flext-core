@@ -560,7 +560,10 @@ class TestFlextServiceV2Patterns:
             def chain_wrapper(_: object) -> FlextResult[object]:
                 if chained_result.is_success:
                     return FlextResult[object].ok(chained_result.value)
-                return FlextResult[object].fail(chained_result.error or "Chained failed")
+                return FlextResult[object].fail(
+                    chained_result.error or "Chained failed"
+                )
+
             result: FlextResult[object] = service_rail.execute().flat_map(chain_wrapper)
             assert result.is_success
 
@@ -571,10 +574,9 @@ class TestFlextServiceV2Patterns:
                 if step2_result.is_success:
                     return FlextResult[object].ok(step2_result.value)
                 return FlextResult[object].fail(step2_result.error or "Step2 failed")
+
             result_mix: FlextResult[object] = (
-                SimpleV1Service(message="step1")
-                .execute()
-                .flat_map(step2_wrapper)
+                SimpleV1Service(message="step1").execute().flat_map(step2_wrapper)
             )
             assert result_mix.is_success
 

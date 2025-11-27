@@ -841,7 +841,9 @@ class ComprehensiveModelsService(FlextService[Order]):
             order_dict = order.model_dump()
             return Order(**order_dict)
 
-        deserialize_result = FlextResult[Order].create_from_callable(deserialize_from_dict)
+        deserialize_result = FlextResult[Order].create_from_callable(
+            deserialize_from_dict
+        )
         if deserialize_result.is_success:
             new_order = deserialize_result.unwrap()
             print(f"✅ Deserialized order: {new_order.order_number}")
@@ -1094,7 +1096,9 @@ class ComprehensiveModelsService(FlextService[Order]):
                 result = validate_credit(cust)
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
-                return FlextResult[object].fail(result.error or "Credit validation failed")
+                return FlextResult[object].fail(
+                    result.error or "Credit validation failed"
+                )
             return FlextResult[object].fail("Invalid customer type")
 
         def assign_vip_wrapper(cust: object) -> FlextResult[object]:
@@ -1195,11 +1199,7 @@ class ComprehensiveModelsService(FlextService[Order]):
             )
 
         # Success case - expensive_default NOT called
-        order = (
-            success.unwrap()
-            if success.is_success
-            else expensive_default()
-        )
+        order = success.unwrap() if success.is_success else expensive_default()
         print(
             f"✅ Success: {order.order_number}, expensive_created={expensive_created}",
         )
@@ -1207,11 +1207,7 @@ class ComprehensiveModelsService(FlextService[Order]):
         # Failure case - expensive_default IS called
         expensive_created = False
         failure = FlextResult[Order].fail("Order not found")
-        order = (
-            failure.unwrap()
-            if failure.is_success
-            else expensive_default()
-        )
+        order = failure.unwrap() if failure.is_success else expensive_default()
         print(
             f"✅ Failure recovered: {order.order_number}, expensive_created={expensive_created}",
         )

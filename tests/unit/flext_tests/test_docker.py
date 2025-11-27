@@ -21,6 +21,7 @@ from docker import DockerClient
 
 import flext_tests.docker as docker_module
 from flext_core import FlextResult, FlextUtilities
+from flext_tests import utilities as utilities_module
 from flext_tests.docker import FlextTestDocker
 
 # Access nested classes
@@ -922,7 +923,6 @@ class TestDockerComposeWithPythonOnWhales:
         threading-based timeouts instead of subprocess.TimeoutExpired.
         """
         # Import utilities module to check threading implementation
-        from flext_tests import utilities as utilities_module
 
         utilities_source = Path(utilities_module.__file__).read_text(encoding="utf-8")
         docker_source = Path(docker_module.__file__).read_text(encoding="utf-8")

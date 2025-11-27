@@ -107,7 +107,10 @@ class TestService100Coverage:
         # Note: auto_execute is not a default attribute in FlextService base
         # It's only present when explicitly defined as ClassVar in subclasses
         # Default behavior is manual execution (auto_execute=False equivalent)
-        assert not hasattr(service, "auto_execute") or getattr(service, "auto_execute", False) is False
+        assert (
+            not hasattr(service, "auto_execute")
+            or getattr(service, "auto_execute", False) is False
+        )
 
     def test_validate_business_rules_override(self) -> None:
         """Test validate_business_rules can be overridden."""

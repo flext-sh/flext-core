@@ -273,7 +273,10 @@ class TestServiceIntegrationPatterns:
                 result_inner = mock_external_service.process(x)
                 if result_inner.is_success:
                     return FlextResult[object].ok(result_inner.value)
-                return FlextResult[object].fail(result_inner.error or "Processing failed")
+                return FlextResult[object].fail(
+                    result_inner.error or "Processing failed"
+                )
+
             return result.flat_map(process_wrapper).map(
                 lambda _r: f"pipeline_result_{len(str(data))}",
             )
@@ -336,7 +339,10 @@ class TestServiceIntegrationPatterns:
                 result_inner = mock_external_service.process(x)
                 if result_inner.is_success:
                     return FlextResult[object].ok(result_inner.value)
-                return FlextResult[object].fail(result_inner.error or "Processing failed")
+                return FlextResult[object].fail(
+                    result_inner.error or "Processing failed"
+                )
+
             return (
                 FlextResult[str]
                 .ok(data)

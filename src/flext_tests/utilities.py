@@ -975,12 +975,22 @@ class FlextTestsUtilities:
                 return
 
             original_compose_files = getattr(client_config, "compose_files", None)
+            original_project_directory = getattr(
+                client_config, "compose_project_directory", None
+            )
             try:
                 client_config.compose_files = [str(compose_path)]
+                # Set project directory to compose file's parent for correct container matching
+                client_config.compose_project_directory = compose_path.parent
                 operation()
             finally:
                 if original_compose_files is not None:
                     client_config.compose_files = original_compose_files
+                if original_project_directory is not None:
+                    client_config.compose_project_directory = original_project_directory
+                else:
+                    # Reset to None if it wasn't set before
+                    client_config.compose_project_directory = None
 
         @staticmethod
         def execute_docker_client_operation[TResult](

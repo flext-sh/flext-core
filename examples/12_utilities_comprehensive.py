@@ -258,7 +258,9 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
         # Safe validation without try/except
         validation_result = cast(
             "FlextResult[dict[str, object]]",
-            FlextResult[dict[str, object]].create_from_callable(risky_validation_operation),
+            FlextResult[dict[str, object]].create_from_callable(
+                risky_validation_operation
+            ),
         )
         if validation_result.is_success:
             validated_data = validation_result.unwrap()
@@ -323,7 +325,9 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
                 result = validate_email_format(x)
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
-                return FlextResult[object].fail(result.error or "Email validation failed")
+                return FlextResult[object].fail(
+                    result.error or "Email validation failed"
+                )
             return FlextResult[object].fail("Invalid input")
 
         def validate_hostname_wrapper(x: object) -> FlextResult[object]:
@@ -331,7 +335,9 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
                 result = validate_hostname_format(x)
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
-                return FlextResult[object].fail(result.error or "Hostname validation failed")
+                return FlextResult[object].fail(
+                    result.error or "Hostname validation failed"
+                )
             return FlextResult[object].fail("Invalid input")
 
         def enrich_wrapper(x: object) -> FlextResult[object]:

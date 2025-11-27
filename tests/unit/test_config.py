@@ -136,7 +136,11 @@ class TestFlextConfig:
 
     def test_config_from_dict(self) -> None:
         """Test config creation from dictionary."""
-        config_data: dict[str, object] = {"app_name": "dict_app", "version": "2.0.0", "debug": False}
+        config_data: dict[str, object] = {
+            "app_name": "dict_app",
+            "version": "2.0.0",
+            "debug": False,
+        }
         config = ConfigTestHelpers.create_test_config(**config_data)
         ConfigTestHelpers.assert_config_fields(config, config_data)
 
