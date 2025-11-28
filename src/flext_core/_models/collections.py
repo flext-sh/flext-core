@@ -83,8 +83,11 @@ class FlextModelsCollections:
             return sum(len(entries) for entries in self.categories.values())
 
         @property
-        def summary(self) -> dict[str, int]:
-            """Get summary with entry count per category."""
+        def summary(self) -> object:
+            """Get summary with entry count per category.
+
+            Uses SummaryDataMapping pattern.
+            """
             return {name: len(entries) for name, entries in self.categories.items()}
 
         def items(self) -> list[tuple[str, list[T]]]:
@@ -127,16 +130,16 @@ class FlextModelsCollections:
             """Create from existing dict."""
             return cls(categories=data)
 
-        def to_dict(self) -> dict[str, list[T]]:
-            """Convert to dict."""
+        def to_dict(self) -> object:
+            """Convert to dict (CategoryGroupsMapping pattern)."""
             return self.categories.copy()
 
     class Statistics(FlextModelsEntity.Value):
         """Base for statistics models (frozen Value)."""
 
         @classmethod
-        def aggregate(cls, stats_list: list[Self]) -> dict[str, object]:
-            """Aggregate multiple statistics instances.
+        def aggregate(cls, stats_list: list[Self]) -> object:
+            """Aggregate multiple statistics instances (ConfigurationMapping pattern).
 
             Combines statistics by:
             - Summing numeric values (int, float)

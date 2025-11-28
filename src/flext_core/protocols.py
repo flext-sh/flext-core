@@ -19,11 +19,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import Generic, Protocol, runtime_checkable
 
-from flext_core.typings import T, T_co
+from flext_core.typings import FlextTypes, T, T_co
 
 
 class FlextProtocols:
@@ -43,7 +43,7 @@ class FlextProtocols:
     class HasModelDump(Protocol):
         """Protocol for objects that can dump model data."""
 
-        def model_dump(self) -> dict[str, object]:
+        def model_dump(self) -> Mapping[str, FlextTypes.FlexibleValue]:
             """Dump model data."""
             ...
 
@@ -52,7 +52,7 @@ class FlextProtocols:
         """Protocol for objects with model fields."""
 
         @property
-        def model_fields(self) -> dict[str, object]:
+        def model_fields(self) -> Mapping[str, FlextTypes.FlexibleValue]:
             """Model fields."""
             ...
 
@@ -80,7 +80,10 @@ class FlextProtocols:
         """Protocol for command validation."""
 
         def validate_command(
-            self, command: object
+            self,
+            command: FlextTypes.ScalarValue
+            | Sequence[FlextTypes.ScalarValue]
+            | Mapping[str, FlextTypes.ScalarValue],
         ) -> FlextProtocols.ResultProtocol[bool]:
             """Validate command."""
             ...
@@ -120,7 +123,7 @@ class FlextProtocols:
     class Configurable(Protocol):
         """Protocol for component configuration."""
 
-        def configure(self, config: dict[str, object]) -> None:
+        def configure(self, config: Mapping[str, FlextTypes.FlexibleValue]) -> None:
             """Configure component."""
             ...
 
@@ -152,20 +155,18 @@ class FlextProtocols:
             self,
             error: str,
             error_code: str | None = None,
-            metadata: dict[str, object] | None = None,
+            metadata: Mapping[str, FlextTypes.FlexibleValue] | None = None,
         ) -> FlextProtocols.ResultProtocol[T]:
             """Create failure result."""
             ...
 
-        def map(
-            self, func: Callable[[T], object]
-        ) -> FlextProtocols.ResultProtocol[object]:
+        def map[U](self, func: Callable[[T], U]) -> FlextProtocols.ResultProtocol[U]:
             """Map success value."""
             ...
 
-        def flat_map(
-            self, func: Callable[[T], FlextProtocols.ResultProtocol[object]]
-        ) -> FlextProtocols.ResultProtocol[object]:
+        def flat_map[U](
+            self, func: Callable[[T], FlextProtocols.ResultProtocol[U]]
+        ) -> FlextProtocols.ResultProtocol[U]:
             """Flat map success value."""
             ...
 
@@ -205,11 +206,29 @@ class FlextProtocols:
     class ConfigProtocol(Protocol):
         """Configuration interface (prevents circular imports)."""
 
-        def get(self, key: str, default: object = None) -> object:
+        def get(
+            self,
+            key: str,
+            default: FlextTypes.ScalarValue
+            | Sequence[FlextTypes.ScalarValue]
+            | Mapping[str, FlextTypes.ScalarValue]
+            | None = None,
+        ) -> (
+            FlextTypes.ScalarValue
+            | Sequence[FlextTypes.ScalarValue]
+            | Mapping[str, FlextTypes.ScalarValue]
+            | None
+        ):
             """Get configuration value."""
             ...
 
-        def set(self, key: str, value: object) -> None:
+        def set(
+            self,
+            key: str,
+            value: FlextTypes.ScalarValue
+            | Sequence[FlextTypes.ScalarValue]
+            | Mapping[str, FlextTypes.ScalarValue],
+        ) -> None:
             """Set configuration value."""
             ...
 
@@ -226,12 +245,20 @@ class FlextProtocols:
     class Service(Protocol, Generic[T]):
         """Base domain service interface."""
 
-        def execute(self, command: object) -> FlextProtocols.ResultProtocol[T]:
+        def execute(
+            self,
+            command: FlextTypes.ScalarValue
+            | Sequence[FlextTypes.ScalarValue]
+            | Mapping[str, FlextTypes.ScalarValue],
+        ) -> FlextProtocols.ResultProtocol[T]:
             """Execute command."""
             ...
 
         def validate_business_rules(
-            self, command: object
+            self,
+            command: FlextTypes.ScalarValue
+            | Sequence[FlextTypes.ScalarValue]
+            | Mapping[str, FlextTypes.ScalarValue],
         ) -> FlextProtocols.ResultProtocol[bool]:
             """Validate business rules."""
             ...
@@ -240,7 +267,7 @@ class FlextProtocols:
             """Check validity."""
             ...
 
-        def get_service_info(self) -> dict[str, object]:
+        def get_service_info(self) -> Mapping[str, FlextTypes.FlexibleValue]:
             """Get service info."""
             ...
 
@@ -269,17 +296,21 @@ class FlextProtocols:
     class Handler(Protocol):
         """Command/Query handler interface."""
 
-        def handle(self, message: object) -> FlextProtocols.ResultProtocol[object]:
+        def handle[T](
+            self, message: FlextTypes.FlexibleValue
+        ) -> FlextProtocols.ResultProtocol[T]:
             """Handle message."""
             ...
 
         def validate_command(
-            self, command: object
+            self, command: FlextTypes.FlexibleValue
         ) -> FlextProtocols.ResultProtocol[bool]:
             """Validate command."""
             ...
 
-        def validate_query(self, query: object) -> FlextProtocols.ResultProtocol[bool]:
+        def validate_query(
+            self, query: FlextTypes.FlexibleValue
+        ) -> FlextProtocols.ResultProtocol[bool]:
             """Validate query."""
             ...
 
@@ -297,7 +328,9 @@ class FlextProtocols:
             """Register handler."""
             ...
 
-        def execute(self, command: object) -> FlextProtocols.ResultProtocol[object]:
+        def execute[T](
+            self, command: FlextTypes.FlexibleValue
+        ) -> FlextProtocols.ResultProtocol[T]:
             """Execute command."""
             ...
 
@@ -305,11 +338,13 @@ class FlextProtocols:
     class Middleware(Protocol):
         """Processing pipeline."""
 
-        def process(
+        def process[T](
             self,
-            command: object,
-            next_handler: Callable[[object], FlextProtocols.ResultProtocol[object]],
-        ) -> FlextProtocols.ResultProtocol[object]:
+            command: FlextTypes.FlexibleValue,
+            next_handler: Callable[
+                [FlextTypes.FlexibleValue], FlextProtocols.ResultProtocol[T]
+            ],
+        ) -> FlextProtocols.ResultProtocol[T]:
             """Process command."""
             ...
 
@@ -319,29 +354,42 @@ class FlextProtocols:
         """Logging interface."""
 
         def log(
-            self, level: str, message: str, _context: dict[str, object] | None = None
+            self,
+            level: str,
+            message: str,
+            _context: Mapping[str, FlextTypes.FlexibleValue] | None = None,
         ) -> None:
             """Log message."""
             ...
 
         def debug(
-            self, message: str, _context: dict[str, object] | None = None
+            self,
+            message: str,
+            _context: Mapping[str, FlextTypes.FlexibleValue] | None = None,
         ) -> None:
             """Debug log."""
             ...
 
-        def info(self, message: str, _context: dict[str, object] | None = None) -> None:
+        def info(
+            self,
+            message: str,
+            _context: Mapping[str, FlextTypes.FlexibleValue] | None = None,
+        ) -> None:
             """Info log."""
             ...
 
         def warning(
-            self, message: str, _context: dict[str, object] | None = None
+            self,
+            message: str,
+            _context: Mapping[str, FlextTypes.FlexibleValue] | None = None,
         ) -> None:
             """Warning log."""
             ...
 
         def error(
-            self, message: str, _context: dict[str, object] | None = None
+            self,
+            message: str,
+            _context: Mapping[str, FlextTypes.FlexibleValue] | None = None,
         ) -> None:
             """Error log."""
             ...
@@ -368,7 +416,7 @@ class FlextProtocols:
         """Plugin execution context."""
 
         @property
-        def config(self) -> dict[str, object]:
+        def config(self) -> Mapping[str, FlextTypes.FlexibleValue]:
             """Plugin config."""
             ...
 
@@ -382,17 +430,24 @@ class FlextProtocols:
         """Metrics and monitoring."""
 
         def record_metric(
-            self, name: str, value: object, tags: dict[str, str] | None = None
+            self,
+            name: str,
+            value: FlextTypes.FlexibleValue,
+            tags: dict[str, str] | None = None,
         ) -> None:
             """Record metric."""
             ...
 
         def log_event(
-            self, level: str, message: str, _context: dict[str, object] | None = None
+            self,
+            level: str,
+            message: str,
+            _context: Mapping[str, FlextTypes.FlexibleValue] | None = None,
         ) -> None:
             """Log event."""
             ...
 
+    @runtime_checkable
     class ValidationInfo(Protocol):
         """Protocol for Pydantic ValidationInfo to avoid explicit Any types.
 
@@ -406,7 +461,7 @@ class FlextProtocols:
             ...
 
         @property
-        def data(self) -> dict[str, object] | None:
+        def data(self) -> Mapping[str, FlextTypes.FlexibleValue] | None:
             """Validation data dictionary."""
             ...
 

@@ -22,8 +22,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import socket
-from collections.abc import Callable
-from typing import Annotated, ParamSpec, TypeAlias, TypeVar
+from collections.abc import Callable, Mapping, Sequence
+from enum import StrEnum
+from typing import Annotated, ParamSpec, TypedDict, TypeVar
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
@@ -84,7 +85,8 @@ TValueObject_co = TypeVar("TValueObject_co", covariant=True)
 TResult_contra = TypeVar("TResult_contra", contravariant=True)
 
 # Factory TypeVar for dependency injection patterns
-FactoryT = TypeVar("FactoryT", bound=Callable[[], object])
+# Bound to Callable returning GeneralValueType (defined in FlextTypes class below)
+FactoryT = TypeVar("FactoryT", bound=Callable[[], "FlextTypes.GeneralValueType"])
 
 # Config-specific TypeVars
 T_Config = TypeVar("T_Config")  # Bound removed - forward ref causes circular import
@@ -99,6 +101,7 @@ class FlextTypes:
     and nested helper classes.
 
     Architecture: Nested type definitions for:
+    - Scalar and base types ("ScalarValue", GeneralValueType, etc.)
     - Domain validation types (PortNumber, TimeoutSeconds, etc.)
     - JSON types (JsonPrimitive, JsonValue, etc.)
     - Handler types (HandlerCallable, BusHandlerType, etc.)
@@ -107,23 +110,84 @@ class FlextTypes:
     - Configuration models (RetryConfig)
     """
 
-    # Direct type aliases for compatibility (used by pyrefly)
-    ObjectList: TypeAlias = list[object]
-    GenericDetailsType: TypeAlias = object | dict[str, object]
-    SortableObjectType: TypeAlias = object
-    CachedObjectType: TypeAlias = object
-    ParameterValueType: TypeAlias = object
-    MessageTypeSpecifier: TypeAlias = object
-    TypeOriginSpecifier: TypeAlias = object
-    SerializableType: TypeAlias = (
-        object | dict[str, object] | list[object] | str | int | float | bool | None
+    # =====================================================================
+    # SCALAR AND BASE TYPES (Python 3.13+ PEP 695 Type Aliases)
+    # =====================================================================
+    # Base scalar types for value handling across FLEXT ecosystem
+
+    # Module-level type aliases exposed as class-level aliases for convenience
+    # These reference the module-level definitions without forward references
+    # Scalar value type - base types (no containers)
+    type ScalarValue = str | int | float | bool | None
+
+    # Recursive general value type - properly parameterized for strict mode
+    # Supports JSON-serializable values: primitives, sequences, and mappings
+    # Objects with model_dump() are handled via HasModelDump protocol when needed
+    type GeneralValueType = (
+        str
+        | int
+        | float
+        | bool
+        | Sequence[GeneralValueType]
+        | Mapping[str, GeneralValueType]
+        | None
     )
-    AcceptableMessageType: TypeAlias = (
-        object | dict[str, object] | str | int | float | bool
+
+    # Metadata-compatible attribute value type
+    type MetadataAttributeValue = (
+        str
+        | int
+        | float
+        | bool
+        | list[str | int | float | bool | None]
+        | dict[str, str | int | float | bool | None]
+        | None
     )
-    HookRegistry: TypeAlias = dict[str, list[Callable[[object], object]]]
-    ScopeRegistry: TypeAlias = dict[str, object]
-    HookCallableType: TypeAlias = Callable[[object], object]
+
+    # NOTE: "ScalarValue" is defined at module level for use in nested classes
+    type StringValue = str  # String value type
+
+    type NumericValue = int | float  # Numeric value type (int or float)
+
+    type BooleanValue = bool  # Boolean value type
+
+    type NoneValue = None  # None/null value type
+
+    # Flexible value type for protocol methods - contains scalars, sequences, or mappings
+    # Used in protocols for flexible input/output handling
+    type FlexibleValue = ScalarValue | Sequence[ScalarValue] | Mapping[str, ScalarValue]
+
+    # Constant value type - all possible constant types in FlextConstants
+    # Used for type-safe constant access via __getitem__ method
+    # Includes all types that can be stored as constants: primitives, collections,
+    # Pydantic ConfigDict, and StrEnum types
+    type ConstantValue = (
+        str
+        | int
+        | float
+        | bool
+        | ConfigDict
+        | frozenset[str]
+        | tuple[str, ...]
+        | Mapping[str, str | int]
+        | StrEnum
+        | type[StrEnum]
+    )
+
+    # Collection type aliases - fully parameterized for strict mode
+    # NOTE: Using forward references for recursive GeneralValueType
+    type ObjectList = Sequence[GeneralValueType]
+    type GenericDetailsType = GeneralValueType
+    type SortableObjectType = GeneralValueType
+    type CachedObjectType = GeneralValueType
+    type ParameterValueType = GeneralValueType
+    type MessageTypeSpecifier = str | type[ScalarValue]
+    type TypeOriginSpecifier = str | type[ScalarValue]
+    type SerializableType = GeneralValueType
+    type AcceptableMessageType = GeneralValueType
+    type HookRegistry = Mapping[str, GeneralValueType]
+    type ScopeRegistry = Mapping[str, GeneralValueType]
+    type HookCallableType = Callable[[GeneralValueType], GeneralValueType]
 
     class Validation:
         """Domain validation types using Pydantic Field annotations."""
@@ -166,123 +230,153 @@ class FlextTypes:
         # Primitive JSON types
         type JsonPrimitive = str | int | float | bool | None
 
-        # Complex JSON types - direct reference (no string annotation)
-        JsonValue: TypeAlias = JsonPrimitive | dict[str, object] | list[object]
-        type JsonList = list[JsonValue]
-        type JsonDict = dict[str, JsonValue]
-
-    # JSON types for convenience (after Json class definition)
-    JsonValue: TypeAlias = Json.JsonValue
-    JsonDict: TypeAlias = Json.JsonDict
+        # Complex JSON types using recursive GeneralValueType
+        type JsonValue = (
+            JsonPrimitive
+            | Sequence[FlextTypes.GeneralValueType]
+            | Mapping[str, FlextTypes.GeneralValueType]
+        )
+        type JsonList = Sequence[JsonValue]
+        type JsonDict = Mapping[str, FlextTypes.GeneralValueType]
 
     class Handler:
         """Handler and middleware type definitions for CQRS patterns."""
 
-        # Protocol-based handler types using simplified type aliases
-        ValidationRule: TypeAlias = Callable[[object], object]
-        CrossFieldValidator: TypeAlias = Callable[[object], object]
-        ValidatorFunction: TypeAlias = Callable[[object], object]
+        # Protocol-based handler types - GeneralValueType is defined in parent FlextTypes class
+        type ValidationRule = Callable[
+            [GeneralValueType],
+            GeneralValueType,
+        ]
+        type CrossFieldValidator = Callable[
+            [GeneralValueType],
+            GeneralValueType,
+        ]
+        type ValidatorFunction = Callable[
+            [GeneralValueType],
+            GeneralValueType,
+        ]
 
         # Callable handler types with contravariant input, covariant output
-        HandlerCallable: TypeAlias = Callable[[object], object]
-        CallableHandlerType: TypeAlias = Callable[[object], object]
-        BusHandlerType: TypeAlias = Callable[[object], object]
-        MiddlewareType: TypeAlias = Callable[[object], object]
+        type HandlerCallable = Callable[
+            [GeneralValueType],
+            GeneralValueType,
+        ]
+        type CallableHandlerType = Callable[
+            [GeneralValueType],
+            GeneralValueType,
+        ]
+        type BusHandlerType = Callable[
+            [GeneralValueType],
+            GeneralValueType,
+        ]
+        type MiddlewareType = Callable[
+            [GeneralValueType],
+            GeneralValueType,
+        ]
 
         # Middleware configuration types
-        MiddlewareConfig: TypeAlias = dict[str, object]
+        type MiddlewareConfig = FlextTypes.Types.ConfigurationMapping
 
     class Processor:
         """Processor types for data transformation pipelines."""
 
         # Input/output types for processing operations
-        type ProcessorInputType = object | dict[str, object] | str | int | float | bool
-        type ProcessorOutputType = (
-            object | dict[str, object] | str | int | float | bool | None
-        )
+        type ProcessorInputType = GeneralValueType
+        type ProcessorOutputType = "GeneralValueType" | None
 
     class Factory:
         """Factory pattern types for dependency injection."""
 
         # Factory callable and type variable definitions
-        type FactoryCallableType = Callable[[], object]
-        FactoryT = TypeVar("FactoryT", bound=Callable[[], object])
+        type FactoryCallableType = Callable[[], GeneralValueType]
 
     class Predicate:
         """Predicate types for filtering and validation operations."""
 
-        type PredicateType = Callable[[object], bool]
+        type PredicateType = Callable[[GeneralValueType], bool]
 
     class Decorator:
         """Decorator pattern types for function enhancement."""
 
         type DecoratorReturnType = Callable[
-            [Callable[[object], object]], Callable[[object], object]
+            [Callable[[GeneralValueType], GeneralValueType]],
+            Callable[[GeneralValueType], GeneralValueType],
         ]
 
     class Utility:
         """General utility types for common operations."""
 
         # Serialization and type hinting types
-        type SerializableType = (
-            object | dict[str, object] | list[object] | str | int | float | bool | None
-        )
-        type TypeOriginSpecifier = object
-        type TypeHintSpecifier = object
-        type GenericTypeArgument = str | object
-        type ContextualObjectType = object
-        type ContainerServiceType = object
+        type SerializableType = GeneralValueType
+        type TypeOriginSpecifier = str | type[GeneralValueType]
+        type TypeHintSpecifier = str | type[GeneralValueType]
+        type GenericTypeArgument = str | type[GeneralValueType]
+        type ContextualObjectType = GeneralValueType
+        type ContainerServiceType = GeneralValueType
 
         # Collection and caching types
-        type ObjectList = list[object]
-        CachedObjectType: TypeAlias = object
-        type ParameterValueType = object
-        type SortableObjectType = object
-        type GenericDetailsType = object | dict[str, object]
-
-        # Additional utility types for compatibility
+        type ObjectList = Sequence[GeneralValueType]
+        type CachedObjectType = GeneralValueType
+        type ParameterValueType = GeneralValueType
+        type SortableObjectType = GeneralValueType
+        type GenericDetailsType = GeneralValueType
 
         # Registry and configuration types
-        type MetadataDict = dict[str, object]
-        type ServiceRegistry = dict[str, object]
-        type FactoryRegistry = dict[str, Callable[[], object]]
-        type ContainerConfig = dict[str, object]
+        type MetadataDict = FlextTypes.Types.ServiceMetadataMapping
+        type ServiceRegistry = Mapping[str, GeneralValueType]
+        type FactoryRegistry = Mapping[str, Callable[[], GeneralValueType]]
+        type ContainerConfig = FlextTypes.Types.ConfigurationMapping
 
         # Event and payload types
-        type EventPayload = dict[str, object]
-        type CommandPayload = dict[str, object]
-        type QueryPayload = dict[str, object]
+        type EventPayload = FlextTypes.Types.EventDataMapping
+        type CommandPayload = GeneralValueType
+        type QueryPayload = GeneralValueType
 
     class Bus:
         """Message bus and handler type definitions."""
 
         # Message and handler types for bus operations
-        type BusMessageType = object | dict[str, object]
-        type MessageTypeOrHandlerType = type | str | Callable[[object], object]
-        type HandlerOrCallableType = Callable[[object], object] | object
-        type HandlerConfigurationType = dict[str, object] | None
-        type HandlerCallableType = Callable[[object], object]
-        type AcceptableMessageType = object | dict[str, object]
+        type BusMessageType = GeneralValueType
+        type MessageTypeOrHandlerType = (
+            type[GeneralValueType]
+            | str
+            | Callable[[GeneralValueType], GeneralValueType]
+        )
+        type HandlerOrCallableType = (
+            Callable[[GeneralValueType], GeneralValueType] | "GeneralValueType"
+        )
+        type HandlerConfigurationType = "FlextTypes.Types.ConfigurationMapping" | None
+        type HandlerCallableType = Callable[
+            [GeneralValueType],
+            GeneralValueType,
+        ]
+        type AcceptableMessageType = GeneralValueType
 
     class Logging:
         """Logging and context type definitions."""
 
         # Context and processor types for logging operations
-        type LoggingContextType = dict[str, object]
-        type LoggingContextValueType = object | str | int | float | bool | None
-        type LoggerContextType = dict[str, object]
-        type LoggingProcessorType = Callable[[object, str, dict[str, object]], None]
-        type LoggingArgType = object
-        type LoggingKwargsType = dict[str, object]
-        type BoundLoggerType = object
+        type LoggingContextType = FlextTypes.Types.ContextMetadataMapping
+        type LoggingContextValueType = GeneralValueType
+        type LoggerContextType = FlextTypes.Types.ContextMetadataMapping
+        type LoggingProcessorType = Callable[
+            [GeneralValueType, str, GeneralValueType],
+            None,
+        ]
+        type LoggingArgType = GeneralValueType
+        type LoggingKwargsType = dict[str, GeneralValueType]
+        type BoundLoggerType = Callable[[str, GeneralValueType], None]
 
     class Hook:
         """Hook and registry types for extensibility."""
 
         # Hook callable and registry types
-        type HookCallableType = Callable[[object], object]
-        type HookRegistry = dict[str, list[Callable[[object], object]]]
-        type ScopeRegistry = dict[str, object]
+        type HookCallableType = Callable[
+            [GeneralValueType],
+            GeneralValueType,
+        ]
+        type HookRegistry = Mapping[str, GeneralValueType]
+        type ScopeRegistry = Mapping[str, GeneralValueType]
 
     class Config:
         """Configuration models for operational settings."""
@@ -322,79 +416,268 @@ class FlextTypes:
         """CQRS pattern type aliases with simplified forward references."""
 
         # Simplified forward references to avoid circular imports
-        Command: TypeAlias = object  # Simplified for type resolution
-        Event: TypeAlias = object
-        Message: TypeAlias = object
-        Query: TypeAlias = object
+        type Command = GeneralValueType
+        type Event = GeneralValueType
+        type Message = GeneralValueType
+        type Query = GeneralValueType
+
+    class Types:
+        """Type aliases for structured mappings and TypedDict definitions.
+
+        Provides Python 3.13+ PEP 695 type aliases for Mapping types and
+        TypedDict class definitions used throughout the FLEXT ecosystem.
+        All types use proper annotations for strict type checking.
+
+        **Mapping Type Aliases**:
+        - ServiceMetadataMapping: Service metadata structure
+        - FieldMetadataMapping: Field metadata structure
+        - SummaryDataMapping: Summary data structure
+        - CategoryGroupsMapping: Category groups structure
+        - SharedContainersMapping: Shared container configuration
+        - EventDataMapping: Event data structure
+        - ContextMetadataMapping: Context metadata structure
+        - ConfigurationMapping: Configuration structure
+        - ConfigInstanceMapping: Config instance structure
+        - NamespaceRegistryMapping: Namespace registry structure
+
+        **TypedDict Classes**:
+        - ServiceRegistrationMetadata: Service registration metadata
+        - FactoryRegistrationMetadata: Factory registration metadata
+        - ValidationContextDict: Validation context data
+        - EventDataDict: Domain event data
+        - EntityDataDict: Entity data structure
+        - CategoryGroupDict: Category grouping data
+        - ContainerConfigDict: Container configuration
+        - DependencyContainerConfigDict: Dependency injection container config
+        - DockerServiceConfigDict: Docker service configuration
+        """
+
+        # =====================================================================
+        # MAPPING TYPE ALIASES (Python 3.13+ PEP 695)
+        # =====================================================================
+        # Using PEP 695 type keyword for better type checking and IDE support
+        type ServiceMetadataMapping = Mapping[str, GeneralValueType]
+        """Mapping for service metadata (attribute names to values)."""
+
+        type FieldMetadataMapping = Mapping[str, GeneralValueType]
+        """Mapping for field metadata (field names to metadata objects)."""
+
+        type SummaryDataMapping = Mapping[str, int | float | str]
+        """Mapping for summary data (category names to summary values)."""
+
+        type CategoryGroupsMapping = Mapping[str, Sequence[GeneralValueType]]
+        """Mapping for category groups (category names to entry lists)."""
+
+        # ContainerConfigDict must be defined before SharedContainersMapping
+        class ContainerConfigDict(TypedDict, total=True):
+            """Container configuration for Docker services."""
+
+            compose_file: str
+            service: str
+            port: int
+
+        type SharedContainersMapping = Mapping[str, ContainerConfigDict]
+        """Mapping for shared containers (container IDs to container objects)."""
+
+        type EventDataMapping = Mapping[str, GeneralValueType]
+        """Mapping for event data (event properties to values)."""
+
+        type ContextMetadataMapping = Mapping[str, GeneralValueType]
+        """Mapping for context metadata (context properties to values)."""
+
+        type ConfigurationMapping = Mapping[str, GeneralValueType]
+        """Mapping for configuration (configuration keys to values)."""
+
+        type ConfigInstanceMapping = Mapping[str, GeneralValueType]
+        """Mapping for configuration instances (instance IDs to instances)."""
+
+        type NamespaceRegistryMapping = Mapping[str, GeneralValueType]
+        """Mapping for namespace registry (namespace names to registries)."""
+
+        # Additional mapping types for validation and exceptions
+        type FieldValidatorMapping = Mapping[
+            str, Callable[[GeneralValueType], GeneralValueType]
+        ]
+        """Mapping for field validators (field names to validator functions)."""
+
+        type ConsistencyRuleMapping = Mapping[
+            str, Callable[[GeneralValueType], GeneralValueType]
+        ]
+        """Mapping for consistency rules (rule names to validator functions)."""
+
+        type EventValidatorMapping = Mapping[
+            str, Callable[[GeneralValueType], GeneralValueType]
+        ]
+        """Mapping for event validators (event types to validator functions)."""
+
+        type NestedExceptionLevelMapping = dict[str, dict[type, str]]
+        """Nested dict for exception levels (library → exception_type → level)."""
+
+        type ExceptionLevelMapping = dict[str, str]
+        """Mutable dict for exception levels (container names to levels)."""
+
+        type ErrorTypeMapping = dict[
+            str,
+            str
+            | int
+            | float
+            | dict[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | list[str | int | float | bool | None]
+                | dict[str, str | int | float | bool | None]
+                | None,
+            ]
+            | None,
+        ]
+        """Dict for error type data with details, metadata, correlation IDs, timestamps."""
+
+        type ExceptionMetricsMapping = dict[type, int]
+        """Mutable dict for exception metrics (exception types to occurrence counts)."""
+
+        type ExceptionKwargsType = (
+            FlextTypes.ScalarValue
+            | Sequence[FlextTypes.ScalarValue]
+            | Mapping[
+                str,
+                FlextTypes.ScalarValue
+                | Sequence[FlextTypes.ScalarValue]
+                | Mapping[str, FlextTypes.ScalarValue],
+            ]
+        )
+        """Type alias for exception kwargs - flexible value handling with proper parametrization."""
+
+        # =====================================================================
+        # TYPEDDICT CLASSES (Python 3.13+ PEP 695)
+        # =====================================================================
+        class ServiceRegistrationMetadata(TypedDict, total=True):
+            """Metadata for service registration in the container.
+
+            Used for tracking service registration details including
+            handler type, registration status, and metadata.
+            """
+
+            handler_type: str
+            """Type of handler (command, query, event, etc.)."""
+
+            registration_status: str
+            """Status of registration (active, inactive, error)."""
+
+            metadata: dict[str, GeneralValueType]
+            """Additional service metadata (JSON-serializable)."""
+
+        class FactoryRegistrationMetadata(TypedDict, total=True):
+            """Metadata for factory registration in the container.
+
+            Used for tracking factory registration details.
+            """
+
+            factory_type: str
+            """Type of factory."""
+
+            registration_status: str
+            """Status of registration (active, inactive, error)."""
+
+            metadata: dict[str, GeneralValueType]
+            """Additional factory metadata (JSON-serializable)."""
+
+        class ValidationContextDict(TypedDict, total=False):
+            """Context dictionary for validation operations.
+
+            Used for passing validation context data between validators.
+            """
+
+            field_name: str
+            """Name of the field being validated."""
+
+            field_value: GeneralValueType
+            """Value of the field being validated."""
+
+            parent_data: dict[str, GeneralValueType]
+            """Parent data context for cross-field validation."""
+
+        class EventDataDict(TypedDict, total=True):
+            """Data dictionary for event objects.
+
+            Used for structured event data in domain events.
+            """
+
+            event_type: str
+            """Type of event."""
+
+            event_data: dict[str, GeneralValueType]
+            """Event payload data."""
+
+            metadata: dict[str, GeneralValueType]
+            """Event metadata (timestamp, correlation ID, etc.)."""
+
+        class EntityDataDict(TypedDict, total=False):
+            """Data dictionary for entity objects.
+
+            Used for structured entity data representation.
+            """
+
+            entity_id: str
+            """Unique entity identifier."""
+
+            entity_type: str
+            """Type classification of the entity."""
+
+            data: dict[str, GeneralValueType]
+            """Entity data payload."""
+
+        class CategoryGroupDict(TypedDict, total=True):
+            """Data dictionary for category groups.
+
+            Used for categorized data grouping.
+            """
+
+            category_name: str
+            """Name of the category."""
+
+            items: list[GeneralValueType]
+            """List of items in this category."""
+
+        class DependencyContainerConfigDict(TypedDict, total=True):
+            """Configuration dictionary for dependency injection containers.
+
+            Used for dependency injection container configuration.
+            """
+
+            service_name: str
+            """Name of the service."""
+
+            service_type: str
+            """Type of service."""
+
+            config: dict[str, GeneralValueType]
+            """Service configuration data."""
+
+        # DockerServiceConfigDict is the same as ContainerConfigDict
+        type DockerServiceConfigDict = ContainerConfigDict
 
 
 # NOTE: All TypeVars are defined at module level (lines 28-81)
-# No re-export needed - they're already available for direct import
-
-# Type aliases from nested classes (these ARE inside FlextTypes)
-Command: TypeAlias = FlextTypes.Cqrs.Command
-Event: TypeAlias = FlextTypes.Cqrs.Event
-Message: TypeAlias = FlextTypes.Cqrs.Message
-Query: TypeAlias = FlextTypes.Cqrs.Query
-
-# Validation types
-RetryCount: TypeAlias = FlextTypes.Validation.RetryCount
-TimeoutSeconds: TypeAlias = FlextTypes.Validation.TimeoutSeconds
-
-# Utility types
-ObjectList: TypeAlias = FlextTypes.Utility.ObjectList
-GenericDetailsType: TypeAlias = FlextTypes.Utility.GenericDetailsType
-SortableObjectType: TypeAlias = FlextTypes.Utility.SortableObjectType
-CachedObjectType: TypeAlias = FlextTypes.Utility.CachedObjectType
-ParameterValueType: TypeAlias = FlextTypes.Utility.ParameterValueType
-AcceptableMessageType: TypeAlias = FlextTypes.AcceptableMessageType
-
-# Bus types
-MessageTypeSpecifier: TypeAlias = FlextTypes.MessageTypeSpecifier
-TypeOriginSpecifier: TypeAlias = FlextTypes.Utility.TypeOriginSpecifier
-
-# JSON types
-JsonValue: TypeAlias = FlextTypes.Json.JsonValue
-JsonDict: TypeAlias = FlextTypes.Json.JsonDict
-
-# Hook types
-HookRegistry: TypeAlias = FlextTypes.Hook.HookRegistry
-ScopeRegistry: TypeAlias = FlextTypes.Hook.ScopeRegistry
-HookCallableType: TypeAlias = FlextTypes.Hook.HookCallableType
-
-# Config types
-RetryConfig: TypeAlias = FlextTypes.Config.RetryConfig
+# Module-level type alias for GeneralValueType to enable direct imports
+# This is necessary for backward compatibility and convenience
+type GeneralValueType = FlextTypes.GeneralValueType
 
 __all__ = [
-    "AcceptableMessageType",
-    "CachedObjectType",
     "CallableInputT",
     "CallableOutputT",
-    "Command",
     "E",
-    "Event",
     "F",
     "FactoryT",
     "FlextTypes",
-    "GenericDetailsType",
-    "HookCallableType",
-    "HookRegistry",
-    "JsonDict",
-    "JsonValue",
+    "GeneralValueType",
     "K",
-    "Message",
     "MessageT_contra",
-    "MessageTypeSpecifier",
-    "ObjectList",
     "P",
-    "ParameterValueType",
-    "Query",
     "R",
     "ResultT",
-    "RetryConfig",
-    "RetryCount",
-    "ScopeRegistry",
-    "SortableObjectType",
     "T",
     "T1_co",
     "T2_co",
@@ -420,10 +703,10 @@ __all__ = [
     "TUtil_contra",
     "TValueObject_co",
     "TValue_co",
+    "T_Config",
+    "T_Namespace",
     "T_co",
     "T_contra",
-    "TimeoutSeconds",
-    "TypeOriginSpecifier",
     "U",
     "V",
     "W",

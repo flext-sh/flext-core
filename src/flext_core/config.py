@@ -16,9 +16,9 @@ from __future__ import annotations
 import logging
 import os
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, ClassVar, Self, TypeVar
+from typing import ClassVar, Self, TypeVar, cast
 
 from dependency_injector import providers
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
@@ -26,7 +26,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
-from flext_core.typings import T_Namespace
+from flext_core.runtime import FlextRuntime
+from flext_core.typings import FlextTypes, T_Namespace
 
 _logger = logging.getLogger(__name__)
 
@@ -74,7 +75,7 @@ class FlextConfig(BaseSettings):
     """
 
     # Singleton pattern
-    _instances: ClassVar[dict[type, object]] = {}
+    _instances: ClassVar[dict[type[BaseSettings], BaseSettings]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
 
     # Configuration fields
@@ -124,8 +125,12 @@ class FlextConfig(BaseSettings):
     trace: bool = Field(default=False, description="Enable trace mode")
 
     # Logging configuration
-    log_level: str = Field(
-        default=FlextConstants.Logging.DEFAULT_LEVEL, description="Log level"
+    log_level: FlextConstants.Literals.LogLevelLiteral = Field(
+        default=cast(
+            "FlextConstants.Literals.LogLevelLiteral",
+            FlextConstants.Logging.DEFAULT_LEVEL,
+        ),
+        description="Log level",
     )
     json_output: bool = Field(
         default=FlextConstants.Logging.JSON_OUTPUT_DEFAULT,
@@ -243,13 +248,19 @@ class FlextConfig(BaseSettings):
     )
 
     # Exception configuration
-    exception_failure_level: str = Field(
+    # Note: Using FailureLevel StrEnum directly for type safety
+    exception_failure_level: FlextConstants.Exceptions.FailureLevel = Field(
         default=FlextConstants.Exceptions.FAILURE_LEVEL_DEFAULT,
         description="Exception failure level",
     )
 
-    def __new__(cls, **_kwargs: object) -> Self:
-        """Create singleton instance."""
+    def __new__(cls) -> Self:
+        """Create singleton instance.
+
+        Note: BaseSettings.__init__ accepts **values: Any internally.
+        We override __new__ to implement singleton pattern without needing
+        to pass kwargs through, avoiding type checker issues.
+        """
         base_class = cls
         if base_class not in cls._instances:
             with cls._lock:
@@ -273,16 +284,31 @@ class FlextConfig(BaseSettings):
             if cls in cls._instances:
                 del cls._instances[cls]
 
-    def __init__(self, **data: Any) -> None:
-        """Initialize config with data."""
-        super().__init__(**data)
+    def __init__(self) -> None:
+        """Initialize config with data.
+
+        Note: BaseSettings handles initialization from environment variables,
+        .env files, and other sources automatically. We don't need to pass
+        kwargs here as BaseSettings.__init__() handles all configuration sources.
+        """
+        # BaseSettings.__init__() without arguments reads from environment,
+        # .env files, and other configured sources automatically
+        super().__init__()
         self._di_provider: providers.Singleton[Self] | None = None
 
-    @field_validator("log_level")
+    @field_validator("log_level", mode="before")
     @classmethod
-    def validate_log_level(cls, v: str) -> str:
-        """Validate log level against allowed values."""
+    def validate_log_level(
+        cls, v: str | FlextConstants.Settings.LogLevel
+    ) -> FlextConstants.Literals.LogLevelLiteral:
+        """Validate and normalize log level against allowed values.
+
+        Accepts string or LogLevel StrEnum, normalizes to uppercase string.
+        """
+        if isinstance(v, FlextConstants.Settings.LogLevel):
+            return cast("FlextConstants.Literals.LogLevelLiteral", v.value)
         normalized = v.upper()
+        # Validate against StrEnum values
         allowed_levels = {
             FlextConstants.Settings.LogLevel.DEBUG.value,
             FlextConstants.Settings.LogLevel.INFO.value,
@@ -293,7 +319,7 @@ class FlextConfig(BaseSettings):
         if normalized not in allowed_levels:
             msg = f"Invalid log level: {v}. Must be one of {allowed_levels}"
             raise ValueError(msg)
-        return normalized
+        return cast("FlextConstants.Literals.LogLevelLiteral", normalized)
 
     @model_validator(mode="after")
     def validate_configuration(self) -> Self:
@@ -315,18 +341,25 @@ class FlextConfig(BaseSettings):
         return self
 
     @property
-    def effective_log_level(self) -> str:
+    def effective_log_level(self) -> FlextConstants.Literals.LogLevelLiteral:
         """Get effective log level based on debug/trace flags."""
         if self.trace:
-            return "DEBUG"
+            return cast(
+                "FlextConstants.Literals.LogLevelLiteral",
+                FlextConstants.Settings.LogLevel.DEBUG.value,
+            )
         if self.debug:
-            return "INFO"
+            return cast(
+                "FlextConstants.Literals.LogLevelLiteral",
+                FlextConstants.Settings.LogLevel.INFO.value,
+            )
         return self.log_level
 
     @computed_field
     def is_production(self) -> bool:
         """Check if running in production environment."""
-        return os.getenv("ENVIRONMENT", "").lower() == "production"
+        env_value = os.getenv("ENVIRONMENT", "").lower()
+        return env_value == FlextConstants.Settings.Environment.PRODUCTION.value
 
     @classmethod
     def get_global_instance(cls) -> Self:
@@ -343,12 +376,24 @@ class FlextConfig(BaseSettings):
         """Update configuration from current environment variables."""
         # Implementation would reload from env
 
-    def validate_override(self, key: str, _value: object) -> bool:
+    def validate_override(
+        self,
+        key: str,
+        _value: FlextTypes.ScalarValue
+        | Sequence[FlextTypes.ScalarValue]
+        | Mapping[str, FlextTypes.ScalarValue],
+    ) -> bool:
         """Validate if an override is acceptable."""
         # Basic validation - could be extended
         return key in self.model_fields
 
-    def apply_override(self, key: str, value: object) -> None:
+    def apply_override(
+        self,
+        key: str,
+        value: FlextTypes.ScalarValue
+        | Sequence[FlextTypes.ScalarValue]
+        | Mapping[str, FlextTypes.ScalarValue],
+    ) -> None:
         """Apply a validated configuration override."""
         if self.validate_override(key, value):
             setattr(self, key, value)
@@ -494,12 +539,12 @@ class FlextConfig(BaseSettings):
             int: Numeric log level for structlog
 
         """
-        level_map = {
-            "DEBUG": logging.DEBUG,
-            "INFO": logging.INFO,
-            "WARNING": logging.WARNING,
-            "ERROR": logging.ERROR,
-            "CRITICAL": logging.CRITICAL,
+        level_map: dict[str, int] = {
+            FlextConstants.Settings.LogLevel.DEBUG.value: logging.DEBUG,
+            FlextConstants.Settings.LogLevel.INFO.value: logging.INFO,
+            FlextConstants.Settings.LogLevel.WARNING.value: logging.WARNING,
+            FlextConstants.Settings.LogLevel.ERROR.value: logging.ERROR,
+            FlextConstants.Settings.LogLevel.CRITICAL.value: logging.CRITICAL,
         }
         return level_map.get(level.upper(), logging.INFO)
 
@@ -528,7 +573,6 @@ class FlextConfig(BaseSettings):
 
         """
         # Import here to avoid circular import (FlextRuntime imports from config)
-        from flext_core.runtime import FlextRuntime
 
         if FlextConfig._logging_initialized and not force:
             return
@@ -559,7 +603,7 @@ class FlextConfig(BaseSettings):
     def apply_cli_logging_params(
         self,
         *,
-        log_level: str | None = None,
+        log_level: FlextConstants.Literals.LogLevelLiteral | None = None,
         debug: bool | None = None,
         trace: bool | None = None,
         _verbose: bool | None = None,
@@ -591,7 +635,8 @@ class FlextConfig(BaseSettings):
         """
         # Apply overrides if provided
         if log_level is not None:
-            self.log_level = log_level.upper()
+            # Validate and normalize log level using the same validator
+            self.log_level = self.validate_log_level(log_level)
 
         if debug is not None:
             self.debug = debug

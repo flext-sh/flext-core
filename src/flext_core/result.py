@@ -14,8 +14,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import types
-from collections.abc import Callable, Sequence
-from typing import Self
+from collections.abc import Callable, Mapping, Sequence
+from typing import Self, cast
 
 from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
@@ -24,7 +24,7 @@ from returns.result import Failure, Result, Success
 from flext_core.exceptions import (
     FlextExceptions,  # Direct import to avoid circular dependency
 )
-from flext_core.typings import U
+from flext_core.typings import FlextTypes, U
 
 
 class FlextResult[T_co]:
@@ -47,7 +47,7 @@ class FlextResult[T_co]:
         self,
         _result: Result[T_co, str],
         error_code: str | None = None,
-        error_data: dict[str, object] | None = None,
+        error_data: Mapping[str, FlextTypes.GeneralValueType] | None = None,
     ) -> None:
         """Initialize FlextResult with internal Result and optional metadata."""
         self._result = _result
@@ -67,7 +67,7 @@ class FlextResult[T_co]:
         cls,
         error: str,
         error_code: str | None = None,
-        error_data: dict[str, object] | None = None,
+        error_data: Mapping[str, FlextTypes.GeneralValueType] | None = None,
     ) -> FlextResult[T_co]:
         """Create failed result with error message."""
         return cls(Failure(error), error_code=error_code, error_data=error_data)
@@ -83,17 +83,17 @@ class FlextResult[T_co]:
         return isinstance(self._result, Failure)
 
     @property
+    def result(self) -> Result[T_co, str]:
+        """Access the internal Result[T_co, str] for advanced operations."""
+        return self._result
+
+    @property
     def value(self) -> T_co:
         """Get the success value."""
         if self.is_failure:
             msg = f"Cannot access value of failed result: {self.error}"
             raise RuntimeError(msg)
         return self._result.unwrap()
-
-    @property
-    def data(self) -> T_co:
-        """Backward compatibility alias for value."""
-        return self.value
 
     @property
     def error(self) -> str | None:
@@ -108,7 +108,7 @@ class FlextResult[T_co]:
         return getattr(self, "_error_code", None)
 
     @property
-    def error_data(self) -> dict[str, object] | None:
+    def error_data(self) -> Mapping[str, FlextTypes.GeneralValueType] | None:
         """Get error metadata."""
         return getattr(self, "_error_data", None)
 
@@ -123,18 +123,16 @@ class FlextResult[T_co]:
         """Unwrap success value or return default."""
         return self._result.value_or(default)
 
-    def map(self, func: Callable[[T_co], object]) -> FlextResult[object]:
+    def map[U](self, func: Callable[[T_co], U]) -> FlextResult[U]:
         """Transform success value using function."""
         return FlextResult(self._result.map(func))
 
-    def flat_map(
-        self, func: Callable[[T_co], FlextResult[object]]
-    ) -> FlextResult[object]:
+    def flat_map[U](self, func: Callable[[T_co], FlextResult[U]]) -> FlextResult[U]:
         """Chain operations returning FlextResult."""
 
-        def inner(value: T_co) -> Result[object, str]:
+        def inner(value: T_co) -> Result[U, str]:
             result = func(value)
-            return result._result
+            return cast("Result[U, str]", result.to_io_result())
 
         return FlextResult(self._result.bind(inner))
 
@@ -153,22 +151,21 @@ class FlextResult[T_co]:
 
         def inner(error: str) -> Result[T_co, str]:
             result = func(error)
-            return result._result
+            return result.result
 
         return FlextResult(self._result.lash(inner))
 
-    def flow_through(
-        self, *funcs: Callable[[object], FlextResult[object]]
-    ) -> FlextResult[object]:
+    def flow_through[U](
+        self, *funcs: Callable[[T_co | U], FlextResult[U]]
+    ) -> FlextResult[U]:
         """Chain multiple operations in a pipeline."""
-        # Due to covariance, FlextResult[T_co] is a subtype of FlextResult[object]
-        # Convert explicitly by creating new instance with same internal result
-        current = FlextResult[object](self._result)
+        # Start with current result, then apply each function in sequence
+        current: FlextResult[T_co | U] = cast("FlextResult[T_co | U]", self)
         for func in funcs:
             if current.is_failure:
-                return current
-            current = func(current.value)
-        return current
+                return cast("FlextResult[U]", current)
+            current = cast("FlextResult[T_co | U]", func(current.value))
+        return cast("FlextResult[U]", current)
 
     @classmethod
     def create_from_callable(
@@ -224,20 +221,21 @@ class FlextResult[T_co]:
     def from_io_result(cls, io_result: IOResult[T_co, str]) -> FlextResult[T_co]:
         """Create from returns.io.IOResult."""
         if isinstance(io_result, IOSuccess):
-            io_value = io_result.unwrap()
-            # Access internal value from IO wrapper
-            value: T_co = io_value._inner_value
+            value: T_co = io_result.unwrap()
             return cls.ok(value)
-        io_error = io_result.failure()
-        # Access internal value from IO wrapper
-        error_msg: str = io_error._inner_value
+        # IOFailure case
+        error_failure = io_result.failure()
+        error_msg: str = error_failure.failure()
         return cls.fail(error_msg)
 
     @classmethod
     def safe(cls, func: Callable[..., T_co]) -> Callable[..., FlextResult[T_co]]:
         """Decorator to wrap function in FlextResult."""
 
-        def wrapper(*args: object, **kwargs: object) -> FlextResult[T_co]:
+        def wrapper(
+            *args: FlextTypes.GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
+        ) -> FlextResult[T_co]:
             try:
                 return cls.ok(func(*args, **kwargs))
             except Exception as e:
@@ -246,8 +244,8 @@ class FlextResult[T_co]:
         return wrapper
 
     @classmethod
-    def traverse(
-        cls, items: Sequence[object], func: Callable[[object], FlextResult[U]]
+    def traverse[T, U](
+        cls, items: Sequence[T], func: Callable[[T], FlextResult[U]]
     ) -> FlextResult[list[U]]:
         """Map over sequence with failure propagation."""
         results: list[U] = []
@@ -273,10 +271,10 @@ class FlextResult[T_co]:
         return FlextResult(Success(successes))
 
     @classmethod
-    def parallel_map(
+    def parallel_map[T, U](
         cls,
-        items: Sequence[object],
-        func: Callable[[object], FlextResult[U]],
+        items: Sequence[T],
+        func: Callable[[T], FlextResult[U]],
         *,
         fail_fast: bool = True,
     ) -> FlextResult[list[U]]:
@@ -290,11 +288,11 @@ class FlextResult[T_co]:
         return cls.accumulate_errors(*results)
 
     @classmethod
-    def with_resource(
+    def with_resource[R](
         cls,
-        factory: Callable[[], object],
-        op: Callable[[object], FlextResult[T_co]],
-        cleanup: Callable[[object], None] | None = None,
+        factory: Callable[[], R],
+        op: Callable[[R], FlextResult[T_co]],
+        cleanup: Callable[[R], None] | None = None,
     ) -> FlextResult[T_co]:
         """Resource management with automatic cleanup."""
         resource = factory()

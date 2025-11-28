@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime
-from typing import ClassVar, Self, TypeAlias
+from typing import ClassVar, Self
 
 from beartype.door import is_bearable
 from pydantic import Field, HttpUrl, computed_field, model_validator
@@ -20,11 +20,15 @@ from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.metadata import Metadata
 from flext_core.constants import FlextConstants
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-# Type aliases for conditional execution callables
-ConditionCallable: TypeAlias = Callable[[object], bool]
-ActionCallable: TypeAlias = Callable[..., object]
+# Type alias for GeneralValueType (PEP 695)
+type GeneralValueType = FlextTypes.GeneralValueType
+
+# Type aliases for conditional execution callables (PEP 695)
+type ConditionCallable = Callable[[GeneralValueType], bool]
+type ActionCallable = Callable[..., GeneralValueType]
 
 
 class FlextModelsBase:
@@ -138,18 +142,18 @@ class FlextModelsBase:
 
         level: str = Field(default_factory=lambda: "INFO")
         message: str
-        context: dict[str, object] = Field(default_factory=dict)
+        context: dict[str, GeneralValueType] = Field(default_factory=dict)
         timestamp: datetime = Field(
             default_factory=FlextUtilities.Generators.generate_datetime_utc,
         )
         source: str | None = None
         operation: str | None = None
-        obj: object | None = None
+        obj: GeneralValueType | None = None
 
     class TimestampConfig(FlextModelsCollections.Config):
         """Enhanced timestamp configuration."""
 
-        obj: object
+        obj: GeneralValueType
         use_utc: bool = Field(default_factory=lambda: True)
         auto_update: bool = Field(default_factory=lambda: True)
         format: str = "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -166,7 +170,7 @@ class FlextModelsBase:
     class SerializationRequest(FlextModelsEntity.ArbitraryTypesModel):
         """Enhanced serialization request."""
 
-        data: object
+        data: GeneralValueType
         format: str = Field(
             default_factory=lambda: FlextConstants.Cqrs.SerializationFormat.JSON,
         )
@@ -184,7 +188,7 @@ class FlextModelsBase:
         condition: ConditionCallable
         true_action: ActionCallable | None = None
         false_action: ActionCallable | None = None
-        context: dict[str, object] = Field(default_factory=dict)
+        context: dict[str, GeneralValueType] = Field(default_factory=dict)
 
         @classmethod
         def validate_condition(
@@ -197,15 +201,15 @@ class FlextModelsBase:
     class StateInitializationRequest(FlextModelsEntity.ArbitraryTypesModel):
         """State initialization request."""
 
-        data: object
+        data: GeneralValueType
         state_key: str
-        initial_value: object
+        initial_value: GeneralValueType
         ttl_seconds: int | None = None
         persistence_level: str = Field(
             default_factory=lambda: FlextConstants.Cqrs.PersistenceLevel.MEMORY,
         )
         field_name: str = "state"
-        state: object
+        state: GeneralValueType
 
 
 __all__ = ["FlextModelsBase"]

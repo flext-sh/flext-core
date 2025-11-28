@@ -9,9 +9,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 from flext_core.result import FlextResult
+from flext_core.typings import GeneralValueType
 
 _logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ class FlextUtilitiesDataMapper:
     """
 
     @staticmethod
-    def convert_to_int_safe(value: object, default: int) -> int:
+    def convert_to_int_safe(value: GeneralValueType, default: int) -> int:
         """Convert value to int with safe fallback on error.
 
         **Generic replacement for**: Manual int conversion with try/except
@@ -70,11 +71,11 @@ class FlextUtilitiesDataMapper:
 
     @staticmethod
     def map_dict_keys(
-        source: dict[str, object],
+        source: dict[str, GeneralValueType],
         key_mapping: dict[str, str],
         *,
         keep_unmapped: bool = True,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[dict[str, GeneralValueType]]:
         """Map dictionary keys using mapping specification.
 
         **Generic replacement for**: Key renaming in dicts
@@ -97,7 +98,7 @@ class FlextUtilitiesDataMapper:
 
         """
         try:
-            result: dict[str, object] = {}
+            result: dict[str, GeneralValueType] = {}
 
             for key, value in source.items():
                 new_key = key_mapping.get(key)
@@ -106,10 +107,12 @@ class FlextUtilitiesDataMapper:
                 elif keep_unmapped:
                     result[key] = value
 
-            return FlextResult[dict[str, object]].ok(result)
+            return FlextResult[dict[str, GeneralValueType]].ok(result)
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[dict[str, object]].fail(f"Failed to map dict keys: {e}")
+            return FlextResult[dict[str, GeneralValueType]].fail(
+                f"Failed to map dict keys: {e}"
+            )
 
     @staticmethod
     def build_flags_dict(
@@ -197,9 +200,9 @@ class FlextUtilitiesDataMapper:
 
     @staticmethod
     def transform_values(
-        source: dict[str, object],
-        transformer: Callable[[object], object],
-    ) -> dict[str, object]:
+        source: dict[str, GeneralValueType],
+        transformer: Callable[[GeneralValueType], GeneralValueType],
+    ) -> dict[str, GeneralValueType]:
         """Transform all values in dict using transformer function.
 
         **Generic replacement for**: Manual dict value transformations
@@ -223,9 +226,9 @@ class FlextUtilitiesDataMapper:
 
     @staticmethod
     def filter_dict(
-        source: dict[str, object],
-        predicate: Callable[[str, object], bool],
-    ) -> dict[str, object]:
+        source: dict[str, GeneralValueType],
+        predicate: Callable[[str, GeneralValueType], bool],
+    ) -> dict[str, GeneralValueType]:
         """Filter dict by predicate function on key-value pairs.
 
         **Generic replacement for**: Dict comprehensions with filters
@@ -284,12 +287,12 @@ class FlextUtilitiesDataMapper:
         return {v: k for k, v in source.items()}
 
     @staticmethod
-    def is_json_primitive(value: object) -> bool:
+    def is_json_primitive(value: GeneralValueType) -> bool:
         """Check if value is a JSON primitive type (str, int, float, bool, None)."""
         return isinstance(value, (str, int, float, bool, type(None)))
 
     @classmethod
-    def convert_to_json_value(cls, value: object) -> object:
+    def convert_to_json_value(cls, value: GeneralValueType) -> GeneralValueType:
         """Convert any value to JSON-compatible type.
 
         **Generic replacement for**: Manual type conversion to JSON values
@@ -317,7 +320,7 @@ class FlextUtilitiesDataMapper:
             return value
         if isinstance(value, dict):
             return {str(k): cls.convert_to_json_value(v) for k, v in value.items()}
-        if isinstance(value, (list, tuple)):
+        if isinstance(value, Sequence):
             return [cls.convert_to_json_value(item) for item in value]
         # Fallback: convert to string
         return str(value)
@@ -325,8 +328,8 @@ class FlextUtilitiesDataMapper:
     @classmethod
     def convert_dict_to_json(
         cls,
-        data: dict[str, object],
-    ) -> dict[str, object]:
+        data: dict[str, GeneralValueType],
+    ) -> dict[str, GeneralValueType]:
         """Convert dict with any values to JSON-compatible dict.
 
         **Generic replacement for**: Manual dict-to-JSON conversion loops
@@ -353,7 +356,7 @@ class FlextUtilitiesDataMapper:
     def convert_list_to_json(
         cls,
         data: list[object],
-    ) -> list[dict[str, object]]:
+    ) -> list[dict[str, GeneralValueType]]:
         """Convert list of dict-like items to JSON-compatible list.
 
         **Generic replacement for**: Manual list-to-JSON conversion loops
@@ -374,7 +377,7 @@ class FlextUtilitiesDataMapper:
         ]
 
     @staticmethod
-    def ensure_str(value: object, default: str = "") -> str:
+    def ensure_str(value: GeneralValueType, default: str = "") -> str:
         """Ensure value is a string, converting if needed.
 
         **Generic replacement for**: Manual str() conversions with isinstance checks
@@ -402,7 +405,9 @@ class FlextUtilitiesDataMapper:
         return str(value)
 
     @staticmethod
-    def ensure_str_list(value: object, default: list[str] | None = None) -> list[str]:
+    def ensure_str_list(
+        value: GeneralValueType, default: list[str] | None = None
+    ) -> list[str]:
         """Ensure value is a list of strings, converting if needed.
 
         **Generic replacement for**: [str(item) for item in list] patterns
@@ -436,7 +441,7 @@ class FlextUtilitiesDataMapper:
         return [str(value)]
 
     @staticmethod
-    def ensure_str_or_none(value: object) -> str | None:
+    def ensure_str_or_none(value: GeneralValueType) -> str | None:
         """Ensure value is a string or None.
 
         **Generic replacement for**: value if isinstance(value, str) else None

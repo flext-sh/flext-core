@@ -17,6 +17,19 @@ from pydantic import BaseModel, ConfigDict, Field
 # Cannot import FlextUtilities here as it would create: metadata → utilities → _utilities → (potential circular)
 # datetime.now(UTC) is acceptable here as it's stdlib and this is a foundation module.
 
+# Local TypeAlias for metadata attributes (no object catch-alls per user requirements)
+# JSON-serializable primitive types for metadata attributes (non-recursive to avoid Pydantic recursion)
+# Metadata typically holds flat values, not deeply nested structures
+type MetadataAttributeValue = (
+    str
+    | int
+    | float
+    | bool
+    | list[str | int | float | bool | None]
+    | dict[str, str | int | float | bool | None]
+    | None
+)
+
 
 class Metadata(BaseModel):
     """Immutable metadata model - zero-dependency foundation.
@@ -51,7 +64,7 @@ class Metadata(BaseModel):
         default_factory=list,
         description="Tags for categorization and filtering",
     )
-    attributes: dict[str, object] = Field(
+    attributes: dict[str, MetadataAttributeValue] = Field(
         default_factory=dict,
         description="Additional metadata attributes (JSON-serializable)",
     )

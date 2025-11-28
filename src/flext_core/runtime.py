@@ -63,7 +63,7 @@ import re
 import secrets
 import string
 import typing
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import TypeGuard
 
@@ -218,14 +218,16 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: object,
-    ) -> TypeGuard[dict[str, object]]:
+    ) -> TypeGuard[
+        dict[str, FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]]
+    ]:
         """Type guard to check if value is dict-like.
 
         Args:
             value: Value to check
 
         Returns:
-            True if value is a dict[str, object] or dict-like object, False otherwise
+            True if value is a dict[str, FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]] or dict-like object, False otherwise
 
         """
         if isinstance(value, dict):
@@ -246,7 +248,9 @@ class FlextRuntime:
     @staticmethod
     def is_list_like(
         value: object,
-    ) -> TypeGuard[list[object]]:
+    ) -> TypeGuard[
+        list[FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]]
+    ]:
         """Type guard to check if value is list-like.
 
         Args:
@@ -341,7 +345,7 @@ class FlextRuntime:
             # Check if it's a known type alias
             if hasattr(type_hint, "__name__"):
                 type_name = getattr(type_hint, "__name__", "")
-                # Handle common type aliases
+                # Handle common type aliases - use actual type objects
                 type_mapping: dict[
                     str, tuple[FlextTypes.Utility.GenericTypeArgument, ...]
                 ] = {
@@ -349,13 +353,13 @@ class FlextRuntime:
                     "IntList": (int,),
                     "FloatList": (float,),
                     "BoolList": (bool,),
-                    "Dict": (str, object),
-                    "List": (object,),
+                    "Dict": (str, str),
+                    "List": (str,),
                     "StringDict": (str, str),
                     "IntDict": (str, int),
                     "FloatDict": (str, float),
                     "BoolDict": (str, bool),
-                    "NestedDict": (str, object),
+                    "NestedDict": (str, str),
                 }
                 if type_name in type_mapping:
                     return type_mapping[type_name]
@@ -434,8 +438,10 @@ class FlextRuntime:
     def level_based_context_filter(
         _logger: FlextTypes.Logging.LoggerContextType,
         method_name: str,
-        event_dict: dict[str, object],
-    ) -> dict[str, object]:
+        event_dict: dict[
+            str, FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]
+        ],
+    ) -> dict[str, FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]]:
         """Filter context variables based on log level.
 
         Removes context variables that are restricted to specific log levels
@@ -481,7 +487,9 @@ class FlextRuntime:
         current_level = level_hierarchy.get(method_name.lower(), 20)  # Default to INFO
 
         # Process all keys in event_dict
-        filtered_dict: dict[str, object] = {}
+        filtered_dict: dict[
+            str, FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]
+        ] = {}
         for key, value in event_dict.items():
             # Check if this is a level-prefixed variable
             if key.startswith("_level_"):
@@ -839,7 +847,7 @@ class FlextRuntime:
         def track_domain_event(
             event_name: str,
             aggregate_id: str | None = None,
-            event_data: dict[str, object] | None = None,
+            event_data: FlextTypes.Types.EventDataMapping | None = None,
         ) -> None:
             """Track domain event with context correlation.
 

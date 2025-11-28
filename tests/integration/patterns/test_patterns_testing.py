@@ -23,6 +23,14 @@ from typing import ParamSpec, TypeVar, cast
 import pytest
 from hypothesis import given, settings, strategies as st
 
+from ...fixtures.typing import (
+    MockScenarioData,
+    TestCaseDict,
+    TestDataDict,
+    TestFixturesDict,
+    TestSuiteDict,
+)
+
 _P = ParamSpec("_P")
 _R = TypeVar("_R")
 
@@ -33,8 +41,7 @@ def mark_test_pattern(
     """Mark test with a specific pattern for demonstration purposes."""
 
     def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
-        # Use setattr for dynamic attribute setting to avoid mypy error
-
+        # Use setattr for dynamic attribute setting
         func._test_pattern = pattern
         return func
 
@@ -52,7 +59,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: dict[str, object]) -> None:
+    def __init__(self, name: str, data: MockScenarioData) -> None:
         """Initialize mock scenario with name and test data."""
         super().__init__()
         self.name = name
@@ -105,13 +112,16 @@ class GivenWhenThenBuilder:
         """Build the final mock scenario object."""
         return MockScenario(
             self.name,
-            {
-                "given": self._given,
-                "when": self._when,
-                "then": self._then,
-                "tags": self._tags,
-                "priority": self._priority,
-            },
+            cast(
+                "MockScenarioData",
+                {
+                    "given": self._given,
+                    "when": self._when,
+                    "then": self._then,
+                    "tags": self._tags,
+                    "priority": self._priority,
+                },
+            ),
         )
 
 
@@ -155,9 +165,9 @@ class FlextTestBuilder:
         # No-op stub to keep example API; could attach schema metadata here
         return self
 
-    def build(self) -> dict[str, object]:
+    def build(self) -> TestDataDict:
         """Build the final test data dictionary."""
-        return self._data.copy()
+        return cast("TestDataDict", self._data)
 
 
 class ParameterizedTestBuilder:
@@ -167,18 +177,18 @@ class ParameterizedTestBuilder:
         """Initialize parameterized test builder with test name."""
         super().__init__()
         self.test_name = test_name
-        self._cases: list[dict[str, object]] = []
-        self._success_cases: list[dict[str, object]] = []
-        self._failure_cases: list[dict[str, object]] = []
+        self._cases: list[TestCaseDict] = []
+        self._success_cases: list[TestCaseDict] = []
+        self._failure_cases: list[TestCaseDict] = []
 
     def add_case(self, **kwargs: object) -> ParameterizedTestBuilder:
         """Add a test case with the given parameters."""
-        self._cases.append(kwargs)
+        self._cases.append(cast("TestCaseDict", kwargs))
         return self
 
     def add_success_cases(
         self,
-        cases: list[dict[str, object]],
+        cases: list[TestCaseDict],
     ) -> ParameterizedTestBuilder:
         """Add multiple success test cases."""
         self._success_cases.extend(cases)
@@ -186,13 +196,13 @@ class ParameterizedTestBuilder:
 
     def add_failure_cases(
         self,
-        cases: list[dict[str, object]],
+        cases: list[TestCaseDict],
     ) -> ParameterizedTestBuilder:
         """Add multiple failure test cases."""
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[dict[str, object]]:
+    def build(self) -> list[TestCaseDict]:
         """Build the list of test cases."""
         return self._cases.copy()
 
@@ -278,14 +288,17 @@ class SuiteBuilder:
         self._tags.append(tag)
         return self
 
-    def build(self) -> dict[str, object]:
+    def build(self) -> TestSuiteDict:
         """Build the test suite configuration."""
-        return {
-            "suite_name": self.name,
-            "scenario_count": len(self._scenarios),
-            "tags": self._tags,
-            "setup_data": self._setup_data,
-        }
+        return cast(
+            "TestSuiteDict",
+            {
+                "suite_name": self.name,
+                "scenario_count": len(self._scenarios),
+                "tags": self._tags,
+                "setup_data": self._setup_data,
+            },
+        )
 
 
 class FixtureBuilder:
@@ -308,9 +321,9 @@ class FixtureBuilder:
         self._fixtures["request"] = kwargs
         return self
 
-    def build(self) -> dict[str, object]:
+    def build(self) -> TestFixturesDict:
         """Build the test fixtures configuration."""
-        return self._fixtures.copy()
+        return cast("TestFixturesDict", self._fixtures.copy())
 
     def add_setup(self, func: object) -> FixtureBuilder:
         """Add a setup function to the fixtures."""
@@ -538,10 +551,10 @@ class TestAdvancedPatterns:
         )
 
         assert scenario.name == "user_registration"
-        assert "email" in cast("dict[str, object]", scenario.given)
-        assert "action" in cast("dict[str, object]", scenario.when)
-        assert "success" in cast("dict[str, object]", scenario.then)
-        assert "integration" in cast("list[str]", scenario.tags)
+        assert "email" in scenario.given
+        assert "action" in scenario.when
+        assert "success" in scenario.then
+        assert "integration" in scenario.tags
         assert scenario.priority == "high"
 
     def test_builder_pattern_advanced(self) -> None:
@@ -685,8 +698,8 @@ class TestComprehensiveIntegration:
 
         assert suite["suite_name"] == "comprehensive_operation_tests"
         assert suite["scenario_count"] == 2
-        assert "integration" in cast("list[str]", suite["tags"])
-        assert cast("dict[str, object]", suite["setup_data"])["environment"] == "test"
+        assert "integration" in suite["tags"]
+        assert suite["setup_data"]["environment"] == "test"
 
 
 # ============================================================================
@@ -825,5 +838,5 @@ class TestRealWorldScenarios:
             .build()
         )
 
-        assert cast("dict[str, object]", scenario.given)["config"] == config
-        assert "configuration" in cast("list[str]", scenario.tags)
+        assert scenario.given["config"] == config
+        assert "configuration" in scenario.tags

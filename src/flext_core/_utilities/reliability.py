@@ -16,6 +16,7 @@ from collections.abc import Callable
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
+from flext_core.typings import GeneralValueType
 
 _logger = logging.getLogger(__name__)
 
@@ -165,7 +166,9 @@ class FlextUtilitiesReliability:
         )
 
     @staticmethod
-    def calculate_delay(attempt: int, config: object) -> float:
+    def calculate_delay(
+        attempt: int, config: dict[str, GeneralValueType] | None
+    ) -> float:
         """Calculate delay for retry attempt using configuration.
 
         Args:

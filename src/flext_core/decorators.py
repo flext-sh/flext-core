@@ -24,7 +24,7 @@ from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import P, R, T
+from flext_core.typings import GeneralValueType, P, R, T
 
 
 class FlextDecorators:
@@ -197,7 +197,7 @@ class FlextDecorators:
                     result = func(*args, **kwargs)
                     duration = time.perf_counter() - start_time
 
-                    success_extra: dict[str, object] = {
+                    success_extra: dict[str, GeneralValueType] = {
                         "operation": op_name,
                         "duration_ms": duration * 1000,
                         "duration_seconds": duration,
@@ -219,7 +219,7 @@ class FlextDecorators:
                 ) as e:
                     duration = time.perf_counter() - start_time
 
-                    failure_extra: dict[str, object] = {
+                    failure_extra: dict[str, GeneralValueType] = {
                         "operation": op_name,
                         "duration_ms": duration * 1000,
                         "duration_seconds": duration,
@@ -263,7 +263,7 @@ class FlextDecorators:
                     # If already a FlextResult, return as-is
                     # Create new instance with correct type to avoid cast
                     if isinstance(result, FlextResult):
-                        return FlextResult[T](result._result)
+                        return FlextResult[T](result.result)
 
                     # Wrap successful result
                     return FlextResult[T].ok(result)
@@ -352,15 +352,17 @@ class FlextDecorators:
 
     @staticmethod
     def _resolve_logger(
-        args: tuple[object, ...],
-        func: Callable[..., object],
+        args: tuple[GeneralValueType, ...],
+        func: Callable[..., GeneralValueType],
     ) -> FlextLogger:
         """Resolve logger from first argument or create module logger."""
         first_arg = args[0] if args else None
-        potential_logger: object | None = (
-            getattr(first_arg, "logger", None) if first_arg is not None else None
-        )
-        if potential_logger is not None and isinstance(potential_logger, FlextLogger):
+        potential_logger: FlextLogger | None = None
+        if first_arg is not None:
+            attr = getattr(first_arg, "logger", None)
+            if isinstance(attr, FlextLogger):
+                potential_logger = attr
+        if potential_logger is not None:
             return potential_logger
         return FlextLogger(func.__module__)
 
@@ -375,9 +377,12 @@ class FlextDecorators:
         error_type: str | None = None,
         start_time: float = 0.0,
         track_perf: bool = False,
-    ) -> dict[str, object]:
+    ) -> dict[str, GeneralValueType]:
         """Build extra dict for operation logging."""
-        extra: dict[str, object] = {"function": func_name, "func_module": func_module}
+        extra: dict[str, GeneralValueType] = {
+            "function": func_name,
+            "func_module": func_module,
+        }
         if correlation_id is not None:
             extra["correlation_id"] = correlation_id
         if success is not None:
@@ -416,7 +421,7 @@ class FlextDecorators:
         )
         failure_extra["operation"] = op_name
         # Build bind dict for logger
-        bind_dict: dict[str, str | float] = {
+        bind_dict: dict[str, GeneralValueType] = {
             "success": "False",
             "error": str(exc),
             "error_type": type(exc).__name__,
@@ -450,14 +455,14 @@ class FlextDecorators:
     @staticmethod
     def _execute_retry_loop[R](
         func: Callable[..., R],
-        args: tuple[object, ...],
-        kwargs: dict[str, object],
+        args: tuple[GeneralValueType, ...],
+        kwargs: GeneralValueType,
         logger: FlextLogger,
         attempts: int = 3,
         delay: float = 1.0,
         strategy: str = "exponential",
         *,
-        config: object | None = None,
+        config: FlextModels.Config.RetryConfiguration | None = None,
     ) -> R | Exception:
         """Execute retry loop, returning result on success or Exception on failure."""
         # Extract config values (config takes priority over individual params)
@@ -629,7 +634,7 @@ class FlextDecorators:
         result: FlextResult[bool],
         logger: FlextLogger,
         fallback_message: str,
-        kwargs: dict[str, object],
+        kwargs: GeneralValueType,
     ) -> None:
         """Ensure FlextLogger call results are handled for diagnostics."""
         if result.is_failure:

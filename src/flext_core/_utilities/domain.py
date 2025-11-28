@@ -13,6 +13,7 @@ import logging
 from collections.abc import Hashable
 
 from flext_core.runtime import FlextRuntime
+from flext_core.typings import GeneralValueType
 
 _logger = logging.getLogger(__name__)
 
@@ -155,7 +156,7 @@ class FlextUtilitiesDomain:
                 # Type check: ensure the method is callable
                 model_dump = getattr(obj, "model_dump", None)
                 if callable(model_dump):
-                    # Call the method directly - it returns dict[str, object]
+                    # Call the method directly - it returns dict[str, GeneralValueType]
                     data_raw = model_dump()
                     if isinstance(data_raw, dict):
                         data: dict[str, object] = data_raw
@@ -197,7 +198,7 @@ class FlextUtilitiesDomain:
         return bool(entity_id)
 
     @staticmethod
-    def validate_value_object_immutable(obj: object) -> bool:
+    def validate_value_object_immutable(obj: GeneralValueType) -> bool:
         """Check if value object appears to be immutable (frozen).
 
         Args:

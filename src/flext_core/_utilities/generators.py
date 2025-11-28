@@ -19,7 +19,7 @@ from datetime import UTC, datetime
 from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes
+from flext_core.typings import FlextTypes, GeneralValueType
 
 _logger = logging.getLogger(__name__)
 
@@ -203,15 +203,15 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _normalize_context_to_dict(
-        context: dict[str, object] | object,
-    ) -> dict[str, object]:
+        context: dict[str, GeneralValueType] | object,
+    ) -> dict[str, GeneralValueType]:
         """Normalize context to dict - fast fail validation.
 
         Args:
             context: Context to normalize
 
         Returns:
-            dict[str, object]: Normalized context dict
+            dict[str, GeneralValueType]: Normalized context dict
 
         Raises:
             TypeError: If context cannot be normalized
@@ -250,7 +250,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _enrich_context_fields(
-        context_dict: dict[str, object],
+        context_dict: dict[str, GeneralValueType],
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -280,11 +280,11 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_trace_context(
-        context: dict[str, object] | object,
+        context: dict[str, str] | object,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
-    ) -> dict[str, object]:
+    ) -> dict[str, str]:
         """Ensure context dict has distributed tracing fields (trace_id, span_id, etc).
 
         This generic helper consolidates duplicate context enrichment logic
@@ -300,7 +300,7 @@ class FlextUtilitiesGenerators:
             include_timestamp: If True, ensure timestamp exists (ISO 8601)
 
         Returns:
-            dict[str, object]: Enriched context with requested fields
+            dict[str, str]: Enriched context with requested fields (all string values)
 
         Example:
             >>> from flext_core.utilities import FlextUtilities
@@ -338,9 +338,9 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_dict(
-        value: object,
-        default: dict[str, object] | None = None,
-    ) -> dict[str, object]:
+        value: GeneralValueType,
+        default: dict[str, GeneralValueType] | None = None,
+    ) -> dict[str, GeneralValueType]:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
 
         This generic helper consolidates duplicate dict normalization logic
@@ -360,7 +360,7 @@ class FlextUtilitiesGenerators:
             default: Default value to return if value is None (optional)
 
         Returns:
-            dict[str, object]: Normalized dict or default
+            dict[str, GeneralValueType]: Normalized dict or default
 
         Raises:
             TypeError: If value is None (and no default) or cannot be converted
@@ -445,7 +445,7 @@ class FlextUtilitiesGenerators:
     def create_dynamic_type_subclass(
         name: str,
         base_class: object,  # Can be a class or Self
-        attributes: dict[str, object],
+        attributes: dict[str, GeneralValueType],
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 

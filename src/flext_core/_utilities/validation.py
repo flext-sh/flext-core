@@ -55,8 +55,8 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult  # ✅ CORRECT - See architectural note above
 from flext_core.runtime import FlextRuntime
 
-# Import RetryConfig directly to avoid type issues
-from flext_core.typings import FlextTypes, RetryConfig
+# Import FlextTypes for FlextTypes.Config.RetryConfig and other complex types
+from flext_core.typings import FlextTypes
 
 _logger = logging.getLogger(__name__)
 
@@ -77,46 +77,73 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _normalize_component(
-        component: FlextTypes.GenericDetailsType,
-    ) -> object:
+        component: FlextTypes.GeneralValueType,
+    ) -> FlextTypes.GeneralValueType:
         """Normalize component for consistent representation (internal recursive)."""
         if FlextRuntime.is_dict_like(component):
+            # Type narrowing: is_dict_like ensures dict-like
             component_dict = component
-            return {
-                str(k): FlextUtilitiesValidation._normalize_component(v)
-                for k, v in component_dict.items()
-            }
-        if isinstance(component, (list, tuple)):
+            if not isinstance(component_dict, Mapping):
+                # Fallback for non-Mapping dict-like objects
+                component_dict = (
+                    dict(component_dict.items())
+                    if hasattr(component_dict, "items")
+                    else dict(component_dict)
+                )
+            normalized_dict: dict[str, FlextTypes.GeneralValueType] = {}
+            for k, v in component_dict.items():
+                # Type narrowing: convert v to GeneralValueType
+                v_normalized: FlextTypes.GeneralValueType
+                if isinstance(v, (str, int, float, bool, type(None))):
+                    v_normalized = v
+                elif isinstance(v, (Sequence, Mapping)):
+                    v_normalized = v  # type: ignore[assignment]
+                else:
+                    v_normalized = str(v)
+                normalized_dict[str(k)] = v_normalized
+                # Recursively normalize the value
+                normalized_dict[str(k)] = FlextUtilitiesValidation._normalize_component(
+                    v_normalized
+                )
+            return normalized_dict
+        if isinstance(component, Sequence):
             # Component is confirmed to be list or tuple, iterate directly
-            sequence: Sequence[object] = component
             return [
-                FlextUtilitiesValidation._normalize_component(item) for item in sequence
+                FlextUtilitiesValidation._normalize_component(item)
+                for item in component
             ]
         if isinstance(component, set):
             # Component is confirmed to be set, iterate directly
-            set_component: set[object] = component
             return {
                 FlextUtilitiesValidation._normalize_component(item)
-                for item in set_component
+                for item in component
             }
         # Return primitives and other types directly
         return component
 
     @staticmethod
-    def _sort_key(key: object) -> tuple[str, str]:
+    def _sort_key(key: str | float) -> tuple[str, str]:
         """Generate a sort key for consistent ordering (internal helper)."""
         key_str = str(key)
         return (key_str.casefold(), key_str)
 
     @staticmethod
     def _sort_dict_keys(
-        data: FlextTypes.SortableObjectType,
-    ) -> FlextTypes.SortableObjectType:
+        data: FlextTypes.GeneralValueType,
+    ) -> FlextTypes.GeneralValueType:
         """Sort dict keys for consistent representation (internal recursive)."""
         if FlextRuntime.is_dict_like(data):
+            # Type narrowing: is_dict_like ensures dict-like
             data_dict = data
+            if not isinstance(data_dict, Mapping):
+                # Fallback for non-Mapping dict-like objects
+                data_dict = (
+                    dict(data_dict.items())
+                    if hasattr(data_dict, "items")
+                    else dict(data_dict)
+                )
             return {
-                k: FlextUtilitiesValidation._sort_dict_keys(data_dict[k])
+                str(k): FlextUtilitiesValidation._sort_dict_keys(data_dict[k])
                 for k in sorted(
                     data_dict.keys(),
                     key=FlextUtilitiesValidation._sort_key,
@@ -151,7 +178,7 @@ class FlextUtilitiesValidation:
                             f"Validator failed: {result.error}",
                             error_code=FlextConstants.Errors.VALIDATION_ERROR,
                         )
-                    if result.data is not True:
+                    if result.value is not True:
                         return FlextResult[bool].fail(
                             "Validator must return FlextResult[bool].ok(True)",
                             error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -183,12 +210,14 @@ class FlextUtilitiesValidation:
         return json.dumps(value, sort_keys=True, default=str)
 
     @staticmethod
-    def _is_dataclass_instance(obj: object) -> TypeGuard[object]:
+    def _is_dataclass_instance(obj: FlextTypes.GeneralValueType) -> TypeGuard[object]:
         """Type guard to check if object is a dataclass instance (not class)."""
         return is_dataclass(obj) and not isinstance(obj, type)
 
     @staticmethod
-    def _normalize_primitive_or_bytes(value: object) -> tuple[bool, object]:
+    def _normalize_primitive_or_bytes(
+        value: FlextTypes.GeneralValueType,
+    ) -> tuple[bool, FlextTypes.GeneralValueType]:
         """Normalize primitive types and bytes.
 
         Returns:
@@ -201,16 +230,16 @@ class FlextUtilitiesValidation:
         if value is None or isinstance(value, (bool, int, float, str)):
             return (True, value)
 
-        # Handle bytes (convert to hex tuple)
+        # Handle bytes (convert to dict with type marker)
         if isinstance(value, bytes):
-            return (True, ("bytes", value.hex()))
+            return (True, {"type": "bytes", "data": value.hex()})
 
         return (False, None)  # Not a primitive/bytes - continue dispatching
 
     @staticmethod
     def normalize_component(
-        value: object,
-    ) -> object:
+        value: FlextTypes.GeneralValueType,
+    ) -> FlextTypes.GeneralValueType:
         """Normalize arbitrary objects into cache-friendly deterministic structures."""
         # Check primitives and bytes first
         is_primitive, normalized = (
@@ -229,7 +258,7 @@ class FlextUtilitiesValidation:
         if isinstance(value, Mapping):
             return FlextUtilitiesValidation._normalize_mapping(value)
 
-        if isinstance(value, (list, tuple)):
+        if isinstance(value, Sequence):
             return FlextUtilitiesValidation._normalize_sequence(value)
 
         if isinstance(value, set):
@@ -240,11 +269,11 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _normalize_pydantic_value(
         value: FlextProtocols.HasModelDump,
-    ) -> tuple[str, object]:
+    ) -> FlextTypes.GeneralValueType:
         """Normalize Pydantic model to cache-friendly structure."""
         # Fast fail: model_dump() must succeed for valid Pydantic models
         try:
-            dumped: dict[str, object] = value.model_dump()
+            dumped: FlextTypes.GeneralValueType = value.model_dump()
         except TypeError as e:
             # Fast fail: model_dump() failure indicates invalid model
             msg = (
@@ -252,11 +281,14 @@ class FlextUtilitiesValidation:
                 f"{type(e).__name__}: {e}"
             )
             raise TypeError(msg) from e
-        normalized_dumped = FlextUtilitiesValidation._normalize_component(dumped)
-        return ("pydantic", normalized_dumped)
+        normalized_dumped = FlextUtilitiesValidation.normalize_component(dumped)
+        # Return as dict with type marker for cache structure
+        return {"type": "pydantic", "data": normalized_dumped}
 
     @staticmethod
-    def _normalize_dataclass_value_instance(value: object) -> tuple[str, object]:
+    def _normalize_dataclass_value_instance(
+        value: FlextTypes.GeneralValueType,
+    ) -> FlextTypes.GeneralValueType:
         """Normalize dataclass instance to cache-friendly structure.
 
         Note: This should only be called after checking is_dataclass(value) and
@@ -264,68 +296,75 @@ class FlextUtilitiesValidation:
         """
         # Caller guarantees value is a dataclass instance via
         # _is_dataclass_instance check. Using manual field extraction
-        field_dict: dict[str, object] = {}
+        field_dict: dict[str, FlextTypes.GeneralValueType] = {}
         # value.__class__ is type for dataclass instances
         value_class: type = value.__class__
         for field in get_dataclass_fields(value_class):
             field_dict[field.name] = getattr(value, field.name)
-
-        normalized_dict = FlextUtilitiesValidation._normalize_component(field_dict)
-        return ("dataclass", normalized_dict)
+        sorted_data = FlextUtilitiesValidation._sort_dict_keys(field_dict)
+        # Return as dict with type marker for cache structure
+        return {"type": "dataclass", "data": sorted_data}
 
     @staticmethod
-    def _normalize_mapping(value: Mapping[object, object]) -> dict[object, object]:
+    def _normalize_mapping(
+        value: Mapping[str, FlextTypes.GeneralValueType],
+    ) -> FlextTypes.GeneralValueType:
         """Normalize mapping to cache-friendly structure."""
         sorted_items = sorted(
             value.items(),
             key=lambda x: FlextUtilitiesValidation._sort_key(x[0]),
         )
         return {
-            FlextUtilitiesValidation._normalize_component(
-                k,
-            ): FlextUtilitiesValidation._normalize_component(v)
+            str(k): FlextUtilitiesValidation._normalize_component(v)
             for k, v in sorted_items
         }
 
     @staticmethod
-    def _normalize_sequence(value: Sequence[object]) -> tuple[str, tuple[object, ...]]:
+    def _normalize_sequence(
+        value: Sequence[FlextTypes.GeneralValueType],
+    ) -> FlextTypes.GeneralValueType:
         """Normalize sequence to cache-friendly structure."""
         sequence_items = [
             FlextUtilitiesValidation._normalize_component(item) for item in value
         ]
-        return ("sequence", tuple(sequence_items))
+        # Return as dict with type marker for cache structure
+        return {"type": "sequence", "data": sequence_items}
 
     @staticmethod
-    def _normalize_set(value: set[object]) -> tuple[str, tuple[object, ...]]:
+    def _normalize_set(
+        value: set[FlextTypes.GeneralValueType],
+    ) -> FlextTypes.GeneralValueType:
         """Normalize set to cache-friendly structure."""
         set_items = [
             FlextUtilitiesValidation._normalize_component(item) for item in value
         ]
         set_items.sort(key=str)
-        normalized_set = tuple(set_items)
-        return ("set", normalized_set)
+        # Return as dict with type marker for cache structure
+        return {"type": "set", "data": set_items}
 
     @staticmethod
-    def _normalize_vars(value: object) -> tuple[str, object]:
+    def _normalize_vars(
+        value: FlextTypes.GeneralValueType,
+    ) -> FlextTypes.GeneralValueType:
         """Normalize object attributes to cache-friendly structure."""
         try:
             vars_result = vars(value)
-            # vars() returns dict[str, object] when successful
+            # vars() returns dict when successful
             if isinstance(vars_result, dict):
-                value_vars_dict: dict[str, object] = vars_result
+                value_vars_dict: dict[str, FlextTypes.GeneralValueType] = vars_result
             else:
-                return ("repr", repr(value))
+                return {"type": "repr", "data": repr(value)}
         except TypeError:
-            return ("repr", repr(value))
+            return {"type": "repr", "data": repr(value)}
 
-        normalized_vars = tuple(
-            (key, FlextUtilitiesValidation._normalize_component(val))
+        normalized_vars = {
+            str(key): FlextUtilitiesValidation._normalize_component(val)
             for key, val in sorted(
                 value_vars_dict.items(),
                 key=operator.itemgetter(0),
             )
-        )
-        return ("vars", normalized_vars)
+        }
+        return {"type": "vars", "data": normalized_vars}
 
     @staticmethod
     def _generate_key_from_data(command_type: type[object], sorted_data: object) -> str:
@@ -335,7 +374,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _generate_key_pydantic(
         command: FlextProtocols.HasModelDump,
-        command_type: type[object],
+        command_type: type[FlextTypes.GeneralValueType],
     ) -> str | None:
         """Generate cache key from Pydantic model."""
         try:
@@ -350,12 +389,12 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _generate_key_dataclass(
-        command: object,
-        command_type: type[object],
+        command: FlextTypes.GeneralValueType,
+        command_type: type[FlextTypes.GeneralValueType],
     ) -> str | None:
         """Generate cache key from dataclass."""
         try:
-            dataclass_data: dict[str, object] = {}
+            dataclass_data: dict[str, FlextTypes.GeneralValueType] = {}
             # command.__class__ is type for class instances
             command_class: type = command.__class__
             for field in get_dataclass_fields(command_class):
@@ -369,7 +408,10 @@ class FlextUtilitiesValidation:
             return None
 
     @staticmethod
-    def _generate_key_dict(command: object, command_type: type[object]) -> str | None:
+    def _generate_key_dict(
+        command: Mapping[str, FlextTypes.GeneralValueType],
+        command_type: type[FlextTypes.GeneralValueType],
+    ) -> str | None:
         """Generate cache key from dict."""
         try:
             sorted_data = FlextUtilitiesValidation._sort_dict_keys(command)
@@ -382,8 +424,8 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def generate_cache_key(
-        command: object | None,
-        command_type: type[object],
+        command: FlextTypes.GeneralValueType | None,
+        command_type: type[FlextTypes.GeneralValueType],
     ) -> str:
         """Generate a deterministic cache key for the command.
 
@@ -415,7 +457,7 @@ class FlextUtilitiesValidation:
                 return key
 
         # Try dict
-        if FlextRuntime.is_dict_like(command):
+        if FlextRuntime.is_dict_like(command) and isinstance(command, Mapping):
             key = FlextUtilitiesValidation._generate_key_dict(command, command_type)
             if key is not None:
                 return key
@@ -431,22 +473,32 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def sort_dict_keys(
-        obj: FlextTypes.SortableObjectType,
-    ) -> FlextTypes.SortableObjectType:
+        obj: FlextTypes.GeneralValueType,
+    ) -> FlextTypes.GeneralValueType:
         """Recursively sort dictionary keys for deterministic ordering.
 
         Args:
-            obj: Object to sort (dict[str, object], list, or other)
+            obj: Object to sort (object, list, or other)
 
         Returns:
             Object with sorted keys
 
         """
         if FlextRuntime.is_dict_like(obj):
-            dict_obj: dict[str, object] = obj
+            # Type narrowing: is_dict_like ensures dict-like
+            dict_obj = obj
+            if not isinstance(dict_obj, Mapping):
+                # Fallback for non-Mapping dict-like objects
+                dict_obj = (
+                    dict(dict_obj.items())
+                    if hasattr(dict_obj, "items")
+                    else dict(dict_obj)
+                )
             # Convert items() view to list for sorting
-            items_list: list[tuple[str, object]] = list(dict_obj.items())
-            sorted_items: list[tuple[str, object]] = sorted(
+            items_list: list[tuple[str, FlextTypes.GeneralValueType]] = list(
+                dict_obj.items()
+            )
+            sorted_items: list[tuple[str, FlextTypes.GeneralValueType]] = sorted(
                 items_list,
                 key=lambda x: str(x[0]),
             )
@@ -455,14 +507,26 @@ class FlextUtilitiesValidation:
                 for k, v in sorted_items
             }
         if FlextRuntime.is_list_like(obj):
-            obj_list: list[object] = obj
-            return [FlextUtilitiesValidation._sort_dict_keys(item) for item in obj_list]
+            # Type narrowing: is_list_like ensures list-like
+            obj_list = obj
+            if not isinstance(obj_list, Sequence):
+                # Fallback for non-Sequence list-like objects
+                obj_list = (
+                    list(obj_list) if hasattr(obj_list, "__iter__") else [obj_list]
+                )
+            return [
+                FlextUtilitiesValidation._sort_dict_keys(
+                    item
+                    if isinstance(
+                        item, (str, int, float, bool, type(None), Sequence, Mapping)
+                    )
+                    else str(item)
+                )
+                for item in obj_list
+            ]
         if isinstance(obj, tuple):
             # obj is confirmed to be tuple, iterate directly
-            obj_tuple: tuple[object, ...] = obj
-            return tuple(
-                FlextUtilitiesValidation._sort_dict_keys(item) for item in obj_tuple
-            )
+            return tuple(FlextUtilitiesValidation._sort_dict_keys(item) for item in obj)
         return obj
 
     @staticmethod
@@ -860,7 +924,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def validate_callable(
-        value: object,
+        value: FlextTypes.GeneralValueType,
         error_message: str = "Value must be callable",
         error_code: str = FlextConstants.Errors.TYPE_ERROR,
     ) -> FlextResult[object]:
@@ -1213,8 +1277,12 @@ class FlextUtilitiesValidation:
         return FlextResult[str].ok(normalized_name)
 
     @staticmethod
-    def _validate_max_attempts(retry_config: dict[str, object]) -> FlextResult[int]:
+    def _validate_max_attempts(
+        retry_config: dict[str, FlextTypes.GeneralValueType] | None,
+    ) -> FlextResult[int]:
         """Validate max_attempts parameter."""
+        if retry_config is None:
+            retry_config = {}
         max_attempts_raw = retry_config.get("max_attempts", 1)
         if isinstance(max_attempts_raw, (int, str)):
             max_attempts = int(max_attempts_raw)
@@ -1228,8 +1296,12 @@ class FlextUtilitiesValidation:
         return FlextResult[int].ok(max_attempts)
 
     @staticmethod
-    def _validate_initial_delay(retry_config: dict[str, object]) -> FlextResult[float]:
+    def _validate_initial_delay(
+        retry_config: dict[str, FlextTypes.GeneralValueType] | None,
+    ) -> FlextResult[float]:
         """Validate initial_delay_seconds parameter."""
+        if retry_config is None:
+            retry_config = {}
         initial_delay_raw = retry_config.get("initial_delay_seconds", 0.1)
         if isinstance(initial_delay_raw, (int, float, str)):
             initial_delay = float(initial_delay_raw)
@@ -1243,8 +1315,12 @@ class FlextUtilitiesValidation:
         return FlextResult[float].ok(initial_delay)
 
     @staticmethod
-    def _validate_max_delay(retry_config: dict[str, object]) -> FlextResult[float]:
+    def _validate_max_delay(
+        retry_config: dict[str, FlextTypes.GeneralValueType] | None,
+    ) -> FlextResult[float]:
         """Validate max_delay_seconds parameter."""
+        if retry_config is None:
+            retry_config = {}
         max_delay_raw = retry_config.get("max_delay_seconds", 60.0)
         if isinstance(max_delay_raw, (int, float, str)):
             max_delay = float(max_delay_raw)
@@ -1259,9 +1335,13 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _validate_backoff_multiplier(
-        retry_config: dict[str, object],
+        retry_config: dict[str, FlextTypes.GeneralValueType] | None,
     ) -> FlextResult[float]:
         """Validate backoff_multiplier parameter."""
+        if retry_config is None:
+            return FlextResult[float].ok(
+                FlextConstants.Performance.DEFAULT_BACKOFF_MULTIPLIER,
+            )
         backoff_multiplier = retry_config.get("backoff_multiplier")
         if backoff_multiplier is not None and isinstance(
             backoff_multiplier,
@@ -1280,22 +1360,24 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def create_retry_config(
-        retry_config: dict[str, object],
-    ) -> FlextResult[RetryConfig]:
+        retry_config: dict[str, FlextTypes.GeneralValueType] | None,
+    ) -> FlextResult[FlextTypes.Config.RetryConfig]:
         """Create and validate retry configuration using railway pattern.
 
         Args:
             retry_config: Raw retry configuration dictionary
 
         Returns:
-            FlextResult[RetryConfig]: Validated retry configuration or error
+            FlextResult[FlextTypes.Config.RetryConfig]: Validated retry configuration or error
 
         """
+        if retry_config is None:
+            retry_config = {}
         try:
             # Validate each parameter using railway pattern (DRY consolidation)
             result = FlextUtilitiesValidation._validate_max_attempts(retry_config)
             if result.is_failure:
-                return FlextResult[RetryConfig].fail(
+                return FlextResult[FlextTypes.Config.RetryConfig].fail(
                     result.error or "Max attempts validation failed"
                 )
 
@@ -1305,7 +1387,7 @@ class FlextUtilitiesValidation:
                 retry_config
             )
             if delay_result.is_failure:
-                return FlextResult[RetryConfig].fail(
+                return FlextResult[FlextTypes.Config.RetryConfig].fail(
                     delay_result.error or "Initial delay validation failed"
                 )
 
@@ -1316,7 +1398,7 @@ class FlextUtilitiesValidation:
                 retry_config
             )
             if max_delay_result.is_failure:
-                return FlextResult[RetryConfig].fail(
+                return FlextResult[FlextTypes.Config.RetryConfig].fail(
                     max_delay_result.error or "Max delay validation failed"
                 )
 
@@ -1327,15 +1409,15 @@ class FlextUtilitiesValidation:
                 retry_config
             )
             if backoff_result.is_failure:
-                return FlextResult[RetryConfig].fail(
+                return FlextResult[FlextTypes.Config.RetryConfig].fail(
                     backoff_result.error or "Backoff multiplier validation failed"
                 )
 
             backoff_mult = backoff_result.value
             params_4 = (*params_3, backoff_mult)
 
-            return FlextResult[RetryConfig].ok(
-                RetryConfig(
+            return FlextResult[FlextTypes.Config.RetryConfig].ok(
+                FlextTypes.Config.RetryConfig(
                     max_attempts=params_4[0],
                     initial_delay_seconds=params_4[1],
                     max_delay_seconds=params_4[2],
@@ -1361,7 +1443,7 @@ class FlextUtilitiesValidation:
             )
 
         except (ValueError, TypeError) as e:
-            return FlextResult[RetryConfig].fail(
+            return FlextResult[FlextTypes.Config.RetryConfig].fail(
                 f"Invalid retry configuration: {e}",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
@@ -1410,15 +1492,15 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def validate_batch_services(
-        services: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        services: Mapping[str, FlextTypes.GeneralValueType],
+    ) -> FlextResult[Mapping[str, FlextTypes.GeneralValueType]]:
         """Validate batch services dictionary for container registration.
 
         Args:
             services: Dictionary of service names to service instances
 
         Returns:
-            FlextResult[dict[str, object]]: Validated services or validation error
+            FlextResult[Mapping[str, FlextTypes.GeneralValueType]]: Validated services or validation error
 
         """
         # Allow empty dictionaries for batch_register flexibility
@@ -1426,20 +1508,20 @@ class FlextUtilitiesValidation:
         # Validate service names
         for name in services:
             if not isinstance(name, str) or not name.strip():
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].fail(
                     f"Invalid service name: '{name}'. Must be non-empty string",
                 )
 
             # Check for reserved names
             if name.startswith("_"):
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].fail(
                     f"Service name cannot start with underscore: '{name}'",
                 )
 
         # Validate service instances
         for name, service in services.items():
             if service is None:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].fail(
                     f"Service '{name}' cannot be None",
                 )
 
@@ -1448,15 +1530,17 @@ class FlextUtilitiesValidation:
                 error_msg = (
                     f"Service '{name}' appears to be callable. Use with_factory instead"
                 )
-                return FlextResult[dict[str, object]].fail(error_msg)
+                return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].fail(
+                    error_msg
+                )
 
-        return FlextResult[dict[str, object]].ok(services)
+        return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].ok(services)
 
     @staticmethod
     def analyze_constructor_parameter(
         param_name: str,
         param: inspect.Parameter,
-    ) -> dict[str, object]:
+    ) -> FlextTypes.GeneralValueType:
         """Analyze constructor parameter for dependency injection.
 
         Args:
@@ -1480,31 +1564,37 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def validate_dispatch_config(
-        config: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        config: Mapping[str, FlextTypes.GeneralValueType] | None,
+    ) -> FlextResult[Mapping[str, FlextTypes.GeneralValueType]]:
         """Validate dispatch configuration dictionary.
 
         Args:
             config: Dispatch configuration dictionary
 
         Returns:
-            FlextResult[dict[str, object]]: Validated configuration or validation error
+            FlextResult[Mapping[str, FlextTypes.GeneralValueType]]: Validated configuration or validation error
 
         """
+        if config is None:
+            return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].fail(
+                "Configuration cannot be None",
+            )
         if not FlextRuntime.is_dict_like(config):
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].fail(
                 "Configuration must be a dictionary",
             )
 
         # Validate metadata if present
         metadata = config.get("metadata")
         if metadata is not None and not FlextRuntime.is_dict_like(metadata):
-            return FlextResult[dict[str, object]].fail("Metadata must be a dictionary")
+            return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].fail(
+                "Metadata must be a dictionary"
+            )
 
         # Validate correlation_id if present
         correlation_id = config.get("correlation_id")
         if correlation_id is not None and not isinstance(correlation_id, str):
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].fail(
                 "Correlation ID must be a string",
             )
 
@@ -1514,14 +1604,20 @@ class FlextUtilitiesValidation:
             timeout_override,
             (int, float),
         ):
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].fail(
                 "Timeout override must be a number",
             )
 
-        return FlextResult[dict[str, object]].ok(config)
+        # Type narrowing: config is guaranteed to be dict-like after validation
+        if not isinstance(config, Mapping):
+            # Convert to dict if needed
+            config = dict(config.items()) if hasattr(config, "items") else {}
+        return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].ok(config)
 
     @staticmethod
-    def _validate_event_structure(event: object) -> FlextResult[bool]:
+    def _validate_event_structure(
+        event: FlextProtocols.HasModelDump | None,
+    ) -> FlextResult[bool]:
         """Validate event is not None and has required attributes."""
         if event is None:
             return FlextResult[bool].fail(
@@ -1541,7 +1637,9 @@ class FlextUtilitiesValidation:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def _validate_event_fields(event: object) -> FlextResult[bool]:
+    def _validate_event_fields(
+        event: FlextProtocols.HasModelDump,
+    ) -> FlextResult[bool]:
         """Validate event field types and values."""
         # Validate event_type is non-empty string
         event_type = getattr(event, "event_type", "")
@@ -1570,7 +1668,9 @@ class FlextUtilitiesValidation:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def validate_domain_event(event: object) -> FlextResult[bool]:
+    def validate_domain_event(
+        event: FlextProtocols.HasModelDump | None,
+    ) -> FlextResult[bool]:
         """Enhanced domain event validation with comprehensive checks.
 
         Validates domain events for proper structure, required fields,
@@ -1588,7 +1688,12 @@ class FlextUtilitiesValidation:
         if structure_result.is_failure:
             return structure_result
 
-        # Validate fields
+        # Validate fields (event is guaranteed to be non-None after structure validation)
+        if event is None:
+            return FlextResult[bool].fail(
+                "Domain event cannot be None",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
         fields_result = FlextUtilitiesValidation._validate_event_fields(event)
         if fields_result.is_failure:
             return fields_result

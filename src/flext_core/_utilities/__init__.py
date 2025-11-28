@@ -15,6 +15,7 @@ from flext_core._utilities.configuration import FlextUtilitiesConfiguration, T_M
 from flext_core._utilities.data_mapper import FlextUtilitiesDataMapper
 from flext_core._utilities.domain import FlextUtilitiesDomain
 from flext_core._utilities.generators import FlextUtilitiesGenerators
+from flext_core._utilities.pagination import FlextUtilitiesPagination
 from flext_core._utilities.reliability import FlextUtilitiesReliability
 from flext_core._utilities.string_parser import FlextUtilitiesStringParser
 from flext_core._utilities.text_processor import FlextUtilitiesTextProcessor
@@ -28,6 +29,7 @@ __all__ = [
     "FlextUtilitiesDataMapper",
     "FlextUtilitiesDomain",
     "FlextUtilitiesGenerators",
+    "FlextUtilitiesPagination",
     "FlextUtilitiesReliability",
     "FlextUtilitiesStringParser",
     "FlextUtilitiesTextProcessor",

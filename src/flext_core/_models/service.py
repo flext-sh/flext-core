@@ -17,6 +17,7 @@ from pydantic import Field, field_validator
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
@@ -32,8 +33,8 @@ class FlextModelsService:
 
         service_name: str = Field(min_length=1, description="Service name")
         method_name: str = Field(min_length=1, description="Method to execute")
-        parameters: dict[str, object] = Field(default_factory=dict)
-        context: dict[str, object] = Field(default_factory=dict)
+        parameters: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
+        context: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
         timeout_seconds: float = Field(
             default=FlextConstants.Defaults.TIMEOUT,
             gt=0,
@@ -45,8 +46,12 @@ class FlextModelsService:
 
         @field_validator("context", mode="before")
         @classmethod
-        def validate_context(cls, v: object) -> dict[str, object]:
-            """Ensure context has required fields (using FlextUtilities.Generators)."""
+        def validate_context(cls, v: FlextTypes.GeneralValueType) -> dict[str, str]:
+            """Ensure context has required fields (using FlextUtilities.Generators).
+
+            Returns dict[str, str] because ensure_trace_context generates string trace IDs.
+            This is compatible with the field type dict[str, GeneralValueType] since str is a subtype.
+            """
             return FlextUtilities.Generators.ensure_trace_context(v)
 
         @field_validator("timeout_seconds", mode="after")
@@ -69,7 +74,7 @@ class FlextModelsService:
         """Domain service batch request."""
 
         service_name: str
-        operations: list[dict[str, object]] = Field(
+        operations: list[dict[str, FlextTypes.GeneralValueType]] = Field(
             default_factory=list,
             min_length=1,
             max_length=FlextConstants.Performance.MAX_BATCH_OPERATIONS,
@@ -105,7 +110,7 @@ class FlextModelsService:
             default_factory=lambda: FlextConstants.Cqrs.Aggregation.AVG,
         )
         group_by: list[str] = Field(default_factory=list)
-        filters: dict[str, object] = Field(default_factory=dict)
+        filters: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
 
     class DomainServiceResourceRequest(FlextModelsEntity.ArbitraryTypesModel):
         """Domain service resource request."""
@@ -118,8 +123,8 @@ class FlextModelsService:
         resource_id: str | None = None
         resource_limit: int = Field(1000, gt=0)
         action: str = Field(default_factory=lambda: FlextConstants.Cqrs.Action.GET)
-        data: dict[str, object] = Field(default_factory=dict)
-        filters: dict[str, object] = Field(default_factory=dict)
+        data: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
+        filters: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
 
     class OperationExecutionRequest(FlextModelsEntity.ArbitraryTypesModel):
         """Operation execution request."""
@@ -130,15 +135,19 @@ class FlextModelsService:
             description="Operation name",
         )
         operation_callable: Callable[..., FlextProtocols.ResultLike[object]]
-        arguments: dict[str, object] = Field(default_factory=dict)
-        keyword_arguments: dict[str, object] = Field(default_factory=dict)
+        arguments: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
+        keyword_arguments: dict[str, FlextTypes.GeneralValueType] = Field(
+            default_factory=dict
+        )
         timeout_seconds: float = Field(
             default=FlextConstants.Defaults.TIMEOUT,
             gt=0,
             le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextConfig (Config has priority over Constants)",
         )
-        retry_config: dict[str, object] = Field(default_factory=dict)
+        retry_config: dict[str, FlextTypes.GeneralValueType] = Field(
+            default_factory=dict
+        )
 
         @field_validator("operation_callable", mode="after")
         @classmethod

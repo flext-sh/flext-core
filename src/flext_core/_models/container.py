@@ -11,12 +11,18 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime
+from typing import cast as type_cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from flext_core._models.metadata import Metadata
+from flext_core._models.metadata import Metadata, MetadataAttributeValue
+from flext_core.constants import FlextConstants
 from flext_core.runtime import FlextRuntime
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
+
+# Type alias for GeneralValueType (PEP 695)
+type GeneralValueType = FlextTypes.GeneralValueType
 
 
 class FlextModelsContainer:
@@ -40,7 +46,7 @@ class FlextModelsContainer:
             min_length=1,
             description="Service identifier/name",
         )
-        service: object = Field(
+        service: GeneralValueType = Field(
             ...,
             description="Service instance (actual object)",
         )
@@ -48,7 +54,7 @@ class FlextModelsContainer:
             default_factory=FlextUtilities.Generators.generate_datetime_utc,
             description="UTC timestamp when service was registered",
         )
-        metadata: Metadata | dict[str, object] | None = Field(
+        metadata: Metadata | FlextTypes.Types.ServiceMetadataMapping | None = Field(
             default=None,
             description="Additional service metadata (JSON-serializable)",
         )
@@ -72,7 +78,11 @@ class FlextModelsContainer:
             if v is None:
                 return Metadata(attributes={})
             if FlextRuntime.is_dict_like(v):
-                return Metadata(attributes=v)
+                # Cast to MetadataAttributeValue-compatible dict
+                attributes: dict[str, MetadataAttributeValue] = type_cast(
+                    "dict[str, MetadataAttributeValue]", v
+                )
+                return Metadata(attributes=attributes)
             if isinstance(v, Metadata):
                 return v
             msg = f"metadata must be None, dict, or Metadata, got {type(v).__name__}"
@@ -112,7 +122,7 @@ class FlextModelsContainer:
             default=None,
             description="Cached singleton instance (if is_singleton=True)",
         )
-        metadata: Metadata | dict[str, object] | None = Field(
+        metadata: Metadata | FlextTypes.Types.ServiceMetadataMapping | None = Field(
             default=None,
             description="Additional factory metadata (JSON-serializable)",
         )
@@ -133,7 +143,11 @@ class FlextModelsContainer:
             if v is None:
                 return Metadata(attributes={})
             if FlextRuntime.is_dict_like(v):
-                return Metadata(attributes=v)
+                # Cast to MetadataAttributeValue-compatible dict
+                attributes: dict[str, MetadataAttributeValue] = type_cast(
+                    "dict[str, MetadataAttributeValue]", v
+                )
+                return Metadata(attributes=attributes)
             if isinstance(v, Metadata):
                 return v
             msg = f"metadata must be None, dict, or Metadata, got {type(v).__name__}"
@@ -171,10 +185,9 @@ class FlextModelsContainer:
             le=5000,
             description="Maximum number of factories allowed in registry",
         )
-        validation_mode: str = Field(
-            default="strict",
-            pattern="^(strict|lenient)$",
-            description="Validation mode: 'strict' or 'lenient'",
+        validation_mode: FlextConstants.Cqrs.ValidationLevel = Field(
+            default=FlextConstants.Cqrs.ValidationLevel.STRICT,
+            description=f"Validation mode: '{FlextConstants.Cqrs.ValidationLevel.STRICT.value}' or '{FlextConstants.Cqrs.ValidationLevel.LENIENT.value}'",
         )
         enable_auto_registration: bool = Field(
             default=False,

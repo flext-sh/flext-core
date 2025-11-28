@@ -18,7 +18,7 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core.typings import FlextTypes, GeneralValueType
 
 # TypeVar for generic Pydantic model type
 T_Model = TypeVar("T_Model", bound=BaseModel)
@@ -30,7 +30,9 @@ class FlextUtilitiesConfiguration:
     """Configuration parameter access and manipulation utilities."""
 
     @staticmethod
-    def get_parameter(obj: object, parameter: str) -> FlextTypes.ParameterValueType:
+    def get_parameter(
+        obj: GeneralValueType, parameter: str
+    ) -> FlextTypes.ParameterValueType:
         """Get parameter value from a Pydantic configuration object.
 
         Simplified implementation using Pydantic's model_dump for safe access.
@@ -62,7 +64,7 @@ class FlextUtilitiesConfiguration:
                 if not isinstance(model_data_raw, dict):
                     msg = f"model_dump() must return dict, got {type(model_data_raw).__name__}"
                     raise TypeError(msg)
-                model_data: dict[str, object] = model_data_raw
+                model_data: dict[str, GeneralValueType] = model_data_raw
                 if parameter not in model_data:
                     msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
                     raise FlextExceptions.NotFoundError(msg, resource_id=parameter)
@@ -88,7 +90,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def set_parameter(
-        obj: object,
+        obj: GeneralValueType,
         parameter: str,
         value: FlextTypes.ParameterValueType,
     ) -> bool:
@@ -200,7 +202,7 @@ class FlextUtilitiesConfiguration:
         )
 
     @staticmethod
-    def validate_config_class(config_class: object) -> tuple[bool, str | None]:
+    def validate_config_class(config_class: type[object]) -> tuple[bool, str | None]:
         """Validate that a configuration class is properly configured.
 
         Checks that the class:
@@ -240,7 +242,7 @@ class FlextUtilitiesConfiguration:
         env_prefix: str,
         env_file: str | None = None,
         env_nested_delimiter: str = "__",
-    ) -> dict[str, object]:
+    ) -> dict[str, GeneralValueType]:
         """Create a SettingsConfigDict for environment binding.
 
         Helper method for creating proper Pydantic v2 SettingsConfigDict
@@ -271,7 +273,7 @@ class FlextUtilitiesConfiguration:
         model_class: type[T_Model],
         explicit_options: T_Model | None,
         default_factory: Callable[[], T_Model],
-        **kwargs: object,
+        **kwargs: GeneralValueType,
     ) -> FlextResult[T_Model]:
         """Build Pydantic options model from explicit options or kwargs.
 
@@ -291,7 +293,7 @@ class FlextUtilitiesConfiguration:
                 self,
                 entries: list[Entry],
                 format_options: WriteFormatOptions | None = None,
-                **format_kwargs: object,
+                **format_kwargs: GeneralValueType,
             ) -> FlextResult[str]:
                 options_result = FlextUtilities.Configuration.build_options_from_kwargs(
                     model_class=WriteFormatOptions,
@@ -328,13 +330,13 @@ class FlextUtilitiesConfiguration:
             # Step 3: Get valid field names from model class
             # Access model_fields as class attribute for type safety
             model_fields_attr = getattr(model_class, "model_fields", {})
-            model_fields: dict[str, object] = (
+            model_fields: dict[str, GeneralValueType] = (
                 model_fields_attr if isinstance(model_fields_attr, dict) else {}
             )
             valid_field_names = set(model_fields.keys())
 
             # Step 4: Filter kwargs to only valid field names
-            valid_kwargs: dict[str, object] = {}
+            valid_kwargs: dict[str, GeneralValueType] = {}
             invalid_kwargs: list[str] = []
 
             for key, value in kwargs.items():

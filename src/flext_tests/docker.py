@@ -26,7 +26,7 @@ import socket
 import subprocess
 import time
 from collections.abc import Callable, Iterator
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from types import ModuleType
 from typing import ClassVar
@@ -63,8 +63,11 @@ logger: FlextLogger = FlextLogger(__name__)
 class FlextTestDocker:
     """Docker container management for FLEXT tests."""
 
-    class ContainerStatus(Enum):
-        """Container status enumeration."""
+    class ContainerStatus(StrEnum):
+        """Container status enumeration.
+
+        Uses StrEnum (Python 3.11+) for better type safety and Pydantic integration.
+        """
 
         RUNNING = "running"
         STOPPED = "stopped"

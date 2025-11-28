@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Mapping, Sequence
 
 from pydantic import computed_field
 
@@ -24,6 +25,7 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 
 
 class FlextService[TDomainResult](
@@ -72,7 +74,12 @@ class FlextService[TDomainResult](
         ...     user = result.value
     """
 
-    def __init__(self, **data: object) -> None:
+    def __init__(
+        self,
+        **data: FlextTypes.ScalarValue
+        | Sequence[FlextTypes.ScalarValue]
+        | Mapping[str, FlextTypes.ScalarValue],
+    ) -> None:
         """Initialize service with configuration data.
 
         Sets up the service instance with optional configuration parameters
@@ -177,7 +184,7 @@ class FlextService[TDomainResult](
             # Validation failed due to exception - consider invalid
             return False
 
-    def get_service_info(self) -> dict[str, object]:
+    def get_service_info(self) -> Mapping[str, FlextTypes.FlexibleValue]:
         """Get service metadata and configuration information.
 
         Returns comprehensive metadata about the service instance including
@@ -185,7 +192,7 @@ class FlextService[TDomainResult](
         Used by monitoring, logging, and debugging infrastructure.
 
         Returns:
-            dict[str, object]: Service metadata dictionary containing:
+            Mapping[str, FlextTypes.FlexibleValue]: Service metadata dictionary containing:
                 - service_type: Class name of the service
                 - Additional metadata can be added by subclasses
 

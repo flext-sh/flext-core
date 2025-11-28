@@ -21,15 +21,18 @@ from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
+# Type alias for general value type - re-export from FlextTypes
+type GeneralValueType = FlextTypes.GeneralValueType
+
 
 class FlextModelsValidation:
     """Validation utility functions."""
 
     @staticmethod
     def validate_business_rules(
-        model: object,
-        *rules: Callable[[object], FlextResult[object]],
-    ) -> FlextResult[object]:
+        model: GeneralValueType,
+        *rules: Callable[[GeneralValueType], FlextResult[GeneralValueType]],
+    ) -> FlextResult[GeneralValueType]:
         """Validate business rules with railway patterns.
 
         Args:
@@ -69,15 +72,15 @@ class FlextModelsValidation:
                     if result.error
                     else f"{base_msg} (validation rule failed)"
                 )
-                return FlextResult[object].fail(error_msg)
+                return FlextResult[GeneralValueType].fail(error_msg)
 
-        return FlextResult[object].ok(model)
+        return FlextResult[GeneralValueType].ok(model)
 
     @staticmethod
     def validate_cross_fields(
-        model: object,
-        field_validators: dict[str, Callable[[object], FlextResult[object]]],
-    ) -> FlextResult[object]:
+        model: GeneralValueType,
+        field_validators: FlextTypes.Types.FieldValidatorMapping,
+    ) -> FlextResult[GeneralValueType]:
         """Validate cross-field dependencies with railway patterns.
 
         Args:
@@ -102,8 +105,9 @@ class FlextModelsValidation:
             ```
 
         """
-        validation_results = [
-            validator(model) for validator in field_validators.values()
+        validation_results: list[FlextResult[bool]] = [
+            validator(model)
+            for validator in field_validators.values()  # type: ignore[return-value]
         ]
 
         errors = [
@@ -115,13 +119,13 @@ class FlextModelsValidation:
         if errors:
             # Type assertion: errors contains only non-None strings due to filter above
             error_messages = [str(err) for err in errors]
-            return FlextResult[object].fail(
+            return FlextResult[GeneralValueType].fail(
                 f"Cross-field validation failed: {'; '.join(error_messages)}",
                 error_code="CROSS_FIELD_VALIDATION_FAILED",
                 error_data={"field_errors": error_messages},
             )
 
-        return FlextResult[object].ok(model)
+        return FlextResult[GeneralValueType].ok(model)
 
     @staticmethod
     def validate_performance(
@@ -232,7 +236,7 @@ class FlextModelsValidation:
 
             return FlextResult[object].ok(valid_models)
         # Accumulate all errors
-        validated_models: FlextTypes.ObjectList = []
+        validated_models: list[GeneralValueType] = []
         all_errors: list[str] = []
 
         for model in models:
@@ -312,9 +316,9 @@ class FlextModelsValidation:
 
     @staticmethod
     def validate_aggregate_consistency_with_rules(
-        aggregate: object,
-        consistency_rules: dict[str, Callable[[object], FlextResult[object]]],
-    ) -> FlextResult[object]:
+        aggregate: GeneralValueType,
+        consistency_rules: FlextTypes.Types.ConsistencyRuleMapping,
+    ) -> FlextResult[GeneralValueType]:
         """Validate aggregate consistency with railway patterns.
 
         Args:
@@ -344,19 +348,19 @@ class FlextModelsValidation:
                 violations.append(f"{rule_name}: {result.error}")
 
         if violations:
-            return FlextResult[object].fail(
+            return FlextResult[GeneralValueType].fail(
                 f"Aggregate consistency violations: {'; '.join(violations)}",
                 error_code="AGGREGATE_CONSISTENCY_VIOLATION",
                 error_data={"violations": violations},
             )
 
-        return FlextResult[object].ok(aggregate)
+        return FlextResult[GeneralValueType].ok(aggregate)
 
     @staticmethod
     def validate_event_sourcing(
-        event: object,
-        event_validators: dict[str, Callable[[object], FlextResult[object]]],
-    ) -> FlextResult[object]:
+        event: GeneralValueType,
+        event_validators: FlextTypes.Types.EventValidatorMapping,
+    ) -> FlextResult[GeneralValueType]:
         """Validate event sourcing patterns with railway patterns.
 
         Args:
@@ -390,13 +394,13 @@ class FlextModelsValidation:
         ]
 
         if errors:
-            return FlextResult[object].fail(
+            return FlextResult[GeneralValueType].fail(
                 f"Event validation failed: {'; '.join(errors)}",
                 error_code="EVENT_VALIDATION_FAILED",
                 error_data={"event_errors": errors},
             )
 
-        return FlextResult[object].ok(event)
+        return FlextResult[GeneralValueType].ok(event)
 
     @staticmethod
     def validate_cqrs_patterns(
@@ -408,7 +412,7 @@ class FlextModelsValidation:
 
         Args:
             command_or_query: The command or query to validate
-            pattern_type: Type of pattern ("command" or "query")
+            pattern_type: Type of pattern (command or query handler type)
             validators: List of pattern-specific validators
 
         Returns:
@@ -418,7 +422,7 @@ class FlextModelsValidation:
             ```python
             result = FlextModels.Validation.validate_cqrs_patterns(
                 create_order_command,
-                "command",
+                FlextConstants.Cqrs.HandlerType.COMMAND.value,
                 [
                     lambda c: validate_command_structure(c),
                     lambda c: validate_command_data(c),
@@ -428,9 +432,13 @@ class FlextModelsValidation:
             ```
 
         """
-        if pattern_type not in {"command", "query"}:
+        valid_pattern_types = {
+            FlextConstants.Cqrs.HandlerType.COMMAND.value,
+            FlextConstants.Cqrs.HandlerType.QUERY.value,
+        }
+        if pattern_type not in valid_pattern_types:
             return FlextResult[object].fail(
-                f"Invalid pattern type: {pattern_type}. Must be 'command' or 'query'",
+                f"Invalid pattern type: {pattern_type}. Must be '{FlextConstants.Cqrs.HandlerType.COMMAND.value}' or '{FlextConstants.Cqrs.HandlerType.QUERY.value}'",
                 error_code="INVALID_PATTERN_TYPE",
             )
 

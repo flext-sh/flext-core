@@ -16,10 +16,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence, Set as AbstractSet
 from enum import StrEnum
-from typing import Final, Literal
+from types import MappingProxyType
+from typing import Final, Literal, TypedDict, TypeGuard, cast
 
 from pydantic import ConfigDict
+
+from flext_core.typings import FlextTypes
+
+
+class DockerContainerConfig(TypedDict):
+    """Type definition for Docker container configuration."""
+
+    compose_file: str
+    service: str
+    port: int
 
 
 class FlextConstants:
@@ -106,14 +118,16 @@ class FlextConstants:
     All FLEXT projects MUST follow these patterns for constants organization:
 
     1. **Constants Organization**:
-       - ALL constants MUST be inside the main constants class (no module-level constants)
+       - ALL constants MUST be inside the main constants class
+         (no module-level constants)
        - Use nested classes for logical grouping (e.g., class Errors:)
        - Layer 0 purity: Only constants, no functions or behavior
 
     2. **Inheritance Pattern**:
        - All domain constants MUST extend FlextConstants directly
        - Use composition for domain relationships: Reference other domain constants
-       - Example: class FlextLdapConstants(FlextConstants): with LdifConstants = FlextLdifConstants
+       - Example: class FlextLdapConstants(FlextConstants):
+           with LdifConstants = FlextLdifConstants
 
     3. **Declaration Style**:
        - Use Final[Type] for ALL immutable constants
@@ -272,25 +286,27 @@ class FlextConstants:
     ZERO: Final[int] = 0
     INITIAL_TIME: Final[float] = 0.0
 
-    def __getitem__(self, key: str) -> object:
+    def __getitem__(self, key: str) -> FlextTypes.ConstantValue:
         """Dynamic access: FlextConstants['Errors.VALIDATION_ERROR'].
 
         Args:
             key: Dot-separated path (e.g., 'Errors.VALIDATION_ERROR')
 
         Returns:
-            The constant value
+            The constant value (str, int, float, bool, ConfigDict, frozenset,
+            tuple, Mapping, or StrEnum)
 
         Raises:
             AttributeError: If path not found
 
         """
         parts = key.split(".")
-        value: object = self
+        result: object = self
         try:
             for part in parts:
-                value = getattr(value, part)
-            return value
+                attr = getattr(result, part)
+                result = attr
+            return cast("FlextTypes.ConstantValue", result)
         except AttributeError as e:
             msg = f"Constant path '{key}' not found"
             raise AttributeError(msg) from e
@@ -403,7 +419,7 @@ class FlextConstants:
                 "flext-redis",
                 "flext-oracle",
             )
-            SHARED_CONTAINERS: Final[dict[str, dict[str, str | int]]] = {
+            SHARED_CONTAINERS: Final[Mapping[str, DockerContainerConfig]] = {
                 "flext-openldap-test": {
                     "compose_file": "flext-ldap/docker/docker-compose.yml",
                     "service": "openldap",
@@ -436,7 +452,7 @@ class FlextConstants:
             WARN = "warn"
             PERMISSIVE = "permissive"
 
-        FAILURE_LEVEL_DEFAULT: Final[str] = FailureLevel.PERMISSIVE
+        FAILURE_LEVEL_DEFAULT: Final[FailureLevel] = FailureLevel.PERMISSIVE
 
     class Messages:
         """User-facing message templates."""
@@ -619,7 +635,15 @@ class FlextConstants:
 
             @classmethod
             def validate(cls, value: str) -> bool:
-                """Validate state value."""
+                """Validate state value.
+
+                Args:
+                    value: State value to validate.
+
+                Returns:
+                    True if value is a valid state, False otherwise.
+
+                """
                 return value in cls.__members__.values()
 
     class Security:
@@ -647,6 +671,8 @@ class FlextConstants:
             "ERROR",
             "CRITICAL",
         )
+        # Immutable set for O(1) membership testing (Python 3.13+ frozenset)
+        VALID_LEVELS_SET: Final[frozenset[str]] = frozenset(VALID_LEVELS)
         JSON_OUTPUT_DEFAULT: Final[bool] = False
         DEFAULT_FORMAT: Final[str] = (
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -665,6 +691,199 @@ class FlextConstants:
         MAX_CONTEXT_KEYS: Final[int] = 50
         MASK_SENSITIVE_DATA: Final[bool] = True
 
+        # String constants for context operations (runtime use)
+        # Using Literal types directly in Final for Python 3.13+ type safety
+        CONTEXT_OPERATION_BIND: Final = "bind"
+        CONTEXT_OPERATION_UNBIND: Final = "unbind"
+        CONTEXT_OPERATION_CLEAR: Final = "clear"
+        CONTEXT_OPERATION_GET: Final = "get"
+
+        # Type aliases for logging operations (Python 3.13+ PEP 695 best practices)
+        # Using PEP 695 type keyword for better type checking and IDE support
+        type ContextOperationGetLiteral = Literal["get"]
+        type ContextOperationModifyLiteral = Literal["bind", "unbind", "clear"]
+        type ReturnResultTrueLiteral = Literal[True]
+        type ReturnResultFalseLiteral = Literal[False]
+
+    class Literals:
+        """Literal type aliases for type-safe annotations.
+
+        Uses Python 3.13+ PEP 695 best practices.
+
+        These type aliases provide strict type checking for common string values
+        used throughout the flext-core codebase. They correspond to StrEnum values
+        and constant values defined in other namespace classes.
+
+        Uses PEP 695 `type` keyword syntax for modern Python 3.13+ type aliases.
+        """
+
+        # Log level literal (matches Settings.LogLevel StrEnum values)
+        # Values must match Settings.LogLevel enum exactly for type safety
+        type LogLevelLiteral = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
+        # Environment literal (matches Settings.Environment StrEnum values)
+        # Values must match Settings.Environment enum exactly for type safety
+        type EnvironmentLiteral = Literal[
+            "development",
+            "staging",
+            "production",
+            "testing",
+            "local",
+        ]
+
+        # Registration status literal (matches Dispatcher constants)
+        type RegistrationStatusLiteral = Literal["active", "inactive", "error"]
+
+        # State literal (matches Mixins state constants)
+        type StateLiteral = Literal[
+            "active",
+            "inactive",
+            "pending",
+            "completed",
+            "failed",
+            "running",
+            "compensating",
+            "sent",
+            "idle",
+            "healthy",
+            "degraded",
+            "unhealthy",
+        ]
+
+        # =====================================================================
+        # ADVANCED ENUM-DERIVED LITERAL TYPES (Python 3.13+ PEP 695 best practices)
+        # =====================================================================
+        # These Literal types match StrEnum classes defined above
+        # Use these for type annotations in Pydantic models and function signatures
+        # All Literal values must match their corresponding StrEnum values exactly
+        # for type safety and consistency
+        #
+        # Python 3.13+ advanced patterns:
+        # - collections.abc.Mapping for immutable validation mappings
+        # - frozenset for O(1) membership testing
+        # - discriminated unions for better type narrowing
+
+        # Exceptions.FailureLevel - values match FailureLevel StrEnum
+        type FailureLevelLiteral = Literal["strict", "warn", "permissive"]
+
+        # Cqrs.ProcessingMode - values match ProcessingMode StrEnum
+        type ProcessingModeLiteral = Literal[
+            "batch", "stream", "parallel", "sequential"
+        ]
+
+        # Cqrs.ProcessingStatus - values match ProcessingStatus StrEnum
+        type ProcessingStatusLiteral = Literal[
+            "pending",
+            "running",
+            "completed",
+            "failed",
+            "cancelled",
+        ]
+
+        # Cqrs.ValidationLevel - values match ValidationLevel StrEnum
+        type ValidationLevelLiteral = Literal["strict", "lenient", "standard"]
+
+        # Cqrs.ProcessingPhase - values match ProcessingPhase StrEnum
+        type ProcessingPhaseLiteral = Literal[
+            "prepare", "execute", "validate", "complete"
+        ]
+
+        # Cqrs.BindType - values match BindType StrEnum
+        type BindTypeLiteral = Literal["temporary", "permanent"]
+
+        # Cqrs.MergeStrategy - values match MergeStrategy StrEnum
+        type MergeStrategyLiteral = Literal["replace", "update", "merge_deep"]
+
+        # Cqrs.Status - values match Status StrEnum
+        type StatusLiteral = Literal[
+            "pending",
+            "running",
+            "completed",
+            "failed",
+            "compensating",
+        ]
+
+        # Cqrs.HealthStatus - values match HealthStatus StrEnum
+        type HealthStatusLiteral = Literal["healthy", "degraded", "unhealthy"]
+
+        # Cqrs.TokenType - values match TokenType StrEnum
+        type TokenTypeLiteral = Literal["bearer", "api_key", "jwt"]
+
+        # Cqrs.NotificationStatus - values match NotificationStatus StrEnum
+        type NotificationStatusLiteral = Literal["pending", "sent", "failed"]
+
+        # Cqrs.TokenStatus - values match TokenStatus StrEnum
+        type TokenStatusLiteral = Literal["pending", "running", "completed", "failed"]
+
+        # Reliability.CircuitBreakerState - values match CircuitBreakerState StrEnum
+        type CircuitBreakerStateLiteral = Literal["closed", "open", "half_open"]
+
+        # Cqrs.CircuitBreakerStatus - values match CircuitBreakerStatus StrEnum
+        type CircuitBreakerStatusLiteral = Literal[
+            "idle", "running", "completed", "failed"
+        ]
+
+        # Cqrs.BatchStatus - values match BatchStatus StrEnum
+        type BatchStatusLiteral = Literal[
+            "pending", "processing", "completed", "failed"
+        ]
+
+        # Cqrs.ExportStatus - values match ExportStatus StrEnum
+        type ExportStatusLiteral = Literal[
+            "pending", "processing", "completed", "failed"
+        ]
+
+        # Cqrs.OperationStatus - values match OperationStatus StrEnum
+        type OperationStatusLiteral = Literal["success", "failure", "partial"]
+
+        # Cqrs.SerializationFormat - values match SerializationFormat StrEnum
+        type SerializationFormatLiteral = Literal["json", "yaml", "toml", "msgpack"]
+
+        # Cqrs.Compression - values match Compression StrEnum
+        type CompressionLiteral = Literal["none", "gzip", "bzip2", "lz4"]
+
+        # Cqrs.Aggregation - values match Aggregation StrEnum
+        type AggregationLiteral = Literal["sum", "avg", "min", "max", "count"]
+
+        # Cqrs.Action - values match Action StrEnum
+        type ActionLiteral = Literal["get", "create", "update", "delete", "list"]
+
+        # Cqrs.PersistenceLevel - values match PersistenceLevel StrEnum
+        type PersistenceLevelLiteral = Literal["memory", "disk", "distributed"]
+
+        # Cqrs.TargetFormat - values match TargetFormat StrEnum
+        type TargetFormatLiteral = Literal["full", "compact", "minimal"]
+
+        # Cqrs.WarningLevel - values match WarningLevel StrEnum
+        type WarningLevelLiteral = Literal["none", "warn", "error"]
+
+        # Cqrs.OutputFormat - values match OutputFormat StrEnum
+        type OutputFormatLiteral = Literal["dict", "json"]
+
+        # Cqrs.Mode - values match Mode StrEnum
+        type ModeLiteral = Literal["validation", "serialization"]
+
+        # Error type literal (for error categorization)
+        type ErrorTypeLiteral = Literal[
+            "validation",
+            "configuration",
+            "operation",
+            "connection",
+            "timeout",
+            "authorization",
+            "authentication",
+            "not_found",
+            "attribute_access",
+            "conflict",
+            "rate_limit",
+            "circuit_breaker",
+            "type_error",
+            "value_error",
+            "runtime_error",
+            "system_error",
+        ]
+        """Error type literals for error categorization and type-safe error handling."""
+
     class Cqrs:
         """CQRS pattern constants."""
 
@@ -677,13 +896,27 @@ class FlextConstants:
             OPERATION = "operation"
             SAGA = "saga"
 
-        # Type literals for message type discrimination
-        CommandMessageTypeLiteral = Literal["command"]
-        QueryMessageTypeLiteral = Literal["query"]
-        EventMessageTypeLiteral = Literal["event"]
-        HandlerModeLiteral = Literal["command", "query", "event", "operation", "saga"]
-        HandlerTypeLiteral = Literal["command", "query", "event", "operation", "saga"]
-        ServiceMetricTypeLiteral = Literal["counter", "gauge", "histogram", "summary"]
+        # Type aliases for message type discrimination
+        # (Python 3.13+ PEP 695 best practices)
+        # Using PEP 695 type keyword for better type checking and IDE support
+        # These Literals match HandlerType StrEnum values for type safety
+        type CommandMessageTypeLiteral = Literal["command"]
+        type QueryMessageTypeLiteral = Literal["query"]
+        type EventMessageTypeLiteral = Literal["event"]
+        # HandlerTypeLiteral matches HandlerType StrEnum values exactly
+        type HandlerTypeLiteral = Literal[
+            "command",
+            "query",
+            "event",
+            "operation",
+            "saga",
+        ]
+        type ServiceMetricTypeLiteral = Literal[
+            "counter",
+            "gauge",
+            "histogram",
+            "summary",
+        ]
 
         DEFAULT_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
         COMMAND_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
@@ -692,8 +925,8 @@ class FlextConstants:
         OPERATION_HANDLER_TYPE: HandlerType = HandlerType.OPERATION
         SAGA_HANDLER_TYPE: HandlerType = HandlerType.SAGA
 
-        # Valid handler modes as frozenset for validation without enum iteration
-        VALID_HANDLER_MODES: frozenset[str] = frozenset({
+        # Valid handler modes as frozenset for O(1) validation
+        VALID_HANDLER_MODES: Final[AbstractSet[str]] = frozenset({
             "command",
             "query",
             "event",
@@ -917,6 +1150,8 @@ class FlextConstants:
         SCOPE_REQUEST: Final[str] = "request"
         SCOPE_SESSION: Final[str] = "session"
         SCOPE_TRANSACTION: Final[str] = "transaction"
+        SCOPE_APPLICATION: Final[str] = "application"
+        SCOPE_OPERATION: Final[str] = "operation"
         CORRELATION_ID_PREFIX: Final[str] = "flext-"
         CORRELATION_ID_LENGTH: Final[int] = 12
         DEFAULT_CONTEXT_TIMEOUT: Final[int] = 30
@@ -925,7 +1160,7 @@ class FlextConstants:
         MILLISECONDS_PER_SECOND: Final[int] = 1000
         EXPORT_FORMAT_JSON: Final[str] = "json"
         EXPORT_FORMAT_DICT: Final[str] = "dict"
-        METADATA_FIELDS: Final[frozenset[str]] = frozenset({
+        METADATA_FIELDS: Final[AbstractSet[str]] = frozenset({
             "user_id",
             "correlation_id",
             "request_id",
@@ -945,28 +1180,35 @@ class FlextConstants:
     class Dispatcher:
         """Message dispatcher constants."""
 
-        HANDLER_MODE_COMMAND = "command"
-        HANDLER_MODE_QUERY = "query"
-        VALID_HANDLER_MODES = (HANDLER_MODE_COMMAND, HANDLER_MODE_QUERY)
-        DEFAULT_HANDLER_MODE = HANDLER_MODE_COMMAND
-        DEFAULT_AUTO_CONTEXT = True
-        DEFAULT_ENABLE_LOGGING = True
-        DEFAULT_ENABLE_METRICS = True
-        DEFAULT_TIMEOUT_SECONDS = 30
-        MIN_TIMEOUT_SECONDS = 1
-        MAX_TIMEOUT_SECONDS = 600
-        MIN_REGISTRATION_ID_LENGTH = 1
-        MIN_REQUEST_ID_LENGTH = 1
-        ERROR_INVALID_HANDLER_MODE = "handler_mode must be 'command' or 'query'"
-        ERROR_HANDLER_REQUIRED = "handler cannot be None"
-        ERROR_MESSAGE_REQUIRED = "message cannot be None"
-        ERROR_POSITIVE_TIMEOUT = "timeout must be positive"
-        ERROR_INVALID_REGISTRATION_ID = "registration_id must be non-empty string"
-        ERROR_INVALID_REQUEST_ID = "request_id must be non-empty string"
-        REGISTRATION_STATUS_ACTIVE = "active"
-        REGISTRATION_STATUS_INACTIVE = "inactive"
-        REGISTRATION_STATUS_ERROR = "error"
-        VALID_REGISTRATION_STATUSES = (
+        HANDLER_MODE_COMMAND: Final[str] = "command"
+        HANDLER_MODE_QUERY: Final[str] = "query"
+        VALID_HANDLER_MODES: Final[tuple[str, ...]] = (
+            HANDLER_MODE_COMMAND,
+            HANDLER_MODE_QUERY,
+        )
+        DEFAULT_HANDLER_MODE: Final[str] = HANDLER_MODE_COMMAND
+        DEFAULT_AUTO_CONTEXT: Final[bool] = True
+        DEFAULT_ENABLE_LOGGING: Final[bool] = True
+        DEFAULT_ENABLE_METRICS: Final[bool] = True
+        DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
+        MIN_TIMEOUT_SECONDS: Final[int] = 1
+        MAX_TIMEOUT_SECONDS: Final[int] = 600
+        MIN_REGISTRATION_ID_LENGTH: Final[int] = 1
+        MIN_REQUEST_ID_LENGTH: Final[int] = 1
+        ERROR_INVALID_HANDLER_MODE: Final[str] = (
+            "handler_mode must be 'command' or 'query'"
+        )
+        ERROR_HANDLER_REQUIRED: Final[str] = "handler cannot be None"
+        ERROR_MESSAGE_REQUIRED: Final[str] = "message cannot be None"
+        ERROR_POSITIVE_TIMEOUT: Final[str] = "timeout must be positive"
+        ERROR_INVALID_REGISTRATION_ID: Final[str] = (
+            "registration_id must be non-empty string"
+        )
+        ERROR_INVALID_REQUEST_ID: Final[str] = "request_id must be non-empty string"
+        REGISTRATION_STATUS_ACTIVE: Final[str] = "active"
+        REGISTRATION_STATUS_INACTIVE: Final[str] = "inactive"
+        REGISTRATION_STATUS_ERROR: Final[str] = "error"
+        VALID_REGISTRATION_STATUSES: Final[tuple[str, ...]] = (
             REGISTRATION_STATUS_ACTIVE,
             REGISTRATION_STATUS_INACTIVE,
             REGISTRATION_STATUS_ERROR,
@@ -985,89 +1227,89 @@ class FlextConstants:
     class Mixins:
         """Constants for mixin operations."""
 
-        FIELD_ID = "unique_id"
-        FIELD_NAME = "name"
-        FIELD_TYPE = "type"
-        FIELD_STATUS = "status"
-        FIELD_DATA = "data"
-        FIELD_CONFIG = "config"
-        FIELD_STATE = "state"
-        FIELD_CREATED_AT = "created_at"
-        FIELD_UPDATED_AT = "updated_at"
-        FIELD_VALIDATED = "validated"
-        FIELD_CLASS = "class"
-        FIELD_MODULE = "module"
-        FIELD_REGISTERED = "registered"
-        FIELD_EVENT_NAME = "event_name"
-        FIELD_AGGREGATE_ID = "aggregate_id"
-        FIELD_OCCURRED_AT = "occurred_at"
-        STATE_ACTIVE = "active"
-        STATE_INACTIVE = "inactive"
-        STATE_PENDING = "pending"
-        STATE_COMPLETED = "completed"
-        STATE_FAILED = "failed"
-        STATE_RUNNING = "running"
-        STATE_COMPENSATING = "compensating"
-        STATE_SENT = "sent"
-        STATE_IDLE = "idle"
-        STATE_HEALTHY = "healthy"
-        STATE_DEGRADED = "degraded"
-        STATE_UNHEALTHY = "unhealthy"
-        STATUS_PASS = "PASS"
-        STATUS_FAIL = "FAIL"
-        STATUS_NO_TARGET = "NO_TARGET"
-        STATUS_SKIP = "SKIP"
-        STATUS_UNKNOWN = "UNKNOWN"
-        IDENTIFIER_UNKNOWN = "unknown"
-        IDENTIFIER_DEFAULT = "default"
-        IDENTIFIER_ANONYMOUS = "anonymous"
-        IDENTIFIER_GUEST = "guest"
-        IDENTIFIER_SYSTEM = "system"
-        METHOD_HANDLE = "handle"
-        METHOD_PROCESS = "process"
-        METHOD_EXECUTE = "execute"
-        METHOD_PROCESS_COMMAND = "process_command"
-        AUTH_BEARER = "bearer"
-        AUTH_API_KEY = "api_key"
-        AUTH_JWT = "jwt"
-        HANDLER_COMMAND = "command"
-        HANDLER_QUERY = "query"
-        METHOD_VALIDATE = "validate"
-        VALIDATION_BASIC = "basic"
-        VALIDATION_STRICT = "strict"
-        VALIDATION_CUSTOM = "custom"
-        DEFAULT_JSON_INDENT = 2
-        DEFAULT_ENCODING = "utf-8"
-        DEFAULT_SORT_KEYS = False
-        DEFAULT_ENSURE_ASCII = False
-        BOOL_TRUE_STRINGS: Final[frozenset[str]] = frozenset({
+        FIELD_ID: Final[str] = "unique_id"
+        FIELD_NAME: Final[str] = "name"
+        FIELD_TYPE: Final[str] = "type"
+        FIELD_STATUS: Final[str] = "status"
+        FIELD_DATA: Final[str] = "data"
+        FIELD_CONFIG: Final[str] = "config"
+        FIELD_STATE: Final[str] = "state"
+        FIELD_CREATED_AT: Final[str] = "created_at"
+        FIELD_UPDATED_AT: Final[str] = "updated_at"
+        FIELD_VALIDATED: Final[str] = "validated"
+        FIELD_CLASS: Final[str] = "class"
+        FIELD_MODULE: Final[str] = "module"
+        FIELD_REGISTERED: Final[str] = "registered"
+        FIELD_EVENT_NAME: Final[str] = "event_name"
+        FIELD_AGGREGATE_ID: Final[str] = "aggregate_id"
+        FIELD_OCCURRED_AT: Final[str] = "occurred_at"
+        STATE_ACTIVE: Final[str] = "active"
+        STATE_INACTIVE: Final[str] = "inactive"
+        STATE_PENDING: Final[str] = "pending"
+        STATE_COMPLETED: Final[str] = "completed"
+        STATE_FAILED: Final[str] = "failed"
+        STATE_RUNNING: Final[str] = "running"
+        STATE_COMPENSATING: Final[str] = "compensating"
+        STATE_SENT: Final[str] = "sent"
+        STATE_IDLE: Final[str] = "idle"
+        STATE_HEALTHY: Final[str] = "healthy"
+        STATE_DEGRADED: Final[str] = "degraded"
+        STATE_UNHEALTHY: Final[str] = "unhealthy"
+        STATUS_PASS: Final[str] = "PASS"
+        STATUS_FAIL: Final[str] = "FAIL"
+        STATUS_NO_TARGET: Final[str] = "NO_TARGET"
+        STATUS_SKIP: Final[str] = "SKIP"
+        STATUS_UNKNOWN: Final[str] = "UNKNOWN"
+        IDENTIFIER_UNKNOWN: Final[str] = "unknown"
+        IDENTIFIER_DEFAULT: Final[str] = "default"
+        IDENTIFIER_ANONYMOUS: Final[str] = "anonymous"
+        IDENTIFIER_GUEST: Final[str] = "guest"
+        IDENTIFIER_SYSTEM: Final[str] = "system"
+        METHOD_HANDLE: Final[str] = "handle"
+        METHOD_PROCESS: Final[str] = "process"
+        METHOD_EXECUTE: Final[str] = "execute"
+        METHOD_PROCESS_COMMAND: Final[str] = "process_command"
+        AUTH_BEARER: Final[str] = "bearer"
+        AUTH_API_KEY: Final[str] = "api_key"
+        AUTH_JWT: Final[str] = "jwt"
+        HANDLER_COMMAND: Final[str] = "command"
+        HANDLER_QUERY: Final[str] = "query"
+        METHOD_VALIDATE: Final[str] = "validate"
+        VALIDATION_BASIC: Final[str] = "basic"
+        VALIDATION_STRICT: Final[str] = "strict"
+        VALIDATION_CUSTOM: Final[str] = "custom"
+        DEFAULT_JSON_INDENT: Final[int] = 2
+        DEFAULT_ENCODING: Final[str] = "utf-8"
+        DEFAULT_SORT_KEYS: Final[bool] = False
+        DEFAULT_ENSURE_ASCII: Final[bool] = False
+        BOOL_TRUE_STRINGS: Final[AbstractSet[str]] = frozenset({
             "true",
             "1",
             "yes",
             "on",
             "enabled",
         })
-        BOOL_FALSE_STRINGS: Final[frozenset[str]] = frozenset({
+        BOOL_FALSE_STRINGS: Final[AbstractSet[str]] = frozenset({
             "false",
             "0",
             "no",
             "off",
             "disabled",
         })
-        STRING_TRUE = "true"
-        STRING_FALSE = "false"
-        DEFAULT_USE_UTC = True
-        DEFAULT_AUTO_UPDATE = True
-        MAX_OPERATION_NAME_LENGTH = 100
-        MAX_STATE_VALUE_LENGTH = 50
-        MAX_FIELD_NAME_LENGTH = 50
-        MIN_FIELD_NAME_LENGTH = 1
-        ERROR_EMPTY_OPERATION = "Operation name cannot be empty"
-        ERROR_EMPTY_STATE = "State value cannot be empty"
-        ERROR_EMPTY_FIELD_NAME = "Field name cannot be empty"
-        ERROR_INVALID_ENCODING = "Invalid character encoding"
-        ERROR_MISSING_TIMESTAMP_FIELDS = "Required timestamp fields missing"
-        ERROR_INVALID_LOG_LEVEL = "Invalid log level"
+        STRING_TRUE: Final[str] = "true"
+        STRING_FALSE: Final[str] = "false"
+        DEFAULT_USE_UTC: Final[bool] = True
+        DEFAULT_AUTO_UPDATE: Final[bool] = True
+        MAX_OPERATION_NAME_LENGTH: Final[int] = 100
+        MAX_STATE_VALUE_LENGTH: Final[int] = 50
+        MAX_FIELD_NAME_LENGTH: Final[int] = 50
+        MIN_FIELD_NAME_LENGTH: Final[int] = 1
+        ERROR_EMPTY_OPERATION: Final[str] = "Operation name cannot be empty"
+        ERROR_EMPTY_STATE: Final[str] = "State value cannot be empty"
+        ERROR_EMPTY_FIELD_NAME: Final[str] = "Field name cannot be empty"
+        ERROR_INVALID_ENCODING: Final[str] = "Invalid character encoding"
+        ERROR_MISSING_TIMESTAMP_FIELDS: Final[str] = "Required timestamp fields missing"
+        ERROR_INVALID_LOG_LEVEL: Final[str] = "Invalid log level"
 
     class FlextWeb:
         """HTTP protocol constants."""
@@ -1081,6 +1323,233 @@ class FlextConstants:
         DEFAULT_MAX_WORKERS: Final[int] = 4
         DEFAULT_BATCH_SIZE: Final[int] = 1000
         MAX_BATCH_SIZE: Final[int] = 10000
+
+    # =============================================================================
+    # ADVANCED VALIDATION HELPERS - Python 3.13+ collections.abc patterns
+    # =============================================================================
+    # Advanced validation methods using modern Python patterns
+    # Similar to flext-cli patterns but adapted for flext-core scope
+
+    # Log level validation mapping
+    LOG_LEVEL_VALIDATION_MAP: Final[Mapping[str, str]] = MappingProxyType({
+        "DEBUG": "DEBUG",
+        "INFO": "INFO",
+        "WARNING": "WARNING",
+        "ERROR": "ERROR",
+        "CRITICAL": "CRITICAL",
+    })
+
+    # Log level validation set using frozenset for O(1) membership testing
+    LOG_LEVEL_VALIDATION_SET: Final[AbstractSet[str]] = frozenset({
+        "DEBUG",
+        "INFO",
+        "WARNING",
+        "ERROR",
+        "CRITICAL",
+    })
+
+    # Environment validation mapping
+    ENVIRONMENT_VALIDATION_MAP: Final[Mapping[str, str]] = MappingProxyType({
+        "development": "development",
+        "staging": "staging",
+        "production": "production",
+        "testing": "testing",
+        "local": "local",
+    })
+
+    # Environment validation set
+    ENVIRONMENT_VALIDATION_SET: Final[AbstractSet[str]] = frozenset({
+        "development",
+        "staging",
+        "production",
+        "testing",
+        "local",
+    })
+
+    # =============================================================================
+    # GENERALIZED VALIDATION HELPERS - Python 3.13+ collections.abc patterns
+    # =============================================================================
+    # Generic validation methods that can be reused by any FlextConstants subclass
+    # Uses ValidationMappings pattern for type-safe validation
+
+    @classmethod
+    def validate_enum_value(
+        cls,
+        value: str,
+        validation_set: AbstractSet[str],
+        validation_map: Mapping[str, str],
+    ) -> str | None:
+        """Validate enum value using advanced patterns.
+
+        Generic validation method that works with any ValidationMappings pattern.
+        Uses frozenset for O(1) membership testing and collections.abc.Mapping
+        for immutable validation data. Python 3.13+ best practice for validation.
+
+        Args:
+            value: Value string to validate
+            validation_set: Set of valid values (frozenset for O(1) lookup)
+            validation_map: Mapping of values to normalized values
+
+        Returns:
+            Valid normalized value string or None if invalid
+
+        """
+        if value in validation_set:
+            return validation_map.get(value)
+        return None
+
+    @classmethod
+    def get_valid_enum_values(cls, validation_set: AbstractSet[str]) -> Sequence[str]:
+        """Get immutable sequence of valid enum values.
+
+        Generic method to get sorted sequence from validation set.
+        Returns collections.abc.Sequence for read-only iteration.
+        Python 3.13+ best practice for exposing validation options.
+
+        Args:
+            validation_set: Set of valid values
+
+        Returns:
+            Immutable sequence of valid value strings
+
+        """
+        return tuple(sorted(validation_set))
+
+    @classmethod
+    def create_discriminated_union(
+        cls,
+        *enum_classes: type[StrEnum],
+    ) -> Mapping[str, type[StrEnum]]:
+        """Create discriminated union mapping from StrEnum classes.
+
+        Advanced helper for creating validation mappings from StrEnum classes.
+        Python 3.13+ discriminated union construction pattern.
+
+        Args:
+            *enum_classes: StrEnum classes to create union from
+
+        Returns:
+            Immutable mapping of enum values to enum classes
+
+        """
+        union_map: dict[str, type[StrEnum]] = {}
+        for enum_class in enum_classes:
+            for member in enum_class.__members__.values():
+                union_map[member.value] = enum_class
+        return MappingProxyType(union_map)
+
+    # Domain-specific convenience methods using generic helpers
+    @classmethod
+    def validate_log_level(cls, value: str) -> str | None:
+        """Validate log level string using advanced patterns.
+
+        Uses inherited generic validation from validate_enum_value.
+        Delegates to generic method for DRY compliance.
+
+        Args:
+            value: Log level string to validate
+
+        Returns:
+            Valid log level string or None if invalid
+
+        """
+        return cls.validate_enum_value(
+            value, cls.LOG_LEVEL_VALIDATION_SET, cls.LOG_LEVEL_VALIDATION_MAP
+        )
+
+    @classmethod
+    def validate_environment(cls, value: str) -> str | None:
+        """Validate environment string using discriminated union pattern.
+
+        Uses inherited generic validation from validate_enum_value.
+        Composes with Settings.Environment StrEnum for comprehensive validation.
+
+        Args:
+            value: Environment string to validate
+
+        Returns:
+            Valid environment string or None if invalid
+
+        """
+        return cls.validate_enum_value(
+            value, cls.ENVIRONMENT_VALIDATION_SET, cls.ENVIRONMENT_VALIDATION_MAP
+        )
+
+    @classmethod
+    def get_valid_log_levels(cls) -> Sequence[str]:
+        """Get immutable sequence of valid log levels.
+
+        Uses inherited generic method from get_valid_enum_values.
+        Returns collections.abc.Sequence for read-only iteration.
+
+        Returns:
+            Immutable sequence of valid log level strings
+
+        """
+        return cls.get_valid_enum_values(cls.LOG_LEVEL_VALIDATION_SET)
+
+    @classmethod
+    def get_valid_environments(cls) -> Sequence[str]:
+        """Get immutable sequence of valid environments.
+
+        Uses inherited generic method from get_valid_enum_values.
+        Returns collections.abc.Sequence for safe iteration.
+
+        Returns:
+            Immutable sequence of valid environment strings
+
+        """
+        return cls.get_valid_enum_values(cls.ENVIRONMENT_VALIDATION_SET)
+
+    @classmethod
+    def create_enum_literal_mapping(
+        cls,
+        enum_class: type[StrEnum],
+    ) -> Mapping[str, str]:
+        """Create discriminated union mapping from StrEnum class.
+
+        Advanced helper for creating validation mappings from StrEnum classes.
+        Python 3.13+ discriminated union construction pattern.
+
+        Args:
+            enum_class: StrEnum class to create mapping from
+
+        Returns:
+            Immutable mapping of enum values to themselves
+
+        """
+        return {
+            member.value: member.value for member in enum_class.__members__.values()
+        }
+
+    # =============================================================================
+    # ENUM HELPERS - Extract values from StrEnum for Literal types
+    # =============================================================================
+
+    @staticmethod
+    def extract_enum_values(enum_class: type[StrEnum]) -> tuple[str, ...]:
+        """Extract all values from a StrEnum class as a tuple.
+
+        Python 3.13+ helper for automatically deriving Literal types from StrEnum.
+        Use this to create tuple constants that match StrEnum values, ensuring
+        Literal types stay in sync with their corresponding StrEnum classes.
+
+        Args:
+            enum_class: The StrEnum class to extract values from
+
+        Returns:
+            Tuple of all enum values in definition order
+
+        Example:
+            >>> values = FlextConstants.extract_enum_values(
+            ...     FlextConstants.Settings.LogLevel
+            ... )
+            >>> # Use values to create Literal type:
+            >>> # type LogLevelLiteral = Literal[values[0], values[1], ...]
+
+        """
+        # Iterate over enum members using __members__ for proper type checking
+        return tuple(member.value for member in enum_class.__members__.values())
 
 
 __all__ = ["FlextConstants"]

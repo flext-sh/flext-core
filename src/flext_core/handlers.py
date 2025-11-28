@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
@@ -26,6 +26,9 @@ from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+# Type alias for GeneralValueType (PEP 695)
+type GeneralValueType = FlextTypes.GeneralValueType
 
 
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
@@ -83,24 +86,27 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     _expected_message_type: ClassVar[type | None] = None
     _expected_result_type: ClassVar[type | None] = None
 
-    def __init__(self, **kwargs: object) -> None:
+    def __init__(
+        self,
+        *,
+        config: FlextModels.Cqrs.Handler | None = None,
+    ) -> None:
         """Initialize handler with configuration and context.
 
-        Sets up the handler with optional configuration parameters passed
-        through **kwargs. The kwargs can include 'config' for handler configuration.
+        Sets up the handler with optional configuration parameters.
+        The config parameter accepts a FlextModels.Cqrs.Handler instance.
 
         Args:
-            **kwargs: Configuration parameters for handler setup (e.g., config)
+            config: Optional handler configuration model
 
         """
         # Do not pass kwargs to super() - FlextMixins and ABC don't accept them
         super().__init__()
-        # Store config model if provided
-        config = kwargs.get("config")
-        if isinstance(config, FlextModels.Cqrs.Handler):
+        # Store config model if provided, otherwise create default
+        if config is not None:
             self._config_model = config
         else:
-            # Create default config if not provided or invalid type
+            # Create default config if not provided
             self._config_model = FlextModels.Cqrs.Handler(
                 handler_id=f"handler_{id(self)}",
                 handler_name=self.__class__.__name__,
@@ -116,8 +122,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         self._accepted_message_types: list[type] = []
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
-        self._context_stack: list[dict[str, object]] = []
-        self._metrics: dict[str, object] = {}
+        self._context_stack: list[dict[str, GeneralValueType]] = []
+        self._metrics: dict[str, GeneralValueType] = {}
 
     @property
     def handler_name(self) -> str:
@@ -132,7 +138,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     @classmethod
     def create_from_callable(
         cls,
-        handler_callable: Callable[[object], object],
+        handler_callable: Callable[[GeneralValueType], GeneralValueType],
         handler_name: str | None = None,
         handler_type: FlextConstants.Cqrs.HandlerType | None = None,
         mode: FlextConstants.Cqrs.HandlerType | str | None = None,
@@ -168,27 +174,35 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         class CallableHandler(FlextHandlers[object, object]):
             """Dynamic handler created from callable."""
 
-            _handler_fn: Callable[[object], object]
+            _handler_fn: Callable[[GeneralValueType], GeneralValueType]
 
             def __init__(
                 self,
-                handler_fn: Callable[[object], object],
-                **kwargs: object,
+                handler_fn: Callable[[GeneralValueType], GeneralValueType],
+                config: FlextModels.Cqrs.Handler | None = None,
             ) -> None:
-                super().__init__(**kwargs)
+                # Call parent __init__ with config as keyword argument
+                super().__init__(config=config)
                 self._handler_fn = handler_fn
 
             def handle(self, message: object) -> FlextResult[object]:
                 """Execute the wrapped callable."""
                 try:
-                    result = self._handler_fn(message)
+                    # Cast message to GeneralValueType for handler function
+                    message_value: GeneralValueType = cast("GeneralValueType", message)
+                    result = self._handler_fn(message_value)
                     # If result is already FlextResult, return it
                     if isinstance(result, FlextResult):
-                        return result
+                        return cast("FlextResult[object]", result)
                     # Otherwise wrap it in FlextResult
-                    return FlextResult[object].ok(result)
+                    return cast(
+                        "FlextResult[object]", FlextResult[GeneralValueType].ok(result)
+                    )
                 except Exception as exc:
-                    return FlextResult[object].fail(str(exc))
+                    return cast(
+                        "FlextResult[object]",
+                        FlextResult[GeneralValueType].fail(str(exc)),
+                    )
 
         # Use handler_config if provided
         if handler_config is not None:
@@ -272,7 +286,11 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             ...     print(f"Failed: {result.error}")
 
         """
-        validation = self.validate(message)
+        # Cast message to AcceptableMessageType for validation
+        message_for_validation: FlextTypes.AcceptableMessageType = cast(
+            "FlextTypes.AcceptableMessageType", message
+        )
+        validation = self.validate(message_for_validation)
         if validation.is_failure:
             return FlextResult[ResultT].fail(validation.error or "Validation failed")
         return self.handle(message)
@@ -377,7 +395,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         # Delegate to base validation
         return self.validate(message)
 
-    def can_handle(self, message_type: object) -> bool:
+    def can_handle(self, message_type: type[object]) -> bool:
         """Check if handler can handle the specified message type.
 
         Determines message type compatibility using duck typing and class hierarchy.
@@ -422,7 +440,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         """
         return self._config_model.handler_mode
 
-    def push_context(self, context: dict[str, object]) -> FlextResult[bool]:
+    def push_context(self, context: dict[str, GeneralValueType]) -> FlextResult[bool]:
         """Push execution context onto the stack.
 
         Args:
@@ -435,27 +453,29 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         self._context_stack.append(context)
         return FlextResult[bool].ok(True)
 
-    def pop_context(self) -> FlextResult[dict[str, object]]:
+    def pop_context(self) -> FlextResult[dict[str, GeneralValueType]]:
         """Pop execution context from the stack.
 
         Returns:
-            FlextResult[dict[str, object]]: Success with popped context or empty dict
+            FlextResult[dict[str, GeneralValueType]]: Success with popped context or empty dict
 
         """
         if self._context_stack:
-            return FlextResult[dict[str, object]].ok(self._context_stack.pop())
-        return FlextResult[dict[str, object]].ok({})
+            return FlextResult[dict[str, GeneralValueType]].ok(
+                self._context_stack.pop()
+            )
+        return FlextResult[dict[str, GeneralValueType]].ok({})
 
-    def get_metrics(self) -> FlextResult[dict[str, object]]:
+    def get_metrics(self) -> FlextResult[dict[str, GeneralValueType]]:
         """Get current metrics dictionary.
 
         Returns:
-            FlextResult[dict[str, object]]: Success with metrics collection
+            FlextResult[dict[str, GeneralValueType]]: Success with metrics collection
 
         """
-        return FlextResult[dict[str, object]].ok(self._metrics.copy())
+        return FlextResult[dict[str, GeneralValueType]].ok(self._metrics.copy())
 
-    def record_metric(self, name: str, value: object) -> FlextResult[bool]:
+    def record_metric(self, name: str, value: GeneralValueType) -> FlextResult[bool]:
         """Record a metric value.
 
         Args:
@@ -469,7 +489,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         self._metrics[name] = value
         return FlextResult[bool].ok(True)
 
-    def _extract_message_id(self, message: object) -> str | None:
+    def _extract_message_id(self, message: GeneralValueType) -> str | None:
         """Extract message ID from message object without type narrowing.
 
         Helper method to avoid type narrowing issues when checking message
@@ -494,7 +514,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         return None
 
     def dispatch_message(
-        self, message: MessageT_contra, operation: str = "command"
+        self,
+        message: MessageT_contra,
+        operation: str = FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
     ) -> FlextResult[ResultT]:
         """Dispatch message through the handler execution pipeline.
 
@@ -516,7 +538,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         return self._run_pipeline(message, operation)
 
     def _run_pipeline(
-        self, message: MessageT_contra, operation: str = "command"
+        self,
+        message: MessageT_contra,
+        operation: str = FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
     ) -> FlextResult[ResultT]:
         """Run the handler execution pipeline (internal).
 
@@ -534,7 +558,12 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         """
         # Validate handler mode matches operation
         handler_mode = self._config_model.handler_mode.value
-        if operation != handler_mode and operation in {"command", "query", "event"}:
+        valid_operations = {
+            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+            FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+            FlextConstants.Cqrs.HandlerType.EVENT.value,
+        }
+        if operation != handler_mode and operation in valid_operations:
             error_msg = (
                 f"Handler with mode '{handler_mode}' "
                 f"cannot execute {operation} pipelines"
@@ -548,13 +577,17 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             error_msg = f"Handler cannot handle message type {type_name}"
             return FlextResult[ResultT].fail(error_msg)
 
+        # Cast message to AcceptableMessageType for validation
+        message_for_validation: FlextTypes.AcceptableMessageType = cast(
+            "FlextTypes.AcceptableMessageType", message
+        )
         # Validate message based on operation type
-        if operation == "command":
-            validation = self.validate_command(message)
-        elif operation == "query":
-            validation = self.validate_query(message)
+        if operation == FlextConstants.Dispatcher.HANDLER_MODE_COMMAND:
+            validation = self.validate_command(message_for_validation)
+        elif operation == FlextConstants.Dispatcher.HANDLER_MODE_QUERY:
+            validation = self.validate_query(message_for_validation)
         else:
-            validation = self.validate(message)
+            validation = self.validate(message_for_validation)
 
         if validation.is_failure:
             error_detail = validation.error or "Validation failed"
@@ -565,7 +598,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         self._execution_context.start_execution()
 
         # Extract message ID if available using helper to avoid type narrowing
-        message_id: str | None = self._extract_message_id(message)
+        message_for_extraction: GeneralValueType = cast("GeneralValueType", message)
+        message_id: str | None = self._extract_message_id(message_for_extraction)
 
         # Push execution context
         self.push_context({
@@ -579,17 +613,27 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             result = self.handle(message)
 
             # Record execution metrics (execution_time_ms is a property)
-            exec_time = self._execution_context.execution_time_ms
-            self.record_metric("execution_time_ms", exec_time)
-            self.record_metric("success", result.is_success)
+            # Access property value directly
+            exec_time_value = self._execution_context.execution_time_ms
+            exec_time: float = (
+                exec_time_value if isinstance(exec_time_value, float) else 0.0
+            )
+            self.record_metric("execution_time_ms", cast("GeneralValueType", exec_time))
+            self.record_metric("success", cast("GeneralValueType", result.is_success))
 
             return result
         except Exception as exc:
             # Record failure metrics
-            exec_time = self._execution_context.execution_time_ms
-            self.record_metric("execution_time_ms", exec_time)
-            self.record_metric("success", False)
-            self.record_metric("error", str(exc))
+            # Access property value directly
+            exec_time_value_exc = self._execution_context.execution_time_ms
+            exec_time_exc: float = (
+                exec_time_value_exc if isinstance(exec_time_value_exc, float) else 0.0
+            )
+            self.record_metric(
+                "execution_time_ms", cast("GeneralValueType", exec_time_exc)
+            )
+            self.record_metric("success", cast("GeneralValueType", False))
+            self.record_metric("error", cast("GeneralValueType", str(exc)))
             error_msg = f"Critical handler failure: {exc}"
             return FlextResult[ResultT].fail(error_msg)
         finally:

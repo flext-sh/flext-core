@@ -52,10 +52,10 @@ class TestCoverage76Lines:
         repr_str = repr(r)
         assert "error" in repr_str.lower() or "FlextResult" in repr_str
 
-    def test_result_data_property(self) -> None:
-        """Test .data property (backward compat)."""
+    def test_result_value_property(self) -> None:
+        """Test .value property."""
         r = FlextResult[str].ok("test")
-        assert r.data == "test"
+        assert r.value == "test"
 
     def test_result_value_property(self) -> None:
         """Test .value property."""
