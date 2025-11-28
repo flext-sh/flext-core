@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
-from typing import ClassVar, Literal, override
+from typing import ClassVar, override
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
@@ -22,7 +22,11 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
+
+# Constants for event validation
+_EVENT_TUPLE_LENGTH = 2
 
 
 class FlextModelsEntity:
@@ -178,16 +182,22 @@ class FlextModelsEntity:
     class DomainEvent(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
         """Base class for domain events."""
 
-        message_type: Literal["event"] = Field(
-            default="event",
+        message_type: FlextConstants.Cqrs.EventMessageTypeLiteral = Field(
+            default=FlextConstants.Cqrs.HandlerType.EVENT.value,
             frozen=True,
             description="Message type discriminator for union routing - always 'event'",
         )
 
         event_type: str
         aggregate_id: str
-        data: dict[str, object] = Field(default_factory=dict)
-        metadata: dict[str, str | int | float] = Field(default_factory=dict)
+        data: FlextTypes.Types.EventDataMapping = Field(
+            default_factory=dict,
+            description="Event data - maps to EventDataMapping",
+        )
+        metadata: FlextTypes.Types.FieldMetadataMapping = Field(
+            default_factory=dict,
+            description="Event metadata - maps to FieldMetadataMapping",
+        )
 
     class Core(TimestampedModel, IdentifiableMixin, VersionableMixin):
         """Core Entity implementation - base class for domain entities with identity.
@@ -235,7 +245,7 @@ class FlextModelsEntity:
         def _validate_event_input(
             self,
             event_name: str,
-            data: dict[str, object],
+            data: object,
         ) -> FlextResult[bool]:
             """Validate event input parameters."""
             if not event_name or not isinstance(event_name, str):
@@ -264,14 +274,17 @@ class FlextModelsEntity:
         def _create_and_validate_event(
             self,
             event_name: str,
-            data: dict[str, object],
+            data: object,
         ) -> FlextResult[FlextModelsEntity.DomainEvent]:
             """Create and validate domain event."""
             try:
                 # Fast fail: data must be dict (None not allowed for domain events)
-                event_data: dict[str, object] = (
-                    data if FlextRuntime.is_dict_like(data) else {}
-                )
+                # Type narrowing: if dict-like, treat as Mapping; else use empty dict
+                if isinstance(data, dict):
+                    event_data: FlextTypes.Types.EventDataMapping = data
+                else:
+                    event_data = {}
+
                 domain_event = FlextModelsEntity.DomainEvent(
                     event_type=event_name,
                     aggregate_id=self.unique_id,
@@ -300,7 +313,7 @@ class FlextModelsEntity:
         def _execute_event_handler(
             self,
             event_name: str,
-            data: dict[str, object],
+            data: object,
         ) -> None:
             """Execute event handler if available."""
             # Fast fail: event_type must be str
@@ -334,7 +347,7 @@ class FlextModelsEntity:
         def add_domain_event(
             self,
             event_name: str,
-            data: dict[str, object],
+            data: FlextTypes.Types.EventDataMapping | None,
         ) -> FlextResult[bool]:
             """Add a domain event to be dispatched with enhanced validation."""
             # Validate input
@@ -435,7 +448,7 @@ class FlextModelsEntity:
 
         def _validate_bulk_events_input(
             self,
-            events: list[tuple[str, dict[str, object]]],
+            events: object,
         ) -> FlextResult[int]:
             """Validate bulk events input and return total count.
 
@@ -461,40 +474,71 @@ class FlextModelsEntity:
 
             return FlextResult[int].ok(total_after_add)
 
+        EXPECTED_EVENT_TUPLE_LENGTH: int = 2
+
         def _validate_and_collect_events(
             self,
-            events: list[tuple[str, dict[str, object]]],
-        ) -> FlextResult[list[tuple[str, dict[str, object]]]]:
+            events: Sequence[FlextTypes.Types.EventDataMapping],
+        ) -> FlextResult[list[tuple[str, FlextTypes.Types.EventDataMapping]]]:
             """Validate and collect events for bulk add.
 
             Returns:
                 FlextResult with validated events list or error
 
             """
-            validated_events: list[tuple[str, dict[str, object]]] = []
+            validated_events: list[tuple[str, FlextTypes.Types.EventDataMapping]] = []
 
-            for i, (event_name, data) in enumerate(events):
+            if not isinstance(events, (list, tuple)):
+                return FlextResult[
+                    list[tuple[str, FlextTypes.Types.EventDataMapping]]
+                ].fail(
+                    "Events must be a list or tuple",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+
+            for i, event_item in enumerate(events):
+                if (
+                    not isinstance(event_item, (list, tuple))
+                    or len(event_item) != _EVENT_TUPLE_LENGTH
+                ):
+                    return FlextResult[
+                        list[tuple[str, FlextTypes.Types.EventDataMapping]]
+                    ].fail(
+                        f"Event {i}: must be a tuple/list of (name, data)",
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
+
+                event_name, data = event_item
+
                 if not isinstance(event_name, str) or not event_name:
-                    return FlextResult[list[tuple[str, dict[str, object]]]].fail(
+                    return FlextResult[
+                        list[tuple[str, FlextTypes.Types.EventDataMapping]]
+                    ].fail(
                         f"Event {i}: name must be non-empty string",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 if data is not None and not FlextRuntime.is_dict_like(data):
-                    return FlextResult[list[tuple[str, dict[str, object]]]].fail(
-                        f"Event {i}: data must be dict[str, object] or None",
+                    return FlextResult[
+                        list[tuple[str, FlextTypes.Types.EventDataMapping]]
+                    ].fail(
+                        f"Event {i}: data must be dict[str, GeneralValueType] or None",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 # Fast fail: data must be dict (None not allowed)
-                event_data: dict[str, object] = (
-                    data if FlextRuntime.is_dict_like(data) else {}
-                )
+                # Type narrowing: if dict-like, treat as Mapping; else use empty dict
+                if isinstance(data, dict):
+                    event_data: FlextTypes.Types.EventDataMapping = data
+                else:
+                    event_data = {}
                 validated_events.append((event_name, event_data))
 
-            return FlextResult[list[tuple[str, dict[str, object]]]].ok(validated_events)
+            return FlextResult[list[tuple[str, FlextTypes.Types.EventDataMapping]]].ok(
+                validated_events
+            )
 
         def _add_validated_events_bulk(
             self,
-            validated_events: list[tuple[str, dict[str, object]]],
+            validated_events: list[tuple[str, FlextTypes.Types.EventDataMapping]],
         ) -> FlextResult[bool]:
             """Add validated events in bulk.
 
@@ -535,7 +579,7 @@ class FlextModelsEntity:
 
         def add_domain_events_bulk(
             self,
-            events: list[tuple[str, dict[str, object]]],
+            events: Sequence[FlextTypes.Types.EventDataMapping],
         ) -> FlextResult[bool]:
             """Add multiple domain events in bulk with validation."""
             # Validate input

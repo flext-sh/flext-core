@@ -24,6 +24,7 @@ from pydantic import (
 
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import FlextConstants
+from flext_core.typings import GeneralValueType
 from flext_core.utilities import FlextUtilities
 
 # FlextUtilitiesValidation is safe to import at module level:
@@ -193,7 +194,7 @@ class FlextModelsHandler:
             ),
         ]
         handler_mode: Annotated[
-            FlextConstants.Cqrs.HandlerModeLiteral,
+            FlextConstants.Cqrs.HandlerTypeLiteral,
             Field(
                 min_length=1,
                 description="Mode of handler execution",
@@ -201,7 +202,7 @@ class FlextModelsHandler:
             ),
         ]
         _start_time: float | None = PrivateAttr(default=None)
-        _metrics_state: dict[str, object] | None = PrivateAttr(default=None)
+        _metrics_state: dict[str, GeneralValueType] | None = PrivateAttr(default=None)
 
         def start_execution(self) -> None:
             """Start execution timing.
@@ -243,11 +244,11 @@ class FlextModelsHandler:
             return round(elapsed * 1000, 2)
 
         @computed_field
-        def metrics_state(self) -> dict[str, object]:
+        def metrics_state(self) -> dict[str, GeneralValueType]:
             """Get current metrics state.
 
             Returns:
-                Dictionary containing metrics state (empty dict[str, object] if not set)
+                Dictionary containing metrics state (empty dict[str, GeneralValueType] if not set)
 
             Examples:
                 >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
@@ -262,7 +263,7 @@ class FlextModelsHandler:
                 self._metrics_state = {}
             return self._metrics_state
 
-        def set_metrics_state(self, state: dict[str, object]) -> None:
+        def set_metrics_state(self, state: dict[str, GeneralValueType]) -> None:
             """Set metrics state.
 
             Direct assignment to _metrics_state. Use this to update metrics.
@@ -302,7 +303,7 @@ class FlextModelsHandler:
         def create_for_handler(
             cls,
             handler_name: str,
-            handler_mode: FlextConstants.Cqrs.HandlerModeLiteral,
+            handler_mode: FlextConstants.Cqrs.HandlerTypeLiteral,
         ) -> Self:
             """Create execution context for a handler.
 

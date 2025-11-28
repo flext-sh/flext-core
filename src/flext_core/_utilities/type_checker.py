@@ -13,7 +13,7 @@ import logging
 from typing import get_origin, get_type_hints
 
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core.typings import FlextTypes, GeneralValueType
 
 _logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ class FlextUtilitiesTypeChecker:
             if origin and origin.__name__ == "FlextHandlers":
                 # Use FlextRuntime.extract_generic_args() from Layer 0.5
                 args = FlextRuntime.extract_generic_args(base)
-                # Accept all type forms: plain types, generic aliases (e.g., dict[str, object]),
+                # Accept all type forms: plain types, generic aliases (e.g., dict[str, GeneralValueType]),
                 # and string type references. The _evaluate_type_compatibility method
                 # handles all these forms correctly.
                 if args and args[0] is not None:
@@ -99,7 +99,7 @@ class FlextUtilitiesTypeChecker:
         cls,
         handle_method: object,
         handler_class: type,
-    ) -> dict[str, object]:
+    ) -> dict[str, GeneralValueType]:
         """Safely extract type hints from handle method."""
         try:
             return get_type_hints(
@@ -114,7 +114,7 @@ class FlextUtilitiesTypeChecker:
     def _extract_message_type_from_parameter(
         cls,
         parameter: inspect.Parameter,
-        type_hints: dict[str, object],
+        type_hints: dict[str, GeneralValueType],
         param_name: str,
     ) -> FlextTypes.MessageTypeSpecifier | None:
         """Extract message type from parameter hints or annotation."""
@@ -231,15 +231,15 @@ class FlextUtilitiesTypeChecker:
             True if dict compatible, None if not dict types
 
         """
-        # Handle dict/dict[str, object] compatibility
-        # If expected is dict or dict[str, object], accept dict instances
+        # Handle dict/dict[str, GeneralValueType] compatibility
+        # If expected is dict or dict[str, GeneralValueType], accept dict instances
         if origin_type is dict and (
             message_origin is dict
             or (isinstance(message_type, type) and issubclass(message_type, dict))
         ):
             return True
 
-        # If message is dict or dict[str, object], and expected is also dict-like
+        # If message is dict or dict[str, GeneralValueType], and expected is also dict-like
         if (
             isinstance(message_type, type)
             and issubclass(message_type, dict)

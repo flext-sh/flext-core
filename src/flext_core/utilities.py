@@ -22,6 +22,7 @@ from flext_core._utilities import (
     FlextUtilitiesDataMapper,
     FlextUtilitiesDomain,
     FlextUtilitiesGenerators,
+    FlextUtilitiesPagination,
     FlextUtilitiesReliability,
     FlextUtilitiesStringParser,
     FlextUtilitiesTextProcessor,
@@ -31,6 +32,7 @@ from flext_core._utilities import (
 )
 from flext_core._utilities.string_parser import ParseOptions
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 
 
 class FlextUtilities:
@@ -49,6 +51,7 @@ class FlextUtilities:
     - Reliability: Timeout and retry patterns
     - TypeChecker: Runtime type introspection
     - Configuration: Parameter access/manipulation
+    - Pagination: API pagination utilities
     """
 
     class Cache:
@@ -94,24 +97,9 @@ class FlextUtilities:
         validate_domain_event = staticmethod(
             FlextUtilitiesValidation.validate_domain_event
         )
-        normalize_component = staticmethod(
-            FlextUtilitiesValidation._normalize_component
-        )
-        sort_key = staticmethod(FlextUtilitiesValidation._sort_key)
-        sort_dict_keys = staticmethod(FlextUtilitiesValidation._sort_dict_keys)
-        _normalize_pydantic_value = staticmethod(
-            FlextUtilitiesValidation._normalize_pydantic_value
-        )
-        _normalize_dataclass_value_instance = staticmethod(
-            FlextUtilitiesValidation._normalize_dataclass_value_instance
-        )
-        _normalize_mapping = staticmethod(FlextUtilitiesValidation._normalize_mapping)
-        _normalize_sequence = staticmethod(FlextUtilitiesValidation._normalize_sequence)
-        _normalize_set = staticmethod(FlextUtilitiesValidation._normalize_set)
-        _normalize_vars = staticmethod(FlextUtilitiesValidation._normalize_vars)
-        _generate_key_pydantic = staticmethod(
-            FlextUtilitiesValidation._generate_key_pydantic
-        )
+        normalize_component = staticmethod(FlextUtilitiesValidation.normalize_component)
+        sort_key = staticmethod(FlextUtilitiesValidation.sort_key)
+        sort_dict_keys = staticmethod(FlextUtilitiesValidation.sort_dict_keys)
 
     class Generators:
         """ID and data generation utilities."""
@@ -253,6 +241,19 @@ class FlextUtilities:
             FlextUtilitiesDomain.validate_value_object_immutable
         )
 
+    class Pagination:
+        """Pagination utilities for API responses.
+
+        Provides methods for extracting pagination parameters, validating them,
+        preparing paginated data, and building responses with FlextResult error handling.
+        """
+
+        extract_page_params = staticmethod(FlextUtilitiesPagination.extract_page_params)
+        validate_pagination_params = staticmethod(FlextUtilitiesPagination.validate_pagination_params)
+        prepare_pagination_data = staticmethod(FlextUtilitiesPagination.prepare_pagination_data)
+        build_pagination_response = staticmethod(FlextUtilitiesPagination.build_pagination_response)
+        extract_pagination_config = staticmethod(FlextUtilitiesPagination.extract_pagination_config)
+
     class StringParser:
         """String parsing utilities - facade for FlextUtilitiesStringParser.
 
@@ -346,7 +347,9 @@ class FlextUtilities:
             """
             return self._parser.apply_regex_pipeline(text, patterns)
 
-        def get_object_key(self, obj: object) -> str:
+        def get_object_key(
+            self, obj: FlextTypes.GeneralValueType
+        ) -> str:
             """Get string key representation of object.
 
             Args:

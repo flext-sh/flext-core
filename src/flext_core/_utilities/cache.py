@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+from collections.abc import Sequence
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
@@ -25,7 +26,7 @@ class FlextUtilitiesCache:
     @staticmethod
     def normalize_component(
         component: FlextTypes.GenericDetailsType,
-    ) -> object:
+    ) -> GeneralValueType:
         """Normalize a component for consistent representation."""
         if FlextRuntime.is_dict_like(component):
             component_dict = component
@@ -33,7 +34,7 @@ class FlextUtilitiesCache:
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in component_dict.items()
             }
-        if isinstance(component, (list, tuple)):
+        if isinstance(component, Sequence):
             return [FlextUtilitiesCache.normalize_component(item) for item in component]
         if isinstance(component, set):
             return {FlextUtilitiesCache.normalize_component(item) for item in component}
@@ -76,7 +77,7 @@ class FlextUtilitiesCache:
                 if hasattr(obj, attr_name):
                     cache_attr = getattr(obj, attr_name, None)
                     if cache_attr is not None:
-                        # Clear dict[str, object]-like caches
+                        # Clear dict[str, GeneralValueType]-like caches
                         if hasattr(cache_attr, "clear") and callable(
                             cache_attr.clear,
                         ):
@@ -98,7 +99,7 @@ class FlextUtilitiesCache:
         return any(hasattr(obj, attr) for attr in cache_attributes)
 
     @staticmethod
-    def generate_cache_key(*args: object, **kwargs: object) -> str:
+    def generate_cache_key(*args: GeneralValueType, **kwargs: GeneralValueType) -> str:
         """Generate a cache key from arguments."""
         key_data = str(args) + str(sorted(kwargs.items()))
         return hashlib.sha256(key_data.encode()).hexdigest()

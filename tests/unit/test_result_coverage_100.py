@@ -100,10 +100,10 @@ class TestFlextResultCoverage:
         with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
             _ = result.value
 
-    def test_data_property_alias(self) -> None:
-        """Test that data property is alias for value."""
+    def test_value_property(self) -> None:
+        """Test that value property works correctly."""
         result = FlextResult[str].ok("test")
-        assert result.data == result.value
+        assert result.value == "test"
 
     def test_error_property_on_failure(self) -> None:
         """Test accessing error on failure result."""

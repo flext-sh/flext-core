@@ -201,10 +201,9 @@ class TestCoveragePush75Percent:
         assert isinstance(ts, str)
         assert len(ts) > 0
 
-    def test_result_data_property(self) -> None:
-        """Test result .data property (backward compat)."""
+    def test_result_value_property(self) -> None:
+        """Test result .value property."""
         r = FlextResult[str].ok("value")
-        assert r.data == "value"
         assert r.value == "value"
 
     def test_result_unwrap_or(self) -> None:

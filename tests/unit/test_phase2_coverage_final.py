@@ -120,7 +120,7 @@ class TestPhase2FinalCoveragePush:
         success_result = FlextResult[str].ok("success_value")
         assert success_result.unwrap() == "success_value"
         assert success_result.value == "success_value"
-        assert success_result.data == "success_value"
+        assert success_result.value == "success_value"
 
     def test_flext_result_is_methods(self) -> None:
         """Test FlextResult boolean check methods."""

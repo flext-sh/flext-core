@@ -20,6 +20,12 @@ import pytest
 
 from flext_core import FlextResult
 
+from ...fixtures.typing import (
+    MockScenarioData,
+    TestCaseDict,
+    TestDataDict,
+)
+
 # Type alias for test functions
 TestFunction = Callable[[object], None]
 
@@ -52,14 +58,14 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: dict[str, object]) -> None:
+    def __init__(self, name: str, data: MockScenarioData) -> None:
         """Initialize mockscenario:."""
         super().__init__()
         self.name = name
         self.given: dict[str, str] = cast("dict[str, str]", data.get("given", {}))
         self.when: dict[str, str] = cast("dict[str, str]", data.get("when", {}))
         self.then: dict[str, str] = cast("dict[str, str]", data.get("then", {}))
-        self.tags: list[str] = cast("list[str]", data.get("tags", []))
+        self.tags: list[str] = data.get("tags", [])
         self.priority: str = str(data.get("priority", "normal"))
 
 
@@ -218,14 +224,14 @@ class FlextTestBuilder:
         self._validation_rules = kwargs
         return self
 
-    def build(self) -> dict[str, object]:
+    def build(self) -> TestDataDict:
         """Build method.
 
         Returns:
             dict[str, object]: Copy of the built data.
 
         """
-        return self._data.copy()
+        return cast("TestDataDict", self._data.copy())
 
 
 class ParameterizedTestBuilder:
@@ -275,14 +281,14 @@ class ParameterizedTestBuilder:
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[dict[str, object]]:
+    def build(self) -> list[TestCaseDict]:
         """Build method.
 
         Returns:
             list[dict[str, object]]: Copy of the test cases.
 
         """
-        return self._cases.copy()
+        return cast("list[TestCaseDict]", self._cases.copy())
 
     def build_pytest_params(self) -> list[tuple[str, str, bool]]:
         """build_pytest_params method.
@@ -525,7 +531,7 @@ class TestAdvancedPatterns:
 
         scenario = MockScenario(
             "api_request",
-            scenario_data,
+            cast("MockScenarioData", scenario_data),
         )
 
         assert scenario.name == "api_request"

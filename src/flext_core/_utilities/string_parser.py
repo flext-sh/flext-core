@@ -14,6 +14,7 @@ from dataclasses import dataclass
 
 from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
+from flext_core.typings import GeneralValueType
 
 
 @dataclass
@@ -574,7 +575,7 @@ class FlextUtilitiesStringParser:
             )
             return FlextResult[str].fail(f"Failed to apply regex pipeline: {e}")
 
-    def get_object_key(self, obj: object) -> str:
+    def get_object_key(self, obj: GeneralValueType) -> str:
         """Get comparable string key from object (generic helper).
 
         This generic helper consolidates object-to-key conversion logic from

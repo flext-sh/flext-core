@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from typing import Self
 
 from flext_core.config import FlextConfig
@@ -19,7 +19,7 @@ from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import T
+from flext_core.typings import FlextTypes, T
 
 
 class FlextContainer(FlextProtocols.Configurable):
@@ -58,7 +58,12 @@ class FlextContainer(FlextProtocols.Configurable):
         self._global_config: FlextModels.ContainerConfig = (
             self._create_container_config()
         )
-        self._user_overrides: dict[str, object] = {}
+        self._user_overrides: dict[
+            str,
+            FlextTypes.ScalarValue
+            | Sequence[FlextTypes.ScalarValue]
+            | Mapping[str, FlextTypes.ScalarValue],
+        ] = {}
         self._sync_config_to_di()
 
     @property
@@ -80,31 +85,75 @@ class FlextContainer(FlextProtocols.Configurable):
         # DynamicContainer doesn't have a config attribute
         # Configuration is managed through FlextConfig directly
 
-    def configure(self, config: dict[str, object]) -> None:
+    def configure(
+        self,
+        config: dict[
+            str,
+            FlextTypes.ScalarValue
+            | Sequence[FlextTypes.ScalarValue]
+            | Mapping[str, FlextTypes.ScalarValue],
+        ],
+    ) -> None:
         """Configure container settings."""
         self._user_overrides.update(config)
         self._sync_config_to_di()
 
-    def get_config(self) -> dict[str, object]:
+    def get_config(
+        self,
+    ) -> dict[
+        str,
+        FlextTypes.ScalarValue
+        | Sequence[FlextTypes.ScalarValue]
+        | Mapping[str, FlextTypes.ScalarValue],
+    ]:
         """Get current configuration."""
         return self._global_config.model_dump()
 
-    def with_config(self, config: dict[str, object]) -> Self:
+    def with_config(
+        self,
+        config: dict[
+            str,
+            FlextTypes.ScalarValue
+            | Sequence[FlextTypes.ScalarValue]
+            | Mapping[str, FlextTypes.ScalarValue],
+        ],
+    ) -> Self:
         """Fluent interface for configuration."""
         self.configure(config)
         return self
 
-    def with_service(self, name: str, service: object) -> Self:
+    def with_service(
+        self,
+        name: str,
+        service: FlextTypes.ScalarValue
+        | Sequence[FlextTypes.ScalarValue]
+        | Mapping[str, FlextTypes.ScalarValue],
+    ) -> Self:
         """Fluent interface for service registration."""
         self.register(name, service)
         return self
 
-    def with_factory(self, name: str, factory: Callable[[], object]) -> Self:
+    def with_factory(
+        self,
+        name: str,
+        factory: Callable[
+            [],
+            FlextTypes.ScalarValue
+            | Sequence[FlextTypes.ScalarValue]
+            | Mapping[str, FlextTypes.ScalarValue],
+        ],
+    ) -> Self:
         """Fluent interface for factory registration."""
         self.register_factory(name, factory)
         return self
 
-    def register(self, name: str, service: object) -> FlextResult[bool]:
+    def register(
+        self,
+        name: str,
+        service: FlextTypes.ScalarValue
+        | Sequence[FlextTypes.ScalarValue]
+        | Mapping[str, FlextTypes.ScalarValue],
+    ) -> FlextResult[bool]:
         """Register a service instance."""
         try:
             if name in self._services:
@@ -120,7 +169,14 @@ class FlextContainer(FlextProtocols.Configurable):
             return FlextResult[bool].fail(str(e))
 
     def register_factory(
-        self, name: str, factory: Callable[[], object]
+        self,
+        name: str,
+        factory: Callable[
+            [],
+            FlextTypes.ScalarValue
+            | Sequence[FlextTypes.ScalarValue]
+            | Mapping[str, FlextTypes.ScalarValue],
+        ],
     ) -> FlextResult[bool]:
         """Register a service factory."""
         try:
@@ -135,21 +191,21 @@ class FlextContainer(FlextProtocols.Configurable):
         except Exception as e:
             return FlextResult[bool].fail(str(e))
 
-    def get(self, name: str) -> FlextResult[object]:
+    def get[T](self, name: str) -> FlextResult[T]:
         """Get service by name."""
         # Try service first
         if name in self._services:
-            return FlextResult[object].ok(self._services[name].service)
+            return FlextResult[T].ok(self._services[name].service)
 
         # Try factory
         if name in self._factories:
             try:
                 instance = self._factories[name].factory()
-                return FlextResult[object].ok(instance)
+                return FlextResult[T].ok(instance)
             except Exception as e:
-                return FlextResult[object].fail(str(e))
+                return FlextResult[T].fail(str(e))
 
-        return FlextResult[object].fail(f"Service '{name}' not found")
+        return FlextResult[T].fail(f"Service '{name}' not found")
 
     def get_typed(self, name: str, type_cls: type[T]) -> FlextResult[T]:
         """Get service with type safety."""

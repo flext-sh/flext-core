@@ -21,7 +21,11 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
+
+# Type alias for GeneralValueType (PEP 695)
+type GeneralValueType = FlextTypes.GeneralValueType
 
 
 class FlextModelsConfig:
@@ -45,8 +49,8 @@ class FlextModelsConfig:
             min_length=1,
             description="Unique operation identifier",
         )
-        data: dict[str, object] = Field(default_factory=dict)
-        context: dict[str, object] = Field(default_factory=dict)
+        data: dict[str, GeneralValueType] = Field(default_factory=dict)
+        context: dict[str, GeneralValueType] = Field(default_factory=dict)
         timeout_seconds: float = Field(
             default=FlextConstants.Defaults.TIMEOUT,
             gt=0,
@@ -65,8 +69,12 @@ class FlextModelsConfig:
 
         @field_validator("context", mode="before")
         @classmethod
-        def validate_context(cls, v: object) -> dict[str, object]:
-            """Ensure context has required fields (using FlextUtilities.Generators)."""
+        def validate_context(cls, v: object) -> dict[str, str]:
+            """Ensure context has required fields (using FlextUtilities.Generators).
+
+            Returns dict[str, str] because ensure_trace_context generates string trace IDs.
+            This is compatible with the field type dict[str, GeneralValueType] since str is a subtype.
+            """
             return FlextUtilities.Generators.ensure_trace_context(
                 v,
                 include_correlation_id=True,
@@ -202,11 +210,11 @@ class FlextModelsConfig:
         max_workers: int = Field(
             default=FlextConstants.Processing.DEFAULT_MAX_WORKERS,
             le=FlextConstants.Settings.MAX_WORKERS_THRESHOLD,
-            description="Maximum workers from FlextConfig (Config has priority over Constants)",
+            description="Maximum workers (Config has priority over Constants)",
         )
         timeout_per_item: float = Field(
             default=FlextConstants.Defaults.TIMEOUT,
-            description="Timeout per item from FlextConfig (Config has priority over Constants)",
+            description="Timeout per item (Config has priority over Constants)",
         )
         continue_on_error: bool = True
         data_items: Annotated[
@@ -238,8 +246,8 @@ class FlextModelsConfig:
         """Enhanced handler execution configuration."""
 
         handler_name: str = Field(pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$")
-        input_data: dict[str, object] = Field(default_factory=dict)
-        execution_context: dict[str, object] = Field(default_factory=dict)
+        input_data: dict[str, GeneralValueType] = Field(default_factory=dict)
+        execution_context: dict[str, GeneralValueType] = Field(default_factory=dict)
         timeout_seconds: float = Field(
             default=FlextConstants.Defaults.TIMEOUT,
             le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
@@ -270,7 +278,7 @@ class FlextModelsConfig:
         enabled: bool = Field(default=True, description="Whether middleware is enabled")
         order: int = Field(default=0, description="Execution order in middleware chain")
         name: str | None = Field(default=None, description="Optional middleware name")
-        config: dict[str, object] = Field(
+        config: dict[str, GeneralValueType] = Field(
             default_factory=dict,
             description="Middleware-specific configuration",
         )
@@ -475,7 +483,7 @@ class FlextModelsConfig:
             default=False,
             description="Whether to auto-generate correlation ID",
         )
-        extra_kwargs: dict[str, object] = Field(
+        extra_kwargs: dict[str, GeneralValueType] = Field(
             default_factory=dict,
             description="Additional keyword arguments for metadata",
         )

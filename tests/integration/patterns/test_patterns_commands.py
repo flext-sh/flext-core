@@ -16,6 +16,12 @@ from flext_core import (
     FlextResult,
 )
 
+from ...fixtures.typing import (
+    CommandPayloadDict,
+    UpdatePayloadDict,
+    UserPayloadDict,
+)
+
 # =============================================================================
 # Import required classes for CQRS patterns
 # Constants
@@ -36,12 +42,15 @@ class CreateUserCommand(FlextModels.TimestampedModel):
     username: str
     email: str
 
-    def get_payload(self) -> dict[str, object]:
+    def get_payload(self) -> UserPayloadDict:
         """Get command payload."""
-        return {
-            "username": self.username,
-            "email": self.email,
-        }
+        return cast(
+            "UserPayloadDict",
+            {
+                "username": self.username,
+                "email": self.email,
+            },
+        )
 
     def validate_command(self) -> FlextResult[bool]:
         """Validate command data."""
@@ -60,12 +69,15 @@ class UpdateUserCommand(FlextModels.TimestampedModel):
     target_user_id: str
     updates: dict[str, object]
 
-    def get_payload(self) -> dict[str, object]:
+    def get_payload(self) -> UpdatePayloadDict:
         """Get command payload."""
-        return {
-            "target_user_id": self.target_user_id,
-            "updates": self.updates,
-        }
+        return cast(
+            "UpdatePayloadDict",
+            {
+                "target_user_id": self.target_user_id,
+                "updates": self.updates,
+            },
+        )
 
     def validate_command(self) -> FlextResult[bool]:
         """Validate command data."""
@@ -79,9 +91,9 @@ class UpdateUserCommand(FlextModels.TimestampedModel):
 class FailingCommand(FlextModels.TimestampedModel):
     """Test command that always fails validation."""
 
-    def get_payload(self) -> dict[str, object]:
+    def get_payload(self) -> CommandPayloadDict:
         """Get command payload."""
-        return {}
+        return cast("CommandPayloadDict", {})
 
     def validate_command(self) -> FlextResult[bool]:
         """Fail validation intentionally."""
@@ -111,6 +123,13 @@ class CreateUserCommandHandler(
     def can_handle(self, message_type: object) -> bool:
         """Check if can handle command."""
         return message_type == CreateUserCommand or str(message_type) == "create_user"
+
+    def validate(self, data: object) -> FlextResult[bool]:
+        """Validate command using command's validate_command method."""
+        if isinstance(data, CreateUserCommand):
+            # Call the command's validate_command method
+            return data.validate_command()
+        return FlextResult[bool].fail("Cannot handle this command type")
 
     def handle(
         self,
@@ -158,6 +177,13 @@ class UpdateUserCommandHandler(
         """Check if can handle command."""
         return message_type == UpdateUserCommand or str(message_type) == "update_user"
 
+    def validate(self, data: object) -> FlextResult[bool]:
+        """Validate command using command's validate_command method."""
+        if isinstance(data, UpdateUserCommand):
+            # Call the command's validate_command method
+            return data.validate_command()
+        return FlextResult[bool].fail("Cannot handle this command type")
+
     def handle(
         self,
         message: UpdateUserCommand,
@@ -195,6 +221,13 @@ class FailingCommandHandler(FlextCommandHandler[FailingCommand, bool]):
     def can_handle(self, message_type: object) -> bool:
         """Check if can handle command."""
         return message_type == FailingCommand or str(message_type) == "failing"
+
+    def validate(self, data: object) -> FlextResult[bool]:
+        """Validate command using command's validate_command method."""
+        if isinstance(data, FailingCommand):
+            # Call the command's validate_command method
+            return data.validate_command()
+        return FlextResult[bool].fail("Cannot handle this command type")
 
     def handle(self, message: FailingCommand) -> FlextResult[bool]:
         """Fail to handle command intentionally."""

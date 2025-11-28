@@ -22,15 +22,11 @@ from typing import ClassVar, ParamSpec, TypeVar
 import pytest
 
 from flext_core import (
-    Command,
     E,
-    Event,
     F,
     FlextTypes,
     K,
-    Message,
     P,
-    Query,
     R,
     ResultT,
     T,
@@ -150,10 +146,10 @@ class TypeScenarios:
     ]
 
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("Command", TypeVarCategory.CQRS, Command, True),
-        TypeVarTestCase("Query", TypeVarCategory.CQRS, Query, True),
-        TypeVarTestCase("Event", TypeVarCategory.CQRS, Event, True),
-        TypeVarTestCase("Message", TypeVarCategory.CQRS, Message, True),
+        TypeVarTestCase("Command", TypeVarCategory.CQRS, FlextTypes.Cqrs.Command, True),
+        TypeVarTestCase("Query", TypeVarCategory.CQRS, FlextTypes.Cqrs.Query, True),
+        TypeVarTestCase("Event", TypeVarCategory.CQRS, FlextTypes.Cqrs.Event, True),
+        TypeVarTestCase("Message", TypeVarCategory.CQRS, FlextTypes.Cqrs.Message, True),
     ]
 
     PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [

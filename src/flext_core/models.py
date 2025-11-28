@@ -20,7 +20,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, TypeAlias
+from collections.abc import Callable, Mapping
+from typing import Annotated, ClassVar
 
 from pydantic import Discriminator
 
@@ -222,7 +223,7 @@ class FlextModels:
         """Context management facade with DRY mapping."""
 
         # DRY mapping for context classes
-        _CONTEXT_CLASSES: ClassVar[dict[str, type]] = {
+        _CONTEXT_CLASSES: ClassVar[Mapping[str, type]] = {
             "StructlogProxyToken": FlextModelsContext.StructlogProxyToken,
             "StructlogProxyContextVar": FlextModelsContext.StructlogProxyContextVar,
             "Token": FlextModelsContext.Token,
@@ -283,8 +284,8 @@ class FlextModels:
     class ContainerConfig(FlextModelsContainer.ContainerConfig):
         """Container configuration model - DI container settings."""
 
-    # Pydantic v2 discriminated union using modern typing
-    MessageUnion: TypeAlias = Annotated[
+    # Pydantic v2 discriminated union using modern typing (PEP 695)
+    type MessageUnion = Annotated[
         Cqrs.Command | Cqrs.Query | DomainEvent, Discriminator("message_type")
     ]
 
@@ -293,7 +294,7 @@ class FlextModels:
         """Validation namespace with DRY method delegation."""
 
         # Mapping for DRY validation method assignment
-        _VALIDATION_METHODS: ClassVar[dict[str, object]] = {
+        _VALIDATION_METHODS: ClassVar[Mapping[str, Callable[..., object]]] = {
             "validate_business_rules": FlextModelsValidation.validate_business_rules,
             "validate_cross_fields": FlextModelsValidation.validate_cross_fields,
             "validate_performance": FlextModelsValidation.validate_performance,

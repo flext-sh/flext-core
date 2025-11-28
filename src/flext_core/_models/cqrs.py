@@ -20,6 +20,7 @@ from flext_core._utilities.data_mapper import FlextUtilitiesDataMapper
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 # Constants for validator logic
@@ -41,9 +42,9 @@ class FlextModelsCqrs:
         """Base class for CQRS commands with validation."""
 
         message_type: FlextConstants.Cqrs.CommandMessageTypeLiteral = Field(
-            default="command",
+            default=FlextConstants.Cqrs.HandlerType.COMMAND.value,
             frozen=True,
-            description="Message type discriminator for union routing - always 'command'",
+            description="Message type discriminator (always 'command')",
         )
 
         command_type: str = Field(
@@ -114,12 +115,12 @@ class FlextModelsCqrs:
         )
 
         message_type: FlextConstants.Cqrs.QueryMessageTypeLiteral = Field(
-            default="query",
+            default=FlextConstants.Cqrs.HandlerType.QUERY.value,
             frozen=True,
             description="Message type discriminator",
         )
 
-        filters: dict[str, object] = Field(default_factory=dict)
+        filters: FlextTypes.Types.ConfigurationMapping = Field(default_factory=dict)
         pagination: FlextModelsCqrs.Pagination | dict[str, int] = Field(
             default_factory=dict,
         )
@@ -145,7 +146,9 @@ class FlextModelsCqrs:
                 parts = cls.__qualname__.split(".")
                 models_module = sys.modules.get("flext_core.models")
                 if models_module and len(parts) >= _MIN_QUALNAME_PARTS_FOR_WRAPPER:
-                    obj: object = getattr(models_module, parts[0], None)
+                    obj: FlextTypes.GeneralValueType | None = getattr(
+                        models_module, parts[0], None
+                    )
                     for part in parts[1:-1]:  # Navigate to Cqrs (skip Query)
                         if obj and hasattr(obj, part):
                             obj = getattr(obj, part)
@@ -179,17 +182,17 @@ class FlextModelsCqrs:
         @classmethod
         def validate_query(
             cls,
-            query_payload: dict[str, object],
+            query_payload: FlextTypes.Types.ConfigurationMapping,
         ) -> FlextResult[FlextModelsCqrs.Query]:
             """Validate and create Query from payload."""
             try:
                 # Fast fail: filters and pagination must be dict or None
                 filters_raw = query_payload.get("filters")
-                filters: dict[str, object] = (
+                filters: FlextTypes.Types.ConfigurationMapping = (
                     filters_raw if FlextRuntime.is_dict_like(filters_raw) else {}
                 )
                 pagination_raw = query_payload.get("pagination")
-                pagination_data: dict[str, object] = (
+                pagination_data: FlextTypes.Types.ConfigurationMapping = (
                     pagination_raw if FlextRuntime.is_dict_like(pagination_raw) else {}
                 )
                 if FlextRuntime.is_dict_like(pagination_data):
@@ -211,8 +214,10 @@ class FlextModelsCqrs:
                     if query_id_raw is None
                     else str(query_id_raw)
                 )
-                query_type: object = query_payload.get("query_type")
-                # filters is already guaranteed to be dict[str, object] from earlier validation
+                query_type: FlextTypes.GeneralValueType | None = query_payload.get(
+                    "query_type"
+                )
+                # filters is already guaranteed to be ConfigurationMapping from earlier validation
                 query = cls(
                     filters=filters,
                     pagination=pagination,
@@ -300,7 +305,7 @@ class FlextModelsCqrs:
             )
             default_name: str | None = None
             default_id: str | None = None
-            handler_config: dict[str, object] | None = None
+            handler_config: FlextTypes.Types.ConfigurationMapping | None = None
             command_timeout: int = 0
             max_command_retries: int = 0
 
@@ -308,7 +313,7 @@ class FlextModelsCqrs:
             """Builder pattern for Handler (reduces 8 params to fluent API).
 
             Example:
-                config = (Handler.Builder(handler_type="command")
+                config = (Handler.Builder(handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE)
                          .with_name("MyHandler")
                          .with_timeout(30)
                          .build())
@@ -318,7 +323,7 @@ class FlextModelsCqrs:
             def __init__(self, handler_type: FlextConstants.Cqrs.HandlerType) -> None:
                 """Initialize builder with required handler_type."""
                 handler_short_id = FlextUtilities.Generators.generate_short_id(length=8)
-                self._data: dict[str, object] = {
+                self._data: dict[str, FlextTypes.GeneralValueType] = {
                     "handler_type": handler_type,
                     "handler_mode": (
                         FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
@@ -357,7 +362,9 @@ class FlextModelsCqrs:
                 self._data["metadata"] = metadata
                 return self
 
-            def merge_config(self, config: dict[str, object]) -> Self:
+            def merge_config(
+                self, config: FlextTypes.Types.ConfigurationMapping
+            ) -> Self:
                 """Merge additional config (fluent API)."""
                 self._data.update(config)
                 return self
