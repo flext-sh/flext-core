@@ -9,12 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Annotated
+from typing import Annotated, TypeAlias
 
 from pydantic import ConfigDict, Field, field_validator
 
-from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.base import FlextModelsBase
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
 from flext_core.typings import FlextTypes
@@ -28,22 +27,10 @@ class FlextModelsService:
     All nested classes are accessed via FlextModels.Service.* in the main models.py.
     """
 
-    class RuntimeResources(FlextModelsEntity.ArbitraryTypesModel):
-        """Runtime dependencies attached to a service instance.
+    # Type alias for base class (mypy-compatible)
+    ArbitraryTypesModel: TypeAlias = FlextModelsBase.ArbitraryTypesModel
 
-        Provides a frozen, pydantic-backed container for the configuration,
-        context, and container objects that power each service execution. Using
-        a model here ensures we rely on FlextModels for structural validation
-        while keeping imports cycle-free via FlextProtocols interfaces.
-        """
-
-        model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
-
-        config: FlextProtocols.ConfigProtocol
-        context: FlextProtocols.ContextProtocol
-        container: FlextProtocols.ContainerProtocol
-
-    class DomainServiceExecutionRequest(FlextModelsEntity.ArbitraryTypesModel):
+    class DomainServiceExecutionRequest(ArbitraryTypesModel):
         """Domain service execution request with advanced validation."""
 
         service_name: str = Field(min_length=1, description="Service name")
@@ -65,7 +52,7 @@ class FlextModelsService:
             """Ensure context has required fields (using FlextUtilities.Generators).
 
             Returns dict[str, str] because ensure_trace_context generates string trace IDs.
-            This is compatible with the field type dict[str, GeneralValueType] since str is a subtype.
+            This is compatible with the field type dict[str, FlextTypes.GeneralValueType] since str is a subtype.
             """
             return FlextUtilities.Generators.ensure_trace_context(v)
 
@@ -85,7 +72,7 @@ class FlextModelsService:
                 raise ValueError(error_msg)
             return v
 
-    class DomainServiceBatchRequest(FlextModelsEntity.ArbitraryTypesModel):
+    class DomainServiceBatchRequest(ArbitraryTypesModel):
         """Domain service batch request."""
 
         service_name: str
@@ -105,7 +92,7 @@ class FlextModelsService:
             description="Timeout per operation from FlextConfig (Config has priority over Constants)",
         )
 
-    class DomainServiceMetricsRequest(FlextModelsEntity.ArbitraryTypesModel):
+    class DomainServiceMetricsRequest(ArbitraryTypesModel):
         """Domain service metrics request."""
 
         service_name: str
@@ -127,7 +114,7 @@ class FlextModelsService:
         group_by: list[str] = Field(default_factory=list)
         filters: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
 
-    class DomainServiceResourceRequest(FlextModelsEntity.ArbitraryTypesModel):
+    class DomainServiceResourceRequest(ArbitraryTypesModel):
         """Domain service resource request."""
 
         service_name: str = "default_service"
@@ -141,7 +128,27 @@ class FlextModelsService:
         data: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
         filters: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
 
-    class OperationExecutionRequest(FlextModelsEntity.ArbitraryTypesModel):
+    class AclResponse(ArbitraryTypesModel):
+        """ACL (Access Control List) response model."""
+
+        resource: str = Field(description="Resource identifier")
+        user: str = Field(description="User identifier")
+        action: str = Field(description="Requested action")
+        allowed: bool = Field(description="Whether access is allowed")
+        permissions: list[str] = Field(
+            default_factory=list,
+            description="Granted permissions",
+        )
+        denied_permissions: list[str] = Field(
+            default_factory=list,
+            description="Denied permissions",
+        )
+        context: dict[str, FlextTypes.GeneralValueType] = Field(
+            default_factory=dict,
+            description="Additional context",
+        )
+
+    class OperationExecutionRequest(ArbitraryTypesModel):
         """Operation execution request."""
 
         operation_name: str = Field(
@@ -149,10 +156,12 @@ class FlextModelsService:
             min_length=1,
             description="Operation name",
         )
-        operation_callable: Callable[..., FlextProtocols.ResultLike[object]]
+        operation_callable: FlextProtocols.VariadicCallable[
+            FlextProtocols.ResultLike[object]
+        ]
         arguments: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
         keyword_arguments: dict[str, FlextTypes.GeneralValueType] = Field(
-            default_factory=dict
+            default_factory=dict,
         )
         timeout_seconds: float = Field(
             default=FlextConstants.Defaults.TIMEOUT,
@@ -161,30 +170,22 @@ class FlextModelsService:
             description="Timeout from FlextConfig (Config has priority over Constants)",
         )
         retry_config: dict[str, FlextTypes.GeneralValueType] = Field(
-            default_factory=dict
+            default_factory=dict,
         )
 
         @field_validator("operation_callable", mode="after")
         @classmethod
         def validate_operation_callable(
-            cls, v: Callable[..., FlextProtocols.ResultLike[object]]
-        ) -> Callable[..., FlextProtocols.ResultLike[object]]:
-            """Validate operation is callable (using FlextUtilities.Validation).
+            cls,
+            v: FlextProtocols.VariadicCallable[FlextProtocols.ResultLike[object]],
+        ) -> FlextProtocols.VariadicCallable[FlextProtocols.ResultLike[object]]:
+            """Validate operation is callable.
 
-            With mode="after", Pydantic has already validated v as Callable type.
-            This validator performs additional runtime checks.
+            With mode="after", Pydantic has already validated v as VariadicCallable type.
+            Protocol types are always callable, so no additional check needed.
             """
-            result = FlextUtilities.Validation.validate_callable(
-                v,
-                error_message="Operation must be callable",
-                error_code=FlextConstants.Errors.TYPE_ERROR,
-            )
-            if result.is_failure:
-                raise TypeError(
-                    f"Operation must be callable: {result.error}"
-                    if result.error
-                    else "Operation must be callable (validation failed)",
-                )
+            # v is already validated as VariadicCallable by Pydantic
+            # Protocol types guarantee callable interface
             return v
 
 

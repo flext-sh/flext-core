@@ -23,6 +23,7 @@ from cachetools import LRUCache
 from pydantic import BaseModel
 
 from flext_core._dispatcher import (
+    CircuitBreakerManager,
     DispatcherConfig,
 )
 from flext_core._utilities.validation import FlextUtilitiesValidation
@@ -412,26 +413,26 @@ class FlextDispatcher(FlextMixins):
         )
 
         # Initialize circuit breaker manager
-        self._circuit_breaker = self.CircuitBreakerManager(
+        self._circuit_breaker = CircuitBreakerManager(
             threshold=self.config.circuit_breaker_threshold,
             recovery_timeout=FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT,
             success_threshold=FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD,
         )
 
         # Rate limiting - simplified sliding window implementation via manager
-        self._rate_limiter = self.RateLimiterManager(
+        self._rate_limiter = self._RateLimiterManager(
             max_requests=self.config.rate_limit_max_requests,
             window_seconds=self.config.rate_limit_window_seconds,
         )
 
         # Timeout enforcement and executor management via manager
-        self._timeout_enforcer = self.TimeoutEnforcer(
+        self._timeout_enforcer = self._TimeoutEnforcer(
             use_timeout_executor=self.config.enable_timeout_executor,
             executor_workers=self.config.executor_workers,
         )
 
         # Retry policy management via manager
-        self._retry_policy = self.RetryPolicy(
+        self._retry_policy = self._RetryPolicy(
             max_attempts=self.config.max_retry_attempts,
             retry_delay=self.config.retry_delay,
         )
@@ -440,7 +441,8 @@ class FlextDispatcher(FlextMixins):
 
         # Timeout context tracking for deadline and cancellation propagation
         self._timeout_contexts: dict[
-            str, FlextTypes.GeneralValueType
+            str,
+            FlextTypes.GeneralValueType,
         ] = {}  # operation_id → context
         self._timeout_deadlines: dict[
             str,
@@ -460,7 +462,8 @@ class FlextDispatcher(FlextMixins):
             Mapping[str, FlextTypes.GeneralValueType]
         ] = []  # Config + ordering
         self._middleware_instances: dict[
-            str, FlextTypes.GeneralValueType
+            str,
+            FlextTypes.GeneralValueType,
         ] = {}  # Keyed by middleware_id
 
         # Query result caching (from FlextDispatcher - LRU cache)
@@ -472,7 +475,8 @@ class FlextDispatcher(FlextMixins):
 
         # Event subscribers (from FlextDispatcher event protocol)
         self._event_subscribers: dict[
-            str, list[FlextTypes.GeneralValueType]
+            str,
+            list[FlextTypes.GeneralValueType],
         ] = {}  # event_type → handlers
 
         # Execution counter for metrics
@@ -482,13 +486,16 @@ class FlextDispatcher(FlextMixins):
 
         # Group 1: Processor Registry (from FlextProcessors)
         self._processors: dict[
-            str, FlextTypes.GeneralValueType
+            str,
+            FlextTypes.GeneralValueType,
         ] = {}  # name → processor function
         self._processor_configs: dict[
-            str, dict[str, FlextTypes.GeneralValueType]
+            str,
+            dict[str, FlextTypes.GeneralValueType],
         ] = {}  # name → config
         self._processor_metrics_per_name: dict[
-            str, dict[str, int]
+            str,
+            dict[str, int],
         ] = {}  # per-processor metrics
         self._processor_locks: dict[
             str,
@@ -502,10 +509,12 @@ class FlextDispatcher(FlextMixins):
 
         # Group 3: Handler Registry (from FlextProcessors.HandlerRegistry)
         self._handler_registry: dict[
-            str, FlextTypes.GeneralValueType
+            str,
+            FlextTypes.GeneralValueType,
         ] = {}  # name → handler function
         self._handler_configs: dict[
-            str, Mapping[str, FlextTypes.GeneralValueType]
+            str,
+            Mapping[str, FlextTypes.GeneralValueType],
         ] = {}  # name → handler config
         self._handler_validators: dict[
             str,
@@ -519,11 +528,13 @@ class FlextDispatcher(FlextMixins):
         self._pipeline_composition: dict[
             str,
             Callable[
-                [FlextTypes.GeneralValueType], FlextResult[FlextTypes.GeneralValueType]
+                [FlextTypes.GeneralValueType],
+                FlextResult[FlextTypes.GeneralValueType],
             ],
         ] = {}  # composed functions
         self._pipeline_memo: dict[
-            str, FlextTypes.GeneralValueType
+            str,
+            FlextTypes.GeneralValueType,
         ] = {}  # Memoization cache for pipeline
 
         # Group 5: Metrics & Auditing (from FlextProcessors)
@@ -540,7 +551,8 @@ class FlextDispatcher(FlextMixins):
             Mapping[str, FlextTypes.GeneralValueType]
         ] = []  # Operation audit trail
         self._performance_metrics: dict[
-            str, FlextTypes.GeneralValueType
+            str,
+            FlextTypes.GeneralValueType,
         ] = {}  # Timing and throughput
         self._processor_execution_times: dict[
             str,
@@ -554,23 +566,27 @@ class FlextDispatcher(FlextMixins):
         # Construct DispatcherConfig TypedDict from config values
         return DispatcherConfig(
             dispatcher_timeout_seconds=config_dict.get(
-                "dispatcher_timeout_seconds", 30.0
+                "dispatcher_timeout_seconds",
+                30.0,
             ),
             executor_workers=config_dict.get("executor_workers", 4),
             circuit_breaker_threshold=config_dict.get("circuit_breaker_threshold", 5),
             rate_limit_max_requests=config_dict.get("rate_limit_max_requests", 100),
             rate_limit_window_seconds=config_dict.get(
-                "rate_limit_window_seconds", 60.0
+                "rate_limit_window_seconds",
+                60.0,
             ),
             max_retry_attempts=config_dict.get("max_retry_attempts", 3),
             retry_delay=config_dict.get("retry_delay", 1.0),
             enable_timeout_executor=config_dict.get("enable_timeout_executor", True),
             dispatcher_enable_logging=config_dict.get(
-                "dispatcher_enable_logging", True
+                "dispatcher_enable_logging",
+                True,
             ),
             dispatcher_auto_context=config_dict.get("dispatcher_auto_context", True),
             dispatcher_enable_metrics=config_dict.get(
-                "dispatcher_enable_metrics", True
+                "dispatcher_enable_metrics",
+                True,
             ),
         )
 
@@ -623,7 +639,8 @@ class FlextDispatcher(FlextMixins):
         )
 
     def _route_to_processor(
-        self, processor_name: str
+        self,
+        processor_name: str,
     ) -> FlextTypes.GeneralValueType | None:
         """Locate registered processor by name.
 
@@ -786,7 +803,7 @@ class FlextDispatcher(FlextMixins):
                 else:
                     error_msg = result.error or "Unknown error in processor"
                     return FlextResult[list[FlextTypes.GeneralValueType]].fail(
-                        error_msg
+                        error_msg,
                     )
 
         return FlextResult[list[FlextTypes.GeneralValueType]].ok(results)
@@ -845,13 +862,13 @@ class FlextDispatcher(FlextMixins):
                     else:
                         error_msg = result.error or "Unknown error in processor"
                         return FlextResult[list[FlextTypes.GeneralValueType]].fail(
-                            error_msg
+                            error_msg,
                         )
 
             return FlextResult[list[FlextTypes.GeneralValueType]].ok(results)
         except Exception as e:
             return FlextResult[list[FlextTypes.GeneralValueType]].fail(
-                f"Parallel processing failed: {e}"
+                f"Parallel processing failed: {e}",
             )
 
     def _validate_handler_registry_interface(
@@ -1119,7 +1136,9 @@ class FlextDispatcher(FlextMixins):
             "max_workers": self._parallel_workers,
         }
 
-    def get_process_audit_log(self) -> FlextResult[list[FlextTypes.GeneralValueType]]:
+    def get_process_audit_log(
+        self,
+    ) -> FlextResult[list[FlextTypes.GeneralValueType]]:
         """Retrieve operation audit trail.
 
         Returns:
@@ -1128,7 +1147,9 @@ class FlextDispatcher(FlextMixins):
         """
         return FlextResult[list[FlextTypes.GeneralValueType]].ok(self._audit_log.copy())
 
-    def get_performance_analytics(self) -> FlextResult[FlextTypes.GeneralValueType]:
+    def get_performance_analytics(
+        self,
+    ) -> FlextResult[FlextTypes.GeneralValueType]:
         """Get comprehensive performance analytics.
 
         Returns:
@@ -1149,7 +1170,8 @@ class FlextDispatcher(FlextMixins):
     # ==================== LAYER 1: CQRS ROUTING INTERNAL METHODS ====================
 
     def _normalize_command_key(
-        self, command_type_obj: FlextTypes.GeneralValueType
+        self,
+        command_type_obj: FlextTypes.GeneralValueType,
     ) -> str:
         """Create comparable key for command identifiers (from FlextDispatcher).
 
@@ -1192,7 +1214,8 @@ class FlextDispatcher(FlextMixins):
         return self.ok(True)
 
     def _route_to_handler(
-        self, command: FlextTypes.GeneralValueType
+        self,
+        command: FlextTypes.GeneralValueType,
     ) -> FlextTypes.GeneralValueType | None:
         """Locate the handler that can process the provided message.
 
@@ -1532,7 +1555,8 @@ class FlextDispatcher(FlextMixins):
     # ==================== LAYER 1 PUBLIC API: CQRS ROUTING & MIDDLEWARE ====================
 
     def execute(
-        self, command: FlextTypes.GeneralValueType
+        self,
+        command: FlextTypes.GeneralValueType,
     ) -> FlextResult[FlextTypes.GeneralValueType]:
         """Execute command/query via CQRS bus with caching and middleware.
 
@@ -1615,7 +1639,9 @@ class FlextDispatcher(FlextMixins):
                 else FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
             )
             result: FlextResult[FlextTypes.GeneralValueType] = self._execute_handler(
-                handler, command, operation=operation
+                handler,
+                command,
+                operation=operation,
             )
 
             # Cache successful query results
@@ -1634,7 +1660,8 @@ class FlextDispatcher(FlextMixins):
             return result
 
     def layer1_register_handler(
-        self, *args: FlextTypes.GeneralValueType
+        self,
+        *args: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Register handler with dual-mode support (from FlextDispatcher).
 
@@ -1808,7 +1835,8 @@ class FlextDispatcher(FlextMixins):
             return self.fail(f"Event publishing error: {e}")
 
     def publish_events(
-        self, events: list[FlextTypes.GeneralValueType]
+        self,
+        events: list[FlextTypes.GeneralValueType],
     ) -> FlextResult[bool]:
         """Publish multiple domain events (from FlextDispatcher).
 
@@ -1871,7 +1899,9 @@ class FlextDispatcher(FlextMixins):
         return FlextResult[bool].create_from_callable(publish_all)
 
     def subscribe(
-        self, event_type: str, handler: FlextTypes.GeneralValueType
+        self,
+        event_type: str,
+        handler: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Subscribe handler to event type (from FlextDispatcher).
 
@@ -1954,7 +1984,9 @@ class FlextDispatcher(FlextMixins):
     # Registration methods using structured models
     # ------------------------------------------------------------------
     def _get_nested_attr(
-        self, obj: FlextTypes.GeneralValueType, *path: str
+        self,
+        obj: FlextTypes.GeneralValueType,
+        *path: str,
     ) -> FlextTypes.GeneralValueType | None:
         """Get nested attribute safely (e.g., obj.attr1.attr2).
 
@@ -2044,7 +2076,7 @@ class FlextDispatcher(FlextMixins):
         handler = request_dict.get("handler")
         if not handler:
             return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
-                "Handler is required"
+                "Handler is required",
             )
 
         # Validate handler has required interface
@@ -2061,7 +2093,7 @@ class FlextDispatcher(FlextMixins):
         handler_name = self._extract_handler_name(handler, request_dict)
         if not handler_name:
             return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
-                "handler_name is required"
+                "handler_name is required",
             )
 
         # ARCHITECTURE: Two registration modes
@@ -2304,7 +2336,10 @@ class FlextDispatcher(FlextMixins):
         _handler_config: FlextTypes.Bus.HandlerConfigurationType = None,
         mode: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
     ) -> FlextResult[
-        FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
+        FlextHandlers[
+            FlextTypes.GeneralValueType,
+            FlextTypes.GeneralValueType,
+        ]
     ]:
         """Create handler from function using FlextHandlers constructor.
 
@@ -2322,12 +2357,16 @@ class FlextDispatcher(FlextMixins):
             handler_name = getattr(handler_func, "__name__", "FunctionHandler")
 
             class FunctionHandler(
-                FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
+                FlextHandlers[
+                    FlextTypes.GeneralValueType,
+                    FlextTypes.GeneralValueType,
+                ],
             ):
                 """Concrete handler implementation for function-based handlers."""
 
                 def handle(
-                    self, message: FlextTypes.GeneralValueType
+                    self,
+                    message: FlextTypes.GeneralValueType,
                 ) -> FlextResult[FlextTypes.GeneralValueType]:
                     """Handle message by calling the wrapped function."""
                     result = handler_func(message)
@@ -2342,12 +2381,18 @@ class FlextDispatcher(FlextMixins):
                 handler_type=mode,
             )
             return FlextResult[
-                FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
+                FlextHandlers[
+                    FlextTypes.GeneralValueType,
+                    FlextTypes.GeneralValueType,
+                ]
             ].ok(handler)
 
         except Exception as error:
             return FlextResult[
-                FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
+                FlextHandlers[
+                    FlextTypes.GeneralValueType,
+                    FlextTypes.GeneralValueType,
+                ]
             ].fail(
                 f"Handler creation failed: {error}",
             )
@@ -2357,7 +2402,10 @@ class FlextDispatcher(FlextMixins):
         handler: FlextTypes.GeneralValueType,
         mode: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
     ) -> FlextResult[
-        FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
+        FlextHandlers[
+            FlextTypes.GeneralValueType,
+            FlextTypes.GeneralValueType,
+        ]
     ]:
         """Ensure handler is a FlextHandlers instance, converting from callable if needed.
 
@@ -2374,7 +2422,10 @@ class FlextDispatcher(FlextMixins):
         # If already FlextHandlers, return success
         if isinstance(handler, FlextHandlers):
             return FlextResult[
-                FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
+                FlextHandlers[
+                    FlextTypes.GeneralValueType,
+                    FlextTypes.GeneralValueType,
+                ]
             ].ok(handler)
 
         # If callable, convert to FlextHandlers
@@ -2386,7 +2437,10 @@ class FlextDispatcher(FlextMixins):
 
         # Invalid handler type
         return FlextResult[
-            FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
+            FlextHandlers[
+                FlextTypes.GeneralValueType,
+                FlextTypes.GeneralValueType,
+            ]
         ].fail(
             f"Handler must be FlextHandlers instance or callable, "
             f"got {type(handler).__name__}",
@@ -2669,10 +2723,11 @@ class FlextDispatcher(FlextMixins):
                 handler_raw = self._handlers[message_type]
                 if not callable(handler_raw):
                     return FlextResult.fail(
-                        f"Handler for {message_type} is not callable"
+                        f"Handler for {message_type} is not callable",
                     )
                 handler: Callable[
-                    [FlextTypes.GeneralValueType], FlextTypes.GeneralValueType
+                    [FlextTypes.GeneralValueType],
+                    FlextTypes.GeneralValueType,
                 ] = handler_raw
                 result = handler(message)
                 return FlextResult.ok(result)
@@ -2690,7 +2745,7 @@ class FlextDispatcher(FlextMixins):
         )
         if config_result.is_failure:
             return FlextResult[FlextTypes.GeneralValueType].fail(
-                config_result.error or "Config extraction failed"
+                config_result.error or "Config extraction failed",
             )
 
         # Prepare dispatch context
@@ -2703,7 +2758,7 @@ class FlextDispatcher(FlextMixins):
         )
         if context_result.is_failure:
             return FlextResult[FlextTypes.GeneralValueType].fail(
-                context_result.error or "Context preparation failed"
+                context_result.error or "Context preparation failed",
             )
 
         # Validate pre-dispatch conditions
@@ -2712,7 +2767,7 @@ class FlextDispatcher(FlextMixins):
         )
         if validated_result.is_failure:
             return FlextResult[FlextTypes.GeneralValueType].fail(
-                validated_result.error or "Pre-dispatch validation failed"
+                validated_result.error or "Pre-dispatch validation failed",
             )
 
         # Execute with retry policy
@@ -2912,7 +2967,9 @@ class FlextDispatcher(FlextMixins):
         return message, message_type
 
     def _create_message_wrapper(
-        self, data: FlextTypes.GeneralValueType, message_type: str
+        self,
+        data: FlextTypes.GeneralValueType,
+        message_type: str,
     ) -> FlextTypes.GeneralValueType:
         """Create message wrapper for string message types."""
 
@@ -2923,7 +2980,9 @@ class FlextDispatcher(FlextMixins):
             message_type: str
 
             def model_post_init(
-                self, /, __context: FlextTypes.GeneralValueType | None = None
+                self,
+                /,
+                __context: FlextTypes.GeneralValueType | None = None,
             ) -> None:
                 """Post-initialization to set class name."""
                 super().model_post_init(__context)
@@ -3294,7 +3353,9 @@ class FlextDispatcher(FlextMixins):
         # Dispatch each message - message_type is extracted from message object
         return [self.dispatch(msg) for msg in messages]
 
-    def get_performance_metrics(self) -> dict[str, FlextTypes.GeneralValueType]:
+    def get_performance_metrics(
+        self,
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Get performance metrics for the dispatcher.
 
         Returns:

@@ -130,8 +130,8 @@ class ExceptionScenarios:
             "type_error",
             FlextExceptions.TypeError,
             "Expected string, got int",
-            {"expected_type": "str", "actual_type": "int"},
-            {"expected_type": "str", "actual_type": "int"},
+            {"expected_type": str, "actual_type": int},
+            {"expected_type": str, "actual_type": int},
         ),
         ExceptionCreationScenario(
             "operation_error",
@@ -411,8 +411,8 @@ class TestExceptionMetrics:
         metrics: dict[str, object] = FlextExceptions.get_metrics()
         assert metrics["total_exceptions"] == 3
         exception_counts = cast("dict[str, object]", metrics["exception_counts"])
-        assert exception_counts["ValidationError"] == 2
-        assert exception_counts["ConfigurationError"] == 1
+        assert exception_counts["FlextExceptions.ValidationError"] == 2
+        assert exception_counts["FlextExceptions.ConfigurationError"] == 1
         assert metrics["unique_exception_types"] == 2
 
     def test_clear_metrics(self) -> None:

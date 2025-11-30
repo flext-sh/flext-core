@@ -76,6 +76,29 @@ class TestConstants:
         # Test-specific Literals (not in production)
         # None at this time - all test types reuse production types
 
+    class Fixtures:
+        """Test fixture constants - NUNCA duplicar de src/.
+
+        REGRAS:
+        ───────
+        1. NUNCA duplicar constantes de src/
+        2. Apenas valores de teste específicos
+        3. Referenciar src/constants para valores de produção
+        """
+
+        # Valores de teste específicos
+        SAMPLE_DN: Final[str] = "cn=test,dc=example,dc=com"
+        SAMPLE_UID: Final[str] = "testuser"
+        SAMPLE_PASSWORD: Final[str] = "testpass123"
+
+        # Referência a constantes de produção - NÃO duplicar!
+        DEFAULT_STATUS: Final[FlextConstants.Domain.Status] = (
+            FlextConstants.Domain.Status.ACTIVE
+        )
+        DEFAULT_SERVER: Final[FlextConstants.SharedDomain.ServerType] = (
+            FlextConstants.SharedDomain.ServerType.OUD
+        )
+
     # Note: Type aliases should be imported from flext_core.typings, not constants.
     # Constants file only contains constant values, not type definitions.
     # For types, import directly: from flext_core.typings import FlextTypes
