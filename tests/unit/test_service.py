@@ -27,7 +27,14 @@ from typing import ClassVar
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextResult, FlextService
+from flext_core import (
+    FlextConfig,
+    FlextModels,
+    FlextProtocols,
+    FlextRegistry,
+    FlextResult,
+    FlextService,
+)
 
 
 class ServiceScenarioType(StrEnum):
@@ -221,6 +228,118 @@ class TestFlextServiceCore:
         info = service.get_service_info()
         assert isinstance(info, dict)
         assert "service_type" in info
+
+    def test_service_runtime_protocols(self) -> None:
+        """Service runtime exposes protocol-compliant components."""
+
+        service = UserService()
+
+        runtime = service.runtime
+        assert isinstance(runtime, FlextModels.ServiceRuntime)
+        assert isinstance(runtime.config, FlextProtocols.ConfigProtocol)
+        assert isinstance(runtime.context, FlextProtocols.ContextProtocol)
+        assert isinstance(runtime.container, FlextProtocols.ContainerProtocol)
+
+    def test_service_access_facade(self) -> None:
+        """Service exposes unified access gateway to infrastructure components."""
+
+        service = UserService()
+        access = service.access
+
+        assert access.cqrs is FlextModels.Cqrs
+        assert isinstance(access.registry, FlextRegistry)
+        global_config = FlextConfig.get_global_instance()
+        assert access.config is not global_config
+        assert access.config.app_name == global_config.app_name
+        assert access.runtime is service.runtime
+        assert access.result is FlextResult
+        assert access.context is service.context
+        assert access.container is service.container
+
+        cloned = access.clone_config(app_name="nested")
+        assert cloned.app_name == "nested"
+        assert access.config.app_name != cloned.app_name
+
+    def test_service_runtime_scope(self) -> None:
+        """Runtime scopes rely on protocol-driven runtime cloning."""
+
+        service = UserService()
+        access = service.access
+
+        runtime_scope = access.runtime_scope(
+            config_overrides={"app_name": "scoped"},
+            services={"scoped_runtime_service": {"value": True}},
+        )
+
+        assert isinstance(runtime_scope, FlextModels.ServiceRuntime)
+        assert isinstance(runtime_scope.config, FlextProtocols.ConfigProtocol)
+        assert runtime_scope.config.app_name == "scoped"
+        assert runtime_scope.context is not service.context
+        assert runtime_scope.container.config is runtime_scope.config
+        assert runtime_scope.container.context is runtime_scope.context
+        assert runtime_scope.container.has_service("scoped_runtime_service")
+        assert not service.container.has_service("scoped_runtime_service")
+
+    def test_service_container_scope(self) -> None:
+        """Container scopes clone config and isolate registrations."""
+
+        service = UserService()
+        access = service.access
+
+        base_container = access.container
+        assert base_container.register("root_service", {"value": 1}).is_success
+
+        scoped = access.container_scope(
+            config_overrides={"app_name": "scoped"},
+            services={"scoped_service": 123},
+            subproject="api",
+        )
+
+        assert scoped.config.app_name == "scoped.api"
+        assert scoped.has_service("root_service")
+        assert scoped.has_service("scoped_service")
+        assert scoped.context is not service.context
+
+        assert scoped.register("local_only", True).is_success
+        assert not base_container.has_service("local_only")
+
+    def test_service_nested_execution_scope(self) -> None:
+        """Nested execution creates isolated context and configuration."""
+
+        service = UserService()
+        access = service.access
+        base_config = access.config
+        base_container = access.container
+        assert base_container.register("base", "value").is_success
+
+        with access.nested_execution(
+            config_overrides={"app_name": "nested_app"},
+            service_name="nested_service",
+            correlation_id="corr-nested",
+            container_services={"nested": {"value": "scoped"}},
+        ) as scope:
+            assert isinstance(scope.runtime, FlextModels.ServiceRuntime)
+            assert scope.runtime.config.app_name == "nested_app"
+            assert scope.runtime.config is not base_config
+            assert scope.runtime.context is not access.context
+            assert (
+                scope.runtime.context.Correlation.get_correlation_id() == "corr-nested"
+            )
+            assert scope.registry is access.registry
+            assert scope.result is FlextResult
+            assert scope.cqrs is FlextModels.Cqrs
+            assert scope.runtime.container is not base_container
+            assert scope.runtime.container.context is scope.runtime.context
+            assert scope.runtime.container.has_service("base")
+            assert scope.runtime.container.has_service("nested")
+            assert scope.service_data["service_type"] == "UserService"
+            assert scope.service_data["payload"] == {}
+
+            assert scope.runtime.container.register("nested_only", 99).is_success
+
+        # Original context should remain unchanged
+        assert service.context.Correlation.get_correlation_id() is None
+        assert not base_container.has_service("nested_only")
 
 
 __all__ = ["TestFlextServiceCore"]

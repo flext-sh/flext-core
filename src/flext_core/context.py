@@ -16,17 +16,19 @@ import json
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Final, Self
+from typing import TYPE_CHECKING, Final, Self
 
 from flext_core._models.context import FlextModelsContext
 from flext_core.constants import FlextConstants
-from flext_core.container import FlextContainer
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes, GeneralValueType
 from flext_core.utilities import FlextUtilities
+
+if TYPE_CHECKING:
+    from flext_core.container import FlextContainer
 
 # Type aliases using PEP 695 (Python 3.13+)
 # Note: ContextVar requires mutable dict, not Mapping
@@ -977,10 +979,10 @@ class FlextContext:
     # Container integration for dependency injection
     # =========================================================================
 
-    _container: FlextContainer | None = None
+    _container: "FlextContainer" | None = None
 
     @classmethod
-    def get_container(cls) -> FlextContainer:
+    def get_container(cls) -> "FlextContainer":
         """Get global container with lazy initialization.
 
         Returns:
@@ -993,6 +995,8 @@ class FlextContext:
 
         """
         if cls._container is None:
+            from flext_core.container import FlextContainer
+
             cls._container = FlextContainer()
         return cls._container
 
@@ -1072,12 +1076,19 @@ class FlextContext:
             return value if isinstance(value, str) else None
 
         @staticmethod
-        def set_correlation_id(correlation_id: str) -> None:
+        def set_correlation_id(correlation_id: str | None) -> None:
             """Set correlation ID.
 
             Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
+            Accepts ``None`` to explicitly clear the active correlation when needed.
             """
             FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
+
+        @staticmethod
+        def reset_correlation_id() -> None:
+            """Clear correlation ID from context variables."""
+
+            FlextContext.Variables.Correlation.CORRELATION_ID.set(None)
 
         @staticmethod
         def generate_correlation_id() -> str:

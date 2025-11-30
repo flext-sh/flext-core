@@ -19,7 +19,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
+from contextlib import AbstractContextManager
 from datetime import datetime
 from typing import Generic, Protocol, runtime_checkable
 
@@ -81,9 +82,7 @@ class FlextProtocols:
 
         def validate_command(
             self,
-            command: FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | Mapping[str, FlextTypes.ScalarValue],
+            command: FlextTypes.FlexibleValue,
         ) -> FlextProtocols.ResultProtocol[bool]:
             """Validate command."""
             ...
@@ -125,6 +124,139 @@ class FlextProtocols:
 
         def configure(self, config: Mapping[str, FlextTypes.FlexibleValue]) -> None:
             """Configure component."""
+            ...
+
+    # Context, Config, and Container Protocols for circular-import safety
+    @runtime_checkable
+    class ConfigProtocol(Protocol):
+        """Protocol for configuration objects with cloning support."""
+
+        @property
+        def app_name(self) -> str:
+            """Application name bound to the configuration."""
+            ...
+
+        @property
+        def version(self) -> str:
+            """Semantic version of the running application."""
+            ...
+
+        def get(
+            self,
+            key: str,
+            default: FlextTypes.FlexibleValue | None = None,
+        ) -> FlextTypes.FlexibleValue | None:
+            """Get configuration value by key."""
+            ...
+
+        def set(
+            self,
+            key: str,
+            value: FlextTypes.FlexibleValue,
+        ) -> None:
+            """Set configuration value."""
+            ...
+
+        def model_copy(
+            self,
+            *,
+            update: Mapping[str, FlextTypes.FlexibleValue] | None = None,
+            deep: bool = False,
+        ) -> "FlextProtocols.ConfigProtocol":
+            """Clone configuration with optional updates."""
+            ...
+
+    @runtime_checkable
+    class ContextServiceProtocol(Protocol):
+        """Protocol for service-scoped context management."""
+
+        def service_context(
+            self, service_name: str, version: str
+        ) -> AbstractContextManager[None]:
+            """Context manager for entering a service scope."""
+            ...
+
+    @runtime_checkable
+    class ContextCorrelationProtocol(Protocol):
+        """Protocol for correlation-aware contexts."""
+
+        def get_correlation_id(self) -> str | None:
+            """Get current correlation identifier."""
+            ...
+
+        def set_correlation_id(self, correlation_id: str | None) -> None:
+            """Set or reset correlation identifier."""
+            ...
+
+        def reset_correlation_id(self) -> None:
+            """Clear correlation identifier from context."""
+            ...
+
+    @runtime_checkable
+    class ContextUtilitiesProtocol(Protocol):
+        """Protocol for utility helpers bound to a context."""
+
+        def ensure_correlation_id(self) -> str:
+            """Ensure a correlation identifier exists and return it."""
+            ...
+
+    @runtime_checkable
+    class ContextProtocol(Protocol):
+        """Protocol for execution contexts with cloning semantics."""
+
+        Correlation: ContextCorrelationProtocol
+        Service: ContextServiceProtocol
+        Utilities: ContextUtilitiesProtocol
+
+        def clone(self) -> "FlextProtocols.ContextProtocol":
+            """Clone context for isolated execution."""
+            ...
+
+    @runtime_checkable
+    class ContainerProtocol(Configurable, Protocol):
+        """Protocol for dependency injection containers."""
+
+        @property
+        def config(self) -> ConfigProtocol:
+            """Configuration bound to the container."""
+            ...
+
+        @property
+        def context(self) -> ContextProtocol:
+            """Execution context bound to the container."""
+            ...
+
+        def scoped(
+            self,
+            *,
+            config: ConfigProtocol | None = None,
+            context: ContextProtocol | None = None,
+            subproject: str | None = None,
+            services: Mapping[str, FlextTypes.FlexibleValue] | None = None,
+            factories: Mapping[str, Callable[[], FlextTypes.FlexibleValue]]
+            | None = None,
+        ) -> "FlextProtocols.ContainerProtocol":
+            """Create an isolated container scope with optional overrides."""
+            ...
+
+        def has_service(self, name: str) -> bool:
+            """Check if a service is registered."""
+            ...
+
+        def register(
+            self,
+            name: str,
+            service: FlextTypes.FlexibleValue,
+        ) -> FlextProtocols.ResultProtocol[bool]:
+            """Register a service instance."""
+            ...
+
+        def register_factory(
+            self,
+            name: str,
+            factory: Callable[[], FlextTypes.FlexibleValue],
+        ) -> FlextProtocols.ResultProtocol[bool]:
+            """Register a service factory."""
             ...
 
     # Layer 0.5: Circular Import Prevention Protocols
@@ -202,35 +334,6 @@ class FlextProtocols:
             """Unwrap value."""
             ...
 
-    @runtime_checkable
-    class ConfigProtocol(Protocol):
-        """Configuration interface (prevents circular imports)."""
-
-        def get(
-            self,
-            key: str,
-            default: FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | Mapping[str, FlextTypes.ScalarValue]
-            | None = None,
-        ) -> (
-            FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | Mapping[str, FlextTypes.ScalarValue]
-            | None
-        ):
-            """Get configuration value."""
-            ...
-
-        def set(
-            self,
-            key: str,
-            value: FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | Mapping[str, FlextTypes.ScalarValue],
-        ) -> None:
-            """Set configuration value."""
-            ...
 
     @runtime_checkable
     class ModelProtocol(HasModelDump, Protocol):
@@ -247,18 +350,14 @@ class FlextProtocols:
 
         def execute(
             self,
-            command: FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | Mapping[str, FlextTypes.ScalarValue],
+            command: FlextTypes.FlexibleValue,
         ) -> FlextProtocols.ResultProtocol[T]:
             """Execute command."""
             ...
 
         def validate_business_rules(
             self,
-            command: FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | Mapping[str, FlextTypes.ScalarValue],
+            command: FlextTypes.FlexibleValue,
         ) -> FlextProtocols.ResultProtocol[bool]:
             """Validate business rules."""
             ...

@@ -83,6 +83,7 @@
             "uv>=0.9.6",
         ]
         test = [
+            "beartype>=0.19.0",
             "factory-boy>=3.3.1",
             "faker>=37.4.0",
             "hypothesis>=6.125.0",

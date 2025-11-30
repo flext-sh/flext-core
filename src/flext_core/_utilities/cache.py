@@ -15,7 +15,12 @@ from collections.abc import Sequence
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
+
+# Direct type aliases to avoid indirection through FlextTypes
+CachedObjectType = object
+GenericDetailsType = object
+SortableObjectType = object
+GeneralValueType = object
 
 _logger = logging.getLogger(__name__)
 
@@ -25,7 +30,7 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def normalize_component(
-        component: FlextTypes.GenericDetailsType,
+        component: GenericDetailsType,
     ) -> GeneralValueType:
         """Normalize a component for consistent representation."""
         if FlextRuntime.is_dict_like(component):
@@ -42,7 +47,7 @@ class FlextUtilitiesCache:
         return component
 
     @staticmethod
-    def sort_key(key: FlextTypes.SortableObjectType) -> tuple[int, str]:
+    def sort_key(key: SortableObjectType) -> tuple[int, str]:
         """Generate a sort key for consistent ordering."""
         if isinstance(key, str):
             return (0, key.lower())
@@ -52,8 +57,8 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def sort_dict_keys(
-        data: FlextTypes.SortableObjectType,
-    ) -> FlextTypes.SortableObjectType:
+        data: SortableObjectType,
+    ) -> SortableObjectType:
         """Sort dictionary keys for consistent representation."""
         if FlextRuntime.is_dict_like(data):
             data_dict = data
@@ -65,7 +70,7 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def clear_object_cache(
-        obj: FlextTypes.CachedObjectType,
+        obj: CachedObjectType,
     ) -> FlextResult[bool]:
         """Clear any caches on an object."""
         try:
@@ -93,7 +98,7 @@ class FlextUtilitiesCache:
             return FlextResult[bool].fail(f"Failed to clear caches: {e}")
 
     @staticmethod
-    def has_cache_attributes(obj: FlextTypes.CachedObjectType) -> bool:
+    def has_cache_attributes(obj: CachedObjectType) -> bool:
         """Check if object has any cache-related attributes."""
         cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
         return any(hasattr(obj, attr) for attr in cache_attributes)
