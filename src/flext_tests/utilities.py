@@ -21,7 +21,7 @@ import fnmatch
 import threading
 import time
 import uuid
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
@@ -30,6 +30,7 @@ from typing import Protocol, TypeVar, runtime_checkable
 from docker.errors import DockerException, NotFound
 
 from flext_core import FlextResult
+from flext_core.constants import DockerContainerConfig
 from flext_tests.domains import FlextTestsDomains
 from flext_tests.matchers import FlextTestsMatchers
 
@@ -54,7 +55,7 @@ class LoggerProtocol(Protocol):
         ...
 
     def exception(
-        self, message: str, *, extra: dict[str, object] | None = None
+        self, message: str, *, extra: dict[str, object] | None = None,
     ) -> None:
         """Log exception message."""
         ...
@@ -657,12 +658,12 @@ class FlextTestsUtilities:
                 return FlextResult[TResult].fail(error_msg)
             except DockerException as e:
                 if logger and hasattr(logger, "exception"):
-                    logger.exception(f"Failed to {operation_name}")
+                    logger.exception("Failed to %s", operation_name)
                 error_msg = f"Failed to {operation_name}: {e}"
                 return FlextResult[TResult].fail(error_msg)
             except Exception as e:
                 if logger and hasattr(logger, "exception"):
-                    logger.exception(f"Unexpected error in {operation_name}")
+                    logger.exception("Unexpected error in %s", operation_name)
                 error_msg = f"Unexpected error in {operation_name}: {e}"
                 return FlextResult[TResult].fail(error_msg)
 
@@ -711,15 +712,15 @@ class FlextTestsUtilities:
                 return operation()
             except Exception as e:
                 if logger and hasattr(logger, "warning"):
-                    logger.warning(f"{error_prefix} failed: {e}")
+                    logger.warning("%s failed: %s", error_prefix, e)
                 return default_value
 
         @staticmethod
         def get_container_config(
             container_name: str,
-            shared_containers: dict[str, dict[str, str | int]],
+            shared_containers: Mapping[str, DockerContainerConfig],
             registered_configs: dict[str, dict[str, str]],
-        ) -> dict[str, str | int] | None:
+        ) -> DockerContainerConfig | None:
             """Get container configuration from shared or registered configs.
 
             Args:
@@ -736,7 +737,12 @@ class FlextTestsUtilities:
             if container_name in registered_configs:
                 config_raw = registered_configs[container_name]
                 if isinstance(config_raw, dict):
-                    return dict(config_raw.items())
+                    # Convert dict to DockerContainerConfig TypedDict
+                    return DockerContainerConfig(
+                        compose_file=str(config_raw.get("compose_file", "")),
+                        service=str(config_raw.get("service", "")),
+                        port=int(config_raw.get("port", 0)),
+                    )
             return None
 
         @staticmethod
@@ -824,11 +830,11 @@ class FlextTestsUtilities:
 
                 for resource in all_resources:
                     resource_name: str = getattr(
-                        resource, resource_name_attr, "unknown"
+                        resource, resource_name_attr, "unknown",
                     )
 
                     if filter_pattern and not fnmatch.fnmatch(
-                        resource_name, filter_pattern
+                        resource_name, filter_pattern,
                     ):
                         continue
 
@@ -839,13 +845,13 @@ class FlextTestsUtilities:
                             removed_items.append(resource_name)
                             if logger and hasattr(logger, "info"):
                                 logger.info(
-                                    f"Removed {resource_type}: {resource_name}",
+                                    "Removed %s: %s", resource_type, resource_name,
                                     extra={resource_type: resource_name},
                                 )
                     except Exception as e:
                         if logger and hasattr(logger, "warning"):
                             logger.warning(
-                                f"Failed to remove {resource_type} {resource_name}: {e}",
+                                "Failed to remove %s %s: %s", resource_type, resource_name, e,
                                 extra={resource_type: resource_name, "error": str(e)},
                             )
 
@@ -856,7 +862,7 @@ class FlextTestsUtilities:
 
             except Exception as e:
                 if logger and hasattr(logger, "exception"):
-                    logger.exception(f"Failed to cleanup {resource_type}s")
+                    logger.exception("Failed to cleanup %ss", resource_type)
                 return FlextResult[dict[str, int | list[str]]].fail(
                     f"{resource_type.title()} cleanup failed: {e}",
                 )
@@ -925,7 +931,7 @@ class FlextTestsUtilities:
 
                 if logger and hasattr(logger, "info"):
                     logger.info(
-                        f"docker compose {operation_name} succeeded",
+                        "docker compose %s succeeded", operation_name,
                         extra={"compose_file": compose_file},
                     )
 
@@ -944,7 +950,7 @@ class FlextTestsUtilities:
                 error_msg = str(e)
                 if logger and hasattr(logger, "exception"):
                     logger.exception(
-                        f"docker compose {operation_name} failed: {error_msg}",
+                        "docker compose %s failed: %s", operation_name, error_msg,
                         extra={
                             "compose_file": compose_file,
                             "error": error_msg,
@@ -976,7 +982,7 @@ class FlextTestsUtilities:
 
             original_compose_files = getattr(client_config, "compose_files", None)
             original_project_directory = getattr(
-                client_config, "compose_project_directory", None
+                client_config, "compose_project_directory", None,
             )
             try:
                 client_config.compose_files = [str(compose_path)]
@@ -1030,12 +1036,12 @@ class FlextTestsUtilities:
                 return FlextResult[TResult].fail(error_msg)
             except DockerException as e:
                 if logger and hasattr(logger, "exception"):
-                    logger.exception(f"Failed to {operation_name}")
+                    logger.exception("Failed to %s", operation_name)
                 error_msg = f"Failed to {operation_name}: {e}"
                 return FlextResult[TResult].fail(error_msg)
             except Exception as e:
                 if logger and hasattr(logger, "exception"):
-                    logger.exception(f"Unexpected error in {operation_name}")
+                    logger.exception("Unexpected error in %s", operation_name)
                 error_msg = f"Unexpected error in {operation_name}: {e}"
                 return FlextResult[TResult].fail(error_msg)
 
@@ -1203,7 +1209,7 @@ class FlextTestsUtilities:
 
             if health and isinstance(health, dict):
                 health_status = FlextTestsUtilities.DockerHelpers.get_health_status(
-                    health, started_at, stuck_threshold_seconds
+                    health, started_at, stuck_threshold_seconds,
                 )
 
                 if health_status == "unhealthy":
@@ -1212,7 +1218,7 @@ class FlextTestsUtilities:
 
                 if health_status == "stuck":
                     issues.append(
-                        f"Container stuck in starting state for >{stuck_threshold_seconds}s"
+                        f"Container stuck in starting state for >{stuck_threshold_seconds}s",
                     )
 
             if exit_code and exit_code != 0:
@@ -1248,7 +1254,7 @@ class FlextTestsUtilities:
                     stop_method(timeout=timeout)
                     if logger and hasattr(logger, "info"):
                         logger.info(
-                            f"Container {container_name} stopped gracefully",
+                            "Container %s stopped gracefully", container_name,
                             extra={"container": container_name},
                         )
                     return FlextResult[bool].ok(True)
@@ -1260,7 +1266,7 @@ class FlextTestsUtilities:
                             kill_method(signal="SIGKILL")
                             if logger and hasattr(logger, "warning"):
                                 logger.warning(
-                                    f"Graceful stop failed for {container_name}, force killed",
+                                    "Graceful stop failed for %s, force killed", container_name,
                                     extra={
                                         "container": container_name,
                                         "error": str(e),
@@ -1271,7 +1277,7 @@ class FlextTestsUtilities:
                         error_msg = f"Failed to stop/kill container {container_name}: {kill_error}"
                         if logger and hasattr(logger, "exception"):
                             logger.exception(
-                                error_msg, extra={"container": container_name}
+                                error_msg, extra={"container": container_name},
                             )
                         return FlextResult[bool].fail(error_msg)
 
@@ -1281,7 +1287,7 @@ class FlextTestsUtilities:
                 return FlextResult[bool].fail(error_msg)
 
             return FlextResult[bool].fail(
-                f"Container {container_name} has no stop method"
+                f"Container {container_name} has no stop method",
             )
 
         @staticmethod
@@ -1313,7 +1319,7 @@ class FlextTestsUtilities:
                         remove_method()
                     if logger and hasattr(logger, "info"):
                         logger.info(
-                            f"Container {container_name} removed",
+                            "Container %s removed", container_name,
                             extra={"container": container_name, "force": force},
                         )
                     return FlextResult[bool].ok(True)
@@ -1326,7 +1332,7 @@ class FlextTestsUtilities:
                             remove_method(force=True)
                             if logger and hasattr(logger, "info"):
                                 logger.info(
-                                    f"Container {container_name} force removed",
+                                    "Container %s force removed", container_name,
                                     extra={"container": container_name},
                                 )
                             return FlextResult[bool].ok(True)
@@ -1334,7 +1340,7 @@ class FlextTestsUtilities:
                         error_msg = f"Failed to remove container {container_name}: {force_error}"
                         if logger and hasattr(logger, "exception"):
                             logger.exception(
-                                error_msg, extra={"container": container_name}
+                                error_msg, extra={"container": container_name},
                             )
                         return FlextResult[bool].fail(error_msg)
 
@@ -1344,7 +1350,7 @@ class FlextTestsUtilities:
                 return FlextResult[bool].fail(error_msg)
 
             return FlextResult[bool].fail(
-                f"Container {container_name} has no remove method"
+                f"Container {container_name} has no remove method",
             )
 
         @staticmethod
@@ -1368,7 +1374,7 @@ class FlextTestsUtilities:
                 if get_method:
                     container = get_method(container_name)
                     state = FlextTestsUtilities.DockerHelpers.extract_container_state(
-                        container
+                        container,
                     )
                     return (container, state)
             raise RuntimeError(f"Failed to get container {container_name}")
@@ -1404,7 +1410,7 @@ class FlextTestsUtilities:
                     if success_condition is None or success_condition(value):
                         if logger and hasattr(logger, "info"):
                             logger.info(
-                                f"Check succeeded after {check_count} attempts",
+                                "Check succeeded after %s attempts", check_count,
                                 extra={"checks": check_count},
                             )
                         return (True, value, "")

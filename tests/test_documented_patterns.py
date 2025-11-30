@@ -100,7 +100,7 @@ class RailwayTestCase:
 
         # Start with first user
         result: FlextResult[object] = cast(
-            "FlextResult[object]", GetUserService(user_id=self.user_ids[0]).execute()
+            "FlextResult[object]", GetUserService(user_id=self.user_ids[0]).execute(),
         )
 
         # Apply operations if specified
@@ -112,13 +112,13 @@ class RailwayTestCase:
                     lambda email: cast(
                         "FlextResult[object]",
                         SendEmailService(
-                            to=cast("str", email), subject="Test"
+                            to=cast("str", email), subject="Test",
                         ).execute(),
-                    )
+                    ),
                 )
             elif op == "get_status":
                 result = result.map(
-                    lambda response: cast("EmailResponse", response).status
+                    lambda response: cast("EmailResponse", response).status,
                 )
 
         return result
@@ -138,7 +138,7 @@ class RailwayTestCase:
                 user = cast("User", user).email
             elif op == "send_email":
                 response_obj: Any = SendEmailService(
-                    to=cast("str", user), subject="Test"
+                    to=cast("str", user), subject="Test",
                 ).result
                 user = cast("EmailResponse", response_obj).status
 
@@ -416,7 +416,7 @@ class TestPattern3V2Auto:
 
     @pytest.mark.parametrize("case", TestFactories.success_cases())
     def test_v2_auto_manual_service_returns_instance(
-        self, case: ServiceTestCase
+        self, case: ServiceTestCase,
     ) -> None:
         """V2 Auto: Default (auto_execute=False) returns service instance."""
         service = case.create_user_service()
@@ -459,7 +459,7 @@ class TestPattern5RailwayV2Property:
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
     def test_v2_property_can_use_execute_for_railway(
-        self, case: RailwayTestCase
+        self, case: RailwayTestCase,
     ) -> None:
         """V2 Property: .execute() available for railway pattern."""
         # V2 Property: Use .result for happy path
@@ -549,7 +549,7 @@ class TestPattern7MonadicComposition:
             GetUserService(user_id="123")
             .execute()
             .flat_map(
-                lambda user: cast("FlextResult[object]", FlextResult.ok(user.email))
+                lambda user: cast("FlextResult[object]", FlextResult.ok(user.email)),
             )
             .flat_map(
                 lambda email: cast(
@@ -689,10 +689,10 @@ class TestPattern10MultipleOperations:
     """Test Pattern 10: Múltiplas Operações."""
 
     @pytest.mark.parametrize(
-        ("operation", "value", "expected"), TestFactories.multi_operation_cases()
+        ("operation", "value", "expected"), TestFactories.multi_operation_cases(),
     )
     def test_multiple_operations(
-        self, operation: str, value: int, expected: dict[str, Any]
+        self, operation: str, value: int, expected: dict[str, Any],
     ) -> None:
         """Multiple Operations: Various operations with different inputs."""
         result = cast(
@@ -806,6 +806,6 @@ class TestAllPatternsIntegration:
 
         # Step 3: Multiple operations (V2 Property)
         calc_result = cast(
-            "dict[str, Any]", MultiOperationService(operation="double", value=10).result
+            "dict[str, Any]", MultiOperationService(operation="double", value=10).result,
         )
         assert calc_result["result"] == 20

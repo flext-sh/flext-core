@@ -156,7 +156,7 @@ class DomainTestHelpers:
 
     @staticmethod
     def create_entity(
-        name: str, value: int, *, with_id: bool = True
+        name: str, value: int, *, with_id: bool = True,
     ) -> DomainTestEntity:
         """Create a test entity with optional ID."""
         entity = DomainTestEntity(name=name, value=value)
@@ -184,7 +184,7 @@ class DomainTestHelpers:
                 entity1 = test_case.input_data["entity1"]
                 entity2 = test_case.input_data["entity2"]
                 return domain.compare_entities_by_id(
-                    entity1, entity2, id_attr=test_case.id_attr
+                    entity1, entity2, id_attr=test_case.id_attr,
                 )
 
             case DomainTestType.HASH_ENTITY_BY_ID:

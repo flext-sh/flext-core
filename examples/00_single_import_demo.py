@@ -163,7 +163,7 @@ def demonstrate_single_import_pattern() -> None:
     print("\n5. Validation Utilities:")
 
     # Cache management validation
-    test_obj = FlextModels.Entity(unique_id="test-cache")
+    test_obj = FlextModels.Entity.Core(unique_id="test-cache")
     cache_result = FlextUtilities.Cache.clear_object_cache(test_obj)
     print(f"   ✅ Cache clearing: {cache_result.is_success}")
 

@@ -1,6 +1,8 @@
-"""Utilities module - FlextUtilitiesStringParser.
+"""String parsing helpers for deterministic CQRS utility flows.
 
-Extracted from flext_core.utilities for better modularity.
+These helpers centralize delimiter handling, whitespace normalization, and
+escaped character parsing so dispatcher handlers and services receive
+predictable ``FlextResult`` outcomes instead of ad-hoc string handling.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,34 +21,19 @@ from flext_core.result import FlextResult
 
 
 class FlextUtilitiesStringParser:
-    r"""String parsing utilities for delimited and structured text processing.
+    r"""Parse delimited and structured strings with predictable results.
 
-    Constants:
-        PATTERN_TUPLE_MIN_LENGTH: Minimum length for pattern tuple (pattern, replacement)
-        PATTERN_TUPLE_MAX_LENGTH: Maximum length for pattern tuple (pattern, replacement, flags)
+    The parser consolidates delimiter handling, escape-aware splits, and
+    normalization routines behind ``FlextResult`` so callers can compose
+    parsing logic in dispatcher pipelines without manual error handling.
 
-    Provides generic string parsing methods that can be reused across projects
-    for handling delimited strings, escaped characters, and whitespace normalization.
+    Examples:
+        >>> parser = FlextUtilitiesStringParser()
+        >>> parser.parse_delimited("a, b, c", ",").unwrap()
+        ['a', 'b', 'c']
+        >>> parser.split_on_char_with_escape("cn=admin\\,dc=com", ",", "\\").unwrap()
+        ['cn=admin', 'dc=com']
 
-    **Architecture**: Detailed structured logging following FlextLdifParser pattern
-    - debug: Processing steps and intermediate results
-    - warning: Non-fatal issues with context
-    - error: Fatal errors with detailed context and abort
-    - info: Major operations and performance metrics
-
-    **Usage Examples**:
-    >>> # Parse comma-delimited string
-    >>> parser = FlextUtilitiesStringParser()
-    >>> result = parser.parse_delimited("a, b, c", ",")
-    >>> if result.is_success:
-    ...     values = result.unwrap()  # ["a", "b", "c"]
-
-    >>> # Parse with escape character handling
-    >>> result = parser.split_on_char_with_escape("cn=admin\\,dc=com", ",", "\\")
-
-    >>> # Normalize whitespace
-    >>> result = parser.normalize_whitespace("  hello   world  ")
-    >>> cleaned = result.unwrap()  # "hello world"
     """
 
     PATTERN_TUPLE_MIN_LENGTH: int = 2
@@ -766,6 +753,14 @@ class FlextUtilitiesStringParser:
             FlextResult if edge case handled, None to continue processing
 
         """
+        if text is None:
+            self.logger.debug(
+                "None text provided, returning failure",
+                operation="apply_regex_pipeline",
+                source="flext-core/src/flext_core/_utilities/string_parser.py",
+            )
+            return FlextResult[str].fail("Text cannot be None")
+
         if not text:
             self.logger.debug(
                 "Empty text provided, returning unchanged",

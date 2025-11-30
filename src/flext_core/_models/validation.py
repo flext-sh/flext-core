@@ -186,7 +186,10 @@ class FlextModelsValidation:
     @staticmethod
     def validate_batch(
         models: FlextTypes.ObjectList,
-        *validators: Callable[[object], FlextResult[object]],
+        *validators: Callable[
+            [FlextTypes.GeneralValueType],
+            FlextResult[FlextTypes.GeneralValueType],
+        ],
         fail_fast: bool = True,
     ) -> FlextResult[object]:
         """Validate a batch of models with railway patterns.
@@ -277,7 +280,12 @@ class FlextModelsValidation:
     @staticmethod
     def validate_domain_invariants(
         model: object,
-        invariants: list[Callable[[object], FlextResult[object]]],
+        invariants: list[
+            Callable[
+                [FlextTypes.GeneralValueType],
+                FlextResult[FlextTypes.GeneralValueType],
+            ]
+        ],
     ) -> FlextResult[object]:
         """Validate domain invariants with railway patterns.
 
@@ -302,7 +310,9 @@ class FlextModelsValidation:
 
         """
         for invariant in invariants:
-            result = invariant(model)
+            # Cast model to GeneralValueType for type safety
+            typed_model = cast("FlextTypes.GeneralValueType", model)
+            result = invariant(typed_model)
             if hasattr(result, "is_failure") and result.is_failure:
                 return FlextResult[object].fail(
                     f"Domain invariant violation: {result.error if hasattr(result, 'error') else 'unknown'}",
@@ -408,7 +418,12 @@ class FlextModelsValidation:
     def validate_cqrs_patterns(
         command_or_query: object,
         pattern_type: str,
-        validators: list[Callable[[object], FlextResult[object]]],
+        validators: list[
+            Callable[
+                [FlextTypes.GeneralValueType],
+                FlextResult[FlextTypes.GeneralValueType],
+            ]
+        ],
     ) -> FlextResult[object]:
         """Validate CQRS patterns with railway patterns.
 
@@ -445,7 +460,11 @@ class FlextModelsValidation:
             )
 
         for validator in validators:
-            result = validator(command_or_query)
+            # Cast command_or_query to GeneralValueType for type safety
+            typed_command_or_query = cast(
+                "FlextTypes.GeneralValueType", command_or_query
+            )
+            result = validator(typed_command_or_query)
             if result.is_failure:
                 return FlextResult[object].fail(
                     f"CQRS {pattern_type} validation failed: {result.error}",
@@ -576,7 +595,7 @@ class FlextModelsValidation:
         # Check invariants if the aggregate supports them
         if isinstance(aggregate, FlextProtocols.HasInvariants):
             try:
-                aggregate.check_invariants()
+                _ = aggregate.check_invariants()
             except (
                 AttributeError,
                 TypeError,

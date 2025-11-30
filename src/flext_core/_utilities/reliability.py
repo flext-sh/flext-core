@@ -1,6 +1,9 @@
-"""Utilities module - FlextUtilitiesReliability.
+"""Reliability helpers aligned with dispatcher-centric CQRS flows.
 
-Extracted from flext_core.utilities for better modularity.
+Utilities extracted from ``flext_core.utilities`` to keep retry and
+timeout behaviors modular. All helpers return ``FlextResult`` so
+dispatcher handlers can compose reliability policies without raising
+exceptions or leaking thread-local state.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -20,7 +23,7 @@ from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesReliability:
-    """Reliability patterns for resilient operations."""
+    """Reliability patterns for resilient, dispatcher-safe operations."""
 
     @property
     def logger(self) -> StructlogLogger:
@@ -36,7 +39,7 @@ class FlextUtilitiesReliability:
         operation: Callable[[], FlextResult[TTimeout]],
         timeout_seconds: float,
     ) -> FlextResult[TTimeout]:
-        """Execute operation with timeout using railway patterns."""
+        """Execute an operation with a hard timeout using railway patterns."""
         if timeout_seconds <= FlextConstants.INITIAL_TIME:
             return FlextResult[TTimeout].fail("Timeout must be positive")
 
@@ -88,10 +91,7 @@ class FlextUtilitiesReliability:
         delay_seconds: float | None = None,
         backoff_multiplier: float | None = None,
     ) -> FlextResult[TResult]:
-        """Execute operation with retry logic using railway patterns.
-
-        Fast fail: explicit default values instead of 'or' fallback.
-        """
+        """Execute an operation with retry logic using railway patterns."""
         # Fast fail: explicit default values instead of 'or' fallback
         max_attempts_value: int = (
             max_attempts

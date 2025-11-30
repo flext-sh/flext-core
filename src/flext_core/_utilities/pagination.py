@@ -1,8 +1,10 @@
-"""FlextUtilitiesPagination - Pagination utilities for FLEXT ecosystem.
+"""Pagination helpers that stay compatible with dispatcher flows.
 
 Provides comprehensive pagination functionality for API responses,
 including parameter extraction, validation, data preparation, and
-response building with FlextResult-based error handling.
+response building with ``FlextResult``-based error handling. Keep
+metadata deterministic so dispatcher handlers can compose paginated
+results without side effects.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -181,7 +183,7 @@ class FlextUtilitiesPagination:
             data_typed = str(data)
 
         if isinstance(
-            pagination, (str, int, float, bool, type(None), Sequence, Mapping)
+            pagination, (str, int, float, bool, type(None), Sequence, Mapping),
         ):
             pagination_typed = pagination
         else:

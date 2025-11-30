@@ -211,7 +211,7 @@ class ServiceTestCaseFactory(factory.Factory):
     expected_error = None
     extra_param = TestConstants.Validation.MIN_LENGTH_DEFAULT
     description = factory.LazyAttribute(
-        lambda obj: f"Test case for {obj.service_type} with {obj.input_value}"
+        lambda obj: f"Test case for {obj.service_type} with {obj.input_value}",
     )
 
 
@@ -231,7 +231,7 @@ class ServiceFactoryRegistry(Generic[ServiceT]):
 
     @classmethod
     def create_service(
-        cls, case: ServiceTestCase
+        cls, case: ServiceTestCase,
     ) -> FlextService[User] | FlextService[str]:
         """Create appropriate service based on case type using pattern matching."""
         factory_class = cls._factories.get(case.service_type)
@@ -247,7 +247,7 @@ class ServiceFactoryRegistry(Generic[ServiceT]):
                 service = factory_class.build(user_id=case.input_value)
             case ServiceTestType.VALIDATE:
                 service = factory_class.build(
-                    value_input=case.input_value, min_length=case.extra_param
+                    value_input=case.input_value, min_length=case.extra_param,
                 )
             case ServiceTestType.FAIL:
                 service = factory_class.build(error_message=case.input_value)
@@ -294,7 +294,7 @@ class TestDataGenerators:
                 input_value="test",
                 extra_param=2,
                 description="Custom min length",
-            )
+            ),
         ]
 
     @staticmethod

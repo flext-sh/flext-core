@@ -147,16 +147,15 @@ class UserService(FlextService):
 
 **Files:**
 
-- `handlers.py` - Message handler registry
-- `bus.py` - Central message bus
-- `dispatcher.py` - Unified dispatcher
-- `processors.py` - Event processors
-- `registry.py` - Component registry
+- `handlers.py` - CQRS handler foundation
+- `dispatcher.py` - Unified dispatcher with reliability features
+- `registry.py` - Handler registration utilities
+- `decorators.py` - Reliability/dependency-injection decorators
 
 **Rule:** Can import from Layers 2, 1, 0.5, 0. Coordinates domain services.
 
 ```python
-from flext_core import FlextBus, FlextResult  # ✅ Layers 1, 3
+from flext_core import FlextDispatcher, FlextResult  # ✅ Layers 1, 3
 
 class CreateUserHandler:
     """Application handler - orchestrates domain service."""
@@ -185,7 +184,7 @@ class CreateUserHandler:
 **Rule:** Can import ANYTHING. Final layer with external dependencies.
 
 ```python
-from flext_core import FlextBus  # ✅ All layers available
+from flext_core import FlextDispatcher  # ✅ All layers available
 import structlog  # ✅ External libraries
 from database import connect  # ✅ External services
 
@@ -200,7 +199,7 @@ class FlextLogger:
 
 ```python
 # Bootstrap application (from outside all layers)
-from flext_core import FlextContainer, FlextConfig, FlextLogger, FlextBus
+from flext_core import FlextContainer, FlextConfig, FlextLogger, FlextDispatcher
 
 # 1. Configure (Layer 4)
 config = FlextConfig(config_files=['config.toml'])
@@ -216,16 +215,16 @@ user_service = UserService()
 container.register("user_service", user_service)
 
 # 4. Register handlers (Layer 3)
-bus = FlextBus()
-bus.register_handler(CreateUserCommand, CreateUserHandler(user_service))
-container.register("bus", bus)
+dispatcher = FlextDispatcher()
+dispatcher.register_handler(CreateUserCommand, CreateUserHandler(user_service))
+container.register("dispatcher", dispatcher)
 
 # 5. Use application (request time)
-bus_result = container.get("bus")
-if bus_result.is_success:
-    bus = bus_result.unwrap()
+dispatcher_result = container.get("dispatcher")
+if dispatcher_result.is_success:
+    dispatcher = dispatcher_result.unwrap()
     command = CreateUserCommand(name="Alice", email="alice@example.com")
-    result = bus.send_command(command)
+    result = dispatcher.dispatch(command)
 ```
 
 ## Single Responsibility Per Module
@@ -311,12 +310,12 @@ class User(FlextModels.Entity):
 
 ```python
 # Layer 3 and 4 can add features/change implementation
-# Example: FlextBus might add new middleware system in v1.1
-from flext_core import FlextBus
+# Example: FlextDispatcher might add new middleware system in v1.1
+from flext_core import FlextDispatcher
 
-bus = FlextBus()
+dispatcher = FlextDispatcher()
 # New in v1.1: advanced pipeline features
-bus.add_middleware(MyMiddleware())
+dispatcher.register_handler(Message, FlextDecorators.retry()(handler))
 ```
 
 ## Circular Dependency Prevention

@@ -298,7 +298,7 @@ Layer 0: FlextConstants, FlextTypes, FlextProtocols (no imports from other layer
 Layer 0.5: FlextRuntime (imports Layer 0 only)
 Layer 1: FlextResult, FlextContainer (imports Layer 0, 0.5 only)
 Layer 2: FlextModels, FlextService (imports Layer 0-1 only)
-Layer 3: FlextHandlers, FlextBus (imports Layer 0-2 only)
+Layer 3: FlextHandlers, FlextDispatcher (imports Layer 0-2 only)
 Layer 4: FlextConfig, FlextLogger (imports all lower layers)
 ```
 

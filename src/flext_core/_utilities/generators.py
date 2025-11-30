@@ -1,6 +1,8 @@
-"""Utilities module - FlextUtilitiesGenerators.
+"""ID and data generation helpers shared across dispatcher flows.
 
-Extracted from flext_core.utilities for better modularity.
+These primitives centralize correlation, batch, and timestamp generation so
+dispatcher handlers and services produce consistent identifiers and audit
+metadata without duplicating randomness or formatting concerns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -24,7 +26,7 @@ from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesGenerators:
-    """ID and data generation utilities."""
+    """Generate deterministic IDs and timestamps for CQRS workflows."""
 
     @property
     def logger(self) -> StructlogLogger:
@@ -45,13 +47,9 @@ class FlextUtilitiesGenerators:
     ) -> str:
         """Factory method for generating prefixed IDs with UUID.
 
-        **INTERNAL METHOD**: This is a private implementation detail used
-        by public ID generation methods. Do not call directly - use the
-        specific public methods instead (generate_correlation_id,
-        generate_batch_id, etc.).
-
-        This method consolidates 12+ similar ID generation methods following
-        DRY principle (Don't Repeat Yourself).
+        This private helper keeps the public generators consistent while
+        limiting duplication across the correlation, batch, and transaction
+        ID factories.
 
         Args:
             prefix: ID prefix (e.g., 'corr', 'batch', 'txn')
@@ -402,10 +400,13 @@ class FlextUtilitiesGenerators:
         # Strategy 2: Pydantic BaseModel - use model_dump()
         # Check for model_dump method instead of isinstance to avoid type narrowing issues
         # GeneralValueType doesn't include BaseModel, but objects with model_dump() are valid
-        if hasattr(value, "model_dump") and callable(
-            getattr(value, "model_dump", None)
+        # Type narrowing: exclude None before accessing attributes
+        if (
+            value is not None
+            and hasattr(value, "model_dump")
+            and callable(getattr(value, "model_dump", None))
         ):
-            # Type narrowing: value has model_dump method
+            # Type narrowing: value has model_dump method and is not None
             model_dump_method = value.model_dump
             if callable(model_dump_method):
                 result = model_dump_method()

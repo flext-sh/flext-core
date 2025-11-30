@@ -1,8 +1,9 @@
-"""Automation decorators for infrastructure concerns.
+"""Decorator utilities that automate dispatcher-friendly cross-cutting concerns.
 
-This module provides FlextDecorators, a collection of decorators that
-automatically handle common infrastructure concerns to reduce boilerplate
-code in services, handlers, and other components.
+The decorators in this module hide boilerplate for dependency injection,
+logging, correlation tracking, and railway conversions so handlers and services
+stay focused on domain logic while fitting naturally into the dispatcher
+pipeline.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,6 +16,7 @@ import time
 from collections.abc import Callable
 from contextlib import suppress
 from functools import wraps
+from typing import cast
 
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
@@ -28,25 +30,13 @@ from flext_core.typings import FlextTypes, P, R, T
 
 
 class FlextDecorators:
-    """Automation decorators for cross-cutting infrastructure concerns.
+    """Decorator suite for DI, logging, correlation, and result safety.
 
-    Core Decorators:
-    - @inject: Dependency injection from FlextContainer
-    - @log_operation: Automatic structured logging
-    - @track_performance: Operation timing and metrics
-    - @railway: Exception-to-FlextResult conversion
-    - @retry: Retry with exponential/linear backoff
-    - @timeout: Operation timeout enforcement
-    - @with_correlation: Correlation ID management
-    - @with_context: Context variable binding
-    - @track_operation: Combined correlation + logging
-    - @combined: Combines inject, log, performance, railway
-
-    Composition order (outer to inner):
-        @railway → @inject → @track_performance → @log_operation → func
-
-    All decorators are thread-safe via FlextContainer singleton and
-    FlextContext contextvars.
+    Each decorator wraps callables with dispatcher-friendly behavior: dependency
+    injection through ``FlextContainer``, structured logging that respects
+    ``FlextContext`` correlation data, performance tracking, and conversion of
+    raised errors into ``FlextResult`` when appropriate. Composition order
+    mirrors the dispatcher middleware chain to keep telemetry consistent.
     """
 
     @staticmethod
@@ -65,7 +55,9 @@ class FlextDecorators:
                 for name, service_key in dependencies.items():
                     if name not in kwargs:
                         # Get from container using the service key
-                        result = container.get(service_key)
+                        result: FlextResult[FlextTypes.GeneralValueType] = (
+                            container.get(service_key)
+                        )
                         if result.is_success:
                             kwargs[name] = result.unwrap()
                         else:
@@ -91,7 +83,8 @@ class FlextDecorators:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 op_name = operation_name or func.__name__
-                args_tuple: tuple[FlextTypes.GeneralValueType, ...] = tuple(args)
+                # Convert P.args to tuple for logger resolution (type narrowing happens in _resolve_logger)
+                args_tuple = tuple(args)
                 logger = FlextDecorators._resolve_logger(args_tuple, func)
                 result_logger = logger.with_result()
                 correlation_id = FlextDecorators._bind_operation_context(
@@ -184,8 +177,8 @@ class FlextDecorators:
                 )
 
                 # Get logger from self if available, otherwise create one
-                # Convert P.args to tuple[object, ...] for logger resolution
-                args_tuple: tuple[FlextTypes.GeneralValueType, ...] = tuple(args)
+                # Convert P.args to tuple for logger resolution (type narrowing happens in _resolve_logger)
+                args_tuple = tuple(args)
                 logger = FlextDecorators._resolve_logger(args_tuple, func)
 
                 start_time = time.perf_counter()
@@ -322,10 +315,16 @@ class FlextDecorators:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 logger = FlextDecorators._resolve_logger(args, func)
+                # Convert P.args and P.kwargs to types expected by _execute_retry_loop
+                # Use cast since ParamSpec types are not directly compatible
+                args_tuple = cast("tuple[FlextTypes.GeneralValueType, ...]", args)
+                kwargs_dict = cast(
+                    "FlextTypes.GeneralValueType", dict(kwargs) if kwargs else {}
+                )
                 result_or_exception = FlextDecorators._execute_retry_loop(
                     func,
-                    args,
-                    kwargs,
+                    args_tuple,
+                    kwargs_dict,
                     logger,
                     attempts,
                     delay,
@@ -356,8 +355,8 @@ class FlextDecorators:
 
     @staticmethod
     def _resolve_logger(
-        args: tuple[FlextTypes.GeneralValueType, ...],
-        func: Callable[..., FlextTypes.GeneralValueType],
+        args: tuple[object, ...],
+        func: Callable[..., object],
     ) -> FlextLogger:
         """Resolve logger from first argument or create module logger."""
         first_arg = args[0] if args else None
@@ -494,7 +493,15 @@ class FlextDecorators:
                     )
                     time.sleep(current_delay)
 
-                return func(*args, **kwargs)
+                # Convert kwargs to dict if it's a Mapping, otherwise use empty dict
+                if FlextRuntime.is_dict_like(kwargs):
+                    kwargs_mapping = (
+                        dict(kwargs)
+                        if isinstance(kwargs, dict)
+                        else dict(kwargs.items())
+                    )
+                    return func(*args, **kwargs_mapping)
+                return func(*args)
 
             except (
                 AttributeError,
@@ -645,7 +652,13 @@ class FlextDecorators:
             fallback_logger = getattr(logger, "logger", None)
             if fallback_logger is None or not hasattr(fallback_logger, "warning"):
                 return
-            fallback_kwargs = dict(kwargs)
+            # Convert kwargs to dict if it's a Mapping, otherwise use empty dict
+            if FlextRuntime.is_dict_like(kwargs):
+                fallback_kwargs = (
+                    dict(kwargs) if isinstance(kwargs, dict) else dict(kwargs.items())
+                )
+            else:
+                fallback_kwargs = {}
             fallback_kwargs.setdefault("extra", {})
             extra_payload = fallback_kwargs["extra"]
             if FlextRuntime.is_dict_like(extra_payload):
@@ -779,20 +792,6 @@ class FlextDecorators:
 
         return decorator
 
-        """Ensure correlation ID exists in context for distributed tracing."""
-
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
-            @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                # Ensure correlation ID exists
-                FlextContext.Utilities.ensure_correlation_id()
-
-                return func(*args, **kwargs)
-
-            return wrapper
-
-        return decorator
-
     @staticmethod
     def with_context(
         **context_vars: str | int | bool | None,
@@ -802,8 +801,8 @@ class FlextDecorators:
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                # Convert P.args to tuple[object, ...] for logger resolution
-                args_tuple: tuple[FlextTypes.GeneralValueType, ...] = tuple(args)
+                # Convert P.args to tuple for logger resolution (type narrowing happens in _resolve_logger)
+                args_tuple = tuple(args)
                 logger = FlextDecorators._resolve_logger(args_tuple, func)
 
                 try:
@@ -860,8 +859,8 @@ class FlextDecorators:
                     operation_name if operation_name is not None else func.__name__
                 )
 
-                # Convert P.args to tuple[object, ...] for logger resolution
-                args_tuple: tuple[FlextTypes.GeneralValueType, ...] = tuple(args)
+                # Convert P.args to tuple for logger resolution (type narrowing happens in _resolve_logger)
+                args_tuple = tuple(args)
                 logger = FlextDecorators._resolve_logger(args_tuple, func)
 
                 correlation_id = FlextDecorators._bind_operation_context(

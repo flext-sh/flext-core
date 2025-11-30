@@ -276,7 +276,7 @@ class TestFlextUtilities:
         assert id1 != id2
 
     @pytest.mark.parametrize(
-        ("method_name", "prefix"), UtilityScenarios.ID_GENERATOR_CASES
+        ("method_name", "prefix"), UtilityScenarios.ID_GENERATOR_CASES,
     )
     def test_generators(self, method_name: str, prefix: str | None) -> None:
         """Test various ID and timestamp generators."""
@@ -330,7 +330,7 @@ class TestFlextUtilities:
         UtilityScenarios.CACHE_NORMALIZATION_CASES,
     )
     def test_cache_normalize_component(
-        self, input_data: object, expected_type: type
+        self, input_data: object, expected_type: type,
     ) -> None:
         """Test cache component normalization."""
         result = FlextUtilities.Cache.normalize_component(input_data)
