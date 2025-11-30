@@ -87,13 +87,11 @@ class FlextContainer(FlextProtocols.Configurable):
     @property
     def config(self) -> FlextProtocols.ConfigProtocol:
         """Get configuration bound to this container."""
-
         return self._config
 
     @property
     def context(self) -> FlextProtocols.ContextProtocol:
         """Get execution context bound to this container."""
-
         return self._context
 
     def _create_container_config(self) -> FlextModelsContainer.ContainerConfig:
@@ -233,7 +231,6 @@ class FlextContainer(FlextProtocols.Configurable):
         factories: Mapping[str, Callable[[], object]] | None = None,
     ) -> FlextProtocols.ContainerProtocol:
         """Create an isolated container scope with optional overrides."""
-
         base_config = config or self.config.model_copy(deep=True)
         if subproject:
             base_config = base_config.model_copy(

@@ -16,16 +16,10 @@ from __future__ import annotations
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import ClassVar, Self
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
-from flext_core._models.collections import FlextModelsCollections
-from flext_core._models.entity import FlextModelsEntity
-from flext_core._models.metadata import Metadata
-from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
 
 # TIER 0 CONSTANTS - Inline to avoid importing from flext_core
 _DEFAULT_VERSION = 1

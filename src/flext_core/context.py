@@ -1023,10 +1023,10 @@ class FlextContext:
     # Container integration for dependency injection
     # =========================================================================
 
-    _container: "FlextContainer" | None = None
+    _container: FlextContainer | None = None
 
     @classmethod
-    def get_container(cls) -> "FlextContainer":
+    def get_container(cls) -> FlextContainer:
         """Get global container with lazy initialization.
 
         Returns:
@@ -1151,7 +1151,6 @@ class FlextContext:
         @staticmethod
         def reset_correlation_id() -> None:
             """Clear correlation ID from context variables."""
-
             FlextContext.Variables.Correlation.CORRELATION_ID.set(None)
 
         @staticmethod

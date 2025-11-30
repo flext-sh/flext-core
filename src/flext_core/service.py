@@ -18,9 +18,9 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
-from typing import Iterator, Self
+from typing import Self
 
 from pydantic import ConfigDict, PrivateAttr, computed_field
 
@@ -172,7 +172,6 @@ class FlextService[TDomainResult](
     @staticmethod
     def _create_initial_runtime() -> FlextModels.ServiceRuntime:
         """Build the initial runtime triple for a new service instance."""
-
         base_context = FlextContext()
         global_config = FlextConfig.get_global_instance()
 
@@ -203,7 +202,6 @@ class FlextService[TDomainResult](
         container_factories: Mapping[str, Callable[[], object]] | None = None,
     ) -> FlextModels.ServiceRuntime:
         """Clone config/context and container in a single unified path."""
-
         cloned_config = self.config.model_copy(update=config_overrides or {}, deep=True)
         runtime_context = (
             context.clone() if context is not None else self.context.clone()
@@ -227,25 +225,21 @@ class FlextService[TDomainResult](
         self,
     ) -> FlextModels.ServiceRuntime:  # pragma: no cover - trivial access
         """View of the runtime triple for this service instance."""
-
         return self._runtime
 
     @computed_field
     def context(self) -> FlextProtocols.ContextProtocol:  # type: ignore[override]
         """Service-scoped execution context."""
-
         return self._context
 
     @computed_field
     def config(self) -> FlextProtocols.ConfigProtocol:  # type: ignore[override]
         """Service-scoped configuration clone."""
-
         return self._config
 
     @computed_field
     def container(self) -> FlextProtocols.ContainerProtocol:  # type: ignore[override]
         """Container bound to the service context/config."""
-
         return self._container
 
     @abstractmethod
@@ -339,7 +333,7 @@ class FlextService[TDomainResult](
         }
 
     @computed_field
-    def access(self) -> "_ServiceAccess":
+    def access(self) -> _ServiceAccess:
         """Unified access to FLEXT infrastructure components.
 
         Provides on-demand access to CQRS models, registry, configuration,
@@ -355,8 +349,8 @@ class FlextService[TDomainResult](
             >>> service = MyService()
             >>> registry = service.access.registry
             >>> nested = service.access.clone_config(app_name="test")
-        """
 
+        """
         return _ServiceAccess(self)
 
 
@@ -394,13 +388,11 @@ class _ServiceAccess(FlextModels.ArbitraryTypesModel):
     @computed_field
     def cqrs(self) -> type[FlextModels.Cqrs]:  # pragma: no cover - trivial access
         """CQRS facade from FlextModels."""
-
         return FlextModels.Cqrs
 
     @computed_field
     def registry(self) -> FlextRegistry:
         """Registry singleton for service discovery."""
-
         if self._registry is None:
             try:
                 dispatcher = FlextDispatcher()
@@ -420,7 +412,6 @@ class _ServiceAccess(FlextModels.ArbitraryTypesModel):
     @computed_field
     def config(self) -> FlextConfig:
         """Global configuration instance for the service."""
-
         return self._service.config
 
     @computed_field
@@ -428,25 +419,21 @@ class _ServiceAccess(FlextModels.ArbitraryTypesModel):
         self,
     ) -> FlextModels.ServiceRuntime:  # pragma: no cover - trivial access
         """Protocol-backed runtime triple for the bound service."""
-
         return self._service.runtime
 
     @computed_field
     def result(self) -> type[FlextResult]:  # pragma: no cover - trivial access
         """Result factory shortcuts."""
-
         return FlextResult
 
     @computed_field
     def context(self) -> FlextContext:
         """Context manager for correlation and tracing."""
-
         return self._service.context
 
     @computed_field
     def container(self) -> FlextContainer:
         """Dependency injection container bound to the service."""
-
         return self._service.container
 
     def container_scope(
@@ -459,7 +446,6 @@ class _ServiceAccess(FlextModels.ArbitraryTypesModel):
         factories: Mapping[str, Callable[[], object]] | None = None,
     ) -> FlextProtocols.ContainerProtocol:
         """Create a container scope with cloned config and optional overrides."""
-
         return self.runtime_scope(
             config_overrides=config_overrides,
             context=context,
@@ -480,7 +466,6 @@ class _ServiceAccess(FlextModels.ArbitraryTypesModel):
         container_factories: Mapping[str, Callable[[], object]] | None = None,
     ) -> FlextModels.ServiceRuntime:
         """Clone the service runtime triple using protocol-backed models."""
-
         return self._service._clone_runtime(
             config_overrides=config_overrides,
             context=context or self.context,
@@ -499,8 +484,8 @@ class _ServiceAccess(FlextModels.ArbitraryTypesModel):
 
         Returns:
             FlextConfig: Cloned configuration instance with updates applied.
-        """
 
+        """
         return self.config.model_copy(update=overrides, deep=True)
 
     @contextmanager
@@ -521,7 +506,6 @@ class _ServiceAccess(FlextModels.ArbitraryTypesModel):
         isolated from the parent, enabling containerized execution flows without
         mutating global state.
         """
-
         base_runtime = self.runtime
         base_context = base_runtime.context
         original_correlation = base_context.Correlation.get_correlation_id()

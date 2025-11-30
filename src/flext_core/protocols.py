@@ -162,7 +162,7 @@ class FlextProtocols:
             *,
             update: Mapping[str, FlextTypes.FlexibleValue] | None = None,
             deep: bool = False,
-        ) -> "FlextProtocols.ConfigProtocol":
+        ) -> FlextProtocols.ConfigProtocol:
             """Clone configuration with optional updates."""
             ...
 
@@ -208,7 +208,7 @@ class FlextProtocols:
         Service: ContextServiceProtocol
         Utilities: ContextUtilitiesProtocol
 
-        def clone(self) -> "FlextProtocols.ContextProtocol":
+        def clone(self) -> FlextProtocols.ContextProtocol:
             """Clone context for isolated execution."""
             ...
 
@@ -235,7 +235,7 @@ class FlextProtocols:
             services: Mapping[str, FlextTypes.FlexibleValue] | None = None,
             factories: Mapping[str, Callable[[], FlextTypes.FlexibleValue]]
             | None = None,
-        ) -> "FlextProtocols.ContainerProtocol":
+        ) -> FlextProtocols.ContainerProtocol:
             """Create an isolated container scope with optional overrides."""
             ...
 
