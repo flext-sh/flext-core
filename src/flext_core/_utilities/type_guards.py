@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import GeneralValueType
+from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesTypeGuards:
@@ -30,7 +30,7 @@ class FlextUtilitiesTypeGuards:
     """
 
     @staticmethod
-    def is_string_non_empty(value: GeneralValueType) -> bool:
+    def is_string_non_empty(value: FlextTypes.GeneralValueType) -> bool:
         """Check if value is a non-empty string using duck typing.
 
         Validates that the provided value is a string type and contains
@@ -54,7 +54,7 @@ class FlextUtilitiesTypeGuards:
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
-    def is_dict_non_empty(value: GeneralValueType) -> bool:
+    def is_dict_non_empty(value: FlextTypes.GeneralValueType) -> bool:
         """Check if value is a non-empty dictionary using duck typing.
 
         Validates that the provided value behaves like a dictionary
@@ -78,7 +78,7 @@ class FlextUtilitiesTypeGuards:
         return FlextRuntime.is_dict_like(value) and bool(value)
 
     @staticmethod
-    def is_list_non_empty(value: GeneralValueType) -> bool:
+    def is_list_non_empty(value: FlextTypes.GeneralValueType) -> bool:
         """Check if value is a non-empty list using duck typing.
 
         Validates that the provided value behaves like a list

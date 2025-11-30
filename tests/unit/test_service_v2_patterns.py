@@ -614,7 +614,7 @@ class TestFlextServiceV2Patterns:
             class NoAutoService(FlextService[str]):
                 """Service without auto_execute."""
 
-                auto_execute = False
+                auto_execute: ClassVar[bool] = False
 
                 def execute(self, **_kwargs: object) -> FlextResult[str]:
                     return FlextResult.ok("no_auto")

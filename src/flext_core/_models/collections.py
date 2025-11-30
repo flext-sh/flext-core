@@ -1,26 +1,37 @@
 """Collection models for categorized data.
 
-This module provides generic collection classes for categorizing items.
+TIER 0.5: Depende apenas de base.py (Tier 0).
+Usa verificações inline de tipo para evitar import de runtime.py.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-from typing import Self
+from collections.abc import Callable, Mapping, Sequence
+from typing import Self, cast
 
 from pydantic import ConfigDict, Field
 
-from flext_core._models.entity import FlextModelsEntity
-from flext_core.runtime import FlextRuntime
+from flext_core._models.base import FlextModelsBase
+
+
+# Tier 0.5 - Helper functions inline (avoid FlextRuntime import)
+def _is_list_like(value: object) -> bool:
+    """Check if value is list-like (but not string/bytes)."""
+    return isinstance(value, Sequence) and not isinstance(value, str | bytes)
+
+
+def _is_dict_like(value: object) -> bool:
+    """Check if value is dict-like."""
+    return isinstance(value, Mapping)
 
 
 class FlextModelsCollections:
     """Collection models container class."""
 
-    class Categories[T](FlextModelsEntity.ArbitraryTypesModel):
+    class Categories[T](FlextModelsBase.ArbitraryTypesModel):
         """Generic categorized collection with dynamic categories.
 
         Provides type-safe storage for items organized by category names.
@@ -134,7 +145,7 @@ class FlextModelsCollections:
             """Convert to dict (CategoryGroupsMapping pattern)."""
             return self.categories.copy()
 
-    class Statistics(FlextModelsEntity.Value):
+    class Statistics(FlextModelsBase.FrozenValueModel):
         """Base for statistics models (frozen Value)."""
 
         @classmethod
@@ -175,10 +186,10 @@ class FlextModelsCollections:
                 if isinstance(first_val, int | float):
                     result[key] = sum(v for v in non_none if isinstance(v, int | float))
                 # Concatenate lists
-                elif FlextRuntime.is_list_like(first_val):
+                elif _is_list_like(first_val):
                     combined: list[object] = []
                     for v in non_none:
-                        if FlextRuntime.is_list_like(v):
+                        if _is_list_like(v):
                             combined.extend(v)
                     result[key] = combined
                 # Keep last for other types
@@ -187,7 +198,7 @@ class FlextModelsCollections:
 
             return result
 
-    class Config(FlextModelsEntity.ArbitraryTypesModel):
+    class Config(FlextModelsBase.ArbitraryTypesModel):
         """Base for configuration models - mutable Pydantic v2 model.
 
         Pydantic v2 models are not hashable by default when not frozen.
@@ -263,7 +274,7 @@ class FlextModelsCollections:
                 return NotImplemented
             return self.model_dump() == other.model_dump()
 
-    class Results(FlextModelsEntity.Value):
+    class Results(FlextModelsBase.FrozenValueModel):
         """Base for result models."""
 
         @classmethod
@@ -280,19 +291,19 @@ class FlextModelsCollections:
                 return sum(v for v in non_none if isinstance(v, int | float))
 
             # Concatenate lists
-            if FlextRuntime.is_list_like(first_val):
+            if _is_list_like(first_val):
                 combined: list[object] = []
                 for v in non_none:
-                    if FlextRuntime.is_list_like(v):
-                        combined.extend(v)
+                    if _is_list_like(v):
+                        combined.extend(cast("Sequence[object]", v))
                 return combined
 
             # Merge dicts
-            if FlextRuntime.is_dict_like(first_val):
+            if _is_dict_like(first_val):
                 merged: dict[str, object] = {}
                 for v in non_none:
-                    if FlextRuntime.is_dict_like(v):
-                        merged.update(v)
+                    if _is_dict_like(v):
+                        merged.update(cast("Mapping[str, object]", v))
                 return merged
 
             # Keep last for other types
@@ -327,12 +338,12 @@ class FlextModelsCollections:
 
             return aggregated
 
-    class Rules(FlextModelsEntity.ArbitraryTypesModel):
+    class Rules(FlextModelsBase.ArbitraryTypesModel):
         """Base for rules models."""
 
         model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
-    class Options(FlextModelsEntity.Value):
+    class Options(FlextModelsBase.FrozenValueModel):
         """Base for options models."""
 
         def merge(self, other: Self) -> Self:
@@ -366,3 +377,13 @@ class FlextModelsCollections:
             """
             data = self.model_dump()
             return {k: v for k, v in data.items() if k in fields}
+
+    class ParseOptions(Options):
+        """Parameter object for parse_delimited configuration.
+
+        Used by FlextUtilitiesStringParser for configuring string parsing operations.
+        """
+
+        strip: bool = True
+        remove_empty: bool = True
+        validator: Callable[[str], bool] | None = None

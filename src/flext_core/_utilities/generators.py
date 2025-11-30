@@ -8,23 +8,33 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 import secrets
 import string
 import time
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from typing import cast
 
 from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes, GeneralValueType
-
-_logger = logging.getLogger(__name__)
+from flext_core.runtime import FlextRuntime, StructlogLogger
+from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesGenerators:
+    """ID and data generation utilities."""
+
+    @property
+    def logger(self) -> StructlogLogger:
+        """Get logger instance using FlextRuntime (avoids circular imports).
+
+        Returns structlog logger instance (Logger protocol).
+        Type annotation omitted to avoid importing structlog.typing here.
+        """
+        return FlextRuntime.get_logger(__name__)
+
     """ID and data generation utilities."""
 
     @staticmethod
@@ -188,7 +198,7 @@ class FlextUtilitiesGenerators:
         ) + 1
 
     @staticmethod
-    def ensure_id(obj: FlextTypes.CachedObjectType) -> None:
+    def ensure_id(obj: FlextTypes.Utility.CachedObjectType) -> None:
         """Ensure object has an ID using FlextUtilities and FlextConstants.
 
         Args:
@@ -203,15 +213,15 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _normalize_context_to_dict(
-        context: dict[str, GeneralValueType] | object,
-    ) -> dict[str, GeneralValueType]:
+        context: dict[str, FlextTypes.GeneralValueType] | object,
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Normalize context to dict - fast fail validation.
 
         Args:
             context: Context to normalize
 
         Returns:
-            dict[str, GeneralValueType]: Normalized context dict
+            dict[str, FlextTypes.GeneralValueType]: Normalized context dict
 
         Raises:
             TypeError: If context cannot be normalized
@@ -250,7 +260,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _enrich_context_fields(
-        context_dict: dict[str, GeneralValueType],
+        context_dict: dict[str, str],
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -258,7 +268,7 @@ class FlextUtilitiesGenerators:
         """Enrich context dict with tracing fields.
 
         Args:
-            context_dict: Context dict to enrich (modified in place)
+            context_dict: Context dict to enrich (modified in place, all values must be strings)
             include_correlation_id: If True, ensure correlation_id exists
             include_timestamp: If True, ensure timestamp exists
 
@@ -328,7 +338,12 @@ class FlextUtilitiesGenerators:
             'abc'
 
         """
-        context_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
+        normalized_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
+        # Convert all values to strings for trace context (trace_id, span_id, etc. are strings)
+        context_dict: dict[str, str] = {
+            k: str(v) if not isinstance(v, str) else v
+            for k, v in normalized_dict.items()
+        }
         FlextUtilitiesGenerators._enrich_context_fields(
             context_dict,
             include_correlation_id=include_correlation_id,
@@ -338,9 +353,9 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_dict(
-        value: GeneralValueType,
-        default: dict[str, GeneralValueType] | None = None,
-    ) -> dict[str, GeneralValueType]:
+        value: FlextTypes.GeneralValueType,
+        default: dict[str, FlextTypes.GeneralValueType] | None = None,
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
 
         This generic helper consolidates duplicate dict normalization logic
@@ -360,7 +375,7 @@ class FlextUtilitiesGenerators:
             default: Default value to return if value is None (optional)
 
         Returns:
-            dict[str, GeneralValueType]: Normalized dict or default
+            dict[str, FlextTypes.GeneralValueType]: Normalized dict or default
 
         Raises:
             TypeError: If value is None (and no default) or cannot be converted
@@ -384,17 +399,22 @@ class FlextUtilitiesGenerators:
         if isinstance(value, dict):
             return value
 
-        # Strategy 2: Pydantic BaseModel - use model_dump() (fast fail)
-        if isinstance(value, BaseModel):
-            # Fast fail: model_dump() must succeed for valid Pydantic models
-            try:
-                return value.model_dump()
-            except (AttributeError, TypeError) as e:
-                msg = (
-                    f"Failed to dump BaseModel {type(value).__name__}: "
-                    f"{type(e).__name__}: {e}"
-                )
-                raise TypeError(msg) from e
+        # Strategy 2: Pydantic BaseModel - use model_dump()
+        # Check for model_dump method instead of isinstance to avoid type narrowing issues
+        # GeneralValueType doesn't include BaseModel, but objects with model_dump() are valid
+        if hasattr(value, "model_dump") and callable(
+            getattr(value, "model_dump", None)
+        ):
+            # Type narrowing: value has model_dump method
+            model_dump_method = value.model_dump
+            if callable(model_dump_method):
+                result = model_dump_method()
+                # model_dump() always returns dict[str, Any] for BaseModel
+                # Cast to our expected type
+                if result is not None:
+                    return cast("dict[str, FlextTypes.GeneralValueType]", result)
+                # Fallback: return empty dict if model_dump() returns None (shouldn't happen)
+                return {}
 
         # Strategy 3: Mapping (dict-like) - convert via dict() (fast fail)
         if isinstance(value, Mapping):
@@ -445,7 +465,7 @@ class FlextUtilitiesGenerators:
     def create_dynamic_type_subclass(
         name: str,
         base_class: object,  # Can be a class or Self
-        attributes: dict[str, GeneralValueType],
+        attributes: dict[str, object],
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 

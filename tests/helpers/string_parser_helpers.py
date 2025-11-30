@@ -15,8 +15,9 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from typing import TypeVar
 
-from flext_core import FlextResult
-from flext_core._utilities.string_parser import ParseOptions
+from flext_core import FlextModels, FlextResult
+
+ParseOptions = FlextModels.ParseOptions
 
 TResult = TypeVar("TResult")
 TService = TypeVar("TService")

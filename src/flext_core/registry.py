@@ -331,7 +331,8 @@ class FlextRegistry(FlextMixins):
         self._registered_keys: set[str] = set()
 
     def _safe_get_handler_mode(
-        self, value: FlextTypes.GeneralValueType
+        self,
+        value: FlextTypes.GeneralValueType,
     ) -> FlextConstants.Cqrs.HandlerType:
         """Safely extract and validate handler mode from object value."""
         if value == FlextConstants.Cqrs.HandlerType.QUERY:
@@ -342,7 +343,8 @@ class FlextRegistry(FlextMixins):
         return FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
 
     def _safe_get_status(
-        self, value: FlextTypes.GeneralValueType
+        self,
+        value: FlextTypes.GeneralValueType,
     ) -> FlextConstants.Cqrs.Status:
         """Safely extract and validate status from object value."""
         if value == FlextConstants.Cqrs.RegistrationStatus.ACTIVE:
@@ -997,7 +999,9 @@ class FlextRegistry(FlextMixins):
     # =========================================================================
 
     def register_item(
-        self, name: str, item: FlextTypes.GeneralValueType
+        self,
+        name: str,
+        item: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Register item (RegistrationTracker protocol)."""
         # Direct implementation without try/except - use FlextResult for error handling
