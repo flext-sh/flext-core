@@ -371,6 +371,107 @@ class FlextUtilities:
     # NESTED CLASS: String Parser Utilities
     # ═══════════════════════════════════════════════════════════════════
 
+<<<<<<< HEAD
+        def __init__(self) -> None:
+            """Initialize StringParser with internal implementation."""
+            self._parser = FlextUtilitiesStringParser()
+
+        def parse_delimited(
+            self,
+            text: str,
+            delimiter: str,
+            *,
+            options: ParseOptions | None = None,
+            strip: bool = True,
+            remove_empty: bool = True,
+            validator: Callable[[str], bool] | None = None,
+        ) -> FlextResult[list[str]]:
+            """Parse delimited text with flexible options.
+
+            Args:
+                text: Text to parse
+                delimiter: Delimiter character/string
+                options: ParseOptions for advanced configuration
+                strip: Strip whitespace from each component
+                remove_empty: Remove empty components after stripping
+                validator: Optional validation function for each component
+
+            Returns:
+                FlextResult[list[str]]: Parsed components or error
+
+            """
+            return self._parser.parse_delimited(
+                text,
+                delimiter,
+                options=options,
+                strip=strip,
+                remove_empty=remove_empty,
+                validator=validator,
+            )
+
+        def normalize_whitespace(
+            self, text: str, pattern: str = r"\s+", replacement: str = " "
+        ) -> FlextResult[str]:
+            r"""Normalize whitespace in text.
+
+            Args:
+                text: Text to normalize
+                pattern: Regex pattern to match (default: r"\s+")
+                replacement: Replacement string (default: " ")
+
+            Returns:
+                FlextResult[str]: Normalized text or error
+
+            """
+            return self._parser.normalize_whitespace(
+                text, pattern=pattern, replacement=replacement
+            )
+
+        def split_on_char_with_escape(
+            self, text: str, split_char: str, escape_char: str = "\\"
+        ) -> FlextResult[list[str]]:
+            r"""Split text on character with escape support.
+
+            Args:
+                text: Text to split
+                split_char: Character to split on
+                escape_char: Escape character (default: "\\")
+
+            Returns:
+                FlextResult[list[str]]: Split components or error
+
+            """
+            return self._parser.split_on_char_with_escape(text, split_char, escape_char)
+
+        def apply_regex_pipeline(
+            self, text: str, patterns: list[tuple[str, str] | tuple[str, str, int]]
+        ) -> FlextResult[str]:
+            """Apply sequence of regex replacements to text.
+
+            Args:
+                text: Text to process
+                patterns: List of (pattern, replacement) or (pattern, replacement, flags) tuples
+
+            Returns:
+                FlextResult[str]: Processed text or error
+
+            """
+            return self._parser.apply_regex_pipeline(text, patterns)
+
+        def get_object_key(
+            self, obj: GeneralValueType
+        ) -> str:
+            """Get string key representation of object.
+
+            Args:
+                obj: Object to get key for
+
+            Returns:
+                str: String representation suitable for use as key
+
+            """
+            return self._parser.get_object_key(obj)
+
     # Thin facade: direct alias to FlextUtilitiesStringParser
     StringParser = FlextUtilitiesStringParser
 

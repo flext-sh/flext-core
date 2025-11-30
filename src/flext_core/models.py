@@ -235,6 +235,9 @@ class FlextModels:
         """Handler execution context model."""
 
     # Domain Service Models
+    class ServiceRuntime(FlextModelsService.RuntimeResources):
+        """Runtime triple (config, context, container) for services."""
+
     class DomainServiceExecutionRequest(
         FlextModelsService.DomainServiceExecutionRequest,
     ):

@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 import os
 import threading
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable
 from pathlib import Path
 from typing import ClassVar, Self, TypeVar
 
@@ -417,9 +417,7 @@ class FlextConfig(BaseSettings):
     def validate_override(
         self,
         key: str,
-        _value: FlextTypes.ScalarValue
-        | Sequence[FlextTypes.ScalarValue]
-        | Mapping[str, FlextTypes.ScalarValue],
+        _value: FlextTypes.FlexibleValue,
     ) -> bool:
         """Validate if an override is acceptable."""
         # Basic validation - could be extended
@@ -428,9 +426,7 @@ class FlextConfig(BaseSettings):
     def apply_override(
         self,
         key: str,
-        value: FlextTypes.ScalarValue
-        | Sequence[FlextTypes.ScalarValue]
-        | Mapping[str, FlextTypes.ScalarValue],
+        value: FlextTypes.FlexibleValue,
     ) -> None:
         """Apply a validated configuration override."""
         if self.validate_override(key, value):
@@ -698,6 +694,16 @@ class FlextConfig(BaseSettings):
 
         # Reinitialize logging with new settings
         self.initialize_logging(force=True)
+
+    def get(
+        self, key: str, default: FlextTypes.FlexibleValue | None = None
+    ) -> FlextTypes.FlexibleValue | None:
+        """Retrieve a configuration value with a default fallback."""
+        return getattr(self, key, default)
+
+    def set(self, key: str, value: FlextTypes.FlexibleValue) -> None:
+        """Set a configuration value in place."""
+        object.__setattr__(self, key, value)
 
     @classmethod
     def reset_logging(cls) -> None:

@@ -692,7 +692,9 @@ class FlextTypes:
 
 
 # NOTE: All TypeVars are defined at module level (lines 28-81)
-# GeneralValueType is now defined at module level (lines 87-98)
+# GeneralValueType is defined in FlextTypes class (line 130)
+# Use FlextTypes.GeneralValueType for type annotations
+# Module-level aliases are not needed - use FlextTypes namespace directly
 
 __all__ = [
     "CallableInputT",

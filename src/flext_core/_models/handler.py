@@ -195,6 +195,7 @@ class FlextModelsHandler:
         """
 
         model_config = ConfigDict(
+            arbitrary_types_allowed=True,
             json_schema_extra={
                 "title": "HandlerExecutionContext",
                 "description": "Handler execution context for tracking performance and state",

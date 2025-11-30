@@ -13,6 +13,14 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+# ARCHITECTURAL EXCEPTION: This module is zero-dependency by design to break circular imports.
+# Cannot import FlextUtilities here as it would create: metadata → utilities → _utilities → (potential circular)
+# datetime.now(UTC) is acceptable here as it's stdlib and this is a foundation module.
+
+# Local type alias for metadata attributes (no object catch-alls per user requirements)
+# JSON-serializable primitive types for metadata attributes (non-recursive to avoid Pydantic recursion)
+# Metadata typically holds flat values, not deeply nested structures
+# Using PEP 695 type alias syntax (Python 3.12+)
 type MetadataAttributeValue = (
     str
     | int
