@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 import os
 import threading
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from pathlib import Path
 from typing import ClassVar, Self, TypeVar, cast
 
