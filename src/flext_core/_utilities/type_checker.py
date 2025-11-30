@@ -1,6 +1,8 @@
-"""Utilities module - FlextUtilitiesTypeChecker.
+"""Type introspection helpers for dispatcher handler compatibility.
 
-Extracted from flext_core.utilities for better modularity.
+The utilities here mirror the logic previously embedded in ``FlextHandlers``
+to keep handler initialization lighter while still honoring the dispatcher
+protocol expectations for message typing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,11 +21,7 @@ _logger = logging.getLogger(__name__)
 
 
 class FlextUtilitiesTypeChecker:
-    """Handler type checking utilities for FlextHandlers complexity reduction.
-
-    Extracts type introspection and compatibility logic from FlextHandlers
-    to simplify handler initialization and provide reusable type checking.
-    """
+    """Reusable handler type checking for CQRS registration."""
 
     @classmethod
     def compute_accepted_message_types(

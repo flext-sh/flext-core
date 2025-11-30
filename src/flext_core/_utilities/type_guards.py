@@ -1,10 +1,8 @@
-"""FlextUtilitiesTypeGuards - Type Guard Utilities Module.
+"""Runtime type guard helpers for dispatcher-safe validations.
 
-This module provides runtime type checking utilities for the FLEXT ecosystem,
-implementing structural typing via FlextProtocols.TypeGuards (duck typing - no inheritance required).
-
-Scope: Runtime type validation, type guards for strings, dictionaries, lists,
-and other common types with consistent error handling.
+The utilities rely on structural typing (via ``FlextProtocols.TypeGuards``)
+to keep handler and service checks lightweight while staying compatible with
+duck-typed inputs used throughout the CQRS pipeline.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,17 +15,7 @@ from flext_core.typings import GeneralValueType
 
 
 class FlextUtilitiesTypeGuards:
-    """Runtime type checking utilities for FLEXT ecosystem.
-
-    Provides type guard functions for common validation patterns used throughout
-    the FLEXT framework, implementing structural typing for duck-typed interfaces.
-
-    Core Features:
-    - String validation guards (non-empty, etc.)
-    - Collection validation guards (dict, list)
-    - Type-safe runtime checking
-    - Consistent error handling patterns
-    """
+    """Lightweight type guard helpers for common CQRS validation patterns."""
 
     @staticmethod
     def is_string_non_empty(value: GeneralValueType) -> bool:

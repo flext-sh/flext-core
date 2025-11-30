@@ -1,11 +1,10 @@
-"""FlextConfig - Configuration Management Module.
+"""Configuration bootstrap for dispatcher-first applications.
 
-This module provides comprehensive configuration management for the FLEXT ecosystem,
-implementing Pydantic v2 BaseSettings with dependency injection, environment variable support,
-and runtime validation. Serves as the foundation layer (0.5) controlling all other layers.
-
-Scope: Global configuration management, singleton pattern, DI integration, validation,
-environment variable handling, thread-safe operations, and dynamic config updates.
+This foundation module centralizes environment-aware settings using Pydantic v2
+`BaseSettings`, enforces a singleton instantiation model, and keeps dispatcher
+pipelines wired through dependency-injector providers without importing higher
+layers. It resolves a shared ``.env`` file eagerly so every namespace config
+shares the same lookup rules.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -59,19 +58,13 @@ def _resolve_env_file_impl() -> str | None:
 
 
 class FlextConfig(BaseSettings):
-    """Configuration management with Pydantic validation and dependency injection.
+    """Layer 0.5 settings holder with DI-friendly singleton semantics.
 
-    Architecture: Layer 0.5 (Configuration Foundation)
-    Provides enterprise-grade configuration management for the FLEXT ecosystem
-    through Pydantic v2 BaseSettings, implementing structural typing via
-    FlextProtocols.Configurable (duck typing - no inheritance required).
-
-    Core Features:
-    - Pydantic v2 BaseSettings with type-safe configuration
-    - Environment variable support with FLEXT_ prefix
-    - Thread-safe singleton pattern
-    - Dependency injection integration
-    - Runtime configuration updates
+    FlextConfig wraps Pydantic settings so dispatcher handlers and services can
+    resolve a consistent configuration object through dependency-injector
+    providers. It exposes a single ``resolve_env_file`` entry point to keep
+    ``.env`` discovery uniform across namespace configurations and guards
+    instantiation with a thread-safe singleton cache.
     """
 
     # Singleton pattern

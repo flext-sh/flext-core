@@ -1,18 +1,10 @@
-"""Type system foundation module for FLEXT ecosystem.
+"""Type aliases and generics used across dispatcher-ready components.
 
-Provides FlextTypes, a comprehensive type system foundation defining TypeVars at
-module level and complex type aliases organized in nested namespaces within the
-FlextTypes class. Uses Pydantic Field annotations for domain validation types and
-provides type aliases for CQRS patterns, JSON serialization, handlers, processors,
-factories, predicates, decorators, utilities, logging, hooks, and configuration.
-
-Scope: Module-level TypeVars for generic programming (T, T_co, T_contra, P, R,
-domain-specific TypeVars), and FlextTypes class with nested namespaces (Validation,
-Json, Handler, Processor, Factory, Predicate, Decorator, Utility, Bus, Logging,
-Hook, Config, Cqrs) containing type aliases and validation models. Type aliases
-are also exported at module level for convenience. Follows single-class pattern
-with nested namespaces for organization. TypeVars use appropriate variance (covariant,
-contravariant) for protocol compliance and type safety.
+``FlextTypes`` centralizes ``TypeVar`` declarations and nested namespaces of
+aliases for CQRS messages, handlers, utilities, logging, and validation. The
+module keeps typing consistent for dispatcher pipelines, services, and examples
+without importing higher-layer implementations while retaining compatibility
+with legacy bus naming where necessary.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -104,7 +96,7 @@ class FlextTypes:
     - Scalar and base types ("ScalarValue", GeneralValueType, etc.)
     - Domain validation types (PortNumber, TimeoutSeconds, etc.)
     - JSON types (JsonPrimitive, JsonValue, etc.)
-    - Handler types (HandlerCallable, BusHandlerType, etc.)
+    - Handler types (HandlerCallable with dispatcher/bus-compatible aliases)
     - Utility types (SerializableType, MetadataDict, etc.)
     - CQRS pattern types (Command, Event, Message, Query)
     - Configuration models (RetryConfig)
@@ -333,9 +325,9 @@ class FlextTypes:
         type QueryPayload = GeneralValueType
 
     class Bus:
-        """Message bus and handler type definitions."""
+        """Dispatcher routing type aliases (legacy "Bus" namespace retained)."""
 
-        # Message and handler types for bus operations
+        # Message and handler types for dispatcher operations
         type BusMessageType = GeneralValueType
         type MessageTypeOrHandlerType = (
             type[GeneralValueType]

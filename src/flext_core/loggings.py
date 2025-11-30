@@ -1,8 +1,9 @@
 """Structured logging with context propagation and dependency injection.
 
-This module provides FlextLogger, a structured logging system built on
-FlextRuntime.structlog() with automatic context propagation, dependency injection support,
-and integration with the FLEXT ecosystem infrastructure.
+This module wraps ``structlog`` so dispatcher pipelines, handlers, and services
+share context-aware logging that cooperates with ``FlextResult`` outcomes and
+dependency-injector wiring. It keeps correlation data flowing alongside CQRS
+operations without pulling higher-layer imports back into the foundation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -31,27 +32,12 @@ type GeneralValueType = FlextTypes.GeneralValueType
 
 
 class FlextLogger:
-    """Structured logging with context propagation and FlextResult integration.
+    """Context-aware logger tuned for dispatcher-centric CQRS flows.
 
-    Built on FlextRuntime.structlog() for thread-safe structured logging with:
-    - Three-tier scoped contexts (application/request/operation)
-    - Level-based context filtering (DEBUG/INFO/WARNING/ERROR/CRITICAL)
-    - DI factories: create_service_logger(), create_module_logger()
-    - Performance tracking: track_performance() context manager
-    - FlextResult integration: log_result(), with_result() adapter
-
-    Logging methods (debug, info, warning, error, critical, exception) return
-    None by default; use return_result=True or with_result() for FlextResult.
-
-    Usage:
-        logger = FlextLogger.create_module_logger(__name__)
-        logger.info("Processing", user_id="123")
-
-        with logger.track_performance("database_query"):
-            db.execute()
-
-        FlextLogger.bind_global_context(request_id="req-456")
-        logger.log_result(result, operation="validation")
+    FlextLogger layers structured logging on ``structlog`` with scoped contexts,
+    dependency-injector factories, performance tracking helpers, and adapters for
+    ``FlextResult`` so command/query handlers emit consistent telemetry without
+    bespoke wrappers.
     """
 
     # =========================================================================

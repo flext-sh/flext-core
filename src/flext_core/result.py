@@ -1,11 +1,8 @@
-"""FlextResult - Railway-oriented result type for type-safe error handling.
+"""Railway-oriented result type for dispatcher-driven applications.
 
-This module provides FlextResult[T], a type-safe result type implementing
-the railway pattern for explicit error handling throughout the FLEXT ecosystem.
-
-FlextResult wraps operation outcomes with explicit success/failure states,
-providing monadic operations for functional composition and safe error
-propagation without exceptions.
+FlextResult wraps outcomes with explicit success/failure states so dispatcher
+handlers, services, and middleware can compose operations without exceptions.
+It underpins CQRS flows with monadic helpers for predictable, typed pipelines.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -28,19 +25,11 @@ from flext_core.typings import FlextTypes, U
 
 
 class FlextResult[T_co]:
-    """FlextResult[T_co] type-safe result type implementing the railway pattern.
+    """Type-safe railway result with monadic helpers for CQRS pipelines.
 
-    Provides monadic operations for functional error handling with explicit
-    success/failure states. Wraps operation outcomes and enables composable
-    error propagation without exceptions.
-
-    Key Features:
-    - Type-safe success/failure wrapping with generic [T_co] covariance
-    - Monadic operations: map, flat_map, filter, bind, traverse, lash
-    - Railway pattern for functional composition
-    - Context managers for resource management
-    - Integration with returns library for battle-tested operations
-    - Error metadata: error_code, error_data for structured logging
+    Use FlextResult to compose dispatcher handlers and domain services without
+    raising exceptions, while preserving optional error codes and metadata for
+    structured logging.
     """
 
     def __init__(

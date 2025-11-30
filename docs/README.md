@@ -1,172 +1,42 @@
 # FLEXT-Core Documentation
 
-Professional Documentation · Status: Production Ready · Version: 0.9.9
-Last Updated: 2025-10-21
+Comprehensive reference and guidance for FLEXT-Core, the dispatcher-first foundation library built around railway-oriented programming, dependency injection, and domain-driven design. Content follows PEP 8, PEP 257, and the project documentation standards in `docs/standards/`.
 
-This comprehensive documentation covers FLEXT-Core, the foundation library for the
-FLEXT ecosystem. It provides railway-oriented programming, dependency injection,
-domain-driven design patterns, and comprehensive type safety with Python 3.13+.
+## Scope and Compatibility
+- **Version:** 0.9.9
+- **Python:** 3.13+ (per `pyproject.toml`)
+- **Architecture:** Dispatcher-centric CQRS with `FlextResult`, `FlextContainer`, `FlextDispatcher`, and DDD primitives.
 
-> **✨ New in v0.9.9**: Enhanced 5-layer architecture (Layers 0, 0.5, 1, 2, 3, 4) with zero-dependency constants layer and runtime bridge. See [CLAUDE.md](../CLAUDE.md) for AI-assisted development workflow with Serena MCP integration.
->
-> **📚 New Comprehensive Guides** (October 2025):
->
-> - **[Railway-Oriented Programming](./guides/railway-oriented-programming.md)** - FlextResult[T] patterns with real examples
-> - **[Advanced Dependency Injection](./guides/dependency-injection-advanced.md)** - FlextContainer type-safe patterns
-> - **[Domain-Driven Design](./guides/domain-driven-design.md)** - FlextModels with practical examples
-> - **[Anti-Patterns & Best Practices](./guides/anti-patterns-best-practices.md)** - Common mistakes and solutions
-> - **[Pydantic v2 Patterns](./guides/pydantic-v2-patterns.md)** - Production patterns for ecosystem projects
-
-## Documentation Structure
-
-```text
-docs/
-├── README.md                 # This file - documentation overview
-├── INDEX.md                  # Navigation guide to all documentation
-│
-├── api-reference/           # ✅ Complete API reference (ALL FILES)
-│   ├── foundation.md        # Core foundation classes (Result, Container, etc.)
-│   ├── domain.md           # Domain layer (Models, Services, etc.)
-│   ├── application.md      # Application layer (Bus, Handlers, etc.)
-│   └── infrastructure.md   # Infrastructure layer (Config, Logging, etc.)
-│
-├── QUICK_START.md                # ✅ 5-minute quick start guide (NEW)
-│
-├── guides/                  # ✅ Complete guides (10/10 complete)
-│   ├── getting-started.md           # ✅ Installation and quick start
-│   ├── railway-oriented-programming.md   # ✅ FlextResult[T] comprehensive guide
-│   ├── dependency-injection-advanced.md  # ✅ FlextContainer advanced patterns
-│   ├── domain-driven-design.md      # ✅ FlextModels and DDD patterns
-│   ├── anti-patterns-best-practices.md   # ✅ Common mistakes and solutions
-│   ├── pydantic-v2-patterns.md      # ✅ Pydantic v2 ecosystem patterns
-│   ├── configuration.md             # ✅ FlextConfig usage patterns (NEW)
-│   ├── error-handling.md            # ✅ Railway-oriented error patterns (NEW)
-│   ├── testing.md                   # ✅ pytest and testing patterns (NEW)
-│   └── troubleshooting.md           # ✅ Common issues and solutions (NEW)
-│
-├── architecture/            # ✅ Complete architecture (4/4 complete)
-│   ├── overview.md         # ✅ High-level architecture
-│   ├── clean-architecture.md # ✅ 5-layer architecture details (NEW)
-│   ├── patterns.md         # ✅ 9 architectural patterns (NEW)
-│   └── decisions.md        # ✅ 10 Architecture Decision Records (NEW)
-│
-├── development/            # ✅ Complete (1/1 complete)
-│   └── contributing.md     # ✅ How to contribute
-│
-├── standards/              # ✅ Complete standards (4/4 complete)
-│   ├── development.md      # ✅ Coding standards and conventions
-│   ├── python.md           # ✅ Python coding standards (NEW)
-│   ├── documentation.md    # ✅ Documentation standards (NEW)
-│   └── templates.md        # ✅ Documentation templates (NEW)
-│
-└── improvements/           # Documentation audit reports
-    └── PHASE1_COMPLETION_SUMMARY.md  # Quality audit results
-```
+## Navigation
+- **Quick start:** [`QUICK_START.md`](./QUICK_START.md)
+- **Architecture:** [`architecture/overview.md`](./architecture/overview.md) and [`architecture/clean-architecture.md`](./architecture/clean-architecture.md)
+- **API reference:** [`api-reference/`](./api-reference/) grouped by layer (foundation, domain, application, infrastructure)
+- **Guides:** [`guides/`](./guides/) for patterns such as railway execution, DI, DDD, error handling, configuration, testing, and troubleshooting
+- **Standards:** [`standards/`](./standards/) for code, documentation, and templates
+- **Contributing:** [`development/contributing.md`](./development/contributing.md)
 
 ## Quick Start
-
-### Installation
+Install the package and verify imports:
 
 ```bash
-# Clone and setup
-git clone https://github.com/flext-sh/flext-core.git
-cd flext-core
-make setup
-
-# Verify installation
-python -c "from flext_core import __version__; print(f'✅ FLEXT-Core v{__version__} ready')"
-```
-
-```python
-from flext_core import FlextContainer
-from flext_core import FlextResult
-
-# Railway-oriented error handling
-result = FlextResult[str].ok("Success!")
-if result.is_success:
-    value = result.unwrap()
-
-# Dependency injection
-container = FlextContainer.get_global()
-container.register("logger", FlextLogger(**name**))
-
-
-# Domain modeling with DDD patterns
-class User(FlextModels.Entity):
-    name: str
-    email: str
+pip install flext-core
+python - <<'PY'
+from flext_core import FlextDispatcher, FlextResult
+print('flext-core ready', FlextDispatcher.__name__, FlextResult.__name__)
+PY
 ```
 
 ## Core Concepts
+1. **Railway-oriented programming (`FlextResult`)** — express success/failure without exceptions and chain operations with `map`/`flat_map`.
+2. **Dependency injection (`FlextContainer`)** — register and resolve shared collaborators explicitly; avoid implicit globals.
+3. **CQRS dispatcher (`FlextDispatcher`)** — route commands, queries, and domain events through handler registries with optional middleware.
+4. **Domain-driven design (`FlextModels`, `FlextService`)** — model entities/values and encapsulate domain services that return `FlextResult`.
 
-### 1. Railway-Oriented Programming
+## Style Expectations
+- Prefer docstrings that follow PEP 257 sentence-style summaries and keep examples PEP 8 compliant.
+- Cross-reference the `docs/standards/documentation.md` templates when adding new material.
+- Avoid duplicated sections across guides; link to existing topics instead of restating them.
 
-FLEXT-Core uses the `FlextResult[T]` monad for error handling without exceptions:
-
-```python
-def divide(a: float, b: float) -> FlextResult[float]:
-    if b == 0:
-        return FlextResult[float].fail("Division by zero")
-    return FlextResult[float].ok(a / b)
-
-result = divide(10, 2)
-if result.is_success:
-    print(f"Result: {result.unwrap()}")
-```
-
-### 2. Dependency Injection
-
-Global container with type-safe service registration:
-
-```python
-from flext_core import FlextContainer
-
-container = FlextContainer.get_global()
-container.register("database", DatabaseService())
-db = container.get("database")
-```
-
-### 3. Domain-Driven Design
-
-Entity, Value Object, and Aggregate Root patterns:
-
-```python
-from typing import List
-from decimal import Decimal
-from flext_core import FlextModels
-from flext_core import FlextResult
-
-class Order(FlextModels.Entity):
-    customer_id: str
-    items: List[OrderItem]
-    total: Decimal
-
-    def calculate_total(self) -> FlextResult[Decimal]:
-        # Business logic here
-        pass
-```
-
-- **Zero MyPy Errors**: Type safety guaranteed
-- **75%+ Test Coverage**: Comprehensive testing
-- **Python 3.13+**: Modern Python features
-- **Pydantic v2**: Latest validation framework
-
-## Getting Help
-
-- **[API Reference](./api-reference/)**:
-  Complete API documentation
-- **[GitHub Issues](https://github.com/flext-sh/flext-core/issues)**:
-  Report bugs or request features
-- **[GitHub Discussions](https://github.com/flext-sh/flext-core/discussions)**:
-  Ask questions and share ideas
-
-## Contributing
-
-See [Contributing Guide](./development/contributing.md) for development guidelines
-and workflow.
-
----
-
-**FLEXT-Core v0.9.9** - Production-ready foundation for enterprise Python applications
-with railway-oriented programming, dependency injection, and domain-driven design
-patterns.
+## Support
+- **Issues and questions:** GitHub Issues/Discussions
+- **Code of conduct and contribution flow:** see [`development/contributing.md`](./development/contributing.md)

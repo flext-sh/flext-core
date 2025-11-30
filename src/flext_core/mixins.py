@@ -1,8 +1,7 @@
-"""Reusable behavior mixins for service infrastructure.
+"""Dispatcher-aware mixins for reusable service infrastructure.
 
-This module provides FlextMixins, a collection of reusable mixin classes
-that add common infrastructure capabilities to service classes throughout
-the FLEXT ecosystem.
+Provide shared behaviors for services and handlers that rely on dispatcher-
+first CQRS execution, structured logging, and DI-backed context handling.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -29,30 +28,27 @@ from flext_core.runtime import FlextRuntime
 
 
 class FlextMixins:
-    """Composable infrastructure behaviors for FLEXT services.
+    """Composable behaviors for dispatcher-driven services and handlers.
 
-    Provides DI container, structured logging, context management, and
-    performance tracking via structural typing (satisfies FlextProtocols.Service).
+    These mixins centralize DI container access, structured logging, and
+    context management so dispatcher-executed services can stay focused on
+    domain work while still emitting `FlextResult` outcomes and metrics.
 
     Properties:
-    - container: FlextContainer.get_global() (DI singleton)
-    - logger: FlextLogger with thread-safe caching
-    - context: FlextContext() instance
-    - config: FlextConfig.get_global_instance()
+    - ``container``: Lazy ``FlextContainer`` singleton lookups for DI wiring.
+    - ``logger``: Cached ``FlextLogger`` resolution for structured logs.
+    - ``context``: Per-operation ``FlextContext`` for correlation metadata.
+    - ``config``: Thread-safe ``FlextConfig`` access for runtime settings.
 
     Key methods:
-    - _init_service(name): Initialize with container registration
-    - track(operation): Performance tracking context manager
-    - _with_operation_context(**data): Level-based context binding
-    - _clear_operation_context(): Cleanup operation scope
+    - ``track``: Context manager that records timing/err counts per operation.
+    - ``_with_operation_context`` / ``_clear_operation_context``: Scoped
+      context bindings used by dispatcher pipelines.
+    - Delegated ``FlextRuntime``/``FlextResult`` helpers for railway flows.
 
-    Delegated utilities:
-    - FlextRuntime: is_dict_like, is_list_like, is_valid_json, etc.
-    - FlextResult: ok(), fail(), traverse(), parallel_map()
-
-    Usage:
+    Example:
         class MyService(FlextMixins):
-            def process(self, data: dict):
+            def process(self, data: dict) -> FlextResult[dict[str, str]]:
                 with self.track("process"):
                     self.logger.info("Processing", size=len(data))
                     return self.ok({"status": "processed"})

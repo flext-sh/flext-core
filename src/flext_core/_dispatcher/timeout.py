@@ -1,6 +1,9 @@
-"""Timeout enforcement for FlextDispatcher.
+"""Timeout helpers used by ``FlextDispatcher``.
 
-Contains TimeoutEnforcer class extracted from FlextDispatcher.
+Expose ``TimeoutEnforcer`` to provide deterministic timeout enforcement for
+dispatcher-managed handlers. The helper keeps executor configuration isolated
+from orchestration code while retaining the same behavior as the consolidated
+dispatcher.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,7 +15,7 @@ import concurrent.futures
 
 
 class TimeoutEnforcer:
-    """Manages timeout enforcement and thread pool execution."""
+    """Manage timeout enforcement and dispatcher thread-pool execution."""
 
     def __init__(
         self,
@@ -20,11 +23,13 @@ class TimeoutEnforcer:
         use_timeout_executor: bool,
         executor_workers: int,
     ) -> None:
-        """Initialize timeout enforcer.
+        """Initialize the timeout coordinator.
 
         Args:
-            use_timeout_executor: Whether to use timeout executor
-            executor_workers: Number of executor worker threads
+            use_timeout_executor: Whether to route handler execution through a
+                dedicated timeout executor
+            executor_workers: Number of worker threads to provision when the
+                executor is enabled
 
         """
         self._use_timeout_executor = use_timeout_executor
@@ -32,19 +37,19 @@ class TimeoutEnforcer:
         self._executor: concurrent.futures.ThreadPoolExecutor | None = None
 
     def should_use_executor(self) -> bool:
-        """Check if timeout executor should be used."""
+        """Return ``True`` when a dedicated timeout executor is enabled."""
         return self._use_timeout_executor
 
     def reset_executor(self) -> None:
-        """Reset executor (after shutdown)."""
+        """Reset executor after shutdown to allow lazy re-creation."""
         self._executor = None
 
     def resolve_workers(self) -> int:
-        """Get the configured worker count."""
+        """Return the configured worker count for the dispatcher executor."""
         return self._executor_workers
 
     def ensure_executor(self) -> concurrent.futures.ThreadPoolExecutor:
-        """Create the shared executor on demand (lazy initialization)."""
+        """Create the shared executor on demand with lazy initialization."""
         if self._executor is None:
             self._executor = concurrent.futures.ThreadPoolExecutor(
                 max_workers=self._executor_workers,
@@ -53,14 +58,14 @@ class TimeoutEnforcer:
         return self._executor
 
     def get_executor_status(self) -> dict[str, object]:
-        """Get executor status information."""
+        """Return executor status metadata for diagnostics and metrics."""
         return {
             "executor_active": self._executor is not None,
             "executor_workers": self._executor_workers if self._executor else 0,
         }
 
     def cleanup(self) -> None:
-        """Cleanup executor resources."""
+        """Release executor resources used by dispatcher timeout handling."""
         if self._executor is not None:
             self._executor.shutdown(wait=False, cancel_futures=True)
             self._executor = None
