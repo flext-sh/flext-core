@@ -11,10 +11,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
 
 T = TypeVar("T")
 
@@ -151,7 +150,7 @@ class FlextUtilitiesPagination:
     def build_pagination_response(
         pagination_data: dict[str, object],
         message: str | None = None,
-    ) -> FlextResult[FlextTypes.JsonObject]:
+    ) -> FlextResult[dict[str, Any]]:
         """Build paginated response dictionary.
 
         Args:
@@ -167,7 +166,7 @@ class FlextUtilitiesPagination:
         if data is None or pagination is None:
             return FlextResult.fail("Invalid pagination data structure")
 
-        response: FlextTypes.JsonObject = {
+        response: dict[str, Any] = {
             "data": data,
             "pagination": pagination,
         }

@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Annotated
 
-from pydantic import Field, field_validator
+from pydantic import ConfigDict, Field, field_validator
 
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import FlextConstants
@@ -27,6 +27,21 @@ class FlextModelsService:
     This class acts as a namespace container for domain service patterns.
     All nested classes are accessed via FlextModels.Service.* in the main models.py.
     """
+
+    class RuntimeResources(FlextModelsEntity.ArbitraryTypesModel):
+        """Runtime dependencies attached to a service instance.
+
+        Provides a frozen, pydantic-backed container for the configuration,
+        context, and container objects that power each service execution. Using
+        a model here ensures we rely on FlextModels for structural validation
+        while keeping imports cycle-free via FlextProtocols interfaces.
+        """
+
+        model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
+
+        config: FlextProtocols.ConfigProtocol
+        context: FlextProtocols.ContextProtocol
+        container: FlextProtocols.ContainerProtocol
 
     class DomainServiceExecutionRequest(FlextModelsEntity.ArbitraryTypesModel):
         """Domain service execution request with advanced validation."""

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from typing import Annotated, Self
+from typing import Annotated, Any, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -21,11 +21,10 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-# Type alias for GeneralValueType (PEP 695)
-type GeneralValueType = FlextTypes.GeneralValueType
+# Type alias for arbitrary configuration values (PEP 695)
+type GeneralValueType = Any
 
 
 class FlextModelsConfig:
@@ -267,6 +266,7 @@ class FlextModelsConfig:
         """
 
         model_config = ConfigDict(
+            arbitrary_types_allowed=True,
             json_schema_extra={
                 "title": "MiddlewareConfig",
                 "description": (

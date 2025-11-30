@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+from typing import Union
+
 from pydantic import BaseModel, ConfigDict, Field
 
 # ARCHITECTURAL EXCEPTION: This module is zero-dependency by design to break circular imports.
@@ -20,15 +22,15 @@ from pydantic import BaseModel, ConfigDict, Field
 # Local TypeAlias for metadata attributes (no object catch-alls per user requirements)
 # JSON-serializable primitive types for metadata attributes (non-recursive to avoid Pydantic recursion)
 # Metadata typically holds flat values, not deeply nested structures
-type MetadataAttributeValue = (
-    str
-    | int
-    | float
-    | bool
-    | list[str | int | float | bool | None]
-    | dict[str, str | int | float | bool | None]
-    | None
-)
+MetadataAttributeValue = Union[
+    str,
+    int,
+    float,
+    bool,
+    list[str | int | float | bool | None],
+    dict[str, str | int | float | bool | None],
+    None,
+]
 
 
 class Metadata(BaseModel):

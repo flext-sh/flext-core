@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, cast
+from typing import Annotated, Any, cast
 
 import structlog.contextvars
 from pydantic import BaseModel, Field, computed_field, field_validator
@@ -17,10 +17,10 @@ from pydantic import BaseModel, Field, computed_field, field_validator
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.metadata import Metadata, MetadataAttributeValue
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes, T
+from flext_core.typings import T
 
 # Type alias for GeneralValueType (PEP 695)
-type GeneralValueType = FlextTypes.GeneralValueType
+type GeneralValueType = Any
 
 
 class FlextModelsContext:

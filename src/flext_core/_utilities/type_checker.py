@@ -13,7 +13,11 @@ import logging
 from typing import get_origin, get_type_hints
 
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes, GeneralValueType
+
+# Direct type aliases to avoid cross-module indirection
+GeneralValueType = object
+MessageTypeSpecifier = object
+TypeOriginSpecifier = object
 
 _logger = logging.getLogger(__name__)
 
@@ -29,7 +33,7 @@ class FlextUtilitiesTypeChecker:
     def compute_accepted_message_types(
         cls,
         handler_class: type,
-    ) -> tuple[FlextTypes.MessageTypeSpecifier, ...]:
+    ) -> tuple[MessageTypeSpecifier, ...]:
         """Compute message types accepted by a handler using cached introspection.
 
         Args:
@@ -39,14 +43,14 @@ class FlextUtilitiesTypeChecker:
             Tuple of accepted message types
 
         """
-        message_types: list[FlextTypes.MessageTypeSpecifier] = []
+        message_types: list[MessageTypeSpecifier] = []
         generic_types = cls._extract_generic_message_types(handler_class)
         # Extend with extracted generic types
         message_types.extend(generic_types)
 
         if not message_types:
-            explicit_type: FlextTypes.MessageTypeSpecifier | None = (
-                cls._extract_message_type_from_handle(handler_class)
+            explicit_type: MessageTypeSpecifier | None = cls._extract_message_type_from_handle(
+                handler_class
             )
             if explicit_type is not None:
                 message_types.append(explicit_type)
@@ -57,7 +61,7 @@ class FlextUtilitiesTypeChecker:
     def _extract_generic_message_types(
         cls,
         handler_class: type,
-    ) -> list[FlextTypes.MessageTypeSpecifier]:
+    ) -> list[MessageTypeSpecifier]:
         """Extract message types from generic base annotations.
 
         Args:
@@ -67,7 +71,7 @@ class FlextUtilitiesTypeChecker:
             List of message types from generic annotations
 
         """
-        message_types: list[FlextTypes.MessageTypeSpecifier] = []
+        message_types: list[MessageTypeSpecifier] = []
         for base in getattr(handler_class, "__orig_bases__", ()) or ():
             # Layer 0.5: Use FlextRuntime for type introspection
             origin = get_origin(base)
@@ -116,7 +120,7 @@ class FlextUtilitiesTypeChecker:
         parameter: inspect.Parameter,
         type_hints: dict[str, GeneralValueType],
         param_name: str,
-    ) -> FlextTypes.MessageTypeSpecifier | None:
+    ) -> MessageTypeSpecifier | None:
         """Extract message type from parameter hints or annotation."""
         if param_name in type_hints:
             # Return the type hint directly (plain types, generic aliases, etc.)
@@ -135,7 +139,7 @@ class FlextUtilitiesTypeChecker:
     def _extract_message_type_from_handle(
         cls,
         handler_class: type,
-    ) -> FlextTypes.MessageTypeSpecifier | None:
+    ) -> MessageTypeSpecifier | None:
         """Extract message type from handle method annotations when generics are absent.
 
         Args:
@@ -166,8 +170,8 @@ class FlextUtilitiesTypeChecker:
     @classmethod
     def can_handle_message_type(
         cls,
-        accepted_types: tuple[FlextTypes.MessageTypeSpecifier, ...],
-        message_type: FlextTypes.MessageTypeSpecifier,
+        accepted_types: tuple[MessageTypeSpecifier, ...],
+        message_type: MessageTypeSpecifier,
     ) -> bool:
         """Check if handler can process this message type.
 
@@ -214,8 +218,8 @@ class FlextUtilitiesTypeChecker:
     @classmethod
     def _check_dict_compatibility(
         cls,
-        expected_type: FlextTypes.TypeOriginSpecifier,
-        message_type: FlextTypes.MessageTypeSpecifier,
+        expected_type: TypeOriginSpecifier,
+        message_type: MessageTypeSpecifier,
         origin_type: object,
         message_origin: object,
     ) -> bool | None:
@@ -255,8 +259,8 @@ class FlextUtilitiesTypeChecker:
     @classmethod
     def _evaluate_type_compatibility(
         cls,
-        expected_type: FlextTypes.TypeOriginSpecifier,
-        message_type: FlextTypes.MessageTypeSpecifier,
+        expected_type: TypeOriginSpecifier,
+        message_type: MessageTypeSpecifier,
     ) -> bool:
         """Evaluate compatibility between expected and actual message types.
 
@@ -302,10 +306,10 @@ class FlextUtilitiesTypeChecker:
     @classmethod
     def _handle_type_or_origin_check(
         cls,
-        expected_type: FlextTypes.TypeOriginSpecifier,
-        message_type: FlextTypes.TypeOriginSpecifier,
-        origin_type: FlextTypes.TypeOriginSpecifier,
-        message_origin: FlextTypes.TypeOriginSpecifier,
+        expected_type: TypeOriginSpecifier,
+        message_type: TypeOriginSpecifier,
+        origin_type: TypeOriginSpecifier,
+        message_origin: TypeOriginSpecifier,
     ) -> bool:
         """Handle type checking for types or objects with __origin__.
 
@@ -331,8 +335,8 @@ class FlextUtilitiesTypeChecker:
     @classmethod
     def _handle_instance_check(
         cls,
-        message_type: FlextTypes.TypeOriginSpecifier,
-        origin_type: FlextTypes.TypeOriginSpecifier,
+        message_type: TypeOriginSpecifier,
+        origin_type: TypeOriginSpecifier,
     ) -> bool:
         """Handle instance checking for non-type objects.
 

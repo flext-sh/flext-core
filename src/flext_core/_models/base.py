@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime
-from typing import ClassVar, Self
+from typing import Any, ClassVar, Self
 
 from beartype.door import is_bearable
 from pydantic import Field, HttpUrl, computed_field, model_validator
@@ -20,11 +20,10 @@ from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.metadata import Metadata
 from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 # Type alias for GeneralValueType (PEP 695)
-type GeneralValueType = FlextTypes.GeneralValueType
+type GeneralValueType = Any
 
 # Type aliases for conditional execution callables (PEP 695)
 type ConditionCallable = Callable[[GeneralValueType], bool]

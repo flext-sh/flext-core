@@ -24,7 +24,7 @@ from __future__ import annotations
 import socket
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import Annotated, ParamSpec, TypedDict, TypeVar
+from typing import Any, Annotated, ParamSpec, TypedDict, TypeVar
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
@@ -663,8 +663,16 @@ class FlextTypes:
 # NOTE: All TypeVars are defined at module level (lines 28-81)
 # Module-level type alias for GeneralValueType to enable direct imports
 # This is necessary for backward compatibility and convenience
-type GeneralValueType = FlextTypes.GeneralValueType
-
+GeneralValueType = Any
+FlexibleValue = (
+    str
+    | int
+    | float
+    | bool
+    | None
+    | Sequence[str | int | float | bool | None]
+    | Mapping[str, str | int | float | bool | None]
+)
 __all__ = [
     "CallableInputT",
     "CallableOutputT",
@@ -672,6 +680,7 @@ __all__ = [
     "F",
     "FactoryT",
     "FlextTypes",
+    "FlexibleValue",
     "GeneralValueType",
     "K",
     "MessageT_contra",

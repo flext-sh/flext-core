@@ -108,6 +108,7 @@ class FlextModelsCqrs:
         """Query model for CQRS query operations."""
 
         model_config = ConfigDict(
+            arbitrary_types_allowed=True,
             json_schema_extra={
                 "title": "Query",
                 "description": "Query model for CQRS query operations",
@@ -298,6 +299,7 @@ class FlextModelsCqrs:
             """Parameter object for handler configuration (reduces parameter count)."""
 
             model_config = ConfigDict(
+                arbitrary_types_allowed=True,
                 json_schema_extra={
                     "title": "HandlerConfigParams",
                     "description": "Parameter object for handler configuration",

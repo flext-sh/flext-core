@@ -32,7 +32,8 @@ from flext_core._utilities import (
 )
 from flext_core._utilities.string_parser import ParseOptions
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
+
+GeneralValueType = object
 
 
 class FlextUtilities:
@@ -348,7 +349,7 @@ class FlextUtilities:
             return self._parser.apply_regex_pipeline(text, patterns)
 
         def get_object_key(
-            self, obj: FlextTypes.GeneralValueType
+            self, obj: GeneralValueType
         ) -> str:
             """Get string key representation of object.
 
