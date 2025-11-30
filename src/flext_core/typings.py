@@ -664,15 +664,7 @@ class FlextTypes:
 # Module-level type alias for GeneralValueType to enable direct imports
 # This is necessary for backward compatibility and convenience
 GeneralValueType = Any
-FlexibleValue = (
-    str
-    | int
-    | float
-    | bool
-    | None
-    | Sequence[str | int | float | bool | None]
-    | Mapping[str, str | int | float | bool | None]
-)
+FlexibleValue = FlextTypes.FlexibleValue
 __all__ = [
     "CallableInputT",
     "CallableOutputT",
