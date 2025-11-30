@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import ClassVar, Self, TypeAlias, cast, override
+from typing import ClassVar, Self, cast, override
 
 from pydantic import Field
 
@@ -38,14 +38,6 @@ class FlextModelsEntity:
     This class acts as a namespace container for Entity and related DDD patterns.
     Uses FlextModelsBase for all base classes (Tier 0).
     """
-
-    # Type aliases for base classes (mypy-compatible)
-    ArbitraryTypesModel: TypeAlias = FlextModelsBase.ArbitraryTypesModel
-    FrozenStrictModel: TypeAlias = FlextModelsBase.FrozenStrictModel
-    IdentifiableMixin: TypeAlias = FlextModelsBase.IdentifiableMixin
-    TimestampableMixin: TypeAlias = FlextModelsBase.TimestampableMixin
-    VersionableMixin: TypeAlias = FlextModelsBase.VersionableMixin
-    TimestampedModel: TypeAlias = FlextModelsBase.TimestampedModel
 
     class DomainEvent(
         FlextModelsBase.ArbitraryTypesModel,

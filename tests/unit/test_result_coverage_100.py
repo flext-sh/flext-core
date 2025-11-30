@@ -54,7 +54,7 @@ class TestFlextResultCoverage:
         ],
     )
     def test_ok_creates_success_with_various_types(
-        self, value: object, expected: object
+        self, value: object, expected: object,
     ) -> None:
         """Test creating success results with different value types."""
         result = FlextResult[object].ok(value)
@@ -441,7 +441,7 @@ class TestFlextResultCoverage:
             raise ValueError(error_msg)
 
         result = FlextResult[str].create_from_callable(
-            failing_func, error_code="TEST_ERROR"
+            failing_func, error_code="TEST_ERROR",
         )
         assert result.is_failure
         assert result.error_code == "TEST_ERROR"
@@ -650,7 +650,7 @@ class TestFlextResultCoverage:
         """Test error code and error data metadata."""
         error_data: dict[str, object] = {"details": "something"}
         result = FlextResult[str].fail(
-            "Error", error_code="CODE_123", error_data=error_data
+            "Error", error_code="CODE_123", error_data=error_data,
         )
         assert result.error_code == "CODE_123"
         assert result.error_data == error_data

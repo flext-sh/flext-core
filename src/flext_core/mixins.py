@@ -1,8 +1,7 @@
-"""Reusable behavior mixins for service infrastructure.
+"""Dispatcher-aware mixins for reusable service infrastructure.
 
-This module provides FlextMixins, a collection of reusable mixin classes
-that add common infrastructure capabilities to service classes throughout
-the FLEXT ecosystem.
+Provide shared behaviors for services and handlers that rely on dispatcher-
+first CQRS execution, structured logging, and DI-backed context handling.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager, suppress
 from functools import partial
 from typing import ClassVar, TypeVar
@@ -26,36 +25,37 @@ from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
+from flext_core.typings import FlextTypes
 
 
 class FlextMixins:
-    """Composable infrastructure behaviors for FLEXT services.
+    """Composable behaviors for dispatcher-driven services and handlers.
 
-    Provides DI container, structured logging, context management, and
-    performance tracking via structural typing (satisfies FlextProtocols.Service).
+    These mixins centralize DI container access, structured logging, and
+    context management so dispatcher-executed services can stay focused on
+    domain work while still emitting `FlextResult` outcomes and metrics.
 
     Properties:
-    - container: FlextContainer.get_global() (DI singleton)
-    - logger: FlextLogger with thread-safe caching
-    - context: FlextContext() instance
-    - config: FlextConfig.get_global_instance()
+    - ``container``: Lazy ``FlextContainer`` singleton lookups for DI wiring.
+    - ``logger``: Cached ``FlextLogger`` resolution for structured logs.
+    - ``context``: Per-operation ``FlextContext`` for correlation metadata.
+    - ``config``: Thread-safe ``FlextConfig`` access for runtime settings.
 
     Key methods:
-    - _init_service(name): Initialize with container registration
-    - track(operation): Performance tracking context manager
-    - _with_operation_context(**data): Level-based context binding
-    - _clear_operation_context(): Cleanup operation scope
+    - ``track``: Context manager that records timing/err counts per operation.
+    - ``_with_operation_context`` / ``_clear_operation_context``: Scoped
+      context bindings used by dispatcher pipelines.
+    - Delegated ``FlextRuntime``/``FlextResult`` helpers for railway flows.
 
-    Delegated utilities:
-    - FlextRuntime: is_dict_like, is_list_like, is_valid_json, etc.
-    - FlextResult: ok(), fail(), traverse(), parallel_map()
-
-    Usage:
+    Example:
         class MyService(FlextMixins):
-            def process(self, data: dict):
+            def process(
+                self, data: FlextTypes.Types.ContextMetadataMapping
+            ) -> FlextResult[FlextTypes.Types.ContextMetadataMapping]:
                 with self.track("process"):
                     self.logger.info("Processing", size=len(data))
                     return self.ok({"status": "processed"})
+
     """
 
     # =========================================================================
@@ -97,11 +97,22 @@ class FlextMixins:
         """BaseModel/dict conversion utilities (eliminates 32+ repetitive patterns)."""
 
         @staticmethod
-        def to_dict(obj: BaseModel | dict[str, object] | None) -> dict[str, object]:
-            """Convert BaseModel/dict to dict (None → empty dict)."""
+        def to_dict(
+            obj: (
+                BaseModel
+                | FlextTypes.Types.ContextMetadataMapping
+                | Mapping[str, FlextTypes.GeneralValueType]
+                | None
+            ),
+        ) -> dict[str, FlextTypes.GeneralValueType]:
+            """Convert BaseModel/dict/Mapping to dict (None → empty dict)."""
             if obj is None:
                 return {}
-            return obj.model_dump() if isinstance(obj, BaseModel) else obj
+            if isinstance(obj, BaseModel):
+                return obj.model_dump()
+            if isinstance(obj, Mapping):
+                return dict(obj)
+            return dict(obj) if isinstance(obj, dict) else {}
 
     # =========================================================================
     # RESULT HANDLING UTILITIES (New in Phase 0 - Consolidation)
@@ -144,11 +155,15 @@ class FlextMixins:
         return self._get_or_create_logger()
 
     @contextmanager
-    def track(self, operation_name: str) -> Iterator[dict[str, object]]:
+    def track(
+        self, operation_name: str,
+    ) -> Iterator[dict[str, FlextTypes.GeneralValueType]]:
         """Track operation performance with timing and automatic context cleanup."""
         # Get or initialize stats storage for this operation
         stats_attr = f"_stats_{operation_name}"
-        stats: dict[str, object] = getattr(
+        # Use correct type - stats values are all GeneralValueType (int, float)
+        # Use dict for mutability (not Mapping)
+        stats: dict[str, FlextTypes.GeneralValueType] = getattr(
             self,
             stats_attr,
             {
@@ -300,9 +315,15 @@ class FlextMixins:
                 cls._logger_cache[logger_name] = logger
             return logger
 
-    def _log_with_context(self, level: str, message: str, **extra: object) -> None:
+    def _log_with_context(
+        self,
+        level: str,
+        message: str,
+        **extra: FlextTypes.GeneralValueType,
+    ) -> None:
         """Log message with automatic context data inclusion."""
-        context_data: dict[str, object] = {
+        # Use dict for mutability in context building
+        context_data: dict[str, FlextTypes.GeneralValueType] = {
             "correlation_id": FlextContext.Correlation.get_correlation_id(),
             "operation": FlextContext.Request.get_operation_name(),
             **extra,
@@ -342,10 +363,11 @@ class FlextMixins:
     # CONTEXT ENRICHMENT METHODS - Automatic Context Management
     # =========================================================================
 
-    def _enrich_context(self, **context_data: object) -> None:
+    def _enrich_context(self, **context_data: FlextTypes.GeneralValueType) -> None:
         """Log service information ONCE at initialization (not bound to context)."""
-        # Build service context for logging
-        service_context: dict[str, object] = {
+        # Build service context for logging using correct types
+        # Use dict for mutability
+        service_context: dict[str, FlextTypes.GeneralValueType] = {
             "service_name": self.__class__.__name__,
             "service_module": self.__class__.__module__,
             **context_data,
@@ -355,7 +377,7 @@ class FlextMixins:
 
     def _log_config_once(
         self,
-        config: dict[str, object],
+        config: FlextTypes.Types.ConfigurationMapping,
         message: str = "Configuration loaded",
     ) -> None:
         """Log configuration ONCE without binding to context."""
@@ -365,7 +387,7 @@ class FlextMixins:
     def _with_operation_context(
         self,
         operation_name: str,
-        **operation_data: object,
+        **operation_data: FlextTypes.GeneralValueType,
     ) -> None:
         """Set operation context with level-based binding (DEBUG/ERROR/normal)."""
         # Propagate context using inherited Context mixin method
@@ -383,10 +405,15 @@ class FlextMixins:
                 "error_details",
             }
 
-            # Separate data by level
-            debug_data = {k: v for k, v in operation_data.items() if k in debug_keys}
-            error_data = {k: v for k, v in operation_data.items() if k in error_keys}
-            normal_data = {
+            # Separate data by level - preserve GeneralValueType from operation_data
+            # Use dict for mutability
+            debug_data: dict[str, FlextTypes.GeneralValueType] = {
+                k: v for k, v in operation_data.items() if k in debug_keys
+            }
+            error_data: dict[str, FlextTypes.GeneralValueType] = {
+                k: v for k, v in operation_data.items() if k in error_keys
+            }
+            normal_data: dict[str, FlextTypes.GeneralValueType] = {
                 k: v
                 for k, v in operation_data.items()
                 if k not in debug_keys and k not in error_keys
@@ -415,18 +442,20 @@ class FlextMixins:
 
         @staticmethod
         def validate_with_result(
-            data: object,
-            validators: list[Callable[[object], FlextResult[bool]]],
-        ) -> FlextResult[object]:
+            data: FlextTypes.GeneralValueType,
+            validators: list[
+                Callable[[FlextTypes.GeneralValueType], FlextResult[bool]]
+            ],
+        ) -> FlextResult[FlextTypes.GeneralValueType]:
             """Chain validators sequentially, returning first failure or data on success."""
-            result: FlextResult[object] = FlextResult.ok(data)
+            result: FlextResult[FlextTypes.GeneralValueType] = FlextResult.ok(data)
 
             for validator in validators:
                 # Create helper function with proper closure to validate and preserve data
                 def validate_and_preserve(
-                    data: object,
-                    v: Callable[[object], FlextResult[bool]],
-                ) -> FlextResult[object]:
+                    data: FlextTypes.GeneralValueType,
+                    v: Callable[[FlextTypes.GeneralValueType], FlextResult[bool]],
+                ) -> FlextResult[FlextTypes.GeneralValueType]:
                     validation_result = v(data)
                     if validation_result.is_failure:
                         base_msg = "Validation failed"
@@ -435,17 +464,17 @@ class FlextMixins:
                             if validation_result.error
                             else f"{base_msg} (validation rule failed)"
                         )
-                        return FlextResult[object].fail(
+                        return FlextResult[FlextTypes.GeneralValueType].fail(
                             error_msg,
                             error_code=validation_result.error_code,
                             error_data=validation_result.error_data,
                         )
                     # Check that validation returned True
                     if validation_result.value is not True:
-                        return FlextResult[object].fail(
+                        return FlextResult[FlextTypes.GeneralValueType].fail(
                             f"Validator must return FlextResult[bool].ok(True) for success, got {validation_result.value!r}",
                         )
-                    return FlextResult[object].ok(data)
+                    return FlextResult[FlextTypes.GeneralValueType].ok(data)
 
                 # Use partial to bind validator while passing data through flat_map
                 result = result.flat_map(partial(validate_and_preserve, v=validator))

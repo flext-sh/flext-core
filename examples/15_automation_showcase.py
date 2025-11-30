@@ -689,10 +689,10 @@ def main() -> None:
     print("✅ Automatic context cleanup")
     print("✅ Structured logging with full context")
     print(
-        "✅ NEW FlextResult methods: from_callable, flow_through, lash, alt, value_or_call"
+        "✅ NEW FlextResult methods: from_callable, flow_through, lash, alt, value_or_call",
     )
     print(
-        "✅ Advanced automation scenarios: ETL pipelines, service orchestration, lazy loading"
+        "✅ Advanced automation scenarios: ETL pipelines, service orchestration, lazy loading",
     )
     print("✅ Zero boilerplate infrastructure code")
     print("=" * 80)

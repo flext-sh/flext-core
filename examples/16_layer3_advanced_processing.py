@@ -1,18 +1,9 @@
-"""Layer 3 Advanced Processing Integration Examples.
+"""Dispatcher processing examples focused on reliability and batching.
 
-This example demonstrates the NEW Layer 3 capabilities for batch, parallel,
-and fault-tolerant processing. Layer 3 integrates on top of Layer 1 CQRS
-and Layer 2 Reliability Patterns.
-
-Key Features:
-- Processor registration and execution
-- Batch processing for multiple items
-- Parallel processing with ThreadPoolExecutor
-- Timeout enforcement
-- Fallback chains for resilience
-- Comprehensive metrics and auditing
-
-All operations use FlextResult[T] for composable error handling.
+Showcases the dispatcher processor API for batch, parallel, timeout-aware,
+and fallback-driven execution built on top of the CQRS dispatcher pipeline.
+Each operation returns ``FlextResult`` to keep flows composable and explicit
+about failures.
 """
 
 from __future__ import annotations

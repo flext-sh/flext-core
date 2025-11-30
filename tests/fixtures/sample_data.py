@@ -117,12 +117,12 @@ class SampleDataFactories:
     def create_inactive_user() -> TestUserData:
         """Create inactive test user."""
         return TestUserData(
-            user_id="inactive-123", name="Inactive User", is_active=False
+            user_id="inactive-123", name="Inactive User", is_active=False,
         )
 
     @staticmethod
     def create_error_context(
-        error_code: str = "TEST_ERROR_001", severity: str = "medium"
+        error_code: str = "TEST_ERROR_001", severity: str = "medium",
     ) -> ErrorContext:
         """Create error context for testing."""
         return ErrorContext(error_code=error_code, severity=severity)
@@ -131,7 +131,7 @@ class SampleDataFactories:
     def create_validation_error_context() -> ErrorContext:
         """Create validation error context."""
         return ErrorContext(
-            error_code="VAL_001", severity="low", component="validation_module"
+            error_code="VAL_001", severity="low", component="validation_module",
         )
 
     @staticmethod

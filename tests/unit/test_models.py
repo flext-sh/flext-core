@@ -67,7 +67,7 @@ class SampleAggregate(FlextModels.AggregateRoot):
         """Change status and add domain event."""
         self.status = new_status
         result = self.add_domain_event(
-            "status_changed", {"old_status": "active", "new_status": new_status}
+            "status_changed", {"old_status": "active", "new_status": new_status},
         )
         if result.is_failure:
             error_msg = f"Failed to add domain event: {result.error}"
@@ -113,7 +113,7 @@ class TestFlextModels:
         assert entity.email == "test@example.com"
         assert entity.unique_id is not None
         entity_dict = entity.model_dump(
-            exclude={"is_initial_version", "is_modified", "uncommitted_events"}
+            exclude={"is_initial_version", "is_modified", "uncommitted_events"},
         )
         validated_entity = entity.model_validate(entity_dict)
         assert validated_entity.email == "test@example.com"
@@ -466,7 +466,7 @@ class TestFlextModels:
     def test_domain_event_creation(self) -> None:
         """Test DomainEvent creation."""
         event = FlextModels.DomainEvent(
-            event_type="user_created", aggregate_id="user-123", data={"name": "test"}
+            event_type="user_created", aggregate_id="user-123", data={"name": "test"},
         )
         assert all(hasattr(event, attr) for attr in ["unique_id", "created_at"])
         assert event.event_type == "user_created"
@@ -477,7 +477,7 @@ class TestFlextModels:
     def test_query_creation(self) -> None:
         """Test Query creation."""
         query = FlextModels.Cqrs.Query(
-            query_type="find_users", filters={"active": "true"}
+            query_type="find_users", filters={"active": "true"},
         )
         assert hasattr(query, "query_id")
         assert query.query_id is not None
@@ -581,7 +581,7 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         result = aggregate.add_domain_event(
-            "user_action", {"event_type": "test_event", "key": "value"}
+            "user_action", {"event_type": "test_event", "key": "value"},
         )
         assert result.is_success
         assert aggregate.handler_called is True
@@ -604,7 +604,7 @@ class TestFlextModels:
     def test_domain_event_model_creation(self) -> None:
         """Test DomainEvent model creation and properties."""
         event = FlextModels.DomainEvent(
-            event_type="test_event", aggregate_id="aggregate-123", data={"key": "value"}
+            event_type="test_event", aggregate_id="aggregate-123", data={"key": "value"},
         )
         assert event.event_type == "test_event"
         assert event.aggregate_id == "aggregate-123"
@@ -618,7 +618,7 @@ class TestFlextModels:
     def test_command_model_creation(self) -> None:
         """Test Command model creation with correct fields."""
         command = FlextModels.Cqrs.Command(
-            command_type="CreateOrder", issuer_id="issuer-123"
+            command_type="CreateOrder", issuer_id="issuer-123",
         )
         assert command.command_type == "CreateOrder"
         assert command.issuer_id == "issuer-123"
@@ -642,7 +642,7 @@ class TestFlextModels:
     def test_processing_request_model_creation(self) -> None:
         """Test ProcessingRequest model with correct fields."""
         request = FlextModels.ProcessingRequest(
-            data={"input": "data"}, enable_validation=True
+            data={"input": "data"}, enable_validation=True,
         )
         assert request.data == {"input": "data"}
         assert request.enable_validation is True
@@ -655,7 +655,7 @@ class TestFlextModels:
             pass
 
         reg = FlextModels.HandlerRegistration(
-            name="TestHandler", handler=dummy_handler, event_types=["CreateUser"]
+            name="TestHandler", handler=dummy_handler, event_types=["CreateUser"],
         )
         assert reg.name == "TestHandler"
         assert callable(reg.handler)
@@ -664,7 +664,7 @@ class TestFlextModels:
     def test_batch_processing_config_model(self) -> None:
         """Test BatchProcessingConfig model with correct fields."""
         config = FlextModels.BatchProcessingConfig(
-            batch_size=100, continue_on_error=True, data_items=[1, 2, 3]
+            batch_size=100, continue_on_error=True, data_items=[1, 2, 3],
         )
         assert config.batch_size == 100
         assert config.continue_on_error is True
@@ -761,7 +761,7 @@ class TestFlextModels:
     def test_handler_execution_context_model(self) -> None:
         """Test HandlerExecutionContext model creation."""
         context = FlextModels.HandlerExecutionContext.create_for_handler(
-            handler_name="ProcessOrderCommand", handler_mode="command"
+            handler_name="ProcessOrderCommand", handler_mode="command",
         )
         assert context.handler_name == "ProcessOrderCommand"
         assert context.handler_mode == "command"

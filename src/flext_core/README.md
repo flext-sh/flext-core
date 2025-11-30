@@ -8,8 +8,8 @@ This module provides the core infrastructure components used across the FLEXT ec
 
 - **Railway-oriented error handling** with `FlextResult[T]`
 - **Dependency injection container** with type-safe service registration
-- **CQRS implementation** with command bus and message dispatching
-- **Domain modeling** with entities, value objects, and aggregates
+- **CQRS implementation** with command/query dispatcher and registry
+- **Domain modeling** with entities, value objects, aggregates, and domain events
 - **Structured logging** with context propagation
 - **Configuration management** with validation and environment support
 - **Context management** for distributed tracing and correlation
@@ -30,7 +30,7 @@ Business logic abstractions including entities, value objects, services, and dom
 
 ### Application Layer
 
-Use case coordination with CQRS patterns, command/query handlers, and application services.
+Use case coordination with CQRS patterns, command/query handlers, domain-event publishing, and application services.
 
 ### Infrastructure Layer
 
@@ -42,8 +42,7 @@ External concerns including logging, configuration, dependency injection, and co
 | ----------------- | ---------------------------------------------------------- |
 | `FlextResult[T]`  | Railway-oriented error handling with monadic operations    |
 | `FlextContainer`  | Dependency injection container with type-safe registration |
-| `FlextBus`        | Command/query bus for CQRS message routing                 |
-| `FlextDispatcher` | High-level message dispatch orchestration                  |
+| `FlextDispatcher` | Command/query dispatcher with reliability controls         |
 | `FlextContext`    | Hierarchical context management for tracing                |
 | `FlextLogger`     | Structured logging with automatic context propagation      |
 | `FlextConfig`     | Configuration management with Pydantic validation          |
@@ -54,7 +53,6 @@ External concerns including logging, configuration, dependency injection, and co
 ### Basic Setup
 
 ```python
-from flext_core.bus import FlextBus
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
@@ -66,17 +64,17 @@ from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
-from flext_core.processors import FlextProcessors
 from flext_core.protocols import FlextProtocols
 from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
 from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities, FlextResult
+from flext_core.utilities import FlextUtilities
 
-# Get unified facade
-core = Flext)
+# Create dispatcher/registry (registry optional for simple flows)
+dispatcher = FlextDispatcher()
+registry = FlextRegistry()
 
 # Railway-oriented error handling
 result = FlextResult.success("operation completed")
@@ -88,10 +86,12 @@ if result.is_success:
 
 ```python
 from flext_core import FlextContainer
+from flext_core.loggings import FlextLogger
 
 container = FlextContainer()
-container.register("logger", Flextcreate_logger("my-service"))
+container.register("logger", FlextLogger.create_module_logger(__name__))
 logger_result = container.get("logger")
+assert logger_result.unwrap() is container.get("logger").unwrap()
 ```
 
 ### Domain Modeling
@@ -107,6 +107,39 @@ class User(FlextModels.Entity):
         if "@" not in self.email:
             return FlextResult[bool].fail("Invalid email")
         return FlextResult[bool].ok(True)
+```
+
+### Domain Events and Dispatcher Integration
+
+Aggregate roots collect domain events that can be published through the dispatcher after a successful operation:
+
+```python
+from flext_core.dispatcher import FlextDispatcher
+from flext_core.models import FlextModels
+
+
+class InventoryAdjusted(FlextModels.DomainEvent):
+    sku: str
+    quantity: int
+
+
+class Product(FlextModels.AggregateRoot):
+    sku: str
+    inventory: int
+
+    def decrease_inventory(self, quantity: int) -> None:
+        if quantity > self.inventory:
+            raise ValueError("Insufficient inventory")
+        self.inventory -= quantity
+        self.add_domain_event(InventoryAdjusted(sku=self.sku, quantity=quantity))
+
+
+dispatcher = FlextDispatcher()
+product = Product(sku="ABC", inventory=10)
+product.decrease_inventory(3)
+
+# Publish events via dispatcher (with middleware/telemetry applied)
+dispatcher.publish_events(product.commit_domain_events())
 ```
 
 ### CQRS Pattern
@@ -131,7 +164,7 @@ The framework is designed for extension through:
 
 - **Custom handlers** inheriting from `FlextHandlers`
 - **Protocol implementations** for interface contracts
-- **Custom processors** for specialized message handling
+- **Dispatcher middleware** for reliability, logging, or validation
 - **Mixin composition** for reusable behaviors
 
 All components integrate with the core infrastructure while maintaining clear separation of concerns.

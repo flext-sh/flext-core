@@ -832,7 +832,7 @@ class ComprehensiveModelsService(FlextService[Order]):
         json_result = FlextResult[str].create_from_callable(serialize_to_json)
         if json_result.is_success:
             print(
-                f"✅ JSON serialization successful: {len(json_result.unwrap())} chars"
+                f"✅ JSON serialization successful: {len(json_result.unwrap())} chars",
             )
 
         # NEW: Use from_callable for safe model deserialization
@@ -842,7 +842,7 @@ class ComprehensiveModelsService(FlextService[Order]):
             return Order(**order_dict)
 
         deserialize_result = FlextResult[Order].create_from_callable(
-            deserialize_from_dict
+            deserialize_from_dict,
         )
         if deserialize_result.is_success:
             new_order = deserialize_result.unwrap()
@@ -1097,7 +1097,7 @@ class ComprehensiveModelsService(FlextService[Order]):
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
                 return FlextResult[object].fail(
-                    result.error or "Credit validation failed"
+                    result.error or "Credit validation failed",
                 )
             return FlextResult[object].fail("Invalid customer type")
 
