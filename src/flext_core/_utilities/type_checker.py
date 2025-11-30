@@ -11,10 +11,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
+import logging
 from typing import cast, get_origin, get_type_hints
 
 from flext_core.runtime import FlextRuntime, StructlogLogger
 from flext_core.typings import FlextTypes
+
+_logger = logging.getLogger(__name__)
 
 
 class FlextUtilitiesTypeChecker:
@@ -323,10 +326,13 @@ class FlextUtilitiesTypeChecker:
     @classmethod
     def _handle_type_or_origin_check(
         cls,
+<<<<<<< HEAD
+        expected_type: TypeOriginSpecifier,
         expected_type: FlextTypes.Utility.TypeOriginSpecifier,
         message_type: FlextTypes.Utility.TypeOriginSpecifier,
         origin_type: FlextTypes.Utility.TypeOriginSpecifier,
         message_origin: FlextTypes.Utility.TypeOriginSpecifier,
+>>>>>>> main
     ) -> bool:
         """Handle type checking for types or objects with __origin__.
 

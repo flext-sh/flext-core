@@ -32,8 +32,6 @@ class FlextUtilitiesCache:
         """
         return FlextRuntime.get_logger(__name__)
 
-    """Cache utility functions for data normalization and sorting."""
-
     @staticmethod
     def normalize_component(
         component: object,

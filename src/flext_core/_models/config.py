@@ -21,7 +21,6 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 
@@ -258,6 +257,7 @@ class FlextModelsConfig:
         """
 
         model_config = ConfigDict(
+            arbitrary_types_allowed=True,
             json_schema_extra={
                 "title": "MiddlewareConfig",
                 "description": (

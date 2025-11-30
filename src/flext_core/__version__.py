@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from importlib.metadata import metadata
+from importlib.metadata import PackageNotFoundError, metadata
 
 
 class FlextVersion:
@@ -57,7 +57,18 @@ class FlextVersion:
     """
 
     # Package metadata extraction with error handling
-    _metadata = metadata("flext-core")
+    try:
+        _metadata = metadata("flext-core")
+    except PackageNotFoundError:
+        _metadata = {
+            "Version": "0.0.0-dev",
+            "Name": "flext-core",
+            "Summary": "FLEXT core (metadata fallback)",
+            "Author": "",
+            "Author-Email": "",
+            "License": "",
+            "Home-Page": "",
+        }
 
     # Core version information - extracted once at import time
     __version__ = _metadata["Version"]
