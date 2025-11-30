@@ -14,6 +14,7 @@ from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.metadata import Metadata
 from flext_core._utilities.data_mapper import FlextUtilitiesDataMapper
@@ -23,7 +24,6 @@ from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-# Constants for validator logic
 _MIN_QUALNAME_PARTS_FOR_WRAPPER = 2  # FlextModels.Cqrs requires at least 2 parts
 
 
@@ -35,14 +35,14 @@ class FlextModelsCqrs:
     """
 
     class Command(
-        FlextModelsEntity.ArbitraryTypesModel,
+        FlextModelsBase.ArbitraryTypesModel,
         FlextModelsEntity.IdentifiableMixin,
         FlextModelsEntity.TimestampableMixin,
     ):
         """Base class for CQRS commands with validation."""
 
         message_type: FlextConstants.Cqrs.CommandMessageTypeLiteral = Field(
-            default=FlextConstants.Cqrs.HandlerType.COMMAND.value,
+            default=FlextConstants.Cqrs.HandlerType.COMMAND,
             frozen=True,
             description="Message type discriminator (always 'command')",
         )
@@ -115,7 +115,7 @@ class FlextModelsCqrs:
         )
 
         message_type: FlextConstants.Cqrs.QueryMessageTypeLiteral = Field(
-            default=FlextConstants.Cqrs.HandlerType.QUERY.value,
+            default=FlextConstants.Cqrs.HandlerType.QUERY,
             frozen=True,
             description="Message type discriminator",
         )
@@ -147,7 +147,9 @@ class FlextModelsCqrs:
                 models_module = sys.modules.get("flext_core.models")
                 if models_module and len(parts) >= _MIN_QUALNAME_PARTS_FOR_WRAPPER:
                     obj: FlextTypes.GeneralValueType | None = getattr(
-                        models_module, parts[0], None
+                        models_module,
+                        parts[0],
+                        None,
                     )
                     for part in parts[1:-1]:  # Navigate to Cqrs (skip Query)
                         if obj and hasattr(obj, part):
@@ -215,7 +217,7 @@ class FlextModelsCqrs:
                     else str(query_id_raw)
                 )
                 query_type: FlextTypes.GeneralValueType | None = query_payload.get(
-                    "query_type"
+                    "query_type",
                 )
                 # filters is already guaranteed to be ConfigurationMapping from earlier validation
                 query = cls(
@@ -323,7 +325,7 @@ class FlextModelsCqrs:
             def __init__(self, handler_type: FlextConstants.Cqrs.HandlerType) -> None:
                 """Initialize builder with required handler_type."""
                 handler_short_id = FlextUtilities.Generators.generate_short_id(length=8)
-                self._data: dict[str, FlextTypes.GeneralValueType] = {
+                self._data: dict[str, FlextTypes.GeneralValueType | object] = {
                     "handler_type": handler_type,
                     "handler_mode": (
                         FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
@@ -363,7 +365,8 @@ class FlextModelsCqrs:
                 return self
 
             def merge_config(
-                self, config: FlextTypes.Types.ConfigurationMapping
+                self,
+                config: FlextTypes.Types.ConfigurationMapping,
             ) -> Self:
                 """Merge additional config (fluent API)."""
                 self._data.update(config)

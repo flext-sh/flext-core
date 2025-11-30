@@ -24,9 +24,6 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-# Type alias for GeneralValueType (PEP 695)
-type GeneralValueType = FlextTypes.GeneralValueType
-
 
 class FlextModelsConfig:
     """Configuration pattern container class.
@@ -49,8 +46,8 @@ class FlextModelsConfig:
             min_length=1,
             description="Unique operation identifier",
         )
-        data: dict[str, GeneralValueType] = Field(default_factory=dict)
-        context: dict[str, GeneralValueType] = Field(default_factory=dict)
+        data: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
+        context: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
         timeout_seconds: float = Field(
             default=FlextConstants.Defaults.TIMEOUT,
             gt=0,
@@ -73,7 +70,7 @@ class FlextModelsConfig:
             """Ensure context has required fields (using FlextUtilities.Generators).
 
             Returns dict[str, str] because ensure_trace_context generates string trace IDs.
-            This is compatible with the field type dict[str, GeneralValueType] since str is a subtype.
+            This is compatible with the field type dict[str, FlextTypes.GeneralValueType] since str is a subtype.
             """
             return FlextUtilities.Generators.ensure_trace_context(
                 v,
@@ -246,8 +243,10 @@ class FlextModelsConfig:
         """Enhanced handler execution configuration."""
 
         handler_name: str = Field(pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$")
-        input_data: dict[str, GeneralValueType] = Field(default_factory=dict)
-        execution_context: dict[str, GeneralValueType] = Field(default_factory=dict)
+        input_data: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
+        execution_context: dict[str, FlextTypes.GeneralValueType] = Field(
+            default_factory=dict,
+        )
         timeout_seconds: float = Field(
             default=FlextConstants.Defaults.TIMEOUT,
             le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
@@ -278,7 +277,7 @@ class FlextModelsConfig:
         enabled: bool = Field(default=True, description="Whether middleware is enabled")
         order: int = Field(default=0, description="Execution order in middleware chain")
         name: str | None = Field(default=None, description="Optional middleware name")
-        config: dict[str, GeneralValueType] = Field(
+        config: dict[str, FlextTypes.GeneralValueType] = Field(
             default_factory=dict,
             description="Middleware-specific configuration",
         )
@@ -483,7 +482,7 @@ class FlextModelsConfig:
             default=False,
             description="Whether to auto-generate correlation ID",
         )
-        extra_kwargs: dict[str, GeneralValueType] = Field(
+        extra_kwargs: dict[str, FlextTypes.GeneralValueType] = Field(
             default_factory=dict,
             description="Additional keyword arguments for metadata",
         )

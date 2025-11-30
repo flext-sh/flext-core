@@ -16,10 +16,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
-
-from pydantic import computed_field
+from typing import Self
 
 from flext_core.exceptions import FlextExceptions
 from flext_core.mixins import FlextMixins
@@ -74,6 +74,61 @@ class FlextService[TDomainResult](
         ...     user = result.value
     """
 
+    def __new__(  # type: ignore[misc]  # __new__ can return TDomainResult for auto_execute pattern
+        cls,
+        **kwargs: FlextTypes.ScalarValue
+        | Sequence[FlextTypes.ScalarValue]
+        | Mapping[str, FlextTypes.ScalarValue],
+    ) -> Self | TDomainResult:
+        """Create service instance.
+
+        For services with auto_execute = True, returns the execution result directly.
+        For services without auto_execute, returns the service instance.
+
+        Args:
+            **kwargs: Configuration parameters for service initialization
+
+        Returns:
+            Self | TDomainResult: Service instance or execution result
+
+        """
+        instance = super().__new__(cls)
+        # Check for auto_execute ClassVar
+        auto_execute = getattr(cls, "auto_execute", False)
+        if auto_execute:
+            # Verify class is concrete (not abstract)
+            if inspect.isabstract(cls):
+                msg = (
+                    f"Class {cls.__name__} has auto_execute=True but is still abstract. "
+                    "Implement all abstract methods in the concrete class."
+                )
+                raise TypeError(msg)
+            # Initialize the instance
+            # Use type(instance) to avoid mypy error about accessing __init__ on instance
+            type(instance).__init__(instance, **kwargs)
+            # Execute and return result directly (V2 Auto pattern)
+            # Concrete classes with auto_execute=True must implement execute()
+            result = instance.execute()  # pyright: ignore[reportAbstractUsage]
+            if result.is_success:
+                return result.value  # type: ignore[return-value]
+            # On failure, raise exception
+            raise FlextExceptions.BaseError(result.error or "Service execution failed")
+        return instance
+
+    @property
+    def result(self) -> TDomainResult:
+        """Get the execution result, raising exception on failure."""
+        if not hasattr(self, "_execution_result"):
+            # Lazy execution for services without auto_execute
+            execution_result = self.execute()
+            self._execution_result = execution_result
+
+        result = self._execution_result
+        if result.is_success:
+            return result.value
+        # On failure, raise exception
+        raise FlextExceptions.BaseError(result.error or "Service execution failed")
+
     def __init__(
         self,
         **data: FlextTypes.ScalarValue
@@ -112,30 +167,6 @@ class FlextService[TDomainResult](
 
         """
         ...
-
-    @computed_field
-    def result(self) -> TDomainResult:
-        """Get execution result with lazy evaluation.
-
-        Computed property that executes the service and returns the result value.
-        Uses Pydantic's computed_field for caching and lazy evaluation. Raises
-        exception on failure to maintain synchronous error handling.
-
-        Returns:
-            TDomainResult: The successful execution result
-
-        Raises:
-            FlextExceptions.BaseError: When execution fails
-
-        Example:
-            >>> service = MyService()
-            >>> result_value = service.result  # Executes and returns value
-
-        """
-        result = self.execute()
-        if result.is_success:
-            return result.value
-        raise FlextExceptions.BaseError(result.error or "Service execution failed")
 
     def validate_business_rules(self) -> FlextResult[bool]:
         """Validate business rules with extensible validation pipeline.

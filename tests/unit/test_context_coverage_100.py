@@ -597,7 +597,7 @@ class TestContext100Coverage:
         invalid_data: Any = 123
         with pytest.raises(
             TypeError,
-            match=r".*must be a dictionary or Pydantic model.*",
+            match=r".*must be a dict or Pydantic model.*",
         ):
             FlextModels.ContextExport(data=invalid_data)
 

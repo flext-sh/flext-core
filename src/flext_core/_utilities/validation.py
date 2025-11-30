@@ -2,16 +2,16 @@
 
 Extracted from flext_core.utilities for better modularity.
 
-⚠️ ARCHITECTURAL RULE - DO NOT MODIFY ⚠️
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WARNING: ARCHITECTURAL RULE - DO NOT MODIFY
+================================================================================
 
 This module CORRECTLY imports and uses FlextResult[T]. This is NOT a circular import.
 
 **Dependency Flow** (UNIDIRECTIONAL - NO CIRCLE):
-  FlextResult (Tier 1) → defines Result[T] type
-         ↑
+  FlextResult (Tier 1) -> defines Result[T] type
+         ^
          |
-  FlextUtilities (Tier 2) → USES Result[T] in return types
+  FlextUtilities (Tier 2) -> USES Result[T] in return types
 
 **Why This Is Safe**:
 - FlextResult ONLY defines the Result[T] type and its methods (ok/fail/unwrap/map)
@@ -20,15 +20,15 @@ This module CORRECTLY imports and uses FlextResult[T]. This is NOT a circular im
 - Therefore: NO CIRCULAR DEPENDENCY exists
 
 **For Other Agents**:
-❌ DO NOT remove `from flext_core.result import FlextResult`
-❌ DO NOT change FlextResult[T] returns to plain T or exceptions
-❌ DO NOT refactor this to "break circular imports" - THERE IS NO CIRCULAR
+- DO NOT remove `from flext_core.result import FlextResult`
+- DO NOT change FlextResult[T] returns to plain T or exceptions
+- DO NOT refactor this to "break circular imports" - THERE IS NO CIRCULAR
 
-✅ This architecture is CORRECT and INTENTIONAL
-✅ FlextUtilities validation methods MUST return FlextResult[T]
-✅ Railway-oriented programming pattern requires Result types
+This architecture is CORRECT and INTENTIONAL
+FlextUtilities validation methods MUST return FlextResult[T]
+Railway-oriented programming pattern requires Result types
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+================================================================================
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -39,29 +39,35 @@ from __future__ import annotations
 import concurrent.futures
 import inspect
 import json
-import logging
 import operator
 import re
 import socket
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import fields as get_dataclass_fields, is_dataclass
 from datetime import datetime
-from typing import TypeGuard
+from typing import TypeGuard, cast
 
 import orjson
 
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
-from flext_core.result import FlextResult  # ✅ CORRECT - See architectural note above
-from flext_core.runtime import FlextRuntime
-
-# Import FlextTypes for FlextTypes.Config.RetryConfig and other complex types
+from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime, StructlogLogger
 from flext_core.typings import FlextTypes
-
-_logger = logging.getLogger(__name__)
 
 
 class FlextUtilitiesValidation:
+    """Unified validation patterns using railway composition."""
+
+    @property
+    def logger(self) -> StructlogLogger:
+        """Get logger instance using FlextRuntime (avoids circular imports).
+
+        Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
+        Uses same structure/config as FlextLogger but without circular import.
+        """
+        return FlextRuntime.get_logger(__name__)
+
     """Unified validation patterns using railway composition.
 
     Use for composite/pipeline validation and complex business logic validators.
@@ -77,49 +83,231 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _normalize_component(
-        component: FlextTypes.GeneralValueType,
+        component: FlextTypes.GeneralValueType | object,
+        visited: set[int] | None = None,
     ) -> FlextTypes.GeneralValueType:
         """Normalize component for consistent representation (internal recursive)."""
+        # Initialize visited set if not provided (first call)
+        if visited is None:
+            visited = set()
+
+        # Check for circular references using object id
+        component_id = id(component)
+        if component_id in visited:
+            # Circular reference detected - return placeholder
+            return {"type": "circular_reference", "id": str(component_id)}
+
+        # Add current component to visited set
+        visited.add(component_id)
+
+        try:
+            component = FlextUtilitiesValidation._handle_pydantic_model(component)
+            return FlextUtilitiesValidation._normalize_by_type(component, visited)
+        finally:
+            # Remove from visited set when done (allow re-visiting at different depth)
+            visited.discard(component_id)
+
+    @staticmethod
+    def _handle_pydantic_model(component: object) -> FlextTypes.GeneralValueType:
+        """Handle Pydantic model conversion."""
+        # Type narrowing: check if component has model_dump method
+        if hasattr(component, "model_dump") and callable(
+            getattr(component, "model_dump", None)
+        ):
+            # Type narrowing: component has model_dump, safe to call
+            try:
+                # Get model_dump method and call it - avoids pyright error on object type
+                model_dump_method = component.model_dump
+                dump_result: object = model_dump_method()
+                if isinstance(dump_result, dict):
+                    # Type narrowing: dict is valid GeneralValueType
+                    return dump_result
+                # Type narrowing: str is valid GeneralValueType
+                return str(component)
+            except Exception:
+                # Type narrowing: str is valid GeneralValueType
+                return str(component)
+        # Component is not a Pydantic model - check if it's a valid GeneralValueType
+        # GeneralValueType includes: str | int | float | bool | Sequence | Mapping | None
+        if isinstance(component, (str, int, float, bool, type(None))):
+            # Type narrowing: these are valid GeneralValueType
+            return component
+        if isinstance(component, Sequence) and not isinstance(component, str | bytes):
+            # Type narrowing: Sequence is valid GeneralValueType
+            return component
+        if isinstance(component, Mapping):
+            # Type narrowing: Mapping is valid GeneralValueType
+            return component
+        # Fallback: convert to string if not a valid GeneralValueType
+        # String is valid GeneralValueType
+        return str(component)
+
+    @staticmethod
+    def _normalize_by_type(
+        component: object,
+        visited: set[int] | None = None,
+    ) -> FlextTypes.GeneralValueType:
+        """Normalize component based on its type."""
+        if visited is None:
+            visited = set()
+
         if FlextRuntime.is_dict_like(component):
-            # Type narrowing: is_dict_like ensures dict-like
-            component_dict = component
-            if not isinstance(component_dict, Mapping):
-                # Fallback for non-Mapping dict-like objects
-                component_dict = (
-                    dict(component_dict.items())
-                    if hasattr(component_dict, "items")
-                    else dict(component_dict)
-                )
-            normalized_dict: dict[str, FlextTypes.GeneralValueType] = {}
-            for k, v in component_dict.items():
-                # Type narrowing: convert v to GeneralValueType
-                v_normalized: FlextTypes.GeneralValueType
-                if isinstance(v, (str, int, float, bool, type(None))):
-                    v_normalized = v
-                elif isinstance(v, (Sequence, Mapping)):
-                    v_normalized = v  # type: ignore[assignment]
-                else:
-                    v_normalized = str(v)
-                normalized_dict[str(k)] = v_normalized
-                # Recursively normalize the value
-                normalized_dict[str(k)] = FlextUtilitiesValidation._normalize_component(
-                    v_normalized
-                )
-            return normalized_dict
+            return FlextUtilitiesValidation._normalize_dict_like(component, visited)
         if isinstance(component, Sequence):
-            # Component is confirmed to be list or tuple, iterate directly
-            return [
-                FlextUtilitiesValidation._normalize_component(item)
-                for item in component
-            ]
+            return FlextUtilitiesValidation._normalize_sequence_helper(
+                component, visited
+            )
         if isinstance(component, set):
-            # Component is confirmed to be set, iterate directly
-            return {
-                FlextUtilitiesValidation._normalize_component(item)
-                for item in component
-            }
-        # Return primitives and other types directly
-        return component
+            # Convert set to tuple for GeneralValueType compatibility
+            # GeneralValueType uses Sequence, not set
+            normalized_set = FlextUtilitiesValidation._normalize_set_helper(component)
+            return tuple(normalized_set)
+        # Return as FlextTypes.GeneralValueType - component is already a valid FlextTypes.GeneralValueType
+        # (primitives, None, etc. are all part of FlextTypes.GeneralValueType)
+        # Type narrowing: component is object, convert to valid GeneralValueType
+        # GeneralValueType includes: str | int | float | bool | Sequence | Mapping | None
+        if isinstance(component, (str, int, float, bool, type(None))):
+            return component
+        if isinstance(component, Sequence) and not isinstance(component, str | bytes):
+            return component
+        if isinstance(component, Mapping):
+            return component
+        # Fallback: convert to string (string is valid GeneralValueType)
+        return str(component)
+
+    @staticmethod
+    def _normalize_dict_like(
+        component: object,
+        visited: set[int] | None = None,
+    ) -> dict[str, FlextTypes.GeneralValueType]:
+        """Normalize dict-like objects."""
+        if visited is None:
+            visited = set()
+
+        # Convert to Mapping for type safety
+        component_dict: Mapping[str, FlextTypes.GeneralValueType]
+        if isinstance(component, Mapping):
+            component_dict = component
+        elif hasattr(component, "items") and callable(
+            getattr(component, "items", None),
+        ):
+            # Has items() method - convert to dict
+            # Get items() method and call it - avoids pyright error on object type
+            items_method = component.items
+            items_result: object = items_method()
+            if isinstance(items_result, (list, tuple)):
+                # items() returned list/tuple of pairs - convert to dict
+                # Type narrowing: items_result is list or tuple of (str, object) pairs
+                component_dict = dict(items_result)
+            else:
+                # items() returned something else - try to iterate
+                try:
+                    # Type narrowing: items_result might be iterable
+                    if hasattr(items_result, "__iter__"):
+                        # Cast to satisfy type checker - items_result is iterable at runtime
+                        items_iterable = cast(
+                            "Iterable[tuple[str, object]]", items_result
+                        )
+                        items_list = list(items_iterable)
+                        # Type narrowing: convert tuples to dict, then normalize values
+                        # Create temporary mutable dict, then assign to component_dict
+                        temp_dict: dict[str, FlextTypes.GeneralValueType] = {}
+                        for k, v in items_list:
+                            if isinstance(k, str):
+                                # Normalize value first, then cast to GeneralValueType
+                                normalized_v = (
+                                    FlextUtilitiesValidation._normalize_component(
+                                        v, visited=None
+                                    )
+                                )
+                                # normalized_v is already GeneralValueType from _normalize_component
+                                temp_dict[k] = normalized_v
+                        component_dict = temp_dict
+                    else:
+                        result_type = type(items_result)
+                        msg = f"items() returned non-iterable: {result_type}"
+                        raise TypeError(msg)
+                except (TypeError, ValueError):
+                    # Cannot convert - raise error
+                    msg = f"Cannot convert {type(component).__name__}.items() to dict"
+                    raise TypeError(msg) from None
+        elif isinstance(component, dict):
+            # Direct dict - use as is
+            component_dict = component
+        else:
+            # Cannot convert - raise error
+            msg = f"Cannot convert {type(component).__name__} to dict"
+            raise TypeError(msg)
+
+        normalized_dict: dict[str, FlextTypes.GeneralValueType] = {}
+        for k, v in component_dict.items():
+            v_normalized = FlextUtilitiesValidation._normalize_value(v)
+            if isinstance(v_normalized, (Mapping, Sequence)) and not isinstance(
+                v_normalized,
+                str,
+            ):
+                # v_normalized is Mapping or Sequence, compatible with object parameter
+                normalized_dict[str(k)] = FlextUtilitiesValidation._normalize_component(
+                    v_normalized, visited
+                )
+            else:
+                normalized_dict[str(k)] = v_normalized
+        return normalized_dict
+
+    @staticmethod
+    def _normalize_value(value: object) -> FlextTypes.GeneralValueType:
+        """Normalize a single value."""
+        if isinstance(value, (str, int, float, bool, type(None))):
+            # Type narrowing: these are all valid FlextTypes.GeneralValueType
+            return value
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            # Type narrowing: tuple is valid FlextTypes.GeneralValueType
+            return tuple(value)
+        if isinstance(value, Mapping):
+            # Type narrowing: dict is valid FlextTypes.GeneralValueType
+            return dict(value)
+        # Fallback: convert to string (string is valid FlextTypes.GeneralValueType)
+        return str(value)
+
+    @staticmethod
+    def _normalize_sequence_helper(
+        component: Sequence[object],
+        visited: set[int] | None = None,
+    ) -> list[FlextTypes.GeneralValueType]:
+        """Normalize sequence types (helper for internal recursion)."""
+        if visited is None:
+            visited = set()
+        return [
+            FlextUtilitiesValidation._normalize_component(item, visited)
+            for item in component
+        ]
+
+    @staticmethod
+    def _normalize_set_helper(
+        component: set[object],
+    ) -> set[FlextTypes.GeneralValueType]:
+        """Normalize set types (helper for internal recursion)."""
+        # Normalize items and ensure they are hashable for set
+        normalized_items = [
+            FlextUtilitiesValidation._normalize_component(item) for item in component
+        ]
+        # Convert to set, ensuring hashability
+        result_set: set[FlextTypes.GeneralValueType] = set()
+        for item in normalized_items:
+            # Only add hashable items to set
+            if isinstance(item, (str, int, float, bool, type(None))):
+                result_set.add(item)
+            elif isinstance(item, tuple):
+                # Tuples are hashable if all elements are hashable
+                try:
+                    result_set.add(item)
+                except TypeError:
+                    # Non-hashable tuple - convert to string representation
+                    result_set.add(str(item))
+            else:
+                # Non-hashable type - convert to string
+                result_set.add(str(item))
+        return result_set
 
     @staticmethod
     def _sort_key(key: str | float) -> tuple[str, str]:
@@ -132,16 +320,10 @@ class FlextUtilitiesValidation:
         data: FlextTypes.GeneralValueType,
     ) -> FlextTypes.GeneralValueType:
         """Sort dict keys for consistent representation (internal recursive)."""
-        if FlextRuntime.is_dict_like(data):
-            # Type narrowing: is_dict_like ensures dict-like
-            data_dict = data
-            if not isinstance(data_dict, Mapping):
-                # Fallback for non-Mapping dict-like objects
-                data_dict = (
-                    dict(data_dict.items())
-                    if hasattr(data_dict, "items")
-                    else dict(data_dict)
-                )
+        # Type narrowing: GeneralValueType includes Mapping[str, GeneralValueType]
+        if isinstance(data, Mapping):
+            # data is Mapping[str, GeneralValueType], which is valid GeneralValueType
+            data_dict: Mapping[str, FlextTypes.GeneralValueType] = data
             return {
                 str(k): FlextUtilitiesValidation._sort_dict_keys(data_dict[k])
                 for k in sorted(
@@ -149,6 +331,7 @@ class FlextUtilitiesValidation:
                     key=FlextUtilitiesValidation._sort_key,
                 )
             }
+        # For non-dict types, return as-is
         return data
 
     @staticmethod
@@ -197,22 +380,45 @@ class FlextUtilitiesValidation:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def sort_key(value: FlextTypes.SerializableType) -> str:
-        """Return a deterministic string for ordering normalized cache components."""
+    def sort_key(value: FlextTypes.Utility.SerializableType) -> tuple[str, str]:
+        """Return a deterministic tuple for ordering normalized cache components.
+
+        Returns a tuple of (type_category, serialized_value) for consistent sorting.
+        """
+        # Determine type category
+        if isinstance(value, str):
+            type_cat = "str"
+        elif isinstance(value, (int, float)):
+            type_cat = "num"
+        elif isinstance(value, dict):
+            type_cat = "dict"
+        elif isinstance(value, (list, tuple)):
+            type_cat = "seq"
+        else:
+            type_cat = "other"
+
+        # Serialize value
         try:
             json_bytes = orjson.dumps(value, option=orjson.OPT_SORT_KEYS)
-            return json_bytes.decode(FlextConstants.Utilities.DEFAULT_ENCODING)
+            serialized = json_bytes.decode(FlextConstants.Utilities.DEFAULT_ENCODING)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             # Use proper logger instead of root logger
-            logger = logging.getLogger(__name__)
+            logger = FlextRuntime.get_logger(__name__)
             logger.debug("orjson dumps failed: %s", e)
-        # Use standard library json with sorted keys
-        return json.dumps(value, sort_keys=True, default=str)
+            # Use standard library json with sorted keys
+            serialized = json.dumps(value, sort_keys=True, default=str)
+
+        return (type_cat, serialized)
 
     @staticmethod
-    def _is_dataclass_instance(obj: FlextTypes.GeneralValueType) -> TypeGuard[object]:
+    def _is_dataclass_instance(
+        obj: FlextTypes.GeneralValueType,
+    ) -> TypeGuard[object]:
         """Type guard to check if object is a dataclass instance (not class)."""
-        return is_dataclass(obj) and not isinstance(obj, type)
+        # Check if obj is a dataclass instance
+        # GeneralValueType doesn't include type, so obj is never a type
+        # We only need to check if it's a dataclass
+        return is_dataclass(obj)
 
     @staticmethod
     def _normalize_primitive_or_bytes(
@@ -241,30 +447,11 @@ class FlextUtilitiesValidation:
         value: FlextTypes.GeneralValueType,
     ) -> FlextTypes.GeneralValueType:
         """Normalize arbitrary objects into cache-friendly deterministic structures."""
-        # Check primitives and bytes first
-        is_primitive, normalized = (
-            FlextUtilitiesValidation._normalize_primitive_or_bytes(value)
-        )
-        if is_primitive:
-            return normalized
-
-        # Dispatch to specialized normalizers
-        if isinstance(value, FlextProtocols.HasModelDump):
-            return FlextUtilitiesValidation._normalize_pydantic_value(value)
-
-        if FlextUtilitiesValidation._is_dataclass_instance(value):
-            return FlextUtilitiesValidation._normalize_dataclass_value_instance(value)
-
-        if isinstance(value, Mapping):
-            return FlextUtilitiesValidation._normalize_mapping(value)
-
-        if isinstance(value, Sequence):
-            return FlextUtilitiesValidation._normalize_sequence(value)
-
-        if isinstance(value, set):
-            return FlextUtilitiesValidation._normalize_set(value)
-
-        return FlextUtilitiesValidation._normalize_vars(value)
+        # Handle strings specially - they should not be treated as sequences
+        if isinstance(value, str):
+            return value
+        # Use the internal recursive method which handles cycles and returns simple structures
+        return FlextUtilitiesValidation._normalize_component(value, visited=None)
 
     @staticmethod
     def _normalize_pydantic_value(
@@ -281,7 +468,10 @@ class FlextUtilitiesValidation:
                 f"{type(e).__name__}: {e}"
             )
             raise TypeError(msg) from e
-        normalized_dumped = FlextUtilitiesValidation.normalize_component(dumped)
+        # Use private _normalize_component to avoid infinite recursion
+        normalized_dumped = FlextUtilitiesValidation._normalize_component(
+            dumped, visited=None
+        )
         # Return as dict with type marker for cache structure
         return {"type": "pydantic", "data": normalized_dumped}
 
@@ -315,7 +505,7 @@ class FlextUtilitiesValidation:
             key=lambda x: FlextUtilitiesValidation._sort_key(x[0]),
         )
         return {
-            str(k): FlextUtilitiesValidation._normalize_component(v)
+            str(k): FlextUtilitiesValidation._normalize_component(v, visited=None)
             for k, v in sorted_items
         }
 
@@ -325,7 +515,8 @@ class FlextUtilitiesValidation:
     ) -> FlextTypes.GeneralValueType:
         """Normalize sequence to cache-friendly structure."""
         sequence_items = [
-            FlextUtilitiesValidation._normalize_component(item) for item in value
+            FlextUtilitiesValidation._normalize_component(item, visited=None)
+            for item in value
         ]
         # Return as dict with type marker for cache structure
         return {"type": "sequence", "data": sequence_items}
@@ -336,7 +527,8 @@ class FlextUtilitiesValidation:
     ) -> FlextTypes.GeneralValueType:
         """Normalize set to cache-friendly structure."""
         set_items = [
-            FlextUtilitiesValidation._normalize_component(item) for item in value
+            FlextUtilitiesValidation._normalize_component(item, visited=None)
+            for item in value
         ]
         set_items.sort(key=str)
         # Return as dict with type marker for cache structure
@@ -349,22 +541,25 @@ class FlextUtilitiesValidation:
         """Normalize object attributes to cache-friendly structure."""
         try:
             vars_result = vars(value)
-            # vars() returns dict when successful
-            if isinstance(vars_result, dict):
-                value_vars_dict: dict[str, FlextTypes.GeneralValueType] = vars_result
-            else:
-                return {"type": "repr", "data": repr(value)}
-        except TypeError:
-            return {"type": "repr", "data": repr(value)}
-
-        normalized_vars = {
-            str(key): FlextUtilitiesValidation._normalize_component(val)
-            for key, val in sorted(
-                value_vars_dict.items(),
-                key=operator.itemgetter(0),
+            # vars() always returns dict[str, object] when successful
+            # Type narrowing: vars_result is always a dict
+            value_vars_dict: dict[str, FlextTypes.GeneralValueType] = cast(
+                "dict[str, FlextTypes.GeneralValueType]", vars_result
             )
-        }
-        return {"type": "vars", "data": normalized_vars}
+            # Process vars_result - normalize all values
+            normalized_vars = {
+                str(key): FlextUtilitiesValidation._normalize_component(
+                    val, visited=None
+                )
+                for key, val in sorted(
+                    value_vars_dict.items(),
+                    key=operator.itemgetter(0),
+                )
+            }
+            return {"type": "vars", "data": normalized_vars}
+        except TypeError:
+            # vars() failed - return repr representation
+            return {"type": "repr", "data": repr(value)}
 
     @staticmethod
     def _generate_key_from_data(command_type: type[object], sorted_data: object) -> str:
@@ -444,11 +639,9 @@ class FlextUtilitiesValidation:
                 return key
 
         # Try dataclass
-        if (
-            hasattr(command, "__dataclass_fields__")
-            and is_dataclass(command)
-            and not isinstance(command, type)
-        ):
+        # GeneralValueType doesn't include type, so isinstance(command, type) is always False
+        # But we check hasattr and is_dataclass to ensure it's a dataclass instance
+        if hasattr(command, "__dataclass_fields__") and is_dataclass(command):
             key = FlextUtilitiesValidation._generate_key_dataclass(
                 command,
                 command_type,
@@ -484,19 +677,13 @@ class FlextUtilitiesValidation:
             Object with sorted keys
 
         """
-        if FlextRuntime.is_dict_like(obj):
-            # Type narrowing: is_dict_like ensures dict-like
-            dict_obj = obj
-            if not isinstance(dict_obj, Mapping):
-                # Fallback for non-Mapping dict-like objects
-                dict_obj = (
-                    dict(dict_obj.items())
-                    if hasattr(dict_obj, "items")
-                    else dict(dict_obj)
-                )
+        # Type narrowing: obj can be Mapping (which is GeneralValueType)
+        if isinstance(obj, Mapping):
+            # obj is Mapping[str, GeneralValueType]
+            dict_obj: Mapping[str, FlextTypes.GeneralValueType] = obj
             # Convert items() view to list for sorting
             items_list: list[tuple[str, FlextTypes.GeneralValueType]] = list(
-                dict_obj.items()
+                dict_obj.items(),
             )
             sorted_items: list[tuple[str, FlextTypes.GeneralValueType]] = sorted(
                 items_list,
@@ -506,31 +693,30 @@ class FlextUtilitiesValidation:
                 str(k): FlextUtilitiesValidation._sort_dict_keys(v)
                 for k, v in sorted_items
             }
-        if FlextRuntime.is_list_like(obj):
-            # Type narrowing: is_list_like ensures list-like
-            obj_list = obj
-            if not isinstance(obj_list, Sequence):
-                # Fallback for non-Sequence list-like objects
-                obj_list = (
-                    list(obj_list) if hasattr(obj_list, "__iter__") else [obj_list]
-                )
+        # Type narrowing: obj can be Sequence (which is GeneralValueType)
+        # Handle tuple first (tuple is a Sequence but needs special handling)
+        if isinstance(obj, tuple):
+            # obj is confirmed to be tuple, iterate directly
+            return tuple(FlextUtilitiesValidation._sort_dict_keys(item) for item in obj)
+        # Handle other Sequences (but not str, bytes, or tuple)
+        if isinstance(obj, Sequence) and not isinstance(obj, (str, bytes)):
+            # obj is Sequence[GeneralValueType] - use directly
+            obj_list: Sequence[FlextTypes.GeneralValueType] = obj
             return [
                 FlextUtilitiesValidation._sort_dict_keys(
                     item
                     if isinstance(
-                        item, (str, int, float, bool, type(None), Sequence, Mapping)
+                        item,
+                        (str, int, float, bool, type(None), Sequence, Mapping),
                     )
-                    else str(item)
+                    else str(item),
                 )
                 for item in obj_list
             ]
-        if isinstance(obj, tuple):
-            # obj is confirmed to be tuple, iterate directly
-            return tuple(FlextUtilitiesValidation._sort_dict_keys(item) for item in obj)
         return obj
 
     @staticmethod
-    def initialize(obj: FlextTypes.CachedObjectType, field_name: str) -> None:
+    def initialize(obj: FlextTypes.Utility.CachedObjectType, field_name: str) -> None:
         """Initialize validation for object.
 
         Simplified implementation that directly sets the validation flag.
@@ -738,7 +924,7 @@ class FlextUtilitiesValidation:
             r"//([^/?#]+)"  # authority (required for validation)
             r"([^?#]*)"  # path
             r"(?:\?([^#]*))?"  # query (optional)
-            r"(?:#(.*))?$"  # fragment (optional)
+            r"(?:#(.*))?$",  # fragment (optional)
         )
 
         if not uri_pattern.match(uri_stripped):
@@ -1163,7 +1349,7 @@ class FlextUtilitiesValidation:
 
         # Validate hostname format (RFC 1035: basic pattern)
         hostname_pattern = re.compile(
-            r"^(?!-)(?!.*--)(?!.*\.$)(?!.*\.\.)[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*$"
+            r"^(?!-)(?!.*--)(?!.*\.$)(?!.*\.\.)[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*$",
         )
         if not hostname_pattern.match(normalized_hostname):
             return FlextResult[str].fail(
@@ -1378,39 +1564,39 @@ class FlextUtilitiesValidation:
             result = FlextUtilitiesValidation._validate_max_attempts(retry_config)
             if result.is_failure:
                 return FlextResult[FlextTypes.Config.RetryConfig].fail(
-                    result.error or "Max attempts validation failed"
+                    result.error or "Max attempts validation failed",
                 )
 
             max_attempts = result.value
 
             delay_result = FlextUtilitiesValidation._validate_initial_delay(
-                retry_config
+                retry_config,
             )
             if delay_result.is_failure:
                 return FlextResult[FlextTypes.Config.RetryConfig].fail(
-                    delay_result.error or "Initial delay validation failed"
+                    delay_result.error or "Initial delay validation failed",
                 )
 
             initial_delay = delay_result.value
             params_2 = (max_attempts, initial_delay)
 
             max_delay_result = FlextUtilitiesValidation._validate_max_delay(
-                retry_config
+                retry_config,
             )
             if max_delay_result.is_failure:
                 return FlextResult[FlextTypes.Config.RetryConfig].fail(
-                    max_delay_result.error or "Max delay validation failed"
+                    max_delay_result.error or "Max delay validation failed",
                 )
 
             max_delay = max_delay_result.value
             params_3 = (*params_2, max_delay)
 
             backoff_result = FlextUtilitiesValidation._validate_backoff_multiplier(
-                retry_config
+                retry_config,
             )
             if backoff_result.is_failure:
                 return FlextResult[FlextTypes.Config.RetryConfig].fail(
-                    backoff_result.error or "Backoff multiplier validation failed"
+                    backoff_result.error or "Backoff multiplier validation failed",
                 )
 
             backoff_mult = backoff_result.value
@@ -1434,12 +1620,13 @@ class FlextUtilitiesValidation:
                         if "retry_on_exceptions" in retry_config
                         and retry_config["retry_on_exceptions"] is not None
                         and isinstance(
-                            retry_config["retry_on_exceptions"], (list, tuple)
+                            retry_config["retry_on_exceptions"],
+                            (list, tuple),
                         )
                         else [Exception]
                     ),
                     backoff_multiplier=params_4[3],
-                )
+                ),
             )
 
         except (ValueError, TypeError) as e:
@@ -1531,7 +1718,7 @@ class FlextUtilitiesValidation:
                     f"Service '{name}' appears to be callable. Use with_factory instead"
                 )
                 return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].fail(
-                    error_msg
+                    error_msg,
                 )
 
         return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].ok(services)
@@ -1588,7 +1775,7 @@ class FlextUtilitiesValidation:
         metadata = config.get("metadata")
         if metadata is not None and not FlextRuntime.is_dict_like(metadata):
             return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].fail(
-                "Metadata must be a dictionary"
+                "Metadata must be a dictionary",
             )
 
         # Validate correlation_id if present
@@ -1608,11 +1795,14 @@ class FlextUtilitiesValidation:
                 "Timeout override must be a number",
             )
 
-        # Type narrowing: config is guaranteed to be dict-like after validation
-        if not isinstance(config, Mapping):
-            # Convert to dict if needed
-            config = dict(config.items()) if hasattr(config, "items") else {}
-        return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].ok(config)
+        # Type narrowing: config is guaranteed to be Mapping after validation above
+        # Parameter type is already Mapping[str, FlextTypes.GeneralValueType] | None
+        # and we've validated it's not None and is dict-like
+        # Cast to correct type for type checker - config is validated as dict-like above
+        validated_config = cast("Mapping[str, FlextTypes.GeneralValueType]", config)
+        return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].ok(
+            validated_config
+        )
 
     @staticmethod
     def _validate_event_structure(

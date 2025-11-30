@@ -30,20 +30,6 @@ Satisfies FlextProtocols.Runtime through method signatures and capabilities:
 - NO imports from higher layers (result.py, container.py, etc.)
 - Pure Layer 0.5 implementation - safe from circular imports
 
-**Production Readiness Checklist**:
-✅ 8+ type guard utilities with FlextConstants patterns
-✅ Safe serialization strategies (Pydantic, dict, __dict__, direct)
-✅ Type introspection without circular imports
-✅ Structured logging configuration with FLEXT defaults
-✅ Application-layer integration helpers
-✅ Service resolution and domain event tracking
-✅ Context correlation ID generation (uuid4)
-✅ Level-based logging context filtering
-✅ 100% type-safe (strict MyPy compliance)
-✅ Zero external dependencies (only stdlib + configured deps)
-✅ Circular import prevention (foundation + bridge only)
-✅ Complete ecosystem logging foundation
-
 **Usage Patterns**:
 1. **Type Guards**: Use is_valid_phone(), is_valid_json() for pattern validation
 4. **Structured Logging**: Use configure_structlog() once at startup
@@ -57,6 +43,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
 import json
 import logging
 import re
@@ -65,7 +52,7 @@ import string
 import typing
 from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
-from typing import TypeGuard
+from typing import Protocol, TypeGuard, cast
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
@@ -75,6 +62,39 @@ from structlog.typing import BindableLogger
 
 from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes, P
+
+__all__ = ["StructlogLogger"]
+
+
+class StructlogLogger(BindableLogger, Protocol):
+    """Protocol for structlog logger with all logging methods.
+
+    Extends BindableLogger to add explicit method signatures for logging methods
+    (debug, info, warning, error, etc.) that are available via __getattr__ at runtime.
+
+    Structlog loggers implement this protocol through dynamic method dispatch.
+    """
+
+    def debug(self, msg: str | object, *args: object, **kw: object) -> None:
+        """Log debug message."""
+
+    def info(self, msg: str | object, *args: object, **kw: object) -> None:
+        """Log info message."""
+
+    def warning(self, msg: str | object, *args: object, **kw: object) -> None:
+        """Log warning message."""
+
+    def warn(self, msg: str | object, *args: object, **kw: object) -> None:
+        """Log warning message (alias)."""
+
+    def error(self, msg: str | object, *args: object, **kw: object) -> None:
+        """Log error message."""
+
+    def critical(self, msg: str | object, *args: object, **kw: object) -> None:
+        """Log critical message."""
+
+    def exception(self, msg: str | object, *args: object, **kw: object) -> None:
+        """Log exception with traceback."""
 
 
 class FlextRuntime:
@@ -140,19 +160,6 @@ class FlextRuntime:
     9. **Domain Events** - Event tracking with correlation
     10. **Zero Circular Imports** - Foundation + bridge layers only
 
-    **Production Readiness Checklist**:
-    ✅ 5+ type guard utilities using FlextConstants patterns
-    ✅ Safe serialization with 4 fallback strategies
-    ✅ Type introspection without circular imports
-    ✅ Structured logging configuration with FLEXT defaults
-    ✅ Application-layer integration helpers (opt-in)
-    ✅ Service resolution and domain event tracking
-    ✅ Context correlation ID generation (uuid4)
-    ✅ Level-based logging context filtering
-    ✅ Direct external library access (structlog, DI)
-    ✅ Configurable processor pipelines
-    ✅ 100% type-safe (strict MyPy compliance)
-    ✅ Zero external module circular dependencies
 
     **Usage Patterns**:
     1. **Type Validation**: `if FlextRuntime.is_valid_phone(value): ...`
@@ -306,10 +313,10 @@ class FlextRuntime:
 
     @staticmethod
     def safe_get_attribute(
-        obj: FlextTypes.Utility.SerializableType,
+        obj: FlextTypes.GeneralValueType,
         attr: str,
-        default: FlextTypes.Utility.SerializableType = None,
-    ) -> FlextTypes.Utility.SerializableType:
+        default: FlextTypes.GeneralValueType = None,
+    ) -> FlextTypes.GeneralValueType:
         """Safe attribute access without raising AttributeError.
 
         Args:
@@ -346,9 +353,11 @@ class FlextRuntime:
             if hasattr(type_hint, "__name__"):
                 type_name = getattr(type_hint, "__name__", "")
                 # Handle common type aliases - use actual type objects
-                type_mapping: dict[
-                    str, tuple[FlextTypes.Utility.GenericTypeArgument, ...]
-                ] = {
+                # GenericTypeArgument = str | type[GeneralValueType]
+                # We use actual type objects (str, int, float, bool) which are valid
+                # Cast is needed because type[str | int | float | bool] is not directly
+                # compatible with type[GeneralValueType], but runtime they are compatible
+                type_mapping_raw: dict[str, tuple[object, ...]] = {
                     "StringList": (str,),
                     "IntList": (int,),
                     "FloatList": (float,),
@@ -359,8 +368,15 @@ class FlextRuntime:
                     "IntDict": (str, int),
                     "FloatDict": (str, float),
                     "BoolDict": (str, bool),
-                    "NestedDict": (str, str),
+                    # NestedDict: str key, GeneralValueType value
+                    # Use object as representative type for GeneralValueType
+                    "NestedDict": (str, object),
                 }
+                # Cast to satisfy type checker - all values are valid GenericTypeArgument
+                type_mapping = cast(
+                    "dict[str, tuple[FlextTypes.Utility.GenericTypeArgument, ...]]",
+                    type_mapping_raw,
+                )
                 if type_name in type_mapping:
                     return type_mapping[type_name]
 
@@ -425,6 +441,34 @@ class FlextRuntime:
         return structlog
 
     @staticmethod
+    def get_logger(name: str | None = None) -> StructlogLogger:
+        """Get structlog logger instance - same structure/config used by FlextLogger.
+
+        Returns the exact same structlog logger instance that FlextLogger uses internally.
+        This ensures consistent logging structure across the entire FLEXT ecosystem.
+
+        Args:
+            name: Logger name (module name). Defaults to __name__ of caller.
+
+        Returns:
+            Logger: Typed structlog logger instance (same as FlextLogger.logger).
+
+        Note:
+            FlextLogger internally uses: FlextRuntime.get_logger(name).bind(**context)
+            This method returns the base logger before context binding.
+
+        """
+        if name is None:
+            frame = inspect.currentframe()
+            if frame and frame.f_back:
+                name = frame.f_back.f_globals.get("__name__", __name__)
+            else:
+                name = __name__
+        # structlog.get_logger returns BoundLoggerLazyProxy which implements StructlogLogger protocol
+        # All methods (debug, info, warning, error, etc.) are available via __getattr__ at runtime
+        return cast("StructlogLogger", structlog.get_logger(name))
+
+    @staticmethod
     def dependency_providers() -> ModuleType:
         """Return the dependency-injector providers module."""
         return providers
@@ -439,7 +483,8 @@ class FlextRuntime:
         _logger: FlextTypes.Logging.LoggerContextType,
         method_name: str,
         event_dict: dict[
-            str, FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]
+            str,
+            FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object],
         ],
     ) -> dict[str, FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]]:
         """Filter context variables based on log level.
@@ -488,7 +533,8 @@ class FlextRuntime:
 
         # Process all keys in event_dict
         filtered_dict: dict[
-            str, FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]
+            str,
+            FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object],
         ] = {}
         for key, value in event_dict.items():
             # Check if this is a level-prefixed variable

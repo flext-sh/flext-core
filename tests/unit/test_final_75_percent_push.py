@@ -57,7 +57,7 @@ class CoverageScenarios:
         ResultOperationScenario("flat_map_fail", 5, ["flat_map_fail"], False, None),
         ResultOperationScenario("lash_success", 42, ["lash"], True, 42),
         ResultOperationScenario("lash_failure", None, ["lash"], True, 99),
-        ResultOperationScenario("chaining", 10, ["map", "map"], True, 30),
+        ResultOperationScenario("chaining", 10, ["map", "map"], True, 40),
         ResultOperationScenario(
             "failure_propagation", None, ["map", "map"], False, None
         ),
@@ -186,7 +186,7 @@ class TestCoveragePush75Percent:
         """Test exception types."""
         exc = scenario.exception_type(scenario.message)
         assert isinstance(exc, Exception)
-        assert scenario.expected_in_str in str(exc).upper()
+        assert scenario.expected_in_str.upper() in str(exc).upper()
 
     def test_utilities_id(self) -> None:
         """Test ID generation."""

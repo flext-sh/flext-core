@@ -26,8 +26,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextUtilities
-from flext_core._utilities.string_parser import ParseOptions
+from flext_core import FlextModels, FlextUtilities
 from tests.fixtures.constants import TestConstants
 from tests.helpers.string_parser_helpers import (
     NormalizeWhitespaceCase,
@@ -37,6 +36,8 @@ from tests.helpers.string_parser_helpers import (
     SplitEscapeCase,
     TestHelpers,
 )
+
+ParseOptions = FlextModels.ParseOptions
 
 
 class StringParserTestFactory:
