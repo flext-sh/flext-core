@@ -57,11 +57,6 @@ class TestCoverage76Lines:
         r = FlextResult[str].ok("test")
         assert r.value == "test"
 
-    def test_result_value_property(self) -> None:
-        """Test .value property."""
-        r = FlextResult[str].ok("test")
-        assert r.value == "test"
-
     def test_result_is_success_property(self) -> None:
         """Test .is_success property."""
         r = FlextResult[int].ok(42)

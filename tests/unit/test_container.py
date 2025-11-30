@@ -64,10 +64,10 @@ class ContainerScenarios:
 
     TYPED_RETRIEVAL_SCENARIOS: ClassVar[list[TypedRetrievalScenario]] = [
         TypedRetrievalScenario(
-            "dict_service", {"key": "value"}, dict, True, "Dict service"
+            "dict_service", {"key": "value"}, dict, True, "Dict service",
         ),
         TypedRetrievalScenario(
-            "string_service", "test_string", str, True, "String service"
+            "string_service", "test_string", str, True, "String service",
         ),
         TypedRetrievalScenario("list_service", [1, 2, 3], list, True, "List service"),
     ]
@@ -122,7 +122,7 @@ class TestFlextContainer:
         assert container1 is container2
 
     @pytest.mark.parametrize(
-        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
+        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name,
     )
     def test_register_service(self, scenario: ServiceScenario) -> None:
         """Test service registration with various types."""
@@ -132,7 +132,7 @@ class TestFlextContainer:
         assert result.value is True
 
     @pytest.mark.parametrize(
-        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
+        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name,
     )
     def test_with_service_fluent(self, scenario: ServiceScenario) -> None:
         """Test fluent interface for service registration."""
@@ -168,7 +168,7 @@ class TestFlextContainer:
         container = ContainerTestHelpers.create_clean_container()
         factory = ContainerTestHelpers.create_factory(return_value)
         result = container.register_factory(
-            f"factory_{type(return_value).__name__}", factory
+            f"factory_{type(return_value).__name__}", factory,
         )
         assert result.is_success
         assert result.value is True
@@ -183,7 +183,7 @@ class TestFlextContainer:
         container = ContainerTestHelpers.create_clean_container()
         factory = ContainerTestHelpers.create_factory(return_value)
         result = container.with_factory(
-            f"factory_{type(return_value).__name__}", factory
+            f"factory_{type(return_value).__name__}", factory,
         )
         assert result is container
 
@@ -207,7 +207,7 @@ class TestFlextContainer:
         assert "already registered" in result.error
 
     @pytest.mark.parametrize(
-        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
+        "scenario", ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name,
     )
     def test_get_service(self, scenario: ServiceScenario) -> None:
         """Test service retrieval."""
@@ -215,7 +215,7 @@ class TestFlextContainer:
         container.register(scenario.name, scenario.service)
         result = container.get(scenario.name)
         FlextTestsUtilities.ResultHelpers.assert_success_with_value(
-            result, scenario.service
+            result, scenario.service,
         )
 
     def test_get_nonexistent_service(self) -> None:
@@ -232,7 +232,7 @@ class TestFlextContainer:
         container.register_factory("factory_service", factory)
         result = container.get("factory_service")
         FlextTestsUtilities.ResultHelpers.assert_success_with_value(
-            result, factory_result
+            result, factory_result,
         )
 
     def test_get_factory_called_each_time(self) -> None:
@@ -248,14 +248,14 @@ class TestFlextContainer:
         assert call_count[0] == 2
 
     @pytest.mark.parametrize(
-        "scenario", ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS, ids=lambda s: s.name
+        "scenario", ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS, ids=lambda s: s.name,
     )
     def test_get_typed_correct(self, scenario: TypedRetrievalScenario) -> None:
         """Test typed retrieval with correct types."""
         container = ContainerTestHelpers.create_clean_container()
         container.register(scenario.name, scenario.service)
         typed_result: FlextResult[object] = container.get_typed(
-            scenario.name, scenario.expected_type
+            scenario.name, scenario.expected_type,
         )
         if scenario.should_pass:
             assert typed_result.is_success
@@ -356,7 +356,7 @@ class TestFlextContainer:
         """Test fluent interface for configuration."""
         container = FlextContainer()
         config: dict[str, object] = {
-            "max_workers": FlextConstants.Container.DEFAULT_WORKERS
+            "max_workers": FlextConstants.Container.DEFAULT_WORKERS,
         }
         result = container.with_config(config)
         assert result is container

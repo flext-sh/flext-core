@@ -227,26 +227,3 @@ class TestConstants:
         MAX_EXECUTION_TIME: Final[float] = 1.0
         ITERATION_COUNT: Final[int] = 1000
         TEST_BATCH_SIZE: Final[int] = 10
-
-    class Payload:
-        """Payload model test constants."""
-
-        # Test IDs
-        USER_ID_1: Final[str] = "1"
-        USER_ID_2: Final[str] = "2"
-        USER_ID_123: Final[str] = "123"
-        PRODUCT_ID_456: Final[str] = "456"
-
-        # Test names
-        USER_NAME_TEST: Final[str] = "Test"
-        PRODUCT_TITLE_TEST: Final[str] = "Test"
-        PRODUCT_TITLE_WRONG: Final[str] = "Wrong"
-
-        # Error patterns
-        TYPE_MISMATCH_PATTERN: Final[str] = (
-            r"Payload\[PayloadUser\] received data of type PayloadProduct"
-        )
-
-        # Class name patterns
-        PAYLOAD_IN_NAME: Final[str] = "Payload"
-        USER_IN_NAME: Final[str] = "User"

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time as time_module
 from collections.abc import Callable
-from typing import Annotated, Self
+from typing import Annotated, Self, cast
 
 from pydantic import (
     BaseModel,
@@ -22,21 +22,14 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.base import FlextModelsBase
 from flext_core.constants import FlextConstants
-from flext_core.typings import GeneralValueType
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 # FlextUtilitiesValidation is safe to import at module level:
 # - validation.py uses ResultProtocol (not concrete FlextResult) to break circular import
 # - circular import issue was RESOLVED (validation.py doesn't import handler.py)
-
-# Type alias for handler callables - avoids explicit Any while maintaining flexibility
-HandlerCallable = (
-    Callable[[], object]
-    | Callable[[object], object]
-    | Callable[[object, object], object]
-)
 
 
 class FlextModelsHandler:
@@ -46,11 +39,18 @@ class FlextModelsHandler:
     All nested classes are accessed via FlextModels.Handler.* in the main models.py.
     """
 
-    class Registration(FlextModelsEntity.ArbitraryTypesModel):
+    class Registration(FlextModelsBase.ArbitraryTypesModel):
         """Handler registration with advanced validation."""
 
         name: str = Field(min_length=1, description="Handler name")
-        handler: HandlerCallable
+        handler: (
+            Callable[[], FlextTypes.GeneralValueType]
+            | Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType]
+            | Callable[
+                [FlextTypes.GeneralValueType, FlextTypes.GeneralValueType],
+                FlextTypes.GeneralValueType,
+            ]
+        )
         event_types: list[str] = Field(
             default_factory=list,
             description="Event types this handler processes",
@@ -58,14 +58,30 @@ class FlextModelsHandler:
 
         @field_validator("handler", mode="after")
         @classmethod
-        def validate_handler(cls, v: object) -> HandlerCallable:
+        def validate_handler(
+            cls,
+            v: object,
+        ) -> (
+            Callable[[], FlextTypes.GeneralValueType]
+            | Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType]
+            | Callable[
+                [FlextTypes.GeneralValueType, FlextTypes.GeneralValueType],
+                FlextTypes.GeneralValueType,
+            ]
+        ):
             """Validate handler is properly callable (direct validation, no circular imports)."""
             # Direct callable check - avoid circular import via FlextUtilitiesValidation
             if not callable(v):
                 msg = f"Handler must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
             # Type-safe return: v is confirmed callable by validation above
-            return v
+            # Cast to handler callable since we've validated it's callable
+            return cast(
+                (
+                    "Callable[[], FlextTypes.GeneralValueType] | Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType] | Callable[[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType], FlextTypes.GeneralValueType]"
+                ),
+                v,
+            )
 
     class RegistrationDetails(BaseModel):
         """Registration details for handler registration tracking.
@@ -202,7 +218,9 @@ class FlextModelsHandler:
             ),
         ]
         _start_time: float | None = PrivateAttr(default=None)
-        _metrics_state: dict[str, GeneralValueType] | None = PrivateAttr(default=None)
+        _metrics_state: dict[str, FlextTypes.GeneralValueType] | None = PrivateAttr(
+            default=None,
+        )
 
         def start_execution(self) -> None:
             """Start execution timing.
@@ -244,11 +262,11 @@ class FlextModelsHandler:
             return round(elapsed * 1000, 2)
 
         @computed_field
-        def metrics_state(self) -> dict[str, GeneralValueType]:
+        def metrics_state(self) -> dict[str, FlextTypes.GeneralValueType]:
             """Get current metrics state.
 
             Returns:
-                Dictionary containing metrics state (empty dict[str, GeneralValueType] if not set)
+                Dictionary containing metrics state (empty dict[str, FlextTypes.GeneralValueType] if not set)
 
             Examples:
                 >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
@@ -263,7 +281,10 @@ class FlextModelsHandler:
                 self._metrics_state = {}
             return self._metrics_state
 
-        def set_metrics_state(self, state: dict[str, GeneralValueType]) -> None:
+        def set_metrics_state(
+            self,
+            state: dict[str, FlextTypes.GeneralValueType],
+        ) -> None:
             """Set metrics state.
 
             Direct assignment to _metrics_state. Use this to update metrics.

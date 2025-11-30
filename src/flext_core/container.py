@@ -14,10 +14,12 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Mapping, Sequence
-from typing import Self
+from typing import Self, cast
 
+from pydantic import BaseModel
+
+from flext_core._models.container import FlextModelsContainer
 from flext_core.config import FlextConfig
-from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -38,11 +40,16 @@ class FlextContainer(FlextProtocols.Configurable):
 
     def __new__(cls) -> Self:
         """Create or return the global singleton instance."""
+        # Double-checked locking pattern for thread-safe singleton
         if cls._global_instance is None:
             with cls._global_lock:
+                # Check again inside lock (double-checked locking)
                 if cls._global_instance is None:
                     instance = super().__new__(cls)
                     cls._global_instance = instance
+        # After lock, _global_instance is guaranteed to be set
+        # Type narrowing: mypy doesn't understand double-checked locking
+        # but we know _global_instance is set after the lock
         if cls._global_instance is None:
             msg = "Failed to create global instance"
             raise RuntimeError(msg)
@@ -57,9 +64,9 @@ class FlextContainer(FlextProtocols.Configurable):
         self.containers = FlextRuntime.dependency_containers()
         self.providers = FlextRuntime.dependency_providers()
         self._di_container = self.containers.DynamicContainer()
-        self._services: dict[str, FlextModels.ServiceRegistration] = {}
-        self._factories: dict[str, FlextModels.FactoryRegistration] = {}
-        self._global_config: FlextModels.ContainerConfig = (
+        self._services: dict[str, FlextModelsContainer.ServiceRegistration] = {}
+        self._factories: dict[str, FlextModelsContainer.FactoryRegistration] = {}
+        self._global_config: FlextModelsContainer.ContainerConfig = (
             self._create_container_config()
         )
         self._user_overrides: dict[
@@ -75,9 +82,9 @@ class FlextContainer(FlextProtocols.Configurable):
         """Get current global FlextConfig."""
         return FlextConfig.get_global_instance()
 
-    def _create_container_config(self) -> FlextModels.ContainerConfig:
+    def _create_container_config(self) -> FlextModelsContainer.ContainerConfig:
         """Create container configuration."""
-        return FlextModels.ContainerConfig(
+        return FlextModelsContainer.ContainerConfig(
             enable_singleton=True,
             enable_factory_caching=True,
             max_services=1000,
@@ -91,12 +98,7 @@ class FlextContainer(FlextProtocols.Configurable):
 
     def configure(
         self,
-        config: dict[
-            str,
-            FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | Mapping[str, FlextTypes.ScalarValue],
-        ],
+        config: Mapping[str, FlextTypes.FlexibleValue],
     ) -> None:
         """Configure container settings."""
         self._user_overrides.update(config)
@@ -129,23 +131,24 @@ class FlextContainer(FlextProtocols.Configurable):
     def with_service(
         self,
         name: str,
-        service: FlextTypes.ScalarValue
-        | Sequence[FlextTypes.ScalarValue]
-        | Mapping[str, FlextTypes.ScalarValue],
+        service: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | Callable[..., FlextTypes.GeneralValueType]
+        ),
     ) -> Self:
-        """Fluent interface for service registration."""
+        """Fluent interface for service registration.
+
+        Accepts GeneralValueType (primitives, sequences, mappings), BaseModel instances,
+        or callables for service registration.
+        """
         self.register(name, service)
         return self
 
     def with_factory(
         self,
         name: str,
-        factory: Callable[
-            [],
-            FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | Mapping[str, FlextTypes.ScalarValue],
-        ],
+        factory: Callable[[], FlextTypes.GeneralValueType],
     ) -> Self:
         """Fluent interface for factory registration."""
         self.register_factory(name, factory)
@@ -154,15 +157,17 @@ class FlextContainer(FlextProtocols.Configurable):
     def register(
         self,
         name: str,
-        service: FlextTypes.ScalarValue
-        | Sequence[FlextTypes.ScalarValue]
-        | Mapping[str, FlextTypes.ScalarValue],
+        service: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | Callable[..., FlextTypes.GeneralValueType]
+        ),
     ) -> FlextResult[bool]:
         """Register a service instance."""
         try:
             if name in self._services:
                 return FlextResult[bool].fail(f"Service '{name}' already registered")
-            registration = FlextModels.ServiceRegistration(
+            registration = FlextModelsContainer.ServiceRegistration(
                 name=name,
                 service=service,
                 service_type=type(service).__name__,
@@ -175,18 +180,13 @@ class FlextContainer(FlextProtocols.Configurable):
     def register_factory(
         self,
         name: str,
-        factory: Callable[
-            [],
-            FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | Mapping[str, FlextTypes.ScalarValue],
-        ],
+        factory: Callable[[], FlextTypes.GeneralValueType],
     ) -> FlextResult[bool]:
         """Register a service factory."""
         try:
             if name in self._factories:
                 return FlextResult[bool].fail(f"Factory '{name}' already registered")
-            registration = FlextModels.FactoryRegistration(
+            registration = FlextModelsContainer.FactoryRegistration(
                 name=name,
                 factory=factory,
             )
@@ -199,21 +199,25 @@ class FlextContainer(FlextProtocols.Configurable):
         """Get service by name."""
         # Try service first
         if name in self._services:
-            return FlextResult[T].ok(self._services[name].service)
+            service = self._services[name].service
+            # Runtime type safety guaranteed by container registration
+            return FlextResult[T].ok(cast("T", service))
 
         # Try factory
         if name in self._factories:
             try:
                 instance = self._factories[name].factory()
-                return FlextResult[T].ok(instance)
+                # Runtime type safety guaranteed by container registration
+                return FlextResult[T].ok(cast("T", instance))
             except Exception as e:
                 return FlextResult[T].fail(str(e))
 
-        return FlextResult[T].fail(f"Service '{name}' not found")
+        result: FlextResult[T] = FlextResult[T].fail(f"Service '{name}' not found")
+        return result
 
     def get_typed(self, name: str, type_cls: type[T]) -> FlextResult[T]:
         """Get service with type safety."""
-        result = self.get(name)
+        result: FlextResult[T] = self.get(name)
         if result.is_failure:
             return FlextResult[T].fail(result.error or "Unknown error")
         if not isinstance(result.value, type_cls):

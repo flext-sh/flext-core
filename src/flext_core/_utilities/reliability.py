@@ -12,20 +12,27 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextvars
-import logging
 import threading
 import time
 from collections.abc import Callable
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
-from flext_core.typings import GeneralValueType
-
-_logger = logging.getLogger(__name__)
+from flext_core.runtime import FlextRuntime, StructlogLogger
+from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
+
+    @property
+    def logger(self) -> StructlogLogger:
+        """Get logger instance using FlextRuntime (avoids circular imports).
+
+        Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
+        Uses same structure/config as FlextLogger but without circular import.
+        """
+        return FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def with_timeout[TTimeout](
@@ -167,7 +174,8 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def calculate_delay(
-        attempt: int, config: dict[str, GeneralValueType] | None
+        attempt: int,
+        config: dict[str, FlextTypes.GeneralValueType] | None,
     ) -> float:
         """Calculate delay for retry attempt using configuration.
 

@@ -18,10 +18,9 @@ from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
 
-from flext_core.exceptions import (
-    FlextExceptions,  # Direct import to avoid circular dependency
-)
-from flext_core.typings import FlextTypes, U
+from flext_core.exceptions import FlextExceptions
+from flext_core.protocols import FlextProtocols
+from flext_core.typings import FlextTypes, T_co, U
 
 
 class FlextResult[T_co]:
@@ -121,7 +120,9 @@ class FlextResult[T_co]:
 
         def inner(value: T_co) -> Result[U, str]:
             result = func(value)
-            return cast("Result[U, str]", result.to_io_result())
+            if result.is_success:
+                return Success(result.value)
+            return Failure(result.error or "")
 
         return FlextResult(self._result.bind(inner))
 
@@ -145,7 +146,8 @@ class FlextResult[T_co]:
         return FlextResult(self._result.lash(inner))
 
     def flow_through[U](
-        self, *funcs: Callable[[T_co | U], FlextResult[U]]
+        self,
+        *funcs: Callable[[T_co | U], FlextResult[U]],
     ) -> FlextResult[U]:
         """Chain multiple operations in a pipeline."""
         # Start with current result, then apply each function in sequence
@@ -158,7 +160,9 @@ class FlextResult[T_co]:
 
     @classmethod
     def create_from_callable(
-        cls, func: Callable[[], T_co], error_code: str | None = None
+        cls,
+        func: Callable[[], T_co],
+        error_code: str | None = None,
     ) -> FlextResult[T_co]:
         """Create result from callable, catching exceptions."""
         try:
@@ -185,7 +189,9 @@ class FlextResult[T_co]:
 
     @classmethod
     def from_maybe(
-        cls, maybe: Maybe[T_co], error: str = "Value is Nothing"
+        cls,
+        maybe: Maybe[T_co],
+        error: str = "Value is Nothing",
     ) -> FlextResult[T_co]:
         """Create from returns.maybe.Maybe."""
         if isinstance(maybe, Some):
@@ -207,18 +213,29 @@ class FlextResult[T_co]:
         return IOFailure(self.error or "")
 
     @classmethod
-    def from_io_result(cls, io_result: IOResult[T_co, str]) -> FlextResult[T_co]:
-        """Create from returns.io.IOResult."""
-        if isinstance(io_result, IOSuccess):
-            value: T_co = io_result.unwrap()
-            return cls.ok(value)
-        # IOFailure case
-        error_failure = io_result.failure()
-        error_msg: str = error_failure.failure()
-        return cls.fail(error_msg)
+    def from_io_result(cls, io_result: object) -> FlextResult[object]:
+        """Create from returns.io.IOResult.
+
+        Note: This method handles dynamic typing from the returns library.
+        Type safety is maintained through runtime checks.
+        """
+        try:
+            if isinstance(io_result, IOSuccess):
+                # IOSuccess contains the success value
+                value = io_result.unwrap()
+                return FlextResult.ok(value)
+            if isinstance(io_result, IOFailure):
+                # IOFailure contains the error
+                error = io_result.failure()
+                return FlextResult.fail(str(error))
+            return FlextResult.fail(f"Invalid IO result type: {type(io_result)}")
+        except Exception as e:
+            return FlextResult.fail(f"Error processing IO result: {e}")
 
     @classmethod
-    def safe(cls, func: Callable[..., T_co]) -> Callable[..., FlextResult[T_co]]:
+    def safe(
+        cls, func: FlextProtocols.VariadicCallable[T_co],
+    ) -> FlextProtocols.VariadicCallable[FlextResult[T_co]]:
         """Decorator to wrap function in FlextResult."""
 
         def wrapper(
@@ -234,7 +251,9 @@ class FlextResult[T_co]:
 
     @classmethod
     def traverse[T, U](
-        cls, items: Sequence[T], func: Callable[[T], FlextResult[U]]
+        cls,
+        items: Sequence[T],
+        func: Callable[[T], FlextResult[U]],
     ) -> FlextResult[list[U]]:
         """Map over sequence with failure propagation."""
         results: list[U] = []

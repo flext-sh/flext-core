@@ -65,22 +65,22 @@ class FlextModels:
     class DomainEvent(FlextModelsEntity.DomainEvent):
         """Domain event for event sourcing."""
 
-    class ArbitraryTypesModel(FlextModelsEntity.ArbitraryTypesModel):
+    class ArbitraryTypesModel(FlextModelsBase.ArbitraryTypesModel):
         """Base model with arbitrary types support."""
 
-    class FrozenStrictModel(FlextModelsEntity.FrozenStrictModel):
+    class FrozenStrictModel(FlextModelsBase.FrozenStrictModel):
         """Immutable strict model."""
 
-    class IdentifiableMixin(FlextModelsEntity.IdentifiableMixin):
+    class IdentifiableMixin(FlextModelsBase.IdentifiableMixin):
         """Mixin for unique identifiers."""
 
-    class TimestampableMixin(FlextModelsEntity.TimestampableMixin):
+    class TimestampableMixin(FlextModelsBase.TimestampableMixin):
         """Mixin for timestamps."""
 
-    class TimestampedModel(FlextModelsEntity.TimestampedModel):
+    class TimestampedModel(FlextModelsBase.TimestampedModel):
         """Model with timestamp fields."""
 
-    class VersionableMixin(FlextModelsEntity.VersionableMixin):
+    class VersionableMixin(FlextModelsBase.VersionableMixin):
         """Mixin for versioning."""
 
     # Collections
@@ -100,6 +100,12 @@ class FlextModels:
 
     class Options(FlextModelsCollections.Options):
         """Options model for configuration options."""
+
+    class ParseOptions(FlextModelsCollections.ParseOptions):
+        """Parameter object for parse_delimited configuration.
+
+        Used by FlextUtilitiesStringParser for configuring string parsing operations.
+        """
 
     # CQRS Patterns
     class Cqrs:
@@ -141,26 +147,6 @@ class FlextModels:
     # Base Utility Models
     class Metadata(MetadataBase):
         """Metadata model for structured information."""
-
-    Payload = FlextModelsBase.Payload
-
-    class Url(FlextModelsBase.Url):
-        """URL model with validation."""
-
-    class LogOperation(FlextModelsBase.LogOperation):
-        """Log operation model."""
-
-    class TimestampConfig(FlextModelsBase.TimestampConfig):
-        """Timestamp configuration model."""
-
-    class SerializationRequest(FlextModelsBase.SerializationRequest):
-        """Serialization request model."""
-
-    class ConditionalExecutionRequest(FlextModelsBase.ConditionalExecutionRequest):
-        """Conditional execution request model."""
-
-    class StateInitializationRequest(FlextModelsBase.StateInitializationRequest):
-        """State initialization request model."""
 
     # Configuration Models
     class ProcessingRequest(FlextModelsConfig.ProcessingRequest):
@@ -250,7 +236,7 @@ class FlextModels:
 
     # Domain Service Models
     class DomainServiceExecutionRequest(
-        FlextModelsService.DomainServiceExecutionRequest
+        FlextModelsService.DomainServiceExecutionRequest,
     ):
         """Domain service execution request model."""
 
@@ -262,6 +248,9 @@ class FlextModels:
 
     class DomainServiceResourceRequest(FlextModelsService.DomainServiceResourceRequest):
         """Domain service resource request model."""
+
+    class AclResponse(FlextModelsService.AclResponse):
+        """ACL (Access Control List) response model."""
 
     class OperationExecutionRequest(FlextModelsService.OperationExecutionRequest):
         """Operation execution request model."""
@@ -278,7 +267,8 @@ class FlextModels:
 
     # Pydantic v2 discriminated union using modern typing (PEP 695)
     type MessageUnion = Annotated[
-        Cqrs.Command | Cqrs.Query | DomainEvent, Discriminator("message_type")
+        Cqrs.Command | Cqrs.Query | DomainEvent,
+        Discriminator("message_type"),
     ]
 
     # Validation Patterns - DRY mapping for method delegation

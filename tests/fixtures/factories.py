@@ -17,7 +17,6 @@ from typing import ClassVar, Generic, TypeVar
 import factory
 from factory import Faker
 from flext_core import FlextModels, FlextResult, FlextService
-from pydantic import BaseModel
 
 from tests.fixtures.constants import TestConstants
 
@@ -40,25 +39,6 @@ class User(FlextModels.Entity):
     name: str
     email: str
     is_active: bool = True
-
-
-# =========================================================================
-# Pydantic BaseModel Test Models (for Payload testing)
-# =========================================================================
-
-
-class PayloadUser(BaseModel):
-    """Pydantic User model for Payload testing."""
-
-    id: str
-    name: str
-
-
-class PayloadProduct(BaseModel):
-    """Pydantic Product model for Payload testing."""
-
-    id: str
-    title: str
 
 
 class ServiceTestType(StrEnum):
@@ -163,53 +143,6 @@ class UserFactory(factory.Factory):
     is_active = True
 
 
-# =========================================================================
-# Payload Model Factories
-# =========================================================================
-
-
-class PayloadUserFactory:
-    """Factory for PayloadUser model."""
-
-    @staticmethod
-    def create(id: str, name: str) -> PayloadUser:
-        """Create PayloadUser instance."""
-        return PayloadUser(id=id, name=name)
-
-    @staticmethod
-    def create_test() -> PayloadUser:
-        """Create test PayloadUser."""
-        return PayloadUserFactory.create(
-            id=TestConstants.Payload.USER_ID_123,
-            name=TestConstants.Payload.USER_NAME_TEST,
-        )
-
-
-class PayloadProductFactory:
-    """Factory for PayloadProduct model."""
-
-    @staticmethod
-    def create(id: str, title: str) -> PayloadProduct:
-        """Create PayloadProduct instance."""
-        return PayloadProduct(id=id, title=title)
-
-    @staticmethod
-    def create_test() -> PayloadProduct:
-        """Create test PayloadProduct."""
-        return PayloadProductFactory.create(
-            id=TestConstants.Payload.PRODUCT_ID_456,
-            title=TestConstants.Payload.PRODUCT_TITLE_TEST,
-        )
-
-    @staticmethod
-    def create_wrong() -> PayloadProduct:
-        """Create wrong PayloadProduct for type mismatch testing."""
-        return PayloadProductFactory.create(
-            id=TestConstants.Payload.PRODUCT_ID_456,
-            title=TestConstants.Payload.PRODUCT_TITLE_WRONG,
-        )
-
-
 class GetUserServiceFactory(factory.Factory):
     """Factory for GetUserService."""
 
@@ -278,7 +211,7 @@ class ServiceTestCaseFactory(factory.Factory):
     expected_error = None
     extra_param = TestConstants.Validation.MIN_LENGTH_DEFAULT
     description = factory.LazyAttribute(
-        lambda obj: f"Test case for {obj.service_type} with {obj.input_value}"
+        lambda obj: f"Test case for {obj.service_type} with {obj.input_value}",
     )
 
 
@@ -298,7 +231,7 @@ class ServiceFactoryRegistry(Generic[ServiceT]):
 
     @classmethod
     def create_service(
-        cls, case: ServiceTestCase
+        cls, case: ServiceTestCase,
     ) -> FlextService[User] | FlextService[str]:
         """Create appropriate service based on case type using pattern matching."""
         factory_class = cls._factories.get(case.service_type)
@@ -314,7 +247,7 @@ class ServiceFactoryRegistry(Generic[ServiceT]):
                 service = factory_class.build(user_id=case.input_value)
             case ServiceTestType.VALIDATE:
                 service = factory_class.build(
-                    value_input=case.input_value, min_length=case.extra_param
+                    value_input=case.input_value, min_length=case.extra_param,
                 )
             case ServiceTestType.FAIL:
                 service = factory_class.build(error_message=case.input_value)
@@ -361,7 +294,7 @@ class TestDataGenerators:
                 input_value="test",
                 extra_param=2,
                 description="Custom min length",
-            )
+            ),
         ]
 
     @staticmethod

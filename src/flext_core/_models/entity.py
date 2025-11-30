@@ -1,27 +1,25 @@
-"""Entity and DDD patterns extracted from FlextModels.
+"""Entity and DDD patterns for FLEXT ecosystem.
 
-This module contains the FlextModelsEntity class with all related DDD patterns
-as nested classes. It should NOT be imported directly - use FlextModels.Entity instead.
+TIER 1: Usa base.py (Tier 0) + pode usar result, exceptions, runtime.
+Importa FlextModelsBase e adiciona apenas classes DDD específicas.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
-from datetime import UTC, datetime
-from typing import ClassVar, override
+from collections.abc import Callable, Mapping, Sequence
+from typing import ClassVar, Self, cast, override
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
+from pydantic import Field
 
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.validation import FlextModelsValidation
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
-from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime
+from flext_core.runtime import FlextRuntime, StructlogLogger
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
@@ -29,161 +27,27 @@ from flext_core.utilities import FlextUtilities
 _EVENT_TUPLE_LENGTH = 2
 
 
+def _is_dict_like(value: object) -> bool:
+    """Check if value is dict-like (inline to avoid extra import)."""
+    return isinstance(value, Mapping)
+
+
 class FlextModelsEntity:
     """Entity and DDD pattern container class.
 
     This class acts as a namespace container for Entity and related DDD patterns.
-    All nested classes are accessed via FlextModels.Entity.* in the main models.py.
+    Uses FlextModelsBase for all base classes (Tier 0).
     """
 
-    class IdentifiableMixin(BaseModel):
-        """Mixin for models with unique identifiers."""
-
-        # Explicit construction for type safety (avoiding TypedDict spreading issues)
-        model_config = ConfigDict(
-            validate_assignment=True,
-            validate_return=True,
-            validate_default=True,
-            strict=True,
-            str_strip_whitespace=True,
-            use_enum_values=True,
-            arbitrary_types_allowed=True,
-            extra="forbid",
-            ser_json_timedelta="iso8601",
-            ser_json_bytes="base64",
-            hide_input_in_errors=True,
-            json_schema_extra={
-                "title": "IdentifiableMixin",
-                "description": "Mixin providing unique identifier fields",
-            },
-        )
-
-        unique_id: str = Field(default_factory=FlextUtilities.Generators.generate_id)
-
-    class TimestampableMixin(BaseModel):
-        """Mixin for models with creation and update timestamps."""
-
-        # Explicit construction for type safety (avoiding TypedDict spreading issues)
-        model_config = ConfigDict(
-            validate_assignment=True,
-            validate_return=True,
-            validate_default=True,
-            strict=True,
-            str_strip_whitespace=True,
-            use_enum_values=True,
-            arbitrary_types_allowed=True,
-            extra="forbid",
-            ser_json_timedelta="iso8601",
-            ser_json_bytes="base64",
-            hide_input_in_errors=True,
-            json_schema_extra={
-                "title": "TimestampableMixin",
-                "description": "Mixin providing timestamp fields and serialization",
-            },
-        )
-
-        created_at: datetime = Field(
-            default_factory=FlextUtilities.Generators.generate_datetime_utc,
-            description="Timestamp when the model was created (UTC timezone)",
-            examples=[
-                datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
-                datetime(2025, 10, 12, 15, 30, 0, tzinfo=UTC),
-            ],
-        )
-        updated_at: datetime | None = Field(
-            default=None,
-            description="Timestamp when the model was last updated (UTC timezone)",
-            examples=[
-                None,
-                datetime(2025, 1, 2, 14, 30, 0, tzinfo=UTC),
-            ],
-        )
-
-        @field_serializer("created_at", "updated_at", when_used="json")
-        def serialize_timestamps(self, value: datetime | None) -> str | None:
-            """Serialize timestamps to ISO 8601 format for JSON."""
-            return value.isoformat() if value else None
-
-        @computed_field
-        def is_modified(self) -> bool:
-            """Check if the model has been modified after creation."""
-            return self.updated_at is not None
-
-        def update_timestamp(self) -> None:
-            """Update the updated_at timestamp to current UTC time."""
-            self.updated_at = FlextUtilities.Generators.generate_datetime_utc()
-
-    class VersionableMixin(BaseModel):
-        """Mixin for models with versioning support."""
-
-        model_config = ConfigDict(
-            json_schema_extra={
-                "title": "VersionableMixin",
-                "description": "Mixin providing version fields and optimistic locking",
-            },
-        )
-
-        version: int = Field(
-            default=FlextConstants.Performance.DEFAULT_VERSION,
-            ge=FlextConstants.Performance.MIN_VERSION,
-            description="Version number for optimistic locking - increments with each update",
-            examples=[1, 5, 42, 100],
-        )
-
-        @computed_field
-        def is_initial_version(self) -> bool:
-            """Check if this is the initial version (version 1)."""
-            return self.version == FlextConstants.Performance.DEFAULT_VERSION
-
-        def increment_version(self) -> None:
-            """Increment the version number for optimistic locking."""
-            self.version += 1
-
-    class ArbitraryTypesModel(BaseModel):
-        """Base model with arbitrary types support."""
-
-        model_config = ConfigDict(
-            validate_assignment=True,
-            extra="forbid",
-            arbitrary_types_allowed=True,
-            use_enum_values=True,
-            json_schema_extra={
-                "title": "ArbitraryTypesModel",
-                "description": "Base model with arbitrary types support and comprehensive validation",
-            },
-        )
-
-    class FrozenStrictModel(BaseModel):
-        """Immutable base model."""
-
-        # Explicit construction for type safety (avoiding TypedDict spreading issues)
-        model_config = ConfigDict(
-            validate_assignment=True,
-            validate_return=True,
-            validate_default=True,
-            strict=True,
-            str_strip_whitespace=True,
-            use_enum_values=True,
-            arbitrary_types_allowed=True,
-            extra="forbid",
-            ser_json_timedelta="iso8601",
-            ser_json_bytes="base64",
-            hide_input_in_errors=True,
-            frozen=True,
-            json_schema_extra={
-                "title": "FrozenStrictModel",
-                "description": "Immutable base model with strict validation and frozen state",
-            },
-        )
-
-    class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
-        """Base class for models with timestamp fields."""
-
-    class DomainEvent(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
+    class DomainEvent(
+        FlextModelsBase.ArbitraryTypesModel,
+        FlextModelsBase.IdentifiableMixin,
+        FlextModelsBase.TimestampableMixin,
+    ):
         """Base class for domain events."""
 
         message_type: FlextConstants.Cqrs.EventMessageTypeLiteral = Field(
-            default=FlextConstants.Cqrs.HandlerType.EVENT.value,
+            default=FlextConstants.Cqrs.HandlerType.EVENT,
             frozen=True,
             description="Message type discriminator for union routing - always 'event'",
         )
@@ -199,7 +63,11 @@ class FlextModelsEntity:
             description="Event metadata - maps to FieldMetadataMapping",
         )
 
-    class Core(TimestampedModel, IdentifiableMixin, VersionableMixin):
+    class Core(
+        FlextModelsBase.TimestampedModel,
+        FlextModelsBase.IdentifiableMixin,
+        FlextModelsBase.VersionableMixin,
+    ):
         """Core Entity implementation - base class for domain entities with identity.
 
         Combines TimestampedModel, IdentifiableMixin, and VersionableMixin to provide:
@@ -210,21 +78,20 @@ class FlextModelsEntity:
         - domain_events: Event sourcing support
         """
 
-        _internal_logger: ClassVar[FlextLogger | None] = None
+        domain_events: list[FlextModelsEntity.DomainEvent] = Field(
+            default_factory=list,
+            description="List of uncommitted domain events for event sourcing",
+        )
 
         @property
         def entity_id(self) -> str:
             """Entity identifier property - alias for unique_id."""
             return self.unique_id
 
-        @classmethod
-        def _get_logger(cls) -> FlextLogger:
-            """Get or create the internal logger (lazy initialization)."""
-            if cls._internal_logger is None:
-                cls._internal_logger = FlextLogger(__name__)
-            return cls._internal_logger
-
-        domain_events: list[FlextModelsEntity.DomainEvent] = Field(default_factory=list)
+        @property
+        def logger(self) -> StructlogLogger:
+            """Get logger instance."""
+            return FlextRuntime.get_logger(__name__)
 
         @override
         def model_post_init(self, __context: object, /) -> None:
@@ -237,13 +104,12 @@ class FlextModelsEntity:
             """Identity-based equality for entities (using FlextUtilities.Domain)."""
             return FlextUtilities.Domain.compare_entities_by_id(self, other)
 
-        @override
         def __hash__(self) -> int:
             """Identity-based hash for entities (using FlextUtilities.Domain)."""
             return FlextUtilities.Domain.hash_entity_by_id(self)
 
         def _validate_event_input(
-            self,
+            self: Self,
             event_name: str,
             data: object,
         ) -> FlextResult[bool]:
@@ -254,7 +120,7 @@ class FlextModelsEntity:
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
-            if data is not None and not FlextRuntime.is_dict_like(data):
+            if data is not None and not _is_dict_like(data):
                 return FlextResult[bool].fail(
                     "Domain event data must be a dictionary or None",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -272,7 +138,7 @@ class FlextModelsEntity:
             return FlextResult[bool].ok(True)
 
         def _create_and_validate_event(
-            self,
+            self: Self,
             event_name: str,
             data: object,
         ) -> FlextResult[FlextModelsEntity.DomainEvent]:
@@ -311,15 +177,16 @@ class FlextModelsEntity:
                 )
 
         def _execute_event_handler(
-            self,
+            self: Self,
             event_name: str,
             data: object,
         ) -> None:
             """Execute event handler if available."""
             # Fast fail: event_type must be str
             event_type: str = ""
-            if FlextRuntime.is_dict_like(data):
-                event_type_raw = data.get("event_type")
+            if _is_dict_like(data):
+                data_dict = cast("Mapping[str, object]", data)
+                event_type_raw = data_dict.get("event_type")
                 event_type = "" if event_type_raw is None else str(event_type_raw)
             if event_type:
                 handler_method_name = f"_apply_{str(event_type).lower()}"
@@ -327,7 +194,7 @@ class FlextModelsEntity:
                     try:
                         handler_method = getattr(self, handler_method_name)
                         handler_method(data)
-                        self._get_logger().debug(
+                        self.logger.debug(
                             "Domain event handler executed",
                             event_type=event_name,
                             handler=handler_method_name,
@@ -340,12 +207,15 @@ class FlextModelsEntity:
                         RuntimeError,
                         KeyError,
                     ) as e:
-                        self._get_logger().warning(
-                            f"Domain event handler {handler_method_name} failed for event {event_name}: {e}",
+                        self.logger.warning(
+                            "Domain event handler %s failed for event %s: %s",
+                            handler_method_name,
+                            event_name,
+                            e,
                         )
 
         def add_domain_event(
-            self,
+            self: Self,
             event_name: str,
             data: FlextTypes.Types.EventDataMapping | None,
         ) -> FlextResult[bool]:
@@ -380,7 +250,7 @@ class FlextModelsEntity:
                 event_data=data,
             )
 
-            self._get_logger().debug(
+            self.logger.debug(
                 "Domain event added",
                 event_type=event_name,
                 aggregate_id=self.unique_id,
@@ -399,12 +269,14 @@ class FlextModelsEntity:
             return FlextResult[bool].ok(True)
 
         @property
-        def uncommitted_events(self) -> list[FlextModelsEntity.DomainEvent]:
+        def uncommitted_events(
+            self: Self,
+        ) -> list[FlextModelsEntity.DomainEvent]:
             """Get uncommitted domain events without clearing them."""
             return list(self.domain_events)
 
         def mark_events_as_committed(
-            self,
+            self: Self,
         ) -> FlextResult[list[FlextModelsEntity.DomainEvent]]:
             """Mark all domain events as committed and return them."""
             try:
@@ -412,7 +284,7 @@ class FlextModelsEntity:
 
                 if events:
                     event_types = [e.event_type for e in events]
-                    self._get_logger().info(
+                    self.logger.info(
                         "Domain events committed",
                         aggregate_id=self.unique_id,
                         aggregate_type=self.__class__.__name__,
@@ -430,12 +302,14 @@ class FlextModelsEntity:
                     error_code=FlextConstants.Errors.DOMAIN_EVENT_ERROR,
                 )
 
-        def clear_domain_events(self) -> list[FlextModelsEntity.DomainEvent]:
+        def clear_domain_events(
+            self: Self,
+        ) -> list[FlextModelsEntity.DomainEvent]:
             """Clear and return domain events."""
             events = list(self.domain_events)
 
             if events:
-                self._get_logger().debug(
+                self.logger.debug(
                     "Domain events cleared",
                     aggregate_id=self.unique_id,
                     aggregate_type=self.__class__.__name__,
@@ -447,7 +321,7 @@ class FlextModelsEntity:
             return events
 
         def _validate_bulk_events_input(
-            self,
+            self: Self,
             events: object,
         ) -> FlextResult[int]:
             """Validate bulk events input and return total count.
@@ -459,7 +333,7 @@ class FlextModelsEntity:
             if not events:
                 return FlextResult[int].ok(0)  # Signal empty - caller handles
 
-            if not FlextRuntime.is_list_like(events):
+            if not isinstance(events, (list, tuple)):
                 return FlextResult[int].fail(
                     "Events must be a list of tuples",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -474,11 +348,9 @@ class FlextModelsEntity:
 
             return FlextResult[int].ok(total_after_add)
 
-        EXPECTED_EVENT_TUPLE_LENGTH: int = 2
-
         def _validate_and_collect_events(
-            self,
-            events: Sequence[FlextTypes.Types.EventDataMapping],
+            self: Self,
+            events: Sequence[tuple[str, FlextTypes.Types.EventDataMapping | None]],
         ) -> FlextResult[list[tuple[str, FlextTypes.Types.EventDataMapping]]]:
             """Validate and collect events for bulk add.
 
@@ -497,14 +369,18 @@ class FlextModelsEntity:
                 )
 
             for i, event_item in enumerate(events):
-                if (
-                    not isinstance(event_item, (list, tuple))
-                    or len(event_item) != _EVENT_TUPLE_LENGTH
-                ):
+                if not isinstance(event_item, tuple):
                     return FlextResult[
                         list[tuple[str, FlextTypes.Types.EventDataMapping]]
                     ].fail(
-                        f"Event {i}: must be a tuple/list of (name, data)",
+                        f"Event {i}: must be a tuple of (name, data)",
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
+                if len(event_item) != _EVENT_TUPLE_LENGTH:
+                    return FlextResult[
+                        list[tuple[str, FlextTypes.Types.EventDataMapping]]
+                    ].fail(
+                        f"Event {i}: must have exactly 2 elements (name, data)",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
@@ -517,11 +393,11 @@ class FlextModelsEntity:
                         f"Event {i}: name must be non-empty string",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
-                if data is not None and not FlextRuntime.is_dict_like(data):
+                if data is not None and not _is_dict_like(data):
                     return FlextResult[
                         list[tuple[str, FlextTypes.Types.EventDataMapping]]
                     ].fail(
-                        f"Event {i}: data must be dict[str, GeneralValueType] or None",
+                        f"Event {i}: data must be dict[str, FlextTypes.GeneralValueType] or None",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 # Fast fail: data must be dict (None not allowed)
@@ -533,11 +409,11 @@ class FlextModelsEntity:
                 validated_events.append((event_name, event_data))
 
             return FlextResult[list[tuple[str, FlextTypes.Types.EventDataMapping]]].ok(
-                validated_events
+                validated_events,
             )
 
         def _add_validated_events_bulk(
-            self,
+            self: Self,
             validated_events: list[tuple[str, FlextTypes.Types.EventDataMapping]],
         ) -> FlextResult[bool]:
             """Add validated events in bulk.
@@ -561,7 +437,7 @@ class FlextModelsEntity:
 
                 self.update_timestamp()
 
-                self._get_logger().info(
+                self.logger.info(
                     "Bulk domain events added",
                     aggregate_id=self.unique_id,
                     aggregate_type=self.__class__.__name__,
@@ -578,8 +454,8 @@ class FlextModelsEntity:
                 )
 
         def add_domain_events_bulk(
-            self,
-            events: Sequence[FlextTypes.Types.EventDataMapping],
+            self: Self,
+            events: Sequence[tuple[str, FlextTypes.Types.EventDataMapping | None]],
         ) -> FlextResult[bool]:
             """Add multiple domain events in bulk with validation."""
             # Validate input
@@ -617,7 +493,7 @@ class FlextModelsEntity:
             # Add validated events
             return self._add_validated_events_bulk(validated_result.unwrap())
 
-        def validate_consistency(self) -> FlextResult[bool]:
+        def validate_consistency(self: Self) -> FlextResult[bool]:
             """Validate entity consistency using centralized validation."""
             entity_result = FlextModelsValidation.validate_entity_relationships(self)
             if entity_result.is_failure:
@@ -636,18 +512,20 @@ class FlextModelsEntity:
 
             return FlextResult[bool].ok(True)
 
-    class Value(FrozenStrictModel):
+    class Value(FlextModelsBase.FrozenStrictModel):
         """Base class for value objects - immutable and compared by value."""
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self: Self, other: object) -> bool:
             """Compare by value (using FlextUtilities.Domain)."""
             return FlextUtilities.Domain.compare_value_objects_by_value(self, other)
 
-        @override
         def __hash__(self) -> int:
             """Hash based on values for use in sets/dicts (using FlextUtilities.Domain)."""
             return FlextUtilities.Domain.hash_value_object_by_value(self)
+
+    # Alias for backward compatibility - Entity is the same as Core
+    Entity = Core
 
     class AggregateRoot(Core):
         """Base class for aggregate roots - consistency boundaries."""

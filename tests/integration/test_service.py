@@ -33,6 +33,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextContainer, FlextResult
+from flext_core.typings import FlextTypes
 
 
 class FunctionalExternalService:
@@ -42,11 +43,14 @@ class FunctionalExternalService:
         """Initialize functional external service."""
         super().__init__()
         self.call_count = 0
-        self.processed_items: list[object] = []
+        self.processed_items: list[FlextTypes.GeneralValueType] = []
         self.should_fail = False
         self.failure_message = "Service unavailable"
 
-    def process(self, data: object = None) -> FlextResult[str]:
+    def process(
+        self,
+        data: FlextTypes.GeneralValueType | None = None,
+    ) -> FlextResult[str]:
         """Functional processing method - validates real behavior.
 
         Returns:
@@ -54,7 +58,8 @@ class FunctionalExternalService:
 
         """
         self.call_count += 1
-        self.processed_items.append(data)
+        processed_data = data or "processed"
+        self.processed_items.append(processed_data)
 
         if self.should_fail:
             return FlextResult[str].fail(self.failure_message)
@@ -78,47 +83,47 @@ class FunctionalUserService:
     def __init__(self) -> None:
         """Initialize functional user service."""
         super().__init__()
-        self.users: dict[str, object] = {}
+        self.users: dict[str, dict[str, FlextTypes.GeneralValueType]] = {}
         self.call_count = 0
         self.should_fail = False
 
     def get_user(
         self,
         user_id: str,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
         """Get user by ID - functional implementation.
 
         Returns:
-            FlextResult[dict[str, object]]: Success with user data or failure with error message.
+            FlextResult[dict[str, FlextTypes.GeneralValueType]]: Success with user data or failure with error message.
 
         """
         self.call_count += 1
 
         if self.should_fail:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
                 "User service unavailable",
             )
 
         if user_id in self.users:
-            return FlextResult[dict[str, object]].ok(
-                cast("dict[str, object]", self.users[user_id]),
+            return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(
+                self.users[user_id],
             )
 
         # Default user data for testing
-        default_user: dict[str, object] = {
+        default_user: dict[str, FlextTypes.GeneralValueType] = {
             "id": user_id,
             "email": f"user{user_id}@example.com",
             "name": f"User {user_id}",
             "active": True,
         }
-        return FlextResult[dict[str, object]].ok(
+        return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(
             default_user,
         )
 
     def set_user_data(
         self,
         user_id: str,
-        user_data: dict[str, object],
+        user_data: dict[str, FlextTypes.GeneralValueType],
     ) -> None:
         """Set user data for testing."""
         self.users[user_id] = user_data
@@ -165,12 +170,15 @@ class FunctionalLifecycleService:
         """Initialize functional lifecycle service."""
         super().__init__()
         self.initialized = False
-        self.config: dict[str, object] | None = None
+        self.config: dict[str, FlextTypes.GeneralValueType] | None = None
         self.shutdown_called = False
         self.should_fail_init = False
         self.should_fail_shutdown = False
 
-    def initialize(self, config: dict[str, object]) -> FlextResult[str]:
+    def initialize(
+        self,
+        config: dict[str, FlextTypes.GeneralValueType],
+    ) -> FlextResult[str]:
         """Initialize service - functional implementation.
 
         Returns:
@@ -239,7 +247,8 @@ class TestServiceIntegrationPatterns:
         self,
         mock_external_service: FunctionalExternalService,
         performance_threshold: dict[str, float],
-        benchmark_data: dict[str, object] | dict[str, dict[str, dict[str, list[int]]]],
+        benchmark_data: dict[str, FlextTypes.GeneralValueType]
+        | dict[str, dict[str, dict[str, list[int]]]],
     ) -> None:
         """Test service pipeline meets performance requirements.
 
@@ -265,16 +274,18 @@ class TestServiceIntegrationPatterns:
             data: list[int]
             | dict[str, str]
             | dict[str, dict[str, dict[str, list[int]]]],
-        ) -> FlextResult[object]:
+        ) -> FlextResult[str]:
             # Simulate service pipeline with realistic operations
-            result = FlextResult[object].ok(data)
+            result = FlextResult[FlextTypes.GeneralValueType].ok(data)
 
-            def process_wrapper(x: object) -> FlextResult[object]:
+            def process_wrapper(
+                x: FlextTypes.GeneralValueType,
+            ) -> FlextResult[str]:
                 result_inner = mock_external_service.process(x)
                 if result_inner.is_success:
-                    return FlextResult[object].ok(result_inner.value)
-                return FlextResult[object].fail(
-                    result_inner.error or "Processing failed"
+                    return FlextResult[str].ok(result_inner.value)
+                return FlextResult[str].fail(
+                    result_inner.error or "Processing failed",
                 )
 
             return result.flat_map(process_wrapper).map(
@@ -307,6 +318,7 @@ class TestServiceIntegrationPatterns:
         assert result.is_success is True
         assert execution_time < performance_threshold["serialization"]
         assert result.value is not None
+        assert isinstance(result.value, str)
         assert "pipeline_result" in result.value
         # Functional validation - check actual service call
         assert mock_external_service.call_count == 1
@@ -334,13 +346,13 @@ class TestServiceIntegrationPatterns:
         error_message = f"Service error: {error_context['error_code']}"
         mock_external_service.set_failure_mode(should_fail=True, message=error_message)
 
-        def failing_pipeline(data: str) -> FlextResult[object]:
-            def process_wrapper(x: object) -> FlextResult[object]:
+        def failing_pipeline(data: str) -> FlextResult[str]:
+            def process_wrapper(x: str) -> FlextResult[str]:
                 result_inner = mock_external_service.process(x)
                 if result_inner.is_success:
-                    return FlextResult[object].ok(result_inner.value)
-                return FlextResult[object].fail(
-                    result_inner.error or "Processing failed"
+                    return FlextResult[str].ok(result_inner.value)
+                return FlextResult[str].fail(
+                    result_inner.error or "Processing failed",
                 )
 
             return (
@@ -366,7 +378,7 @@ class TestServiceIntegrationPatterns:
     def test_dependency_injection_with_mocks(
         self,
         clean_container: FlextContainer,
-        test_user_data: dict[str, object] | list[str],
+        test_user_data: dict[str, FlextTypes.GeneralValueType] | list[str],
     ) -> None:
         """Test dependency injection patterns with functional services.
 
@@ -384,13 +396,13 @@ class TestServiceIntegrationPatterns:
 
         # Configure functional service behavior with real test data
         if isinstance(test_user_data, dict):
-            test_user_dict: dict[str, object] = test_user_data
-            user_id = str(test_user_dict["id"])
+            test_user_dict = test_user_data
+            user_id = str(test_user_dict.get("id", "default_user"))
             user_service.set_user_data(user_id, test_user_dict)
         else:
             # Handle case where test_user_data is not a dict
             user_id = "default_user"
-            default_user_data: dict[str, object] = {
+            default_user_data: dict[str, FlextTypes.GeneralValueType] = {
                 "id": user_id,
                 "email": f"user{user_id}@example.com",
                 "name": f"User {user_id}",
@@ -429,10 +441,15 @@ class TestServiceIntegrationPatterns:
             if not user_result.is_success:
                 return FlextResult[str].fail("User not found")
 
-            # Send notification
-            return retrieved_notification_service.send(
-                str(user_result.value["email"]),
+            # Send notification - get email from user data
+            user_data = user_result.value
+            email_value = user_data.get("email", "")
+            email_str = (
+                str(email_value)
+                if email_value
+                else f"user{workflow_user_id}@example.com"
             )
+            return retrieved_notification_service.send(email_str)
 
         # Act - Execute workflow
         result = user_notification_workflow(user_id)
@@ -499,7 +516,10 @@ class TestServiceIntegrationPatterns:
         assert config_fetch_result.is_success is True
 
         service = cast("FunctionalLifecycleService", service_result.value)
-        config = cast("dict[str, object]", config_fetch_result.value)
+        config = cast(
+            "dict[str, FlextTypes.GeneralValueType]",
+            config_fetch_result.value,
+        )
 
         # Act - Test service lifecycle
         init_result = service.initialize(config)

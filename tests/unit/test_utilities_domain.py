@@ -86,10 +86,10 @@ class TestFlextUtilitiesDomain:
             TestConstants.Domain.VALUE_COUNT_5,
         )
         custom1 = DomainTestHelpers.create_custom_entity(
-            TestConstants.Domain.CUSTOM_ID_1
+            TestConstants.Domain.CUSTOM_ID_1,
         )
         custom2 = DomainTestHelpers.create_custom_entity(
-            TestConstants.Domain.CUSTOM_ID_1
+            TestConstants.Domain.CUSTOM_ID_1,
         )
 
         return [
@@ -139,7 +139,7 @@ class TestFlextUtilitiesDomain:
             with_id=False,
         )
         custom = DomainTestHelpers.create_custom_entity(
-            TestConstants.Domain.CUSTOM_ID_1
+            TestConstants.Domain.CUSTOM_ID_1,
         )
 
         return [
@@ -286,7 +286,7 @@ class TestFlextUtilitiesDomain:
             with_id=False,
         )
         custom = DomainTestHelpers.create_custom_entity(
-            TestConstants.Domain.CUSTOM_ID_1
+            TestConstants.Domain.CUSTOM_ID_1,
         )
 
         return [

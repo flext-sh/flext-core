@@ -14,7 +14,7 @@ from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.metadata import Metadata
 from flext_core._utilities.data_mapper import FlextUtilitiesDataMapper
 from flext_core.constants import FlextConstants
@@ -23,7 +23,6 @@ from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-# Constants for validator logic
 _MIN_QUALNAME_PARTS_FOR_WRAPPER = 2  # FlextModels.Cqrs requires at least 2 parts
 
 
@@ -35,14 +34,14 @@ class FlextModelsCqrs:
     """
 
     class Command(
-        FlextModelsEntity.ArbitraryTypesModel,
-        FlextModelsEntity.IdentifiableMixin,
-        FlextModelsEntity.TimestampableMixin,
+        FlextModelsBase.ArbitraryTypesModel,
+        FlextModelsBase.IdentifiableMixin,
+        FlextModelsBase.TimestampableMixin,
     ):
         """Base class for CQRS commands with validation."""
 
         message_type: FlextConstants.Cqrs.CommandMessageTypeLiteral = Field(
-            default=FlextConstants.Cqrs.HandlerType.COMMAND.value,
+            default=FlextConstants.Cqrs.HandlerType.COMMAND,
             frozen=True,
             description="Message type discriminator (always 'command')",
         )
@@ -56,7 +55,7 @@ class FlextModelsCqrs:
 
         @field_validator("command_type", mode="before")
         @classmethod
-        def validate_command(cls, v: object) -> str:
+        def validate_command(cls, v: FlextTypes.GeneralValueType) -> str:
             """Auto-set command type from class name if empty."""
             if isinstance(v, str):
                 return v if v.strip() else cls.__name__
@@ -115,7 +114,7 @@ class FlextModelsCqrs:
         )
 
         message_type: FlextConstants.Cqrs.QueryMessageTypeLiteral = Field(
-            default=FlextConstants.Cqrs.HandlerType.QUERY.value,
+            default=FlextConstants.Cqrs.HandlerType.QUERY,
             frozen=True,
             description="Message type discriminator",
         )
@@ -147,7 +146,9 @@ class FlextModelsCqrs:
                 models_module = sys.modules.get("flext_core.models")
                 if models_module and len(parts) >= _MIN_QUALNAME_PARTS_FOR_WRAPPER:
                     obj: FlextTypes.GeneralValueType | None = getattr(
-                        models_module, parts[0], None
+                        models_module,
+                        parts[0],
+                        None,
                     )
                     for part in parts[1:-1]:  # Navigate to Cqrs (skip Query)
                         if obj and hasattr(obj, part):
@@ -165,13 +166,17 @@ class FlextModelsCqrs:
 
             # Convert dict to Pagination
             if FlextRuntime.is_dict_like(v):
-                v_dict = v
+                # TypeGuard narrows v to Mapping[str, GeneralValueType]
+                v_dict: FlextTypes.Types.ConfigurationMapping = v
+                # .get() returns GeneralValueType | None, pass directly (None is valid GeneralValueType)
+                page_value = v_dict.get("page")
+                size_value = v_dict.get("size")
                 page = FlextUtilitiesDataMapper.convert_to_int_safe(
-                    v_dict.get("page"),
+                    page_value if page_value is not None else 1,
                     1,
                 )
                 size = FlextUtilitiesDataMapper.convert_to_int_safe(
-                    v_dict.get("size"),
+                    size_value if size_value is not None else 20,
                     20,
                 )
                 return pagination_cls(page=page, size=size)
@@ -188,10 +193,12 @@ class FlextModelsCqrs:
             try:
                 # Fast fail: filters and pagination must be dict or None
                 filters_raw = query_payload.get("filters")
+                # TypeGuard narrows to Mapping[str, GeneralValueType] when is_dict_like is True
                 filters: FlextTypes.Types.ConfigurationMapping = (
                     filters_raw if FlextRuntime.is_dict_like(filters_raw) else {}
                 )
                 pagination_raw = query_payload.get("pagination")
+                # TypeGuard narrows to Mapping[str, GeneralValueType] when is_dict_like is True
                 pagination_data: FlextTypes.Types.ConfigurationMapping = (
                     pagination_raw if FlextRuntime.is_dict_like(pagination_raw) else {}
                 )
@@ -215,7 +222,7 @@ class FlextModelsCqrs:
                     else str(query_id_raw)
                 )
                 query_type: FlextTypes.GeneralValueType | None = query_payload.get(
-                    "query_type"
+                    "query_type",
                 )
                 # filters is already guaranteed to be ConfigurationMapping from earlier validation
                 query = cls(
@@ -359,11 +366,16 @@ class FlextModelsCqrs:
 
             def with_metadata(self, metadata: Metadata) -> Self:
                 """Set metadata (fluent API - Pydantic model)."""
-                self._data["metadata"] = metadata
+                # Convert Metadata model to dict for GeneralValueType compatibility
+                metadata_dict: dict[str, FlextTypes.GeneralValueType] = dict(
+                    metadata.model_dump().items()
+                )
+                self._data["metadata"] = metadata_dict
                 return self
 
             def merge_config(
-                self, config: FlextTypes.Types.ConfigurationMapping
+                self,
+                config: FlextTypes.Types.ConfigurationMapping,
             ) -> Self:
                 """Merge additional config (fluent API)."""
                 self._data.update(config)

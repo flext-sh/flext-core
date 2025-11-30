@@ -10,17 +10,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Hashable
 
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import GeneralValueType
-
-_logger = logging.getLogger(__name__)
+from flext_core.runtime import FlextRuntime, StructlogLogger
+from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesDomain:
     """Reusable DDD helpers for dispatcher-driven domain workflows."""
+
+    @property
+    def logger(self) -> StructlogLogger:
+        """Get logger instance using FlextRuntime (avoids circular imports).
+
+        Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
+        Uses same structure/config as FlextLogger but without circular import.
+        """
+        return FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def compare_entities_by_id(
@@ -150,7 +156,7 @@ class FlextUtilitiesDomain:
                 # Type check: ensure the method is callable
                 model_dump = getattr(obj, "model_dump", None)
                 if callable(model_dump):
-                    # Call the method directly - it returns dict[str, GeneralValueType]
+                    # Call the method directly - it returns dict[str, FlextTypes.GeneralValueType]
                     data_raw = model_dump()
                     if isinstance(data_raw, dict):
                         data: dict[str, object] = data_raw
@@ -192,7 +198,7 @@ class FlextUtilitiesDomain:
         return bool(entity_id)
 
     @staticmethod
-    def validate_value_object_immutable(obj: GeneralValueType) -> bool:
+    def validate_value_object_immutable(obj: FlextTypes.GeneralValueType) -> bool:
         """Check if value object appears to be immutable (frozen).
 
         Args:

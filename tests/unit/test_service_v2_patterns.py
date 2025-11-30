@@ -251,38 +251,38 @@ class ServiceScenarios:
             ServiceOperationType.V1_EXPLICIT_EXECUTE_UNWRAP,
         ),
         ServiceTestCase(
-            "V2 property direct result", ServiceOperationType.V2_PROPERTY_DIRECT_RESULT
+            "V2 property direct result", ServiceOperationType.V2_PROPERTY_DIRECT_RESULT,
         ),
         ServiceTestCase(
-            "V1 and V2 produce same result", ServiceOperationType.V1_AND_V2_SAME_RESULT
+            "V1 and V2 produce same result", ServiceOperationType.V1_AND_V2_SAME_RESULT,
         ),
         ServiceTestCase(
             "V2 maintains execute access",
             ServiceOperationType.V2_MAINTAINS_EXECUTE_ACCESS,
         ),
         ServiceTestCase(
-            "V1 with validation failure", ServiceOperationType.V1_VALIDATION_FAILURE
+            "V1 with validation failure", ServiceOperationType.V1_VALIDATION_FAILURE,
         ),
         ServiceTestCase(
-            "V2 with validation failure", ServiceOperationType.V2_VALIDATION_FAILURE
+            "V2 with validation failure", ServiceOperationType.V2_VALIDATION_FAILURE,
         ),
         ServiceTestCase(
-            "V1 with validation success", ServiceOperationType.V1_VALIDATION_SUCCESS
+            "V1 with validation success", ServiceOperationType.V1_VALIDATION_SUCCESS,
         ),
         ServiceTestCase(
-            "V2 with validation success", ServiceOperationType.V2_VALIDATION_SUCCESS
+            "V2 with validation success", ServiceOperationType.V2_VALIDATION_SUCCESS,
         ),
         ServiceTestCase(
-            "V1 complex with items", ServiceOperationType.V1_COMPLEX_WITH_ITEMS
+            "V1 complex with items", ServiceOperationType.V1_COMPLEX_WITH_ITEMS,
         ),
         ServiceTestCase(
-            "V2 complex with items", ServiceOperationType.V2_COMPLEX_WITH_ITEMS
+            "V2 complex with items", ServiceOperationType.V2_COMPLEX_WITH_ITEMS,
         ),
         ServiceTestCase(
-            "V1 complex with empty items", ServiceOperationType.V1_COMPLEX_EMPTY_ITEMS
+            "V1 complex with empty items", ServiceOperationType.V1_COMPLEX_EMPTY_ITEMS,
         ),
         ServiceTestCase(
-            "V2 complex with empty items", ServiceOperationType.V2_COMPLEX_EMPTY_ITEMS
+            "V2 complex with empty items", ServiceOperationType.V2_COMPLEX_EMPTY_ITEMS,
         ),
         ServiceTestCase(
             "V2 property result can be called multiple times",
@@ -292,10 +292,10 @@ class ServiceScenarios:
 
     V2_AUTO_SCENARIOS: ClassVar[list[ServiceTestCase]] = [
         ServiceTestCase(
-            "V2 Auto returns value directly", ServiceOperationType.V2_AUTO_RETURNS_VALUE
+            "V2 Auto returns value directly", ServiceOperationType.V2_AUTO_RETURNS_VALUE,
         ),
         ServiceTestCase(
-            "V2 Auto vs V1 service instance", ServiceOperationType.V2_AUTO_VS_V1_SERVICE
+            "V2 Auto vs V1 service instance", ServiceOperationType.V2_AUTO_VS_V1_SERVICE,
         ),
         ServiceTestCase(
             "V2 Auto validation success",
@@ -314,7 +314,7 @@ class ServiceScenarios:
             ServiceOperationType.V2_AUTO_COMPLEX_FAILURE,
         ),
         ServiceTestCase(
-            "V2 Auto zero ceremony", ServiceOperationType.V2_AUTO_ZERO_CEREMONY
+            "V2 Auto zero ceremony", ServiceOperationType.V2_AUTO_ZERO_CEREMONY,
         ),
     ]
 
@@ -332,13 +332,13 @@ class ServiceScenarios:
             ServiceOperationType.MIX_V1_AND_V2_PIPELINE,
         ),
         ServiceTestCase(
-            "Error handling consistency", ServiceOperationType.ERROR_CONSISTENCY
+            "Error handling consistency", ServiceOperationType.ERROR_CONSISTENCY,
         ),
     ]
 
     BACKWARD_COMPATIBILITY_SCENARIOS: ClassVar[list[ServiceTestCase]] = [
         ServiceTestCase(
-            "V1 code still works", ServiceOperationType.V1_CODE_STILL_WORKS
+            "V1 code still works", ServiceOperationType.V1_CODE_STILL_WORKS,
         ),
         ServiceTestCase(
             "V2 property doesn't break V1 tests",
@@ -356,14 +356,14 @@ class ServiceScenarios:
 
     V2_EDGE_CASES_SCENARIOS: ClassVar[list[ServiceTestCase]] = [
         ServiceTestCase(
-            "V2 auto with bool return", ServiceOperationType.V2_AUTO_WITH_BOOL_RETURN
+            "V2 auto with bool return", ServiceOperationType.V2_AUTO_WITH_BOOL_RETURN,
         ),
         ServiceTestCase(
             "V2 property with dict return",
             ServiceOperationType.V2_PROPERTY_WITH_DICT_RETURN,
         ),
         ServiceTestCase(
-            "V2 auto with list return", ServiceOperationType.V2_AUTO_WITH_LIST_RETURN
+            "V2 auto with list return", ServiceOperationType.V2_AUTO_WITH_LIST_RETURN,
         ),
         ServiceTestCase(
             "V2 property with pydantic model return",
@@ -416,7 +416,7 @@ class TestFlextServiceV2Patterns:
             v1_result = v1_service.execute().unwrap()
 
             v2_service_prop: SimpleV2PropertyService = SimpleV2PropertyService(
-                message="test"
+                message="test",
             )
             v2_result = v2_service_prop.result
 
@@ -425,7 +425,7 @@ class TestFlextServiceV2Patterns:
 
         elif test_case.operation == ServiceOperationType.V2_MAINTAINS_EXECUTE_ACCESS:
             service_v2: SimpleV2PropertyService = SimpleV2PropertyService(
-                message="test"
+                message="test",
             )
             result_via_property = service_v2.result
             result_via_execute = service_v2.execute().unwrap()
@@ -553,7 +553,7 @@ class TestFlextServiceV2Patterns:
 
         elif test_case.operation == ServiceOperationType.V2_USE_V1_RAILWAY:
             service_rail: SimpleV2PropertyService = SimpleV2PropertyService(
-                message="test"
+                message="test",
             )
             chained_result = SimpleV1Service(message="chained").execute()
 
@@ -561,7 +561,7 @@ class TestFlextServiceV2Patterns:
                 if chained_result.is_success:
                     return FlextResult[object].ok(chained_result.value)
                 return FlextResult[object].fail(
-                    chained_result.error or "Chained failed"
+                    chained_result.error or "Chained failed",
                 )
 
             result: FlextResult[object] = service_rail.execute().flat_map(chain_wrapper)
@@ -614,7 +614,7 @@ class TestFlextServiceV2Patterns:
             class NoAutoService(FlextService[str]):
                 """Service without auto_execute."""
 
-                auto_execute = False
+                auto_execute: ClassVar[bool] = False
 
                 def execute(self, **_kwargs: object) -> FlextResult[str]:
                     return FlextResult.ok("no_auto")
