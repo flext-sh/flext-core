@@ -1,14 +1,9 @@
-"""FlextHandlers - CQRS Command and Query Handler Foundation Module.
+"""CQRS handler foundation used by the dispatcher pipeline.
 
-This module provides FlextHandlers, the base class for implementing Command Query
-Responsibility Segregation (CQRS) handlers throughout the FLEXT ecosystem. It implements
-structural typing via FlextProtocols.Handler[MessageT_contra] through duck typing,
-providing a foundation for command/query/event handlers with validation pipelines,
-execution context management, and configuration support.
-
-Scope: Abstract base class for CQRS handlers, message validation, type checking,
-handler execution pipeline, command/query/event processing with FlextResult-based
-error handling and comprehensive logging/metrics integration.
+FlextHandlers defines the base class the dispatcher relies on for commands,
+queries, and domain events. It favors structural typing over inheritance,
+ensures validation and execution steps return ``FlextResult`` rather than
+raising, and keeps handler metadata ready for registry/dispatcher discovery.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -29,7 +24,7 @@ from flext_core.typings import FlextTypes
 
 
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
-    """CQRS Command and Query Handler Foundation for FLEXT ecosystem.
+    """Abstract CQRS handler with validation and railway-style execution.
 
     Provides the base implementation for Command Query Responsibility Segregation
     (CQRS) handlers, implementing structural typing via FlextProtocols.Handler[MessageT_contra]
@@ -112,7 +107,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         # Initialize execution context
         self._execution_context = FlextModels.HandlerExecutionContext(
             handler_name=self._config_model.handler_name,
-            handler_mode=self._config_model.handler_mode.value,
+            handler_mode=self._config_model.handler_mode,
         )
 
         # Initialize handler state

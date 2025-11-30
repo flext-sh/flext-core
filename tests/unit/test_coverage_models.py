@@ -345,7 +345,7 @@ class TestQueries:
             max_price: float | None = None
 
         query = SearchProductsQuery(
-            keyword="laptop", category="electronics", min_price=500.0
+            keyword="laptop", category="electronics", min_price=500.0,
         )
         assert query.keyword == "laptop"
         assert query.category == "electronics"
@@ -420,14 +420,14 @@ class TestMetadata:
     def test_metadata_creation(self) -> None:
         """Test creating metadata."""
         metadata = FlextModels.Metadata(
-            attributes={"user_id": "123", "operation": "create"}
+            attributes={"user_id": "123", "operation": "create"},
         )
         assert metadata.attributes["user_id"] == "123"
 
     def test_metadata_with_various_types(self) -> None:
         """Test metadata with different attribute types."""
         metadata = FlextModels.Metadata(
-            attributes={"string": "value", "number": 42, "float": math.pi, "bool": True}
+            attributes={"string": "value", "number": 42, "float": math.pi, "bool": True},
         )
         assert metadata.attributes["string"] == "value"
         assert metadata.attributes["number"] == 42
@@ -517,7 +517,7 @@ class TestModelSerialization:
             body: str
 
         cmd = SendEmailCommand(
-            recipient="user@example.com", subject="Test", body="Message body"
+            recipient="user@example.com", subject="Test", body="Message body",
         )
         dumped = cmd.model_dump()
         assert dumped["recipient"] == "user@example.com"
@@ -558,7 +558,7 @@ class TestModelIntegration:
 
         customer = Customer(name="John", email="john@example.com")
         customer_dict = customer.model_dump(
-            exclude={"is_initial_version", "is_modified", "uncommitted_events"}
+            exclude={"is_initial_version", "is_modified", "uncommitted_events"},
         )
         validated = Customer.model_validate(customer_dict)
         assert validated is not None

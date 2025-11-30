@@ -18,7 +18,6 @@ from .constants import TestConstants
 class TestIdentifiers:
     """Test identifiers and IDs."""
 
-    __test__ = False
 
     user_id: str = "test_user_123"
     session_id: str = "test_session_123"
@@ -32,7 +31,6 @@ class TestIdentifiers:
 class TestNames:
     """Test module and component names."""
 
-    __test__ = False
 
     module_name: str = "test_module"
     handler_name: str = "test_handler"
@@ -49,7 +47,6 @@ class TestNames:
 class TestErrors:
     """Test error codes and messages."""
 
-    __test__ = False
 
     error_code: str = "TEST_ERROR_001"
     validation_error: str = "test_error"
@@ -62,7 +59,6 @@ class TestErrors:
 class TestData:
     """Test field names and data values."""
 
-    __test__ = False
 
     field_name: str = "test_field"
     config_key: str = "test_key"
@@ -80,7 +76,6 @@ class TestData:
 class TestPatterns:
     """Test patterns and formats."""
 
-    __test__ = False
 
     slug_input: str = "Test_String"
     slug_expected: str = "test_string"
@@ -91,7 +86,6 @@ class TestPatterns:
 class TestNumericValues:
     """Test port and numeric values."""
 
-    __test__ = False
 
     port: int = 8080
     timeout: int = 30
@@ -103,7 +97,6 @@ class TestNumericValues:
 class TestConstantsCollection:
     """Complete collection of all test constants."""
 
-    __test__ = False
 
     identifiers: TestIdentifiers = TestIdentifiers()
     names: TestNames = TestNames()
@@ -125,7 +118,7 @@ class TestConstantsCollection:
                 "test_operation_id": self.identifiers.operation_id,
                 "test_request_id": self.identifiers.request_id,
                 "test_correlation_id": self.identifiers.correlation_id,
-            }
+            },
         )
 
         # Names
@@ -140,7 +133,7 @@ class TestConstantsCollection:
                 "test_app_name": self.names.app_name,
                 "test_validation_app": self.names.validation_app,
                 "test_source_service": self.names.source_service,
-            }
+            },
         )
 
         # Errors
@@ -151,7 +144,7 @@ class TestConstantsCollection:
                 "test_operation_error": self.errors.operation_error,
                 "test_config_error": self.errors.config_error,
                 "test_timeout_error": self.errors.timeout_error,
-            }
+            },
         )
 
         # Data
@@ -167,7 +160,7 @@ class TestConstantsCollection:
                 "test_request_data": self.data.request_data,
                 "test_result_data": self.data.result_data,
                 "test_message": self.data.message,
-            }
+            },
         )
 
         # Patterns
@@ -176,7 +169,7 @@ class TestConstantsCollection:
                 "test_slug_input": self.patterns.slug_input,
                 "test_slug_expected": self.patterns.slug_expected,
                 "test_uuid_format": self.patterns.uuid_format,
-            }
+            },
         )
 
         # Numeric
@@ -186,7 +179,7 @@ class TestConstantsCollection:
                 "test_timeout": self.numeric.timeout,
                 "test_retry_count": self.numeric.retry_count,
                 "test_batch_size": self.numeric.batch_size,
-            }
+            },
         )
 
         return result
@@ -205,10 +198,10 @@ class TestConstantsFactories:
         """Create constants for integration testing."""
         return TestConstantsCollection(
             identifiers=TestIdentifiers(
-                request_id="int-request-789", correlation_id="int-corr-456"
+                request_id="int-request-789", correlation_id="int-corr-456",
             ),
             names=TestNames(
-                app_name="integration-app", module_name="integration_module"
+                app_name="integration-app", module_name="integration_module",
             ),
         )
 
@@ -216,7 +209,7 @@ class TestConstantsFactories:
     def create_performance_constants() -> TestConstantsCollection:
         """Create constants for performance testing."""
         return TestConstantsCollection(
-            numeric=TestNumericValues(batch_size=1000, timeout=60)
+            numeric=TestNumericValues(batch_size=1000, timeout=60),
         )
 
 

@@ -1,8 +1,8 @@
-"""Dispatcher submodule with reliability patterns extracted from FlextDispatcher.
+"""Expose dispatcher reliability and timeout helpers.
 
-This module contains helper classes that were previously nested inside FlextDispatcher.
-Extracting them reduces dispatcher.py from 3400+ lines to ~2400 lines while
-maintaining the same functionality.
+This package houses helper classes previously nested within
+``FlextDispatcher`` so orchestration code remains concise while retaining
+identical behavior and typed exports for downstream consumers.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

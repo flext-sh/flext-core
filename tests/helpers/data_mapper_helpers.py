@@ -52,7 +52,7 @@ class DataMapperTestHelpers:
                 mapping = test_case.input_data["mapping"]
                 keep_unmapped = test_case.input_data.get("keep_unmapped", True)
                 return data_mapper.map_dict_keys(
-                    source, mapping, keep_unmapped=keep_unmapped
+                    source, mapping, keep_unmapped=keep_unmapped,
                 )
 
             case DataMapperTestType.BUILD_FLAGS_DICT:
@@ -60,7 +60,7 @@ class DataMapperTestHelpers:
                 mapping = test_case.input_data["mapping"]
                 default_value = test_case.input_data.get("default_value", False)
                 return data_mapper.build_flags_dict(
-                    flags, mapping, default_value=default_value
+                    flags, mapping, default_value=default_value,
                 )
 
             case DataMapperTestType.COLLECT_ACTIVE_KEYS:
@@ -81,10 +81,10 @@ class DataMapperTestHelpers:
             case DataMapperTestType.INVERT_DICT:
                 source = test_case.input_data["source"]
                 handle_collisions = test_case.input_data.get(
-                    "handle_collisions", "last"
+                    "handle_collisions", "last",
                 )
                 return data_mapper.invert_dict(
-                    source, handle_collisions=handle_collisions
+                    source, handle_collisions=handle_collisions,
                 )
 
         msg = f"Unknown test type: {test_case.test_type}"

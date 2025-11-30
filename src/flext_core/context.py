@@ -1,8 +1,8 @@
-"""Hierarchical context management for distributed tracing and correlation.
+"""Context propagation utilities for dispatcher-coordinated workloads.
 
-This module provides FlextContext, a comprehensive context management system
-for request metadata, correlation IDs, performance tracking, and distributed
-tracing across the FLEXT ecosystem.
+FlextContext tracks correlation metadata, request data, and timing information
+through the dispatcher pipeline and into handlers, ensuring structured logs and
+metrics remain consistent across threads and async boundaries.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -72,95 +72,18 @@ def _create_dict_proxy(
 
 
 class FlextContext:
-    """Hierarchical context management for distributed tracing and correlation.
+    """Context manager for correlation, request data, and timing metadata.
 
-    Implements comprehensive context management for request metadata, correlation
-    IDs, performance tracking, and distributed tracing across the FLEXT ecosystem.
-    Uses Python's contextvars for thread-safe context variable storage with automatic
-    FlextLogger integration for structured logging.
+    The dispatcher and decorators rely on FlextContext to move correlation IDs,
+    service metadata, and timing details through CQRS handlers without mutating
+    function signatures. Data lives in ``contextvars`` to survive async hops and
+    thread switches, and hooks keep ``FlextLogger`` in sync for structured logs.
 
-    Architecture:
-        - Single-instance context per operation (scope-based isolation)
-        - ContextVar storage for thread-safe access across async/threading boundaries
-        - Hierarchical scopes (global, user, session) with scope-based access
-        - Delegation to FlextLogger for structured logging integration
-        - Container integration via FlextContext.Service for DI pattern
-        - FlextModels.StructlogProxyContextVar for direct logging system integration
-
-    Core Features:
-        - Hierarchical context scopes (global, request, session, transaction)
-        - Correlation ID management for distributed tracing (automatic generation)
-        - Service identification context (name, version)
-        - Request context with user and operation metadata
-        - Performance tracking with timing operations (start/end, duration)
-        - Context serialization for cross-service propagation (HTTP headers)
-        - Thread-safe context variable management via Python contextvars
-        - Context cloning and merging capabilities
-        - Automatic integration with FlextLogger for logging
-        - Extensible hook system for context events
-        - Statistics tracking for context operations
-
-    Nested Domains:
-        - FlextContext.Variables - Context variable definitions
-          (Correlation, Service, Request, Performance)
-        - FlextContext.Correlation - Distributed tracing and correlation ID management
-        - FlextContext.Service - Service identification and lifecycle context
-        - FlextContext.Request - User and request metadata management
-        - FlextContext.Performance - Operation timing and performance tracking
-        - FlextContext.Serialization - Context serialization for
-          cross-service communication
-        - FlextContext.Utilities - Helper methods and utility operations
-
-    Integration Patterns:
-        - Container Integration - FlextContext.Service.get_service() /
-          register_service()
-        - Logger Delegation - Automatic FlextLogger.bind_global_context() on
-          context changes
-        - Cross-Service Propagation - HTTP header format
-          (X-Correlation-Id, X-Service-Name)
-        - FlextResult Integration - All service operations return FlextResult[T]
-
-    Usage Example:
-        >>> from flext_core import FlextContext, FlextResult
-        >>>
-        >>> # Create context instance
-        >>> context = FlextContext()
-        >>> context.set("user_id", "123")
-        >>> user_id = context.get("user_id")
-        >>>
-        >>> # Correlation ID management for distributed tracing
-        >>> with FlextContext.Correlation.new_correlation() as corr_id:
-        ...     print(f"Processing request {corr_id}")
-        >>>
-        >>> # Service context management
-        >>> with FlextContext.Service.service_context("my_service", "v1.0"):
-        ...     result = FlextContext.Service.get_service("logger")
-        ...     if result.is_success:
-        ...         logger = result.unwrap()
-        >>>
-        >>> # Request context with metadata
-        >>> with FlextContext.Request.request_context(
-        ...     user_id="user123",
-        ...     operation_name="process_payment",
-        ... ):
-        ...     # All logging will include context automatically
-        ...     pass
-        >>>
-        >>> # Performance tracking with timing
-        >>> with FlextContext.Performance.timed_operation("data_processing"):
-        ...     # Operation metrics automatically tracked
-        ...     process_data()
-        >>>
-        >>> # Cross-service context propagation
-        >>> headers = FlextContext.Serialization.get_correlation_context()
-        >>> # headers: {"X-Correlation-Id": "...", "X-Service-Name": "..."}
-
-    Context Variable Compliance:
-        - Uses Python contextvars for inherent thread-safety and async support
-        - FlextModels.StructlogProxyContextVar wraps contextvars with
-          structlog integration
-        - No explicit protocol inheritance needed - implements context management patterns
-        - Automatic FlextLogger delegation for logging consistency across ecosystem
+    Highlights:
+    - Correlation IDs and service identity helpers for cross-service tracing
+    - Request and operation scopes for user/action metadata
+    - Timing utilities that feed metrics and structured logging
+    - Serialization helpers for propagating context via headers or payloads
     """
 
     # =========================================================================
@@ -570,7 +493,7 @@ class FlextContext:
             all_keys.update(scope_dict.keys())
         return list(all_keys)
 
-    def values(self) -> list[object]:
+    def values(self) -> list[FlextTypes.GeneralValueType]:
         """Get all values in the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
@@ -581,7 +504,7 @@ class FlextContext:
         """
         if not self._active:
             return []
-        all_values: list[object] = []
+        all_values: list[FlextTypes.GeneralValueType] = []
         for ctx_var in self._scope_vars.values():
             scope_dict = FlextUtilities.Generators.ensure_dict(
                 ctx_var.get(),
@@ -590,7 +513,7 @@ class FlextContext:
             all_values.extend(scope_dict.values())
         return all_values
 
-    def items(self) -> list[tuple[str, object]]:
+    def items(self) -> list[tuple[str, FlextTypes.GeneralValueType]]:
         """Get all key-value pairs in the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
@@ -601,7 +524,7 @@ class FlextContext:
         """
         if not self._active:
             return []
-        all_items: list[tuple[str, object]] = []
+        all_items: list[tuple[str, FlextTypes.GeneralValueType]] = []
         for ctx_var in self._scope_vars.values():
             scope_dict = FlextUtilities.Generators.ensure_dict(
                 ctx_var.get(),
@@ -833,9 +756,9 @@ class FlextContext:
         """
         if event not in self._hooks:
             self._hooks[event] = []
+        # hooks_list is already a list (type: list[HookCallableType])
         hooks_list = self._hooks[event]
-        if FlextRuntime.is_list_like(hooks_list):
-            hooks_list.append(hook)
+        hooks_list.append(hook)
 
     def set_metadata(self, key: str, value: FlextTypes.GeneralValueType) -> None:
         """Set metadata for the context.
@@ -960,7 +883,7 @@ class FlextContext:
         # Reset metadata model
         self._metadata = FlextModels.ContextMetadata()
 
-    def export(self) -> object:
+    def export(self) -> dict[str, FlextTypes.GeneralValueType]:
         """Export context data as a dictionary for compatibility consumers.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -1000,10 +923,17 @@ class FlextContext:
             )
             raise TypeError(msg)
 
+        # Pass directly - field validators accept object and will normalize
+        # metadata_dict is dict[str, GeneralValueType], statistics_dict is dict from model_dump()
+        # Validators handle conversion to expected types (they accept object)
+        from typing import cast as type_cast  # noqa: PLC0415
+
         return FlextModels.ContextExport(
             data=all_data,
-            metadata=metadata_dict,
-            statistics=statistics_dict,
+            metadata=type_cast("object", metadata_dict),  # Validator accepts object
+            statistics=type_cast(
+                "object", dict(statistics_dict)
+            ),  # Validator accepts object
         )
 
     def import_data(self, data: dict[str, FlextTypes.GeneralValueType]) -> None:
@@ -1605,7 +1535,9 @@ class FlextContext:
             return context
 
         @staticmethod
-        def set_from_context(context: Mapping[str, object]) -> None:
+        def set_from_context(
+            context: Mapping[str, FlextTypes.GeneralValueType],
+        ) -> None:
             """Set context from dictionary (e.g., from HTTP headers)."""
             # Fast fail: use explicit checks instead of OR fallback
             correlation_id_value = context.get("X-Correlation-Id")

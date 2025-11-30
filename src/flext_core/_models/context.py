@@ -437,17 +437,14 @@ class FlextModelsContext:
                 description="All context data from all scopes",
             ),
         ] = Field(default_factory=dict)
-        metadata: Metadata | dict[str, object] | None = Field(
+        metadata: Metadata | FlextTypes.Types.ContextMetadataMapping | None = Field(
             default=None,
             description="Context metadata (creation info, source, version)",
         )
-        statistics: Annotated[
-            dict[str, object],
-            Field(
-                default_factory=dict,
-                description="Usage statistics (operation counts, timing info)",
-            ),
-        ] = Field(default_factory=dict)
+        statistics: FlextTypes.Types.ContextMetadataMapping = Field(
+            default_factory=dict,
+            description="Usage statistics (operation counts, timing info)",
+        )
 
         @field_validator("metadata", mode="before")
         @classmethod
@@ -534,7 +531,8 @@ class FlextModelsContext:
             # Access via class name since we're in a nested class
             FlextModelsContext.ContextExport.check_json_serializable(v)
             # Type assertion: runtime validation ensures correct type
-            return v
+            # Convert to dict explicitly (is_dict_like ensures dict-like)
+            return dict(v)
 
         @computed_field
         def total_data_items(self) -> int:
@@ -592,7 +590,8 @@ class FlextModelsContext:
             """Validate scope data - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
-                return v
+                # Convert to dict explicitly (is_dict_like ensures dict-like)
+                return dict(v)
             if isinstance(v, BaseModel):
                 return v.model_dump()
             if v is None:
@@ -609,7 +608,8 @@ class FlextModelsContext:
             """Validate scope metadata - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
-                return v
+                # Convert to dict explicitly (is_dict_like ensures dict-like)
+                return dict(v)
             if isinstance(v, BaseModel):
                 return v.model_dump()
             if v is None:
@@ -678,7 +678,8 @@ class FlextModelsContext:
             """Validate operations - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
-                return v
+                # Convert to dict explicitly (is_dict_like ensures dict-like)
+                return dict(v)
             if isinstance(v, BaseModel):
                 return v.model_dump()
             if v is None:
@@ -784,7 +785,8 @@ class FlextModelsContext:
             """Validate custom_fields - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
-                return v
+                # Convert to dict explicitly (is_dict_like ensures dict-like)
+                return dict(v)
             if isinstance(v, BaseModel):
                 return v.model_dump()
             if v is None:

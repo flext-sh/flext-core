@@ -93,7 +93,7 @@ class ContextTestHelpers:
 
     @staticmethod
     def assert_context_get_success(
-        context: FlextContext, key: str, expected_value: object
+        context: FlextContext, key: str, expected_value: object,
     ) -> None:
         """Assert context get operation succeeds with expected value."""
         result = context.get(key)
@@ -119,7 +119,7 @@ class TestFlextContext:
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
         initial_data = FlextModels.ContextData(
-            data={"user_id": "123", "session_id": "abc"}
+            data={"user_id": "123", "session_id": "abc"},
         )
         context = FlextContext(initial_data)
         ContextTestHelpers.assert_context_get_success(context, "user_id", "123")
@@ -131,7 +131,7 @@ class TestFlextContext:
         ids=lambda x: x[0] if isinstance(x, tuple) else str(x),
     )
     def test_context_set_get_value(
-        self, key: str, value: object, expected: object
+        self, key: str, value: object, expected: object,
     ) -> None:
         """Test context set/get value operations."""
         context = ContextTestHelpers.create_test_context()
@@ -189,7 +189,7 @@ class TestFlextContext:
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
-            }
+            },
         }
         context.set("nested", nested_data).unwrap()
         result = context.get("nested")
@@ -232,7 +232,7 @@ class TestFlextContext:
         assert isinstance(json_str, str) and "string_value" in json_str
         restored = FlextContext.from_json(json_str)
         ContextTestHelpers.assert_context_get_success(
-            restored, "string_key", "string_value"
+            restored, "string_key", "string_value",
         )
         ContextTestHelpers.assert_context_get_success(restored, "int_key", 42)
         ContextTestHelpers.assert_context_get_success(restored, "bool_key", True)
@@ -298,7 +298,7 @@ class TestFlextContext:
         context.set("global_key", "global_value").unwrap()
         context.set(f"{scope}_key", value, scope=scope).unwrap()
         ContextTestHelpers.assert_context_get_success(
-            context, "global_key", "global_value"
+            context, "global_key", "global_value",
         )
         scoped_result = context.get(f"{scope}_key", scope=scope)
         assert scoped_result.is_success
@@ -377,13 +377,13 @@ class TestFlextContext:
         ids=lambda x: x[0] if isinstance(x, tuple) else str(x),
     )
     def test_context_edge_case_special_characters(
-        self, key_name: str, special_key: str
+        self, key_name: str, special_key: str,
     ) -> None:
         """Test context keys with special characters."""
         context = ContextTestHelpers.create_test_context()
         context.set(special_key, "special_value").unwrap()
         ContextTestHelpers.assert_context_get_success(
-            context, special_key, "special_value"
+            context, special_key, "special_value",
         )
 
     @pytest.mark.parametrize(
@@ -392,7 +392,7 @@ class TestFlextContext:
         ids=lambda x: x[0] if isinstance(x, tuple) else str(x),
     )
     def test_context_edge_case_special_values(
-        self, value_name: str, special_value: object
+        self, value_name: str, special_value: object,
     ) -> None:
         """Test context with special values."""
         context = ContextTestHelpers.create_test_context()
@@ -456,7 +456,7 @@ class TestFlextContext:
             context.set(f"key_{i}", f"value_{i}").unwrap()
         for i in range(100):
             ContextTestHelpers.assert_context_get_success(
-                context, f"key_{i}", f"value_{i}"
+                context, f"key_{i}", f"value_{i}",
             )
         for i in range(50):
             context.remove(f"key_{i}")
@@ -464,7 +464,7 @@ class TestFlextContext:
             assert context.has(f"key_{i}") is False
         for i in range(50, 100):
             ContextTestHelpers.assert_context_get_success(
-                context, f"key_{i}", f"value_{i}"
+                context, f"key_{i}", f"value_{i}",
             )
 
     def test_context_get_metadata_nonexistent(self) -> None:
@@ -589,7 +589,7 @@ class TestFlextContext:
         context.set("existing_key", "existing_value").unwrap()
         context.import_data({})
         ContextTestHelpers.assert_context_get_success(
-            context, "existing_key", "existing_value"
+            context, "existing_key", "existing_value",
         )
 
     def test_context_export_after_clear(self) -> None:

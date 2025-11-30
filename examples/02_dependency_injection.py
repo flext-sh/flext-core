@@ -364,7 +364,7 @@ class CacheService(FlextService[object]):
                 self.logger.debug("Cache miss: %s", valid_key)
                 error_msg = f"Key not found: {valid_key}"
                 return FlextResult[str].fail(
-                    error_msg, error_code=FlextConstants.Errors.NOT_FOUND
+                    error_msg, error_code=FlextConstants.Errors.NOT_FOUND,
                 )
             return FlextResult[str].ok(valid_key)
 
@@ -380,13 +380,13 @@ class CacheService(FlextService[object]):
                 # Use from_callable for safe conversion
                 def convert_timestamp() -> float:
                     if created_at_raw is not None and isinstance(
-                        created_at_raw, (int, float, str)
+                        created_at_raw, (int, float, str),
                     ):
                         return float(created_at_raw)
                     return 0.0
 
                 created_at_result = FlextResult[float].create_from_callable(
-                    convert_timestamp
+                    convert_timestamp,
                 )
 
                 if created_at_result.is_success:
@@ -399,7 +399,7 @@ class CacheService(FlextService[object]):
                         self.logger.debug("Cache expired: %s", valid_key)
                         error_msg = f"Key expired: {valid_key}"
                         return FlextResult[str].fail(
-                            error_msg, error_code=FlextConstants.Errors.TIMEOUT_ERROR
+                            error_msg, error_code=FlextConstants.Errors.TIMEOUT_ERROR,
                         )
 
             return FlextResult[str].ok(valid_key)
@@ -428,7 +428,7 @@ class CacheService(FlextService[object]):
         result = (
             FlextResult[str]
             .create_from_callable(
-                validate_key, error_code=FlextConstants.Errors.VALIDATION_ERROR
+                validate_key, error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
             .flow_through(
                 check_existence_obj,
@@ -439,7 +439,7 @@ class CacheService(FlextService[object]):
             str_key = str(result.unwrap())
             return get_value(str_key)
         return FlextResult[object].fail(
-            result.error or "Unknown error", error_code=result.error_code
+            result.error or "Unknown error", error_code=result.error_code,
         )
 
     def set(
@@ -495,7 +495,7 @@ class CacheService(FlextService[object]):
                     if isinstance(metadata, dict):
                         created_at_raw = metadata.get("created_at", 0)
                     if created_at_raw is not None and isinstance(
-                        created_at_raw, (int, float, str)
+                        created_at_raw, (int, float, str),
                     ):
                         return float(created_at_raw)
                     return 0.0
@@ -611,7 +611,7 @@ class UserRepository(FlextService[User]):
         validation_result = self._validate_user(user)
         if validation_result.is_failure:
             return FlextResult[bool].fail(
-                validation_result.error or "Validation failed"
+                validation_result.error or "Validation failed",
             )
 
         # Simulate save operation with enhanced logging
@@ -1079,7 +1079,7 @@ class ComprehensiveDIService(FlextService[User]):
 
         # Try to register with invalid name (with_service doesn't validate names)
         print(
-            "✅ Skipping invalid name test (with_service doesn't validate empty names)"
+            "✅ Skipping invalid name test (with_service doesn't validate empty names)",
         )
 
         # Type mismatch in get_typed

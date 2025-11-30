@@ -270,7 +270,7 @@ class FlextTestsFactories:
                     validation = self._validate_business_rules_complex()
                     if validation.is_failure:
                         return FlextResult[object].fail(
-                            validation.error or "Validation failed"
+                            validation.error or "Validation failed",
                         )
                     return FlextResult[object].ok({"result": "success"})
                 return FlextResult[object].ok({"service_type": service_type})

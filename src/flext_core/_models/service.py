@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, TypeAlias
+from typing import Annotated
 
 from pydantic import Field, field_validator
 
@@ -27,10 +27,7 @@ class FlextModelsService:
     All nested classes are accessed via FlextModels.Service.* in the main models.py.
     """
 
-    # Type alias for base class (mypy-compatible)
-    ArbitraryTypesModel: TypeAlias = FlextModelsBase.ArbitraryTypesModel
-
-    class DomainServiceExecutionRequest(ArbitraryTypesModel):
+    class DomainServiceExecutionRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service execution request with advanced validation."""
 
         service_name: str = Field(min_length=1, description="Service name")
@@ -72,7 +69,7 @@ class FlextModelsService:
                 raise ValueError(error_msg)
             return v
 
-    class DomainServiceBatchRequest(ArbitraryTypesModel):
+    class DomainServiceBatchRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service batch request."""
 
         service_name: str
@@ -92,7 +89,7 @@ class FlextModelsService:
             description="Timeout per operation from FlextConfig (Config has priority over Constants)",
         )
 
-    class DomainServiceMetricsRequest(ArbitraryTypesModel):
+    class DomainServiceMetricsRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service metrics request."""
 
         service_name: str
@@ -114,7 +111,7 @@ class FlextModelsService:
         group_by: list[str] = Field(default_factory=list)
         filters: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
 
-    class DomainServiceResourceRequest(ArbitraryTypesModel):
+    class DomainServiceResourceRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service resource request."""
 
         service_name: str = "default_service"
@@ -128,7 +125,7 @@ class FlextModelsService:
         data: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
         filters: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
 
-    class AclResponse(ArbitraryTypesModel):
+    class AclResponse(FlextModelsBase.ArbitraryTypesModel):
         """ACL (Access Control List) response model."""
 
         resource: str = Field(description="Resource identifier")
@@ -148,7 +145,7 @@ class FlextModelsService:
             description="Additional context",
         )
 
-    class OperationExecutionRequest(ArbitraryTypesModel):
+    class OperationExecutionRequest(FlextModelsBase.ArbitraryTypesModel):
         """Operation execution request."""
 
         operation_name: str = Field(
@@ -157,7 +154,7 @@ class FlextModelsService:
             description="Operation name",
         )
         operation_callable: FlextProtocols.VariadicCallable[
-            FlextProtocols.ResultLike[object]
+            FlextProtocols.ResultLike[FlextTypes.GeneralValueType]
         ]
         arguments: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
         keyword_arguments: dict[str, FlextTypes.GeneralValueType] = Field(

@@ -1,11 +1,10 @@
-"""FlextConfig - Configuration Management Module.
+"""Configuration bootstrap for dispatcher-first applications.
 
-This module provides comprehensive configuration management for the FLEXT ecosystem,
-implementing Pydantic v2 BaseSettings with dependency injection, environment variable support,
-and runtime validation. Serves as the foundation layer (0.5) controlling all other layers.
-
-Scope: Global configuration management, singleton pattern, DI integration, validation,
-environment variable handling, thread-safe operations, and dynamic config updates.
+This foundation module centralizes environment-aware settings using Pydantic v2
+`BaseSettings`, enforces a singleton instantiation model, and keeps dispatcher
+pipelines wired through dependency-injector providers without importing higher
+layers. It resolves a shared ``.env`` file eagerly so every namespace config
+shares the same lookup rules.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -57,19 +56,13 @@ def _resolve_env_file_impl() -> str | None:
 
 
 class FlextConfig(BaseSettings):
-    """Configuration management with Pydantic validation and dependency injection.
+    """Layer 0.5 settings holder with DI-friendly singleton semantics.
 
-    Architecture: Layer 0.5 (Configuration Foundation)
-    Provides enterprise-grade configuration management for the FLEXT ecosystem
-    through Pydantic v2 BaseSettings, implementing structural typing via
-    FlextProtocols.Configurable (duck typing - no inheritance required).
-
-    Core Features:
-    - Pydantic v2 BaseSettings with type-safe configuration
-    - Environment variable support with FLEXT_ prefix
-    - Thread-safe singleton pattern
-    - Dependency injection integration
-    - Runtime configuration updates
+    FlextConfig wraps Pydantic settings so dispatcher handlers and services can
+    resolve a consistent configuration object through dependency-injector
+    providers. It exposes a single ``resolve_env_file`` entry point to keep
+    ``.env`` discovery uniform across namespace configurations and guards
+    instantiation with a thread-safe singleton cache.
     """
 
     # Singleton pattern
@@ -266,7 +259,9 @@ class FlextConfig(BaseSettings):
         description="Exception failure level",
     )
 
-    def __new__(cls, **_kwargs: object) -> Self:
+    def __new__(
+        cls,
+    ) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values: Any internally.
@@ -296,7 +291,7 @@ class FlextConfig(BaseSettings):
             if cls in cls._instances:
                 del cls._instances[cls]
 
-    def __init__(self, **kwargs: str | int | bool | None) -> None:
+    def __init__(self, **kwargs: FlextTypes.ScalarValue) -> None:
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,
@@ -314,16 +309,11 @@ class FlextConfig(BaseSettings):
 
         # First initialization - call BaseSettings.__init__() then apply kwargs
         # BaseSettings loads from environment/files, then we apply explicit kwargs
-        # Resolve env_file dynamically to support directory changes in tests
-        env_file_path = _resolve_env_file_impl()
-        # Temporarily update model_config to use resolved path
-        original_env_file = self.model_config.get("env_file")
-        if env_file_path != original_env_file:
-            # Update model_config for this instance
-            self.model_config = SettingsConfigDict(**{
-                **self.model_config,
-                "env_file": env_file_path,
-            })
+        # Note: model_config is a class variable in Pydantic v2 (ConfigDict) and
+        # cannot be assigned via instance. The env_file is resolved at class
+        # definition time via _resolve_env_file_impl() in model_config (line 85).
+        # For runtime directory changes in tests, BaseSettings will use the
+        # resolved path from the class definition.
         super().__init__()
         self._di_provider: providers.Singleton[Self] | None = None
 
@@ -333,12 +323,12 @@ class FlextConfig(BaseSettings):
             # Apply kwargs directly - BaseSettings.__init__ already called above
             # Validate kwargs by applying them individually
             for key, value in kwargs.items():
-                if key in self.model_fields:
+                if key in type(self).model_fields:
                     # Validate using field validator if exists
                     validated_value = value
                     # Check if there's a field validator for this field
-                    if hasattr(self.__class__, f"validate_{key}"):
-                        validator = getattr(self.__class__, f"validate_{key}")
+                    if hasattr(type(self), f"validate_{key}"):
+                        validator = getattr(type(self), f"validate_{key}")
                         validated_value = validator(value)
                     # Apply validated value
                     object.__setattr__(self, key, validated_value)
@@ -357,13 +347,13 @@ class FlextConfig(BaseSettings):
             # v is already LogLevel enum member, which is compatible with LogLevelLiteral
             # LogLevelLiteral is Literal[LogLevel.DEBUG, LogLevel.INFO, ...]
             # Return the enum member directly (compatible with Literal type)
-            return v  # type: ignore[return-value]
+            return v
         normalized = v.upper()
         # Validate against StrEnum values and return the enum value (Literal type)
         try:
             # Return LogLevel enum member, compatible with LogLevelLiteral
             # LogLevelLiteral is Literal[LogLevel.DEBUG, LogLevel.INFO, ...]
-            return FlextConstants.Settings.LogLevel(normalized)  # type: ignore[return-value]
+            return FlextConstants.Settings.LogLevel(normalized)
         except ValueError:
             log_level_enum = FlextConstants.Settings.LogLevel
             allowed_values = [
@@ -431,7 +421,7 @@ class FlextConfig(BaseSettings):
     ) -> bool:
         """Validate if an override is acceptable."""
         # Basic validation - could be extended
-        return key in self.model_fields
+        return key in type(self).model_fields
 
     def apply_override(
         self,

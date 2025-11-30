@@ -154,7 +154,7 @@ class TestFlextUtilities:
         UtilityScenarios.TYPE_GUARD_CASES["string"],
     )
     def test_type_guard_string(
-        self, description: str, value: object, expected: bool
+        self, description: str, value: object, expected: bool,
     ) -> None:
         """Test string type guards."""
         result = FlextUtilities.TypeGuards.is_string_non_empty(value)
@@ -165,7 +165,7 @@ class TestFlextUtilities:
         UtilityScenarios.TYPE_GUARD_CASES["dict"],
     )
     def test_type_guard_dict(
-        self, description: str, value: object, expected: bool
+        self, description: str, value: object, expected: bool,
     ) -> None:
         """Test dict type guards."""
         result = FlextUtilities.TypeGuards.is_dict_non_empty(value)
@@ -176,7 +176,7 @@ class TestFlextUtilities:
         UtilityScenarios.TYPE_GUARD_CASES["list"],
     )
     def test_type_guard_list(
-        self, description: str, value: object, expected: bool
+        self, description: str, value: object, expected: bool,
     ) -> None:
         """Test list type guards."""
         result = FlextUtilities.TypeGuards.is_list_non_empty(value)
@@ -194,10 +194,10 @@ class TestFlextUtilities:
         assert isinstance(result, str) and len(result) > 0
 
     @pytest.mark.parametrize(
-        ("length", "expected_length"), UtilityScenarios.SHORT_ID_LENGTHS
+        ("length", "expected_length"), UtilityScenarios.SHORT_ID_LENGTHS,
     )
     def test_generators_short_id_lengths(
-        self, length: int | None, expected_length: int
+        self, length: int | None, expected_length: int,
     ) -> None:
         """Test short ID generation with various lengths."""
         short_id = (
@@ -210,14 +210,14 @@ class TestFlextUtilities:
     def test_generators_batch_id(self) -> None:
         """Test batch ID generation."""
         batch_id = FlextUtilities.Generators.generate_batch_id(
-            FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
+            FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
         )
         assert isinstance(batch_id, str) and len(batch_id) > 0
 
     def test_generators_correlation_id_with_context(self) -> None:
         """Test correlation ID with context."""
         corr_id = FlextUtilities.Generators.generate_correlation_id_with_context(
-            "test_ctx"
+            "test_ctx",
         )
         assert isinstance(corr_id, str) and "test_ctx" in corr_id
 
@@ -232,10 +232,10 @@ class TestFlextUtilities:
     # =====================================================================
 
     @pytest.mark.parametrize(
-        ("input_text", "expected_pattern"), UtilityScenarios.TEXT_CLEAN_CASES
+        ("input_text", "expected_pattern"), UtilityScenarios.TEXT_CLEAN_CASES,
     )
     def test_text_processor_clean_text(
-        self, input_text: str, expected_pattern: str
+        self, input_text: str, expected_pattern: str,
     ) -> None:
         """Test text cleaning."""
         result = FlextUtilities.TextProcessor.clean_text(input_text)
@@ -246,7 +246,7 @@ class TestFlextUtilities:
         UtilityScenarios.TEXT_TRUNCATE_CASES,
     )
     def test_text_processor_truncate(
-        self, text: str, max_length: int, should_truncate: bool
+        self, text: str, max_length: int, should_truncate: bool,
     ) -> None:
         """Test text truncation."""
         result = FlextUtilities.TextProcessor.truncate_text(text, max_length=max_length)
@@ -271,10 +271,10 @@ class TestFlextUtilities:
     # =====================================================================
 
     @pytest.mark.parametrize(
-        ("input_data", "expected_type"), UtilityScenarios.CACHE_NORMALIZE_CASES
+        ("input_data", "expected_type"), UtilityScenarios.CACHE_NORMALIZE_CASES,
     )
     def test_cache_normalize_component(
-        self, input_data: object, expected_type: type | tuple[type, ...]
+        self, input_data: object, expected_type: type | tuple[type, ...],
     ) -> None:
         """Test cache component normalization."""
         normalized = FlextUtilities.Cache.normalize_component(input_data)
@@ -350,7 +350,7 @@ class TestFlextUtilities:
     ) -> None:
         """Test type checking."""
         result = FlextUtilities.TypeChecker.can_handle_message_type(
-            accepted_types, message_type
+            accepted_types, message_type,
         )
         assert result is expected
 
@@ -380,7 +380,7 @@ class TestFlextUtilities:
         ],
     )
     def test_validation_normalize_component_primitives(
-        self, value: object, expected: object
+        self, value: object, expected: object,
     ) -> None:
         """Test normalize_component with primitives."""
         result = FlextUtilities.Validation.normalize_component(value)
@@ -394,7 +394,7 @@ class TestFlextUtilities:
         ],
     )
     def test_validation_normalize_component_collections(
-        self, input_data: object, expected_type: tuple[type, ...]
+        self, input_data: object, expected_type: tuple[type, ...],
     ) -> None:
         """Test normalize_component with collections."""
         result = FlextUtilities.Validation.normalize_component(input_data)
@@ -468,7 +468,7 @@ class TestFlextUtilities:
         """Test setting configuration parameter."""
         config = FlextConfig.get_global_instance()
         result = FlextUtilities.Configuration.set_parameter(
-            config, "test_param", "test_value"
+            config, "test_param", "test_value",
         )
         assert isinstance(result, bool)
 
@@ -488,7 +488,7 @@ class TestFlextUtilities:
             return FlextResult[str].ok("success")
 
         result = FlextUtilities.Reliability.retry(
-            quick_success, max_attempts=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
+            quick_success, max_attempts=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
         )
         assert result.is_success
         assert result.value == "success"

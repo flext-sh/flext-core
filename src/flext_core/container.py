@@ -1,8 +1,10 @@
-"""FlextContainer - Dependency injection container for service management.
+"""Dependency injection container for dispatcher-driven applications.
 
-This module provides FlextContainer, a type-safe dependency injection container
-for managing service lifecycles and resolving dependencies throughout the
-FLEXT ecosystem.
+FlextContainer centralizes service discovery for CQRS handlers, domain services,
+and infrastructure utilities. It keeps configuration isolated from the
+dispatcher pipeline while providing predictable singleton semantics so
+handlers, decorators, and utilities resolve collaborators without manual
+wire-up.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,6 +16,8 @@ import threading
 from collections.abc import Callable, Mapping
 from typing import Self, cast
 
+from pydantic import BaseModel
+
 from flext_core._models.container import FlextModelsContainer
 from flext_core.config import FlextConfig
 from flext_core.context import FlextContext
@@ -24,10 +28,12 @@ from flext_core.typings import FlextTypes, T
 
 
 class FlextContainer(FlextProtocols.Configurable):
-    """Type-safe dependency injection container for service management.
+    """Singleton DI container aligned with the dispatcher-first CQRS flow.
 
-    Provides centralized service management with singleton pattern support,
-    type-safe registration and resolution, and automatic dependency injection.
+    Services and factories are registered once and resolved by handlers,
+    decorators, and utilities without leaking infrastructure concerns into the
+    domain layer. Resolution returns ``FlextResult`` to keep failure handling
+    explicit and composable.
     """
 
     _global_instance: Self | None = None
@@ -127,17 +133,41 @@ class FlextContainer(FlextProtocols.Configurable):
         self.configure(config)
         return self
 
-    def with_service(self, name: str, service: object) -> Self:
-        """Fluent interface for service registration."""
+    def with_service(
+        self,
+        name: str,
+        service: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | Callable[..., FlextTypes.GeneralValueType]
+        ),
+    ) -> Self:
+        """Fluent interface for service registration.
+
+        Accepts GeneralValueType (primitives, sequences, mappings), BaseModel instances,
+        or callables for service registration.
+        """
         self.register(name, service)
         return self
 
-    def with_factory(self, name: str, factory: Callable[[], object]) -> Self:
+    def with_factory(
+        self,
+        name: str,
+        factory: Callable[[], FlextTypes.GeneralValueType],
+    ) -> Self:
         """Fluent interface for factory registration."""
         self.register_factory(name, factory)
         return self
 
-    def register(self, name: str, service: object) -> FlextResult[bool]:
+    def register(
+        self,
+        name: str,
+        service: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | Callable[..., FlextTypes.GeneralValueType]
+        ),
+    ) -> FlextResult[bool]:
         """Register a service instance."""
         try:
             if name in self._services:
