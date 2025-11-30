@@ -1,4 +1,4 @@
-"""Utilities module - FlextUtilitiesValidation.
+"""Dispatcher-friendly validation helpers.
 
 Extracted from flext_core.utilities for better modularity.
 
@@ -57,7 +57,12 @@ from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesValidation:
-    """Unified validation patterns using railway composition."""
+    """Unified validation patterns using railway composition.
+
+    These helpers support dispatcher handlers and services with reusable,
+    composable validators. For data-model field validation prefer Pydantic
+    field constraints: https://docs.pydantic.dev/2.12/api/fields/.
+    """
 
     @property
     def logger(self) -> StructlogLogger:
@@ -67,14 +72,6 @@ class FlextUtilitiesValidation:
         Uses same structure/config as FlextLogger but without circular import.
         """
         return FlextRuntime.get_logger(__name__)
-
-    """Unified validation patterns using railway composition.
-
-    Use for composite/pipeline validation and complex business logic validators.
-    For field validation, use Pydantic Field constraints directly.
-
-    See: https://docs.pydantic.dev/2.12/api/fields/
-    """
 
     # CONSOLIDATED: Use FlextUtilitiesCache for cache operations (no duplication)
     # NOTE: _normalize_component, _sort_key, _sort_dict_keys below are INTERNAL
@@ -112,7 +109,7 @@ class FlextUtilitiesValidation:
         """Handle Pydantic model conversion."""
         # Type narrowing: check if component has model_dump method
         if hasattr(component, "model_dump") and callable(
-            getattr(component, "model_dump", None)
+            getattr(component, "model_dump", None),
         ):
             # Type narrowing: component has model_dump, safe to call
             try:
@@ -155,7 +152,7 @@ class FlextUtilitiesValidation:
             return FlextUtilitiesValidation._normalize_dict_like(component, visited)
         if isinstance(component, Sequence):
             return FlextUtilitiesValidation._normalize_sequence_helper(
-                component, visited
+                component, visited,
             )
         if isinstance(component, set):
             # Convert set to tuple for GeneralValueType compatibility
@@ -176,6 +173,87 @@ class FlextUtilitiesValidation:
         return str(component)
 
     @staticmethod
+    def _convert_items_result_to_dict(
+        items_result: object,
+    ) -> dict[str, FlextTypes.GeneralValueType]:
+        """Convert items() result to dict (helper for _convert_to_mapping).
+
+        Args:
+            items_result: Result from calling items() method
+
+        Returns:
+            dict[str, FlextTypes.GeneralValueType]: Converted dictionary
+
+        Raises:
+            TypeError: If items_result cannot be converted to dict
+
+        """
+        if isinstance(items_result, (list, tuple)):
+            # items() returned list/tuple of pairs - convert to dict
+            return dict(items_result)
+
+        # items() returned something else - try to iterate
+        if not hasattr(items_result, "__iter__"):
+            result_type = type(items_result)
+            msg = f"items() returned non-iterable: {result_type}"
+            raise TypeError(msg)
+
+        # Cast to satisfy type checker - items_result is iterable at runtime
+        items_iterable = cast("Iterable[tuple[str, object]]", items_result)
+        items_list = list(items_iterable)
+
+        # Convert tuples to dict, normalizing values
+        temp_dict: dict[str, FlextTypes.GeneralValueType] = {}
+        for k, v in items_list:
+            if isinstance(k, str):
+                # Normalize value first, then cast to GeneralValueType
+                normalized_v = FlextUtilitiesValidation._normalize_component(
+                    v, visited=None,
+                )
+                # normalized_v is already GeneralValueType from _normalize_component
+                temp_dict[k] = normalized_v
+        return temp_dict
+
+    @staticmethod
+    def _convert_to_mapping(
+        component: object,
+    ) -> Mapping[str, FlextTypes.GeneralValueType]:
+        """Convert object to Mapping (helper for _normalize_dict_like).
+
+        Args:
+            component: Object to convert to Mapping
+
+        Returns:
+            Mapping[str, FlextTypes.GeneralValueType]: Converted mapping
+
+        Raises:
+            TypeError: If component cannot be converted to dict
+
+        """
+        if isinstance(component, Mapping):
+            return component
+
+        if isinstance(component, dict):
+            return component
+
+        if hasattr(component, "items") and callable(getattr(component, "items", None)):
+            # Has items() method - convert to dict
+            items_method = component.items
+            items_result: object = items_method()
+            try:
+                return FlextUtilitiesValidation._convert_items_result_to_dict(
+                    items_result,
+                )
+            except (TypeError, ValueError) as e:
+                # Cannot convert - raise error
+                msg = f"Cannot convert {type(component).__name__}.items() to dict"
+                raise TypeError(msg) from e
+
+        # Cannot convert - raise error
+        msg = f"Cannot convert {type(component).__name__} to dict"
+        raise TypeError(msg)
+
+    @staticmethod
     def _normalize_dict_like(
         component: object,
         visited: set[int] | None = None,
@@ -185,60 +263,9 @@ class FlextUtilitiesValidation:
             visited = set()
 
         # Convert to Mapping for type safety
-        component_dict: Mapping[str, FlextTypes.GeneralValueType]
-        if isinstance(component, Mapping):
-            component_dict = component
-        elif hasattr(component, "items") and callable(
-            getattr(component, "items", None),
-        ):
-            # Has items() method - convert to dict
-            # Get items() method and call it - avoids pyright error on object type
-            items_method = component.items
-            items_result: object = items_method()
-            if isinstance(items_result, (list, tuple)):
-                # items() returned list/tuple of pairs - convert to dict
-                # Type narrowing: items_result is list or tuple of (str, object) pairs
-                component_dict = dict(items_result)
-            else:
-                # items() returned something else - try to iterate
-                try:
-                    # Type narrowing: items_result might be iterable
-                    if hasattr(items_result, "__iter__"):
-                        # Cast to satisfy type checker - items_result is iterable at runtime
-                        items_iterable = cast(
-                            "Iterable[tuple[str, object]]", items_result
-                        )
-                        items_list = list(items_iterable)
-                        # Type narrowing: convert tuples to dict, then normalize values
-                        # Create temporary mutable dict, then assign to component_dict
-                        temp_dict: dict[str, FlextTypes.GeneralValueType] = {}
-                        for k, v in items_list:
-                            if isinstance(k, str):
-                                # Normalize value first, then cast to GeneralValueType
-                                normalized_v = (
-                                    FlextUtilitiesValidation._normalize_component(
-                                        v, visited=None
-                                    )
-                                )
-                                # normalized_v is already GeneralValueType from _normalize_component
-                                temp_dict[k] = normalized_v
-                        component_dict = temp_dict
-                    else:
-                        result_type = type(items_result)
-                        msg = f"items() returned non-iterable: {result_type}"
-                        raise TypeError(msg)
-                except (TypeError, ValueError):
-                    # Cannot convert - raise error
-                    msg = f"Cannot convert {type(component).__name__}.items() to dict"
-                    raise TypeError(msg) from None
-        elif isinstance(component, dict):
-            # Direct dict - use as is
-            component_dict = component
-        else:
-            # Cannot convert - raise error
-            msg = f"Cannot convert {type(component).__name__} to dict"
-            raise TypeError(msg)
+        component_dict = FlextUtilitiesValidation._convert_to_mapping(component)
 
+        # Normalize values in the dictionary
         normalized_dict: dict[str, FlextTypes.GeneralValueType] = {}
         for k, v in component_dict.items():
             v_normalized = FlextUtilitiesValidation._normalize_value(v)
@@ -248,7 +275,7 @@ class FlextUtilitiesValidation:
             ):
                 # v_normalized is Mapping or Sequence, compatible with object parameter
                 normalized_dict[str(k)] = FlextUtilitiesValidation._normalize_component(
-                    v_normalized, visited
+                    v_normalized, visited,
                 )
             else:
                 normalized_dict[str(k)] = v_normalized
@@ -311,7 +338,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _sort_key(key: str | float) -> tuple[str, str]:
-        """Generate a sort key for consistent ordering (internal helper)."""
+        """Generate a sort key for consistent ordering."""
         key_str = str(key)
         return (key_str.casefold(), key_str)
 
@@ -336,11 +363,11 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def validate_pipeline(value: str, validators: list[object]) -> FlextResult[bool]:
-        """Validate using a pipeline of validators.
+        """Validate using a pipeline of validators and surface the first failure.
 
         Returns:
-            FlextResult[bool]: Success with True if all validators pass,
-                failure with error details if any validator fails
+            FlextResult[bool]: ``ok(True)`` when all validators pass or a failed
+            result describing the first violation.
 
         """
         for validator in validators:
@@ -470,7 +497,7 @@ class FlextUtilitiesValidation:
             raise TypeError(msg) from e
         # Use private _normalize_component to avoid infinite recursion
         normalized_dumped = FlextUtilitiesValidation._normalize_component(
-            dumped, visited=None
+            dumped, visited=None,
         )
         # Return as dict with type marker for cache structure
         return {"type": "pydantic", "data": normalized_dumped}
@@ -544,12 +571,12 @@ class FlextUtilitiesValidation:
             # vars() always returns dict[str, object] when successful
             # Type narrowing: vars_result is always a dict
             value_vars_dict: dict[str, FlextTypes.GeneralValueType] = cast(
-                "dict[str, FlextTypes.GeneralValueType]", vars_result
+                "dict[str, FlextTypes.GeneralValueType]", vars_result,
             )
             # Process vars_result - normalize all values
             normalized_vars = {
                 str(key): FlextUtilitiesValidation._normalize_component(
-                    val, visited=None
+                    val, visited=None,
                 )
                 for key, val in sorted(
                     value_vars_dict.items(),
@@ -1801,7 +1828,7 @@ class FlextUtilitiesValidation:
         # Cast to correct type for type checker - config is validated as dict-like above
         validated_config = cast("Mapping[str, FlextTypes.GeneralValueType]", config)
         return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].ok(
-            validated_config
+            validated_config,
         )
 
     @staticmethod

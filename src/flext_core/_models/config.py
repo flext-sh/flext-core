@@ -14,8 +14,8 @@ from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
-from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.metadata import Metadata
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -31,7 +31,7 @@ class FlextModelsConfig:
     All nested classes are accessed via FlextModels.Config.* in the main models.py.
     """
 
-    class ProcessingRequest(FlextModelsEntity.ArbitraryTypesModel):
+    class ProcessingRequest(FlextModelsBase.ArbitraryTypesModel):
         """Enhanced processing request with advanced validation."""
 
         model_config = ConfigDict(
@@ -87,7 +87,7 @@ class FlextModelsConfig:
 
             return FlextResult[bool].ok(True)
 
-    class RetryConfiguration(FlextModelsEntity.ArbitraryTypesModel):
+    class RetryConfiguration(FlextModelsBase.ArbitraryTypesModel):
         """Retry configuration with advanced validation."""
 
         max_attempts: int = Field(
@@ -152,7 +152,7 @@ class FlextModelsConfig:
                 raise ValueError(msg)
             return self
 
-    class ValidationConfiguration(FlextModelsEntity.ArbitraryTypesModel):
+    class ValidationConfiguration(FlextModelsBase.ArbitraryTypesModel):
         """Validation configuration."""
 
         enable_strict_mode: bool = Field(default_factory=lambda: True)
@@ -178,20 +178,12 @@ class FlextModelsConfig:
         def validate_additional_validators(cls, v: list[object]) -> list[object]:
             """Validate custom validators are callable."""
             for validator in v:
-                result = FlextUtilities.Validation.validate_callable(
-                    validator,
-                    error_message="All validators must be callable",
-                    error_code=FlextConstants.Errors.TYPE_ERROR,
-                )
-                if result.is_failure:
+                # Direct callable check - object can be any callable, not just GeneralValueType
+                if not callable(validator):
                     base_msg = "Validator must be callable"
-                    error_msg = (
-                        f"{base_msg}: {result.error}"
-                        if result.error
-                        else f"{base_msg} (validation failed)"
-                    )
+                    error_msg = f"{base_msg}: got {type(validator).__name__}"
                     raise FlextExceptions.TypeError(
-                        message=error_msg,
+                        error_msg,
                         error_code=FlextConstants.Errors.TYPE_ERROR,
                     )
             return v

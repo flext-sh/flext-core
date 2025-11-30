@@ -54,7 +54,7 @@ class TestServiceResultProperty:
 
     @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
     def test_result_property_returns_unwrapped_value(
-        self, case: ServiceTestCase
+        self, case: ServiceTestCase,
     ) -> None:
         """V2: .result returns unwrapped domain result directly."""
         service = ServiceTestCases.create_service(case)
@@ -66,7 +66,7 @@ class TestServiceResultProperty:
 
     @pytest.mark.parametrize("case", ServiceTestCases.VALIDATE_SUCCESS)
     def test_result_property_with_validation_success(
-        self, case: ServiceTestCase
+        self, case: ServiceTestCase,
     ) -> None:
         """V2: Validation success returns unwrapped value."""
         service = ServiceTestCases.create_service(case)
@@ -78,7 +78,7 @@ class TestServiceResultProperty:
 
     @pytest.mark.parametrize("case", ServiceTestCases.VALIDATE_FAILURE)
     def test_result_property_with_validation_failure(
-        self, case: ServiceTestCase
+        self, case: ServiceTestCase,
     ) -> None:
         """V2: Validation failure raises exception."""
         service = ServiceTestCases.create_service(case)

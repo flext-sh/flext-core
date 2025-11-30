@@ -168,14 +168,14 @@ class TestLayer3MessageProcessing:
         assert result.is_success
 
     @pytest.mark.parametrize(
-        "scenario", DispatcherScenarios.PROCESSOR_SCENARIOS, ids=lambda s: s.name
+        "scenario", DispatcherScenarios.PROCESSOR_SCENARIOS, ids=lambda s: s.name,
     )
     def test_process_registered_processor(self, scenario: ProcessorScenario) -> None:
         """Test processing through registered processor."""
         dispatcher = DispatcherTestHelpers.create_test_dispatcher()
         result = dispatcher.process(scenario.processor_name, scenario.input_data)
         DispatcherTestHelpers.assert_processor_result(
-            result, scenario.expected_success, scenario.expected_value
+            result, scenario.expected_success, scenario.expected_value,
         )
 
     def test_process_unregistered_processor_fails(self) -> None:

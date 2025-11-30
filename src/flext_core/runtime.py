@@ -1,4 +1,4 @@
-"""Layer 0.5: Runtime Integration Bridge for External Libraries.
+"""Runtime bridge exposing external libraries with dispatcher-safe boundaries.
 
 **ARCHITECTURE LAYER 0.5** - Integration Bridge (Minimal Dependencies)
 
@@ -98,7 +98,7 @@ class StructlogLogger(BindableLogger, Protocol):
 
 
 class FlextRuntime:
-    """Runtime Utilities and External Library Integration Bridge (Layer 0.5).
+    """Expose structlog, DI providers, and validation helpers to higher layers.
 
     **ARCHITECTURE LAYER 0.5** - Integration Bridge with minimal dependencies
 
@@ -225,16 +225,14 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: object,
-    ) -> TypeGuard[
-        dict[str, FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]]
-    ]:
+    ) -> TypeGuard[Mapping[str, FlextTypes.GeneralValueType]]:
         """Type guard to check if value is dict-like.
 
         Args:
             value: Value to check
 
         Returns:
-            True if value is a dict[str, FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]] or dict-like object, False otherwise
+            True if value is a Mapping[str, GeneralValueType] or dict-like object, False otherwise
 
         """
         if isinstance(value, dict):
@@ -255,9 +253,7 @@ class FlextRuntime:
     @staticmethod
     def is_list_like(
         value: object,
-    ) -> TypeGuard[
-        list[FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]]
-    ]:
+    ) -> TypeGuard[Sequence[FlextTypes.GeneralValueType]]:
         """Type guard to check if value is list-like.
 
         Args:
@@ -482,11 +478,8 @@ class FlextRuntime:
     def level_based_context_filter(
         _logger: FlextTypes.Logging.LoggerContextType,
         method_name: str,
-        event_dict: dict[
-            str,
-            FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object],
-        ],
-    ) -> dict[str, FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]]:
+        event_dict: Mapping[str, FlextTypes.GeneralValueType],
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Filter context variables based on log level.
 
         Removes context variables that are restricted to specific log levels
@@ -532,10 +525,7 @@ class FlextRuntime:
         current_level = level_hierarchy.get(method_name.lower(), 20)  # Default to INFO
 
         # Process all keys in event_dict
-        filtered_dict: dict[
-            str,
-            FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object],
-        ] = {}
+        filtered_dict: dict[str, FlextTypes.GeneralValueType] = {}
         for key, value in event_dict.items():
             # Check if this is a level-prefixed variable
             if key.startswith("_level_"):

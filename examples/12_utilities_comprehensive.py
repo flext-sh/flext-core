@@ -1,20 +1,12 @@
 #!/usr/bin/env python3
-"""12 - FlextUtilities: Essential Utility Functions.
+"""12 - FlextUtilities: essential validation and reliability helpers.
 
-This example demonstrates the simplified FlextUtilities API providing
-essential validation, generation, and processing utilities for the FLEXT ecosystem.
-
-Key Concepts Demonstrated:
-- Validation: String, email, hostname, file path validation
-- ID Generation: UUID, event, command, query, correlation IDs
-- Timestamp Generation: Unix and ISO timestamps
-- Cache Operations: Object caching and key generation
-- Type Conversion: String to int/float conversion
-- Reliability: Timeout and circuit breaker patterns
+This example walks through dispatcher-friendly utilities for validation, ID
+generation, caching, type conversion, and reliability primitives that all
+return ``FlextResult`` outcomes.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -27,34 +19,15 @@ from flext_core import FlextResult, FlextService
 
 
 class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
-    """Service demonstrating essential FlextUtilities patterns with FlextMixins infrastructure.
+    """Service showcasing FlextUtilities with inherited dispatcher context.
 
-    This service inherits from FlextService to demonstrate:
-    - Inherited container property (FlextContainer singleton)
-    - Inherited logger property (FlextLogger with service context - UTILITIES FOCUS!)
-    - Inherited context property (FlextContext for request/correlation tracking)
-    - Inherited config property (FlextConfig with application settings)
-    - Inherited metrics property (FlextMetrics for observability)
-
-    FlextUtilities provides:
-    - Validation: String, email, hostname, file path validation
-    - ID Generation: UUID, event, command, query, correlation IDs
-    - Timestamp Generation: Unix and ISO timestamps
-    - Cache Operations: Object caching and key generation
-    - Type Conversion: String to int/float conversion
-    - Reliability: Timeout and circuit breaker patterns
+    The mixin stack provides container, logger, context, config, and metrics
+    accessors so the example can focus on utilities for validation, ID
+    generation, caching, conversions, and reliability patterns.
     """
 
     def __init__(self) -> None:
-        """Initialize with inherited FlextMixins infrastructure.
-
-        Inherited properties (no manual instantiation needed):
-        - self.logger: FlextLogger with service context (utilities operations)
-        - self.container: FlextContainer singleton (for service dependencies)
-        - self.context: FlextContext (for correlation tracking)
-        - self.config: FlextConfig (for application configuration)
-        - self.metrics: FlextMetrics (for observability)
-        """
+        """Initialize with FlextMixins infrastructure already configured."""
         super().__init__()
         self._cache: dict[str, object] = {}
 
@@ -259,7 +232,7 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
         validation_result = cast(
             "FlextResult[dict[str, object]]",
             FlextResult[dict[str, object]].create_from_callable(
-                risky_validation_operation
+                risky_validation_operation,
             ),
         )
         if validation_result.is_success:
@@ -326,7 +299,7 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
                 return FlextResult[object].fail(
-                    result.error or "Email validation failed"
+                    result.error or "Email validation failed",
                 )
             return FlextResult[object].fail("Invalid input")
 
@@ -336,7 +309,7 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
                 return FlextResult[object].fail(
-                    result.error or "Hostname validation failed"
+                    result.error or "Hostname validation failed",
                 )
             return FlextResult[object].fail("Invalid input")
 

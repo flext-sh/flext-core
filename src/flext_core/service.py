@@ -1,14 +1,9 @@
-"""FlextService - Domain Service Base Class Module.
+"""Domain service base class for FLEXT applications.
 
-This module provides FlextService[T], a base class for implementing domain
-services with infrastructure support including dependency injection, validation,
-type-safe result handling, and auto-execution patterns. Implements structural
-typing via FlextProtocols.Service through duck typing, providing a foundation
-for CQRS command and query services throughout the FLEXT ecosystem.
-
-Scope: Domain service base class, auto-execution pattern, business rule validation,
-service metadata, type-safe execution infrastructure, railway-oriented programming
-with FlextResult, and dependency injection support.
+FlextService[T] supplies validation, dependency injection, and railway-style
+result handling for domain services that participate in CQRS flows. It relies
+on structural typing to satisfy ``FlextProtocols.Service`` and aligns with the
+dispatcher-centric architecture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -42,52 +37,17 @@ class FlextService[TDomainResult](
     FlextMixins,
     ABC,
 ):
-    """Domain Service Base Class for FLEXT ecosystem.
+    """Base class for domain services used in CQRS flows.
 
-    Provides comprehensive infrastructure support for implementing domain services
-    with type-safe execution, dependency injection, business rule validation,
-    and auto-execution patterns. Implements structural typing via FlextProtocols.Service
-    through duck typing (no inheritance required), serving as the foundation for
-    CQRS command and query services throughout the FLEXT ecosystem.
-
-    Core Features:
-    - Abstract base class with generic type parameters for type-safe results
-    - Railway-oriented programming with FlextResult for error handling
-    - Auto-execution pattern for immediate service execution on instantiation
-    - Business rule validation with extensible validation pipeline
-    - Dependency injection support through FlextMixins
-    - Pydantic integration for configuration and validation
-    - Service metadata and introspection capabilities
-
-    Architecture:
-    - Single class with nested service execution logic
-    - DRY principle applied through centralized result handling
-    - SOLID principles: Single Responsibility for domain service execution
-    - Railway pattern for consistent error handling without exceptions
-    - Structural typing for protocol compliance without inheritance
-
-    Type Parameters:
-    - TDomainResult: The type of result returned by service execution
-
-    Usage Examples:
-        >>> # Standard service usage
-        >>> class UserService(FlextService[User]):
-        ...     def execute(self) -> FlextResult[User]:
-        ...         # Domain logic here
-        ...         user = User(id=1, name="John")
-        ...         return self.ok(user)
-        >>>
-        >>> service = UserService()
-        >>> result = service.execute()
-        >>> if result.is_success:
-        ...     user = result.value
+    Subclasses implement ``execute`` to run business logic and return
+    ``FlextResult`` values. The base provides validation hooks, dependency
+    injection, and context-aware logging while remaining protocol compliant via
+    structural typing.
     """
 
-    def __new__(  # type: ignore[misc]  # __new__ can return TDomainResult for auto_execute pattern
+    def __new__(
         cls,
-        **kwargs: FlextTypes.ScalarValue
-        | Sequence[FlextTypes.ScalarValue]
-        | Mapping[str, FlextTypes.ScalarValue],
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> Self | TDomainResult:
         """Create service instance.
 
@@ -115,12 +75,18 @@ class FlextService[TDomainResult](
             # Initialize the instance
             # Use type(instance) to avoid mypy error about accessing __init__ on instance
             type(instance).__init__(instance, **kwargs)
-            # Execute and return result directly (V2 Auto pattern)
+            # Execute and get result (V2 Auto pattern)
             # Concrete classes with auto_execute=True must implement execute()
-            result = instance.execute()  # pyright: ignore[reportAbstractUsage]
+            # After isabstract check, we know execute() exists on concrete class
+            execute_method = getattr(instance, "execute", None)
+            if not callable(execute_method):
+                msg = f"Class {cls.__name__} must implement execute() method"
+                raise TypeError(msg)
+            result = execute_method()
+            # For auto_execute=True, return unwrapped result directly
             if result.is_success:
-                return result.value  # type: ignore[return-value]
-            # On failure, raise exception
+                return result.value
+            # On failure, raise exception immediately
             raise FlextExceptions.BaseError(result.error or "Service execution failed")
         return instance
 
@@ -140,7 +106,7 @@ class FlextService[TDomainResult](
 
     def __init__(
         self,
-        **data: object,
+        **data: FlextTypes.GeneralValueType,
     ) -> None:
         """Initialize service with configuration data.
 
@@ -244,17 +210,19 @@ class FlextService[TDomainResult](
 
     @abstractmethod
     def execute(self) -> FlextResult[TDomainResult]:
-        """Execute domain service logic - abstract method to be implemented by subclasses.
+        """Execute domain service logic.
 
         This is the core business logic method that must be implemented by all
         concrete service subclasses. It contains the actual domain operations,
         business rules, and result generation logic specific to each service.
 
         The method should follow railway-oriented programming principles,
-        returning FlextResult[T] for consistent error handling and success indication.
+        returning ``FlextResult[T]`` for consistent error handling and success
+        indication.
 
         Returns:
-            FlextResult[TDomainResult]: Success with domain result or failure with error details
+            FlextResult[TDomainResult]: Success with domain result or failure
+                with error details
 
         Note:
             Implementations should focus on business logic only. Infrastructure

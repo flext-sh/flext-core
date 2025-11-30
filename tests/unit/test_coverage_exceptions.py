@@ -39,7 +39,7 @@ class ExceptionScenarios:
 
     EXCEPTION_CREATION: ClassVar[list[ExceptionCreationScenario]] = [
         ExceptionCreationScenario(
-            "validation_basic", FlextExceptions.ValidationError, "Invalid input", {}, {}
+            "validation_basic", FlextExceptions.ValidationError, "Invalid input", {}, {},
         ),
         ExceptionCreationScenario(
             "validation_with_field",
@@ -183,7 +183,7 @@ class TestFlextExceptionsHierarchy:
     """Test complete exception hierarchy using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "scenario", ExceptionScenarios.EXCEPTION_CREATION, ids=lambda s: s.name
+        "scenario", ExceptionScenarios.EXCEPTION_CREATION, ids=lambda s: s.name,
     )
     def test_exception_creation(self, scenario: ExceptionCreationScenario) -> None:
         """Test creating exceptions with various scenarios."""
@@ -229,7 +229,7 @@ class TestExceptionIntegration:
         try:
             error_msg = "Validation failed"
             raise FlextExceptions.ValidationError(
-                error_msg, field="email", value="invalid"
+                error_msg, field="email", value="invalid",
             )
         except FlextExceptions.ValidationError as e:
             result = FlextResult[bool].fail(f"Error in user creation: {e}")
@@ -251,7 +251,7 @@ class TestExceptionEdgeCases:
         ids=["empty", "unicode", "long", "special_chars"],
     )
     def test_exception_message_variations(
-        self, message: str, expected_in_str: bool
+        self, message: str, expected_in_str: bool,
     ) -> None:
         """Test exception with various message formats."""
         error = FlextExceptions.ValidationError(message)
@@ -301,7 +301,7 @@ class TestExceptionProperties:
     def test_base_error_with_metadata(self) -> None:
         """Test BaseError with metadata."""
         error = FlextExceptions.NotFoundError(
-            "Resource not found", resource_id="123", resource_type="User"
+            "Resource not found", resource_id="123", resource_type="User",
         )
         assert "Resource not found" in str(error)
 
@@ -317,7 +317,7 @@ class TestExceptionContext:
             "timestamp": 1234567890,
         }
         error = FlextExceptions.ValidationError(
-            "Validation failed in context"
+            "Validation failed in context",
         ).with_context(**context_dict)
         assert "user_id" in error.metadata.attributes
         assert error.metadata.attributes["user_id"] == "123"
@@ -356,7 +356,7 @@ class TestExceptionSerialization:
     def test_exception_to_dict(self) -> None:
         """Test converting exception to dictionary."""
         error = FlextExceptions.ValidationError(
-            "Invalid email", field="email", value="not-valid"
+            "Invalid email", field="email", value="not-valid",
         )
         error_dict = error.to_dict()
         assert error_dict["error_type"] == "ValidationError"
@@ -366,7 +366,7 @@ class TestExceptionSerialization:
     def test_exception_dict_with_metadata(self) -> None:
         """Test exception dict includes metadata."""
         error = FlextExceptions.OperationError(
-            "Operation failed", operation="INSERT"
+            "Operation failed", operation="INSERT",
         ).with_context(user_id="123", timestamp=1234567890)
         error_dict: dict[str, object] = error.to_dict()
         metadata = cast("dict[str, object]", error_dict["metadata"])
@@ -471,7 +471,7 @@ class TestHierarchicalExceptionSystem:
         ids=["strict", "warn", "permissive"],
     )
     def test_flext_exception_config_levels(
-        self, level_name: str, expected_value: str
+        self, level_name: str, expected_value: str,
     ) -> None:
         """Test setting and getting global failure level."""
         config = FlextExceptions.Configuration
@@ -490,10 +490,10 @@ class TestHierarchicalExceptionSystem:
         config = FlextExceptions.Configuration
         failure_level = FlextConstants.Exceptions.FailureLevel
         config.register_library_exception_level(
-            "test_lib", ValueError, failure_level.WARN
+            "test_lib", ValueError, failure_level.WARN,
         )
         level = config.get_effective_level(
-            library_name="test_lib", exception_type=ValueError
+            library_name="test_lib", exception_type=ValueError,
         )
         assert level == failure_level.WARN
 
@@ -515,11 +515,11 @@ class TestHierarchicalExceptionSystem:
         try:
             config.set_global_level(failure_level.PERMISSIVE)
             config.register_library_exception_level(
-                "test_lib", ValueError, failure_level.WARN
+                "test_lib", ValueError, failure_level.WARN,
             )
             assert (
                 config.get_effective_level(
-                    library_name="test_lib", exception_type=ValueError
+                    library_name="test_lib", exception_type=ValueError,
                 )
                 == failure_level.WARN
             )

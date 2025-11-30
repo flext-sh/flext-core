@@ -11,8 +11,8 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 ┌─────────────────────────────────────────────────────────────┐
 │                  Layer 4: Application                        │
 │   (Use cases, orchestration)                                │
-│   FlextHandlers, FlextBus, FlextDispatcher                  │
-│   FlextRegistry, FlextProcessors, FlextDecorators           │
+│   FlextHandlers, FlextDispatcher, FlextRegistry             │
+│   FlextDecorators                                           │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -201,67 +201,51 @@ FLEXT-Core follows **Clean Architecture** with clear separation of concerns acro
 
 ### Layer 3: Application (Use Cases)
 
-**Purpose**: Orchestrate business logic and coordinate between domain and infrastructure.
+**Purpose**: Coordinate domain logic through CQRS-style handlers with reliability and observability baked in.
 
 **Modules**:
 
-| Module          | Coverage | Purpose                               |
-| --------------- | -------- | ------------------------------------- |
-| `bus.py`        | 94%      | Message bus with middleware pipeline  |
-| `cqrs.py`       | 100%     | CQRS patterns (Command, Query, Event) |
-| `handlers.py`   | 66%      | Handler registry and execution        |
-| `dispatcher.py` | 45%      | Unified command/query dispatcher      |
-| `registry.py`   | 91%      | Handler registry management           |
-| `processors.py` | 56%      | Message processing orchestration      |
+| Module            | Coverage | Purpose                                            |
+| ----------------- | -------- | -------------------------------------------------- |
+| `handlers.py`     | 66%      | CQRS handler foundation and execution pipeline     |
+| `dispatcher.py`   | 45%      | Unified command/query dispatcher with resiliency   |
+| `registry.py`     | 91%      | Handler registration and discovery utilities       |
+| `decorators.py`   | 64%      | Cross-cutting concern decorators (retry, timeout)  |
 
 **Key Patterns**:
 
-1. **CQRS** (`FlextBus`):
+1. **CQRS Dispatch** (`FlextDispatcher`):
 
    ```python
-   # Command - write operation
-   class CreateUserCommand:
-       name: str
-       email: str
+   dispatcher = FlextDispatcher()
 
-   # Query - read operation
-   class GetUserQuery:
-       user_id: str
+   dispatcher.register_handler(CreateUserCommand, create_user_handler)
+   dispatcher.register_handler(GetUserQuery, get_user_handler)
 
-   # Event - domain event
-   class UserCreatedEvent:
-       user_id: str
-       timestamp: datetime
-
-   # Bus usage
-   bus = FlextBus()
-   result = bus.execute(CreateUserCommand(name="Alice", email="alice@example.com"))
+   # Reliability: retries, timeouts, rate limiting, and caching are configurable
+   result = dispatcher.dispatch(CreateUserCommand(name="Alice", email="alice@example.com"))
    ```
 
-2. **Message Bus** (`FlextBus`):
-   - Command/Query/Event routing
-   - Middleware pipeline (validation, logging, caching)
-   - Result caching with LRU strategy
-   - Context propagation
+2. **Handler Foundation** (`FlextHandlers`):
+   - Validation pipeline before execution
+   - Context propagation for logging and tracing
+   - Railway-oriented error handling via `FlextResult`
 
-3. **Handler Registry** (`FlextHandlers`, `FlextRegistry`):
-   - Type-based handler registration
-   - Handler discovery and resolution
-   - Lifecycle management
-   - Batch registration support
+3. **Registration Utilities** (`FlextRegistry`):
+   - Batch or single handler registration
+   - Idempotent registration with summary reporting
+   - Callable or class-based handler support
 
-4. **Dispatcher** (`FlextDispatcher`):
-   - Unified dispatch façade
-   - Multi-handler support
-   - Metadata propagation
-   - Error aggregation
+4. **Decorators** (`FlextDecorators`):
+   - `@retry`, `@timeout`, `@with_correlation` for reliability and tracing
+   - `@inject` for dependency injection from `FlextContainer`
+   - `@railway` for automatic `FlextResult` wrapping
 
 **Design Principles**:
 
-- Use case orchestration
-- No business logic (delegates to domain)
-- Infrastructure-agnostic
-- Composable pipelines
+- Use case orchestration without embedding business rules
+- Infrastructure-agnostic reliability (timeouts, retries, caching)
+- Composable pipelines with structural typing compliance
 
 ### Layer 4: Infrastructure (External Concerns)
 
@@ -362,7 +346,7 @@ Only outer layers depend on inner layers, never reversed.
 **Example**:
 
 - `FlextLogger` (Infrastructure) depends on `FlextContext` (Infrastructure)
-- `FlextBus` (Application) depends on `FlextResult` (Foundation)
+- `FlextDispatcher` (Application) depends on `FlextResult` (Foundation)
 - `FlextModels` (Domain) depends on `FlextResult` (Foundation)
 - `FlextResult` (Foundation) depends on nothing
 
@@ -407,7 +391,7 @@ FlextModels ←────── FlextService   │
     |          FlextHandlers       │
     ↑              ↑               │
     │              │               │
-FlextBus ──────────┘               │
+FlextRegistry ─────┘               │
     ↑                              │
     │                              │
 FlextDispatcher                    │
@@ -435,9 +419,9 @@ FlextContext
 
 ### Structural Patterns
 
-1. **Façade**: `FlextDispatcher` (simplifies FlextBus/Registry)
+1. **Façade**: `FlextDispatcher` (simplifies handler orchestration/registry)
 2. **Composite**: `FlextModels.AggregateRoot` with child entities
-3. **Decorator**: Middleware pipeline in `FlextBus`
+3. **Decorator**: Reliability decorators in `FlextDecorators`
 
 ### Behavioral Patterns
 
@@ -545,11 +529,11 @@ See `examples/automation_showcase.py` for complete working examples.
 2. **New Command/Query**:
    - Define message class
    - Create handler
-   - Register with `FlextBus` or `FlextDispatcher`
+   - Register with `FlextRegistry` or `FlextDispatcher`
 
 3. **New Middleware**:
    - Implement middleware callable
-   - Register with `FlextBus.apply_middleware()`
+   - Wrap handler with `FlextDecorators` (e.g., `@retry`, `@timeout`)
 
 4. **New Context Type**:
    - Extend `FlextContext` with new scope

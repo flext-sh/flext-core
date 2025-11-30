@@ -1,7 +1,8 @@
-"""Domain utilities for DDD patterns - Generic helpers for Entities, Value Objects, Aggregates.
+"""Domain helper utilities for entities, value objects, and aggregates.
 
-This module provides reusable generic utilities for Domain-Driven Design patterns
-used across flext-core and dependent projects.
+The helpers consolidate common DDD checks so domain services and dispatcher
+handlers can validate identity and immutability without duplicating boilerplate
+logic.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,14 +17,7 @@ from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesDomain:
-    """Generic utilities for Domain-Driven Design patterns.
-
-    Provides reusable helper methods for:
-    - Entity comparison and hashing by unique ID
-    - Value Object immutability validation
-    - Aggregate Root consistency checks
-    - Domain Event validation patterns
-    """
+    """Reusable DDD helpers for dispatcher-driven domain workflows."""
 
     @property
     def logger(self) -> StructlogLogger:

@@ -98,7 +98,7 @@ class OrderService(FlextService):
 **Pattern:** Separate read (queries) and write (commands) operations.
 
 ```python
-from flext_core import FlextBus, FlextResult
+from flext_core import FlextDispatcher, FlextResult
 
 # Command - modifies state
 class CreateUserCommand:
@@ -111,19 +111,19 @@ class GetUserQuery:
     def __init__(self, user_id: str):
         self.user_id = user_id
 
-# Handler for command
-@bus.command_handler
-class CreateUserHandler:
-    def handle(self, command: CreateUserCommand) -> FlextResult[User]:
-        # Create and return user
-        pass
+dispatcher = FlextDispatcher()
 
-# Handler for query
-@bus.query_handler
-class GetUserHandler:
-    def handle(self, query: GetUserQuery) -> FlextResult[User]:
-        # Retrieve and return user (no modification)
-        pass
+def create_user_handler(command: CreateUserCommand) -> FlextResult[User]:
+    # Create and return user
+    ...
+
+def get_user_handler(query: GetUserQuery) -> FlextResult[User]:
+    # Retrieve and return user (no modification)
+    ...
+
+dispatcher.register_handler(CreateUserCommand, create_user_handler)
+dispatcher.register_handler(GetUserQuery, get_user_handler)
+result = dispatcher.dispatch(CreateUserCommand("Alice", "alice@example.com"))
 ```
 
 **Benefits:**
@@ -304,32 +304,19 @@ else:
 **Pattern:** Chain middleware for cross-cutting concerns.
 
 ```python
-from flext_core import FlextBus
+from flext_core.decorators import FlextDecorators
+from flext_core import FlextDispatcher
 
-class LoggingMiddleware:
-    def process(self, message, next_handler):
-        logger.info(f"Processing {type(message).__name__}")
-        result = next_handler(message)
-        logger.info(f"Completed {type(message).__name__}")
-        return result
+dispatcher = FlextDispatcher()
 
-class ValidationMiddleware:
-    def process(self, message, next_handler):
-        if not self.is_valid(message):
-            return FlextResult.fail("Invalid message")
-        return next_handler(message)
+@FlextDecorators.retry(attempts=2)
+@FlextDecorators.timeout(seconds=3)
+@FlextDecorators.with_correlation
+def guarded_handler(message):
+    logger.info("processing", message=type(message).__name__)
+    return handle(message)
 
-class AuthenticationMiddleware:
-    def process(self, message, next_handler):
-        if not self.is_authenticated():
-            return FlextResult.fail("Not authenticated")
-        return next_handler(message)
-
-# Configure bus with middleware
-bus = FlextBus()
-bus.add_middleware(LoggingMiddleware())
-bus.add_middleware(ValidationMiddleware())
-bus.add_middleware(AuthenticationMiddleware())
+dispatcher.register_handler(MessageType, guarded_handler)
 ```
 
 **Benefits:**
