@@ -10,12 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Any, TypeVar
+from collections.abc import Mapping, Sequence
 
 from flext_core.result import FlextResult
-
-T = TypeVar("T")
+from flext_core.typings import FlextTypes, T
 
 
 class FlextUtilitiesPagination:
@@ -44,6 +42,7 @@ class FlextUtilitiesPagination:
 
         Returns:
             FlextResult with (page, page_size) tuple or error
+
         """
         page_str = str(default_page)
         if "page" in query_params:
@@ -88,6 +87,7 @@ class FlextUtilitiesPagination:
 
         Returns:
             FlextResult with validated parameters or error
+
         """
         if page < 1:
             return FlextResult.fail("Page must be >= 1")
@@ -119,6 +119,7 @@ class FlextUtilitiesPagination:
 
         Returns:
             FlextResult with pagination data dictionary or error
+
         """
         if data is None:
             data = []
@@ -128,7 +129,7 @@ class FlextUtilitiesPagination:
         total_pages = (total_count + page_size - 1) // page_size  # Ceiling division
 
         # Ensure page is within bounds
-        if page > total_pages and total_pages > 0:
+        if page > total_pages > 0:
             return FlextResult.fail(f"Page {page} exceeds total pages {total_pages}")
 
         has_next = page < total_pages
@@ -150,7 +151,7 @@ class FlextUtilitiesPagination:
     def build_pagination_response(
         pagination_data: dict[str, object],
         message: str | None = None,
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
         """Build paginated response dictionary.
 
         Args:
@@ -159,6 +160,7 @@ class FlextUtilitiesPagination:
 
         Returns:
             FlextResult with response dictionary or error
+
         """
         data = pagination_data.get("data")
         pagination = pagination_data.get("pagination")
@@ -166,9 +168,28 @@ class FlextUtilitiesPagination:
         if data is None or pagination is None:
             return FlextResult.fail("Invalid pagination data structure")
 
-        response: dict[str, Any] = {
-            "data": data,
-            "pagination": pagination,
+        # Type narrowing: data and pagination from dict.get() are object
+        # but we know they are valid GeneralValueType from prepare_pagination_data
+        # Convert to proper types for response dict
+        data_typed: FlextTypes.GeneralValueType
+        pagination_typed: FlextTypes.GeneralValueType
+
+        # Validate types match GeneralValueType
+        if isinstance(data, (str, int, float, bool, type(None), Sequence, Mapping)):
+            data_typed = data
+        else:
+            data_typed = str(data)
+
+        if isinstance(
+            pagination, (str, int, float, bool, type(None), Sequence, Mapping)
+        ):
+            pagination_typed = pagination
+        else:
+            pagination_typed = str(pagination)
+
+        response: dict[str, FlextTypes.GeneralValueType] = {
+            "data": data_typed,
+            "pagination": pagination_typed,
         }
 
         if message is not None:
@@ -177,7 +198,9 @@ class FlextUtilitiesPagination:
         return FlextResult.ok(response)
 
     @staticmethod
-    def extract_pagination_config(config: object | None) -> dict[str, int]:
+    def extract_pagination_config(
+        config: FlextTypes.GeneralValueType | None,
+    ) -> dict[str, int]:
         """Extract pagination configuration values - no fallbacks.
 
         Args:
@@ -185,6 +208,7 @@ class FlextUtilitiesPagination:
 
         Returns:
             Dictionary with pagination config values
+
         """
         # Default values
         default_page_size = 20
@@ -192,7 +216,7 @@ class FlextUtilitiesPagination:
 
         if config is not None:
             if hasattr(config, "default_page_size"):
-                default_page_size_value = getattr(config, "default_page_size")
+                default_page_size_value = config.default_page_size
                 if (
                     isinstance(default_page_size_value, int)
                     and default_page_size_value > 0
@@ -200,7 +224,7 @@ class FlextUtilitiesPagination:
                     default_page_size = default_page_size_value
 
             if hasattr(config, "max_page_size"):
-                max_page_size_value = getattr(config, "max_page_size")
+                max_page_size_value = config.max_page_size
                 if isinstance(max_page_size_value, int) and max_page_size_value > 0:
                     max_page_size = max_page_size_value
 

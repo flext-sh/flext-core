@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time as time_module
 from collections.abc import Callable
-from typing import Annotated, Self
+from typing import Annotated, Self, TypeAlias
 
 from pydantic import (
     BaseModel,
@@ -22,10 +22,13 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.base import FlextModelsBase
 from flext_core.constants import FlextConstants
-from flext_core.typings import GeneralValueType
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
+
+# Type alias for FlextTypes.GeneralValueType (imported from typings)
+# Already imported above
 
 # FlextUtilitiesValidation is safe to import at module level:
 # - validation.py uses ResultProtocol (not concrete FlextResult) to break circular import
@@ -46,7 +49,10 @@ class FlextModelsHandler:
     All nested classes are accessed via FlextModels.Handler.* in the main models.py.
     """
 
-    class Registration(FlextModelsEntity.ArbitraryTypesModel):
+    # Type alias for base class (mypy-compatible)
+    ArbitraryTypesModel: TypeAlias = FlextModelsBase.ArbitraryTypesModel
+
+    class Registration(ArbitraryTypesModel):
         """Handler registration with advanced validation."""
 
         name: str = Field(min_length=1, description="Handler name")
@@ -203,7 +209,9 @@ class FlextModelsHandler:
             ),
         ]
         _start_time: float | None = PrivateAttr(default=None)
-        _metrics_state: dict[str, GeneralValueType] | None = PrivateAttr(default=None)
+        _metrics_state: dict[str, FlextTypes.GeneralValueType] | None = PrivateAttr(
+            default=None,
+        )
 
         def start_execution(self) -> None:
             """Start execution timing.
@@ -245,11 +253,11 @@ class FlextModelsHandler:
             return round(elapsed * 1000, 2)
 
         @computed_field
-        def metrics_state(self) -> dict[str, GeneralValueType]:
+        def metrics_state(self) -> dict[str, FlextTypes.GeneralValueType]:
             """Get current metrics state.
 
             Returns:
-                Dictionary containing metrics state (empty dict[str, GeneralValueType] if not set)
+                Dictionary containing metrics state (empty dict[str, FlextTypes.GeneralValueType] if not set)
 
             Examples:
                 >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
@@ -264,7 +272,10 @@ class FlextModelsHandler:
                 self._metrics_state = {}
             return self._metrics_state
 
-        def set_metrics_state(self, state: dict[str, GeneralValueType]) -> None:
+        def set_metrics_state(
+            self,
+            state: dict[str, FlextTypes.GeneralValueType],
+        ) -> None:
             """Set metrics state.
 
             Direct assignment to _metrics_state. Use this to update metrics.

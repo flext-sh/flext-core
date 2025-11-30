@@ -8,16 +8,25 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable, Sequence
 
 from flext_core.result import FlextResult
-from flext_core.typings import GeneralValueType
-
-_logger = logging.getLogger(__name__)
+from flext_core.runtime import FlextRuntime, StructlogLogger
+from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesDataMapper:
+    """Data structure mapping and transformation utilities."""
+
+    @property
+    def logger(self) -> StructlogLogger:
+        """Get logger instance using FlextRuntime (avoids circular imports).
+
+        Returns structlog logger instance (Logger protocol).
+        Type annotation omitted to avoid importing structlog.typing here.
+        """
+        return FlextRuntime.get_logger(__name__)
+
     """Data structure mapping and transformation utilities.
 
     Provides generic methods for mapping between data structures, building
@@ -39,7 +48,7 @@ class FlextUtilitiesDataMapper:
     """
 
     @staticmethod
-    def convert_to_int_safe(value: GeneralValueType, default: int) -> int:
+    def convert_to_int_safe(value: FlextTypes.GeneralValueType, default: int) -> int:
         """Convert value to int with safe fallback on error.
 
         **Generic replacement for**: Manual int conversion with try/except
@@ -71,11 +80,11 @@ class FlextUtilitiesDataMapper:
 
     @staticmethod
     def map_dict_keys(
-        source: dict[str, GeneralValueType],
+        source: dict[str, FlextTypes.GeneralValueType],
         key_mapping: dict[str, str],
         *,
         keep_unmapped: bool = True,
-    ) -> FlextResult[dict[str, GeneralValueType]]:
+    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
         """Map dictionary keys using mapping specification.
 
         **Generic replacement for**: Key renaming in dicts
@@ -98,7 +107,7 @@ class FlextUtilitiesDataMapper:
 
         """
         try:
-            result: dict[str, GeneralValueType] = {}
+            result: dict[str, FlextTypes.GeneralValueType] = {}
 
             for key, value in source.items():
                 new_key = key_mapping.get(key)
@@ -107,11 +116,11 @@ class FlextUtilitiesDataMapper:
                 elif keep_unmapped:
                     result[key] = value
 
-            return FlextResult[dict[str, GeneralValueType]].ok(result)
+            return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(result)
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[dict[str, GeneralValueType]].fail(
-                f"Failed to map dict keys: {e}"
+            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
+                f"Failed to map dict keys: {e}",
             )
 
     @staticmethod
@@ -200,9 +209,12 @@ class FlextUtilitiesDataMapper:
 
     @staticmethod
     def transform_values(
-        source: dict[str, GeneralValueType],
-        transformer: Callable[[GeneralValueType], GeneralValueType],
-    ) -> dict[str, GeneralValueType]:
+        source: dict[str, FlextTypes.GeneralValueType],
+        transformer: Callable[
+            [FlextTypes.GeneralValueType],
+            FlextTypes.GeneralValueType,
+        ],
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Transform all values in dict using transformer function.
 
         **Generic replacement for**: Manual dict value transformations
@@ -226,9 +238,9 @@ class FlextUtilitiesDataMapper:
 
     @staticmethod
     def filter_dict(
-        source: dict[str, GeneralValueType],
-        predicate: Callable[[str, GeneralValueType], bool],
-    ) -> dict[str, GeneralValueType]:
+        source: dict[str, FlextTypes.GeneralValueType],
+        predicate: Callable[[str, FlextTypes.GeneralValueType], bool],
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Filter dict by predicate function on key-value pairs.
 
         **Generic replacement for**: Dict comprehensions with filters
@@ -287,12 +299,15 @@ class FlextUtilitiesDataMapper:
         return {v: k for k, v in source.items()}
 
     @staticmethod
-    def is_json_primitive(value: GeneralValueType) -> bool:
+    def is_json_primitive(value: FlextTypes.GeneralValueType) -> bool:
         """Check if value is a JSON primitive type (str, int, float, bool, None)."""
         return isinstance(value, (str, int, float, bool, type(None)))
 
     @classmethod
-    def convert_to_json_value(cls, value: GeneralValueType) -> GeneralValueType:
+    def convert_to_json_value(
+        cls,
+        value: FlextTypes.GeneralValueType,
+    ) -> FlextTypes.GeneralValueType:
         """Convert any value to JSON-compatible type.
 
         **Generic replacement for**: Manual type conversion to JSON values
@@ -328,8 +343,8 @@ class FlextUtilitiesDataMapper:
     @classmethod
     def convert_dict_to_json(
         cls,
-        data: dict[str, GeneralValueType],
-    ) -> dict[str, GeneralValueType]:
+        data: dict[str, FlextTypes.GeneralValueType],
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Convert dict with any values to JSON-compatible dict.
 
         **Generic replacement for**: Manual dict-to-JSON conversion loops
@@ -356,7 +371,7 @@ class FlextUtilitiesDataMapper:
     def convert_list_to_json(
         cls,
         data: list[object],
-    ) -> list[dict[str, GeneralValueType]]:
+    ) -> list[dict[str, FlextTypes.GeneralValueType]]:
         """Convert list of dict-like items to JSON-compatible list.
 
         **Generic replacement for**: Manual list-to-JSON conversion loops
@@ -377,7 +392,7 @@ class FlextUtilitiesDataMapper:
         ]
 
     @staticmethod
-    def ensure_str(value: GeneralValueType, default: str = "") -> str:
+    def ensure_str(value: FlextTypes.GeneralValueType, default: str = "") -> str:
         """Ensure value is a string, converting if needed.
 
         **Generic replacement for**: Manual str() conversions with isinstance checks
@@ -406,7 +421,8 @@ class FlextUtilitiesDataMapper:
 
     @staticmethod
     def ensure_str_list(
-        value: GeneralValueType, default: list[str] | None = None
+        value: FlextTypes.GeneralValueType,
+        default: list[str] | None = None,
     ) -> list[str]:
         """Ensure value is a list of strings, converting if needed.
 
@@ -441,7 +457,7 @@ class FlextUtilitiesDataMapper:
         return [str(value)]
 
     @staticmethod
-    def ensure_str_or_none(value: GeneralValueType) -> str | None:
+    def ensure_str_or_none(value: FlextTypes.GeneralValueType) -> str | None:
         """Ensure value is a string or None.
 
         **Generic replacement for**: value if isinstance(value, str) else None

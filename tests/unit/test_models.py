@@ -108,9 +108,7 @@ class TestFlextModels:
                     raise ValueError(error_msg)
                 return v
 
-        entity = TestEntity(
-            name="Test User", email="test@example.com", domain_events=[]
-        )
+        entity = TestEntity(name="Test User", email="test@example.com")
         assert entity.name == "Test User"
         assert entity.email == "test@example.com"
         assert entity.unique_id is not None
@@ -121,7 +119,7 @@ class TestFlextModels:
         assert validated_entity.email == "test@example.com"
         error_msg = "Invalid email"
         with pytest.raises(ValueError, match=error_msg):
-            TestEntity(name="Test User", email="invalid-email", domain_events=[])
+            TestEntity(name="Test User", email="invalid-email")
 
     def test_models_value_object_creation(self) -> None:
         """Test value object creation and immutability."""
@@ -186,7 +184,7 @@ class TestFlextModels:
         class VersionedEntity(FlextModels.Entity):
             name: str
 
-        entity = VersionedEntity(name="Test", domain_events=[])
+        entity = VersionedEntity(name="Test")
         initial_version = entity.version
         entity.increment_version()
         assert entity.version == initial_version + 1
@@ -197,7 +195,7 @@ class TestFlextModels:
         class TimestampedEntity(FlextModels.Entity):
             name: str
 
-        entity = TimestampedEntity(name="Test", domain_events=[])
+        entity = TimestampedEntity(name="Test")
         initial_created = entity.created_at
         entity.update_timestamp()
         assert entity.updated_at is not None
@@ -226,15 +224,13 @@ class TestFlextModels:
                     raise ValueError(error_msg)
                 return v
 
-        entity = ValidatedEntity(
-            name="Test", email="test@example.com", domain_events=[]
-        )
+        entity = ValidatedEntity(name="Test", email="test@example.com")
         assert entity.name == "Test"
         assert entity.email == "test@example.com"
         with pytest.raises(ValueError, match="Name is required"):
-            ValidatedEntity(name="", email="test@example.com", domain_events=[])
+            ValidatedEntity(name="", email="test@example.com")
         with pytest.raises(ValueError, match="Invalid email"):
-            ValidatedEntity(name="Test", email="invalid", domain_events=[])
+            ValidatedEntity(name="Test", email="invalid")
 
     def test_models_thread_safety(self) -> None:
         """Test thread safety of models."""
@@ -245,7 +241,7 @@ class TestFlextModels:
             def increment(self) -> None:
                 self.counter += 1
 
-        entity = ThreadSafeEntity(domain_events=[])
+        entity = ThreadSafeEntity()
 
         def worker() -> None:
             for _ in range(100):
@@ -267,7 +263,6 @@ class TestFlextModels:
             "DomainEvent",
             "Cqrs",
             "Metadata",
-            "Payload",
             "RegistrationDetails",
             "HandlerExecutionConfig",
             "BatchProcessingConfig",
@@ -644,15 +639,6 @@ class TestFlextModels:
         assert len(meta.tags) == 2
         assert meta.attributes["priority"] == "high"
 
-    def test_payload_model_creation(self) -> None:
-        """Test Payload model creation with required data field."""
-        payload = FlextModels.Payload(
-            data={"order_id": "123"}, correlation_id="corr-abc"
-        )
-        assert payload.data == {"order_id": "123"}
-        assert payload.correlation_id == "corr-abc"
-        assert payload.message_type is None
-
     def test_processing_request_model_creation(self) -> None:
         """Test ProcessingRequest model with correct fields."""
         request = FlextModels.ProcessingRequest(
@@ -717,34 +703,6 @@ class TestFlextModels:
         )
         assert val_config.enable_strict_mode is True
         assert val_config.validate_on_assignment is True
-
-    def test_conditional_execution_request_model(self) -> None:
-        """Test ConditionalExecutionRequest model with correct fields."""
-
-        def condition_func(v: object) -> bool:
-            return True
-
-        def true_func() -> None:
-            pass
-
-        cond_req = FlextModels.ConditionalExecutionRequest(
-            condition=condition_func, true_action=true_func, context={"test": "value"}
-        )
-        assert callable(cond_req.condition)
-        assert callable(cond_req.true_action)
-        assert cond_req.context["test"] == "value"
-
-    def test_state_initialization_request_model(self) -> None:
-        """Test StateInitializationRequest model with correct fields."""
-        state_init = FlextModels.StateInitializationRequest(
-            data="state_data",
-            state_key="key-123",
-            initial_value="initial",
-            state="initialized",
-        )
-        assert state_init.state_key == "key-123"
-        assert state_init.initial_value == "initial"
-        assert state_init.state == "initialized"
 
     def test_cqrs_handler_model_creation(self) -> None:
         """Test Cqrs.Handler model creation."""

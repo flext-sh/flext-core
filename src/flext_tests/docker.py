@@ -36,10 +36,6 @@ import docker
 import pytest
 from docker import DockerClient
 from docker.errors import DockerException, NotFound
-
-# subprocess only used for command execution in containers, not docker-compose
-# Import python_on_whales - docker is a pre-instantiated DockerClient instance
-# Type stubs are in ~/flext/typings/python_on_whales/
 from python_on_whales import (
     DockerClient as PowDockerClient,
     docker as pow_docker,
@@ -919,19 +915,30 @@ class FlextTestDocker:
         image: str | None = None,
         ports: dict[str, int | list[int] | tuple[str, int] | None] | None = None,
     ) -> FlextResult[str]:
-        """Start a Docker container."""
+        """Start a Docker container, or check if already running."""
         try:
             client = self.get_client()
-            # Use default image if not provided
-            image_name = image or "alpine:latest"
-            client.containers.run(
-                image_name,
-                name=name,
-                ports=ports,
-                detach=True,
-                remove=False,
-            )
-            return FlextResult[str].ok(f"Container {name} started")
+
+            # First check if container already exists and is running
+            try:
+                container = client.containers.get(name)
+                if container.status == "running":
+                    return FlextResult[str].ok(f"Container {name} already running")
+                # If exists but not running, start it
+                container.start()
+                return FlextResult[str].ok(f"Container {name} started (was stopped)")
+            except DockerException:
+                # Container doesn't exist, create it
+                image_name = image or "alpine:latest"
+                client.containers.run(
+                    image_name,
+                    name=name,
+                    ports=ports,
+                    detach=True,
+                    remove=False,
+                )
+                return FlextResult[str].ok(f"Container {name} created and started")
+
         except DockerException as e:
             self.logger.exception("Failed to start container")
             return FlextResult[str].fail(f"Failed to start container: {e}")

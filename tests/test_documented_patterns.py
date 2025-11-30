@@ -615,12 +615,10 @@ class TestPattern8ErrorHandling:
         assert "not found" in str(exc_info.value).lower()
 
     def test_error_handling_try_except_v2_auto(self) -> None:
-        """Error Handling: try/except with V2 Auto (using .result)."""
-        # Note: auto_execute is not implemented in FlextService base
-        # Use .result property instead
+        """Error Handling: try/except with V2 Auto (auto_execute returns value directly)."""
+        # With auto_execute=True, the service returns the value directly, not the service instance
         try:
-            service = AutoGetUserService(user_id="789")
-            user = service.result
+            user = AutoGetUserService(user_id="789")
             assert isinstance(user, User)
             assert user.unique_id == "789"
         except FlextExceptions.BaseError:

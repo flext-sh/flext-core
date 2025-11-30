@@ -18,7 +18,7 @@ import os
 import threading
 from collections.abc import Callable
 from pathlib import Path
-from typing import ClassVar, Self, TypeVar, cast
+from typing import ClassVar, Self, TypeVar
 
 from dependency_injector import providers
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
@@ -26,10 +26,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
-from flext_core.runtime import FlextRuntime
+from flext_core.runtime import FlextRuntime, StructlogLogger
 from flext_core.typings import FlextTypes, T_Namespace
-
-_logger = logging.getLogger(__name__)
 
 # TypeVar for decorator type preservation - bound to BaseSettings
 _TSettings = TypeVar("_TSettings", bound=BaseSettings)
@@ -77,6 +75,14 @@ class FlextConfig(BaseSettings):
     # Singleton pattern
     _instances: ClassVar[dict[type[BaseSettings], BaseSettings]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
+
+    @property
+    def logger(self) -> StructlogLogger:
+        """Get logger instance using FlextRuntime (avoids circular imports).
+
+        Returns structlog logger instance with all logging methods.
+        """
+        return FlextRuntime.get_logger(__name__)
 
     # Configuration fields
     # env_file resolved at module load time via FLEXT_ENV_FILE env var
@@ -126,10 +132,7 @@ class FlextConfig(BaseSettings):
 
     # Logging configuration
     log_level: FlextConstants.Literals.LogLevelLiteral = Field(
-        default=cast(
-            "FlextConstants.Literals.LogLevelLiteral",
-            FlextConstants.Logging.DEFAULT_LEVEL,
-        ),
+        default=FlextConstants.Settings.LogLevel.INFO,
         description="Log level",
     )
     json_output: bool = Field(
@@ -141,7 +144,8 @@ class FlextConfig(BaseSettings):
         description="Include source in logs",
     )
     log_verbosity: str = Field(
-        default=FlextConstants.Logging.VERBOSITY, description="Log verbosity"
+        default=FlextConstants.Logging.VERBOSITY,
+        description="Log verbosity",
     )
     include_context: bool = Field(
         default=FlextConstants.Logging.INCLUDE_CONTEXT,
@@ -153,10 +157,12 @@ class FlextConfig(BaseSettings):
     )
     log_file: str | None = Field(default=None, description="Log file path")
     log_file_max_size: int = Field(
-        default=FlextConstants.Logging.MAX_FILE_SIZE, description="Max log file size"
+        default=FlextConstants.Logging.MAX_FILE_SIZE,
+        description="Max log file size",
     )
     log_file_backup_count: int = Field(
-        default=FlextConstants.Logging.BACKUP_COUNT, description="Log file backup count"
+        default=FlextConstants.Logging.BACKUP_COUNT,
+        description="Log file backup count",
     )
     console_enabled: bool = Field(
         default=FlextConstants.Logging.CONSOLE_ENABLED,
@@ -173,7 +179,8 @@ class FlextConfig(BaseSettings):
         description="Enable caching",
     )
     cache_ttl: int = Field(
-        default=FlextConstants.Defaults.CACHE_TTL, description="Cache TTL"
+        default=FlextConstants.Defaults.CACHE_TTL,
+        description="Cache TTL",
     )
 
     # Database configuration
@@ -207,7 +214,8 @@ class FlextConfig(BaseSettings):
 
     # Dispatcher configuration
     enable_timeout_executor: bool = Field(
-        default=True, description="Enable timeout executor"
+        default=True,
+        description="Enable timeout executor",
     )
     dispatcher_enable_logging: bool = Field(
         default=FlextConstants.Dispatcher.DEFAULT_ENABLE_LOGGING,
@@ -226,18 +234,22 @@ class FlextConfig(BaseSettings):
         description="Enable dispatcher metrics",
     )
     executor_workers: int = Field(
-        default=FlextConstants.Container.DEFAULT_WORKERS, description="Executor workers"
+        default=FlextConstants.Container.DEFAULT_WORKERS,
+        description="Executor workers",
     )
 
     # Processing configuration
     timeout_seconds: float = Field(
-        default=FlextConstants.Network.DEFAULT_TIMEOUT, description="Default timeout"
+        default=FlextConstants.Network.DEFAULT_TIMEOUT,
+        description="Default timeout",
     )
     max_workers: int = Field(
-        default=FlextConstants.Processing.DEFAULT_MAX_WORKERS, description="Max workers"
+        default=FlextConstants.Processing.DEFAULT_MAX_WORKERS,
+        description="Max workers",
     )
     max_batch_size: int = Field(
-        default=FlextConstants.Processing.MAX_BATCH_SIZE, description="Max batch size"
+        default=FlextConstants.Processing.MAX_BATCH_SIZE,
+        description="Max batch size",
     )
 
     # Security configuration
@@ -254,12 +266,12 @@ class FlextConfig(BaseSettings):
         description="Exception failure level",
     )
 
-    def __new__(cls) -> Self:
+    def __new__(cls, **_kwargs: object) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values: Any internally.
-        We override __new__ to implement singleton pattern without needing
-        to pass kwargs through, avoiding type checker issues.
+        We override __new__ to implement singleton pattern while allowing
+        kwargs to be passed for testing and configuration via model_validate.
         """
         base_class = cls
         if base_class not in cls._instances:
@@ -284,42 +296,81 @@ class FlextConfig(BaseSettings):
             if cls in cls._instances:
                 del cls._instances[cls]
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs: str | int | bool | None) -> None:
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,
-        .env files, and other sources automatically. We don't need to pass
-        kwargs here as BaseSettings.__init__() handles all configuration sources.
+        .env files, and other sources automatically. Kwargs can be passed for
+        testing and explicit configuration (used by model_validate).
         """
-        # BaseSettings.__init__() without arguments reads from environment,
-        # .env files, and other configured sources automatically
+        # Check if already initialized (singleton pattern)
+        if hasattr(self, "_di_provider"):
+            # Instance already initialized, just update fields from kwargs
+            if kwargs:
+                for key, value in kwargs.items():
+                    if hasattr(self, key):
+                        setattr(self, key, value)
+            return
+
+        # First initialization - call BaseSettings.__init__() then apply kwargs
+        # BaseSettings loads from environment/files, then we apply explicit kwargs
+        # Resolve env_file dynamically to support directory changes in tests
+        env_file_path = _resolve_env_file_impl()
+        # Temporarily update model_config to use resolved path
+        original_env_file = self.model_config.get("env_file")
+        if env_file_path != original_env_file:
+            # Update model_config for this instance
+            self.model_config = SettingsConfigDict(**{
+                **self.model_config,
+                "env_file": env_file_path,
+            })
         super().__init__()
         self._di_provider: providers.Singleton[Self] | None = None
+
+        # Apply explicit kwargs after BaseSettings initialization (overrides env values)
+        # Validate kwargs using Pydantic validators before applying
+        if kwargs:
+            # Apply kwargs directly - BaseSettings.__init__ already called above
+            # Validate kwargs by applying them individually
+            for key, value in kwargs.items():
+                if key in self.model_fields:
+                    # Validate using field validator if exists
+                    validated_value = value
+                    # Check if there's a field validator for this field
+                    if hasattr(self.__class__, f"validate_{key}"):
+                        validator = getattr(self.__class__, f"validate_{key}")
+                        validated_value = validator(value)
+                    # Apply validated value
+                    object.__setattr__(self, key, validated_value)
 
     @field_validator("log_level", mode="before")
     @classmethod
     def validate_log_level(
-        cls, v: str | FlextConstants.Settings.LogLevel
+        cls,
+        v: str | FlextConstants.Settings.LogLevel,
     ) -> FlextConstants.Literals.LogLevelLiteral:
         """Validate and normalize log level against allowed values.
 
         Accepts string or LogLevel StrEnum, normalizes to uppercase string.
         """
         if isinstance(v, FlextConstants.Settings.LogLevel):
-            return cast("FlextConstants.Literals.LogLevelLiteral", v.value)
+            # v is already LogLevel enum member, which is compatible with LogLevelLiteral
+            # LogLevelLiteral is Literal[LogLevel.DEBUG, LogLevel.INFO, ...]
+            # Return the enum member directly (compatible with Literal type)
+            return v  # type: ignore[return-value]
         normalized = v.upper()
-        # Validate against StrEnum values
-        allowed_levels = {
-            FlextConstants.Settings.LogLevel.DEBUG.value,
-            FlextConstants.Settings.LogLevel.INFO.value,
-            FlextConstants.Settings.LogLevel.WARNING.value,
-            FlextConstants.Settings.LogLevel.ERROR.value,
-            FlextConstants.Settings.LogLevel.CRITICAL.value,
-        }
-        if normalized not in allowed_levels:
-            msg = f"Invalid log level: {v}. Must be one of {allowed_levels}"
-            raise ValueError(msg)
-        return cast("FlextConstants.Literals.LogLevelLiteral", normalized)
+        # Validate against StrEnum values and return the enum value (Literal type)
+        try:
+            # Return LogLevel enum member, compatible with LogLevelLiteral
+            # LogLevelLiteral is Literal[LogLevel.DEBUG, LogLevel.INFO, ...]
+            return FlextConstants.Settings.LogLevel(normalized)  # type: ignore[return-value]
+        except ValueError:
+            log_level_enum = FlextConstants.Settings.LogLevel
+            allowed_values = [
+                level.value for level in log_level_enum.__members__.values()
+            ]
+            msg = f"Invalid log level: {v}. Must be one of {allowed_values}"
+            raise ValueError(msg) from None
 
     @model_validator(mode="after")
     def validate_configuration(self) -> Self:
@@ -344,15 +395,12 @@ class FlextConfig(BaseSettings):
     def effective_log_level(self) -> FlextConstants.Literals.LogLevelLiteral:
         """Get effective log level based on debug/trace flags."""
         if self.trace:
-            return cast(
-                "FlextConstants.Literals.LogLevelLiteral",
-                FlextConstants.Settings.LogLevel.DEBUG.value,
-            )
+            # LogLevel.DEBUG is already compatible with LogLevelLiteral
+            return FlextConstants.Settings.LogLevel.DEBUG
         if self.debug:
-            return cast(
-                "FlextConstants.Literals.LogLevelLiteral",
-                FlextConstants.Settings.LogLevel.INFO.value,
-            )
+            # LogLevel.INFO is already compatible with LogLevelLiteral
+            return FlextConstants.Settings.LogLevel.INFO
+        # self.log_level is already LogLevelLiteral (from field_validator)
         return self.log_level
 
     @computed_field
@@ -435,7 +483,9 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def register_namespace(
-        cls, namespace: str, config_class: type[BaseSettings]
+        cls,
+        namespace: str,
+        config_class: type[BaseSettings],
     ) -> None:
         """Register a configuration class for a namespace.
 
@@ -460,7 +510,9 @@ class FlextConfig(BaseSettings):
         return cls._namespace_registry.get(namespace)
 
     def get_namespace(
-        self, namespace: str, config_type: type[T_Namespace]
+        self,
+        namespace: str,
+        config_type: type[T_Namespace],
     ) -> T_Namespace:
         """Get configuration instance for a namespace.
 
@@ -590,7 +642,8 @@ class FlextConfig(BaseSettings):
             )
 
         FlextConfig._logging_initialized = True
-        _logger.debug(
+        # Use self.logger property - StructlogLogger has debug method
+        self.logger.debug(
             "Logging initialized with level=%s (numeric=%d)",
             log_level_str,
             log_level_numeric,

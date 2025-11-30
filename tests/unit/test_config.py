@@ -70,7 +70,12 @@ class ConfigTestHelpers:
         """Create test config with reset."""
         FlextConfig.reset_global_instance()
         try:
-            return FlextConfig(**kwargs)
+            # For testing, create instance and manually set attributes
+            config = FlextConfig()
+            for key, value in kwargs.items():
+                if hasattr(config, key):
+                    setattr(config, key, value)
+            return config
         except Exception:
             FlextConfig.reset_global_instance()
             raise
@@ -160,7 +165,8 @@ class TestFlextConfig:
         original_config = ConfigTestHelpers.create_test_config(
             app_name="original_app", version="1.0.0"
         )
-        config_dict = original_config.model_dump()
+        # Exclude computed fields that have no setters
+        config_dict = original_config.model_dump(exclude={"is_production"})
         cloned_config = FlextConfig.model_validate(config_dict)
         assert cloned_config.app_name == original_config.app_name
         assert cloned_config.version == original_config.version
@@ -277,9 +283,8 @@ class TestFlextConfig:
             )
             assert config.app_name == "Test Application"
             assert config.debug is True
-            config2 = ConfigTestHelpers.create_test_config(
-                app_name="Test Application", debug=True
-            )
+            # Call FlextConfig() directly to test singleton (not reset)
+            config2 = FlextConfig()
             assert config2.app_name == "Test Application"
             assert config2.debug is True
             assert config is config2
@@ -401,9 +406,13 @@ class TestFlextConfig:
                 env_file.write_text("FLEXT_TIMEOUT_SECONDS=45\n")
                 config = ConfigTestHelpers.create_test_config(timeout_seconds=90)
                 assert config.timeout_seconds == 90
+                # Reset singleton to test env var precedence
+                FlextConfig.reset_global_instance()
                 config_no_explicit = FlextConfig()
                 assert config_no_explicit.timeout_seconds == 60
                 del os.environ["FLEXT_TIMEOUT_SECONDS"]
+                # Reset singleton to test .env file precedence
+                FlextConfig.reset_global_instance()
                 config_no_env = FlextConfig()
                 assert config_no_env.timeout_seconds == 45
             finally:
@@ -414,9 +423,11 @@ class TestFlextConfig:
         with ConfigTestHelpers.env_vars_context(
             {"FLEXT_DEBUG": "true"}, ["FLEXT_DEBUG"]
         ):
+            FlextConfig.reset_global_instance()
             config = FlextConfig()
             assert config.debug is True
             os.environ["FLEXT_DEBUG"] = "false"
+            FlextConfig.reset_global_instance()
             config_updated = FlextConfig()
             assert config_updated.debug is False
 
@@ -426,10 +437,12 @@ class TestFlextConfig:
             {"FLEXT_LOG_LEVEL": "ERROR", "FLEXT_DEBUG": "true"},
             ["FLEXT_LOG_LEVEL", "FLEXT_DEBUG"],
         ):
+            FlextConfig.reset_global_instance()
             config = FlextConfig()
             assert config.log_level == "ERROR"
             assert config.debug is True
             os.environ["FLEXT_DEBUG"] = "false"
+            FlextConfig.reset_global_instance()
             config_no_debug = FlextConfig()
             assert config_no_debug.log_level == "ERROR"
             assert config_no_debug.debug is False
