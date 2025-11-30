@@ -709,12 +709,10 @@ class FlextConfig(BaseSettings):
         self, key: str, default: FlextTypes.FlexibleValue | None = None
     ) -> FlextTypes.FlexibleValue | None:
         """Retrieve a configuration value with a default fallback."""
-
         return getattr(self, key, default)
 
     def set(self, key: str, value: FlextTypes.FlexibleValue) -> None:
         """Set a configuration value in place."""
-
         object.__setattr__(self, key, value)
 
     @classmethod

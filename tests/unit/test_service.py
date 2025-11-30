@@ -231,7 +231,6 @@ class TestFlextServiceCore:
 
     def test_service_runtime_protocols(self) -> None:
         """Service runtime exposes protocol-compliant components."""
-
         service = UserService()
 
         runtime = service.runtime
@@ -242,7 +241,6 @@ class TestFlextServiceCore:
 
     def test_service_access_facade(self) -> None:
         """Service exposes unified access gateway to infrastructure components."""
-
         service = UserService()
         access = service.access
 
@@ -262,7 +260,6 @@ class TestFlextServiceCore:
 
     def test_service_runtime_scope(self) -> None:
         """Runtime scopes rely on protocol-driven runtime cloning."""
-
         service = UserService()
         access = service.access
 
@@ -282,7 +279,6 @@ class TestFlextServiceCore:
 
     def test_service_container_scope(self) -> None:
         """Container scopes clone config and isolate registrations."""
-
         service = UserService()
         access = service.access
 
@@ -305,7 +301,6 @@ class TestFlextServiceCore:
 
     def test_service_nested_execution_scope(self) -> None:
         """Nested execution creates isolated context and configuration."""
-
         service = UserService()
         access = service.access
         base_config = access.config

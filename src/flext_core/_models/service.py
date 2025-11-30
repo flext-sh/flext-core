@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Annotated, TypeAlias
 
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import FlextConstants
