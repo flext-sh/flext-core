@@ -25,19 +25,20 @@ from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes, GeneralValueType
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 # Type aliases using PEP 695 (Python 3.13+)
 # Note: ContextVar requires mutable dict, not Mapping
-type _StructlogProxyStr = FlextModelsContext.StructlogProxyContextVar[str]
-type _StructlogProxyDatetime = FlextModelsContext.StructlogProxyContextVar[datetime]
-type _StructlogProxyDict = FlextModelsContext.StructlogProxyContextVar[
-    dict[str, GeneralValueType]
-]
+# Use FlextModelsContext.StructlogProxyContextVar directly - no aliases
 
 
-def _create_str_proxy(key: str, default: str | None = None) -> _StructlogProxyStr:
+# Helper functions for context variable creation
+# Placed outside class to avoid forward reference issues
+def _create_str_proxy(
+    key: str,
+    default: str | None = None,
+) -> FlextModelsContext.StructlogProxyContextVar[str]:
     """Helper to create StructlogProxyContextVar[str] instances."""
     return FlextModelsContext.StructlogProxyContextVar[str](key, default=default)
 
@@ -45,7 +46,7 @@ def _create_str_proxy(key: str, default: str | None = None) -> _StructlogProxySt
 def _create_datetime_proxy(
     key: str,
     default: datetime | None = None,
-) -> _StructlogProxyDatetime:
+) -> FlextModelsContext.StructlogProxyContextVar[datetime]:
     """Helper to create StructlogProxyContextVar[datetime] instances."""
     return FlextModelsContext.StructlogProxyContextVar[datetime](
         key,
@@ -55,10 +56,14 @@ def _create_datetime_proxy(
 
 def _create_dict_proxy(
     key: str,
-    default: dict[str, GeneralValueType] | None = None,
-) -> _StructlogProxyDict:
+    default: dict[str, FlextTypes.GeneralValueType] | None = None,
+) -> FlextModelsContext.StructlogProxyContextVar[
+    dict[str, FlextTypes.GeneralValueType]
+]:
     """Helper to create StructlogProxyContextVar[dict] instances."""
-    return FlextModelsContext.StructlogProxyContextVar[dict[str, GeneralValueType]](
+    return FlextModelsContext.StructlogProxyContextVar[
+        dict[str, FlextTypes.GeneralValueType]
+    ](
         key,
         default=default,
     )
@@ -79,6 +84,10 @@ class FlextContext:
     - Serialization helpers for propagating context via headers or payloads
     """
 
+    # =========================================================================
+    # HELPER METHODS (moved from module level for SRP compliance)
+    # =========================================================================
+
     # Instance attributes
     _metadata: FlextModels.ContextMetadata
 
@@ -89,7 +98,7 @@ class FlextContext:
     def __init__(
         self,
         initial_data: FlextModels.ContextData
-        | dict[str, GeneralValueType]
+        | dict[str, FlextTypes.GeneralValueType]
         | None = None,
     ) -> None:
         """Initialize FlextContext with optional initial data.
@@ -106,9 +115,9 @@ class FlextContext:
         # Use Pydantic directly - NO redundant helpers (Pydantic validates dict/None/model)
         # Type narrowing: always create FlextModels.ContextData instance
         if FlextRuntime.is_dict_like(initial_data):
-            # Normalize to dict[str, GeneralValueType] using helper
+            # Normalize to dict[str, FlextTypes.GeneralValueType] using helper
             normalized_data = FlextModels.ContextData.normalize_to_general_value(
-                initial_data
+                initial_data,
             )
             if isinstance(normalized_data, dict):
                 context_data = FlextModels.ContextData(data=normalized_data)
@@ -129,7 +138,7 @@ class FlextContext:
         # FlextContext._metadata = context-specific tracing metadata (ContextMetadata)
         self._metadata = FlextModels.ContextMetadata()
 
-        self._hooks: dict[str, list[FlextTypes.HookCallableType]] = {}
+        self._hooks: dict[str, list[FlextTypes.Hook.HookCallableType]] = {}
         self._statistics: FlextModels.ContextStatistics = (
             FlextModels.ContextStatistics()
         )
@@ -141,7 +150,7 @@ class FlextContext:
         # Note: Using None default per B039 - mutable defaults cause issues
         self._scope_vars: dict[
             str,
-            contextvars.ContextVar[dict[str, GeneralValueType] | None],
+            contextvars.ContextVar[dict[str, FlextTypes.GeneralValueType] | None],
         ] = {
             FlextConstants.Context.SCOPE_GLOBAL: contextvars.ContextVar(
                 "flext_global_context",
@@ -174,7 +183,7 @@ class FlextContext:
     def _get_or_create_scope_var(
         self,
         scope: str,
-    ) -> contextvars.ContextVar[dict[str, GeneralValueType] | None]:
+    ) -> contextvars.ContextVar[dict[str, FlextTypes.GeneralValueType] | None]:
         """Get or create contextvar for scope.
 
         Args:
@@ -193,7 +202,11 @@ class FlextContext:
             )
         return self._scope_vars[scope]
 
-    def _set_in_contextvar(self, scope: str, data: dict[str, GeneralValueType]) -> None:
+    def _set_in_contextvar(
+        self,
+        scope: str,
+        data: dict[str, FlextTypes.GeneralValueType],
+    ) -> None:
         """Set multiple values in contextvar scope."""
         ctx_var = self._get_or_create_scope_var(scope)
         current = FlextUtilities.Generators.ensure_dict(ctx_var.get(), default={})
@@ -201,10 +214,14 @@ class FlextContext:
         if scope == FlextConstants.Context.SCOPE_GLOBAL:
             FlextLogger.bind_global_context(**data)
 
-    def _get_from_contextvar(self, scope: str) -> dict[str, GeneralValueType]:
+    def _get_from_contextvar(
+        self,
+        scope: str,
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Get all values from contextvar scope."""
         return FlextUtilities.Generators.ensure_dict(
-            self._get_or_create_scope_var(scope).get(), default={}
+            self._get_or_create_scope_var(scope).get(),
+            default={},
         )
 
     def _update_statistics(self, operation: str) -> None:
@@ -230,7 +247,11 @@ class FlextContext:
             if isinstance(value, int):
                 self._statistics.operations[operation] = value + 1
 
-    def _execute_hooks(self, event: str, event_data: GeneralValueType) -> None:
+    def _execute_hooks(
+        self,
+        event: str,
+        event_data: FlextTypes.GeneralValueType,
+    ) -> None:
         """Execute hooks for an event (DRY helper).
 
         Args:
@@ -252,7 +273,10 @@ class FlextContext:
                 hook(event_data)
 
     def _propagate_to_logger(
-        self, key: str, value: GeneralValueType, scope: str
+        self,
+        key: str,
+        value: FlextTypes.GeneralValueType,
+        scope: str,
     ) -> None:
         """Propagate context changes to FlextLogger (DRY helper).
 
@@ -272,7 +296,7 @@ class FlextContext:
     def set(
         self,
         key: str,
-        value: GeneralValueType,
+        value: FlextTypes.GeneralValueType,
         scope: str = FlextConstants.Context.SCOPE_GLOBAL,
     ) -> FlextResult[bool]:
         """Set a value in the context.
@@ -296,8 +320,12 @@ class FlextContext:
         if not key:
             return FlextResult[bool].fail("Key must be a non-empty string")
 
+        # Reject None values explicitly
+        if value is None:
+            return FlextResult[bool].fail("Value cannot be None")
+
         # Validate value is serializable
-        if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
+        if not isinstance(value, (str, int, float, bool, list, dict)):
             return FlextResult[bool].fail("Value must be serializable")
 
         try:
@@ -317,10 +345,10 @@ class FlextContext:
         self,
         key: str,
         scope: str = FlextConstants.Context.SCOPE_GLOBAL,
-    ) -> FlextResult[GeneralValueType]:
+    ) -> FlextResult[FlextTypes.GeneralValueType]:
         """Get a value from the context.
 
-        Fast fail: Returns FlextResult[GeneralValueType] - fails if key not found.
+        Fast fail: Returns FlextResult[FlextTypes.GeneralValueType] - fails if key not found.
         No fallback behavior - use FlextResult monadic operations for defaults.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
@@ -331,7 +359,7 @@ class FlextContext:
             scope: The scope to get from (global, user, session)
 
         Returns:
-            FlextResult[GeneralValueType]: Success with value, or failure if key not found
+            FlextResult[FlextTypes.GeneralValueType]: Success with value, or failure if key not found
 
         Example:
             >>> context = FlextContext()
@@ -349,7 +377,7 @@ class FlextContext:
 
         """
         if not self._active:
-            return FlextResult[GeneralValueType].fail(
+            return FlextResult[FlextTypes.GeneralValueType].fail(
                 "Context is not active",
                 error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
             )
@@ -358,7 +386,7 @@ class FlextContext:
         scope_data = self._get_from_contextvar(scope)
 
         if key not in scope_data:
-            return FlextResult[GeneralValueType].fail(
+            return FlextResult[FlextTypes.GeneralValueType].fail(
                 f"Context key '{key}' not found in scope '{scope}'",
                 error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
             )
@@ -370,12 +398,12 @@ class FlextContext:
 
         # Handle None values - return failure since FlextResult.ok() cannot accept None
         if value is None:
-            return FlextResult[GeneralValueType].fail(
+            return FlextResult[FlextTypes.GeneralValueType].fail(
                 f"Context key '{key}' has None value in scope '{scope}'",
                 error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
             )
 
-        return FlextResult[GeneralValueType].ok(value)
+        return FlextResult[FlextTypes.GeneralValueType].ok(value)
 
     def has(self, key: str, scope: str = FlextConstants.Context.SCOPE_GLOBAL) -> bool:
         """Check if a key exists in the context.
@@ -398,7 +426,9 @@ class FlextContext:
         return key in scope_data
 
     def remove(
-        self, key: str, scope: str = FlextConstants.Context.SCOPE_GLOBAL
+        self,
+        key: str,
+        scope: str = FlextConstants.Context.SCOPE_GLOBAL,
     ) -> None:
         """Remove a key from the context."""
         if not self._active:
@@ -455,12 +485,13 @@ class FlextContext:
         all_keys: set[str] = set()
         for ctx_var in self._scope_vars.values():
             scope_dict = FlextUtilities.Generators.ensure_dict(
-                ctx_var.get(), default={}
+                ctx_var.get(),
+                default={},
             )
             all_keys.update(scope_dict.keys())
         return list(all_keys)
 
-    def values(self) -> list[object]:
+    def values(self) -> list[FlextTypes.GeneralValueType]:
         """Get all values in the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
@@ -471,15 +502,16 @@ class FlextContext:
         """
         if not self._active:
             return []
-        all_values: list[object] = []
+        all_values: list[FlextTypes.GeneralValueType] = []
         for ctx_var in self._scope_vars.values():
             scope_dict = FlextUtilities.Generators.ensure_dict(
-                ctx_var.get(), default={}
+                ctx_var.get(),
+                default={},
             )
             all_values.extend(scope_dict.values())
         return all_values
 
-    def items(self) -> list[tuple[str, object]]:
+    def items(self) -> list[tuple[str, FlextTypes.GeneralValueType]]:
         """Get all key-value pairs in the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
@@ -490,15 +522,19 @@ class FlextContext:
         """
         if not self._active:
             return []
-        all_items: list[tuple[str, object]] = []
+        all_items: list[tuple[str, FlextTypes.GeneralValueType]] = []
         for ctx_var in self._scope_vars.values():
             scope_dict = FlextUtilities.Generators.ensure_dict(
-                ctx_var.get(), default={}
+                ctx_var.get(),
+                default={},
             )
             all_items.extend(scope_dict.items())
         return all_items
 
-    def merge(self, other: FlextContext | dict[str, GeneralValueType]) -> Self:
+    def merge(
+        self,
+        other: FlextContext | dict[str, FlextTypes.GeneralValueType],
+    ) -> Self:
         """Merge another context or dictionary into this context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
@@ -521,7 +557,8 @@ class FlextContext:
                 # Merge into contextvar
                 ctx_var = self._get_or_create_scope_var(scope_name)
                 current_dict = FlextUtilities.Generators.ensure_dict(
-                    ctx_var.get(), default={}
+                    ctx_var.get(),
+                    default={},
                 )
                 scope_dict = FlextUtilities.Generators.ensure_dict(scope_data)
                 ctx_var.set({**current_dict, **scope_dict})
@@ -547,7 +584,8 @@ class FlextContext:
         cloned = FlextContext()
         for scope_name, ctx_var in self._scope_vars.items():
             scope_dict = FlextUtilities.Generators.ensure_dict(
-                ctx_var.get(), default={}
+                ctx_var.get(),
+                default={},
             )
             if scope_dict:
                 cloned._get_or_create_scope_var(scope_name).set(scope_dict.copy())
@@ -561,7 +599,7 @@ class FlextContext:
 
         return cloned
 
-    def get_all_scopes(self) -> FlextTypes.ScopeRegistry:
+    def get_all_scopes(self) -> FlextTypes.Hook.ScopeRegistry:
         """Get all scopes.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -570,10 +608,11 @@ class FlextContext:
             Dictionary of all scopes with their data
 
         """
-        scopes: dict[str, dict[str, GeneralValueType]] = {}
+        scopes: dict[str, dict[str, FlextTypes.GeneralValueType]] = {}
         for scope_name, ctx_var in self._scope_vars.items():
             scope_dict = FlextUtilities.Generators.ensure_dict(
-                ctx_var.get(), default={}
+                ctx_var.get(),
+                default={},
             )
             if scope_dict:
                 scopes[scope_name] = scope_dict.copy()
@@ -593,7 +632,8 @@ class FlextContext:
         for ctx_var in self._scope_vars.values():
             try:
                 scope_dict = FlextUtilities.Generators.ensure_dict(
-                    ctx_var.get(), default={}
+                    ctx_var.get(),
+                    default={},
                 )
             except TypeError as e:
                 return FlextResult[bool].fail(str(e))
@@ -611,10 +651,11 @@ class FlextContext:
             JSON string representation of the context
 
         """
-        all_data: dict[str, GeneralValueType] = {}
+        all_data: dict[str, FlextTypes.GeneralValueType] = {}
         for ctx_var in self._scope_vars.values():
             scope_dict = FlextUtilities.Generators.ensure_dict(
-                ctx_var.get(), default={}
+                ctx_var.get(),
+                default={},
             )
             all_data.update(scope_dict)
         return json.dumps(all_data, default=str)
@@ -643,23 +684,24 @@ class FlextContext:
                 # New scoped format - restore all scopes
                 for scope_name, scope_data in data.items():
                     if FlextRuntime.is_dict_like(scope_data):
-                        # Normalize scope_data to dict[str, GeneralValueType]
+                        # Normalize scope_data to dict[str, FlextTypes.GeneralValueType]
                         normalized_scope = (
                             FlextModels.ContextData.normalize_to_general_value(
-                                scope_data
+                                scope_data,
                             )
                         )
                         if isinstance(normalized_scope, dict):
                             context._set_in_contextvar(scope_name, normalized_scope)
             else:
                 # Old flat format - put everything in global scope
-                # Normalize data to dict[str, GeneralValueType]
+                # Normalize data to dict[str, FlextTypes.GeneralValueType]
                 normalized_data = FlextModels.ContextData.normalize_to_general_value(
-                    data
+                    data,
                 )
                 if isinstance(normalized_data, dict):
                     context._set_in_contextvar(
-                        FlextConstants.Context.SCOPE_GLOBAL, normalized_data
+                        FlextConstants.Context.SCOPE_GLOBAL,
+                        normalized_data,
                     )
 
         return context
@@ -702,7 +744,7 @@ class FlextContext:
         self._metadata = FlextModels.ContextMetadata()  # Reset model
         self._hooks.clear()
 
-    def add_hook(self, event: str, hook: FlextTypes.HookCallableType) -> None:
+    def add_hook(self, event: str, hook: FlextTypes.Hook.HookCallableType) -> None:
         """Add a hook for context events.
 
         Args:
@@ -712,11 +754,11 @@ class FlextContext:
         """
         if event not in self._hooks:
             self._hooks[event] = []
+        # hooks_list is already a list (type: list[HookCallableType])
         hooks_list = self._hooks[event]
-        if FlextRuntime.is_list_like(hooks_list):
-            hooks_list.append(hook)
+        hooks_list.append(hook)
 
-    def set_metadata(self, key: str, value: GeneralValueType) -> None:
+    def set_metadata(self, key: str, value: FlextTypes.GeneralValueType) -> None:
         """Set metadata for the context.
 
         Args:
@@ -729,17 +771,17 @@ class FlextContext:
             # and object recreation
             self._metadata.custom_fields[key] = value
 
-    def get_metadata(self, key: str) -> FlextResult[GeneralValueType]:
+    def get_metadata(self, key: str) -> FlextResult[FlextTypes.GeneralValueType]:
         """Get metadata from the context.
 
-        Fast fail: Returns FlextResult[GeneralValueType] - fails if key not found.
+        Fast fail: Returns FlextResult[FlextTypes.GeneralValueType] - fails if key not found.
         No fallback behavior - use FlextResult monadic operations for defaults.
 
         Args:
             key: The metadata key
 
         Returns:
-            FlextResult[GeneralValueType]: Success with metadata value, or failure if key not found
+            FlextResult[FlextTypes.GeneralValueType]: Success with metadata value, or failure if key not found
 
         Example:
             >>> context = FlextContext()
@@ -757,7 +799,7 @@ class FlextContext:
 
         """
         if not isinstance(self._metadata, FlextModels.ContextMetadata):
-            return FlextResult[GeneralValueType].fail(
+            return FlextResult[FlextTypes.GeneralValueType].fail(
                 "Context metadata not initialized",
                 error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
             )
@@ -769,17 +811,17 @@ class FlextContext:
         )
 
         if key not in custom_fields:
-            return FlextResult[GeneralValueType].fail(
+            return FlextResult[FlextTypes.GeneralValueType].fail(
                 f"Metadata key '{key}' not found",
                 error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
             )
 
-        # Normalize value to GeneralValueType
+        # Normalize value to FlextTypes.GeneralValueType
         value = custom_fields[key]
         normalized_value = FlextModels.ContextData.normalize_to_general_value(value)
-        return FlextResult[GeneralValueType].ok(normalized_value)
+        return FlextResult[FlextTypes.GeneralValueType].ok(normalized_value)
 
-    def get_all_metadata(self) -> dict[str, GeneralValueType]:
+    def get_all_metadata(self) -> dict[str, FlextTypes.GeneralValueType]:
         """Get all metadata from the context.
 
         Returns:
@@ -794,7 +836,7 @@ class FlextContext:
             return result
         return {}
 
-    def get_all_data(self) -> dict[str, GeneralValueType]:
+    def get_all_data(self) -> dict[str, FlextTypes.GeneralValueType]:
         """Get all data from the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -803,10 +845,11 @@ class FlextContext:
             Dictionary of all context data across all scopes
 
         """
-        all_data: dict[str, GeneralValueType] = {}
+        all_data: dict[str, FlextTypes.GeneralValueType] = {}
         for ctx_var in self._scope_vars.values():
             scope_dict = FlextUtilities.Generators.ensure_dict(
-                ctx_var.get(), default={}
+                ctx_var.get(),
+                default={},
             )
             all_data.update(scope_dict)
         return all_data
@@ -838,7 +881,7 @@ class FlextContext:
         # Reset metadata model
         self._metadata = FlextModels.ContextMetadata()
 
-    def export(self) -> object:
+    def export(self) -> dict[str, FlextTypes.GeneralValueType]:
         """Export context data as a dictionary for compatibility consumers.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -854,10 +897,11 @@ class FlextContext:
         Pydantic v2 field_validator accepts models directly - no model_dump() needed.
 
         """
-        all_data: dict[str, GeneralValueType] = {}
+        all_data: dict[str, FlextTypes.GeneralValueType] = {}
         for ctx_var in self._scope_vars.values():
             scope_dict = FlextUtilities.Generators.ensure_dict(
-                ctx_var.get(), default={}
+                ctx_var.get(),
+                default={},
             )
             all_data.update(scope_dict)
         metadata_dict = self.get_all_metadata()
@@ -877,13 +921,20 @@ class FlextContext:
             )
             raise TypeError(msg)
 
+        # Pass directly - field validators accept object and will normalize
+        # metadata_dict is dict[str, GeneralValueType], statistics_dict is dict from model_dump()
+        # Validators handle conversion to expected types (they accept object)
+        from typing import cast as type_cast  # noqa: PLC0415
+
         return FlextModels.ContextExport(
             data=all_data,
-            metadata=metadata_dict,
-            statistics=statistics_dict,
+            metadata=type_cast("object", metadata_dict),  # Validator accepts object
+            statistics=type_cast(
+                "object", dict(statistics_dict)
+            ),  # Validator accepts object
         )
 
-    def import_data(self, data: dict[str, GeneralValueType]) -> None:
+    def import_data(self, data: dict[str, FlextTypes.GeneralValueType]) -> None:
         """Import context data.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
@@ -929,11 +980,15 @@ class FlextContext:
         class Correlation:
             """Correlation variables for distributed tracing."""
 
-            CORRELATION_ID: Final[_StructlogProxyStr] = _create_str_proxy(
-                "correlation_id",
-                default=None,
+            CORRELATION_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
+                _create_str_proxy(
+                    "correlation_id",
+                    default=None,
+                )
             )
-            PARENT_CORRELATION_ID: Final[_StructlogProxyStr] = _create_str_proxy(
+            PARENT_CORRELATION_ID: Final[
+                FlextModelsContext.StructlogProxyContextVar[str]
+            ] = _create_str_proxy(
                 "parent_correlation_id",
                 default=None,
             )
@@ -941,27 +996,37 @@ class FlextContext:
         class Service:
             """Service context variables for identification."""
 
-            SERVICE_NAME: Final[_StructlogProxyStr] = _create_str_proxy(
-                "service_name",
-                default=None,
+            SERVICE_NAME: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
+                _create_str_proxy(
+                    "service_name",
+                    default=None,
+                )
             )
-            SERVICE_VERSION: Final[_StructlogProxyStr] = _create_str_proxy(
-                "service_version",
-                default=None,
+            SERVICE_VERSION: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
+                _create_str_proxy(
+                    "service_version",
+                    default=None,
+                )
             )
 
         class Request:
             """Request context variables for metadata."""
 
-            USER_ID: Final[_StructlogProxyStr] = _create_str_proxy(
-                "user_id",
-                default=None,
+            USER_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
+                _create_str_proxy(
+                    "user_id",
+                    default=None,
+                )
             )
-            REQUEST_ID: Final[_StructlogProxyStr] = _create_str_proxy(
-                "request_id",
-                default=None,
+            REQUEST_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
+                _create_str_proxy(
+                    "request_id",
+                    default=None,
+                )
             )
-            REQUEST_TIMESTAMP: Final[_StructlogProxyDatetime] = _create_datetime_proxy(
+            REQUEST_TIMESTAMP: Final[
+                FlextModelsContext.StructlogProxyContextVar[datetime]
+            ] = _create_datetime_proxy(
                 "request_timestamp",
                 default=None,
             )
@@ -969,14 +1034,20 @@ class FlextContext:
         class Performance:
             """Performance context variables for timing."""
 
-            OPERATION_NAME: Final[_StructlogProxyStr] = _create_str_proxy(
-                "operation_name",
-                default=None,
+            OPERATION_NAME: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
+                _create_str_proxy(
+                    "operation_name",
+                    default=None,
+                )
             )
-            OPERATION_START_TIME: Final[_StructlogProxyDatetime] = (
-                _create_datetime_proxy("operation_start_time", default=None)
-            )
-            OPERATION_METADATA: Final[_StructlogProxyDict] = _create_dict_proxy(
+            OPERATION_START_TIME: Final[
+                FlextModelsContext.StructlogProxyContextVar[datetime]
+            ] = _create_datetime_proxy("operation_start_time", default=None)
+            OPERATION_METADATA: Final[
+                FlextModelsContext.StructlogProxyContextVar[
+                    dict[str, FlextTypes.GeneralValueType]
+                ]
+            ] = _create_dict_proxy(
                 "operation_metadata",
                 default=None,
             )
@@ -1260,7 +1331,7 @@ class FlextContext:
             user_id: str | None = None,
             operation_name: str | None = None,
             request_id: str | None = None,
-            metadata: dict[str, GeneralValueType] | None = None,
+            metadata: dict[str, FlextTypes.GeneralValueType] | None = None,
         ) -> Generator[None]:
             """Create request metadata context scope with automatic cleanup."""
             # Save current context (for potential future use in logging/debugging)
@@ -1328,22 +1399,26 @@ class FlextContext:
             FlextContext.Variables.Performance.OPERATION_START_TIME.set(start_time)
 
         @staticmethod
-        def get_operation_metadata() -> dict[str, GeneralValueType] | None:
+        def get_operation_metadata() -> dict[str, FlextTypes.GeneralValueType] | None:
             """Get operation metadata from context."""
             return FlextContext.Variables.Performance.OPERATION_METADATA.get()
 
         @staticmethod
         def set_operation_metadata(
-            metadata: dict[str, GeneralValueType],
+            metadata: dict[str, FlextTypes.GeneralValueType],
         ) -> None:
             """Set operation metadata in context."""
             FlextContext.Variables.Performance.OPERATION_METADATA.set(metadata)
 
         @staticmethod
-        def add_operation_metadata(key: str, value: GeneralValueType) -> None:
+        def add_operation_metadata(
+            key: str,
+            value: FlextTypes.GeneralValueType,
+        ) -> None:
             """Add single metadata entry to operation context."""
             current_metadata = FlextUtilities.Generators.ensure_dict(
-                FlextContext.Variables.Performance.OPERATION_METADATA.get(), default={}
+                FlextContext.Variables.Performance.OPERATION_METADATA.get(),
+                default={},
             )
             current_metadata[key] = value
             FlextContext.Variables.Performance.OPERATION_METADATA.set(current_metadata)
@@ -1352,10 +1427,10 @@ class FlextContext:
         @contextmanager
         def timed_operation(
             operation_name: str | None = None,
-        ) -> Generator[dict[str, GeneralValueType]]:
+        ) -> Generator[dict[str, FlextTypes.GeneralValueType]]:
             """Create timed operation context with performance tracking."""
             start_time = FlextUtilities.Generators.generate_datetime_utc()
-            operation_metadata: dict[str, GeneralValueType] = {
+            operation_metadata: dict[str, FlextTypes.GeneralValueType] = {
                 "start_time": start_time.isoformat(),
                 "operation_name": operation_name,
             }
@@ -1411,7 +1486,7 @@ class FlextContext:
         """Context serialization and deserialization utilities."""
 
         @staticmethod
-        def get_full_context() -> dict[str, GeneralValueType | None]:
+        def get_full_context() -> dict[str, FlextTypes.GeneralValueType | None]:
             """Get current context as dictionary."""
             context_vars = FlextContext.Variables
             return {
@@ -1423,8 +1498,8 @@ class FlextContext:
                 "operation_name": context_vars.Performance.OPERATION_NAME.get(),
                 "request_id": context_vars.Request.REQUEST_ID.get(),
                 "operation_start_time": (
-                    context_vars.Performance.OPERATION_START_TIME.get().isoformat()
-                    if context_vars.Performance.OPERATION_START_TIME.get()
+                    st.isoformat()
+                    if (st := context_vars.Performance.OPERATION_START_TIME.get())
                     else None
                 ),
                 "operation_metadata": context_vars.Performance.OPERATION_METADATA.get(),
@@ -1450,7 +1525,9 @@ class FlextContext:
             return context
 
         @staticmethod
-        def set_from_context(context: Mapping[str, object]) -> None:
+        def set_from_context(
+            context: Mapping[str, FlextTypes.GeneralValueType],
+        ) -> None:
             """Set context from dictionary (e.g., from HTTP headers)."""
             # Fast fail: use explicit checks instead of OR fallback
             correlation_id_value = context.get("X-Correlation-Id")

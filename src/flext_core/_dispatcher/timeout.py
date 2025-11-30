@@ -57,7 +57,7 @@ class TimeoutEnforcer:
             )
         return self._executor
 
-    def get_executor_status(self) -> dict[str, object]:
+    def get_executor_status(self) -> dict[str, int | bool]:
         """Return executor status metadata for diagnostics and metrics."""
         return {
             "executor_active": self._executor is not None,

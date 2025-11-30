@@ -14,8 +14,8 @@ from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
-from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.metadata import Metadata
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -23,9 +23,6 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
-
-# Type alias for GeneralValueType (PEP 695)
-type GeneralValueType = FlextTypes.GeneralValueType
 
 
 class FlextModelsConfig:
@@ -35,7 +32,7 @@ class FlextModelsConfig:
     All nested classes are accessed via FlextModels.Config.* in the main models.py.
     """
 
-    class ProcessingRequest(FlextModelsEntity.ArbitraryTypesModel):
+    class ProcessingRequest(FlextModelsBase.ArbitraryTypesModel):
         """Enhanced processing request with advanced validation."""
 
         model_config = ConfigDict(
@@ -49,8 +46,8 @@ class FlextModelsConfig:
             min_length=1,
             description="Unique operation identifier",
         )
-        data: dict[str, GeneralValueType] = Field(default_factory=dict)
-        context: dict[str, GeneralValueType] = Field(default_factory=dict)
+        data: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
+        context: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
         timeout_seconds: float = Field(
             default=FlextConstants.Defaults.TIMEOUT,
             gt=0,
@@ -73,7 +70,7 @@ class FlextModelsConfig:
             """Ensure context has required fields (using FlextUtilities.Generators).
 
             Returns dict[str, str] because ensure_trace_context generates string trace IDs.
-            This is compatible with the field type dict[str, GeneralValueType] since str is a subtype.
+            This is compatible with the field type dict[str, FlextTypes.GeneralValueType] since str is a subtype.
             """
             return FlextUtilities.Generators.ensure_trace_context(
                 v,
@@ -91,7 +88,7 @@ class FlextModelsConfig:
 
             return FlextResult[bool].ok(True)
 
-    class RetryConfiguration(FlextModelsEntity.ArbitraryTypesModel):
+    class RetryConfiguration(FlextModelsBase.ArbitraryTypesModel):
         """Retry configuration with advanced validation."""
 
         max_attempts: int = Field(
@@ -156,7 +153,7 @@ class FlextModelsConfig:
                 raise ValueError(msg)
             return self
 
-    class ValidationConfiguration(FlextModelsEntity.ArbitraryTypesModel):
+    class ValidationConfiguration(FlextModelsBase.ArbitraryTypesModel):
         """Validation configuration."""
 
         enable_strict_mode: bool = Field(default_factory=lambda: True)
@@ -182,20 +179,12 @@ class FlextModelsConfig:
         def validate_additional_validators(cls, v: list[object]) -> list[object]:
             """Validate custom validators are callable."""
             for validator in v:
-                result = FlextUtilities.Validation.validate_callable(
-                    validator,
-                    error_message="All validators must be callable",
-                    error_code=FlextConstants.Errors.TYPE_ERROR,
-                )
-                if result.is_failure:
+                # Direct callable check - object can be any callable, not just GeneralValueType
+                if not callable(validator):
                     base_msg = "Validator must be callable"
-                    error_msg = (
-                        f"{base_msg}: {result.error}"
-                        if result.error
-                        else f"{base_msg} (validation failed)"
-                    )
+                    error_msg = f"{base_msg}: got {type(validator).__name__}"
                     raise FlextExceptions.TypeError(
-                        message=error_msg,
+                        error_msg,
                         error_code=FlextConstants.Errors.TYPE_ERROR,
                     )
             return v
@@ -246,8 +235,10 @@ class FlextModelsConfig:
         """Enhanced handler execution configuration."""
 
         handler_name: str = Field(pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$")
-        input_data: dict[str, GeneralValueType] = Field(default_factory=dict)
-        execution_context: dict[str, GeneralValueType] = Field(default_factory=dict)
+        input_data: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
+        execution_context: dict[str, FlextTypes.GeneralValueType] = Field(
+            default_factory=dict,
+        )
         timeout_seconds: float = Field(
             default=FlextConstants.Defaults.TIMEOUT,
             le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
@@ -278,7 +269,7 @@ class FlextModelsConfig:
         enabled: bool = Field(default=True, description="Whether middleware is enabled")
         order: int = Field(default=0, description="Execution order in middleware chain")
         name: str | None = Field(default=None, description="Optional middleware name")
-        config: dict[str, GeneralValueType] = Field(
+        config: dict[str, FlextTypes.GeneralValueType] = Field(
             default_factory=dict,
             description="Middleware-specific configuration",
         )
@@ -483,7 +474,7 @@ class FlextModelsConfig:
             default=False,
             description="Whether to auto-generate correlation ID",
         )
-        extra_kwargs: dict[str, GeneralValueType] = Field(
+        extra_kwargs: dict[str, FlextTypes.GeneralValueType] = Field(
             default_factory=dict,
             description="Additional keyword arguments for metadata",
         )

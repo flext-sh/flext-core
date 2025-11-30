@@ -118,10 +118,10 @@ class ServiceScenarios:
     SCENARIOS: ClassVar[list[ServiceScenario]] = [
         ServiceScenario("basic_user_service", ServiceScenarioType.BASIC_USER, True),
         ServiceScenario(
-            "complex_valid", ServiceScenarioType.COMPLEX_VALID, True, {"name": "test"}
+            "complex_valid", ServiceScenarioType.COMPLEX_VALID, True, {"name": "test"},
         ),
         ServiceScenario(
-            "complex_invalid", ServiceScenarioType.COMPLEX_INVALID, False, {"name": ""}
+            "complex_invalid", ServiceScenarioType.COMPLEX_INVALID, False, {"name": ""},
         ),
         ServiceScenario("failing_service", ServiceScenarioType.FAILING, False),
         ServiceScenario(
@@ -188,7 +188,7 @@ class TestFlextServiceCore:
         assert "user_id" in data
 
     @pytest.mark.parametrize(
-        "scenario", ServiceScenarios.SCENARIOS, ids=lambda s: s.name
+        "scenario", ServiceScenarios.SCENARIOS, ids=lambda s: s.name,
     )
     def test_is_valid_scenarios(self, scenario: ServiceScenario) -> None:
         """Test is_valid with various service scenarios."""

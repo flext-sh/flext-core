@@ -21,6 +21,7 @@ from flext_core import (
     FlextResult,
     FlextRuntime,
     FlextService,
+    FlextTypes,
 )
 
 
@@ -197,7 +198,7 @@ class Example01BasicResult:
                 "severity": "error",
             }
 
-    class ComprehensiveResultService(FlextService[dict[str, object]]):
+    class ComprehensiveResultService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
         """Service demonstrating ALL FlextResult patterns with FlextMixins infrastructure.
 
         This service now inherits from FlextService to demonstrate:
@@ -224,22 +225,20 @@ class Example01BasicResult:
             """
             super().__init__()
             self._scenarios = Example01BasicResult.DemoScenarios()
-            self._dataset: dict[str, object] = self._scenarios.dataset()
-            self._validation: dict[str, object] = self._scenarios.validation_data()
-            self._metadata: dict[str, object] = self._scenarios.metadata(
+            self._dataset: FlextTypes.Types.ServiceMetadataMapping = self._scenarios.dataset()
+            self._validation: FlextTypes.Types.ServiceMetadataMapping = self._scenarios.validation_data()
+            self._metadata: FlextTypes.Types.ServiceMetadataMapping = self._scenarios.metadata(
                 tags=["result", "demo"],
             )
 
             # Demonstrate inherited logger (no manual instantiation needed!)
             self.logger.info(
                 "ComprehensiveResultService initialized with inherited infrastructure",
-                extra={
-                    "dataset_keys": list(self._dataset.keys()),
-                    "service_type": "FlextResult demonstration",
-                },
+                dataset_keys=list(self._dataset.keys()),
+                service_type="FlextResult demonstration",
             )
 
-        def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
+        def execute(self, **_kwargs: object) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
             """Execute all FlextResult demonstrations and return summary.
 
             This method satisfies the FlextService abstract interface while
@@ -271,7 +270,7 @@ class Example01BasicResult:
                 self.demonstrate_value_or_call()
                 self.demonstrate_deprecated_patterns()
 
-                summary: dict[str, object] = {
+                summary: FlextTypes.Types.ServiceMetadataMapping = {
                     "demonstrations_completed": 17,
                     "methods_covered": [
                         "FlextRuntime integration",
@@ -305,12 +304,12 @@ class Example01BasicResult:
                     extra=summary,
                 )
 
-                return FlextResult[dict[str, object]].ok(summary)
+                return FlextResult[FlextTypes.Types.ServiceMetadataMapping].ok(summary)
 
             except Exception as e:
                 error_msg = f"Demonstration failed: {e}"
                 self.logger.exception(error_msg)
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Types.ServiceMetadataMapping].fail(
                     error_msg,
                     error_code="VALIDATION_ERROR",
                 )
@@ -366,7 +365,7 @@ class Example01BasicResult:
 
             # NEW: Using create_from_callable instead of manual try/except
             from_callable_result = FlextResult[int].create_from_callable(
-                risky_operation
+                risky_operation,
             )
             print(f"🔥 .create_from_callable() for exceptions: {from_callable_result}")
 
@@ -444,7 +443,7 @@ class Example01BasicResult:
                 FlextResult[str]
                 .ok("hello")
                 .flow_through(
-                    validate_length, to_upper_result, double_length, add_prefix
+                    validate_length, to_upper_result, double_length, add_prefix,
                 )
             )
             print(f".flow_through pipeline: {result.unwrap()}")
@@ -552,11 +551,11 @@ class Example01BasicResult:
             sequenced = FlextResult.traverse(
                 items,
                 lambda item: FlextResult[dict[str, object]].ok(
-                    cast("dict[str, object]", item)
+                    cast("dict[str, object]", item),
                 ),
             )
             print(
-                f".traverse() (sequenced): {len(sequenced.unwrap())} successful users"
+                f".traverse() (sequenced): {len(sequenced.unwrap())} successful users",
             )
 
         # ========== VALIDATION PATTERNS ==========
@@ -674,7 +673,7 @@ class Example01BasicResult:
 
             def risky_operation() -> FlextResult[int]:
                 message = str(
-                    self._scenarios.error_scenario("ValidationError")["message"]
+                    self._scenarios.error_scenario("ValidationError")["message"],
                 )
                 return FlextResult[int].fail(message)
 
@@ -913,7 +912,7 @@ class Example01BasicResult:
             # Show the clean new pattern
             print("\n✨ NEW PATTERN (create_from_callable with error code):")
             result_with_code = FlextResult[int].create_from_callable(
-                risky_function, error_code=FlextConstants.Errors.VALIDATION_ERROR
+                risky_function, error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
             print(f"With custom error code: {result_with_code.error_code}")
 

@@ -16,6 +16,7 @@ import time
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 
 
 class CircuitBreakerManager:
@@ -188,7 +189,7 @@ class CircuitBreakerManager:
         self._recovery_failures.clear()
         self._total_successes.clear()
 
-    def get_metrics(self) -> dict[str, object]:
+    def get_metrics(self) -> dict[str, FlextTypes.GeneralValueType]:
         """Collect circuit breaker metrics, including recovery statistics."""
         total_recovery_attempts = sum(
             self._recovery_successes.get(mt, 0) + self._recovery_failures.get(mt, 0)

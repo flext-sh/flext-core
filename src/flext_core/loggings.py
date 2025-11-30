@@ -24,11 +24,10 @@ from typing import ClassVar, Self, overload
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime
+from flext_core.runtime import FlextRuntime, StructlogLogger
 from flext_core.typings import FlextTypes, T
 
-# Type alias for GeneralValueType (PEP 695)
-type GeneralValueType = FlextTypes.GeneralValueType
+# Use FlextTypes.GeneralValueType directly - no aliases
 
 
 class FlextLogger:
@@ -49,11 +48,11 @@ class FlextLogger:
 
     # Scoped context tracking
     # Format: {scope_name: {context_key: context_value}}
-    _scoped_contexts: ClassVar[dict[str, dict[str, GeneralValueType]]] = {}
+    _scoped_contexts: ClassVar[dict[str, dict[str, FlextTypes.GeneralValueType]]] = {}
 
     # Level-based context tracking
     # Format: {log_level: {context_key: context_value}}
-    _level_contexts: ClassVar[dict[str, dict[str, GeneralValueType]]] = {}
+    _level_contexts: ClassVar[dict[str, dict[str, FlextTypes.GeneralValueType]]] = {}
 
     # NOTE: _configure_structlog_if_needed() wrapper method REMOVED
     # Applications must call FlextRuntime.configure_structlog() explicitly at startup
@@ -93,8 +92,10 @@ class FlextLogger:
 
     @classmethod
     def _execute_context_op(
-        cls, operation: str, kwargs: dict[str, GeneralValueType]
-    ) -> FlextResult[bool] | dict[str, GeneralValueType]:
+        cls,
+        operation: str,
+        kwargs: dict[str, FlextTypes.GeneralValueType],
+    ) -> FlextResult[bool] | dict[str, FlextTypes.GeneralValueType]:
         """Execute context operation by name."""
         if operation == FlextConstants.Logging.CONTEXT_OPERATION_BIND:
             FlextRuntime.structlog().contextvars.bind_contextvars(**kwargs)
@@ -113,7 +114,9 @@ class FlextLogger:
 
     @classmethod
     def _handle_context_error(
-        cls, operation: str, exc: Exception
+        cls,
+        operation: str,
+        exc: Exception,
     ) -> FlextResult[bool] | FlextTypes.Types.ContextMetadataMapping:
         """Handle context operation error."""
         if operation == FlextConstants.Logging.CONTEXT_OPERATION_GET:
@@ -121,7 +124,10 @@ class FlextLogger:
         return FlextResult[bool].fail(f"Failed to {operation} global context: {exc}")
 
     @classmethod
-    def bind_global_context(cls, **context: GeneralValueType) -> FlextResult[bool]:
+    def bind_global_context(
+        cls,
+        **context: FlextTypes.GeneralValueType,
+    ) -> FlextResult[bool]:
         """Bind context globally using FlextRuntime.structlog() contextvars."""
         operation: FlextConstants.Logging.ContextOperationModifyLiteral = (
             FlextConstants.Logging.CONTEXT_OPERATION_BIND
@@ -141,9 +147,12 @@ class FlextLogger:
         """
         # Convert keys tuple to dict for kwargs compatibility
         # Each key is mapped to its string value to indicate it should be unbound
-        keys_dict: dict[str, GeneralValueType] = {key: str(key) for key in keys}
+        keys_dict: dict[str, FlextTypes.GeneralValueType] = {
+            key: str(key) for key in keys
+        }
         return cls._context_operation(
-            FlextConstants.Logging.CONTEXT_OPERATION_UNBIND, **keys_dict
+            FlextConstants.Logging.CONTEXT_OPERATION_UNBIND,
+            **keys_dict,
         )
 
     @classmethod
@@ -174,7 +183,9 @@ class FlextLogger:
 
     @classmethod
     def _bind_context(
-        cls, _scope: str, **context: GeneralValueType
+        cls,
+        _scope: str,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Internal method to bind context to a specific scope.
 
@@ -197,7 +208,8 @@ class FlextLogger:
 
     @classmethod
     def bind_application_context(
-        cls, **context: FlextTypes.GeneralValueType
+        cls,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Bind application-level context (persists for entire app lifetime).
 
@@ -223,7 +235,8 @@ class FlextLogger:
 
     @classmethod
     def bind_request_context(
-        cls, **context: FlextTypes.GeneralValueType
+        cls,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Bind request-level context (persists for single request/command).
 
@@ -249,7 +262,8 @@ class FlextLogger:
 
     @classmethod
     def bind_operation_context(
-        cls, **context: FlextTypes.GeneralValueType
+        cls,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Bind operation-level context using mapping."""
         return cls._bind_context(FlextConstants.Context.SCOPE_OPERATION, **context)
@@ -288,7 +302,9 @@ class FlextLogger:
     @classmethod
     @contextmanager
     def scoped_context(
-        cls, scope: str, **context: FlextTypes.GeneralValueType
+        cls,
+        scope: str,
+        **context: FlextTypes.GeneralValueType,
     ) -> Iterator[None]:
         """Context manager for automatic scoped context cleanup."""
         # Use _bind_context for all scopes (handles known + generic scopes)
@@ -296,7 +312,7 @@ class FlextLogger:
 
         if result.is_failure:
             cls.create_module_logger("flext_core.loggings").warning(
-                f"Failed to bind scoped context: {result.error}"
+                f"Failed to bind scoped context: {result.error}",
             )
 
         try:
@@ -311,7 +327,7 @@ class FlextLogger:
     @classmethod
     def bind_context_for_level(
         cls,
-        level: FlextConstants.Literals.LogLevelLiteral,
+        level: str,
         **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Bind context that only appears at specific log level."""
@@ -332,7 +348,9 @@ class FlextLogger:
 
     @classmethod
     def unbind_context_for_level(
-        cls, level: FlextConstants.Literals.LogLevelLiteral, *keys: str
+        cls,
+        level: FlextConstants.Literals.LogLevelLiteral,
+        *keys: str,
     ) -> FlextResult[bool]:
         """Unbind specific level-filtered context variables."""
         try:
@@ -417,17 +435,17 @@ class FlextLogger:
             context["correlation_id"] = _correlation_id
 
         # Create bound logger with initial context
-        self.logger = FlextRuntime.structlog().get_logger(name).bind(**context)
+        self.logger = FlextRuntime.get_logger(name).bind(**context)
 
         # Initialize optional state variables
-        self._context: dict[str, GeneralValueType] = {}
-        self._tracking: dict[str, GeneralValueType] = {}
+        self._context: dict[str, FlextTypes.GeneralValueType] = {}
+        self._tracking: dict[str, FlextTypes.GeneralValueType] = {}
 
     @classmethod
     def _create_bound_logger(
         cls,
         name: str,
-        bound_logger: FlextTypes.Logging.BoundLoggerType,
+        bound_logger: StructlogLogger,
     ) -> FlextLogger:
         """Internal factory for creating logger with pre-bound structlog instance."""
         instance = cls.__new__(cls)
@@ -489,7 +507,9 @@ class FlextLogger:
         return result if return_result else None
 
     def _format_log_message(
-        self, message: str, *args: FlextTypes.Logging.LoggingArgType
+        self,
+        message: str,
+        *args: FlextTypes.Logging.LoggingArgType,
     ) -> str:
         """Format log message with % arguments."""
         try:
@@ -586,7 +606,7 @@ class FlextLogger:
         _level: FlextConstants.Settings.LogLevel | str,
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Internal logging method - consolidates all log level methods."""
         try:
@@ -617,7 +637,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: FlextConstants.Logging.ReturnResultTrueLiteral,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]: ...
 
     @overload
@@ -626,7 +646,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: FlextConstants.Logging.ReturnResultFalseLiteral = False,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> None: ...
 
     def debug(
@@ -634,11 +654,14 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: bool = False,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool] | None:
         """Log debug message - LoggerProtocol implementation."""
         result = self._log(
-            FlextConstants.Settings.LogLevel.DEBUG, message, *args, **context
+            FlextConstants.Settings.LogLevel.DEBUG,
+            message,
+            *args,
+            **context,
         )
         return result if return_result else None
 
@@ -648,7 +671,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: FlextConstants.Logging.ReturnResultTrueLiteral,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]: ...
 
     @overload
@@ -657,7 +680,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: FlextConstants.Logging.ReturnResultFalseLiteral = False,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> None: ...
 
     def info(
@@ -665,11 +688,14 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: bool = False,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool] | None:
         """Log info message - LoggerProtocol implementation."""
         result = self._log(
-            FlextConstants.Settings.LogLevel.INFO, message, *args, **context
+            FlextConstants.Settings.LogLevel.INFO,
+            message,
+            *args,
+            **context,
         )
         return result if return_result else None
 
@@ -679,7 +705,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: FlextConstants.Logging.ReturnResultTrueLiteral,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]: ...
 
     @overload
@@ -688,7 +714,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: FlextConstants.Logging.ReturnResultFalseLiteral = False,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> None: ...
 
     def warning(
@@ -696,11 +722,14 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: bool = False,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool] | None:
         """Log warning message - LoggerProtocol implementation."""
         result = self._log(
-            FlextConstants.Settings.LogLevel.WARNING, message, *args, **context
+            FlextConstants.Settings.LogLevel.WARNING,
+            message,
+            *args,
+            **context,
         )
         return result if return_result else None
 
@@ -710,7 +739,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: FlextConstants.Logging.ReturnResultTrueLiteral,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]: ...
 
     @overload
@@ -719,7 +748,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: FlextConstants.Logging.ReturnResultFalseLiteral = False,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> None: ...
 
     def error(
@@ -727,11 +756,14 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: bool = False,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool] | None:
         """Log error message - LoggerProtocol implementation."""
         result = self._log(
-            FlextConstants.Settings.LogLevel.ERROR, message, *args, **context
+            FlextConstants.Settings.LogLevel.ERROR,
+            message,
+            *args,
+            **context,
         )
         return result if return_result else None
 
@@ -741,7 +773,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: FlextConstants.Logging.ReturnResultTrueLiteral,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]: ...
 
     @overload
@@ -750,7 +782,7 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: FlextConstants.Logging.ReturnResultFalseLiteral = False,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> None: ...
 
     def critical(
@@ -758,11 +790,14 @@ class FlextLogger:
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
         return_result: bool = False,
-        **context: GeneralValueType,
+        **context: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool] | None:
         """Log critical message - LoggerProtocol implementation."""
         result = self._log(
-            FlextConstants.Settings.LogLevel.CRITICAL, message, *args, **context
+            FlextConstants.Settings.LogLevel.CRITICAL,
+            message,
+            *args,
+            **context,
         )
         return result if return_result else None
 
@@ -774,7 +809,7 @@ class FlextLogger:
         exception: BaseException | None = None,
         exc_info: bool = True,
         return_result: FlextConstants.Logging.ReturnResultTrueLiteral,
-        **kwargs: GeneralValueType,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]: ...
 
     @overload
@@ -785,7 +820,7 @@ class FlextLogger:
         exception: BaseException | None = None,
         exc_info: bool = True,
         return_result: FlextConstants.Logging.ReturnResultFalseLiteral = False,
-        **kwargs: GeneralValueType,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> None: ...
 
     def exception(
@@ -795,7 +830,7 @@ class FlextLogger:
         exception: BaseException | None = None,
         exc_info: bool = True,
         return_result: bool = False,
-        **kwargs: GeneralValueType,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool] | None:
         """Log exception with conditional stack trace (DEBUG only)."""
         try:
@@ -818,8 +853,10 @@ class FlextLogger:
                 if include_stack_trace:
                     kwargs["stack_trace"] = "".join(
                         traceback.format_exception(
-                            type(exception), exception, exception.__traceback__
-                        )
+                            type(exception),
+                            exception,
+                            exception.__traceback__,
+                        ),
                     )
             elif exc_info and include_stack_trace:
                 kwargs["stack_trace"] = traceback.format_exc()
@@ -848,7 +885,7 @@ class FlextLogger:
     ) -> FlextResult[bool]:
         """Log FlextResult with automatic success/failure handling."""
         try:
-            context: dict[str, GeneralValueType] = {}
+            context: dict[str, FlextTypes.GeneralValueType] = {}
             if operation is not None:
                 context["operation"] = operation
 
@@ -874,7 +911,8 @@ class FlextLogger:
     # =========================================================================
 
     def bind_context(
-        self, context: FlextTypes.Types.ContextMetadataMapping
+        self,
+        context: FlextTypes.Types.ContextMetadataMapping,
     ) -> FlextResult[bool]:
         """Bind context to logger (ContextBinder protocol)."""
         try:
@@ -885,12 +923,12 @@ class FlextLogger:
 
     def get_context(
         self,
-    ) -> FlextResult[dict[str, GeneralValueType]]:
+    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
         """Get context (ContextBinder protocol)."""
         try:
-            return FlextResult[dict[str, GeneralValueType]].ok(self._context)
+            return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(self._context)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[dict[str, GeneralValueType]].fail(str(e))
+            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(str(e))
 
     def start_tracking(self, _operation: str) -> FlextResult[bool]:
         """Start tracking operation (PerformanceTracker protocol)."""
@@ -929,7 +967,7 @@ class FlextLogger:
             status = "success" if is_success else "failed"
             log_method = self.logger.info if is_success else self.logger.error
 
-            context: dict[str, GeneralValueType] = {
+            context: dict[str, FlextTypes.GeneralValueType] = {
                 "duration_seconds": elapsed,
                 "operation": self._operation_name,
                 "status": status,
@@ -940,7 +978,9 @@ class FlextLogger:
                 context["exception_message"] = str(exc_val) if exc_val else ""
 
             log_method(
-                f"{self._operation_name} {status}", return_result=False, **context
+                f"{self._operation_name} {status}",
+                return_result=False,
+                **context,
             )
 
 
@@ -967,7 +1007,7 @@ class FlextLoggerResultAdapter:
         """Return self (idempotent)."""
         return self
 
-    def bind(self, **context: GeneralValueType) -> FlextLoggerResultAdapter:
+    def bind(self, **context: FlextTypes.GeneralValueType) -> FlextLoggerResultAdapter:
         """Bind context preserving adapter wrapper."""
         return FlextLoggerResultAdapter(self._base_logger.bind(**context))
 
@@ -976,7 +1016,7 @@ class FlextLoggerResultAdapter:
         method: FlextConstants.Settings.LogLevel | str,
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
-        **kwargs: GeneralValueType,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Call logging method with return_result=True."""
         # Convert StrEnum to string value if needed
@@ -986,7 +1026,10 @@ class FlextLoggerResultAdapter:
             else method
         ).lower()
         result = getattr(self._base_logger, method_str)(
-            message, *args, return_result=True, **kwargs
+            message,
+            *args,
+            return_result=True,
+            **kwargs,
         )
         return result if isinstance(result, FlextResult) else FlextResult[bool].ok(True)
 
@@ -994,7 +1037,7 @@ class FlextLoggerResultAdapter:
         self,
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
-        **kwargs: GeneralValueType,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Log trace message returning FlextResult."""
         return self._log_with_result("trace", message, *args, **kwargs)
@@ -1003,55 +1046,70 @@ class FlextLoggerResultAdapter:
         self,
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
-        **kwargs: GeneralValueType,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Log debug message returning FlextResult."""
         return self._log_with_result(
-            FlextConstants.Settings.LogLevel.DEBUG, message, *args, **kwargs
+            FlextConstants.Settings.LogLevel.DEBUG,
+            message,
+            *args,
+            **kwargs,
         )
 
     def info(
         self,
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
-        **kwargs: GeneralValueType,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Log info message returning FlextResult."""
         return self._log_with_result(
-            FlextConstants.Settings.LogLevel.INFO, message, *args, **kwargs
+            FlextConstants.Settings.LogLevel.INFO,
+            message,
+            *args,
+            **kwargs,
         )
 
     def warning(
         self,
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
-        **kwargs: GeneralValueType,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Log warning message returning FlextResult."""
         return self._log_with_result(
-            FlextConstants.Settings.LogLevel.WARNING, message, *args, **kwargs
+            FlextConstants.Settings.LogLevel.WARNING,
+            message,
+            *args,
+            **kwargs,
         )
 
     def error(
         self,
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
-        **kwargs: GeneralValueType,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Log error message returning FlextResult."""
         return self._log_with_result(
-            FlextConstants.Settings.LogLevel.ERROR, message, *args, **kwargs
+            FlextConstants.Settings.LogLevel.ERROR,
+            message,
+            *args,
+            **kwargs,
         )
 
     def critical(
         self,
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
-        **kwargs: GeneralValueType,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Log critical message returning FlextResult."""
         return self._log_with_result(
-            FlextConstants.Settings.LogLevel.CRITICAL, message, *args, **kwargs
+            FlextConstants.Settings.LogLevel.CRITICAL,
+            message,
+            *args,
+            **kwargs,
         )
 
     def exception(
@@ -1060,11 +1118,11 @@ class FlextLoggerResultAdapter:
         *,
         exception: BaseException | None = None,
         exc_info: bool = True,
-        **kwargs: GeneralValueType,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Log exception with traceback returning FlextResult."""
         # Convert exception to string for context if provided
-        context: dict[str, GeneralValueType] = dict(kwargs)
+        context: dict[str, FlextTypes.GeneralValueType] = dict(kwargs)
         if exception is not None:
             context["exception"] = str(exception)
             context["exception_type"] = type(exception).__name__

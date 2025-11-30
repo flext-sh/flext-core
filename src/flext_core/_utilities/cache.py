@@ -12,24 +12,32 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import hashlib
-import logging
 from collections.abc import Sequence
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime
+from flext_core.runtime import FlextRuntime, StructlogLogger
 from flext_core.typings import FlextTypes
-
-_logger = logging.getLogger(__name__)
 
 
 class FlextUtilitiesCache:
     """Cache utilities for deterministic normalization and key management."""
 
+    @property
+    def logger(self) -> StructlogLogger:
+        """Get logger instance using FlextRuntime (avoids circular imports).
+
+        Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
+        Uses same structure/config as FlextLogger but without circular import.
+        """
+        return FlextRuntime.get_logger(__name__)
+
+    """Cache utility functions for data normalization and sorting."""
+
     @staticmethod
     def normalize_component(
-        component: FlextTypes.GenericDetailsType,
-    ) -> GeneralValueType:
+        component: object,
+    ) -> FlextTypes.GeneralValueType:
         """Normalize a component recursively for consistent representation."""
         if FlextRuntime.is_dict_like(component):
             component_dict = component
@@ -37,12 +45,21 @@ class FlextUtilitiesCache:
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in component_dict.items()
             }
+        # Check str before Sequence since str is a Sequence
+        if isinstance(component, str):
+            return component
         if isinstance(component, Sequence):
             return [FlextUtilitiesCache.normalize_component(item) for item in component]
         if isinstance(component, set):
-            return {FlextUtilitiesCache.normalize_component(item) for item in component}
+            return tuple(
+                FlextUtilitiesCache.normalize_component(item) for item in component
+            )
         # Return primitives and other types directly
-        return component
+        # Type narrowing: primitives are valid GeneralValueType
+        if isinstance(component, (str, int, float, bool, type(None))):
+            return component
+        # For other types, convert to string as fallback
+        return str(component)
 
     @staticmethod
     def sort_key(key: FlextTypes.SortableObjectType) -> tuple[int, str]:
@@ -68,7 +85,7 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def clear_object_cache(
-        obj: FlextTypes.CachedObjectType,
+        obj: FlextTypes.Utility.CachedObjectType,
     ) -> FlextResult[bool]:
         """Clear cache-like attributes on an object and surface any failure."""
         try:
@@ -80,7 +97,7 @@ class FlextUtilitiesCache:
                 if hasattr(obj, attr_name):
                     cache_attr = getattr(obj, attr_name, None)
                     if cache_attr is not None:
-                        # Clear dict[str, GeneralValueType]-like caches
+                        # Clear dict[str, FlextTypes.GeneralValueType]-like caches
                         if hasattr(cache_attr, "clear") and callable(
                             cache_attr.clear,
                         ):
@@ -96,13 +113,16 @@ class FlextUtilitiesCache:
             return FlextResult[bool].fail(f"Failed to clear caches: {e}")
 
     @staticmethod
-    def has_cache_attributes(obj: FlextTypes.CachedObjectType) -> bool:
+    def has_cache_attributes(obj: FlextTypes.Utility.CachedObjectType) -> bool:
         """Check if an object exposes any known cache-related attributes."""
         cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
         return any(hasattr(obj, attr) for attr in cache_attributes)
 
     @staticmethod
-    def generate_cache_key(*args: GeneralValueType, **kwargs: GeneralValueType) -> str:
+    def generate_cache_key(
+        *args: FlextTypes.GeneralValueType,
+        **kwargs: FlextTypes.GeneralValueType,
+    ) -> str:
         """Generate a deterministic cache key from arguments."""
         key_data = str(args) + str(sorted(kwargs.items()))
         return hashlib.sha256(key_data.encode()).hexdigest()

@@ -143,7 +143,7 @@ class TestFlextHandlers:
     def test_handlers_initialization(self) -> None:
         """Test handlers initialization."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_handler_1", "Test Handler 1"
+            "test_handler_1", "Test Handler 1",
         )
         handlers = ConcreteTestHandler(config=config)
         assert handlers is not None
@@ -166,7 +166,7 @@ class TestFlextHandlers:
     def test_handlers_handle_success(self) -> None:
         """Test successful handler execution."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_handler_3", "Test Handler 3"
+            "test_handler_3", "Test Handler 3",
         )
         handler = ConcreteTestHandler(config=config)
         result = handler.handle("test_message")
@@ -176,7 +176,7 @@ class TestFlextHandlers:
     def test_handlers_handle_failure(self) -> None:
         """Test handler execution with failure."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_handler_4", "Test Handler 4"
+            "test_handler_4", "Test Handler 4",
         )
         handler = FailingTestHandler(config=config)
         result = handler.handle("test_message")
@@ -203,7 +203,7 @@ class TestFlextHandlers:
     def test_handlers_execution_context(self) -> None:
         """Test handler execution context creation."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_handler_6", "Test Handler 6"
+            "test_handler_6", "Test Handler 6",
         )
         handler = ConcreteTestHandler(config=config)
         assert handler._execution_context is not None
@@ -217,7 +217,7 @@ class TestFlextHandlers:
                 return FlextResult[str].ok(f"processed_{message}")
 
         config = HandlerTestHelpers.create_handler_config(
-            "test_handler_10", "Test Handler 10"
+            "test_handler_10", "Test Handler 10",
         )
         handler = IntHandler(config=config)
         result = handler.handle(42)
@@ -225,7 +225,7 @@ class TestFlextHandlers:
         assert result.value == "processed_42"
 
     @pytest.mark.parametrize(
-        "scenario", HandlerScenarios.HANDLER_TYPES, ids=lambda s: s.name
+        "scenario", HandlerScenarios.HANDLER_TYPES, ids=lambda s: s.name,
     )
     def test_handlers_types(self, scenario: HandlerTypeScenario) -> None:
         """Test handlers with various types."""
@@ -245,7 +245,7 @@ class TestFlextHandlers:
             "test_handler_with_metadata",
             "Test Handler With Metadata",
             metadata=FlextModels.Metadata(
-                attributes={"test_key": "test_value", "priority": 1}
+                attributes={"test_key": "test_value", "priority": 1},
             ),
         )
         handler = ConcreteTestHandler(config=config)
@@ -255,7 +255,7 @@ class TestFlextHandlers:
     def test_handlers_with_timeout(self) -> None:
         """Test handlers with timeout configuration."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_handler_with_timeout", "Test Handler With Timeout", command_timeout=60
+            "test_handler_with_timeout", "Test Handler With Timeout", command_timeout=60,
         )
         handler = ConcreteTestHandler(config=config)
         assert handler._config_model.command_timeout == 60
@@ -263,7 +263,7 @@ class TestFlextHandlers:
     def test_handlers_with_retry_config(self) -> None:
         """Test handlers with retry configuration."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_handler_with_retry", "Test Handler With Retry", max_command_retries=3
+            "test_handler_with_retry", "Test Handler With Retry", max_command_retries=3,
         )
         handler = ConcreteTestHandler(config=config)
         assert handler._config_model.max_command_retries == 3
@@ -271,7 +271,7 @@ class TestFlextHandlers:
     def test_handlers_inheritance_chain(self) -> None:
         """Test that handlers inherit from FlextMixins."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_inheritance_handler", "Test Inheritance Handler"
+            "test_inheritance_handler", "Test Inheritance Handler",
         )
         handler = ConcreteTestHandler(config=config)
         assert isinstance(handler, FlextMixins)
@@ -457,7 +457,7 @@ class TestFlextHandlers:
     def test_handlers_execute_method(self) -> None:
         """Test execute method (Layer 1 interface)."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_execute", "Test Execute"
+            "test_execute", "Test Execute",
         )
         handler = ConcreteTestHandler(config=config)
         result = handler.execute("test_message")
@@ -467,7 +467,7 @@ class TestFlextHandlers:
     def test_handlers_callable_interface(self) -> None:
         """Test __call__ method (callable interface)."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_callable", "Test Callable"
+            "test_callable", "Test Callable",
         )
         handler = ConcreteTestHandler(config=config)
         result = handler("test_message")
@@ -477,7 +477,7 @@ class TestFlextHandlers:
     def test_handlers_can_handle_method(self) -> None:
         """Test can_handle method."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_can_handle", "Test Can Handle"
+            "test_can_handle", "Test Can Handle",
         )
         handler = ConcreteTestHandler(config=config)
         assert isinstance(handler.can_handle(str), bool)
@@ -502,7 +502,7 @@ class TestFlextHandlers:
         ids=[scenario.name for scenario in HandlerScenarios.HANDLER_TYPES],
     )
     def test_handlers_validate_generic(
-        self, handler_type: str, handler_mode: str
+        self, handler_type: str, handler_mode: str,
     ) -> None:
         """Test validate method for various handler types."""
         config = HandlerTestHelpers.create_handler_config(
@@ -521,11 +521,11 @@ class TestFlextHandlers:
         ids=[t[0] for t in HandlerScenarios.VALIDATION_TYPES],
     )
     def test_handlers_message_validation_types(
-        self, type_name: str, message: object
+        self, type_name: str, message: object,
     ) -> None:
         """Test message validation with various types."""
         config = HandlerTestHelpers.create_handler_config(
-            f"test_{type_name}_message", f"Test {type_name.title()} Message"
+            f"test_{type_name}_message", f"Test {type_name.title()} Message",
         )
         handler = ConcreteTestHandler(config=config)
         result = handler.validate(message)
@@ -534,7 +534,7 @@ class TestFlextHandlers:
     def test_handlers_validate_message_protocol(self) -> None:
         """Test validate_message protocol method."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_validate_message_protocol", "Test Validate Message Protocol"
+            "test_validate_message_protocol", "Test Validate Message Protocol",
         )
         handler = ConcreteTestHandler(config=config)
         result = handler.validate_message("test_message")
@@ -543,7 +543,7 @@ class TestFlextHandlers:
     def test_handlers_record_metric(self) -> None:
         """Test record_metric protocol method."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_record_metric", "Test Record Metric"
+            "test_record_metric", "Test Record Metric",
         )
         handler = ConcreteTestHandler(config=config)
         result = handler.record_metric("test_metric", 42.0)
@@ -552,7 +552,7 @@ class TestFlextHandlers:
     def test_handlers_get_metrics(self) -> None:
         """Test get_metrics protocol method."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_get_metrics", "Test Get Metrics"
+            "test_get_metrics", "Test Get Metrics",
         )
         handler = ConcreteTestHandler(config=config)
         handler.record_metric("test_metric", 42.0)
@@ -565,7 +565,7 @@ class TestFlextHandlers:
     def test_handlers_push_context(self) -> None:
         """Test push_context protocol method."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_push_context", "Test Push Context"
+            "test_push_context", "Test Push Context",
         )
         handler = ConcreteTestHandler(config=config)
         context = {"user_id": "123", "operation": "test"}
@@ -575,7 +575,7 @@ class TestFlextHandlers:
     def test_handlers_pop_context(self) -> None:
         """Test pop_context protocol method."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_pop_context", "Test Pop Context"
+            "test_pop_context", "Test Pop Context",
         )
         handler = ConcreteTestHandler(config=config)
         handler.push_context({"test": "data"})
@@ -585,7 +585,7 @@ class TestFlextHandlers:
     def test_handlers_pop_context_empty_stack(self) -> None:
         """Test pop_context when stack is empty."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_pop_context_empty", "Test Pop Context Empty"
+            "test_pop_context_empty", "Test Pop Context Empty",
         )
         handler = ConcreteTestHandler(config=config)
         result = handler.pop_context()
@@ -594,7 +594,7 @@ class TestFlextHandlers:
     def test_handlers_message_with_none_raises_validation_error(self) -> None:
         """Test message validation with None value."""
         config = HandlerTestHelpers.create_handler_config(
-            "test_none_message", "Test None Message"
+            "test_none_message", "Test None Message",
         )
         handler = ConcreteTestHandler(config=config)
         result = handler.validate(None)
@@ -607,7 +607,7 @@ class TestFlextHandlers:
             value: str
 
         config = HandlerTestHelpers.create_handler_config(
-            "test_pydantic_validation", "Test Pydantic Validation"
+            "test_pydantic_validation", "Test Pydantic Validation",
         )
         handler = ConcreteTestHandler(config=config)
         msg = TestMessage(value="test")
@@ -623,7 +623,7 @@ class TestFlextHandlers:
             number: int
 
         config = HandlerTestHelpers.create_handler_config(
-            "test_dataclass_message", "Test Dataclass Message"
+            "test_dataclass_message", "Test Dataclass Message",
         )
         handler = ConcreteTestHandler(config=config)
         msg = DataClassMessage(value="test", number=42)
@@ -641,7 +641,7 @@ class TestFlextHandlers:
                 self.number = number
 
         config = HandlerTestHelpers.create_handler_config(
-            "test_slots_message", "Test Slots Message"
+            "test_slots_message", "Test Slots Message",
         )
         handler = ConcreteTestHandler(config=config)
         msg = SlotsMessage(value="test", number=42)

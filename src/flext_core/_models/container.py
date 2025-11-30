@@ -1,5 +1,7 @@
 """Container models - Dependency Injection registry models.
 
+TIER 0.5: Usa apenas stdlib + pydantic + _models/metadata.py (evita ciclos via __init__.py).
+
 This module contains Pydantic models for FlextContainer that implement
 ServiceRegistry and FactoryProvider Protocols.
 
@@ -9,20 +11,38 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from datetime import datetime
+from collections.abc import Callable, Mapping, Sequence
+from datetime import UTC, datetime
+from enum import StrEnum
 from typing import cast as type_cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from flext_core._models.metadata import Metadata, MetadataAttributeValue
-from flext_core.constants import FlextConstants
-from flext_core.runtime import FlextRuntime
+from flext_core._models.metadata import Metadata
 from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
 
-# Type alias for GeneralValueType (PEP 695)
-type GeneralValueType = FlextTypes.GeneralValueType
+
+# Tier 0.5 inline enum (avoid importing FlextConstants)
+class _ValidationLevel(StrEnum):
+    """Validation level for container operations."""
+
+    STRICT = "strict"
+    LENIENT = "lenient"
+
+
+# Use FlextTypes.Types.ServiceMetadataMapping directly instead of alias
+
+
+# Tier 0.5 inline helper (avoid importing FlextRuntime)
+def _is_dict_like(value: object) -> bool:
+    """Check if value is dict-like."""
+    return isinstance(value, Mapping)
+
+
+# Tier 0.5 inline helper (avoid importing FlextUtilities)
+def _generate_datetime_utc() -> datetime:
+    """Generate current UTC datetime."""
+    return datetime.now(UTC)
 
 
 class FlextModelsContainer:
@@ -46,12 +66,16 @@ class FlextModelsContainer:
             min_length=1,
             description="Service identifier/name",
         )
-        service: GeneralValueType = Field(
+        service: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | Callable[..., FlextTypes.GeneralValueType]
+        ) = Field(
             ...,
-            description="Service instance (actual object)",
+            description="Service instance (primitives, BaseModel, or callable)",
         )
         registration_time: datetime = Field(
-            default_factory=FlextUtilities.Generators.generate_datetime_utc,
+            default_factory=_generate_datetime_utc,
             description="UTC timestamp when service was registered",
         )
         metadata: Metadata | FlextTypes.Types.ServiceMetadataMapping | None = Field(
@@ -77,10 +101,11 @@ class FlextModelsContainer:
             """
             if v is None:
                 return Metadata(attributes={})
-            if FlextRuntime.is_dict_like(v):
-                # Cast to MetadataAttributeValue-compatible dict
-                attributes: dict[str, MetadataAttributeValue] = type_cast(
-                    "dict[str, MetadataAttributeValue]", v
+            if _is_dict_like(v):
+                # Cast to MetadataValue-compatible dict
+                attributes: dict[str, FlextTypes.MetadataValue] = type_cast(
+                    "dict[str, FlextTypes.MetadataValue]",
+                    v,
                 )
                 return Metadata(attributes=attributes)
             if isinstance(v, Metadata):
@@ -106,19 +131,26 @@ class FlextModelsContainer:
             min_length=1,
             description="Factory identifier/name",
         )
-        factory: Callable[[], object] = Field(
+        factory: Callable[
+            [],
+            (
+                FlextTypes.ScalarValue
+                | Sequence[FlextTypes.ScalarValue]
+                | Mapping[str, FlextTypes.ScalarValue]
+            ),
+        ] = Field(
             ...,
             description="Factory function that creates service instances",
         )
         registration_time: datetime = Field(
-            default_factory=FlextUtilities.Generators.generate_datetime_utc,
+            default_factory=_generate_datetime_utc,
             description="UTC timestamp when factory was registered",
         )
         is_singleton: bool = Field(
             default=False,
             description="Whether factory creates singleton instances",
         )
-        cached_instance: object | None = Field(
+        cached_instance: FlextTypes.GeneralValueType | BaseModel | None = Field(
             default=None,
             description="Cached singleton instance (if is_singleton=True)",
         )
@@ -142,10 +174,11 @@ class FlextModelsContainer:
             """
             if v is None:
                 return Metadata(attributes={})
-            if FlextRuntime.is_dict_like(v):
-                # Cast to MetadataAttributeValue-compatible dict
-                attributes: dict[str, MetadataAttributeValue] = type_cast(
-                    "dict[str, MetadataAttributeValue]", v
+            if _is_dict_like(v):
+                # Cast to MetadataValue-compatible dict
+                attributes: dict[str, FlextTypes.MetadataValue] = type_cast(
+                    "dict[str, FlextTypes.MetadataValue]",
+                    v,
                 )
                 return Metadata(attributes=attributes)
             if isinstance(v, Metadata):
@@ -185,9 +218,9 @@ class FlextModelsContainer:
             le=5000,
             description="Maximum number of factories allowed in registry",
         )
-        validation_mode: FlextConstants.Cqrs.ValidationLevel = Field(
-            default=FlextConstants.Cqrs.ValidationLevel.STRICT,
-            description=f"Validation mode: '{FlextConstants.Cqrs.ValidationLevel.STRICT.value}' or '{FlextConstants.Cqrs.ValidationLevel.LENIENT.value}'",
+        validation_mode: _ValidationLevel = Field(
+            default=_ValidationLevel.STRICT,
+            description=f"Validation mode: '{_ValidationLevel.STRICT.value}' or '{_ValidationLevel.LENIENT.value}'",
         )
         enable_auto_registration: bool = Field(
             default=False,

@@ -55,6 +55,7 @@ class NestedDataDict(TypedDict, total=False):
 class TestDataDict(TypedDict, total=False):
     """Test data for FlextTestBuilder."""
 
+
     id: str
     correlation_id: str
     created_at: str
@@ -69,12 +70,14 @@ class TestDataDict(TypedDict, total=False):
 class TestCaseDict(TypedDict, total=False):
     """Individual test case configuration."""
 
+
     email: str
     input: str
 
 
 class SuccessCaseDict(TypedDict, total=False):
     """Success test case."""
+
 
     email: str
     input: str
@@ -83,12 +86,14 @@ class SuccessCaseDict(TypedDict, total=False):
 class FailureCaseDict(TypedDict, total=False):
     """Failure test case."""
 
+
     email: str
     input: str
 
 
 class SetupDataDict(TypedDict, total=False):
     """Setup data for test suite."""
+
 
     initialization_step: str
     configuration_key: str
@@ -97,6 +102,7 @@ class SetupDataDict(TypedDict, total=False):
 
 class TestSuiteDict(TypedDict):
     """Test suite configuration."""
+
 
     suite_name: str
     scenario_count: int
@@ -122,6 +128,7 @@ class RequestDataFixtureDict(TypedDict, total=False):
 
 class TestFixturesDict(TypedDict, total=False):
     """Test fixtures configuration."""
+
 
     user: dict[str, UserDataFixtureDict]
     request: dict[str, RequestDataFixtureDict]
@@ -171,6 +178,7 @@ class AsyncPayloadDict(TypedDict, total=False):
 
 class AsyncTestDataDict(TypedDict, total=False):
     """Async test data."""
+
 
     event_type: str
     timestamp: str

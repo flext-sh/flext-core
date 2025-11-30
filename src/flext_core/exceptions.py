@@ -12,22 +12,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextvars
-import logging
 import time
 import uuid
 from collections.abc import Callable, Mapping
-from typing import ClassVar, Self
-
-import structlog
+from typing import ClassVar, Self, cast
 
 from flext_core._models.metadata import Metadata
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
-
-# Type alias for GeneralValueType (PEP 695)
-type GeneralValueType = FlextTypes.GeneralValueType
 
 
 class FlextExceptions:
@@ -56,7 +50,8 @@ class FlextExceptions:
 
         @classmethod
         def set_global_level(
-            cls, level: FlextConstants.Exceptions.FailureLevel
+            cls,
+            level: FlextConstants.Exceptions.FailureLevel,
         ) -> None:
             """Set the global failure level for exception handling."""
             cls._global_failure_level = level
@@ -79,7 +74,10 @@ class FlextExceptions:
 
         @classmethod
         def register_library_exception_level(
-            cls, library_name: str, exception_type: type, level: str
+            cls,
+            library_name: str,
+            exception_type: type,
+            level: str,
         ) -> None:
             """Register exception level for a specific library and exception type."""
             if library_name not in cls._library_exception_levels:
@@ -104,7 +102,7 @@ class FlextExceptions:
                 return call_level
             if container_id and container_id in cls._container_exception_levels:
                 return FlextConstants.Exceptions.FailureLevel(
-                    cls._container_exception_levels[container_id]
+                    cls._container_exception_levels[container_id],
                 )
             if (
                 library_name
@@ -113,7 +111,7 @@ class FlextExceptions:
                 and exception_type in cls._library_exception_levels[library_name]
             ):
                 return FlextConstants.Exceptions.FailureLevel(
-                    cls._library_exception_levels[library_name][exception_type]
+                    cls._library_exception_levels[library_name][exception_type],
                 )
             return cls._get_global_failure_level()
 
@@ -129,7 +127,7 @@ class FlextExceptions:
             metadata: Metadata | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
-            **extra_kwargs: GeneralValueType,
+            **extra_kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize base exception with structured metadata and correlation.
 
@@ -159,9 +157,10 @@ class FlextExceptions:
                         k: v
                         for k, v in (extra_kwargs or {}).items()
                         if isinstance(
-                            v, (str, int, float, bool, list, dict, type(None))
+                            v,
+                            (str, int, float, bool, list, dict, type(None)),
                         )
-                    }
+                    },
                 )
                 if metadata is None
                 else metadata
@@ -191,7 +190,9 @@ class FlextExceptions:
         def _log_exception(self) -> None:
             """Log the exception using structured logging."""
             try:
-                logger = structlog.get_logger()
+                # Get logger - BindableLogger protocol has methods at runtime
+                logger = FlextRuntime.get_logger()
+                # Type narrowing: logger from structlog.get_logger() has error/debug/warning methods
                 logger.error(
                     "exception_raised",
                     event_type="exception",
@@ -203,8 +204,9 @@ class FlextExceptions:
                     metadata=self.metadata,
                 )
             except Exception as e:
-                logging.getLogger(__name__).debug(
-                    "Logging failed in exception handler: %s", e
+                FlextRuntime.get_logger(__name__).debug(
+                    "Logging failed in exception handler",
+                    exc_info=e,
                 )
 
         def __str__(self) -> str:
@@ -228,7 +230,7 @@ class FlextExceptions:
                 "metadata": self.metadata.attributes,
             }
 
-        def with_context(self, **context: GeneralValueType) -> Self:
+        def with_context(self, **context: FlextTypes.GeneralValueType) -> Self:
             """Add context information to the exception metadata."""
             existing_attrs = self.metadata.attributes
             new_attrs = {
@@ -250,7 +252,7 @@ class FlextExceptions:
                 }
                 self.metadata = Metadata(attributes=new_attrs)
             try:
-                logger = structlog.get_logger()
+                logger = FlextRuntime.get_logger()
                 logger.warning(
                     "exception_chained",
                     event_type="exception_chain",
@@ -259,8 +261,9 @@ class FlextExceptions:
                     correlation_id=self.correlation_id,
                 )
             except Exception as e:
-                logging.getLogger(__name__).debug(
-                    "Logging failed in exception handler: %s", e
+                FlextRuntime.get_logger(__name__).debug(
+                    "Logging failed in exception handler",
+                    exc_info=e,
                 )
             return self
 
@@ -273,13 +276,13 @@ class FlextExceptions:
             message: str,
             *,
             field: str | None = None,
-            value: GeneralValueType | None = None,
+            value: FlextTypes.GeneralValueType | None = None,
             error_code: str = FlextConstants.Errors.VALIDATION_ERROR,
             correlation_id: str | None = None,
             metadata: Metadata | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
-            **kwargs: GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize validation error with field and value information."""
             kwargs.update({"field": field, "value": value})
@@ -309,7 +312,7 @@ class FlextExceptions:
             metadata: Metadata | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
-            **kwargs: GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize configuration error with config context."""
             kwargs.update({"config_key": config_key, "config_source": config_source})
@@ -340,7 +343,7 @@ class FlextExceptions:
             metadata: Metadata | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
-            **kwargs: GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize connection error with network context."""
             kwargs.update({"host": host, "port": port, "timeout": timeout})
@@ -371,7 +374,7 @@ class FlextExceptions:
             metadata: Metadata | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
-            **kwargs: GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize timeout error with timeout context."""
             kwargs.update({"timeout_seconds": timeout_seconds, "operation": operation})
@@ -401,7 +404,7 @@ class FlextExceptions:
             metadata: Metadata | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
-            **kwargs: GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize authentication error with auth context."""
             kwargs.update({"auth_method": auth_method, "user_id": user_id})
@@ -432,7 +435,7 @@ class FlextExceptions:
             metadata: Metadata | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
-            **kwargs: GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize authorization error with permission context."""
             kwargs.update({
@@ -467,7 +470,7 @@ class FlextExceptions:
             metadata: Metadata | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
-            **kwargs: GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize not found error with resource context."""
             kwargs.update({"resource_type": resource_type, "resource_id": resource_id})
@@ -498,7 +501,7 @@ class FlextExceptions:
             metadata: Metadata | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
-            **kwargs: GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize conflict error with resource context."""
             kwargs.update({
@@ -534,7 +537,7 @@ class FlextExceptions:
             metadata: Metadata | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
-            **kwargs: GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize rate limit error with limit context."""
             kwargs.update({
@@ -570,7 +573,7 @@ class FlextExceptions:
             metadata: Metadata | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
-            **kwargs: GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize circuit breaker error with service context."""
             kwargs.update({
@@ -605,11 +608,11 @@ class FlextExceptions:
             metadata: Metadata | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
-            **kwargs: GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize type error with type information."""
-            # Convert type objects to their qualified names (GeneralValueType compatible)
-            type_kwargs: dict[str, GeneralValueType] = {
+            # Convert type objects to their qualified names (FlextTypes.GeneralValueType compatible)
+            type_kwargs: dict[str, FlextTypes.GeneralValueType] = {
                 "expected_type": expected_type.__qualname__ if expected_type else None,
                 "actual_type": actual_type.__qualname__ if actual_type else None,
             }
@@ -640,7 +643,7 @@ class FlextExceptions:
             metadata: Metadata | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
-            **kwargs: GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize operation error with operation context."""
             kwargs.update({"operation": operation, "reason": reason})
@@ -670,7 +673,7 @@ class FlextExceptions:
             metadata: Metadata | None = None,
             auto_log: bool = False,
             auto_correlation: bool = False,
-            **kwargs: GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize attribute access error with attribute context."""
             kwargs.update({
@@ -691,15 +694,15 @@ class FlextExceptions:
 
     @staticmethod
     def prepare_exception_kwargs(
-        kwargs: dict[str, GeneralValueType],
-        specific_params: dict[str, GeneralValueType] | None = None,
+        kwargs: dict[str, FlextTypes.GeneralValueType],
+        specific_params: dict[str, FlextTypes.GeneralValueType] | None = None,
     ) -> tuple[
         str | None,
-        GeneralValueType,
+        FlextTypes.GeneralValueType,
         bool,
         bool,
-        GeneralValueType,
-        dict[str, GeneralValueType],
+        FlextTypes.GeneralValueType,
+        dict[str, FlextTypes.GeneralValueType],
     ]:
         """Prepare exception kwargs by extracting common parameters."""
         if specific_params:
@@ -735,11 +738,14 @@ class FlextExceptions:
 
     @staticmethod
     def extract_common_kwargs(
-        kwargs: Mapping[str, GeneralValueType],
-    ) -> tuple[GeneralValueType | None, GeneralValueType | None]:
+        kwargs: Mapping[str, FlextTypes.GeneralValueType],
+    ) -> tuple[
+        FlextTypes.GeneralValueType | None,
+        FlextTypes.GeneralValueType | None,
+    ]:
         """Extract correlation_id and metadata from kwargs.
 
-        Returns raw values without narrowing types, as they could be any GeneralValueType.
+        Returns raw values without narrowing types, as they could be any FlextTypes.GeneralValueType.
         Callers should validate types as needed.
         """
         return (kwargs.get("correlation_id"), kwargs.get("metadata"))
@@ -770,7 +776,7 @@ class FlextExceptions:
 
     @staticmethod
     def _determine_error_type(
-        kwargs: Mapping[str, GeneralValueType],
+        kwargs: Mapping[str, FlextTypes.GeneralValueType],
     ) -> str | None:
         if "field" in kwargs or "value" in kwargs:
             return "validation"
@@ -800,7 +806,7 @@ class FlextExceptions:
             [
                 str,
                 str | None,
-                Mapping[str, GeneralValueType],
+                Mapping[str, FlextTypes.GeneralValueType],
                 str | None,
                 Metadata | None,
             ],
@@ -927,9 +933,9 @@ class FlextExceptions:
         error_type: str | None,
         message: str,
         error_code: str | None,
-        kwargs: Mapping[str, GeneralValueType],
+        kwargs: Mapping[str, FlextTypes.GeneralValueType],
         correlation_id: str | None,
-        metadata: dict[str, GeneralValueType] | None,
+        metadata: dict[str, FlextTypes.GeneralValueType] | None,
     ) -> BaseError:
         creator = FlextExceptions._get_error_creator(error_type) if error_type else None
         normalized_metadata = None
@@ -938,7 +944,20 @@ class FlextExceptions:
             filtered_attrs = {
                 k: v
                 for k, v in metadata.items()
-                if isinstance(v, (str, int, float, bool, list, dict, type(None)))
+                if isinstance(v, (str, int, float, bool, type(None)))
+                or (
+                    isinstance(v, list)
+                    and all(
+                        isinstance(x, (str, int, float, bool, type(None))) for x in v
+                    )
+                )
+                or (
+                    isinstance(v, dict)
+                    and all(
+                        isinstance(x, (str, int, float, bool, type(None)))
+                        for x in v.values()
+                    )
+                )
             }
             normalized_metadata = Metadata(attributes=filtered_attrs)
         if creator:
@@ -962,7 +981,7 @@ class FlextExceptions:
     def create(
         message: str,
         error_code: str | None = None,
-        **kwargs: GeneralValueType,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> BaseError:
         """Create an appropriate exception instance based on kwargs context."""
         correlation_id_obj, metadata_obj = FlextExceptions.extract_common_kwargs(kwargs)
@@ -974,13 +993,18 @@ class FlextExceptions:
             else None
         )
         # Convert metadata_obj to dict | None (only pass dicts to _create_error_by_type)
-        metadata_dict: dict[str, GeneralValueType] | None = None
+        metadata_dict: dict[str, FlextTypes.GeneralValueType] | None = None
         if isinstance(metadata_obj, dict):
             metadata_dict = metadata_obj
         # Note: if metadata_obj is dict-like but not a dict (Mapping interface),
-        # we don't convert it since Metadata expects concrete dict with GeneralValueType values
+        # we don't convert it since Metadata expects concrete dict with FlextTypes.GeneralValueType values
         return FlextExceptions._create_error_by_type(
-            error_type, message, error_code, kwargs, correlation_id, metadata_dict
+            error_type,
+            message,
+            error_code,
+            kwargs,
+            correlation_id,
+            metadata_dict,
         )
 
     _exception_counts: ClassVar[FlextTypes.Types.ExceptionMetricsMapping] = {}
@@ -998,15 +1022,32 @@ class FlextExceptions:
         total = sum(cls._exception_counts.values(), 0)
         # Serialize exception counts as a single string for compatibility with ErrorTypeMapping
         exception_counts_list = [
-            f"{exc_type.__qualname__}:{count}"
+            f"{exc_type.__qualname__ if hasattr(exc_type, '__qualname__') else str(exc_type)}:{count}"
             for exc_type, count in cls._exception_counts.items()
         ]
         exception_counts_str = ";".join(exception_counts_list)
-        return {
+        # Build exception_counts dict for test compatibility
+        exception_counts_dict: dict[str, int] = {}
+        for exc_type, count in cls._exception_counts.items():
+            exc_name = (
+                exc_type.__qualname__
+                if hasattr(exc_type, "__qualname__")
+                else str(exc_type)
+            )
+            exception_counts_dict[exc_name] = count
+        # Build result dict matching ErrorTypeMapping type
+        # ErrorTypeMapping allows dict[str, int] for exception_counts
+        # Cast to satisfy type checker - dict[str, int] is compatible with dict[str, str | int | ...]
+        result: FlextTypes.Types.ErrorTypeMapping = {
             "total_exceptions": total,
-            "exception_counts_summary": exception_counts_str,
+            "exception_counts": cast(
+                "dict[str, str | int | float | bool | list[str | int | float | bool | None] | dict[str, str | int | float | bool | None] | None]",
+                exception_counts_dict,
+            ),
+            "exception_counts_summary": exception_counts_str,  # String format for summary
             "unique_exception_types": len(cls._exception_counts),
         }
+        return result
 
     @classmethod
     def clear_metrics(cls) -> None:

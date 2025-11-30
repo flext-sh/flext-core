@@ -156,7 +156,8 @@ class FlextProtocols:
             ...
 
         def flat_map[U](
-            self, func: Callable[[T], FlextProtocols.ResultProtocol[U]]
+            self,
+            func: Callable[[T], FlextProtocols.ResultProtocol[U]],
         ) -> FlextProtocols.ResultProtocol[U]:
             """Flat map success value."""
             ...
@@ -284,23 +285,45 @@ class FlextProtocols:
 
     # Layer 2: Application Protocols
     @runtime_checkable
+    class VariadicCallable(Protocol[T_co]):
+        """Protocol for variadic callables returning T_co.
+
+        Used for functions that accept any arguments and return a typed value.
+        """
+
+        def __call__(
+            self,
+            *args: FlextTypes.GeneralValueType,
+            **kwargs: FlextTypes.GeneralValueType,
+        ) -> T_co:
+            """Call the function with any arguments, returning T_co."""
+            ...
+
+    @runtime_checkable
     class Handler(Protocol):
-        """Command/Query handler interface."""
+        """Command/Query handler interface.
+
+        This protocol defines the interface for handler objects that can
+        process messages and determine if they can handle a message type.
+        """
 
         def handle[T](
-            self, message: FlextTypes.FlexibleValue
+            self,
+            message: FlextTypes.FlexibleValue,
         ) -> FlextProtocols.ResultProtocol[T]:
             """Handle message."""
             ...
 
         def validate_command(
-            self, command: FlextTypes.FlexibleValue
+            self,
+            command: FlextTypes.FlexibleValue,
         ) -> FlextProtocols.ResultProtocol[bool]:
             """Validate command."""
             ...
 
         def validate_query(
-            self, query: FlextTypes.FlexibleValue
+            self,
+            query: FlextTypes.FlexibleValue,
         ) -> FlextProtocols.ResultProtocol[bool]:
             """Validate query."""
             ...
@@ -314,13 +337,16 @@ class FlextProtocols:
         """Command routing and execution."""
 
         def register_handler(
-            self, handler_type: str, handler: FlextProtocols.Handler
+            self,
+            handler_type: str,
+            handler: FlextProtocols.Handler,
         ) -> None:
             """Register handler."""
             ...
 
         def execute[T](
-            self, command: FlextTypes.FlexibleValue
+            self,
+            command: FlextTypes.FlexibleValue,
         ) -> FlextProtocols.ResultProtocol[T]:
             """Execute command."""
             ...
@@ -333,7 +359,8 @@ class FlextProtocols:
             self,
             command: FlextTypes.FlexibleValue,
             next_handler: Callable[
-                [FlextTypes.FlexibleValue], FlextProtocols.ResultProtocol[T]
+                [FlextTypes.FlexibleValue],
+                FlextProtocols.ResultProtocol[T],
             ],
         ) -> FlextProtocols.ResultProtocol[T]:
             """Process command."""
@@ -356,33 +383,53 @@ class FlextProtocols:
         def debug(
             self,
             message: str,
-            _context: Mapping[str, FlextTypes.FlexibleValue] | None = None,
-        ) -> None:
+            *args: FlextTypes.GeneralValueType,
+            return_result: bool = False,
+            **context: FlextTypes.GeneralValueType,
+        ) -> FlextProtocols.ResultProtocol[bool] | None:
             """Debug log."""
             ...
 
         def info(
             self,
             message: str,
-            _context: Mapping[str, FlextTypes.FlexibleValue] | None = None,
-        ) -> None:
+            *args: FlextTypes.GeneralValueType,
+            return_result: bool = False,
+            **context: FlextTypes.GeneralValueType,
+        ) -> FlextProtocols.ResultProtocol[bool] | None:
             """Info log."""
             ...
 
         def warning(
             self,
             message: str,
-            _context: Mapping[str, FlextTypes.FlexibleValue] | None = None,
-        ) -> None:
+            *args: FlextTypes.GeneralValueType,
+            return_result: bool = False,
+            **context: FlextTypes.GeneralValueType,
+        ) -> FlextProtocols.ResultProtocol[bool] | None:
             """Warning log."""
             ...
 
         def error(
             self,
             message: str,
-            _context: Mapping[str, FlextTypes.FlexibleValue] | None = None,
-        ) -> None:
+            *args: FlextTypes.GeneralValueType,
+            return_result: bool = False,
+            **context: FlextTypes.GeneralValueType,
+        ) -> FlextProtocols.ResultProtocol[bool] | None:
             """Error log."""
+            ...
+
+        def exception(
+            self,
+            message: str,
+            *,
+            exception: BaseException | None = None,
+            exc_info: bool = True,
+            return_result: bool = False,
+            **kwargs: FlextTypes.GeneralValueType,
+        ) -> FlextProtocols.ResultProtocol[bool] | None:
+            """Exception log."""
             ...
 
     @runtime_checkable
@@ -460,6 +507,59 @@ class FlextProtocols:
         def mode(self) -> str:
             """Validation mode."""
             ...
+
+    # ═══════════════════════════════════════════════════════════════════
+    # DOMAIN PROTOCOLS (Layer 1)
+    # ═══════════════════════════════════════════════════════════════════
+
+    class Entry:
+        """Entry-related protocols."""
+
+        @runtime_checkable
+        class EntryProtocol(Protocol):
+            """Protocol for entry objects - read-only."""
+
+            @property
+            def dn(self) -> str:
+                """Distinguished name."""
+                ...
+
+            @property
+            def attributes(self) -> Mapping[str, Sequence[str]]:
+                """Entry attributes as immutable mapping."""
+                ...
+
+            def to_dict(self) -> dict[str, object]:
+                """Convert to dictionary representation."""
+                ...
+
+            def to_ldif(self) -> str:
+                """Convert to LDIF format."""
+                ...
+
+        @runtime_checkable
+        class MutableEntryProtocol(EntryProtocol, Protocol):
+            """Protocol for mutable entry objects."""
+
+            def set_attribute(
+                self,
+                name: str,
+                values: Sequence[str],
+            ) -> FlextProtocols.Entry.EntryProtocol:
+                """Set attribute values, returning self for chaining."""
+                ...
+
+            def add_attribute(
+                self,
+                name: str,
+                values: Sequence[str],
+            ) -> FlextProtocols.Entry.EntryProtocol:
+                """Add attribute values, returning self for chaining."""
+                ...
+
+            def remove_attribute(self, name: str) -> FlextProtocols.Entry.EntryProtocol:
+                """Remove attribute, returning self for chaining."""
+                ...
 
 
 __all__ = ["FlextProtocols"]

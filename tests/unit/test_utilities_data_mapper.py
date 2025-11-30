@@ -68,7 +68,7 @@ class TestFlextUtilitiesDataMapper:
                         TestConstants.DataMapper.UNMAPPED: TestConstants.DataMapper.VALUE2,
                     },
                     "mapping": {
-                        TestConstants.DataMapper.OLD_KEY: TestConstants.DataMapper.NEW_KEY
+                        TestConstants.DataMapper.OLD_KEY: TestConstants.DataMapper.NEW_KEY,
                     },
                     "keep_unmapped": True,
                 },
@@ -86,12 +86,12 @@ class TestFlextUtilitiesDataMapper:
                         TestConstants.DataMapper.UNMAPPED: TestConstants.DataMapper.VALUE2,
                     },
                     "mapping": {
-                        TestConstants.DataMapper.OLD_KEY: TestConstants.DataMapper.NEW_KEY
+                        TestConstants.DataMapper.OLD_KEY: TestConstants.DataMapper.NEW_KEY,
                     },
                     "keep_unmapped": False,
                 },
                 expected_result={
-                    TestConstants.DataMapper.NEW_KEY: TestConstants.DataMapper.VALUE1
+                    TestConstants.DataMapper.NEW_KEY: TestConstants.DataMapper.VALUE1,
                 },
             ),
             DataMapperTestCase(

@@ -207,7 +207,9 @@ class TestFlextConfigSingletonIntegration:
             assert config.app_name == "test-app-from-env"
             assert config.log_level == "DEBUG"
             assert config.max_workers == 8  # Use an actual FlextConfig attribute
-            assert config.timeout_seconds == 60  # Use an actual FlextConfig attribute
+            assert (
+                config.timeout_seconds == 60
+            )  # Use an actual FlextConfig attribute (FLEXT_TIMEOUT_SECONDS=60)
             assert config.debug is True
 
         finally:
@@ -450,7 +452,7 @@ class TestFlextConfigSingletonIntegration:
             config_defaults = FlextConfig.get_global_instance()
 
             # These should use Field defaults
-            assert config_defaults.app_name == "FLEXT Application"  # Default from Field
+            assert config_defaults.app_name == "flext"  # Default from Field
             assert config_defaults.log_level == "INFO"  # Default from FlextConstants
             assert config_defaults.debug is False  # Default from Field
             assert config_defaults.timeout_seconds == 30  # Default from Field
@@ -490,7 +492,7 @@ class TestFlextConfigSingletonIntegration:
             assert config_env.app_name == "from-env-var"
             assert config_env.log_level == "DEBUG"
             assert config_env.debug is False  # Env var overrides .env
-            assert config_env.timeout_seconds == 60
+            assert config_env.timeout_seconds == 60  # Env var FLEXT_TIMEOUT_SECONDS=60
 
             # Reset for explicit init test
             FlextConfig.reset_global_instance()

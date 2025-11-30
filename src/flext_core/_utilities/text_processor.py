@@ -11,17 +11,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 import re
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
-
-_logger = logging.getLogger(__name__)
+from flext_core.runtime import FlextRuntime, StructlogLogger
 
 
 class FlextUtilitiesTextProcessor:
     """Low-level text normalization helpers for CQRS utilities."""
+
+    @property
+    def logger(self) -> StructlogLogger:
+        """Get logger instance using FlextRuntime (avoids circular imports).
+
+        Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
+        Uses same structure/config as FlextLogger but without circular import.
+        """
+        return FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def clean_text(text: str) -> str:
