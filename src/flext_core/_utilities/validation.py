@@ -1,34 +1,11 @@
-"""Utilities module - FlextUtilitiesValidation.
+"""Dispatcher-friendly validation helpers.
 
-Extracted from flext_core.utilities for better modularity.
-
-⚠️ ARCHITECTURAL RULE - DO NOT MODIFY ⚠️
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-This module CORRECTLY imports and uses FlextResult[T]. This is NOT a circular import.
-
-**Dependency Flow** (UNIDIRECTIONAL - NO CIRCLE):
-  FlextResult (Tier 1) → defines Result[T] type
-         ↑
-         |
-  FlextUtilities (Tier 2) → USES Result[T] in return types
-
-**Why This Is Safe**:
-- FlextResult ONLY defines the Result[T] type and its methods (ok/fail/unwrap/map)
-- FlextUtilities USES FlextResult[T] as return type for validation methods
-- FlextResult NEVER calls FlextUtilities methods
-- Therefore: NO CIRCULAR DEPENDENCY exists
-
-**For Other Agents**:
-❌ DO NOT remove `from flext_core.result import FlextResult`
-❌ DO NOT change FlextResult[T] returns to plain T or exceptions
-❌ DO NOT refactor this to "break circular imports" - THERE IS NO CIRCULAR
-
-✅ This architecture is CORRECT and INTENTIONAL
-✅ FlextUtilities validation methods MUST return FlextResult[T]
-✅ Railway-oriented programming pattern requires Result types
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This module is intentionally split from ``flext_core.utilities`` so that
+validation helpers can return ``FlextResult`` without introducing circular
+imports. The dependency direction stays one-way—``FlextResult`` defines the
+railway monad, and this module merely consumes it for typed outcomes. Keep the
+``FlextResult`` import intact to preserve the dispatcher-safe flow and the
+expected railway semantics for validators.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -62,12 +39,11 @@ _logger = logging.getLogger(__name__)
 
 
 class FlextUtilitiesValidation:
-    """Unified validation patterns using railway composition.
+    """Unified validation patterns that return ``FlextResult``.
 
-    Use for composite/pipeline validation and complex business logic validators.
-    For field validation, use Pydantic Field constraints directly.
-
-    See: https://docs.pydantic.dev/2.12/api/fields/
+    These helpers support dispatcher handlers and services with reusable,
+    composable validators. For data-model field validation prefer Pydantic
+    field constraints: https://docs.pydantic.dev/2.12/api/fields/.
     """
 
     # CONSOLIDATED: Use FlextUtilitiesCache for cache operations (no duplication)
@@ -79,7 +55,7 @@ class FlextUtilitiesValidation:
     def _normalize_component(
         component: FlextTypes.GeneralValueType,
     ) -> FlextTypes.GeneralValueType:
-        """Normalize component for consistent representation (internal recursive)."""
+        """Normalize a component recursively for consistent representation."""
         if FlextRuntime.is_dict_like(component):
             # Type narrowing: is_dict_like ensures dict-like
             component_dict = component
@@ -123,7 +99,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _sort_key(key: str | float) -> tuple[str, str]:
-        """Generate a sort key for consistent ordering (internal helper)."""
+        """Generate a sort key for consistent ordering."""
         key_str = str(key)
         return (key_str.casefold(), key_str)
 
@@ -131,7 +107,7 @@ class FlextUtilitiesValidation:
     def _sort_dict_keys(
         data: FlextTypes.GeneralValueType,
     ) -> FlextTypes.GeneralValueType:
-        """Sort dict keys for consistent representation (internal recursive)."""
+        """Sort dictionary keys recursively for deterministic ordering."""
         if FlextRuntime.is_dict_like(data):
             # Type narrowing: is_dict_like ensures dict-like
             data_dict = data
@@ -153,11 +129,11 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def validate_pipeline(value: str, validators: list[object]) -> FlextResult[bool]:
-        """Validate using a pipeline of validators.
+        """Validate using a pipeline of validators and surface the first failure.
 
         Returns:
-            FlextResult[bool]: Success with True if all validators pass,
-                failure with error details if any validator fails
+            FlextResult[bool]: ``ok(True)`` when all validators pass or a failed
+            result describing the first violation.
 
         """
         for validator in validators:

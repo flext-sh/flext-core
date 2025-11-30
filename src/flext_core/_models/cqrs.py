@@ -231,12 +231,12 @@ class FlextModelsCqrs:
                 )
 
     class Bus(BaseModel):
-        """Bus configuration model."""
+        """Dispatcher configuration model for CQRS routing."""
 
         model_config = ConfigDict(
             json_schema_extra={
-                "title": "Bus",
-                "description": "CQRS command bus configuration",
+                "title": "Dispatcher",
+                "description": "CQRS dispatcher configuration",
             },
         )
         enable_middleware: bool = Field(

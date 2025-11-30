@@ -1,6 +1,8 @@
-"""Utilities module - FlextUtilitiesGenerators.
+"""ID and data generation helpers shared across dispatcher flows.
 
-Extracted from flext_core.utilities for better modularity.
+These primitives centralize correlation, batch, and timestamp generation so
+dispatcher handlers and services produce consistent identifiers and audit
+metadata without duplicating randomness or formatting concerns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -25,7 +27,7 @@ _logger = logging.getLogger(__name__)
 
 
 class FlextUtilitiesGenerators:
-    """ID and data generation utilities."""
+    """Generate deterministic IDs and timestamps for CQRS workflows."""
 
     @staticmethod
     def _generate_prefixed_id(
@@ -35,13 +37,9 @@ class FlextUtilitiesGenerators:
     ) -> str:
         """Factory method for generating prefixed IDs with UUID.
 
-        **INTERNAL METHOD**: This is a private implementation detail used
-        by public ID generation methods. Do not call directly - use the
-        specific public methods instead (generate_correlation_id,
-        generate_batch_id, etc.).
-
-        This method consolidates 12+ similar ID generation methods following
-        DRY principle (Don't Repeat Yourself).
+        This private helper keeps the public generators consistent while
+        limiting duplication across the correlation, batch, and transaction
+        ID factories.
 
         Args:
             prefix: ID prefix (e.g., 'corr', 'batch', 'txn')

@@ -1,14 +1,9 @@
-"""FlextHandlers - CQRS Command and Query Handler Foundation Module.
+"""CQRS handler foundation used by the dispatcher pipeline.
 
-This module provides FlextHandlers, the base class for implementing Command Query
-Responsibility Segregation (CQRS) handlers throughout the FLEXT ecosystem. It implements
-structural typing via FlextProtocols.Handler[MessageT_contra] through duck typing,
-providing a foundation for command/query/event handlers with validation pipelines,
-execution context management, and configuration support.
-
-Scope: Abstract base class for CQRS handlers, message validation, type checking,
-handler execution pipeline, command/query/event processing with FlextResult-based
-error handling and comprehensive logging/metrics integration.
+FlextHandlers defines the base class the dispatcher relies on for commands,
+queries, and domain events. It favors structural typing over inheritance,
+ensures validation and execution steps return ``FlextResult`` rather than
+raising, and keeps handler metadata ready for registry/dispatcher discovery.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -32,54 +27,12 @@ type GeneralValueType = FlextTypes.GeneralValueType
 
 
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
-    """CQRS Command and Query Handler Foundation for FLEXT ecosystem.
+    """Abstract CQRS handler with validation and railway-style execution.
 
-    Provides the base implementation for Command Query Responsibility Segregation
-    (CQRS) handlers, implementing structural typing via FlextProtocols.Handler[MessageT_contra]
-    through duck typing (no inheritance required). This class serves as the foundation
-    for implementing command, query, and event handlers with comprehensive validation,
-    execution pipelines, metrics collection, and configuration management.
-
-    Core Features:
-    - Abstract base class for command/query/event handlers using generics
-    - Railway-oriented programming with FlextResult for error handling
-    - Message validation pipeline with extensible validation methods
-    - Type checking for message compatibility using duck typing
-    - Execution context management with tracing and correlation IDs
-    - Callable interface for seamless integration with dispatchers
-    - Configuration-driven behavior through FlextConstants
-
-    Architecture:
-    - Single class with nested type definitions and validation logic
-    - DRY principle applied through shared validation methods
-    - SOLID principles: Open/Closed for extensibility, Single Responsibility for focused methods
-    - Railway pattern for error handling without exceptions
-    - Structural typing for protocol compliance without inheritance
-
-    Type Parameters:
-    - MessageT_contra: Contravariant message type (commands, queries, events)
-    - ResultT: Covariant result type returned by handler execution
-
-    Example Usage:
-        >>> from flext_core.handlers import FlextHandlers
-        >>> from flext_core.result import FlextResult
-        >>>
-        >>> class UserCommand:
-        ...     user_id: str
-        ...     action: str
-        >>>
-        >>> class UserHandler(FlextHandlers[UserCommand, bool]):
-        ...     def handle(self, message: UserCommand) -> FlextResult[bool]:
-        ...         # Implement command handling logic
-        ...         return FlextResult[bool].ok(True)
-        ...
-        ...     def validate(
-        ...         self, data: FlextTypes.AcceptableMessageType
-        ...     ) -> FlextResult[bool]:
-        ...         # Custom validation logic
-        ...         if not isinstance(data, UserCommand):
-        ...             return FlextResult[bool].fail("Invalid message type")
-        ...         return FlextResult[bool].ok(True)
+    Handlers use generic type parameters for message/result typing and expose a
+    callable interface consumed by ``FlextDispatcher``. Validation and execution
+    return ``FlextResult`` to keep failure handling explicit, while mixins supply
+    tracing/metrics hooks that align with the dispatcher middleware pipeline.
     """
 
     # Class variables for message type expectations (configurable via inheritance)

@@ -1,8 +1,9 @@
-"""Automation decorators for infrastructure concerns.
+"""Decorator utilities that automate dispatcher-friendly cross-cutting concerns.
 
-This module provides FlextDecorators, a collection of decorators that
-automatically handle common infrastructure concerns to reduce boilerplate
-code in services, handlers, and other components.
+The decorators in this module hide boilerplate for dependency injection,
+logging, correlation tracking, and railway conversions so handlers and services
+stay focused on domain logic while fitting naturally into the dispatcher
+pipeline.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -28,25 +29,13 @@ from flext_core.typings import GeneralValueType, P, R, T
 
 
 class FlextDecorators:
-    """Automation decorators for cross-cutting infrastructure concerns.
+    """Decorator suite for DI, logging, correlation, and result safety.
 
-    Core Decorators:
-    - @inject: Dependency injection from FlextContainer
-    - @log_operation: Automatic structured logging
-    - @track_performance: Operation timing and metrics
-    - @railway: Exception-to-FlextResult conversion
-    - @retry: Retry with exponential/linear backoff
-    - @timeout: Operation timeout enforcement
-    - @with_correlation: Correlation ID management
-    - @with_context: Context variable binding
-    - @track_operation: Combined correlation + logging
-    - @combined: Combines inject, log, performance, railway
-
-    Composition order (outer to inner):
-        @railway → @inject → @track_performance → @log_operation → func
-
-    All decorators are thread-safe via FlextContainer singleton and
-    FlextContext contextvars.
+    Each decorator wraps callables with dispatcher-friendly behavior: dependency
+    injection through ``FlextContainer``, structured logging that respects
+    ``FlextContext`` correlation data, performance tracking, and conversion of
+    raised errors into ``FlextResult`` when appropriate. Composition order
+    mirrors the dispatcher middleware chain to keep telemetry consistent.
     """
 
     @staticmethod

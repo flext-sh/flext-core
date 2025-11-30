@@ -1,8 +1,9 @@
-"""High-level message dispatch orchestration with reliability patterns.
+"""Message dispatch orchestration with layered reliability.
 
-This module provides FlextDispatcher, a facade that orchestrates message
-dispatching with circuit breaker, rate limiting, retry logic, timeout
-enforcement, and comprehensive observability.
+FlextDispatcher coordinates command and query execution with CQRS routing,
+reliability policies (circuit breaker, rate limiting, retry, timeout), and
+context-aware observability. The dispatcher is the application entry point for
+handler registration and execution in the current architecture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -38,53 +39,17 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextDispatcher(FlextMixins):
-    """High-level message dispatch orchestration with reliability patterns.
+    """Application-level dispatcher that satisfies the command bus protocol.
 
-    Implements FlextProtocols.CommandBus through structural typing. Provides
-    message dispatching with circuit breaker, rate limiting, retry logic,
-    timeout enforcement, and comprehensive observability through three
-    integrated layers: Layer 1 (CQRS routing), Layer 2 (reliability patterns),
-    and Layer 3 (advanced processing).
+    The dispatcher exposes CQRS routing, handler registration, and execution
+    with layered reliability controls. It leans on structural typing to satisfy
+    ``FlextProtocols.CommandBus`` without inheritance while providing context
+    propagation, metrics, and audit logging aligned to the current architecture.
 
-    CommandBus Protocol Implementation:
-        - register_handler(message_type, handler) - Register command handler
-        - register_command(command_type, handler) - Register typed command handler
-        - register_query(query_type, handler) - Register typed query handler
-        - dispatch(message) - Execute handler with message (FlextProtocols.CommandBus)
-        - dispatch_batch(message_type, messages) - Batch message dispatching
-        - create_from_global_config() - Factory method using global config
-
-    Reliability Patterns:
-        - Circuit breaker: Prevents cascading failures for specific message types
-        - Rate limiting: Throttles message dispatching per message type
-        - Retry logic: Automatic exponential backoff retry with configurable attempts
-        - Timeout enforcement: Operation boundaries with timeout protection
-        - Context propagation: Distributed tracing with correlation IDs
-
-    Features:
-    - Handler registration and discovery with support for commands, queries, and functions
-    - Circuit breaker pattern for fault tolerance with per-message-type state
-    - Rate limiting for request throttling with sliding window tracking
-    - Retry logic with exponential backoff for transient failures
-    - Timeout enforcement for operation boundaries using ThreadPoolExecutor
-    - Audit logging for compliance and debugging
-    - Performance metrics collection and reporting
-    - Batch processing for multiple messages
-    - Context propagation for distributed tracing with correlation IDs
-    - Dispatcher instances satisfy FlextProtocols.CommandBus through duck typing
-
-    Usage:
-        >>> from flext_core import FlextDispatcher
-        >>> from flext_core.protocols import FlextProtocols
-        >>>
+    Basic usage:
         >>> dispatcher = FlextDispatcher()
         >>> dispatcher.register_handler(CreateUserCommand, handler)
-        >>> result = dispatcher.dispatch(CreateUserCommand(name="Alice"))
-        >>>
-        >>> # Dispatcher instances satisfy FlextProtocols.CommandBus protocol
-        >>> # through structural typing - register_handler and dispatch methods
-        >>> assert callable(dispatcher.register_handler)
-        >>> assert callable(dispatcher.dispatch)
+        >>> dispatcher.dispatch(CreateUserCommand(name="Alice"))
     """
 
     # Note: TimeoutEnforcer, RateLimiterManager, and RetryPolicy are defined as
@@ -480,7 +445,7 @@ class FlextDispatcher(FlextMixins):
 
         # ==================== LAYER 3: ADVANCED PROCESSING INITIALIZATION ====================
 
-        # Group 1: Processor Registry (from FlextProcessors)
+        # Group 1: Processor Registry (internal processing hooks)
         self._processors: dict[
             str, FlextTypes.GeneralValueType
         ] = {}  # name → processor function
@@ -500,7 +465,7 @@ class FlextDispatcher(FlextMixins):
         self._batch_size: int = self.config.max_batch_size
         self._parallel_workers: int = self.config.executor_workers
 
-        # Group 3: Handler Registry (from FlextProcessors.HandlerRegistry)
+        # Group 3: Handler Registry (internal dispatcher handler registry)
         self._handler_registry: dict[
             str, FlextTypes.GeneralValueType
         ] = {}  # name → handler function
@@ -512,7 +477,7 @@ class FlextDispatcher(FlextMixins):
             Callable[[FlextTypes.GeneralValueType], bool],
         ] = {}  # validation functions
 
-        # Group 4: Pipeline (from FlextProcessors.Pipeline)
+        # Group 4: Pipeline (dispatcher-managed processing pipeline)
         self._pipeline_steps: list[
             Mapping[str, FlextTypes.GeneralValueType]
         ] = []  # Ordered pipeline steps
@@ -526,7 +491,7 @@ class FlextDispatcher(FlextMixins):
             str, FlextTypes.GeneralValueType
         ] = {}  # Memoization cache for pipeline
 
-        # Group 5: Metrics & Auditing (from FlextProcessors)
+        # Group 5: Metrics & Auditing (dispatcher-level counters)
         self._process_metrics: dict[str, int | float] = {
             "registrations": 0,
             "successful_processes": 0,
@@ -1534,11 +1499,11 @@ class FlextDispatcher(FlextMixins):
     def execute(
         self, command: FlextTypes.GeneralValueType
     ) -> FlextResult[FlextTypes.GeneralValueType]:
-        """Execute command/query via CQRS bus with caching and middleware.
+        """Execute command/query through the CQRS dispatcher routing layer.
 
-        This is the main Layer 1 entry point - pure routing without reliability patterns.
-        For reliability patterns (circuit breaker, rate limit, retry, timeout), use
-        dispatch() which chains this execution with Layer 2 patterns.
+        This Layer 1 entry point performs routing with caching and middleware.
+        For reliability patterns (circuit breaker, rate limit, retry, timeout),
+        use ``dispatch`` which chains this execution with the Layer 2 controls.
 
         Args:
             command: The command or query object to execute
@@ -1552,7 +1517,7 @@ class FlextDispatcher(FlextMixins):
         self._propagate_context(f"execute_{command_type.__name__}")
 
         # Track operation metrics
-        with self.track(f"bus_execute_{command_type.__name__}") as _:
+        with self.track(f"dispatch_execute_{command_type.__name__}") as _:
             self._execution_count += 1
 
             self.logger.debug(
@@ -2987,13 +2952,13 @@ class FlextDispatcher(FlextMixins):
 
     def _handle_dispatch_result(
         self,
-        bus_result: FlextResult[FlextTypes.GeneralValueType],
+        dispatch_result: FlextResult[FlextTypes.GeneralValueType],
         message_type: str,
     ) -> FlextResult[FlextTypes.GeneralValueType]:
         """Handle dispatch result with circuit breaker tracking.
 
         Args:
-            bus_result: Result from bus execution
+            dispatch_result: Result from dispatcher execution
             message_type: Message type for circuit breaker
 
         Returns:
@@ -3003,16 +2968,16 @@ class FlextDispatcher(FlextMixins):
             FlextExceptions.OperationError: If result is failure but error is None
 
         """
-        if bus_result.is_failure:
+        if dispatch_result.is_failure:
             # Use unwrap_error() for type-safe str
-            error_msg = bus_result.error or "Unknown error"
+            error_msg = dispatch_result.error or "Unknown error"
             if "Executor was shutdown" in error_msg:
                 return self.fail(error_msg)
             self._circuit_breaker.record_failure(message_type)
             return self.fail(error_msg)
 
         self._circuit_breaker.record_success(message_type)
-        return self.ok(bus_result.value)
+        return self.ok(dispatch_result.value)
 
     def _execute_dispatch_attempt(
         self,
@@ -3041,13 +3006,13 @@ class FlextDispatcher(FlextMixins):
                 timeout_override,
             )
 
-            bus_result = self._execute_with_timeout(
+            dispatch_result = self._execute_with_timeout(
                 execute_with_context,
                 timeout_seconds,
                 timeout_override,
             )
 
-            return self._handle_dispatch_result(bus_result, message_type)
+            return self._handle_dispatch_result(dispatch_result, message_type)
 
         except Exception as e:
             self._circuit_breaker.record_failure(message_type)

@@ -1,7 +1,9 @@
-"""Reliability patterns for FlextDispatcher.
+"""Reliability helpers for ``FlextDispatcher``.
 
-Contains CircuitBreakerManager, RateLimiterManager, and RetryPolicy classes
-extracted from FlextDispatcher to reduce module size.
+Provide reusable circuit breaking, rate limiting, and retry primitives used by
+the dispatcher pipeline to protect CQRS handlers. Splitting these helpers into
+their own module keeps orchestration readable while preserving the same
+runtime behavior and typed surface exposed by the dispatcher.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,10 +19,11 @@ from flext_core.result import FlextResult
 
 
 class CircuitBreakerManager:
-    """Manages circuit breaker state machine per message type.
+    """Manage per-message circuit breaker state for dispatcher executions.
 
     Handles state transitions (CLOSED → OPEN → HALF_OPEN → CLOSED) with
-    configurable thresholds and recovery timeouts.
+    configurable thresholds and recovery timeouts to protect downstream
+    handlers from cascading failures.
     """
 
     def __init__(
@@ -146,10 +149,12 @@ class CircuitBreakerManager:
                 self.transition_to_half_open(message_type)
 
     def check_before_dispatch(self, message_type: str) -> FlextResult[bool]:
-        """Check if dispatch is allowed.
+        """Return a result indicating whether dispatch can proceed.
 
         Returns:
-            FlextResult[bool]: Success with True if allowed, failure if circuit is open
+            FlextResult[bool]: Success with ``True`` when the circuit is closed
+                or half-open; failure with metadata when the circuit remains
+                open.
 
         """
         self.attempt_reset(message_type)
@@ -184,7 +189,7 @@ class CircuitBreakerManager:
         self._total_successes.clear()
 
     def get_metrics(self) -> dict[str, object]:
-        """Get circuit breaker metrics including advanced metrics."""
+        """Collect circuit breaker metrics, including recovery statistics."""
         total_recovery_attempts = sum(
             self._recovery_successes.get(mt, 0) + self._recovery_failures.get(mt, 0)
             for mt in self._states
@@ -222,7 +227,7 @@ class CircuitBreakerManager:
 
 
 class RateLimiterManager:
-    """Manages rate limiting with simplified sliding window implementation."""
+    """Enforce per-message rate limits with a sliding window algorithm."""
 
     def __init__(
         self,
@@ -254,7 +259,7 @@ class RateLimiterManager:
         return max(0.0, jittered)
 
     def check_rate_limit(self, message_type: str) -> FlextResult[bool]:
-        """Check if rate limit is exceeded for message type."""
+        """Return whether dispatch is allowed under the current rate window."""
         current_time = time.time()
         window_start, count = self._windows.get(message_type, (current_time, 0))
 
@@ -294,7 +299,7 @@ class RateLimiterManager:
 
 
 class RetryPolicy:
-    """Manages retry logic with configurable attempts and exponential backoff."""
+    """Coordinate retry attempts with configurable backoff for dispatcher steps."""
 
     def __init__(self, max_attempts: int, retry_delay: float) -> None:
         """Initialize retry policy manager.

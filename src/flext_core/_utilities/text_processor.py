@@ -1,6 +1,9 @@
-"""Utilities module - FlextUtilitiesTextProcessor.
+"""Primitive text helpers used by higher-level utilities.
 
-Extracted from flext_core.utilities for better modularity.
+The functions here intentionally return raw values and may raise on invalid
+input; dispatcher-facing wrappers in ``flext_core.utilities`` apply
+``FlextResult`` semantics when needed. Keeping this layer minimal reduces
+cross-layer coupling while providing deterministic normalization behaviors.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,17 +21,11 @@ _logger = logging.getLogger(__name__)
 
 
 class FlextUtilitiesTextProcessor:
-    """Text processing primitive utilities.
-
-    ⚠️ PRIMITIVE FUNCTIONS - Return raw values, raise exceptions for errors.
-    DO NOT wrap in FlextResult - that belongs in utilities.py (Tier 2).
-    """
+    """Low-level text normalization helpers for CQRS utilities."""
 
     @staticmethod
     def clean_text(text: str) -> str:
         """Clean text by removing extra whitespace and control characters.
-
-        ⚠️ PRIMITIVE FUNCTION - Returns str directly, NOT FlextResult[str].
 
         Args:
             text: Text to clean
@@ -61,10 +58,6 @@ class FlextUtilitiesTextProcessor:
     def safe_string(text: str | None) -> str:
         """Validate and clean text string.
 
-        ⚠️ PRIMITIVE FUNCTION - Returns str directly, raises on validation failure.
-
-        Fast fail: text must be non-empty string. Raises ValueError on invalid input.
-
         Args:
             text: Text to validate and clean
 
@@ -72,7 +65,7 @@ class FlextUtilitiesTextProcessor:
             str: Cleaned text with whitespace stripped
 
         Raises:
-            ValueError: If text is None, empty, or whitespace-only
+            ValueError: If text is ``None``, empty, or whitespace-only
 
         """
         # Fast fail: text cannot be None

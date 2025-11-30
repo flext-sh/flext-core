@@ -1,12 +1,9 @@
-"""FlextUtilities - Core Utilities Module.
+"""Utility façade for validation, parsing, and reliability helpers.
 
-This module provides essential utility functions and helper classes used
-throughout the FLEXT ecosystem, including caching, configuration, data mapping,
-domain operations, generators, reliability patterns, string parsing, and validation.
-
-Scope: Utility functions for caching, configuration management, data mapping,
-domain operations, ID generation, reliability patterns, string parsing,
-and validation with consistent FlextResult-based error handling.
+Expose ``FlextUtilities`` as a dispatcher-safe toolbox for caching, type
+guards, string parsing, data mapping, and reliability patterns that all return
+``FlextResult`` values. The underlying implementations live in ``_utilities``
+but are surfaced here for stable imports across examples and services.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -36,22 +33,13 @@ from flext_core.typings import FlextTypes
 
 
 class FlextUtilities:
-    """Utility functions for validation, generation, and data processing.
+    """Stable utility surface for dispatcher-friendly helpers.
 
-    Provides enterprise-grade utility functions for common operations
-    throughout the FLEXT ecosystem, implementing structural typing via
-    FlextProtocols.Utility (duck typing - no inheritance required).
-
-    Core Features:
-    - Cache: Data normalization and cache key generation
-    - Validation: Comprehensive input validation
-    - Generators: ID, UUID, timestamp generation
-    - TextProcessor: Text cleaning and processing
-    - TypeGuards: Runtime type checking
-    - Reliability: Timeout and retry patterns
-    - TypeChecker: Runtime type introspection
-    - Configuration: Parameter access/manipulation
-    - Pagination: API pagination utilities
+    Architecture: Foundation utilities
+    Delegates to the ``_utilities`` package while keeping imports lightweight
+    for handlers and services. Groups cache helpers, validators, generators,
+    text processors, type guards, and reliability patterns under a single
+    façade that follows ``FlextProtocols.Utility`` via structural typing.
     """
 
     class Cache:

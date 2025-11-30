@@ -1,8 +1,10 @@
-"""FlextContainer - Dependency injection container for service management.
+"""Dependency injection container for dispatcher-driven applications.
 
-This module provides FlextContainer, a type-safe dependency injection container
-for managing service lifecycles and resolving dependencies throughout the
-FLEXT ecosystem.
+FlextContainer centralizes service discovery for CQRS handlers, domain services,
+and infrastructure utilities. It keeps configuration isolated from the
+dispatcher pipeline while providing predictable singleton semantics so
+handlers, decorators, and utilities resolve collaborators without manual
+wire-up.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -23,10 +25,12 @@ from flext_core.typings import FlextTypes, T
 
 
 class FlextContainer(FlextProtocols.Configurable):
-    """Type-safe dependency injection container for service management.
+    """Singleton DI container aligned with the dispatcher-first CQRS flow.
 
-    Provides centralized service management with singleton pattern support,
-    type-safe registration and resolution, and automatic dependency injection.
+    Services and factories are registered once and resolved by handlers,
+    decorators, and utilities without leaking infrastructure concerns into the
+    domain layer. Resolution returns ``FlextResult`` to keep failure handling
+    explicit and composable.
     """
 
     _global_instance: Self | None = None

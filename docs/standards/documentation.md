@@ -83,19 +83,17 @@ from flext_core import FlextResult
 
 # ❌ WRONG - Unnecessary imports
 from flext_core import (
-    FlextBus,
+    FlextDispatcher,
     FlextConfig,
     FlextConstants,
     FlextContainer,
     FlextContext,
     FlextDecorators,
-    FlextDispatcher,
     FlextExceptions,
     FlextHandlers,
     FlextLogger,
     FlextMixins,
     FlextModels,
-    FlextProcessors,
     FlextProtocols,
     FlextRegistry,
     FlextResult,  # Only this one!

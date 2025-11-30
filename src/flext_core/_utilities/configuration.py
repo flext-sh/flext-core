@@ -1,6 +1,8 @@
-"""Utilities module - FlextUtilitiesConfiguration.
+"""Configuration helpers that support dispatcher-safe defaults.
 
-Extracted from flext_core.utilities for better modularity.
+Extracted from ``flext_core.utilities`` for modularity while keeping
+``FlextResult`` semantics intact. These helpers keep runtime parameter
+access predictable for handlers, services, and dispatcher pipelines.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

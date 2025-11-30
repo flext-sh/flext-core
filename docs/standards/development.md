@@ -78,7 +78,7 @@ Inner layers know NOTHING about outer layers.
    - FlextMixins - Reusable behaviors
 
 3. **Application Layer** (Foundation + Domain):
-   - FlextBus - Message routing
+   - FlextDispatcher - Message routing
    - FlextHandlers - Handler registry
    - FlextRegistry - Component management
 
@@ -100,7 +100,7 @@ src/flext_core/
 ├── constants.py        # Constants (FlextConstants)
 ├── models.py           # DDD base classes (FlextModels)
 ├── service.py          # Domain service base (FlextService)
-├── bus.py             # Message bus (FlextBus)
+├── dispatcher.py      # Command/query dispatcher
 ├── config.py          # Configuration (FlextConfig)
 ├── loggings.py        # Logging (FlextLogger)
 └── ... (other modules)

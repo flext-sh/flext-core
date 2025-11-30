@@ -1,16 +1,9 @@
-"""Protocol definitions for interface contracts and type safety in FLEXT ecosystem.
+"""Runtime-checkable protocols that describe FLEXT public contracts.
 
-Provides FlextProtocols, a hierarchical collection of runtime-checkable protocol
-definitions that establish interface contracts and enable type-safe structural
-typing throughout the FLEXT ecosystem. All protocols use @runtime_checkable for
-runtime validation and follow a layered architecture pattern.
-
-Scope: Foundation protocols organized in architectural layers (Layer 0: Foundation,
-Layer 0.5: Circular Import Prevention, Layer 1: Domain, Layer 2: Application,
-Layer 3: Infrastructure, Layer 4: Extensions). Protocols enable type-safe
-implementations across 32+ dependent projects without requiring explicit
-inheritance, using structural typing and protocol composition. All protocols
-are nested within the FlextProtocols class following the single-class pattern.
+Define ``FlextProtocols`` as the structural typing surface for dispatcher
+handlers, services, results, and utilities. All protocols are
+``@runtime_checkable`` so integration points can be verified without
+inheritance, keeping layers decoupled while remaining type-safe.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -27,15 +20,13 @@ from flext_core.typings import FlextTypes, T, T_co
 
 
 class FlextProtocols:
-    """Hierarchical protocol definitions for enterprise FLEXT ecosystem.
+    """Hierarchical protocol definitions for dispatcher-aligned components.
 
-    Architecture: Layer 0 (Pure Constants - no implementation)
-    Provides foundational protocol definitions for the entire FLEXT ecosystem,
-    establishing interface contracts and enabling type-safe, structural typing
-    compliance across all 32+ dependent projects.
-
-    Key Distinction: These are PROTOCOL DEFINITIONS, not implementations.
-    Actual implementations live in their respective layers.
+    Architecture: Foundation layer (no implementations)
+    Describes the minimal interfaces for results, handlers, services, logging,
+    and validation so downstream code can rely on structural typing instead of
+    inheritance. Implementations live in their respective modules but conform
+    to these contracts for interoperability.
     """
 
     # Layer 0: Foundation Protocols
