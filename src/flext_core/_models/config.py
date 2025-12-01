@@ -206,7 +206,7 @@ class FlextModelsConfig:
         """Enhanced batch processing configuration."""
 
         batch_size: int = Field(
-            default=FlextConstants.Processing.MAX_BATCH_SIZE,
+            default=FlextConstants.Performance.MAX_BATCH_SIZE,
             description=("Batch size from FlextConstants (Constants default)"),
         )
         max_workers: int = Field(

@@ -11,7 +11,6 @@ from __future__ import annotations
 import re
 
 from flext_core.constants import FlextConstants
-from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime, StructlogLogger
 
 
@@ -56,8 +55,10 @@ class FlextUtilitiesTextProcessor:
         text: str,
         max_length: int = FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
         suffix: str = "...",
-    ) -> FlextResult[str]:
+    ) -> "FlextResult[str]":
         """Truncate text to maximum length with suffix."""
+        from flext_core.result import FlextResult
+
         if len(text) <= max_length:
             return FlextResult[str].ok(text)
 

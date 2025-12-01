@@ -35,6 +35,7 @@ from flext_core import (
     FlextResult,
     FlextService,
 )
+from flext_core.typings import FlextTypes
 
 
 class DemoScenarios:
@@ -159,9 +160,13 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
                 "reference_database": self._reference_config.get("database_url"),
             }
 
+            demonstrations_value: FlextTypes.GeneralValueType = cast(
+                "FlextTypes.GeneralValueType",
+                summary.get("demonstrations_completed", 0),
+            )
             self.logger.info(
                 "FlextConfig demonstration completed successfully",
-                extra={"demonstrations": summary["demonstrations_completed"]},
+                demonstrations=demonstrations_value,
             )
 
             return FlextResult[dict[str, object]].ok(summary)
@@ -851,7 +856,7 @@ def demonstrate_flextcore_config_access() -> None:
     logger = FlextLogger.create_module_logger(__name__)
     container = FlextContainer()
 
-    logger.info("Configuration loaded", extra={"log_level": config.log_level})
+    logger.info("Configuration loaded", log_level=config.log_level)
     container.with_service("config", config)
 
     print(f"  ✅ Logger integrated: {type(logger).__name__}")

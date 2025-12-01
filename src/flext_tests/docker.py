@@ -135,10 +135,10 @@ class FlextTestDocker:
                     self._dirty_containers = set(state.get("dirty_containers", []))
                     self.logger.info(
                         "Loaded dirty state",
-                        extra={"dirty_containers": list(self._dirty_containers)},
+                        dirty_containers=list(self._dirty_containers),
                     )
         except Exception as e:
-            self.logger.warning("Failed to load dirty state", extra={"error": str(e)})
+            self.logger.warning("Failed to load dirty state", error=str(e))
             self._dirty_containers = set()
 
     def _save_dirty_state(self) -> None:
@@ -153,10 +153,10 @@ class FlextTestDocker:
                 )
             self.logger.info(
                 "Saved dirty state",
-                extra={"dirty_containers": list(self._dirty_containers)},
+                dirty_containers=list(self._dirty_containers),
             )
         except Exception as e:
-            self.logger.warning("Failed to save dirty state", extra={"error": str(e)})
+            self.logger.warning("Failed to save dirty state", error=str(e))
 
     def mark_container_dirty(self, container_name: str) -> FlextResult[bool]:
         """Mark a container as dirty, requiring recreation on next use.
@@ -174,7 +174,7 @@ class FlextTestDocker:
             self._save_dirty_state()
             self.logger.info(
                 "Container marked as dirty",
-                extra={"container": container_name},
+                container=container_name,
             )
 
         return FlextTestsUtilities.DockerHelpers.execute_docker_operation(
@@ -646,8 +646,12 @@ class FlextTestDocker:
             return FlextResult[tuple[int, str, str]].fail(f"Command failed: {e}")
 
     def enable_auto_cleanup(self, *, enabled: bool = True) -> FlextResult[bool]:
-        """Enable or disable auto cleanup."""
-        _ = enabled  # Unused parameter
+        """Enable or disable auto cleanup.
+
+        Args:
+            enabled: Whether to enable auto cleanup (currently always enabled)
+        """
+        # Auto cleanup is always enabled - parameter kept for API compatibility
         return FlextResult[bool].ok(True)
 
     def start_services_for_test(
@@ -665,8 +669,8 @@ class FlextTestDocker:
                         FlextTestsTypings.Docker.ContainerOperationResult
                     ].fail(f"Service '{service_name}' is not registered")
 
-        _ = test_name  # Unused parameter
-        _ = required_services  # Unused parameter
+        # test_name and required_services kept for API compatibility
+        # Services are started via service_names parameter
         return FlextResult[FlextTestsTypings.Docker.ContainerOperationResult].ok(
             {"status": "services_started"},
         )
@@ -791,8 +795,8 @@ class FlextTestDocker:
 
                 def logs_op() -> None:
                     nonlocal logs_result
-                    # Use python-on-whales compose logs
-                    logs = docker_client.compose.logs(compose_files=[compose_path])
+                    # Use python-on-whales compose logs (compose file set via context)
+                    logs = docker_client.compose.logs()
                     logs_result = logs if isinstance(logs, str) else str(logs)
 
                 helpers.with_compose_file_config(docker_client, compose_path, logs_op)
@@ -867,7 +871,7 @@ class FlextTestDocker:
     def cleanup_networks(self) -> FlextResult[list[str]]:
         """Clean up unused networks."""
         result = FlextTestsUtilities.DockerHelpers.cleanup_docker_resources(
-            client=self.get_client(),
+            self.get_client(),
             resource_type="network",
             list_attr="networks",
             remove_attr="remove",
@@ -927,7 +931,7 @@ class FlextTestDocker:
     ) -> FlextResult[FlextTestsTypings.Docker.ContainerOperationResult]:
         """Clean up unused images."""
         result = FlextTestsUtilities.DockerHelpers.cleanup_docker_resources(
-            client=self.get_client(),
+            self.get_client(),
             resource_type="image",
             list_attr="images",
             remove_attr="remove",
@@ -1883,8 +1887,7 @@ class FlextTestDocker:
             return FlextResult[bool].fail(f"Container {container_name} not found")
         except DockerException as e:
             self.logger.exception(
-                "Failed to set env vars for %s",
-                container_name,
+                f"Failed to set env vars for {container_name}",
                 exception=e,
             )
             return FlextResult[bool].fail(f"Failed to set environment variables: {e}")
@@ -2065,8 +2068,7 @@ class FlextTestDocker:
                     get_method(container_name)  # Verify exists
         except NotFound:
             self.logger.exception(
-                "Container %s not found - marking dirty",
-                container_name,
+                f"Container {container_name} not found - marking dirty",
                 exception=NotFound(f"Container {container_name} not found"),
             )
             self.mark_container_dirty(container_name)
@@ -2160,9 +2162,7 @@ class FlextTestDocker:
 
         except Exception as e:
             self.logger.exception(
-                "Failed to wait for port %s:%s",
-                host,
-                port,
+                f"Failed to wait for port {host}:{port}",
                 exception=e,
             )
             return FlextResult[bool].fail(f"Failed to wait for port: {e}")
@@ -2340,9 +2340,8 @@ class FlextTestDocker:
                             self.logger.info("Pruned unused volumes")
                         except Exception as e:
                             self.logger.warning(
-                                "Failed to prune volumes: %s",
-                                e,
-                                extra={"error": str(e)},
+                                f"Failed to prune volumes: {e}",
+                                error=str(e),
                             )
 
             return self.compose_up(compose_file, service=service)
@@ -2394,8 +2393,7 @@ class FlextTestDocker:
 
         except Exception as e:
             self.logger.exception(
-                "Failed to auto-repair %s",
-                container_name,
+                f"Failed to auto-repair {container_name}",
                 exception=e,
             )
             return FlextResult[str].fail(f"Failed to auto-repair container: {e}")
@@ -2858,9 +2856,9 @@ class FlextTestDocker:
                     if discovery.is_success:
                         services = discovery.value
                         self.logger.info(
-                            "Auto-discovered services from %s: %s",
-                            compose_path,
-                            services,
+                            f"Auto-discovered services from {compose_path}: {services}",
+                            compose_path=str(compose_path),
+                            services=services,
                         )
 
             return FlextResult[str].ok(
@@ -2989,8 +2987,12 @@ class FlextTestDocker:
         *,
         follow: bool = False,
     ) -> FlextResult[str]:
-        """Show logs for a Docker Compose stack."""
-        _ = follow  # compatibility with previous signature
+        """Show logs for a Docker Compose stack.
+
+        Args:
+            compose_file: Path to docker-compose file
+            follow: Whether to follow logs (parameter kept for API compatibility)
+        """
         logs_result = self.compose_logs(compose_file)
         if logs_result.is_success:
             return FlextResult[str].ok("Logs displayed")

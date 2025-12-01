@@ -97,15 +97,6 @@ class FlextConstants:
     - **Security**: PERMISSION_ERROR, AUTHENTICATION_ERROR
     - **System**: EXCEPTION_ERROR, CRITICAL_ERROR, NONEXISTENT_ERROR
 
-    **Integration with FlextProtocols**:
-    This module provides the complete constant registry that other FLEXT
-    components depend on. By centralizing all constants here:
-    - Error codes are consistent across all 32+ projects
-    - Configuration defaults are standardized
-    - Type-safe literals support strict type checking
-    - All components reference single source of truth
-    - Reduces configuration drift and inconsistencies
-
     **Constants Organization Standards (FLEXT Standardization Plan)**:
     All FLEXT projects MUST follow these patterns for constants organization:
 
@@ -1540,7 +1531,6 @@ class FlextConstants:
 
         DEFAULT_MAX_WORKERS: Final[int] = 4
         DEFAULT_BATCH_SIZE: Final[int] = 1000
-        MAX_BATCH_SIZE: Final[int] = 10000
 
     # =============================================================================
     # ADVANCED VALIDATION HELPERS - Python 3.13+ collections.abc patterns

@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from copy import deepcopy
 from datetime import UTC, datetime
 from typing import ClassVar, Protocol, cast, runtime_checkable
@@ -369,9 +369,9 @@ class CacheService(FlextService[object]):
         self._cache: dict[str, FlextTypes.GeneralValueType] = {}
         self._metadata: dict[str, FlextTypes.GeneralValueType] = {}
 
-    def execute(self, **_kwargs: object) -> FlextResult[object]:
+    def execute(self, **_kwargs: object) -> FlextResult[FlextTypes.GeneralValueType]:
         """Execute the cache service."""
-        return FlextResult[object].ok(None)
+        return FlextResult[FlextTypes.GeneralValueType].ok(None)
 
     def get(self, key: str) -> FlextResult[FlextTypes.GeneralValueType]:
         """Get value from cache with TTL validation using functional composition."""
@@ -433,26 +433,32 @@ class CacheService(FlextService[object]):
 
             return FlextResult[str].ok(valid_key)
 
-        def get_value(valid_key: str) -> FlextResult[object]:
+        def get_value(valid_key: str) -> FlextResult[FlextTypes.GeneralValueType]:
             """Get the actual cached value."""
             self._hits += 1
             self.logger.debug("Cache hit: %s", valid_key)
-            return FlextResult[object].ok(self._cache[valid_key])
+            return FlextResult[FlextTypes.GeneralValueType].ok(self._cache[valid_key])
 
         # NEW: Use flow_through for clean pipeline composition
-        def check_existence_obj(key: object) -> FlextResult[object]:
+        def check_existence_obj(
+            key: object,
+        ) -> FlextResult[FlextTypes.GeneralValueType]:
             str_key = str(key)
             result = check_existence(str_key)
             if result.is_success:
-                return FlextResult[object].ok(result.value)
-            return FlextResult[object].fail(result.error or "Check failed")
+                return FlextResult[FlextTypes.GeneralValueType].ok(result.value)
+            return FlextResult[FlextTypes.GeneralValueType].fail(
+                result.error or "Check failed"
+            )
 
-        def validate_ttl_obj(key: object) -> FlextResult[object]:
+        def validate_ttl_obj(key: object) -> FlextResult[FlextTypes.GeneralValueType]:
             str_key = str(key)
             result = validate_ttl(str_key)
             if result.is_success:
-                return FlextResult[object].ok(result.value)
-            return FlextResult[object].fail(result.error or "Validation failed")
+                return FlextResult[FlextTypes.GeneralValueType].ok(result.value)
+            return FlextResult[FlextTypes.GeneralValueType].fail(
+                result.error or "Validation failed"
+            )
 
         result = (
             FlextResult[str]
@@ -468,7 +474,7 @@ class CacheService(FlextService[object]):
         if result.is_success:
             str_key = str(result.unwrap())
             return get_value(str_key)
-        return FlextResult[object].fail(
+        return FlextResult[FlextTypes.GeneralValueType].fail(
             result.error or "Unknown error",
             error_code=result.error_code,
         )
@@ -538,13 +544,13 @@ class CacheService(FlextService[object]):
 
             return min(self._metadata.keys(), key=get_timestamp)
 
-        def perform_eviction(oldest_key: object) -> FlextResult[object]:
+        def perform_eviction(oldest_key: object) -> FlextResult[str]:
             """Perform the actual eviction."""
             str_key = str(oldest_key)
             del self._cache[str_key]
             del self._metadata[str_key]
             self.logger.debug("Cache evicted: %s", str_key)
-            return FlextResult[object].ok(str_key)
+            return FlextResult[str].ok(str_key)
 
         # NEW: Use from_callable and flow_through for eviction
         eviction_result = (
@@ -931,16 +937,18 @@ class ComprehensiveDIService(FlextService[User]):
         cache_result = self.container.get("cache")
         if cache_result.is_success:
             cache = cache_result.unwrap()
-            user_dict = sample_user
+            user_dict = cast("dict[str, FlextTypes.GeneralValueType]", sample_user)
             cache_key = user_dict.get("id", "test_user")
             if isinstance(cache, HasCacheSet):
                 set_method = cache.set
-                set_method(str(cache_key), sample_user)
+                set_method(str(cache_key), user_dict)
             if isinstance(cache, HasCacheGet):
                 get_method = cache.get
                 get_result = get_method(str(cache_key))
             else:
-                get_result = FlextResult[object].fail("Cache get method not available")
+                get_result = FlextResult[FlextTypes.GeneralValueType].fail(
+                    "Cache get method not available"
+                )
             if get_result.is_success:
                 cached_data = get_result.unwrap()
                 if isinstance(cached_data, dict):
@@ -1022,7 +1030,7 @@ class ComprehensiveDIService(FlextService[User]):
         print("\n=== Container Configuration ===")
 
         production_config = self._scenarios.config(production=True)
-        config: dict[str, FlextTypes.FlexibleValue] = {
+        config: dict[str, FlextTypes.GeneralValueType] = {
             "services": {
                 "database": {
                     "connection_string": production_config.get(
@@ -1164,28 +1172,23 @@ class ComprehensiveDIService(FlextService[User]):
         print("\n=== flow_through(): Service Initialization Pipeline ===")
 
         def connect_database(
-            db: object,
-        ) -> FlextResult[object]:
+            db: DatabaseService,
+        ) -> FlextResult[DatabaseService]:
             """Connect to database."""
-            if not isinstance(db, DatabaseService):
-                return FlextResult[object].fail("Not a DatabaseService")
             result = db.connect()
             if result.is_failure:
-                return FlextResult[object].fail(
+                return FlextResult[DatabaseService].fail(
                     f"Connection failed: {result.error}",
                 )
-            return FlextResult[object].ok(db)
+            return FlextResult[DatabaseService].ok(db)
 
         def validate_database(
-            db: object,
-        ) -> FlextResult[object]:
+            db: DatabaseService,
+        ) -> FlextResult[DatabaseService]:
             """Validate database is ready."""
-            if not isinstance(db, DatabaseService):
-                return FlextResult[object].fail("Not a DatabaseService")
-            db_service = cast("DatabaseService", db)
-            if not db_service.connected:
-                return FlextResult[object].fail("Database not connected")
-            return FlextResult[object].ok(db)
+            if not db.connected:
+                return FlextResult[DatabaseService].fail("Database not connected")
+            return FlextResult[DatabaseService].ok(db)
 
         # Pipeline: create → connect → validate
         result = (

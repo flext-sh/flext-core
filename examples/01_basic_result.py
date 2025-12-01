@@ -747,15 +747,11 @@ class Example01BasicResult:
             # ValidationError with field context
             try:
                 error_message = "Invalid email format"
-                from flext_core._models.config import FlextModelsConfig
-
                 raise FlextExceptions.ValidationError(
                     error_message,
-                    config=FlextModelsConfig.ValidationErrorConfig(
-                        field="email",
-                        value="invalid-email",
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    ),
+                    field="email",
+                    value="invalid-email",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
             except FlextExceptions.ValidationError as e:
                 result = FlextResult[str].fail(

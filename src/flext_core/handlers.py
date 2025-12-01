@@ -516,7 +516,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         self._metrics[name] = value
         return FlextResult[bool].ok(True)
 
-    def _extract_message_id(self, message: FlextTypes.GeneralValueType) -> str | None:
+    @staticmethod
+    def _extract_message_id(message: FlextTypes.GeneralValueType) -> str | None:
         """Extract message ID from message object without type narrowing.
 
         Helper method to avoid type narrowing issues when checking message
@@ -630,7 +631,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             "FlextTypes.GeneralValueType",
             message,
         )
-        message_id: str | None = self._extract_message_id(message_for_extraction)
+        message_id: str | None = FlextHandlers._extract_message_id(
+            message_for_extraction
+        )
 
         # Push execution context
         self.push_context({

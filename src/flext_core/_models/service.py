@@ -81,7 +81,7 @@ class FlextModelsService:
         parallel_execution: bool = False
         stop_on_error: bool = True
         batch_size: int = Field(
-            default=FlextConstants.Processing.MAX_BATCH_SIZE,
+            default=FlextConstants.Performance.MAX_BATCH_SIZE,
             description="Batch size from FlextConfig (Config has priority over Constants)",
         )
         timeout_per_operation: float = Field(

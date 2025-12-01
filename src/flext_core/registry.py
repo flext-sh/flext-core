@@ -738,7 +738,7 @@ class FlextRegistry(FlextMixins):
         """
         summary = FlextRegistry.Summary()
         for message_type, handler in bindings:
-            key = self._resolve_binding_key(handler, message_type)
+            key = FlextRegistry._resolve_binding_key(handler, message_type)
             if key in self._registered_keys:
                 summary.skipped.append(key)
                 continue
@@ -799,7 +799,7 @@ class FlextRegistry(FlextMixins):
         for message_type, entry in mapping.items():
             try:
                 # Resolve key and check if already registered (early continue)
-                key = self._resolve_binding_key_from_entry(entry, message_type)
+                key = FlextRegistry._resolve_binding_key_from_entry(entry, message_type)
                 if key in self._registered_keys:
                     summary.skipped.append(key)
                     continue
@@ -956,8 +956,8 @@ class FlextRegistry(FlextMixins):
             type_name = str(message_type)
         return f"{base_key}::{type_name}"
 
+    @staticmethod
     def _resolve_binding_key_from_entry(
-        self,
         entry: FlextHandlers[object, object]
         | tuple[
             FlextTypes.Bus.HandlerCallableType,
@@ -978,7 +978,7 @@ class FlextRegistry(FlextMixins):
                 type_name = str(message_type)
             return f"{handler_name}::{type_name}"
         if isinstance(entry, FlextHandlers):
-            return self._resolve_binding_key(entry, message_type)
+            return FlextRegistry._resolve_binding_key(entry, message_type)
         # Handle object or other types
         return str(entry)
 
