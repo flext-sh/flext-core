@@ -1,14 +1,9 @@
-"""FlextHandlers - CQRS Command and Query Handler Foundation Module.
+"""CQRS handler foundation used by the dispatcher pipeline.
 
-This module provides FlextHandlers, the base class for implementing Command Query
-Responsibility Segregation (CQRS) handlers throughout the FLEXT ecosystem. It implements
-structural typing via FlextProtocols.Handler[MessageT_contra] through duck typing,
-providing a foundation for command/query/event handlers with validation pipelines,
-execution context management, and configuration support.
-
-Scope: Abstract base class for CQRS handlers, message validation, type checking,
-handler execution pipeline, command/query/event processing with FlextResult-based
-error handling and comprehensive logging/metrics integration.
+FlextHandlers defines the base class the dispatcher relies on for commands,
+queries, and domain events. It favors structural typing over inheritance,
+ensures validation and execution steps return ``FlextResult`` rather than
+raising, and keeps handler metadata ready for registry/dispatcher discovery.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -29,7 +24,7 @@ from flext_core.typings import FlextTypes
 
 
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
-    """CQRS Command and Query Handler Foundation for FLEXT ecosystem.
+    """Abstract CQRS handler with validation and railway-style execution.
 
     Provides the base implementation for Command Query Responsibility Segregation
     (CQRS) handlers, implementing structural typing via FlextProtocols.Handler[MessageT_contra]
@@ -191,7 +186,9 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                 super().__init__(config=config)
                 self._handler_fn = handler_fn
 
-            def handle(self, message: object) -> FlextResult[object]:
+            def handle(
+                self, message: FlextTypes.GeneralValueType
+            ) -> FlextResult[FlextTypes.GeneralValueType]:
                 """Execute the wrapped callable."""
                 try:
                     # Cast message to FlextTypes.GeneralValueType for handler function
@@ -309,7 +306,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     def validate(
         self,
         data: FlextTypes.Handler.AcceptableMessageType,
-    ) -> FlextResult[bool]:
+    ) -> FlextResult[bool]:  # noqa: PLR6301
         """Validate input data using extensible validation pipeline.
 
         Base validation method that can be overridden by subclasses to implement
@@ -332,6 +329,8 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             >>> if result.is_failure:
             ...     print(f"Validation error: {result.error}")
 
+        Note: self is required for subclass override compatibility, even though
+        this base implementation doesn't use instance state.
         """
         # Reject None values
         if data is None:

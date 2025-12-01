@@ -14,8 +14,9 @@ import os
 import shutil
 import tempfile
 import warnings
-from collections.abc import Generator, Mapping, Sequence
+from collections.abc import Generator, Mapping
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -25,7 +26,6 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextRuntime,
-    FlextService,
 )
 from flext_core.typings import FlextTypes
 from flext_tests.docker import FlextTestDocker
@@ -151,15 +151,18 @@ def clean_container() -> Generator[FlextContainer]:
 
 
 @pytest.fixture
-def sample_data() -> dict[str, FlextTypes.GeneralValueType]:
+def sample_data() -> Mapping[str, FlextTypes.GeneralValueType]:
     """Provide deterministic sample data for tests."""
-    return get_sample_data()
+    return cast("Mapping[str, FlextTypes.GeneralValueType]", get_sample_data())
 
 
 @pytest.fixture
-def test_user_data() -> dict[str, FlextTypes.GeneralValueType] | list[str] | None:
+def test_user_data() -> Mapping[str, FlextTypes.GeneralValueType] | list[str] | None:
     """Provide consistent user data for domain testing."""
-    return get_test_user_data()
+    user_data = get_test_user_data()
+    if isinstance(user_data, dict):
+        return cast("Mapping[str, FlextTypes.GeneralValueType]", user_data)
+    return user_data
 
 
 @pytest.fixture
@@ -180,64 +183,39 @@ def temp_directory() -> Generator[Path]:
         shutil.rmtree(temp_dir)
 
 
-class ExternalProcessingService(FlextService[str]):
-    """Real external processing service for integration testing.
+class FunctionalExternalService:
+    """Functional external service for integration testing - real implementation.
 
-    Uses FlextService base class with real behavior, not a mock.
-    Can be configured for success/failure scenarios through initialization.
+    This is a real service implementation that can be used for testing
+    without mocks. It provides functional behavior that can be configured
+    for success/failure scenarios.
     """
 
-    def __init__(
+    def __init__(self) -> None:
+        """Initialize functional external service with processing state."""
+        self.call_count = 0
+        self.processed_items: list[FlextTypes.GeneralValueType] = []
+        self._should_fail = False
+        self._failure_message = "Service unavailable"
+
+    def process(
         self,
-        **data: FlextTypes.ScalarValue
-        | Sequence[FlextTypes.ScalarValue]
-        | Mapping[str, FlextTypes.ScalarValue],
-    ) -> None:
-        """Initialize external processing service with instance state.
-
-        Args:
-            **data: Configuration parameters (unused in this service).
-
-        """
-        super().__init__(**data)
-        self._instance_should_fail = False
-        self._instance_failure_message = "Service unavailable"
-        self._instance_call_count = 0
-        self._instance_processed_items: list[str] = []
-
-    def execute(self) -> FlextResult[str]:
-        """Execute external processing service.
+        data: FlextTypes.GeneralValueType | None = None,
+    ) -> FlextResult[str]:
+        """Process data through functional external service.
 
         Returns:
             FlextResult[str]: Success with processed data or failure with error message.
 
         """
-        self._instance_call_count += 1
+        self.call_count += 1
+        processed_data = data or "processed"
+        self.processed_items.append(processed_data)
 
-        if self._instance_should_fail:
-            return FlextResult[str].fail(self._instance_failure_message)
+        if self._should_fail:
+            return FlextResult[str].fail(self._failure_message)
 
-        processed_data = "processed_data"
-        self._instance_processed_items.append(processed_data)
-        return FlextResult[str].ok(processed_data)
-
-    def process(self, data: str) -> FlextResult[str]:
-        """Process data through external service.
-
-        Args:
-            data: Data to process.
-
-        Returns:
-            FlextResult[str]: Success with processed data or failure with error message.
-
-        """
-        self._instance_call_count += 1
-        self._instance_processed_items.append(data)
-
-        if self._instance_should_fail:
-            return FlextResult[str].fail(self._instance_failure_message)
-
-        return FlextResult[str].ok(f"processed_{data}")
+        return FlextResult[str].ok(f"processed_{processed_data}")
 
     def get_call_count(self) -> int:
         """Get number of times process was called.
@@ -246,12 +224,7 @@ class ExternalProcessingService(FlextService[str]):
             int: Number of times the process method was called.
 
         """
-        return self._instance_call_count
-
-    @property
-    def processed_items(self) -> list[str]:
-        """Get list of processed items."""
-        return self._instance_processed_items.copy()
+        return self.call_count
 
     def set_failure_mode(
         self,
@@ -259,42 +232,36 @@ class ExternalProcessingService(FlextService[str]):
         should_fail: bool = True,
         message: str = "Service unavailable",
     ) -> None:
-        """Configure service to fail for testing error scenarios.
-
-        Args:
-            should_fail: Whether service should fail.
-            message: Failure message to return.
-
-        """
-        self._instance_should_fail = should_fail
-        self._instance_failure_message = message
+        """Configure service to fail for testing error scenarios."""
+        self._should_fail = should_fail
+        self._failure_message = message
 
     def reset(self) -> None:
         """Reset service state for test isolation."""
-        self._instance_call_count = 0
-        self._instance_processed_items.clear()
-        self._instance_should_fail = False
-        self._instance_failure_message = "Service unavailable"
+        self.call_count = 0
+        self.processed_items.clear()
+        self._should_fail = False
+        self._failure_message = "Service unavailable"
 
 
 @pytest.fixture
-def mock_external_service() -> ExternalProcessingService:
-    """Provide real external processing service for integration testing.
+def mock_external_service() -> FunctionalExternalService:
+    """Provide functional external service for integration testing.
 
-    Uses FlextService-based implementation, not a mock. Provides real behavior
-    that can be configured for various test scenarios.
+    Real service implementation (not a mock) that can be configured
+    for various test scenarios. Uses proper types from FlextTypes.
 
     Returns:
-        ExternalProcessingService: A configured external service instance.
+        FunctionalExternalService: A configured external service instance.
 
     """
-    return ExternalProcessingService()
+    return FunctionalExternalService()
 
 
 @pytest.fixture
 def configured_container(
     clean_container: FlextContainer,
-    mock_external_service: ExternalProcessingService,
+    mock_external_service: FunctionalExternalService,
 ) -> FlextContainer:
     """Provide pre-configured container for integration testing.
 
@@ -309,7 +276,10 @@ def configured_container(
       FlextContainer with standard test services registered
 
     """
-    _ = clean_container.with_service("external_service", mock_external_service)
+    _ = clean_container.with_service(
+        "external_service",
+        cast("FlextTypes.GeneralValueType", mock_external_service),
+    )
     _ = clean_container.with_service("config", {"test_mode": True})
     _ = clean_container.with_service("logger", "test_logger")
     return clean_container
@@ -323,39 +293,39 @@ def error_context() -> dict[str, str | None]:
 
 # Test Data Constants - Centralized test data and constants
 @pytest.fixture
-def test_constants() -> dict[str, FlextTypes.GeneralValueType]:
+def test_constants() -> Mapping[str, FlextTypes.GeneralValueType]:
     """Provide centralized test constants for all tests."""
-    return get_test_constants()
+    return cast("Mapping[str, FlextTypes.GeneralValueType]", get_test_constants())
 
 
 @pytest.fixture
-def test_contexts() -> dict[str, FlextTypes.GeneralValueType]:
+def test_contexts() -> Mapping[str, FlextTypes.GeneralValueType]:
     """Provide common test contexts for various scenarios."""
-    return get_test_contexts()
+    return cast("Mapping[str, FlextTypes.GeneralValueType]", get_test_contexts())
 
 
 @pytest.fixture
 def test_payloads() -> FlextTypes.GeneralValueType:
     """Provide common test payloads for different operations."""
-    return get_test_payloads()
+    return cast("FlextTypes.GeneralValueType", get_test_payloads())
 
 
 @pytest.fixture
 def test_error_scenarios() -> FlextTypes.GeneralValueType:
     """Provide common error scenarios for testing."""
-    return get_test_error_scenarios()
+    return cast("FlextTypes.GeneralValueType", get_test_error_scenarios())
 
 
 @pytest.fixture
-def performance_threshold() -> FlextTypes.GeneralValueType:
+def performance_threshold() -> Mapping[str, float]:
     """Provide performance thresholds for testing."""
-    return get_performance_threshold()
+    return cast("Mapping[str, float]", get_performance_threshold())
 
 
 @pytest.fixture
 def benchmark_data() -> FlextTypes.GeneralValueType:
     """Provide standardized data for performance testing."""
-    return get_benchmark_data()
+    return cast("FlextTypes.GeneralValueType", get_benchmark_data())
 
 
 # Factory Fixtures - COMMENTED OUT: Use FlextTestsMatchers directly instead of aliases
@@ -503,9 +473,9 @@ def logging_test_env() -> Generator[None]:
 @pytest.fixture(autouse=True)
 def setup_test_environment() -> None:
     """Automatically set up test environment for all tests."""
-    # object global test setup can go here
+    # Global test setup can go here
     return
-    # object global test teardown can go here
+    # Global test teardown can go here
 
 
 # COMMENTED OUT: Use FlextTestsMatchers directly

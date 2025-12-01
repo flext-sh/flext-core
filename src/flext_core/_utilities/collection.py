@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Mapping
 from enum import StrEnum
 
+from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
@@ -43,8 +44,6 @@ class FlextUtilitiesCollection:
                  statuses: tuple[Status, ...] = result.value
 
         """
-        from flext_core.result import FlextResult
-
         parsed: list[E] = []
         errors: list[str] = []
 
@@ -119,8 +118,6 @@ class FlextUtilitiesCollection:
              )
 
         """
-        from flext_core.result import FlextResult
-
         parsed: dict[str, E] = {}
         errors: list[str] = []
 

@@ -1,4 +1,4 @@
-"""Layer 0.5: Runtime Integration Bridge for External Libraries.
+"""Runtime bridge exposing external libraries with dispatcher-safe boundaries.
 
 **ARCHITECTURE LAYER 0.5** - Integration Bridge (Minimal Dependencies)
 
@@ -50,7 +50,7 @@ import re
 import secrets
 import string
 import typing
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import Protocol, TypeGuard, cast
 
@@ -60,7 +60,9 @@ from beartype.claw import beartype_package
 from dependency_injector import containers, providers
 from structlog.typing import BindableLogger
 
+from flext_core._models.metadata import MetadataAttributeValue
 from flext_core.constants import FlextConstants
+from flext_core.protocols import FlextProtocols
 from flext_core.typings import FlextTypes, P
 
 __all__ = ["StructlogLogger"]
@@ -75,30 +77,65 @@ class StructlogLogger(BindableLogger, Protocol):
     Structlog loggers implement this protocol through dynamic method dispatch.
     """
 
-    def debug(self, msg: str | object, *args: object, **kw: object) -> None:
+    def debug(
+        self,
+        msg: str | FlextTypes.GeneralValueType,
+        *args: object,
+        **kw: object,
+    ) -> None:
         """Log debug message."""
 
-    def info(self, msg: str | object, *args: object, **kw: object) -> None:
+    def info(
+        self,
+        msg: str | FlextTypes.GeneralValueType,
+        *args: object,
+        **kw: object,
+    ) -> None:
         """Log info message."""
 
-    def warning(self, msg: str | object, *args: object, **kw: object) -> None:
+    def warning(
+        self,
+        msg: str | FlextTypes.GeneralValueType,
+        *args: object,
+        **kw: object,
+    ) -> None:
         """Log warning message."""
 
-    def warn(self, msg: str | object, *args: object, **kw: object) -> None:
+    def warn(
+        self,
+        msg: str | FlextTypes.GeneralValueType,
+        *args: object,
+        **kw: object,
+    ) -> None:
         """Log warning message (alias)."""
 
-    def error(self, msg: str | object, *args: object, **kw: object) -> None:
+    def error(
+        self,
+        msg: str | FlextTypes.GeneralValueType,
+        *args: object,
+        **kw: object,
+    ) -> None:
         """Log error message."""
 
-    def critical(self, msg: str | object, *args: object, **kw: object) -> None:
+    def critical(
+        self,
+        msg: str | FlextTypes.GeneralValueType,
+        *args: object,
+        **kw: object,
+    ) -> None:
         """Log critical message."""
 
-    def exception(self, msg: str | object, *args: object, **kw: object) -> None:
+    def exception(
+        self,
+        msg: str | FlextTypes.GeneralValueType,
+        *args: object,
+        **kw: object,
+    ) -> None:
         """Log exception with traceback."""
 
 
 class FlextRuntime:
-    """Runtime Utilities and External Library Integration Bridge (Layer 0.5).
+    """Expose structlog, DI providers, and validation helpers to higher layers.
 
     **ARCHITECTURE LAYER 0.5** - Integration Bridge with minimal dependencies
 
@@ -204,7 +241,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_valid_phone(
-        value: object,
+        value: FlextTypes.GeneralValueType,
     ) -> TypeGuard[str]:
         """Type guard to check if value is a valid phone number string.
 
@@ -225,14 +262,14 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: object,
-    ) -> TypeGuard[dict[str, FlextTypes.GeneralValueType]]:
+    ) -> TypeGuard[Mapping[str, FlextTypes.GeneralValueType]]:
         """Type guard to check if value is dict-like.
 
         Args:
             value: Value to check
 
         Returns:
-            True if value is a dict[str, FlextTypes.GeneralValueType] or dict-like object, False otherwise
+            True if value is a Mapping[str, FlextTypes.GeneralValueType] or dict-like object, False otherwise
 
         """
         if isinstance(value, dict):
@@ -253,7 +290,7 @@ class FlextRuntime:
     @staticmethod
     def is_list_like(
         value: object,
-    ) -> TypeGuard[list[FlextTypes.GeneralValueType]]:
+    ) -> TypeGuard[Sequence[FlextTypes.GeneralValueType]]:
         """Type guard to check if value is list-like.
 
         Args:
@@ -305,8 +342,57 @@ class FlextRuntime:
         return str(val)
 
     @staticmethod
+    def normalize_to_metadata_value(
+        val: FlextTypes.GeneralValueType,
+    ) -> MetadataAttributeValue:
+        """Normalize any value to MetadataAttributeValue.
+
+        MetadataAttributeValue is more restrictive than FlextTypes.GeneralValueType,
+        so we need to normalize nested structures to flat types.
+        This method is in FlextRuntime (Tier 0.5) to avoid circular dependencies.
+
+        Args:
+            val: Value to normalize
+
+        Returns:
+            MetadataAttributeValue: Normalized value compatible with Metadata attributes
+
+        Example:
+            >>> FlextRuntime.normalize_to_metadata_value("test")
+            'test'
+            >>> FlextRuntime.normalize_to_metadata_value({"key": "value"})
+            {'key': 'value'}
+            >>> FlextRuntime.normalize_to_metadata_value([1, 2, 3])
+            [1, 2, 3]
+
+        """
+        if isinstance(val, (str, int, float, bool, type(None))):
+            return val
+        if FlextRuntime.is_dict_like(val):
+            # Convert to flat dict[str, MetadataAttributeValue]
+            result: dict[str, str | int | float | bool | None] = {}
+            dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
+            for k, v in dict_v.items():
+                if isinstance(k, str):
+                    if isinstance(v, (str, int, float, bool, type(None))):
+                        result[k] = v
+                    else:
+                        result[k] = str(v)
+            return result
+        if FlextRuntime.is_list_like(val):
+            # Convert to list[MetadataAttributeValue]
+            result_list: list[str | int | float | bool | None] = []
+            for item in val:
+                if isinstance(item, (str, int, float, bool, type(None))):
+                    result_list.append(item)
+                else:
+                    result_list.append(str(item))
+            return result_list
+        return str(val)
+
+    @staticmethod
     def is_valid_json(
-        value: object,
+        value: FlextTypes.GeneralValueType,
     ) -> TypeGuard[str]:
         """Type guard to check if value is valid JSON string.
 
@@ -327,7 +413,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_valid_identifier(
-        value: object,
+        value: FlextTypes.GeneralValueType,
     ) -> TypeGuard[str]:
         """Type guard to check if value is a valid Python identifier.
 
@@ -515,9 +601,9 @@ class FlextRuntime:
 
     @staticmethod
     def level_based_context_filter(
-        _logger: FlextTypes.Logging.LoggerContextType,
+        _logger: FlextProtocols.LoggerProtocol,
         method_name: str,
-        event_dict: dict[str, FlextTypes.GeneralValueType],
+        event_dict: Mapping[str, FlextTypes.GeneralValueType],
     ) -> dict[str, FlextTypes.GeneralValueType]:
         """Filter context variables based on log level.
 
@@ -597,15 +683,16 @@ class FlextRuntime:
         return filtered_dict
 
     @classmethod
-    def configure_structlog(
+    def configure_structlog(  # noqa: PLR0913
         cls,
         *,
-        config: object | None = None,
+        config: Mapping[str, FlextTypes.GeneralValueType] | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[object] | None = None,
+        additional_processors: Sequence[Callable[..., FlextTypes.GeneralValueType]]
+        | None = None,
         wrapper_class_factory: Callable[[], type[BindableLogger]] | None = None,
-        logger_factory: Callable[P, object] | None = None,
+        logger_factory: Callable[P, BindableLogger] | None = None,
         cache_logger_on_first_use: bool = True,
     ) -> None:
         """Configure structlog once using FLEXT defaults.

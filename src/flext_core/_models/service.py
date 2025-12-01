@@ -14,10 +14,11 @@ from typing import Annotated
 from pydantic import Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
+from flext_core._utilities.generators import FlextUtilitiesGenerators
+from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
 from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
 
 
 class FlextModelsService:
@@ -46,19 +47,19 @@ class FlextModelsService:
         @field_validator("context", mode="before")
         @classmethod
         def validate_context(cls, v: FlextTypes.GeneralValueType) -> dict[str, str]:
-            """Ensure context has required fields (using FlextUtilities.Generators).
+            """Ensure context has required fields (using FlextUtilitiesGenerators).
 
             Returns dict[str, str] because ensure_trace_context generates string trace IDs.
             This is compatible with the field type dict[str, FlextTypes.GeneralValueType] since str is a subtype.
             """
-            return FlextUtilities.Generators.ensure_trace_context(v)
+            return FlextUtilitiesGenerators.ensure_trace_context(v)
 
         @field_validator("timeout_seconds", mode="after")
         @classmethod
         def validate_timeout(cls, v: int) -> int:
-            """Validate timeout is reasonable (using FlextUtilities.Validation)."""
+            """Validate timeout is reasonable (using FlextUtilitiesValidation)."""
             max_timeout_seconds = FlextConstants.Performance.MAX_TIMEOUT_SECONDS
-            result = FlextUtilities.Validation.validate_timeout(v, max_timeout_seconds)
+            result = FlextUtilitiesValidation.validate_timeout(v, max_timeout_seconds)
             if result.is_failure:
                 base_msg = "Timeout validation failed"
                 error_msg = (

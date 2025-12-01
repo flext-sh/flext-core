@@ -1,6 +1,6 @@
 # QUICK START
 
-Get started with FLEXT-Core in 5 minutes. This guide covers the essentials - for deeper knowledge, see the full guides.
+Get started with FLEXT-Core in 5 minutes. This guide covers the essentials; see the full guides for deeper coverage and rationale.
 
 ## Installation
 
@@ -42,7 +42,7 @@ else:
 
 ### 2. Dependency Injection (FlextContainer)
 
-Centralized service management:
+Centralized service management with explicit lifecycles:
 
 ```python
 from flext_core import FlextContainer, FlextLogger
@@ -61,7 +61,7 @@ if logger_result.is_success:
 
 ### 3. Domain-Driven Design (FlextModels)
 
-Model your business domain clearly:
+Model your business domain with explicit boundaries:
 
 ```python
 from flext_core import FlextModels
@@ -148,7 +148,7 @@ if service_result.is_success:
 ### Use Case 3: Domain Models with Validation
 
 ```python
-from pydantic import BaseModel, Field
+from pydantic import Field
 from flext_core import FlextModels, FlextService, FlextResult
 
 class OrderItem(FlextModels.Value):
@@ -195,6 +195,37 @@ if result.is_success:
     print(f"Order created: {order.entity_id} with {len(order.items)} items")
 else:
     print(f"Order failed: {result.error}")
+```
+
+### Use Case 4: Dispatcher-Driven CQRS
+
+Route commands through the dispatcher to keep orchestration and side effects consistent:
+
+```python
+from flext_core import FlextDispatcher, FlextRegistry, FlextResult, FlextService
+
+class CreateUser(FlextService.Command):
+    """Command payload for creating users."""
+
+
+class UserService(FlextService):
+    """Domain service implementing the command handler."""
+
+    def handle_create_user(self, command: CreateUser) -> FlextResult[str]:
+        if not command.email:
+            return FlextResult[str].fail("Email required")
+        # persist user and raise domain event here
+        return FlextResult[str].ok(command.email)
+
+
+registry = FlextRegistry()
+registry.register_command(CreateUser, UserService().handle_create_user)
+
+dispatcher = FlextDispatcher(registry=registry)
+result = dispatcher.dispatch(CreateUser(email="user@example.com"))
+
+if result.is_success:
+    print(f"Created: {result.unwrap()}")
 ```
 
 ## Key Patterns Cheat Sheet

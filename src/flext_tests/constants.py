@@ -93,7 +93,11 @@ class FlextTestConstants(FlextConstants):
         ERROR_OPERATION_TIMEOUT: Final[str] = "Docker operation timed out"
 
     class Execution:
-        """Test execution constants (extends FlextConstants.Test)."""
+        """Test execution constants for test infrastructure.
+
+        Extends FlextConstants.Test with test-specific execution constants.
+        Does not override FlextConstants.Test to avoid MRO conflicts.
+        """
 
         # Test execution timeouts
         DEFAULT_TEST_TIMEOUT_SECONDS: Final[int] = 60

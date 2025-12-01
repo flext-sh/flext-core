@@ -1,11 +1,8 @@
-"""FlextResult - Railway-oriented result type for type-safe error handling.
+"""Railway-oriented result type for dispatcher-driven applications.
 
-This module provides FlextResult[T], a type-safe result type implementing
-the railway pattern for explicit error handling throughout the FLEXT ecosystem.
-
-FlextResult wraps operation outcomes with explicit success/failure states,
-providing monadic operations for functional composition and safe error
-propagation without exceptions.
+FlextResult wraps outcomes with explicit success/failure states so dispatcher
+handlers, services, and middleware can compose operations without exceptions.
+It underpins CQRS flows with monadic helpers for predictable, typed pipelines.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -26,20 +23,12 @@ from flext_core.protocols import FlextProtocols
 from flext_core.typings import FlextTypes, T_co, U
 
 
-class FlextResult[T_co]:
-    """FlextResult[T_co] type-safe result type implementing the railway pattern.
+class FlextResult[T_co]:  # noqa: PLR0904
+    """Type-safe railway result with monadic helpers for CQRS pipelines.
 
-    Provides monadic operations for functional error handling with explicit
-    success/failure states. Wraps operation outcomes and enables composable
-    error propagation without exceptions.
-
-    Key Features:
-    - Type-safe success/failure wrapping with generic [T_co] covariance
-    - Monadic operations: map, flat_map, filter, bind, traverse, lash
-    - Railway pattern for functional composition
-    - Context managers for resource management
-    - Integration with returns library for battle-tested operations
-    - Error metadata: error_code, error_data for structured logging
+    Use FlextResult to compose dispatcher handlers and domain services without
+    raising exceptions, while preserving optional error codes and metadata for
+    structured logging.
     """
 
     def __init__(
@@ -52,6 +41,78 @@ class FlextResult[T_co]:
         self._result = _result
         self._error_code = error_code
         self._error_data = error_data
+
+    # ═══════════════════════════════════════════════════════════════════
+    # NESTED OPERATION GROUPS (Organization via Composition)
+    # ═══════════════════════════════════════════════════════════════════
+
+    class Monad[T]:
+        """Monadic operations: map, flat_map, filter, alt, lash, flow_through."""
+
+        @staticmethod
+        def alt(result: FlextResult[T], func: Callable[[str], str]) -> FlextResult[T]:
+            """Apply alternative function on failure."""
+            return FlextResult(result._result.alt(func))
+
+        @staticmethod
+        def lash(
+            result: FlextResult[T], func: Callable[[str], FlextResult[T]]
+        ) -> FlextResult[T]:
+            """Apply recovery function on failure."""
+
+            def inner(error: str) -> Result[T, str]:
+                recovery = func(error)
+                return recovery.result
+
+            return FlextResult(result._result.lash(inner))
+
+    class Convert[T]:
+        """Conversion operations: to/from Maybe, IO, IOResult."""
+
+        @staticmethod
+        def to_io(result: FlextResult[T]) -> IO[T]:
+            """Convert to returns.io.IO."""
+            if result.is_success:
+                return IO(result.value)
+            msg = "Cannot convert failure to IO"
+            raise FlextExceptions.ValidationError(msg)
+
+        @staticmethod
+        def from_io_result(
+            io_result: IOResult[FlextTypes.GeneralValueType, str],
+        ) -> FlextResult[FlextTypes.GeneralValueType]:
+            """Create from returns.io.IOResult."""
+            try:
+                if isinstance(io_result, IOSuccess):
+                    value = io_result.unwrap()
+                    return FlextResult.ok(value)
+                if isinstance(io_result, IOFailure):
+                    error = io_result.failure()
+                    return FlextResult.fail(str(error))
+                return FlextResult.fail(f"Invalid IO result type: {type(io_result)}")
+            except Exception as e:
+                return FlextResult.fail(f"Error processing IO result: {e}")
+
+    class Operations[T]:
+        """Utility operations: safe, traverse, accumulate_errors, parallel_map, with_resource."""
+
+        @staticmethod
+        def safe(
+            func: FlextProtocols.VariadicCallable[T],
+        ) -> FlextProtocols.VariadicCallable[FlextResult[T]]:
+            """Decorator to wrap function in FlextResult."""
+
+            def wrapper(
+                *args: FlextTypes.FlexibleValue,
+                **kwargs: FlextTypes.FlexibleValue,
+            ) -> FlextResult[T]:
+                try:
+                    result = func(*args, **kwargs)
+                    return FlextResult.ok(result)
+                except Exception as e:
+                    return FlextResult.fail(str(e))
+
+            return wrapper
 
     @classmethod
     def ok(cls, value: T_co) -> FlextResult[T_co]:
@@ -119,8 +180,18 @@ class FlextResult[T_co]:
         return self._result.unwrap()
 
     def unwrap_or(self, default: T_co) -> T_co:
-        """Unwrap success value or return default."""
-        return self._result.value_or(default)
+        """Unwrap the result value or return default if failure.
+
+        Args:
+            default: Default value to return on failure
+
+        Returns:
+            The result value if success, otherwise the default
+
+        """
+        if self.is_failure:
+            return default
+        return self._result.unwrap()
 
     def map[U](self, func: Callable[[T_co], U]) -> FlextResult[U]:
         """Transform success value using function."""
@@ -142,19 +213,6 @@ class FlextResult[T_co]:
         if self.is_success and not predicate(self.value):
             return FlextResult.fail("Filter predicate failed")
         return self
-
-    def alt(self, func: Callable[[str], str]) -> FlextResult[T_co]:
-        """Apply alternative function on failure."""
-        return FlextResult(self._result.alt(func))
-
-    def lash(self, func: Callable[[str], FlextResult[T_co]]) -> FlextResult[T_co]:
-        """Apply recovery function on failure."""
-
-        def inner(error: str) -> Result[T_co, str]:
-            result = func(error)
-            return result.result
-
-        return FlextResult(self._result.lash(inner))
 
     def flow_through[U](
         self,
@@ -209,57 +267,11 @@ class FlextResult[T_co]:
             return cls.ok(maybe.unwrap())
         return cls.fail(error)
 
-    def to_io(self) -> IO[T_co]:
-        """Convert to returns.io.IO."""
-        if self.is_success:
-            return IO(self.value)
-        # IO doesn't support failure, raise exception
-        msg = "Cannot convert failure to IO"
-        raise FlextExceptions.ValidationError(msg)
-
     def to_io_result(self) -> IOResult[T_co, str]:
         """Convert to returns.io.IOResult."""
         if self.is_success:
             return IOSuccess(self.value)
         return IOFailure(self.error or "")
-
-    @classmethod
-    def from_io_result(cls, io_result: object) -> FlextResult[object]:
-        """Create from returns.io.IOResult.
-
-        Note: This method handles dynamic typing from the returns library.
-        Type safety is maintained through runtime checks.
-        """
-        try:
-            if isinstance(io_result, IOSuccess):
-                # IOSuccess contains the success value
-                value = io_result.unwrap()
-                return FlextResult.ok(value)
-            if isinstance(io_result, IOFailure):
-                # IOFailure contains the error
-                error = io_result.failure()
-                return FlextResult.fail(str(error))
-            return FlextResult.fail(f"Invalid IO result type: {type(io_result)}")
-        except Exception as e:
-            return FlextResult.fail(f"Error processing IO result: {e}")
-
-    @classmethod
-    def safe(
-        cls,
-        func: FlextProtocols.VariadicCallable[T_co],
-    ) -> FlextProtocols.VariadicCallable[FlextResult[T_co]]:
-        """Decorator to wrap function in FlextResult."""
-
-        def wrapper(
-            *args: FlextTypes.GeneralValueType,
-            **kwargs: FlextTypes.GeneralValueType,
-        ) -> FlextResult[T_co]:
-            try:
-                return cls.ok(func(*args, **kwargs))
-            except Exception as e:
-                return cls.fail(str(e))
-
-        return wrapper
 
     @classmethod
     def traverse[T, U](

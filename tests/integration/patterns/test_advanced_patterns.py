@@ -21,9 +21,9 @@ import pytest
 from flext_core import FlextResult
 
 from ...fixtures.typing import (
+    FixtureCaseDict,
+    FixtureDataDict,
     MockScenarioData,
-    TestCaseDict,
-    TestDataDict,
 )
 
 # Type alias for test functions
@@ -224,14 +224,14 @@ class FlextTestBuilder:
         self._validation_rules = kwargs
         return self
 
-    def build(self) -> TestDataDict:
+    def build(self) -> FixtureDataDict:
         """Build method.
 
         Returns:
             dict[str, object]: Copy of the built data.
 
         """
-        return cast("TestDataDict", self._data.copy())
+        return cast("FixtureDataDict", self._data.copy())
 
 
 class ParameterizedTestBuilder:
@@ -281,14 +281,14 @@ class ParameterizedTestBuilder:
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[TestCaseDict]:
+    def build(self) -> list[FixtureCaseDict]:
         """Build method.
 
         Returns:
             list[dict[str, object]]: Copy of the test cases.
 
         """
-        return cast("list[TestCaseDict]", self._cases.copy())
+        return cast("list[FixtureCaseDict]", self._cases.copy())
 
     def build_pytest_params(self) -> list[tuple[str, str, bool]]:
         """build_pytest_params method.

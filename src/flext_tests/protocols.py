@@ -331,7 +331,7 @@ class FlextTestProtocols:
         @runtime_checkable
         class ComposeClientProtocol(Protocol):
             """Protocol for docker-compose operations.
-            
+
             Compatible with python-on-whales DockerClient.
             Uses structural typing - any object with compose and client_config attributes is accepted.
             """

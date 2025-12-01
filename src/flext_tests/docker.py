@@ -259,11 +259,9 @@ class FlextTestDocker:
             }
             self.logger.info(
                 "Registered container config",
-                extra={
-                    "container": container_name,
-                    "compose_file": compose_file,
-                    "service": service,
-                },
+                container=container_name,
+                compose_file=compose_file,
+                service=service,
             )
 
         return FlextTestsUtilities.DockerHelpers.execute_docker_operation(
@@ -289,7 +287,7 @@ class FlextTestDocker:
         for container_name in list(self._dirty_containers):
             self.logger.info(
                 "Cleaning up dirty container",
-                extra={"container": container_name},
+                container=container_name,
             )
 
             # Convert Mapping to dict for get_container_config helper
@@ -331,7 +329,8 @@ class FlextTestDocker:
 
                 self.logger.info(
                     "Running docker-compose down --volumes",
-                    extra={"container": container_name, "compose_file": compose_file},
+                    container=container_name,
+                    compose_file=compose_file,
                 )
                 down_result = self.compose_down(compose_file)
                 if down_result.is_failure:
@@ -650,6 +649,7 @@ class FlextTestDocker:
 
         Args:
             enabled: Whether to enable auto cleanup (currently always enabled)
+
         """
         # Auto cleanup is always enabled - parameter kept for API compatibility
         return FlextResult[bool].ok(True)
@@ -1887,7 +1887,8 @@ class FlextTestDocker:
             return FlextResult[bool].fail(f"Container {container_name} not found")
         except DockerException as e:
             self.logger.exception(
-                f"Failed to set env vars for {container_name}",
+                "Failed to set env vars for %s",
+                container_name,
                 exception=e,
             )
             return FlextResult[bool].fail(f"Failed to set environment variables: {e}")
@@ -2070,6 +2071,7 @@ class FlextTestDocker:
             self.logger.exception(
                 f"Container {container_name} not found - marking dirty",
                 exception=NotFound(f"Container {container_name} not found"),
+                container=container_name,
             )
             self.mark_container_dirty(container_name)
             return FlextResult[bool].fail(f"Container {container_name} not found")
@@ -2162,7 +2164,9 @@ class FlextTestDocker:
 
         except Exception as e:
             self.logger.exception(
-                f"Failed to wait for port {host}:{port}",
+                "Failed to wait for port %s:%s",
+                host,
+                port,
                 exception=e,
             )
             return FlextResult[bool].fail(f"Failed to wait for port: {e}")
@@ -2340,7 +2344,8 @@ class FlextTestDocker:
                             self.logger.info("Pruned unused volumes")
                         except Exception as e:
                             self.logger.warning(
-                                f"Failed to prune volumes: {e}",
+                                "Failed to prune volumes: %s",
+                                e,
                                 error=str(e),
                             )
 
@@ -2393,7 +2398,8 @@ class FlextTestDocker:
 
         except Exception as e:
             self.logger.exception(
-                f"Failed to auto-repair {container_name}",
+                "Failed to auto-repair %s",
+                container_name,
                 exception=e,
             )
             return FlextResult[str].fail(f"Failed to auto-repair container: {e}")
@@ -2992,6 +2998,7 @@ class FlextTestDocker:
         Args:
             compose_file: Path to docker-compose file
             follow: Whether to follow logs (parameter kept for API compatibility)
+
         """
         logs_result = self.compose_logs(compose_file)
         if logs_result.is_success:

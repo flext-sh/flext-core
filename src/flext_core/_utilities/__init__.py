@@ -1,7 +1,8 @@
-"""Internal utilities module - Extracted nested classes.
+"""Dispatcher-friendly utility exports split from ``FlextUtilities``.
 
-This module contains the extracted nested classes from FlextUtilities
-for better modularity and maintainability.
+The module re-exports utility helpers that were formerly nested to keep
+imports lightweight while preserving the dispatcher-safe defaults used by
+handlers, services, and registry code across the package.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

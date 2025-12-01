@@ -18,6 +18,7 @@ from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
+from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
@@ -27,11 +28,7 @@ T_Result = TypeVar("T_Result")
 def _create_result_ok[T_Result](
     value: T_Result,
 ) -> FlextProtocols.ResultProtocol[T_Result]:
-    """Create success result - helper to avoid circular import."""
-    from typing import cast
-
-    from flext_core.result import FlextResult  # noqa: PLC0415
-
+    """Create success result."""
     result = FlextResult[T_Result].ok(value)
     # FlextResult structurally implements ResultProtocol - cast for type checker
     return cast("FlextProtocols.ResultProtocol[T_Result]", result)
@@ -42,11 +39,7 @@ def _create_result_fail[T_Result](
     error_code: str | None = None,
     error_data: Mapping[str, FlextTypes.GeneralValueType] | None = None,
 ) -> FlextProtocols.ResultProtocol[T_Result]:
-    """Create failure result - helper to avoid circular import."""
-    from typing import cast
-
-    from flext_core.result import FlextResult  # noqa: PLC0415
-
+    """Create failure result."""
     result = FlextResult[T_Result].fail(
         error, error_code=error_code, error_data=error_data
     )
@@ -101,9 +94,9 @@ class FlextModelsValidation:
                     if result.error
                     else f"{base_msg} (validation rule failed)"
                 )
-                return _create_result_fail(error_msg)  # type: ignore[return-value]
+                return _create_result_fail(error_msg)
 
-        return _create_result_ok(model)  # type: ignore[return-value]
+        return _create_result_ok(model)
 
     @staticmethod
     def validate_cross_fields(
@@ -344,6 +337,7 @@ class FlextModelsValidation:
 
         """
         for invariant in invariants:
+            # Cast model to GeneralValueType for type safety
             result = invariant(model)
             if hasattr(result, "is_failure") and result.is_failure:
                 return _create_result_fail(
@@ -492,6 +486,7 @@ class FlextModelsValidation:
             )
 
         for validator in validators:
+            # Cast command_or_query to GeneralValueType for type safety
             result = validator(command_or_query)
             if result.is_failure:
                 return _create_result_fail(
@@ -636,7 +631,7 @@ class FlextModelsValidation:
         # Check invariants if the aggregate supports them
         if isinstance(aggregate, FlextProtocols.HasInvariants):
             try:
-                aggregate.check_invariants()
+                _ = aggregate.check_invariants()
             except (
                 AttributeError,
                 TypeError,

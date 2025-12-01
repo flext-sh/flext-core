@@ -52,7 +52,7 @@ class NestedDataDict(TypedDict, total=False):
     metadata: str
 
 
-class TestDataDict(TypedDict, total=False):
+class FixtureDataDict(TypedDict, total=False):
     """Test data for FlextTestBuilder."""
 
     id: str
@@ -66,7 +66,7 @@ class TestDataDict(TypedDict, total=False):
     nested_data: dict[str, NestedDataDict]
 
 
-class TestCaseDict(TypedDict, total=False):
+class FixtureCaseDict(TypedDict, total=False):
     """Individual test case configuration."""
 
     email: str
@@ -95,7 +95,7 @@ class SetupDataDict(TypedDict, total=False):
     configuration_value: str
 
 
-class TestSuiteDict(TypedDict):
+class FixtureSuiteDict(TypedDict):
     """Test suite configuration."""
 
     suite_name: str
@@ -120,7 +120,7 @@ class RequestDataFixtureDict(TypedDict, total=False):
     headers: dict[str, str]
 
 
-class TestFixturesDict(TypedDict, total=False):
+class FixtureFixturesDict(TypedDict, total=False):
     """Test fixtures configuration."""
 
     user: dict[str, UserDataFixtureDict]
@@ -231,6 +231,10 @@ __all__ = [
     "CommandPayloadDict",
     "ConfigTestCaseDict",
     "FailureCaseDict",
+    "FixtureCaseDict",
+    "FixtureDataDict",
+    "FixtureFixturesDict",
+    "FixtureSuiteDict",
     "GenericFieldsDict",
     "GenericTestCaseDict",
     "MockScenarioData",
@@ -240,10 +244,6 @@ __all__ = [
     "SetupDataDict",
     "StressTestResultDict",
     "SuccessCaseDict",
-    "TestCaseDict",
-    "TestDataDict",
-    "TestFixturesDict",
-    "TestSuiteDict",
     "UpdateFieldDict",
     "UpdatePayloadDict",
     "UpdateResultDict",

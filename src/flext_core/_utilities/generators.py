@@ -1,6 +1,8 @@
-"""Utilities module - FlextUtilitiesGenerators.
+"""ID and data generation helpers shared across dispatcher flows.
 
-Extracted from flext_core.utilities for better modularity.
+These primitives centralize correlation, batch, and timestamp generation so
+dispatcher handlers and services produce consistent identifiers and audit
+metadata without duplicating randomness or formatting concerns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,45 +14,74 @@ import secrets
 import string
 import time
 import uuid
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 
 from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
-from flext_core.runtime import FlextRuntime, StructlogLogger
+from flext_core.protocols import FlextProtocols
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesGenerators:
-    """ID and data generation utilities."""
+    """Generate deterministic IDs and timestamps for CQRS workflows.
 
-    @property
-    def logger(self) -> StructlogLogger:
-        """Get logger instance using FlextRuntime (avoids circular imports).
+    Nested classes organize related generators:
+    - Random: Random/short ID generation
+    - Type: Dynamic type generation
+    """
 
-        Returns structlog logger instance (Logger protocol).
-        Type annotation omitted to avoid importing structlog.typing here.
-        """
-        return FlextRuntime.get_logger(__name__)
+    class Random:
+        """Random ID generation helpers."""
+
+        @staticmethod
+        def generate_short_id(length: int = 8) -> str:
+            """Generate a short random ID."""
+            alphabet = string.ascii_letters + string.digits
+            return "".join(secrets.choice(alphabet) for _ in range(length))
+
+    class Type:
+        """Type and subclass generation helpers."""
+
+        @staticmethod
+        def create_dynamic_type_subclass(
+            base_type: type,
+            name: str,
+            attributes: Mapping[str, FlextTypes.GeneralValueType],
+        ) -> type:
+            """Create a dynamic subclass with custom attributes.
+
+            Delegates to main implementation.
+            """
+            # Convert Mapping to dict and ensure correct types
+            attributes_dict: dict[str, FlextTypes.GeneralValueType] = {
+                k: v
+                if isinstance(
+                    v,
+                    (str, int, float, bool, type(None), list, dict, Mapping, Sequence),
+                )
+                else str(v)
+                for k, v in attributes.items()
+            }
+            return FlextUtilitiesGenerators.create_dynamic_type_subclass(
+                name, base_type, attributes_dict
+            )
 
     """ID and data generation utilities."""
 
     @staticmethod
     def _generate_prefixed_id(
         prefix: str,
-        *parts: object,
+        *parts: FlextTypes.GeneralValueType,
         length: int = FlextConstants.Utilities.SHORT_UUID_LENGTH,
     ) -> str:
         """Factory method for generating prefixed IDs with UUID.
 
-        **INTERNAL METHOD**: This is a private implementation detail used
-        by public ID generation methods. Do not call directly - use the
-        specific public methods instead (generate_correlation_id,
-        generate_batch_id, etc.).
-
-        This method consolidates 12+ similar ID generation methods following
-        DRY principle (Don't Repeat Yourself).
+        This private helper keeps the public generators consistent while
+        limiting duplication across the correlation, batch, and transaction
+        ID factories.
 
         Args:
             prefix: ID prefix (e.g., 'corr', 'batch', 'txn')
@@ -113,9 +144,8 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def generate_short_id(length: int = 8) -> str:
-        """Generate a short random ID."""
-        alphabet = string.ascii_letters + string.digits
-        return "".join(secrets.choice(alphabet) for _ in range(length))
+        """Generate a short random ID (delegates to Random.generate_short_id)."""
+        return FlextUtilitiesGenerators.Random.generate_short_id(length)
 
     @staticmethod
     def generate_entity_id() -> str:
@@ -197,7 +227,7 @@ class FlextUtilitiesGenerators:
         ) + 1
 
     @staticmethod
-    def ensure_id(obj: FlextTypes.Utility.CachedObjectType) -> None:
+    def ensure_id(obj: FlextProtocols.HasModelDump) -> None:
         """Ensure object has an ID using FlextUtilities and FlextConstants.
 
         Args:
@@ -399,23 +429,15 @@ class FlextUtilitiesGenerators:
             return value
 
         # Strategy 2: Pydantic BaseModel - use model_dump()
-        # Check for model_dump method instead of isinstance to avoid type narrowing issues
-        # GeneralValueType doesn't include BaseModel, but objects with model_dump() are valid
-        model_dump_method = getattr(value, "model_dump", None)
-        if model_dump_method is not None and callable(model_dump_method):
-            # Type narrowing: value has model_dump method
+        if isinstance(value, BaseModel):
             try:
-                result = model_dump_method()
-                # model_dump() always returns dict[str, Any] for BaseModel
-                # Normalize to GeneralValueType
+                result = value.model_dump()
                 if isinstance(result, dict):
                     normalized = FlextRuntime.normalize_to_general_value(result)
                     if isinstance(normalized, dict):
                         return normalized
-                # Fallback: return empty dict if model_dump() returns None (shouldn't happen)
                 return {}
             except (AttributeError, TypeError):
-                # model_dump() failed, continue to next strategy
                 pass
 
         # Strategy 3: Mapping (dict-like) - convert via dict() (fast fail)

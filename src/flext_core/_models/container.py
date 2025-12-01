@@ -14,11 +14,10 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import cast as type_cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from flext_core._models.metadata import Metadata
+from flext_core._models.metadata import Metadata, MetadataAttributeValue
 from flext_core.typings import FlextTypes
 
 
@@ -63,13 +62,17 @@ class FlextModelsContainer:
             min_length=1,
             description="Service identifier/name",
         )
+        # Note: Using 'object' as base type allows arbitrary service instances
+        # while maintaining type safety (all classes inherit from object)
+        # This is essential for DI container to accept any service type
         service: (
             FlextTypes.GeneralValueType
             | BaseModel
             | Callable[..., FlextTypes.GeneralValueType]
+            | object
         ) = Field(
             ...,
-            description="Service instance (primitives, BaseModel, or callable)",
+            description="Service instance (primitives, BaseModel, callable, or any object)",
         )
         registration_time: datetime = Field(
             default_factory=_generate_datetime_utc,
@@ -90,7 +93,7 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(cls, v: FlextTypes.GeneralValueType) -> Metadata:
+        def validate_metadata(cls, v: FlextTypes.GeneralValueType) -> Metadata:  # noqa: C901
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
@@ -98,15 +101,57 @@ class FlextModelsContainer:
             """
             if v is None:
                 return Metadata(attributes={})
-            # v can be GeneralValueType (dict) or Metadata
-            # Check if it's dict-like (GeneralValueType)
-            if isinstance(v, Mapping):
-                # Cast to MetadataValue-compatible dict
-                attributes: dict[str, FlextTypes.MetadataValue] = type_cast(
-                    "dict[str, FlextTypes.MetadataValue]",
-                    v,
-                )
-                return Metadata(attributes=attributes)
+            if _is_dict_like(v):
+                # Convert Mapping to dict and ensure MetadataAttributeValue compatibility
+                # Metadata.attributes expects dict[str, MetadataAttributeValue]
+                # where MetadataAttributeValue = str | int | float | bool | list[...] | dict[...] | None
+                # We need to convert any Mapping values to dict
+                def _convert_to_metadata_value(  # noqa: C901, PLR0912
+                    val: FlextTypes.GeneralValueType,
+                ) -> MetadataAttributeValue:
+                    """Convert GeneralValueType to MetadataAttributeValue."""
+                    if val is None:
+                        return None
+                    if isinstance(val, (str, int, float, bool)):
+                        return val
+                    if isinstance(val, list):
+                        # Ensure list elements are compatible with MetadataAttributeValue list type
+                        converted_list: list[str | int | float | bool | None] = []
+                        for item in val:
+                            if isinstance(item, (str, int, float, bool, type(None))):
+                                converted_list.append(item)
+                            else:
+                                converted_list.append(str(item))
+                        return converted_list
+                    if isinstance(val, dict):
+                        # Ensure dict values are compatible
+                        converted_dict: dict[str, str | int | float | bool | None] = {}
+                        for k, v_item in val.items():
+                            if isinstance(v_item, (str, int, float, bool, type(None))):
+                                converted_dict[str(k)] = v_item
+                            else:
+                                converted_dict[str(k)] = str(v_item)
+                        return converted_dict
+                    if isinstance(val, Mapping):
+                        # Convert Mapping to dict
+                        mapping_dict: dict[str, str | int | float | bool | None] = {}
+                        for k, v_item in val.items():
+                            if isinstance(v_item, (str, int, float, bool, type(None))):
+                                mapping_dict[str(k)] = v_item
+                            else:
+                                mapping_dict[str(k)] = str(v_item)
+                        return mapping_dict
+                    # Convert other types to string
+                    return str(val)
+
+                # Type narrowing: v is Mapping after _is_dict_like check
+                if isinstance(v, Mapping):
+                    attributes: dict[str, MetadataAttributeValue] = {
+                        str(key): _convert_to_metadata_value(value)
+                        for key, value in v.items()
+                    }
+                    return Metadata(attributes=attributes)
+                return Metadata(attributes={})
             if isinstance(v, Metadata):
                 return v
             msg = f"metadata must be None, dict, or Metadata, got {type(v).__name__}"
@@ -165,7 +210,7 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(cls, v: FlextTypes.GeneralValueType) -> Metadata:
+        def validate_metadata(cls, v: FlextTypes.GeneralValueType) -> Metadata:  # noqa: C901
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
@@ -173,15 +218,57 @@ class FlextModelsContainer:
             """
             if v is None:
                 return Metadata(attributes={})
-            # v can be GeneralValueType (dict) or Metadata
-            # Check if it's dict-like (GeneralValueType)
-            if isinstance(v, Mapping):
-                # Cast to MetadataValue-compatible dict
-                attributes: dict[str, FlextTypes.MetadataValue] = type_cast(
-                    "dict[str, FlextTypes.MetadataValue]",
-                    v,
-                )
-                return Metadata(attributes=attributes)
+            if _is_dict_like(v):
+                # Convert Mapping to dict and ensure MetadataAttributeValue compatibility
+                # Metadata.attributes expects dict[str, MetadataAttributeValue]
+                # where MetadataAttributeValue = str | int | float | bool | list[...] | dict[...] | None
+                # We need to convert any Mapping values to dict
+                def _convert_to_metadata_value(  # noqa: C901, PLR0912
+                    val: FlextTypes.GeneralValueType,
+                ) -> MetadataAttributeValue:
+                    """Convert GeneralValueType to MetadataAttributeValue."""
+                    if val is None:
+                        return None
+                    if isinstance(val, (str, int, float, bool)):
+                        return val
+                    if isinstance(val, list):
+                        # Ensure list elements are compatible with MetadataAttributeValue list type
+                        converted_list: list[str | int | float | bool | None] = []
+                        for item in val:
+                            if isinstance(item, (str, int, float, bool, type(None))):
+                                converted_list.append(item)
+                            else:
+                                converted_list.append(str(item))
+                        return converted_list
+                    if isinstance(val, dict):
+                        # Ensure dict values are compatible
+                        converted_dict: dict[str, str | int | float | bool | None] = {}
+                        for k, v_item in val.items():
+                            if isinstance(v_item, (str, int, float, bool, type(None))):
+                                converted_dict[str(k)] = v_item
+                            else:
+                                converted_dict[str(k)] = str(v_item)
+                        return converted_dict
+                    if isinstance(val, Mapping):
+                        # Convert Mapping to dict
+                        mapping_dict: dict[str, str | int | float | bool | None] = {}
+                        for k, v_item in val.items():
+                            if isinstance(v_item, (str, int, float, bool, type(None))):
+                                mapping_dict[str(k)] = v_item
+                            else:
+                                mapping_dict[str(k)] = str(v_item)
+                        return mapping_dict
+                    # Convert other types to string
+                    return str(val)
+
+                # Type narrowing: v is Mapping after _is_dict_like check
+                if isinstance(v, Mapping):
+                    attributes: dict[str, MetadataAttributeValue] = {
+                        str(key): _convert_to_metadata_value(value)
+                        for key, value in v.items()
+                    }
+                    return Metadata(attributes=attributes)
+                return Metadata(attributes={})
             if isinstance(v, Metadata):
                 return v
             msg = f"metadata must be None, dict, or Metadata, got {type(v).__name__}"

@@ -24,6 +24,7 @@ import uuid
 from typing import cast
 
 from flext_core import FlextResult, FlextService
+from flext_core.typings import FlextTypes
 
 
 class UtilitiesComprehensiveService(FlextService[dict[str, object]]):

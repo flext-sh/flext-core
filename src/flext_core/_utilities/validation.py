@@ -1,4 +1,4 @@
-"""Utilities module - FlextUtilitiesValidation.
+"""Dispatcher-friendly validation helpers.
 
 Extracted from flext_core.utilities for better modularity.
 
@@ -52,29 +52,142 @@ import orjson
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime, StructlogLogger
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
 
-class FlextUtilitiesValidation:
-    """Unified validation patterns using railway composition."""
-
-    @property
-    def logger(self) -> StructlogLogger:
-        """Get logger instance using FlextRuntime (avoids circular imports).
-
-        Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
-        Uses same structure/config as FlextLogger but without circular import.
-        """
-        return FlextRuntime.get_logger(__name__)
-
+class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
     """Unified validation patterns using railway composition.
 
-    Use for composite/pipeline validation and complex business logic validators.
-    For field validation, use Pydantic Field constraints directly.
+    These helpers support dispatcher handlers and services with reusable,
+    composable validators organized by domain using Protocol-based composition.
 
-    See: https://docs.pydantic.dev/2.12/api/fields/
+    Nested validator groups:
+    - Network: URI, port, hostname validation
+    - String: Pattern, length, choice validation
+    - Numeric: Non-negative, positive, range validation
+    - Temporal: Timestamp validation
+
+    For data-model field validation prefer Pydantic field constraints:
+    https://docs.pydantic.dev/2.12/api/fields/.
     """
+
+    # ═══════════════════════════════════════════════════════════════════
+    # NESTED PROTOCOL-BASED VALIDATOR GROUPS (Organization via Composition)
+    # ═══════════════════════════════════════════════════════════════════
+
+    class Network:
+        """Network-related validation (URI, port, hostname)."""
+
+        @staticmethod
+        def validate_uri(
+            uri: str | None,
+            allowed_schemes: list[str] | None = None,
+            context: str = "URI",
+        ) -> FlextResult[str]:
+            """Validate URI format."""
+            return FlextUtilitiesValidation.validate_uri(uri, allowed_schemes, context)
+
+        @staticmethod
+        def validate_port_number(
+            port: int | None,
+            context: str = "Port",
+        ) -> FlextResult[int]:
+            """Validate port number (1-65535)."""
+            return FlextUtilitiesValidation.validate_port_number(port, context)
+
+        @staticmethod
+        def validate_hostname(
+            hostname: str,
+            *,
+            perform_dns_lookup: bool = True,
+        ) -> FlextResult[str]:
+            """Validate hostname format."""
+            return FlextUtilitiesValidation.validate_hostname(
+                hostname, perform_dns_lookup=perform_dns_lookup
+            )
+
+    class String:
+        """String-related validation (pattern, length, choice)."""
+
+        @staticmethod
+        def validate_required_string(
+            value: str | None,
+            context: str = "Field",
+        ) -> FlextResult[str]:
+            """Validate non-empty string (wraps to FlextResult)."""
+            try:
+                result = FlextUtilitiesValidation.validate_required_string(
+                    value, context
+                )
+                return FlextResult[str].ok(result)
+            except ValueError as e:
+                return FlextResult[str].fail(str(e))
+
+        @staticmethod
+        def validate_choice(
+            value: str,
+            valid_choices: set[str],
+            context: str = "Value",
+            *,
+            case_sensitive: bool = False,
+        ) -> FlextResult[str]:
+            """Validate value is in allowed choices."""
+            return FlextUtilitiesValidation.validate_choice(
+                value, valid_choices, context, case_sensitive=case_sensitive
+            )
+
+        @staticmethod
+        def validate_length(
+            value: str,
+            min_length: int | None = None,
+            max_length: int | None = None,
+            context: str = "Value",
+        ) -> FlextResult[str]:
+            """Validate string/sequence length."""
+            return FlextUtilitiesValidation.validate_length(
+                value, min_length, max_length, context
+            )
+
+        @staticmethod
+        def validate_pattern(
+            value: str,
+            pattern: str,
+            context: str = "Value",
+        ) -> FlextResult[str]:
+            """Validate string matches regex pattern."""
+            return FlextUtilitiesValidation.validate_pattern(value, pattern, context)
+
+    class Numeric:
+        """Numeric-related validation (positive, range, etc)."""
+
+        @staticmethod
+        def validate_non_negative(
+            value: int | None,
+            context: str = "Value",
+        ) -> FlextResult[int]:
+            """Validate value >= 0."""
+            return FlextUtilitiesValidation.validate_non_negative(value, context)
+
+        @staticmethod
+        def validate_positive(
+            value: int | None,
+            context: str = "Value",
+        ) -> FlextResult[int]:
+            """Validate value > 0."""
+            return FlextUtilitiesValidation.validate_positive(value, context)
+
+        @staticmethod
+        def validate_range(
+            value: int,
+            min_value: int | None = None,
+            max_value: int | None = None,
+            context: str = "Value",
+        ) -> FlextResult[int]:
+            """Validate numeric range."""
+            return FlextUtilitiesValidation.validate_range(
+                value, min_value, max_value, context
+            )
 
     # CONSOLIDATED: Use FlextUtilitiesCache for cache operations (no duplication)
     # NOTE: _normalize_component, _sort_key, _sort_dict_keys below are INTERNAL
@@ -112,7 +225,7 @@ class FlextUtilitiesValidation:
         component: FlextTypes.GeneralValueType,
     ) -> FlextTypes.GeneralValueType:
         """Handle Pydantic model conversion."""
-        # Try Pydantic model conversion
+        # Type narrowing: check if component has model_dump method
         model_dump_attr = getattr(component, "model_dump", None)
         if model_dump_attr is not None and callable(model_dump_attr):
             try:
@@ -149,7 +262,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _normalize_by_type(
-        component: object,
+        component: FlextTypes.GeneralValueType,
         visited: set[int] | None = None,
     ) -> FlextTypes.GeneralValueType:
         """Normalize component based on its type."""
@@ -174,7 +287,8 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _convert_items_to_dict(
-        items_result: object,
+        items_result: Sequence[tuple[str, FlextTypes.GeneralValueType]]
+        | Mapping[str, FlextTypes.GeneralValueType],
     ) -> dict[str, FlextTypes.GeneralValueType]:
         """Convert items() result to dict with normalization."""
         if isinstance(items_result, (list, tuple)):
@@ -205,7 +319,8 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _extract_dict_from_component(
-        component: object,
+        component: Mapping[str, FlextTypes.GeneralValueType]
+        | FlextProtocols.HasModelDump,
         _visited: set[int] | None = None,
     ) -> Mapping[str, FlextTypes.GeneralValueType]:
         """Extract dict-like structure from component."""
@@ -220,24 +335,126 @@ class FlextUtilitiesValidation:
         items_result = items_attr()
         try:
             # Type narrowing: items_result is from dict-like object, should be iterable of tuples
-            return FlextUtilitiesValidation._convert_items_to_dict(items_result)
+            # Cast to proper type for _convert_items_to_dict
+            items_typed: (
+                Sequence[tuple[str, FlextTypes.GeneralValueType]]
+                | Mapping[str, FlextTypes.GeneralValueType]
+            ) = cast(
+                "Sequence[tuple[str, FlextTypes.GeneralValueType]] | Mapping[str, FlextTypes.GeneralValueType]",
+                items_result,
+            )
+            return FlextUtilitiesValidation._convert_items_to_dict(items_typed)
         except (TypeError, ValueError) as e:
             msg = f"Cannot convert {type(component).__name__}.items() to dict"
             raise TypeError(msg) from e
 
     @staticmethod
+    def _convert_items_result_to_dict(
+        items_result: Sequence[tuple[str, FlextTypes.GeneralValueType]]
+        | Mapping[str, FlextTypes.GeneralValueType]
+        | Iterable[tuple[str, FlextTypes.GeneralValueType]],
+    ) -> dict[str, FlextTypes.GeneralValueType]:
+        """Convert items() result to dict (helper for _convert_to_mapping).
+
+        Args:
+            items_result: Result from calling items() method
+
+        Returns:
+            dict[str, FlextTypes.GeneralValueType]: Converted dictionary
+
+        Raises:
+            TypeError: If items_result cannot be converted to dict
+
+        """
+        if isinstance(items_result, (list, tuple)):
+            # items() returned list/tuple of pairs - convert to dict
+            return dict(items_result)
+
+        # items() returned something else - try to iterate
+        if not hasattr(items_result, "__iter__"):
+            result_type = type(items_result)
+            msg = f"items() returned non-iterable: {result_type}"
+            raise TypeError(msg)
+
+        # Cast to satisfy type checker - items_result is iterable at runtime
+        items_iterable = cast("Iterable[tuple[str, object]]", items_result)
+        items_list = list(items_iterable)
+
+        # Convert tuples to dict, normalizing values
+        temp_dict: dict[str, FlextTypes.GeneralValueType] = {}
+        for k, v in items_list:
+            if isinstance(k, str):
+                # Normalize value first, then cast to GeneralValueType
+                # v is object from items_list iteration, cast to GeneralValueType
+                v_typed: FlextTypes.GeneralValueType = cast(
+                    "FlextTypes.GeneralValueType",
+                    v,
+                )
+                normalized_v = FlextUtilitiesValidation._normalize_component(
+                    v_typed,
+                    visited=None,
+                )
+                # normalized_v is already GeneralValueType from _normalize_component
+                temp_dict[k] = normalized_v
+        return temp_dict
+
+    @staticmethod
+    def _convert_to_mapping(
+        component: Mapping[str, FlextTypes.GeneralValueType]
+        | FlextProtocols.HasModelDump,
+    ) -> Mapping[str, FlextTypes.GeneralValueType]:
+        """Convert object to Mapping (helper for _normalize_dict_like).
+
+        Args:
+            component: Object to convert to Mapping
+
+        Returns:
+            Mapping[str, FlextTypes.GeneralValueType]: Converted mapping
+
+        Raises:
+            TypeError: If component cannot be converted to dict
+
+        """
+        if isinstance(component, Mapping):
+            return component
+
+        if isinstance(component, dict):
+            return component
+
+        if hasattr(component, "items") and callable(getattr(component, "items", None)):
+            # Has items() method - convert to dict
+            items_method = component.items
+            items_result: (
+                Sequence[tuple[str, FlextTypes.GeneralValueType]]
+                | Mapping[str, FlextTypes.GeneralValueType]
+            ) = items_method()
+            try:
+                return FlextUtilitiesValidation._convert_items_result_to_dict(
+                    items_result,
+                )
+            except (TypeError, ValueError) as e:
+                # Cannot convert - raise error
+                msg = f"Cannot convert {type(component).__name__}.items() to dict"
+                raise TypeError(msg) from e
+
+        # Cannot convert - raise error
+        msg = f"Cannot convert {type(component).__name__} to dict"
+        raise TypeError(msg)
+
+    @staticmethod
     def _normalize_dict_like(
-        component: object,
+        component: Mapping[str, FlextTypes.GeneralValueType]
+        | FlextProtocols.HasModelDump,
         visited: set[int] | None = None,
     ) -> dict[str, FlextTypes.GeneralValueType]:
         """Normalize dict-like objects."""
         if visited is None:
             visited = set()
 
-        component_dict = FlextUtilitiesValidation._extract_dict_from_component(
-            component,
-        )
+        # Convert to Mapping for type safety
+        component_dict = FlextUtilitiesValidation._convert_to_mapping(component)
 
+        # Normalize values in the dictionary
         normalized_dict: dict[str, FlextTypes.GeneralValueType] = {}
         for k, v in component_dict.items():
             v_normalized = FlextUtilitiesValidation._normalize_value(v)
@@ -312,7 +529,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _sort_key(key: str | float) -> tuple[str, str]:
-        """Generate a sort key for consistent ordering (internal helper)."""
+        """Generate a sort key for consistent ordering."""
         key_str = str(key)
         return (key_str.casefold(), key_str)
 
@@ -340,11 +557,11 @@ class FlextUtilitiesValidation:
         value: str,
         validators: list[Callable[[str], FlextResult[bool]]],
     ) -> FlextResult[bool]:
-        """Validate using a pipeline of validators.
+        """Validate using a pipeline of validators and surface the first failure.
 
         Returns:
-            FlextResult[bool]: Success with True if all validators pass,
-                failure with error details if any validator fails
+            FlextResult[bool]: ``ok(True)`` when all validators pass or a failed
+            result describing the first violation.
 
         """
         for validator in validators:
@@ -384,7 +601,7 @@ class FlextUtilitiesValidation:
         return FlextResult[bool].ok(True)
 
     @staticmethod
-    def sort_key(value: FlextTypes.Utility.SerializableType) -> tuple[str, str]:
+    def sort_key(value: FlextTypes.GeneralValueType) -> tuple[str, str]:
         """Return a deterministic tuple for ordering normalized cache components.
 
         Returns a tuple of (type_category, serialized_value) for consistent sorting.
@@ -726,7 +943,7 @@ class FlextUtilitiesValidation:
         return obj
 
     @staticmethod
-    def initialize(obj: FlextTypes.Utility.CachedObjectType, field_name: str) -> None:
+    def initialize(obj: FlextTypes.GeneralValueType, field_name: str) -> None:
         """Initialize validation for object.
 
         Simplified implementation that directly sets the validation flag.
@@ -1815,9 +2032,8 @@ class FlextUtilitiesValidation:
         # Parameter type is already Mapping[str, FlextTypes.GeneralValueType] | None
         # and we've validated it's not None and is dict-like
         # Cast to correct type for type checker - config is validated as dict-like above
-        validated_config = cast("Mapping[str, FlextTypes.GeneralValueType]", config)
         return FlextResult[Mapping[str, FlextTypes.GeneralValueType]].ok(
-            validated_config,
+            config,
         )
 
     @staticmethod

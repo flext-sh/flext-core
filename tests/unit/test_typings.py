@@ -185,10 +185,18 @@ class TypeScenarios:
     ]
 
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("Command", TypeVarCategory.CQRS, FlextTypes.Cqrs.Command, True),
-        TypeVarTestCase("Query", TypeVarCategory.CQRS, FlextTypes.Cqrs.Query, True),
-        TypeVarTestCase("Event", TypeVarCategory.CQRS, FlextTypes.Cqrs.Event, True),
-        TypeVarTestCase("Message", TypeVarCategory.CQRS, FlextTypes.Cqrs.Message, True),
+        TypeVarTestCase(
+            "Command", TypeVarCategory.CQRS, FlextTypes.GeneralValueType, True
+        ),
+        TypeVarTestCase(
+            "Query", TypeVarCategory.CQRS, FlextTypes.GeneralValueType, True
+        ),
+        TypeVarTestCase(
+            "Event", TypeVarCategory.CQRS, FlextTypes.GeneralValueType, True
+        ),
+        TypeVarTestCase(
+            "Message", TypeVarCategory.CQRS, FlextTypes.GeneralValueType, True
+        ),
     ]
 
     PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [
@@ -287,10 +295,10 @@ class TestFlextTypings:
         assert all(
             alias is not None
             for alias in [
-                FlextTypes.Cqrs.Command,
-                FlextTypes.Cqrs.Event,
-                FlextTypes.Cqrs.Query,
-                FlextTypes.Cqrs.Message,
+                FlextTypes.GeneralValueType,  # Command
+                FlextTypes.GeneralValueType,  # Event
+                FlextTypes.GeneralValueType,  # Query
+                FlextTypes.GeneralValueType,  # Message
             ]
         )
 

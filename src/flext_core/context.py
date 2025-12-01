@@ -1,8 +1,8 @@
-"""Hierarchical context management for distributed tracing and correlation.
+"""Context propagation utilities for dispatcher-coordinated workloads.
 
-This module provides FlextContext, a comprehensive context management system
-for request metadata, correlation IDs, performance tracking, and distributed
-tracing across the FLEXT ecosystem.
+FlextContext tracks correlation metadata, request data, and timing information
+through the dispatcher pipeline and into handlers, ensuring structured logs and
+metrics remain consistent across threads and async boundaries.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import contextvars
 import json
-from collections.abc import Callable, Generator, Mapping
+from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Final, Self, cast
@@ -22,9 +22,9 @@ from pydantic import BaseModel
 
 from flext_core._models.context import FlextModelsContext
 from flext_core.constants import FlextConstants
-from flext_core.container import FlextContainer
 from flext_core.loggings import FlextLogger
 from flext_core.models import FlextModels
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
@@ -71,96 +71,19 @@ def _create_dict_proxy(
     )
 
 
-class FlextContext:
-    """Hierarchical context management for distributed tracing and correlation.
+class FlextContext:  # noqa: PLR0904 - Context manager requires comprehensive interface
+    """Context manager for correlation, request data, and timing metadata.
 
-    Implements comprehensive context management for request metadata, correlation
-    IDs, performance tracking, and distributed tracing across the FLEXT ecosystem.
-    Uses Python's contextvars for thread-safe context variable storage with automatic
-    FlextLogger integration for structured logging.
+    The dispatcher and decorators rely on FlextContext to move correlation IDs,
+    service metadata, and timing details through CQRS handlers without mutating
+    function signatures. Data lives in ``contextvars`` to survive async hops and
+    thread switches, and hooks keep ``FlextLogger`` in sync for structured logs.
 
-    Architecture:
-        - Single-instance context per operation (scope-based isolation)
-        - ContextVar storage for thread-safe access across async/threading boundaries
-        - Hierarchical scopes (global, user, session) with scope-based access
-        - Delegation to FlextLogger for structured logging integration
-        - Container integration via FlextContext.Service for DI pattern
-        - FlextModels.StructlogProxyContextVar for direct logging system integration
-
-    Core Features:
-        - Hierarchical context scopes (global, request, session, transaction)
-        - Correlation ID management for distributed tracing (automatic generation)
-        - Service identification context (name, version)
-        - Request context with user and operation metadata
-        - Performance tracking with timing operations (start/end, duration)
-        - Context serialization for cross-service propagation (HTTP headers)
-        - Thread-safe context variable management via Python contextvars
-        - Context cloning and merging capabilities
-        - Automatic integration with FlextLogger for logging
-        - Extensible hook system for context events
-        - Statistics tracking for context operations
-
-    Nested Domains:
-        - FlextContext.Variables - Context variable definitions
-          (Correlation, Service, Request, Performance)
-        - FlextContext.Correlation - Distributed tracing and correlation ID management
-        - FlextContext.Service - Service identification and lifecycle context
-        - FlextContext.Request - User and request metadata management
-        - FlextContext.Performance - Operation timing and performance tracking
-        - FlextContext.Serialization - Context serialization for
-          cross-service communication
-        - FlextContext.Utilities - Helper methods and utility operations
-
-    Integration Patterns:
-        - Container Integration - FlextContext.Service.get_service() /
-          register_service()
-        - Logger Delegation - Automatic FlextLogger.bind_global_context() on
-          context changes
-        - Cross-Service Propagation - HTTP header format
-          (X-Correlation-Id, X-Service-Name)
-        - FlextResult Integration - All service operations return FlextResult[T]
-
-    Usage Example:
-        >>> from flext_core import FlextContext, FlextResult
-        >>>
-        >>> # Create context instance
-        >>> context = FlextContext()
-        >>> context.set("user_id", "123")
-        >>> user_id = context.get("user_id")
-        >>>
-        >>> # Correlation ID management for distributed tracing
-        >>> with FlextContext.Correlation.new_correlation() as corr_id:
-        ...     print(f"Processing request {corr_id}")
-        >>>
-        >>> # Service context management
-        >>> with FlextContext.Service.service_context("my_service", "v1.0"):
-        ...     result = FlextContext.Service.get_service("logger")
-        ...     if result.is_success:
-        ...         logger = result.unwrap()
-        >>>
-        >>> # Request context with metadata
-        >>> with FlextContext.Request.request_context(
-        ...     user_id="user123",
-        ...     operation_name="process_payment",
-        ... ):
-        ...     # All logging will include context automatically
-        ...     pass
-        >>>
-        >>> # Performance tracking with timing
-        >>> with FlextContext.Performance.timed_operation("data_processing"):
-        ...     # Operation metrics automatically tracked
-        ...     process_data()
-        >>>
-        >>> # Cross-service context propagation
-        >>> headers = FlextContext.Serialization.get_correlation_context()
-        >>> # headers: {"X-Correlation-Id": "...", "X-Service-Name": "..."}
-
-    Context Variable Compliance:
-        - Uses Python contextvars for inherent thread-safety and async support
-        - FlextModels.StructlogProxyContextVar wraps contextvars with
-          structlog integration
-        - No explicit protocol inheritance needed - implements context management patterns
-        - Automatic FlextLogger delegation for logging consistency across ecosystem
+    Highlights:
+    - Correlation IDs and service identity helpers for cross-service tracing
+    - Request and operation scopes for user/action metadata
+    - Timing utilities that feed metrics and structured logging
+    - Serialization helpers for propagating context via headers or payloads
     """
 
     # =========================================================================
@@ -193,7 +116,8 @@ class FlextContext:
         super().__init__()
         # Use Pydantic directly - NO redundant helpers (Pydantic validates dict/None/model)
         # Type narrowing: always create FlextModels.ContextData instance
-        if FlextRuntime.is_dict_like(initial_data):
+        if isinstance(initial_data, dict):
+            # Type narrowing: initial_data is dict[str, FlextTypes.GeneralValueType]
             # Normalize to dict[str, FlextTypes.GeneralValueType] using helper
             normalized_data = FlextModels.ContextData.normalize_to_general_value(
                 initial_data,
@@ -217,7 +141,7 @@ class FlextContext:
         # FlextContext._metadata = context-specific tracing metadata (ContextMetadata)
         self._metadata = FlextModels.ContextMetadata()
 
-        self._hooks: dict[str, list[FlextTypes.Hook.HookCallableType]] = {}
+        self._hooks: dict[str, list[FlextTypes.Handler.HandlerCallable]] = {}
         self._statistics: FlextModels.ContextStatistics = (
             FlextModels.ContextStatistics()
         )
@@ -342,7 +266,9 @@ class FlextContext:
             return
 
         hooks = self._hooks[event]
-        if not FlextRuntime.is_list_like(hooks):
+        # Type narrowing: hooks is list[HandlerCallable], which is Sequence[Callable]
+        # Use isinstance check directly instead of is_list_like for type safety
+        if not isinstance(hooks, list):
             return
 
         for hook in hooks:
@@ -376,7 +302,7 @@ class FlextContext:
     def _validate_set_inputs(
         key: str,
         value: FlextTypes.GeneralValueType,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Validate inputs for set operation.
 
         Args:
@@ -384,16 +310,16 @@ class FlextContext:
             value: The value to validate
 
         Returns:
-            FlextResult[None]: Success if valid, failure with error message
+            FlextResult[bool]: Success with True if valid, failure with error message
 
         """
         if not key:
-            return FlextResult[None].fail("Key must be a non-empty string")
+            return FlextResult[bool].fail("Key must be a non-empty string")
         if value is None:
-            return FlextResult[None].fail("Value cannot be None")
+            return FlextResult[bool].fail("Value cannot be None")
         if not isinstance(value, (str, int, float, bool, list, dict)):
-            return FlextResult[None].fail("Value must be serializable")
-        return FlextResult[None].ok(None)
+            return FlextResult[bool].fail("Value must be serializable")
+        return FlextResult[bool].ok(True)
 
     def set(
         self,
@@ -590,46 +516,6 @@ class FlextContext:
             all_keys.update(scope_dict.keys())
         return list(all_keys)
 
-    def values(self) -> list[object]:
-        """Get all values in the context.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
-
-        Returns:
-            List of all values across all scopes
-
-        """
-        if not self._active:
-            return []
-        all_values: list[object] = []
-        for ctx_var in self._scope_vars.values():
-            scope_dict = FlextUtilities.Generators.ensure_dict(
-                ctx_var.get(),
-                default={},
-            )
-            all_values.extend(scope_dict.values())
-        return all_values
-
-    def items(self) -> list[tuple[str, object]]:
-        """Get all key-value pairs in the context.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
-
-        Returns:
-            List of (key, value) tuples across all scopes
-
-        """
-        if not self._active:
-            return []
-        all_items: list[tuple[str, object]] = []
-        for ctx_var in self._scope_vars.values():
-            scope_dict = FlextUtilities.Generators.ensure_dict(
-                ctx_var.get(),
-                default={},
-            )
-            all_items.extend(scope_dict.items())
-        return all_items
-
     def merge(
         self,
         other: FlextContext | dict[str, FlextTypes.GeneralValueType],
@@ -698,25 +584,6 @@ class FlextContext:
 
         return cloned
 
-    def get_all_scopes(self) -> FlextTypes.Hook.ScopeRegistry:
-        """Get all scopes.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage.
-
-        Returns:
-            Dictionary of all scopes with their data
-
-        """
-        scopes: dict[str, dict[str, FlextTypes.GeneralValueType]] = {}
-        for scope_name, ctx_var in self._scope_vars.items():
-            scope_dict = FlextUtilities.Generators.ensure_dict(
-                ctx_var.get(),
-                default={},
-            )
-            if scope_dict:
-                scopes[scope_name] = scope_dict.copy()
-        return scopes
-
     def validate(self) -> FlextResult[bool]:
         """Validate the context data.
 
@@ -759,52 +626,6 @@ class FlextContext:
             all_data.update(scope_dict)
         return json.dumps(all_data, default=str)
 
-    @classmethod
-    def from_json(cls, json_str: str) -> FlextContext:
-        """Create context from JSON string.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
-        FlextLogger for logging integration (global scope only).
-
-        Args:
-            json_str: JSON string to parse
-
-        Returns:
-            New FlextContext instance
-
-        """
-        data = json.loads(json_str)
-        context = cls()
-
-        # Handle both old flat format and new scoped format
-        if FlextRuntime.is_dict_like(data):
-            data_values = data.values()
-            if all(FlextRuntime.is_dict_like(v) for v in data_values):
-                # New scoped format - restore all scopes
-                for scope_name, scope_data in data.items():
-                    if FlextRuntime.is_dict_like(scope_data):
-                        # Normalize scope_data to dict[str, FlextTypes.GeneralValueType]
-                        normalized_scope = (
-                            FlextModels.ContextData.normalize_to_general_value(
-                                scope_data,
-                            )
-                        )
-                        if isinstance(normalized_scope, dict):
-                            context._set_in_contextvar(scope_name, normalized_scope)
-            else:
-                # Old flat format - put everything in global scope
-                # Normalize data to dict[str, FlextTypes.GeneralValueType]
-                normalized_data = FlextModels.ContextData.normalize_to_general_value(
-                    data,
-                )
-                if isinstance(normalized_data, dict):
-                    context._set_in_contextvar(
-                        FlextConstants.Context.SCOPE_GLOBAL,
-                        normalized_data,
-                    )
-
-        return context
-
     def is_active(self) -> bool:
         """Check if context is active.
 
@@ -813,10 +634,6 @@ class FlextContext:
 
         """
         return self._active and not self._suspended
-
-    def suspend(self) -> None:
-        """Suspend the context."""
-        self._suspended = True
 
     def resume(self) -> None:
         """Resume the context."""
@@ -842,19 +659,6 @@ class FlextContext:
         # Clear metadata and hooks
         self._metadata = FlextModels.ContextMetadata()  # Reset model
         self._hooks.clear()
-
-    def add_hook(self, event: str, hook: FlextTypes.Hook.HookCallableType) -> None:
-        """Add a hook for context events.
-
-        Args:
-            event: The event to hook (set, get, remove, clear)
-            hook: The hook function to call
-
-        """
-        if event not in self._hooks:
-            self._hooks[event] = []
-        hooks_list: list[FlextTypes.Hook.HookCallableType] = self._hooks[event]
-        hooks_list.append(hook)
 
     def set_metadata(self, key: str, value: FlextTypes.GeneralValueType) -> None:
         """Set metadata for the context.
@@ -919,21 +723,6 @@ class FlextContext:
         normalized_value = FlextModels.ContextData.normalize_to_general_value(value)
         return FlextResult[FlextTypes.GeneralValueType].ok(normalized_value)
 
-    def get_all_metadata(self) -> dict[str, FlextTypes.GeneralValueType]:
-        """Get all metadata from the context.
-
-        Returns:
-            Dictionary of all metadata (flattened including custom_fields)
-
-        """
-        if isinstance(self._metadata, FlextModels.ContextMetadata):
-            result = self._metadata.model_dump()
-            # Flatten custom_fields into top-level dict for backward compatibility
-            custom_fields = result.pop("custom_fields", {})
-            result.update(custom_fields)
-            return result
-        return {}
-
     def get_all_data(self) -> dict[str, FlextTypes.GeneralValueType]:
         """Get all data from the context.
 
@@ -988,81 +777,14 @@ class FlextContext:
         export_snapshot = self.export_snapshot()
         return export_snapshot.data
 
-    def export_snapshot(self) -> FlextModels.ContextExport:
-        """Return typed export snapshot including metadata and statistics.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage.
-        Pydantic v2 field_validator accepts models directly - no model_dump() needed.
-
-        """
-        all_data: dict[str, FlextTypes.GeneralValueType] = {}
-        for ctx_var in self._scope_vars.values():
-            scope_dict = FlextUtilities.Generators.ensure_dict(
-                ctx_var.get(),
-                default={},
-            )
-            all_data.update(scope_dict)
-        metadata_dict = self.get_all_metadata()
-        statistics_dict = self._statistics.model_dump()
-
-        # Fast fail: metadata and statistics must be dict
-        if not FlextRuntime.is_dict_like(metadata_dict):
-            msg = (
-                f"Invalid metadata_dict type: {type(metadata_dict).__name__}. "
-                "Expected object"
-            )
-            raise TypeError(msg)
-        if not FlextRuntime.is_dict_like(statistics_dict):
-            msg = (
-                f"Invalid statistics_dict type: {type(statistics_dict).__name__}. "
-                "Expected object"
-            )
-            raise TypeError(msg)
-
-        # Normalize metadata and statistics to GeneralValueType
-        metadata_normalized: FlextTypes.GeneralValueType | None = (
-            FlextRuntime.normalize_to_general_value(metadata_dict)
-            if metadata_dict is not None
-            else None
-        )
-        metadata_typed: dict[str, FlextTypes.GeneralValueType] | None = (
-            metadata_normalized if isinstance(metadata_normalized, dict) else None
-        )
-
-        statistics_normalized = FlextRuntime.normalize_to_general_value(statistics_dict)
-        statistics_typed: dict[str, FlextTypes.GeneralValueType] = (
-            statistics_normalized
-            if isinstance(statistics_normalized, dict)
-            else {"statistics": statistics_normalized}
-        )
-
-        return FlextModels.ContextExport(
-            data=all_data,
-            metadata=metadata_typed,
-            statistics=statistics_typed,
-        )
-
-    def import_data(self, data: dict[str, FlextTypes.GeneralValueType]) -> None:
-        """Import context data.
-
-        ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
-        FlextLogger for logging integration (global scope only).
-
-        Args:
-            data: Dictionary containing context data to import
-
-        """
-        # Import data into global scope using FlextConstants.Context
-        self._set_in_contextvar(FlextConstants.Context.SCOPE_GLOBAL, data)
-
     # =========================================================================
     # Container integration for dependency injection
     # =========================================================================
 
-    _container: FlextContainer | None = None
+    _container: FlextProtocols.ContainerProtocol | None = None
 
     @classmethod
-    def get_container(cls) -> FlextContainer:
+    def get_container(cls) -> FlextProtocols.ContainerProtocol:
         """Get global container with lazy initialization.
 
         Returns:
@@ -1075,7 +797,17 @@ class FlextContext:
 
         """
         if cls._container is None:
-            cls._container = FlextContainer()
+            # ARCHITECTURAL NOTE: Lazy import breaks container↔context cycle
+            # FlextContainer uses FlextProtocols.ContextProtocol for types
+            from flext_core.container import FlextContainer  # noqa: PLC0415
+
+            # FlextContainer implements ContainerProtocol structurally - cast for type checker
+            cls._container = cast("FlextProtocols.ContainerProtocol", FlextContainer())
+        # Type narrowing: _container is guaranteed non-None after assignment above
+        # Use explicit check instead of assert (S101)
+        if cls._container is None:
+            msg = "Container initialization failed unexpectedly"
+            raise RuntimeError(msg)
         return cls._container
 
     # ==========================================================================
@@ -1174,12 +906,18 @@ class FlextContext:
             return value if isinstance(value, str) else None
 
         @staticmethod
-        def set_correlation_id(correlation_id: str) -> None:
+        def set_correlation_id(correlation_id: str | None) -> None:
             """Set correlation ID.
 
             Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
+            Accepts ``None`` to explicitly clear the active correlation when needed.
             """
             FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
+
+        @staticmethod
+        def reset_correlation_id() -> None:
+            """Clear correlation ID from context variables."""
+            FlextContext.Variables.Correlation.CORRELATION_ID.set(None)
 
         @staticmethod
         def generate_correlation_id() -> str:
@@ -1324,7 +1062,11 @@ class FlextContext:
 
             """
             container = FlextContext.get_container()
-            return container.get(service_name)
+            # Protocol returns ResultProtocol[T], cast to concrete FlextResult type
+            result: FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType] = (
+                container.get(service_name)
+            )
+            return cast("FlextResult[FlextTypes.GeneralValueType]", result)
 
         @staticmethod
         def register_service(
@@ -1354,16 +1096,10 @@ class FlextContext:
             """
             container = FlextContext.get_container()
             try:
-                # Cast service to appropriate type for with_service
-                service_typed: (
-                    FlextTypes.GeneralValueType
-                    | BaseModel
-                    | Callable[..., FlextTypes.GeneralValueType]
-                ) = cast(
-                    "FlextTypes.GeneralValueType | BaseModel | Callable[..., FlextTypes.GeneralValueType]",
-                    service,
-                )
-                container.with_service(service_name, service_typed)
+                # Cast service to FlexibleValue for protocol compatibility
+                # FlextContainer.with_service accepts GeneralValueType internally
+                service_flexible = cast("FlextTypes.FlexibleValue", service)
+                container.with_service(service_name, service_flexible)
                 return FlextResult[bool].ok(True)
             except ValueError as e:
                 return FlextResult[bool].fail(str(e))

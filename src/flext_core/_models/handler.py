@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time as time_module
 from collections.abc import Callable
-from typing import Annotated, Self
+from typing import Annotated, Self, cast
 
 from pydantic import (
     BaseModel,
@@ -23,18 +23,13 @@ from pydantic import (
 )
 
 from flext_core._models.base import FlextModelsBase
+from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
-
-# Type alias for FlextTypes.GeneralValueType (imported from typings)
-# Already imported above
 
 # FlextUtilitiesValidation is safe to import at module level:
 # - validation.py uses ResultProtocol (not concrete FlextResult) to break circular import
 # - circular import issue was RESOLVED (validation.py doesn't import handler.py)
-
-# Use FlextTypes.Handler.HandlerCallable directly - no aliases allowed
 
 
 class FlextModelsHandler:
@@ -65,7 +60,7 @@ class FlextModelsHandler:
         @classmethod
         def validate_handler(
             cls,
-            v: object,
+            v: FlextTypes.GeneralValueType | Callable[..., FlextTypes.GeneralValueType],
         ) -> (
             Callable[[], FlextTypes.GeneralValueType]
             | Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType]
@@ -80,9 +75,7 @@ class FlextModelsHandler:
                 msg = f"Handler must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
             # Type-safe return: v is confirmed callable by validation above
-            # Cast to expected return type since we validated it's callable
-            from typing import cast
-
+            # Cast to handler callable since we've validated it's callable
             return cast(
                 (
                     "Callable[[], FlextTypes.GeneralValueType] | Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType] | Callable[[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType], FlextTypes.GeneralValueType]"
@@ -161,8 +154,8 @@ class FlextModelsHandler:
         @field_validator("timestamp", mode="after")
         @classmethod
         def validate_timestamp_format(cls, v: str) -> str:
-            """Validate timestamp is in ISO 8601 format (using FlextUtilities.Validation)."""
-            result = FlextUtilities.Validation.validate_iso8601_timestamp(
+            """Validate timestamp is in ISO 8601 format (using FlextUtilitiesValidation)."""
+            result = FlextUtilitiesValidation.validate_iso8601_timestamp(
                 v,
                 allow_empty=True,
             )
@@ -202,6 +195,7 @@ class FlextModelsHandler:
         """
 
         model_config = ConfigDict(
+            arbitrary_types_allowed=True,
             json_schema_extra={
                 "title": "HandlerExecutionContext",
                 "description": "Handler execution context for tracking performance and state",

@@ -24,11 +24,11 @@ import pytest
 from hypothesis import given, settings, strategies as st
 
 from ...fixtures.typing import (
+    FixtureCaseDict,
+    FixtureDataDict,
+    FixtureFixturesDict,
+    FixtureSuiteDict,
     MockScenarioData,
-    TestCaseDict,
-    TestDataDict,
-    TestFixturesDict,
-    TestSuiteDict,
 )
 
 _P = ParamSpec("_P")
@@ -165,9 +165,9 @@ class FlextTestBuilder:
         # No-op stub to keep example API; could attach schema metadata here
         return self
 
-    def build(self) -> TestDataDict:
+    def build(self) -> FixtureDataDict:
         """Build the final test data dictionary."""
-        return cast("TestDataDict", self._data)
+        return cast("FixtureDataDict", self._data)
 
 
 class ParameterizedTestBuilder:
@@ -177,18 +177,18 @@ class ParameterizedTestBuilder:
         """Initialize parameterized test builder with test name."""
         super().__init__()
         self.test_name = test_name
-        self._cases: list[TestCaseDict] = []
-        self._success_cases: list[TestCaseDict] = []
-        self._failure_cases: list[TestCaseDict] = []
+        self._cases: list[FixtureCaseDict] = []
+        self._success_cases: list[FixtureCaseDict] = []
+        self._failure_cases: list[FixtureCaseDict] = []
 
     def add_case(self, **kwargs: object) -> ParameterizedTestBuilder:
         """Add a test case with the given parameters."""
-        self._cases.append(cast("TestCaseDict", kwargs))
+        self._cases.append(cast("FixtureCaseDict", kwargs))
         return self
 
     def add_success_cases(
         self,
-        cases: list[TestCaseDict],
+        cases: list[FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """Add multiple success test cases."""
         self._success_cases.extend(cases)
@@ -196,13 +196,13 @@ class ParameterizedTestBuilder:
 
     def add_failure_cases(
         self,
-        cases: list[TestCaseDict],
+        cases: list[FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """Add multiple failure test cases."""
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[TestCaseDict]:
+    def build(self) -> list[FixtureCaseDict]:
         """Build the list of test cases."""
         return self._cases.copy()
 
@@ -288,10 +288,10 @@ class SuiteBuilder:
         self._tags.append(tag)
         return self
 
-    def build(self) -> TestSuiteDict:
+    def build(self) -> FixtureSuiteDict:
         """Build the test suite configuration."""
         return cast(
-            "TestSuiteDict",
+            "FixtureSuiteDict",
             {
                 "suite_name": self.name,
                 "scenario_count": len(self._scenarios),
@@ -321,9 +321,9 @@ class FixtureBuilder:
         self._fixtures["request"] = kwargs
         return self
 
-    def build(self) -> TestFixturesDict:
+    def build(self) -> FixtureFixturesDict:
         """Build the test fixtures configuration."""
-        return cast("TestFixturesDict", self._fixtures.copy())
+        return cast("FixtureFixturesDict", self._fixtures.copy())
 
     def add_setup(self, func: object) -> FixtureBuilder:
         """Add a setup function to the fixtures."""

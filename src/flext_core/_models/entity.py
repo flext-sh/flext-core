@@ -15,21 +15,27 @@ from typing import ClassVar, Self, cast, override
 from pydantic import Field
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._models.config import FlextModelsConfig
 from flext_core._models.validation import FlextModelsValidation
+from flext_core._utilities.domain import FlextUtilitiesDomain
+from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime, StructlogLogger
 from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
 
 # Constants for event validation
 _EVENT_TUPLE_LENGTH = 2
 
 
-def _is_dict_like(value: object) -> bool:
-    """Check if value is dict-like (inline to avoid extra import)."""
+def _is_dict_like(value: FlextTypes.GeneralValueType) -> bool:
+    """Check if value is dict-like (inline to avoid extra import).
+
+    Returns:
+        True if value is a Mapping (dict-like), False otherwise.
+
+    """
     return isinstance(value, Mapping)
 
 
@@ -98,16 +104,30 @@ class FlextModelsEntity:
         def model_post_init(self, __context: object, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
             if self.updated_at is None:
-                self.updated_at = FlextUtilities.Generators.generate_datetime_utc()
+                self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
 
         @override
         def __eq__(self, other: object) -> bool:
-            """Identity-based equality for entities (using FlextUtilities.Domain)."""
-            return FlextUtilities.Domain.compare_entities_by_id(self, other)
+            """Identity-based equality for entities (using FlextUtilitiesDomain).
+
+            Returns:
+                True if entities have the same unique_id, False otherwise.
+                NotImplemented if other is not a compatible type.
+
+            """
+            # Type narrowing: other must implement HasModelDump protocol for comparison
+            if not isinstance(other, FlextProtocols.HasModelDump):
+                return NotImplemented
+            return FlextUtilitiesDomain.compare_entities_by_id(self, other)
 
         def __hash__(self) -> int:
-            """Identity-based hash for entities (using FlextUtilities.Domain)."""
-            return FlextUtilities.Domain.hash_entity_by_id(self)
+            """Identity-based hash for entities (using FlextUtilitiesDomain).
+
+            Returns:
+                Hash value based on entity's unique_id.
+
+            """
+            return FlextUtilitiesDomain.hash_entity_by_id(self)
 
         def _validate_event_input(
             self: Self,
@@ -158,10 +178,11 @@ class FlextModelsEntity:
                     data=event_data,
                 )
 
-                # Validate domain event using FlextUtilitiesValidation
-                # (imported at module level - safe because validation.py uses ResultProtocol)
-                validation_result = FlextUtilities.Validation.validate_domain_event(
-                    domain_event,
+                # Validate domain event using FlextModelsValidation
+                # Convert DomainEvent (BaseModel) to dict for validation
+                event_dict: FlextTypes.GeneralValueType = domain_event.model_dump()
+                validation_result = FlextModelsValidation.validate_domain_event(
+                    event_dict,
                 )
                 if validation_result.is_failure:
                     return FlextResult[FlextModelsEntity.DomainEvent].fail(
@@ -209,10 +230,10 @@ class FlextModelsEntity:
                         KeyError,
                     ) as e:
                         self.logger.warning(
-                            "Domain event handler %s failed for event %s: %s",
-                            handler_method_name,
-                            event_name,
-                            e,
+                            f"Domain event handler {handler_method_name} failed for event {event_name}: {e!s}",
+                            handler=handler_method_name,
+                            event=event_name,
+                            error=str(e),
                         )
 
         def add_domain_event(
@@ -479,7 +500,7 @@ class FlextModelsEntity:
 
             # Validate and collect events
             validated_result = FlextModelsEntity.Core.validate_and_collect_events(
-                events
+                events,
             )
             if validated_result.is_failure:
                 base_msg = "Event validation failed"
@@ -504,7 +525,7 @@ class FlextModelsEntity:
                 self,
             )
             entity_result = FlextModelsValidation.validate_entity_relationships(
-                entity_typed
+                entity_typed,
             )
             if entity_result.is_failure:
                 return FlextResult[bool].fail(
@@ -513,7 +534,9 @@ class FlextModelsEntity:
                 )
 
             for event in self.domain_events:
-                event_result = FlextUtilities.Validation.validate_domain_event(event)
+                # Convert DomainEvent (BaseModel) to dict for validation
+                event_dict: FlextTypes.GeneralValueType = event.model_dump()
+                event_result = FlextModelsValidation.validate_domain_event(event_dict)
                 if event_result.is_failure:
                     return FlextResult[bool].fail(
                         f"Domain event validation failed: {event_result.error}",
@@ -527,12 +550,14 @@ class FlextModelsEntity:
 
         @override
         def __eq__(self: Self, other: object) -> bool:
-            """Compare by value (using FlextUtilities.Domain)."""
-            return FlextUtilities.Domain.compare_value_objects_by_value(self, other)
+            """Compare by value (using FlextUtilitiesDomain)."""
+            if not isinstance(other, FlextProtocols.HasModelDump):
+                return NotImplemented
+            return FlextUtilitiesDomain.compare_value_objects_by_value(self, other)
 
         def __hash__(self) -> int:
-            """Hash based on values for use in sets/dicts (using FlextUtilities.Domain)."""
-            return FlextUtilities.Domain.hash_value_object_by_value(self)
+            """Hash based on values for use in sets/dicts (using FlextUtilitiesDomain)."""
+            return FlextUtilitiesDomain.hash_value_object_by_value(self)
 
     # Alias for backward compatibility - Entity is the same as Core
     Entity = Core
@@ -549,9 +574,7 @@ class FlextModelsEntity:
                     msg = f"Invariant violated: {invariant.__name__}"
                     raise FlextExceptions.ValidationError(
                         msg,
-                        config=FlextModelsConfig.ValidationErrorConfig(
-                            error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                        ),
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
         @override

@@ -21,12 +21,12 @@ from pathlib import Path
 from typing import ClassVar, Self, TypeVar
 
 from dependency_injector import providers
-from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
-from flext_core.runtime import FlextRuntime, StructlogLogger
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes, T_Namespace
 
 # TypeVar for decorator type preservation - bound to BaseSettings
@@ -75,14 +75,6 @@ class FlextConfig(BaseSettings):
     # Singleton pattern
     _instances: ClassVar[dict[type[BaseSettings], BaseSettings]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
-
-    @property
-    def logger(self) -> StructlogLogger:
-        """Get logger instance using FlextRuntime (avoids circular imports).
-
-        Returns structlog logger instance with all logging methods.
-        """
-        return FlextRuntime.get_logger(__name__)
 
     # Configuration fields
     # env_file resolved at module load time via FLEXT_ENV_FILE env var
@@ -248,7 +240,7 @@ class FlextConfig(BaseSettings):
         description="Max workers",
     )
     max_batch_size: int = Field(
-        default=FlextConstants.Processing.MAX_BATCH_SIZE,
+        default=FlextConstants.Performance.MAX_BATCH_SIZE,
         description="Max batch size",
     )
 
@@ -266,7 +258,7 @@ class FlextConfig(BaseSettings):
         description="Exception failure level",
     )
 
-    def __new__(cls, **_kwargs: object) -> Self:
+    def __new__(cls, **_kwargs: FlextTypes.GeneralValueType) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values: Any internally.
@@ -397,16 +389,6 @@ class FlextConfig(BaseSettings):
             return FlextConstants.Settings.LogLevel.INFO
         # self.log_level is already LogLevelLiteral (from field_validator)
         return self.log_level
-
-    @computed_field
-    def is_production(self) -> bool:  # noqa: PLR6301
-        """Check if running in production environment.
-
-        Note: Pydantic @computed_field requires instance method signature
-        even if self is not used in the implementation.
-        """
-        env_value = os.getenv("ENVIRONMENT", "").lower()
-        return env_value == FlextConstants.Settings.Environment.PRODUCTION.value
 
     @classmethod
     def get_global_instance(cls) -> Self:
@@ -645,8 +627,8 @@ class FlextConfig(BaseSettings):
             )
 
         FlextConfig._logging_initialized = True
-        # Use self.logger property - StructlogLogger has debug method
-        self.logger.debug(
+        # Use FlextRuntime.get_logger() - StructlogLogger has debug method
+        FlextRuntime.get_logger(__name__).debug(
             "Logging initialized with level=%s (numeric=%d)",
             log_level_str,
             log_level_numeric,

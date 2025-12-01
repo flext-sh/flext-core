@@ -11,17 +11,19 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping
-from typing import Annotated, Self, cast
+from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.metadata import Metadata
-from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
+from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
 
 
 class FlextModelsConfig:
@@ -41,7 +43,7 @@ class FlextModelsConfig:
         )
 
         operation_id: str = Field(
-            default_factory=FlextUtilitiesGenerators.generate_id,
+            default_factory=FlextUtilities.Generators.generate_id,
             min_length=1,
             description="Unique operation identifier",
         )
@@ -71,7 +73,7 @@ class FlextModelsConfig:
             Returns dict[str, str] because ensure_trace_context generates string trace IDs.
             This is compatible with the field type dict[str, FlextTypes.GeneralValueType] since str is a subtype.
             """
-            return FlextUtilitiesGenerators.ensure_trace_context(
+            return FlextUtilities.Generators.ensure_trace_context(
                 v,
                 include_correlation_id=True,
                 include_timestamp=True,
@@ -79,8 +81,6 @@ class FlextModelsConfig:
 
         def validate_processing_constraints(self) -> FlextResult[bool]:
             """Validate constraints that should be checked during processing."""
-            from flext_core.result import FlextResult
-
             max_timeout_seconds = FlextConstants.Utilities.MAX_TIMEOUT_SECONDS
             if self.timeout_seconds > max_timeout_seconds:
                 return FlextResult[bool].fail(
@@ -130,9 +130,7 @@ class FlextModelsConfig:
         @classmethod
         def validate_backoff_strategy(cls, v: list[object]) -> list[object]:
             """Validate status codes are valid HTTP codes."""
-            from flext_core._utilities.validation import FlextUtilitiesValidation
-
-            result = FlextUtilitiesValidation.validate_http_status_codes(
+            result = FlextUtilities.Validation.validate_http_status_codes(
                 v,
                 min_code=FlextConstants.FlextWeb.HTTP_STATUS_MIN,
                 max_code=FlextConstants.FlextWeb.HTTP_STATUS_MAX,
@@ -181,21 +179,11 @@ class FlextModelsConfig:
         @classmethod
         def validate_additional_validators(cls, v: list[object]) -> list[object]:
             """Validate custom validators are callable."""
-            from flext_core._utilities.validation import FlextUtilitiesValidation
-
             for validator in v:
-                result = FlextUtilitiesValidation.validate_callable(
-                    cast("FlextTypes.GeneralValueType", validator),
-                    error_message="All validators must be callable",
-                    error_code=FlextConstants.Errors.TYPE_ERROR,
-                )
-                if result.is_failure:
+                # Direct callable check - object can be any callable, not just GeneralValueType
+                if not callable(validator):
                     base_msg = "Validator must be callable"
-                    error_msg = (
-                        f"{base_msg}: {result.error}"
-                        if result.error
-                        else f"{base_msg} (validation failed)"
-                    )
+                    error_msg = f"{base_msg}: got {type(validator).__name__}"
                     raise FlextExceptions.TypeError(
                         error_msg,
                         error_code=FlextConstants.Errors.TYPE_ERROR,
@@ -271,6 +259,7 @@ class FlextModelsConfig:
         """
 
         model_config = ConfigDict(
+            arbitrary_types_allowed=True,
             json_schema_extra={
                 "title": "MiddlewareConfig",
                 "description": (
@@ -458,6 +447,33 @@ class FlextModelsConfig:
             default=None,
             ge=0,
             description="Optional timeout override in seconds",
+        )
+
+    class ExecuteDispatchAttemptOptions(FlextModelsCollections.Config):
+        """Options for _execute_dispatch_attempt (Pydantic v2).
+
+        Reduces parameter count from 6 to 2 params (message, options).
+        Groups execution context parameters.
+        """
+
+        message_type: str = Field(
+            description="Message type name for routing and circuit breaker",
+        )
+        metadata: FlextTypes.GeneralValueType | None = Field(
+            default=None,
+            description="Optional execution context metadata",
+        )
+        correlation_id: str | None = Field(
+            default=None,
+            description="Optional correlation ID for distributed tracing",
+        )
+        timeout_override: int | None = Field(
+            default=None,
+            ge=0,
+            description="Optional timeout override in seconds",
+        )
+        operation_id: str = Field(
+            description="Operation ID for timeout tracking",
         )
 
     class ExceptionConfig(FlextModelsCollections.Config):
