@@ -810,7 +810,8 @@ class FlextRuntime:
         *,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[object] | None = None,
+        additional_processors: Sequence[Callable[..., FlextTypes.GeneralValueType]]
+        | None = None,
     ) -> None:
         """Force reconfigure structlog (ignores is_configured checks).
 

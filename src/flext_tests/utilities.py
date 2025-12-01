@@ -1102,7 +1102,7 @@ class FlextTestsUtilities:
             except Exception as e:
                 if logger and hasattr(logger, "warning"):
                     logger.warning(
-                        f"{error_prefix} failed: {str(e)}",
+                        f"{error_prefix} failed: {e!s}",
                         error=str(e),
                     )
                 return default_value
@@ -1251,7 +1251,7 @@ class FlextTestsUtilities:
                             }
                             # Call with explicit context unpacking
                             logger.warning(
-                                f"Failed to remove {resource_type} {resource_name}: {str(e)}",
+                                f"Failed to remove {resource_type} {resource_name}: {e!s}",
                                 **warning_kwargs,
                             )
 

@@ -838,9 +838,9 @@ class FlextExceptions:
             self,
             message: str,
             *,
+            error_code: str = FlextConstants.Errors.TYPE_ERROR,
             expected_type: type | None = None,
             actual_type: type | None = None,
-            error_code: str = FlextConstants.Errors.TYPE_ERROR,
             context: Mapping[str, MetadataAttributeValue] | None = None,
             **extra_kwargs: MetadataAttributeValue,
         ) -> None:
@@ -857,6 +857,10 @@ class FlextExceptions:
             )
             for k, v in extra_kwargs.items():
                 type_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+            # Check for metadata in extra_kwargs and handle it specially
+            metadata = extra_kwargs.pop("metadata", None)
+            if metadata is not None:
+                type_context["metadata"] = metadata
             super().__init__(
                 message,
                 error_code=error_code,

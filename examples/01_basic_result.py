@@ -450,141 +450,144 @@ class Example01BasicResult:
 
         # ========== RAILWAY OPERATIONS ==========
 
-        def demonstrate_railway_operations(self) -> None:
-            """Core railway-oriented programming patterns."""
-            print("\n=== Railway Operations ===")
+    @staticmethod
+    def demonstrate_railway_operations() -> None:
+        """Core railway-oriented programming patterns."""
+        print("\n=== Railway Operations ===")
 
-            def validate_length(s: object) -> FlextResult[object]:
-                str_val = str(s)
-                if len(str_val) < FlextConstants.Validation.MIN_USERNAME_LENGTH:
-                    return FlextResult[object].fail("Too short")
-                return FlextResult[object].ok(str_val)
+        def validate_length(s: object) -> FlextResult[object]:
+            str_val = str(s)
+            if len(str_val) < FlextConstants.Validation.MIN_USERNAME_LENGTH:
+                return FlextResult[object].fail("Too short")
+            return FlextResult[object].ok(str_val)
 
-            def to_upper(s: str) -> str:
-                return s.upper()
+        def to_upper(s: str) -> str:
+            return s.upper()
 
-            def add_prefix(s: object) -> FlextResult[object]:
-                return FlextResult[object].ok(f"PREFIX_{s}")
+        def add_prefix(s: object) -> FlextResult[object]:
+            return FlextResult[object].ok(f"PREFIX_{s}")
 
-            # Map: transform success value
-            result = FlextResult[str].ok("test").map(to_upper)
-            print(f".map(to_upper): {result.unwrap()}")
+        # Map: transform success value
+        result = FlextResult[str].ok("test").map(to_upper)
+        print(f".map(to_upper): {result.unwrap()}")
 
-            # FlatMap: chain operations that return FlextResult
-            result = (
-                FlextResult[str]
-                .ok("hello")
-                .flat_map(validate_length)
-                .flat_map(add_prefix)
+        # FlatMap: chain operations that return FlextResult
+        result = (
+            FlextResult[str]
+            .ok("hello")
+            .flat_map(validate_length)
+            .flat_map(add_prefix)
+        )
+        print(f".flat_map chain: {result.unwrap()}")
+
+        # NEW: flow_through for clean pipeline composition
+        def to_upper_result(s: object) -> FlextResult[object]:
+            str_val = str(s)
+            return FlextResult[object].ok(str_val.upper())
+
+        def double_length(s: object) -> FlextResult[object]:
+            str_val = str(s)
+            return FlextResult[object].ok(str_val * 2)
+
+        result = (
+            FlextResult[str]
+            .ok("hello")
+            .flow_through(
+                validate_length,
+                to_upper_result,
+                double_length,
+                add_prefix,
             )
-            print(f".flat_map chain: {result.unwrap()}")
+        )
+        print(f".flow_through pipeline: {result.unwrap()}")
 
-            # NEW: flow_through for clean pipeline composition
-            def to_upper_result(s: object) -> FlextResult[object]:
-                str_val = str(s)
-                return FlextResult[object].ok(str_val.upper())
-
-            def double_length(s: object) -> FlextResult[object]:
-                str_val = str(s)
-                return FlextResult[object].ok(str_val * 2)
-
-            result = (
-                FlextResult[str]
-                .ok("hello")
-                .flow_through(
-                    validate_length,
-                    to_upper_result,
-                    double_length,
-                    add_prefix,
-                )
+        # Filter: conditional success
+        filtered_result: FlextResult[int] = (
+            FlextResult[int]
+            .ok(10)
+            .filter(
+                lambda x: x > FlextConstants.Validation.FILTER_THRESHOLD,
             )
-            print(f".flow_through pipeline: {result.unwrap()}")
+        )
+        print(
+            f".filter(>{FlextConstants.Validation.FILTER_THRESHOLD}): {filtered_result}",
+        )
 
-            # Filter: conditional success
-            filtered_result: FlextResult[int] = (
-                FlextResult[int]
-                .ok(10)
-                .filter(
-                    lambda x: x > FlextConstants.Validation.FILTER_THRESHOLD,
-                )
-            )
-            print(
-                f".filter(>{FlextConstants.Validation.FILTER_THRESHOLD}): {filtered_result}",
-            )
-
-            # Using flat_map for chaining
-            result = (
-                FlextResult[str]
-                .ok("test")
-                .flat_map(validate_length)
-                .flat_map(add_prefix)
-            )
-            print(f"flat_map chain: {result}")
+        # Using flat_map for chaining
+        result = (
+            FlextResult[str]
+            .ok("test")
+            .flat_map(validate_length)
+            .flat_map(add_prefix)
+        )
+        print(f"flat_map chain: {result}")
 
         # ========== ERROR RECOVERY ==========
 
-        def demonstrate_error_recovery(self) -> None:
-            """Show error recovery patterns."""
-            print("\n=== Error Recovery ===")
+    @staticmethod
+    def demonstrate_error_recovery() -> None:
+        """Show error recovery patterns."""
+        print("\n=== Error Recovery ===")
 
-            failure = FlextResult[str].fail("Initial error")
+        failure = FlextResult[str].fail("Initial error")
 
-            # alt - transform error string to success value
-            def recover_from_error(error: str) -> str:
-                return f"Recovered from: {error}"
+        # alt - transform error string to success value
+        def recover_from_error(error: str) -> str:
+            return f"Recovered from: {error}"
 
-            recovered = failure.alt(recover_from_error)
-            print(f".alt() (error transform): {recovered.unwrap()}")
+        recovered = failure.alt(recover_from_error)
+        print(f".alt() (error transform): {recovered.unwrap()}")
 
-            # lash - provide fallback result
-            def provide_fallback(_error: str) -> FlextResult[str]:
-                return FlextResult[str].ok("fallback")
+        # lash - provide fallback result
+        def provide_fallback(_error: str) -> FlextResult[str]:
+            return FlextResult[str].ok("fallback")
 
-            fallback = failure.lash(provide_fallback)
-            print(f".lash() (fallback): {fallback.unwrap()}")
+        fallback = failure.lash(provide_fallback)
+        print(f".lash() (fallback): {fallback.unwrap()}")
 
-            # NEW: lash - apply function to error (opposite of flat_map)
-            def log_and_recover(error: str) -> FlextResult[str]:
-                print(f"  Logging error: {error}")
-                return FlextResult[str].ok("Recovered via lash")
+        # NEW: lash - apply function to error (opposite of flat_map)
+        def log_and_recover(error: str) -> FlextResult[str]:
+            print(f"  Logging error: {error}")
+            return FlextResult[str].ok("Recovered via lash")
 
-            lashed = failure.lash(log_and_recover)
-            print(f".lash(): {lashed.unwrap()}")
+        lashed = failure.lash(log_and_recover)
+        print(f".lash(): {lashed.unwrap()}")
 
-            # Success case - lash not applied
-            success = FlextResult[str].ok("Success value")
-            success_lashed = success.lash(log_and_recover)
-            print(f"Success with .lash() (unchanged): {success_lashed.unwrap()}")
+        # Success case - lash not applied
+        success = FlextResult[str].ok("Success value")
+        success_lashed = success.lash(log_and_recover)
+        print(f"Success with .lash() (unchanged): {success_lashed.unwrap()}")
 
         # ========== ADVANCED COMBINATORS ==========
 
-        def demonstrate_advanced_combinators(self) -> None:
-            """Advanced functional programming patterns."""
-            print("\n=== Advanced Combinators ===")
+    @staticmethod
+    def demonstrate_advanced_combinators() -> None:
+        """Advanced functional programming patterns."""
+        print("\n=== Advanced Combinators ===")
 
-            # Side effects using map (tap equivalent)
-            def tap_effect(x: object) -> object:
-                int_val = int(x) if isinstance(x, (int, float, str)) else 0
-                print(f"  Side effect: {int_val}")
-                return int_val
+        # Side effects using map (tap equivalent)
+        def tap_effect(x: object) -> object:
+            int_val = int(x) if isinstance(x, (int, float, str)) else 0
+            print(f"  Side effect: {int_val}")
+            return int_val
 
-            result = (
-                FlextResult[int]
-                .ok(42)
-                .map(tap_effect)
-                .map(lambda x: int(x) * 2 if isinstance(x, (int, float, str)) else 0)
-            )
-            print(f"Side effect result: {result.unwrap()}")
+        result = (
+            FlextResult[int]
+            .ok(42)
+            .map(tap_effect)
+            .map(lambda x: int(x) * 2 if isinstance(x, (int, float, str)) else 0)
+        )
+        print(f"Side effect result: {result.unwrap()}")
 
-            # Traverse: map and sequence
-            items = [1, 2, 3]
+        # Traverse: map and sequence
+        items = [1, 2, 3]
 
-            def process(x: object) -> FlextResult[int]:
-                int_val = int(x) if isinstance(x, (int, float, str)) else 0
-                return FlextResult[int].ok(int_val * 2)
+        def process(x: object) -> FlextResult[int]:
+            int_val = int(x) if isinstance(x, (int, float, str)) else 0
+            return FlextResult[int].ok(int_val * 2)
 
-            traversed = FlextResult.traverse(items, process)
-            print(f".traverse(): {traversed.unwrap()}")
+        traversed = FlextResult.traverse(items, process)
+        print(f".traverse(): {traversed.unwrap()}")
 
         # ========== COLLECTION OPERATIONS ==========
 

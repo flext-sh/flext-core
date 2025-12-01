@@ -115,7 +115,7 @@ class TestConstants(FlextTestConstants):
         FAILED_PARSE: Final[str] = "Failed to parse"
         FAILED_SPLIT: Final[str] = "Failed to split"
         FAILED_NORMALIZE: Final[str] = "Failed to normalize"
-        FAILED_PIPELINE: Final[str] = "Failed to apply"
+        FAILED_PIPELINE: Final[str] = "validation error"
         INVALID_REGEX: Final[str] = "Invalid regex pattern"
         USER_NOT_FOUND: Final[str] = "User not found"
         INVALID_EMAIL: Final[str] = "Invalid email address"

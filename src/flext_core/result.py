@@ -273,6 +273,64 @@ class FlextResult[T_co]:  # noqa: PLR0904
             return IOSuccess(self.value)
         return IOFailure(self.error or "")
 
+    def alt(self, func: Callable[[str], str]) -> FlextResult[T_co]:
+        """Apply alternative function on failure.
+
+        Transforms the error message using the provided function.
+        On success, returns self unchanged.
+
+        Args:
+            func: Function to transform error message
+
+        Returns:
+            FlextResult with transformed error on failure, unchanged on success
+        """
+        return FlextResult.Monad.alt(self, func)
+
+    def lash(self, func: Callable[[str], FlextResult[T_co]]) -> FlextResult[T_co]:
+        """Apply recovery function on failure.
+
+        On failure, calls the provided function with the error message
+        to produce a new FlextResult (recovery attempt).
+        On success, returns self unchanged.
+
+        Args:
+            func: Recovery function that returns a new FlextResult
+
+        Returns:
+            Result of recovery function on failure, unchanged on success
+        """
+        return FlextResult.Monad.lash(self, func)
+
+    def to_io(self) -> IO[T_co]:
+        """Convert to returns.io.IO.
+
+        Returns an IO wrapper around the success value.
+        Raises ValidationError if the result is a failure.
+
+        Returns:
+            IO[T_co]: IO wrapper around the success value
+
+        Raises:
+            FlextExceptions.ValidationError: If result is failure
+        """
+        return FlextResult.Convert.to_io(self)
+
+    @classmethod
+    def from_io_result(
+        cls,
+        io_result: IOResult[FlextTypes.GeneralValueType, str],
+    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        """Create FlextResult from returns.io.IOResult.
+
+        Args:
+            io_result: IOResult to convert
+
+        Returns:
+            FlextResult representing the same success/failure state
+        """
+        return FlextResult.Convert.from_io_result(io_result)
+
     @classmethod
     def traverse[T, U](
         cls,

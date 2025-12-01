@@ -51,16 +51,8 @@ os.environ.setdefault("FLEXT_DEBUG", "false")
 os.environ.setdefault("FLEXT_TRACE", "false")
 
 
-def demonstrate_single_import_pattern() -> None:
-    """Demonstrate complete framework access via Flext."""
-    print("\n" + "=" * 60)
-    print("FLEXTCORE SINGLE-IMPORT PATTERN DEMONSTRATION")
-    print("Complete framework access with zero additional imports")
-    print("=" * 60)
-
-    # ========================================
-    # 1. RAILWAY PATTERN - Shorthand Methods
-    # ========================================
+def demonstrate_railway_pattern() -> None:
+    """Demonstrate railway pattern with shorthand methods."""
     print("\n1. Railway Pattern - Shorthand Factory Methods:")
 
     # Create success result
@@ -101,9 +93,9 @@ def demonstrate_single_import_pattern() -> None:
     )
     print(f"   🚂 Railway chain: {chain_result.unwrap()}")
 
-    # ========================================
-    # 2. COMPONENTS VIA CONVENIENCE METHODS
-    # ========================================
+
+def demonstrate_components() -> None:
+    """Demonstrate components via convenience methods."""
     print("\n2. Components via Convenience Methods:")
 
     # Logger - using FlextLogger factory method
@@ -119,9 +111,9 @@ def demonstrate_single_import_pattern() -> None:
     runtime = FlextRuntime()
     print(f"   ✅ FlextRuntime: {type(runtime).__name__}")
 
-    # ========================================
-    # 3. CONSTANTS AND TYPES
-    # ========================================
+
+def demonstrate_constants_and_types() -> None:
+    """Demonstrate constants and types access."""
     print("\n3. Constants and Types:")
 
     # Access constants
@@ -135,9 +127,9 @@ def demonstrate_single_import_pattern() -> None:
     data: dict[str, object] = {"key": "value"}
     print(f"   📦 Type alias: {type(data).__name__}")
 
-    # ========================================
-    # 4. DECORATORS
-    # ========================================
+
+def demonstrate_decorators() -> None:
+    """Demonstrate available decorators."""
     print("\n4. Decorators:")
 
     @FlextDecorators.railway()
@@ -157,9 +149,9 @@ def demonstrate_single_import_pattern() -> None:
     print(f"      - log_operation: {FlextDecorators.log_operation.__name__}")
     print(f"      - track_performance: {FlextDecorators.track_performance.__name__}")
 
-    # ========================================
-    # 5. VALIDATION UTILITIES
-    # ========================================
+
+def demonstrate_validation_utilities() -> None:
+    """Demonstrate validation utilities."""
     print("\n5. Validation Utilities:")
 
     # Cache management validation
@@ -175,9 +167,9 @@ def demonstrate_single_import_pattern() -> None:
     short_id = FlextUtilities.Generators.generate_short_id()
     print(f"   ✅ Short ID: {short_id[:8]}...")
 
-    # ========================================
-    # 6. DOMAIN MODELS (DDD)
-    # ========================================
+
+def demonstrate_domain_models() -> None:
+    """Demonstrate domain models (DDD patterns)."""
     print("\n6. Domain Models (DDD Patterns):")
 
     # Entity - using base Entity with unique_id
@@ -191,9 +183,9 @@ def demonstrate_single_import_pattern() -> None:
     email = Email(address="test@example.com")
     print(f"   ✅ Value Object: {email.address}")
 
-    # ========================================
-    # 7. EXCEPTIONS
-    # ========================================
+
+def demonstrate_exceptions() -> None:
+    """Demonstrate structured exceptions."""
     print("\n7. Structured Exceptions:")
 
     try:
@@ -211,9 +203,9 @@ def demonstrate_single_import_pattern() -> None:
         else:
             print(f"      Code: {e.error_code}")
 
-    # ========================================
-    # 8. EXTENDING FLEXT PATTERNS VIA FLEEXTBASE
-    # ========================================
+
+def demonstrate_extending_patterns() -> None:
+    """Demonstrate extending Flext patterns."""
     print("\n8. Extending Patterns with Flext")
 
     class DemoBase(FlextModels.ArbitraryTypesModel):
@@ -233,6 +225,23 @@ def demonstrate_single_import_pattern() -> None:
     print("   - class MyBase(FlextModels.Validation)")
     print("   - class MyBase(FlextModels.Mixin)")
     print("=" * 60)
+
+
+def demonstrate_single_import_pattern() -> None:
+    """Demonstrate complete framework access via Flext."""
+    print("\n" + "=" * 60)
+    print("FLEXTCORE SINGLE-IMPORT PATTERN DEMONSTRATION")
+    print("Complete framework access with zero additional imports")
+    print("=" * 60)
+
+    demonstrate_railway_pattern()
+    demonstrate_components()
+    demonstrate_constants_and_types()
+    demonstrate_decorators()
+    demonstrate_validation_utilities()
+    demonstrate_domain_models()
+    demonstrate_exceptions()
+    demonstrate_extending_patterns()
 
 
 def main() -> None:

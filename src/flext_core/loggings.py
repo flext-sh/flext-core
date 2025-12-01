@@ -151,27 +151,6 @@ class FlextLogger:
         return cls._context_operation(operation, **context)
 
     @classmethod
-    def unbind_global_context(cls, *keys: str) -> FlextResult[bool]:
-        """Unbind specific keys from global context.
-
-        Args:
-            *keys: Context keys to unbind
-
-        Returns:
-            FlextResult[bool]: Success with True if unbound, failure with error details
-
-        """
-        # Convert keys tuple to dict for kwargs compatibility
-        # Each key is mapped to its string value to indicate it should be unbound
-        keys_dict: dict[str, FlextTypes.GeneralValueType] = {
-            key: str(key) for key in keys
-        }
-        return cls._context_operation(
-            FlextConstants.Logging.CONTEXT_OPERATION_UNBIND,
-            **keys_dict,
-        )
-
-    @classmethod
     def clear_global_context(cls) -> FlextResult[bool]:
         """Clear all globally bound context.
 
@@ -344,6 +323,53 @@ class FlextLogger:
     def get_logger(cls) -> FlextLogger:
         """Get a logger instance."""
         return cls.create_module_logger("flext")
+
+    @classmethod
+    def create_module_logger(cls, name: str) -> FlextLogger:
+        """Create a logger instance for a module.
+
+        Args:
+            name: Module name (typically __name__)
+
+        Returns:
+            FlextLogger: Logger instance for the module
+
+        Example:
+            >>> logger = FlextLogger.create_module_logger(__name__)
+            >>> logger.info("Module initialized")
+        """
+        return cls(name)
+
+    @classmethod
+    def bind_context_for_level(
+        cls,
+        level: str,
+        **context: FlextTypes.GeneralValueType,
+    ) -> FlextResult[bool]:
+        """Bind context variables that are only included for a specific log level.
+
+        Args:
+            level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+            **context: Context variables to bind for this level
+
+        Returns:
+            FlextResult[bool]: Success with True if bound, failure with error details
+
+        Example:
+            >>> FlextLogger.bind_context_for_level("DEBUG", config=config_dict)
+            >>> FlextLogger.bind_context_for_level("ERROR", stack_trace=trace)
+        """
+        try:
+            level_upper = level.upper()
+            if level_upper not in cls._level_contexts:
+                cls._level_contexts[level_upper] = {}
+            cls._level_contexts[level_upper].update(context)
+            # Prefix keys with level for structlog filtering
+            prefixed_context = {f"{level_upper}_{k}": v for k, v in context.items()}
+            FlextRuntime.structlog().contextvars.bind_contextvars(**prefixed_context)
+            return FlextResult[bool].ok(True)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
+            return FlextResult[bool].fail(f"Failed to bind {level} context: {e}")
 
     # =========================================================================
     # FACTORY PATTERNS - DI-ready logger creation

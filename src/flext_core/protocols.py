@@ -513,7 +513,7 @@ class FlextProtocols:
 
         def register_handler(
             self,
-            request: FlextTypes.GeneralValueType | BaseModel,
+            request: FlextTypes.GeneralValueType,
             handler: FlextTypes.GeneralValueType | None = None,
         ) -> FlextProtocols.ResultProtocol[dict[str, FlextTypes.GeneralValueType]]:
             """Register handler.
@@ -524,15 +524,28 @@ class FlextProtocols:
 
             Returns:
                 FlextResult with registration details or error
+
             """
             ...
 
         def register_command[TCommand, TResult](
             self,
             command_type: type[TCommand],
-            handler: Callable[[TCommand], FlextProtocols.ResultProtocol[TResult]],
-        ) -> FlextProtocols.ResultProtocol[bool]:
-            """Register command handler."""
+            handler: FlextTypes.GeneralValueType,
+            *,
+            handler_config: Mapping[str, FlextTypes.FlexibleValue] | None = None,
+        ) -> FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]:
+            """Register command handler.
+
+            Args:
+                command_type: Command message type
+                handler: Handler instance (FlextHandlers or callable)
+                handler_config: Optional handler configuration
+
+            Returns:
+                FlextResult with registration details or error
+
+            """
             ...
 
         @staticmethod
@@ -630,6 +643,10 @@ class FlextProtocols:
             **kwargs: FlextTypes.FlexibleValue,
         ) -> FlextProtocols.ResultProtocol[bool] | None:
             """Exception log."""
+            ...
+
+        def with_result(self) -> FlextProtocols.LoggerProtocol:
+            """Return logger adapter that always returns FlextResult."""
             ...
 
     @runtime_checkable
