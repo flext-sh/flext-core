@@ -463,7 +463,7 @@ class FlextContext:
         if key in current:
             ctx_var.set({k: v for k, v in current.items() if k != key})
             if scope == FlextConstants.Context.SCOPE_GLOBAL:
-                # unbind_global_context is a classmethod
+                # unbind_global_context is a classmethod - call with key as argument
                 FlextLogger.unbind_global_context(key)
             self._update_statistics("remove")
 
@@ -1021,7 +1021,7 @@ class FlextContext:
     class Service:
         """Service identification and lifecycle context management utilities."""
 
-        @classmethod
+        @staticmethod
         def get_service_name() -> str | None:
             """Get current service name."""
             value = FlextContext.Variables.Service.SERVICE_NAME.get()
