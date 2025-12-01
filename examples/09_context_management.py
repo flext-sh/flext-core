@@ -32,6 +32,7 @@ from flext_core import (
     FlextResult,
     FlextService,
 )
+from flext_core.typings import FlextTypes
 
 
 class ContextManagementService(FlextService[dict[str, object]]):
