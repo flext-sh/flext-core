@@ -1236,7 +1236,7 @@ class FlextExceptions:
             error_context["error_code"] = error_code
 
         # Create appropriate error class based on type
-        error_classes: dict[str, type[BaseError]] = {
+        error_classes: dict[str, type[FlextExceptions.BaseError]] = {
             "validation": FlextExceptions.ValidationError,
             "configuration": FlextExceptions.ConfigurationError,
             "connection": FlextExceptions.ConnectionError,
