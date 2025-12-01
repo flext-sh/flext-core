@@ -463,6 +463,7 @@ class FlextContext:
         if key in current:
             ctx_var.set({k: v for k, v in current.items() if k != key})
             if scope == FlextConstants.Context.SCOPE_GLOBAL:
+                # unbind_global_context is a classmethod
                 FlextLogger.unbind_global_context(key)
             self._update_statistics("remove")
 
