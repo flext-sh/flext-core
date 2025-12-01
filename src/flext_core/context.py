@@ -557,6 +557,10 @@ class FlextContext:
 
                 # DELEGATION: Propagate global scope to FlextLogger
                 if scope_name == FlextConstants.Context.SCOPE_GLOBAL:
+                    scope_dict = FlextUtilities.Generators.ensure_dict(
+                        ctx_var.get(),
+                        default={},
+                    )
                     FlextLogger.bind_global_context(**scope_dict)
         else:
             # Merge dictionary into global scope
@@ -796,6 +800,23 @@ class FlextContext:
 
     _container: FlextProtocols.ContainerProtocol | None = None
 
+    @classmethod
+    def get_container(cls) -> FlextProtocols.ContainerProtocol:
+        """Get global container with lazy initialization.
+
+        Returns:
+            Global FlextContainer instance for dependency injection
+
+        Example:
+            >>> container = FlextContext.get_container()
+            >>> result = container.get("service_name")
+        """
+        if cls._container is None:
+            from flext_core.container import FlextContainer  # noqa: PLC0415
+
+            cls._container = cast("FlextProtocols.ContainerProtocol", FlextContainer())
+        return cls._container
+
     # ==========================================================================
     # Variables - Context Variables using structlog as Single Source of Truth
     # ==========================================================================
@@ -999,7 +1020,7 @@ class FlextContext:
     class Service:
         """Service identification and lifecycle context management utilities."""
 
-        @staticmethod
+        @classmethod
         def get_service_name() -> str | None:
             """Get current service name."""
             value = FlextContext.Variables.Service.SERVICE_NAME.get()
@@ -1047,8 +1068,8 @@ class FlextContext:
                 ...     logger.info("Service retrieved")
 
             """
-            # get_container is a classmethod, call it correctly
-            container = cls.get_container()
+            # get_container is a classmethod on FlextContext, access via class
+            container = FlextContext.get_container()
             # Protocol returns ResultProtocol[T], cast to concrete FlextResult type
             result: FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType] = (
                 container.get(service_name)
@@ -1081,8 +1102,8 @@ class FlextContext:
                 ...     print(f"Registration failed: {result.error}")
 
             """
-            # get_container is a classmethod, call it correctly
-            container = cls.get_container()
+            # get_container is a classmethod on FlextContext, access via class
+            container = FlextContext.get_container()
             try:
                 # Cast service to FlexibleValue for protocol compatibility
                 # FlextContainer.with_service accepts GeneralValueType internally

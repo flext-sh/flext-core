@@ -284,6 +284,7 @@ class FlextResult[T_co]:  # noqa: PLR0904
 
         Returns:
             FlextResult with transformed error on failure, unchanged on success
+
         """
         return FlextResult.Monad.alt(self, func)
 
@@ -299,6 +300,7 @@ class FlextResult[T_co]:  # noqa: PLR0904
 
         Returns:
             Result of recovery function on failure, unchanged on success
+
         """
         return FlextResult.Monad.lash(self, func)
 
@@ -313,6 +315,7 @@ class FlextResult[T_co]:  # noqa: PLR0904
 
         Raises:
             FlextExceptions.ValidationError: If result is failure
+
         """
         return FlextResult.Convert.to_io(self)
 
@@ -328,6 +331,7 @@ class FlextResult[T_co]:  # noqa: PLR0904
 
         Returns:
             FlextResult representing the same success/failure state
+
         """
         return FlextResult.Convert.from_io_result(io_result)
 

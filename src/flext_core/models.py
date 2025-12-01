@@ -233,6 +233,9 @@ class FlextModels:
     class InternalErrorConfig(FlextModelsConfig.InternalErrorConfig):
         """Internal error configuration model."""
 
+    class TypeErrorOptions(FlextModelsConfig.TypeErrorOptions):
+        """Options for TypeError initialization."""
+
     class TypeErrorConfig(FlextModelsConfig.TypeErrorConfig):
         """Type error configuration model."""
 

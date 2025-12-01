@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
-from flext_core._models.metadata import Metadata
+from flext_core._models.metadata import Metadata, MetadataAttributeValue
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
@@ -484,11 +484,11 @@ class FlextModelsConfig:
         Groups runtime scope configuration parameters.
         """
 
-        config_overrides: "Mapping[str, FlextTypes.FlexibleValue] | None" = Field(
+        config_overrides: Mapping[str, FlextTypes.FlexibleValue] | None = Field(
             default=None,
             description="Optional configuration overrides",
         )
-        context: "FlextProtocols.ContextProtocol | None" = Field(
+        context: FlextProtocols.ContextProtocol | None = Field(
             default=None,
             description="Optional context protocol instance",
         )
@@ -496,21 +496,21 @@ class FlextModelsConfig:
             default=None,
             description="Optional subproject name",
         )
-        services: "Mapping[str, FlextTypes.FlexibleValue] | None" = Field(
+        services: Mapping[str, FlextTypes.FlexibleValue] | None = Field(
             default=None,
             description="Optional container services mapping",
         )
-        factories: "Mapping[str, Callable[[], FlextTypes.FlexibleValue]] | None" = (
-            Field(
-                default=None,
-                description="Optional container factories mapping",
-            )
+        factories: Mapping[str, Callable[[], FlextTypes.FlexibleValue]] | None = Field(
+            default=None,
+            description="Optional container factories mapping",
         )
-        container_services: "Mapping[str, FlextTypes.FlexibleValue] | None" = Field(
+        container_services: Mapping[str, FlextTypes.FlexibleValue] | None = Field(
             default=None,
             description="Optional container services (alias for services)",
         )
-        container_factories: "Mapping[str, Callable[[], FlextTypes.FlexibleValue]] | None" = Field(
+        container_factories: (
+            Mapping[str, Callable[[], FlextTypes.FlexibleValue]] | None
+        ) = Field(
             default=None,
             description="Optional container factories (alias for factories)",
         )
@@ -522,7 +522,7 @@ class FlextModelsConfig:
         Groups nested execution configuration parameters.
         """
 
-        config_overrides: "Mapping[str, FlextTypes.FlexibleValue] | None" = Field(
+        config_overrides: Mapping[str, FlextTypes.FlexibleValue] | None = Field(
             default=None,
             description="Optional configuration overrides",
         )
@@ -538,11 +538,13 @@ class FlextModelsConfig:
             default=None,
             description="Optional correlation ID for tracing",
         )
-        container_services: "Mapping[str, FlextTypes.FlexibleValue] | None" = Field(
+        container_services: Mapping[str, FlextTypes.FlexibleValue] | None = Field(
             default=None,
             description="Optional container services mapping",
         )
-        container_factories: "Mapping[str, Callable[[], FlextTypes.FlexibleValue]] | None" = Field(
+        container_factories: (
+            Mapping[str, Callable[[], FlextTypes.FlexibleValue]] | None
+        ) = Field(
             default=None,
             description="Optional container factories mapping",
         )
