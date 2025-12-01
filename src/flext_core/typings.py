@@ -177,6 +177,9 @@ class FlextTypes:
     # Used in protocols for flexible input/output handling
     type FlexibleValue = ScalarValue | Sequence[ScalarValue] | Mapping[str, ScalarValue]
 
+    # Mapping of string keys to flexible values
+    FlexibleMapping = Mapping[str, FlexibleValue]
+
     # Constant value type - all possible constant types in FlextConstants
     # Used for type-safe constant access via __getitem__ method
     # Includes all types that can be stored as constants: primitives, collections,

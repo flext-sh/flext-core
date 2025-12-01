@@ -303,10 +303,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
             return FlextResult[ResultT].fail(validation.error or "Validation failed")
         return self.handle(message)
 
-    def validate(
+    def validate(  # noqa: PLR6301
         self,
         data: FlextTypes.Handler.AcceptableMessageType,
-    ) -> FlextResult[bool]:  # noqa: PLR6301
+    ) -> FlextResult[bool]:
         """Validate input data using extensible validation pipeline.
 
         Base validation method that can be overridden by subclasses to implement
@@ -331,6 +331,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
 
         Note: self is required for subclass override compatibility, even though
         this base implementation doesn't use instance state.
+
         """
         # Reject None values
         if data is None:

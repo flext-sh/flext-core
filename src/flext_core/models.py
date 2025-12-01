@@ -194,6 +194,12 @@ class FlextModels:
     ):
         """Options for execute dispatch attempt."""
 
+    class RuntimeScopeOptions(FlextModelsConfig.RuntimeScopeOptions):
+        """Options for runtime scope."""
+
+    class NestedExecutionOptions(FlextModelsConfig.NestedExecutionOptions):
+        """Options for nested execution."""
+
     class ExceptionConfig(FlextModelsConfig.ExceptionConfig):
         """Exception configuration model."""
 

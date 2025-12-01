@@ -17,6 +17,7 @@ from typing import Annotated, cast
 from pydantic import Field, computed_field
 
 from flext_core.constants import FlextConstants
+from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import FlextHandlers
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
@@ -172,7 +173,7 @@ class FlextRegistry(FlextMixins):
             """
             return not self.errors
 
-    def __init__(self, dispatcher: FlextProtocols.CommandBus | None = None) -> None:
+    def __init__(self, dispatcher: FlextDispatcher | None = None) -> None:
         """Initialize the registry with a CommandBus protocol instance.
 
         Args:
@@ -184,10 +185,7 @@ class FlextRegistry(FlextMixins):
         # Initialize service infrastructure (DI, Context, Logging, Metrics)
         self._init_service("flext_registry")
 
-        # Lazy import to break circular dependency
         if dispatcher is None:
-            from flext_core.dispatcher import FlextDispatcher  # noqa: PLC0415
-
             dispatcher = FlextDispatcher()
 
         # Enrich context with registry metadata for observability
@@ -198,9 +196,7 @@ class FlextRegistry(FlextMixins):
             idempotent_registration=True,
         )
 
-        # Cast dispatcher to protocol type for type safety
-        # FlextDispatcher implements CommandBus structurally
-        self._dispatcher = cast("FlextProtocols.CommandBus", dispatcher)
+        self._dispatcher: FlextDispatcher = dispatcher
         self._registered_keys: set[str] = set()
 
     @staticmethod

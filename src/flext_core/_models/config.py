@@ -21,6 +21,7 @@ from flext_core._models.metadata import Metadata
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
@@ -474,6 +475,76 @@ class FlextModelsConfig:
         )
         operation_id: str = Field(
             description="Operation ID for timeout tracking",
+        )
+
+    class RuntimeScopeOptions(FlextModelsCollections.Config):
+        """Options for runtime_scope (Pydantic v2).
+
+        Reduces parameter count from 7 to 2 params (self, options).
+        Groups runtime scope configuration parameters.
+        """
+
+        config_overrides: "Mapping[str, FlextTypes.FlexibleValue] | None" = Field(
+            default=None,
+            description="Optional configuration overrides",
+        )
+        context: "FlextProtocols.ContextProtocol | None" = Field(
+            default=None,
+            description="Optional context protocol instance",
+        )
+        subproject: str | None = Field(
+            default=None,
+            description="Optional subproject name",
+        )
+        services: "Mapping[str, FlextTypes.FlexibleValue] | None" = Field(
+            default=None,
+            description="Optional container services mapping",
+        )
+        factories: "Mapping[str, Callable[[], FlextTypes.FlexibleValue]] | None" = (
+            Field(
+                default=None,
+                description="Optional container factories mapping",
+            )
+        )
+        container_services: "Mapping[str, FlextTypes.FlexibleValue] | None" = Field(
+            default=None,
+            description="Optional container services (alias for services)",
+        )
+        container_factories: "Mapping[str, Callable[[], FlextTypes.FlexibleValue]] | None" = Field(
+            default=None,
+            description="Optional container factories (alias for factories)",
+        )
+
+    class NestedExecutionOptions(FlextModelsCollections.Config):
+        """Options for nested_execution (Pydantic v2).
+
+        Reduces parameter count from 6 to 2 params (self, options).
+        Groups nested execution configuration parameters.
+        """
+
+        config_overrides: "Mapping[str, FlextTypes.FlexibleValue] | None" = Field(
+            default=None,
+            description="Optional configuration overrides",
+        )
+        service_name: str | None = Field(
+            default=None,
+            description="Optional service name",
+        )
+        version: str | None = Field(
+            default=None,
+            description="Optional version string",
+        )
+        correlation_id: str | None = Field(
+            default=None,
+            description="Optional correlation ID for tracing",
+        )
+        container_services: "Mapping[str, FlextTypes.FlexibleValue] | None" = Field(
+            default=None,
+            description="Optional container services mapping",
+        )
+        container_factories: "Mapping[str, Callable[[], FlextTypes.FlexibleValue]] | None" = Field(
+            default=None,
+            description="Optional container factories mapping",
         )
 
     class ExceptionConfig(FlextModelsCollections.Config):

@@ -269,18 +269,31 @@ class FlextMixins:
         try:
             # Get container from mixin property (works for both BaseModel and non-BaseModel)
             container = self.container
-            # Cast self to BaseModel for container registration
+            # Type narrowing: container is ContainerProtocol, but implementation accepts BaseModel
+            # Cast container to FlextContainer to access implementation that accepts BaseModel
+
+            container_impl = cast("FlextContainer", container)
             # FlextMixins is used as a mixin, so we need to check if it's a BaseModel
             if isinstance(self, BaseModel):
-                container.with_service(service_name, self)
+                # FlextContainer.with_service accepts BaseModel (more permissive than protocol)
+                container_impl.with_service(service_name, self)
             else:
                 # For non-BaseModel mixins, use register_factory with cast
-                def _factory() -> FlextTypes.GeneralValueType:
-                    return cast("FlextTypes.GeneralValueType", self)
+                def _factory() -> FlextTypes.FlexibleValue:
+                    # Convert to FlexibleValue via model_dump if BaseModel, otherwise cast
+                    if isinstance(self, BaseModel):
+                        dumped = self.model_dump()
+                        # Type narrowing: model_dump returns dict, which is Mapping[str, ScalarValue]
+                        return cast("FlextTypes.FlexibleValue", dumped)
+                    return cast("FlextTypes.FlexibleValue", self)
 
-                result = container.register_factory(service_name, _factory)
-                if result.is_failure:
-                    return result
+                result_raw = container_impl.register_factory(service_name, _factory)
+                # Convert ResultProtocol to FlextResult
+                if hasattr(result_raw, "is_failure") and result_raw.is_failure:
+                    error_msg = getattr(
+                        result_raw, "error", "Factory registration failed"
+                    )
+                    return FlextResult[bool].fail(str(error_msg))
             return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             # If already registered, return success (for test compatibility)
@@ -467,17 +480,16 @@ class FlextMixins:
                 if k not in debug_keys and k not in error_keys
             }
 
-            # Bind with appropriate levels - convert object to GeneralValueType
+            # Bind context using bind_global_context - no level-specific binding available
+            # Combine all context data for global binding
+            all_context_data: dict[str, FlextTypes.GeneralValueType] = {}
+            all_context_data.update(normal_data)
             if debug_data:
-                FlextLogger.bind_context_for_level(
-                    "DEBUG",
-                    **debug_data,
-                )
+                all_context_data.update(debug_data)
             if error_data:
-                FlextLogger.bind_context_for_level(
-                    "ERROR",
-                    **error_data,
-                )
+                all_context_data.update(error_data)
+            if all_context_data:
+                FlextLogger.bind_global_context(**all_context_data)
             if normal_data:
                 FlextLogger.bind_operation_context(**normal_data)
 

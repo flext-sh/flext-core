@@ -71,7 +71,7 @@ def _create_dict_proxy(
     )
 
 
-class FlextContext:  # noqa: PLR0904 - Context manager requires comprehensive interface
+class FlextContext:
     """Context manager for correlation, request data, and timing metadata.
 
     The dispatcher and decorators rely on FlextContext to move correlation IDs,
@@ -537,16 +537,23 @@ class FlextContext:  # noqa: PLR0904 - Context manager requires comprehensive in
 
         if isinstance(other, FlextContext):
             # Merge all scopes from the other context
-            other_scopes = other.get_all_scopes()
-            for scope_name, scope_data in other_scopes.items():
-                # Merge into contextvar
-                ctx_var = self._get_or_create_scope_var(scope_name)
-                current_dict = FlextUtilities.Generators.ensure_dict(
-                    ctx_var.get(),
+            # Iterate through all scope variables in other context
+            for scope_name, other_ctx_var in other._scope_vars.items():
+                # Get scope data from other context
+                other_scope_dict = FlextUtilities.Generators.ensure_dict(
+                    other_ctx_var.get(),
                     default={},
                 )
-                scope_dict = FlextUtilities.Generators.ensure_dict(scope_data)
-                ctx_var.set({**current_dict, **scope_dict})
+                if other_scope_dict:
+                    # Merge into this context's scope
+                    ctx_var = self._get_or_create_scope_var(scope_name)
+                    current_dict = FlextUtilities.Generators.ensure_dict(
+                        ctx_var.get(),
+                        default={},
+                    )
+                    # Merge scope_data into current_dict
+                    current_dict.update(other_scope_dict)
+                    ctx_var.set(current_dict)
 
                 # DELEGATION: Propagate global scope to FlextLogger
                 if scope_name == FlextConstants.Context.SCOPE_GLOBAL:
@@ -774,41 +781,20 @@ class FlextContext:  # noqa: PLR0904 - Context manager requires comprehensive in
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
 
         """
-        export_snapshot = self.export_snapshot()
-        return export_snapshot.data
+        all_data: dict[str, FlextTypes.GeneralValueType] = {}
+        for ctx_var in self._scope_vars.values():
+            scope_dict = FlextUtilities.Generators.ensure_dict(
+                ctx_var.get(),
+                default={},
+            )
+            all_data.update(scope_dict)
+        return all_data
 
     # =========================================================================
     # Container integration for dependency injection
     # =========================================================================
 
     _container: FlextProtocols.ContainerProtocol | None = None
-
-    @classmethod
-    def get_container(cls) -> FlextProtocols.ContainerProtocol:
-        """Get global container with lazy initialization.
-
-        Returns:
-            Global FlextContainer instance for dependency injection
-
-        Example:
-            >>> container = FlextContext.get_container()
-            >>> container.with_service("my_service", MyService())
-            >>> service_result = container.get("my_service")
-
-        """
-        if cls._container is None:
-            # ARCHITECTURAL NOTE: Lazy import breaks container↔context cycle
-            # FlextContainer uses FlextProtocols.ContextProtocol for types
-            from flext_core.container import FlextContainer  # noqa: PLC0415
-
-            # FlextContainer implements ContainerProtocol structurally - cast for type checker
-            cls._container = cast("FlextProtocols.ContainerProtocol", FlextContainer())
-        # Type narrowing: _container is guaranteed non-None after assignment above
-        # Use explicit check instead of assert (S101)
-        if cls._container is None:
-            msg = "Container initialization failed unexpectedly"
-            raise RuntimeError(msg)
-        return cls._container
 
     # ==========================================================================
     # Variables - Context Variables using structlog as Single Source of Truth
@@ -1061,7 +1047,8 @@ class FlextContext:  # noqa: PLR0904 - Context manager requires comprehensive in
                 ...     logger.info("Service retrieved")
 
             """
-            container = FlextContext.get_container()
+            # get_container is a classmethod, call it correctly
+            container = cls.get_container()
             # Protocol returns ResultProtocol[T], cast to concrete FlextResult type
             result: FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType] = (
                 container.get(service_name)
@@ -1094,7 +1081,8 @@ class FlextContext:  # noqa: PLR0904 - Context manager requires comprehensive in
                 ...     print(f"Registration failed: {result.error}")
 
             """
-            container = FlextContext.get_container()
+            # get_container is a classmethod, call it correctly
+            container = cls.get_container()
             try:
                 # Cast service to FlexibleValue for protocol compatibility
                 # FlextContainer.with_service accepts GeneralValueType internally
