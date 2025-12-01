@@ -200,7 +200,7 @@ class FlextTestDocker:
             self._save_dirty_state()
             self.logger.info(
                 "Container marked as clean",
-                extra={"container": container_name},
+                container=container_name,
             )
 
         return FlextTestsUtilities.DockerHelpers.execute_docker_operation(
