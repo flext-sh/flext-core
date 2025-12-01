@@ -41,6 +41,7 @@ class CircuitBreakerManager:
             success_threshold: Successes needed to close from half-open
 
         """
+        super().__init__()
         self._failures: dict[str, int] = {}
         self._states: dict[str, str] = {}
         self._opened_at: dict[str, float] = {}
@@ -241,9 +242,10 @@ class RateLimiterManager:
         Args:
             max_requests: Maximum requests allowed per window
             window_seconds: Time window in seconds for rate limiting
-            jitter_factor: Jitter variance as fraction (0.1 = ±10%)
+            jitter_factor: Jitter variance as fraction (0.1 = +/-10%)
 
         """
+        super().__init__()
         self._max_requests = max_requests
         self._window_seconds = window_seconds
         self._jitter_factor = max(0.0, min(jitter_factor, 1.0))
@@ -310,6 +312,7 @@ class RetryPolicy:
             retry_delay: Base delay in seconds between retry attempts
 
         """
+        super().__init__()
         self._max_attempts = max(max_attempts, 1)
         self._base_delay = max(retry_delay, 0.0)
         self._attempts: dict[str, int] = {}
@@ -359,7 +362,7 @@ class RetryPolicy:
 
     def reset(self, message_type: str) -> None:
         """Reset attempt tracking for a message type."""
-        self._attempts.pop(message_type, None)
+        _ = self._attempts.pop(message_type, None)
 
     def cleanup(self) -> None:
         """Clear all attempt tracking."""

@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict
-from typing import TypeVar
+from typing import TypeVar, cast, get_origin
 
 import pytest
 
@@ -108,7 +108,7 @@ class GenericHandler[TMessage]:
 pytestmark = [pytest.mark.unit, pytest.mark.coverage]
 
 
-class TestFlextUtilitiesTypeChecker:
+class TestFlextUtilitiesTypeChecker:  # noqa: PLR0904
     """Comprehensive tests for FlextUtilitiesTypeChecker."""
 
     def test_compute_accepted_message_types_from_generic(self) -> None:
@@ -136,8 +136,6 @@ class TestFlextUtilitiesTypeChecker:
 
     def test_compute_accepted_message_types_dict_handler(self) -> None:
         """Test compute_accepted_message_types with dict handler."""
-        from typing import get_origin
-
         types = FlextUtilitiesTypeChecker.compute_accepted_message_types(DictHandler)
         assert len(types) == 1
         # Check that it's a dict type (may be dict or dict[str, GeneralValueType])
@@ -161,14 +159,19 @@ class TestFlextUtilitiesTypeChecker:
 
     def test_can_handle_message_type_object_accepts_all(self) -> None:
         """Test can_handle_message_type with object type (universal)."""
-        accepted = (object,)
+        accepted: tuple[FlextTypes.Utility.MessageTypeSpecifier, ...] = (
+            cast("FlextTypes.Utility.MessageTypeSpecifier", object),  # type: ignore[arg-type]  # object is compatible with MessageTypeSpecifier at runtime
+        )
         assert FlextUtilitiesTypeChecker.can_handle_message_type(accepted, str) is True
         assert FlextUtilitiesTypeChecker.can_handle_message_type(accepted, int) is True
         assert FlextUtilitiesTypeChecker.can_handle_message_type(accepted, dict) is True
 
     def test_can_handle_message_type_dict_compatibility(self) -> None:
         """Test can_handle_message_type with dict type compatibility."""
-        accepted = (dict,)
+        accepted: tuple[FlextTypes.Utility.MessageTypeSpecifier, ...] = (
+            cast("FlextTypes.Utility.MessageTypeSpecifier", dict),  # type: ignore[arg-type]  # dict type is compatible with MessageTypeSpecifier
+        )
+        assert FlextUtilitiesTypeChecker.can_handle_message_type(accepted, str) is False
         assert FlextUtilitiesTypeChecker.can_handle_message_type(accepted, dict) is True
         # dict[str, GeneralValueType] should be compatible with dict
         dict_type: type[dict[str, FlextTypes.GeneralValueType]] = dict
@@ -184,7 +187,11 @@ class TestFlextUtilitiesTypeChecker:
 
     def test_can_handle_message_type_multiple_accepted(self) -> None:
         """Test can_handle_message_type with multiple accepted types."""
-        accepted = (str, int, dict)
+        accepted: tuple[FlextTypes.Utility.MessageTypeSpecifier, ...] = (
+            cast("FlextTypes.Utility.MessageTypeSpecifier", str),
+            cast("FlextTypes.Utility.MessageTypeSpecifier", int),
+            cast("FlextTypes.Utility.MessageTypeSpecifier", dict),
+        )  # type: ignore[arg-type]  # Built-in types are compatible with MessageTypeSpecifier
         assert FlextUtilitiesTypeChecker.can_handle_message_type(accepted, str) is True
         assert FlextUtilitiesTypeChecker.can_handle_message_type(accepted, int) is True
         assert FlextUtilitiesTypeChecker.can_handle_message_type(accepted, dict) is True
@@ -331,14 +338,18 @@ class TestFlextUtilitiesTypeChecker:
             """Test function."""
             return str(x)
 
-        signature = FlextUtilitiesTypeChecker._get_method_signature(test_func)
+        signature = FlextUtilitiesTypeChecker._get_method_signature(
+            cast("FlextTypes.HandlerAliases.HandlerCallable", test_func)
+        )
         assert signature is not None
         assert len(signature.parameters) == 1
         assert "x" in signature.parameters
 
     def test_get_method_signature_non_callable(self) -> None:
         """Test _get_method_signature with non-callable."""
-        signature = FlextUtilitiesTypeChecker._get_method_signature("not callable")
+        signature = FlextUtilitiesTypeChecker._get_method_signature(
+            cast("FlextTypes.HandlerAliases.HandlerCallable", "not callable")
+        )
         assert signature is None
 
     def test_get_type_hints_safe_valid_method(self) -> None:
@@ -352,7 +363,8 @@ class TestFlextUtilitiesTypeChecker:
                 return message
 
         hints = FlextUtilitiesTypeChecker._get_type_hints_safe(
-            TestClass.handle, TestClass
+            cast("FlextTypes.HandlerAliases.HandlerCallable", TestClass.handle),
+            TestClass,
         )
         assert "message" in hints
         assert hints["message"] is str
@@ -363,20 +375,19 @@ class TestFlextUtilitiesTypeChecker:
         class TestClass:
             """Test class."""
 
-            def handle(self, message):  # type: ignore[no-untyped-def]
+            def handle(self, message: str) -> str:
                 """Handle message."""
                 return message
 
         hints = FlextUtilitiesTypeChecker._get_type_hints_safe(
-            TestClass.handle, TestClass
+            cast("FlextTypes.HandlerAliases.HandlerCallable", TestClass.handle),
+            TestClass,
         )
         # Should return empty dict or handle gracefully
         assert isinstance(hints, dict)
 
     def test_handle_type_or_origin_check_with_origin(self) -> None:
         """Test _handle_type_or_origin_check with __origin__ attribute."""
-        from typing import get_origin
-
         dict_type: type[dict[str, str]] = dict[str, str]
         origin = get_origin(dict_type) or dict_type
 

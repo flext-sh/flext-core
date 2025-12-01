@@ -17,8 +17,9 @@ import time
 from collections.abc import Callable
 
 from flext_core.constants import FlextConstants
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime, StructlogLogger
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
 
@@ -26,7 +27,7 @@ class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
 
     @property
-    def logger(self) -> StructlogLogger:
+    def logger(self) -> FlextProtocols.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).

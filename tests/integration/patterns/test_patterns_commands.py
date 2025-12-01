@@ -277,10 +277,12 @@ class TestFlextCommand:
         command = CreateUserCommand(username="test_user", email="test@example.com")
         payload = command.get_payload()
 
-        if payload["username"] != "test_user":
-            msg = f"Expected {'test_user'}, got {payload['username']}"
+        # UserPayloadDict has total=False, so use .get() for optional fields
+        username = payload.get("username")
+        if username != "test_user":
+            msg = f"Expected {'test_user'}, got {username}"
             raise AssertionError(msg)
-        assert payload["email"] == "test@example.com"
+        assert payload.get("email") == "test@example.com"
 
     def test_validate_command_success(self) -> None:
         """Test successful command validation."""

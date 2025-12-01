@@ -14,20 +14,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable
 from datetime import UTC, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
+from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes
 
-# TIER 0 CONSTANTS - Inline to avoid importing from flext_core
-_DEFAULT_VERSION = 1
-_MIN_VERSION = 1
-
-# Type aliases for conditional execution callables (PEP 695)
-type ConditionCallable = Callable[[FlextTypes.GeneralValueType], bool]
-type ActionCallable = Callable[..., FlextTypes.GeneralValueType]
+# NOTE: Use FlextConstants.Performance constants directly - no inline constants per FLEXT standards
 
 
 class FlextModelsBase:
@@ -123,15 +117,15 @@ class FlextModelsBase:
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
         version: int = Field(
-            default=_DEFAULT_VERSION,
-            ge=_MIN_VERSION,
+            default=FlextConstants.Performance.DEFAULT_VERSION,
+            ge=FlextConstants.Performance.MIN_VERSION,
             description="Version number for optimistic locking",
         )
 
         @computed_field
         def is_initial_version(self) -> bool:
             """Check if this is the initial version (version 1)."""
-            return self.version == _DEFAULT_VERSION
+            return self.version == FlextConstants.Performance.DEFAULT_VERSION
 
         def increment_version(self) -> None:
             """Increment the version number for optimistic locking."""
@@ -139,6 +133,44 @@ class FlextModelsBase:
 
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
         """Model with timestamp fields."""
+
+    class Metadata(BaseModel):
+        """Immutable metadata model - zero-dependency foundation.
+
+        This is the SINGLE source of truth for metadata across the entire FLEXT ecosystem.
+        All other modules import from here, creating a clear dependency hierarchy.
+        """
+
+        model_config = ConfigDict(
+            frozen=True,
+            validate_assignment=True,
+            extra="forbid",
+        )
+
+        created_by: str | None = Field(
+            default=None,
+            description="User/service that created this metadata",
+        )
+        created_at: datetime = Field(
+            default_factory=lambda: datetime.now(UTC),
+            description="UTC timestamp of creation",
+        )
+        modified_by: str | None = Field(
+            default=None,
+            description="User/service that last modified this metadata",
+        )
+        modified_at: datetime | None = Field(
+            default=None,
+            description="UTC timestamp of last modification",
+        )
+        tags: list[str] = Field(
+            default_factory=list,
+            description="Tags for categorization and filtering",
+        )
+        attributes: dict[str, FlextTypes.MetadataAttributeValue] = Field(
+            default_factory=dict,
+            description="Additional metadata attributes (JSON-serializable)",
+        )
 
 
 __all__ = ["FlextModelsBase"]

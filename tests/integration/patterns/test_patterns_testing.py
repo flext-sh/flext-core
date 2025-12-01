@@ -23,6 +23,8 @@ from typing import ParamSpec, TypeVar, cast
 import pytest
 from hypothesis import given, settings, strategies as st
 
+from flext_core.typings import FlextTypes
+
 from ...fixtures.typing import (
     FixtureCaseDict,
     FixtureDataDict,
@@ -41,8 +43,9 @@ def mark_test_pattern(
     """Mark test with a specific pattern for demonstration purposes."""
 
     def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
-        # Use setattr for dynamic attribute setting
-        func._test_pattern = pattern
+        # Use setattr for dynamic attribute setting to avoid type checker issues
+        # Type ignore needed because Callable doesn't have _test_pattern attribute
+        func._test_pattern = pattern  # type: ignore[attr-defined]
         return func
 
     return decorator
@@ -77,23 +80,29 @@ class GivenWhenThenBuilder:
         """Initialize Given-When-Then builder with test name."""
         super().__init__()
         self.name = name
-        self._given: dict[str, object] = {}
-        self._when: dict[str, object] = {}
-        self._then: dict[str, object] = {}
+        self._given: dict[str, FlextTypes.GeneralValueType] = {}
+        self._when: dict[str, FlextTypes.GeneralValueType] = {}
+        self._then: dict[str, FlextTypes.GeneralValueType] = {}
         self._tags: list[str] = []
         self._priority = "normal"
 
-    def given(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+    def given(
+        self, _description: str, **kwargs: FlextTypes.GeneralValueType
+    ) -> GivenWhenThenBuilder:
         """Add given conditions to the test scenario."""
         self._given.update(kwargs)
         return self
 
-    def when(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+    def when(
+        self, _description: str, **kwargs: FlextTypes.GeneralValueType
+    ) -> GivenWhenThenBuilder:
         """Add when actions to the test scenario."""
         self._when.update(kwargs)
         return self
 
-    def then(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+    def then(
+        self, _description: str, **kwargs: FlextTypes.GeneralValueType
+    ) -> GivenWhenThenBuilder:
         """Add then expectations to the test scenario."""
         self._then.update(kwargs)
         return self
@@ -131,7 +140,7 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize test data builder with empty data."""
         super().__init__()
-        self._data: dict[str, object] = {}
+        self._data: dict[str, FlextTypes.GeneralValueType] = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """Add ID to the test data."""
@@ -143,7 +152,7 @@ class FlextTestBuilder:
         self._data["correlation_id"] = correlation_id
         return self
 
-    def with_metadata(self, **kwargs: object) -> FlextTestBuilder:
+    def with_metadata(self, **kwargs: FlextTypes.GeneralValueType) -> FlextTestBuilder:
         """Add metadata to the test data."""
         self._data.update(kwargs)
         return self
@@ -156,8 +165,8 @@ class FlextTestBuilder:
 
     def with_timestamp(self) -> FlextTestBuilder:
         """Add timestamp fields to the test data."""
-        self._data.setdefault("created_at", "2023-01-01T00:00:00+00:00")
-        self._data.setdefault("updated_at", "2023-01-01T00:00:00+00:00")
+        _ = self._data.setdefault("created_at", "2023-01-01T00:00:00+00:00")
+        _ = self._data.setdefault("updated_at", "2023-01-01T00:00:00+00:00")
         return self
 
     def with_validation_rules(self) -> FlextTestBuilder:
@@ -270,7 +279,7 @@ class SuiteBuilder:
         super().__init__()
         self.name = name
         self._scenarios: list[object] = []
-        self._setup_data: dict[str, object] = {}
+        self._setup_data: dict[str, FlextTypes.GeneralValueType] = {}
         self._tags: list[str] = []
 
     def add_scenarios(self, scenarios: list[object]) -> SuiteBuilder:
@@ -278,7 +287,7 @@ class SuiteBuilder:
         self._scenarios.extend(scenarios)
         return self
 
-    def with_setup_data(self, **kwargs: object) -> SuiteBuilder:
+    def with_setup_data(self, **kwargs: FlextTypes.GeneralValueType) -> SuiteBuilder:
         """Add setup data to the test suite."""
         self._setup_data.update(kwargs)
         return self
@@ -307,16 +316,16 @@ class FixtureBuilder:
     def __init__(self) -> None:
         """Initialize test fixture builder with empty fixtures."""
         super().__init__()
-        self._fixtures: dict[str, object] = {}
+        self._fixtures: dict[str, FlextTypes.GeneralValueType] = {}
         self._setups: list[object] = []
         self._teardowns: list[object] = []
 
-    def with_user(self, **kwargs: object) -> FixtureBuilder:
+    def with_user(self, **kwargs: FlextTypes.GeneralValueType) -> FixtureBuilder:
         """Add user fixture data."""
         self._fixtures["user"] = kwargs
         return self
 
-    def with_request(self, **kwargs: object) -> FixtureBuilder:
+    def with_request(self, **kwargs: FlextTypes.GeneralValueType) -> FixtureBuilder:
         """Add request fixture data."""
         self._fixtures["request"] = kwargs
         return self
@@ -335,25 +344,29 @@ class FixtureBuilder:
         self._teardowns.append(func)
         return self
 
-    def add_fixture(self, key: str, value: object) -> FixtureBuilder:
+    def add_fixture(
+        self, key: str, value: FlextTypes.GeneralValueType
+    ) -> FixtureBuilder:
         """Add a custom fixture with the given key and value."""
         self._fixtures[key] = value
         return self
 
-    def setup_context(self) -> Callable[[], ContextManager[dict[str, object]]]:
+    def setup_context(
+        self,
+    ) -> Callable[[], ContextManager[dict[str, FlextTypes.GeneralValueType]]]:
         """Create a context manager for test setup and teardown."""
 
         @contextmanager
-        def _ctx() -> Iterator[dict[str, object]]:
+        def _ctx() -> Iterator[dict[str, FlextTypes.GeneralValueType]]:
             for f in self._setups:
                 if callable(f):
-                    f()
+                    _ = f()
             try:
                 yield self._fixtures
             finally:
                 for f in self._teardowns:
                     if callable(f):
-                        f()
+                        _ = f()
 
         return _ctx
 
@@ -500,7 +513,7 @@ class TestPerformanceAnalysis:
         iterations = 0
 
         while time.perf_counter() - start_time < duration_target:
-            memory_operation()
+            _ = memory_operation()
             iterations += 1
 
         actual_duration = time.perf_counter() - start_time
@@ -515,7 +528,7 @@ class TestPerformanceAnalysis:
     def test_memory_profiling_advanced(self) -> None:
         """Demonstrate advanced memory profiling."""
         # Simple memory profiling without external library
-        gc.collect()  # Clean up before measurement
+        _ = gc.collect()  # Clean up before measurement
 
         # Create and manipulate large data structures
         large_list = list(range(10000))
@@ -570,10 +583,10 @@ class TestAdvancedPatterns:
 
         data = builder.build()
 
-        assert data["id"] == "test_123"
-        assert data["correlation_id"] == "corr_456"
-        assert data["name"] == "John Doe"
-        assert data["email"] == "john@example.com"
+        assert data.get("id") == "test_123"
+        assert data.get("correlation_id") == "corr_456"
+        assert data.get("name") == "John Doe"
+        assert data.get("email") == "john@example.com"
         assert "created_at" in data
         assert "updated_at" in data
 
@@ -582,14 +595,14 @@ class TestAdvancedPatterns:
         param_builder = ParameterizedTestBuilder("email_validation")
 
         # Add various test cases
-        param_builder.add_success_cases(
+        _ = param_builder.add_success_cases(
             [
                 {"email": "test@example.com", "input": "valid_email_1"},
                 {"email": "user@domain.org", "input": "valid_email_2"},
             ],
         )
 
-        param_builder.add_failure_cases(
+        _ = param_builder.add_failure_cases(
             [
                 {"email": "invalid-email", "input": "invalid_email_1"},
                 {"email": "@domain.com", "input": "invalid_email_2"},
@@ -629,13 +642,15 @@ class TestAdvancedPatterns:
     def test_arrange_act_assert_decorator(self) -> None:
         """Demonstrate Arrange-Act-Assert pattern decorator."""
 
-        def arrange_data(*_args: object) -> dict[str, object]:
+        def arrange_data(*_args: object) -> dict[str, FlextTypes.GeneralValueType]:
             return {"numbers": [1, 2, 3, 4, 5]}
 
-        def act_on_data(data: dict[str, object]) -> int:
+        def act_on_data(data: dict[str, FlextTypes.GeneralValueType]) -> int:
             return sum(cast("list[int]", data["numbers"]))
 
-        def assert_result(result: int, original_data: dict[str, object]) -> None:
+        def assert_result(
+            result: int, original_data: dict[str, FlextTypes.GeneralValueType]
+        ) -> None:
             assert result == 15
             assert len(cast("list[int]", original_data["numbers"])) == 5
 
@@ -722,14 +737,14 @@ class TestRealWorldScenarios:
         def teardown_api_environment() -> None:
             pass  # Cleanup
 
-        fixture_builder.add_setup(setup_api_environment)
-        fixture_builder.add_teardown(teardown_api_environment)
-        fixture_builder.add_fixture("api_base_url", "https://api.test.com")
-        fixture_builder.add_fixture("timeout", 30)
+        _ = fixture_builder.add_setup(setup_api_environment)
+        _ = fixture_builder.add_teardown(teardown_api_environment)
+        _ = fixture_builder.add_fixture("api_base_url", "https://api.test.com")
+        _ = fixture_builder.add_fixture("timeout", 30)
 
         with fixture_builder.setup_context()():
             # Use a fixed test request instead of Hypothesis example
-            test_request: dict[str, object] = {
+            test_request: dict[str, FlextTypes.GeneralValueType] = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",
@@ -739,8 +754,8 @@ class TestRealWorldScenarios:
 
             # Simulate API processing
             def process_api_request(
-                request: dict[str, object],
-            ) -> dict[str, object]:
+                request: dict[str, FlextTypes.GeneralValueType],
+            ) -> dict[str, FlextTypes.GeneralValueType]:
                 return {
                     "status": "success",
                     "method": request["method"],
@@ -808,7 +823,7 @@ class TestRealWorldScenarios:
     @settings()
     def test_configuration_validation_comprehensive(
         self,
-        config: dict[str, object],
+        config: dict[str, FlextTypes.GeneralValueType],
     ) -> None:
         """Comprehensive configuration validation testing."""
         # Validate configuration structure

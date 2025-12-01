@@ -30,6 +30,7 @@ from typing import ClassVar
 import pytest
 
 from flext_core import FlextContext, FlextModels
+from flext_core.typings import FlextTypes
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,7 +88,16 @@ class ContextTestHelpers:
     def create_test_context(**initial_data: object) -> FlextContext:
         """Create test context with optional initial data."""
         if initial_data:
-            context_data = FlextModels.ContextData(data=initial_data)
+            # Convert object values to GeneralValueType for type safety
+            converted_data: dict[str, FlextTypes.GeneralValueType] = {}
+            for key, value in initial_data.items():
+                # Type narrowing: ensure value is GeneralValueType compatible
+                if isinstance(value, (str, int, float, bool, type(None), list, dict)):
+                    converted_data[str(key)] = value
+                else:
+                    # Convert non-compatible types to string
+                    converted_data[str(key)] = str(value)
+            context_data = FlextModels.ContextData(data=converted_data)
             return FlextContext(context_data)
         return FlextContext()
 
@@ -109,7 +119,7 @@ class ContextTestHelpers:
         assert result.is_failure
 
 
-class TestFlextContext:
+class TestFlextContext:  # noqa: PLR0904
     """Test suite for FlextContext using FlextTestsUtilities and FlextConstants."""
 
     def test_context_initialization(self) -> None:
@@ -140,7 +150,12 @@ class TestFlextContext:
     ) -> None:
         """Test context set/get value operations."""
         context = ContextTestHelpers.create_test_context()
-        set_result = context.set(key, value)
+        # Type narrowing: value must be GeneralValueType compatible
+        converted_value: FlextTypes.GeneralValueType = (
+            value if isinstance(value, (str, int, float, bool, type(None), list, dict))
+            else str(value)
+        )
+        set_result = context.set(key, converted_value)
         assert set_result.is_success
         ContextTestHelpers.assert_context_get_success(context, key, expected)
 
@@ -149,7 +164,13 @@ class TestFlextContext:
         context = ContextTestHelpers.create_test_context()
         result = context.get("nonexistent_key")
         assert result.is_failure
-        assert result.unwrap_or("default_value") == "default_value"
+        # unwrap_or exists on FlextResult, type narrowing ensures it's available
+        default_value = "default_value"
+        # Type narrowing: context.get() returns FlextResult[GeneralValueType]
+        # FlextResult has unwrap_or method
+        # pyright: ignore[reportAttributeAccessIssue] - unwrap_or exists on FlextResult
+        value = result.unwrap_or(default_value)  # type: ignore[attr-defined]
+        assert value == default_value
 
     def test_context_has_value(self) -> None:
         """Test context has value check."""
@@ -190,7 +211,8 @@ class TestFlextContext:
     def test_context_nested_data(self) -> None:
         """Test context with nested data structures."""
         context = ContextTestHelpers.create_test_context()
-        nested_data = {
+        # Type narrowing: nested_data must be GeneralValueType compatible
+        nested_data: dict[str, FlextTypes.GeneralValueType] = {
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
@@ -201,7 +223,16 @@ class TestFlextContext:
         assert result.is_success
         retrieved = result.value
         assert isinstance(retrieved, dict)
-        assert retrieved["user"]["profile"]["name"] == "John Doe"
+        # Type narrowing: retrieved is dict after isinstance check
+        # pyright needs explicit type narrowing for nested dict access
+        retrieved_dict: dict[str, FlextTypes.GeneralValueType] = retrieved  # type: ignore[assignment]
+        user_data = retrieved_dict.get("user")
+        assert isinstance(user_data, dict)
+        user_dict: dict[str, FlextTypes.GeneralValueType] = user_data  # type: ignore[assignment]
+        profile_data = user_dict.get("profile")
+        assert isinstance(profile_data, dict)
+        profile_dict: dict[str, FlextTypes.GeneralValueType] = profile_data  # type: ignore[assignment]
+        assert profile_dict.get("name") == "John Doe"
 
     def test_context_merge(self) -> None:
         """Test context merging."""
@@ -317,22 +348,23 @@ class TestFlextContext:
         """Test context lifecycle management."""
         context = ContextTestHelpers.create_test_context()
         assert context.is_active() is True
-        context.suspend()
-        context.resume()
+        context._suspend()
+        context._resume()
         assert context.is_active() is True
-        context.destroy()
+        context._destroy()
 
     def test_context_hooks(self) -> None:
         """Test context hooks."""
         context = ContextTestHelpers.create_test_context()
         hook_called = False
 
-        def test_hook(_arg: object) -> object:
+        # HandlerCallable = Callable[[GeneralValueType], GeneralValueType]
+        def test_hook(_arg: FlextTypes.GeneralValueType) -> FlextTypes.GeneralValueType:
             nonlocal hook_called
             hook_called = True
             return _arg
 
-        context.add_hook("set", test_hook)
+        context._add_hook("set", test_hook)
         context.set("test_key", "test_value").unwrap()
         assert hook_called is True
 
@@ -344,7 +376,7 @@ class TestFlextContext:
         created_at_result = context.get_metadata("created_at")
         assert created_at_result.is_success
         assert created_at_result.value == "2025-01-01"
-        metadata = context.get_all_metadata()
+        metadata = context._get_all_metadata()
         assert "created_at" in metadata and "version" in metadata
 
     def test_context_statistics(self) -> None:
@@ -355,7 +387,7 @@ class TestFlextContext:
         context.get("key1")
         context.get("key2")
         context.remove("key1")
-        stats = context.get_statistics()
+        stats = context._get_statistics()
         assert stats is not None
         assert isinstance(stats, FlextModels.ContextStatistics)
 
@@ -365,7 +397,7 @@ class TestFlextContext:
         context.set("key1", "value1").unwrap()
         context.set("key2", "value2").unwrap()
         assert all(context.has(k) for k in ["key1", "key2"])
-        context.cleanup()
+        context._cleanup()
         assert not any(context.has(k) for k in ["key1", "key2"])
 
     def test_context_export_import(self) -> None:
@@ -374,9 +406,20 @@ class TestFlextContext:
         context.set("key1", "value1").unwrap()
         context.set("key2", "value2").unwrap()
         exported = context.export()
-        assert isinstance(exported, dict) and "key1" in exported
+        # export() returns {scope: {key: value}} structure
+        assert isinstance(exported, dict)
+        assert "global" in exported
+        global_data = exported.get("global")
         new_context = FlextContext()
-        new_context.import_data(exported)
+        if global_data is not None and isinstance(global_data, dict):
+            # Convert dict[str, object] to dict[str, GeneralValueType]
+            converted_global: dict[str, FlextTypes.GeneralValueType] = {
+                str(k): v if isinstance(v, (str, int, float, bool, type(None), list, dict)) else str(v)
+                for k, v in global_data.items()
+            }
+            assert "key1" in converted_global
+            # Pass global scope data to _import_data
+            new_context._import_data(converted_global)
         ContextTestHelpers.assert_context_get_success(new_context, "key1", "value1")
         ContextTestHelpers.assert_context_get_success(new_context, "key2", "value2")
 
@@ -411,7 +454,12 @@ class TestFlextContext:
     ) -> None:
         """Test context with special values."""
         context = ContextTestHelpers.create_test_context()
-        context.set(f"{value_name}_key", special_value).unwrap()
+        # Type narrowing: special_value must be GeneralValueType compatible
+        converted_value: FlextTypes.GeneralValueType = (
+            special_value if isinstance(special_value, (str, int, float, bool, type(None), list, dict))
+            else str(special_value)
+        )
+        context.set(f"{value_name}_key", converted_value).unwrap()
         result = context.get(f"{value_name}_key")
         assert result.is_success
         assert result.value == special_value
@@ -497,7 +545,13 @@ class TestFlextContext:
         """Test getting metadata with default value."""
         context = ContextTestHelpers.create_test_context()
         result = context.get_metadata("nonexistent_meta")
-        assert result.unwrap_or("default_value") == "default_value"
+        # unwrap_or exists on FlextResult, type narrowing ensures it's available
+        default_value = "default_value"
+        # Type narrowing: context.get_metadata() returns FlextResult[GeneralValueType]
+        # FlextResult has unwrap_or method
+        # pyright: ignore[reportAttributeAccessIssue] - unwrap_or exists on FlextResult
+        value = result.unwrap_or(default_value)  # type: ignore[attr-defined]
+        assert value == default_value
 
     def test_context_set_get_metadata(self) -> None:
         """Test setting and getting metadata."""
@@ -510,13 +564,13 @@ class TestFlextContext:
     def test_context_get_all_metadata_empty(self) -> None:
         """Test getting all metadata when empty."""
         context = ContextTestHelpers.create_test_context()
-        metadata = context.get_all_metadata()
+        metadata = context._get_all_metadata()
         assert isinstance(metadata, dict)
 
     def test_context_get_all_data_empty(self) -> None:
         """Test getting all data when empty."""
         context = ContextTestHelpers.create_test_context()
-        all_data = context.get_all_data()
+        all_data = context._get_all_data()
         assert isinstance(all_data, dict)
 
     def test_context_get_statistics(self) -> None:
@@ -524,7 +578,7 @@ class TestFlextContext:
         context = ContextTestHelpers.create_test_context()
         context.set("key1", "value1").unwrap()
         context.set("key2", "value2").unwrap()
-        stats = context.get_statistics()
+        stats = context._get_statistics()
         assert stats is not None
         assert isinstance(stats, FlextModels.ContextStatistics)
 
@@ -565,8 +619,8 @@ class TestFlextContext:
         context = ContextTestHelpers.create_test_context()
         context.set("key1", "value1").unwrap()
         assert context.is_active() is True
-        context.suspend()
-        context.resume()
+        context._suspend()
+        context._resume()
         assert context.is_active() is True
 
     def test_context_is_active(self) -> None:
@@ -578,7 +632,7 @@ class TestFlextContext:
         """Test context destroy operation."""
         context = ContextTestHelpers.create_test_context()
         context.set("key1", "value1").unwrap()
-        context.destroy()
+        context._destroy()
 
     def test_context_remove_nonexistent(self) -> None:
         """Test removing a nonexistent key."""
@@ -606,7 +660,7 @@ class TestFlextContext:
         """Test importing empty data into context."""
         context = ContextTestHelpers.create_test_context()
         context.set("existing_key", "existing_value").unwrap()
-        context.import_data({})
+        context._import_data({})
         ContextTestHelpers.assert_context_get_success(
             context,
             "existing_key",
@@ -662,7 +716,7 @@ class TestFlextContext:
         """Test exporting context snapshot."""
         context = ContextTestHelpers.create_test_context()
         context.set("key1", "value1").unwrap()
-        snapshot = context.export_snapshot()
+        snapshot = context._export_snapshot()
         assert snapshot is not None
         assert isinstance(snapshot, FlextModels.ContextExport)
 
@@ -688,7 +742,7 @@ class TestFlextContext:
         context = ContextTestHelpers.create_test_context()
         context.set("key1", "value1").unwrap()
         context.set("key2", "value2").unwrap()
-        scopes = context.get_all_scopes()
+        scopes = context._get_all_scopes()
         assert scopes is not None
         assert isinstance(scopes, dict)
 
@@ -743,8 +797,9 @@ class TestFlextContext:
     def test_context_import_data(self) -> None:
         """Test importing data into context."""
         context = ContextTestHelpers.create_test_context()
-        data_to_import: dict[str, object] = {"key1": "value1", "key2": "value2"}
-        context.import_data(data_to_import)
+        # Type narrowing: convert dict[str, object] to dict[str, GeneralValueType]
+        data_to_import: dict[str, FlextTypes.GeneralValueType] = {"key1": "value1", "key2": "value2"}
+        context._import_data(data_to_import)
         ContextTestHelpers.assert_context_get_success(context, "key1", "value1")
         ContextTestHelpers.assert_context_get_success(context, "key2", "value2")
 
@@ -776,8 +831,8 @@ class TestFlextContext:
         """Test cleanup called multiple times."""
         context = ContextTestHelpers.create_test_context()
         context.set("key1", "value1").unwrap()
-        context.cleanup()
-        context.cleanup()
+        context._cleanup()
+        context._cleanup()
 
     def test_correlation_inherit_correlation_context(self) -> None:
         """Test Correlation.inherit_correlation context manager."""
@@ -790,13 +845,16 @@ class TestFlextContext:
     def test_context_add_hook_and_invoke(self) -> None:
         """Test adding and invoking hooks."""
         context = ContextTestHelpers.create_test_context()
-        hook_called: list[object] = []
+        hook_called: list[FlextTypes.GeneralValueType] = []
 
-        def test_hook(arg: object) -> object:
+        def test_hook(arg: FlextTypes.GeneralValueType) -> FlextTypes.GeneralValueType:
             hook_called.append(arg)
             return arg
 
-        context.add_hook("test_event", test_hook)
+        # Type narrowing: test_hook signature matches HandlerCallable
+        # HandlerCallable = Callable[[GeneralValueType], GeneralValueType]
+        # test_hook has the same signature, so it's compatible
+        context._add_hook("test_event", test_hook)
 
 
 __all__ = ["TestFlextContext"]

@@ -7,8 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
+from flext_core.typings import FlextTypes
 from flext_tests.domains import FlextTestsDomains
 
 
@@ -110,15 +109,18 @@ class TestFlextTestsDomains:
 
     def test_api_response_data_error(self) -> None:
         """Test api_response_data with error status."""
-        response: dict[str, object] = FlextTestsDomains.api_response_data(
+        response: dict[str, FlextTypes.GeneralValueType] = FlextTestsDomains.api_response_data(
             status="error",
         )
 
         assert response["status"] == "error"
         assert "error" in response
-        error_obj = cast("dict[str, object]", response["error"])
-        assert error_obj["code"] == "TEST_ERROR"
-        assert error_obj["message"] == "Test error message"
+        # Type narrowing: error is GeneralValueType, check if it's a dict
+        error_value = response.get("error")
+        if isinstance(error_value, dict):
+            error_obj: dict[str, FlextTypes.GeneralValueType] = error_value
+            assert error_obj.get("code") == "TEST_ERROR"
+            assert error_obj.get("message") == "Test error message"
 
     def test_api_response_data_custom_fields(self) -> None:
         """Test api_response_data with custom field overrides."""

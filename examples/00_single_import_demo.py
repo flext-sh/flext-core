@@ -1,257 +1,337 @@
-"""00 - FlextSingle-Import Pattern Demo.
+"""Flext advanced single-import demonstration.
 
-This example demonstrates the NEW recommended single-import pattern
-where ALL framework functionality is accessed through Flext
-
-Key Benefits:
-- Complete framework access via namespace pattern
-- Python 3.13+ modern syntax with type parameters
-- Zero additional imports needed for basic usage
-- Cleaner example code with reduced import boilerplate
+Direct framework access using Python 3.13+ advanced features, minimal code bloat,
+maximal functionality via FlextConstants centralized StrEnum/Literals, railway patterns,
+context management, runtime type checking with beartype, FlextModels DDD patterns,
+dependency injection, dispatcher CQRS, and comprehensive flext-core integration.
+Uses PEP 695 type aliases, advanced collections.abc patterns, Pydantic 2 with StrEnum,
+and strict Python 3.13+ only - no backward compatibility.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-import os
+from collections.abc import Callable, Sequence, Set as AbstractSet
+from dataclasses import dataclass
+from itertools import starmap
 
 from flext_core import (
     FlextConstants,
-    FlextContainer,
-    FlextDecorators,
+    FlextContext,
     FlextExceptions,
     FlextLogger,
-    FlextModels,
     FlextResult,
-    FlextRuntime,
+    FlextTypes,
     FlextUtilities,
 )
 
-"""00 - FlextSingle-Import Pattern Demo.
-
-This example demonstrates the NEW recommended single-import pattern
-where ALL framework functionality is accessed through Flext
-
-Key Benefits:
-- Complete framework access via namespace pattern
-- Python 3.13+ modern syntax with type parameters
-- Zero additional imports needed for basic usage
-- Cleaner example code with reduced import boilerplate
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
-"""
-
-# Configuration
-os.environ.setdefault("FLEXT_DEBUG", "false")
-os.environ.setdefault("FLEXT_TRACE", "false")
+# Using FlextTypes directly - no local type aliases (DRY + SRP)
+# All types come from FlextTypes namespace - centralized type system
 
 
-def demonstrate_railway_pattern() -> None:
-    """Demonstrate railway pattern with shorthand methods."""
-    print("\n1. Railway Pattern - Shorthand Factory Methods:")
+# Advanced domain entity using FlextConstants StrEnum (DRY + SRP)
+@dataclass(frozen=True)
+class UserProfile:
+    """Domain entity with centralized types and business logic - no None types."""
 
-    # Create success result
-    success_result = FlextResult[str].ok("Operation successful")
-    print(f"   ✅ FlextResult.ok(): {success_result.value}")
+    name: str
+    email: str
+    unique_id: str
+    status: FlextConstants.Domain.Status
 
-    # Create failure result
-    error_result = FlextResult[str].fail("Validation failed")
-    print(f"   ❌ FlextResult.fail(): {error_result.error}")
-
-    # Chain operations using railway pattern
-    min_length = 3
-
-    def validate_length(s: str) -> FlextResult[str]:
-        if len(s) < min_length:
-            return FlextResult[str].fail("Too short")
-        return FlextResult[str].ok(s)
-
-    def to_upper(s: str) -> str:
-        return s.upper()
-
-    # Type cast functions to match flat_map and map signatures
-    def validate_wrapper(x: object) -> FlextResult[object]:
-        if isinstance(x, str):
-            result = validate_length(x)
-            if result.is_success:
-                return FlextResult[object].ok(result.value)
-            return FlextResult[object].fail(result.error or "Validation failed")
-        return FlextResult[object].fail("Invalid input")
-
-    def to_upper_wrapper(x: object) -> object:
-        if isinstance(x, str):
-            return to_upper(x)
-        return x
-
-    chain_result = (
-        FlextResult[str].ok("hello").flat_map(validate_wrapper).map(to_upper_wrapper)
-    )
-    print(f"   🚂 Railway chain: {chain_result.unwrap()}")
+    def activate(self) -> FlextResult[None]:
+        """Railway pattern for business operations - no None returns."""
+        if self.status == FlextConstants.Domain.Status.ACTIVE:
+            return FlextResult.fail("Already active")
+        return FlextResult.ok(None)
 
 
-def demonstrate_components() -> None:
-    """Demonstrate components via convenience methods."""
-    print("\n2. Components via Convenience Methods:")
+# Railway pattern with advanced validation using FlextUtilities (DRY + SRP)
+def validate_transform_user(
+    data: FlextTypes.Example.UserDataMapping,
+) -> FlextResult[UserProfile]:
+    """Railway pattern using centralized utilities - no None types, strict validation."""
+    # Extract with advanced collections.abc Mapping access and functional composition
+    name_value = data.get("name")
+    email_value = data.get("email")
 
-    # Logger - using FlextLogger factory method
-    logger = FlextLogger.create_module_logger(__name__)
-    logger.info("Single-import pattern demonstration")
-    print(f"   ✅ create_module_logger: {type(logger).__name__}")
+    # Validate and extract with type narrowing
+    if not isinstance(name_value, str) or not name_value:
+        return FlextResult[UserProfile].fail("Name is required and must be a string")
+    if not isinstance(email_value, str) or not email_value:
+        return FlextResult[UserProfile].fail("Email is required and must be a string")
 
-    # Container - simplified accessor
-    container = FlextContainer()
-    print(f"   ✅ get_container: {type(container).__name__}")
+    name: str = name_value
+    email: str = email_value
 
-    # Runtime type guards
-    runtime = FlextRuntime()
-    print(f"   ✅ FlextRuntime: {type(runtime).__name__}")
-
-
-def demonstrate_constants_and_types() -> None:
-    """Demonstrate constants and types access."""
-    print("\n3. Constants and Types:")
-
-    # Access constants
-    timeout = FlextConstants.Defaults.TIMEOUT
-    print(f"   ⏱️  Timeout: {timeout}s")
-
-    validation_error = FlextConstants.Errors.VALIDATION_ERROR
-    print(f"   📋 Validation Error Code: {validation_error}")
-
-    # Type aliases
-    data: dict[str, object] = {"key": "value"}
-    print(f"   📦 Type alias: {type(data).__name__}")
-
-
-def demonstrate_decorators() -> None:
-    """Demonstrate available decorators."""
-    print("\n4. Decorators:")
-
-    @FlextDecorators.railway()
-    def risky_operation(x: int) -> FlextResult[int]:
-        """Decorated operation with automatic railway handling."""
-        if x <= 0:
-            return FlextResult[int].fail("Must be positive")  # Type inferred
-        return FlextResult[int].ok(x * 2)
-
-    result = risky_operation(5)
-    print(f"   ✅ @railway decorator: {result.value}")
-
-    # Demonstrate decorator availability
-    print("   📦 Available decorators:")
-    print(f"      - railway: {FlextDecorators.railway.__name__}")
-    print(f"      - inject: {FlextDecorators.inject.__name__}")
-    print(f"      - log_operation: {FlextDecorators.log_operation.__name__}")
-    print(f"      - track_performance: {FlextDecorators.track_performance.__name__}")
-
-
-def demonstrate_validation_utilities() -> None:
-    """Demonstrate validation utilities."""
-    print("\n5. Validation Utilities:")
-
-    # Cache management validation
-    test_obj = FlextModels.Entity(unique_id="test-cache")
-    cache_result = FlextUtilities.Cache.clear_object_cache(test_obj)
-    print(f"   ✅ Cache clearing: {cache_result.is_success}")
-
-    # ID generation utilities
-    correlation_id = FlextUtilities.Generators.generate_correlation_id()
-    print(f"   ✅ Correlation ID: {correlation_id[:8]}...")
-
-    # Short ID generation
-    short_id = FlextUtilities.Generators.generate_short_id()
-    print(f"   ✅ Short ID: {short_id[:8]}...")
-
-
-def demonstrate_domain_models() -> None:
-    """Demonstrate domain models (DDD patterns)."""
-    print("\n6. Domain Models (DDD Patterns):")
-
-    # Entity - using base Entity with unique_id
-    entity = FlextModels.Entity(unique_id="entity-123")
-    print(f"   ✅ Entity: {entity.entity_id}")
-
-    # Value Object
-    class Email(FlextModels.Value):
-        address: str
-
-    email = Email(address="test@example.com")
-    print(f"   ✅ Value Object: {email.address}")
-
-
-def demonstrate_exceptions() -> None:
-    """Demonstrate structured exceptions."""
-    print("\n7. Structured Exceptions:")
-
-    try:
-        error_msg = "Invalid input"
-        raise FlextExceptions.ValidationError(
-            error_msg,
-            field="email",
-            value="invalid",
-            error_code=FlextConstants.Errors.VALIDATION_ERROR,
+    # Advanced validation using FlextUtilities with traverse (DRY - no manual loops)
+    return FlextResult.traverse(
+        [
+            FlextUtilities.Validation.validate_length(
+                name, min_length=FlextConstants.Validation.MIN_USERNAME_LENGTH
+            ),
+            FlextUtilities.Validation.validate_pattern(
+                email, FlextConstants.Platform.PATTERN_EMAIL, "email"
+            ),
+        ],
+        lambda r: r,
+    ).flat_map(
+        lambda _: FlextResult.ok(
+            UserProfile(
+                unique_id=FlextUtilities.Generators.generate_correlation_id(),
+                name=name.upper(),
+                email=email.lower(),
+                status=FlextConstants.Domain.Status.ACTIVE,
+            )
         )
-    except FlextExceptions.ValidationError as e:
-        print(f"   ❌ ValidationError caught: {e.message}")
-        if hasattr(e, "field") and e.field:
-            print(f"      Field: {e.field}, Code: {e.error_code}")
-        else:
-            print(f"      Code: {e.error_code}")
+    )
 
 
-def demonstrate_extending_patterns() -> None:
-    """Demonstrate extending Flext patterns."""
-    print("\n8. Extending Patterns with Flext")
-
-    class DemoBase(FlextModels.ArbitraryTypesModel):
-        """Demonstrate how domain libraries can extend Flext."""
-
-    print("\n" + "=" * 60)
-    print("✨ SINGLE-IMPORT PATTERN COMPLETE!")
-    print("\n🎯 Domain extension ready via:")
-    print("   - class MyBase(FlextModels.BaseModel)")
-    print("   - class MyBase(FlextModels.ArbitraryTypesModel)")
-    print("   - class MyBase(FlextModels.ValueObject)")
-    print("   - class MyBase(FlextModels.Entity)")
-    print("   - class MyBase(FlextModels.AggregateRoot)")
-    print("   - class MyBase(FlextModels.Cqrs.Command)")
-    print("   - class MyBase(FlextModels.Cqrs.Query)")
-    print("   - class MyBase(FlextModels.DomainEvent)")
-    print("   - class MyBase(FlextModels.Validation)")
-    print("   - class MyBase(FlextModels.Mixin)")
-    print("=" * 60)
+def process_user_data(
+    *,
+    user_data: FlextTypes.Example.UserDataMapping,
+    operation: FlextConstants.Cqrs.Action,
+) -> FlextResult[str]:
+    """Decorated railway with centralized StrEnum constraints - direct functional composition."""
+    return validate_transform_user(user_data).map(
+        lambda profile: f"{operation.value.upper()}D: {profile.name} ({profile.status.value})"
+    )
 
 
-def demonstrate_single_import_pattern() -> None:
-    """Demonstrate complete framework access via Flext."""
-    print("\n" + "=" * 60)
-    print("FLEXTCORE SINGLE-IMPORT PATTERN DEMONSTRATION")
-    print("Complete framework access with zero additional imports")
-    print("=" * 60)
+# Advanced context-aware service (SOLID + DRY)
+class UserService:
+    """Advanced service implementing SRP with comprehensive context integration and railway patterns."""
 
-    demonstrate_railway_pattern()
-    demonstrate_components()
-    demonstrate_constants_and_types()
-    demonstrate_decorators()
-    demonstrate_validation_utilities()
-    demonstrate_domain_models()
+    __slots__ = ("logger", "operation_count")
+
+    def __init__(self) -> None:
+        """Initialize with centralized logger and metrics."""
+        self.logger = FlextLogger.create_module_logger(__name__)
+        self.operation_count = 0
+
+    def create_user(
+        self, user_data: FlextTypes.Example.UserDataMapping
+    ) -> FlextResult[UserProfile]:
+        """Create user with advanced context tracing and railway pattern - direct functional composition."""
+        with FlextContext.Request.request_context(operation_name="create_user"):
+            correlation_id = (
+                FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
+            )
+            self.operation_count += 1
+
+            self.logger.info(  # Using mixin logger
+                "Creating user",
+                extra={
+                    "correlation_id": correlation_id,
+                    "operation_count": self.operation_count,
+                    "user_data_keys": tuple(user_data.keys()),
+                },
+            )
+
+            # Railway pattern with advanced functional composition (DRY)
+            return (
+                self._validate_data(user_data)
+                .flat_map(lambda _: validate_transform_user(user_data))
+                .map(self._log_success)
+            )
+
+    @staticmethod
+    def _validate_data(
+        data: FlextTypes.Example.UserDataMapping,
+    ) -> FlextResult[bool]:
+        """Validate input data using FlextUtilities (DRY) - no None types."""
+        required_fields: AbstractSet[str] = frozenset({
+            "name",
+            "email",
+        })  # Advanced collections.abc Set
+        present_fields: AbstractSet[str] = frozenset(data.keys())
+
+        if not required_fields <= present_fields:
+            missing = required_fields - present_fields
+            return FlextResult[bool].fail(f"Missing required fields: {missing}")
+
+        return FlextResult[bool].ok(True)
+
+    @staticmethod
+    def _activate_user(user: UserProfile) -> FlextResult[UserProfile]:
+        """Activate user using domain business logic - railway pattern."""
+        return user.activate().map(lambda _: user)
+
+    def _log_success(self, user: UserProfile) -> UserProfile:
+        """Log success and return user (railway pattern)."""
+        self.logger.debug(f"User {user.name} activated successfully")
+        return user
+
+    def _log_final_result(
+        self, correlation_id: str
+    ) -> Callable[[UserProfile], UserProfile]:
+        """Create logging function for final result - advanced functional pattern."""
+
+        def log_result(user: UserProfile) -> UserProfile:
+            self.logger.info(
+                "User created successfully",
+                extra={
+                    "user_id": user.unique_id,
+                    "correlation_id": correlation_id,
+                    "user_status": user.status.value,
+                },
+            )
+            return user
+
+        return log_result
+
+
+# Comprehensive utilities demonstration (DRY + SRP with advanced flext-core integration)
+def demonstrate_utilities() -> None:
+    """Advanced utilities demonstration using comprehensive flext-core patterns - direct functional composition."""
+    # Create test data and perform operations with railway pattern (DRY + SRP)
+    correlation_id = FlextUtilities.Generators.generate_correlation_id()
+    test_obj: FlextTypes.Example.UserDataMapping = {
+        "unique_id": correlation_id,
+        "test": True,
+    }
+
+    # Railway pattern with traverse for multiple operations (DRY - no manual loops)
+    cache_result = FlextUtilities.Cache.clear_object_cache(test_obj)
+    validation_results = [
+        FlextUtilities.Validation.validate_length("test", min_length=1, max_length=10),
+        FlextUtilities.Validation.validate_pattern(
+            "test@example.com", FlextConstants.Platform.PATTERN_EMAIL, "email"
+        ),
+    ]
+
+    result = (
+        FlextResult.traverse(validation_results, lambda r: r)
+        .flat_map(lambda _: cache_result)
+        .map(
+            lambda cache_cleared: "\n".join([
+                f"Cache cleared: {cache_cleared}",
+                f"Generated ID: {correlation_id[:12]}",
+                f"All validations passed: {len(validation_results)} checks",
+            ])
+        )
+    )
+
+    # Safe output with railway pattern
+    result.map(print)
+
+
+# Advanced exception handling with comprehensive error integration (DRY + SRP)
+def demonstrate_exceptions() -> None:
+    """Structured exception handling using centralized constants and railway patterns - functional composition."""
+    # Railway pattern with traverse for multiple error scenarios (DRY - no manual loops)
+    error_scenarios: Sequence[tuple[str, str, str]] = (
+        ("Invalid status", "status", "invalid"),
+        ("Empty name", "name", ""),
+        ("Invalid email", "email", "not-an-email"),
+    )
+
+    FlextResult.traverse(
+        list(
+            starmap(
+                lambda msg, field, value: FlextResult.fail(
+                    FlextExceptions.ValidationError(
+                        msg,
+                        field=field,
+                        value=value,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    ).message,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+                .map(
+                    lambda _: f"Error: {field}={value}, code: {FlextConstants.Errors.VALIDATION_ERROR}, railway: True"
+                )
+                .map(print),
+                error_scenarios,
+            )
+        )
+        + [
+            # Standard exception conversion
+            FlextResult.fail("Standard exception")
+            .map(lambda error: f"Converted exception to result: {error}")
+            .map(print),
+        ],
+        lambda r: r,
+    )
+
+
+# Railway pattern handlers (SRP - single responsibility for result handling)
+
+
+def execute_validation_chain(
+    user_data: FlextTypes.Example.UserDataMapping,
+) -> None:
+    """Execute validation chain with railway pattern - SRP focused on chaining operations."""
+    # Railway pattern with advanced functional composition (DRY + SRP)
+    (
+        validate_transform_user(user_data)
+        .map(
+            lambda user: f"User: {user.name} ({user.status.value}) - ID: {user.unique_id[:8]}"
+        )
+        .flat_map(FlextResult.ok)
+        .flat_map(
+            lambda output: process_user_data(
+                user_data=user_data, operation=FlextConstants.Cqrs.Action.CREATE
+            ).map(lambda result: f"{output}\nProcess: {result}")
+        )
+        .map(print)
+        .lash(
+            lambda error: FlextResult[None].ok(
+                print(f"Validation failed: {error}") or None
+            )
+        )
+    )
+
+
+def execute_service_operations(
+    service: UserService, user_data: FlextTypes.Example.UserDataMapping
+) -> None:
+    """Execute service operations - SRP focused on service interaction."""
+    result = service.create_user(user_data)
+    if result.is_success:
+        user = result.unwrap()
+        print(f"Service: SUCCESS - {user.name}")
+    else:
+        print(f"Service: FAILED - {result.error}")
+
+
+def execute_demonstrations(
+    service: UserService, user_data: FlextTypes.Example.UserDataMapping
+) -> None:
+    """Execute utility demonstrations - SRP focused on side effect execution."""
+    # Railway pattern with side effects (DRY - no manual loops)
+    service.create_user(user_data).map(lambda _: None)
+    # Execute demonstrations as side effects
+    demonstrate_utilities()
     demonstrate_exceptions()
-    demonstrate_extending_patterns()
 
 
+# Main demonstration (minimal code, maximal functionality - DRY + SRP)
 def main() -> None:
-    """Main entry point."""
-    demonstrate_single_import_pattern()
+    """Advanced FLEXT demo with railway patterns and context management - functional composition."""
+    logger = FlextLogger.create_module_logger(__name__)
 
-    print("\n📚 Next Steps:")
-    print("   - See 01_basic_result.py for complete FlextResult API")
-    print("   - See 02_dependency_injection.py for DI patterns")
-    print("   - See other examples for advanced patterns")
+    with FlextContext.Request.request_context(operation_name="demo"):
+        correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
+        logger.info("Starting demonstration", extra={"correlation_id": correlation_id})
+
+        # Advanced collections.abc Mapping for user data (DRY - single definition)
+        user_data: FlextTypes.Example.UserDataMapping = {
+            "name": "Demo",
+            "email": "demo@example.com",
+        }
+
+        # Service instance (DRY - single creation)
+        service = UserService()
+
+        # Execute operations with SRP separation (DRY - no code duplication)
+        execute_validation_chain(user_data)
+        execute_service_operations(service, user_data)
+        execute_demonstrations(service, user_data)
+
+        logger.info("Comprehensive demonstration completed successfully")
 
 
 if __name__ == "__main__":

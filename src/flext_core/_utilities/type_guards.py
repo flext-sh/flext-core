@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models.metadata import MetadataAttributeValue
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
@@ -104,7 +103,7 @@ class FlextUtilitiesTypeGuards:
     @staticmethod
     def normalize_to_metadata_value(
         val: FlextTypes.GeneralValueType,
-    ) -> MetadataAttributeValue:
+    ) -> FlextTypes.MetadataAttributeValue:
         """Normalize any value to MetadataAttributeValue.
 
         MetadataAttributeValue is more restrictive than FlextTypes.GeneralValueType,
@@ -114,7 +113,7 @@ class FlextUtilitiesTypeGuards:
             val: Value to normalize
 
         Returns:
-            MetadataAttributeValue: Normalized value compatible with Metadata attributes
+            FlextTypes.MetadataAttributeValue: Normalized value compatible with Metadata attributes
 
         Example:
             >>> FlextUtilitiesTypeGuards.normalize_to_metadata_value("test")
@@ -128,7 +127,7 @@ class FlextUtilitiesTypeGuards:
         if isinstance(val, (str, int, float, bool, type(None))):
             return val
         if FlextRuntime.is_dict_like(val):
-            # Convert to flat dict[str, MetadataAttributeValue]
+            # Convert to flat dict[str, FlextTypes.MetadataAttributeValue]
             result: dict[str, str | int | float | bool | None] = {}
             dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
             for k, v in dict_v.items():
@@ -139,7 +138,7 @@ class FlextUtilitiesTypeGuards:
                         result[k] = str(v)
             return result
         if FlextRuntime.is_list_like(val):
-            # Convert to list[MetadataAttributeValue]
+            # Convert to list[FlextTypes.MetadataAttributeValue]
             result_list: list[str | int | float | bool | None] = []
             for item in val:
                 if isinstance(item, (str, int, float, bool, type(None))):

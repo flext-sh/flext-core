@@ -96,7 +96,7 @@ class TestLibraryIntegration:
         assert register_result is clean_container
 
         # Act - Test service retrieval
-        service_result = clean_container.get("test_service")
+        service_result: FlextResult[FlextTypes.GeneralValueType] = clean_container.get("test_service")
 
         # Assert - Service retrieval success
         assert service_result.is_success is True
@@ -131,9 +131,11 @@ class TestLibraryIntegration:
         # FunctionalExternalService.process() transforms input by prefixing "processed_"
         expected_result_data: str = f"processed_{input_data}"
 
-        def create_result() -> FlextResult[str]:
+        def create_result() -> str:
             # Use functional service processing - real behavior
-            return mock_external_service.process(input_data)
+            process_result = mock_external_service.process(input_data)
+            # Unwrap FlextResult to return GeneralValueType (str)
+            return process_result.value if process_result.is_success else ""
 
         # Act - Register factory in container
         register_result = clean_container.with_factory(
@@ -145,18 +147,17 @@ class TestLibraryIntegration:
         assert register_result is clean_container
 
         # Act - Get factory result from container
-        factory_result = clean_container.get("result_factory")
+        factory_result: FlextResult[FlextTypes.GeneralValueType] = clean_container.get("result_factory")
 
         # Assert - Factory retrieval success
         assert factory_result.is_success is True
 
-        # Act - Verify factory produced FlextResult
-        result: FlextResult[str] = cast("FlextResult[str]", factory_result.value)
+        # Act - Verify factory produced string value (GeneralValueType)
+        result_value: str = cast("str", factory_result.value)
 
         # Assert - Result type and content validation
-        assert isinstance(result, FlextResult)
-        assert result.is_success is True
-        assert result.value == expected_result_data
+        assert isinstance(result_value, str)
+        assert result_value == expected_result_data
 
         # Assert - Functional service was called (real validation)
         assert mock_external_service.get_call_count() == 1

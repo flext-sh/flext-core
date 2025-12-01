@@ -39,6 +39,7 @@ from flext_core import (
     FlextDispatcher,
     FlextResult,
 )
+from flext_core.typings import FlextTypes
 
 # Skip entire module if optional dependencies not available
 psycopg2 = pytest.importorskip("psycopg2")
@@ -67,7 +68,7 @@ class PostgreSQLService:
         self.connection_attempts = 0
         self.query_count = 0
 
-    def process(self, data: object) -> FlextResult[dict[str, object]]:
+    def process(self, data: object) -> FlextResult[FlextTypes.GeneralValueType]:
         """Process data by executing query against PostgreSQL.
 
         This validates real database connectivity without ORM dependencies.
@@ -80,7 +81,7 @@ class PostgreSQLService:
 
         """
         if not isinstance(data, dict) or "query" not in data:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.GeneralValueType].fail(
                 "Data must be dict with 'query' key",
             )
 
@@ -104,14 +105,19 @@ class PostgreSQLService:
             conn.close()
 
             self.query_count += 1
-            return FlextResult[dict[str, object]].ok({
-                "result": result,
-                "query": data["query"],
-            })
+            return FlextResult[FlextTypes.GeneralValueType].ok(
+                cast(
+                    "FlextTypes.GeneralValueType",
+                    {
+                        "result": result,
+                        "query": data["query"],
+                    },
+                ),
+            )
 
         except Exception as e:
             self.connection_attempts += 1
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.GeneralValueType].fail(
                 f"PostgreSQL connection error: {type(e).__name__}: {e!s}",
             )
 
@@ -132,7 +138,7 @@ class NetworkLatencyProcessor:
         self.latency_seconds = latency_seconds
         self.process_count = 0
 
-    def process(self, data: object) -> FlextResult[object]:
+    def process(self, data: object) -> FlextResult[FlextTypes.GeneralValueType]:
         """Simulate network latency then return result.
 
         Args:
@@ -144,10 +150,15 @@ class NetworkLatencyProcessor:
         """
         time.sleep(self.latency_seconds)
         self.process_count += 1
-        return FlextResult[object].ok({
-            "processed": data,
-            "latency": self.latency_seconds,
-        })
+        return FlextResult[FlextTypes.GeneralValueType].ok(
+            cast(
+                "FlextTypes.GeneralValueType",
+                {
+                    "processed": data,
+                    "latency": self.latency_seconds,
+                },
+            ),
+        )
 
 
 class FaultInjectionProcessor:
@@ -168,7 +179,7 @@ class FaultInjectionProcessor:
         self.success_count = 0
         self.failure_count = 0
 
-    def process(self, data: object) -> FlextResult[object]:
+    def process(self, data: object) -> FlextResult[FlextTypes.GeneralValueType]:
         """Process with probabilistic failure.
 
         Args:
@@ -182,10 +193,17 @@ class FaultInjectionProcessor:
 
         if random.random() < self.failure_rate:
             self.failure_count += 1
-            return FlextResult[object].fail(f"Injected failure #{self.failure_count}")
+            return FlextResult[FlextTypes.GeneralValueType].fail(
+                f"Injected failure #{self.failure_count}",
+            )
 
         self.success_count += 1
-        return FlextResult[object].ok({"data": data, "attempt": self.attempt_count})
+        return FlextResult[FlextTypes.GeneralValueType].ok(
+            cast(
+                "FlextTypes.GeneralValueType",
+                {"data": data, "attempt": self.attempt_count},
+            ),
+        )
 
 
 # ==================== FIXTURES ====================
@@ -204,7 +222,7 @@ def docker_enabled() -> bool:
         return False
 
     try:
-        subprocess.run(
+        _ = subprocess.run(
             [docker_path, "ps"],
             capture_output=True,
             timeout=5,
@@ -339,7 +357,7 @@ class TestLayer3SingleItemProcessing:
             postgres_service: PostgreSQL service processor
 
         """
-        dispatcher.register_processor("postgres", postgres_service)
+        _ = dispatcher.register_processor("postgres", postgres_service)
 
         # Process simple query
         result = dispatcher.process("postgres", {"query": "SELECT 1"})
@@ -365,7 +383,7 @@ class TestLayer3SingleItemProcessing:
             latency_service: Network latency processor
 
         """
-        dispatcher.register_processor("latency", latency_service)
+        _ = dispatcher.register_processor("latency", latency_service)
 
         start_time = time.time()
         result = dispatcher.process("latency", {"value": 42})
@@ -387,7 +405,7 @@ class TestLayer3SingleItemProcessing:
             fault_service: Fault injection processor
 
         """
-        dispatcher.register_processor("fault", fault_service)
+        _ = dispatcher.register_processor("fault", fault_service)
 
         # Multiple attempts increase likelihood of capturing both success and failure
         results = [dispatcher.process("fault", {"value": i}) for i in range(5)]
@@ -415,13 +433,13 @@ class TestLayer3BatchProcessing:
             latency_service: Network latency processor
 
         """
-        dispatcher.register_processor("latency", latency_service)
+        _ = dispatcher.register_processor("latency", latency_service)
 
         data_list = [{"value": i} for i in range(3)]
         start_time = time.time()
         result = dispatcher.process_batch(
             "latency",
-            cast("list[object]", data_list),
+            cast("list[FlextTypes.GeneralValueType]", data_list),
             batch_size=2,
         )
         elapsed = time.time() - start_time
@@ -445,7 +463,7 @@ class TestLayer3BatchProcessing:
             latency_service: Network latency processor
 
         """
-        dispatcher.register_processor("latency", latency_service)
+        _ = dispatcher.register_processor("latency", latency_service)
 
         result = dispatcher.process_batch("latency", [])
 
@@ -465,12 +483,12 @@ class TestLayer3BatchProcessing:
             latency_service: Network latency processor
 
         """
-        dispatcher.register_processor("latency", latency_service)
+        _ = dispatcher.register_processor("latency", latency_service)
 
         data_list = [{"value": i} for i in range(10)]
         result = dispatcher.process_batch(
             "latency",
-            cast("list[object]", data_list),
+            cast("list[FlextTypes.GeneralValueType]", data_list),
             batch_size=10,
         )
 
@@ -498,13 +516,13 @@ class TestLayer3ParallelProcessing:
             latency_service: Network latency processor
 
         """
-        dispatcher.register_processor("latency", latency_service)
+        _ = dispatcher.register_processor("latency", latency_service)
 
         data_list = [{"value": i} for i in range(4)]
         start_time = time.time()
         result = dispatcher.process_parallel(
             "latency",
-            cast("list[object]", data_list),
+            cast("list[FlextTypes.GeneralValueType]", data_list),
             max_workers=2,
         )
         elapsed = time.time() - start_time
@@ -528,7 +546,7 @@ class TestLayer3ParallelProcessing:
             latency_service: Network latency processor
 
         """
-        dispatcher.register_processor("latency", latency_service)
+        _ = dispatcher.register_processor("latency", latency_service)
 
         result = dispatcher.process_parallel("latency", [])
 
@@ -548,12 +566,12 @@ class TestLayer3ParallelProcessing:
             latency_service: Network latency processor
 
         """
-        dispatcher.register_processor("latency", latency_service)
+        _ = dispatcher.register_processor("latency", latency_service)
 
         data_list = [{"value": i} for i in range(50)]
         result = dispatcher.process_parallel(
             "latency",
-            cast("list[object]", data_list),
+            cast("list[FlextTypes.GeneralValueType]", data_list),
             max_workers=4,
         )
 
@@ -581,7 +599,7 @@ class TestLayer3TimeoutEnforcement:
             latency_service: Network latency processor
 
         """
-        dispatcher.register_processor("latency", latency_service)
+        _ = dispatcher.register_processor("latency", latency_service)
 
         # Latency is 0.05s, timeout is 1.0s - should succeed
         result = dispatcher.execute_with_timeout("latency", {"value": 42}, timeout=1.0)
@@ -603,7 +621,7 @@ class TestLayer3TimeoutEnforcement:
         """
         # Create service with longer latency
         slow_service = NetworkLatencyProcessor(latency_seconds=0.2)
-        dispatcher.register_processor("slow", slow_service)
+        _ = dispatcher.register_processor("slow", slow_service)
 
         # Timeout is 0.05s, latency is 0.2s - should timeout
         result = dispatcher.execute_with_timeout("slow", {"value": 42}, timeout=0.05)
@@ -648,8 +666,8 @@ class TestLayer3FallbackChains:
             latency_service: Network latency processor
 
         """
-        dispatcher.register_processor("primary", latency_service)
-        dispatcher.register_processor("fallback1", NetworkLatencyProcessor(0.02))
+        _ = dispatcher.register_processor("primary", latency_service)
+        _ = dispatcher.register_processor("fallback1", NetworkLatencyProcessor(0.02))
 
         result = dispatcher.process("primary", {"value": 42})
 
@@ -672,8 +690,8 @@ class TestLayer3FallbackChains:
         primary = FaultInjectionProcessor(failure_rate=1.0)  # Always fails
         fallback = FaultInjectionProcessor(failure_rate=0.0)  # Always succeeds
 
-        dispatcher.register_processor("primary", primary)
-        dispatcher.register_processor("fallback", fallback)
+        _ = dispatcher.register_processor("primary", primary)
+        _ = dispatcher.register_processor("fallback", fallback)
 
         result = dispatcher.process("primary", {"value": 42})
 
@@ -694,9 +712,9 @@ class TestLayer3FallbackChains:
         fallback1 = FaultInjectionProcessor(failure_rate=1.0)  # Always fails
         fallback2 = FaultInjectionProcessor(failure_rate=1.0)  # Always fails
 
-        dispatcher.register_processor("primary", primary)
-        dispatcher.register_processor("fallback1", fallback1)
-        dispatcher.register_processor("fallback2", fallback2)
+        _ = dispatcher.register_processor("primary", primary)
+        _ = dispatcher.register_processor("fallback1", fallback1)
+        _ = dispatcher.register_processor("fallback2", fallback2)
 
         # Fast fail: primary fails, return error immediately
         result = dispatcher.process("primary", {"value": 42})
@@ -721,9 +739,9 @@ class TestLayer3FallbackChains:
         fallback1 = FaultInjectionProcessor(failure_rate=1.0)
         fallback2 = FaultInjectionProcessor(failure_rate=0.0)  # This one succeeds
 
-        dispatcher.register_processor("primary", primary)
-        dispatcher.register_processor("fallback1", fallback1)
-        dispatcher.register_processor("fallback2", fallback2)
+        _ = dispatcher.register_processor("primary", primary)
+        _ = dispatcher.register_processor("fallback1", fallback1)
+        _ = dispatcher.register_processor("fallback2", fallback2)
 
         # Fast fail: primary fails, return error immediately
         result1 = dispatcher.process("primary", {"value": 42})
@@ -752,11 +770,11 @@ class TestLayer3MetricsAndObservability:
             latency_service: Network latency processor
 
         """
-        dispatcher.register_processor("latency", latency_service)
+        _ = dispatcher.register_processor("latency", latency_service)
 
         # Execute multiple operations
         for _ in range(3):
-            dispatcher.process("latency", {"value": 42})
+            _ = dispatcher.process("latency", {"value": 42})
 
         metrics = dispatcher.processor_metrics
         assert "latency" in metrics
@@ -775,10 +793,10 @@ class TestLayer3MetricsAndObservability:
             latency_service: Network latency processor
 
         """
-        dispatcher.register_processor("latency", latency_service)
+        _ = dispatcher.register_processor("latency", latency_service)
 
         # Execute batch operations
-        dispatcher.process_batch("latency", [{"value": i} for i in range(5)])
+        _ = dispatcher.process_batch("latency", [{"value": i} for i in range(5)])
 
         batch_perf = dispatcher.batch_performance
         assert "batch_operations" in batch_perf
@@ -797,10 +815,10 @@ class TestLayer3MetricsAndObservability:
             latency_service: Network latency processor
 
         """
-        dispatcher.register_processor("latency", latency_service)
+        _ = dispatcher.register_processor("latency", latency_service)
 
         # Execute parallel operations
-        dispatcher.process_parallel("latency", [{"value": i} for i in range(5)])
+        _ = dispatcher.process_parallel("latency", [{"value": i} for i in range(5)])
 
         parallel_perf = dispatcher.parallel_performance
         assert "parallel_operations" in parallel_perf
@@ -819,11 +837,11 @@ class TestLayer3MetricsAndObservability:
             latency_service: Network latency processor
 
         """
-        dispatcher.register_processor("latency", latency_service)
+        _ = dispatcher.register_processor("latency", latency_service)
 
         # Execute various operations
-        dispatcher.process("latency", {"value": 42})
-        dispatcher.process_batch("latency", [{"value": i} for i in range(3)])
+        _ = dispatcher.process("latency", {"value": 42})
+        _ = dispatcher.process_batch("latency", [{"value": i} for i in range(3)])
 
         analytics_result = dispatcher.get_performance_analytics()
         assert analytics_result.is_success

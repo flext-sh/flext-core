@@ -136,13 +136,13 @@ class CollectionScenarios:
         ),
         CoerceListValidatorScenario(
             name="valid_set_strings",
-            value={"active", "pending"},
+            value=list({"active", "pending"}),  # type: ignore[arg-type]  # list[str] is compatible with Sequence[ScalarValue]
             expected_success=True,
             expected_error=None,
         ),
         CoerceListValidatorScenario(
             name="valid_frozenset_strings",
-            value=frozenset({"active", "pending"}),
+            value=list(frozenset({"active", "pending"})),  # type: ignore[arg-type]  # list[str] is compatible with Sequence[ScalarValue]
             expected_success=True,
             expected_error=None,
         ),
@@ -232,7 +232,9 @@ class TestFlextUtilitiesCollectionParseSequence:
             assert isinstance(parsed, tuple)
         else:
             assert result.is_failure
-            assert scenario.expected_error in result.error
+            error_msg = result.error
+            assert error_msg is not None and scenario.expected_error is not None
+            assert scenario.expected_error in error_msg
 
 
 class TestFlextUtilitiesCollectionCoerceListValidator:
@@ -254,7 +256,9 @@ class TestFlextUtilitiesCollectionCoerceListValidator:
         else:
             with pytest.raises((TypeError, ValueError)) as exc_info:
                 validator(scenario.value)
-            assert scenario.expected_error in str(exc_info.value)
+            expected_error = scenario.expected_error
+            assert expected_error is not None
+            assert expected_error in str(exc_info.value)
 
 
 class TestFlextUtilitiesCollectionParseMapping:
@@ -279,7 +283,9 @@ class TestFlextUtilitiesCollectionParseMapping:
             assert all(isinstance(v, Status) for v in parsed.values())
         else:
             assert result.is_failure
-            assert scenario.expected_error in result.error
+            error_msg = result.error
+            assert error_msg is not None and scenario.expected_error is not None
+            assert scenario.expected_error in error_msg
 
 
 class TestFlextUtilitiesCollectionCoerceDictValidator:

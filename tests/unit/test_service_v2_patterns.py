@@ -148,16 +148,16 @@ class DictService(FlextService[dict[str, int]]):
         return FlextResult.ok({"a": 1, "b": 2})
 
 
-class UserService(FlextService[FlextModels.Entity]):
+class UserService(FlextService[FlextModels.Entity]):  # type: ignore[misc,valid-type]  # FlextModels.Entity is assignment alias, valid for type parameter
     """Service returning User entity."""
 
     user_id: str
     user_name: str
 
-    def execute(self, **_kwargs: object) -> FlextResult[FlextModels.Entity]:
+    def execute(self, **_kwargs: object) -> FlextResult[FlextModels.Entity]:  # type: ignore[valid-type]  # FlextModels.Entity is assignment alias, valid for type parameter
         """Execute and return user."""
 
-        class User(FlextModels.Entity):
+        class User(FlextModels.Entity):  # type: ignore[misc,valid-type]  # FlextModels.Entity is assignment alias, valid for inheritance
             """User entity."""
 
             unique_id: str = "test_id"
@@ -420,82 +420,54 @@ class TestFlextServiceV2Patterns:
     )
     def test_v1_vs_v2_property_patterns(self, test_case: ServiceTestCase) -> None:
         """Test V1 vs V2 Property pattern comparisons."""
-        if test_case.operation == ServiceOperationType.V1_EXPLICIT_EXECUTE_UNWRAP:
-            result = SimpleV1Service(message="test").execute()
-            assert result.is_success
-            assert result.unwrap() == "V1: test"
+        op = test_case.operation
 
-        elif test_case.operation == ServiceOperationType.V2_PROPERTY_DIRECT_RESULT:
-            value = SimpleV2PropertyService(message="test").result
-            assert value == "V2 Property: test"
+        if op == ServiceOperationType.V1_EXPLICIT_EXECUTE_UNWRAP:
+            assert SimpleV1Service(message="test").execute().unwrap() == "V1: test"
 
-        elif test_case.operation == ServiceOperationType.V1_AND_V2_SAME_RESULT:
-            v1_service: SimpleV1Service = SimpleV1Service(message="test")
-            v1_result = v1_service.execute().unwrap()
+        elif op == ServiceOperationType.V2_PROPERTY_DIRECT_RESULT:
+            assert SimpleV2PropertyService(message="test").result == "V2 Property: test"
 
-            v2_service_prop: SimpleV2PropertyService = SimpleV2PropertyService(
-                message="test",
-            )
-            v2_result = v2_service_prop.result
+        elif op == ServiceOperationType.V1_AND_V2_SAME_RESULT:
+            assert SimpleV1Service(message="test").execute().unwrap() == "V1: test"
+            assert SimpleV2PropertyService(message="test").result == "V2 Property: test"
 
-            assert v1_result == "V1: test"
-            assert v2_result == "V2 Property: test"
+        elif op == ServiceOperationType.V2_MAINTAINS_EXECUTE_ACCESS:
+            svc = SimpleV2PropertyService(message="test")
+            assert svc.result == svc.execute().unwrap()
 
-        elif test_case.operation == ServiceOperationType.V2_MAINTAINS_EXECUTE_ACCESS:
-            service_v2: SimpleV2PropertyService = SimpleV2PropertyService(
-                message="test",
-            )
-            result_via_property = service_v2.result
-            result_via_execute = service_v2.execute().unwrap()
-            assert result_via_property == result_via_execute
+        elif op == ServiceOperationType.V1_VALIDATION_FAILURE:
+            assert ValidationService(value=-1).execute().is_failure
 
-        elif test_case.operation == ServiceOperationType.V1_VALIDATION_FAILURE:
-            val_service_v1: ValidationService = ValidationService(value=-1)
-            result = val_service_v1.execute()
-            assert result.is_failure
-
-        elif test_case.operation == ServiceOperationType.V2_VALIDATION_FAILURE:
-            val_service_v2: ValidationService = ValidationService(value=-1)
+        elif op == ServiceOperationType.V2_VALIDATION_FAILURE:
             try:
-                _ = val_service_v2.result
+                _ = ValidationService(value=-1).result
                 pytest.fail("Should raise exception")
             except FlextExceptions.BaseError:
                 pass
 
-        elif test_case.operation == ServiceOperationType.V1_VALIDATION_SUCCESS:
-            val_service_v1s: ValidationService = ValidationService(value=10)
-            result = val_service_v1s.execute()
-            assert result.is_success
-            assert result.unwrap()["value"] == 10
+        elif op == ServiceOperationType.V1_VALIDATION_SUCCESS:
+            res = ValidationService(value=10).execute()
+            assert res.is_success and res.unwrap()["value"] == 10
 
-        elif test_case.operation == ServiceOperationType.V2_VALIDATION_SUCCESS:
-            val_service_v2s: ValidationService = ValidationService(value=10)
-            value = val_service_v2s.result
-            assert isinstance(value, dict)
-            assert value["value"] == 10
+        elif op == ServiceOperationType.V2_VALIDATION_SUCCESS:
+            val = ValidationService(value=10).result
+            assert isinstance(val, dict) and val["value"] == 10
 
-        elif test_case.operation == ServiceOperationType.V1_COMPLEX_WITH_ITEMS:
-            service = ComplexV1Service(items=["a", "b", "c"], multiplier=2)
-            result = service.execute()
-            assert result.is_success
-            value = result.unwrap()
-            assert value["count"] == 6
+        elif op == ServiceOperationType.V1_COMPLEX_WITH_ITEMS:
+            res = ComplexV1Service(items=["a", "b", "c"], multiplier=2).execute()
+            assert res.is_success and res.unwrap()["count"] == 6
 
-        elif test_case.operation == ServiceOperationType.V2_COMPLEX_WITH_ITEMS:
-            service = ComplexV2Service(items=["a", "b", "c"], multiplier=2)
-            value = service.result
-            assert isinstance(value, dict)
-            assert value["count"] == 6
+        elif op == ServiceOperationType.V2_COMPLEX_WITH_ITEMS:
+            val = ComplexV2Service(items=["a", "b", "c"], multiplier=2).result
+            assert isinstance(val, dict) and val["count"] == 6
 
-        elif test_case.operation == ServiceOperationType.V1_COMPLEX_EMPTY_ITEMS:
-            service = ComplexV1Service(items=[], multiplier=2)
-            result = service.execute()
-            assert result.is_failure
+        elif op == ServiceOperationType.V1_COMPLEX_EMPTY_ITEMS:
+            assert ComplexV1Service(items=[], multiplier=2).execute().is_failure
 
-        elif test_case.operation == ServiceOperationType.V2_COMPLEX_EMPTY_ITEMS:
-            service = ComplexV2Service(items=[], multiplier=2)
+        elif op == ServiceOperationType.V2_COMPLEX_EMPTY_ITEMS:
             try:
-                _ = service.result
+                _ = ComplexV2Service(items=[], multiplier=2).result
                 pytest.fail("Should raise exception")
             except FlextExceptions.BaseError:
                 pass
@@ -637,9 +609,9 @@ class TestFlextServiceV2Patterns:
                 def execute(self) -> FlextResult[str]:
                     return FlextResult.ok("no_auto")
 
-            service = NoAutoService()
-            assert isinstance(service, FlextService)
-            result = service.execute()
+            no_auto_service: FlextService[str] = NoAutoService()
+            assert isinstance(no_auto_service, FlextService)
+            result = no_auto_service.execute()
             assert result.unwrap() == "no_auto"
 
         elif test_case.operation == ServiceOperationType.NO_AUTO_EXECUTE_ATTRIBUTE:
@@ -650,8 +622,8 @@ class TestFlextServiceV2Patterns:
                 def execute(self) -> FlextResult[str]:
                     return FlextResult.ok("default")
 
-            service = DefaultService()
-            assert isinstance(service, FlextService)
+            default_service: FlextService[str] = DefaultService()
+            assert isinstance(default_service, FlextService)
 
     @pytest.mark.parametrize(
         "test_case",
@@ -661,27 +633,33 @@ class TestFlextServiceV2Patterns:
     def test_v2_edge_cases(self, test_case: ServiceTestCase) -> None:
         """Test edge cases with various return types."""
         if test_case.operation == ServiceOperationType.V2_AUTO_WITH_BOOL_RETURN:
-            value = BoolService()
-            assert value is True
+            # Testing auto_execute: BoolService() returns bool directly when auto_execute=True
+            # The __new__ method unwraps the result value for auto_execute services
+            bool_value: bool = BoolService()  # type: ignore[assignment]
+            assert bool_value is True
 
         elif test_case.operation == ServiceOperationType.V2_PROPERTY_WITH_DICT_RETURN:
-            service = DictService()
-            value = service.result
-            assert isinstance(value, dict)
-            assert value["a"] == 1
-            assert value["b"] == 2
+            dict_service: FlextService[dict[str, int]] = DictService()
+            dict_value = dict_service.result
+            assert isinstance(dict_value, dict)
+            assert dict_value["a"] == 1
+            assert dict_value["b"] == 2
 
         elif test_case.operation == ServiceOperationType.V2_AUTO_WITH_LIST_RETURN:
-            value = ListService()
-            assert isinstance(value, list)
-            assert len(value) == 3
-            assert value[0] == "x"
+            # Testing auto_execute: ListService() returns list directly when auto_execute=True
+            # The __new__ method unwraps the result value for auto_execute services
+            list_value: list[str] = ListService()  # type: ignore[assignment]
+            assert isinstance(list_value, list)
+            assert len(list_value) == 3
+            assert list_value[0] == "x"
 
         elif test_case.operation == ServiceOperationType.V2_PROPERTY_WITH_MODEL_RETURN:
-            service = UserService(user_id="123", user_name="Test User")
-            user = service.result
+            user_service: FlextService[FlextModels.Entity] = UserService(user_id="123", user_name="Test User")  # type: ignore[assignment,valid-type]  # FlextModels.Entity is assignment alias
+            user = user_service.result
             assert isinstance(user, FlextModels.Entity)
-            assert user.unique_id == "123"
+            # Type narrowing: user is FlextModels.Entity, access unique_id via getattr for type safety
+            user_id = getattr(user, "unique_id", None)
+            assert user_id == "123"
             # User entity may not have name attribute directly, check via getattr
             user_name = getattr(user, "name", None)
             if user_name is not None:
@@ -695,20 +673,27 @@ class TestFlextServiceV2Patterns:
     def test_v2_best_practices(self, test_case: ServiceTestCase) -> None:
         """Test V2 best practice recommendations."""
         if test_case.operation == ServiceOperationType.V2_PROPERTY_RECOMMENDED:
-            service = SimpleV2PropertyService(message="test")
-            value = service.result
-            assert value == "V2 Property: test"
+            prop_service: FlextService[str] = SimpleV2PropertyService(message="test")
+            prop_value = prop_service.result
+            assert prop_value == "V2 Property: test"
 
         elif test_case.operation == ServiceOperationType.V1_EXECUTE_RECOMMENDED:
-            service = ValidationService(value=10)
-            result = service.execute()
-            if result.is_success:
-                value = result.unwrap()
-                assert value["value"] == 10
+            validation_service_instance = ValidationService(value=10)
+            validation_result = validation_service_instance.execute()
+            if validation_result.is_success:
+                validation_value_raw = validation_result.unwrap()
+                assert isinstance(validation_value_raw, dict)
+                validation_value: dict[str, int] = {
+                    k: int(v) if isinstance(v, (int, float)) else 0
+                    for k, v in validation_value_raw.items()
+                }
+                assert validation_value["value"] == 10
 
         elif test_case.operation == ServiceOperationType.V2_AUTO_RECOMMENDED:
-            value = SimpleV2AutoService(message="simple")
-            assert value == "V2 Auto: simple"
+            # Testing auto_execute: SimpleV2AutoService() returns str directly when auto_execute=True
+            # The __new__ method unwraps the result value for auto_execute services
+            auto_value: str = SimpleV2AutoService(message="simple")  # type: ignore[assignment]
+            assert auto_value == "V2 Auto: simple"
 
 
 __all__ = ["TestFlextServiceV2Patterns"]

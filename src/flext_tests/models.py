@@ -12,6 +12,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
+from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import FlextConstants
 from flext_core.models import FlextModels
 from flext_tests.constants import FlextTestConstants
@@ -25,16 +26,16 @@ class FlextTestModels(FlextModels):
     All base models from FlextModels are available through inheritance.
     """
 
-    # Re-export base models
-    Value = FlextModels.Value
-    Entity = FlextModels.Entity
-    AggregateRoot = FlextModels.AggregateRoot
-    DomainEvent = FlextModels.DomainEvent
+    # Re-export base models - use actual classes for inheritance
+    Value = FlextModelsEntity.Value
+    Entity = FlextModelsEntity.Core
+    AggregateRoot = FlextModelsEntity.AggregateRoot
+    DomainEvent = FlextModelsEntity.DomainEvent
 
     class Docker:
         """Docker-specific models for test infrastructure."""
 
-        class ContainerInfo(FlextModels.Value):
+        class ContainerInfo(FlextModelsEntity.Value):
             """Container information model.
 
             Represents Docker container state and configuration.
@@ -57,7 +58,7 @@ class FlextTestModels(FlextModels):
                     msg = "Container image cannot be empty"
                     raise ValueError(msg)
 
-        class ContainerConfig(FlextModels.Value):
+        class ContainerConfig(FlextModelsEntity.Value):
             """Container configuration model.
 
             Represents docker-compose container configuration.
@@ -84,7 +85,7 @@ class FlextTestModels(FlextModels):
                     msg = f"Port {self.port} out of valid range"
                     raise ValueError(msg)
 
-        class ContainerState(FlextModels.Value):
+        class ContainerState(FlextModelsEntity.Value):
             """Container state tracking model.
 
             Represents persistent container state for dirty tracking.
@@ -95,7 +96,7 @@ class FlextTestModels(FlextModels):
             worker_id: str
             last_updated: str | None = None
 
-        class ComposeConfig(FlextModels.Value):
+        class ComposeConfig(FlextModelsEntity.Value):
             """Docker compose configuration model."""
 
             compose_file: Path

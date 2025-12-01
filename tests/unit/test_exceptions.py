@@ -23,12 +23,13 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 
-from flext_core import FlextExceptions
-from flext_core._models.metadata import Metadata
+from flext_core import FlextExceptions, FlextRuntime
+from flext_core._models.base import FlextModelsBase
+from flext_core.typings import FlextTypes
 
 
 class ExceptionScenarioType(StrEnum):
@@ -89,9 +90,19 @@ class ExceptionTestHelpers:
     """Generalized helpers for exception testing."""
 
     @staticmethod
-    def create_metadata_object(attributes: dict[str, object] | None = None) -> Metadata:
+    def create_metadata_object(attributes: dict[str, object] | None = None) -> FlextModelsBase.Metadata:
         """Create Metadata object from attributes dict."""
-        return Metadata(attributes=attributes or {})
+        if not attributes:
+            return FlextModelsBase.Metadata(attributes={})
+        # Convert dict[str, object] to dict[str, MetadataAttributeValue]
+        # Convert object to GeneralValueType first, then normalize
+        normalized_attrs: dict[str, FlextTypes.MetadataAttributeValue] = {
+            k: FlextRuntime.normalize_to_metadata_value(
+                cast("FlextTypes.GeneralValueType", v)
+            )
+            for k, v in attributes.items()
+        }
+        return FlextModelsBase.Metadata(attributes=normalized_attrs)
 
     @staticmethod
     def get_exception_class_by_type(error_type: str) -> type[FlextExceptions.BaseError]:
@@ -679,7 +690,7 @@ class TestFlextExceptions:
         exc = FlextExceptions.ValidationError(
             "Validation failed",
             error_code="INVALID_INPUT",
-            metadata=ExceptionTestHelpers.create_metadata_object({
+            metadata=ExceptionTestHelpers.create_metadata_object({  # type: ignore[arg-type]  # FlextModelsBase.Metadata is accepted by BaseError.__init__ metadata parameter
                 "field": "email",
                 "value": "invalid",
             }),

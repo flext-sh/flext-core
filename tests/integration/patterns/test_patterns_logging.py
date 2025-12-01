@@ -12,7 +12,7 @@ import time
 
 import pytest
 
-from flext_core import FlextConstants, FlextLogger, FlextLoggerResultAdapter
+from flext_core import FlextConstants, FlextLogger
 
 # Alias for the LogLevel enum
 FlextLogLevel = FlextConstants.Settings.LogLevel
@@ -21,7 +21,7 @@ FlextLogLevel = FlextConstants.Settings.LogLevel
 EXPECTED_BULK_SIZE = 2
 
 
-def make_result_logger(name: str) -> FlextLoggerResultAdapter:
+def make_result_logger(name: str) -> FlextLogger.ResultAdapter:
     """Helper to create loggers with FlextResult outputs."""
     return FlextLogger(name).with_result()
 
@@ -247,19 +247,19 @@ class TestFlextLoggerUsage:
         logger = make_result_logger("usage_test")
 
         # These should not raise errors
-        logger.info("Test info message", test=True)
-        logger.debug("Test debug message", test=True)
-        logger.warning("Test warning message", test=True)
-        logger.error("Test error message", test=True)
-        logger.critical("Test critical message", test=True)
+        _ = logger.info("Test info message", test=True)
+        _ = logger.debug("Test debug message", test=True)
+        _ = logger.warning("Test warning message", test=True)
+        _ = logger.error("Test error message", test=True)
+        _ = logger.critical("Test critical message", test=True)
 
     def test_logging_with_context(self) -> None:
         """Test logging with context data."""
         logger = make_result_logger("context_test")
 
         # These should not raise errors
-        logger.info("User action", user_id="123", action="login")
-        logger.error("Operation failed", error_code="E001", duration_ms=150.5)
+        _ = logger.info("User action", user_id="123", action="login")
+        _ = logger.error("Operation failed", error_code="E001", duration_ms=150.5)
 
     def test_bound_logger_usage(self) -> None:
         """Test using bound logger."""
@@ -267,8 +267,8 @@ class TestFlextLoggerUsage:
         bound_logger = logger.bind(request_id="req-123", user_id="user-456")
 
         # Context should be automatically included in these logs
-        bound_logger.info("Processing request")
-        bound_logger.error("Request failed")
+        _ = bound_logger.info("Processing request")
+        _ = bound_logger.error("Request failed")
 
     def test_context_manager_style(self) -> None:
         """Test context manager style usage."""
@@ -276,10 +276,10 @@ class TestFlextLoggerUsage:
 
         # Bind context for a series of operations
         bound_logger = logger.bind(operation="batch_process", batch_id="batch-123")
-        bound_logger.info("Starting batch process")
-        bound_logger.info("Processing item 1")
-        bound_logger.info("Processing item 2")
-        bound_logger.info("Batch process completed")
+        _ = bound_logger.info("Starting batch process")
+        _ = bound_logger.info("Processing item 1")
+        _ = bound_logger.info("Processing item 2")
+        _ = bound_logger.info("Batch process completed")
 
     @pytest.mark.performance
     def test_performance_logging(self) -> None:
@@ -289,7 +289,7 @@ class TestFlextLoggerUsage:
         # Performance loggers should support similar operations
 
         assert hasattr(perf_logger, "info")
-        perf_logger.info("Performance test message")
+        _ = perf_logger.info("Performance test message")
 
 
 class TestFlextLoggerIntegration:
@@ -312,20 +312,20 @@ class TestFlextLoggerIntegration:
 
         # Simulate a complex operation with nested contexts
         bound_logger = logger.bind(operation="user_registration", request_id="req-789")
-        bound_logger.info("Starting user registration")
+        _ = bound_logger.info("Starting user registration")
 
         validation_logger = bound_logger.bind(
             step="validation",
             user_email="test@example.com",
         )
-        validation_logger.debug("Validating user input")
-        validation_logger.info("User input validation passed")
+        _ = validation_logger.debug("Validating user input")
+        _ = validation_logger.info("User input validation passed")
 
         database_logger = bound_logger.bind(step="database", table="users")
-        database_logger.debug("Saving user to database")
-        database_logger.info("User saved successfully", user_id="user-456")
+        _ = database_logger.debug("Saving user to database")
+        _ = database_logger.info("User saved successfully", user_id="user-456")
 
-        bound_logger.info("User registration completed")
+        _ = bound_logger.info("User registration completed")
 
     def test_error_logging_with_context(self) -> None:
         """Test error logging with rich context."""
@@ -340,7 +340,7 @@ class TestFlextLoggerIntegration:
             # Simulate an error
             _raise_test_error()
         except ValueError as e:
-            logger.exception(
+            _ = logger.exception(
                 "Operation failed with error",
                 error_type=type(e).__name__,
                 error_message=str(e),
@@ -361,7 +361,7 @@ class TestFlextLoggerIntegration:
 
         duration_ms = (time.time() - start_time) * 1000
 
-        logger.info(
+        _ = logger.info(
             "Operation completed",
             operation="test_work",
             duration_ms=duration_ms,

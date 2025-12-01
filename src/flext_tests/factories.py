@@ -20,7 +20,10 @@ import uuid
 from collections.abc import Callable, Mapping, Sequence
 from typing import Never
 
-from flext_core import FlextModels, FlextResult, FlextService, FlextUtilities
+from pydantic import PrivateAttr
+
+from flext_core import FlextResult, FlextService, FlextUtilities
+from flext_core._models.entity import FlextModelsEntity
 from flext_core.typings import FlextTypes
 from flext_tests.typings import FlextTestsTypings
 
@@ -31,7 +34,7 @@ class FlextTestsFactories:
     Provides factory methods for creating test objects using Models.
     """
 
-    class User(FlextModels.Value):
+    class User(FlextModelsEntity.Value):
         """Test user model."""
 
         id: str
@@ -39,7 +42,7 @@ class FlextTestsFactories:
         email: str
         active: bool = True
 
-    class Config(FlextModels.Value):
+    class Config(FlextModelsEntity.Value):
         """Test configuration model."""
 
         service_type: str = "api"
@@ -49,7 +52,7 @@ class FlextTestsFactories:
         timeout: int = 30
         max_retries: int = 3
 
-    class Service(FlextModels.Value):
+    class Service(FlextModelsEntity.Value):
         """Test service model."""
 
         id: str
@@ -235,6 +238,9 @@ class FlextTestsFactories:
             name: str | None = None
             amount: int | None = None
             enabled: bool | None = None
+            _overrides: dict[str, FlextTestsTypings.TestResultValue] = PrivateAttr(
+                default_factory=dict
+            )
 
             def __init__(
                 self,
@@ -245,7 +251,7 @@ class FlextTestsFactories:
                 ),
             ) -> None:
                 super().__init__(**data)
-                self._overrides = overrides
+                self._overrides.update(overrides)
 
             def _validate_name_not_empty(self) -> FlextResult[bool]:
                 """Validate name is not empty."""

@@ -17,14 +17,25 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
-from flext_core._models.metadata import Metadata, MetadataAttributeValue
-from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
+
+
+def _get_log_level_from_config() -> int:
+    """Get log level from FlextConfig (lazy import to avoid circular dependency)."""
+    from flext_core.config import (  # noqa: PLC0415  # Lazy import to avoid circular dependency
+        FlextConfig,
+    )
+
+    return getattr(
+        logging,
+        FlextConfig().log_level.upper(),
+        logging.INFO,
+    )
 
 
 class FlextModelsConfig:
@@ -368,11 +379,7 @@ class FlextModelsConfig:
         """
 
         log_level: int = Field(
-            default_factory=lambda: getattr(
-                logging,
-                FlextConfig().log_level.upper(),
-                logging.INFO,
-            ),
+            default_factory=_get_log_level_from_config,
             ge=0,
             le=50,
             description=(
@@ -436,7 +443,7 @@ class FlextModelsConfig:
         Groups optional dispatch context and overrides.
         """
 
-        metadata: Metadata | None = Field(
+        metadata: FlextModelsBase.Metadata | None = Field(
             default=None,
             description="Optional execution context metadata (Pydantic model)",
         )
@@ -564,7 +571,7 @@ class FlextModelsConfig:
             default=None,
             description="Correlation ID for distributed tracing",
         )
-        metadata: Metadata | None = Field(
+        metadata: FlextModelsBase.Metadata | None = Field(
             default=None,
             description="Additional metadata (Pydantic model)",
         )
@@ -595,7 +602,7 @@ class FlextModelsConfig:
             default=None,
             description="Error code for categorization",
         )
-        error_data: Metadata | None = Field(
+        error_data: FlextModelsBase.Metadata | None = Field(
             default=None,
             description="Additional error data (Pydantic model)",
         )
@@ -747,6 +754,31 @@ class FlextModelsConfig:
         actual_type: str | None = Field(
             default=None,
             description="Actual type name",
+        )
+
+    class TypeErrorOptions(FlextModelsCollections.Config):
+        """Options for TypeError initialization (Pydantic v2).
+
+        Groups TypeError constructor parameters for cleaner initialization.
+        """
+
+        expected_type: type | None = Field(
+            default=None,
+            description="Expected type class",
+        )
+        actual_type: type | None = Field(
+            default=None,
+            description="Actual type class",
+        )
+        context: Mapping[str, FlextTypes.MetadataAttributeValue] | None = Field(
+            default=None,
+            description="Additional context for error",
+        )
+        metadata: FlextModelsBase.Metadata | Mapping[str, FlextTypes.MetadataAttributeValue] | None = (
+            Field(
+                default=None,
+                description="Metadata for error",
+            )
         )
 
     class ValueErrorConfig(ExceptionConfig):

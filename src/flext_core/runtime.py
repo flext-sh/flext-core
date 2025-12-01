@@ -43,6 +43,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib
 import inspect
 import json
 import logging
@@ -52,7 +53,7 @@ import string
 import typing
 from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
-from typing import Protocol, TypeGuard, cast
+from typing import TypeGuard, cast
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
@@ -60,81 +61,12 @@ from beartype.claw import beartype_package
 from dependency_injector import containers, providers
 from structlog.typing import BindableLogger
 
-from flext_core._models.metadata import MetadataAttributeValue
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes, P
-
-__all__ = ["StructlogLogger"]
+from flext_core.typings import FlextTypes, P, T
 
 
-class StructlogLogger(BindableLogger, Protocol):
-    """Protocol for structlog logger with all logging methods.
-
-    Extends BindableLogger to add explicit method signatures for logging methods
-    (debug, info, warning, error, etc.) that are available via __getattr__ at runtime.
-
-    Structlog loggers implement this protocol through dynamic method dispatch.
-    """
-
-    def debug(
-        self,
-        msg: str | FlextTypes.GeneralValueType,
-        *args: object,
-        **kw: object,
-    ) -> None:
-        """Log debug message."""
-
-    def info(
-        self,
-        msg: str | FlextTypes.GeneralValueType,
-        *args: object,
-        **kw: object,
-    ) -> None:
-        """Log info message."""
-
-    def warning(
-        self,
-        msg: str | FlextTypes.GeneralValueType,
-        *args: object,
-        **kw: object,
-    ) -> None:
-        """Log warning message."""
-
-    def warn(
-        self,
-        msg: str | FlextTypes.GeneralValueType,
-        *args: object,
-        **kw: object,
-    ) -> None:
-        """Log warning message (alias)."""
-
-    def error(
-        self,
-        msg: str | FlextTypes.GeneralValueType,
-        *args: object,
-        **kw: object,
-    ) -> None:
-        """Log error message."""
-
-    def critical(
-        self,
-        msg: str | FlextTypes.GeneralValueType,
-        *args: object,
-        **kw: object,
-    ) -> None:
-        """Log critical message."""
-
-    def exception(
-        self,
-        msg: str | FlextTypes.GeneralValueType,
-        *args: object,
-        **kw: object,
-    ) -> None:
-        """Log exception with traceback."""
-
-
-class FlextRuntime:
+class FlextRuntime:  # noqa: PLR0904
     """Expose structlog, DI providers, and validation helpers to higher layers.
 
     **ARCHITECTURE LAYER 0.5** - Integration Bridge with minimal dependencies
@@ -213,9 +145,6 @@ class FlextRuntime:
     - Pattern-based validation using FlextConstants (single source of truth)
     """
 
-    # Constants for level-prefixed context variable parsing
-    LEVEL_PREFIX_PARTS_COUNT: int = FlextConstants.Validation.LEVEL_PREFIX_PARTS_COUNT
-
     _structlog_configured: bool = False
 
     @classmethod
@@ -228,12 +157,7 @@ class FlextRuntime:
         """
         return cls._structlog_configured
 
-    # Log level constants using FlextConstants (production-ready, not test-only)
-    LOG_LEVEL_DEBUG: str = FlextConstants.Settings.LogLevel.DEBUG
-    LOG_LEVEL_INFO: str = FlextConstants.Settings.LogLevel.INFO
-    LOG_LEVEL_WARNING: str = FlextConstants.Settings.LogLevel.WARNING
-    LOG_LEVEL_ERROR: str = FlextConstants.Settings.LogLevel.ERROR
-    LOG_LEVEL_CRITICAL: str = FlextConstants.Settings.LogLevel.CRITICAL
+    # NOTE: Use FlextConstants.Settings.LogLevel directly - no aliases per FLEXT standards
 
     # =========================================================================
     # TYPE GUARD UTILITIES (Uses regex patterns from FlextConstants)
@@ -258,6 +182,80 @@ class FlextRuntime:
             return False
         pattern = re.compile(FlextConstants.Platform.PATTERN_PHONE_NUMBER)
         return pattern.match(value) is not None
+
+    @staticmethod
+    def create_instance[T](class_type: type[T]) -> T:
+        """Type-safe factory for creating instances via object.__new__.
+
+        This helper function properly types object.__new__() calls, eliminating
+        the need for type: ignore comments. Use this instead of direct object.__new__()
+        calls in factory patterns.
+
+        Args:
+            class_type: The class to instantiate
+
+        Returns:
+            An instance of type T
+
+        Example:
+            >>> instance = FlextRuntime.create_instance(MyClass)
+            >>> # instance is properly typed as MyClass
+
+        """
+        # object.__new__ returns object, but we know it's actually T
+        # Use explicit type narrowing via isinstance check after creation
+        instance = object.__new__(class_type)
+        # Type assertion: object.__new__(class_type) always returns an instance of class_type
+        # This is a fundamental Python guarantee, so we can safely assert the type
+        if not isinstance(instance, class_type):
+            class_name = getattr(class_type, "__name__", str(class_type))
+            msg = (
+                f"object.__new__({class_name}) did not return instance of {class_name}"
+            )
+            raise TypeError(msg)
+        return instance
+
+    @staticmethod
+    def create_context() -> FlextProtocols.ContextProtocol:
+        """Factory for creating context instances using protocol-based import.
+
+        Uses dynamic import to avoid circular dependencies while maintaining
+        type safety through FlextProtocols.ContextProtocol.
+
+        Returns:
+            ContextProtocol instance
+
+        Example:
+            >>> context = FlextRuntime.create_context()
+            >>> result = context.set("key", "value")
+
+        """
+        # Dynamic import to avoid circular dependency at module import time
+        # This is NOT a lazy import - it's a factory pattern using importlib
+        context_module = importlib.import_module("flext_core.context")
+        context_class = context_module.FlextContext
+        return cast("FlextProtocols.ContextProtocol", context_class())
+
+    @staticmethod
+    def create_container() -> FlextProtocols.ContainerProtocol:
+        """Factory for creating container instances using protocol-based import.
+
+        Uses dynamic import to avoid circular dependencies while maintaining
+        type safety through FlextProtocols.ContainerProtocol.
+
+        Returns:
+            ContainerProtocol instance
+
+        Example:
+            >>> container = FlextRuntime.create_container()
+            >>> result = container.get("service_name")
+
+        """
+        # Dynamic import to avoid circular dependency at module import time
+        # This is NOT a lazy import - it's a factory pattern using importlib
+        container_module = importlib.import_module("flext_core.container")
+        container_class = container_module.FlextContainer
+        return cast("FlextProtocols.ContainerProtocol", container_class())
 
     @staticmethod
     def is_dict_like(
@@ -303,15 +301,17 @@ class FlextRuntime:
         return isinstance(value, list)
 
     @staticmethod
-    def normalize_to_general_value(val: object) -> FlextTypes.GeneralValueType:
+    def normalize_to_general_value(
+        val: FlextTypes.GeneralValueType | object,
+    ) -> FlextTypes.GeneralValueType:
         """Normalize any value to FlextTypes.GeneralValueType recursively.
 
         Converts dict[str, object], list[object], and other object types
-        to dict[str, GeneralValueType], list[GeneralValueType], etc.
+        to Mapping[str, GeneralValueType], Sequence[GeneralValueType], etc.
         This is the central conversion function for type safety.
 
         Args:
-            val: Value to normalize (can be object, dict[str, object], etc.)
+            val: Value to normalize (can be object, Mapping[str, GeneralValueType], etc.)
 
         Returns:
             Normalized value compatible with GeneralValueType
@@ -338,16 +338,17 @@ class FlextRuntime:
         if FlextRuntime.is_list_like(val):
             # Convert to list[GeneralValueType] recursively
             return [FlextRuntime.normalize_to_general_value(item) for item in val]
-        # Fallback: convert to string for non-serializable types
+        # For arbitrary objects that don't match known types, convert to string representation
+        # This ensures we always return a GeneralValueType-compatible value
         return str(val)
 
     @staticmethod
     def normalize_to_metadata_value(
         val: FlextTypes.GeneralValueType,
-    ) -> MetadataAttributeValue:
-        """Normalize any value to MetadataAttributeValue.
+    ) -> FlextTypes.MetadataAttributeValue:
+        """Normalize any value to FlextTypes.MetadataAttributeValue.
 
-        MetadataAttributeValue is more restrictive than FlextTypes.GeneralValueType,
+        FlextTypes.MetadataAttributeValue is more restrictive than FlextTypes.GeneralValueType,
         so we need to normalize nested structures to flat types.
         This method is in FlextRuntime (Tier 0.5) to avoid circular dependencies.
 
@@ -355,7 +356,7 @@ class FlextRuntime:
             val: Value to normalize
 
         Returns:
-            MetadataAttributeValue: Normalized value compatible with Metadata attributes
+            FlextTypes.MetadataAttributeValue: Normalized value compatible with Metadata attributes
 
         Example:
             >>> FlextRuntime.normalize_to_metadata_value("test")
@@ -367,9 +368,11 @@ class FlextRuntime:
 
         """
         if isinstance(val, (str, int, float, bool, type(None))):
-            return val
+            # Return type is FlextTypes.MetadataAttributeValue (scalar types)
+            result_scalar: FlextTypes.MetadataAttributeValue = val
+            return result_scalar
         if FlextRuntime.is_dict_like(val):
-            # Convert to flat dict[str, MetadataAttributeValue]
+            # Convert to flat dict[str, FlextTypes.MetadataAttributeValue]
             result: dict[str, str | int | float | bool | None] = {}
             dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
             for k, v in dict_v.items():
@@ -378,17 +381,23 @@ class FlextRuntime:
                         result[k] = v
                     else:
                         result[k] = str(v)
-            return result
+            # Return type is FlextTypes.MetadataAttributeValue (dict type)
+            result_dict: FlextTypes.MetadataAttributeValue = result
+            return result_dict
         if FlextRuntime.is_list_like(val):
-            # Convert to list[MetadataAttributeValue]
+            # Convert to list[FlextTypes.MetadataAttributeValue]
             result_list: list[str | int | float | bool | None] = []
             for item in val:
                 if isinstance(item, (str, int, float, bool, type(None))):
                     result_list.append(item)
                 else:
                     result_list.append(str(item))
-            return result_list
-        return str(val)
+            # Return type is FlextTypes.MetadataAttributeValue (list type)
+            result_list_typed: FlextTypes.MetadataAttributeValue = result_list
+            return result_list_typed
+        # Return type is FlextTypes.MetadataAttributeValue (str type)
+        result_str: FlextTypes.MetadataAttributeValue = str(val)
+        return result_str
 
     @staticmethod
     def is_valid_json(
@@ -475,10 +484,11 @@ class FlextRuntime:
                 type_name = getattr(type_hint, "__name__", "")
                 # Handle common type aliases - use actual type objects
                 # GenericTypeArgument = str | type[GeneralValueType]
-                # We use actual type objects (str, int, float, bool) which are valid
-                # Cast is needed because type[str | int | float | bool] is not directly
-                # compatible with type[GeneralValueType], but runtime they are compatible
-                type_mapping_raw: dict[str, tuple[object, ...]] = {
+                # Type objects (str, int, float, bool) are valid GenericTypeArgument
+                # types as they represent type[T] where T is a scalar GeneralValueType
+                type_mapping: dict[
+                    str, tuple[FlextTypes.Utility.GenericTypeArgument, ...]
+                ] = {
                     "StringList": (str,),
                     "IntList": (int,),
                     "FloatList": (float,),
@@ -489,15 +499,9 @@ class FlextRuntime:
                     "IntDict": (str, int),
                     "FloatDict": (str, float),
                     "BoolDict": (str, bool),
-                    # NestedDict: str key, GeneralValueType value
-                    # Use object as representative type for GeneralValueType
-                    "NestedDict": (str, object),
+                    # NestedDict: str key, nested value (recursive dict structure)
+                    "NestedDict": (str, dict),
                 }
-                # Cast to satisfy type checker - all values are valid GenericTypeArgument
-                type_mapping = cast(
-                    "dict[str, tuple[FlextTypes.Utility.GenericTypeArgument, ...]]",
-                    type_mapping_raw,
-                )
                 if type_name in type_mapping:
                     return type_mapping[type_name]
 
@@ -562,7 +566,9 @@ class FlextRuntime:
         return structlog
 
     @staticmethod
-    def get_logger(name: str | None = None) -> StructlogLogger:
+    def get_logger(
+        name: str | None = None,
+    ) -> FlextProtocols.StructlogLogger:
         """Get structlog logger instance - same structure/config used by FlextLogger.
 
         Returns the exact same structlog logger instance that FlextLogger uses internally.
@@ -585,9 +591,11 @@ class FlextRuntime:
                 name = frame.f_back.f_globals.get("__name__", __name__)
             else:
                 name = __name__
-        # structlog.get_logger returns BoundLoggerLazyProxy which implements StructlogLogger protocol
+        # structlog.get_logger returns BoundLoggerLazyProxy which implements FlextProtocols.StructlogLogger protocol
         # All methods (debug, info, warning, error, etc.) are available via __getattr__ at runtime
-        return cast("StructlogLogger", structlog.get_logger(name))
+        # FlextProtocols.StructlogLogger protocol is compatible with structlog's return type via structural typing
+        logger: FlextProtocols.StructlogLogger = structlog.get_logger(name)
+        return logger
 
     @staticmethod
     def dependency_providers() -> ModuleType:
@@ -930,6 +938,143 @@ class FlextRuntime:
         )
 
         return True
+
+    # =========================================================================
+    # RESULT FACTORY METHODS (Core implementation - NO FlextResult import)
+    # =========================================================================
+    # ARCHITECTURE: runtime.py is Tier 0.5, result.py is Tier 1.
+    # FlextResult MUST import from runtime, NOT the other way around.
+    # RuntimeResult is a lightweight ResultProtocol implementation that
+    # can be used by higher layers without circular imports.
+    # =========================================================================
+
+    class RuntimeResult[T]:
+        """Lightweight ResultProtocol implementation for Tier 0.5.
+
+        This class implements FlextProtocols.ResultProtocol without depending
+        on FlextResult, allowing runtime.py to create results that can be used
+        by higher layers. FlextResult can wrap or extend this as needed.
+        """
+
+        __slots__ = ("_error", "_error_code", "_error_data", "_is_success", "_value")
+
+        def __init__(
+            self,
+            value: T | None = None,
+            error: str | None = None,
+            error_code: str | None = None,
+            error_data: Mapping[str, FlextTypes.GeneralValueType] | None = None,
+            *,
+            is_success: bool = True,
+        ) -> None:
+            """Initialize RuntimeResult."""
+            self._value = value
+            self._error = error
+            self._error_code = error_code
+            self._error_data = error_data
+            self._is_success = is_success
+
+        @property
+        def value(self) -> T:
+            """Get the success value."""
+            if not self._is_success:
+                msg = f"Cannot get value from failed result: {self._error}"
+                raise ValueError(msg)
+            # Type narrowing: if is_success is True, _value is guaranteed to be T
+            if self._value is None:
+                msg = "Success result cannot have None value"
+                raise ValueError(msg)
+            return self._value
+
+        @property
+        def is_success(self) -> bool:
+            """Check if result is successful."""
+            return self._is_success
+
+        @property
+        def is_failure(self) -> bool:
+            """Check if result is a failure."""
+            return not self._is_success
+
+        @property
+        def error(self) -> str | None:
+            """Get the error message."""
+            return self._error
+
+        @property
+        def error_code(self) -> str | None:
+            """Get the error code."""
+            return self._error_code
+
+        @property
+        def error_data(self) -> Mapping[str, FlextTypes.GeneralValueType] | None:
+            """Get the error data."""
+            return self._error_data
+
+        def unwrap(self) -> T:
+            """Unwrap the success value or raise."""
+            return self.value
+
+        def unwrap_or(self, default: T) -> T:
+            """Return the success value or the default if failed."""
+            if self._is_success and self._value is not None:
+                return self._value
+            return default
+
+        def unwrap_or_else(self, func: Callable[[], T]) -> T:
+            """Return the success value or call func if failed."""
+            if self._is_success and self._value is not None:
+                return self._value
+            return func()
+
+    @staticmethod
+    def result_ok[T](value: T) -> FlextProtocols.ResultProtocol[T]:
+        """Create a successful result - CORE IMPLEMENTATION.
+
+        This is the core factory for creating success results.
+        Uses RuntimeResult to avoid circular imports with FlextResult.
+
+        Args:
+            value: The success value (cannot be None)
+
+        Returns:
+            RuntimeResult[T] instance with success state (as ResultProtocol)
+
+        Raises:
+            ValueError: If value is None
+
+        """
+        if value is None:
+            msg = "Cannot create success result with None value"
+            raise ValueError(msg)
+        return FlextRuntime.RuntimeResult(value=value, is_success=True)
+
+    @staticmethod
+    def result_fail[T](
+        error: str,
+        error_code: str | None = None,
+        error_data: Mapping[str, FlextTypes.GeneralValueType] | None = None,
+    ) -> FlextProtocols.ResultProtocol[T]:
+        """Create a failed result - CORE IMPLEMENTATION.
+
+        This is the core factory for creating failure results.
+        Uses RuntimeResult to avoid circular imports with FlextResult.
+
+        Args:
+            error: The error message
+            error_code: Optional error code for categorization
+            error_data: Optional metadata about the error
+
+        Returns:
+            RuntimeResult[T] instance with failure state (as ResultProtocol)
+
+        """
+        return FlextRuntime.RuntimeResult(
+            error=error,
+            error_code=error_code,
+            error_data=error_data,
+            is_success=False,
+        )
 
     # =========================================================================
     # APPLICATION LAYER INTEGRATION (Using structlog directly - Layer 0.5)

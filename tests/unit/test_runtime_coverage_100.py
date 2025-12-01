@@ -17,10 +17,11 @@ from typing import ClassVar, Never, cast, overload
 import structlog
 
 from flext_core import FlextRuntime
+from flext_core.typings import FlextTypes
 
 
-class TestRuntime100Coverage:
-    """Real tests to achieve 100% runtime coverage."""
+class TestRuntimeDictLike:
+    """Tests for is_dict_like runtime coverage."""
 
     def test_is_dict_like_with_exception_on_items(self) -> None:
         """Test is_dict_like when items() raises AttributeError."""
@@ -118,6 +119,10 @@ class TestRuntime100Coverage:
         result = FlextRuntime.is_dict_like(obj)
         assert result is False
 
+
+class TestRuntimeTypeChecking:
+    """Tests for runtime type checking coverage."""
+
     def test_extract_generic_args_with_type_mapping(self) -> None:
         """Test extract_generic_args with known type aliases."""
 
@@ -142,7 +147,7 @@ class TestRuntime100Coverage:
         assert FlextRuntime.extract_generic_args(IntDict) == (str, int)
         assert FlextRuntime.extract_generic_args(FloatDict) == (str, float)
         assert FlextRuntime.extract_generic_args(BoolDict) == (str, bool)
-        assert FlextRuntime.extract_generic_args(NestedDict) == (str, object)
+        assert FlextRuntime.extract_generic_args(NestedDict) == (str, dict)
 
     def test_is_sequence_type_with_type_mapping(self) -> None:
         """Test is_sequence_type with known type aliases."""
@@ -181,7 +186,7 @@ class TestRuntime100Coverage:
         # A malformed one would be just "_level_" or "_level_debug" (not enough parts)
         # Create a key that starts with _level_ but has fewer parts than required
         malformed_key = "_level_"  # This will split into fewer parts than required
-        event_dict: dict[str, object] = {
+        event_dict: FlextTypes.Types.ConfigurationMapping = {
             malformed_key: "value1",  # Malformed - not enough parts after split
             "normal_key": "value2",  # Not prefixed
         }
@@ -208,7 +213,33 @@ class TestRuntime100Coverage:
             cache_logger_on_first_use: ClassVar[bool] = True
 
         config = Config()
-        FlextRuntime.configure_structlog(config=config)
+        # Convert Config object to Mapping for type compatibility
+        # Convert list[object] to Sequence[GeneralValueType] for type compatibility
+        additional_processors_typed: Sequence[FlextTypes.GeneralValueType] = (
+            cast("Sequence[FlextTypes.GeneralValueType]", config.additional_processors)
+            if isinstance(config.additional_processors, Sequence)
+            else []
+        )
+        # Convert object | None to GeneralValueType | None for type compatibility
+        wrapper_class_factory_typed: FlextTypes.GeneralValueType | None = (
+            cast("FlextTypes.GeneralValueType", config.wrapper_class_factory)
+            if config.wrapper_class_factory is not None
+            else None
+        )
+        logger_factory_typed: FlextTypes.GeneralValueType | None = (
+            cast("FlextTypes.GeneralValueType", config.logger_factory)
+            if config.logger_factory is not None
+            else None
+        )
+        config_dict: FlextTypes.Types.ConfigurationMapping = {
+            "log_level": config.log_level,
+            "console_renderer": config.console_renderer,
+            "additional_processors": additional_processors_typed,
+            "wrapper_class_factory": wrapper_class_factory_typed,
+            "logger_factory": logger_factory_typed,
+            "cache_logger_on_first_use": config.cache_logger_on_first_use,
+        }
+        FlextRuntime.configure_structlog(config=config_dict)
 
         assert FlextRuntime._structlog_configured is True
 
@@ -307,7 +338,7 @@ class TestRuntime100Coverage:
         # Format: _level_<level>_<key> where parts_count = 4
         # So "_level_debug_config" splits into ['', 'level', 'debug', 'config']
         # Level hierarchy: DEBUG (10) < INFO (20) < WARNING (30) < ERROR (40) < CRITICAL (50)
-        event_dict: dict[str, object] = {
+        event_dict: FlextTypes.Types.ConfigurationMapping = {
             "_level_debug_config": {"key": "value"},  # DEBUG level (10)
             "_level_info_status": "ok",  # INFO level (20)
             "_level_error_stack": "trace",  # ERROR level (40)
@@ -348,5 +379,31 @@ class TestRuntime100Coverage:
             cache_logger_on_first_use: ClassVar[bool] = True
 
         config = Config()
-        FlextRuntime.configure_structlog(config=config)
+        # Convert Config object to Mapping for type compatibility
+        # Convert list[object] to Sequence[GeneralValueType] for type compatibility
+        additional_processors_typed: Sequence[FlextTypes.GeneralValueType] = (
+            cast("Sequence[FlextTypes.GeneralValueType]", config.additional_processors)
+            if isinstance(config.additional_processors, Sequence)
+            else []
+        )
+        # Convert object | None to GeneralValueType | None for type compatibility
+        wrapper_class_factory_typed: FlextTypes.GeneralValueType | None = (
+            cast("FlextTypes.GeneralValueType", config.wrapper_class_factory)
+            if config.wrapper_class_factory is not None
+            else None
+        )
+        logger_factory_typed: FlextTypes.GeneralValueType | None = (
+            cast("FlextTypes.GeneralValueType", config.logger_factory)
+            if config.logger_factory is not None
+            else None
+        )
+        config_dict: FlextTypes.Types.ConfigurationMapping = {
+            "log_level": config.log_level,
+            "console_renderer": config.console_renderer,
+            "additional_processors": additional_processors_typed,
+            "wrapper_class_factory": wrapper_class_factory_typed,
+            "logger_factory": logger_factory_typed,
+            "cache_logger_on_first_use": config.cache_logger_on_first_use,
+        }
+        FlextRuntime.configure_structlog(config=config_dict)
         assert FlextRuntime._structlog_configured is True

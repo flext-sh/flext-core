@@ -14,7 +14,7 @@ import secrets
 import string
 import time
 import uuid
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from datetime import UTC, datetime
 
 from pydantic import BaseModel
@@ -42,34 +42,7 @@ class FlextUtilitiesGenerators:
             alphabet = string.ascii_letters + string.digits
             return "".join(secrets.choice(alphabet) for _ in range(length))
 
-    class Type:
-        """Type and subclass generation helpers."""
-
-        @staticmethod
-        def create_dynamic_type_subclass(
-            base_type: type,
-            name: str,
-            attributes: Mapping[str, FlextTypes.GeneralValueType],
-        ) -> type:
-            """Create a dynamic subclass with custom attributes.
-
-            Delegates to main implementation.
-            """
-            # Convert Mapping to dict and ensure correct types
-            attributes_dict: dict[str, FlextTypes.GeneralValueType] = {
-                k: v
-                if isinstance(
-                    v,
-                    (str, int, float, bool, type(None), list, dict, Mapping, Sequence),
-                )
-                else str(v)
-                for k, v in attributes.items()
-            }
-            return FlextUtilitiesGenerators.create_dynamic_type_subclass(
-                name, base_type, attributes_dict
-            )
-
-    """ID and data generation utilities."""
+    # NOTE: create_dynamic_type_subclass is available as static method - no nested Type class needed
 
     @staticmethod
     def _generate_prefixed_id(
@@ -491,7 +464,7 @@ class FlextUtilitiesGenerators:
     def create_dynamic_type_subclass(
         name: str,
         base_class: type,  # Base class for dynamic subclass
-        attributes: dict[str, FlextTypes.GeneralValueType],
+        attributes: Mapping[str, FlextTypes.GeneralValueType] | dict[str, FlextTypes.GeneralValueType],
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 
@@ -513,6 +486,9 @@ class FlextUtilitiesGenerators:
         if not isinstance(base_class, type):
             msg = f"base_class must be a type, got {type(base_class).__name__}"
             raise TypeError(msg)
+        # Convert Mapping to dict if needed - accept both Mapping and dict per FLEXT standards
+        if isinstance(attributes, Mapping) and not isinstance(attributes, dict):
+            attributes = dict(attributes.items())
         base_type: type = base_class
         return type(name, (base_type,), attributes)
 

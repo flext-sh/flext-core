@@ -17,6 +17,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import cast
+
+from pydantic import BaseModel as PydanticBaseModel
+
 # Add src to path for imports (required for tests/examples structure)
 from flext_core import (
     FlextConfig,
@@ -103,11 +108,24 @@ class TestMigrationScenario2:
 
         # Use correct API: with_service() for registration (fluent interface)
         test_service = TestService()
-        registration_result = container.with_service("test_migration_service", test_service)
+        # Cast TestService to BaseModel for type compatibility (FlextService extends BaseModel)
+        service_typed: (
+            FlextTypes.GeneralValueType
+            | PydanticBaseModel
+            | Callable[..., FlextTypes.GeneralValueType]
+        ) = cast(
+            "FlextTypes.GeneralValueType | PydanticBaseModel | Callable[..., FlextTypes.GeneralValueType]",
+            test_service,
+        )
+        registration_result = container.with_service(
+            "test_migration_service", service_typed
+        )
         assert registration_result is container  # Fluent interface returns Self
 
         # Use correct API: get() for resolution
-        resolution_result = container.get("test_migration_service")
+        resolution_result: FlextResult[FlextTypes.GeneralValueType] = container.get(
+            "test_migration_service"
+        )
         assert resolution_result.is_success
         service = resolution_result.unwrap()
         assert isinstance(service, TestService)
@@ -123,18 +141,22 @@ class TestMigrationScenario4:
         class UserService(FlextService[None]):
             """User service extending FlextService."""
 
-            def __init__(self) -> None:
-                super().__init__()
+            def __init__(self, **data: FlextTypes.GeneralValueType) -> None:
+                super().__init__(**data)
                 self._logger = FlextLogger(__name__)
 
             def execute(self, **_kwargs: object) -> FlextResult[None]:
                 """Execute method required by FlextService abstract class."""
                 return FlextResult[None].ok(None)
 
-            def create_user(self, username: str, email: str) -> FlextResult[dict[str, str]]:
+            def create_user(
+                self, username: str, email: str
+            ) -> FlextResult[dict[str, str]]:
                 """Create user with validation."""
                 if not username or not email:
-                    return FlextResult[dict[str, str]].fail("Username and email required")
+                    return FlextResult[dict[str, str]].fail(
+                        "Username and email required"
+                    )
 
                 self._logger.info("Creating user", extra={"username": username})
                 user_data = {"username": username, "email": email}
@@ -246,13 +268,18 @@ class TestMigrationComplexity:
                 self.logger = FlextLogger(__name__)
                 self.container = FlextContainer()
 
-            def process_data(self, data: dict[str, str]) -> FlextResult[dict[str, object]]:
+            def process_data(
+                self, data: dict[str, str]
+            ) -> FlextResult[dict[str, object]]:
                 """Typical data processing method."""
                 if not data:
                     return FlextResult[dict[str, object]].fail("Data required")
 
                 self.logger.info("Processing data", extra={"size": len(data)})
-                processed: dict[str, object] = {"original": str(data), "processed": True}
+                processed: dict[str, object] = {
+                    "original": str(data),
+                    "processed": True,
+                }
                 return FlextResult[dict[str, object]].ok(processed)
 
         # Test application works correctly

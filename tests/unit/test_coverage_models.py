@@ -28,6 +28,8 @@ import pytest
 from pydantic import ValidationError, field_validator
 
 from flext_core import FlextModels
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.cqrs import FlextModelsCqrs
 
 
 class ModelScenarios:
@@ -304,15 +306,32 @@ class TestCommands:
             DepositCommand(account_id="ACC-001", amount=-50.0)
 
 
+# Define Query classes at module level using direct import
+class GetUserQuery(FlextModelsCqrs.Query):
+    """Query to get a user."""
+
+
+class ListAccountsQuery(FlextModelsCqrs.Query):
+    """Query to list accounts."""
+
+    page: int
+    limit: int
+
+
+class SearchProductsQuery(FlextModelsCqrs.Query):
+    """Query to search products."""
+
+    keyword: str
+    category: str | None = None
+    min_price: float | None = None
+    max_price: float | None = None
+
+
 class TestQueries:
     """Test CQRS query pattern using FlextTestsUtilities."""
 
     def test_query_creation(self) -> None:
         """Test creating a query."""
-
-        class GetUserQuery(FlextModels.Cqrs.Query):
-            """Query to get a user."""
-
         query = GetUserQuery(filters={"user_id": "USER-001"}, query_type="get_user")
         assert query.filters["user_id"] == "USER-001"
         assert query.query_id is not None
@@ -320,13 +339,6 @@ class TestQueries:
 
     def test_query_mutation_behavior(self) -> None:
         """Test query mutation behavior with validate_assignment."""
-
-        class ListAccountsQuery(FlextModels.Cqrs.Query):
-            """Query to list accounts."""
-
-            page: int
-            limit: int
-
         query = ListAccountsQuery(page=1, limit=10)
         original_page = query.page
         query.page = 2
@@ -335,15 +347,6 @@ class TestQueries:
 
     def test_query_with_filters(self) -> None:
         """Test query with filtering."""
-
-        class SearchProductsQuery(FlextModels.Cqrs.Query):
-            """Query to search products."""
-
-            keyword: str
-            category: str | None = None
-            min_price: float | None = None
-            max_price: float | None = None
-
         query = SearchProductsQuery(
             keyword="laptop",
             category="electronics",
@@ -421,14 +424,14 @@ class TestMetadata:
 
     def test_metadata_creation(self) -> None:
         """Test creating metadata."""
-        metadata = FlextModels.Metadata(
+        metadata = FlextModelsBase.Metadata(
             attributes={"user_id": "123", "operation": "create"},
         )
         assert metadata.attributes["user_id"] == "123"
 
     def test_metadata_with_various_types(self) -> None:
         """Test metadata with different attribute types."""
-        metadata = FlextModels.Metadata(
+        metadata = FlextModelsBase.Metadata(
             attributes={
                 "string": "value",
                 "number": 42,

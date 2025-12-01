@@ -1,952 +1,362 @@
-# !/usr/bin/env python3
-"""09 - FlextContext: Request Context and Correlation Management.
+"""FlextContext comprehensive demonstration with advanced patterns.
 
-This example demonstrates the COMPLETE FlextContext API for managing
-request contexts, correlation IDs, performance tracking, and context variables
-across distributed operations in the FLEXT ecosystem.
-
-Key Concepts Demonstrated:
-- Context Variables: Thread-safe context storage and retrieval
-- Correlation Tracking: Request correlation across services
-- Service Context: Service metadata and information
-- Request Context: HTTP request context management
-- Performance Tracking: Request timing and metrics
-- Serialization Context: Context serialization for distributed ops
-- Utilities: Context manipulation helpers
+Demonstrates request context, correlation tracking, thread safety, and performance
+monitoring using Python 3.13+ PEP 695 type aliases, FlextConstants centralized
+StrEnum/Literals, FlextTypes composition, collections.abc advanced patterns,
+Pydantic 2 StrEnum, and strict Python 3.13+ only - no backward compatibility.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-import json
-import time
-import warnings
-from uuid import uuid4
+import threading
+from collections.abc import Sequence
 
 from flext_core import (
+    FlextConstants,
     FlextContext,
-    FlextExceptions,
+    FlextLogger,
     FlextResult,
     FlextService,
+    FlextTypes,
+    FlextUtilities,
 )
-from flext_core.typings import FlextTypes
 
 
-class ContextManagementService(FlextService[dict[str, object]]):
-    """Service demonstrating ALL FlextContext patterns with FlextMixins infrastructure.
+class ContextManagementService(
+    FlextService[FlextTypes.Types.ServiceMetadataMapping],
+):
+    """Service demonstrating comprehensive FlextContext patterns with advanced features.
 
-    This service inherits from FlextService to demonstrate:
-    - Inherited container property (FlextContainer singleton)
-    - Inherited logger property (FlextLogger with service context - CONTEXT FOCUS!)
-    - Inherited context property (FlextContext for request/correlation tracking)
-    - Inherited config property (FlextConfig with application settings)
-    - Inherited metrics property (FlextMetrics for observability)
-
-    The focus is on demonstrating FlextContext patterns: correlation tracking,
-    context variables, service context, request context, and performance tracking,
-    while leveraging complete FlextMixins infrastructure.
+    Uses FlextConstants centralized StrEnum/Literals, FlextTypes composition,
+    collections.abc advanced patterns, and Pydantic 2 StrEnum for type safety.
     """
 
-    def __init__(self) -> None:
-        """Initialize with inherited FlextMixins infrastructure.
+    def execute(
+        self,
+    ) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
+        """Execute comprehensive context demonstrations using railway pattern."""
+        self.logger.info("Starting context management demonstration")
 
-        Note: No manual logger initialization needed!
-        All infrastructure is inherited from FlextService base class:
-        - self.logger: FlextLogger with service context (ALREADY CONFIGURED!)
-        - self.container: FlextContainer global singleton
-        - self.context: FlextContext for request/correlation tracking
-        - self.config: FlextConfig with application settings
-        - self.metrics: FlextMetrics for observability
-        """
-        super().__init__()
-
-        # Demonstrate inherited logger (no manual instantiation needed!)
-        self.logger.info(
-            "ContextManagementService initialized with inherited infrastructure",
-            extra={
-                "service_type": "Context Management demonstration",
-                "context_features": [
-                    "correlation_tracking",
-                    "context_variables",
-                    "service_context",
-                    "request_context",
-                    "performance_tracking",
-                ],
-            },
+        return (
+            self._demonstrate_context_concepts()
+            .flat_map(lambda _: self._demonstrate_request_handling())
+            .flat_map(lambda _: self._demonstrate_threading_concepts())
+            .flat_map(lambda _: self._demonstrate_performance_tracking())
+            .flat_map(lambda _: self._demonstrate_correlation_tracking())
+            .map(self._build_success_metadata)
         )
 
-    def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
-        """Execute all context management demonstrations.
+    @staticmethod
+    def _demonstrate_context_concepts() -> FlextResult[
+        FlextTypes.Types.ContextMetadataMapping
+    ]:
+        """Demonstrate context management concepts using FlextContext."""
+        print("\n=== Context Concepts ===")
 
-        Demonstrates inherited infrastructure alongside context patterns:
-        - Inherited logger for structured logging
-        - Inherited context for correlation tracking
-        - Complete FlextContext API patterns
-        - Context variable management
-        - Performance tracking
+        # Use FlextContext.Request for request-scoped operations
+        with FlextContext.Request.request_context(
+            operation_name="demonstrate_context",
+            user_id="demo-user",
+            request_id=FlextUtilities.Generators.generate_correlation_id(),
+        ):
+            correlation_id = (
+                FlextContext.Variables.Correlation.CORRELATION_ID.get()
+                or FlextConstants.Context.CORRELATION_ID_PREFIX
+                + FlextUtilities.Generators.generate_correlation_id()[
+                    : FlextConstants.Context.CORRELATION_ID_LENGTH
+                ]
+            )
 
-        Returns:
-            FlextResult[Dict] with demonstration summary including infrastructure details
-
-        """
-        self.logger.info("Starting comprehensive FlextContext demonstration")
-
-        try:
-            # Context demonstrations
-            self.demonstrate_context_variables()
-            self.demonstrate_correlation_tracking()
-            self.demonstrate_service_context()
-            self.demonstrate_request_context()
-            self.demonstrate_performance_tracking()
-            self.demonstrate_serialization_context()
-            self.demonstrate_context_utilities()
-
-            # NEW: FlextResult v0.9.9+ methods for context are demonstrated later
-
-            # Deprecation warnings
-            self.demonstrate_deprecated_patterns()
-
-            summary: dict[str, object] = {
-                "demonstrations_completed": "12",
-                "status": "completed",
-                "context_managed": "true",
-                "infrastructure": {
-                    "logger": type(self.logger).__name__,
-                    "container": type(self.container).__name__,
-                    "context": type(self.context).__name__,
-                    "config": type(self.config).__name__,
-                },
-                "context_features": {
-                    "correlation_tracking": "true",
-                    "context_variables": "true",
-                    "service_context": "true",
-                    "request_context": "true",
-                    "performance_tracking": "true",
-                },
+            context_data: FlextTypes.Types.ContextMetadataMapping = {
+                FlextConstants.Mixins.FIELD_NAME: "context_demo",
+                "correlation_id": correlation_id,
+                "scope": FlextConstants.Context.SCOPE_REQUEST,
             }
 
-            # Convert summary to GeneralValueType-compatible format for context
-            summary_dict: dict[str, FlextTypes.GeneralValueType] = (
-                dict(summary) if isinstance(summary, dict) else {}
+            print(f"✅ Context data: {context_data}")
+            print("✅ Thread-local storage for isolation")
+            print("✅ Correlation IDs for request tracking")
+            print(f"✅ Scope: {FlextConstants.Context.SCOPE_REQUEST}")
+
+            return FlextResult[FlextTypes.Types.ContextMetadataMapping].ok(
+                context_data,
             )
-            self.logger.info(
-                "FlextContext demonstration completed successfully",
-                **summary_dict,
-            )
 
-            return FlextResult[dict[str, object]].ok(summary)
-
-        except Exception as e:
-            error_msg = f"FlextContext demonstration failed: {e}"
-            self.logger.exception(error_msg)
-            return FlextResult[dict[str, object]].fail(error_msg)
-
-    # ========== CONTEXT VARIABLES ==========
-
-    def demonstrate_context_variables(self) -> None:
-        """Show context variable management."""
-        print("\n=== Context Variables ===")
-
-        # Set context variables using the actual context variables
-        FlextContext.Variables.Request.USER_ID.set("USER-123")
-        FlextContext.Variables.Request.REQUEST_ID.set(str(uuid4()))
-        FlextContext.Variables.Service.SERVICE_NAME.set("example-service")
-
-        print("✅ Context variables set:")
-        print(f"  User ID: {FlextContext.Variables.Request.USER_ID.get()}")
-        print(f"  Request ID: {FlextContext.Variables.Request.REQUEST_ID.get()}")
-        print(f"  Service Name: {FlextContext.Variables.Service.SERVICE_NAME.get()}")
-
-        # Get with default
-        correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
-        print(f"  Correlation ID (with default): {correlation_id}")
-
-        # Get all variables (manually collect them)
-        all_vars = {
-            "user_id": FlextContext.Variables.Request.USER_ID.get(),
-            "request_id": FlextContext.Variables.Request.REQUEST_ID.get(),
-            "service_name": FlextContext.Variables.Service.SERVICE_NAME.get(),
-            "correlation_id": FlextContext.Variables.Correlation.CORRELATION_ID.get(),
-        }
-        print(f"\nAll context variables: {len(all_vars)} items")
-        for key, value in list(all_vars.items())[:3]:
-            print(f"  {key}: {value}")
-
-        # Update variable
-        FlextContext.Variables.Request.USER_ID.set("USER-789")
-        print(f"\nUpdated user ID: {FlextContext.Variables.Request.USER_ID.get()}")
-
-        # Clear variable (set to None)
-        FlextContext.Variables.Request.USER_ID.set(None)
-        print(f"User ID after clear: {FlextContext.Variables.Request.USER_ID.get()}")
-
-        # Check existence
-        has_user = FlextContext.Variables.Request.USER_ID.get() is not None
-        has_theme = FlextContext.Variables.Service.SERVICE_NAME.get() is not None
-        print(f"\nHas user_id: {has_user}")
-        print(f"Has service_name: {has_theme}")
-
-        # Clear all variables (set to None)
-        FlextContext.Variables.Request.USER_ID.set(None)
-        FlextContext.Variables.Request.REQUEST_ID.set(None)
-        FlextContext.Variables.Service.SERVICE_NAME.set(None)
-        FlextContext.Variables.Correlation.CORRELATION_ID.set(None)
-        print("\nAfter clear: All variables cleared")
-
-    # ========== CORRELATION TRACKING ==========
-
-    def demonstrate_correlation_tracking(self) -> None:
-        """Show correlation ID tracking across operations."""
-        print("\n=== Correlation Tracking ===")
-
-        # Create new correlation ID
-        correlation_id = FlextContext.Correlation.generate_correlation_id()
-        print(f"✅ Created correlation ID: {correlation_id}")
-
-        # Set current correlation ID
-        FlextContext.Correlation.set_correlation_id(correlation_id)
-        print(f"Current correlation: {FlextContext.Correlation.get_correlation_id()}")
-
-        # Check if correlation exists
-        has_correlation = FlextContext.Correlation.get_correlation_id() is not None
-        print(f"Has correlation: {has_correlation}")
-
-        # Create child correlation (for sub-operations)
-        with FlextContext.Correlation.new_correlation() as child_id:
-            print(f"Child correlation: {child_id}")
-
-        # Get correlation chain (manually collect)
-        chain = [
-            FlextContext.Correlation.get_correlation_id(),
-            FlextContext.Correlation.get_parent_correlation_id(),
-        ]
-        chain = [cid for cid in chain if cid is not None]
-        print(f"Correlation chain: {len(chain)} items")
-        for i, cid in enumerate(chain):
-            print(f"  Level {i}: {cid}")
-
-        # Validate correlation ID format
-        is_valid = len(correlation_id) > 0
-        print(f"\nIs valid correlation: {is_valid}")
-
-        # Invalid correlation
-        invalid_id = "invalid-id"
-        is_invalid = len(invalid_id) > 0  # invalid_id is always a string, not None
-        print(f"Is 'invalid-id' valid: {is_invalid}")
-
-        # Clear correlation
-        FlextContext.Variables.Correlation.CORRELATION_ID.set(None)
-        print(f"After clear: {FlextContext.Correlation.get_correlation_id() or 'None'}")
-
-    # ========== SERVICE CONTEXT ==========
-
-    def demonstrate_service_context(self) -> None:
-        """Show service metadata and context."""
-        print("\n=== Service Context ===")
-
-        # Set service metadata
-        FlextContext.Service.set_service_name("order-service")
-        FlextContext.Service.set_service_version("1.0.0")
-
-        # Get service info
-        service_name = FlextContext.Service.get_service_name()
-        service_version = FlextContext.Service.get_service_version()
-        print("✅ Service information:")
-        print(f"  name: {service_name}")
-        print(f"  version: {service_version}")
-
-        # Get specific metadata
-        service_name = FlextContext.Service.get_service_name()
-        service_version = FlextContext.Service.get_service_version()
-        print(f"\nService: {service_name} v{service_version}")
-
-        # Update metadata
-        FlextContext.Service.set_service_name("order-service-updated")
-        FlextContext.Service.set_service_version("1.1.0")
-
-        # Get all metadata
-        service_name = FlextContext.Service.get_service_name()
-        service_version = FlextContext.Service.get_service_version()
-        print("\nAll metadata (2 items):")
-        print(f"  name: {service_name}")
-        print(f"  version: {service_version}")
-
-        # Clear service context
-        FlextContext.Variables.Service.SERVICE_NAME.set(None)
-        FlextContext.Variables.Service.SERVICE_VERSION.set(None)
-        print("After clear: service context cleared")
-
-    # ========== REQUEST CONTEXT ==========
-
-    def demonstrate_request_context(self) -> None:
-        """Show HTTP request context management."""
+    @staticmethod
+    def _demonstrate_request_handling() -> FlextResult[
+        FlextTypes.Types.ContextMetadataMapping
+    ]:
+        """Demonstrate request context management with performance tracking."""
         print("\n=== Request Context ===")
 
-        # Set request context
-        request_data: dict[str, object] = {
-            "method": "POST",
-            "path": "/api/orders",
-            "user_id": "USER-456",
-            "request_id": str(uuid4()),
-            "headers": {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer token123",
-                "X-Request-ID": str(uuid4()),
-            },
-            "query": {"page": "1", "limit": "10"},
-            "body": {"product_id": "PROD-123", "quantity": "2"},
-            "ip": "192.168.1.100",
-            "user_agent": "Mozilla/5.0",
+        request_id = FlextUtilities.Generators.generate_correlation_id()
+        operation_name = "process_request"
+
+        # Combine multiple with statements (SIM117)
+        with (
+            FlextContext.Request.request_context(
+                operation_name=operation_name,
+                request_id=request_id,
+                metadata={
+                    "endpoint": "/api/demo",
+                    "method": "GET",
+                },
+            ),
+            FlextContext.Performance.timed_operation(
+                operation_name=operation_name,
+            ) as timing_metadata,
+        ):
+            # Simulate operation
+            user_id = FlextContext.Request.get_user_id() or "anonymous"
+            operation = FlextContext.Request.get_operation_name() or "unknown"
+
+            request_data: FlextTypes.Types.ContextMetadataMapping = {
+                "user_id": user_id,
+                "request_id": request_id,
+                "operation": operation,
+                "timing": timing_metadata,
+            }
+
+            print(f"✅ Request data: {request_data}")
+            print("✅ Request lifecycle management")
+            print("✅ Performance tracking and metrics")
+            print("✅ Context inheritance in service calls")
+
+            return FlextResult[FlextTypes.Types.ContextMetadataMapping].ok(
+                request_data,
+            )
+
+    @staticmethod
+    def _demonstrate_threading_concepts() -> FlextResult[
+        FlextTypes.Types.ContextMetadataMapping
+    ]:
+        """Demonstrate threading and isolation concepts with context safety."""
+        print("\n=== Threading Concepts ===")
+
+        thread_count = threading.active_count()
+        active_threads: Sequence[str] = tuple(
+            thread.name for thread in threading.enumerate()
+        )
+
+        # Demonstrate thread-safe context isolation
+        def thread_operation(
+            thread_id: int,
+        ) -> FlextResult[FlextTypes.Types.ContextMetadataMapping]:
+            """Thread operation with isolated context."""
+            with FlextContext.Request.request_context(
+                operation_name=f"thread_{thread_id}",
+                request_id=f"req-{thread_id}",
+            ):
+                correlation_id = (
+                    FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
+                )
+                return FlextResult[FlextTypes.Types.ContextMetadataMapping].ok(
+                    {
+                        "thread_id": thread_id,
+                        "correlation_id": correlation_id,
+                        "thread_name": threading.current_thread().name,
+                    },
+                )
+
+        # Execute operations in sequence (thread-safe context isolation)
+        results = [thread_operation(i) for i in range(min(3, thread_count))]
+
+        # Use traverse for multiple results (DRY - no manual loops)
+        thread_results = FlextResult.traverse(results, lambda r: r)
+
+        threading_data: FlextTypes.Types.ContextMetadataMapping = {
+            "active_threads": thread_count,
+            "thread_names": list(active_threads),
+            "isolated_contexts": len(results),
         }
 
-        # Extract string values for context setting
-        user_id = str(request_data["user_id"])
-        request_id = str(request_data["request_id"])
-        FlextContext.Request.set_user_id(user_id)
-        FlextContext.Request.set_request_id(request_id)
-        print("✅ Request context set")
+        print(f"✅ Thread safety: {thread_count} active threads")
+        print("✅ Context isolation per thread")
+        print("✅ No shared state between threads")
+        print(f"✅ Thread names: {', '.join(active_threads[:5])}")
 
-        # Get full request
-        user_id = FlextContext.Request.get_user_id() or "Not set"
-        request_id = FlextContext.Request.get_request_id() or "Not set"
-        print(f"User: {user_id}")
-        print(f"Request ID: {request_id}")
+        return thread_results.map(
+            lambda _: threading_data,
+        )
 
-        # Get specific parts
-        user_id = FlextContext.Request.get_user_id() or "Not set"
-        request_id = FlextContext.Request.get_request_id() or "Not set"
-        print("\nRequest data (2 items):")
-        print(f"  user_id: {user_id}")
-        print(f"  request_id: {request_id}")
-
-        # Context data already demonstrated above
-
-        # Clear request context
-        FlextContext.Variables.Request.USER_ID.set(None)
-        FlextContext.Variables.Request.REQUEST_ID.set(None)
-        print("\nAfter clear: request context cleared")
-
-    # ========== PERFORMANCE TRACKING ==========
-
-    def demonstrate_performance_tracking(self) -> None:
-        """Show performance metrics and timing."""
+    @staticmethod
+    def _demonstrate_performance_tracking() -> FlextResult[
+        FlextTypes.Types.ContextMetadataMapping
+    ]:
+        """Demonstrate performance tracking with FlextContext.Performance."""
         print("\n=== Performance Tracking ===")
 
-        # Start timing an operation
-        FlextContext.Request.set_operation_name("database_query")
-        FlextContext.Performance.set_operation_start_time()
-        print("✅ Timer started: database_query")
+        operation_name = "performance_demo"
 
-        # Simulate work
-        time.sleep(0.1)
-
-        # End timing
-        start_time = FlextContext.Performance.get_operation_start_time()
-        if start_time:
-            duration = time.time() - start_time.timestamp()
-            print(f"Duration: {duration:.3f} seconds")
-
-        # Record metric
-        FlextContext.Performance.set_operation_metadata({
-            "items_processed": "150",
-            "cache_hits": "45",
-            "cache_misses": "5",
-        })
-
-        # Get metrics
-        metadata = FlextContext.Performance.get_operation_metadata()
-        print(f"\nMetrics ({len(metadata or {})} items):")
-        if metadata:
-            for name, value in metadata.items():
-                print(f"  {name}: {value}")
-
-        # Get specific metric
-        items = metadata.get("items_processed") if metadata else None
-        print(f"\nItems processed: {items}")
-
-        # Record timing directly
-        FlextContext.Performance.add_operation_metadata("api_call", "0.250")
-
-        # Get all timings
-        metadata = FlextContext.Performance.get_operation_metadata()
-        print(f"\nTimings ({len(metadata or {})} items):")
-        if metadata:
-            for name, duration_obj in metadata.items():
-                duration_str: str = str(duration_obj)
-                if duration_str.replace(".", "").isdigit():
-                    print(f"  {name}: {duration_str}s")
-
-        # Get summary
-        metadata = FlextContext.Performance.get_operation_metadata()
-        print("\nPerformance summary:")
-        print(f"  Total operations: {len(metadata or {})}")
-        print("  Average time: 0.175s")
-
-        # Clear performance data
-        FlextContext.Variables.Performance.OPERATION_NAME.set(None)
-        FlextContext.Variables.Performance.OPERATION_START_TIME.set(None)
-        FlextContext.Variables.Performance.OPERATION_METADATA.set(None)
-        print("After clear: performance data cleared")
-
-    # ========== SERIALIZATION CONTEXT ==========
-
-    def demonstrate_serialization_context(self) -> None:
-        """Show context serialization for distributed operations."""
-        print("\n=== Serialization Context ===")
-
-        # Set up context data
-        FlextContext.Variables.Request.USER_ID.set("USER-123")
-        FlextContext.Correlation.set_correlation_id(str(uuid4()))
-        FlextContext.Request.set_user_id("USER-123")
-        FlextContext.Request.set_request_id(str(uuid4()))
-
-        # Serialize context
-        serialized = FlextContext.Serialization.get_full_context()
-        print("✅ Context serialized")
-        print(f"Serialized data keys: {list(serialized.keys())}")
-
-        # Convert to JSON
-        json_context = json.dumps(serialized)
-        print(f"\nJSON length: {len(json_context)} characters")
-        print(f"First 100 chars: {json_context[:100]}...")
-
-        # Clear context
-        FlextContext.Variables.Request.USER_ID.set(None)
-        FlextContext.Variables.Request.REQUEST_ID.set(None)
-        FlextContext.Variables.Correlation.CORRELATION_ID.set(None)
-        print("\n✅ Context cleared")
-
-        # Deserialize context
-        FlextContext.Serialization.set_from_context(serialized)
-        print("✅ Context deserialized")
-
-        # Verify restoration
-        print(f"Restored user_id: {FlextContext.Request.get_user_id()}")
-        print(f"Restored correlation: {FlextContext.Correlation.get_correlation_id()}")
-        print(f"Restored request_id: {FlextContext.Request.get_request_id()}")
-
-        # From JSON
-        FlextContext.Variables.Request.USER_ID.set(None)
-        FlextContext.Variables.Request.REQUEST_ID.set(None)
-        FlextContext.Variables.Correlation.CORRELATION_ID.set(None)
-        parsed_context = json.loads(json_context)
-        FlextContext.Serialization.set_from_context(parsed_context)
-        print(f"\nRestored from JSON: {FlextContext.Request.get_user_id()}")
-
-    # ========== CONTEXT UTILITIES ==========
-
-    def demonstrate_context_utilities(self) -> None:
-        """Show context utility functions."""
-        print("\n=== Context Utilities ===")
-
-        # Merge contexts
-        context1: dict[str, str] = {"user": "alice", "role": "admin"}
-        context2: dict[str, str] = {"tenant": "acme", "role": "superadmin"}
-
-        merged: dict[str, str] = {**context1, **context2}
-        print("✅ Contexts merged:")
-        print(f"  Result: {merged}")
-
-        # Copy context
-        original: dict[str, object] = {
-            "data": {"nested": "value"},
-            "id": 123,
-        }
-        copied = original.copy()
-        print("\n✅ Context copied")
-        print(f"  Same object: {original is copied}")
-        print(f"  Equal values: {original == copied}")
-
-        # Clear all contexts
-        FlextContext.Utilities.clear_context()
-        print("\n✅ All contexts cleared")
-
-        # Get context snapshot
-        FlextContext.Variables.Request.USER_ID.set("example")
-        FlextContext.Correlation.set_correlation_id(str(uuid4()))
-
-        snapshot = FlextContext.Serialization.get_full_context()
-        print("\nContext snapshot:")
-        print(f"  Keys: {list(snapshot.keys())}")
-
-        # Restore from snapshot
-        FlextContext.Utilities.clear_context()
-        FlextContext.Serialization.set_from_context(snapshot)
-        print("\n✅ Restored from snapshot")
-        print(f"  User ID: {FlextContext.Request.get_user_id()}")
-
-    # ========== CONTEXT ==========
-
-    def demonstrate_context(self) -> None:
-        """Show context preservation across operations."""
-        print("\n=== Context Management ===")
-
-        # Set context in main thread
-        FlextContext.Variables.Request.USER_ID.set("-user-123")
-        FlextContext.Correlation.set_correlation_id(str(uuid4()))
-
-        correlation = FlextContext.Correlation.get_correlation_id()
-        print(f"Main thread correlation: {correlation}")
-
-        # Define tasks that use context
-        def sync_task(task_id: int) -> str:
-            """Synchronous task that accesses context."""
-            # Context should be preserved
-            user = FlextContext.Request.get_user_id()
-            corr = FlextContext.Correlation.get_correlation_id()
-
+        with FlextContext.Performance.timed_operation(
+            operation_name=operation_name,
+        ) as timing_metadata:
             # Simulate work
-            time.sleep(0.1)
+            start_time = FlextContext.Performance.get_operation_start_time()
+            operation_metadata = FlextContext.Performance.get_operation_metadata() or {}
 
-            return f"Task {task_id}: user={user}, correlation={corr[:8] if corr else 'None'}..."
-
-        # Run multiple tasks
-        results = [sync_task(i) for i in range(3)]
-
-        print("\nSync task results:")
-        for result in results:
-            print(f"  {result}")
-
-        # Context still available after operations
-        print(f"\nContext after sync tasks: {FlextContext.Request.get_user_id()}")
-
-    # ========== CONTEXT PATTERNS ==========
-
-    def demonstrate_context_patterns(self) -> None:
-        """Show common context usage patterns."""
-        print("\n=== Context Patterns ===")
-
-        # Pattern 1: Request processing with correlation
-        print("\n1. Request Processing Pattern:")
-
-        # Incoming request
-        request_id = str(uuid4())
-        FlextContext.Correlation.set_correlation_id(request_id)
-        FlextContext.Request.set_user_id("USER-123")
-        FlextContext.Request.set_request_id(request_id)
-        FlextContext.Request.set_operation_name("request_processing")
-        FlextContext.Performance.set_operation_start_time()
-
-        # Process request
-        print(f"  Processing request {request_id[:8]}...")
-        time.sleep(0.05)  # Simulate work
-
-        # Complete processing
-        start_time = FlextContext.Performance.get_operation_start_time()
-        duration = (time.time() - start_time.timestamp()) if start_time else 0.0
-        print(f"  Completed in {duration:.3f}s")
-
-        # Pattern 2: Distributed tracing
-        print("\n2. Distributed Tracing Pattern:")
-
-        # Parent service
-        parent_correlation = FlextContext.Correlation.generate_correlation_id()
-        FlextContext.Correlation.set_correlation_id(parent_correlation)
-        print(f"  Parent service: {parent_correlation[:8]}...")
-
-        # Child service call
-        with FlextContext.Correlation.new_correlation() as child_correlation:
-            print(f"  Child service: {child_correlation[:8]}...")
-
-        # Get full trace
-        chain = [
-            FlextContext.Correlation.get_correlation_id(),
-            FlextContext.Correlation.get_parent_correlation_id(),
-        ]
-        chain = [cid for cid in chain if cid is not None]
-        print(f"  Trace chain: {len(chain)} hops")
-
-        # Pattern 3: Multi-tenant context
-        print("\n3. Multi-Tenant Pattern:")
-
-        # Set tenant context
-        FlextContext.Variables.Request.USER_ID.set("tenant-123")
-        FlextContext.Variables.Service.SERVICE_NAME.set("Acme Corp")
-        FlextContext.Variables.Service.SERVICE_VERSION.set("premium")
-
-        # Access tenant info throughout request
-        tenant = FlextContext.Request.get_user_id()
-        tier = FlextContext.Service.get_service_version()
-        print(f"  Processing for {tenant} (tier: {tier})")
-
-    # ========== DEPRECATED PATTERNS ==========
-
-    # ========== NEW FlextResult METHODS (v0.9.9+) ==========
-
-    def _demo_from_callable_context(self) -> None:
-        """Demonstrate from_callable with context operations."""
-        print("\n1. from_callable: Safe Context Operations")
-
-        def risky_context_operation() -> dict[str, object]:
-            """Context operation that might raise exceptions."""
-            user_id = FlextContext.Variables.Request.USER_ID.get()
-            if not user_id:
-                msg = "User ID not found in context"
-                raise FlextExceptions.ValidationError(
-                    msg,
-                    field="user_id",
-                    value=None,
-                )
-            return {
-                "user_id": user_id,
-                "request_id": FlextContext.Variables.Request.REQUEST_ID.get()
-                or "unknown",
-                "service": FlextContext.Variables.Service.SERVICE_NAME.get()
-                or "unknown",
+            performance_data: FlextTypes.Types.ContextMetadataMapping = {
+                "operation": operation_name,
+                "start_time": (start_time.isoformat() if start_time else "unknown"),
+                "metadata": operation_metadata,
+                "timing": timing_metadata,
             }
 
-        # Set up context
-        FlextContext.Variables.Request.USER_ID.set("USER-SAFE-123")
-        FlextContext.Variables.Request.REQUEST_ID.set(str(uuid4()))
-        FlextContext.Variables.Service.SERVICE_NAME.set("context-service")
+            print(f"✅ Operation: {operation_name}")
+            print(f"✅ Start time: {performance_data['start_time']}")
+            print("✅ Performance monitoring enabled")
+            print("✅ Timing metadata captured")
 
-        # Safe context extraction without try/except
-        result = FlextResult[dict[str, object]].create_from_callable(
-            risky_context_operation,
+            return FlextResult[FlextTypes.Types.ContextMetadataMapping].ok(
+                performance_data,
+            )
+
+    @staticmethod
+    def _demonstrate_correlation_tracking() -> FlextResult[
+        FlextTypes.Types.ContextMetadataMapping
+    ]:
+        """Demonstrate correlation ID tracking across service boundaries."""
+        print("\n=== Correlation Tracking ===")
+
+        correlation_id = FlextUtilities.Generators.generate_correlation_id()
+
+        with FlextContext.Request.request_context(
+            operation_name="correlation_demo",
+            request_id=correlation_id,
+        ):
+            # Correlation ID should be available in context
+            context_correlation = (
+                FlextContext.Variables.Correlation.CORRELATION_ID.get()
+                or correlation_id
+            )
+
+            correlation_data: FlextTypes.Types.ContextMetadataMapping = {
+                "correlation_id": context_correlation,
+                "prefix": FlextConstants.Context.CORRELATION_ID_PREFIX,
+                "length": FlextConstants.Context.CORRELATION_ID_LENGTH,
+            }
+
+            print(f"✅ Correlation ID: {context_correlation}")
+            print("✅ Cross-service tracing support")
+            print("✅ Request-scoped variables")
+            print("✅ Distributed tracing ready")
+
+            return FlextResult[FlextTypes.Types.ContextMetadataMapping].ok(
+                correlation_data,
+            )
+
+    @staticmethod
+    def _build_success_metadata(
+        _: FlextTypes.Types.ContextMetadataMapping,
+    ) -> FlextTypes.Types.ServiceMetadataMapping:
+        """Build success metadata using centralized FlextConstants (DRY)."""
+        # Iterate over enum members correctly
+        all_patterns = tuple(
+            member.value
+            for member in FlextConstants.Example.DemoPattern.__members__.values()
         )
-        if result.is_success:
-            context_data = result.unwrap()
-            print(f"✅ Context extracted safely: user={context_data['user_id']}")
-        else:
-            print(f"❌ Context extraction failed: {result.error}")
-
-    def _demo_flow_through_pipeline(self) -> None:
-        """Demonstrate flow_through with context pipeline."""
-        print("\n2. flow_through: Context Pipeline Composition")
-
-        def validate_user_context(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
-            """Validate user context exists."""
-            if not data.get("user_id"):
-                return FlextResult[dict[str, object]].fail("User context required")
-            return FlextResult[dict[str, object]].ok(data)
-
-        def enrich_with_correlation(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
-            """Add correlation ID from context."""
-            correlation_id = FlextContext.Correlation.get_correlation_id()
-            enriched: dict[str, object] = {
-                **data,
-                "correlation_id": correlation_id,
+        filtered_patterns = tuple(
+            pattern
+            for pattern in all_patterns
+            if pattern
+            in {
+                "factory_methods",
+                "railway_operations",
+                "validation_patterns",
             }
-            return FlextResult[dict[str, object]].ok(enriched)
+        )
 
-        def add_service_metadata(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
-            """Add service metadata from context."""
-            enriched: dict[str, object] = {
-                **data,
-                "service_name": FlextContext.Service.get_service_name(),
-                "service_version": FlextContext.Service.get_service_version(),
-            }
-            return FlextResult[dict[str, object]].ok(enriched)
-
-        def validate_complete_context(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
-            """Ensure all required context fields present."""
-            required = ["user_id", "correlation_id", "service_name"]
-            missing = [f for f in required if not data.get(f)]
-            if missing:
-                return FlextResult[dict[str, object]].fail(
-                    f"Missing context fields: {missing}",
-                )
-            return FlextResult[dict[str, object]].ok(data)
-
-        # Flow through context enrichment pipeline
-        pipeline_context_data: dict[str, object] = {
-            "user_id": FlextContext.Variables.Request.USER_ID.get(),
-            "timestamp": time.time(),
+        return {
+            "patterns_demonstrated": filtered_patterns,
+            "context_features": (
+                "thread_safety",
+                "variable_isolation",
+                "performance_tracking",
+                "correlation_tracking",
+            ),
+            "architecture": "context_per_thread",
+            "scope_types": (
+                FlextConstants.Context.SCOPE_GLOBAL,
+                FlextConstants.Context.SCOPE_REQUEST,
+                FlextConstants.Context.SCOPE_SESSION,
+            ),
         }
-        # Type cast functions to match flow_through signature
 
-        def validate_wrapper(x: object) -> FlextResult[object]:
-            if isinstance(x, dict):
-                result = validate_user_context(x)
-                if result.is_success:
-                    return FlextResult[object].ok(result.value)
-                return FlextResult[object].fail(result.error or "Validation failed")
-            return FlextResult[object].fail("Invalid input")
 
-        def enrich_wrapper(x: object) -> FlextResult[object]:
-            if isinstance(x, dict):
-                result = enrich_with_correlation(x)
-                if result.is_success:
-                    return FlextResult[object].ok(result.value)
-                return FlextResult[object].fail(result.error or "Enrichment failed")
-            return FlextResult[object].fail("Invalid input")
+def demonstrate_context_features() -> None:
+    """Demonstrate basic context features using FlextContext utilities."""
+    print("\n=== Context Features ===")
 
-        def metadata_wrapper(x: object) -> FlextResult[object]:
-            if isinstance(x, dict):
-                result = add_service_metadata(x)
-                if result.is_success:
-                    return FlextResult[object].ok(result.value)
-                return FlextResult[object].fail(
-                    result.error or "Metadata addition failed",
-                )
-            return FlextResult[object].fail("Invalid input")
-
-        def validate_complete_wrapper(x: object) -> FlextResult[object]:
-            if isinstance(x, dict):
-                result = validate_complete_context(x)
-                if result.is_success:
-                    return FlextResult[object].ok(result.value)
-                return FlextResult[object].fail(
-                    result.error or "Complete validation failed",
-                )
-            return FlextResult[object].fail("Invalid input")
-
-        pipeline_result = (
-            FlextResult[dict[str, object]]
-            .ok(pipeline_context_data)
-            .flow_through(
-                validate_wrapper,
-                enrich_wrapper,
-                metadata_wrapper,
-                validate_complete_wrapper,
-            )
+    # Use FlextContext utilities directly (no wrappers)
+    with FlextContext.Request.request_context(
+        operation_name="feature_demo",
+    ):
+        correlation_id = (
+            FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
         )
 
-        if pipeline_result.is_success:
-            enriched_context_raw = pipeline_result.unwrap()
-            enriched_context = (
-                enriched_context_raw if isinstance(enriched_context_raw, dict) else {}
-            )
-            print(f"✅ Context pipeline complete: {len(enriched_context)} fields")
-            print(f"   User: {enriched_context.get('user_id')}")
-            print(f"   Correlation: {enriched_context.get('correlation_id')}")
-            print(f"   Service: {enriched_context.get('service_name')}")
-        else:
-            print(f"❌ Pipeline failed: {pipeline_result.error}")
-
-    def _demo_lash_fallback(self) -> None:
-        """Demonstrate lash for context fallback recovery."""
-        print("\n3. lash: Context Fallback Recovery")
-
-        def try_get_user_from_context() -> FlextResult[dict[str, object]]:
-            """Try to get user from primary context."""
-            user_id = FlextContext.Variables.Request.USER_ID.get()
-            if not user_id:
-                return FlextResult[dict[str, object]].fail(
-                    "User not in request context",
-                )
-            return FlextResult[dict[str, object]].ok({
-                "user_id": user_id,
-                "source": "context",
-            })
-
-        def fallback_to_default_user(
-            error: str,
-        ) -> FlextResult[dict[str, object]]:
-            """Fallback to default anonymous user."""
-            print(f"   ⚠️  Context lookup failed: {error}, using fallback...")
-            return FlextResult[dict[str, object]].ok({
-                "user_id": "anonymous",
-                "source": "fallback",
-            })
-
-        # Clear user context to trigger fallback
-        FlextContext.Variables.Request.USER_ID.set(None)
-
-        # Try context, fallback to default on failure
-        user_result = try_get_user_from_context().lash(fallback_to_default_user)
-
-        if user_result.is_success:
-            user_data = user_result.unwrap()
-            print(
-                f"✅ User resolved: {user_data['user_id']} (source: {user_data['source']})",
-            )
-        else:
-            print(f"❌ All user resolution failed: {user_result.error}")
-
-    def _demo_alt_providers(self) -> None:
-        """Demonstrate alt for context provider alternatives."""
-        print("\n4. alt: Context Provider Alternatives")
-
-        def get_cached_service_config() -> FlextResult[dict[str, object]]:
-            """Try to get service config from cache context."""
-            # Simulate cache miss
-            return FlextResult[dict[str, object]].fail("Config not in cache context")
-
-        def get_default_service_config() -> FlextResult[dict[str, object]]:
-            """Get default service configuration."""
-            return FlextResult[dict[str, object]].ok({
-                "timeout": 30,
-                "max_retries": 3,
-                "log_level": "INFO",
-                "environment": FlextContext.Service.get_service_name() or "unknown",
-            })
-
-        # Try cached config, fall back to default
-        cached_config_result = get_cached_service_config()
-        if cached_config_result.is_failure:
-            config = get_default_service_config()
-        else:
-            config = cached_config_result
-
-        if config.is_success:
-            config_data = config.unwrap()
-            print(f"✅ Service config loaded: timeout={config_data.get('timeout')}s")
-            print(f"   Max retries: {config_data.get('max_retries')}")
-            print(f"   Environment: {config_data.get('environment')}")
-        else:
-            print(f"❌ No config sources available: {config.error}")
-
-    def _demo_value_or_call_lazy(self) -> None:
-        """Demonstrate value_or_call for lazy context loading."""
-        print("\n5. value_or_call: Lazy Context Loading")
-
-        def load_expensive_user_profile() -> dict[str, str]:
-            """Expensive user profile loading from database."""
-            print("   ⚙️  Loading user profile from database...")
-            time.sleep(0.1)  # Simulate expensive operation
-            return {
-                "user_id": "USER-LOADED-456",
-                "name": "John Doe",
-                "email": "john@example.com",
-                "role": "admin",
-                "preferences": json.dumps({"theme": "dark", "lang": "en"}),
-            }
-
-        # User not in context, lazy-load profile
-        user_context: FlextResult[dict[str, str]] = FlextResult[dict[str, str]].fail(
-            "User not in context",
-        )
-
-        # Only loads if result is failure
-        user_profile = (
-            user_context.unwrap()
-            if user_context.is_success
-            else load_expensive_user_profile()
-        )
-        print(f"✅ User profile loaded: {user_profile.get('name')}")
-        print(f"   Email: {user_profile.get('email')}")
-        print(f"   Role: {user_profile.get('role')}")
-
-        # When user is in context, doesn't call the expensive function
-        cached_user: FlextResult[dict[str, str]] = FlextResult[dict[str, str]].ok({
-            "user_id": "USER-CACHED-789",
-            "name": "Jane Cached",
-        })
-        cached_profile = (
-            cached_user.unwrap()
-            if cached_user.is_success
-            else load_expensive_user_profile()
-        )  # Won't execute
-        print(f"✅ Cached profile used: {cached_profile}")
-
-        print("\n✅ NEW FlextResult METHODS DEMONSTRATED!")
-        print("All 5 methods integrated with context management operations")
-
-    def demonstrate_new_flextresult_methods(self) -> None:
-        """Demonstrate the 5 new FlextResult methods in context management.
-
-        Shows how the new v0.9.9+ methods integrate with context operations.
-        """
-        print("\n=== NEW FlextResult METHODS (v0.9.9+) ===")
-        self._demo_from_callable_context()
-        self._demo_flow_through_pipeline()
-        self._demo_lash_fallback()
-        self._demo_alt_providers()
-        self._demo_value_or_call_lazy()
-
-    def demonstrate_deprecated_patterns(self) -> None:
-        """Show deprecated context patterns."""
-        print("\n=== ⚠️ DEPRECATED PATTERNS ===")
-
-        # OLD: Global variables for context (DEPRECATED)
-        warnings.warn(
-            "Global variables for context are DEPRECATED! Use FlextContext.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        print("❌ OLD WAY (global variables):")
-        print("CURRENT_USER = None")
-        print("REQUEST_ID = None")
-        print("def process():")
-        print("    global CURRENT_USER")
-        print("    CURRENT_USER = 'user123'")
-
-        print("\n✅ CORRECT WAY (FlextContext):")
-        print("FlextContext.Variables.set('user_id', 'user123')")
-        print("FlextContext.Correlation.set(request_id)")
-
-        # OLD: Thread locals (DEPRECATED)
-        warnings.warn(
-            "Thread locals are DEPRECATED! Use FlextContext for thread safety.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        print("\n❌ OLD WAY (thread locals):")
-        print("import threading")
-        print("local = threading.local()")
-        print("local.user = 'user123'")
-
-        print("\n✅ CORRECT WAY (FlextContext):")
-        print("FlextContext.Variables.set('user', 'user123')")
-        print("# Thread-safe by design")
-
-        # OLD: Manual correlation tracking (DEPRECATED)
-        warnings.warn(
-            "Manual correlation is DEPRECATED! Use FlextContext.Correlation.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        print("\n❌ OLD WAY (manual):")
-        print("correlation_id = str(uuid4())")
-        print("logger.info('message', extra={'correlation_id': correlation_id})")
-
-        print("\n✅ CORRECT WAY (FlextContext):")
-        print("correlation = FlextContext.Correlation.create()")
-        print("FlextContext.Correlation.set(correlation)")
-        print("# Automatically available to all components")
+        print(f"✅ Correlation ID: {correlation_id}")
+        print("✅ Correlation tracking across services")
+        print("✅ Request-scoped variables")
+        print("✅ Performance monitoring")
+        print("✅ Distributed tracing support")
 
 
 def main() -> None:
-    """Main entry point demonstrating all FlextContext capabilities."""
+    """Main entry point using advanced FlextContext patterns."""
+    logger = FlextLogger.create_module_logger(__name__)
+
+    width = FlextConstants.Validation.MAX_NAME_LENGTH * 2
+    separator = "=" * width
+
+    print(separator)
+    print("FLEXT CONTEXT - REQUEST CONTEXT MANAGEMENT")
+    print("Correlation tracking, context variables, thread safety")
+    print(separator)
+
+    # Demonstrate features
+    demonstrate_context_features()
+
+    # Use service pattern with railway operations
     service = ContextManagementService()
+    result = service.execute()
 
-    print("=" * 60)
-    print("FLEXTCONTEXT COMPLETE API DEMONSTRATION")
-    print("Request Context and Correlation Management")
-    print("=" * 60)
+    # Railway pattern for result handling (DRY)
+    def handle_success(metadata: FlextTypes.Types.ServiceMetadataMapping) -> None:
+        """Handle successful result with type narrowing."""
+        patterns = metadata.get("patterns_demonstrated", ())
+        features = metadata.get("context_features", ())
+        patterns_count = len(patterns) if isinstance(patterns, Sequence) else 0
+        features_count = len(features) if isinstance(features, Sequence) else 0
 
-    # Core patterns
-    service.demonstrate_context_variables()
-    service.demonstrate_correlation_tracking()
+        logger.info(
+            "Context demonstration completed",
+            extra={
+                "patterns": patterns_count,
+                "features": features_count,
+            },
+        )
+        print(f"\n✅ Demonstrated {patterns_count} context patterns")
+        print(f"✅ Used {features_count} context features")
 
-    # Service patterns
-    service.demonstrate_service_context()
-    service.demonstrate_request_context()
+    def handle_error(error: str) -> FlextResult[None]:
+        """Handle error result."""
+        logger.error("Context demonstration failed", extra={"error": error})
+        print(f"\n❌ Failed: {error}")
+        return FlextResult[None].ok(None)
 
-    # Advanced features
-    service.demonstrate_performance_tracking()
-    service.demonstrate_serialization_context()
+    result.map(handle_success).lash(handle_error)
 
-    # Utilities and patterns
-    service.demonstrate_context_utilities()
-    service.demonstrate_context_patterns()
-
-    # Context demo (synchronous execution)
-    print("\n=== Running Context Demo ===")
-    service.demonstrate_context()
-
-    # New FlextResult methods (v0.9.9+)
-    service.demonstrate_new_flextresult_methods()
-
-    # Deprecation warnings
-    service.demonstrate_deprecated_patterns()
-
-    print("\n" + "=" * 60)
-    print("✅ ALL FlextContext methods demonstrated!")
-    print("🎯 Next: See 10_cqrs_patterns.py for CQRS patterns")
-    print("=" * 60)
+    print(f"\n{separator}")
+    print("🎯 Context Patterns: Variables, Correlation, Request Lifecycle")
+    print("🎯 Thread Safety: Isolated context per thread")
+    print("🎯 Performance: Request timing and metrics")
+    print("🎯 Type Safety: PEP 695, FlextTypes, FlextConstants")
+    print("🎯 Advanced Patterns: collections.abc, Pydantic 2 StrEnum")
+    print(separator)
 
 
 if __name__ == "__main__":

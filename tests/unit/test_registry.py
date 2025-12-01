@@ -31,10 +31,11 @@ from flext_core import (
     FlextConstants,
     FlextDispatcher,
     FlextHandlers,
-    FlextModels,
     FlextRegistry,
     FlextResult,
 )
+from flext_core._models.handler import FlextModelsHandler
+from flext_core.typings import FlextTypes
 
 
 class RegistryOperationType(StrEnum):
@@ -65,12 +66,16 @@ class RegistryTestCase:
     duplicate_registration: bool = False
 
 
-class ConcreteTestHandler(FlextHandlers[object, object]):
+class ConcreteTestHandler(
+    FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
+):
     """Concrete implementation of FlextHandlers for testing."""
 
-    def handle(self, message: object) -> FlextResult[object]:
+    def handle(
+        self, message: FlextTypes.GeneralValueType
+    ) -> FlextResult[FlextTypes.GeneralValueType]:
         """Handle the message."""
-        return FlextResult[object].ok(f"processed_{message}")
+        return FlextResult[FlextTypes.GeneralValueType].ok(f"processed_{message}")
 
 
 class RegistryScenarios:
@@ -262,23 +267,40 @@ class RegistryScenarios:
     ]
 
     @staticmethod
-    def create_handlers(count: int) -> list[FlextHandlers[object, object]]:
+    def create_handlers(
+        count: int,
+    ) -> list[FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]]:
         """Create test handlers."""
         return [ConcreteTestHandler() for _ in range(count)]
 
     @staticmethod
     def create_bindings(
-        handlers: list[FlextHandlers[object, object]],
-    ) -> list[tuple[type[object], FlextHandlers[object, object]]]:
+        handlers: list[
+            FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
+        ],
+    ) -> list[
+        tuple[
+            type[FlextTypes.GeneralValueType],
+            FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType],
+        ]
+    ]:
         """Create test bindings using str message type."""
         return [(str, handler) for handler in handlers]
 
     @staticmethod
     def create_function_map(
-        handlers: list[FlextHandlers[object, object]],
-    ) -> dict[type[object], FlextHandlers[object, object]]:
+        handlers: list[
+            FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
+        ],
+    ) -> dict[
+        type[FlextTypes.GeneralValueType],
+        FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType],
+    ]:
         """Create test function map using str message type."""
-        result: dict[type[object], FlextHandlers[object, object]] = {}
+        result: dict[
+            type[FlextTypes.GeneralValueType],
+            FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType],
+        ] = {}
         for idx, handler in enumerate(handlers):
             result[str if idx == 0 else int] = handler
         return result
@@ -393,11 +415,11 @@ class TestFlextRegistry:
         if test_case.handler_count > 0:
             for i in range(test_case.handler_count):
                 summary.registered.append(
-                    FlextModels.RegistrationDetails(
+                    FlextModelsHandler.RegistrationDetails(
                         registration_id=f"test_{i}",
                         handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                         timestamp="2025-01-01T00:00:00Z",
-                        status=FlextConstants.Cqrs.Status.RUNNING,
+                        status=FlextConstants.Cqrs.CommonStatus.RUNNING,
                     ),
                 )
         if not test_case.should_succeed:
@@ -438,7 +460,7 @@ class TestFlextRegistry:
             handler = ConcreteTestHandler()
             result = registry.register_handler(handler)
             assert result.is_success
-            assert isinstance(result.value, FlextModels.RegistrationDetails)
+            assert isinstance(result.value, FlextModelsHandler.RegistrationDetails)
 
     def test_registry_initialization(self) -> None:
         """Test registry initialization."""
@@ -452,7 +474,7 @@ class TestFlextRegistry:
         handler = ConcreteTestHandler()
         result = registry.register_handler(handler)
         assert result.is_success
-        assert isinstance(result.value, FlextModels.RegistrationDetails)
+        assert isinstance(result.value, FlextModelsHandler.RegistrationDetails)
 
     @pytest.mark.parametrize(
         ("mode", "expected"),
@@ -477,7 +499,7 @@ class TestFlextRegistry:
         ("status", "expected"),
         [
             ("active", "running"),
-            ("inactive", "completed"),
+            ("inactive", "failed"),  # CommonStatus has FAILED, not STOPPED
             ("invalid", "running"),
             (None, "running"),
         ],

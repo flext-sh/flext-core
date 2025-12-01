@@ -33,7 +33,7 @@ class ErrorScenario:
 
     def to_dict(self) -> FlextTypes.Types.ConfigurationMapping:
         """Convert to dictionary format for compatibility."""
-        result: FlextTypes.Types.ConfigurationMapping = {
+        result: dict[str, FlextTypes.GeneralValueType] = {
             "type": self.type,
             "message": self.message,
             "code": self.code,

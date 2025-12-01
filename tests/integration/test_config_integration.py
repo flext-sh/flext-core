@@ -31,6 +31,8 @@ from flext_core import (
     FlextConstants,
     FlextContainer,
     FlextLogger,
+    FlextResult,
+    FlextTypes,
 )
 
 
@@ -58,7 +60,7 @@ class ConfigTestCase:
         elif self.file_format == "toml":
             # Simple TOML-like format for testing
             content = "\n".join(f"{k} = {v!r}" for k, v in self.config_data.items())
-            file_path.write_text(content)
+            _ = file_path.write_text(content)
 
         return file_path
 
@@ -183,7 +185,9 @@ class TestFlextConfigSingletonIntegration:
         # Container should have reference to global config
         # Verify container has access to config (via get method or direct access)
         # Note: _flext_config is private, so we verify via public API
-        config_result = container.get("config")
+        config_result: FlextResult[FlextTypes.GeneralValueType] = container.get(
+            "config"
+        )
         if config_result.is_success:
             assert config_result.unwrap() is global_config
 
@@ -208,8 +212,8 @@ class TestFlextConfigSingletonIntegration:
             assert config.log_level == "DEBUG"
             assert config.max_workers == 8  # Use an actual FlextConfig attribute
             assert (
-                config.timeout_seconds == 60
-            )  # Use an actual FlextConfig attribute (FLEXT_TIMEOUT_SECONDS=60)
+                config.timeout_seconds == 90
+            )  # Environment variable set FLEXT_TIMEOUT_SECONDS=90
             assert config.debug is True
 
         finally:
@@ -258,7 +262,9 @@ class TestFlextConfigSingletonIntegration:
             os.chdir(temp_dir)
 
             # Copy config to config.json in current directory
-            Path("config.json").write_text(json.dumps(config_data), encoding="utf-8")
+            _ = Path("config.json").write_text(
+                json.dumps(config_data), encoding="utf-8"
+            )
 
             # Get config using singleton API (should load from JSON)
             config = FlextConfig.get_global_instance()
@@ -358,8 +364,8 @@ class TestFlextConfigSingletonIntegration:
 
             # 2. Create .env file (medium priority)
             with Path(".env").open("w", encoding="utf-8") as f:
-                f.write("FLEXT_APP_NAME=from-env\n")
-                f.write("FLEXT_HOST=env-host\n")
+                _ = f.write("FLEXT_APP_NAME=from-env\n")
+                _ = f.write("FLEXT_HOST=env-host\n")
 
             # 3. Set environment variable (highest priority)
             os.environ["FLEXT_APP_NAME"] = "from-env-var"
@@ -463,10 +469,10 @@ class TestFlextConfigSingletonIntegration:
             # === STEP 2: Test .env File Override (Medium Priority) ===
             # Create .env file with values
             with Path(".env").open("w", encoding="utf-8") as f:
-                f.write("FLEXT_APP_NAME=from-dotenv\n")
-                f.write("FLEXT_LOG_LEVEL=WARNING\n")
-                f.write("FLEXT_DEBUG=true\n")
-                f.write("FLEXT_TIMEOUT_SECONDS=45\n")
+                _ = f.write("FLEXT_APP_NAME=from-dotenv\n")
+                _ = f.write("FLEXT_LOG_LEVEL=WARNING\n")
+                _ = f.write("FLEXT_DEBUG=true\n")
+                _ = f.write("FLEXT_TIMEOUT_SECONDS=45\n")
 
             config_dotenv = FlextConfig.get_global_instance()
 
@@ -492,7 +498,7 @@ class TestFlextConfigSingletonIntegration:
             assert config_env.app_name == "from-env-var"
             assert config_env.log_level == "DEBUG"
             assert config_env.debug is False  # Env var overrides .env
-            assert config_env.timeout_seconds == 60  # Env var FLEXT_TIMEOUT_SECONDS=60
+            assert config_env.timeout_seconds == 90  # Env var FLEXT_TIMEOUT_SECONDS=90
 
             # Reset for explicit init test
             FlextConfig.reset_global_instance()

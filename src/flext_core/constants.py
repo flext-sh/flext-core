@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence, Set as AbstractSet
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Final, Literal, TypeIs, cast
+from typing import Final, Literal, TypeGuard, TypeIs
 
 from pydantic import ConfigDict
 
@@ -37,15 +37,13 @@ class FlextConstants:
     - typing.Final type annotations for immutability guarantees
     - Hierarchical access patterns (FlextConstants.Namespace.CONSTANT)
     - Compile-time constant verification via strict type checking
-    - Runtime constant validation through __getitem__
 
     **Core Features**:
     1. **Immutable Constants**: All constants wrapped with typing.Final
     2. **Namespace Organization**: 30+ nested classes for logical grouping
     3. **Type Safety**: Complete type annotations (no Any, no implicit types)
     4. **Hierarchical Access**: Multi-level namespace access patterns
-    5. **Alternative Access**: __getitem__ for dynamic constant retrieval
-    6. **Ecosystem Single Source of Truth**: Centralized configuration
+    5. **Ecosystem Single Source of Truth**: Centralized configuration
     7. **Integration Ready**: Seamless use throughout 32+ FLEXT projects
     8. **Error Code Registry**: 50+ error codes with reserved purposes
     9. **Literal Type Definitions**: Type-safe literal types for annotations
@@ -275,35 +273,45 @@ class FlextConstants:
 
         Raises:
             AttributeError: If path not found
+            TypeError: If resolved value is not a valid constant type
 
         """
         parts = key.split(".")
-        # Type narrowing: result can be any constant type (str, int, float, bool, ConfigDict, frozenset, tuple, Mapping, StrEnum, or nested class)
-        # Start with self, which is FlextConstants instance
-        result: (
-            str
-            | int
-            | float
-            | bool
-            | ConfigDict
-            | frozenset[FlextTypes.ScalarValue]
-            | tuple[FlextTypes.ScalarValue, ...]
-            | Mapping[str, FlextTypes.ScalarValue]
-            | StrEnum
-            | type[FlextConstants]
-            | FlextConstants
-        ) = cast(
-            "str | int | float | bool | ConfigDict | frozenset[FlextTypes.ScalarValue] | tuple[FlextTypes.ScalarValue, ...] | Mapping[str, FlextTypes.ScalarValue] | StrEnum | type[FlextConstants] | FlextConstants",
-            self,
-        )
+        # Traverse through nested classes and attributes
+        # Intermediate result can be FlextConstants instance, nested class type, or FlextTypes.ConstantValue
+        result: FlextConstants | type | FlextTypes.ConstantValue = self
         try:
             for part in parts:
                 attr = getattr(result, part)
                 result = attr
-            return cast("FlextTypes.ConstantValue", result)
+            # Type narrowing: verify result is a valid FlextTypes.ConstantValue
+            if self._is_constant_value(result):
+                return result
+            msg = f"Constant path '{key}' resolved to invalid type: {type(result).__name__}"
+            raise TypeError(msg)
         except AttributeError as e:
             msg = f"Constant path '{key}' not found"
             raise AttributeError(msg) from e
+
+    @staticmethod
+    def _is_constant_value(
+        value: FlextConstants | type | FlextTypes.ConstantValue,
+    ) -> TypeGuard[FlextTypes.ConstantValue]:
+        """Type guard to verify value is a valid FlextTypes.ConstantValue type."""
+        # Exclude FlextConstants and type classes first
+        if isinstance(value, (FlextConstants, type)):
+            return False
+        # Check for basic types
+        if isinstance(value, (str, int, float, bool, frozenset, tuple, Mapping)):
+            return True
+        # Check for StrEnum (subclass check)
+        if isinstance(value, StrEnum):
+            return True
+        # Check for Pattern (re.Pattern is a type alias, check via hasattr)
+        if hasattr(value, "pattern") and hasattr(value, "match"):
+            return True
+        # Check for ConfigDict (TypedDict, check via type) or dict
+        return type(value).__name__ == "ConfigDict" or isinstance(value, dict)
 
     class Network:
         """Network-related defaults."""
@@ -413,9 +421,7 @@ class FlextConstants:
                 "flext-redis",
                 "flext-oracle",
             )
-            SHARED_CONTAINERS: Final[
-                Mapping[str, FlextTypes.Types.ContainerConfigDict]
-            ] = {
+            SHARED_CONTAINERS: Final[FlextTypes.Types.SharedContainersMapping] = {
                 "flext-openldap-test": {
                     "compose_file": "flext-ldap/docker/docker-compose.yml",
                     "service": "openldap",
@@ -470,6 +476,8 @@ class FlextConstants:
         MAX_MESSAGE_LENGTH: Final[int] = 100
         DEFAULT_MIDDLEWARE_ORDER: Final[int] = 0
         OPERATION_TIMEOUT_SECONDS: Final[int] = 30
+        DATABASE_URL: Final[str] = "sqlite:///:memory:"
+        DEFAULT_DATABASE_URL: Final[str] = DATABASE_URL
 
     class Utilities:
         """Utility constants."""
@@ -654,24 +662,29 @@ class FlextConstants:
     class Logging:
         """Logging configuration."""
 
+        # Log level constants - direct access for referencing
         DEBUG: Final[str] = "DEBUG"
         INFO: Final[str] = "INFO"
         WARNING: Final[str] = "WARNING"
         ERROR: Final[str] = "ERROR"
         CRITICAL: Final[str] = "CRITICAL"
-        DEFAULT_LEVEL: Final[str] = "INFO"
-        DEFAULT_LEVEL_DEVELOPMENT: Final[str] = "DEBUG"
-        DEFAULT_LEVEL_PRODUCTION: Final[str] = "WARNING"
-        DEFAULT_LEVEL_TESTING: Final[str] = "INFO"
+
+        # Log levels tuple and set
         VALID_LEVELS: Final[tuple[str, ...]] = (
-            "DEBUG",
-            "INFO",
-            "WARNING",
-            "ERROR",
-            "CRITICAL",
+            DEBUG,
+            INFO,
+            WARNING,
+            ERROR,
+            CRITICAL,
         )
-        # Immutable set for O(1) membership testing (Python 3.13+ frozenset)
         VALID_LEVELS_SET: Final[frozenset[str]] = frozenset(VALID_LEVELS)
+
+        # Default log level references
+        DEFAULT_LEVEL: Final[str] = INFO
+        DEFAULT_LEVEL_DEVELOPMENT: Final[str] = DEBUG
+        DEFAULT_LEVEL_PRODUCTION: Final[str] = WARNING
+        DEFAULT_LEVEL_TESTING: Final[str] = INFO
+
         JSON_OUTPUT_DEFAULT: Final[bool] = False
         DEFAULT_FORMAT: Final[str] = (
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -690,17 +703,21 @@ class FlextConstants:
         MAX_CONTEXT_KEYS: Final[int] = 50
         MASK_SENSITIVE_DATA: Final[bool] = True
 
-        # String constants for context operations (runtime use)
-        # Using Literal types directly in Final for Python 3.13+ type safety
-        CONTEXT_OPERATION_BIND: Final = "bind"
-        CONTEXT_OPERATION_UNBIND: Final = "unbind"
-        CONTEXT_OPERATION_CLEAR: Final = "clear"
-        CONTEXT_OPERATION_GET: Final = "get"
+        class ContextOperation(StrEnum):
+            """Context operation types enumeration (single source of truth)."""
 
-        # Type aliases for logging operations (Python 3.13+ PEP 695 best practices)
-        # Using PEP 695 type keyword for better type checking and IDE support
-        type ContextOperationGetLiteral = Literal["get"]
-        type ContextOperationModifyLiteral = Literal["bind", "unbind", "clear"]
+            BIND = "bind"
+            UNBIND = "unbind"
+            CLEAR = "clear"
+            GET = "get"
+
+        # Type aliases derived from ContextOperation StrEnum (NÃO DUPLICA!)
+        type ContextOperationGetLiteral = Literal[ContextOperation.GET]
+        type ContextOperationModifyLiteral = Literal[
+            ContextOperation.BIND,
+            ContextOperation.UNBIND,
+            ContextOperation.CLEAR,
+        ]
         type ReturnResultTrueLiteral = Literal[True]
         type ReturnResultFalseLiteral = Literal[False]
 
@@ -743,20 +760,32 @@ class FlextConstants:
         ]
 
         # State literal - NOTE: This combines multiple StrEnum values
-        # References FlextConstants.Domain.Status and FlextConstants.Cqrs.HealthStatus members
+        # References FlextConstants.Domain.Status, FlextConstants.Cqrs.CommonStatus, and FlextConstants.Cqrs.HealthStatus members
         type StateLiteral = Literal[
             FlextConstants.Domain.Status.ACTIVE,
             FlextConstants.Domain.Status.INACTIVE,
             FlextConstants.Domain.Status.PENDING,
-            FlextConstants.Cqrs.ProcessingStatus.COMPLETED,
-            FlextConstants.Cqrs.ProcessingStatus.FAILED,
-            FlextConstants.Cqrs.ProcessingStatus.RUNNING,
-            FlextConstants.Cqrs.Status.COMPENSATING,
-            FlextConstants.Cqrs.NotificationStatus.SENT,
-            FlextConstants.Cqrs.CircuitBreakerStatus.IDLE,
+            FlextConstants.Cqrs.CommonStatus.COMPLETED,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
+            FlextConstants.Cqrs.CommonStatus.RUNNING,
+            FlextConstants.Cqrs.CommonStatus.COMPENSATING,
+            FlextConstants.Cqrs.CommonStatus.PENDING,
+            FlextConstants.Cqrs.SpecialStatus.SENT,
+            FlextConstants.Cqrs.SpecialStatus.IDLE,
+            FlextConstants.Cqrs.SpecialStatus.PROCESSING,
             FlextConstants.Cqrs.HealthStatus.HEALTHY,
             FlextConstants.Cqrs.HealthStatus.DEGRADED,
             FlextConstants.Cqrs.HealthStatus.UNHEALTHY,
+        ]
+
+        # Action literal (references Cqrs.Action StrEnum members)
+        # NÃO duplica strings - referencia o enum member!
+        type ActionLiteral = Literal[
+            FlextConstants.Cqrs.Action.GET,
+            FlextConstants.Cqrs.Action.CREATE,
+            FlextConstants.Cqrs.Action.UPDATE,
+            FlextConstants.Cqrs.Action.DELETE,
+            FlextConstants.Cqrs.Action.LIST,
         ]
 
         # =====================================================================
@@ -787,13 +816,14 @@ class FlextConstants:
             FlextConstants.Cqrs.ProcessingMode.SEQUENTIAL,
         ]
 
-        # FlextConstants.Cqrs.ProcessingStatus - references ProcessingStatus StrEnum members
+        # FlextConstants.Cqrs.ProcessingStatus - references CommonStatus StrEnum members directly
+        # ProcessingStatus uses CommonStatus values - NO duplicate enum!
         type ProcessingStatusLiteral = Literal[
-            FlextConstants.Cqrs.ProcessingStatus.PENDING,
-            FlextConstants.Cqrs.ProcessingStatus.RUNNING,
-            FlextConstants.Cqrs.ProcessingStatus.COMPLETED,
-            FlextConstants.Cqrs.ProcessingStatus.FAILED,
-            FlextConstants.Cqrs.ProcessingStatus.CANCELLED,
+            FlextConstants.Cqrs.CommonStatus.PENDING,
+            FlextConstants.Cqrs.CommonStatus.RUNNING,
+            FlextConstants.Cqrs.CommonStatus.COMPLETED,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
+            FlextConstants.Cqrs.CommonStatus.CANCELLED,
         ]
 
         # FlextConstants.Cqrs.ValidationLevel - references ValidationLevel StrEnum members
@@ -824,13 +854,13 @@ class FlextConstants:
             FlextConstants.Cqrs.MergeStrategy.MERGE_DEEP,
         ]
 
-        # FlextConstants.Cqrs.Status - references Status StrEnum members
+        # FlextConstants.Cqrs.CommonStatus - references CommonStatus StrEnum members
         type StatusLiteral = Literal[
-            FlextConstants.Cqrs.Status.PENDING,
-            FlextConstants.Cqrs.Status.RUNNING,
-            FlextConstants.Cqrs.Status.COMPLETED,
-            FlextConstants.Cqrs.Status.FAILED,
-            FlextConstants.Cqrs.Status.COMPENSATING,
+            FlextConstants.Cqrs.CommonStatus.PENDING,
+            FlextConstants.Cqrs.CommonStatus.RUNNING,
+            FlextConstants.Cqrs.CommonStatus.COMPLETED,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
+            FlextConstants.Cqrs.CommonStatus.COMPENSATING,
         ]
 
         # FlextConstants.Cqrs.HealthStatus - references HealthStatus StrEnum members
@@ -847,19 +877,21 @@ class FlextConstants:
             FlextConstants.Cqrs.TokenType.JWT,
         ]
 
-        # FlextConstants.Cqrs.NotificationStatus - references NotificationStatus StrEnum members
+        # FlextConstants.Cqrs.NotificationStatus - references CommonStatus and SpecialStatus StrEnum members
+        # NO duplicate enum - uses CommonStatus and SpecialStatus directly!
         type NotificationStatusLiteral = Literal[
-            FlextConstants.Cqrs.NotificationStatus.PENDING,
-            FlextConstants.Cqrs.NotificationStatus.SENT,
-            FlextConstants.Cqrs.NotificationStatus.FAILED,
+            FlextConstants.Cqrs.CommonStatus.PENDING,
+            FlextConstants.Cqrs.SpecialStatus.SENT,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
 
-        # FlextConstants.Cqrs.TokenStatus - references TokenStatus StrEnum members
+        # FlextConstants.Cqrs.TokenStatus - references CommonStatus StrEnum members directly
+        # NO duplicate enum - uses CommonStatus directly!
         type TokenStatusLiteral = Literal[
-            FlextConstants.Cqrs.TokenStatus.PENDING,
-            FlextConstants.Cqrs.TokenStatus.RUNNING,
-            FlextConstants.Cqrs.TokenStatus.COMPLETED,
-            FlextConstants.Cqrs.TokenStatus.FAILED,
+            FlextConstants.Cqrs.CommonStatus.PENDING,
+            FlextConstants.Cqrs.CommonStatus.RUNNING,
+            FlextConstants.Cqrs.CommonStatus.COMPLETED,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
 
         # Reliability.CircuitBreakerState - references CircuitBreakerState StrEnum members
@@ -869,28 +901,31 @@ class FlextConstants:
             FlextConstants.Reliability.CircuitBreakerState.HALF_OPEN,
         ]
 
-        # FlextConstants.Cqrs.CircuitBreakerStatus - references CircuitBreakerStatus StrEnum members
+        # FlextConstants.Cqrs.CircuitBreakerStatus - references CommonStatus and SpecialStatus StrEnum members
+        # NO duplicate enum - uses CommonStatus and SpecialStatus directly!
         type CircuitBreakerStatusLiteral = Literal[
-            FlextConstants.Cqrs.CircuitBreakerStatus.IDLE,
-            FlextConstants.Cqrs.CircuitBreakerStatus.RUNNING,
-            FlextConstants.Cqrs.CircuitBreakerStatus.COMPLETED,
-            FlextConstants.Cqrs.CircuitBreakerStatus.FAILED,
+            FlextConstants.Cqrs.SpecialStatus.IDLE,
+            FlextConstants.Cqrs.CommonStatus.RUNNING,
+            FlextConstants.Cqrs.CommonStatus.COMPLETED,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
 
-        # FlextConstants.Cqrs.BatchStatus - references BatchStatus StrEnum members
+        # FlextConstants.Cqrs.BatchStatus - references CommonStatus and SpecialStatus StrEnum members
+        # NO duplicate enum - uses CommonStatus and SpecialStatus directly!
         type BatchStatusLiteral = Literal[
-            FlextConstants.Cqrs.BatchStatus.PENDING,
-            FlextConstants.Cqrs.BatchStatus.PROCESSING,
-            FlextConstants.Cqrs.BatchStatus.COMPLETED,
-            FlextConstants.Cqrs.BatchStatus.FAILED,
+            FlextConstants.Cqrs.CommonStatus.PENDING,
+            FlextConstants.Cqrs.SpecialStatus.PROCESSING,
+            FlextConstants.Cqrs.CommonStatus.COMPLETED,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
 
-        # FlextConstants.Cqrs.ExportStatus - references ExportStatus StrEnum members
+        # FlextConstants.Cqrs.ExportStatus - references CommonStatus and SpecialStatus StrEnum members
+        # NO duplicate enum - uses CommonStatus and SpecialStatus directly!
         type ExportStatusLiteral = Literal[
-            FlextConstants.Cqrs.ExportStatus.PENDING,
-            FlextConstants.Cqrs.ExportStatus.PROCESSING,
-            FlextConstants.Cqrs.ExportStatus.COMPLETED,
-            FlextConstants.Cqrs.ExportStatus.FAILED,
+            FlextConstants.Cqrs.CommonStatus.PENDING,
+            FlextConstants.Cqrs.SpecialStatus.PROCESSING,
+            FlextConstants.Cqrs.CommonStatus.COMPLETED,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
 
         # FlextConstants.Cqrs.OperationStatus - references OperationStatus StrEnum members
@@ -923,15 +958,6 @@ class FlextConstants:
             FlextConstants.Cqrs.Aggregation.MIN,
             FlextConstants.Cqrs.Aggregation.MAX,
             FlextConstants.Cqrs.Aggregation.COUNT,
-        ]
-
-        # FlextConstants.Cqrs.Action - references Action StrEnum members
-        type ActionLiteral = Literal[
-            FlextConstants.Cqrs.Action.GET,
-            FlextConstants.Cqrs.Action.CREATE,
-            FlextConstants.Cqrs.Action.UPDATE,
-            FlextConstants.Cqrs.Action.DELETE,
-            FlextConstants.Cqrs.Action.LIST,
         ]
 
         # FlextConstants.Cqrs.PersistenceLevel - references PersistenceLevel StrEnum members
@@ -1032,14 +1058,79 @@ class FlextConstants:
             ARCHIVED = "archived"
             FAILED = "failed"
 
+        class Currency(StrEnum):
+            """Currency enumeration for monetary operations."""
+
+            USD = "USD"
+            EUR = "EUR"
+            GBP = "GBP"
+            BRL = "BRL"
+
+        class OrderStatus(StrEnum):
+            """Order status enumeration for order lifecycle."""
+
+            PENDING = "pending"
+            CONFIRMED = "confirmed"
+            SHIPPED = "shipped"
+            DELIVERED = "delivered"
+            CANCELLED = "cancelled"
+
+        # Model config for domain classes
+        DOMAIN_MODEL_CONFIG: Final[ConfigDict] = ConfigDict(
+            use_enum_values=True,
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            str_strip_whitespace=True,
+            arbitrary_types_allowed=False,
+            extra="forbid",
+        )
+
         # ─────────────────────────────────────────────────────────────────
         # SUBSETS: Literal referenciando membros do StrEnum
         # ─────────────────────────────────────────────────────────────────
         # Use para aceitar apenas ALGUNS valores do enum em métodos
         # Isso NÃO duplica strings - referencia o enum member!
 
-        type ActiveStates = Literal[Status.ACTIVE, Status.INACTIVE, Status.PENDING]
-        type TerminalStates = Literal[Status.ARCHIVED, Status.FAILED]
+        type ActiveStates = Literal[
+            FlextConstants.Domain.Status.ACTIVE,
+            FlextConstants.Domain.Status.INACTIVE,
+            FlextConstants.Domain.Status.PENDING,
+        ]
+        type TerminalStates = Literal[
+            FlextConstants.Domain.Status.ARCHIVED,
+            FlextConstants.Domain.Status.FAILED,
+        ]
+
+        # Order status literals for type-safe operations
+        type OrderStatusLiteral = Literal[
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.SHIPPED,
+            OrderStatus.DELIVERED,
+            OrderStatus.CANCELLED,
+        ]
+
+        # Active order statuses
+        type ActiveOrderStatusLiteral = Literal[
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.SHIPPED,
+        ]
+
+        # Terminal order statuses
+        type TerminalOrderStatusLiteral = Literal[
+            OrderStatus.DELIVERED,
+            OrderStatus.CANCELLED,
+        ]
+
+        # Currency literal for type-safe monetary operations
+        type CurrencyLiteral = Literal[
+            Currency.USD,
+            Currency.EUR,
+            Currency.GBP,
+            Currency.BRL,
+        ]
 
         # ─────────────────────────────────────────────────────────────────
         # EXEMPLOS DE USO EM MÉTODOS
@@ -1051,51 +1142,6 @@ class FlextConstants:
         # 2. Aceitar apenas subset do StrEnum:
         #    def process_active(self, status: ActiveStates) -> FlextResult[bool]: ...
         #    def finalize(self, status: TerminalStates) -> FlextResult[bool]: ...
-
-        # ─────────────────────────────────────────────────────────────────
-        # TYPEGUARD: Para narrowing em código Python (fora de Pydantic)
-        # ─────────────────────────────────────────────────────────────────
-        @classmethod
-        def is_valid_status(
-            cls: type[FlextConstants.Domain],
-            value: str | FlextConstants.Domain.Status | FlextTypes.ScalarValue,
-        ) -> TypeIs[FlextConstants.Domain.Status]:
-            """Type narrowing for validating Status in Python code."""
-            return isinstance(value, cls.Status) or (
-                isinstance(value, str) and value in cls.Status._value2member_map_
-            )
-
-        @classmethod
-        def is_active_state(
-            cls: type[FlextConstants.Domain],
-            value: str | FlextConstants.Domain.Status | FlextTypes.ScalarValue,
-        ) -> TypeIs[FlextConstants.Domain.ActiveStates]:
-            """Type narrowing for validating subset of active states."""
-            if isinstance(value, cls.Status):
-                return value in {
-                    cls.Status.ACTIVE,
-                    cls.Status.INACTIVE,
-                    cls.Status.PENDING,
-                }
-            if isinstance(value, str):
-                return value in {
-                    cls.Status.ACTIVE.value,
-                    cls.Status.INACTIVE.value,
-                    cls.Status.PENDING.value,
-                }
-            return False
-
-        @classmethod
-        def is_terminal_state(
-            cls: type[FlextConstants.Domain],
-            value: str | FlextConstants.Domain.Status | FlextTypes.ScalarValue,
-        ) -> TypeIs[FlextConstants.Domain.TerminalStates]:
-            """Type narrowing for validating subset of terminal states."""
-            if isinstance(value, cls.Status):
-                return value in {cls.Status.ARCHIVED, cls.Status.FAILED}
-            if isinstance(value, str):
-                return value in {cls.Status.ARCHIVED.value, cls.Status.FAILED.value}
-            return False
 
     # ═══════════════════════════════════════════════════════════════════
     # REFERÊNCIAS A FLEXT-CORE (quando necessário reutilizar)
@@ -1113,6 +1159,13 @@ class FlextConstants:
 
     class Cqrs:
         """CQRS pattern constants."""
+
+        class Status(StrEnum):
+            """CQRS status enumeration."""
+
+            RUNNING = "running"
+            STOPPED = "stopped"
+            FAILED = "failed"
 
         class HandlerType(StrEnum):
             """CQRS handler types enumeration."""
@@ -1138,28 +1191,45 @@ class FlextConstants:
             HandlerType.OPERATION,
             HandlerType.SAGA,
         ]
+
+        # CONSOLIDATED STATUS ENUM - Single Source of Truth (DRY)
+        # All other status enums derive specialized Literals from this
+        class CommonStatus(StrEnum):
+            """Base status enumeration - single source of truth for all status types (FLEXT standard).
+
+            All specialized status Literals (ProcessingStatusLiteral, NotificationStatusLiteral, etc.)
+            use Literal type aliases derived from these values and SpecialStatus to prevent duplication.
+            This follows DRY and SOLID principles without losing semantic meaning.
+            """
+
+            PENDING = "pending"
+            RUNNING = "running"
+            COMPLETED = "completed"
+            FAILED = "failed"
+            CANCELLED = "cancelled"
+            COMPENSATING = "compensating"
+
+        class MetricType(StrEnum):
+            """Service metric types enumeration - single source of truth (FLEXT standard)."""
+
+            COUNTER = "counter"
+            GAUGE = "gauge"
+            HISTOGRAM = "histogram"
+            SUMMARY = "summary"
+
         type ServiceMetricTypeLiteral = Literal[
-            "counter",
-            "gauge",
-            "histogram",
-            "summary",
+            MetricType.COUNTER,
+            MetricType.GAUGE,
+            MetricType.HISTOGRAM,
+            MetricType.SUMMARY,
         ]
 
         DEFAULT_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
-        COMMAND_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
-        QUERY_HANDLER_TYPE: HandlerType = HandlerType.QUERY
-        EVENT_HANDLER_TYPE: HandlerType = HandlerType.EVENT
-        OPERATION_HANDLER_TYPE: HandlerType = HandlerType.OPERATION
-        SAGA_HANDLER_TYPE: HandlerType = HandlerType.SAGA
 
-        # Valid handler modes as frozenset for O(1) validation
-        VALID_HANDLER_MODES: Final[AbstractSet[str]] = frozenset({
-            "command",
-            "query",
-            "event",
-            "operation",
-            "saga",
-        })
+        # Valid handler modes derived from HandlerType StrEnum (single source of truth)
+        VALID_HANDLER_MODES: Final[AbstractSet[str]] = frozenset(
+            member.value for member in HandlerType.__members__.values()
+        )
 
         class ProcessingMode(StrEnum):
             """CQRS processing modes enumeration."""
@@ -1169,14 +1239,23 @@ class FlextConstants:
             PARALLEL = "parallel"
             SEQUENTIAL = "sequential"
 
-        class ProcessingStatus(StrEnum):
-            """CQRS processing status enumeration."""
-
-            PENDING = "pending"
-            RUNNING = "running"
-            COMPLETED = "completed"
-            FAILED = "failed"
-            CANCELLED = "cancelled"
+        # SPECIALIZED STATUS LITERAL ALIASES (Python 3.13+ PEP 695)
+        # These reference CommonStatus StrEnum members directly - NO string duplication!
+        # Note: CommonStatus must be defined before these type aliases
+        type ProcessingStatusLiteral = Literal[
+            CommonStatus.PENDING,
+            CommonStatus.RUNNING,
+            CommonStatus.COMPLETED,
+            CommonStatus.FAILED,
+            CommonStatus.CANCELLED,
+        ]
+        type SagaStatusLiteral = Literal[
+            CommonStatus.PENDING,
+            CommonStatus.RUNNING,
+            CommonStatus.COMPLETED,
+            CommonStatus.FAILED,
+            CommonStatus.COMPENSATING,
+        ]
 
         class ValidationLevel(StrEnum):
             """CQRS validation levels enumeration."""
@@ -1206,21 +1285,19 @@ class FlextConstants:
             UPDATE = "update"
             MERGE_DEEP = "merge_deep"
 
-        class Status(StrEnum):
-            """CQRS status enumeration."""
-
-            PENDING = "pending"
-            RUNNING = "running"
-            COMPLETED = "completed"
-            FAILED = "failed"
-            COMPENSATING = "compensating"
-
         class HealthStatus(StrEnum):
             """CQRS health status enumeration."""
 
             HEALTHY = "healthy"
             DEGRADED = "degraded"
             UNHEALTHY = "unhealthy"
+
+        class SpecialStatus(StrEnum):
+            """Special status values not in CommonStatus - single source of truth for unique status values."""
+
+            SENT = "sent"  # Unique to notifications
+            IDLE = "idle"  # Unique to circuit breaker
+            PROCESSING = "processing"  # Similar to RUNNING but with specific semantics for batch/export
 
         class TokenType(StrEnum):
             """CQRS token types enumeration."""
@@ -1229,44 +1306,37 @@ class FlextConstants:
             API_KEY = "api_key"
             JWT = "jwt"
 
-        class NotificationStatus(StrEnum):
-            """CQRS notification status enumeration."""
-
-            PENDING = "pending"
-            SENT = "sent"
-            FAILED = "failed"
-
-        class TokenStatus(StrEnum):
-            """CQRS token status enumeration."""
-
-            PENDING = "pending"
-            RUNNING = "running"
-            COMPLETED = "completed"
-            FAILED = "failed"
-
-        class CircuitBreakerStatus(StrEnum):
-            """CQRS circuit breaker status enumeration."""
-
-            IDLE = "idle"
-            RUNNING = "running"
-            COMPLETED = "completed"
-            FAILED = "failed"
-
-        class BatchStatus(StrEnum):
-            """CQRS batch status enumeration."""
-
-            PENDING = "pending"
-            PROCESSING = "processing"
-            COMPLETED = "completed"
-            FAILED = "failed"
-
-        class ExportStatus(StrEnum):
-            """CQRS export status enumeration."""
-
-            PENDING = "pending"
-            PROCESSING = "processing"
-            COMPLETED = "completed"
-            FAILED = "failed"
+        # More specialized status literals from CommonStatus and SpecialStatus
+        # All Literals reference StrEnum members directly - NO string duplication!
+        type NotificationStatusLiteral = Literal[
+            CommonStatus.PENDING,
+            SpecialStatus.SENT,
+            CommonStatus.FAILED,
+        ]
+        type TokenStatusLiteral = Literal[
+            CommonStatus.PENDING,
+            CommonStatus.RUNNING,
+            CommonStatus.COMPLETED,
+            CommonStatus.FAILED,
+        ]
+        type CircuitBreakerStatusLiteral = Literal[
+            SpecialStatus.IDLE,
+            CommonStatus.RUNNING,
+            CommonStatus.COMPLETED,
+            CommonStatus.FAILED,
+        ]
+        type BatchStatusLiteral = Literal[
+            CommonStatus.PENDING,
+            SpecialStatus.PROCESSING,
+            CommonStatus.COMPLETED,
+            CommonStatus.FAILED,
+        ]
+        type ExportStatusLiteral = Literal[
+            CommonStatus.PENDING,
+            SpecialStatus.PROCESSING,
+            CommonStatus.COMPLETED,
+            CommonStatus.FAILED,
+        ]
 
         class OperationStatus(StrEnum):
             """CQRS operation status enumeration."""
@@ -1553,48 +1623,6 @@ class FlextConstants:
         DEFAULT_BATCH_SIZE: Final[int] = 1000
 
     # =============================================================================
-    # ADVANCED VALIDATION HELPERS - Python 3.13+ collections.abc patterns
-    # =============================================================================
-    # Advanced validation methods using modern Python patterns
-    # Similar to flext-cli patterns but adapted for flext-core scope
-
-    # Log level validation mapping
-    LOG_LEVEL_VALIDATION_MAP: Final[Mapping[str, str]] = MappingProxyType({
-        "DEBUG": "DEBUG",
-        "INFO": "INFO",
-        "WARNING": "WARNING",
-        "ERROR": "ERROR",
-        "CRITICAL": "CRITICAL",
-    })
-
-    # Log level validation set using frozenset for O(1) membership testing
-    LOG_LEVEL_VALIDATION_SET: Final[AbstractSet[str]] = frozenset({
-        "DEBUG",
-        "INFO",
-        "WARNING",
-        "ERROR",
-        "CRITICAL",
-    })
-
-    # Environment validation mapping
-    ENVIRONMENT_VALIDATION_MAP: Final[Mapping[str, str]] = MappingProxyType({
-        "development": "development",
-        "staging": "staging",
-        "production": "production",
-        "testing": "testing",
-        "local": "local",
-    })
-
-    # Environment validation set
-    ENVIRONMENT_VALIDATION_SET: Final[AbstractSet[str]] = frozenset({
-        "development",
-        "staging",
-        "production",
-        "testing",
-        "local",
-    })
-
-    # =============================================================================
     # GENERALIZED VALIDATION HELPERS - Python 3.13+ collections.abc patterns
     # =============================================================================
     # Generic validation methods that can be reused by any FlextConstants subclass
@@ -1667,13 +1695,10 @@ class FlextConstants:
                 union_map[member.value] = enum_class
         return MappingProxyType(union_map)  # Return immutable Mapping
 
-    # Domain-specific convenience methods using generic helpers
+    # Domain-specific convenience methods using StrEnum directly
     @classmethod
     def validate_log_level(cls, value: str) -> str | None:
-        """Validate log level string using advanced patterns.
-
-        Uses inherited generic validation from validate_enum_value.
-        Delegates to generic method for DRY compliance.
+        """Validate log level string against Settings.LogLevel StrEnum.
 
         Args:
             value: Log level string to validate
@@ -1682,18 +1707,13 @@ class FlextConstants:
             Valid log level string or None if invalid
 
         """
-        return cls.validate_enum_value(
-            value,
-            cls.LOG_LEVEL_VALIDATION_SET,
-            cls.LOG_LEVEL_VALIDATION_MAP,
-        )
+        if value in cls.Settings.LogLevel._value2member_map_:
+            return value
+        return None
 
     @classmethod
     def validate_environment(cls, value: str) -> str | None:
-        """Validate environment string using discriminated union pattern.
-
-        Uses inherited generic validation from validate_enum_value.
-        Composes with Settings.Environment StrEnum for comprehensive validation.
+        """Validate environment string against Settings.Environment StrEnum.
 
         Args:
             value: Environment string to validate
@@ -1702,37 +1722,29 @@ class FlextConstants:
             Valid environment string or None if invalid
 
         """
-        return cls.validate_enum_value(
-            value,
-            cls.ENVIRONMENT_VALIDATION_SET,
-            cls.ENVIRONMENT_VALIDATION_MAP,
-        )
+        if value in cls.Settings.Environment._value2member_map_:
+            return value
+        return None
 
     @classmethod
     def get_valid_log_levels(cls) -> Sequence[str]:
-        """Get immutable sequence of valid log levels.
-
-        Uses inherited generic method from get_valid_enum_values.
-        Returns collections.abc.Sequence for read-only iteration.
+        """Get immutable sequence of valid log levels from Settings.LogLevel StrEnum.
 
         Returns:
             Immutable sequence of valid log level strings
 
         """
-        return cls.get_valid_enum_values(cls.LOG_LEVEL_VALIDATION_SET)
+        return tuple(m.value for m in cls.Settings.LogLevel.__members__.values())
 
     @classmethod
     def get_valid_environments(cls) -> Sequence[str]:
-        """Get immutable sequence of valid environments.
-
-        Uses inherited generic method from get_valid_enum_values.
-        Returns collections.abc.Sequence for safe iteration.
+        """Get immutable sequence of valid environments from Settings.Environment StrEnum.
 
         Returns:
             Immutable sequence of valid environment strings
 
         """
-        return cls.get_valid_enum_values(cls.ENVIRONMENT_VALIDATION_SET)
+        return tuple(m.value for m in cls.Settings.Environment.__members__.values())
 
     @classmethod
     def create_enum_literal_mapping(
@@ -1874,5 +1886,130 @@ class FlextConstants:
             """
             return tuple(member.value for member in cls.ServerType.__members__.values())
 
+    class Example:
+        """Example constants for demonstrating FLEXT features.
 
-__all__ = ["FlextConstants"]
+        Provides centralized constants for examples, ensuring consistency
+        and type safety across all demonstration code.
+        """
+
+        # Configuration example constants
+        DEFAULT_DATABASE_URL: Final[str] = "sqlite:///:memory:"
+        DEFAULT_API_TIMEOUT: Final[float] = 30.0
+        DEFAULT_DEBUG_MODE: Final[bool] = False
+        DEFAULT_MAX_WORKERS: Final[int] = 4
+        DEFAULT_LOG_LEVEL: Final[str] = "INFO"
+        DEFAULT_DB_POOL_SIZE: Final[int] = 10
+        DEFAULT_API_HOST: Final[str] = "localhost"
+        DEFAULT_API_PORT: Final[int] = 8000
+        DEFAULT_CACHE_ENABLED: Final[bool] = True
+        DEFAULT_CACHE_TTL: Final[int] = 300
+        DEFAULT_WORKER_TIMEOUT: Final[int] = 30
+        DEFAULT_RETRY_ATTEMPTS: Final[int] = 3
+
+        # Environment variable prefixes for examples
+        FLEXT_DEBUG: Final[str] = "FLEXT_DEBUG"
+        FLEXT_DATABASE_URL: Final[str] = "FLEXT_DATABASE_URL"
+        FLEXT_API_TIMEOUT: Final[str] = "FLEXT_API_TIMEOUT"
+
+        # Example environment values
+        EXAMPLE_DEBUG_TRUE: Final[str] = "true"
+        EXAMPLE_DATABASE_URL: Final[str] = "postgresql://localhost/test"
+        EXAMPLE_API_TIMEOUT: Final[str] = "60"
+
+        # File configuration example
+        EXAMPLE_CONFIG_FILE: Final[str] = ".env.test"
+        EXAMPLE_CONFIG_CONTENT: Final[str] = (
+            f"{FLEXT_DEBUG}={EXAMPLE_DEBUG_TRUE}\n"
+            f"{FLEXT_DATABASE_URL}={EXAMPLE_DATABASE_URL}\n"
+            f"{FLEXT_API_TIMEOUT}={EXAMPLE_API_TIMEOUT}\n"
+        )
+
+        # StrEnum for example log levels
+        class LogLevel(StrEnum):
+            """Log levels for example configurations."""
+
+            DEBUG = "DEBUG"
+            INFO = "INFO"
+            WARNING = "WARNING"
+            ERROR = "ERROR"
+            CRITICAL = "CRITICAL"
+
+        # Literals for type-safe configuration
+        type LogLevelLiteral = Literal[
+            LogLevel.DEBUG,
+            LogLevel.INFO,
+            LogLevel.WARNING,
+            LogLevel.ERROR,
+            LogLevel.CRITICAL,
+        ]
+
+        # Configuration validation mapping
+        LOG_LEVEL_MAPPING: Final[Mapping[str, str]] = MappingProxyType({
+            "DEBUG": LogLevel.DEBUG,
+            "INFO": LogLevel.INFO,
+            "WARNING": LogLevel.WARNING,
+            "ERROR": LogLevel.ERROR,
+            "CRITICAL": LogLevel.CRITICAL,
+        })
+
+        # Validation sets for performance
+        VALID_LOG_LEVELS: Final[AbstractSet[str]] = frozenset(
+            member.value for member in LogLevel.__members__.values()
+        )
+
+        # StrEnum for demonstration patterns
+        class DemoPattern(StrEnum):
+            """Patterns demonstrated in examples."""
+
+            FACTORY_METHODS = "factory_methods"
+            VALUE_EXTRACTION = "value_extraction"
+            RAILWAY_OPERATIONS = "railway_operations"
+            ERROR_RECOVERY = "error_recovery"
+            ADVANCED_COMBINATORS = "advanced_combinators"
+            VALIDATION_PATTERNS = "validation_patterns"
+            EXCEPTION_INTEGRATION = "exception_integration"
+
+        # StrEnum for utility type categories
+        class UtilityType(StrEnum):
+            """Utility type categories for comprehensive demonstrations."""
+
+            VALIDATION = "validation"
+            ID_GENERATION = "id_generation"
+            CONVERSIONS = "conversions"
+            CACHING = "caching"
+            RELIABILITY = "reliability"
+            STRING_PARSING = "string_parsing"
+            COLLECTION = "collection"
+            TYPE_CHECKING = "type_checking"
+
+        # Literals for type-safe pattern references
+        type DemoPatternLiteral = Literal[
+            DemoPattern.FACTORY_METHODS,
+            DemoPattern.VALUE_EXTRACTION,
+            DemoPattern.RAILWAY_OPERATIONS,
+            DemoPattern.ERROR_RECOVERY,
+            DemoPattern.ADVANCED_COMBINATORS,
+            DemoPattern.VALIDATION_PATTERNS,
+            DemoPattern.EXCEPTION_INTEGRATION,
+        ]
+
+        # Example user data for demonstrations
+        USER_DATA: Final[Mapping[str, str | int | float | bool | None]] = {
+            "unique_id": 1,  # Using literal instead of self-reference
+            "name": "Alice Example",
+            "email": "alice@example.com",
+            "age": 30,  # Calculated value: MAX_AGE - MIN_AGE
+        }
+
+        # Validation data for demonstrations
+        VALIDATION_DATA: Final[Mapping[str, Sequence[str]]] = {
+            "valid_emails": [
+                "user@example.com",
+                "contact@flext.dev",
+            ],
+            "invalid_emails": [
+                "invalid",
+                "missing-at-symbol",
+            ],
+        }

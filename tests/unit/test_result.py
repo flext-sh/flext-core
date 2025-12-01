@@ -20,14 +20,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, Never, cast
 
 import pytest
 
 from flext_core import FlextResult
 from flext_core.constants import FlextConstants
+from flext_core.typings import FlextTypes
 from flext_tests.utilities import FlextTestsUtilities
 
 
@@ -136,7 +138,7 @@ class TestFlextResult:
         ResultScenarios.STRING_SCENARIOS,
         ids=lambda s: s.name,
     )
-    def test_result_string_operations(self, scenario: ResultScenario) -> None:
+    def test_result_string_operations(self, scenario: ResultScenario) -> None:  # noqa: PLR0914
         """Test FlextResult with string values across all scenarios."""
         op_type = scenario.operation_type
         value = scenario.value
@@ -148,7 +150,9 @@ class TestFlextResult:
                 value,
                 error_on_none="Value cannot be None",
             )
-            FlextTestsUtilities.ResultHelpers.assert_success_with_value(result, value)
+            # Cast object to GeneralValueType for type compatibility
+            value_typed: FlextTypes.GeneralValueType = cast("FlextTypes.GeneralValueType", value)
+            FlextTestsUtilities.ResultHelpers.assert_success_with_value(result, value_typed)
 
         elif op_type == ResultOperationType.CREATION_FAILURE:
             result = FlextTestsUtilities.ResultHelpers.create_failure_result(str(value))
@@ -158,8 +162,9 @@ class TestFlextResult:
             )
 
         elif op_type == ResultOperationType.UNWRAP_OR:
+            value_typed_unwrap: FlextTypes.GeneralValueType = cast("FlextTypes.GeneralValueType", value)
             result = (
-                FlextTestsUtilities.ResultHelpers.create_success_result(value)
+                FlextTestsUtilities.ResultHelpers.create_success_result(value_typed_unwrap)
                 if is_success
                 else FlextTestsUtilities.ResultHelpers.create_failure_result(str(value))
             )
@@ -182,8 +187,9 @@ class TestFlextResult:
             )
 
         elif op_type == ResultOperationType.ALT:
+            value_typed_alt: FlextTypes.GeneralValueType = cast("FlextTypes.GeneralValueType", value)
             result = (
-                FlextTestsUtilities.ResultHelpers.create_success_result(value)
+                FlextTestsUtilities.ResultHelpers.create_success_result(value_typed_alt)
                 if is_success
                 else FlextTestsUtilities.ResultHelpers.create_failure_result(str(value))
             )
@@ -191,12 +197,13 @@ class TestFlextResult:
             if is_success:
                 FlextTestsUtilities.ResultHelpers.assert_success_with_value(
                     alt_result,
-                    value,
+                    value_typed_alt,
                 )
             else:
+                error_str_alt: str = f"alt_{value}"
                 FlextTestsUtilities.ResultHelpers.assert_failure_with_error(
                     alt_result,
-                    f"alt_{value}",
+                    error_str_alt,
                 )
 
         elif op_type == ResultOperationType.LASH:
@@ -215,8 +222,9 @@ class TestFlextResult:
                 assert lash_result.is_success and lash_result.value == expected
 
         elif op_type == ResultOperationType.OR_OPERATOR:
+            value_typed_or: FlextTypes.GeneralValueType = cast("FlextTypes.GeneralValueType", value)
             result = (
-                FlextTestsUtilities.ResultHelpers.create_success_result(value)
+                FlextTestsUtilities.ResultHelpers.create_success_result(value_typed_or)
                 if is_success
                 else FlextTestsUtilities.ResultHelpers.create_failure_result(str(value))
             )
@@ -271,8 +279,10 @@ class TestFlextResult:
             res3 = res2.map(lambda v: f"result_{v}")
             expected = f"result_{value * 2}"
             # Use generic helper for chain validation
+            # Cast list[FlextResult[...]] to Sequence[FlextResult[Never]] for type compatibility
+            results_chain: list[FlextResult[int | str]] = [res1, res2, res3]
             FlextTestsUtilities.GenericHelpers.assert_result_chain(
-                [res1, res2, res3],
+                cast("Sequence[FlextResult[Never]]", results_chain),
                 expected_success_count=3,
                 expected_failure_count=0,
                 first_failure_index=None,
@@ -415,7 +425,7 @@ class TestFlextResult:
         assert result1.value == "default_value"
 
         # Test with None and error
-        result2 = FlextTestsUtilities.GenericHelpers.create_result_from_value(
+        result2: FlextResult[str | None] = FlextTestsUtilities.GenericHelpers.create_result_from_value(
             None,
             error_on_none="Value is None",
         )

@@ -15,7 +15,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
 from dataclasses import dataclass
 from typing import ClassVar, cast
 
@@ -29,7 +28,9 @@ from flext_core import (
     FlextMixins,
     FlextModels,
     FlextResult,
+    FlextTypes,
 )
+from flext_core._models.base import FlextModelsBase
 
 
 class ConcreteTestHandler(FlextHandlers[str, str]):
@@ -113,31 +114,37 @@ class HandlerTestHelpers:
     def create_handler_config(
         handler_id: str,
         handler_name: str,
-        handler_type: str | None = None,
-        handler_mode: str | None = None,
-        command_timeout: int | None = None,
-        max_command_retries: int | None = None,
-        metadata: FlextModels.Metadata | None = None,
+        **options: FlextTypes.GeneralValueType,
     ) -> FlextModels.Cqrs.Handler:
-        """Create handler configuration."""
-        config_kwargs: dict[str, object] = {
+        """Create handler configuration using centralized types.
+
+        Args:
+            handler_id: Unique handler identifier
+            handler_name: Human-readable handler name
+            **options: Optional kwargs (handler_type, handler_mode, command_timeout,
+                      max_command_retries, metadata)
+
+        """
+        # Build Handler with proper types - convert GeneralValueType to specific types
+        handler_kwargs: dict[str, object] = {
             "handler_id": handler_id,
             "handler_name": handler_name,
         }
-        if handler_type:
-            config_kwargs["handler_type"] = handler_type
-        if handler_mode:
-            config_kwargs["handler_mode"] = handler_mode
-        if command_timeout is not None:
-            config_kwargs["command_timeout"] = command_timeout
-        if max_command_retries is not None:
-            config_kwargs["max_command_retries"] = max_command_retries
-        if metadata is not None:
-            config_kwargs["metadata"] = metadata
-        return FlextModels.Cqrs.Handler(**config_kwargs)
+        # Add optional parameters with proper type conversion
+        if "handler_type" in options:
+            handler_kwargs["handler_type"] = options["handler_type"]
+        if "handler_mode" in options:
+            handler_kwargs["handler_mode"] = options["handler_mode"]
+        if "command_timeout" in options:
+            handler_kwargs["command_timeout"] = options["command_timeout"]
+        if "max_command_retries" in options:
+            handler_kwargs["max_command_retries"] = options["max_command_retries"]
+        if "metadata" in options:
+            handler_kwargs["metadata"] = options["metadata"]
+        return FlextModels.Cqrs.Handler(**handler_kwargs)  # type: ignore[arg-type]  # dict values are compatible with Handler parameters at runtime
 
 
-class TestFlextHandlers:
+class TestFlextHandlers:  # noqa: PLR0904
     """Test suite for FlextHandlers handler management using FlextTestsUtilities."""
 
     def test_handlers_initialization(self) -> None:
@@ -251,7 +258,7 @@ class TestFlextHandlers:
         config = HandlerTestHelpers.create_handler_config(
             "test_handler_with_metadata",
             "Test Handler With Metadata",
-            metadata=FlextModels.Metadata(
+            metadata=FlextModelsBase.Metadata(  # type: ignore[arg-type]  # FlextModelsBase.Metadata is accepted by Handler.metadata parameter
                 attributes={"test_key": "test_value", "priority": 1},
             ),
         )
@@ -408,7 +415,7 @@ class TestFlextHandlers:
             return f"handled_{message}"
 
         handler = FlextHandlers.create_from_callable(
-            cast("Callable[[object], object]", simple_handler),
+            cast("FlextTypes.HandlerAliases.HandlerCallable", simple_handler),  # type: ignore[arg-type]  # Callable is compatible with HandlerCallable at runtime
             handler_name="simple_handler",
             handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
@@ -425,7 +432,7 @@ class TestFlextHandlers:
             return FlextResult[str].ok(f"result_{message}")
 
         handler = FlextHandlers.create_from_callable(
-            cast("Callable[[object], object]", result_handler),
+            cast("FlextTypes.HandlerAliases.HandlerCallable", result_handler),  # type: ignore[arg-type]  # Callable is compatible with HandlerCallable at runtime
             handler_name="result_handler",
             handler_type=FlextConstants.Cqrs.HandlerType.QUERY,
         )
@@ -443,7 +450,7 @@ class TestFlextHandlers:
             raise ValueError(error_message)
 
         handler = FlextHandlers.create_from_callable(
-            cast("Callable[[object], object]", failing_handler),
+            cast("FlextTypes.HandlerAliases.HandlerCallable", failing_handler),  # type: ignore[arg-type]  # Callable is compatible with HandlerCallable at runtime
             handler_name="failing_handler",
             handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
@@ -460,7 +467,7 @@ class TestFlextHandlers:
 
         with pytest.raises(FlextExceptions.ValidationError) as exc_info:
             FlextHandlers.create_from_callable(
-                cast("Callable[[object], object]", invalid_handler),
+                cast("FlextTypes.HandlerAliases.HandlerCallable", invalid_handler),  # type: ignore[arg-type]  # Callable is compatible with HandlerCallable at runtime
                 handler_name="invalid_handler",
                 mode="invalid_mode",
             )
@@ -548,7 +555,9 @@ class TestFlextHandlers:
             f"Test {type_name.title()} Message",
         )
         handler = ConcreteTestHandler(config=config)
-        result = handler.validate(message)
+        # Convert object to AcceptableMessageType for type compatibility
+        message_typed = cast("FlextTypes.HandlerAliases.AcceptableMessageType", message)
+        result = handler.validate(message_typed)  # type: ignore[arg-type]  # object is compatible with AcceptableMessageType at runtime
         assert result.is_success
 
     def test_handlers_validate_message_protocol(self) -> None:
@@ -593,7 +602,11 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
         context = {"user_id": "123", "operation": "test"}
-        result = handler.push_context(cast("dict[str, object]", context))
+        # Convert dict[str, object] to dict[str, GeneralValueType]
+        context_typed: dict[str, FlextTypes.GeneralValueType] = {
+            k: cast("FlextTypes.GeneralValueType", v) for k, v in context.items()
+        }
+        result = handler.push_context(context_typed)
         assert result.is_success
 
     def test_handlers_pop_context(self) -> None:
@@ -603,7 +616,7 @@ class TestFlextHandlers:
             "Test Pop Context",
         )
         handler = ConcreteTestHandler(config=config)
-        handler.push_context({"test": "data"})
+        handler.push_context({"test": "data"})  # type: ignore[arg-type]  # dict literal is compatible with dict[str, GeneralValueType]
         result = handler.pop_context()
         assert result.is_success
 
@@ -624,7 +637,7 @@ class TestFlextHandlers:
             "Test None Message",
         )
         handler = ConcreteTestHandler(config=config)
-        result = handler.validate(None)
+        result = handler.validate(None)  # type: ignore[arg-type]  # Testing None validation
         assert result.is_failure
 
     def test_handlers_pydantic_model_validation(self) -> None:
@@ -639,7 +652,7 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
         msg = TestMessage(value="test")
-        result = handler.validate(msg)
+        result = handler.validate(msg)  # type: ignore[arg-type]  # Pydantic BaseModel is compatible with AcceptableMessageType
         assert result.is_success
 
     def test_handlers_dataclass_message_validation(self) -> None:
@@ -656,7 +669,7 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
         msg = DataClassMessage(value="test", number=42)
-        result = handler.validate(msg)
+        result = handler.validate(msg)  # type: ignore[arg-type]  # dataclass is compatible with AcceptableMessageType
         assert result.is_success
 
     def test_handlers_slots_message_validation(self) -> None:
@@ -675,7 +688,7 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
         msg = SlotsMessage(value="test", number=42)
-        result = handler.validate(msg)
+        result = handler.validate(msg)  # type: ignore[arg-type]  # __slots__ class is compatible with AcceptableMessageType
         assert result.is_success
 
 

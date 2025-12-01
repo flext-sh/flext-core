@@ -17,8 +17,9 @@ from collections.abc import Sequence
 from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime, StructlogLogger
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
 
@@ -26,7 +27,7 @@ class FlextUtilitiesCache:
     """Cache utilities for deterministic normalization and key management."""
 
     @property
-    def logger(self) -> StructlogLogger:
+    def logger(self) -> FlextProtocols.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
@@ -72,12 +73,12 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def sort_dict_keys(
-        data: FlextTypes.SortableObjectType,
-    ) -> FlextTypes.SortableObjectType:
+        data: FlextTypes.GeneralValueType,
+    ) -> FlextTypes.GeneralValueType:
         """Sort dictionary keys recursively for consistent representations."""
         if FlextRuntime.is_dict_like(data):
             data_dict = data
-            result: dict[str, FlextTypes.SortableObjectType] = {}
+            result: dict[str, FlextTypes.GeneralValueType] = {}
             for k in sorted(data_dict.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data_dict[k]
                 # Handle None values - convert to empty dict for consistency

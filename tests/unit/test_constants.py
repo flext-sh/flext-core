@@ -253,7 +253,7 @@ class TestFlextConstants:
     def test_completeness_documentation_exists(self) -> None:
         """Test that constants have proper documentation."""
         assert FlextConstants.__doc__ is not None
-        assert "foundation" in FlextConstants.__doc__.lower()
+        assert "layer 0" in FlextConstants.__doc__.lower()
         documented_classes = [
             FlextConstants.Network,
             FlextConstants.Validation,

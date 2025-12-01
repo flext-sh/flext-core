@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core._utilities.configuration import FlextUtilitiesConfiguration
 from flext_core.exceptions import FlextExceptions
@@ -30,10 +30,15 @@ from tests.helpers import TestModels
 
 
 # Test models using TestModels base
-class ConfigModelForTest(TestModels.Value):
-    """Test configuration model."""
+class ConfigModelForTest(BaseModel):
+    """Test configuration model (mutable for set_parameter tests)."""
 
-    name: str
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="forbid",
+    )
+
+    name: str = "default_config"
     timeout: int = Field(default=30, ge=0)
     enabled: bool = True
 
@@ -60,15 +65,18 @@ class DataclassConfigForTest:
     value: int = 42
 
 
-class SingletonClassForTest:
-    """Test singleton class."""
+class SingletonClassForTest(BaseModel):
+    """Test singleton class with Pydantic validation."""
+
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="forbid",  # Disallow extra fields
+    )
 
     _instance: ClassVar[SingletonClassForTest | None] = None
 
-    def __init__(self, name: str = "default") -> None:
-        """Initialize test singleton."""
-        self.name = name
-        self.timeout = 30
+    name: str = "default"
+    timeout: int = 30
 
     @classmethod
     def get_global_instance(cls) -> SingletonClassForTest:
@@ -77,9 +85,10 @@ class SingletonClassForTest:
             cls._instance = cls()
         return cls._instance
 
-    def model_dump(self) -> dict[str, FlextTypes.GeneralValueType]:
-        """Dump model to dict."""
-        return {"name": self.name, "timeout": self.timeout}
+    @classmethod
+    def reset_instance(cls) -> None:
+        """Reset singleton instance for test isolation."""
+        cls._instance = None
 
 
 class SingletonWithoutGetGlobalForTest:
@@ -93,7 +102,7 @@ class SingletonWithoutGetGlobalForTest:
 pytestmark = [pytest.mark.unit, pytest.mark.coverage]
 
 
-class TestFlextUtilitiesConfiguration:
+class TestFlextUtilitiesConfiguration:  # noqa: PLR0904
     """Comprehensive tests for FlextUtilitiesConfiguration."""
 
     def test_get_parameter_from_dict(self) -> None:
@@ -157,17 +166,21 @@ class TestFlextUtilitiesConfiguration:
         config = InvalidModel()
 
         # Should fallback to attribute access
-        result = FlextUtilitiesConfiguration.get_parameter(config, "value")
+        # InvalidModel is compatible at runtime but not statically
+        # pyright: ignore[reportArgumentType] - config is compatible at runtime
+        result = FlextUtilitiesConfiguration.get_parameter(config, "value")  # type: ignore[arg-type]
         assert result == "test"
 
     def test_get_parameter_from_attribute_access(self) -> None:
         """Test get_parameter from object attribute access."""
         config = DataclassConfigForTest(name="test", value=42)
 
-        result = FlextUtilitiesConfiguration.get_parameter(config, "name")
+        # DataclassConfigForTest is compatible at runtime but not statically
+        # pyright: ignore[reportArgumentType] - config is compatible at runtime
+        result = FlextUtilitiesConfiguration.get_parameter(config, "name")  # type: ignore[arg-type]
         assert result == "test"
 
-        result = FlextUtilitiesConfiguration.get_parameter(config, "value")
+        result = FlextUtilitiesConfiguration.get_parameter(config, "value")  # type: ignore[arg-type]
         assert result == 42
 
     def test_get_parameter_from_attribute_access_not_found(self) -> None:

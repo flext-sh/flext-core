@@ -30,6 +30,7 @@ import pytest
 from pydantic import BaseModel
 
 from flext_core import FlextContext, FlextMixins, FlextResult
+from flext_core._models.base import FlextModelsBase
 from flext_core.typings import FlextTypes
 
 
@@ -232,10 +233,15 @@ class TestFlextMixinsNestedClasses:
                 name: str
                 value: int
 
-            input_value = TestModel(name="test", value=42)
+            test_model_instance = TestModel(name="test", value=42)
+            input_value: BaseModel | FlextTypes.GeneralValueType = test_model_instance
         else:
             input_value = scenario.input_value
-        result = FlextMixins.ModelConversion.to_dict(input_value)
+        # Type narrowing: to_dict accepts BaseModel | ContextMetadataMapping | ConfigurationMapping | None
+        if isinstance(input_value, (BaseModel, dict, FlextModelsBase.Metadata)):
+            result = FlextMixins.ModelConversion.to_dict(input_value)
+        else:
+            result = FlextMixins.ModelConversion.to_dict(None)
         assert isinstance(result, dict)
         assert result == scenario.expected_output
         if scenario.scenario_type == ModelConversionScenarioType.WITH_DICT:

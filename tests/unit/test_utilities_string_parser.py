@@ -26,7 +26,8 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextModels, FlextUtilities
+from flext_core import FlextTypes, FlextUtilities
+from flext_core._models.collections import FlextModelsCollections
 from tests.helpers.constants import TestConstants
 from tests.helpers.string_parser_helpers import (
     NormalizeWhitespaceCase,
@@ -37,7 +38,8 @@ from tests.helpers.string_parser_helpers import (
     TestHelpers,
 )
 
-ParseOptions = FlextModels.ParseOptions
+# Use the actual class, not the type alias
+ParseOptions = FlextModelsCollections.ParseOptions
 
 
 class StringParserTestFactory:
@@ -405,7 +407,7 @@ class StringParserTestFactory:
             ),
             ObjectKeyCase(
                 {},  # Empty dict - valid GeneralValueType, tests dict instance behavior
-                expected_contains=["dict", "Mapping"],
+                expected_exact="dict",
                 description="instance",
             ),
             ObjectKeyCase("test", expected_exact="test", description="string"),
@@ -692,7 +694,7 @@ class TestFlextUtilitiesStringParser:
             case: ObjectKeyCase,
         ) -> None:
             """Test get_object_key with parametrized cases."""
-            key = parser.get_object_key(case.obj)
+            key = parser.get_object_key(cast("FlextTypes.GeneralValueType", case.obj))
 
             assert isinstance(key, str), f"Key must be string for: {case.description}"
 

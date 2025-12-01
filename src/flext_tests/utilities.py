@@ -25,8 +25,9 @@ from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Protocol, TypeVar, overload, runtime_checkable
+from typing import Protocol, TypedDict, TypeVar, overload, runtime_checkable
 
+from docker import DockerClient
 from docker.errors import DockerException, NotFound
 
 from flext_core import FlextResult
@@ -505,11 +506,13 @@ class FlextTestsUtilities:
         """Nested class with additional test utilities."""
 
         @staticmethod
-        def assert_result_success(result: FlextResult[TResult]) -> None:
-            """Assert that a FlextResult is successful.
+        def assert_result_success(
+            result: FlextResult[TResult] | FlextProtocols.ResultProtocol[TResult],
+        ) -> None:
+            """Assert that a result is successful.
 
             Args:
-                result: FlextResult to check
+                result: FlextResult or result protocol implementation to check
 
             Raises:
                 AssertionError: If result is not successful
@@ -518,11 +521,13 @@ class FlextTestsUtilities:
             assert result.is_success, f"Expected success result, got: {result}"
 
         @staticmethod
-        def assert_result_failure(result: FlextResult[TResult]) -> None:
-            """Assert that a FlextResult is a failure.
+        def assert_result_failure(
+            result: FlextResult[TResult] | FlextProtocols.ResultProtocol[TResult],
+        ) -> None:
+            """Assert that a result is a failure.
 
             Args:
-                result: FlextResult to check
+                result: FlextResult or result protocol implementation to check
 
             Raises:
                 AssertionError: If result is not a failure
@@ -1151,7 +1156,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def extract_service_from_config(
-            config: dict[str, str | int],
+            config: Mapping[str, str | int],
         ) -> str | None:
             """Extract service name from container config.
 
@@ -1169,14 +1174,19 @@ class FlextTestsUtilities:
                 return str(service_value)
             return None
 
+        class ResourceConfig(TypedDict):
+            """Configuration for Docker resource cleanup operations."""
+
+            resource_type: str
+            list_attr: str
+            remove_attr: str
+            resource_name_attr: str
+
         @staticmethod
         def cleanup_docker_resources(
-            client: FlextTestProtocols.Docker.DockerClientProtocol,
+            client: DockerClient,
+            config: ResourceConfig,
             *,
-            resource_type: str,
-            list_attr: str,
-            remove_attr: str,
-            resource_name_attr: str,
             filter_pattern: str | None = None,
             logger: LoggerProtocol | None = None,
         ) -> FlextResult[dict[str, int | list[str]]]:
@@ -1184,10 +1194,7 @@ class FlextTestsUtilities:
 
             Args:
                 client: Docker client instance
-                resource_type: Type name for logging (e.g., "volume", "network")
-                list_attr: Attribute name for list method (e.g., "volumes")
-                remove_attr: Attribute name for remove method (e.g., "remove")
-                resource_name_attr: Attribute name for resource name (e.g., "name")
+                config: Resource configuration dict with type and attribute names
                 filter_pattern: Optional glob pattern to filter resources
                 logger: Optional logger instance
 
@@ -1195,8 +1202,12 @@ class FlextTestsUtilities:
                 FlextResult with cleanup statistics
 
             """
+            resource_type = config["resource_type"]
             try:
                 removed_items: list[str] = []
+                list_attr = config["list_attr"]
+                remove_attr = config["remove_attr"]
+                resource_name_attr = config["resource_name_attr"]
 
                 resources_api = getattr(client, list_attr, None)
                 if not resources_api:
@@ -1233,26 +1244,23 @@ class FlextTestsUtilities:
                             remove_method(force=True)
                             removed_items.append(resource_name)
                             if logger and hasattr(logger, "info"):
-                                # Build context dict with proper types for protocol compatibility
-                                context_kwargs: dict[str, FlextTypes.FlexibleValue] = {
-                                    resource_type: resource_name
-                                }
                                 # Call with explicit context unpacking
                                 logger.info(
                                     f"Removed {resource_type}: {resource_name}",
-                                    **context_kwargs,
+                                    resource_type=resource_type,
+                                    resource_name=str(resource_name),
                                 )
                     except Exception as e:
                         if logger and hasattr(logger, "warning"):
-                            # Build context dict with proper types for protocol compatibility
-                            warning_kwargs: dict[str, FlextTypes.FlexibleValue] = {
-                                resource_type: resource_name,
-                                "error": str(e),
-                            }
-                            # Call with explicit context unpacking
+                            # Use explicit keyword arguments to avoid type confusion
+                            # Pass context as individual keyword arguments
+                            error_msg = str(e)
+                            resource_name_str = str(resource_name)
                             logger.warning(
-                                f"Failed to remove {resource_type} {resource_name}: {e!s}",
-                                **warning_kwargs,
+                                f"Failed to remove {resource_type} {resource_name_str}: {error_msg}",
+                                error=error_msg,
+                                resource_type=resource_type,
+                                resource_name=resource_name_str,
                             )
 
                 return FlextResult[dict[str, int | list[str]]].ok({
@@ -1776,7 +1784,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def _get_container_with_state(
-            client: FlextTestProtocols.Docker.DockerClientProtocol,
+            client: DockerClient,
             container_name: str,
         ) -> tuple[
             FlextTestProtocols.Docker.ContainerProtocol,

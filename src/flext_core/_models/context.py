@@ -9,24 +9,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from datetime import datetime
 from typing import Annotated, cast
 
 import structlog.contextvars
 from pydantic import BaseModel, Field, computed_field, field_validator
 
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
-from flext_core._models.metadata import Metadata, MetadataAttributeValue
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes, T
-from flext_core.utilities import FlextUtilities
+from flext_core.typings import FlextTypes
 
 
 class FlextModelsContext:
     """Context management pattern container class.
 
     This class acts as a namespace container for context management patterns.
-    All nested classes are accessed via FlextModels.Context.* in the main models.py.
+    All nested classes can be accessed via FlextModels.* (type aliases) or directly via FlextModelsContext.*
     """
 
     @staticmethod
@@ -41,14 +41,23 @@ class FlextModelsContext:
         if not FlextRuntime.is_dict_like(value):
             return {}
         result: dict[str, FlextTypes.GeneralValueType] = {}
-        raw_dict = dict(value) if isinstance(value, dict) else {}
+        raw_dict = value if isinstance(value, dict) else {}
         for k, v in raw_dict.items():
             key = str(k)
             # Ensure value is GeneralValueType compatible
-            if isinstance(v, (str, int, float, bool, type(None), list, dict)):
+            # ScalarValue types: str, int, float, bool, datetime, None
+            if (
+                isinstance(v, (str, int, float, bool, datetime))
+                or v is None
+                or isinstance(v, (list, dict))
+            ):
                 result[key] = v
-            elif hasattr(v, "__iter__") and not isinstance(v, (str, bytes)):
+            elif isinstance(v, Sequence) and not isinstance(v, (str, bytes)):
+                # Convert Sequence to list for GeneralValueType compatibility
                 result[key] = list(v)
+            elif isinstance(v, Mapping):
+                # Convert Mapping to dict for GeneralValueType compatibility
+                result[key] = dict(v)
         return result
 
     class StructlogProxyToken(FlextModelsEntity.Value):
@@ -138,7 +147,7 @@ class FlextModelsContext:
                 Current value with type T (from Generic[T] contract), or None.
 
             Architecture:
-                structlog stores dict[str, object] (untyped).
+                structlog stores Mapping[str, GeneralValueType] (typed via FlextTypes).
                 We cast to T | None to honor the Generic[T] contract.
                 Type safety is ensured by FlextContext using typed variables.
 
@@ -162,7 +171,7 @@ class FlextModelsContext:
             current_value = self.get()
 
             if value is not None:
-                structlog.contextvars.bind_contextvars(**{self._key: value})
+                _ = structlog.contextvars.bind_contextvars(**{self._key: value})
             else:
                 # Unbind if setting to None
                 structlog.contextvars.unbind_contextvars(self._key)
@@ -195,7 +204,7 @@ class FlextModelsContext:
             if token.previous_value is None:
                 structlog.contextvars.unbind_contextvars(token.key)
             else:
-                structlog.contextvars.bind_contextvars(**{
+                _ = structlog.contextvars.bind_contextvars(**{
                     token.key: token.previous_value,
                 })
 
@@ -255,7 +264,7 @@ class FlextModelsContext:
             >>> from flext_core import FlextModels
             >>> context_data = FlextModelsContext.ContextData(
             ...     data={"user_id": "123", "correlation_id": "abc-xyz"},
-            ...     metadata=FlextModels.Metadata(
+            ...     metadata=FlextModelsBase.Metadata(
             ...         attributes={
             ...             "source": "api",
             ...             "created_at": "2025-01-01T00:00:00Z",
@@ -276,7 +285,9 @@ class FlextModelsContext:
                 description="Initial context data as key-value pairs",
             ),
         ] = Field(default_factory=dict)
-        metadata: Metadata | dict[str, FlextTypes.GeneralValueType] | None = Field(
+        metadata: (
+            FlextModelsBase.Metadata | dict[str, FlextTypes.GeneralValueType] | None
+        ) = Field(
             default=None,
             description="Context metadata (creation info, source, etc.)",
         )
@@ -298,10 +309,9 @@ class FlextModelsContext:
                 result: dict[str, FlextTypes.GeneralValueType] = {}
                 dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
                 for k, v in dict_v.items():
-                    if isinstance(k, str):
-                        result[k] = (
-                            FlextModelsContext.ContextData.normalize_to_general_value(v)
-                        )
+                    result[k] = (
+                        FlextModelsContext.ContextData.normalize_to_general_value(v)
+                    )
                 return result
             if FlextRuntime.is_list_like(val):
                 # Convert to list[FlextTypes.GeneralValueType] recursively
@@ -309,7 +319,8 @@ class FlextModelsContext:
                     FlextModelsContext.ContextData.normalize_to_general_value(item)
                     for item in val
                 ]
-            return str(val)
+            # For arbitrary objects, keep as is since GeneralValueType includes object
+            return val
 
         @classmethod
         def check_json_serializable(
@@ -320,9 +331,6 @@ class FlextModelsContext:
                 return
             if FlextRuntime.is_dict_like(obj):
                 for key, val in obj.items():
-                    if not isinstance(key, str):
-                        msg = f"Dictionary keys must be strings at {path}.{key}"
-                        raise TypeError(msg)
                     # Recursive call using cls for mypy compatibility
                     cls.check_json_serializable(val, f"{path}.{key}")
                 return  # All dict items validated successfully
@@ -337,28 +345,25 @@ class FlextModelsContext:
         @field_validator("metadata", mode="before")
         @classmethod
         def validate_metadata(
-            cls, v: FlextTypes.GeneralValueType | Metadata | None
-        ) -> Metadata:
+            cls, v: FlextTypes.GeneralValueType | FlextModelsBase.Metadata | None
+        ) -> FlextModelsBase.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
             Maintains advanced capability to convert dict → Metadata.
             """
             if v is None:
-                return Metadata(attributes={})
+                return FlextModelsBase.Metadata(attributes={})
             if FlextRuntime.is_dict_like(v):
                 # Normalize to MetadataAttributeValue (more restrictive than FlextTypes.GeneralValueType)
                 dict_v = dict(v.items()) if hasattr(v, "items") else dict(v)
-                normalized: dict[str, MetadataAttributeValue] = {}
+                normalized: dict[str, FlextTypes.MetadataAttributeValue] = {}
                 for key, val in dict_v.items():
-                    if isinstance(key, str):
-                        normalized[key] = (
-                            FlextUtilities.TypeGuards.normalize_to_metadata_value(val)
-                        )
-                return Metadata(attributes=normalized)
-            if isinstance(v, Metadata):
+                    normalized[key] = FlextRuntime.normalize_to_metadata_value(val)
+                return FlextModelsBase.Metadata(attributes=normalized)
+            if isinstance(v, FlextModelsBase.Metadata):
                 return v
-            msg = f"metadata must be None, dict, or Metadata, got {type(v).__name__}"
+            msg = f"metadata must be None, dict, or FlextModelsBase.Metadata, got {type(v).__name__}"
             raise TypeError(msg)
 
         @field_validator("data", mode="before")
@@ -369,21 +374,23 @@ class FlextModelsContext:
             | Mapping[str, FlextTypes.GeneralValueType]
             | None,
         ) -> dict[str, FlextTypes.GeneralValueType]:
-            """Validate that dict[str, object] values are JSON-serializable.
+            """Validate that Mapping[str, GeneralValueType] values are JSON-serializable.
 
-            STRICT mode: Also accepts FlextModels.Metadata and converts to dict.
+            STRICT mode: Also accepts FlextModelsBase.Metadata and converts to dict.
             Uses mode='before' to validate raw input before Pydantic processing.
             Only allows JSON-serializable types: str, int, float, bool, list, dict,
             None.
             """
-            # STRICT mode: Accept FlextModels.Metadata and convert to dict
-            if isinstance(v, Metadata):
+            # STRICT mode: Accept FlextModelsBase.Metadata and convert to dict
+            if isinstance(v, FlextModelsBase.Metadata):
                 v = v.attributes
             elif hasattr(v, "model_dump"):
                 # Call model_dump on Pydantic model (safely via callable check)
                 model_dump_method = getattr(v, "model_dump", None)
                 if callable(model_dump_method):
-                    v = model_dump_method()
+                    v = cast(
+                        "dict[str, FlextTypes.GeneralValueType]", model_dump_method()
+                    )
 
             if not FlextRuntime.is_dict_like(v):
                 type_name = type(v).__name__
@@ -423,7 +430,7 @@ class FlextModelsContext:
             >>> from flext_core import FlextModels
             >>> export = FlextModelsContext.ContextExport(
             ...     data={"user_id": "123", "correlation_id": "abc-xyz"},
-            ...     metadata=FlextModels.Metadata(
+            ...     metadata=FlextModelsBase.Metadata(
             ...         attributes={"source": "api", "version": "1.0"}
             ...     ),
             ...     statistics={"sets": 5, "gets": 10, "removes": 2},
@@ -442,7 +449,9 @@ class FlextModelsContext:
                 description="All context data from all scopes",
             ),
         ] = Field(default_factory=dict)
-        metadata: Metadata | FlextTypes.Types.ContextMetadataMapping | None = Field(
+        metadata: (
+            FlextModelsBase.Metadata | FlextTypes.Types.ContextMetadataMapping | None
+        ) = Field(
             default=None,
             description="Context metadata (creation info, source, version)",
         )
@@ -454,28 +463,25 @@ class FlextModelsContext:
         @field_validator("metadata", mode="before")
         @classmethod
         def validate_metadata(
-            cls, v: FlextTypes.GeneralValueType | Metadata | None
-        ) -> Metadata:
+            cls, v: FlextTypes.GeneralValueType | FlextModelsBase.Metadata | None
+        ) -> FlextModelsBase.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
             Maintains advanced capability to convert dict → Metadata.
             """
             if v is None:
-                return Metadata(attributes={})
+                return FlextModelsBase.Metadata(attributes={})
             if FlextRuntime.is_dict_like(v):
                 # Normalize to MetadataAttributeValue (more restrictive than FlextTypes.GeneralValueType)
                 dict_v = dict(v.items()) if hasattr(v, "items") else dict(v)
-                normalized: dict[str, MetadataAttributeValue] = {}
+                normalized: dict[str, FlextTypes.MetadataAttributeValue] = {}
                 for key, val in dict_v.items():
-                    if isinstance(key, str):
-                        normalized[key] = (
-                            FlextUtilities.TypeGuards.normalize_to_metadata_value(val)
-                        )
-                return Metadata(attributes=normalized)
-            if isinstance(v, Metadata):
+                    normalized[key] = FlextRuntime.normalize_to_metadata_value(val)
+                return FlextModelsBase.Metadata(attributes=normalized)
+            if isinstance(v, FlextModelsBase.Metadata):
                 return v
-            msg = f"metadata must be None, dict, or Metadata, got {type(v).__name__}"
+            msg = f"metadata must be None, dict, or FlextModelsBase.Metadata, got {type(v).__name__}"
             raise TypeError(msg)
 
         @classmethod
@@ -487,9 +493,6 @@ class FlextModelsContext:
                 return
             if FlextRuntime.is_dict_like(obj):
                 for key, val in obj.items():
-                    if not isinstance(key, str):
-                        msg = f"Dictionary keys must be strings at {path}.{key}"
-                        raise TypeError(msg)
                     # Recursive call using cls for mypy compatibility
                     cls.check_json_serializable(
                         val,
@@ -514,22 +517,24 @@ class FlextModelsContext:
             | Mapping[str, FlextTypes.GeneralValueType]
             | None,
         ) -> dict[str, FlextTypes.GeneralValueType]:
-            """Validate that dict[str, object] values are JSON-serializable.
+            """Validate that Mapping[str, GeneralValueType] values are JSON-serializable.
 
             Uses mode='before' to validate raw input before Pydantic processing.
             Accepts Pydantic models (converts via model_dump) or dict.
             Only allows JSON-serializable types: str, int, float, bool, list, dict,
             None.
             """
-            # Handle FlextModels.Metadata specially - extract only attributes dict
+            # Handle FlextModelsBase.Metadata specially - extract only attributes dict
             # (excludes datetime fields which aren't JSON-serializable)
-            if isinstance(v, Metadata):
+            if isinstance(v, FlextModelsBase.Metadata):
                 v = v.attributes
             # Accept other Pydantic models - convert to dict
             elif hasattr(v, "model_dump"):
                 model_dump_method = getattr(v, "model_dump", None)
                 if callable(model_dump_method):
-                    v = model_dump_method()
+                    v = cast(
+                        "dict[str, FlextTypes.GeneralValueType]", model_dump_method()
+                    )
 
             if not FlextRuntime.is_dict_like(v):
                 type_name = type(v).__name__
@@ -563,7 +568,7 @@ class FlextModelsContext:
             scope_name: Name of the scope (e.g., 'request', 'operation')
             scope_type: Type/category of scope
             data: Scope-specific data key-value pairs
-            metadata: Metadata associated with this scope
+            metadata: FlextModelsBase.Metadata associated with this scope
 
         Examples:
             >>> from flext_core import FlextModels
@@ -571,7 +576,9 @@ class FlextModelsContext:
             ...     scope_name="request",
             ...     scope_type="http",
             ...     data={"method": "POST", "path": "/api/orders"},
-            ...     metadata=FlextModels.Metadata(attributes={"trace_id": "trace-123"}),
+            ...     metadata=FlextModelsBase.Metadata(
+            ...         attributes={"trace_id": "trace-123"}
+            ...     ),
             ... )
 
         """
@@ -708,9 +715,9 @@ class FlextModelsContext:
     class ContextMetadata(BaseModel):
         """Metadata storage for context objects with full tracing support.
 
-        Enhanced to replace dict[str, object] across multiple modules
-        including context.py, handlers.py, dispatcher.py, and config.py
-        for consistent, strongly-typed metadata handling.
+        Enhanced to use FlextTypes.GeneralValueType and Mapping patterns
+        across multiple modules including context.py, handlers.py, dispatcher.py,
+        and config.py for consistent, strongly-typed metadata handling.
 
         Attributes:
             user_id: Associated user ID

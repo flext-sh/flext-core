@@ -133,7 +133,8 @@ class FlextUtilitiesArgs:
                  # result.value = {"status": Status.ACTIVE, "name": "John"}
 
         """
-        parsed = dict(kwargs)
+        # Convert Mapping to dict for mutability
+        parsed: dict[str, FlextTypes.FlexibleValue] = dict(kwargs)
         errors: list[str] = []
 
         for field, enum_cls in enum_fields.items():

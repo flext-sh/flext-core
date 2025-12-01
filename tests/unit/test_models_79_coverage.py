@@ -12,6 +12,50 @@ from __future__ import annotations
 from decimal import Decimal
 
 from flext_core import FlextModels
+from flext_core._models.cqrs import FlextModelsCqrs
+from flext_core.typings import FlextTypes
+
+
+# Define Query and Command classes at module level to avoid Pydantic model_rebuild() requirement
+class CreateUserCommand(FlextModelsCqrs.Command):
+    """Command to create a user."""
+
+    user_id: str
+    name: str
+    email: str
+
+
+class FindUserQuery(FlextModelsCqrs.Query):
+    """Query to find a user."""
+
+    user_id: str
+
+
+class OptionalFieldCommand(FlextModelsCqrs.Command):
+    """Command with optional fields."""
+
+    required_field: str
+    optional_field: str | None = None
+
+
+class PagedQuery(FlextModelsCqrs.Query):
+    """Query with pagination parameters."""
+
+    page: int
+    page_size: int
+
+
+class CreateUserCmd(FlextModelsCqrs.Command):
+    """Command to create a user."""
+
+    user_id: str
+    name: str
+
+
+class GetUserQuery(FlextModelsCqrs.Query):
+    """Query to get a user."""
+
+    user_id: str
 
 
 class TestFlextModelsEntity:
@@ -20,7 +64,7 @@ class TestFlextModelsEntity:
     def test_entity_creation_basic(self) -> None:
         """Test basic entity creation."""
 
-        class User(FlextModels.Entity):
+        class User(FlextModels.Entity):  # type: ignore[misc,valid-type]  # FlextModels.Entity is assignment alias, valid for inheritance
             name: str
             email: str
 
@@ -32,7 +76,7 @@ class TestFlextModelsEntity:
     def test_entity_equality(self) -> None:
         """Test entity equality based on ID."""
 
-        class User(FlextModels.Entity):
+        class User(FlextModels.Entity):  # type: ignore[misc,valid-type]  # FlextModels.Entity is assignment alias, valid for inheritance
             name: str
 
         user1 = User(unique_id="user-1", name="Alice")
@@ -45,7 +89,7 @@ class TestFlextModelsEntity:
     def test_entity_version(self) -> None:
         """Test entity versioning."""
 
-        class Order(FlextModels.Entity):
+        class Order(FlextModels.Entity):  # type: ignore[misc,valid-type]  # FlextModels.Entity is assignment alias, valid for inheritance
             total: Decimal
 
         order = Order(unique_id="order-1", total=Decimal("99.99"))
@@ -59,7 +103,7 @@ class TestFlextModelsValueObject:
     def test_value_object_creation(self) -> None:
         """Test value object creation."""
 
-        class Email(FlextModels.Value):
+        class Email(FlextModels.Value):  # type: ignore[misc,valid-type]  # FlextModels.Value is assignment alias, valid for inheritance
             address: str
 
         email1 = Email(address="test@example.com")
@@ -72,7 +116,7 @@ class TestFlextModelsValueObject:
     def test_value_object_immutability(self) -> None:
         """Test that value objects are immutable."""
 
-        class Price(FlextModels.Value):
+        class Price(FlextModels.Value):  # type: ignore[misc,valid-type]  # FlextModels.Value is assignment alias, valid for inheritance
             amount: Decimal
             currency: str
 
@@ -90,7 +134,7 @@ class TestFlextModelsAggregateRoot:
     def test_aggregate_root_creation(self) -> None:
         """Test aggregate root creation."""
 
-        class Account(FlextModels.AggregateRoot):
+        class Account(FlextModels.AggregateRoot):  # type: ignore[misc,valid-type]  # FlextModels.AggregateRoot is assignment alias, valid for inheritance
             owner_name: str
             balance: Decimal
 
@@ -106,7 +150,7 @@ class TestFlextModelsAggregateRoot:
     def test_aggregate_root_domain_events(self) -> None:
         """Test aggregate root domain event handling."""
 
-        class BankAccount(FlextModels.AggregateRoot):
+        class BankAccount(FlextModels.AggregateRoot):  # type: ignore[misc,valid-type]  # FlextModels.AggregateRoot is assignment alias, valid for inheritance
             balance: Decimal
 
         account = BankAccount(unique_id="acc-1", balance=Decimal("1000.00"))
@@ -118,7 +162,7 @@ class TestFlextModelsAggregateRoot:
     def test_aggregate_root_domain_event_validation(self) -> None:
         """Test domain event validation."""
 
-        class Order(FlextModels.AggregateRoot):
+        class Order(FlextModels.AggregateRoot):  # type: ignore[misc,valid-type]  # FlextModels.AggregateRoot is assignment alias, valid for inheritance  # type: ignore[misc,valid-type]  # FlextModels.AggregateRoot is assignment alias, valid for inheritance
             total: Decimal
 
         order = Order(unique_id="order-1", total=Decimal("99.99"))
@@ -130,7 +174,7 @@ class TestFlextModelsAggregateRoot:
     def test_aggregate_root_uncommitted_events(self) -> None:
         """Test uncommitted events tracking."""
 
-        class Order(FlextModels.AggregateRoot):
+        class Order(FlextModels.AggregateRoot):  # type: ignore[misc,valid-type]  # FlextModels.AggregateRoot is assignment alias, valid for inheritance  # type: ignore[misc,valid-type]  # FlextModels.AggregateRoot is assignment alias, valid for inheritance
             status: str
 
         order = Order(unique_id="order-1", status="pending")
@@ -183,12 +227,6 @@ class TestFlextModelsCommand:
 
     def test_command_creation(self) -> None:
         """Test command creation."""
-
-        class CreateUserCommand(FlextModels.Cqrs.Command):
-            user_id: str
-            name: str
-            email: str
-
         cmd = CreateUserCommand(
             user_id="user-1",
             name="Alice",
@@ -203,10 +241,6 @@ class TestFlextModelsQuery:
 
     def test_query_creation(self) -> None:
         """Test query creation."""
-
-        class FindUserQuery(FlextModels.Cqrs.Query):
-            user_id: str
-
         query = FindUserQuery(user_id="user-1")
         assert query.user_id == "user-1"
 
@@ -217,11 +251,11 @@ class TestFlextModelsEdgeCases:
     def test_entity_with_complex_types(self) -> None:
         """Test entity with complex nested types."""
 
-        class Address(FlextModels.Value):
+        class Address(FlextModels.Value):  # type: ignore[misc,valid-type]  # FlextModels.Value is assignment alias, valid for inheritance
             street: str
             city: str
 
-        class Person(FlextModels.Entity):
+        class Person(FlextModels.Entity):  # type: ignore[misc,valid-type]  # FlextModels.Entity is assignment alias, valid for inheritance
             name: str
             address: Address
 
@@ -232,11 +266,11 @@ class TestFlextModelsEdgeCases:
     def test_aggregate_root_with_nested_entities(self) -> None:
         """Test aggregate root containing multiple entities."""
 
-        class Item(FlextModels.Entity):
+        class Item(FlextModels.Entity):  # type: ignore[misc,valid-type]  # FlextModels.Entity is assignment alias, valid for inheritance
             product_id: str
             quantity: int
 
-        class ShoppingCart(FlextModels.AggregateRoot):
+        class ShoppingCart(FlextModels.AggregateRoot):  # type: ignore[misc,valid-type]  # FlextModels.AggregateRoot is assignment alias, valid for inheritance
             customer_id: str
 
         cart = ShoppingCart(unique_id="cart-1", customer_id="cust-1")
@@ -245,7 +279,9 @@ class TestFlextModelsEdgeCases:
 
     def test_domain_event_with_large_data(self) -> None:
         """Test domain event with substantial data payload."""
-        large_data: dict[str, object] = {f"field_{i}": f"value_{i}" for i in range(100)}
+        large_data: FlextTypes.Types.EventDataMapping = {
+            f"field_{i}": f"value_{i}" for i in range(100)
+        }
         event = FlextModels.DomainEvent(
             event_type="BulkDataImported",
             aggregate_id="import-1",
@@ -255,22 +291,12 @@ class TestFlextModelsEdgeCases:
 
     def test_command_with_optional_fields(self) -> None:
         """Test command with optional fields."""
-
-        class OptionalFieldCommand(FlextModels.Cqrs.Command):
-            required_field: str
-            optional_field: str | None = None
-
         cmd = OptionalFieldCommand(required_field="value")
         assert cmd.required_field == "value"
         assert cmd.optional_field is None
 
     def test_query_with_pagination(self) -> None:
         """Test query with pagination parameters."""
-
-        class PagedQuery(FlextModels.Cqrs.Query):
-            page: int
-            page_size: int
-
         query = PagedQuery(page=1, page_size=20)
         assert query.page == 1
         assert query.page_size == 20
@@ -282,14 +308,7 @@ class TestFlextModelsIntegration:
     def test_entity_command_query_flow(self) -> None:
         """Test flow: Command -> Entity -> Event -> Query."""
 
-        class CreateUserCmd(FlextModels.Cqrs.Command):
-            user_id: str
-            name: str
-
-        class GetUserQuery(FlextModels.Cqrs.Query):
-            user_id: str
-
-        class User(FlextModels.Entity):
+        class User(FlextModels.Entity):  # type: ignore[misc,valid-type]  # FlextModels.Entity is assignment alias, valid for inheritance
             name: str
 
         # Create command
@@ -307,7 +326,7 @@ class TestFlextModelsIntegration:
     def test_aggregate_full_lifecycle(self) -> None:
         """Test complete aggregate lifecycle."""
 
-        class Order(FlextModels.AggregateRoot):
+        class Order(FlextModels.AggregateRoot):  # type: ignore[misc,valid-type]  # FlextModels.AggregateRoot is assignment alias, valid for inheritance
             status: str
             items_count: int
 

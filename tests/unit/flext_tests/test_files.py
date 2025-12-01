@@ -11,7 +11,7 @@ from pathlib import Path
 
 from flext_tests.files import FlextTestsFileManager
 
-# Access nested class
+# Use the actual nested class directly
 FileInfo = FlextTestsFileManager.FileInfo
 
 
@@ -48,7 +48,7 @@ class TestFileInfo:
         assert info.first_line == "first line"
 
 
-class TestFlextTestsFileManager:
+class TestFlextTestsFileManager:  # noqa: PLR0904
     """Test suite for FlextTestsFileManager class."""
 
     def test_init_without_base_dir(self) -> None:
@@ -200,7 +200,7 @@ class TestFlextTestsFileManager:
 
         info = manager.get_file_info(non_existent)
 
-        assert isinstance(info, FileInfo)
+        assert isinstance(info, FlextTestsFileManager.FileInfo)
         assert info.exists is False
 
     def test_get_file_info_exists(self, tmp_path: Path) -> None:
@@ -211,7 +211,7 @@ class TestFlextTestsFileManager:
 
         info = manager.get_file_info(file_path)
 
-        assert isinstance(info, FileInfo)
+        assert isinstance(info, FlextTestsFileManager.FileInfo)
         assert info.exists is True
         assert info.size > 0
         assert info.lines == 3
@@ -226,7 +226,7 @@ class TestFlextTestsFileManager:
 
         info = manager.get_file_info(file_path)
 
-        assert isinstance(info, FileInfo)
+        assert isinstance(info, FlextTestsFileManager.FileInfo)
         assert info.exists is True
         assert info.size == 0
         assert info.is_empty is True
@@ -369,7 +369,7 @@ class TestFlextTestsFileManager:
     def test_multiple_cleanup_calls(self, tmp_path: Path) -> None:
         """Test multiple cleanup calls are safe."""
         manager = FlextTestsFileManager(base_dir=tmp_path)
-        manager.create_text_file("content", "test.txt")
+        _ = manager.create_text_file("content", "test.txt")
 
         manager.cleanup()
         # Second cleanup should not raise error

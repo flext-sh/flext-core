@@ -10,13 +10,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
+from pathlib import Path
 from typing import cast
 
+from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime, StructlogLogger
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes, T_Model
 
 
@@ -24,12 +27,53 @@ class FlextUtilitiesConfiguration:
     """Configuration utilities for parameter access and manipulation."""
 
     @staticmethod
-    def _get_logger() -> StructlogLogger:
+    def _get_logger() -> FlextProtocols.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods.
         """
         return FlextRuntime.get_logger(__name__)
+
+    @staticmethod
+    def resolve_env_file() -> str | None:
+        """Resolve .env file path from FLEXT_ENV_FILE environment variable.
+
+        This method provides the standard .env file resolution logic for all
+        FLEXT ecosystem configs. It ensures consistent behavior across all
+        namespace configurations.
+
+        Precedence (highest to lowest):
+        1. FLEXT_ENV_FILE environment variable (custom path)
+        2. Default .env file from current directory
+
+        Returns:
+            str | None: Path to .env file or None if not found
+
+        Example:
+            # In namespace config classes (e.g., FlextLdapConfig)
+            model_config = SettingsConfigDict(
+                env_prefix="FLEXT_LDAP_",
+                env_file=FlextUtilities.Configuration.resolve_env_file(),
+                ...
+            )
+
+        """
+        # Check for custom env file path
+        custom_env_file = os.environ.get(FlextConstants.Platform.ENV_FILE_ENV_VAR)
+        if custom_env_file:
+            custom_path = Path(custom_env_file)
+            if custom_path.exists():
+                return str(custom_path.resolve())
+            # If custom path doesn't exist, return it anyway (Pydantic will handle gracefully)
+            return custom_env_file
+
+        # Default: use .env from current directory
+        default_path = Path.cwd() / FlextConstants.Platform.ENV_FILE_DEFAULT
+        if default_path.exists():
+            return str(default_path.resolve())
+
+        # Fallback: use default value (Pydantic handles missing file gracefully)
+        return FlextConstants.Platform.ENV_FILE_DEFAULT
 
     """Configuration parameter access and manipulation utilities."""
 
@@ -73,14 +117,13 @@ class FlextUtilitiesConfiguration:
                 model_data: dict[str, FlextTypes.GeneralValueType] = model_data_raw
                 if parameter not in model_data:
                     msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
-                    raise KeyError(msg)
+                    raise FlextExceptions.NotFoundError(msg)
                 return model_data[parameter]
             except (
                 AttributeError,
                 TypeError,
                 ValueError,
                 RuntimeError,
-                KeyError,
             ) as e:
                 # Log and continue to fallback - object may not be Pydantic model
                 FlextUtilitiesConfiguration._get_logger().debug(
@@ -91,7 +134,7 @@ class FlextUtilitiesConfiguration:
         # Fallback for non-Pydantic objects - direct attribute access
         if not hasattr(obj, parameter):
             msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
-            raise AttributeError(msg)
+            raise FlextExceptions.NotFoundError(msg)
         # Type narrowing: getattr returns object, but we know it's a valid parameter value
         attr_value = getattr(obj, parameter)
         return cast("FlextTypes.GeneralValueType", attr_value)
@@ -168,7 +211,7 @@ class FlextUtilitiesConfiguration:
         msg = (
             f"Class {singleton_class.__name__} does not have get_global_instance method"
         )
-        raise AttributeError(msg)
+        raise FlextExceptions.ValidationError(msg)
 
     @staticmethod
     def set_singleton(
@@ -403,4 +446,4 @@ class FlextUtilitiesConfiguration:
             )
 
 
-__all__ = ["FlextUtilitiesConfiguration", "T_Model"]
+__all__ = ["FlextUtilitiesConfiguration"]

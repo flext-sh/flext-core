@@ -274,7 +274,7 @@ class FlextUtilitiesStringParser:
     def _validate_split_inputs(
         split_char: str,
         escape_char: str,
-    ) -> FlextResult[None]:
+    ) -> FlextResult[bool]:
         """Validate inputs for split operation.
 
         Args:
@@ -282,18 +282,18 @@ class FlextUtilitiesStringParser:
             escape_char: Escape character
 
         Returns:
-            FlextResult[None]: Success if valid, failure with error message
+            FlextResult[bool]: True if valid, failure with error message
 
         """
         if not split_char:
-            return FlextResult[None].fail("Split character cannot be empty")
+            return FlextResult[bool].fail("Split character cannot be empty")
         if not escape_char:
-            return FlextResult[None].fail("Escape character cannot be empty")
+            return FlextResult[bool].fail("Escape character cannot be empty")
         if split_char == escape_char:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "Split character and escape character cannot be the same",
             )
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(True)
 
     def _get_safe_text_length(self, text: str) -> int:
         """Get text length safely, handling non-string objects in tests.
@@ -623,6 +623,66 @@ class FlextUtilitiesStringParser:
             )
             return FlextResult[str].fail(f"Failed to apply regex pipeline: {e}")
 
+    @staticmethod
+    def _extract_key_from_mapping(
+        obj: Mapping[str, FlextTypes.GeneralValueType],
+    ) -> str | None:
+        """Extract key from mapping object (Strategy 2).
+
+        Args:
+            obj: Mapping object to extract key from.
+
+        Returns:
+            String key if found, None otherwise.
+
+        """
+        for key in ("name", "id"):
+            if key in obj:
+                value = obj[key]
+                if isinstance(value, str):
+                    return value
+        return None
+
+    @staticmethod
+    def _extract_key_from_attributes(
+        obj: FlextTypes.GeneralValueType,
+    ) -> str | None:
+        """Extract key from object attributes (Strategy 3).
+
+        Args:
+            obj: Object to extract key from.
+
+        Returns:
+            String key if found, None otherwise.
+
+        """
+        for attr in ("name", "id"):
+            attr_value = getattr(obj, attr, None)
+            if isinstance(attr_value, str):
+                return attr_value
+        return None
+
+    @staticmethod
+    def _extract_key_from_str_conversion(
+        obj: FlextTypes.GeneralValueType,
+    ) -> str | None:
+        """Extract key from string conversion (Strategy 5).
+
+        Args:
+            obj: Object to convert to string.
+
+        Returns:
+            String key if valid, None otherwise.
+
+        """
+        try:
+            str_repr = str(obj)
+            if str_repr and str_repr != f"<{type(obj).__name__} object>":
+                return str_repr
+        except (TypeError, ValueError):
+            pass
+        return None
+
     def get_object_key(self, obj: FlextTypes.GeneralValueType) -> str:
         """Get comparable string key from object (generic helper).
 
@@ -630,10 +690,13 @@ class FlextUtilitiesStringParser:
         dispatcher.py (_normalize_command_key) and provides flexible key extraction
         strategies for objects.
 
-        Extraction Strategy:
+        Extraction Strategy (in order):
             1. Try __name__ attribute (for types, classes, functions)
-            2. Try str(obj)
-            3. Use type name as final strategy
+            2. Try dict 'name' or 'id' key values (for dict-like objects)
+            3. Try 'name' or 'id' attribute on instances
+            4. Try object class name
+            5. Try str conversion
+            6. Use type name as final fallback
 
         Args:
             obj: Object to extract key from (type, class, instance, etc.)
@@ -650,6 +713,9 @@ class FlextUtilitiesStringParser:
             >>> # Function
             >>> parser.get_object_key(len)
             'len'
+            >>> # Dict with name key
+            >>> parser.get_object_key({"name": "MyObj"})
+            'MyObj'
             >>> # Instance
             >>> obj = object()
             >>> key = parser.get_object_key(obj)
@@ -665,33 +731,34 @@ class FlextUtilitiesStringParser:
             source="flext-core/src/flext_core/_utilities/string_parser.py",
         )
 
-        # Try strategies in order
+        # Strategy 0: If obj is a string, return it directly
+        if isinstance(obj, str):
+            key: str = obj
         # Strategy 1: Try __name__ attribute (for types, classes, functions)
-        # Use getattr for type-safe access (returns None if attribute doesn't exist)
-        name = getattr(obj, "__name__", None)
-        if isinstance(name, str):
-            return name
-
-        # Strategy 2: Try dict keys (for dict-like objects)
-        if isinstance(obj, Mapping):
-            keys = list(obj.keys())
-            if keys:
-                return str(keys[0])
-
-        # Strategy 3: Try object attributes
-        if hasattr(obj, "__class__") and hasattr(obj.__class__, "__name__"):
-            return obj.__class__.__name__
-
-        # Strategy 4: Try str conversion
-        try:
-            str_repr = str(obj)
-            if str_repr and str_repr != f"<{type(obj).__name__} object>":
-                return str_repr
-        except (TypeError, ValueError):
-            pass
-
+        elif isinstance(dunder_name := getattr(obj, "__name__", None), str):
+            key = dunder_name
+        # Strategy 2: Try dict 'name' or 'id' key values (for dict-like objects)
+        elif (
+            isinstance(obj, Mapping)
+            and (mapping_key := self._extract_key_from_mapping(obj)) is not None
+        ):
+            key = mapping_key
+        # Strategy 3: Try 'name' or 'id' attribute on instances
+        elif (attr_key := self._extract_key_from_attributes(obj)) is not None:
+            key = attr_key
+        # Strategy 4: Try object class name
+        elif (
+            class_name := obj.__class__.__name__ if hasattr(obj, "__class__") else None
+        ) is not None:
+            key = class_name
+        # Strategy 5: Try str conversion
+        elif (str_key := self._extract_key_from_str_conversion(obj)) is not None:
+            key = str_key
         # Final fallback: type name
-        return type(obj).__name__
+        else:
+            key = type(obj).__name__
+
+        return key
 
     def _extract_pattern_components(
         self,

@@ -32,6 +32,7 @@ class TimeoutEnforcer:
                 executor is enabled
 
         """
+        super().__init__()
         self._use_timeout_executor = use_timeout_executor
         self._executor_workers = max(executor_workers, 1)
         self._executor: concurrent.futures.ThreadPoolExecutor | None = None

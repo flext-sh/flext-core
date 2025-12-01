@@ -11,13 +11,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-import logging
 from typing import cast, get_origin, get_type_hints
 
-from flext_core.runtime import FlextRuntime, StructlogLogger
+from flext_core.protocols import FlextProtocols
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
-
-_logger = logging.getLogger(__name__)
 
 
 class FlextUtilitiesTypeChecker:
@@ -28,7 +26,7 @@ class FlextUtilitiesTypeChecker:
     """
 
     @property
-    def logger(self) -> StructlogLogger:
+    def logger(self) -> FlextProtocols.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
@@ -96,7 +94,7 @@ class FlextUtilitiesTypeChecker:
     @classmethod
     def _get_method_signature(
         cls,
-        handle_method: FlextTypes.Handler.HandlerCallable,
+        handle_method: FlextTypes.HandlerAliases.HandlerCallable,
     ) -> inspect.Signature | None:
         """Extract signature from handle method."""
         try:
@@ -111,7 +109,7 @@ class FlextUtilitiesTypeChecker:
     @classmethod
     def _get_type_hints_safe(
         cls,
-        handle_method: FlextTypes.Handler.HandlerCallable,
+        handle_method: FlextTypes.HandlerAliases.HandlerCallable,
         handler_class: type,
     ) -> dict[str, FlextTypes.GeneralValueType]:
         """Safely extract type hints from handle method."""
