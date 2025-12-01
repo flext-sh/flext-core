@@ -72,13 +72,21 @@ class ContextScenarios:
             "payment_service",
         ),
         ContextOperationScenario(
-            "set_get_version", "service", "set_get_version", "v1.2.3", "v1.2.3"
+            "set_get_version",
+            "service",
+            "set_get_version",
+            "v1.2.3",
+            "v1.2.3",
         ),
     ]
 
     REQUEST_OPERATIONS: ClassVar[list[ContextOperationScenario]] = [
         ContextOperationScenario(
-            "set_get_user_id", "request", "set_get_user_id", "user_12345", "user_12345"
+            "set_get_user_id",
+            "request",
+            "set_get_user_id",
+            "user_12345",
+            "user_12345",
         ),
         ContextOperationScenario(
             "set_get_operation",
@@ -117,7 +125,9 @@ class TestCorrelationDomain:
         assert correlation_id.startswith("corr_")
 
     @pytest.mark.parametrize(
-        "scenario", ContextScenarios.CORRELATION_OPERATIONS, ids=lambda s: s.name
+        "scenario",
+        ContextScenarios.CORRELATION_OPERATIONS,
+        ids=lambda s: s.name,
     )
     def test_correlation_operations(self, scenario: ContextOperationScenario) -> None:
         """Test correlation operations with various scenarios."""
@@ -154,7 +164,7 @@ class TestCorrelationDomain:
         ContextTestHelpers.clear_context()
         explicit_id = "explicit-corr-789"
         with FlextContext.Correlation.new_correlation(
-            correlation_id=explicit_id
+            correlation_id=explicit_id,
         ) as correlation_id:
             assert correlation_id == explicit_id
             assert FlextContext.Correlation.get_correlation_id() == explicit_id
@@ -164,7 +174,8 @@ class TestCorrelationDomain:
         ContextTestHelpers.clear_context()
         parent_id = "parent-123"
         with FlextContext.Correlation.new_correlation(
-            correlation_id="child-456", parent_id=parent_id
+            correlation_id="child-456",
+            parent_id=parent_id,
         ):
             assert FlextContext.Correlation.get_parent_correlation_id() == parent_id
 
@@ -188,7 +199,9 @@ class TestServiceDomain:
     """Test FlextContext.Service domain for service identification using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "scenario", ContextScenarios.SERVICE_OPERATIONS, ids=lambda s: s.name
+        "scenario",
+        ContextScenarios.SERVICE_OPERATIONS,
+        ids=lambda s: s.name,
     )
     def test_service_operations(self, scenario: ContextOperationScenario) -> None:
         """Test service operations with various scenarios."""
@@ -241,7 +254,9 @@ class TestRequestDomain:
     """Test FlextContext.Request domain for request metadata using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "scenario", ContextScenarios.REQUEST_OPERATIONS, ids=lambda s: s.name
+        "scenario",
+        ContextScenarios.REQUEST_OPERATIONS,
+        ids=lambda s: s.name,
     )
     def test_request_operations(self, scenario: ContextOperationScenario) -> None:
         """Test request operations with various scenarios."""
@@ -274,7 +289,8 @@ class TestRequestDomain:
         """Test request context manager with partial metadata."""
         ContextTestHelpers.clear_context()
         with FlextContext.Request.request_context(
-            user_id="user_partial", operation_name="data_processing"
+            user_id="user_partial",
+            operation_name="data_processing",
         ):
             assert FlextContext.Request.get_user_id() == "user_partial"
             assert FlextContext.Request.get_operation_name() == "data_processing"
@@ -283,7 +299,8 @@ class TestRequestDomain:
         """Test request context cleanup after exit."""
         ContextTestHelpers.clear_context()
         with FlextContext.Request.request_context(
-            user_id="user_temp", operation_name="temp_op"
+            user_id="user_temp",
+            operation_name="temp_op",
         ):
             pass
         assert FlextContext.Request.get_user_id() is None
@@ -481,7 +498,7 @@ class TestContextDataModel:
     def test_context_with_context_data_model(self) -> None:
         """Test FlextContext initialization with ContextData model."""
         context_data = FlextModels.ContextData(
-            data={"key1": "value1", "key2": "value2"}
+            data={"key1": "value1", "key2": "value2"},
         )
         context = FlextContext(context_data)
         result1 = context.get("key1")
@@ -516,7 +533,8 @@ class TestContextIntegration:
         with FlextContext.Correlation.new_correlation() as correlation_id:
             with FlextContext.Service.service_context("order_service", "v1.0"):
                 with FlextContext.Request.request_context(
-                    user_id="customer_123", operation_name="create_order"
+                    user_id="customer_123",
+                    operation_name="create_order",
                 ):
                     with FlextContext.Performance.timed_operation("order_processing"):
                         assert (

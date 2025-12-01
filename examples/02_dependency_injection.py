@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import time
 import warnings
+from collections.abc import Mapping
 from copy import deepcopy
 from datetime import UTC, datetime
 from typing import ClassVar, Protocol, cast, runtime_checkable
@@ -39,12 +40,13 @@ from flext_core import (
     FlextResult,
     FlextService,
 )
+from flext_core.typings import FlextTypes
 
 
 class DemoScenarios:
     """Inline scenario helpers for dependency injection demonstrations."""
 
-    _DATASET: ClassVar[dict[str, object]] = {
+    _DATASET: ClassVar[dict[str, FlextTypes.GeneralValueType]] = {
         "users": [
             {
                 "id": 1,
@@ -62,47 +64,53 @@ class DemoScenarios:
         "services": ["database", "cache", "email"],
     }
 
-    _CONFIG: ClassVar[dict[str, object]] = {
+    _CONFIG: ClassVar[dict[str, FlextTypes.GeneralValueType]] = {
         "database_url": "sqlite:///:memory:",
         "api_timeout": 30,
         "retry": 3,
     }
 
-    _PROD_CONFIG: ClassVar[dict[str, object]] = {
+    _PROD_CONFIG: ClassVar[dict[str, FlextTypes.GeneralValueType]] = {
         "database_url": "postgresql://prod-db/flext",
         "api_timeout": 20,
         "retry": 5,
     }
 
-    _PAYLOAD: ClassVar[dict[str, object]] = {
+    _PAYLOAD: ClassVar[dict[str, FlextTypes.GeneralValueType]] = {
         "event": "user_registered",
         "user_id": "usr-123",
         "metadata": {"source": "examples", "version": "1.0"},
     }
 
     @staticmethod
-    def dataset() -> dict[str, object]:
+    def dataset() -> dict[str, FlextTypes.GeneralValueType]:
         """Get a copy of the demo dataset for dependency injection examples."""
         return deepcopy(DemoScenarios._DATASET)
 
     @staticmethod
-    def config(*, production: bool = False) -> dict[str, object]:
+    def config(*, production: bool = False) -> dict[str, FlextTypes.GeneralValueType]:
         """Get a copy of the demo configuration (production or development)."""
         base = DemoScenarios._PROD_CONFIG if production else DemoScenarios._CONFIG
         return deepcopy(base)
 
     @staticmethod
-    def user(**overrides: object) -> dict[str, object]:
+    def user(
+        **overrides: FlextTypes.GeneralValueType,
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Get a demo user object with optional overrides."""
-        dataset: dict[str, object] = DemoScenarios._DATASET
+        dataset: dict[str, FlextTypes.GeneralValueType] = DemoScenarios._DATASET
         users_raw = dataset["users"]
-        users_list: list[dict[str, object]] = cast("list[dict[str, object]]", users_raw)
+        users_list: list[dict[str, FlextTypes.GeneralValueType]] = cast(
+            "list[dict[str, FlextTypes.GeneralValueType]]", users_raw
+        )
         user = deepcopy(users_list[0])
         user.update(overrides)
         return user
 
     @staticmethod
-    def service_batch(logger_name: str = "example_batch") -> dict[str, object]:
+    def service_batch(
+        logger_name: str = "example_batch",
+    ) -> dict[str, FlextTypes.GeneralValueType | FlextLogger]:
         """Get a demo service batch configuration."""
         return {
             "logger": FlextLogger(logger_name),
@@ -111,7 +119,9 @@ class DemoScenarios:
         }
 
     @staticmethod
-    def payload(**overrides: object) -> dict[str, object]:
+    def payload(
+        **overrides: FlextTypes.GeneralValueType,
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Get a demo payload with optional overrides."""
         payload = deepcopy(DemoScenarios._PAYLOAD)
         payload.update(overrides)
@@ -128,16 +138,22 @@ class DatabaseServiceProtocol(Protocol):
         """Connect to database."""
         ...
 
-    def query(self, sql: str) -> FlextResult[list[dict[str, object]]]:
+    def query(
+        self, sql: str
+    ) -> FlextResult[list[dict[str, FlextTypes.GeneralValueType]]]:
         """Execute query."""
         ...
 
     def query_with_params(
         self,
         sql: str,
-        params: list[object],
-        command_type: type[object],
-    ) -> FlextResult[list[dict[str, object]]]:
+        params: list[FlextTypes.GeneralValueType],
+        command_type: type[
+            dict[str, FlextTypes.GeneralValueType]
+            | list[FlextTypes.GeneralValueType]
+            | tuple[FlextTypes.GeneralValueType, ...]
+        ],
+    ) -> FlextResult[list[dict[str, FlextTypes.GeneralValueType]]]:
         """Execute parameterized query to prevent SQL injection."""
         ...
 
@@ -145,11 +161,11 @@ class DatabaseServiceProtocol(Protocol):
 class CacheServiceProtocol(Protocol):
     """Protocol defining cache service interface."""
 
-    def get(self, key: str) -> FlextResult[object]:
+    def get(self, key: str) -> FlextResult[FlextTypes.GeneralValueType]:
         """Get value from cache."""
         ...
 
-    def set(self, key: str, value: object) -> FlextResult[bool]:
+    def set(self, key: str, value: FlextTypes.GeneralValueType) -> FlextResult[bool]:
         """Set value in cache."""
         ...
 
@@ -166,7 +182,7 @@ class EmailServiceProtocol(Protocol):
 class HasGetStats(Protocol):
     """Protocol for objects with get_stats method."""
 
-    def get_stats(self) -> dict[str, object]:
+    def get_stats(self) -> Mapping[str, FlextTypes.GeneralValueType]:
         """Return statistics dictionary."""
         ...
 
@@ -175,7 +191,7 @@ class HasGetStats(Protocol):
 class HasCacheSet(Protocol):
     """Protocol for cache objects with set method."""
 
-    def set(self, key: str, value: object) -> FlextResult[bool]:
+    def set(self, key: str, value: FlextTypes.GeneralValueType) -> FlextResult[bool]:
         """Set value in cache."""
         ...
 
@@ -184,7 +200,7 @@ class HasCacheSet(Protocol):
 class HasCacheGet(Protocol):
     """Protocol for cache objects with get method."""
 
-    def get(self, key: str) -> FlextResult[object]:
+    def get(self, key: str) -> FlextResult[FlextTypes.GeneralValueType]:
         """Get value from cache."""
         ...
 
@@ -224,17 +240,19 @@ class DatabaseService(FlextService[None]):
         )
         return FlextResult[bool].ok(True)
 
-    def query(self, sql: str) -> FlextResult[list[dict[str, object]]]:
+    def query(
+        self, sql: str
+    ) -> FlextResult[list[dict[str, FlextTypes.GeneralValueType]]]:
         """Execute query with comprehensive error handling."""
         if not self.connected:
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[list[dict[str, FlextTypes.GeneralValueType]]].fail(
                 "Database not connected",
                 error_code=FlextConstants.Errors.CONNECTION_ERROR,
                 error_data={"connection_string": self._connection_string},
             )
 
         if not sql or not sql.strip():
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[list[dict[str, FlextTypes.GeneralValueType]]].fail(
                 "SQL query cannot be empty",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
@@ -248,41 +266,45 @@ class DatabaseService(FlextService[None]):
 
         # Simulate different responses based on query with enhanced data
         if "users" in sql.lower():
-            return FlextResult[list[dict[str, object]]].ok([
+            return FlextResult[list[dict[str, FlextTypes.GeneralValueType]]].ok([
                 {"id": 1, "name": "John Doe", "email": "john@example.com"},
                 {"id": 2, "name": "Jane Smith", "email": "jane@example.com"},
             ])
         if "count" in sql.lower():
-            return FlextResult[list[dict[str, object]]].ok([{"count": 42}])
+            return FlextResult[list[dict[str, FlextTypes.GeneralValueType]]].ok([
+                {"count": 42}
+            ])
 
-        return FlextResult[list[dict[str, object]]].ok([])
+        return FlextResult[list[dict[str, FlextTypes.GeneralValueType]]].ok([])
 
     def query_with_params(
         self,
         sql: str,
-        params: list[object],
-        command_type: type[object],
-    ) -> FlextResult[list[dict[str, object]]]:
+        params: list[FlextTypes.GeneralValueType],
+        command_type: type[
+            dict[str, FlextTypes.GeneralValueType]
+            | list[FlextTypes.GeneralValueType]
+            | tuple[FlextTypes.GeneralValueType, ...]
+        ],
+    ) -> FlextResult[list[dict[str, FlextTypes.GeneralValueType]]]:
         """Execute parameterized query to prevent SQL injection."""
         if not self.connected:
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[list[dict[str, FlextTypes.GeneralValueType]]].fail(
                 "Database not connected",
                 error_code=FlextConstants.Errors.CONNECTION_ERROR,
                 error_data={"connection_string": self._connection_string},
             )
 
         if not sql or not sql.strip():
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[list[dict[str, FlextTypes.GeneralValueType]]].fail(
                 "SQL query cannot be empty",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
 
-        # Parameters are already validated as list[object] type in the protocol
-
         # Validate command type
-        valid_command_types = (dict[str, object], list[object], tuple)
+        valid_command_types = (dict, list, tuple)
         if command_type not in valid_command_types:
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[list[dict[str, FlextTypes.GeneralValueType]]].fail(
                 "Invalid command type for query result",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
@@ -301,18 +323,22 @@ class DatabaseService(FlextService[None]):
 
         # Simulate different responses based on query with enhanced data
         if "users" in sql.lower():
-            user_data: list[dict[str, object]] = [
+            user_data: list[dict[str, FlextTypes.GeneralValueType]] = [
                 {"id": 1, "name": "John Doe", "email": "john@example.com"},
                 {"id": 2, "name": "Jane Smith", "email": "jane@example.com"},
             ]
-            return FlextResult[list[dict[str, object]]].ok(user_data)
+            return FlextResult[list[dict[str, FlextTypes.GeneralValueType]]].ok(
+                user_data
+            )
         if "count" in sql.lower():
-            count_data: dict[str, object] = {"count": 42}
-            return FlextResult[list[dict[str, object]]].ok([count_data])
+            count_data: dict[str, FlextTypes.GeneralValueType] = {"count": 42}
+            return FlextResult[list[dict[str, FlextTypes.GeneralValueType]]].ok([
+                count_data
+            ])
 
-        return FlextResult[list[dict[str, object]]].ok([])
+        return FlextResult[list[dict[str, FlextTypes.GeneralValueType]]].ok([])
 
-    def get_stats(self) -> dict[str, object]:
+    def get_stats(self) -> dict[str, FlextTypes.GeneralValueType]:
         """Get database service statistics."""
         return {
             "connection_string": self._connection_string,
@@ -340,14 +366,14 @@ class CacheService(FlextService[object]):
         super().__init__()
         self.max_size = max_size
         self._ttl_seconds = ttl_seconds
-        self._cache: dict[str, object] = {}
-        self._metadata: dict[str, object] = {}
+        self._cache: dict[str, FlextTypes.GeneralValueType] = {}
+        self._metadata: dict[str, FlextTypes.GeneralValueType] = {}
 
     def execute(self, **_kwargs: object) -> FlextResult[object]:
         """Execute the cache service."""
         return FlextResult[object].ok(None)
 
-    def get(self, key: str) -> FlextResult[object]:
+    def get(self, key: str) -> FlextResult[FlextTypes.GeneralValueType]:
         """Get value from cache with TTL validation using functional composition."""
 
         def validate_key() -> str:
@@ -364,7 +390,8 @@ class CacheService(FlextService[object]):
                 self.logger.debug("Cache miss: %s", valid_key)
                 error_msg = f"Key not found: {valid_key}"
                 return FlextResult[str].fail(
-                    error_msg, error_code=FlextConstants.Errors.NOT_FOUND
+                    error_msg,
+                    error_code=FlextConstants.Errors.NOT_FOUND,
                 )
             return FlextResult[str].ok(valid_key)
 
@@ -380,13 +407,14 @@ class CacheService(FlextService[object]):
                 # Use from_callable for safe conversion
                 def convert_timestamp() -> float:
                     if created_at_raw is not None and isinstance(
-                        created_at_raw, (int, float, str)
+                        created_at_raw,
+                        (int, float, str),
                     ):
                         return float(created_at_raw)
                     return 0.0
 
                 created_at_result = FlextResult[float].create_from_callable(
-                    convert_timestamp
+                    convert_timestamp,
                 )
 
                 if created_at_result.is_success:
@@ -399,7 +427,8 @@ class CacheService(FlextService[object]):
                         self.logger.debug("Cache expired: %s", valid_key)
                         error_msg = f"Key expired: {valid_key}"
                         return FlextResult[str].fail(
-                            error_msg, error_code=FlextConstants.Errors.TIMEOUT_ERROR
+                            error_msg,
+                            error_code=FlextConstants.Errors.TIMEOUT_ERROR,
                         )
 
             return FlextResult[str].ok(valid_key)
@@ -428,7 +457,8 @@ class CacheService(FlextService[object]):
         result = (
             FlextResult[str]
             .create_from_callable(
-                validate_key, error_code=FlextConstants.Errors.VALIDATION_ERROR
+                validate_key,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
             .flow_through(
                 check_existence_obj,
@@ -439,13 +469,14 @@ class CacheService(FlextService[object]):
             str_key = str(result.unwrap())
             return get_value(str_key)
         return FlextResult[object].fail(
-            result.error or "Unknown error", error_code=result.error_code
+            result.error or "Unknown error",
+            error_code=result.error_code,
         )
 
     def set(
         self,
         key: str,
-        value: object,
+        value: FlextTypes.GeneralValueType,
         ttl_seconds: int | None = None,
     ) -> FlextResult[bool]:
         """Set value in cache with optional TTL override."""
@@ -495,7 +526,8 @@ class CacheService(FlextService[object]):
                     if isinstance(metadata, dict):
                         created_at_raw = metadata.get("created_at", 0)
                     if created_at_raw is not None and isinstance(
-                        created_at_raw, (int, float, str)
+                        created_at_raw,
+                        (int, float, str),
                     ):
                         return float(created_at_raw)
                     return 0.0
@@ -525,7 +557,7 @@ class CacheService(FlextService[object]):
         if eviction_result.is_failure:
             self.logger.warning("Cache eviction failed: %s", eviction_result.error)
 
-    def get_stats(self) -> dict[str, object]:
+    def get_stats(self) -> dict[str, FlextTypes.GeneralValueType]:
         """Get cache service statistics."""
         return {
             "max_size": self.max_size,
@@ -611,7 +643,7 @@ class UserRepository(FlextService[User]):
         validation_result = self._validate_user(user)
         if validation_result.is_failure:
             return FlextResult[bool].fail(
-                validation_result.error or "Validation failed"
+                validation_result.error or "Validation failed",
             )
 
         # Simulate save operation with enhanced logging
@@ -676,7 +708,7 @@ class UserRepository(FlextService[User]):
 
         return FlextResult[bool].ok(True)
 
-    def get_stats(self) -> dict[str, object]:
+    def get_stats(self) -> dict[str, FlextTypes.GeneralValueType]:
         """Get repository statistics."""
         return {
             "cached_users": len(self._cache),
@@ -795,18 +827,23 @@ class ComprehensiveDIService(FlextService[User]):
 
             # Log comprehensive statistics
             service_count = len(self.container.list_services())
+            # Convert stats to GeneralValueType-compatible format
+            db_stats_dict: dict[str, FlextTypes.GeneralValueType] = (
+                dict(db_stats) if db_stats else {}
+            )
+            cache_stats_dict: dict[str, FlextTypes.GeneralValueType] = (
+                dict(cache_stats) if cache_stats else {}
+            )
             self.logger.info(
                 "Service execution statistics",
-                extra={
-                    "database_stats": db_stats,
-                    "cache_stats": cache_stats,
-                    "container_service_count": service_count,
-                },
+                database_stats=db_stats_dict,
+                cache_stats=cache_stats_dict,
+                container_service_count=service_count,
             )
         except Exception as e:
-            self.logger.warning("Failed to log statistics: %s", e)
+            self.logger.warning("Failed to log statistics: %s", str(e))
 
-    def get_service_stats(self) -> dict[str, object]:
+    def get_service_stats(self) -> dict[str, FlextTypes.GeneralValueType]:
         """Get comprehensive service statistics."""
         service_count = len(
             self.container.list_services(),
@@ -907,15 +944,19 @@ class ComprehensiveDIService(FlextService[User]):
             if get_result.is_success:
                 cached_data = get_result.unwrap()
                 if isinstance(cached_data, dict):
-                    cached_dict = cast("dict[str, object]", cached_data)
+                    cached_dict = cast(
+                        "dict[str, FlextTypes.GeneralValueType]", cached_data
+                    )
                     print(f"✅ Cache test: {cached_dict.get('email')}")
 
-            cache_stats_func: object = getattr(cache, "get_stats", None)
-            stats_raw: object = cache_stats_func() if callable(cache_stats_func) else {}
-            stats_dict: dict[str, object] = (
-                cast("dict[str, object]", stats_raw)
-                if isinstance(stats_raw, dict)
-                else {}
+            cache_stats_func: (
+                Callable[[], Mapping[str, FlextTypes.GeneralValueType]] | None
+            ) = getattr(cache, "get_stats", None)
+            stats_raw: Mapping[str, FlextTypes.GeneralValueType] | None = (
+                cache_stats_func() if callable(cache_stats_func) else None
+            )
+            stats_dict: dict[str, FlextTypes.GeneralValueType] = (
+                dict(stats_raw) if stats_raw else {}
             )
             print(
                 f"   Cache stats: {stats_dict.get('current_size', 0)} items, {stats_dict.get('hits', 0)} hits, {stats_dict.get('misses', 0)} misses",
@@ -981,7 +1022,7 @@ class ComprehensiveDIService(FlextService[User]):
         print("\n=== Container Configuration ===")
 
         production_config = self._scenarios.config(production=True)
-        config: dict[str, object] = {
+        config: dict[str, FlextTypes.FlexibleValue] = {
             "services": {
                 "database": {
                     "connection_string": production_config.get(
@@ -1079,7 +1120,7 @@ class ComprehensiveDIService(FlextService[User]):
 
         # Try to register with invalid name (with_service doesn't validate names)
         print(
-            "✅ Skipping invalid name test (with_service doesn't validate empty names)"
+            "✅ Skipping invalid name test (with_service doesn't validate empty names)",
         )
 
         # Type mismatch in get_typed

@@ -27,7 +27,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextModels, FlextUtilities
-from tests.fixtures.constants import TestConstants
+from tests.helpers.constants import TestConstants
 from tests.helpers.string_parser_helpers import (
     NormalizeWhitespaceCase,
     ObjectKeyCase,
@@ -94,7 +94,9 @@ class StringParserTestFactory:
                 TestConstants.Delimiters.COMMA,
                 ["a", "b", "c"],
                 options=ParseOptions(
-                    strip=True, remove_empty=True, validator=lambda s: len(s) > 0
+                    strip=True,
+                    remove_empty=True,
+                    validator=lambda s: len(s) > 0,
                 ),
                 description="validator success",
             ),
@@ -157,21 +159,21 @@ class StringParserTestFactory:
                 TestConstants.Strings.BASIC_LIST,
                 "",
                 None,
-                expected_error=TestConstants.Errors.DELIMITER_EMPTY,
+                expected_error=TestConstants.TestErrors.DELIMITER_EMPTY,
                 description="empty delimiter",
             ),
             ParseDelimitedCase(
                 TestConstants.Strings.BASIC_LIST,
                 ",,",
                 None,
-                expected_error=TestConstants.Errors.DELIMITER_MULTI,
+                expected_error=TestConstants.TestErrors.DELIMITER_MULTI,
                 description="multi-char delimiter",
             ),
             ParseDelimitedCase(
                 TestConstants.Strings.BASIC_LIST,
                 " ",
                 None,
-                expected_error=TestConstants.Errors.DELIMITER_WHITESPACE,
+                expected_error=TestConstants.TestErrors.DELIMITER_WHITESPACE,
                 description="whitespace delimiter",
             ),
         ]
@@ -237,21 +239,21 @@ class StringParserTestFactory:
             SplitEscapeCase(
                 "a,b",
                 "",
-                expected_error=TestConstants.Errors.SPLIT_EMPTY,
+                expected_error=TestConstants.TestErrors.SPLIT_EMPTY,
                 description="empty split char",
             ),
             SplitEscapeCase(
                 "a,b",
                 TestConstants.Delimiters.COMMA,
                 escape_char="",
-                expected_error=TestConstants.Errors.ESCAPE_EMPTY,
+                expected_error=TestConstants.TestErrors.ESCAPE_EMPTY,
                 description="empty escape char",
             ),
             SplitEscapeCase(
                 "a,b",
                 TestConstants.Delimiters.COMMA,
                 escape_char=TestConstants.Delimiters.COMMA,
-                expected_error=TestConstants.Errors.SPLIT_ESCAPE_SAME,
+                expected_error=TestConstants.TestErrors.SPLIT_ESCAPE_SAME,
                 description="same split and escape",
             ),
         ]
@@ -332,7 +334,7 @@ class StringParserTestFactory:
                     (
                         TestConstants.Patterns.WHITESPACE,
                         TestConstants.Replacements.SPACE,
-                    )
+                    ),
                 ],
                 expected=TestConstants.Strings.EMPTY,
                 description="empty string",
@@ -402,8 +404,8 @@ class StringParserTestFactory:
                 description="function",
             ),
             ObjectKeyCase(
-                object(),
-                expected_contains=["object"],
+                {},  # Empty dict - valid GeneralValueType, tests dict instance behavior
+                expected_contains=["dict", "Mapping"],
                 description="instance",
             ),
             ObjectKeyCase("test", expected_exact="test", description="string"),
@@ -413,10 +415,14 @@ class StringParserTestFactory:
                 description="no str method",
             ),
             ObjectKeyCase(
-                WithName(), expected_exact="TestName", description="with name attr"
+                WithName(),
+                expected_exact="TestName",
+                description="with name attr",
             ),
             ObjectKeyCase(
-                WithId(), expected_exact="TestId", description="with id attr"
+                WithId(),
+                expected_exact="TestId",
+                description="with id attr",
             ),
             ObjectKeyCase(
                 {"name": "DictName"},
@@ -443,7 +449,8 @@ class TestFlextUtilitiesStringParser:
         """Test parse_delimited method."""
 
         @pytest.mark.parametrize(
-            "case", StringParserTestFactory.parse_delimited_cases()
+            "case",
+            StringParserTestFactory.parse_delimited_cases(),
         )
         def test_parse_delimited(
             self,
@@ -461,19 +468,25 @@ class TestFlextUtilitiesStringParser:
                 )
             elif case.options:
                 result = parser.parse_delimited(
-                    case.text, case.delimiter, options=case.options
+                    case.text,
+                    case.delimiter,
+                    options=case.options,
                 )
             else:
                 result = parser.parse_delimited(case.text, case.delimiter)
 
             if case.expected_error:
                 TestHelpers.Assertions.assert_failure(
-                    result, case.expected_error, case.description
+                    result,
+                    case.expected_error,
+                    case.description,
                 )
             else:
                 assert case.expected is not None, "Expected value must not be None"
                 TestHelpers.Assertions.assert_success(
-                    result, case.expected, case.description
+                    result,
+                    case.expected,
+                    case.description,
                 )
 
         def test_exception_handling(self, parser: FlextUtilities.StringParser) -> None:
@@ -485,7 +498,9 @@ class TestFlextUtilitiesStringParser:
             bad_str = cast("str", bad_obj)
             result = parser.parse_delimited(bad_str, TestConstants.Delimiters.COMMA)
             TestHelpers.Assertions.assert_failure(
-                result, TestConstants.Errors.FAILED_PARSE, "exception handling"
+                result,
+                TestConstants.TestErrors.FAILED_PARSE,
+                "exception handling",
             )
 
     class TestSplitWithEscape:
@@ -499,17 +514,23 @@ class TestFlextUtilitiesStringParser:
         ) -> None:
             """Test split_on_char_with_escape with parametrized cases."""
             result = parser.split_on_char_with_escape(
-                case.text, case.split_char, escape_char=case.escape_char
+                case.text,
+                case.split_char,
+                escape_char=case.escape_char,
             )
 
             if case.expected_error:
                 TestHelpers.Assertions.assert_failure(
-                    result, case.expected_error, case.description
+                    result,
+                    case.expected_error,
+                    case.description,
                 )
             else:
                 assert case.expected is not None, "Expected value must not be None"
                 TestHelpers.Assertions.assert_success(
-                    result, case.expected, case.description
+                    result,
+                    case.expected,
+                    case.description,
                 )
 
         def test_exception_handling(self, parser: FlextUtilities.StringParser) -> None:
@@ -520,17 +541,21 @@ class TestFlextUtilitiesStringParser:
             # Type checker: cast to str to test runtime error handling
             bad_str = cast("str", bad_obj)
             result = parser.split_on_char_with_escape(
-                bad_str, TestConstants.Delimiters.COMMA
+                bad_str,
+                TestConstants.Delimiters.COMMA,
             )
             TestHelpers.Assertions.assert_failure(
-                result, TestConstants.Errors.FAILED_SPLIT, "exception handling"
+                result,
+                TestConstants.TestErrors.FAILED_SPLIT,
+                "exception handling",
             )
 
     class TestNormalizeWhitespace:
         """Test normalize_whitespace method."""
 
         @pytest.mark.parametrize(
-            "case", StringParserTestFactory.normalize_whitespace_cases()
+            "case",
+            StringParserTestFactory.normalize_whitespace_cases(),
         )
         def test_normalize_whitespace(
             self,
@@ -539,17 +564,23 @@ class TestFlextUtilitiesStringParser:
         ) -> None:
             """Test normalize_whitespace with parametrized cases."""
             result = parser.normalize_whitespace(
-                case.text, pattern=case.pattern, replacement=case.replacement
+                case.text,
+                pattern=case.pattern,
+                replacement=case.replacement,
             )
 
             if case.expected_error:
                 TestHelpers.Assertions.assert_failure(
-                    result, case.expected_error, case.description
+                    result,
+                    case.expected_error,
+                    case.description,
                 )
             else:
                 assert case.expected is not None, "Expected value must not be None"
                 TestHelpers.Assertions.assert_success(
-                    result, case.expected, case.description
+                    result,
+                    case.expected,
+                    case.description,
                 )
 
         def test_exception_handling(self, parser: FlextUtilities.StringParser) -> None:
@@ -561,7 +592,9 @@ class TestFlextUtilitiesStringParser:
             bad_str = cast("str", bad_obj)
             result = parser.normalize_whitespace(bad_str)
             TestHelpers.Assertions.assert_failure(
-                result, TestConstants.Errors.FAILED_NORMALIZE, "exception handling"
+                result,
+                TestConstants.TestErrors.FAILED_NORMALIZE,
+                "exception handling",
             )
 
     class TestRegexPipeline:
@@ -578,12 +611,16 @@ class TestFlextUtilitiesStringParser:
 
             if case.expected_error:
                 TestHelpers.Assertions.assert_failure(
-                    result, case.expected_error, case.description
+                    result,
+                    case.expected_error,
+                    case.description,
                 )
             else:
                 assert case.expected is not None, "Expected value must not be None"
                 TestHelpers.Assertions.assert_success(
-                    result, case.expected, case.description
+                    result,
+                    case.expected,
+                    case.description,
                 )
 
         def test_exception_handling(self, parser: FlextUtilities.StringParser) -> None:
@@ -592,21 +629,25 @@ class TestFlextUtilitiesStringParser:
             # Type checker: cast to bypass type checking for runtime error testing
             invalid_pattern = cast("tuple[str, str]", (None, "replacement"))
             patterns: list[tuple[str, str] | tuple[str, str, int]] = [
-                invalid_pattern
+                invalid_pattern,
             ]  # Runtime allows this
             result = parser.apply_regex_pipeline("test", patterns)
             TestHelpers.Assertions.assert_failure(
-                result, TestConstants.Errors.FAILED_PIPELINE, "exception handling"
+                result,
+                TestConstants.TestErrors.FAILED_PIPELINE,
+                "exception handling",
             )
 
         def test_invalid_pattern(self, parser: FlextUtilities.StringParser) -> None:
             """Test pipeline with invalid regex pattern."""
             patterns: list[tuple[str, str] | tuple[str, str, int]] = [
-                (r"[invalid", "replacement")
+                (r"[invalid", "replacement"),
             ]
             result = parser.apply_regex_pipeline("test", patterns)
             TestHelpers.Assertions.assert_failure(
-                result, TestConstants.Errors.INVALID_REGEX, "invalid pattern"
+                result,
+                TestConstants.TestErrors.INVALID_REGEX,
+                "invalid pattern",
             )
 
         def test_none_text(self, parser: FlextUtilities.StringParser) -> None:

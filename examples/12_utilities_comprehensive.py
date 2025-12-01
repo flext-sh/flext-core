@@ -259,7 +259,7 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
         validation_result = cast(
             "FlextResult[dict[str, object]]",
             FlextResult[dict[str, object]].create_from_callable(
-                risky_validation_operation
+                risky_validation_operation,
             ),
         )
         if validation_result.is_success:
@@ -326,7 +326,7 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
                 return FlextResult[object].fail(
-                    result.error or "Email validation failed"
+                    result.error or "Email validation failed",
                 )
             return FlextResult[object].fail("Invalid input")
 
@@ -336,7 +336,7 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
                 return FlextResult[object].fail(
-                    result.error or "Hostname validation failed"
+                    result.error or "Hostname validation failed",
                 )
             return FlextResult[object].fail("Invalid input")
 

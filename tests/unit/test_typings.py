@@ -98,50 +98,89 @@ class TypeScenarios:
         TypeVarTestCase("T3_co", TypeVarCategory.COVARIANT, T3_co, True),
         TypeVarTestCase("TState_co", TypeVarCategory.COVARIANT, TState_co, True),
         TypeVarTestCase(
-            "TAggregate_co", TypeVarCategory.COVARIANT, TAggregate_co, True
+            "TAggregate_co",
+            TypeVarCategory.COVARIANT,
+            TAggregate_co,
+            True,
         ),
         TypeVarTestCase(
-            "TCacheValue_co", TypeVarCategory.COVARIANT, TCacheValue_co, True
+            "TCacheValue_co",
+            TypeVarCategory.COVARIANT,
+            TCacheValue_co,
+            True,
         ),
         TypeVarTestCase(
-            "TDomainEvent_co", TypeVarCategory.COVARIANT, TDomainEvent_co, True
+            "TDomainEvent_co",
+            TypeVarCategory.COVARIANT,
+            TDomainEvent_co,
+            True,
         ),
         TypeVarTestCase("TEntity_co", TypeVarCategory.COVARIANT, TEntity_co, True),
         TypeVarTestCase("TResult_co", TypeVarCategory.COVARIANT, TResult_co, True),
         TypeVarTestCase("TValue_co", TypeVarCategory.COVARIANT, TValue_co, True),
         TypeVarTestCase(
-            "TValueObject_co", TypeVarCategory.COVARIANT, TValueObject_co, True
+            "TValueObject_co",
+            TypeVarCategory.COVARIANT,
+            TValueObject_co,
+            True,
         ),
     ]
 
     CONTRAVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
         TypeVarTestCase("T_contra", TypeVarCategory.CONTRAVARIANT, T_contra, True),
         TypeVarTestCase(
-            "TCommand_contra", TypeVarCategory.CONTRAVARIANT, TCommand_contra, True
+            "TCommand_contra",
+            TypeVarCategory.CONTRAVARIANT,
+            TCommand_contra,
+            True,
         ),
         TypeVarTestCase(
-            "TEvent_contra", TypeVarCategory.CONTRAVARIANT, TEvent_contra, True
+            "TEvent_contra",
+            TypeVarCategory.CONTRAVARIANT,
+            TEvent_contra,
+            True,
         ),
         TypeVarTestCase(
-            "TInput_contra", TypeVarCategory.CONTRAVARIANT, TInput_contra, True
+            "TInput_contra",
+            TypeVarCategory.CONTRAVARIANT,
+            TInput_contra,
+            True,
         ),
         TypeVarTestCase(
-            "TQuery_contra", TypeVarCategory.CONTRAVARIANT, TQuery_contra, True
+            "TQuery_contra",
+            TypeVarCategory.CONTRAVARIANT,
+            TQuery_contra,
+            True,
         ),
         TypeVarTestCase(
-            "TItem_contra", TypeVarCategory.CONTRAVARIANT, TItem_contra, True
+            "TItem_contra",
+            TypeVarCategory.CONTRAVARIANT,
+            TItem_contra,
+            True,
         ),
         TypeVarTestCase(
-            "TResult_contra", TypeVarCategory.CONTRAVARIANT, TResult_contra, True
+            "TResult_contra",
+            TypeVarCategory.CONTRAVARIANT,
+            TResult_contra,
+            True,
         ),
         TypeVarTestCase(
-            "TUtil_contra", TypeVarCategory.CONTRAVARIANT, TUtil_contra, True
+            "TUtil_contra",
+            TypeVarCategory.CONTRAVARIANT,
+            TUtil_contra,
+            True,
         ),
         TypeVarTestCase(
-            "TCacheKey_contra", TypeVarCategory.CONTRAVARIANT, TCacheKey_contra, True
+            "TCacheKey_contra",
+            TypeVarCategory.CONTRAVARIANT,
+            TCacheKey_contra,
+            True,
         ),
         TypeVarTestCase(
-            "TConfigKey_contra", TypeVarCategory.CONTRAVARIANT, TConfigKey_contra, True
+            "TConfigKey_contra",
+            TypeVarCategory.CONTRAVARIANT,
+            TConfigKey_contra,
+            True,
         ),
     ]
 
@@ -166,7 +205,9 @@ class TestFlextTypings:
     """Unified test suite for FlextTypes and type system using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "test_case", TypeScenarios.CORE_TYPEVARS, ids=lambda tc: tc.name
+        "test_case",
+        TypeScenarios.CORE_TYPEVARS,
+        ids=lambda tc: tc.name,
     )
     def test_core_typevars(self, test_case: TypeVarTestCase) -> None:
         """Test core TypeVar definitions are properly exported."""
@@ -175,7 +216,9 @@ class TestFlextTypings:
             assert TypeScenarios.is_typevar(test_case.type_var)
 
     @pytest.mark.parametrize(
-        "test_case", TypeScenarios.COVARIANT_TYPEVARS, ids=lambda tc: tc.name
+        "test_case",
+        TypeScenarios.COVARIANT_TYPEVARS,
+        ids=lambda tc: tc.name,
     )
     def test_covariant_typevars(self, test_case: TypeVarTestCase) -> None:
         """Test covariant TypeVar definitions are properly exported."""
@@ -184,7 +227,9 @@ class TestFlextTypings:
             assert TypeScenarios.is_typevar(test_case.type_var)
 
     @pytest.mark.parametrize(
-        "test_case", TypeScenarios.CONTRAVARIANT_TYPEVARS, ids=lambda tc: tc.name
+        "test_case",
+        TypeScenarios.CONTRAVARIANT_TYPEVARS,
+        ids=lambda tc: tc.name,
     )
     def test_contravariant_typevars(self, test_case: TypeVarTestCase) -> None:
         """Test contravariant TypeVar definitions are properly exported."""
@@ -193,7 +238,9 @@ class TestFlextTypings:
             assert TypeScenarios.is_typevar(test_case.type_var)
 
     @pytest.mark.parametrize(
-        "test_case", TypeScenarios.CQRS_ALIASES, ids=lambda tc: tc.name
+        "test_case",
+        TypeScenarios.CQRS_ALIASES,
+        ids=lambda tc: tc.name,
     )
     def test_cqrs_aliases(self, test_case: TypeVarTestCase) -> None:
         """Test CQRS type aliases are properly defined."""
@@ -201,7 +248,9 @@ class TestFlextTypings:
             assert test_case.type_var is not None
 
     @pytest.mark.parametrize(
-        "test_case", TypeScenarios.PARAMSPEC_ITEMS, ids=lambda tc: tc.name
+        "test_case",
+        TypeScenarios.PARAMSPEC_ITEMS,
+        ids=lambda tc: tc.name,
     )
     def test_paramspec(self, test_case: TypeVarTestCase) -> None:
         """Test ParamSpec is properly defined and exported."""

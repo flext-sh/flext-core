@@ -28,6 +28,7 @@ from typing import ClassVar
 import pytest
 
 from flext_core import FlextExceptions, FlextResult, FlextUtilities
+from flext_core.typings import FlextTypes
 
 # =========================================================================
 # Test Data and Scenarios
@@ -155,32 +156,33 @@ class UtilityScenarios:
     ) -> object:
         """Create mock config object."""
 
-        class MockConfig:
-            def model_dump(self) -> dict[str, object]:
+        class TestConfig:
+            def model_dump(self) -> FlextTypes.Types.ConfigurationMapping:
+
                 return kwargs
 
-        return MockConfig()
+        return TestConfig()
 
     @staticmethod
     def create_mock_cached_object() -> object:
         """Create mock object with cache attributes."""
 
-        class MockCachedObject:
+        class TestCachedObject:
             def __init__(self) -> None:
-                self._cache: dict[str, object] = {"key": "value"}
+                self._cache: FlextTypes.Types.ConfigurationMapping = {"key": "value"}
                 self._simple_cache: str = "cached_value"
 
-        return MockCachedObject()
+        return TestCachedObject()
 
     @staticmethod
     def create_mock_uncached_object() -> object:
         """Create mock object without cache attributes."""
 
-        class MockObject:
+        class TestUncachedObject:
             def __init__(self) -> None:
                 pass
 
-        return MockObject()
+        return TestUncachedObject()
 
     @staticmethod
     def create_custom_object() -> object:
@@ -276,7 +278,8 @@ class TestFlextUtilities:
         assert id1 != id2
 
     @pytest.mark.parametrize(
-        ("method_name", "prefix"), UtilityScenarios.ID_GENERATOR_CASES
+        ("method_name", "prefix"),
+        UtilityScenarios.ID_GENERATOR_CASES,
     )
     def test_generators(self, method_name: str, prefix: str | None) -> None:
         """Test various ID and timestamp generators."""
@@ -330,7 +333,9 @@ class TestFlextUtilities:
         UtilityScenarios.CACHE_NORMALIZATION_CASES,
     )
     def test_cache_normalize_component(
-        self, input_data: object, expected_type: type
+        self,
+        input_data: object,
+        expected_type: type,
     ) -> None:
         """Test cache component normalization."""
         result = FlextUtilities.Cache.normalize_component(input_data)

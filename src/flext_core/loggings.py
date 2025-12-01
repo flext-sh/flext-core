@@ -520,8 +520,8 @@ class FlextLogger:
             result = FlextResult[bool].fail(f"Logging failed: {e}")
         return result if return_result else None
 
+    @staticmethod
     def _format_log_message(
-        self,
         message: str,
         *args: FlextTypes.Logging.LoggingArgType,
     ) -> str:
@@ -531,7 +531,8 @@ class FlextLogger:
         except (TypeError, ValueError):
             return f"{message} | args={args!r}"
 
-    def _get_calling_frame(self) -> types.FrameType | None:
+    @staticmethod
+    def _get_calling_frame() -> types.FrameType | None:
         """Get the calling frame 4 levels up the stack."""
         frame = inspect.currentframe()
         if not frame:
@@ -542,7 +543,8 @@ class FlextLogger:
                 return None
         return frame
 
-    def _extract_class_name(self, frame: types.FrameType) -> str | None:
+    @staticmethod
+    def _extract_class_name(frame: types.FrameType) -> str | None:
         """Extract class name from frame locals or qualname."""
         # Check 'self' in locals
         if "self" in frame.f_locals:
@@ -562,19 +564,20 @@ class FlextLogger:
                         return potential_class
         return None
 
-    def _get_caller_source_path(self) -> str | None:
+    @staticmethod
+    def _get_caller_source_path() -> str | None:
         """Get source file path with line, class and method context."""
         try:
-            caller_frame = self._get_calling_frame()
+            caller_frame = FlextLogger._get_calling_frame()
             if not caller_frame:
                 return None
 
             filename = caller_frame.f_code.co_filename
-            file_path = self._convert_to_relative_path(filename)
+            file_path = FlextLogger._convert_to_relative_path(filename)
             line_number = caller_frame.f_lineno + 1
 
             method_name = caller_frame.f_code.co_name
-            class_name = self._extract_class_name(caller_frame)
+            class_name = FlextLogger._extract_class_name(caller_frame)
 
             # Build source parts using conditional mapping
             source_parts = [f"{file_path}:{line_number}"]
@@ -587,11 +590,12 @@ class FlextLogger:
         except Exception:
             return None
 
-    def _convert_to_relative_path(self, filename: str) -> str:
+    @staticmethod
+    def _convert_to_relative_path(filename: str) -> str:
         """Convert absolute path to relative path from workspace root."""
         try:
             abs_path = Path(filename).resolve()
-            workspace_root = self._find_workspace_root(abs_path)
+            workspace_root = FlextLogger._find_workspace_root(abs_path)
 
             if workspace_root:
                 try:
@@ -602,7 +606,8 @@ class FlextLogger:
         except Exception:
             return Path(filename).name
 
-    def _find_workspace_root(self, abs_path: Path) -> Path | None:
+    @staticmethod
+    def _find_workspace_root(abs_path: Path) -> Path | None:
         """Find workspace root by looking for common markers."""
         current = abs_path.parent
         markers = ["pyproject.toml", ".git", "poetry.lock"]
@@ -624,11 +629,11 @@ class FlextLogger:
     ) -> FlextResult[bool]:
         """Internal logging method - consolidates all log level methods."""
         try:
-            formatted_message = self._format_log_message(message, *args)
+            formatted_message = FlextLogger._format_log_message(message, *args)
 
             # Auto-add source if not provided
             if "source" not in context and (
-                source_path := self._get_caller_source_path()
+                source_path := FlextLogger._get_caller_source_path()
             ):
                 context["source"] = source_path
 
@@ -944,14 +949,16 @@ class FlextLogger:
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(str(e))
 
-    def start_tracking(self, _operation: str) -> FlextResult[bool]:
+    @staticmethod
+    def start_tracking(_operation: str) -> FlextResult[bool]:
         """Start tracking operation (PerformanceTracker protocol)."""
         try:
             return FlextResult[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[bool].fail(str(e))
 
-    def stop_tracking(self, _operation: str) -> FlextResult[float]:
+    @staticmethod
+    def stop_tracking(_operation: str) -> FlextResult[float]:
         """Stop tracking operation (PerformanceTracker protocol)."""
         return FlextResult[float].ok(0.0)
 

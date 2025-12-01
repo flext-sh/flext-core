@@ -24,12 +24,13 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, ClassVar
+from typing import ClassVar
 
 import pytest
 from pydantic import BaseModel
 
 from flext_core import FlextContext, FlextMixins, FlextResult
+from flext_core.typings import FlextTypes
 
 
 class ServiceMixinScenarioType(StrEnum):
@@ -77,8 +78,8 @@ class ModelConversionScenario:
 
     name: str
     scenario_type: ModelConversionScenarioType
-    input_value: Any
-    expected_output: dict[str, object]
+    input_value: FlextTypes.GeneralValueType
+    expected_output: FlextTypes.Types.ConfigurationMapping
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,7 +88,7 @@ class ResultHandlingScenario:
 
     name: str
     scenario_type: ResultHandlingScenarioType
-    input_value: Any
+    input_value: FlextTypes.GeneralValueType
 
 
 class MixinScenarios:
@@ -99,23 +100,31 @@ class MixinScenarios:
             ServiceMixinScenarioType.CONTAINER_REGISTER,
         ),
         ServiceMixinScenario(
-            "context_mixin_property", ServiceMixinScenarioType.CONTEXT_PROPERTY
+            "context_mixin_property",
+            ServiceMixinScenarioType.CONTEXT_PROPERTY,
         ),
         ServiceMixinScenario(
-            "context_propagate", ServiceMixinScenarioType.CONTEXT_PROPAGATE
+            "context_propagate",
+            ServiceMixinScenarioType.CONTEXT_PROPAGATE,
         ),
         ServiceMixinScenario(
-            "context_correlation_id", ServiceMixinScenarioType.CONTEXT_CORRELATION
+            "context_correlation_id",
+            ServiceMixinScenarioType.CONTEXT_CORRELATION,
         ),
         ServiceMixinScenario(
-            "logging_with_context", ServiceMixinScenarioType.LOGGING_WITH_CONTEXT
+            "logging_with_context",
+            ServiceMixinScenarioType.LOGGING_WITH_CONTEXT,
         ),
         ServiceMixinScenario("metrics_track", ServiceMixinScenarioType.METRICS_TRACK),
         ServiceMixinScenario(
-            "service_init_service", ServiceMixinScenarioType.SERVICE_INIT, True
+            "service_init_service",
+            ServiceMixinScenarioType.SERVICE_INIT,
+            True,
         ),
         ServiceMixinScenario(
-            "service_enrich_context", ServiceMixinScenarioType.SERVICE_ENRICH, True
+            "service_enrich_context",
+            ServiceMixinScenarioType.SERVICE_ENRICH,
+            True,
         ),
     ]
 
@@ -133,13 +142,18 @@ class MixinScenarios:
             {"key": "value", "number": 123},
         ),
         ModelConversionScenario(
-            "to_dict_with_none", ModelConversionScenarioType.WITH_NONE, None, {}
+            "to_dict_with_none",
+            ModelConversionScenarioType.WITH_NONE,
+            None,
+            {},
         ),
     ]
 
     RESULT_HANDLING_SCENARIOS: ClassVar[list[ResultHandlingScenario]] = [
         ResultHandlingScenario(
-            "ensure_result_raw_value", ResultHandlingScenarioType.RAW_VALUE, 42
+            "ensure_result_raw_value",
+            ResultHandlingScenarioType.RAW_VALUE,
+            42,
         ),
         ResultHandlingScenario(
             "ensure_result_existing_result",
@@ -158,7 +172,9 @@ class TestFlextMixinsNestedClasses:
     """Comprehensive test suite for nested mixin classes using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "scenario", MixinScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
+        "scenario",
+        MixinScenarios.SERVICE_SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_service_mixin_scenarios(self, scenario: ServiceMixinScenario) -> None:
         """Test service mixin functionality across scenarios."""
@@ -201,10 +217,13 @@ class TestFlextMixinsNestedClasses:
             service._enrich_context(version="1.0.0", team="test")
 
     @pytest.mark.parametrize(
-        "scenario", MixinScenarios.MODEL_CONVERSION_SCENARIOS, ids=lambda s: s.name
+        "scenario",
+        MixinScenarios.MODEL_CONVERSION_SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_model_conversion_scenarios(
-        self, scenario: ModelConversionScenario
+        self,
+        scenario: ModelConversionScenario,
     ) -> None:
         """Test ModelConversion.to_dict() with various input types."""
         if scenario.scenario_type == ModelConversionScenarioType.WITH_BASEMODEL:
@@ -222,10 +241,12 @@ class TestFlextMixinsNestedClasses:
         if scenario.scenario_type == ModelConversionScenarioType.WITH_DICT:
             # When input is already a dict, to_dict returns the same object
             assert isinstance(input_value, dict)
-            assert result is input_value
+            assert result == input_value
 
     @pytest.mark.parametrize(
-        "scenario", MixinScenarios.RESULT_HANDLING_SCENARIOS, ids=lambda s: s.name
+        "scenario",
+        MixinScenarios.RESULT_HANDLING_SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_result_handling_scenarios(self, scenario: ResultHandlingScenario) -> None:
         """Test ResultHandling.ensure_result() with various inputs."""

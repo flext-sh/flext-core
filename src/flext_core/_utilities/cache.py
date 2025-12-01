@@ -11,8 +11,9 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Sequence
 
+from pydantic import BaseModel
+
 from flext_core.constants import FlextConstants
-from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime, StructlogLogger
 from flext_core.typings import FlextTypes
 
@@ -33,7 +34,7 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def normalize_component(
-        component: object,
+        component: FlextTypes.GeneralValueType | BaseModel,
     ) -> FlextTypes.GeneralValueType:
         """Normalize a component for consistent representation."""
         if FlextRuntime.is_dict_like(component):
@@ -85,6 +86,8 @@ class FlextUtilitiesCache:
         obj: FlextTypes.Utility.CachedObjectType,
     ) -> FlextResult[bool]:
         """Clear any caches on an object."""
+        from flext_core.result import FlextResult
+
         try:
             # Common cache attribute names to check and clear
             cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES

@@ -27,6 +27,7 @@ from typing import ClassVar
 import pytest
 
 from flext_core import FlextProtocols, FlextResult
+from flext_core.typings import FlextTypes
 
 
 class ProtocolCategoryType(StrEnum):
@@ -73,25 +74,39 @@ class ProtocolScenarios:
             ProtocolCategoryType.FOUNDATION,
         ),
         ProtocolDefinitionScenario(
-            "has_model_dump_protocol", "HasModelDump", ProtocolCategoryType.FOUNDATION
+            "has_model_dump_protocol",
+            "HasModelDump",
+            ProtocolCategoryType.FOUNDATION,
         ),
         ProtocolDefinitionScenario(
-            "repository_protocol", "Repository", ProtocolCategoryType.DOMAIN
+            "repository_protocol",
+            "Repository",
+            ProtocolCategoryType.DOMAIN,
         ),
         ProtocolDefinitionScenario(
-            "service_protocol", "Service", ProtocolCategoryType.DOMAIN
+            "service_protocol",
+            "Service",
+            ProtocolCategoryType.DOMAIN,
         ),
         ProtocolDefinitionScenario(
-            "configurable_protocol", "Configurable", ProtocolCategoryType.INFRASTRUCTURE
+            "configurable_protocol",
+            "Configurable",
+            ProtocolCategoryType.INFRASTRUCTURE,
         ),
         ProtocolDefinitionScenario(
-            "handler_protocol", "Handler", ProtocolCategoryType.APPLICATION
+            "handler_protocol",
+            "Handler",
+            ProtocolCategoryType.APPLICATION,
         ),
         ProtocolDefinitionScenario(
-            "command_bus_protocol", "CommandBus", ProtocolCategoryType.COMMANDS
+            "command_bus_protocol",
+            "CommandBus",
+            ProtocolCategoryType.COMMANDS,
         ),
         ProtocolDefinitionScenario(
-            "middleware_protocol", "Middleware", ProtocolCategoryType.COMMANDS
+            "middleware_protocol",
+            "Middleware",
+            ProtocolCategoryType.COMMANDS,
         ),
     ]
 
@@ -133,21 +148,27 @@ class TestFlextProtocols:
     """Comprehensive test suite for FlextProtocols using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "scenario", ProtocolScenarios.DEFINITION_SCENARIOS, ids=lambda s: s.name
+        "scenario",
+        ProtocolScenarios.DEFINITION_SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_protocol_definition(self, scenario: ProtocolDefinitionScenario) -> None:
         """Test protocol definitions are accessible and valid."""
         protocol = getattr(FlextProtocols, scenario.protocol_name)
         assert protocol is not None
         assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol, "__annotations__"
+            protocol,
+            "__annotations__",
         )
 
     @pytest.mark.parametrize(
-        "scenario", ProtocolScenarios.AVAILABILITY_SCENARIOS, ids=lambda s: s.name
+        "scenario",
+        ProtocolScenarios.AVAILABILITY_SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_protocol_availability(
-        self, scenario: ProtocolAvailabilityScenario
+        self,
+        scenario: ProtocolAvailabilityScenario,
     ) -> None:
         """Test that protocols are available by category."""
         for proto_name in scenario.protocol_names:
@@ -175,14 +196,18 @@ class TestFlextProtocols:
         class UserRepository:
             """Repository for user entities."""
 
-            def find_by_id(self, entity_id: str) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok({
+            def find_by_id(
+                self, entity_id: str
+            ) -> FlextResult[FlextTypes.Types.ConfigurationMapping]:
+                return FlextResult[FlextTypes.Types.ConfigurationMapping].ok({
                     "id": entity_id,
                     "name": "Test",
                 })
 
-            def save(self, entity: dict[str, object]) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok(entity)
+            def save(
+                self, entity: FlextTypes.Types.ConfigurationMapping
+            ) -> FlextResult[FlextTypes.Types.ConfigurationMapping]:
+                return FlextResult[FlextTypes.Types.ConfigurationMapping].ok(entity)
 
             def delete(self, entity_id: str) -> FlextResult[bool]:
                 return FlextResult[bool].ok(True)
@@ -196,8 +221,10 @@ class TestFlextProtocols:
         class UserService:
             """Service for user operations."""
 
-            def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok({"status": "success"})
+            def execute(self) -> FlextResult[FlextTypes.Types.ConfigurationMapping]:
+                return FlextResult[FlextTypes.Types.ConfigurationMapping].ok({
+                    "status": "success"
+                })
 
         service = UserService()
         result = service.execute()
@@ -210,9 +237,12 @@ class TestFlextProtocols:
             """Handler for user creation."""
 
             def handle(
-                self, command: dict[str, object]
-            ) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok({"user_id": "123"})
+                self,
+                command: FlextTypes.Types.ConfigurationMapping,
+            ) -> FlextResult[FlextTypes.Types.ConfigurationMapping]:
+                return FlextResult[FlextTypes.Types.ConfigurationMapping].ok({
+                    "user_id": "123"
+                })
 
         handler = CreateUserHandler()
         result = handler.handle({"name": "Test"})
@@ -224,13 +254,14 @@ class TestFlextProtocols:
         class AdvancedService:
             """Service implementing multiple protocols."""
 
-            def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok({})
+            def execute(self) -> FlextResult[FlextTypes.Types.ConfigurationMapping]:
+                return FlextResult[FlextTypes.Types.ConfigurationMapping].ok({})
 
             def handle(
-                self, command: dict[str, object]
-            ) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok({})
+                self,
+                command: FlextTypes.Types.ConfigurationMapping,
+            ) -> FlextResult[FlextTypes.Types.ConfigurationMapping]:
+                return FlextResult[FlextTypes.Types.ConfigurationMapping].ok({})
 
         service = AdvancedService()
         assert all(hasattr(service, m) for m in ["execute", "handle"])

@@ -118,7 +118,10 @@ class RuntimeScenarios:
             True,
         ),
         RuntimeTestCase(
-            "phone_invalid_too_short", RuntimeOperationType.PHONE_INVALID, "123", False
+            "phone_invalid_too_short",
+            RuntimeOperationType.PHONE_INVALID,
+            "123",
+            False,
         ),
         RuntimeTestCase(
             "phone_invalid_letters",
@@ -133,7 +136,10 @@ class RuntimeScenarios:
             False,
         ),
         RuntimeTestCase(
-            "phone_invalid_empty", RuntimeOperationType.PHONE_INVALID, "", False
+            "phone_invalid_empty",
+            RuntimeOperationType.PHONE_INVALID,
+            "",
+            False,
         ),
         RuntimeTestCase(
             "phone_non_string_int",
@@ -142,13 +148,19 @@ class RuntimeScenarios:
             False,
         ),
         RuntimeTestCase(
-            "phone_non_string_none", RuntimeOperationType.PHONE_NON_STRING, None, False
+            "phone_non_string_none",
+            RuntimeOperationType.PHONE_NON_STRING,
+            None,
+            False,
         ),
     ]
 
     DICT_LIKE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
-            "dict_like_empty", RuntimeOperationType.DICT_LIKE_VALID, {}, True
+            "dict_like_empty",
+            RuntimeOperationType.DICT_LIKE_VALID,
+            {},
+            True,
         ),
         RuntimeTestCase(
             "dict_like_single_key",
@@ -163,7 +175,10 @@ class RuntimeScenarios:
             True,
         ),
         RuntimeTestCase(
-            "dict_like_invalid_list", RuntimeOperationType.DICT_LIKE_INVALID, [], False
+            "dict_like_invalid_list",
+            RuntimeOperationType.DICT_LIKE_INVALID,
+            [],
+            False,
         ),
         RuntimeTestCase(
             "dict_like_invalid_string",
@@ -172,7 +187,10 @@ class RuntimeScenarios:
             False,
         ),
         RuntimeTestCase(
-            "dict_like_invalid_int", RuntimeOperationType.DICT_LIKE_INVALID, 123, False
+            "dict_like_invalid_int",
+            RuntimeOperationType.DICT_LIKE_INVALID,
+            123,
+            False,
         ),
         RuntimeTestCase(
             "dict_like_invalid_none",
@@ -184,10 +202,16 @@ class RuntimeScenarios:
 
     LIST_LIKE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
-            "list_like_empty", RuntimeOperationType.LIST_LIKE_VALID, [], True
+            "list_like_empty",
+            RuntimeOperationType.LIST_LIKE_VALID,
+            [],
+            True,
         ),
         RuntimeTestCase(
-            "list_like_integers", RuntimeOperationType.LIST_LIKE_VALID, [1, 2, 3], True
+            "list_like_integers",
+            RuntimeOperationType.LIST_LIKE_VALID,
+            [1, 2, 3],
+            True,
         ),
         RuntimeTestCase(
             "list_like_strings",
@@ -196,7 +220,10 @@ class RuntimeScenarios:
             True,
         ),
         RuntimeTestCase(
-            "list_like_invalid_dict", RuntimeOperationType.LIST_LIKE_INVALID, {}, False
+            "list_like_invalid_dict",
+            RuntimeOperationType.LIST_LIKE_INVALID,
+            {},
+            False,
         ),
         RuntimeTestCase(
             "list_like_invalid_string",
@@ -205,7 +232,10 @@ class RuntimeScenarios:
             False,
         ),
         RuntimeTestCase(
-            "list_like_invalid_int", RuntimeOperationType.LIST_LIKE_INVALID, 123, False
+            "list_like_invalid_int",
+            RuntimeOperationType.LIST_LIKE_INVALID,
+            123,
+            False,
         ),
         RuntimeTestCase(
             "list_like_invalid_none",
@@ -223,16 +253,28 @@ class RuntimeScenarios:
             True,
         ),
         RuntimeTestCase(
-            "json_valid_empty_array", RuntimeOperationType.JSON_VALID, "[]", True
+            "json_valid_empty_array",
+            RuntimeOperationType.JSON_VALID,
+            "[]",
+            True,
         ),
         RuntimeTestCase(
-            "json_valid_array", RuntimeOperationType.JSON_VALID, "[1, 2, 3]", True
+            "json_valid_array",
+            RuntimeOperationType.JSON_VALID,
+            "[1, 2, 3]",
+            True,
         ),
         RuntimeTestCase(
-            "json_valid_string", RuntimeOperationType.JSON_VALID, '"string"', True
+            "json_valid_string",
+            RuntimeOperationType.JSON_VALID,
+            '"string"',
+            True,
         ),
         RuntimeTestCase(
-            "json_valid_null", RuntimeOperationType.JSON_VALID, "null", True
+            "json_valid_null",
+            RuntimeOperationType.JSON_VALID,
+            "null",
+            True,
         ),
         RuntimeTestCase(
             "json_invalid_plain_text",
@@ -247,7 +289,10 @@ class RuntimeScenarios:
             False,
         ),
         RuntimeTestCase(
-            "json_invalid_empty", RuntimeOperationType.JSON_INVALID, "", False
+            "json_invalid_empty",
+            RuntimeOperationType.JSON_INVALID,
+            "",
+            False,
         ),
         RuntimeTestCase(
             "json_non_string_dict",
@@ -262,7 +307,10 @@ class RuntimeScenarios:
             False,
         ),
         RuntimeTestCase(
-            "json_non_string_none", RuntimeOperationType.JSON_NON_STRING, None, False
+            "json_non_string_none",
+            RuntimeOperationType.JSON_NON_STRING,
+            None,
+            False,
         ),
     ]
 
@@ -436,7 +484,10 @@ class RuntimeScenarios:
 
     LIBRARY_ACCESS_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
-            "structlog_module", RuntimeOperationType.STRUCTLOG_MODULE, None, structlog
+            "structlog_module",
+            RuntimeOperationType.STRUCTLOG_MODULE,
+            None,
+            structlog,
         ),
         RuntimeTestCase(
             "dependency_providers",
@@ -492,10 +543,12 @@ class RuntimeScenarios:
 
     INTEGRATION_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
-            "constants_patterns", RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS
+            "constants_patterns",
+            RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS,
         ),
         RuntimeTestCase(
-            "layer_hierarchy", RuntimeOperationType.INTEGRATION_LAYER_HIERARCHY
+            "layer_hierarchy",
+            RuntimeOperationType.INTEGRATION_LAYER_HIERARCHY,
         ),
         RuntimeTestCase(
             "track_service_resolution_success",
@@ -537,7 +590,9 @@ class TestFlextRuntime:
     """Unified test suite for FlextRuntime using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "test_case", RuntimeScenarios.PHONE_SCENARIOS, ids=lambda tc: tc.name
+        "test_case",
+        RuntimeScenarios.PHONE_SCENARIOS,
+        ids=lambda tc: tc.name,
     )
     def test_phone_validation(self, test_case: RuntimeTestCase) -> None:
         """Test phone number validation."""
@@ -545,7 +600,9 @@ class TestFlextRuntime:
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
-        "test_case", RuntimeScenarios.DICT_LIKE_SCENARIOS, ids=lambda tc: tc.name
+        "test_case",
+        RuntimeScenarios.DICT_LIKE_SCENARIOS,
+        ids=lambda tc: tc.name,
     )
     def test_dict_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test dict-like object validation."""
@@ -553,7 +610,9 @@ class TestFlextRuntime:
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
-        "test_case", RuntimeScenarios.LIST_LIKE_SCENARIOS, ids=lambda tc: tc.name
+        "test_case",
+        RuntimeScenarios.LIST_LIKE_SCENARIOS,
+        ids=lambda tc: tc.name,
     )
     def test_list_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test list-like object validation."""
@@ -561,7 +620,9 @@ class TestFlextRuntime:
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
-        "test_case", RuntimeScenarios.JSON_SCENARIOS, ids=lambda tc: tc.name
+        "test_case",
+        RuntimeScenarios.JSON_SCENARIOS,
+        ids=lambda tc: tc.name,
     )
     def test_json_validation(self, test_case: RuntimeTestCase) -> None:
         """Test JSON string validation."""
@@ -569,7 +630,9 @@ class TestFlextRuntime:
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
-        "test_case", RuntimeScenarios.IDENTIFIER_SCENARIOS, ids=lambda tc: tc.name
+        "test_case",
+        RuntimeScenarios.IDENTIFIER_SCENARIOS,
+        ids=lambda tc: tc.name,
     )
     def test_identifier_validation(self, test_case: RuntimeTestCase) -> None:
         """Test Python identifier validation."""
@@ -577,7 +640,9 @@ class TestFlextRuntime:
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
-        "test_case", RuntimeScenarios.SERIALIZATION_SCENARIOS, ids=lambda tc: tc.name
+        "test_case",
+        RuntimeScenarios.SERIALIZATION_SCENARIOS,
+        ids=lambda tc: tc.name,
     )
     def test_safe_get_attribute(self, test_case: RuntimeTestCase) -> None:
         """Test safe attribute retrieval."""
@@ -597,7 +662,9 @@ class TestFlextRuntime:
                 pass
 
             result = FlextRuntime.safe_get_attribute(
-                TestObjDefault(), "missing", "default"
+                TestObjDefault(),
+                "missing",
+                "default",
             )
             assert result == "default"
         elif (
@@ -612,7 +679,9 @@ class TestFlextRuntime:
             assert result is None
 
     @pytest.mark.parametrize(
-        "test_case", RuntimeScenarios.GENERIC_ARGS_SCENARIOS, ids=lambda tc: tc.name
+        "test_case",
+        RuntimeScenarios.GENERIC_ARGS_SCENARIOS,
+        ids=lambda tc: tc.name,
     )
     def test_extract_generic_args(self, test_case: RuntimeTestCase) -> None:
         """Test extraction of generic type arguments."""
@@ -620,7 +689,9 @@ class TestFlextRuntime:
         assert args == test_case.expected_result
 
     @pytest.mark.parametrize(
-        "test_case", RuntimeScenarios.SEQUENCE_TYPE_SCENARIOS, ids=lambda tc: tc.name
+        "test_case",
+        RuntimeScenarios.SEQUENCE_TYPE_SCENARIOS,
+        ids=lambda tc: tc.name,
     )
     def test_sequence_type_detection(self, test_case: RuntimeTestCase) -> None:
         """Test sequence type detection."""
@@ -628,7 +699,9 @@ class TestFlextRuntime:
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
-        "test_case", RuntimeScenarios.LIBRARY_ACCESS_SCENARIOS, ids=lambda tc: tc.name
+        "test_case",
+        RuntimeScenarios.LIBRARY_ACCESS_SCENARIOS,
+        ids=lambda tc: tc.name,
     )
     def test_external_library_access(self, test_case: RuntimeTestCase) -> None:
         """Test external library access."""
@@ -646,7 +719,9 @@ class TestFlextRuntime:
             assert hasattr(module, "DeclarativeContainer")
 
     @pytest.mark.parametrize(
-        "test_case", RuntimeScenarios.STRUCTLOG_CONFIG_SCENARIOS, ids=lambda tc: tc.name
+        "test_case",
+        RuntimeScenarios.STRUCTLOG_CONFIG_SCENARIOS,
+        ids=lambda tc: tc.name,
     )
     def test_structlog_configuration(self, test_case: RuntimeTestCase) -> None:
         """Test structlog configuration."""
@@ -674,7 +749,9 @@ class TestFlextRuntime:
         ):
 
             def custom_processor(
-                logger: object, method_name: str, event_dict: dict[str, object]
+                logger: object,
+                method_name: str,
+                event_dict: dict[str, object],
             ) -> dict[str, object]:
                 event_dict["custom"] = True
                 return event_dict
@@ -687,7 +764,9 @@ class TestFlextRuntime:
             assert FlextRuntime._structlog_configured is True
 
     @pytest.mark.parametrize(
-        "test_case", RuntimeScenarios.INTEGRATION_SCENARIOS, ids=lambda tc: tc.name
+        "test_case",
+        RuntimeScenarios.INTEGRATION_SCENARIOS,
+        ids=lambda tc: tc.name,
     )
     def test_runtime_integration(self, test_case: RuntimeTestCase) -> None:
         """Test FlextRuntime integration scenarios."""
@@ -710,7 +789,9 @@ class TestFlextRuntime:
             FlextRuntime.configure_structlog()
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
             FlextRuntime.Integration.track_service_resolution(
-                "cache", resolved=False, error_message="Connection refused"
+                "cache",
+                resolved=False,
+                error_message="Connection refused",
             )
             assert FlextContext.Correlation.get_correlation_id() == correlation_id
         elif (
@@ -732,7 +813,8 @@ class TestFlextRuntime:
             FlextRuntime.configure_structlog()
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
             FlextRuntime.Integration.track_domain_event(
-                "SystemInitialized", event_data={"timestamp": "2025-01-01T00:00:00Z"}
+                "SystemInitialized",
+                event_data={"timestamp": "2025-01-01T00:00:00Z"},
             )
             assert FlextContext.Correlation.get_correlation_id() == correlation_id
         elif (
@@ -754,7 +836,8 @@ class TestFlextRuntime:
         ):
             FlextRuntime.configure_structlog()
             FlextRuntime.Integration.setup_service_infrastructure(
-                service_name="minimal-service", enable_context_correlation=True
+                service_name="minimal-service",
+                enable_context_correlation=True,
             )
             assert FlextContext.Service.get_service_name() == "minimal-service"
             assert FlextContext.Correlation.get_correlation_id() is not None

@@ -466,7 +466,6 @@ __all__ = [
     "P",
     "R",
     "ResultT",
-    "RetryCount",
     "T",
     "T1_co",
     "T2_co",

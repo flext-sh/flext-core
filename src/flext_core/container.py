@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Mapping, Sequence
-from typing import Self, cast
+from typing import Any, Self, cast
+
+from pydantic import BaseModel
 
 from flext_core._models.container import FlextModelsContainer
 from flext_core.config import FlextConfig
@@ -61,7 +63,7 @@ class FlextContainer(FlextProtocols.Configurable):
         self._services: dict[str, FlextModelsContainer.ServiceRegistration] = {}
         self._factories: dict[str, FlextModelsContainer.FactoryRegistration] = {}
         self._global_config: FlextModelsContainer.ContainerConfig = (
-            self._create_container_config()
+            FlextContainer._create_container_config()
         )
         self._user_overrides: dict[
             str,
@@ -76,7 +78,8 @@ class FlextContainer(FlextProtocols.Configurable):
         """Get current global FlextConfig."""
         return FlextConfig.get_global_instance()
 
-    def _create_container_config(self) -> FlextModelsContainer.ContainerConfig:
+    @staticmethod
+    def _create_container_config() -> FlextModelsContainer.ContainerConfig:
         """Create container configuration."""
         return FlextModelsContainer.ContainerConfig(
             enable_singleton=True,
@@ -125,23 +128,25 @@ class FlextContainer(FlextProtocols.Configurable):
     def with_service(
         self,
         name: str,
-        service: FlextTypes.ScalarValue
-        | Sequence[FlextTypes.ScalarValue]
-        | Mapping[str, FlextTypes.ScalarValue],
+        service: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | Callable[..., Any]
+            | Any  # Accept any Python object for service registration
+        ),
     ) -> Self:
-        """Fluent interface for service registration."""
+        """Fluent interface for service registration.
+
+        Accepts any service instance for registration in the container.
+        Service type is tracked via ServiceRegistration for type safety.
+        """
         self.register(name, service)
         return self
 
     def with_factory(
         self,
         name: str,
-        factory: Callable[
-            [],
-            FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | Mapping[str, FlextTypes.ScalarValue],
-        ],
+        factory: Callable[[], Any],  # Accept factories returning any type
     ) -> Self:
         """Fluent interface for factory registration."""
         self.register_factory(name, factory)
@@ -150,11 +155,18 @@ class FlextContainer(FlextProtocols.Configurable):
     def register(
         self,
         name: str,
-        service: FlextTypes.ScalarValue
-        | Sequence[FlextTypes.ScalarValue]
-        | Mapping[str, FlextTypes.ScalarValue],
+        service: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | Callable[..., Any]
+            | Any  # Accept any Python object for service registration
+        ),
     ) -> FlextResult[bool]:
-        """Register a service instance."""
+        """Register a service instance.
+
+        Accepts any service instance for registration in the container.
+        Service type is tracked via ServiceRegistration for type safety.
+        """
         try:
             if name in self._services:
                 return FlextResult[bool].fail(f"Service '{name}' already registered")
@@ -171,20 +183,21 @@ class FlextContainer(FlextProtocols.Configurable):
     def register_factory(
         self,
         name: str,
-        factory: Callable[
-            [],
-            FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | Mapping[str, FlextTypes.ScalarValue],
-        ],
+        factory: Callable[[], Any],  # Accept factories returning any type
     ) -> FlextResult[bool]:
         """Register a service factory."""
         try:
             if name in self._factories:
                 return FlextResult[bool].fail(f"Factory '{name}' already registered")
+            # Cast factory to match FactoryRegistration type requirements
+            # GeneralValueType is compatible with the union type expected by FactoryRegistration
+            factory_typed = cast(
+                "Callable[[], (FlextTypes.ScalarValue | Sequence[FlextTypes.ScalarValue] | Mapping[str, FlextTypes.ScalarValue])]",
+                factory,
+            )
             registration = FlextModelsContainer.FactoryRegistration(
                 name=name,
-                factory=factory,
+                factory=factory_typed,
             )
             self._factories[name] = registration
             return FlextResult[bool].ok(True)

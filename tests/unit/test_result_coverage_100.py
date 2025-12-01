@@ -29,6 +29,7 @@ from returns.io import IOFailure, IOResult, IOSuccess
 from returns.maybe import Nothing, Some
 
 from flext_core import FlextExceptions, FlextResult
+from flext_core.typings import FlextTypes
 
 # =========================================================================
 # Test Suite - FlextResult Core Functionality
@@ -54,7 +55,9 @@ class TestFlextResultCoverage:
         ],
     )
     def test_ok_creates_success_with_various_types(
-        self, value: object, expected: object
+        self,
+        value: object,
+        expected: object,
     ) -> None:
         """Test creating success results with different value types."""
         result = FlextResult[object].ok(value)
@@ -80,7 +83,7 @@ class TestFlextResultCoverage:
 
     def test_fail_with_error_data(self) -> None:
         """Test creating failure with error data."""
-        error_data: dict[str, object] = {"status": "failed", "count": 5}
+        error_data: FlextTypes.Types.EventDataMapping = {"status": "failed", "count": 5}
         result = FlextResult[str].fail("Error", error_data=error_data)
         assert result.is_failure
         assert result.error_data == error_data
@@ -441,7 +444,8 @@ class TestFlextResultCoverage:
             raise ValueError(error_msg)
 
         result = FlextResult[str].create_from_callable(
-            failing_func, error_code="TEST_ERROR"
+            failing_func,
+            error_code="TEST_ERROR",
         )
         assert result.is_failure
         assert result.error_code == "TEST_ERROR"
@@ -546,14 +550,16 @@ class TestFlextResultCoverage:
 
     def test_with_resource_success(self) -> None:
         """Test with_resource executes operation."""
-        resources_created: list[object] = []
+        resources_created: list[FlextTypes.Types.ConfigurationMapping] = []
 
-        def factory() -> dict[str, object]:
-            resource: dict[str, object] = {"id": 1}
+        def factory() -> FlextTypes.Types.ConfigurationMapping:
+            resource: FlextTypes.Types.ConfigurationMapping = {"id": 1}
             resources_created.append(resource)
             return resource
 
-        def operation(resource: object) -> FlextResult[str]:
+        def operation(
+            resource: FlextTypes.Types.ConfigurationMapping,
+        ) -> FlextResult[str]:
             if isinstance(resource, dict):
                 return FlextResult[str].ok("success")
             return FlextResult[str].fail("Invalid resource")
@@ -567,10 +573,12 @@ class TestFlextResultCoverage:
         """Test with_resource executes cleanup even on success."""
         cleanups_called = []
 
-        def factory() -> dict[str, object]:
+        def factory() -> FlextTypes.Types.ConfigurationMapping:
             return {"id": 1}
 
-        def operation(resource: object) -> FlextResult[str]:
+        def operation(
+            resource: FlextTypes.Types.ConfigurationMapping,
+        ) -> FlextResult[str]:
             return FlextResult[str].ok("success")
 
         def cleanup(resource: object) -> None:
@@ -648,9 +656,11 @@ class TestFlextResultCoverage:
 
     def test_error_codes_metadata(self) -> None:
         """Test error code and error data metadata."""
-        error_data: dict[str, object] = {"details": "something"}
+        error_data: FlextTypes.Types.EventDataMapping = {"details": "something"}
         result = FlextResult[str].fail(
-            "Error", error_code="CODE_123", error_data=error_data
+            "Error",
+            error_code="CODE_123",
+            error_data=error_data,
         )
         assert result.error_code == "CODE_123"
         assert result.error_data == error_data

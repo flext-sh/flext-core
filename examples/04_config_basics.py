@@ -401,13 +401,13 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
 
         # NEW: Use create_from_callable for safe validation
         validation_result = FlextResult[FlextConfig].create_from_callable(
-            validate_config
+            validate_config,
         )
 
         if validation_result.is_success:
             config = validation_result.unwrap()
             print(
-                f"✅ All validations passed: log_level={config.log_level}, workers={config.max_workers}"
+                f"✅ All validations passed: log_level={config.log_level}, workers={config.max_workers}",
             )
         else:
             print(f"❌ Validation failed: {validation_result.error}")
@@ -552,7 +552,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
                 return FlextResult[object].fail(
-                    result.error or "Environment validation failed"
+                    result.error or "Environment validation failed",
                 )
             return FlextResult[object].fail("Invalid config type")
 
@@ -562,7 +562,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
                 return FlextResult[object].fail(
-                    result.error or "Performance validation failed"
+                    result.error or "Performance validation failed",
                 )
             return FlextResult[object].fail("Invalid config type")
 
@@ -572,7 +572,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
                 return FlextResult[object].fail(
-                    result.error or "Database validation failed"
+                    result.error or "Database validation failed",
                 )
             return FlextResult[object].fail("Invalid config type")
 

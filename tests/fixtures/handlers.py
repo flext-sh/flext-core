@@ -11,11 +11,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
 
 from flext_core import FlextConstants, FlextHandlers, FlextModels, FlextResult
+from flext_core.typings import FlextTypes
 
-from .constants import TestConstants
+from tests.helpers.constants import TestConstants
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,15 +27,19 @@ class HandlerTestCase:
     handler_type: FlextConstants.Cqrs.HandlerType = (
         FlextConstants.Cqrs.HandlerType.COMMAND
     )
-    expected_result: Any = None
+    expected_result: FlextTypes.GeneralValueType | None = None
     should_fail: bool = False
     error_message: str | None = None
     description: str = field(default="", compare=False)
 
     def create_handler(
         self,
-        process_fn: Callable[[object], FlextResult[object]] | None = None,
-    ) -> FlextHandlers[object, object]:
+        process_fn: Callable[
+            [FlextTypes.GeneralValueType],
+            FlextResult[FlextTypes.GeneralValueType],
+        ]
+        | None = None,
+    ) -> FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]:
         """Create handler instance for this test case."""
         return create_test_handler(
             handler_id=self.handler_id,
@@ -97,8 +101,12 @@ def create_test_handler(
     handler_id: str,
     handler_name: str | None = None,
     handler_type: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.HandlerType.COMMAND,
-    process_fn: Callable[[object], FlextResult[object]] | None = None,
-) -> FlextHandlers[object, object]:
+    process_fn: Callable[
+        [FlextTypes.GeneralValueType],
+        FlextResult[FlextTypes.GeneralValueType],
+    ]
+    | None = None,
+) -> FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]:
     """Factory for creating test handlers - reduces massive boilerplate.
 
     Following FLEXT standards: No lazy imports, proper type annotations,
@@ -118,13 +126,15 @@ def create_test_handler(
         >>> handler = create_test_handler("test_handler")
 
         >>> # Custom processing
-        >>> def double_value(msg: object) -> FlextResult[object]:
-        ...     return FlextResult[object].ok(int(msg) * 2)
+        >>> def double_value(msg: FlextTypes.GeneralValueType) -> FlextResult[FlextTypes.GeneralValueType]:
+        ...     return FlextResult[FlextTypes.GeneralValueType].ok(int(msg) * 2)
         >>> handler = create_test_handler("doubler", process_fn=double_value)
 
     """
 
-    class DynamicTestHandler(FlextHandlers[object, object]):
+    class DynamicTestHandler(
+        FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
+    ):
         """Dynamic test handler implementation."""
 
         def __init__(self) -> None:
@@ -141,22 +151,28 @@ def create_test_handler(
             )
             super().__init__(config=config)
 
-        def handle(self, message: object) -> FlextResult[object]:
+        def handle(
+            self, message: FlextTypes.GeneralValueType
+        ) -> FlextResult[FlextTypes.GeneralValueType]:
             """Handle message with proper error handling."""
             try:
                 if process_fn:
                     return process_fn(message)
-                return FlextResult[object].ok(f"Handled: {message}")
+                return FlextResult[FlextTypes.GeneralValueType].ok(
+                    f"Handled: {message}"
+                )
             except Exception as e:
-                return FlextResult[object].fail(f"Handler error: {e}")
+                return FlextResult[FlextTypes.GeneralValueType].fail(
+                    f"Handler error: {e}"
+                )
 
     return DynamicTestHandler()
 
 
 def create_simple_handler(
     handler_id: str,
-    result_value: object = TestConstants.Strings.BASIC_WORD,
-) -> FlextHandlers[object, object]:
+    result_value: FlextTypes.GeneralValueType = TestConstants.Strings.BASIC_WORD,
+) -> FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]:
     """Create a simple handler that always returns the same value.
 
     Following FLEXT standards: Input validation, proper error handling,
@@ -177,17 +193,19 @@ def create_simple_handler(
         msg = "Handler ID cannot be empty"
         raise ValueError(msg)
 
-    def always_succeed(_msg: object) -> FlextResult[object]:
+    def always_succeed(
+        _msg: FlextTypes.GeneralValueType,
+    ) -> FlextResult[FlextTypes.GeneralValueType]:
         """Always return success with configured value."""
-        return FlextResult[object].ok(result_value)
+        return FlextResult[FlextTypes.GeneralValueType].ok(result_value)
 
     return create_test_handler(handler_id, process_fn=always_succeed)
 
 
 def create_failing_handler(
     handler_id: str,
-    error_message: str = TestConstants.Errors.PROCESSING_ERROR,
-) -> FlextHandlers[object, object]:
+    error_message: str = TestConstants.TestErrors.PROCESSING_ERROR,
+) -> FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]:
     """Create a handler that always fails.
 
     Following FLEXT standards: Input validation, use of centralized constants,
@@ -209,19 +227,21 @@ def create_failing_handler(
         raise ValueError(msg)
 
     if not error_message:
-        error_message = TestConstants.Errors.PROCESSING_ERROR
+        error_message = TestConstants.TestErrors.PROCESSING_ERROR
 
-    def always_fail(_msg: object) -> FlextResult[object]:
+    def always_fail(
+        _msg: FlextTypes.GeneralValueType,
+    ) -> FlextResult[FlextTypes.GeneralValueType]:
         """Always return failure with configured error."""
-        return FlextResult[object].fail(error_message)
+        return FlextResult[FlextTypes.GeneralValueType].fail(error_message)
 
     return create_test_handler(handler_id, process_fn=always_fail)
 
 
 def create_transform_handler(
     handler_id: str,
-    transform_fn: Callable[[object], object],
-) -> FlextHandlers[object, object]:
+    transform_fn: Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType],
+) -> FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]:
     """Create a handler that transforms messages.
 
     Following FLEXT standards: Input validation, proper exception handling,
@@ -246,12 +266,16 @@ def create_transform_handler(
         msg = "Transform function must be callable"
         raise ValueError(msg)
 
-    def transform(msg: object) -> FlextResult[object]:
+    def transform(
+        msg: FlextTypes.GeneralValueType,
+    ) -> FlextResult[FlextTypes.GeneralValueType]:
         """Transform message with proper error handling."""
         try:
             result = transform_fn(msg)
-            return FlextResult[object].ok(result)
+            return FlextResult[FlextTypes.GeneralValueType].ok(result)
         except Exception as e:
-            return FlextResult[object].fail(f"Transformation failed: {e}")
+            return FlextResult[FlextTypes.GeneralValueType].fail(
+                f"Transformation failed: {e}"
+            )
 
     return create_test_handler(handler_id, process_fn=transform)

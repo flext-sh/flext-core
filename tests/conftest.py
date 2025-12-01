@@ -14,7 +14,7 @@ import os
 import shutil
 import tempfile
 import warnings
-from collections.abc import Generator
+from collections.abc import Generator, Mapping, Sequence
 from pathlib import Path
 
 import pytest
@@ -25,7 +25,9 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextRuntime,
+    FlextService,
 )
+from flext_core.typings import FlextTypes
 from flext_tests.docker import FlextTestDocker
 
 from .fixtures import (
@@ -69,7 +71,7 @@ def test_docker_containers() -> Generator[FlextTestDocker | None]:
     try:
         docker_controller = FlextTestDocker()
         # Start containers - they will stay running
-        docker_controller.start_all()
+        _ = docker_controller.start_all()
         yield docker_controller
     except Exception:
         # Docker not available, yield None
@@ -94,7 +96,7 @@ def reset_container_singleton() -> Generator[None]:
     FlextRuntime._structlog_configured = False
 
     # Clear FlextLogger global context (contextvars)
-    FlextLogger.clear_global_context()
+    _ = FlextLogger.clear_global_context()
     # Clear all scoped contexts
     FlextLogger._scoped_contexts.clear()
     # Clear all level contexts
@@ -110,7 +112,7 @@ def reset_container_singleton() -> Generator[None]:
     FlextRuntime._structlog_configured = False
 
     # Clear FlextLogger state after test
-    FlextLogger.clear_global_context()
+    _ = FlextLogger.clear_global_context()
     FlextLogger._scoped_contexts.clear()
     FlextLogger._level_contexts.clear()
 
@@ -127,7 +129,7 @@ def test_scenario() -> dict[str, str]:
 
 
 @pytest.fixture
-def clean_container() -> Generator[object]:
+def clean_container() -> Generator[FlextContainer]:
     """Provide isolated FlextContainer for dependency injection testing.
 
     Enterprise-grade DI container fixture ensuring complete test isolation.
@@ -149,13 +151,13 @@ def clean_container() -> Generator[object]:
 
 
 @pytest.fixture
-def sample_data() -> dict[str, object]:
+def sample_data() -> dict[str, FlextTypes.GeneralValueType]:
     """Provide deterministic sample data for tests."""
     return get_sample_data()
 
 
 @pytest.fixture
-def test_user_data() -> dict[str, object] | list[str] | None:
+def test_user_data() -> dict[str, FlextTypes.GeneralValueType] | list[str] | None:
     """Provide consistent user data for domain testing."""
     return get_test_user_data()
 
@@ -178,67 +180,121 @@ def temp_directory() -> Generator[Path]:
         shutil.rmtree(temp_dir)
 
 
-@pytest.fixture
-def mock_external_service() -> object:
-    """Provide mock external service for integration testing.
+class ExternalProcessingService(FlextService[str]):
+    """Real external processing service for integration testing.
 
-    Simple mock service that can be used across different test modules
-    for consistent external service simulation.
-
-    Returns:
-        Mock external service object
-
+    Uses FlextService base class with real behavior, not a mock.
+    Can be configured for success/failure scenarios through initialization.
     """
 
-    class MockExternalService:
-        def __init__(self) -> None:
-            super().__init__()
-            self.call_count = 0
-            self.processed_items: list[object] = []
-            self._should_fail = False
-            self._failure_message = ""
+    def __init__(
+        self,
+        **data: FlextTypes.ScalarValue
+        | Sequence[FlextTypes.ScalarValue]
+        | Mapping[str, FlextTypes.ScalarValue],
+    ) -> None:
+        """Initialize external processing service with instance state.
 
-        def process(self, data: object) -> object:
-            """Process data through mock external service.
+        Args:
+            **data: Configuration parameters (unused in this service).
 
-            Returns:
-                Result: Success with processed data or failure with error message.
+        """
+        super().__init__(**data)
+        self._instance_should_fail = False
+        self._instance_failure_message = "Service unavailable"
+        self._instance_call_count = 0
+        self._instance_processed_items: list[str] = []
 
-            """
-            self.call_count += 1
-            self.processed_items.append(data)
+    def execute(self) -> FlextResult[str]:
+        """Execute external processing service.
 
-            if self._should_fail:
-                return FlextResult[str].fail(self._failure_message)
+        Returns:
+            FlextResult[str]: Success with processed data or failure with error message.
 
-            return FlextResult[str].ok(f"processed_{data}")
+        """
+        self._instance_call_count += 1
 
-        def get_call_count(self) -> int:
-            """Get number of times process was called.
+        if self._instance_should_fail:
+            return FlextResult[str].fail(self._instance_failure_message)
 
-            Returns:
-                int: Number of times the process method was called.
+        processed_data = "processed_data"
+        self._instance_processed_items.append(processed_data)
+        return FlextResult[str].ok(processed_data)
 
-            """
-            return self.call_count
+    def process(self, data: str) -> FlextResult[str]:
+        """Process data through external service.
 
-        def set_failure_mode(
-            self,
-            *,
-            should_fail: bool = True,
-            message: str = "Mock service failure",
-        ) -> None:
-            """Configure mock to simulate failures."""
-            self._should_fail = should_fail
-            self._failure_message = message
+        Args:
+            data: Data to process.
 
-    return MockExternalService()
+        Returns:
+            FlextResult[str]: Success with processed data or failure with error message.
+
+        """
+        self._instance_call_count += 1
+        self._instance_processed_items.append(data)
+
+        if self._instance_should_fail:
+            return FlextResult[str].fail(self._instance_failure_message)
+
+        return FlextResult[str].ok(f"processed_{data}")
+
+    def get_call_count(self) -> int:
+        """Get number of times process was called.
+
+        Returns:
+            int: Number of times the process method was called.
+
+        """
+        return self._instance_call_count
+
+    @property
+    def processed_items(self) -> list[str]:
+        """Get list of processed items."""
+        return self._instance_processed_items.copy()
+
+    def set_failure_mode(
+        self,
+        *,
+        should_fail: bool = True,
+        message: str = "Service unavailable",
+    ) -> None:
+        """Configure service to fail for testing error scenarios.
+
+        Args:
+            should_fail: Whether service should fail.
+            message: Failure message to return.
+
+        """
+        self._instance_should_fail = should_fail
+        self._instance_failure_message = message
+
+    def reset(self) -> None:
+        """Reset service state for test isolation."""
+        self._instance_call_count = 0
+        self._instance_processed_items.clear()
+        self._instance_should_fail = False
+        self._instance_failure_message = "Service unavailable"
+
+
+@pytest.fixture
+def mock_external_service() -> ExternalProcessingService:
+    """Provide real external processing service for integration testing.
+
+    Uses FlextService-based implementation, not a mock. Provides real behavior
+    that can be configured for various test scenarios.
+
+    Returns:
+        ExternalProcessingService: A configured external service instance.
+
+    """
+    return ExternalProcessingService()
 
 
 @pytest.fixture
 def configured_container(
     clean_container: FlextContainer,
-    mock_external_service: object,
+    mock_external_service: ExternalProcessingService,
 ) -> FlextContainer:
     """Provide pre-configured container for integration testing.
 
@@ -253,9 +309,9 @@ def configured_container(
       FlextContainer with standard test services registered
 
     """
-    clean_container.with_service("external_service", mock_external_service)
-    clean_container.with_service("config", {"test_mode": True})
-    clean_container.with_service("logger", "test_logger")
+    _ = clean_container.with_service("external_service", mock_external_service)
+    _ = clean_container.with_service("config", {"test_mode": True})
+    _ = clean_container.with_service("logger", "test_logger")
     return clean_container
 
 
@@ -267,37 +323,37 @@ def error_context() -> dict[str, str | None]:
 
 # Test Data Constants - Centralized test data and constants
 @pytest.fixture
-def test_constants() -> dict[str, object]:
+def test_constants() -> dict[str, FlextTypes.GeneralValueType]:
     """Provide centralized test constants for all tests."""
     return get_test_constants()
 
 
 @pytest.fixture
-def test_contexts() -> dict[str, object]:
+def test_contexts() -> dict[str, FlextTypes.GeneralValueType]:
     """Provide common test contexts for various scenarios."""
     return get_test_contexts()
 
 
 @pytest.fixture
-def test_payloads() -> object:
+def test_payloads() -> FlextTypes.GeneralValueType:
     """Provide common test payloads for different operations."""
     return get_test_payloads()
 
 
 @pytest.fixture
-def test_error_scenarios() -> object:
+def test_error_scenarios() -> FlextTypes.GeneralValueType:
     """Provide common error scenarios for testing."""
     return get_test_error_scenarios()
 
 
 @pytest.fixture
-def performance_threshold() -> object:
+def performance_threshold() -> FlextTypes.GeneralValueType:
     """Provide performance thresholds for testing."""
     return get_performance_threshold()
 
 
 @pytest.fixture
-def benchmark_data() -> object:
+def benchmark_data() -> FlextTypes.GeneralValueType:
     """Provide standardized data for performance testing."""
     return get_benchmark_data()
 

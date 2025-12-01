@@ -91,7 +91,10 @@ class FlextUtilitiesTypeChecker:
         return message_types
 
     @classmethod
-    def _get_method_signature(cls, handle_method: object) -> inspect.Signature | None:
+    def _get_method_signature(
+        cls,
+        handle_method: FlextTypes.Handler.HandlerCallable,
+    ) -> inspect.Signature | None:
         """Extract signature from handle method."""
         try:
             # inspect.signature accepts any callable
@@ -105,7 +108,7 @@ class FlextUtilitiesTypeChecker:
     @classmethod
     def _get_type_hints_safe(
         cls,
-        handle_method: object,
+        handle_method: FlextTypes.Handler.HandlerCallable,
         handler_class: type,
     ) -> dict[str, FlextTypes.GeneralValueType]:
         """Safely extract type hints from handle method."""
@@ -209,7 +212,10 @@ class FlextUtilitiesTypeChecker:
         return False
 
     @classmethod
-    def _check_object_type_compatibility(cls, expected_type: object) -> bool | None:
+    def _check_object_type_compatibility(
+        cls,
+        expected_type: FlextTypes.Utility.TypeOriginSpecifier,
+    ) -> bool | None:
         """Check if expected type is object (universal compatibility).
 
         Args:
@@ -237,8 +243,8 @@ class FlextUtilitiesTypeChecker:
         cls,
         expected_type: FlextTypes.Utility.TypeOriginSpecifier,
         message_type: FlextTypes.Utility.MessageTypeSpecifier,
-        origin_type: object,
-        message_origin: object,
+        origin_type: FlextTypes.Utility.TypeOriginSpecifier,
+        message_origin: FlextTypes.Utility.TypeOriginSpecifier,
     ) -> bool | None:
         """Check dict type compatibility.
 

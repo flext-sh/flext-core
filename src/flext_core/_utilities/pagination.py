@@ -11,8 +11,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from typing import cast
 
-from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
 
 
@@ -108,7 +108,7 @@ class FlextUtilitiesPagination:
         *,
         page: int,
         page_size: int,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
         """Prepare pagination data structure.
 
         Args:
@@ -135,8 +135,14 @@ class FlextUtilitiesPagination:
         has_next = page < total_pages
         has_prev = page > 1
 
+        # Convert Sequence[T] to GeneralValueType-compatible list
+        data_list: FlextTypes.GeneralValueType = cast(
+            "FlextTypes.GeneralValueType",
+            list(data),
+        )
+
         return FlextResult.ok({
-            "data": list(data),
+            "data": data_list,
             "pagination": {
                 "page": page,
                 "page_size": page_size,
@@ -149,7 +155,7 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def build_pagination_response(
-        pagination_data: dict[str, object],
+        pagination_data: dict[str, FlextTypes.GeneralValueType],
         message: str | None = None,
     ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
         """Build paginated response dictionary.
@@ -181,7 +187,8 @@ class FlextUtilitiesPagination:
             data_typed = str(data)
 
         if isinstance(
-            pagination, (str, int, float, bool, type(None), Sequence, Mapping)
+            pagination,
+            (str, int, float, bool, type(None), Sequence, Mapping),
         ):
             pagination_typed = pagination
         else:
@@ -215,18 +222,22 @@ class FlextUtilitiesPagination:
         max_page_size = 1000
 
         if config is not None:
-            if hasattr(config, "default_page_size"):
-                default_page_size_value = config.default_page_size
-                if (
-                    isinstance(default_page_size_value, int)
-                    and default_page_size_value > 0
-                ):
-                    default_page_size = default_page_size_value
+            # Use getattr to safely access attributes without type narrowing issues
+            default_page_size_attr = getattr(config, "default_page_size", None)
+            if (
+                default_page_size_attr is not None
+                and isinstance(default_page_size_attr, int)
+                and default_page_size_attr > 0
+            ):
+                default_page_size = default_page_size_attr
 
-            if hasattr(config, "max_page_size"):
-                max_page_size_value = config.max_page_size
-                if isinstance(max_page_size_value, int) and max_page_size_value > 0:
-                    max_page_size = max_page_size_value
+            max_page_size_attr = getattr(config, "max_page_size", None)
+            if (
+                max_page_size_attr is not None
+                and isinstance(max_page_size_attr, int)
+                and max_page_size_attr > 0
+            ):
+                max_page_size = max_page_size_attr
 
         return {
             "default_page_size": default_page_size,

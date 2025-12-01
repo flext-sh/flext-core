@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Annotated
+from typing import Annotated, cast
 
 from pydantic import Field, computed_field
 
@@ -330,8 +330,8 @@ class FlextRegistry(FlextMixins):
         self._dispatcher = dispatcher
         self._registered_keys: set[str] = set()
 
+    @staticmethod
     def _safe_get_handler_mode(
-        self,
         value: FlextTypes.GeneralValueType,
     ) -> FlextConstants.Cqrs.HandlerType:
         """Safely extract and validate handler mode from object value."""
@@ -342,8 +342,8 @@ class FlextRegistry(FlextMixins):
         # Default to command for invalid values
         return FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
 
+    @staticmethod
     def _safe_get_status(
-        self,
         value: FlextTypes.GeneralValueType,
     ) -> FlextConstants.Cqrs.Status:
         """Safely extract and validate status from object value."""
@@ -374,7 +374,7 @@ class FlextRegistry(FlextMixins):
         """
         return FlextModels.RegistrationDetails(
             registration_id=str(reg_data.get("registration_id", key)),
-            handler_mode=self._safe_get_handler_mode(
+            handler_mode=FlextRegistry._safe_get_handler_mode(
                 reg_data.get(
                     "handler_mode",
                     FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
@@ -436,7 +436,7 @@ class FlextRegistry(FlextMixins):
                 "Handler cannot be None",
             )
 
-        key = self._resolve_handler_key(handler)
+        key = FlextRegistry._resolve_handler_key(handler)
         if key in self._registered_keys:
             self.logger.debug(
                 "Handler already registered, returning existing registration",
@@ -463,9 +463,18 @@ class FlextRegistry(FlextMixins):
             handler_key=key,
             source="flext-core/src/flext_core/registry.py",
         )
-        registration = self._dispatcher.register_handler(handler)
+        # register_handler returns FlextResult[dict[str, GeneralValueType]]
+        # register_handler accepts GeneralValueType | BaseModel, but FlextHandlers works via runtime check
+        # Cast handler to GeneralValueType for type compatibility (runtime handles FlextHandlers correctly)
+        registration = self._dispatcher.register_handler(
+            cast("FlextTypes.GeneralValueType", handler)
+        )
         if registration.is_success:
             self._registered_keys.add(key)
+            # Extract registration details from dict result
+            reg_dict = registration.value
+            if isinstance(reg_dict, dict):
+                reg_dict.get("handler_name", handler_name)
             self.logger.info(
                 "Handler registered successfully",
                 operation="register_handler",
@@ -495,14 +504,14 @@ class FlextRegistry(FlextMixins):
             )
             reg_details = FlextModels.RegistrationDetails(
                 registration_id=str(reg_data.get("registration_id", key)),
-                handler_mode=self._safe_get_handler_mode(
+                handler_mode=FlextRegistry._safe_get_handler_mode(
                     reg_data.get(
                         "handler_mode",
                         FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
                     ),
                 ),
                 timestamp=timestamp_value,
-                status=self._safe_get_status(
+                status=FlextRegistry._safe_get_status(
                     reg_data.get(
                         "status",
                         FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
@@ -611,7 +620,7 @@ class FlextRegistry(FlextMixins):
             FlextResult[bool]: Success with True if registration succeeds, failure with error details.
 
         """
-        key = self._resolve_handler_key(handler)
+        key = FlextRegistry._resolve_handler_key(handler)
         handler_name = handler.__class__.__name__ if handler else "unknown"
 
         if key in self._registered_keys:
@@ -633,13 +642,23 @@ class FlextRegistry(FlextMixins):
             handler_key=key,
             source="flext-core/src/flext_core/registry.py",
         )
-        registration_result: FlextResult[FlextTypes.GeneralValueType] = (
-            self._dispatcher.register_handler(handler)
+        # register_handler accepts GeneralValueType | BaseModel, but FlextHandlers works via runtime check
+        registration_result = self._dispatcher.register_handler(
+            cast("FlextTypes.GeneralValueType", handler)
         )
         if registration_result.is_success:
-            # Convert object to RegistrationDetails
+            # Convert dict result to RegistrationDetails
             reg_data = registration_result.value
-            reg_details = self._create_registration_details(reg_data, key)
+            if isinstance(reg_data, dict):
+                reg_details = self._create_registration_details(reg_data, key)
+            else:
+                # Fallback: create minimal registration details
+                reg_details = FlextModels.RegistrationDetails(
+                    registration_id=key,
+                    handler_mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                    timestamp="",
+                    status=FlextConstants.Cqrs.Status.RUNNING,
+                )
             self._add_successful_registration(key, reg_details, summary)
             self.logger.debug(
                 "Handler registered successfully in batch",
@@ -661,7 +680,7 @@ class FlextRegistry(FlextMixins):
         )
         # Use unwrap_error() for type-safe str
         error_str = registration_result.error or "Unknown error"
-        self._add_registration_error(key, error_str, summary)
+        FlextRegistry._add_registration_error(key, error_str, summary)
         return self.fail(error_str)
 
     def _add_successful_registration(
@@ -676,8 +695,8 @@ class FlextRegistry(FlextMixins):
             registration,
         )
 
+    @staticmethod
     def _add_registration_error(
-        self,
         key: str,
         error: str,
         summary: FlextRegistry.Summary,
@@ -734,9 +753,18 @@ class FlextRegistry(FlextMixins):
                 continue
 
             self._registered_keys.add(key)
-            # Convert object to RegistrationDetails
+            # register_command returns FlextResult[dict[str, GeneralValueType]]
             reg_data = registration.value
-            reg_details = self._create_registration_details(reg_data, key)
+            if isinstance(reg_data, dict):
+                reg_details = self._create_registration_details(reg_data, key)
+            else:
+                # Fallback: create minimal registration details
+                reg_details = FlextModels.RegistrationDetails(
+                    registration_id=key,
+                    handler_mode=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
+                    timestamp="",
+                    status=FlextConstants.Cqrs.Status.RUNNING,
+                )
             summary.registered.append(reg_details)
 
         if summary.errors:
@@ -752,10 +780,10 @@ class FlextRegistry(FlextMixins):
             FlextHandlers[object, object]
             | tuple[
                 FlextTypes.Bus.HandlerCallableType,
-                object | FlextResult[FlextTypes.GeneralValueType],
+                FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
             ]
-            | object
-            | tuple[object, ...]
+            | FlextTypes.GeneralValueType
+            | tuple[FlextTypes.GeneralValueType, ...]
             | None,
         ],
     ) -> FlextResult[FlextRegistry.Summary]:
@@ -788,11 +816,12 @@ class FlextRegistry(FlextMixins):
                     if isinstance(handler_elem, type) or callable(handler_elem):
                         tuple_entry: tuple[
                             FlextTypes.Bus.HandlerCallableType,
-                            object | FlextResult[FlextTypes.GeneralValueType],
+                            FlextTypes.GeneralValueType
+                            | FlextResult[FlextTypes.GeneralValueType],
                         ] = (handler_elem, config_elem)
                         result = self._register_tuple_entry(tuple_entry, key)
                     else:
-                        result = self._register_other_entry(key)
+                        result = FlextRegistry._register_other_entry(key)
                 elif isinstance(entry, FlextHandlers):
                     result = self._register_handler_entry(entry, key)
                 else:
@@ -819,7 +848,7 @@ class FlextRegistry(FlextMixins):
         self,
         entry: tuple[
             FlextTypes.Bus.HandlerCallableType,
-            object | FlextResult[FlextTypes.GeneralValueType],
+            FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
         ],
         key: str,
     ) -> FlextResult[FlextModels.RegistrationDetails]:
@@ -827,14 +856,19 @@ class FlextRegistry(FlextMixins):
         handler_func, handler_config = entry
 
         # Create handler from function
-        # handler_config is object | FlextResult[FlextTypes.GeneralValueType], convert to object | None
+        # handler_config is GeneralValueType | FlextResult[GeneralValueType], convert to GeneralValueType | None
         config_dict: FlextTypes.GeneralValueType | None = None
         if handler_config is not None and isinstance(handler_config, dict):
             config_dict = handler_config
             # If it's FlextResult, skip (not supported for config)
+        # Cast config_dict to HandlerConfigurationType
+        handler_config_typed: FlextTypes.Bus.HandlerConfigurationType = cast(
+            "FlextTypes.Bus.HandlerConfigurationType",
+            config_dict,
+        )
         handler_result = self._dispatcher.create_handler_from_function(
             handler_func,
-            config_dict,
+            handler_config_typed,
             FlextConstants.Cqrs.COMMAND_HANDLER_TYPE,
         )
         if handler_result.is_failure:
@@ -844,7 +878,10 @@ class FlextRegistry(FlextMixins):
 
         # Register with dispatcher
         handler = handler_result.value
-        register_result = self._dispatcher.register_handler(handler)
+        # register_handler accepts GeneralValueType | BaseModel, but FlextHandlers works via runtime check
+        register_result = self._dispatcher.register_handler(
+            cast("FlextTypes.GeneralValueType", handler)
+        )
         if register_result.is_failure:
             return FlextResult[FlextModels.RegistrationDetails].fail(
                 f"Failed to register handler: {register_result.error}",
@@ -865,7 +902,10 @@ class FlextRegistry(FlextMixins):
         key: str,
     ) -> FlextResult[FlextModels.RegistrationDetails]:
         """Register FlextHandlers instance - DRY helper reduces nesting."""
-        register_result = self._dispatcher.register_handler(entry)
+        # register_handler accepts GeneralValueType | BaseModel, but FlextHandlers works via runtime check
+        register_result = self._dispatcher.register_handler(
+            cast("FlextTypes.GeneralValueType", entry)
+        )
         if register_result.is_failure:
             return FlextResult[FlextModels.RegistrationDetails].fail(
                 f"Failed to register handler: {register_result.error}",
@@ -880,8 +920,8 @@ class FlextRegistry(FlextMixins):
         )
         return FlextResult[FlextModels.RegistrationDetails].ok(reg_details)
 
+    @staticmethod
     def _register_other_entry(
-        self,
         key: str,
     ) -> FlextResult[FlextModels.RegistrationDetails]:
         """Register object or other types - DRY helper reduces nesting."""
@@ -896,18 +936,19 @@ class FlextRegistry(FlextMixins):
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-    def _resolve_handler_key(self, handler: FlextHandlers[object, object]) -> str:
+    @staticmethod
+    def _resolve_handler_key(handler: FlextHandlers[object, object]) -> str:
         handler_id = getattr(handler, "handler_id", None)
         if isinstance(handler_id, str) and handler_id:
             return handler_id
         return handler.__class__.__name__
 
+    @staticmethod
     def _resolve_binding_key(
-        self,
         handler: FlextHandlers[object, object],
         message_type: type[object],
     ) -> str:
-        base_key = self._resolve_handler_key(handler)
+        base_key = FlextRegistry._resolve_handler_key(handler)
         # Handle both type objects and string keys
         if hasattr(message_type, "__name__"):
             type_name = message_type.__name__
@@ -920,10 +961,10 @@ class FlextRegistry(FlextMixins):
         entry: FlextHandlers[object, object]
         | tuple[
             FlextTypes.Bus.HandlerCallableType,
-            object | FlextResult[FlextTypes.GeneralValueType],
+            FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
         ]
-        | object
-        | tuple[object, ...]
+        | FlextTypes.GeneralValueType
+        | tuple[FlextTypes.GeneralValueType, ...]
         | None,
         message_type: type[object],
     ) -> str:
@@ -978,12 +1019,16 @@ class FlextRegistry(FlextMixins):
         # Store metadata if provided (for future use)
         if validated_metadata:
             # Log metadata with service name for observability
+            # Ensure validated_metadata is Mapping before calling .keys()
+            metadata_keys: list[str] = []
+            if isinstance(validated_metadata, Mapping):
+                metadata_keys = list(validated_metadata.keys())
             self.logger.debug(
                 "Registering service with metadata",
                 operation="with_service",
                 service_name=name,
                 has_metadata=True,
-                metadata_keys=list(validated_metadata.keys()),
+                metadata_keys=metadata_keys,
                 source="flext-core/src/flext_core/registry.py",
             )
 
@@ -1022,7 +1067,8 @@ class FlextRegistry(FlextMixins):
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return FlextResult[list[str]].fail(str(e))
 
-    def get_batch_size(self) -> int:
+    @staticmethod
+    def get_batch_size() -> int:
         """Get batch size (BatchProcessor protocol)."""
         return 100
 

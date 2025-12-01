@@ -314,7 +314,8 @@ class RetryPolicy:
         """Check if we should retry the operation."""
         return current_attempt < self._max_attempts - 1
 
-    def is_retriable_error(self, error: str | None) -> bool:
+    @staticmethod
+    def is_retriable_error(error: str | None) -> bool:
         """Check if an error is retriable."""
         if error is None:
             return False

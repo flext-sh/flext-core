@@ -10,11 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import ClassVar, Self, TypeAlias, cast, override
+from typing import ClassVar, Self, cast, override
 
 from pydantic import Field
 
 from flext_core._models.base import FlextModelsBase
+from flext_core._models.config import FlextModelsConfig
 from flext_core._models.validation import FlextModelsValidation
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
@@ -38,14 +39,6 @@ class FlextModelsEntity:
     This class acts as a namespace container for Entity and related DDD patterns.
     Uses FlextModelsBase for all base classes (Tier 0).
     """
-
-    # Type aliases for base classes (mypy-compatible)
-    ArbitraryTypesModel: TypeAlias = FlextModelsBase.ArbitraryTypesModel
-    FrozenStrictModel: TypeAlias = FlextModelsBase.FrozenStrictModel
-    IdentifiableMixin: TypeAlias = FlextModelsBase.IdentifiableMixin
-    TimestampableMixin: TypeAlias = FlextModelsBase.TimestampableMixin
-    VersionableMixin: TypeAlias = FlextModelsBase.VersionableMixin
-    TimestampedModel: TypeAlias = FlextModelsBase.TimestampedModel
 
     class DomainEvent(
         FlextModelsBase.ArbitraryTypesModel,
@@ -119,7 +112,7 @@ class FlextModelsEntity:
         def _validate_event_input(
             self: Self,
             event_name: str,
-            data: object,
+            data: FlextTypes.GeneralValueType | None,
         ) -> FlextResult[bool]:
             """Validate event input parameters."""
             if not event_name or not isinstance(event_name, str):
@@ -148,7 +141,7 @@ class FlextModelsEntity:
         def _create_and_validate_event(
             self: Self,
             event_name: str,
-            data: object,
+            data: FlextTypes.GeneralValueType | None,
         ) -> FlextResult[FlextModelsEntity.DomainEvent]:
             """Create and validate domain event."""
             try:
@@ -187,13 +180,13 @@ class FlextModelsEntity:
         def _execute_event_handler(
             self: Self,
             event_name: str,
-            data: object,
+            data: FlextTypes.GeneralValueType | None,
         ) -> None:
             """Execute event handler if available."""
             # Fast fail: event_type must be str
             event_type: str = ""
             if _is_dict_like(data):
-                data_dict = cast("Mapping[str, object]", data)
+                data_dict = cast("Mapping[str, FlextTypes.GeneralValueType]", data)
                 event_type_raw = data_dict.get("event_type")
                 event_type = "" if event_type_raw is None else str(event_type_raw)
             if event_type:
@@ -330,7 +323,7 @@ class FlextModelsEntity:
 
         def _validate_bulk_events_input(
             self: Self,
-            events: object,
+            events: FlextTypes.GeneralValueType | None,
         ) -> FlextResult[int]:
             """Validate bulk events input and return total count.
 
@@ -356,8 +349,8 @@ class FlextModelsEntity:
 
             return FlextResult[int].ok(total_after_add)
 
-        def _validate_and_collect_events(
-            self: Self,
+        @staticmethod
+        def validate_and_collect_events(
             events: Sequence[tuple[str, FlextTypes.Types.EventDataMapping | None]],
         ) -> FlextResult[list[tuple[str, FlextTypes.Types.EventDataMapping]]]:
             """Validate and collect events for bulk add.
@@ -485,7 +478,9 @@ class FlextModelsEntity:
                 return FlextResult[bool].ok(True)
 
             # Validate and collect events
-            validated_result = self._validate_and_collect_events(events)
+            validated_result = FlextModelsEntity.Core.validate_and_collect_events(
+                events
+            )
             if validated_result.is_failure:
                 base_msg = "Event validation failed"
                 error_msg = (
@@ -503,7 +498,14 @@ class FlextModelsEntity:
 
         def validate_consistency(self: Self) -> FlextResult[bool]:
             """Validate entity consistency using centralized validation."""
-            entity_result = FlextModelsValidation.validate_entity_relationships(self)
+            # Cast self to GeneralValueType for validation
+            entity_typed: FlextTypes.GeneralValueType = cast(
+                "FlextTypes.GeneralValueType",
+                self,
+            )
+            entity_result = FlextModelsValidation.validate_entity_relationships(
+                entity_typed
+            )
             if entity_result.is_failure:
                 return FlextResult[bool].fail(
                     f"Entity validation failed: {entity_result.error}",
@@ -546,8 +548,10 @@ class FlextModelsEntity:
                 if not invariant():
                     msg = f"Invariant violated: {invariant.__name__}"
                     raise FlextExceptions.ValidationError(
-                        message=msg,
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                        msg,
+                        config=FlextModelsConfig.ValidationErrorConfig(
+                            error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                        ),
                     )
 
         @override

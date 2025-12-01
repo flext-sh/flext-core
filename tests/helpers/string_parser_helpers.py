@@ -154,7 +154,7 @@ class GenericTestFactories:
                 description=f"Success case {i + 1}",
             )
             for i, (inputs, result) in enumerate(
-                zip(input_variations, expected_results, strict=True)
+                zip(input_variations, expected_results, strict=True),
             )
         ]
 
@@ -174,7 +174,7 @@ class GenericTestFactories:
                 description=f"Failure case {i + 1}",
             )
             for i, (inputs, error) in enumerate(
-                zip(input_variations, error_messages, strict=True)
+                zip(input_variations, error_messages, strict=True),
             )
         ]
 

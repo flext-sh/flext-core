@@ -13,7 +13,6 @@ from enum import StrEnum
 from functools import cache
 from typing import TypeGuard
 
-from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
@@ -81,7 +80,7 @@ class FlextUtilitiesEnum:
     # ─────────────────────────────────────────────────────────────
 
     @staticmethod
-    def parse[E: StrEnum](enum_cls: type[E], value: str | E) -> FlextResult[E]:
+    def parse[E: StrEnum](enum_cls: type[E], value: str | E) -> "FlextResult[E]":
         """Convert string to StrEnum with FlextResult.
 
         Example:
@@ -90,6 +89,8 @@ class FlextUtilitiesEnum:
                  status: Status = result.value
 
         """
+        from flext_core.result import FlextResult
+
         if isinstance(value, enum_cls):
             return FlextResult.ok(value)
         try:

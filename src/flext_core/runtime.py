@@ -50,7 +50,7 @@ import re
 import secrets
 import string
 import typing
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from types import ModuleType
 from typing import Protocol, TypeGuard, cast
 
@@ -225,16 +225,14 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: object,
-    ) -> TypeGuard[
-        dict[str, FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]]
-    ]:
+    ) -> TypeGuard[dict[str, FlextTypes.GeneralValueType]]:
         """Type guard to check if value is dict-like.
 
         Args:
             value: Value to check
 
         Returns:
-            True if value is a dict[str, FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]] or dict-like object, False otherwise
+            True if value is a dict[str, FlextTypes.GeneralValueType] or dict-like object, False otherwise
 
         """
         if isinstance(value, dict):
@@ -255,19 +253,56 @@ class FlextRuntime:
     @staticmethod
     def is_list_like(
         value: object,
-    ) -> TypeGuard[
-        list[FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]]
-    ]:
+    ) -> TypeGuard[list[FlextTypes.GeneralValueType]]:
         """Type guard to check if value is list-like.
 
         Args:
             value: Value to check
 
         Returns:
-            True if value is a list or list-like sequence, False otherwise
+            True if value is a list[FlextTypes.GeneralValueType] or list-like sequence, False otherwise
 
         """
         return isinstance(value, list)
+
+    @staticmethod
+    def normalize_to_general_value(val: object) -> FlextTypes.GeneralValueType:
+        """Normalize any value to FlextTypes.GeneralValueType recursively.
+
+        Converts dict[str, object], list[object], and other object types
+        to dict[str, GeneralValueType], list[GeneralValueType], etc.
+        This is the central conversion function for type safety.
+
+        Args:
+            val: Value to normalize (can be object, dict[str, object], etc.)
+
+        Returns:
+            Normalized value compatible with GeneralValueType
+
+        Examples:
+            >>> FlextRuntime.normalize_to_general_value({"key": "value"})
+            {'key': 'value'}
+            >>> FlextRuntime.normalize_to_general_value({"nested": {"inner": 123}})
+            {'nested': {'inner': 123}}
+            >>> FlextRuntime.normalize_to_general_value([1, 2, {"a": "b"}])
+            [1, 2, {'a': 'b'}]
+
+        """
+        if isinstance(val, (str, int, float, bool, type(None))):
+            return val
+        if FlextRuntime.is_dict_like(val):
+            # Convert to dict[str, GeneralValueType] recursively
+            result: dict[str, FlextTypes.GeneralValueType] = {}
+            dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
+            for k, v in dict_v.items():
+                if isinstance(k, str):
+                    result[k] = FlextRuntime.normalize_to_general_value(v)
+            return result
+        if FlextRuntime.is_list_like(val):
+            # Convert to list[GeneralValueType] recursively
+            return [FlextRuntime.normalize_to_general_value(item) for item in val]
+        # Fallback: convert to string for non-serializable types
+        return str(val)
 
     @staticmethod
     def is_valid_json(
@@ -482,11 +517,8 @@ class FlextRuntime:
     def level_based_context_filter(
         _logger: FlextTypes.Logging.LoggerContextType,
         method_name: str,
-        event_dict: dict[
-            str,
-            FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object],
-        ],
-    ) -> dict[str, FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object]]:
+        event_dict: dict[str, FlextTypes.GeneralValueType],
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Filter context variables based on log level.
 
         Removes context variables that are restricted to specific log levels
@@ -532,10 +564,7 @@ class FlextRuntime:
         current_level = level_hierarchy.get(method_name.lower(), 20)  # Default to INFO
 
         # Process all keys in event_dict
-        filtered_dict: dict[
-            str,
-            FlextTypes.ScalarValue | Sequence[object] | Mapping[str, object],
-        ] = {}
+        filtered_dict: dict[str, FlextTypes.GeneralValueType] = {}
         for key, value in event_dict.items():
             # Check if this is a level-prefixed variable
             if key.startswith("_level_"):

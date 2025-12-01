@@ -192,7 +192,9 @@ class ExceptionScenarios:
             FlextExceptions.CircuitBreakerError,
         ),
         ExceptionScenario(
-            "type_error", ExceptionScenarioType.SPECIFIC_TYPE, FlextExceptions.TypeError
+            "type_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            FlextExceptions.TypeError,
         ),
         ExceptionScenario(
             "operation_error",
@@ -287,7 +289,8 @@ class ExceptionScenarios:
             "OperationError",
         ),
         ExceptionScenario(
-            "create_error_invalid", ExceptionScenarioType.FACTORY_INVALID
+            "create_error_invalid",
+            ExceptionScenarioType.FACTORY_INVALID,
         ),
         ExceptionScenario(
             "exception_raising",
@@ -371,7 +374,9 @@ class TestFlextExceptions:
     """Comprehensive test suite for FlextExceptions using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "scenario", ExceptionScenarios.BASE_SCENARIOS, ids=lambda s: s.name
+        "scenario",
+        ExceptionScenarios.BASE_SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_base_exception_scenarios(self, scenario: ExceptionScenario) -> None:
         """Test base exception creation and behavior."""
@@ -397,7 +402,9 @@ class TestFlextExceptions:
             assert error.metadata.attributes["field"] == "email"
         elif scenario.scenario_type == ExceptionScenarioType.WITH_EXTRA_KWARGS:
             error = FlextExceptions.BaseError(
-                "Test error", field="email", value="invalid"
+                "Test error",
+                field="email",
+                value="invalid",
             )
             assert error.metadata.attributes["field"] == "email"
         elif scenario.scenario_type == ExceptionScenarioType.TO_DICT:
@@ -418,20 +425,25 @@ class TestFlextExceptions:
             assert str(error2) == "[TEST_001] Test error"
 
     @pytest.mark.parametrize(
-        "scenario", ExceptionScenarios.SPECIFIC_TYPE_SCENARIOS, ids=lambda s: s.name
+        "scenario",
+        ExceptionScenarios.SPECIFIC_TYPE_SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_specific_exception_types(self, scenario: ExceptionScenario) -> None:
         """Test specific exception type instantiation."""
         assert scenario.exception_type is not None
         if scenario.exception_type == FlextExceptions.ValidationError:
             error: FlextExceptions.BaseError = FlextExceptions.ValidationError(
-                "Invalid email", field="email", error_code="VAL_EMAIL"
+                "Invalid email",
+                field="email",
+                error_code="VAL_EMAIL",
             )
             assert error.message == "Invalid email" and error.error_code == "VAL_EMAIL"
         elif scenario.exception_type == FlextExceptions.ConfigurationError:
             config_error: FlextExceptions.ConfigurationError = (
                 FlextExceptions.ConfigurationError(
-                    "Missing config", config_key="database.host"
+                    "Missing config",
+                    config_key="database.host",
                 )
             )
             assert (
@@ -441,7 +453,9 @@ class TestFlextExceptions:
         elif scenario.exception_type == FlextExceptions.ConnectionError:
             conn_error: FlextExceptions.ConnectionError = (
                 FlextExceptions.ConnectionError(
-                    "Connection failed", host="localhost", port=5432
+                    "Connection failed",
+                    host="localhost",
+                    port=5432,
                 )
             )
             assert (
@@ -450,7 +464,9 @@ class TestFlextExceptions:
             )
         elif scenario.exception_type == FlextExceptions.TimeoutError:
             timeout_error: FlextExceptions.TimeoutError = FlextExceptions.TimeoutError(
-                "Operation timeout", timeout_seconds=30.0, operation="database_query"
+                "Operation timeout",
+                timeout_seconds=30.0,
+                operation="database_query",
             )
             assert (
                 timeout_error.message == "Operation timeout"
@@ -459,7 +475,9 @@ class TestFlextExceptions:
         elif scenario.exception_type == FlextExceptions.AuthenticationError:
             auth_error: FlextExceptions.AuthenticationError = (
                 FlextExceptions.AuthenticationError(
-                    "Invalid credentials", user_id="testuser", auth_method="password"
+                    "Invalid credentials",
+                    user_id="testuser",
+                    auth_method="password",
                 )
             )
             assert (
@@ -482,7 +500,9 @@ class TestFlextExceptions:
         elif scenario.exception_type == FlextExceptions.NotFoundError:
             not_found_error: FlextExceptions.NotFoundError = (
                 FlextExceptions.NotFoundError(
-                    "Resource not found", resource_type="User", resource_id="123"
+                    "Resource not found",
+                    resource_type="User",
+                    resource_id="123",
                 )
             )
             assert (
@@ -504,7 +524,9 @@ class TestFlextExceptions:
         elif scenario.exception_type == FlextExceptions.RateLimitError:
             rate_limit_error: FlextExceptions.RateLimitError = (
                 FlextExceptions.RateLimitError(
-                    "Rate limit exceeded", limit=100, window_seconds=60
+                    "Rate limit exceeded",
+                    limit=100,
+                    window_seconds=60,
                 )
             )
             assert (
@@ -525,14 +547,18 @@ class TestFlextExceptions:
             )
         elif scenario.exception_type == FlextExceptions.TypeError:
             type_error: FlextExceptions.TypeError = FlextExceptions.TypeError(
-                "Invalid type", expected_type=str, actual_type=int
+                "Invalid type",
+                expected_type=str,
+                actual_type=int,
             )
             assert (
                 type_error.message == "Invalid type" and type_error.expected_type is str
             )
         elif scenario.exception_type == FlextExceptions.OperationError:
             op_error: FlextExceptions.OperationError = FlextExceptions.OperationError(
-                "Operation failed", operation="backup", reason="disk_full"
+                "Operation failed",
+                operation="backup",
+                reason="disk_full",
             )
             assert (
                 op_error.message == "Operation failed"
@@ -540,14 +566,17 @@ class TestFlextExceptions:
             )
 
     @pytest.mark.parametrize(
-        "scenario", ExceptionScenarios.FACTORY_SCENARIOS, ids=lambda s: s.name
+        "scenario",
+        ExceptionScenarios.FACTORY_SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_factory_methods(self, scenario: ExceptionScenario) -> None:
         """Test exception factory methods."""
         if scenario.scenario_type == ExceptionScenarioType.FACTORY_METHOD:
             assert scenario.error_factory_type is not None
             error = FlextExceptions.create_error(
-                scenario.error_factory_type, "Test error"
+                scenario.error_factory_type,
+                "Test error",
             )
             assert type(error).__name__ == scenario.error_factory_type
             assert error.message == "Test error"
@@ -564,15 +593,18 @@ class TestFlextExceptions:
             operation_error_msg = "Operation failed"
             with pytest.raises(FlextExceptions.OperationError) as exc_op_info:
                 raise FlextExceptions.OperationError(
-                    operation_error_msg
+                    operation_error_msg,
                 ) from FlextExceptions.ConfigurationError("Config error")
             assert exc_op_info.value.__cause__ is not None
             assert isinstance(
-                exc_op_info.value.__cause__, FlextExceptions.ConfigurationError
+                exc_op_info.value.__cause__,
+                FlextExceptions.ConfigurationError,
             )
 
     @pytest.mark.parametrize(
-        "scenario", ExceptionScenarios.TYPE_SCENARIOS, ids=lambda s: s.name
+        "scenario",
+        ExceptionScenarios.TYPE_SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_exception_type_scenarios(self, scenario: ExceptionTypeScenario) -> None:
         """Test comprehensive exception type instantiation."""
@@ -614,7 +646,9 @@ class TestFlextExceptions:
         """Test that metadata and kwargs are properly merged."""
         metadata = ExceptionTestHelpers.create_metadata_object({"existing": "value"})
         error = FlextExceptions.BaseError(
-            "Test error", metadata=metadata, new_field="new_value"
+            "Test error",
+            metadata=metadata,
+            new_field="new_value",
         )
         assert error.metadata.attributes["existing"] == "value"
         assert error.metadata.attributes["new_field"] == "new_value"

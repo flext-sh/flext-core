@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from typing import Self
 
+from flext_core.typings import FlextTypes
 from flext_tests.factories import FlextTestsFactories
 
 
@@ -24,11 +25,14 @@ class FlextTestsBuilders:
     """Test data builders using builder pattern.
 
     Provides fluent interface for building complex test data structures.
+    Uses specific types from FlextTestsTypings instead of generic dict/object.
     """
 
     def __init__(self) -> None:
         """Initialize test data builder."""
-        self._data: dict[str, object] = {}
+        # Use dict internally for mutability, supports nested structures
+        # Use GeneralValueType for recursive nested structures
+        self._data: dict[str, FlextTypes.GeneralValueType] = {}
 
     def with_users(self, count: int = 5) -> Self:
         """Add users to dataset using factories.
@@ -98,11 +102,11 @@ class FlextTestsBuilders:
         }
         return self
 
-    def build(self) -> dict[str, object]:
+    def build(self) -> dict[str, FlextTypes.GeneralValueType]:
         """Build the dataset.
 
         Returns:
-            Built dataset dictionary
+            Built dataset dictionary with nested structures using GeneralValueType
 
         """
         return dict(self._data)

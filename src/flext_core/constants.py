@@ -19,19 +19,11 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence, Set as AbstractSet
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Final, Literal, TypedDict, TypeIs, cast
+from typing import Final, Literal, TypeIs, cast
 
 from pydantic import ConfigDict
 
 from flext_core.typings import FlextTypes
-
-
-class DockerContainerConfig(TypedDict):
-    """Type definition for Docker container configuration."""
-
-    compose_file: str
-    service: str
-    port: int
 
 
 class FlextConstants:
@@ -419,7 +411,9 @@ class FlextConstants:
                 "flext-redis",
                 "flext-oracle",
             )
-            SHARED_CONTAINERS: Final[Mapping[str, DockerContainerConfig]] = {
+            SHARED_CONTAINERS: Final[
+                Mapping[str, FlextTypes.Types.ContainerConfigDict]
+            ] = {
                 "flext-openldap-test": {
                     "compose_file": "flext-ldap/docker/docker-compose.yml",
                     "service": "openldap",
@@ -1417,6 +1411,8 @@ class FlextConstants:
         MAX_TIMEOUT_SECONDS: Final[int] = 600
         MIN_REGISTRATION_ID_LENGTH: Final[int] = 1
         MIN_REQUEST_ID_LENGTH: Final[int] = 1
+        SINGLE_HANDLER_ARG_COUNT: Final[int] = 1
+        TWO_HANDLER_ARG_COUNT: Final[int] = 2
         ERROR_INVALID_HANDLER_MODE: Final[str] = (
             "handler_mode must be 'command' or 'query'"
         )

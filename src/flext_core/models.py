@@ -25,6 +25,7 @@ from typing import Annotated, ClassVar
 
 from pydantic import Discriminator
 
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.config import FlextModelsConfig
 from flext_core._models.container import FlextModelsContainer
@@ -72,22 +73,22 @@ class FlextModels:
     class DomainEvent(FlextModelsEntity.DomainEvent):
         """Domain event for event sourcing."""
 
-    class ArbitraryTypesModel(FlextModelsEntity.ArbitraryTypesModel):
+    class ArbitraryTypesModel(FlextModelsBase.ArbitraryTypesModel):
         """Base model with arbitrary types support."""
 
-    class FrozenStrictModel(FlextModelsEntity.FrozenStrictModel):
+    class FrozenStrictModel(FlextModelsBase.FrozenStrictModel):
         """Immutable strict model."""
 
-    class IdentifiableMixin(FlextModelsEntity.IdentifiableMixin):
+    class IdentifiableMixin(FlextModelsBase.IdentifiableMixin):
         """Mixin for unique identifiers."""
 
-    class TimestampableMixin(FlextModelsEntity.TimestampableMixin):
+    class TimestampableMixin(FlextModelsBase.TimestampableMixin):
         """Mixin for timestamps."""
 
-    class TimestampedModel(FlextModelsEntity.TimestampedModel):
+    class TimestampedModel(FlextModelsBase.TimestampedModel):
         """Model with timestamp fields."""
 
-    class VersionableMixin(FlextModelsEntity.VersionableMixin):
+    class VersionableMixin(FlextModelsBase.VersionableMixin):
         """Mixin for versioning."""
 
     # Collections
@@ -170,6 +171,63 @@ class FlextModels:
 
     class HandlerExecutionConfig(FlextModelsConfig.HandlerExecutionConfig):
         """Handler execution configuration model."""
+
+    class OperationExtraConfig(FlextModelsConfig.OperationExtraConfig):
+        """Operation extra configuration model."""
+
+    class LogOperationFailureConfig(FlextModelsConfig.LogOperationFailureConfig):
+        """Log operation failure configuration model."""
+
+    class RetryLoopConfig(FlextModelsConfig.RetryLoopConfig):
+        """Retry loop configuration model."""
+
+    class ExceptionConfig(FlextModelsConfig.ExceptionConfig):
+        """Exception configuration model."""
+
+    class ValidationErrorConfig(FlextModelsConfig.ValidationErrorConfig):
+        """Validation error configuration model."""
+
+    class ConfigurationErrorConfig(FlextModelsConfig.ConfigurationErrorConfig):
+        """Configuration error configuration model."""
+
+    class ConnectionErrorConfig(FlextModelsConfig.ConnectionErrorConfig):
+        """Connection error configuration model."""
+
+    class TimeoutErrorConfig(FlextModelsConfig.TimeoutErrorConfig):
+        """Timeout error configuration model."""
+
+    class AuthenticationErrorConfig(FlextModelsConfig.AuthenticationErrorConfig):
+        """Authentication error configuration model."""
+
+    class AuthorizationErrorConfig(FlextModelsConfig.AuthorizationErrorConfig):
+        """Authorization error configuration model."""
+
+    class NotFoundErrorConfig(FlextModelsConfig.NotFoundErrorConfig):
+        """Not found error configuration model."""
+
+    class ConflictErrorConfig(FlextModelsConfig.ConflictErrorConfig):
+        """Conflict error configuration model."""
+
+    class RateLimitErrorConfig(FlextModelsConfig.RateLimitErrorConfig):
+        """Rate limit error configuration model."""
+
+    class InternalErrorConfig(FlextModelsConfig.InternalErrorConfig):
+        """Internal error configuration model."""
+
+    class TypeErrorConfig(FlextModelsConfig.TypeErrorConfig):
+        """Type error configuration model."""
+
+    class ValueErrorConfig(FlextModelsConfig.ValueErrorConfig):
+        """Value error configuration model."""
+
+    class CircuitBreakerErrorConfig(FlextModelsConfig.CircuitBreakerErrorConfig):
+        """Circuit breaker error configuration model."""
+
+    class OperationErrorConfig(FlextModelsConfig.OperationErrorConfig):
+        """Operation error configuration model."""
+
+    class AttributeAccessErrorConfig(FlextModelsConfig.AttributeAccessErrorConfig):
+        """Attribute access error configuration model."""
 
     class MiddlewareConfig(FlextModelsConfig.MiddlewareConfig):
         """Middleware configuration model."""

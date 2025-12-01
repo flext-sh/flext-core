@@ -17,59 +17,29 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import (
-    FlextConfig,
-    FlextConstants,
-    FlextContainer,
-    FlextContext,
-    FlextDecorators,
-    FlextDispatcher,
-    FlextExceptions,
-    FlextHandlers,
-    FlextLogger,
-    FlextMixins,
-    FlextModels,
-    FlextProtocols,
-    FlextRegistry,
-    FlextResult,
-    FlextRuntime,
-    FlextService,
-    FlextTypes,
-    FlextUtilities,
-)
 from flext_tests.builders import FlextTestsBuilders
+from flext_tests.constants import FlextTestConstants
 from flext_tests.docker import FlextTestDocker
 from flext_tests.domains import FlextTestsDomains
 from flext_tests.factories import FlextTestsFactories
 from flext_tests.files import FlextTestsFileManager
 from flext_tests.matchers import FlextTestsMatchers
+from flext_tests.models import FlextTestModels
+from flext_tests.protocols import FlextTestProtocols
+from flext_tests.typings import FlextTestsTypings
 from flext_tests.utilities import FlextTestsUtilities, ModelFactory
 
 __all__ = [
-    "FlextConfig",
-    "FlextConstants",
-    "FlextContainer",
-    "FlextContext",
-    "FlextDecorators",
-    "FlextDispatcher",
-    "FlextExceptions",
-    "FlextHandlers",
-    "FlextLogger",
-    "FlextMixins",
-    "FlextModels",
-    "FlextProtocols",
-    "FlextRegistry",
-    "FlextResult",
-    "FlextRuntime",
-    "FlextService",
+    "FlextTestConstants",
     "FlextTestDocker",
+    "FlextTestModels",
+    "FlextTestProtocols",
     "FlextTestsBuilders",
     "FlextTestsDomains",
     "FlextTestsFactories",
     "FlextTestsFileManager",
     "FlextTestsMatchers",
+    "FlextTestsTypings",
     "FlextTestsUtilities",
-    "FlextTypes",
-    "FlextUtilities",
     "ModelFactory",
 ]

@@ -245,7 +245,8 @@ class FlextResult[T_co]:
 
     @classmethod
     def safe(
-        cls, func: FlextProtocols.VariadicCallable[T_co]
+        cls,
+        func: FlextProtocols.VariadicCallable[T_co],
     ) -> FlextProtocols.VariadicCallable[FlextResult[T_co]]:
         """Decorator to wrap function in FlextResult."""
 

@@ -13,7 +13,9 @@ import math
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from .constants import TestConstants
+from flext_core.typings import FlextTypes
+
+from tests.helpers.constants import TestConstants
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,7 +30,7 @@ class TestUserData:
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     roles: list[str] = field(default_factory=lambda: ["user", "tester"])
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> dict[str, FlextTypes.GeneralValueType]:
         """Convert to dictionary format for compatibility."""
         return {
             "id": self.user_id,
@@ -80,7 +82,7 @@ class SampleDataSet:
     timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     uuid_data: str = "550e8400-e29b-41d4-a716-446655440000"
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> dict[str, FlextTypes.GeneralValueType]:
         """Convert to dictionary format for compatibility."""
         return {
             "string": self.string_data,
@@ -117,12 +119,15 @@ class SampleDataFactories:
     def create_inactive_user() -> TestUserData:
         """Create inactive test user."""
         return TestUserData(
-            user_id="inactive-123", name="Inactive User", is_active=False
+            user_id="inactive-123",
+            name="Inactive User",
+            is_active=False,
         )
 
     @staticmethod
     def create_error_context(
-        error_code: str = "TEST_ERROR_001", severity: str = "medium"
+        error_code: str = "TEST_ERROR_001",
+        severity: str = "medium",
     ) -> ErrorContext:
         """Create error context for testing."""
         return ErrorContext(error_code=error_code, severity=severity)
@@ -131,7 +136,9 @@ class SampleDataFactories:
     def create_validation_error_context() -> ErrorContext:
         """Create validation error context."""
         return ErrorContext(
-            error_code="VAL_001", severity="low", component="validation_module"
+            error_code="VAL_001",
+            severity="low",
+            component="validation_module",
         )
 
     @staticmethod
@@ -153,7 +160,7 @@ class SampleDataFactories:
 
 
 # Backward compatibility functions
-def get_sample_data() -> dict[str, object]:
+def get_sample_data() -> FlextTypes.Types.ConfigurationMapping:
     """Provide deterministic sample data for tests (backward compatibility).
 
     Returns:
@@ -163,7 +170,7 @@ def get_sample_data() -> dict[str, object]:
     return SampleDataFactories.create_comprehensive_sample_data().to_dict()
 
 
-def get_test_user_data() -> dict[str, object] | list[str] | None:
+def get_test_user_data() -> FlextTypes.Types.ConfigurationMapping | list[str] | None:
     """Provide consistent user data for domain testing (backward compatibility).
 
     Returns:

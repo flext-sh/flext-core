@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import operator
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from pydantic import BaseModel
@@ -38,6 +38,7 @@ from flext_core import (
     FlextResult,
     FlextService,
 )
+from flext_core.typings import FlextTypes
 
 # ============================================================================
 # Test Models and Factories
@@ -57,12 +58,6 @@ class EmailResponse(BaseModel):
 
     status: str
     message_id: str
-
-
-if TYPE_CHECKING:
-    from typing import TypeAlias
-
-    UserOrStr: TypeAlias = User | str
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,33 +88,26 @@ class RailwayTestCase:
     should_fail_at: int | None = None
     description: str = field(default="", compare=False)
 
-    def execute_v1_pipeline(self) -> FlextResult[object]:
+    def execute_v1_pipeline(self) -> FlextResult[str | User | EmailResponse]:
         """Execute V1 railway pipeline for this test case."""
         if not self.user_ids:
             return FlextResult.fail("No user IDs provided")
 
         # Start with first user
-        result: FlextResult[object] = cast(
-            "FlextResult[object]", GetUserService(user_id=self.user_ids[0]).execute()
-        )
+        result: FlextResult[User | str | EmailResponse] = GetUserService(
+            user_id=self.user_ids[0],
+        ).execute()
 
         # Apply operations if specified
         for op in self.operations:
             if op == "get_email":
-                result = result.map(lambda user: cast("User", user).email)
+                result = result.map(lambda user: user.email)
             elif op == "send_email":
                 result = result.flat_map(
-                    lambda email: cast(
-                        "FlextResult[object]",
-                        SendEmailService(
-                            to=cast("str", email), subject="Test"
-                        ).execute(),
-                    )
+                    lambda email: SendEmailService(to=email, subject="Test").execute(),
                 )
             elif op == "get_status":
-                result = result.map(
-                    lambda response: cast("EmailResponse", response).status
-                )
+                result = result.map(lambda response: response.status)
 
         return result
 
@@ -130,19 +118,20 @@ class RailwayTestCase:
             raise FlextExceptions.BaseError(msg)
 
         # Start with first user
-        user: Any = GetUserService(user_id=self.user_ids[0]).result
+        user: User | str = GetUserService(user_id=self.user_ids[0]).result
 
         # Apply operations if specified
         for op in self.operations:
             if op == "get_email":
-                user = cast("User", user).email
+                user = user.email
             elif op == "send_email":
-                response_obj: Any = SendEmailService(
-                    to=cast("str", user), subject="Test"
+                response_obj: EmailResponse = SendEmailService(
+                    to=user,
+                    subject="Test",
                 ).result
-                user = cast("EmailResponse", response_obj).status
+                user = response_obj.status
 
-        return cast("User | str", user)
+        return user
 
 
 class TestFactories:
@@ -195,7 +184,9 @@ class TestFactories:
         ]
 
     @staticmethod
-    def multi_operation_cases() -> list[tuple[str, int, Any]]:
+    def multi_operation_cases() -> list[
+        tuple[str, int, FlextTypes.Types.ConfigurationMapping]
+    ]:
         """Generate multiple operation test cases."""
         return [
             ("double", 5, {"operation": "double", "result": 10}),
@@ -216,7 +207,7 @@ class GetUserService(FlextService[User]):
 
     user_id: str
 
-    def execute(self, **_kwargs: object) -> FlextResult[User]:
+    def execute(self) -> FlextResult[User]:
         """Get user by ID."""
         if self.user_id in {"invalid", ""}:
             return FlextResult.fail("User not found")
@@ -236,7 +227,7 @@ class AutoGetUserService(FlextService[User]):
     auto_execute: ClassVar[bool] = True  # Enable V2 Auto pattern
     user_id: str
 
-    def execute(self, **_kwargs: object) -> FlextResult[User]:
+    def execute(self) -> FlextResult[User]:
         """Get user by ID."""
         if self.user_id in {"invalid", ""}:
             return FlextResult.fail("User not found")
@@ -256,7 +247,7 @@ class SendEmailService(FlextService[EmailResponse]):
     to: str
     subject: str
 
-    def execute(self, **_kwargs: object) -> FlextResult[EmailResponse]:
+    def execute(self) -> FlextResult[EmailResponse]:
         """Send email."""
         if "@" not in self.to:
             return FlextResult.fail("Invalid email address")
@@ -264,12 +255,12 @@ class SendEmailService(FlextService[EmailResponse]):
         return FlextResult.ok(EmailResponse(status="sent", message_id=f"msg-{self.to}"))
 
 
-class ValidationService(FlextService[dict[str, Any]]):
+class ValidationService(FlextService[FlextTypes.Types.ConfigurationMapping]):
     """Service that validates input."""
 
     value: int
 
-    def execute(self, **_kwargs: object) -> FlextResult[dict[str, Any]]:
+    def execute(self) -> FlextResult[FlextTypes.Types.ConfigurationMapping]:
         """Validate value."""
         if self.value < 0:
             return FlextResult.fail("Value must be positive")
@@ -280,13 +271,13 @@ class ValidationService(FlextService[dict[str, Any]]):
         return FlextResult.ok({"valid": True, "value": self.value})
 
 
-class MultiOperationService(FlextService[dict[str, Any]]):
+class MultiOperationService(FlextService[FlextTypes.Types.ConfigurationMapping]):
     """Service with multiple operations."""
 
     operation: str
     value: int
 
-    def execute(self, **_kwargs: object) -> FlextResult[dict[str, Any]]:
+    def execute(self) -> FlextResult[FlextTypes.Types.ConfigurationMapping]:
         """Execute based on operation."""
         match self.operation:
             case "double":
@@ -394,29 +385,28 @@ class TestPattern3V2Auto:
 
     @pytest.mark.parametrize("case", TestFactories.success_cases())
     def test_v2_auto_returns_value_directly(self, case: ServiceTestCase) -> None:
-        """V2 Auto: Use .result property for zero-ceremony access."""
-        # Note: auto_execute is not implemented in FlextService base
-        # Use .result property instead for zero-ceremony pattern
-        service = case.create_auto_user_service()
-        user = service.result
+        """V2 Auto: Returns value directly when auto_execute=True."""
+        # When auto_execute=True, __new__ returns result.value directly
+        # So create_auto_user_service() returns User, not AutoGetUserService
+        user = case.create_auto_user_service()
 
-        # Returns User via .result property
+        # Returns User directly (not service instance)
         assert isinstance(user, User)
         assert not isinstance(user, AutoGetUserService)
         assert user.unique_id == case.user_id
 
     @pytest.mark.parametrize("case", TestFactories.failure_cases())
     def test_v2_auto_failure_raises(self, case: ServiceTestCase) -> None:
-        """V2 Auto: Failure raises exception when accessing .result."""
-        # Note: auto_execute is not implemented in FlextService base
-        # Use .result property which raises on failure
-        service = case.create_auto_user_service()
+        """V2 Auto: Failure raises exception when auto_execute=True."""
+        # When auto_execute=True and execution fails, __new__ raises exception
+        # So create_auto_user_service() raises FlextExceptions.BaseError
         with pytest.raises(FlextExceptions.BaseError):
-            _ = service.result
+            _ = case.create_auto_user_service()
 
     @pytest.mark.parametrize("case", TestFactories.success_cases())
     def test_v2_auto_manual_service_returns_instance(
-        self, case: ServiceTestCase
+        self,
+        case: ServiceTestCase,
     ) -> None:
         """V2 Auto: Default (auto_execute=False) returns service instance."""
         service = case.create_user_service()
@@ -443,7 +433,8 @@ class TestPattern4RailwayV1:
         if "get_status" in case.operations:
             assert result.unwrap() == "sent"
         elif "get_email" in case.operations:
-            email = cast("str", result.unwrap())
+            email: str = result.unwrap()
+            assert isinstance(email, str)
             assert "@" in email
         else:
             assert isinstance(result.unwrap(), User)
@@ -459,7 +450,8 @@ class TestPattern5RailwayV2Property:
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
     def test_v2_property_can_use_execute_for_railway(
-        self, case: RailwayTestCase
+        self,
+        case: RailwayTestCase,
     ) -> None:
         """V2 Property: .execute() available for railway pattern."""
         # V2 Property: Use .result for happy path
@@ -480,16 +472,13 @@ class TestPattern5RailwayV2Property:
             GetUserService(user_id="456")
             .execute()
             .flat_map(
-                lambda user: cast(
-                    "FlextResult[object]",
-                    SendEmailService(to=user.email, subject="Hello").execute(),
-                ),
+                lambda user: SendEmailService(to=user.email, subject="Hello").execute(),
             )
-            .map(lambda response: cast("EmailResponse", response).message_id)
+            .map(lambda response: response.message_id)
         )
 
         assert pipeline.is_success
-        message_id = cast("str", pipeline.unwrap())
+        message_id: str = pipeline.unwrap()
         assert message_id.startswith("msg-")
 
 
@@ -510,7 +499,7 @@ class TestPattern6RailwayV2Auto:
             auto_execute: ClassVar[bool] = False  # Manual mode for railway
             user_id: str
 
-            def execute(self, **_kwargs: object) -> FlextResult[User]:
+            def execute(self) -> FlextResult[User]:
                 """Get user."""
                 return FlextResult.ok(
                     User(unique_id=self.user_id, name="Test", email="test@example.com"),
@@ -549,13 +538,10 @@ class TestPattern7MonadicComposition:
             GetUserService(user_id="123")
             .execute()
             .flat_map(
-                lambda user: cast("FlextResult[object]", FlextResult.ok(user.email))
+                lambda user: FlextResult.ok(user.email),
             )
             .flat_map(
-                lambda email: cast(
-                    "FlextResult[object]",
-                    SendEmailService(to=cast("str", email), subject="Test").execute(),
-                ),
+                lambda email: SendEmailService(to=email, subject="Test").execute(),
             )
         )
 
@@ -577,14 +563,11 @@ class TestPattern7MonadicComposition:
             GetUserService(user_id="123")
             .execute()
             .map(lambda user: user.email)
-            .filter(lambda email: "@" in cast("str", email))
+            .filter(lambda email: "@" in email)
             .flat_map(
-                lambda email: cast(
-                    "FlextResult[object]",
-                    SendEmailService(to=cast("str", email), subject="Test").execute(),
-                ),
+                lambda email: SendEmailService(to=email, subject="Test").execute(),
             )
-            .map(lambda response: cast("EmailResponse", response).status)
+            .map(lambda response: response.status)
         )
 
         assert pipeline.is_success
@@ -689,16 +672,20 @@ class TestPattern10MultipleOperations:
     """Test Pattern 10: Múltiplas Operações."""
 
     @pytest.mark.parametrize(
-        ("operation", "value", "expected"), TestFactories.multi_operation_cases()
+        ("operation", "value", "expected"),
+        TestFactories.multi_operation_cases(),
     )
     def test_multiple_operations(
-        self, operation: str, value: int, expected: dict[str, Any]
+        self,
+        operation: str,
+        value: int,
+        expected: FlextTypes.Types.ConfigurationMapping,
     ) -> None:
         """Multiple Operations: Various operations with different inputs."""
-        result = cast(
-            "dict[str, Any]",
-            MultiOperationService(operation=operation, value=value).result,
-        )
+        result: FlextTypes.Types.ConfigurationMapping = MultiOperationService(
+            operation=operation,
+            value=value,
+        ).result
 
         assert result["operation"] == expected["operation"]
         assert result["result"] == expected["result"]
@@ -717,15 +704,12 @@ class TestPattern10MultipleOperations:
             .execute()
             .map(operator.itemgetter("result"))
             .flat_map(
-                lambda result: cast(
-                    "FlextResult[object]",
-                    MultiOperationService(
-                        operation="square",
-                        value=cast("int", result),
-                    ).execute(),
-                ),
+                lambda result: MultiOperationService(
+                    operation="square",
+                    value=result,
+                ).execute(),
             )
-            .map(lambda data: cast("dict[str, Any]", data)["result"])
+            .map(operator.itemgetter("result"))
         )
 
         assert pipeline.is_success
@@ -752,10 +736,9 @@ class TestAllPatternsIntegration:
         assert isinstance(v2_user_result, User)
         assert v2_user_result.unique_id == "456"
 
-        # V2 Auto: Zero ceremony (using .result property)
-        # Note: auto_execute is not implemented in FlextService base
-        auto_service = AutoGetUserService(user_id="789")
-        auto_user = auto_service.result
+        # V2 Auto: Zero ceremony (returns value directly when auto_execute=True)
+        # When auto_execute=True, __new__ returns result.value directly
+        auto_user = AutoGetUserService(user_id="789")
         assert isinstance(auto_user, User)
         assert auto_user.unique_id == "789"
 
@@ -779,7 +762,7 @@ class TestAllPatternsIntegration:
             auto_execute: ClassVar[bool] = False
             user_id: str
 
-            def execute(self, **_kwargs: object) -> FlextResult[User]:
+            def execute(self) -> FlextResult[User]:
                 return FlextResult.ok(
                     User(unique_id=self.user_id, name="Test", email="test@example.com"),
                 )
@@ -801,11 +784,12 @@ class TestAllPatternsIntegration:
         )
 
         assert email_result.is_success
-        message_id = cast("str", email_result.unwrap())
+        message_id: str = email_result.unwrap()
         assert message_id.startswith("msg-")
 
         # Step 3: Multiple operations (V2 Property)
-        calc_result = cast(
-            "dict[str, Any]", MultiOperationService(operation="double", value=10).result
-        )
+        calc_result: FlextTypes.Types.ConfigurationMapping = MultiOperationService(
+            operation="double",
+            value=10,
+        ).result
         assert calc_result["result"] == 20
