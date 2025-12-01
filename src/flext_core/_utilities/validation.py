@@ -204,13 +204,17 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
         if visited is None:
             visited = set()
 
-        # Check for circular references using object id
+        # Handle primitives and simple types without visited tracking
+        if isinstance(component, (str, int, float, bool, type(None))):
+            return component
+
+        # Check for circular references using object id (only for complex types)
         component_id = id(component)
         if component_id in visited:
             # Circular reference detected - return placeholder
             return {"type": "circular_reference", "id": str(component_id)}
 
-        # Add current component to visited set
+        # Add current component to visited set (only for complex types)
         visited.add(component_id)
 
         try:
@@ -224,8 +228,8 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
     def _handle_pydantic_model(
         component: FlextTypes.GeneralValueType,
     ) -> FlextTypes.GeneralValueType:
-        """Handle Pydantic model conversion."""
-        # Type narrowing: check if component has model_dump method
+        """Handle Pydantic model and dataclass conversion."""
+        # Check for Pydantic model first (has model_dump method)
         model_dump_attr = getattr(component, "model_dump", None)
         if model_dump_attr is not None and callable(model_dump_attr):
             try:
@@ -236,12 +240,18 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
             except Exception:
                 return str(component)
 
+        # Check for dataclass instance (before Sequence check to avoid treating as list)
+        if is_dataclass(component) and not isinstance(component, type):
+            return FlextUtilitiesValidation._normalize_dataclass_value_instance(
+                component
+            )
+
         # Check if already valid GeneralValueType
         return FlextUtilitiesValidation._ensure_general_value_type(component)
 
     @staticmethod
     def _ensure_general_value_type(
-        component: FlextTypes.GeneralValueType,
+        component: FlextTypes.GeneralValueType | type,
     ) -> FlextTypes.GeneralValueType:
         """Ensure component is valid GeneralValueType.
 
@@ -272,13 +282,10 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
         if FlextRuntime.is_dict_like(component):
             return FlextUtilitiesValidation._normalize_dict_like(component, visited)
         if isinstance(component, Sequence):
-            return FlextUtilitiesValidation._normalize_sequence_helper(
-                component,
-                visited,
-            )
+            # Use _normalize_sequence which returns dict with type marker
+            return FlextUtilitiesValidation._normalize_sequence(component, visited)
         if isinstance(component, set):
-            normalized_set = FlextUtilitiesValidation._normalize_set_helper(component)
-            return tuple(normalized_set)
+            return FlextUtilitiesValidation._normalize_set(component, visited)
 
         # Ensure valid GeneralValueType for primitives
         return FlextUtilitiesValidation._ensure_general_value_type(
@@ -421,13 +428,18 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
         if isinstance(component, dict):
             return component
 
-        if hasattr(component, "items") and callable(getattr(component, "items", None)):
+        # Check if component has items() method (duck typing for dict-like objects)
+        items_method = getattr(component, "items", None)
+        if items_method is not None and callable(items_method):
             # Has items() method - convert to dict
-            items_method = component.items
+            # Cast needed: items_method() returns object, but we know it's dict-like
             items_result: (
                 Sequence[tuple[str, FlextTypes.GeneralValueType]]
                 | Mapping[str, FlextTypes.GeneralValueType]
-            ) = items_method()
+            ) = cast(
+                "Sequence[tuple[str, FlextTypes.GeneralValueType]] | Mapping[str, FlextTypes.GeneralValueType]",
+                items_method(),
+            )
             try:
                 return FlextUtilitiesValidation._convert_items_result_to_dict(
                     items_result,
@@ -447,27 +459,37 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
         | FlextProtocols.HasModelDump,
         visited: set[int] | None = None,
     ) -> dict[str, FlextTypes.GeneralValueType]:
-        """Normalize dict-like objects."""
+        """Normalize dict-like objects.
+
+        Note: visited tracking is handled by _normalize_component, so we don't
+        need to check/add here to avoid false circular reference detection.
+        """
         if visited is None:
             visited = set()
 
         # Convert to Mapping for type safety
         component_dict = FlextUtilitiesValidation._convert_to_mapping(component)
+        component_id = id(component_dict)
 
         # Normalize values in the dictionary
         normalized_dict: dict[str, FlextTypes.GeneralValueType] = {}
         for k, v in component_dict.items():
-            v_normalized = FlextUtilitiesValidation._normalize_value(v)
-            if isinstance(v_normalized, (Mapping, Sequence)) and not isinstance(
-                v_normalized,
-                str,
-            ):
+            # Check if value is the same dict (circular reference)
+            if id(v) == component_id:
+                normalized_dict[str(k)] = {
+                    "type": "circular_reference",
+                    "id": str(component_id),
+                }
+            elif isinstance(v, (Mapping, Sequence)) and not isinstance(v, str):
                 normalized_dict[str(k)] = FlextUtilitiesValidation._normalize_component(
-                    v_normalized,
+                    v,
                     visited,
                 )
             else:
+                # Use _normalize_value for primitives
+                v_normalized = FlextUtilitiesValidation._normalize_value(v)
                 normalized_dict[str(k)] = v_normalized
+        # Return normalized dict (empty dict if empty)
         return normalized_dict
 
     @staticmethod
@@ -604,12 +626,15 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
     def sort_key(value: FlextTypes.GeneralValueType) -> tuple[str, str]:
         """Return a deterministic tuple for ordering normalized cache components.
 
-        Returns a tuple of (type_category, serialized_value) for consistent sorting.
+        For strings, returns (casefold, original) for case-insensitive sorting.
+        For other types, returns (type_category, serialized_value) for consistent sorting.
         """
-        # Determine type category
+        # Special handling for strings - return casefold and original
         if isinstance(value, str):
-            type_cat = "str"
-        elif isinstance(value, (int, float)):
+            return (value.casefold(), value)
+
+        # Determine type category for non-strings
+        if isinstance(value, (int, float)):
             type_cat = "num"
         elif isinstance(value, dict):
             type_cat = "dict"
@@ -720,24 +745,30 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
     @staticmethod
     def _normalize_mapping(
         value: Mapping[str, FlextTypes.GeneralValueType],
+        visited: set[int] | None = None,
     ) -> FlextTypes.GeneralValueType:
         """Normalize mapping to cache-friendly structure."""
+        if visited is None:
+            visited = set()
         sorted_items = sorted(
             value.items(),
             key=lambda x: FlextUtilitiesValidation._sort_key(x[0]),
         )
         return {
-            str(k): FlextUtilitiesValidation._normalize_component(v, visited=None)
+            str(k): FlextUtilitiesValidation._normalize_component(v, visited)
             for k, v in sorted_items
         }
 
     @staticmethod
     def _normalize_sequence(
         value: Sequence[FlextTypes.GeneralValueType],
+        visited: set[int] | None = None,
     ) -> FlextTypes.GeneralValueType:
         """Normalize sequence to cache-friendly structure."""
+        if visited is None:
+            visited = set()
         sequence_items = [
-            FlextUtilitiesValidation._normalize_component(item, visited=None)
+            FlextUtilitiesValidation._normalize_component(item, visited)
             for item in value
         ]
         # Return as dict with type marker for cache structure
@@ -746,10 +777,13 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
     @staticmethod
     def _normalize_set(
         value: set[FlextTypes.GeneralValueType],
+        visited: set[int] | None = None,
     ) -> FlextTypes.GeneralValueType:
         """Normalize set to cache-friendly structure."""
+        if visited is None:
+            visited = set()
         set_items = [
-            FlextUtilitiesValidation._normalize_component(item, visited=None)
+            FlextUtilitiesValidation._normalize_component(item, visited)
             for item in value
         ]
         set_items.sort(key=str)
@@ -763,7 +797,7 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
         """Normalize object attributes to cache-friendly structure."""
         try:
             vars_result = vars(value)
-            # vars() always returns dict[str, object] when successful
+            # vars() returns dict[str, object] which we normalize to GeneralValueType
             # Type narrowing: vars_result is always a dict
             value_vars_dict: dict[str, FlextTypes.GeneralValueType] = cast(
                 "dict[str, FlextTypes.GeneralValueType]",
@@ -1095,7 +1129,11 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
             FlextResult[str]: Success with value, or failure with pattern context
 
         """
-        if not re.match(pattern, value):
+        try:
+            compiled_pattern = re.compile(pattern)
+        except re.PatternError as e:
+            return FlextResult[str].fail(f"{context} pattern is invalid: {e}")
+        if not compiled_pattern.match(value):
             return FlextResult[str].fail(f"{context} format is invalid: {value}")
         return FlextResult[str].ok(value)
 
@@ -1340,7 +1378,7 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
         value: FlextTypes.GeneralValueType,
         error_message: str = "Value must be callable",
         error_code: str = FlextConstants.Errors.TYPE_ERROR,
-    ) -> FlextResult[object]:
+    ) -> FlextResult[bool]:
         """Validate that value is callable (generic helper for field validators).
 
         This generic helper consolidates duplicate callable validation logic
@@ -1352,7 +1390,7 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
             error_code: Error code for validation failure
 
         Returns:
-            FlextResult[object]: Success with value if callable, failure otherwise
+            FlextResult[bool]: Success with True if callable, failure otherwise
 
         Example:
             >>> from flext_core.utilities import FlextUtilities
@@ -1365,11 +1403,12 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
 
         """
         if not callable(value):
-            return FlextResult[object].fail(
+            return FlextResult[bool].fail(
                 error_message,
                 error_code=error_code,
             )
-        return FlextResult[object].ok(value)
+        # Return True for valid callable (not the callable itself)
+        return FlextResult[bool].ok(True)
 
     @staticmethod
     def validate_timeout(
@@ -1390,7 +1429,7 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
             error_code: Error code for validation failure
 
         Returns:
-            FlextResult: Success with timeout if valid, failure if exceeds max
+            FlextResult: Success with timeout if valid, failure if exceeds max or negative
 
         Example:
             >>> from flext_core.utilities import FlextUtilities
@@ -1400,15 +1439,26 @@ class FlextUtilitiesValidation:  # noqa: PLR0904  # 28 validators = comprehensiv
             >>> result = FlextUtilities.Validation.validate_timeout(500.0, 300.0)
             >>> result.is_failure
             True
+            >>> result = FlextUtilities.Validation.validate_timeout(-1.0, 300.0)
+            >>> result.is_failure
+            True
 
         """
+        # Fast fail: validate negative values
+        if timeout < 0:
+            msg_negative = (
+                error_message or f"Timeout must be non-negative, got {timeout}"
+            )
+            return FlextResult[float | int].fail(msg_negative, error_code=error_code)
+
+        # Validate maximum
         if timeout > max_timeout:
-            msg: str = (
+            msg_max: str = (
                 error_message
                 if error_message is not None
                 else f"Timeout cannot exceed {max_timeout} seconds"
             )
-            return FlextResult[float | int].fail(msg, error_code=error_code)
+            return FlextResult[float | int].fail(msg_max, error_code=error_code)
         return FlextResult[float | int].ok(timeout)
 
     @staticmethod

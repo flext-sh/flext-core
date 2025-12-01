@@ -9,17 +9,38 @@ about failures.
 from __future__ import annotations
 
 import time
-from typing import cast
 
-from flext_core import FlextDispatcher, FlextResult
+from pydantic import BaseModel
+
+from flext_core import (
+    FlextConstants,
+    FlextDispatcher,
+    FlextProtocols,
+    FlextResult,
+    FlextTypes,
+)
 
 # ==================== PROCESSOR IMPLEMENTATIONS ====================
 
 
 class DataDoubler:
-    """Simple processor that doubles numeric data."""
+    """Simple processor that doubles numeric data.
 
-    def process(self, data: int) -> FlextResult[int]:
+    Implements FlextProtocols.Processor for dispatcher integration.
+    """
+
+    def process(  # noqa: PLR6301  # Required by FlextProtocols.Processor protocol
+        self,
+        data: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+        ),
+    ) -> (
+        FlextTypes.GeneralValueType
+        | BaseModel
+        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+    ):
         """Double the input value."""
         if not isinstance(data, int):
             return FlextResult[int].fail(f"Expected int, got {type(data)}")
@@ -27,9 +48,23 @@ class DataDoubler:
 
 
 class DataSquarer:
-    """Processor that squares numeric data."""
+    """Processor that squares numeric data.
 
-    def process(self, data: int) -> FlextResult[int]:
+    Implements FlextProtocols.Processor for dispatcher integration.
+    """
+
+    @staticmethod
+    def process(
+        data: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+        ),
+    ) -> (
+        FlextTypes.GeneralValueType
+        | BaseModel
+        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+    ):
         """Square the input value."""
         if not isinstance(data, int):
             return FlextResult[int].fail(f"Expected int, got {type(data)}")
@@ -43,17 +78,46 @@ class SlowProcessor:
         """Initialize with delay in seconds."""
         self.delay = delay
 
-    def process(self, data: int) -> FlextResult[int]:
+    def process(
+        self,
+        data: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+        ),
+    ) -> (
+        FlextTypes.GeneralValueType
+        | BaseModel
+        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+    ):
         """Simulate slow operation then return result."""
+        if not isinstance(data, int):
+            return FlextResult[int].fail(f"Expected int, got {type(data)}")
         time.sleep(self.delay)
         return FlextResult[int].ok(data)
 
 
 class DataValidator:
-    """Processor validating data integrity."""
+    """Processor validating data integrity.
 
-    def process(self, data: int) -> FlextResult[int]:
+    Implements FlextProtocols.Processor for dispatcher integration.
+    """
+
+    @staticmethod
+    def process(
+        data: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+        ),
+    ) -> (
+        FlextTypes.GeneralValueType
+        | BaseModel
+        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+    ):
         """Validate data is positive."""
+        if not isinstance(data, int):
+            return FlextResult[int].fail(f"Expected int, got {type(data)}")
         if data < 0:
             return FlextResult[int].fail("Data must be positive")
         return FlextResult[int].ok(data)
@@ -96,9 +160,13 @@ def example_2_batch_processing() -> None:
     dispatcher = FlextDispatcher()
     dispatcher.register_processor("doubler", DataDoubler())
 
-    # Process batch of items
-    data_list: list[object] = [1, 2, 3, 4, 5]
-    result = dispatcher.process_batch("doubler", data_list, batch_size=2)
+    # Process batch of items using FlextConstants (DRY - centralized batch size)
+    data_list: list[FlextTypes.GeneralValueType] = [1, 2, 3, 4, 5]
+    result = dispatcher.process_batch(
+        "doubler",
+        data_list,
+        batch_size=FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
+    )
 
     if result.is_failure:
         print(f"❌ Failed to process batch: {result.error}")
@@ -124,10 +192,12 @@ def example_3_parallel_processing() -> None:
     dispatcher = FlextDispatcher()
     dispatcher.register_processor("doubler", DataDoubler())
 
-    # Process items in parallel
-    data_list = cast("list[object]", list(range(1, 11)))
+    # Process items in parallel using FlextConstants (DRY - centralized workers)
+    data_list: list[FlextTypes.GeneralValueType] = list(range(1, 11))
     start = time.time()
-    result = dispatcher.process_parallel("doubler", data_list, max_workers=4)
+    result = dispatcher.process_parallel(
+        "doubler", data_list, max_workers=FlextConstants.Processing.DEFAULT_MAX_WORKERS
+    )
     elapsed = time.time() - start
 
     if result.is_failure:
@@ -152,12 +222,14 @@ def example_4_timeout_enforcement() -> None:
 
     dispatcher = FlextDispatcher()
 
-    # Register slow processor
-    slow = SlowProcessor(delay=0.05)
+    # Register slow processor using FlextConstants (DRY - centralized timeout)
+    slow = SlowProcessor(delay=FlextConstants.Validation.SLOW_OPERATION_THRESHOLD)
     dispatcher.register_processor("slow", slow)
 
-    # Execute with reasonable timeout - should succeed
-    result = dispatcher.execute_with_timeout("slow", 10, timeout=1.0)
+    # Execute with reasonable timeout using FlextConstants (DRY)
+    result = dispatcher.execute_with_timeout(
+        "slow", 10, timeout=float(FlextConstants.Defaults.TIMEOUT_SECONDS)
+    )
     if result.is_failure:
         print(f"❌ Operation should have succeeded but failed: {result.error}")
         return
@@ -257,7 +329,11 @@ def example_6_metrics_auditing() -> None:
         print(f"❌ Failed to get analytics: {analytics_result.error}")
         return
     analytics = analytics_result.unwrap()
-    print(f"✅ Analytics keys: {list(analytics.keys())}")
+    if isinstance(analytics, dict):
+        analytics_dict: dict[str, FlextTypes.GeneralValueType] = analytics
+        print(f"✅ Analytics keys: {list(analytics_dict.keys())}")
+    else:
+        print("✅ Analytics retrieved")
 
     # Get audit log
     audit_result = dispatcher.get_process_audit_log()
@@ -325,10 +401,15 @@ def example_7_integrated_workflow() -> None:
     if analytics_result.is_success:
         analytics = analytics_result.unwrap()
         print("\n✅ Final Analytics:")
-        print(f"   Global metrics: {analytics['global_metrics']}")
-        print(f"   Processor metrics: {analytics['processor_metrics']}")
-        print(f"   Batch performance: {analytics['batch_performance']}")
-        print(f"   Parallel performance: {analytics['parallel_performance']}")
+        if isinstance(analytics, dict):
+            print(f"   Global metrics: {analytics.get('global_metrics', 'N/A')}")
+            print(f"   Processor metrics: {analytics.get('processor_metrics', 'N/A')}")
+            print(f"   Batch performance: {analytics.get('batch_performance', 'N/A')}")
+            print(
+                f"   Parallel performance: {analytics.get('parallel_performance', 'N/A')}"
+            )
+        else:
+            print("   Analytics retrieved")
 
 
 # ==================== MAIN EXECUTION ====================

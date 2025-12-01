@@ -9,10 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import cast
 
-from flext_core import FlextUtilities
+from flext_core import FlextResult, FlextUtilities
 from flext_core.typings import FlextTypes
 
 
@@ -42,17 +44,21 @@ class DataMapperTestHelpers:
     """Generic helpers for data mapper utility testing."""
 
     @staticmethod
-    def execute_data_mapper_test(
+    def execute_data_mapper_test(  # noqa: PLR0914  # Type narrowing requires many local variables
         test_case: DataMapperTestCase,
-    ) -> FlextTypes.GeneralValueType:
-        """Execute a data mapper test case and return result."""
+    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        """Execute a data mapper test case and return FlextResult."""
         data_mapper = FlextUtilities.DataMapper
 
         match test_case.test_type:
             case DataMapperTestType.MAP_DICT_KEYS:
-                source = test_case.input_data["source"]
-                mapping = test_case.input_data["mapping"]
-                keep_unmapped = test_case.input_data.get("keep_unmapped", True)
+                source_raw = test_case.input_data["source"]
+                mapping_raw = test_case.input_data["mapping"]
+                keep_unmapped_raw = test_case.input_data.get("keep_unmapped", True)
+                # Type narrowing: input_data contains proper types at runtime
+                source = cast("dict[str, FlextTypes.GeneralValueType]", source_raw)  # type: ignore[arg-type]
+                mapping = cast("dict[str, str]", mapping_raw)  # type: ignore[arg-type]
+                keep_unmapped = cast("bool", keep_unmapped_raw)  # type: ignore[arg-type]
                 return data_mapper.map_dict_keys(
                     source,
                     mapping,
@@ -60,9 +66,13 @@ class DataMapperTestHelpers:
                 )
 
             case DataMapperTestType.BUILD_FLAGS_DICT:
-                flags = test_case.input_data["flags"]
-                mapping = test_case.input_data["mapping"]
-                default_value = test_case.input_data.get("default_value", False)
+                flags_raw = test_case.input_data["flags"]
+                mapping_raw = test_case.input_data["mapping"]
+                default_value_raw = test_case.input_data.get("default_value", False)
+                # Type narrowing: input_data contains proper types at runtime
+                flags = cast("list[str]", flags_raw)  # type: ignore[arg-type]
+                mapping = cast("dict[str, str]", mapping_raw)  # type: ignore[arg-type]
+                default_value = cast("bool", default_value_raw)  # type: ignore[arg-type]
                 return data_mapper.build_flags_dict(
                     flags,
                     mapping,
@@ -70,28 +80,50 @@ class DataMapperTestHelpers:
                 )
 
             case DataMapperTestType.COLLECT_ACTIVE_KEYS:
-                source = test_case.input_data["source"]
-                mapping = test_case.input_data["mapping"]
-                return data_mapper.collect_active_keys(source, mapping)
+                source_raw = test_case.input_data["source"]
+                mapping_raw = test_case.input_data["mapping"]
+                # Type narrowing: input_data contains proper types at runtime
+                source_bool: dict[str, bool] = cast("dict[str, bool]", source_raw)  # type: ignore[arg-type]
+                mapping = cast("dict[str, str]", mapping_raw)  # type: ignore[arg-type]
+                return data_mapper.collect_active_keys(source_bool, mapping)
 
             case DataMapperTestType.TRANSFORM_VALUES:
-                source = test_case.input_data["source"]
-                transform_func = test_case.input_data["transform_func"]
-                return data_mapper.transform_values(source, transform_func)
+                source_raw = test_case.input_data["source"]
+                transform_func_raw = test_case.input_data["transform_func"]
+                # Type narrowing: input_data contains proper types at runtime
+                source_transform: dict[str, FlextTypes.GeneralValueType] = cast(
+                    "dict[str, FlextTypes.GeneralValueType]", source_raw
+                )  # type: ignore[arg-type]
+                transform_func = cast(
+                    "Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType]",
+                    transform_func_raw,
+                )  # type: ignore[arg-type]
+                return data_mapper.transform_values(source_transform, transform_func)
 
             case DataMapperTestType.FILTER_DICT:
-                source = test_case.input_data["source"]
-                filter_func = test_case.input_data["filter_func"]
-                return data_mapper.filter_dict(source, filter_func)
+                source_raw = test_case.input_data["source"]
+                filter_func_raw = test_case.input_data["filter_func"]
+                # Type narrowing: input_data contains proper types at runtime
+                source_filter: dict[str, FlextTypes.GeneralValueType] = cast(
+                    "dict[str, FlextTypes.GeneralValueType]", source_raw
+                )  # type: ignore[arg-type]
+                filter_func = cast(
+                    "Callable[[str, FlextTypes.GeneralValueType], bool]",
+                    filter_func_raw,
+                )  # type: ignore[arg-type]
+                return data_mapper.filter_dict(source_filter, filter_func)
 
             case DataMapperTestType.INVERT_DICT:
-                source = test_case.input_data["source"]
-                handle_collisions = test_case.input_data.get(
+                source_raw = test_case.input_data["source"]
+                handle_collisions_raw = test_case.input_data.get(
                     "handle_collisions",
                     "last",
                 )
+                # Type narrowing: input_data contains proper types at runtime
+                source_typed: dict[str, str] = cast("dict[str, str]", source_raw)  # type: ignore[arg-type]
+                handle_collisions = cast("str", handle_collisions_raw)  # type: ignore[arg-type]
                 return data_mapper.invert_dict(
-                    source,
+                    source_typed,
                     handle_collisions=handle_collisions,
                 )
 

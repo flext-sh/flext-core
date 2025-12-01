@@ -28,6 +28,7 @@ from typing import ClassVar, cast
 import pytest
 
 from flext_core import FlextContext, FlextModels
+from flext_core.typings import FlextTypes
 
 
 @dataclass(frozen=True, slots=True)
@@ -232,7 +233,7 @@ class TestServiceDomain:
 
     def test_get_service_from_container(self) -> None:
         """Test retrieving service from container via FlextContext."""
-        test_service_obj = object()
+        test_service_obj: FlextTypes.GeneralValueType = "test_service_value"
         FlextContext.Service.register_service("test_service", test_service_obj)
         result = FlextContext.Service.get_service("test_service")
         assert result.is_success
@@ -274,7 +275,10 @@ class TestRequestDomain:
     def test_request_context_manager(self) -> None:
         """Test request context manager with all metadata."""
         ContextTestHelpers.clear_context()
-        metadata: dict[str, object] = {"transaction_id": "txn_123", "amount": 99.99}
+        metadata: dict[str, FlextTypes.GeneralValueType] = {
+            "transaction_id": "txn_123",
+            "amount": 99.99,
+        }
         with FlextContext.Request.request_context(
             user_id="user_456",
             operation_name="payment_processing",
@@ -330,7 +334,10 @@ class TestPerformanceDomain:
     def test_operation_metadata_getter_setter(self) -> None:
         """Test operation metadata getter and setter."""
         ContextTestHelpers.clear_context()
-        metadata: dict[str, object] = {"request_size": 1024, "response_code": 200}
+        metadata: dict[str, FlextTypes.GeneralValueType] = {
+            "request_size": 1024,
+            "response_code": 200,
+        }
         FlextContext.Performance.set_operation_metadata(metadata)
         retrieved_metadata = FlextContext.Performance.get_operation_metadata()
         assert retrieved_metadata == metadata
@@ -513,15 +520,19 @@ class TestContextDataModel:
         context = FlextContext()
         context.set("key1", "value1")
         context.set_metadata("created_at", "2025-01-01")
-        export_snapshot = context.export_snapshot()
+        export_snapshot = context._export_snapshot()
         assert isinstance(export_snapshot, FlextModels.ContextExport)
         assert export_snapshot.data.get("key1") == "value1"
         assert export_snapshot.metadata is not None
         metadata = export_snapshot.metadata
         if isinstance(metadata, dict):
             assert metadata.get("created_at") == "2025-01-01"
-        else:
+        elif hasattr(metadata, "attributes"):
+            # Type narrowing: metadata is FlextModelsBase.Metadata
             assert metadata.attributes.get("created_at") == "2025-01-01"
+        else:
+            # Fallback for other types
+            pytest.fail(f"Unexpected metadata type: {type(metadata)}")
 
 
 class TestContextIntegration:

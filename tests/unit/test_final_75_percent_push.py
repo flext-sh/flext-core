@@ -169,14 +169,14 @@ class TestCoveragePush75Percent:
         c = FlextContainer()
         r = c.with_service("test", "value")
         assert r is c
-        r2 = c.get("test")
+        r2: FlextResult[str] = c.get("test")
         assert r2.is_success
         assert r2.value == "value"
 
     def test_container_not_found(self) -> None:
         """Test container get not found."""
         c = FlextContainer()
-        r = c.get("nonexistent")
+        r: FlextResult[object] = c.get("nonexistent")
         assert r.is_failure
 
     def test_container_clear_all(self) -> None:
@@ -184,7 +184,7 @@ class TestCoveragePush75Percent:
         c = FlextContainer()
         c.with_service("test", "value")
         c.clear_all()
-        r = c.get("test")
+        r: FlextResult[object] = c.get("test")
         assert r.is_failure
 
     def test_container_unregister(self) -> None:
@@ -192,7 +192,7 @@ class TestCoveragePush75Percent:
         c = FlextContainer()
         c.with_service("test", "value")
         c.unregister("test")
-        r = c.get("test")
+        r: FlextResult[object] = c.get("test")
         assert r.is_failure
 
     def test_container_register_multiple(self) -> None:
@@ -270,14 +270,14 @@ class TestCoveragePush75Percent:
     def test_result_safe_factory(self) -> None:
         """Test safe factory method."""
 
-        @FlextResult.safe
+        @FlextResult.safe  # type: ignore[arg-type]  # safe decorator accepts variadic callables, mypy limitation
         def divide(a: int, b: int) -> int:
             return a // b
 
-        r = divide(10, 2)
+        r: FlextResult[int] = divide(10, 2)
         assert r.is_success
         assert r.value == 5
-        r2 = divide(10, 0)
+        r2: FlextResult[int] = divide(10, 0)
         assert r2.is_failure
 
 

@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from typing import ClassVar, Self, cast, override
 
 from pydantic import Field
@@ -22,21 +22,8 @@ from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime, StructlogLogger
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
-
-# Constants for event validation
-_EVENT_TUPLE_LENGTH = 2
-
-
-def _is_dict_like(value: FlextTypes.GeneralValueType) -> bool:
-    """Check if value is dict-like (inline to avoid extra import).
-
-    Returns:
-        True if value is a Mapping (dict-like), False otherwise.
-
-    """
-    return isinstance(value, Mapping)
 
 
 class FlextModelsEntity:
@@ -45,6 +32,9 @@ class FlextModelsEntity:
     This class acts as a namespace container for Entity and related DDD patterns.
     Uses FlextModelsBase for all base classes (Tier 0).
     """
+
+    # Constants
+    EVENT_TUPLE_SIZE: ClassVar[int] = 2
 
     class DomainEvent(
         FlextModelsBase.ArbitraryTypesModel,
@@ -96,7 +86,7 @@ class FlextModelsEntity:
             return self.unique_id
 
         @property
-        def logger(self) -> StructlogLogger:
+        def logger(self) -> FlextProtocols.StructlogLogger:
             """Get logger instance."""
             return FlextRuntime.get_logger(__name__)
 
@@ -135,13 +125,13 @@ class FlextModelsEntity:
             data: FlextTypes.GeneralValueType | None,
         ) -> FlextResult[bool]:
             """Validate event input parameters."""
-            if not event_name or not isinstance(event_name, str):
+            if not event_name:
                 return FlextResult[bool].fail(
                     "Domain event name must be a non-empty string",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
-            if data is not None and not _is_dict_like(data):
+            if data is not None and not FlextRuntime.is_dict_like(data):
                 return FlextResult[bool].fail(
                     "Domain event data must be a dictionary or None",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -206,9 +196,9 @@ class FlextModelsEntity:
             """Execute event handler if available."""
             # Fast fail: event_type must be str
             event_type: str = ""
-            if _is_dict_like(data):
-                data_dict = cast("Mapping[str, FlextTypes.GeneralValueType]", data)
-                event_type_raw = data_dict.get("event_type")
+            if FlextRuntime.is_dict_like(data):
+                # Type narrowing: is_dict_like ensures data is Mapping-like
+                event_type_raw = data.get("event_type")
                 event_type = "" if event_type_raw is None else str(event_type_raw)
             if event_type:
                 handler_method_name = f"_apply_{str(event_type).lower()}"
@@ -391,14 +381,8 @@ class FlextModelsEntity:
                 )
 
             for i, event_item in enumerate(events):
-                if not isinstance(event_item, tuple):
-                    return FlextResult[
-                        list[tuple[str, FlextTypes.Types.EventDataMapping]]
-                    ].fail(
-                        f"Event {i}: must be a tuple of (name, data)",
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-                if len(event_item) != _EVENT_TUPLE_LENGTH:
+                event_tuple_size = 2  # Event tuple: (name, data)
+                if len(event_item) != event_tuple_size:
                     return FlextResult[
                         list[tuple[str, FlextTypes.Types.EventDataMapping]]
                     ].fail(
@@ -408,14 +392,14 @@ class FlextModelsEntity:
 
                 event_name, data = event_item
 
-                if not isinstance(event_name, str) or not event_name:
+                if not event_name:
                     return FlextResult[
                         list[tuple[str, FlextTypes.Types.EventDataMapping]]
                     ].fail(
                         f"Event {i}: name must be non-empty string",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
-                if data is not None and not _is_dict_like(data):
+                if data is not None and not FlextRuntime.is_dict_like(data):
                     return FlextResult[
                         list[tuple[str, FlextTypes.Types.EventDataMapping]]
                     ].fail(
@@ -585,3 +569,8 @@ class FlextModelsEntity:
 
 
 __all__ = ["FlextModelsEntity"]
+
+# Rebuild models to resolve forward references within the module
+# This is required because Core references DomainEvent which is defined in the same class
+_ = FlextModelsEntity.Core.model_rebuild()
+_ = FlextModelsEntity.AggregateRoot.model_rebuild()

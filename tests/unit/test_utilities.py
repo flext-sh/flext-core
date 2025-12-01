@@ -151,7 +151,7 @@ class UtilityScenarios:
         )
 
 
-class TestFlextUtilities:
+class TestFlextUtilities:  # noqa: PLR0904
     """Unified test suite for FlextUtilities using flext_tests and FlextConstants."""
 
     # =====================================================================
@@ -424,18 +424,24 @@ class TestFlextUtilities:
     @pytest.mark.parametrize(
         ("input_data", "expected_type"),
         [
-            ({"z": 1, "a": 2}, (dict, tuple)),
-            ([1, 2, 3, "four"], (tuple, list, str)),
+            ({"z": 1, "a": 2}, dict),
+            # Lists are normalized to dict with "type": "sequence" marker
+            ([1, 2, 3, "four"], dict),
         ],
     )
     def test_validation_normalize_component_collections(
         self,
         input_data: FlextTypes.GeneralValueType,
-        expected_type: tuple[type, ...],
+        expected_type: type,
     ) -> None:
         """Test normalize_component with collections."""
         result = FlextUtilities.Validation.normalize_component(input_data)
         assert isinstance(result, expected_type)
+        # Verify sequence marker for lists
+        if isinstance(input_data, list):
+            assert isinstance(result, dict)
+            assert result.get("type") == "sequence"
+            assert "data" in result
 
     def test_validation_normalize_component_pydantic(self) -> None:
         """Test normalize_component with Pydantic model."""

@@ -10,31 +10,23 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._models.metadata import Metadata
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-_MIN_QUALNAME_PARTS_FOR_WRAPPER = 2  # FlextModels.Cqrs requires at least 2 parts
-
-
-def _generate_query_id() -> str:
-    """Helper function for Field default_factory."""
-    return FlextUtilities.Generators.generate_id()
-
 
 class FlextModelsCqrs:
     """CQRS pattern container class.
 
     This class acts as a namespace container for CQRS patterns.
-    All nested classes are accessed via FlextModels.Cqrs.* in the main models.py.
+    All nested classes can be accessed via FlextModels.Cqrs.* (type aliases) or directly via FlextModelsCqrs.*
     """
 
     class Command(
@@ -110,6 +102,9 @@ class FlextModelsCqrs:
     class Query(BaseModel):
         """Query model for CQRS query operations."""
 
+        # Constants for internal use
+        _MIN_QUALNAME_PARTS_FOR_WRAPPER: ClassVar[int] = 2  # Requires at least 2 parts
+
         model_config = ConfigDict(
             arbitrary_types_allowed=True,
             json_schema_extra={
@@ -128,17 +123,23 @@ class FlextModelsCqrs:
         pagination: FlextModelsCqrs.Pagination | dict[str, int] = Field(
             default_factory=dict,
         )
-        query_id: str = Field(default_factory=_generate_query_id)
+        query_id: str = Field(
+            default_factory=FlextUtilities.Generators.generate_query_id
+        )
         query_type: str | None = None
 
         @classmethod
-        def _resolve_pagination_class(cls: type) -> type[FlextModelsCqrs.Pagination]:
+        def _resolve_pagination_class(
+            cls: type[FlextModelsCqrs.Query],
+        ) -> type[FlextModelsCqrs.Pagination]:
             """Resolve correct Pagination class based on context."""
             if cls.__module__ != "flext_core.models" or "." not in cls.__qualname__:
                 return FlextModelsCqrs.Pagination
             parts = cls.__qualname__.split(".")
             models_module = sys.modules.get("flext_core.models")
-            if not models_module or len(parts) < _MIN_QUALNAME_PARTS_FOR_WRAPPER:
+            # Use constant value directly - attribute is on Pagination class, not on type
+            min_parts = 2
+            if not models_module or len(parts) < min_parts:
                 return FlextModelsCqrs.Pagination
             obj: FlextTypes.GeneralValueType | None = getattr(
                 models_module,
@@ -150,8 +151,14 @@ class FlextModelsCqrs:
                     obj = getattr(obj, part)
             if obj and hasattr(obj, "Pagination"):
                 pagination_cls_attr = getattr(obj, "Pagination", None)
-                if pagination_cls_attr is not None:
-                    return pagination_cls_attr
+                if (
+                    pagination_cls_attr is not None
+                    and isinstance(pagination_cls_attr, type)
+                    and issubclass(pagination_cls_attr, FlextModelsCqrs.Pagination)
+                ):
+                    # Type-safe narrowing: pagination_cls_attr is confirmed as subclass
+                    result_cls: type[FlextModelsCqrs.Pagination] = pagination_cls_attr
+                    return result_cls
             return FlextModelsCqrs.Pagination
 
         @staticmethod
@@ -309,7 +316,7 @@ class FlextModelsCqrs:
             default=FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
             description="Maximum retry attempts from FlextConstants (default). Models use Config values in initialization.",
         )
-        metadata: Metadata | None = Field(
+        metadata: FlextModelsBase.Metadata | None = Field(
             default=None,
             description="Handler metadata (Pydantic model)",
         )
@@ -334,7 +341,7 @@ class FlextModelsCqrs:
             """Builder pattern for Handler (reduces 8 params to fluent API).
 
             Example:
-                config = (Handler.Builder(handler_type=FlextConstants.Cqrs.COMMAND_HANDLER_TYPE)
+                config = (Handler.Builder(handler_type=FlextConstants.Cqrs.HandlerType.COMMAND)
                          .with_name("MyHandler")
                          .with_timeout(30)
                          .build())
@@ -343,12 +350,13 @@ class FlextModelsCqrs:
 
             def __init__(self, handler_type: FlextConstants.Cqrs.HandlerType) -> None:
                 """Initialize builder with required handler_type."""
+                super().__init__()
                 handler_short_id = FlextUtilities.Generators.generate_short_id(length=8)
                 self._data: dict[str, FlextTypes.GeneralValueType] = {
                     "handler_type": handler_type,
                     "handler_mode": (
                         FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
-                        if handler_type == FlextConstants.Cqrs.COMMAND_HANDLER_TYPE
+                        if handler_type == FlextConstants.Cqrs.HandlerType.COMMAND
                         else FlextConstants.Dispatcher.HANDLER_MODE_QUERY
                     ),
                     "handler_id": f"{handler_type}_handler_{handler_short_id}",
@@ -378,7 +386,7 @@ class FlextModelsCqrs:
                 self._data["max_command_retries"] = max_retries
                 return self
 
-            def with_metadata(self, metadata: Metadata) -> Self:
+            def with_metadata(self, metadata: FlextModelsBase.Metadata) -> Self:
                 """Set metadata (fluent API - Pydantic model)."""
                 # Convert Metadata model to dict for GeneralValueType compatibility
                 metadata_dict: dict[str, FlextTypes.GeneralValueType] = dict(

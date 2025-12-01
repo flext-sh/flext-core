@@ -18,23 +18,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import time
-
-import pytest
-
-from flext_core import FlextLogger, FlextLoggerResultAdapter, FlextResult
+from flext_core import FlextConfig, FlextLogger, FlextResult
 
 
 def make_result_logger(
     name: str,
     *,
-    config: object | None = None,
+    config: FlextConfig | None = None,
     _level: str | None = None,
     _service_name: str | None = None,
     _service_version: str | None = None,
     _correlation_id: str | None = None,
     _force_new: bool = False,
-) -> FlextLoggerResultAdapter:
+) -> FlextLogger.ResultAdapter:
     """Helper to build loggers returning FlextResult for logging tests."""
     return FlextLogger(
         name,
@@ -95,7 +91,7 @@ class TestGlobalContextManagement:
         """Test retrieving global context."""
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(request_id="req-123", user_id="usr-456")
-        context = FlextLogger.get_global_context()
+        context = FlextLogger._get_global_context()
         assert isinstance(context, dict)
 
 
@@ -103,9 +99,10 @@ class TestScopedContextManagement:
     """Test three-tier scoped context system."""
 
     def test_bind_application_context(self) -> None:
-        """Test binding application-level context."""
+        """Test binding application-level context via bind_context."""
         FlextLogger.clear_global_context()
-        result = FlextLogger.bind_application_context(
+        result = FlextLogger.bind_context(
+            scope="application",
             app_name="test-app",
             app_version="1.0.0",
             environment="test",
@@ -113,9 +110,10 @@ class TestScopedContextManagement:
         assert result.is_success
 
     def test_bind_request_context(self) -> None:
-        """Test binding request-level context."""
+        """Test binding request-level context via bind_context."""
         FlextLogger.clear_global_context()
-        result = FlextLogger.bind_request_context(
+        result = FlextLogger.bind_context(
+            scope="request",
             correlation_id="flext-abc123",
             command="migrate",
             user_id="REDACTED_LDAP_BIND_PASSWORD",
@@ -123,9 +121,10 @@ class TestScopedContextManagement:
         assert result.is_success
 
     def test_bind_operation_context(self) -> None:
-        """Test binding operation-level context."""
+        """Test binding operation-level context via bind_context."""
         FlextLogger.clear_global_context()
-        result = FlextLogger.bind_operation_context(
+        result = FlextLogger.bind_context(
+            scope="operation",
             operation="migrate",
             service="MigrationService",
             method="execute",
@@ -134,19 +133,19 @@ class TestScopedContextManagement:
 
     def test_clear_scope_application(self) -> None:
         """Test clearing application scope."""
-        FlextLogger.bind_application_context(app_name="test")
+        FlextLogger.bind_context(scope="application", app_name="test")
         result = FlextLogger.clear_scope("application")
         assert result.is_success
 
     def test_clear_scope_request(self) -> None:
         """Test clearing request scope."""
-        FlextLogger.bind_request_context(correlation_id="flext-123")
+        FlextLogger.bind_context(scope="request", correlation_id="flext-123")
         result = FlextLogger.clear_scope("request")
         assert result.is_success
 
     def test_clear_scope_operation(self) -> None:
         """Test clearing operation scope."""
-        FlextLogger.bind_operation_context(operation="test")
+        FlextLogger.bind_context(scope="operation", operation="test")
         result = FlextLogger.clear_scope("operation")
         assert result.is_success
 
@@ -159,14 +158,14 @@ class TestScopedContextManagement:
         """Test scoped_context manager for request scope."""
         FlextLogger.clear_global_context()
         with FlextLogger.scoped_context("request", correlation_id="flext-123"):
-            context = FlextLogger.get_global_context()
+            context = FlextLogger._get_global_context()
             assert isinstance(context, dict)
 
     def test_scoped_context_manager_operation(self) -> None:
         """Test scoped_context manager for operation scope."""
         FlextLogger.clear_global_context()
         with FlextLogger.scoped_context("operation", operation="test"):
-            context = FlextLogger.get_global_context()
+            context = FlextLogger._get_global_context()
             assert isinstance(context, dict)
 
     def test_scoped_context_manager_cleanup(self) -> None:
@@ -219,20 +218,19 @@ class TestFactoryPatterns:
     """Test logger factory methods."""
 
     def test_create_service_logger(self) -> None:
-        """Test creating service logger."""
-        logger = FlextLogger.create_service_logger("user-service")
+        """Test creating service logger using FlextLogger constructor."""
+        logger = FlextLogger("user-service")
         assert isinstance(logger, FlextLogger)
         assert logger.name == "user-service"
 
     def test_create_service_logger_with_version(self) -> None:
-        """Test creating service logger with version."""
-        logger = FlextLogger.create_service_logger("auth-service", version="2.0.0")
+        """Test creating service logger with version via bind."""
+        logger = FlextLogger("auth-service").bind(version="2.0.0")
         assert isinstance(logger, FlextLogger)
 
     def test_create_service_logger_with_correlation_id(self) -> None:
-        """Test creating service logger with correlation ID."""
-        logger = FlextLogger.create_service_logger(
-            "payment-service",
+        """Test creating service logger with correlation ID via bind."""
+        logger = FlextLogger("payment-service").bind(
             correlation_id="flext-abc123",
         )
         assert isinstance(logger, FlextLogger)
@@ -250,9 +248,10 @@ class TestFactoryPatterns:
         assert isinstance(logger, FlextLogger)
 
     def test_get_logger(self) -> None:
-        """Test get_logger factory method."""
-        logger = FlextLogger.get_logger()
+        """Test creating logger via constructor (get_logger pattern)."""
+        logger = FlextLogger("default_logger")
         assert isinstance(logger, FlextLogger)
+        assert logger.name == "default_logger"
 
 
 class TestInstanceCreation:
@@ -420,95 +419,82 @@ class TestExceptionLogging:
             assert result.is_success
 
 
-class TestPerformanceTracking:
-    """Test performance tracking functionality."""
+class TestResultAdapter:
+    """Test FlextLogger.ResultAdapter functionality."""
 
-    def test_track_performance_success(self) -> None:
-        """Test tracking operation that completes successfully."""
+    def test_with_result_returns_adapter(self) -> None:
+        """Test with_result returns FlextLogger.ResultAdapter."""
         logger = make_result_logger("test")
-        with logger.track_performance("database_query"):
-            time.sleep(0.01)
+        adapter = logger.with_result()
+        assert isinstance(adapter, FlextLogger.ResultAdapter)
 
-    def test_track_performance_with_exception(self) -> None:
-        """Test tracking operation that raises exception."""
+    def test_result_adapter_info(self) -> None:
+        """Test result adapter info method returns Result."""
         logger = make_result_logger("test")
+        adapter = logger.with_result()
+        result = adapter.info("Test message")
+        assert result.is_success
 
-        def failing_operation() -> None:
-            with logger.track_performance("failing_operation"):
-                msg = "Operation failed"
-                raise ValueError(msg)
-
-        with pytest.raises(ValueError):
-            failing_operation()
-
-    def test_track_performance_duration_measured(self) -> None:
-        """Test performance tracker measures duration."""
+    def test_result_adapter_debug(self) -> None:
+        """Test result adapter debug method returns Result."""
         logger = make_result_logger("test")
-        with logger.track_performance("timed_operation") as tracker:
-            time.sleep(0.05)
-            assert tracker._start_time > 0
+        adapter = logger.with_result()
+        result = adapter.debug("Debug message")
+        assert result.is_success
 
-    def test_performance_tracker_enter(self) -> None:
-        """Test PerformanceTracker context manager entry."""
+    def test_result_adapter_warning(self) -> None:
+        """Test result adapter warning method returns Result."""
         logger = make_result_logger("test")
-        with logger.track_performance("test_op") as tracker:
-            assert tracker._start_time > 0
+        adapter = logger.with_result()
+        result = adapter.warning("Warning message")
+        assert result.is_success
 
-    def test_performance_tracker_exit_success(self) -> None:
-        """Test PerformanceTracker context manager exit on success."""
+    def test_result_adapter_error(self) -> None:
+        """Test result adapter error method returns Result."""
         logger = make_result_logger("test")
-        with logger.track_performance("test_op"):
-            pass
-
-    def test_performance_tracker_exit_with_exception(self) -> None:
-        """Test PerformanceTracker context manager logs exception."""
-        logger = make_result_logger("test")
-
-        def failing_op() -> None:
-            with logger.track_performance("test_op"):
-                msg = "Test error"
-                raise ValueError(msg)
-
-        with pytest.raises(ValueError):
-            failing_op()
+        adapter = logger.with_result()
+        result = adapter.error("Error message")
+        assert result.is_success
 
 
 class TestResultIntegration:
-    """Test FlextResult integration with logging."""
+    """Test FlextResult integration with logging via with_result()."""
 
     def test_log_result_success(self) -> None:
-        """Test logging successful result."""
+        """Test logging successful result via with_result()."""
         logger = make_result_logger("test")
         result = FlextResult[str].ok("test_value")
-        log_result = logger.log_result(result, operation="test_operation")
+        log_result = logger.with_result().info(
+            f"Operation completed with: {result.value}",
+        )
         assert log_result.is_success
 
     def test_log_result_failure(self) -> None:
-        """Test logging failed result."""
+        """Test logging failed result via with_result()."""
         logger = make_result_logger("test")
         result = FlextResult[str].fail("Something went wrong")
-        log_result = logger.log_result(result, operation="test_operation")
+        log_result = logger.with_result().error(f"Operation failed: {result.error}")
         assert log_result.is_success
 
     def test_log_result_without_operation(self) -> None:
         """Test logging result without operation name."""
         logger = make_result_logger("test")
         result = FlextResult[str].ok("value")
-        log_result = logger.log_result(result)
+        log_result = logger.with_result().info(f"Result: {result.value}")
         assert log_result.is_success
 
     def test_log_result_with_custom_level(self) -> None:
-        """Test logging result with custom log level."""
+        """Test logging result with debug level."""
         logger = make_result_logger("test")
         result = FlextResult[str].ok("value")
-        log_result = logger.log_result(result, operation="op", level="debug")
+        log_result = logger.with_result().debug(f"Debug result: {result.value}")
         assert log_result.is_success
 
     def test_log_result_failure_includes_error_details(self) -> None:
-        """Test logging result includes error_code and error_data."""
+        """Test logging result includes error details."""
         logger = make_result_logger("test")
         result = FlextResult[str].fail("Error occurred")
-        log_result = logger.log_result(result, operation="op")
+        log_result = logger.with_result().error(f"Error: {result.error}")
         assert log_result.is_success
 
 
@@ -561,8 +547,12 @@ class TestLoggingIntegration:
         """Test complete logging workflow with all features."""
         FlextLogger.clear_global_context()
 
-        # Bind application context
-        FlextLogger.bind_application_context(app="test_app", version="1.0.0")
+        # Bind application context using bind_context
+        FlextLogger.bind_context(
+            scope="application",
+            app="test_app",
+            version="1.0.0",
+        )
 
         # Create logger
         logger = FlextLogger.create_module_logger(__name__)
@@ -571,10 +561,9 @@ class TestLoggingIntegration:
         logger.debug("Debug message")
         logger.info("Info message", action="start")
 
-        # Track performance
-        with logger.track_performance("operation"):
-            time.sleep(0.01)
-            logger.info("Operation in progress")
+        # Log with bound context
+        bound_logger = logger.bind(operation="workflow_test")
+        bound_logger.info("Operation in progress")
 
         logger.info("Completed")
         FlextLogger.clear_global_context()

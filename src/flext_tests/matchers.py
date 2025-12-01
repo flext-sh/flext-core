@@ -17,8 +17,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, Sequence
-from pathlib import Path
+from collections.abc import Mapping
 from typing import Self, TypeVar
 
 from flext_core import FlextResult, FlextUtilities
@@ -88,90 +87,6 @@ class FlextTestsMatchers:
             msg = f"Expected error containing '{expected_error}' but got: {error}"
             raise AssertionError(msg)
         return error
-
-    class TestDataBuilder:
-        """Builder for test datasets."""
-
-        def __init__(self) -> None:
-            """Initialize test data builder."""
-            # Use dict for mutability, will be converted to TestFixtureData on build
-            # Use GeneralValueType internally for flexibility, convert on build
-            self._data: dict[str, FlextTypes.GeneralValueType] = {}
-
-        def with_users(self, count: int = 5) -> Self:
-            """Add users to dataset."""
-            self._data["users"] = [
-                {
-                    "id": f"USER-{i}",
-                    "name": f"User {i}",
-                    "email": f"user{i}@example.com",
-                    "age": 20 + i,
-                }
-                for i in range(count)
-            ]
-            return self
-
-        def with_configs(
-            self,
-            *,
-            production: bool = False,
-        ) -> Self:
-            """Add configuration to dataset."""
-            self._data["configs"] = {
-                "environment": "production" if production else "development",
-                "debug": not production,
-                "database_url": "postgresql://localhost/testdb",
-                "api_timeout": 30,
-                "max_connections": 10,
-            }
-            return self
-
-        def with_validation_fields(
-            self,
-            count: int = 5,
-        ) -> Self:
-            """Add validation fields to dataset."""
-            self._data["validation_fields"] = {
-                "valid_emails": [f"user{i}@example.com" for i in range(count)],
-                "invalid_emails": ["invalid", "no-at-sign.com", ""],
-                "valid_hostnames": ["example.com", "localhost"],
-                "invalid_hostnames": ["invalid..hostname", ""],
-            }
-            return self
-
-        def build(self) -> FlextTestsTypings.Test.TestFixtureData:
-            """Build the dataset.
-
-            Converts internal GeneralValueType dict to TestFixtureData compatible Mapping.
-            """
-            # Create new dict with properly typed values
-            # Filter values to ensure type compatibility
-            result: dict[
-                str,
-                str
-                | int
-                | float
-                | bool
-                | Path
-                | Sequence[str | int | float | bool]
-                | Mapping[str, str | int | float | bool]
-                | None,
-            ] = {}
-            for key, value in self._data.items():
-                # Type narrowing: only include compatible values
-                if isinstance(value, (str, int, float, bool, type(None), Path)):
-                    result[key] = value
-                elif isinstance(value, list) and all(
-                    isinstance(item, (str, int, float, bool)) for item in value
-                ):
-                    # List contains only compatible types
-                    result[key] = value
-                elif isinstance(value, dict) and all(
-                    isinstance(v, (str, int, float, bool)) for v in value.values()
-                ):
-                    # Dict contains only compatible types
-                    result[key] = value
-            return result
 
     @staticmethod
     def assert_true(condition: bool, message: str | None = None) -> None:
@@ -418,3 +333,91 @@ class FlextTestsMatchers:
             msg = f"{field_name} cannot be empty"
             raise ValueError(msg)
         return value
+
+    class TestDataBuilder:
+        """Builder for test datasets with fluent API.
+
+        Provides method chaining for building complex test data structures
+        with users, configs, validation fields, and other test entities.
+        """
+
+        def __init__(self) -> None:
+            """Initialize empty builder."""
+            self._data: dict[str, FlextTypes.GeneralValueType] = {}
+
+        def with_users(self, count: int = 5) -> Self:
+            """Add users to the dataset.
+
+            Args:
+                count: Number of users to generate
+
+            Returns:
+                Self for method chaining
+
+            """
+            users: list[Mapping[str, FlextTypes.ScalarValue]] = []
+            for i in range(count):
+                user: Mapping[str, FlextTypes.ScalarValue] = {
+                    "id": f"USER-{i}",
+                    "name": f"User {i}",
+                    "email": f"user{i}@example.com",
+                    "age": 20 + i,
+                }
+                users.append(user)
+            self._data["users"] = users
+            return self
+
+        def with_configs(self, *, production: bool = False) -> Self:
+            """Add configuration to the dataset.
+
+            Args:
+                production: Whether to use production settings
+
+            Returns:
+                Self for method chaining
+
+            """
+            configs: Mapping[str, FlextTypes.ScalarValue] = {
+                "database_url": "postgresql://localhost/testdb",
+                "api_timeout": 30,
+                "debug": not production,
+                "environment": "production" if production else "development",
+                "max_connections": 10,
+            }
+            self._data["configs"] = configs
+            return self
+
+        def with_validation_fields(self, count: int = 5) -> Self:
+            """Add validation fields to the dataset.
+
+            Args:
+                count: Number of valid emails to generate (default: 5)
+
+            Returns:
+                Self for method chaining
+
+            """
+            # Generate valid emails based on count
+            valid_emails = [f"user{i}@example.com" for i in range(count)]
+
+            # Static invalid emails for validation testing
+            invalid_emails = ["invalid", "missing-at-symbol", "also@invalid"]
+
+            # Static valid hostnames
+            valid_hostnames = ["example.com", "localhost"]
+
+            self._data["validation_fields"] = {
+                "valid_emails": valid_emails,
+                "invalid_emails": invalid_emails,
+                "valid_hostnames": valid_hostnames,
+            }
+            return self
+
+        def build(self) -> dict[str, FlextTypes.GeneralValueType]:
+            """Build and return the dataset.
+
+            Returns:
+                Built dataset dictionary
+
+            """
+            return self._data.copy()

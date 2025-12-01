@@ -5,6 +5,9 @@ handlers, services, results, and utilities. All protocols are
 ``@runtime_checkable`` so integration points can be verified without
 inheritance, keeping layers decoupled while remaining type-safe.
 
+TIER 0.5: Uses FlextTypes for type definitions (no duplication)
+FlextProtocols imports from FlextTypes to maintain single source of truth.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -15,22 +18,57 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from contextlib import AbstractContextManager
 from datetime import datetime
-from typing import Generic, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-from flext_core.typings import FlextTypes, T, T_co
+from pydantic import BaseModel
+from structlog.typing import BindableLogger
+
+from flext_core.typings import FlextTypes, T_co
 
 
 class FlextProtocols:
     """Hierarchical protocol definitions for dispatcher-aligned components.
 
-    Architecture: Foundation layer (no implementations)
+    Architecture: Uses FlextTypes for type definitions (single source of truth)
+    ===========================================================================
     Describes the minimal interfaces for results, handlers, services, logging,
     and validation so downstream code can rely on structural typing instead of
     inheritance. Implementations live in their respective modules but conform
     to these contracts for interoperability.
+
+    ESSENTIAL PROTOCOLS (actively used - 15 core):
+    - ResultProtocol: Railway-oriented result type (114 usages)
+    - HasModelDump: Pydantic model compatibility (25 usages)
+    - ContextProtocol: Context management (25 usages)
+    - ContainerProtocol: Dependency injection (11 usages)
+    - ConfigProtocol: Configuration access (9 usages)
+    - VariadicCallable: Callable patterns (8 usages)
+    - Handler: Handler pattern (8 usages)
+    - Processor: Pipeline processing (7 usages)
+    - Service: Service pattern (6 usages)
+    - CommandBus: CQRS command bus (6 usages)
+    - Configurable: Configuration base (4 usages)
+    - ResultLike: Result compatibility (3 usages)
+    - HasInvariants: Domain validation (3 usages)
+    - Entry: LDIF entry pattern (3 usages)
+    - Repository: Repository pattern (2 usages)
+
+    EXTENSION PROTOCOLS (for specialized use cases):
+    - HasModelFields, HasResultValue, HasValidateCommand, HasTimestamps
+    - HasHandlerType, ContextServiceProtocol, ContextCorrelationProtocol
+    - ContextUtilitiesProtocol, ModelProtocol, Middleware, Connection
+    - PluginContext, Observability, ValidationInfo, LoggerProtocol
+
+    Type Definitions from FlextTypes:
+    - FlextTypes.ScalarValue: str | int | float | bool | datetime | None
+    - FlextTypes.FlexibleValue: scalar + single-level collections
+    - FlextTypes.GeneralValueType: recursive nested structures
     """
 
-    # Layer 0: Foundation Protocols
+    # =========================================================================
+    # LAYER 0: Foundation Protocols
+    # =========================================================================
+
     @runtime_checkable
     class HasModelDump(Protocol):
         """Protocol for objects that can dump model data."""
@@ -117,7 +155,10 @@ class FlextProtocols:
             """Configure component."""
             ...
 
+    # =========================================================================
     # Context, Config, and Container Protocols for circular-import safety
+    # =========================================================================
+
     @runtime_checkable
     class ConfigProtocol(Protocol):
         """Protocol for configuration objects with cloning support."""
@@ -198,18 +239,7 @@ class FlextProtocols:
 
     @runtime_checkable
     class ContextProtocol(Protocol):
-        """Protocol for execution contexts with cloning semantics.
-
-        Matches FlextContext's actual implementation:
-        - set() returns FlextResult[bool]
-        - get() returns FlextResult[FlextTypes.GeneralValueType]
-        - clone() returns new context instance
-
-        Note: Nested classes (Correlation, Service, Utilities) are accessed
-        as class attributes but are not part of the protocol definition due to
-        Python's protocol limitations. Use type narrowing/casts when accessing
-        these nested classes on protocol instances.
-        """
+        """Protocol for execution contexts with cloning semantics."""
 
         def clone(self) -> FlextProtocols.ContextProtocol:
             """Clone context for isolated execution."""
@@ -221,12 +251,7 @@ class FlextProtocols:
             value: FlextTypes.GeneralValueType,
             scope: str = ...,
         ) -> FlextProtocols.ResultProtocol[bool]:
-            """Set a context value.
-
-            Returns:
-                FlextResult[bool]: Success with True if set, failure with error
-
-            """
+            """Set a context value."""
             ...
 
         def get(
@@ -234,12 +259,7 @@ class FlextProtocols:
             key: str,
             scope: str = ...,
         ) -> FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]:
-            """Get a context value.
-
-            Returns:
-                FlextResult[GeneralValueType]: Success with value, failure if not found
-
-            """
+            """Get a context value."""
             ...
 
     @runtime_checkable
@@ -284,7 +304,7 @@ class FlextProtocols:
         def register_factory(
             self,
             name: str,
-            factory: Callable[[], FlextTypes.FlexibleValue],
+            factory: Callable[[], FlextTypes.GeneralValueType],
         ) -> FlextProtocols.ResultProtocol[bool]:
             """Register a service factory."""
             ...
@@ -292,7 +312,7 @@ class FlextProtocols:
         def with_service(
             self,
             name: str,
-            service: FlextTypes.FlexibleValue,
+            service: FlextTypes.GeneralValueType,
         ) -> FlextProtocols.ContainerProtocol:
             """Fluent interface for service registration."""
             ...
@@ -300,12 +320,12 @@ class FlextProtocols:
         def with_factory(
             self,
             name: str,
-            factory: Callable[[], FlextTypes.FlexibleValue],
+            factory: Callable[[], FlextTypes.GeneralValueType],
         ) -> FlextProtocols.ContainerProtocol:
             """Fluent interface for factory registration."""
             ...
 
-        def get[T](self, name: str) -> FlextProtocols.ResultProtocol[T]:
+        def get(self, name: str) -> FlextProtocols.ResultProtocol[T_co]:
             """Get service by name."""
             ...
 
@@ -315,7 +335,7 @@ class FlextProtocols:
             """Get service with type safety."""
             ...
 
-        def list_services(self) -> list[str]:
+        def list_services(self) -> Sequence[str]:
             """List all registered services."""
             ...
 
@@ -323,9 +343,12 @@ class FlextProtocols:
             """Clear all services and factories."""
             ...
 
-    # Layer 0.5: Circular Import Prevention Protocols
+    # =========================================================================
+    # LAYER 0.5: Circular Import Prevention Protocols
+    # =========================================================================
+
     @runtime_checkable
-    class ResultProtocol(Protocol[T]):
+    class ResultProtocol[T](Protocol):
         """Result type interface (prevents circular imports)."""
 
         @property
@@ -348,29 +371,16 @@ class FlextProtocols:
             """Error message."""
             ...
 
-        def ok(self, value: T) -> FlextProtocols.ResultProtocol[T]:
-            """Create success result."""
+        @property
+        def error_code(self) -> str | None:
+            """Error code for categorization."""
             ...
 
-        def fail(
-            self,
-            error: str,
-            error_code: str | None = None,
-            metadata: Mapping[str, FlextTypes.FlexibleValue] | None = None,
-        ) -> FlextProtocols.ResultProtocol[T]:
-            """Create failure result."""
-            ...
-
-        def map[U](self, func: Callable[[T], U]) -> FlextProtocols.ResultProtocol[U]:
-            """Map success value."""
-            ...
-
-        def flat_map[U](
-            self,
-            func: Callable[[T], FlextProtocols.ResultProtocol[U]],
-        ) -> FlextProtocols.ResultProtocol[U]:
-            """Flat map success value."""
-            ...
+        # NOTE: Factory methods (ok, fail) and transformation methods (map, flat_map)
+        # are omitted from this protocol for simplicity:
+        # - ok/fail are classmethods in FlextResult (Protocols can't define classmethods)
+        # - map/flat_map are implementation-specific (FlextResult returns FlextResult[U])
+        # Use FlextResult directly when you need factory or transformation methods.
 
         def unwrap(self) -> T:
             """Unwrap success value."""
@@ -411,9 +421,12 @@ class FlextProtocols:
             """Validate model."""
             ...
 
-    # Layer 1: Domain Protocols
+    # =========================================================================
+    # LAYER 1: Domain Protocols
+    # =========================================================================
+
     @runtime_checkable
-    class Service(Protocol, Generic[T]):
+    class Service[T](Protocol):
         """Base domain service interface."""
 
         def execute(
@@ -439,7 +452,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Repository(Protocol, Generic[T]):
+    class Repository[T](Protocol):
         """Data access interface."""
 
         def get_by_id(self, entity_id: str) -> FlextProtocols.ResultProtocol[T]:
@@ -454,17 +467,17 @@ class FlextProtocols:
             """Delete entity."""
             ...
 
-        def find_all(self) -> FlextProtocols.ResultProtocol[list[T]]:
+        def find_all(self) -> FlextProtocols.ResultProtocol[Sequence[T]]:
             """Find all entities."""
             ...
 
-    # Layer 2: Application Protocols
+    # =========================================================================
+    # LAYER 2: Application Protocols
+    # =========================================================================
+
     @runtime_checkable
     class VariadicCallable(Protocol[T_co]):
-        """Protocol for variadic callables returning T_co.
-
-        Used for functions that accept any arguments and return a typed value.
-        """
+        """Protocol for variadic callables returning T_co."""
 
         def __call__(
             self,
@@ -476,16 +489,12 @@ class FlextProtocols:
 
     @runtime_checkable
     class Handler(Protocol):
-        """Command/Query handler interface.
+        """Command/Query handler interface."""
 
-        This protocol defines the interface for handler objects that can
-        process messages and determine if they can handle a message type.
-        """
-
-        def handle[T](
+        def handle(
             self,
             message: FlextTypes.FlexibleValue,
-        ) -> FlextProtocols.ResultProtocol[T]:
+        ) -> FlextProtocols.ResultProtocol[T_co]:
             """Handle message."""
             ...
 
@@ -515,17 +524,8 @@ class FlextProtocols:
             self,
             request: FlextTypes.GeneralValueType,
             handler: FlextTypes.GeneralValueType | None = None,
-        ) -> FlextProtocols.ResultProtocol[dict[str, FlextTypes.GeneralValueType]]:
-            """Register handler.
-
-            Args:
-                request: Handler type or request object
-                handler: Optional handler instance
-
-            Returns:
-                FlextResult with registration details or error
-
-            """
+        ) -> FlextProtocols.ResultProtocol[Mapping[str, FlextTypes.GeneralValueType]]:
+            """Register handler."""
             ...
 
         def register_command[TCommand, TResult](
@@ -535,17 +535,7 @@ class FlextProtocols:
             *,
             handler_config: Mapping[str, FlextTypes.FlexibleValue] | None = None,
         ) -> FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]:
-            """Register command handler.
-
-            Args:
-                command_type: Command message type
-                handler: Handler instance (FlextHandlers or callable)
-                handler_config: Optional handler configuration
-
-            Returns:
-                FlextResult with registration details or error
-
-            """
+            """Register command handler."""
             ...
 
         @staticmethod
@@ -557,10 +547,10 @@ class FlextProtocols:
             """Create handler from function (static method)."""
             ...
 
-        def execute[T](
+        def execute(
             self,
             command: FlextTypes.FlexibleValue,
-        ) -> FlextProtocols.ResultProtocol[T]:
+        ) -> FlextProtocols.ResultProtocol[T_co]:
             """Execute command."""
             ...
 
@@ -579,7 +569,46 @@ class FlextProtocols:
             """Process command."""
             ...
 
-    # Layer 3: Infrastructure Protocols
+    @runtime_checkable
+    class Processor(Protocol):
+        """Processor interface for data transformation pipelines.
+
+        Processors can be objects with a process() method that takes data
+        and returns a result (which will be normalized to ResultProtocol).
+        Accepts GeneralValueType, BaseModel, or ResultProtocol for processing.
+
+        The return type is flexible to support:
+        - Direct values (FlextTypes.GeneralValueType)
+        - BaseModel instances (Pydantic models)
+        - ResultProtocol instances (structural typing)
+        - Objects with is_success/is_failure properties (FlextResult compatibility)
+        """
+
+        def process(
+            self,
+            data: (
+                FlextTypes.GeneralValueType
+                | BaseModel
+                | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+            ),
+        ) -> (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+        ):
+            """Process data and return result.
+
+            Returns can be:
+            - Direct value (FlextTypes.GeneralValueType)
+            - BaseModel instance (Pydantic model)
+            - ResultProtocol (structural typing compatible)
+            """
+            ...
+
+    # =========================================================================
+    # LAYER 3: Infrastructure Protocols
+    # =========================================================================
+
     @runtime_checkable
     class LoggerProtocol(Protocol):
         """Logging interface."""
@@ -645,8 +674,77 @@ class FlextProtocols:
             """Exception log."""
             ...
 
-        def with_result(self) -> FlextProtocols.LoggerProtocol:
-            """Return logger adapter that always returns FlextResult."""
+    @runtime_checkable
+    class StructlogLogger(BindableLogger, Protocol):
+        """Protocol for structlog logger with all logging methods.
+
+        Extends BindableLogger to add explicit method signatures for logging methods
+        (debug, info, warning, error, etc.) that are available via __getattr__ at runtime.
+
+        Structlog loggers implement this protocol through dynamic method dispatch.
+        """
+
+        def debug(
+            self,
+            msg: str | FlextTypes.GeneralValueType,
+            *args: FlextTypes.GeneralValueType | Exception,
+            **kw: FlextTypes.GeneralValueType | Exception,
+        ) -> None:
+            """Log debug message."""
+            ...
+
+        def info(
+            self,
+            msg: str | FlextTypes.GeneralValueType,
+            *args: FlextTypes.GeneralValueType,
+            **kw: FlextTypes.GeneralValueType | Exception,
+        ) -> None:
+            """Log info message."""
+            ...
+
+        def warning(
+            self,
+            msg: str | FlextTypes.GeneralValueType,
+            *args: FlextTypes.GeneralValueType,
+            **kw: FlextTypes.GeneralValueType | Exception,
+        ) -> None:
+            """Log warning message."""
+            ...
+
+        def warn(
+            self,
+            msg: str | FlextTypes.GeneralValueType,
+            *args: FlextTypes.GeneralValueType,
+            **kw: FlextTypes.GeneralValueType,
+        ) -> None:
+            """Log warning message (alias)."""
+            ...
+
+        def error(
+            self,
+            msg: str | FlextTypes.GeneralValueType,
+            *args: FlextTypes.GeneralValueType,
+            **kw: FlextTypes.GeneralValueType | Exception,
+        ) -> None:
+            """Log error message."""
+            ...
+
+        def critical(
+            self,
+            msg: str | FlextTypes.GeneralValueType,
+            *args: FlextTypes.GeneralValueType,
+            **kw: FlextTypes.GeneralValueType | Exception,
+        ) -> None:
+            """Log critical message."""
+            ...
+
+        def exception(
+            self,
+            msg: str | FlextTypes.GeneralValueType,
+            *args: FlextTypes.GeneralValueType,
+            **kw: FlextTypes.GeneralValueType | Exception,
+        ) -> None:
+            """Log exception with traceback."""
             ...
 
     @runtime_checkable
@@ -665,7 +763,10 @@ class FlextProtocols:
             """Close connection."""
             ...
 
-    # Layer 4: Extensions
+    # =========================================================================
+    # LAYER 4: Extensions
+    # =========================================================================
+
     @runtime_checkable
     class PluginContext(Protocol):
         """Plugin execution context."""
@@ -704,11 +805,7 @@ class FlextProtocols:
 
     @runtime_checkable
     class ValidationInfo(Protocol):
-        """Protocol for Pydantic ValidationInfo to avoid explicit Any types.
-
-        Used in field validators where Pydantic's ValidationInfo is needed
-        but we want to avoid importing pydantic directly in protocols.
-        """
+        """Protocol for Pydantic ValidationInfo to avoid explicit Any types."""
 
         @property
         def field_name(self) -> str | None:
@@ -725,9 +822,9 @@ class FlextProtocols:
             """Validation mode."""
             ...
 
-    # ═══════════════════════════════════════════════════════════════════
+    # =========================================================================
     # DOMAIN PROTOCOLS (Layer 1)
-    # ═══════════════════════════════════════════════════════════════════
+    # =========================================================================
 
     class Entry:
         """Entry-related protocols."""

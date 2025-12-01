@@ -14,7 +14,6 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from flext_core.typings import FlextTypes
-
 from tests.helpers.constants import TestConstants
 
 

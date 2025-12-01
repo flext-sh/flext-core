@@ -13,8 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from typing import Annotated, ClassVar
+from typing import Annotated
 
 from pydantic import Discriminator
 
@@ -26,12 +25,10 @@ from flext_core._models.context import FlextModelsContext
 from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.handler import FlextModelsHandler
-from flext_core._models.metadata import Metadata as MetadataBase
 from flext_core._models.service import FlextModelsService
 from flext_core._models.validation import FlextModelsValidation
-from flext_core.config import FlextConfig
-from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
+from flext_core.typings import FlextTypes
 
 
 class FlextModels:
@@ -53,275 +50,106 @@ class FlextModels:
     and JSON-ready serialization for all exported types.
     """
 
-    # Entity & DDD Patterns
-    class Entity(FlextModelsEntity.Core):
-        """Domain entity with identity and lifecycle."""
+    # Entity & DDD Patterns - Class references for inheritance support
+    # Use class attributes instead of type aliases to allow inheritance
+    Entity = FlextModelsEntity.Core
+    Value = FlextModelsEntity.Value
+    AggregateRoot = FlextModelsEntity.AggregateRoot
+    DomainEvent = FlextModelsEntity.DomainEvent
 
-    class Value(FlextModelsEntity.Value):
-        """Immutable value object."""
+    # Direct alias to base class - no wrapper to avoid MRO duplication
+    # Use FlextModelsBase.ArbitraryTypesModel directly in inheritance
+    # Use class attributes for inheritance support (type aliases can't be base classes)
+    ArbitraryTypesModel = FlextModelsBase.ArbitraryTypesModel
 
-    class AggregateRoot(FlextModelsEntity.AggregateRoot, Entity):
-        """Aggregate root consistency boundary."""
+    # Base Models - Class references for inheritance support
+    # Use class attributes instead of type aliases to allow inheritance
+    FrozenStrictModel = FlextModelsBase.FrozenStrictModel
+    IdentifiableMixin = FlextModelsBase.IdentifiableMixin
+    TimestampableMixin = FlextModelsBase.TimestampableMixin
+    TimestampedModel = FlextModelsBase.TimestampedModel
+    VersionableMixin = FlextModelsBase.VersionableMixin
 
-    class DomainEvent(FlextModelsEntity.DomainEvent):
-        """Domain event for event sourcing."""
+    # Collections - PEP 695 type aliases (Python 3.13+ strict)
+    # Direct access - no nested namespace duplication per FLEXT standards
+    Categories = FlextModelsCollections.Categories[FlextTypes.GeneralValueType]
+    type Statistics = FlextModelsCollections.Statistics
+    type Config = FlextModelsCollections.Config
+    type Results = FlextModelsCollections.Results
+    type Rules = FlextModelsCollections.Rules
+    type Options = FlextModelsCollections.Options
+    type ParseOptions = FlextModelsCollections.ParseOptions
 
-    class ArbitraryTypesModel(FlextModelsBase.ArbitraryTypesModel):
-        """Base model with arbitrary types support."""
-
-    class FrozenStrictModel(FlextModelsBase.FrozenStrictModel):
-        """Immutable strict model."""
-
-    class IdentifiableMixin(FlextModelsBase.IdentifiableMixin):
-        """Mixin for unique identifiers."""
-
-    class TimestampableMixin(FlextModelsBase.TimestampableMixin):
-        """Mixin for timestamps."""
-
-    class TimestampedModel(FlextModelsBase.TimestampedModel):
-        """Model with timestamp fields."""
-
-    class VersionableMixin(FlextModelsBase.VersionableMixin):
-        """Mixin for versioning."""
-
-    # Collections Facade
-    class Collections:
-        """Collections namespace exposing all collection models."""
-
-        Categories = FlextModelsCollections.Categories
-        Statistics = FlextModelsCollections.Statistics
-        Config = FlextModelsCollections.Config
-        Results = FlextModelsCollections.Results
-        Rules = FlextModelsCollections.Rules
-        Options = FlextModelsCollections.Options
-        ParseOptions = FlextModelsCollections.ParseOptions
-
-    # Direct access for backward compatibility (redirects to Collections)
-    Categories = FlextModelsCollections.Categories
-
-    class Statistics(FlextModelsCollections.Statistics):
-        """Statistics model with common counters."""
-
-    class Config(FlextModelsCollections.Config):
-        """Configuration model with common fields."""
-
-    class Results(FlextModelsCollections.Results):
-        """Base for result models."""
-
-    class Rules(FlextModelsCollections.Rules):
-        """Rules model for configuration rules."""
-
-    class Options(FlextModelsCollections.Options):
-        """Options model for configuration options."""
-
-    class ParseOptions(FlextModelsCollections.ParseOptions):
-        """Parameter object for parse_delimited configuration.
-
-        Used by FlextUtilitiesStringParser for configuring string parsing operations.
-        """
-
-    # CQRS Patterns
+    # CQRS Patterns - Class references for isinstance checks
     class Cqrs:
         """CQRS namespace with nested classes."""
 
-        class Command(FlextModelsCqrs.Command):
-            """Base class for CQRS commands."""
+        Command = FlextModelsCqrs.Command
+        Pagination = FlextModelsCqrs.Pagination  # Used in isinstance checks
+        Query = FlextModelsCqrs.Query
+        Bus = FlextModelsCqrs.Bus
+        Handler = FlextModelsCqrs.Handler
 
-        class Pagination(FlextModelsCqrs.Pagination):
-            """Pagination model for query results."""
+        # NOTE: Use FlextConfig.get_global_instance() directly in model defaults
+        # No wrapper methods needed - access config directly per FLEXT standards
 
-        class Query(FlextModelsCqrs.Query):
-            """Query model for CQRS query operations."""
+    # Base Utility Models - PEP 695 type aliases (Python 3.13+ strict)
+    type Metadata = FlextModelsBase.Metadata
 
-        class Bus(FlextModelsCqrs.Bus):
-            """Dispatcher configuration model exposed via CQRS namespace."""
+    # Configuration Models - PEP 695 type aliases (Python 3.13+ strict)
+    type ProcessingRequest = FlextModelsConfig.ProcessingRequest
+    type RetryConfiguration = FlextModelsConfig.RetryConfiguration
+    type ValidationConfiguration = FlextModelsConfig.ValidationConfiguration
+    type BatchProcessingConfig = FlextModelsConfig.BatchProcessingConfig
+    type HandlerExecutionConfig = FlextModelsConfig.HandlerExecutionConfig
+    type OperationExtraConfig = FlextModelsConfig.OperationExtraConfig
+    type LogOperationFailureConfig = FlextModelsConfig.LogOperationFailureConfig
+    type RetryLoopConfig = FlextModelsConfig.RetryLoopConfig
+    type DispatchConfig = FlextModelsConfig.DispatchConfig
+    type ExecuteDispatchAttemptOptions = FlextModelsConfig.ExecuteDispatchAttemptOptions
+    type RuntimeScopeOptions = FlextModelsConfig.RuntimeScopeOptions
+    type NestedExecutionOptions = FlextModelsConfig.NestedExecutionOptions
+    type ExceptionConfig = FlextModelsConfig.ExceptionConfig
+    type ValidationErrorConfig = FlextModelsConfig.ValidationErrorConfig
+    type ConfigurationErrorConfig = FlextModelsConfig.ConfigurationErrorConfig
+    type ConnectionErrorConfig = FlextModelsConfig.ConnectionErrorConfig
+    type TimeoutErrorConfig = FlextModelsConfig.TimeoutErrorConfig
+    type AuthenticationErrorConfig = FlextModelsConfig.AuthenticationErrorConfig
+    type AuthorizationErrorConfig = FlextModelsConfig.AuthorizationErrorConfig
+    type NotFoundErrorConfig = FlextModelsConfig.NotFoundErrorConfig
+    type ConflictErrorConfig = FlextModelsConfig.ConflictErrorConfig
+    type RateLimitErrorConfig = FlextModelsConfig.RateLimitErrorConfig
+    type InternalErrorConfig = FlextModelsConfig.InternalErrorConfig
+    type TypeErrorOptions = FlextModelsConfig.TypeErrorOptions
+    type TypeErrorConfig = FlextModelsConfig.TypeErrorConfig
+    type ValueErrorConfig = FlextModelsConfig.ValueErrorConfig
+    type CircuitBreakerErrorConfig = FlextModelsConfig.CircuitBreakerErrorConfig
+    type OperationErrorConfig = FlextModelsConfig.OperationErrorConfig
+    type AttributeAccessErrorConfig = FlextModelsConfig.AttributeAccessErrorConfig
+    type MiddlewareConfig = FlextModelsConfig.MiddlewareConfig
+    type RateLimiterState = FlextModelsConfig.RateLimiterState
 
-        class Handler(FlextModelsCqrs.Handler):
-            """Handler configuration model."""
+    # Context Management Models - Class references for isinstance/isinstance checks
+    # Direct access - no nested namespace duplication per FLEXT standards
+    StructlogProxyToken = FlextModelsContext.StructlogProxyToken
+    StructlogProxyContextVar = FlextModelsContext.StructlogProxyContextVar[str]
+    Token = FlextModelsContext.Token
+    ContextData = FlextModelsContext.ContextData
+    ContextExport = FlextModelsContext.ContextExport  # Used in isinstance checks
+    ContextScopeData = FlextModelsContext.ContextScopeData
+    ContextStatistics = (
+        FlextModelsContext.ContextStatistics
+    )  # Used in isinstance checks
+    ContextMetadata = FlextModelsContext.ContextMetadata
+    ContextDomainData = FlextModelsContext.ContextDomainData
 
-        @staticmethod
-        def _get_command_timeout_default() -> int:
-            """Get command timeout from config or constants."""
-            config = FlextConfig.get_global_instance()
-            return (
-                int(config.dispatcher_timeout_seconds)
-                or FlextConstants.Cqrs.DEFAULT_COMMAND_TIMEOUT
-            )
+    # Handler Management Models - PEP 695 type aliases (Python 3.13+ strict)
+    type HandlerRegistration = FlextModelsHandler.Registration
+    type RegistrationDetails = FlextModelsHandler.RegistrationDetails
+    type HandlerExecutionContext = FlextModelsHandler.ExecutionContext
 
-        @staticmethod
-        def _get_max_command_retries_default() -> int:
-            """Get max retries from config or constants."""
-            config = FlextConfig.get_global_instance()
-            return (
-                config.max_retry_attempts
-                or FlextConstants.Cqrs.DEFAULT_MAX_COMMAND_RETRIES
-            )
-
-    # Base Utility Models
-    class Metadata(MetadataBase):
-        """Metadata model for structured information."""
-
-    # Configuration Models
-    class ProcessingRequest(FlextModelsConfig.ProcessingRequest):
-        """Processing request configuration model."""
-
-    class RetryConfiguration(FlextModelsConfig.RetryConfiguration):
-        """Retry configuration model."""
-
-    class ValidationConfiguration(FlextModelsConfig.ValidationConfiguration):
-        """Validation configuration model."""
-
-    class BatchProcessingConfig(FlextModelsConfig.BatchProcessingConfig):
-        """Batch processing configuration model."""
-
-    class HandlerExecutionConfig(FlextModelsConfig.HandlerExecutionConfig):
-        """Handler execution configuration model."""
-
-    class OperationExtraConfig(FlextModelsConfig.OperationExtraConfig):
-        """Operation extra configuration model."""
-
-    class LogOperationFailureConfig(FlextModelsConfig.LogOperationFailureConfig):
-        """Log operation failure configuration model."""
-
-    class RetryLoopConfig(FlextModelsConfig.RetryLoopConfig):
-        """Retry loop configuration model."""
-
-    class DispatchConfig(FlextModelsConfig.DispatchConfig):
-        """Dispatch configuration model."""
-
-    class ExecuteDispatchAttemptOptions(
-        FlextModelsConfig.ExecuteDispatchAttemptOptions
-    ):
-        """Options for execute dispatch attempt."""
-
-    class RuntimeScopeOptions(FlextModelsConfig.RuntimeScopeOptions):
-        """Options for runtime scope."""
-
-    class NestedExecutionOptions(FlextModelsConfig.NestedExecutionOptions):
-        """Options for nested execution."""
-
-    class ExceptionConfig(FlextModelsConfig.ExceptionConfig):
-        """Exception configuration model."""
-
-    class ValidationErrorConfig(FlextModelsConfig.ValidationErrorConfig):
-        """Validation error configuration model."""
-
-    class ConfigurationErrorConfig(FlextModelsConfig.ConfigurationErrorConfig):
-        """Configuration error configuration model."""
-
-    class ConnectionErrorConfig(FlextModelsConfig.ConnectionErrorConfig):
-        """Connection error configuration model."""
-
-    class TimeoutErrorConfig(FlextModelsConfig.TimeoutErrorConfig):
-        """Timeout error configuration model."""
-
-    class AuthenticationErrorConfig(FlextModelsConfig.AuthenticationErrorConfig):
-        """Authentication error configuration model."""
-
-    class AuthorizationErrorConfig(FlextModelsConfig.AuthorizationErrorConfig):
-        """Authorization error configuration model."""
-
-    class NotFoundErrorConfig(FlextModelsConfig.NotFoundErrorConfig):
-        """Not found error configuration model."""
-
-    class ConflictErrorConfig(FlextModelsConfig.ConflictErrorConfig):
-        """Conflict error configuration model."""
-
-    class RateLimitErrorConfig(FlextModelsConfig.RateLimitErrorConfig):
-        """Rate limit error configuration model."""
-
-    class InternalErrorConfig(FlextModelsConfig.InternalErrorConfig):
-        """Internal error configuration model."""
-
-    class TypeErrorOptions(FlextModelsConfig.TypeErrorOptions):
-        """Options for TypeError initialization."""
-
-    class TypeErrorConfig(FlextModelsConfig.TypeErrorConfig):
-        """Type error configuration model."""
-
-    class ValueErrorConfig(FlextModelsConfig.ValueErrorConfig):
-        """Value error configuration model."""
-
-    class CircuitBreakerErrorConfig(FlextModelsConfig.CircuitBreakerErrorConfig):
-        """Circuit breaker error configuration model."""
-
-    class OperationErrorConfig(FlextModelsConfig.OperationErrorConfig):
-        """Operation error configuration model."""
-
-    class AttributeAccessErrorConfig(FlextModelsConfig.AttributeAccessErrorConfig):
-        """Attribute access error configuration model."""
-
-    class MiddlewareConfig(FlextModelsConfig.MiddlewareConfig):
-        """Middleware configuration model."""
-
-    class RateLimiterState(FlextModelsConfig.RateLimiterState):
-        """Rate limiter state model."""
-
-    # Context Management Models
-    class StructlogProxyToken(FlextModelsContext.StructlogProxyToken):
-        """Structlog proxy token model."""
-
-    StructlogProxyContextVar = FlextModelsContext.StructlogProxyContextVar
-
-    class Token(FlextModelsContext.Token):
-        """Context token model."""
-
-    class ContextData(FlextModelsContext.ContextData):
-        """Context data model."""
-
-    class ContextExport(FlextModelsContext.ContextExport):
-        """Context export model."""
-
-    class ContextScopeData(FlextModelsContext.ContextScopeData):
-        """Context scope data model."""
-
-    class ContextStatistics(FlextModelsContext.ContextStatistics):
-        """Context statistics model."""
-
-    class ContextMetadata(FlextModelsContext.ContextMetadata):
-        """Context metadata model."""
-
-    class ContextDomainData(FlextModelsContext.ContextDomainData):
-        """Context domain data model."""
-
-    class Context:
-        """Context management facade with DRY mapping."""
-
-        # DRY mapping for context classes
-        _CONTEXT_CLASSES: ClassVar[Mapping[str, type]] = {
-            "StructlogProxyToken": FlextModelsContext.StructlogProxyToken,
-            "StructlogProxyContextVar": FlextModelsContext.StructlogProxyContextVar,
-            "Token": FlextModelsContext.Token,
-            "ContextData": FlextModelsContext.ContextData,
-            "ContextExport": FlextModelsContext.ContextExport,
-            "ContextScopeData": FlextModelsContext.ContextScopeData,
-            "ContextStatistics": FlextModelsContext.ContextStatistics,
-            "ContextMetadata": FlextModelsContext.ContextMetadata,
-            "ContextDomainData": FlextModelsContext.ContextDomainData,
-        }
-
-        # DRY assignment
-        StructlogProxyToken = _CONTEXT_CLASSES["StructlogProxyToken"]
-        StructlogProxyContextVar = _CONTEXT_CLASSES["StructlogProxyContextVar"]
-        Token = _CONTEXT_CLASSES["Token"]
-        ContextData = _CONTEXT_CLASSES["ContextData"]
-        ContextExport = _CONTEXT_CLASSES["ContextExport"]
-        ContextScopeData = _CONTEXT_CLASSES["ContextScopeData"]
-        ContextStatistics = _CONTEXT_CLASSES["ContextStatistics"]
-        ContextMetadata = _CONTEXT_CLASSES["ContextMetadata"]
-        ContextDomainData = _CONTEXT_CLASSES["ContextDomainData"]
-
-    # Handler Management Models
-    class HandlerRegistration(FlextModelsHandler.Registration):
-        """Handler registration model."""
-
-    class RegistrationDetails(FlextModelsHandler.RegistrationDetails):
-        """Registration details model."""
-
-    class HandlerExecutionContext(FlextModelsHandler.ExecutionContext):
-        """Handler execution context model."""
-
-    # Domain Service Models
+    # Domain Service Models - PEP 695 type aliases (Python 3.13+ strict)
+    # ServiceRuntime needs to stay as class due to protocol fields
     class ServiceRuntime(FlextModelsBase.ArbitraryTypesModel):
         """Runtime triple (config, context, container) for services."""
 
@@ -329,82 +157,53 @@ class FlextModels:
         context: FlextProtocols.ContextProtocol
         container: FlextProtocols.ContainerProtocol
 
-    class DomainServiceExecutionRequest(
-        FlextModelsService.DomainServiceExecutionRequest,
-    ):
-        """Domain service execution request model."""
+    type DomainServiceExecutionRequest = (
+        FlextModelsService.DomainServiceExecutionRequest
+    )
+    type DomainServiceBatchRequest = FlextModelsService.DomainServiceBatchRequest
+    type DomainServiceMetricsRequest = FlextModelsService.DomainServiceMetricsRequest
+    type DomainServiceResourceRequest = FlextModelsService.DomainServiceResourceRequest
+    type AclResponse = FlextModelsService.AclResponse
+    type OperationExecutionRequest = FlextModelsService.OperationExecutionRequest
 
-    class DomainServiceBatchRequest(FlextModelsService.DomainServiceBatchRequest):
-        """Domain service batch request model."""
-
-    class DomainServiceMetricsRequest(FlextModelsService.DomainServiceMetricsRequest):
-        """Domain service metrics request model."""
-
-    class DomainServiceResourceRequest(FlextModelsService.DomainServiceResourceRequest):
-        """Domain service resource request model."""
-
-    class AclResponse(FlextModelsService.AclResponse):
-        """ACL (Access Control List) response model."""
-
-    class OperationExecutionRequest(FlextModelsService.OperationExecutionRequest):
-        """Operation execution request model."""
-
-    # Container Models
-    class ServiceRegistration(FlextModelsContainer.ServiceRegistration):
-        """Service registration model - DI container service entry."""
-
-    class FactoryRegistration(FlextModelsContainer.FactoryRegistration):
-        """Factory registration model - DI container factory entry."""
-
-    class ContainerConfig(FlextModelsContainer.ContainerConfig):
-        """Container configuration model - DI container settings."""
+    # Container Models - PEP 695 type aliases (Python 3.13+ strict)
+    type ServiceRegistration = FlextModelsContainer.ServiceRegistration
+    type FactoryRegistration = FlextModelsContainer.FactoryRegistration
+    type ContainerConfig = FlextModelsContainer.ContainerConfig
 
     # Pydantic v2 discriminated union using modern typing (PEP 695)
+    # Use direct references to base classes, not aliases
     type MessageUnion = Annotated[
-        Cqrs.Command | Cqrs.Query | DomainEvent,
+        FlextModelsCqrs.Command | FlextModelsCqrs.Query | FlextModelsEntity.DomainEvent,
         Discriminator("message_type"),
     ]
 
-    # Validation Patterns - DRY mapping for method delegation
+    # Validation Patterns - Direct method delegation (no wrapper mapping)
     class Validation:
-        """Validation namespace with DRY method delegation."""
+        """Validation namespace with direct method delegation."""
 
-        # Mapping for DRY validation method assignment
-        _VALIDATION_METHODS: ClassVar[Mapping[str, Callable[..., object]]] = {
-            "validate_business_rules": FlextModelsValidation.validate_business_rules,
-            "validate_cross_fields": FlextModelsValidation.validate_cross_fields,
-            "validate_performance": FlextModelsValidation.validate_performance,
-            "validate_batch": FlextModelsValidation.validate_batch,
-            "validate_domain_invariants": FlextModelsValidation.validate_domain_invariants,
-            "validate_aggregate_consistency_with_rules": FlextModelsValidation.validate_aggregate_consistency_with_rules,
-            "validate_event_sourcing": FlextModelsValidation.validate_event_sourcing,
-            "validate_cqrs_patterns": FlextModelsValidation.validate_cqrs_patterns,
-            "validate_domain_event": FlextModelsValidation.validate_domain_event,
-            "validate_aggregate_consistency": FlextModelsValidation.validate_aggregate_consistency,
-            "validate_entity_relationships": FlextModelsValidation.validate_entity_relationships,
-        }
-
-        # DRY assignment using mapping
-        validate_business_rules = _VALIDATION_METHODS["validate_business_rules"]
-        validate_cross_fields = _VALIDATION_METHODS["validate_cross_fields"]
-        validate_performance = _VALIDATION_METHODS["validate_performance"]
-        validate_batch = _VALIDATION_METHODS["validate_batch"]
-        validate_domain_invariants = _VALIDATION_METHODS["validate_domain_invariants"]
-        validate_aggregate_consistency_with_rules = _VALIDATION_METHODS[
-            "validate_aggregate_consistency_with_rules"
-        ]
-        validate_event_sourcing = _VALIDATION_METHODS["validate_event_sourcing"]
-        validate_cqrs_patterns = _VALIDATION_METHODS["validate_cqrs_patterns"]
-        validate_domain_event = _VALIDATION_METHODS["validate_domain_event"]
-        validate_aggregate_consistency = _VALIDATION_METHODS[
-            "validate_aggregate_consistency"
-        ]
-        validate_entity_relationships = _VALIDATION_METHODS[
-            "validate_entity_relationships"
-        ]
+        # Direct assignment - no wrapper mapping per FLEXT standards
+        # All methods return ResultProtocol[T] for various T
+        validate_business_rules = FlextModelsValidation.validate_business_rules
+        validate_cross_fields = FlextModelsValidation.validate_cross_fields
+        validate_performance = FlextModelsValidation.validate_performance
+        validate_batch = FlextModelsValidation.validate_batch
+        validate_domain_invariants = FlextModelsValidation.validate_domain_invariants
+        validate_aggregate_consistency_with_rules = (
+            FlextModelsValidation.validate_aggregate_consistency_with_rules
+        )
+        validate_event_sourcing = FlextModelsValidation.validate_event_sourcing
+        validate_cqrs_patterns = FlextModelsValidation.validate_cqrs_patterns
+        validate_domain_event = FlextModelsValidation.validate_domain_event
+        validate_aggregate_consistency = (
+            FlextModelsValidation.validate_aggregate_consistency
+        )
+        validate_entity_relationships = (
+            FlextModelsValidation.validate_entity_relationships
+        )
 
 
 # Pydantic v2 with 'from __future__ import annotations' automatically resolves forward references
 # No manual model_rebuild() needed - annotations are stringified and resolved at runtime
 
-__all__ = ["FlextModels", "FlextModelsCollections"]
+__all__ = ["FlextModels", "FlextModelsCollections", "FlextModelsEntity"]

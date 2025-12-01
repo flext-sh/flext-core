@@ -7,12 +7,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import cast
 
 import pytest
 
 from flext_core import FlextResult
+from flext_core.protocols import FlextProtocols
+from flext_core.typings import FlextTypes
 from flext_tests.utilities import FlextTestsUtilities
 
 
@@ -88,7 +90,11 @@ class TestFlextTestsUtilities:
                 super().__init__()
                 self.attribute = "original"
 
-        obj = TestObject()
+            def model_dump(self) -> Mapping[str, FlextTypes.FlexibleValue]:
+                """Implement HasModelDump protocol."""
+                return {"attribute": self.attribute}
+
+        obj: FlextProtocols.HasModelDump = TestObject()
 
         with FlextTestsUtilities.test_context(obj, "attribute", "modified"):
             assert obj.attribute == "modified"
@@ -100,9 +106,11 @@ class TestFlextTestsUtilities:
         """Test test_context adds new attribute temporarily."""
 
         class TestObject:
-            pass
+            def model_dump(self) -> Mapping[str, FlextTypes.FlexibleValue]:
+                """Implement HasModelDump protocol."""
+                return {}
 
-        obj = TestObject()
+        obj: FlextProtocols.HasModelDump = TestObject()
 
         with FlextTestsUtilities.test_context(obj, "new_attr", "new_value"):
             assert hasattr(obj, "new_attr")
@@ -120,7 +128,11 @@ class TestFlextTestsUtilities:
                 super().__init__()
                 self.temp_attr = "temp"
 
-        obj = TestObject()
+            def model_dump(self) -> Mapping[str, FlextTypes.FlexibleValue]:
+                """Implement HasModelDump protocol."""
+                return {"temp_attr": self.temp_attr}
+
+        obj: FlextProtocols.HasModelDump = TestObject()
 
         with FlextTestsUtilities.test_context(
             obj,
@@ -141,7 +153,11 @@ class TestFlextTestsUtilities:
                 super().__init__()
                 self.attribute = "original"
 
-        obj = TestObject()
+            def model_dump(self) -> Mapping[str, FlextTypes.FlexibleValue]:
+                """Implement HasModelDump protocol."""
+                return {"attribute": self.attribute}
+
+        obj: FlextProtocols.HasModelDump = TestObject()
 
         with FlextTestsUtilities.test_context(obj, "attribute", "modified"):
             assert obj.attribute == "modified"

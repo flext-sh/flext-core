@@ -3104,10 +3104,10 @@ dev = ["pytest", "setuptools"]
 [extras]
 dev = ["autoflake", "black", "codespell", "deptry", "isort", "pre-commit", "pylint", "pyupgrade", "radon", "ruff", "vulture"]
 security = ["bandit", "pip-audit", "uv"]
-test = ["factory-boy", "faker", "hypothesis", "pytest", "pytest-benchmark", "pytest-clarity", "pytest-cov", "pytest-deadfixtures", "pytest-env", "pytest-mock", "pytest-randomly", "pytest-sugar", "pytest-timeout", "pytest-xdist"]
+test = ["beartype", "factory-boy", "faker", "hypothesis", "pytest", "pytest-benchmark", "pytest-clarity", "pytest-cov", "pytest-deadfixtures", "pytest-env", "pytest-mock", "pytest-randomly", "pytest-sugar", "pytest-timeout", "pytest-xdist"]
 typings = ["django-stubs", "types-docker", "types-ldap3", "types-protobuf", "types-psutil", "types-psycopg2", "types-python-dateutil", "types-pyyaml", "types-redis", "types-requests", "types-setuptools", "types-toml"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "d127265e7e7d58d4d24c6adecac4c9acdb7f56495d5fb7a7b34574bf683f6f53"
+content-hash = "58d82a86a119e17532e60e4e8cdb3d7a65220642615ac352c9c3d73658c35708"

@@ -350,6 +350,10 @@ class TestFlextConfig:
         finally:
             FlextConfig.reset_global_instance()
 
+
+class TestFlextConfigPydantic:
+    """Test suite for FlextConfig Pydantic-specific features."""
+
     @pytest.mark.parametrize(
         ("env_key", "env_value", "should_load", "log_level"),
         ConfigScenarios.ENV_PREFIX_CASES,

@@ -9,16 +9,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 import pytest
+from pydantic import PrivateAttr
 
-from flext_core import FlextContainer, FlextModels, FlextResult, FlextService
+from flext_core import FlextContainer, FlextResult, FlextService
+from flext_core._models.collections import FlextModelsCollections
+from flext_core._models.entity import FlextModelsEntity
 from flext_core.typings import FlextTypes
 from tests.integration.test_integration import FunctionalExternalService
 
 
-class UserServiceEntity(FlextModels.Entity):
+class UserServiceEntity(FlextModelsEntity.Core):
     """Test user entity model using FlextModels.Entity."""
 
     name: str
@@ -29,32 +30,27 @@ class UserServiceEntity(FlextModels.Entity):
 class UserQueryService(FlextService[UserServiceEntity | None]):
     """Real user query service using FlextService."""
 
+    _users: dict[str, UserServiceEntity] = PrivateAttr(default_factory=dict)
+    _should_fail: bool = PrivateAttr(default=False)
+    _call_count: int = PrivateAttr(default_factory=lambda: 0)
+
     def __init__(
         self,
-        **data: (
-            FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | FlextTypes.Types.ConfigurationMapping
-        ),
+        **data: FlextTypes.GeneralValueType,
     ) -> None:
         """Initialize user query service."""
         super().__init__(**data)
-        self._users: dict[str, UserServiceEntity] = {}
-        self._should_fail: bool = False
-        self._call_count: int = 0
 
-    def execute(self) -> FlextResult[UserServiceEntity | None]:
+    def execute(self) -> FlextResult[bool]:
         """Execute user query service.
 
         Returns:
-            FlextResult[UserServiceEntity | None]: User entity or None.
+            FlextResult[bool]: True on success, False or failure otherwise.
 
         """
         if self._should_fail:
-            return FlextResult[UserServiceEntity | None].fail(
-                "User service unavailable",
-            )
-        return FlextResult[UserServiceEntity | None].ok(None)
+            return FlextResult[bool].fail("User service unavailable")
+        return FlextResult[bool].ok(True)
 
     def get_user(self, user_id: str) -> FlextResult[UserServiceEntity]:
         """Get user by ID.
@@ -110,19 +106,16 @@ class UserQueryService(FlextService[UserServiceEntity | None]):
 class NotificationService(FlextService[str]):
     """Real notification service using FlextService."""
 
+    _sent_notifications: list[str] = PrivateAttr(default_factory=list)
+    _call_count: int = PrivateAttr(default_factory=lambda: 0)
+    _should_fail: bool = PrivateAttr(default=False)
+
     def __init__(
         self,
-        **data: (
-            FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | FlextTypes.Types.ConfigurationMapping
-        ),
+        **data: FlextTypes.GeneralValueType,
     ) -> None:
         """Initialize notification service."""
         super().__init__(**data)
-        self._sent_notifications: list[str] = []
-        self._call_count: int = 0
-        self._should_fail: bool = False
 
     def execute(self) -> FlextResult[str]:
         """Execute notification service."""
@@ -166,7 +159,8 @@ class NotificationService(FlextService[str]):
         return self._call_count
 
 
-class ServiceConfig(FlextModels.Config):
+# Use the actual class, not the type alias
+class ServiceConfig(FlextModelsCollections.Config):
     """Service configuration model with required fields."""
 
     name: str
@@ -177,21 +171,18 @@ class ServiceConfig(FlextModels.Config):
 class LifecycleService(FlextService[str]):
     """Real lifecycle service using FlextService with config model."""
 
+    _initialized: bool = PrivateAttr(default=False)
+    _service_config: ServiceConfig | None = PrivateAttr(default=None)
+    _shutdown_called: bool = PrivateAttr(default=False)
+    _should_fail_init: bool = PrivateAttr(default=False)
+    _should_fail_shutdown: bool = PrivateAttr(default=False)
+
     def __init__(
         self,
-        **data: (
-            FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | FlextTypes.Types.ConfigurationMapping
-        ),
+        **data: FlextTypes.GeneralValueType,
     ) -> None:
         """Initialize lifecycle service."""
         super().__init__(**data)
-        self._initialized: bool = False
-        self._config: ServiceConfig | None = None
-        self._shutdown_called: bool = False
-        self._should_fail_init: bool = False
-        self._should_fail_shutdown: bool = False
 
     def execute(self) -> FlextResult[str]:
         """Execute lifecycle service."""
@@ -212,7 +203,7 @@ class LifecycleService(FlextService[str]):
         if self._should_fail_init:
             return FlextResult[str].fail("Initialization failed")
         self._initialized = True
-        self._config = config
+        self._service_config = config
         return FlextResult[str].ok("initialized")
 
     def health_check(self) -> bool:
@@ -258,9 +249,9 @@ class LifecycleService(FlextService[str]):
         return self._initialized
 
     @property
-    def config(self) -> ServiceConfig | None:
-        """Get configuration."""
-        return self._config
+    def service_config(self) -> ServiceConfig | None:
+        """Get service configuration."""
+        return self._service_config
 
     @property
     def shutdown_called(self) -> bool:
@@ -293,7 +284,7 @@ class TestFlextServiceIntegration:
 
         # Assert
         assert result.is_success is True
-        assert result.value is None
+        assert result.value is True  # execute() returns True on success
 
     @pytest.mark.integration
     def test_user_service_get_user(
@@ -492,8 +483,8 @@ class TestFlextServiceIntegration:
         assert result.is_success is True
         assert result.value == "initialized"
         assert lifecycle_service.initialized is True
-        assert lifecycle_service.config is not None
-        assert lifecycle_service.config.name == "test_service"
+        assert lifecycle_service.service_config is not None
+        assert lifecycle_service.service_config.name == "test_service"
 
     @pytest.mark.integration
     def test_lifecycle_service_health_check(

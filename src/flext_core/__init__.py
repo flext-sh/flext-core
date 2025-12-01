@@ -23,7 +23,7 @@ from flext_core.decorators import FlextDecorators
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
-from flext_core.loggings import FlextLogger, FlextLoggerResultAdapter
+from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
@@ -50,6 +50,7 @@ from flext_core.typings import (
     T_co,
     T_Config,
     T_contra,
+    T_Model,
     T_Namespace,
     TAggregate_co,
     TCacheKey_contra,
@@ -122,7 +123,6 @@ __all__ = [
     "FlextExceptions",
     "FlextHandlers",
     "FlextLogger",
-    "FlextLoggerResultAdapter",
     "FlextMixins",
     "FlextModels",
     "FlextProtocols",
@@ -163,6 +163,7 @@ __all__ = [
     "TValueObject_co",
     "TValue_co",
     "T_Config",
+    "T_Model",
     "T_Namespace",
     "T_co",
     "T_contra",
@@ -173,3 +174,5 @@ __all__ = [
     "__version_info__",
     "auto_register",
 ]
+# NOTE: UserDataMapping and ValidationResult are in FlextTypes.Example
+# Access via: FlextTypes.Example.UserDataMapping, FlextTypes.Example.ValidationResult

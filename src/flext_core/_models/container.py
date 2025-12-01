@@ -12,37 +12,37 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from flext_core._models.metadata import Metadata, MetadataAttributeValue
+from flext_core._models.base import FlextModelsBase
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
+
+# NOTE: Use FlextUtilitiesGenerators.generate_datetime_utc() directly - no inline helpers per FLEXT standards
 
 
-# Tier 0.5 inline enum (avoid importing FlextConstants)
-class _ValidationLevel(StrEnum):
+# Tier 0.5 inline enum (defined outside class to avoid forward reference issues)
+class _ContainerValidationLevel(StrEnum):
     """Validation level for container operations."""
 
     STRICT = "strict"
     LENIENT = "lenient"
 
 
-# Tier 0.5 inline helper (avoid importing FlextRuntime)
-def _is_dict_like(value: FlextTypes.GeneralValueType) -> bool:
-    """Check if value is dict-like."""
-    return isinstance(value, Mapping)
-
-
-# Tier 0.5 inline helper (avoid importing FlextUtilities)
-def _generate_datetime_utc() -> datetime:
-    """Generate current UTC datetime."""
-    return datetime.now(UTC)
-
-
 class FlextModelsContainer:
     """Container models namespace for DI and service registry."""
+
+    # Re-export for external access
+    ValidationLevel = _ContainerValidationLevel
+
+    @staticmethod
+    def _is_dict_like(value: FlextTypes.GeneralValueType) -> bool:
+        """Check if value is dict-like."""
+        return isinstance(value, Mapping)
 
     class ServiceRegistration(BaseModel):
         """Model for service registry entries.
@@ -75,10 +75,12 @@ class FlextModelsContainer:
             description="Service instance (primitives, BaseModel, callable, or any object)",
         )
         registration_time: datetime = Field(
-            default_factory=_generate_datetime_utc,
+            default_factory=FlextUtilities.Generators.generate_datetime_utc,
             description="UTC timestamp when service was registered",
         )
-        metadata: Metadata | FlextTypes.Types.ServiceMetadataMapping | None = Field(
+        metadata: (
+            FlextModelsBase.Metadata | FlextTypes.Types.ServiceMetadataMapping | None
+        ) = Field(
             default=None,
             description="Additional service metadata (JSON-serializable)",
         )
@@ -93,68 +95,30 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(cls, v: FlextTypes.GeneralValueType) -> Metadata:  # noqa: C901
+        def validate_metadata(
+            cls, v: FlextTypes.GeneralValueType
+        ) -> FlextModelsBase.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
             Maintains advanced capability to convert dict → Metadata.
             """
             if v is None:
-                return Metadata(attributes={})
-            if _is_dict_like(v):
-                # Convert Mapping to dict and ensure MetadataAttributeValue compatibility
-                # Metadata.attributes expects dict[str, MetadataAttributeValue]
-                # where MetadataAttributeValue = str | int | float | bool | list[...] | dict[...] | None
-                # We need to convert any Mapping values to dict
-                def _convert_to_metadata_value(  # noqa: C901, PLR0912
-                    val: FlextTypes.GeneralValueType,
-                ) -> MetadataAttributeValue:
-                    """Convert GeneralValueType to MetadataAttributeValue."""
-                    if val is None:
-                        return None
-                    if isinstance(val, (str, int, float, bool)):
-                        return val
-                    if isinstance(val, list):
-                        # Ensure list elements are compatible with MetadataAttributeValue list type
-                        converted_list: list[str | int | float | bool | None] = []
-                        for item in val:
-                            if isinstance(item, (str, int, float, bool, type(None))):
-                                converted_list.append(item)
-                            else:
-                                converted_list.append(str(item))
-                        return converted_list
-                    if isinstance(val, dict):
-                        # Ensure dict values are compatible
-                        converted_dict: dict[str, str | int | float | bool | None] = {}
-                        for k, v_item in val.items():
-                            if isinstance(v_item, (str, int, float, bool, type(None))):
-                                converted_dict[str(k)] = v_item
-                            else:
-                                converted_dict[str(k)] = str(v_item)
-                        return converted_dict
-                    if isinstance(val, Mapping):
-                        # Convert Mapping to dict
-                        mapping_dict: dict[str, str | int | float | bool | None] = {}
-                        for k, v_item in val.items():
-                            if isinstance(v_item, (str, int, float, bool, type(None))):
-                                mapping_dict[str(k)] = v_item
-                            else:
-                                mapping_dict[str(k)] = str(v_item)
-                        return mapping_dict
-                    # Convert other types to string
-                    return str(val)
-
+                return FlextModelsBase.Metadata(attributes={})
+            if FlextModelsContainer._is_dict_like(v):
+                # Use FlextRuntime.normalize_to_metadata_value directly - no wrapper needed
                 # Type narrowing: v is Mapping after _is_dict_like check
                 if isinstance(v, Mapping):
-                    attributes: dict[str, MetadataAttributeValue] = {
-                        str(key): _convert_to_metadata_value(value)
-                        for key, value in v.items()
-                    }
-                    return Metadata(attributes=attributes)
-                return Metadata(attributes={})
-            if isinstance(v, Metadata):
+                    attributes: dict[str, FlextTypes.MetadataAttributeValue] = {}
+                    for key, value in v.items():
+                        attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(
+                            value
+                        )
+                    return FlextModelsBase.Metadata(attributes=attributes)
+                return FlextModelsBase.Metadata(attributes={})
+            if isinstance(v, FlextModelsBase.Metadata):
                 return v
-            msg = f"metadata must be None, dict, or Metadata, got {type(v).__name__}"
+            msg = f"metadata must be None, dict, or FlextModelsBase.Metadata, got {type(v).__name__}"
             raise TypeError(msg)
 
     class FactoryRegistration(BaseModel):
@@ -187,7 +151,7 @@ class FlextModelsContainer:
             description="Factory function that creates service instances",
         )
         registration_time: datetime = Field(
-            default_factory=_generate_datetime_utc,
+            default_factory=FlextUtilities.Generators.generate_datetime_utc,
             description="UTC timestamp when factory was registered",
         )
         is_singleton: bool = Field(
@@ -198,7 +162,9 @@ class FlextModelsContainer:
             default=None,
             description="Cached singleton instance (if is_singleton=True)",
         )
-        metadata: Metadata | FlextTypes.Types.ServiceMetadataMapping | None = Field(
+        metadata: (
+            FlextModelsBase.Metadata | FlextTypes.Types.ServiceMetadataMapping | None
+        ) = Field(
             default=None,
             description="Additional factory metadata (JSON-serializable)",
         )
@@ -210,68 +176,30 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(cls, v: FlextTypes.GeneralValueType) -> Metadata:  # noqa: C901
+        def validate_metadata(
+            cls, v: FlextTypes.GeneralValueType
+        ) -> FlextModelsBase.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
             Maintains advanced capability to convert dict → Metadata.
             """
             if v is None:
-                return Metadata(attributes={})
-            if _is_dict_like(v):
-                # Convert Mapping to dict and ensure MetadataAttributeValue compatibility
-                # Metadata.attributes expects dict[str, MetadataAttributeValue]
-                # where MetadataAttributeValue = str | int | float | bool | list[...] | dict[...] | None
-                # We need to convert any Mapping values to dict
-                def _convert_to_metadata_value(  # noqa: C901, PLR0912
-                    val: FlextTypes.GeneralValueType,
-                ) -> MetadataAttributeValue:
-                    """Convert GeneralValueType to MetadataAttributeValue."""
-                    if val is None:
-                        return None
-                    if isinstance(val, (str, int, float, bool)):
-                        return val
-                    if isinstance(val, list):
-                        # Ensure list elements are compatible with MetadataAttributeValue list type
-                        converted_list: list[str | int | float | bool | None] = []
-                        for item in val:
-                            if isinstance(item, (str, int, float, bool, type(None))):
-                                converted_list.append(item)
-                            else:
-                                converted_list.append(str(item))
-                        return converted_list
-                    if isinstance(val, dict):
-                        # Ensure dict values are compatible
-                        converted_dict: dict[str, str | int | float | bool | None] = {}
-                        for k, v_item in val.items():
-                            if isinstance(v_item, (str, int, float, bool, type(None))):
-                                converted_dict[str(k)] = v_item
-                            else:
-                                converted_dict[str(k)] = str(v_item)
-                        return converted_dict
-                    if isinstance(val, Mapping):
-                        # Convert Mapping to dict
-                        mapping_dict: dict[str, str | int | float | bool | None] = {}
-                        for k, v_item in val.items():
-                            if isinstance(v_item, (str, int, float, bool, type(None))):
-                                mapping_dict[str(k)] = v_item
-                            else:
-                                mapping_dict[str(k)] = str(v_item)
-                        return mapping_dict
-                    # Convert other types to string
-                    return str(val)
-
+                return FlextModelsBase.Metadata(attributes={})
+            if FlextModelsContainer._is_dict_like(v):
+                # Use FlextRuntime.normalize_to_metadata_value directly - no wrapper needed
                 # Type narrowing: v is Mapping after _is_dict_like check
                 if isinstance(v, Mapping):
-                    attributes: dict[str, MetadataAttributeValue] = {
-                        str(key): _convert_to_metadata_value(value)
-                        for key, value in v.items()
-                    }
-                    return Metadata(attributes=attributes)
-                return Metadata(attributes={})
-            if isinstance(v, Metadata):
+                    attributes: dict[str, FlextTypes.MetadataAttributeValue] = {}
+                    for key, value in v.items():
+                        attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(
+                            value
+                        )
+                    return FlextModelsBase.Metadata(attributes=attributes)
+                return FlextModelsBase.Metadata(attributes={})
+            if isinstance(v, FlextModelsBase.Metadata):
                 return v
-            msg = f"metadata must be None, dict, or Metadata, got {type(v).__name__}"
+            msg = f"metadata must be None, dict, or FlextModelsBase.Metadata, got {type(v).__name__}"
             raise TypeError(msg)
 
     class ContainerConfig(BaseModel):
@@ -306,9 +234,9 @@ class FlextModelsContainer:
             le=5000,
             description="Maximum number of factories allowed in registry",
         )
-        validation_mode: _ValidationLevel = Field(
-            default=_ValidationLevel.STRICT,
-            description=f"Validation mode: '{_ValidationLevel.STRICT.value}' or '{_ValidationLevel.LENIENT.value}'",
+        validation_mode: _ContainerValidationLevel = Field(
+            default=_ContainerValidationLevel.STRICT,
+            description="Validation mode: 'strict' or 'lenient'",
         )
         enable_auto_registration: bool = Field(
             default=False,

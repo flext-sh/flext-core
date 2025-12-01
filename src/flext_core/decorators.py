@@ -18,12 +18,13 @@ from contextlib import suppress
 from functools import wraps
 from typing import cast
 
+from flext_core._models.config import FlextModelsConfig
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
-from flext_core.models import FlextModels
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes, P, R, T
@@ -55,9 +56,9 @@ class FlextDecorators:
                 for name, service_key in dependencies.items():
                     if name not in kwargs:
                         # Get from container using the service key
-                        result: FlextResult[FlextTypes.GeneralValueType] = (
-                            container.get(service_key)
-                        )
+                        result: FlextProtocols.ResultProtocol[
+                            FlextTypes.GeneralValueType
+                        ] = container.get(service_key)
                         if result.is_success:
                             kwargs[name] = result.unwrap()
                         else:
@@ -86,6 +87,8 @@ class FlextDecorators:
                 # Convert P.args to tuple for logger resolution (type narrowing happens in _resolve_logger)
                 args_tuple = tuple(args)
                 logger = FlextDecorators._resolve_logger(args_tuple, func)
+                # with_result() returns FlextLogger.ResultAdapter for result-aware logging
+                # FlextLogger has with_result() method that returns adapter
                 result_logger = logger.with_result()
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
@@ -96,7 +99,7 @@ class FlextDecorators:
                 start_time = time.perf_counter() if track_perf else 0.0
                 try:
                     # Log operation start
-                    start_extra_config = FlextModels.OperationExtraConfig(
+                    start_extra_config = FlextModelsConfig.OperationExtraConfig(
                         func_name=func.__name__,
                         func_module=func.__module__,
                         correlation_id=correlation_id,
@@ -116,7 +119,7 @@ class FlextDecorators:
                     )
                     result = func(*args, **kwargs)
                     # Log operation completion
-                    complete_extra_config = FlextModels.OperationExtraConfig(
+                    complete_extra_config = FlextModelsConfig.OperationExtraConfig(
                         func_name=func.__name__,
                         func_module=func.__module__,
                         correlation_id=correlation_id,
@@ -145,7 +148,7 @@ class FlextDecorators:
                     RuntimeError,
                     KeyError,
                 ) as e:
-                    failure_config = FlextModels.LogOperationFailureConfig(
+                    failure_config = FlextModelsConfig.LogOperationFailureConfig(
                         op_name=op_name,
                         func_name=func.__name__,
                         func_module=func.__module__,
@@ -257,19 +260,21 @@ class FlextDecorators:
     ) -> Callable[[Callable[P, T]], Callable[P, FlextResult[T]]]:
         """Convert exceptions to FlextResult.fail(), returns to FlextResult.ok()."""
 
-        def decorator(func: Callable[P, T]) -> Callable[P, FlextResult[T]]:
+        def decorator(
+            func: Callable[P, T],
+        ) -> Callable[P, FlextResult[T]]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> FlextResult[T]:
                 try:
                     result = func(*args, **kwargs)
 
                     # If already a FlextResult, return as-is
-                    # Create new instance with correct type to avoid cast
                     if isinstance(result, FlextResult):
-                        return FlextResult[T](result.result)
+                        # Return as FlextResult - no need to recreate
+                        return result
 
-                    # Wrap successful result
-                    return FlextResult[T].ok(result)
+                    # Wrap successful result using FlextResult directly
+                    return FlextResult.ok(result)
 
                 except (
                     AttributeError,
@@ -278,13 +283,12 @@ class FlextDecorators:
                     RuntimeError,
                     KeyError,
                 ) as e:
-                    # Convert exception to FlextResult failure
-                    # Fast fail: error_code must be str or None
+                    # Convert exception to failure using FlextResult directly
                     effective_error_code: str = (
                         error_code if isinstance(error_code, str) else "OPERATION_ERROR"
                     )
-                    return FlextResult[T].fail(
-                        str(e),
+                    return FlextResult.fail(
+                        f"{e!s} ({effective_error_code})",
                         error_code=effective_error_code,
                     )
 
@@ -329,9 +333,9 @@ class FlextDecorators:
                 )
                 kwargs_dict = cast(
                     "Mapping[str, FlextTypes.GeneralValueType]",
-                    dict(kwargs) if kwargs else {},
+                    kwargs or {},
                 )
-                retry_loop_config = FlextModels.RetryLoopConfig(
+                retry_loop_config = FlextModelsConfig.RetryLoopConfig(
                     func=cast("Callable[..., R]", func),
                     args=args_tuple,
                     kwargs=kwargs_dict,
@@ -344,7 +348,12 @@ class FlextDecorators:
                     retry_loop_config,
                 )
                 # Check if we got a successful result or an exception
-                if isinstance(result_or_exception, Exception):
+                # result_or_exception is R | Exception, so if it's Exception, handle it
+                # Type narrowing: isinstance check narrows type to Exception
+                # Note: This isinstance check is necessary for type narrowing even though
+                # the type checker reports it as unnecessary - it distinguishes R from Exception
+                # This is a false positive: the check is needed for runtime type narrowing
+                if isinstance(result_or_exception, Exception):  # pyright: ignore[reportUnnecessaryIsInstance]
                     # All retries failed - handle exhaustion and raise
                     FlextDecorators._handle_retry_exhaustion(
                         result_or_exception,
@@ -353,13 +362,8 @@ class FlextDecorators:
                         error_code,
                         logger,
                     )
-                    # Unreachable, but needed for type checking
-                    msg = f"Operation {func.__name__} failed"
-                    raise FlextExceptions.TimeoutError(
-                        msg,
-                        error_code=error_code or "RETRY_EXHAUSTED",
-                    )
-                # Success - return the result
+                    raise result_or_exception
+                # Success - return the result (type narrowed to R)
                 return result_or_exception
 
             return wrapper
@@ -384,7 +388,7 @@ class FlextDecorators:
 
     @staticmethod
     def _build_operation_extra(
-        config: FlextModels.OperationExtraConfig,
+        config: FlextModelsConfig.OperationExtraConfig,
     ) -> dict[str, FlextTypes.GeneralValueType]:
         """Build extra dict for operation logging."""
         extra: dict[str, FlextTypes.GeneralValueType] = {
@@ -407,10 +411,10 @@ class FlextDecorators:
     @staticmethod
     def _log_operation_failure(
         logger: FlextLogger,
-        config: FlextModels.LogOperationFailureConfig,
+        config: FlextModelsConfig.LogOperationFailureConfig,
     ) -> None:
         """Log operation failure with exception details."""
-        failure_extra_config = FlextModels.OperationExtraConfig(
+        failure_extra_config = FlextModelsConfig.OperationExtraConfig(
             func_name=config.func_name,
             func_module=config.func_module,
             correlation_id=config.correlation_id,
@@ -457,7 +461,7 @@ class FlextDecorators:
     @staticmethod
     def _execute_retry_loop[R](
         logger: FlextLogger,
-        config: FlextModels.RetryLoopConfig,
+        config: FlextModelsConfig.RetryLoopConfig,
     ) -> R | Exception:
         """Execute retry loop, returning result on success or Exception on failure."""
         # Extract config values (retry_config takes priority over individual params)
@@ -496,7 +500,7 @@ class FlextDecorators:
                 # Convert kwargs to dict if it's a Mapping, otherwise use empty dict
                 if FlextRuntime.is_dict_like(kwargs_mapping):
                     kwargs_dict = (
-                        dict(kwargs_mapping)
+                        kwargs_mapping
                         if isinstance(kwargs_mapping, dict)
                         else dict(kwargs_mapping.items())
                     )
@@ -607,7 +611,10 @@ class FlextDecorators:
 
         FlextContext.Request.set_operation_name(operation)
 
-        binding_result = FlextLogger.bind_operation_context(operation=operation)
+        binding_result = FlextLogger.bind_context(
+            FlextConstants.Context.SCOPE_OPERATION,
+            operation=operation,
+        )
         if binding_result.is_failure:
             logger.warning(
                 "operation_context_binding_failed",
@@ -646,7 +653,7 @@ class FlextDecorators:
     @staticmethod
     def _handle_log_result(
         *,
-        result: FlextResult[bool],
+        result: FlextProtocols.ResultProtocol[bool],
         logger: FlextLogger,
         fallback_message: str,
         kwargs: FlextTypes.GeneralValueType,
@@ -659,11 +666,11 @@ class FlextDecorators:
             # Convert kwargs to dict if it's a Mapping, otherwise use empty dict
             if FlextRuntime.is_dict_like(kwargs):
                 fallback_kwargs = (
-                    dict(kwargs) if isinstance(kwargs, dict) else dict(kwargs.items())
+                    kwargs if isinstance(kwargs, dict) else dict(kwargs.items())
                 )
             else:
                 fallback_kwargs = {}
-            fallback_kwargs.setdefault("extra", {})
+            _ = fallback_kwargs.setdefault("extra", {})
             extra_payload = fallback_kwargs["extra"]
             if FlextRuntime.is_dict_like(extra_payload):
                 extra_payload = dict(extra_payload)
@@ -706,16 +713,13 @@ class FlextDecorators:
                             if isinstance(error_code, str)
                             else "OPERATION_TIMEOUT"
                         )
-                        # Convert Metadata to context mapping
-                        metadata_obj = FlextModels.Metadata(
-                            attributes={"duration_seconds": duration},
-                        )
+                        # Use dict directly - no need to create Metadata object
                         raise FlextExceptions.TimeoutError(
                             msg,
                             error_code=effective_error_code,
                             timeout_seconds=max_duration,
                             operation=func.__name__,
-                            context=metadata_obj.attributes,
+                            context={"duration_seconds": duration},
                         )
 
                     return result
@@ -734,19 +738,16 @@ class FlextDecorators:
                     duration = time.perf_counter() - start_time
                     if duration > max_duration:
                         msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s) and raised {type(e).__name__}"
-                        # Convert Metadata to context mapping
-                        metadata_obj = FlextModels.Metadata(
-                            attributes={
-                                "duration_seconds": duration,
-                                "original_error": str(e),
-                            },
-                        )
+                        # Use dict directly - no need to create Metadata object
                         raise FlextExceptions.TimeoutError(
                             msg,
                             error_code=error_code or "OPERATION_TIMEOUT",
                             timeout_seconds=max_duration,
                             operation=func.__name__,
-                            context=metadata_obj.attributes,
+                            context={
+                                "duration_seconds": duration,
+                                "original_error": str(e),
+                            },
                         ) from e
                     # Re-raise original exception if not timeout
                     raise
@@ -763,14 +764,16 @@ class FlextDecorators:
         track_perf: bool = True,
         use_railway: bool = False,
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R] | Callable[P, FlextResult[R]]]:
+    ) -> Callable[
+        [Callable[P, R]], Callable[P, R] | Callable[P, FlextProtocols.ResultProtocol[R]]
+    ]:
         """Combine inject, log_operation, and optionally railway patterns."""
 
         def decorator(
             func: Callable[P, R],
-        ) -> Callable[P, R] | Callable[P, FlextResult[R]]:
+        ) -> Callable[P, R] | Callable[P, FlextProtocols.ResultProtocol[R]]:
             # Apply railway pattern first if requested (outermost wrapper)
-            # Note: When use_railway=True, the return type changes to Callable[P, FlextResult[R]]
+            # Note: When use_railway=True, the return type changes to Callable[P, FlextProtocols.ResultProtocol[R]]
             if use_railway:
                 railway_decorated = FlextDecorators.railway(error_code=error_code)(func)
                 # Apply other decorators to railway-wrapped function
@@ -792,11 +795,10 @@ class FlextDecorators:
 
             # Apply unified log_operation with optional performance tracking
             # Return type is Callable[P, R] for non-railway path
-            logged: Callable[P, R] = FlextDecorators.log_operation(
+            return FlextDecorators.log_operation(
                 operation_name=operation_name,
                 track_perf=track_perf,
             )(decorated)
-            return logged
 
         return decorator
 

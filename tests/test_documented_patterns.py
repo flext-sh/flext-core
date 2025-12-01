@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import operator
 from dataclasses import dataclass, field
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 from pydantic import BaseModel
@@ -46,7 +46,7 @@ from flext_core.typings import FlextTypes
 
 
 # Test Models
-class User(FlextModels.Entity):
+class User(FlextModels.Entity):  # type: ignore[misc,valid-type]  # FlextModels.Entity is assignment alias, valid for inheritance
     """User domain model."""
 
     name: str
@@ -94,20 +94,24 @@ class RailwayTestCase:
             return FlextResult.fail("No user IDs provided")
 
         # Start with first user
-        result: FlextResult[User | str | EmailResponse] = GetUserService(
-            user_id=self.user_ids[0],
-        ).execute()
+        user_result = GetUserService(user_id=self.user_ids[0]).execute()
+        # Type narrowing: GetUserService returns User, but pipeline may transform to str or EmailResponse
+        result: FlextResult[User | str | EmailResponse] = cast(
+            "FlextResult[User | str | EmailResponse]", user_result
+        )
 
         # Apply operations if specified
         for op in self.operations:
             if op == "get_email":
-                result = result.map(lambda user: user.email)
+                result = result.map(lambda user: user.email if isinstance(user, User) else str(user))
             elif op == "send_email":
-                result = result.flat_map(
-                    lambda email: SendEmailService(to=email, subject="Test").execute(),
+                # flat_map returns EmailResponse, cast to maintain union type for return signature
+                email_result = result.flat_map(
+                    lambda email: SendEmailService(to=str(email), subject="Test").execute(),
                 )
+                result = cast("FlextResult[User | str | EmailResponse]", email_result)
             elif op == "get_status":
-                result = result.map(lambda response: response.status)
+                result = result.map(lambda response: response.status if isinstance(response, EmailResponse) else str(response))
 
         return result
 
@@ -118,15 +122,17 @@ class RailwayTestCase:
             raise FlextExceptions.BaseError(msg)
 
         # Start with first user
-        user: User | str = GetUserService(user_id=self.user_ids[0]).result
+        user_result = GetUserService(user_id=self.user_ids[0]).result
+        user: User | str = user_result if isinstance(user_result, (User, str)) else str(user_result)
 
         # Apply operations if specified
         for op in self.operations:
             if op == "get_email":
-                user = user.email
+                user = user.email if isinstance(user, User) else str(user)
             elif op == "send_email":
+                email_to = str(user) if not isinstance(user, str) else user
                 response_obj: EmailResponse = SendEmailService(
-                    to=user,
+                    to=email_to,
                     subject="Test",
                 ).result
                 user = response_obj.status
@@ -433,7 +439,8 @@ class TestPattern4RailwayV1:
         if "get_status" in case.operations:
             assert result.unwrap() == "sent"
         elif "get_email" in case.operations:
-            email: str = result.unwrap()
+            unwrapped = result.unwrap()
+            email: str = str(unwrapped) if not isinstance(unwrapped, str) else unwrapped
             assert isinstance(email, str)
             assert "@" in email
         else:
@@ -552,7 +559,13 @@ class TestPattern7MonadicComposition:
         result = (
             ValidationService(value=50)
             .execute()
-            .filter(lambda data: data["value"] < 100)
+            .filter(
+                lambda data: (
+                    isinstance(data.get("value"), int)
+                    and isinstance(data["value"], int)
+                    and data["value"] < 100
+                )
+            )
         )
 
         assert result.is_success

@@ -14,7 +14,6 @@ from dataclasses import dataclass, field
 
 from flext_core import FlextConstants, FlextHandlers, FlextModels, FlextResult
 from flext_core.typings import FlextTypes
-
 from tests.helpers.constants import TestConstants
 
 

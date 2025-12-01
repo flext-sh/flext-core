@@ -12,12 +12,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import ClassVar, Generic, TypeVar
+from typing import ClassVar, TypeVar
 
 import factory
 from factory import Faker
-from flext_core import FlextModels, FlextResult, FlextService
 
+from flext_core import FlextModels, FlextResult, FlextService
 from tests.helpers.constants import TestConstants
 
 # =========================================================================
@@ -134,7 +134,9 @@ class FailingServiceAuto(FailingService):
 class UserFactory(factory.Factory):
     """Factory for User entities."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
+        """Meta configuration for UserFactory."""
+
         model = User
 
     user_id = factory.Sequence(lambda n: f"user_{n:03d}")
@@ -146,7 +148,9 @@ class UserFactory(factory.Factory):
 class GetUserServiceFactory(factory.Factory):
     """Factory for GetUserService."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
+        """Meta configuration for GetUserServiceFactory."""
+
         model = GetUserService
 
     user_id = factory.Sequence(lambda n: f"user_{n:03d}")
@@ -155,7 +159,9 @@ class GetUserServiceFactory(factory.Factory):
 class ValidatingServiceFactory(factory.Factory):
     """Factory for ValidatingService."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
+        """Meta configuration for ValidatingServiceFactory."""
+
         model = ValidatingService
 
     value_input = Faker("word")
@@ -165,7 +171,9 @@ class ValidatingServiceFactory(factory.Factory):
 class FailingServiceFactory(factory.Factory):
     """Factory for FailingService."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
+        """Meta configuration for FailingServiceFactory."""
+
         model = FailingService
 
     error_message = TestConstants.Services.DEFAULT_ERROR_MESSAGE
@@ -174,7 +182,9 @@ class FailingServiceFactory(factory.Factory):
 class GetUserServiceAutoFactory(factory.Factory):
     """Factory for GetUserServiceAuto."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
+        """Meta configuration for GetUserServiceAutoFactory."""
+
         model = GetUserServiceAuto
 
     user_id = factory.Sequence(lambda n: f"user_{n:03d}")
@@ -183,7 +193,9 @@ class GetUserServiceAutoFactory(factory.Factory):
 class ValidatingServiceAutoFactory(factory.Factory):
     """Factory for ValidatingServiceAuto."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
+        """Meta configuration for ValidatingServiceAutoFactory."""
+
         model = ValidatingServiceAuto
 
     value_input = Faker("word")
@@ -193,7 +205,9 @@ class ValidatingServiceAutoFactory(factory.Factory):
 class FailingServiceAutoFactory(factory.Factory):
     """Factory for FailingServiceAuto."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
+        """Meta configuration for FailingServiceAutoFactory."""
+
         model = FailingServiceAuto
 
     error_message = TestConstants.Services.DEFAULT_ERROR_MESSAGE
@@ -202,10 +216,12 @@ class FailingServiceAutoFactory(factory.Factory):
 class ServiceTestCaseFactory(factory.Factory):
     """Factory for ServiceTestCase."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
+        """Meta configuration for ServiceTestCaseFactory."""
+
         model = ServiceTestCase
 
-    service_type = factory.Iterator(ServiceTestType)
+    service_type = factory.Iterator(list(ServiceTestType.__members__.values()))
     input_value = Faker("word")
     expected_success = True
     expected_error = None
@@ -220,7 +236,7 @@ class ServiceTestCaseFactory(factory.Factory):
 # =========================================================================
 
 
-class ServiceFactoryRegistry(Generic[ServiceT]):
+class ServiceFactoryRegistry[ServiceT]:
     """Registry for service factories using pattern matching."""
 
     _factories: ClassVar[dict[ServiceTestType, type[factory.Factory]]] = {

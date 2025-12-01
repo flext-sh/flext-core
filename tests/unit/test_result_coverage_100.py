@@ -36,7 +36,7 @@ from flext_core.typings import FlextTypes
 # =========================================================================
 
 
-class TestFlextResultCoverage:
+class TestFlextResultCoverage:  # noqa: PLR0904
     """Comprehensive test suite for FlextResult - ALL REAL FUNCTIONALITY ONLY."""
 
     # =====================================================================
@@ -395,11 +395,11 @@ class TestFlextResultCoverage:
     def test_safe_decorator_success(self) -> None:
         """Test safe decorator wraps successful function."""
 
-        @FlextResult.safe
+        @FlextResult.safe  # type: ignore[arg-type]  # safe decorator accepts variadic callables, mypy limitation
         def success_func() -> str:
             return "success"
 
-        result = success_func()
+        result: FlextResult[str] = success_func()
         assert result.is_success
         assert result.value == "success"
 
@@ -407,11 +407,11 @@ class TestFlextResultCoverage:
         """Test safe decorator catches exceptions."""
         error_msg = "Function failed"
 
-        @FlextResult.safe
+        @FlextResult.safe  # type: ignore[arg-type]  # safe decorator accepts variadic callables, mypy limitation
         def failing_func() -> str:
             raise ValueError(error_msg)
 
-        result = failing_func()
+        result: FlextResult[str] = failing_func()
         assert result.is_failure
         assert result.error is not None and error_msg in result.error
 

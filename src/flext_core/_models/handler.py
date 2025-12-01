@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time as time_module
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Annotated, Self, cast
 
 from pydantic import (
@@ -26,10 +26,6 @@ from flext_core._models.base import FlextModelsBase
 from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes
-
-# FlextUtilitiesValidation is safe to import at module level:
-# - validation.py uses ResultProtocol (not concrete FlextResult) to break circular import
-# - circular import issue was RESOLVED (validation.py doesn't import handler.py)
 
 
 class FlextModelsHandler:
@@ -143,13 +139,13 @@ class FlextModelsHandler:
             ),
         ] = Field(default_factory=lambda: FlextConstants.Cqrs.DEFAULT_TIMESTAMP)
         status: Annotated[
-            FlextConstants.Cqrs.Status,
+            FlextConstants.Cqrs.CommonStatus,
             Field(
-                default=FlextConstants.Cqrs.Status.RUNNING,
+                default=FlextConstants.Cqrs.CommonStatus.RUNNING,
                 description="Current registration status",
                 examples=["running", "stopped", "failed"],
             ),
-        ] = FlextConstants.Cqrs.Status.RUNNING
+        ] = FlextConstants.Cqrs.CommonStatus.RUNNING
 
         @field_validator("timestamp", mode="after")
         @classmethod
@@ -263,7 +259,7 @@ class FlextModelsHandler:
             return round(elapsed * 1000, 2)
 
         @computed_field
-        def metrics_state(self) -> dict[str, FlextTypes.GeneralValueType]:
+        def metrics_state(self) -> Mapping[str, FlextTypes.GeneralValueType]:
             """Get current metrics state.
 
             Returns:

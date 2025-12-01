@@ -111,7 +111,9 @@ class TestFlextUtilitiesArgsValidated:
         def process(status: Status) -> str:
             return status.value
 
-        result = process("active")
+        # Pydantic validated decorator converts string to enum automatically
+        # pyright: ignore[reportArgumentType] - validated decorator handles conversion
+        result = process("active")  # type: ignore[arg-type]
         assert result == "active"
 
     def test_validated_with_str_enum_enum(self) -> None:
@@ -131,8 +133,10 @@ class TestFlextUtilitiesArgsValidated:
         def process(status: Status) -> str:
             return status.value
 
+        # Pydantic validated decorator will raise ValidationError for invalid enum
+        # pyright: ignore[reportArgumentType] - testing invalid value
         with pytest.raises(ValidationError):
-            process("invalid")
+            process("invalid")  # type: ignore[arg-type]
 
     def test_validated_with_multiple_params(self) -> None:
         """Test validated decorator with multiple parameters."""
@@ -141,7 +145,9 @@ class TestFlextUtilitiesArgsValidated:
         def process(status: Status, priority: Priority, name: str) -> str:
             return f"{name}: {status.value} ({priority.value})"
 
-        result = process("active", "high", "John")
+        # Pydantic validated decorator converts strings to enums automatically
+        # pyright: ignore[reportArgumentType] - validated decorator handles conversion
+        result = process("active", "high", "John")  # type: ignore[arg-type]
         assert result == "John: active (high)"
 
 
@@ -155,7 +161,9 @@ class TestFlextUtilitiesArgsValidatedWithResult:
         def process(status: Status) -> FlextResult[str]:
             return FlextResult.ok(status.value)
 
-        result = process("active")
+        # Pydantic validated decorator converts string to enum automatically
+        # pyright: ignore[reportArgumentType] - validated decorator handles conversion
+        result = process("active")  # type: ignore[arg-type]
         assert result.is_success
         assert result.value == "active"
 
@@ -166,9 +174,13 @@ class TestFlextUtilitiesArgsValidatedWithResult:
         def process(status: Status) -> FlextResult[str]:
             return FlextResult.ok(status.value)
 
-        result = process("invalid")
+        # Pydantic validated decorator will return failure for invalid enum
+        # pyright: ignore[reportArgumentType] - testing invalid value
+        result = process("invalid")  # type: ignore[arg-type]
         assert result.is_failure
-        assert "invalid" in result.error.lower() or "status" in result.error.lower()
+        # Type narrowing: result.error is str | None, check before using .lower()
+        error_msg = result.error or ""
+        assert "invalid" in error_msg.lower() or "status" in error_msg.lower()
 
     def test_validated_with_result_with_exception(self) -> None:
         """Test validated_with_result when function raises exception."""
@@ -178,9 +190,13 @@ class TestFlextUtilitiesArgsValidatedWithResult:
             msg = "Internal error"
             raise ValueError(msg)
 
-        result = process("active")
+        # Pydantic validated decorator converts string to enum automatically
+        # pyright: ignore[reportArgumentType] - validated decorator handles conversion
+        result = process("active")  # type: ignore[arg-type]
         assert result.is_failure
-        assert "Internal error" in result.error
+        # Type narrowing: result.error is str | None, check before using 'in'
+        error_msg = result.error or ""
+        assert "Internal error" in error_msg
 
 
 class TestFlextUtilitiesArgsParseKwargs:
@@ -204,7 +220,11 @@ class TestFlextUtilitiesArgsParseKwargs:
                 assert parsed["status"] == scenario.expected_status
         else:
             assert result.is_failure
-            assert scenario.expected_error in result.error
+            # Type narrowing: result.error is str | None, check before using 'in'
+            # scenario.expected_error is also str | None
+            error_msg = result.error or ""
+            expected_error_str = scenario.expected_error or ""
+            assert expected_error_str in error_msg
 
 
 class TestFlextUtilitiesArgsGetEnumParams:

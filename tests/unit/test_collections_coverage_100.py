@@ -16,13 +16,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from pydantic import Field
 
-from flext_core import FlextModels
 from flext_core._models.collections import FlextModelsCollections
+from flext_core.typings import FlextTypes
+
+# Use actual classes, not type aliases, for inheritance
+Statistics = FlextModelsCollections.Statistics
+Config = FlextModelsCollections.Config
+Results = FlextModelsCollections.Results
+Options = FlextModelsCollections.Options
 
 
 @dataclass(frozen=True, slots=True)
@@ -186,12 +192,12 @@ class TestFlextModelsCollectionsCategories:
 
 
 class TestFlextModelsCollectionsStatistics:
-    """Real tests for FlextModels.Collections.Statistics using FlextTestsUtilities."""
+    """Real tests for FlextModels.Statistics using FlextTestsUtilities."""
 
     def test_statistics_aggregate_empty(self) -> None:
         """Test aggregate with empty list."""
 
-        class TestStats(FlextModels.Statistics):
+        class TestStats(Statistics):
             count: int = 0
 
         assert TestStats.aggregate([]) == {}
@@ -199,29 +205,35 @@ class TestFlextModelsCollectionsStatistics:
     def test_statistics_aggregate_numbers(self) -> None:
         """Test aggregate with numeric values."""
 
-        class TestStats(FlextModels.Statistics):
+        class TestStats(Statistics):
             count: int = 0
 
         stats1 = TestStats(count=10)
         stats2 = TestStats(count=20)
         result = TestStats.aggregate([stats1, stats2])
-        assert result["count"] == 30
+        # Type narrowing: aggregate returns dict-like structure
+        assert isinstance(result, dict)
+        result_dict: dict[str, FlextTypes.GeneralValueType] = result  # type: ignore[assignment]
+        assert result_dict.get("count") == 30
 
     def test_statistics_aggregate_lists(self) -> None:
         """Test aggregate with list values."""
 
-        class TestStats(FlextModels.Statistics):
+        class TestStats(Statistics):
             items: list[str] = Field(default_factory=list)
 
         stats1 = TestStats(items=["a", "b"])
         stats2 = TestStats(items=["c"])
         result = TestStats.aggregate([stats1, stats2])
-        assert result["items"] == ["a", "b", "c"]
+        # Type narrowing: aggregate returns dict-like structure
+        assert isinstance(result, dict)
+        result_dict: dict[str, FlextTypes.GeneralValueType] = result  # type: ignore[assignment]
+        assert result_dict.get("items") == ["a", "b", "c"]
 
     def test_statistics_aggregate_mixed(self) -> None:
         """Test aggregate with mixed types."""
 
-        class TestStats(FlextModels.Statistics):
+        class TestStats(Statistics):
             count: int = 0
             items: list[str] = Field(default_factory=list)
             name: str = ""
@@ -229,31 +241,37 @@ class TestFlextModelsCollectionsStatistics:
         stats1 = TestStats(count=10, items=["a"], name="first")
         stats2 = TestStats(count=20, items=["b"], name="second")
         result = TestStats.aggregate([stats1, stats2])
-        assert result["count"] == 30
-        assert result["items"] == ["a", "b"]
-        assert result["name"] == "second"
+        # Type narrowing: aggregate returns dict-like structure
+        assert isinstance(result, dict)
+        result_dict: dict[str, FlextTypes.GeneralValueType] = result  # type: ignore[assignment]
+        assert result_dict.get("count") == 30
+        assert result_dict.get("items") == ["a", "b"]
+        assert result_dict.get("name") == "second"
 
     def test_statistics_aggregate_none_values(self) -> None:
         """Test aggregate with None values."""
 
-        class TestStats(FlextModels.Statistics):
+        class TestStats(Statistics):
             count: int | None = None
             name: str | None = None
 
         stats1 = TestStats(count=10, name="first")
         stats2 = TestStats(count=None, name=None)
         result = TestStats.aggregate([stats1, stats2])
-        assert result["count"] == 10
-        assert result["name"] == "first"
+        # Type narrowing: aggregate returns dict-like structure
+        assert isinstance(result, dict)
+        result_dict: dict[str, FlextTypes.GeneralValueType] = result  # type: ignore[assignment]
+        assert result_dict.get("count") == 10
+        assert result_dict.get("name") == "first"
 
 
 class TestFlextModelsCollectionsConfig:
-    """Real tests for FlextModels.Collections.Config using FlextTestsUtilities."""
+    """Real tests for FlextModels.Config using FlextTestsUtilities."""
 
     def test_config_merge(self) -> None:
         """Test merge method."""
 
-        class TestConfig(FlextModels.Config):
+        class TestConfig(Config):
             timeout: int = 30
             retries: int = 3
 
@@ -266,17 +284,24 @@ class TestFlextModelsCollectionsConfig:
     def test_config_from_dict(self) -> None:
         """Test from_dict class method."""
 
-        class TestConfig(FlextModels.Config):
+        class TestConfig(Config):
             timeout: int = 30
 
         data = {"timeout": 60}
-        config: TestConfig = TestConfig.from_dict(cast("dict[str, object]", data))
+        # Convert dict[str, object] to dict[str, GeneralValueType] for type compatibility
+        converted_data: dict[str, FlextTypes.GeneralValueType] = {
+            k: v
+            if isinstance(v, (str, int, float, bool, type(None), list, dict))
+            else str(v)
+            for k, v in data.items()
+        }
+        config: TestConfig = TestConfig.from_dict(converted_data)
         assert config.timeout == 60
 
     def test_config_to_dict(self) -> None:
         """Test to_dict method."""
 
-        class TestConfig(FlextModels.Config):
+        class TestConfig(Config):
             timeout: int = 30
 
         config = TestConfig(timeout=60)
@@ -285,7 +310,7 @@ class TestFlextModelsCollectionsConfig:
     def test_config_with_updates(self) -> None:
         """Test with_updates method."""
 
-        class TestConfig(FlextModels.Config):
+        class TestConfig(Config):
             timeout: int = 30
             retries: int = 3
 
@@ -298,7 +323,7 @@ class TestFlextModelsCollectionsConfig:
     def test_config_diff(self) -> None:
         """Test diff method."""
 
-        class TestConfig(FlextModels.Config):
+        class TestConfig(Config):
             timeout: int = 30
             retries: int = 3
 
@@ -312,7 +337,7 @@ class TestFlextModelsCollectionsConfig:
     def test_config_diff_all_different(self) -> None:
         """Test diff with all fields different."""
 
-        class TestConfig(FlextModels.Config):
+        class TestConfig(Config):
             timeout: int = 30
             retries: int = 3
 
@@ -326,7 +351,7 @@ class TestFlextModelsCollectionsConfig:
     def test_config_eq(self) -> None:
         """Test __eq__ method."""
 
-        class TestConfig(FlextModels.Config):
+        class TestConfig(Config):
             timeout: int = 30
 
         config1 = TestConfig(timeout=30)
@@ -338,12 +363,12 @@ class TestFlextModelsCollectionsConfig:
 
 
 class TestFlextModelsCollectionsResults:
-    """Real tests for FlextModels.Collections.Results using FlextTestsUtilities."""
+    """Real tests for FlextModels.Results using FlextTestsUtilities."""
 
     def test_results_aggregate_empty(self) -> None:
         """Test aggregate with empty list."""
 
-        class TestResult(FlextModels.Results):
+        class TestResult(Results):
             processed: int = 0
 
         assert TestResult.aggregate([]) == {}
@@ -351,7 +376,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_numbers(self) -> None:
         """Test aggregate with numeric values."""
 
-        class TestResult(FlextModels.Results):
+        class TestResult(Results):
             processed: int = 0
 
         result1 = TestResult(processed=10)
@@ -362,7 +387,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_lists(self) -> None:
         """Test aggregate with list values."""
 
-        class TestResult(FlextModels.Results):
+        class TestResult(Results):
             errors: list[str] = Field(default_factory=list)
 
         result1 = TestResult(errors=["error1"])
@@ -373,7 +398,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_dicts(self) -> None:
         """Test aggregate with dict values."""
 
-        class TestResult(FlextModels.Results):
+        class TestResult(Results):
             metadata: dict[str, str] = Field(default_factory=dict)
 
         result1 = TestResult(metadata={"key1": "value1"})
@@ -384,7 +409,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_mixed(self) -> None:
         """Test aggregate with mixed types."""
 
-        class TestResult(FlextModels.Results):
+        class TestResult(Results):
             processed: int = 0
             errors: list[str] = Field(default_factory=list)
             status: str = ""
@@ -399,7 +424,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_none_values(self) -> None:
         """Test aggregate with None values."""
 
-        class TestResult(FlextModels.Results):
+        class TestResult(Results):
             processed: int | None = None
             status: str | None = None
 
@@ -411,12 +436,12 @@ class TestFlextModelsCollectionsResults:
 
 
 class TestFlextModelsCollectionsOptions:
-    """Real tests for FlextModels.Collections.Options using FlextTestsUtilities."""
+    """Real tests for FlextModels.Options using FlextTestsUtilities."""
 
     def test_options_merge(self) -> None:
         """Test merge method."""
 
-        class TestOptions(FlextModels.Options):
+        class TestOptions(Options):
             verbose: bool = False
             color: bool = True
 
@@ -429,7 +454,7 @@ class TestFlextModelsCollectionsOptions:
     def test_options_merge_all_fields(self) -> None:
         """Test merge with all fields."""
 
-        class TestOptions(FlextModels.Options):
+        class TestOptions(Options):
             verbose: bool = False
             color: bool = True
 

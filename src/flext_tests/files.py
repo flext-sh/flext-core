@@ -17,7 +17,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Self
 
-from flext_core import FlextModels
+from flext_core._models.entity import FlextModelsEntity
 
 
 class FlextTestsFileManager:
@@ -33,7 +33,7 @@ class FlextTestsFileManager:
 
     """
 
-    class FileInfo(FlextModels.Value):
+    class FileInfo(FlextModelsEntity.Value):
         """File information model for test files."""
 
         exists: bool

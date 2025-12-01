@@ -45,7 +45,7 @@ class TestDataBuilder:
     def test_with_users_custom_count(self) -> None:
         """Test with_users with custom count."""
         builder = FlextTestsMatchers.TestDataBuilder()
-        builder.with_users(count=3)
+        _ = builder.with_users(count=3)
         data = builder.build()
 
         users = cast("list[dict[str, str | int]]", data["users"])
@@ -71,7 +71,7 @@ class TestDataBuilder:
     def test_with_configs_production(self) -> None:
         """Test with_configs in production mode."""
         builder = FlextTestsMatchers.TestDataBuilder()
-        builder.with_configs(production=True)
+        _ = builder.with_configs(production=True)
         data = builder.build()
 
         config = cast("dict[str, object]", data["configs"])
@@ -99,7 +99,7 @@ class TestDataBuilder:
     def test_with_validation_fields_custom_count(self) -> None:
         """Test with_validation_fields with custom count."""
         builder = FlextTestsMatchers.TestDataBuilder()
-        builder.with_validation_fields(count=3)
+        _ = builder.with_validation_fields(count=3)
         data = builder.build()
 
         validation_fields = cast("dict[str, object]", data["validation_fields"])
@@ -117,7 +117,11 @@ class TestDataBuilder:
     def test_build_full_dataset(self) -> None:
         """Test build with all data types added."""
         builder = FlextTestsMatchers.TestDataBuilder()
-        builder.with_users(2).with_configs(production=True).with_validation_fields(2)
+        _ = (
+            builder.with_users(2)
+            .with_configs(production=True)
+            .with_validation_fields(2)
+        )
         data = builder.build()
 
         assert "users" in data

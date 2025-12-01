@@ -18,7 +18,6 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextResult
 from tests.fixtures.constants import TestConstants
 from tests.helpers import (
     BadDict,
@@ -354,10 +353,7 @@ class TestFlextUtilitiesDataMapper:
     )
     def test_map_dict_keys(self, test_case: DataMapperTestCase) -> None:
         """Test map_dict_keys with various scenarios."""
-        result = cast(
-            "FlextResult[object]",
-            DataMapperTestHelpers.execute_data_mapper_test(test_case),
-        )
+        result = DataMapperTestHelpers.execute_data_mapper_test(test_case)
         if test_case.expected_success:
             assert result.is_success
             assert result.unwrap() == test_case.expected_result
@@ -373,10 +369,7 @@ class TestFlextUtilitiesDataMapper:
     )
     def test_build_flags_dict(self, test_case: DataMapperTestCase) -> None:
         """Test build_flags_dict with various scenarios."""
-        result = cast(
-            "FlextResult[object]",
-            DataMapperTestHelpers.execute_data_mapper_test(test_case),
-        )
+        result = DataMapperTestHelpers.execute_data_mapper_test(test_case)
         if test_case.expected_success:
             assert result.is_success
             assert result.unwrap() == test_case.expected_result
@@ -392,10 +385,7 @@ class TestFlextUtilitiesDataMapper:
     )
     def test_collect_active_keys(self, test_case: DataMapperTestCase) -> None:
         """Test collect_active_keys with various scenarios."""
-        result = cast(
-            "FlextResult[object]",
-            DataMapperTestHelpers.execute_data_mapper_test(test_case),
-        )
+        result = DataMapperTestHelpers.execute_data_mapper_test(test_case)
         if test_case.expected_success:
             assert result.is_success
             assert result.unwrap() == test_case.expected_result

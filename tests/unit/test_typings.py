@@ -274,7 +274,7 @@ class TestFlextTypings:
             for attr in [
                 "Validation",
                 "Json",
-                "Handler",
+                "HandlerAliases",
                 "Processor",
                 "Factory",
                 "Utility",

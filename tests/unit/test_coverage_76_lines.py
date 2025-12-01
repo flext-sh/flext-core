@@ -13,10 +13,8 @@ from flext_core import (
 )
 
 
-class TestCoverage76Lines:
-    """Tests for FlextResult and FlextExceptions."""
-
-    # Tests for FlextResult basic operations
+class TestResultBasics:
+    """Tests for FlextResult basic operations."""
 
     def test_result_bool_true(self) -> None:
         """Test __bool__ returns True for success."""
@@ -95,7 +93,9 @@ class TestCoverage76Lines:
         exc = FlextExceptions.CircuitBreakerError("circuit open")
         assert isinstance(exc, Exception)
 
-    # Tests for FlextResult transformation methods
+
+class TestResultTransformations:
+    """Tests for FlextResult transformation methods."""
 
     def test_result_lash_recovery(self) -> None:
         """Test lash recovers from failure."""

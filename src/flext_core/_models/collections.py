@@ -178,7 +178,7 @@ class FlextModelsCollections:
             if not stats_list:
                 return {}
 
-            result: dict[str, object] = {}
+            result: dict[str, FlextTypes.GeneralValueType] = {}
             first = stats_list[0].model_dump()
 
             for key in first:
@@ -244,11 +244,11 @@ class FlextModelsCollections:
             return self.__class__(**merged)
 
         @classmethod
-        def from_dict(cls, data: dict[str, object]) -> Self:
+        def from_dict(cls, data: FlextTypes.Types.ConfigurationMapping) -> Self:
             """Create config from dict."""
             return cls.model_validate(data)
 
-        def to_dict(self) -> dict[str, object]:
+        def to_dict(self) -> dict[str, FlextTypes.GeneralValueType]:
             """Convert to dict."""
             return self.model_dump()
 
@@ -337,7 +337,9 @@ class FlextModelsCollections:
             return non_none[-1]
 
         @classmethod
-        def aggregate(cls, results: list[Self]) -> dict[str, object]:
+        def aggregate(
+            cls, results: list[Self]
+        ) -> dict[str, FlextTypes.GeneralValueType]:
             """Aggregate multiple result instances.
 
             Combines results by:
@@ -356,7 +358,7 @@ class FlextModelsCollections:
             if not results:
                 return {}
 
-            aggregated: dict[str, object] = {}
+            aggregated: dict[str, FlextTypes.GeneralValueType] = {}
             first = results[0].model_dump()
 
             for key in first:
@@ -391,7 +393,7 @@ class FlextModelsCollections:
             base_data.update(override_data)
             return self.__class__(**base_data)
 
-        def with_only(self, *fields: str) -> dict[str, object]:
+        def with_only(self, *fields: str) -> dict[str, FlextTypes.GeneralValueType]:
             """Return dict with only specified fields.
 
             Useful for extracting subset of options for specific operations.

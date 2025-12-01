@@ -13,12 +13,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
-import os
 import threading
 from collections.abc import Callable, Mapping, Sequence
-from pathlib import Path
-from typing import ClassVar, Self, TypeVar
+from typing import ClassVar, Self
 
 from dependency_injector import providers
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -26,34 +23,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes, T_Namespace
-
-# TypeVar for decorator type preservation - bound to BaseSettings
-_TSettings = TypeVar("_TSettings", bound=BaseSettings)
-
-
-def _resolve_env_file_impl() -> str | None:
-    """Internal implementation of env file resolution.
-
-    This function is called at module load time, before FlextConfig class exists.
-    """
-    # Check for custom env file path
-    custom_env_file = os.environ.get(FlextConstants.Platform.ENV_FILE_ENV_VAR)
-    if custom_env_file:
-        custom_path = Path(custom_env_file)
-        if custom_path.exists():
-            return str(custom_path.resolve())
-        # If custom path doesn't exist, return it anyway (Pydantic will handle gracefully)
-        return custom_env_file
-
-    # Default: use .env from current directory
-    default_path = Path.cwd() / FlextConstants.Platform.ENV_FILE_DEFAULT
-    if default_path.exists():
-        return str(default_path.resolve())
-
-    # Fallback: use default value (Pydantic handles missing file gracefully)
-    return FlextConstants.Platform.ENV_FILE_DEFAULT
+from flext_core.typings import FlextTypes, T_Namespace, T_Settings
+from flext_core.utilities import FlextUtilities
 
 
 class FlextConfig(BaseSettings):
@@ -81,7 +52,7 @@ class FlextConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix=FlextConstants.Platform.ENV_PREFIX,
         env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
-        env_file=_resolve_env_file_impl(),
+        env_file=FlextUtilities.Configuration.resolve_env_file(),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -114,7 +85,7 @@ class FlextConfig(BaseSettings):
             )
 
         """
-        return _resolve_env_file_impl()
+        return FlextUtilities.Configuration.resolve_env_file()
 
     # Core configuration
     app_name: str = Field(default="flext", description="Application name")
@@ -122,47 +93,11 @@ class FlextConfig(BaseSettings):
     debug: bool = Field(default=False, description="Enable debug mode")
     trace: bool = Field(default=False, description="Enable trace mode")
 
-    # Logging configuration
+    # Logging configuration (true application config only)
+    # FlextRuntime and FlextLogger handle logging infrastructure
     log_level: FlextConstants.Settings.LogLevel = Field(
         default=FlextConstants.Settings.LogLevel.INFO,
         description="Log level",
-    )
-    json_output: bool = Field(
-        default=FlextConstants.Logging.JSON_OUTPUT_DEFAULT,
-        description="JSON log output",
-    )
-    include_source: bool = Field(
-        default=FlextConstants.Logging.INCLUDE_SOURCE,
-        description="Include source in logs",
-    )
-    log_verbosity: str = Field(
-        default=FlextConstants.Logging.VERBOSITY,
-        description="Log verbosity",
-    )
-    include_context: bool = Field(
-        default=FlextConstants.Logging.INCLUDE_CONTEXT,
-        description="Include context in logs",
-    )
-    include_correlation_id: bool = Field(
-        default=FlextConstants.Logging.INCLUDE_CORRELATION_ID,
-        description="Include correlation ID in logs",
-    )
-    log_file: str | None = Field(default=None, description="Log file path")
-    log_file_max_size: int = Field(
-        default=FlextConstants.Logging.MAX_FILE_SIZE,
-        description="Max log file size",
-    )
-    log_file_backup_count: int = Field(
-        default=FlextConstants.Logging.BACKUP_COUNT,
-        description="Log file backup count",
-    )
-    console_enabled: bool = Field(
-        default=FlextConstants.Logging.CONSOLE_ENABLED,
-        description="Enable console logging",
-    )
-    console_color_enabled: bool = Field(
-        default=FlextConstants.Logging.CONSOLE_COLOR_ENABLED,
-        description="Enable console colors",
     )
 
     # Cache configuration
@@ -176,7 +111,9 @@ class FlextConfig(BaseSettings):
     )
 
     # Database configuration
-    database_url: str | None = Field(default=None, description="Database URL")
+    database_url: str = Field(
+        default=FlextConstants.Defaults.DATABASE_URL, description="Database URL"
+    )
     database_pool_size: int = Field(
         default=FlextConstants.Performance.DEFAULT_DB_POOL_SIZE,
         description="Database pool size",
@@ -246,10 +183,6 @@ class FlextConfig(BaseSettings):
 
     # Security configuration
     api_key: str | None = Field(default=None, description="API key")
-    mask_sensitive_data: bool = Field(
-        default=FlextConstants.Logging.MASK_SENSITIVE_DATA,
-        description="Mask sensitive data",
-    )
 
     # Exception configuration
     # Note: Using FailureLevel StrEnum directly for type safety
@@ -261,7 +194,7 @@ class FlextConfig(BaseSettings):
     def __new__(cls, **_kwargs: FlextTypes.GeneralValueType) -> Self:
         """Create singleton instance.
 
-        Note: BaseSettings.__init__ accepts **values: Any internally.
+        Note: BaseSettings.__init__ accepts **values internally.
         We override __new__ to implement singleton pattern while allowing
         kwargs to be passed for testing and configuration via model_validate.
         """
@@ -288,7 +221,7 @@ class FlextConfig(BaseSettings):
             if cls in cls._instances:
                 del cls._instances[cls]
 
-    def __init__(self, **kwargs: str | int | bool | None) -> None:
+    def __init__(self, **kwargs: FlextTypes.GeneralValueType) -> None:
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,
@@ -444,7 +377,7 @@ class FlextConfig(BaseSettings):
     @staticmethod
     def auto_register(
         namespace: str,
-    ) -> Callable[[type[_TSettings]], type[_TSettings]]:
+    ) -> Callable[[type[T_Settings]], type[T_Settings]]:
         """Decorator for auto-registering configuration classes.
 
         Uses TypeVar to preserve the original class type through the decorator,
@@ -458,7 +391,7 @@ class FlextConfig(BaseSettings):
 
         """
 
-        def decorator(cls: type[_TSettings]) -> type[_TSettings]:
+        def decorator(cls: type[T_Settings]) -> type[T_Settings]:
             """Register the configuration class while preserving type."""
             # Register in namespace registry (namespace stored in registry key, not on class)
             FlextConfig._namespace_registry[namespace] = cls
@@ -554,149 +487,6 @@ class FlextConfig(BaseSettings):
     def reset_global_instance(cls) -> None:
         """Reset the global singleton instance for testing."""
         cls._instances.clear()
-
-    # =========================================================================
-    # LOGGING INITIALIZATION - Centralized logging setup for FLEXT ecosystem
-    # =========================================================================
-
-    _logging_initialized: ClassVar[bool] = False
-
-    @classmethod
-    def _log_level_to_numeric(cls, level: str) -> int:
-        """Convert string log level to numeric value.
-
-        Args:
-            level: String log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-
-        Returns:
-            int: Numeric log level for structlog
-
-        """
-        level_map: dict[str, int] = {
-            FlextConstants.Settings.LogLevel.DEBUG.value: logging.DEBUG,
-            FlextConstants.Settings.LogLevel.INFO.value: logging.INFO,
-            FlextConstants.Settings.LogLevel.WARNING.value: logging.WARNING,
-            FlextConstants.Settings.LogLevel.ERROR.value: logging.ERROR,
-            FlextConstants.Settings.LogLevel.CRITICAL.value: logging.CRITICAL,
-        }
-        return level_map.get(level.upper(), logging.INFO)
-
-    def initialize_logging(self, *, force: bool = False) -> None:
-        """Initialize logging for the FLEXT ecosystem.
-
-        Configures structlog using effective_log_level from configuration.
-        This method should be called once at application startup.
-
-        Precedence (highest to lowest):
-        1. CLI parameters (via apply_cli_logging_params)
-        2. Environment variables (FLEXT_LOG_LEVEL, FLEXT_DEBUG, FLEXT_TRACE)
-        3. .env file values
-        4. Default values from FlextConstants
-
-        Args:
-            force: Force reinitialization even if already initialized
-
-        Example:
-            # At application startup
-            config = FlextConfig.get_global_instance()
-            config.initialize_logging()
-
-            # Force reinitialize (e.g., after CLI params override)
-            config.initialize_logging(force=True)
-
-        """
-        # Import here to avoid circular import (FlextRuntime imports from config)
-
-        if FlextConfig._logging_initialized and not force:
-            return
-
-        # Get effective log level (respects debug/trace flags)
-        log_level_str = self.effective_log_level
-        log_level_numeric = self._log_level_to_numeric(log_level_str)
-
-        # Configure structlog with effective settings
-        if force:
-            FlextRuntime.reconfigure_structlog(
-                log_level=log_level_numeric,
-                console_renderer=not self.json_output,
-            )
-        else:
-            FlextRuntime.configure_structlog(
-                log_level=log_level_numeric,
-                console_renderer=not self.json_output,
-            )
-
-        FlextConfig._logging_initialized = True
-        # Use FlextRuntime.get_logger() - StructlogLogger has debug method
-        FlextRuntime.get_logger(__name__).debug(
-            "Logging initialized with level=%s (numeric=%d)",
-            log_level_str,
-            log_level_numeric,
-        )
-
-    def apply_cli_logging_params(
-        self,
-        *,
-        log_level: FlextConstants.Literals.LogLevelLiteral | None = None,
-        debug: bool | None = None,
-        trace: bool | None = None,
-        _verbose: bool | None = None,
-        _quiet: bool | None = None,
-        json_output: bool | None = None,
-    ) -> None:
-        """Apply CLI logging parameters and reinitialize logging.
-
-        CLI parameters have highest precedence and override all other
-        configuration sources (env vars, .env file, defaults).
-
-        Args:
-            log_level: Override log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-            debug: Enable debug mode (sets effective_log_level to INFO)
-            trace: Enable trace mode (sets effective_log_level to DEBUG, requires debug=True)
-            _verbose: Reserved for CLI-specific use (not used in logging initialization)
-            _quiet: Reserved for CLI-specific use (not used in logging initialization)
-            json_output: Use JSON output instead of console renderer
-
-        Example:
-            # In CLI command handler
-            config = FlextConfig.get_global_instance()
-            config.apply_cli_logging_params(
-                log_level="DEBUG",
-                debug=True,
-                json_output=False,
-            )
-
-        """
-        # Apply overrides if provided
-        if log_level is not None:
-            # Validate and normalize log level using the same validator
-            self.log_level = self.validate_log_level(log_level)
-
-        if debug is not None:
-            self.debug = debug
-
-        if trace is not None:
-            # Trace requires debug
-            if trace and not (debug if debug is not None else self.debug):
-                self.debug = True
-            self.trace = trace
-
-        if json_output is not None:
-            self.json_output = json_output
-
-        # Store verbose/quiet for application use (not directly used in logging)
-        # These are typically handled by CLI-specific config classes
-
-        # Reinitialize logging with new settings
-        self.initialize_logging(force=True)
-
-    @classmethod
-    def reset_logging(cls) -> None:
-        """Reset logging initialization state for testing.
-
-        This allows tests to reinitialize logging with different settings.
-        """
-        cls._logging_initialized = False
 
 
 __all__ = ["FlextConfig"]

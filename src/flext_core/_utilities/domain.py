@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Hashable
 
 from flext_core.protocols import FlextProtocols
-from flext_core.runtime import FlextRuntime, StructlogLogger
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
 
@@ -21,7 +21,7 @@ class FlextUtilitiesDomain:
     """Reusable DDD helpers for dispatcher-driven domain workflows."""
 
     @property
-    def logger(self) -> StructlogLogger:
+    def logger(self) -> FlextProtocols.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).

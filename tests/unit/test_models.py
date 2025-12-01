@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import json
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar
@@ -32,6 +32,12 @@ import pytest
 from pydantic import Field, ValidationError, field_validator
 
 from flext_core import FlextConstants, FlextExceptions, FlextModels
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.config import FlextModelsConfig
+from flext_core._models.cqrs import FlextModelsCqrs
+from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.handler import FlextModelsHandler
+from flext_core.typings import FlextTypes
 
 
 class ModelType(StrEnum):
@@ -57,7 +63,7 @@ class ModelCreationScenario:
     description: str = ""
 
 
-class SampleAggregate(FlextModels.AggregateRoot):
+class SampleAggregate(FlextModelsEntity.AggregateRoot):
     """Sample aggregate root for testing."""
 
     name: str
@@ -75,17 +81,17 @@ class SampleAggregate(FlextModels.AggregateRoot):
             raise ValueError(error_msg)
 
 
-class EventAggregate(FlextModels.AggregateRoot):
+class EventAggregate(FlextModelsEntity.AggregateRoot):
     """Test aggregate for domain events."""
 
     name: str
 
     def trigger_event(self) -> None:
         """Trigger a test event."""
-        self.add_domain_event("test_event", {"data": "test"})
+        _ = self.add_domain_event("test_event", {"data": "test"})
 
 
-class TestFlextModels:
+class TestFlextModels:  # noqa: PLR0904
     """Test suite for FlextModels using FlextTestsUtilities and FlextConstants."""
 
     def test_models_initialization(self) -> None:
@@ -97,7 +103,7 @@ class TestFlextModels:
     def test_models_entity_creation(self) -> None:
         """Test entity creation and validation."""
 
-        class TestEntity(FlextModels.Entity):
+        class TestEntity(FlextModelsEntity.Core):
             name: str
             email: str
 
@@ -120,12 +126,12 @@ class TestFlextModels:
         assert validated_entity.email == "test@example.com"
         error_msg = "Invalid email"
         with pytest.raises(ValueError, match=error_msg):
-            TestEntity(name="Test User", email="invalid-email")
+            _ = TestEntity(name="Test User", email="invalid-email")
 
     def test_models_value_object_creation(self) -> None:
         """Test value object creation and immutability."""
 
-        class TestValue(FlextModels.Value):
+        class TestValue(FlextModelsEntity.Value):
             data: str
             count: int
 
@@ -138,16 +144,16 @@ class TestFlextModels:
 
     def test_models_aggregate_root_creation(self) -> None:
         """Test aggregate root creation and basic functionality."""
-        assert issubclass(FlextModels.AggregateRoot, FlextModels.Entity)
-        assert hasattr(FlextModels.AggregateRoot, "_invariants")
-        assert isinstance(FlextModels.AggregateRoot._invariants, list)
-        assert hasattr(FlextModels.AggregateRoot, "check_invariants")
-        assert callable(FlextModels.AggregateRoot.check_invariants)
+        assert issubclass(FlextModelsEntity.AggregateRoot, FlextModelsEntity.Core)
+        assert hasattr(FlextModelsEntity.AggregateRoot, "_invariants")
+        assert isinstance(FlextModelsEntity.AggregateRoot._invariants, list)
+        assert hasattr(FlextModelsEntity.AggregateRoot, "check_invariants")
+        assert callable(FlextModelsEntity.AggregateRoot.check_invariants)
 
     def test_models_command_creation(self) -> None:
         """Test command model creation."""
 
-        class TestCommand(FlextModels.Cqrs.Command):
+        class TestCommand(FlextModelsCqrs.Command):
             command_type: str = "test_command"
             data: str
 
@@ -159,7 +165,9 @@ class TestFlextModels:
 
     def test_models_metadata_creation(self) -> None:
         """Test metadata model creation."""
-        metadata = FlextModels.Metadata(created_by="test_user", tags=["tag1", "tag2"])
+        metadata = FlextModelsBase.Metadata(
+            created_by="test_user", tags=["tag1", "tag2"]
+        )
         assert metadata.created_by == "test_user"
         assert metadata.created_at is not None
         assert len(metadata.tags) == 2
@@ -173,16 +181,16 @@ class TestFlextModels:
 
     def test_models_domain_events(self) -> None:
         """Test domain events functionality on Entity base class."""
-        assert hasattr(FlextModels.Entity, "add_domain_event")
-        assert callable(FlextModels.Entity.add_domain_event)
-        assert hasattr(FlextModels.Entity, "clear_domain_events")
-        assert callable(FlextModels.Entity.clear_domain_events)
-        assert "domain_events" in FlextModels.Entity.model_fields
+        assert hasattr(FlextModelsEntity.Core, "add_domain_event")
+        assert callable(FlextModelsEntity.Core.add_domain_event)
+        assert hasattr(FlextModelsEntity.Core, "clear_domain_events")
+        assert callable(FlextModelsEntity.Core.clear_domain_events)
+        assert "domain_events" in FlextModelsEntity.Core.model_fields
 
     def test_models_version_management(self) -> None:
         """Test version management in entities."""
 
-        class VersionedEntity(FlextModels.Entity):
+        class VersionedEntity(FlextModelsEntity.Core):
             name: str
 
         entity = VersionedEntity(name="Test")
@@ -193,7 +201,7 @@ class TestFlextModels:
     def test_models_timestamped_functionality(self) -> None:
         """Test timestamped functionality."""
 
-        class TimestampedEntity(FlextModels.Entity):
+        class TimestampedEntity(FlextModelsEntity.Core):
             name: str
 
         entity = TimestampedEntity(name="Test")
@@ -205,7 +213,7 @@ class TestFlextModels:
     def test_models_validation_patterns(self) -> None:
         """Test validation patterns."""
 
-        class ValidatedEntity(FlextModels.Entity):
+        class ValidatedEntity(FlextModelsEntity.Core):
             name: str
             email: str
 
@@ -229,14 +237,14 @@ class TestFlextModels:
         assert entity.name == "Test"
         assert entity.email == "test@example.com"
         with pytest.raises(ValueError, match="Name is required"):
-            ValidatedEntity(name="", email="test@example.com")
+            _ = ValidatedEntity(name="", email="test@example.com")
         with pytest.raises(ValueError, match="Invalid email"):
-            ValidatedEntity(name="Test", email="invalid")
+            _ = ValidatedEntity(name="Test", email="invalid")
 
     def test_models_thread_safety(self) -> None:
         """Test thread safety of models."""
 
-        class ThreadSafeEntity(FlextModels.Entity):
+        class ThreadSafeEntity(FlextModelsEntity.Core):
             counter: int = 0
 
             def increment(self) -> None:
@@ -283,7 +291,7 @@ class TestFlextModels:
     def test_entity_equality_and_hash(self) -> None:
         """Test Entity equality and hash based on identity."""
 
-        class TestEntity(FlextModels.Entity):
+        class TestEntity(FlextModelsEntity.Core):
             name: str
 
         entity1 = TestEntity(name="test", unique_id="123")
@@ -303,7 +311,7 @@ class TestFlextModels:
     def test_entity_domain_events(self) -> None:
         """Test domain event functionality in Entity."""
 
-        class TestEntity(FlextModels.Entity):
+        class TestEntity(FlextModelsEntity.Core):
             name: str
 
         entity = TestEntity(name="test")
@@ -322,7 +330,7 @@ class TestFlextModels:
     def test_entity_domain_events_validation(self) -> None:
         """Test domain event validation."""
 
-        class TestEntity(FlextModels.Entity):
+        class TestEntity(FlextModelsEntity.Core):
             name: str
 
         entity = TestEntity(name="test")
@@ -338,7 +346,7 @@ class TestFlextModels:
     def test_entity_initial_version(self) -> None:
         """Test Entity initial version state."""
 
-        class TestEntity(FlextModels.Entity):
+        class TestEntity(FlextModelsEntity.Core):
             name: str
 
         entity = TestEntity(name="test")
@@ -353,7 +361,7 @@ class TestFlextModels:
     def test_timestampable_mixin_serialization(self) -> None:
         """Test timestamp serialization in JSON output."""
 
-        class TestEntity(FlextModels.Entity):
+        class TestEntity(FlextModelsEntity.Core):
             name: str
 
         entity = TestEntity(name="test")
@@ -366,7 +374,7 @@ class TestFlextModels:
     def test_timestampable_mixin_update_timestamp(self) -> None:
         """Test update_timestamp method."""
 
-        class TestEntity(FlextModels.Entity):
+        class TestEntity(FlextModelsEntity.Core):
             name: str
 
         entity = TestEntity(name="test")
@@ -380,7 +388,7 @@ class TestFlextModels:
     def test_versionable_mixin(self) -> None:
         """Test VersionableMixin functionality."""
 
-        class TestEntity(FlextModels.Entity):
+        class TestEntity(FlextModelsEntity.Core):
             name: str
 
         entity = TestEntity(name="test")
@@ -393,7 +401,7 @@ class TestFlextModels:
     def test_aggregate_root_inheritance(self) -> None:
         """Test AggregateRoot inherits from Entity properly."""
 
-        class TestAggregate(FlextModels.AggregateRoot):
+        class TestAggregate(FlextModelsEntity.AggregateRoot):
             name: str
 
         aggregate = TestAggregate(name="test")
@@ -411,7 +419,7 @@ class TestFlextModels:
         def passing_invariant() -> bool:
             return True
 
-        class TestAggregate(FlextModels.AggregateRoot):
+        class TestAggregate(FlextModelsEntity.AggregateRoot):
             name: str
             value: int
             _invariants: ClassVar[list[Callable[[], bool]]] = [passing_invariant]
@@ -422,17 +430,17 @@ class TestFlextModels:
         def failing_invariant() -> bool:
             return False
 
-        class FailingAggregate(FlextModels.AggregateRoot):
+        class FailingAggregate(FlextModelsEntity.AggregateRoot):
             name: str
             _invariants: ClassVar[list[Callable[[], bool]]] = [failing_invariant]
 
         with pytest.raises(FlextExceptions.ValidationError, match="Invariant violated"):
-            FailingAggregate(name="test")
+            _ = FailingAggregate(name="test")
 
     def test_value_object_immutability(self) -> None:
         """Test Value object immutability and equality."""
 
-        class TestValue(FlextModels.Value):
+        class TestValue(FlextModelsEntity.Value):
             name: str
             value: int
 
@@ -452,7 +460,7 @@ class TestFlextModels:
     def test_command_creation_with_mixins(self) -> None:
         """Test Command creation with all mixins."""
 
-        class TestCommand(FlextModels.Cqrs.Command):
+        class TestCommand(FlextModelsCqrs.Command):
             action: str
             target: str
 
@@ -492,12 +500,12 @@ class TestFlextModels:
     def test_aggregate_root_mark_events_as_committed(self) -> None:
         """Test mark_events_as_committed method."""
 
-        class TestAggregate(FlextModels.AggregateRoot):
+        class TestAggregate(FlextModelsEntity.AggregateRoot):
             name: str
 
         aggregate = TestAggregate(name="test")
-        aggregate.add_domain_event("event1", {"data": "value1"})
-        aggregate.add_domain_event("event2", {"data": "value2"})
+        _ = aggregate.add_domain_event("event1", {"data": "value1"})
+        _ = aggregate.add_domain_event("event2", {"data": "value2"})
         assert len(aggregate.domain_events) == 2
         result = aggregate.mark_events_as_committed()
         assert result.is_success
@@ -508,7 +516,7 @@ class TestFlextModels:
     def test_aggregate_root_mark_events_empty(self) -> None:
         """Test mark_events_as_committed with no events."""
 
-        class TestAggregate(FlextModels.AggregateRoot):
+        class TestAggregate(FlextModelsEntity.AggregateRoot):
             name: str
 
         aggregate = TestAggregate(name="test")
@@ -520,11 +528,12 @@ class TestFlextModels:
     def test_aggregate_root_bulk_domain_events(self) -> None:
         """Test add_domain_events_bulk method."""
 
-        class TestAggregate(FlextModels.AggregateRoot):
+        class TestAggregate(FlextModelsEntity.AggregateRoot):
             name: str
 
         aggregate = TestAggregate(name="test")
-        events: list[object] = [
+        # Convert to proper type: Sequence[tuple[str, EventDataMapping | None]]
+        events: Sequence[tuple[str, FlextTypes.Types.EventDataMapping | None]] = [
             ("event1", {"data": "value1"}),
             ("event2", {"data": "value2"}),
             ("event3", {"data": "value3"}),
@@ -539,17 +548,19 @@ class TestFlextModels:
     def test_aggregate_root_bulk_domain_events_validation(self) -> None:
         """Test add_domain_events_bulk validation."""
 
-        class TestAggregate(FlextModels.AggregateRoot):
+        class TestAggregate(FlextModelsEntity.AggregateRoot):
             name: str
 
         aggregate = TestAggregate(name="test")
         result = aggregate.add_domain_events_bulk([])
         assert result.is_success
         invalid_input: object = "not a list"
-        result = aggregate.add_domain_events_bulk(invalid_input)
+        result = aggregate.add_domain_events_bulk(invalid_input)  # pyright: ignore[reportArgumentType]  # Testing invalid input type
         assert result.is_failure
         assert result.error is not None and "Events must be a list" in result.error
-        invalid_empty_name: list[object] = [("", {"data": "value"})]
+        invalid_empty_name: Sequence[
+            tuple[str, FlextTypes.Types.EventDataMapping | None]
+        ] = [("", {"data": "value"})]
         result = aggregate.add_domain_events_bulk(invalid_empty_name)
         assert result.is_failure
         assert (
@@ -559,12 +570,12 @@ class TestFlextModels:
     def test_aggregate_root_bulk_domain_events_limit(self) -> None:
         """Test add_domain_events_bulk respects max events limit."""
 
-        class TestAggregate(FlextModels.AggregateRoot):
+        class TestAggregate(FlextModelsEntity.AggregateRoot):
             name: str
 
         aggregate = TestAggregate(name="test")
         max_events = FlextConstants.Validation.MAX_UNCOMMITTED_EVENTS
-        events: list[object] = [
+        events: Sequence[tuple[str, FlextTypes.Types.EventDataMapping | None]] = [
             (f"event{i}", {"data": f"value{i}"}) for i in range(max_events + 1)
         ]
         result = aggregate.add_domain_events_bulk(events)
@@ -574,7 +585,7 @@ class TestFlextModels:
     def test_aggregate_root_domain_event_handler_execution(self) -> None:
         """Test domain event handler execution."""
 
-        class TestAggregate(FlextModels.AggregateRoot):
+        class TestAggregate(FlextModelsEntity.AggregateRoot):
             name: str
             handler_called: bool = False
             handler_data: dict[str, object] = Field(default_factory=dict)
@@ -595,7 +606,7 @@ class TestFlextModels:
     def test_aggregate_root_domain_event_handler_error(self) -> None:
         """Test domain event handler error handling."""
 
-        class TestAggregate(FlextModels.AggregateRoot):
+        class TestAggregate(FlextModelsEntity.AggregateRoot):
             name: str
 
             def _apply_failing_event(self, data: dict[str, object]) -> None:
@@ -624,7 +635,7 @@ class TestFlextModels:
 
     def test_command_model_creation(self) -> None:
         """Test Command model creation with correct fields."""
-        command = FlextModels.Cqrs.Command(
+        command = FlextModelsCqrs.Command(
             command_type="CreateOrder",
             issuer_id="issuer-123",
         )
@@ -636,7 +647,7 @@ class TestFlextModels:
 
     def test_metadata_model_creation(self) -> None:
         """Test Metadata model creation with correct fields."""
-        meta = FlextModels.Metadata(
+        meta = FlextModelsBase.Metadata(
             created_by="user-123",
             modified_by="user-456",
             tags=["important", "urgent"],
@@ -649,7 +660,7 @@ class TestFlextModels:
 
     def test_processing_request_model_creation(self) -> None:
         """Test ProcessingRequest model with correct fields."""
-        request = FlextModels.ProcessingRequest(
+        request = FlextModelsConfig.ProcessingRequest(
             data={"input": "data"},
             enable_validation=True,
         )
@@ -663,7 +674,7 @@ class TestFlextModels:
         def dummy_handler() -> None:
             pass
 
-        reg = FlextModels.HandlerRegistration(
+        reg = FlextModelsHandler.Registration(
             name="TestHandler",
             handler=dummy_handler,
             event_types=["CreateUser"],
@@ -674,7 +685,7 @@ class TestFlextModels:
 
     def test_batch_processing_config_model(self) -> None:
         """Test BatchProcessingConfig model with correct fields."""
-        config = FlextModels.BatchProcessingConfig(
+        config = FlextModelsConfig.BatchProcessingConfig(
             batch_size=100,
             continue_on_error=True,
             data_items=[1, 2, 3],
@@ -685,7 +696,7 @@ class TestFlextModels:
 
     def test_handler_execution_config_model(self) -> None:
         """Test HandlerExecutionConfig model with correct fields."""
-        config = FlextModels.HandlerExecutionConfig(
+        config = FlextModelsConfig.HandlerExecutionConfig(
             handler_name="my_handler",
             input_data={"key": "value"},
             retry_on_failure=True,
@@ -696,7 +707,7 @@ class TestFlextModels:
 
     def test_retry_configuration_model(self) -> None:
         """Test RetryConfiguration model with correct fields."""
-        retry = FlextModels.RetryConfiguration(
+        retry = FlextModelsConfig.RetryConfiguration(
             max_attempts=3,
             initial_delay_seconds=1000,
             max_delay_seconds=30000,
@@ -708,7 +719,7 @@ class TestFlextModels:
 
     def test_validation_configuration_model(self) -> None:
         """Test ValidationConfiguration model with correct fields."""
-        val_config = FlextModels.ValidationConfiguration(
+        val_config = FlextModelsConfig.ValidationConfiguration(
             enable_strict_mode=True,
             validate_on_assignment=True,
             validate_on_read=False,
@@ -754,18 +765,18 @@ class TestFlextModels:
         """Test ContextData model with validators."""
         ctx = FlextModels.ContextData(
             data={"request_id": "req-456", "user_id": "user-123"},
-            metadata=FlextModels.Metadata(attributes={"source": "api"}),
+            metadata=FlextModelsBase.Metadata(attributes={"source": "api"}),
         )
         assert ctx.data["request_id"] == "req-456"
         metadata = ctx.metadata
-        if isinstance(metadata, FlextModels.Metadata):
+        if isinstance(metadata, FlextModelsBase.Metadata):
             assert metadata.attributes.get("source") == "api"
 
     def test_context_export_model_creation(self) -> None:
         """Test ContextExport model creation."""
         export = FlextModels.ContextExport(
             data={"key": "value"},
-            metadata=FlextModels.Metadata(attributes={"version": "1.0"}),
+            metadata=FlextModelsBase.Metadata(attributes={"version": "1.0"}),
             statistics={"sets": 10, "gets": 20},
         )
         assert export.data["key"] == "value"
@@ -773,21 +784,21 @@ class TestFlextModels:
 
     def test_handler_execution_context_model(self) -> None:
         """Test HandlerExecutionContext model creation."""
-        context = FlextModels.HandlerExecutionContext.create_for_handler(
+        context = FlextModelsHandler.ExecutionContext.create_for_handler(
             handler_name="ProcessOrderCommand",
-            handler_mode="command",
+            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         assert context.handler_name == "ProcessOrderCommand"
         assert context.handler_mode == "command"
-        assert isinstance(context, FlextModels.HandlerExecutionContext)
+        assert isinstance(context, FlextModelsHandler.ExecutionContext)
 
     def test_registration_details_model(self) -> None:
         """Test RegistrationDetails model creation."""
-        details = FlextModels.RegistrationDetails(
+        details = FlextModelsHandler.RegistrationDetails(
             registration_id="reg-123",
             handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
             timestamp="2025-01-01T00:00:00Z",
-            status=FlextConstants.Cqrs.Status.RUNNING,
+            status=FlextConstants.Cqrs.CommonStatus.RUNNING,
         )
         assert details.registration_id == "reg-123"
         assert details.status == "running"

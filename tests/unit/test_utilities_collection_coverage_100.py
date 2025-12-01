@@ -21,6 +21,7 @@ from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from pydantic import BaseModel, Field
 
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core.typings import FlextTypes
@@ -181,14 +182,14 @@ class CollectionUtilitiesScenarios:
         CoerceListScenario(
             name="valid_set",
             enum_cls=FixtureStatus,
-            value={"active", "pending"},
+            value=list({"active", "pending"}),  # type: ignore[arg-type]  # list[str] is compatible with Sequence[ScalarValue]
             expected_success=True,
             expected_count=2,
         ),
         CoerceListScenario(
             name="valid_frozenset",
             enum_cls=FixtureStatus,
-            value=frozenset(["active", "pending"]),
+            value=list(frozenset(["active", "pending"])),  # type: ignore[arg-type]  # list[str] is compatible with Sequence[ScalarValue]
             expected_success=True,
             expected_count=2,
         ),
@@ -436,13 +437,11 @@ class TestFlextUtilitiesCollectionCoerceListValidator:
 
     def test_coerce_list_validator_with_pydantic(self) -> None:
         """Test coerce_list_validator integration with Pydantic."""
-        from pydantic import BaseModel, Field
-
-        StatusList = list[FixtureStatus]
+        status_list = list[FixtureStatus]
         FlextUtilitiesCollection.coerce_list_validator(FixtureStatus)
 
         class TestModel(BaseModel):
-            statuses: StatusList = Field(default_factory=list)
+            statuses: status_list = Field(default_factory=list)
 
         # Test with string list
         model1 = TestModel.model_validate({"statuses": ["active", "pending"]})
@@ -544,8 +543,6 @@ class TestFlextUtilitiesCollectionCoerceDictValidator:
 
     def test_coerce_dict_validator_with_pydantic(self) -> None:
         """Test coerce_dict_validator integration with Pydantic."""
-        from pydantic import BaseModel, Field
-
         FlextUtilitiesCollection.coerce_dict_validator(FixtureStatus)
 
         class TestModel(BaseModel):
