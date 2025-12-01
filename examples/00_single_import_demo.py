@@ -198,15 +198,11 @@ def demonstrate_single_import_pattern() -> None:
 
     try:
         error_msg = "Invalid input"
-        from flext_core._models.config import FlextModelsConfig
-
         raise FlextExceptions.ValidationError(
             error_msg,
-            config=FlextModelsConfig.ValidationErrorConfig(
-                field="email",
-                value="invalid",
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
-            ),
+            field="email",
+            value="invalid",
+            error_code=FlextConstants.Errors.VALIDATION_ERROR,
         )
     except FlextExceptions.ValidationError as e:
         print(f"   ❌ ValidationError caught: {e.message}")

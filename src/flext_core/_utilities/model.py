@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import cast
 
 from pydantic import BaseModel
 
@@ -51,7 +50,7 @@ class FlextUtilitiesModel:
                  user: UserModel = result.value
 
         """
-        from flext_core.result import FlextResult
+        from flext_core.result import FlextResult  # noqa: PLC0415
 
         try:
             instance = model_cls.model_validate(data, strict=strict)
@@ -112,19 +111,13 @@ class FlextUtilitiesModel:
              # result.value = UserModel with status=Status.INACTIVE
 
         """
-        from flext_core.result import FlextResult
+        from flext_core.result import FlextResult  # noqa: PLC0415
 
         try:
-            current = instance.model_dump()
-            current.update(updates)
-            # Type narrowing: instance is M where M: BaseModel
-            # type(instance) returns type[M] which has model_validate method
-            model_cls = type(instance)
-            # Cast to type[BaseModel] to access model_validate method
-            base_model_cls = cast("type[BaseModel]", model_cls)
-            new_instance = base_model_cls.model_validate(current)
-            # Type narrowing: new_instance is M (same type as instance)
-            return FlextResult.ok(cast("M", new_instance))
+            # Use model_copy with update - modern Pydantic approach
+            # This preserves the type M without needing casts or recreating
+            updated_instance = instance.model_copy(update=updates)
+            return FlextResult.ok(updated_instance)
         except Exception as e:
             return FlextResult.fail(f"Model update failed: {e}")
 
@@ -146,6 +139,4 @@ class FlextUtilitiesModel:
         return instance.model_dump(
             by_alias=by_alias,
             exclude_none=exclude_none,
-        )
-
         )

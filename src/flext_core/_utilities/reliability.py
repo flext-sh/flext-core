@@ -14,7 +14,6 @@ import time
 from collections.abc import Callable
 
 from flext_core.constants import FlextConstants
-from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime, StructlogLogger
 from flext_core.typings import FlextTypes
 
@@ -33,10 +32,12 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def with_timeout[TTimeout](
-        operation: Callable[[], FlextResult[TTimeout]],
+        operation: Callable[[], "FlextResult[TTimeout]"],
         timeout_seconds: float,
-    ) -> FlextResult[TTimeout]:
+    ) -> "FlextResult[TTimeout]":
         """Execute operation with timeout using railway patterns."""
+        from flext_core.result import FlextResult
+
         if timeout_seconds <= FlextConstants.INITIAL_TIME:
             return FlextResult[TTimeout].fail("Timeout must be positive")
 
@@ -83,15 +84,17 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def retry[TResult](
-        operation: Callable[[], FlextResult[TResult]],
+        operation: Callable[[], "FlextResult[TResult]"],
         max_attempts: int | None = None,
         delay_seconds: float | None = None,
         backoff_multiplier: float | None = None,
-    ) -> FlextResult[TResult]:
+    ) -> "FlextResult[TResult]":
         """Execute operation with retry logic using railway patterns.
 
         Fast fail: explicit default values instead of 'or' fallback.
         """
+        from flext_core.result import FlextResult
+
         # Fast fail: explicit default values instead of 'or' fallback
         max_attempts_value: int = (
             max_attempts
@@ -210,11 +213,11 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def with_retry[TResult](
-        operation: Callable[[], FlextResult[TResult]],
+        operation: Callable[[], "FlextResult[TResult]"],
         max_attempts: int = 3,
         should_retry_func: Callable[[int, str | None], bool] | None = None,
         cleanup_func: Callable[[], None] | None = None,
-    ) -> FlextResult[TResult]:
+    ) -> "FlextResult[TResult]":
         """Execute operation with retry logic using railway patterns.
 
         Args:
@@ -227,6 +230,8 @@ class FlextUtilitiesReliability:
             FlextResult[TResult]: Result of operation with retry
 
         """
+        from flext_core.result import FlextResult
+
         for attempt in range(max_attempts):
             try:
                 result = operation()
@@ -257,5 +262,12 @@ class FlextUtilitiesReliability:
 
         return FlextResult[TResult].fail("Max retries exceeded")
 
+
+__all__ = ["FlextUtilitiesReliability"]
+
+__all__ = ["FlextUtilitiesReliability"]
+
+
+__all__ = ["FlextUtilitiesReliability"]
 
 __all__ = ["FlextUtilitiesReliability"]

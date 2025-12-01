@@ -115,9 +115,15 @@ class UtilitiesComprehensiveService(FlextService[dict[str, object]]):
                 "utilities_executed": True,
             }
 
+            # Convert summary to GeneralValueType-compatible format for context
+            summary_dict: dict[str, FlextTypes.GeneralValueType] = (
+                {"summary": summary}
+                if isinstance(summary, (dict, str, int, float, bool, list, type(None)))
+                else {}
+            )
             self.logger.info(
                 "FlextUtilities demonstration completed successfully",
-                extra={"summary": summary},
+                **summary_dict,
             )
 
             return FlextResult[dict[str, object]].ok(summary)

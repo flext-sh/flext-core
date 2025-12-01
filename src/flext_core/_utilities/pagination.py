@@ -31,7 +31,7 @@ class FlextUtilitiesPagination:
         default_page: int = 1,
         default_page_size: int = 20,
         max_page_size: int = 1000,
-    ) -> FlextResult[tuple[int, int]]:
+    ) -> "FlextResult[tuple[int, int]]":
         """Extract page and page_size from query parameters.
 
         Args:
@@ -44,6 +44,8 @@ class FlextUtilitiesPagination:
             FlextResult with (page, page_size) tuple or error
 
         """
+        from flext_core.result import FlextResult
+
         page_str = str(default_page)
         if "page" in query_params:
             page_value = query_params["page"]
@@ -77,7 +79,7 @@ class FlextUtilitiesPagination:
         page: int,
         page_size: int | None,
         max_page_size: int,
-    ) -> FlextResult[dict[str, int]]:
+    ) -> "FlextResult[dict[str, int]]":
         """Validate pagination parameters.
 
         Args:
@@ -89,6 +91,8 @@ class FlextUtilitiesPagination:
             FlextResult with validated parameters or error
 
         """
+        from flext_core.result import FlextResult
+
         if page < 1:
             return FlextResult.fail("Page must be >= 1")
 
@@ -108,7 +112,7 @@ class FlextUtilitiesPagination:
         *,
         page: int,
         page_size: int,
-    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+    ) -> "FlextResult[dict[str, FlextTypes.GeneralValueType]]":
         """Prepare pagination data structure.
 
         Args:
@@ -121,6 +125,8 @@ class FlextUtilitiesPagination:
             FlextResult with pagination data dictionary or error
 
         """
+        from flext_core.result import FlextResult
+
         if data is None:
             data = []
 

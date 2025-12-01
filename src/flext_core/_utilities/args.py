@@ -15,6 +15,7 @@ from typing import Annotated, Protocol, get_args, get_origin, get_type_hints
 
 from pydantic import ConfigDict, validate_call
 
+from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, P, R
 
 

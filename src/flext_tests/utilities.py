@@ -25,7 +25,7 @@ from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Protocol, TypeVar, runtime_checkable
+from typing import Protocol, TypeVar, overload, runtime_checkable
 
 from docker.errors import DockerException, NotFound
 
@@ -439,12 +439,30 @@ class FlextTestsUtilities:
             return FlextResult[bool].ok(True)
 
     @staticmethod
+    @overload
+    def create_test_result[TValue: FlextTypes.GeneralValueType](
+        *,
+        success: bool = True,
+        data: TValue,
+        error: str | None = None,
+    ) -> FlextResult[TValue]: ...
+
+    @staticmethod
+    @overload
+    def create_test_result[TValue: FlextTypes.GeneralValueType](
+        *,
+        success: bool = True,
+        data: None = None,
+        error: str | None = None,
+    ) -> FlextResult[FlextTypes.GeneralValueType]: ...
+
+    @staticmethod
     def create_test_result[TValue: FlextTypes.GeneralValueType](
         *,
         success: bool = True,
         data: TValue | None = None,
         error: str | None = None,
-    ) -> FlextResult[TValue]:
+    ) -> FlextResult[TValue] | FlextResult[FlextTypes.GeneralValueType]:
         """Create a test FlextResult.
 
         Args:
@@ -460,10 +478,11 @@ class FlextTestsUtilities:
             # Fast fail: None is not a valid success value
             if data is None:
                 # Use empty dict as default test data
-                # Use empty dict as default - dict is compatible with GeneralValueType
-                empty_dict: dict[str, FlextTypes.GeneralValueType] = {}
-                return FlextResult[TValue].ok(empty_dict)
+                empty_dict: FlextTypes.GeneralValueType = {}
+                return FlextResult[FlextTypes.GeneralValueType].ok(empty_dict)
             return FlextResult[TValue].ok(data)
+        if data is None:
+            return FlextResult[FlextTypes.GeneralValueType].fail(error or "Test error")
         return FlextResult[TValue].fail(error or "Test error")
 
     @staticmethod
@@ -1193,8 +1212,9 @@ class FlextTestsUtilities:
             return None
 
         @staticmethod
-        def cleanup_docker_resources[TResult](
+        def cleanup_docker_resources(
             client: FlextTestProtocols.Docker.DockerClientProtocol,
+            *,
             resource_type: str,
             list_attr: str,
             remove_attr: str,
@@ -1267,7 +1287,7 @@ class FlextTestsUtilities:
                                 "Failed to remove %s %s: %s",
                                 resource_type,
                                 resource_name,
-                                str(e),
+                                e,
                                 **{resource_type: resource_name, "error": str(e)},
                             )
 
@@ -1371,9 +1391,7 @@ class FlextTestsUtilities:
                 error_msg = str(e)
                 if logger and hasattr(logger, "exception"):
                     logger.exception(
-                        "docker compose %s failed: %s",
-                        operation_name,
-                        error_msg,
+                        f"docker compose {operation_name} failed: {error_msg}",
                         exception=e,
                         compose_file=compose_file,
                         error=error_msg,
@@ -1384,7 +1402,9 @@ class FlextTestsUtilities:
 
         @staticmethod
         def with_compose_file_config(
-            docker_client: FlextTestProtocols.Docker.ComposeClientProtocol,
+            docker_client: (
+                FlextTestProtocols.Docker.ComposeClientProtocol | object
+            ),
             compose_path: Path,
             operation: Callable[[], None],
         ) -> None:

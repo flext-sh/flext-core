@@ -249,7 +249,7 @@ class FlextMixins:
                     setattr(self, stats_attr, stats)
         finally:
             # Auto-cleanup operation context
-            self._clear_operation_context()
+            FlextMixins._clear_operation_context()
 
     @property
     def config(self) -> FlextConfig:
@@ -279,16 +279,19 @@ class FlextMixins:
                 return FlextResult[bool].ok(True)
             return FlextResult[bool].fail(f"Service registration failed: {e}")
 
-    def _propagate_context(self, operation_name: str) -> None:
+    @staticmethod
+    def _propagate_context(operation_name: str) -> None:
         """Propagate context for current operation using FlextContext."""
         FlextContext.Request.set_operation_name(operation_name)
         FlextContext.Utilities.ensure_correlation_id()
 
-    def _get_correlation_id(self) -> str | None:
+    @staticmethod
+    def _get_correlation_id() -> str | None:
         """Get current correlation ID from FlextContext."""
         return FlextContext.Correlation.get_correlation_id()
 
-    def _set_correlation_id(self, correlation_id: str) -> None:
+    @staticmethod
+    def _set_correlation_id(correlation_id: str) -> None:
         """Set correlation ID in FlextContext."""
         FlextContext.Correlation.set_correlation_id(correlation_id)
 
@@ -434,7 +437,7 @@ class FlextMixins:
     ) -> None:
         """Set operation context with level-based binding (DEBUG/ERROR/normal)."""
         # Propagate context using inherited Context mixin method
-        self._propagate_context(operation_name)
+        FlextMixins._propagate_context(operation_name)
 
         # Bind additional operation data with level filtering
         if operation_data:
@@ -480,7 +483,8 @@ class FlextMixins:
                     for k, v in normal_data.items()
                 })
 
-    def _clear_operation_context(self) -> None:
+    @staticmethod
+    def _clear_operation_context() -> None:
         """Clear operation scope context (preserves request/application scopes)."""
         # Clear operation scope only (preserves request and application scopes)
         FlextLogger.clear_scope("operation")

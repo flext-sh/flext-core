@@ -65,12 +65,7 @@ class FlextContainer(FlextProtocols.Configurable):
         self._global_config: FlextModelsContainer.ContainerConfig = (
             FlextContainer._create_container_config()
         )
-        self._user_overrides: dict[
-            str,
-            FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
-            | Mapping[str, FlextTypes.ScalarValue],
-        ] = {}
+        self._user_overrides: dict[str, FlextTypes.GeneralValueType] = {}
         self._sync_config_to_di()
 
     @property
@@ -95,7 +90,7 @@ class FlextContainer(FlextProtocols.Configurable):
 
     def configure(
         self,
-        config: Mapping[str, FlextTypes.FlexibleValue],
+        config: Mapping[str, FlextTypes.GeneralValueType],
     ) -> None:
         """Configure container settings."""
         self._user_overrides.update(config)

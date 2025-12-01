@@ -127,9 +127,13 @@ class ContextManagementService(FlextService[dict[str, object]]):
                 },
             }
 
+            # Convert summary to GeneralValueType-compatible format for context
+            summary_dict: dict[str, FlextTypes.GeneralValueType] = (
+                dict(summary) if isinstance(summary, dict) else {}
+            )
             self.logger.info(
                 "FlextContext demonstration completed successfully",
-                extra=summary,
+                **summary_dict,
             )
 
             return FlextResult[dict[str, object]].ok(summary)
