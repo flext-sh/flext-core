@@ -69,27 +69,27 @@ class TestFlextUtilitiesDomain:
     def create_compare_entities_cases() -> list[DomainTestCase]:
         """Create test cases for entity comparison."""
         alice_entity = DomainTestHelpers.create_entity(
-            TestConstants.Domain.ENTITY_NAME_ALICE,
-            TestConstants.Domain.ENTITY_VALUE_10,
+            TestConstants.TestDomain.ENTITY_NAME_ALICE,
+            TestConstants.TestDomain.ENTITY_VALUE_10,
         )
         bob_entity = DomainTestHelpers.create_entity(
-            TestConstants.Domain.ENTITY_NAME_BOB,
-            TestConstants.Domain.ENTITY_VALUE_20,
+            TestConstants.TestDomain.ENTITY_NAME_BOB,
+            TestConstants.TestDomain.ENTITY_VALUE_20,
         )
         alice_no_id = DomainTestHelpers.create_entity(
-            TestConstants.Domain.ENTITY_NAME_ALICE,
-            TestConstants.Domain.ENTITY_VALUE_10,
+            TestConstants.TestDomain.ENTITY_NAME_ALICE,
+            TestConstants.TestDomain.ENTITY_VALUE_10,
             with_id=False,
         )
         value_obj = DomainTestHelpers.create_value(
-            TestConstants.Domain.VALUE_DATA_TEST,
-            TestConstants.Domain.VALUE_COUNT_5,
+            TestConstants.TestDomain.VALUE_DATA_TEST,
+            TestConstants.TestDomain.VALUE_COUNT_5,
         )
         custom1 = DomainTestHelpers.create_custom_entity(
-            TestConstants.Domain.CUSTOM_ID_1
+            TestConstants.TestDomain.CUSTOM_ID_1,
         )
         custom2 = DomainTestHelpers.create_custom_entity(
-            TestConstants.Domain.CUSTOM_ID_1
+            TestConstants.TestDomain.CUSTOM_ID_1,
         )
 
         return [
@@ -130,16 +130,16 @@ class TestFlextUtilitiesDomain:
     def create_hash_entity_cases() -> list[DomainTestCase]:
         """Create test cases for entity hashing."""
         alice_entity = DomainTestHelpers.create_entity(
-            TestConstants.Domain.ENTITY_NAME_ALICE,
-            TestConstants.Domain.ENTITY_VALUE_10,
+            TestConstants.TestDomain.ENTITY_NAME_ALICE,
+            TestConstants.TestDomain.ENTITY_VALUE_10,
         )
         alice_no_id = DomainTestHelpers.create_entity(
-            TestConstants.Domain.ENTITY_NAME_ALICE,
-            TestConstants.Domain.ENTITY_VALUE_10,
+            TestConstants.TestDomain.ENTITY_NAME_ALICE,
+            TestConstants.TestDomain.ENTITY_VALUE_10,
             with_id=False,
         )
         custom = DomainTestHelpers.create_custom_entity(
-            TestConstants.Domain.CUSTOM_ID_1
+            TestConstants.TestDomain.CUSTOM_ID_1,
         )
 
         return [
@@ -168,23 +168,23 @@ class TestFlextUtilitiesDomain:
     def create_compare_value_objects_cases() -> list[DomainTestCase]:
         """Create test cases for value object comparison."""
         value1 = DomainTestHelpers.create_value(
-            TestConstants.Domain.VALUE_DATA_TEST,
-            TestConstants.Domain.VALUE_COUNT_5,
+            TestConstants.TestDomain.VALUE_DATA_TEST,
+            TestConstants.TestDomain.VALUE_COUNT_5,
         )
         value2 = DomainTestHelpers.create_value(
-            TestConstants.Domain.VALUE_DATA_TEST,
-            TestConstants.Domain.VALUE_COUNT_10,
+            TestConstants.TestDomain.VALUE_DATA_TEST,
+            TestConstants.TestDomain.VALUE_COUNT_10,
         )
         alice_entity = DomainTestHelpers.create_entity(
-            TestConstants.Domain.ENTITY_NAME_ALICE,
-            TestConstants.Domain.ENTITY_VALUE_10,
+            TestConstants.TestDomain.ENTITY_NAME_ALICE,
+            TestConstants.TestDomain.ENTITY_VALUE_10,
         )
-        simple1 = SimpleValue(TestConstants.Domain.VALUE_DATA_TEST)
-        simple2 = SimpleValue(TestConstants.Domain.VALUE_DATA_TEST)
+        simple1 = SimpleValue(TestConstants.TestDomain.VALUE_DATA_TEST)
+        simple2 = SimpleValue(TestConstants.TestDomain.VALUE_DATA_TEST)
         bad1 = BadModelDump()
         bad2 = BadModelDump()
-        no_dict1 = NoDict(TestConstants.Domain.VALUE_COUNT_5)
-        no_dict2 = NoDict(TestConstants.Domain.VALUE_COUNT_5)
+        no_dict1 = NoDict(TestConstants.TestDomain.VALUE_COUNT_5)
+        no_dict2 = NoDict(TestConstants.TestDomain.VALUE_COUNT_5)
 
         return [
             DomainTestCase(
@@ -229,16 +229,16 @@ class TestFlextUtilitiesDomain:
     def create_hash_value_object_cases() -> list[DomainTestCase]:
         """Create test cases for value object hashing."""
         value_obj = DomainTestHelpers.create_value(
-            TestConstants.Domain.VALUE_DATA_TEST,
-            TestConstants.Domain.VALUE_COUNT_5,
+            TestConstants.TestDomain.VALUE_DATA_TEST,
+            TestConstants.TestDomain.VALUE_COUNT_5,
         )
-        simple_obj = SimpleValue(TestConstants.Domain.VALUE_DATA_TEST)
+        simple_obj = SimpleValue(TestConstants.TestDomain.VALUE_DATA_TEST)
         bad_obj = BadModelDump()
         complex_obj = ComplexValue(
-            TestConstants.Domain.VALUE_DATA_TEST,
-            TestConstants.Domain.COMPLEX_ITEMS,
+            TestConstants.TestDomain.VALUE_DATA_TEST,
+            TestConstants.TestDomain.COMPLEX_ITEMS,
         )
-        no_dict_obj = NoDict(TestConstants.Domain.VALUE_COUNT_5)
+        no_dict_obj = NoDict(TestConstants.TestDomain.VALUE_COUNT_5)
 
         return [
             DomainTestCase(
@@ -277,16 +277,16 @@ class TestFlextUtilitiesDomain:
     def create_validate_entity_has_id_cases() -> list[DomainTestCase]:
         """Create test cases for entity ID validation."""
         alice_entity = DomainTestHelpers.create_entity(
-            TestConstants.Domain.ENTITY_NAME_ALICE,
-            TestConstants.Domain.ENTITY_VALUE_10,
+            TestConstants.TestDomain.ENTITY_NAME_ALICE,
+            TestConstants.TestDomain.ENTITY_VALUE_10,
         )
         alice_no_id = DomainTestHelpers.create_entity(
-            TestConstants.Domain.ENTITY_NAME_ALICE,
-            TestConstants.Domain.ENTITY_VALUE_10,
+            TestConstants.TestDomain.ENTITY_NAME_ALICE,
+            TestConstants.TestDomain.ENTITY_VALUE_10,
             with_id=False,
         )
         custom = DomainTestHelpers.create_custom_entity(
-            TestConstants.Domain.CUSTOM_ID_1
+            TestConstants.TestDomain.CUSTOM_ID_1,
         )
 
         return [
@@ -315,11 +315,11 @@ class TestFlextUtilitiesDomain:
     def create_validate_value_object_immutable_cases() -> list[DomainTestCase]:
         """Create test cases for value object immutability validation."""
         value_obj = DomainTestHelpers.create_value(
-            TestConstants.Domain.VALUE_DATA_TEST,
-            TestConstants.Domain.VALUE_COUNT_5,
+            TestConstants.TestDomain.VALUE_DATA_TEST,
+            TestConstants.TestDomain.VALUE_COUNT_5,
         )
-        mutable_obj = MutableObj(TestConstants.Domain.VALUE_COUNT_5)
-        immutable_obj = ImmutableObj(TestConstants.Domain.VALUE_COUNT_5)
+        mutable_obj = MutableObj(TestConstants.TestDomain.VALUE_COUNT_5)
+        immutable_obj = ImmutableObj(TestConstants.TestDomain.VALUE_COUNT_5)
         bad_config_obj = BadConfig()
         no_config_obj = NoConfigNoSetattr()
         no_setattr_obj = NoSetattr()

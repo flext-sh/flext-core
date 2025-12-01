@@ -93,8 +93,12 @@ class FlextModelsBase:
         )
 
         @field_serializer("created_at", "updated_at", when_used="json")
-        def serialize_timestamps(self, value: datetime | None) -> str | None:
-            """Serialize timestamps to ISO 8601 format for JSON."""
+        def serialize_timestamps(self, value: datetime | None) -> str | None:  # noqa: PLR6301
+            """Serialize timestamps to ISO 8601 format for JSON.
+
+            Note: Pydantic @field_serializer requires instance method signature
+            even if self is not used in the implementation.
+            """
             return value.isoformat() if value else None
 
         @computed_field

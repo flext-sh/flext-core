@@ -9,13 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, cast
 
 import structlog.contextvars
 from pydantic import BaseModel, Field, computed_field, field_validator
 
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.metadata import Metadata, MetadataAttributeValue
+from flext_core._utilities.type_guards import FlextUtilitiesTypeGuards
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes, T
 
@@ -26,6 +27,28 @@ class FlextModelsContext:
     This class acts as a namespace container for context management patterns.
     All nested classes are accessed via FlextModels.Context.* in the main models.py.
     """
+
+    @staticmethod
+    def _to_general_value_dict(
+        value: FlextTypes.GeneralValueType,
+    ) -> dict[str, FlextTypes.GeneralValueType]:
+        """Convert dict-like value to dict[str, GeneralValueType] ensuring type safety.
+
+        Helper method to convert dicts with potentially object values to
+        dict[str, GeneralValueType] for type compatibility.
+        """
+        if not FlextRuntime.is_dict_like(value):
+            return {}
+        result: dict[str, FlextTypes.GeneralValueType] = {}
+        raw_dict = dict(value) if isinstance(value, dict) else {}
+        for k, v in raw_dict.items():
+            key = str(k)
+            # Ensure value is GeneralValueType compatible
+            if isinstance(v, (str, int, float, bool, type(None), list, dict)):
+                result[key] = v
+            elif hasattr(v, "__iter__") and not isinstance(v, (str, bytes)):
+                result[key] = list(v)
+        return result
 
     class StructlogProxyToken(FlextModelsEntity.Value):
         """Token for resetting structlog context variables.
@@ -62,7 +85,7 @@ class FlextModelsContext:
             ),
         ]
         previous_value: Annotated[
-            object | None,
+            FlextTypes.GeneralValueType | None,
             Field(
                 default=None,
                 description="Previous value before set operation",
@@ -144,12 +167,18 @@ class FlextModelsContext:
                 structlog.contextvars.unbind_contextvars(self._key)
 
             # Create token for reset functionality
+            # Cast current_value to GeneralValueType | None for StructlogProxyToken
+            previous_value_typed: FlextTypes.GeneralValueType | None = cast(
+                "FlextTypes.GeneralValueType | None",
+                current_value,
+            )
             return FlextModelsContext.StructlogProxyToken(
                 key=self._key,
-                previous_value=current_value,
+                previous_value=previous_value_typed,
             )
 
-        def reset(self, token: FlextModelsContext.StructlogProxyToken) -> None:
+        @staticmethod
+        def reset(token: FlextModelsContext.StructlogProxyToken) -> None:
             """Reset to previous value using token.
 
             Args:
@@ -279,37 +308,6 @@ class FlextModelsContext:
                 ]
             return str(val)
 
-        @staticmethod
-        def normalize_to_metadata_value(val: object) -> MetadataAttributeValue:
-            """Normalize any value to MetadataAttributeValue.
-
-            MetadataAttributeValue is more restrictive than FlextTypes.GeneralValueType,
-            so we need to normalize nested structures to flat types.
-            """
-            if isinstance(val, (str, int, float, bool, type(None))):
-                return val
-            if FlextRuntime.is_dict_like(val):
-                # Convert to flat dict[str, MetadataAttributeValue]
-                result: dict[str, str | int | float | bool | None] = {}
-                dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
-                for k, v in dict_v.items():
-                    if isinstance(k, str):
-                        if isinstance(v, (str, int, float, bool, type(None))):
-                            result[k] = v
-                        else:
-                            result[k] = str(v)
-                return result
-            if FlextRuntime.is_list_like(val):
-                # Convert to list[MetadataAttributeValue]
-                result_list: list[str | int | float | bool | None] = []
-                for item in val:
-                    if isinstance(item, (str, int, float, bool, type(None))):
-                        result_list.append(item)
-                    else:
-                        result_list.append(str(item))
-                return result_list
-            return str(val)
-
         @classmethod
         def check_json_serializable(cls, obj: object, path: str = "") -> None:
             """Recursively check if object is JSON-serializable."""
@@ -348,9 +346,7 @@ class FlextModelsContext:
                 for key, val in dict_v.items():
                     if isinstance(key, str):
                         normalized[key] = (
-                            FlextModelsContext.ContextData.normalize_to_metadata_value(
-                                val,
-                            )
+                            FlextUtilitiesTypeGuards.normalize_to_metadata_value(val)
                         )
                 return Metadata(attributes=normalized)
             if isinstance(v, Metadata):
@@ -436,18 +432,18 @@ class FlextModelsContext:
                 default_factory=dict,
                 description="All context data from all scopes",
             ),
-        ] = Field(default_factory=dict)
-        metadata: Metadata | dict[str, object] | None = Field(
+        ]
+        metadata: Metadata | dict[str, FlextTypes.GeneralValueType] | None = Field(
             default=None,
             description="Context metadata (creation info, source, version)",
         )
         statistics: Annotated[
-            dict[str, object],
+            dict[str, FlextTypes.GeneralValueType],
             Field(
                 default_factory=dict,
                 description="Usage statistics (operation counts, timing info)",
             ),
-        ] = Field(default_factory=dict)
+        ]
 
         @field_validator("metadata", mode="before")
         @classmethod
@@ -466,9 +462,7 @@ class FlextModelsContext:
                 for key, val in dict_v.items():
                     if isinstance(key, str):
                         normalized[key] = (
-                            FlextModelsContext.ContextData.normalize_to_metadata_value(
-                                val,
-                            )
+                            FlextUtilitiesTypeGuards.normalize_to_metadata_value(val)
                         )
                 return Metadata(attributes=normalized)
             if isinstance(v, Metadata):
@@ -533,8 +527,8 @@ class FlextModelsContext:
             # Recursively check all values are JSON-serializable
             # Access via class name since we're in a nested class
             FlextModelsContext.ContextExport.check_json_serializable(v)
-            # Type assertion: runtime validation ensures correct type
-            return v
+            # Convert to GeneralValueType dict for type safety
+            return FlextModelsContext._to_general_value_dict(v)
 
         @computed_field
         def total_data_items(self) -> int:
@@ -592,9 +586,9 @@ class FlextModelsContext:
             """Validate scope data - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
-                return v
+                return FlextModelsContext._to_general_value_dict(v)
             if isinstance(v, BaseModel):
-                return v.model_dump()
+                return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
                 return {}
             msg = f"data must be dict or BaseModel, got {type(v).__name__}"
@@ -609,9 +603,9 @@ class FlextModelsContext:
             """Validate scope metadata - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
-                return v
+                return FlextModelsContext._to_general_value_dict(v)
             if isinstance(v, BaseModel):
-                return v.model_dump()
+                return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
                 return {}
             msg = f"metadata must be dict or BaseModel, got {type(v).__name__}"
@@ -678,9 +672,9 @@ class FlextModelsContext:
             """Validate operations - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
-                return v
+                return FlextModelsContext._to_general_value_dict(v)
             if isinstance(v, BaseModel):
-                return v.model_dump()
+                return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
                 return {}
             msg = f"operations must be dict or BaseModel, got {type(v).__name__}"
@@ -784,9 +778,9 @@ class FlextModelsContext:
             """Validate custom_fields - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
-                return v
+                return FlextModelsContext._to_general_value_dict(v)
             if isinstance(v, BaseModel):
-                return v.model_dump()
+                return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
                 return {}
             msg = f"custom_fields must be dict or BaseModel, got {type(v).__name__}"

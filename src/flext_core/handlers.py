@@ -112,7 +112,7 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         # Initialize execution context
         self._execution_context = FlextModels.HandlerExecutionContext(
             handler_name=self._config_model.handler_name,
-            handler_mode=self._config_model.handler_mode.value,
+            handler_mode=self._config_model.handler_mode,
         )
 
         # Initialize handler state

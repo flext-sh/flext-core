@@ -182,7 +182,9 @@ class TestFlextConstants:
     """Comprehensive test suite for FlextConstants using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "scenario", ConstantsScenarios.CORE_CONSTANT_PATHS, ids=lambda s: s.path
+        "scenario",
+        ConstantsScenarios.CORE_CONSTANT_PATHS,
+        ids=lambda s: s.path,
     )
     def test_core_constant_values(self, scenario: ConstantPathScenario) -> None:
         """Test all core constant values using parametrized test cases."""
@@ -201,7 +203,8 @@ class TestFlextConstants:
         ids=lambda s: s.pattern_attr,
     )
     def test_validation_regex_patterns(
-        self, scenario: PatternValidationScenario
+        self,
+        scenario: PatternValidationScenario,
     ) -> None:
         """Test regex patterns with comprehensive valid and invalid cases."""
         compiled_pattern = ConstantsTestHelpers.compile_pattern(scenario.pattern_attr)
@@ -222,7 +225,9 @@ class TestFlextConstants:
         else str(x),
     )
     def test_type_safety_constant_types(
-        self, value: object, expected_type: type
+        self,
+        value: object,
+        expected_type: type,
     ) -> None:
         """Test that constants have correct types."""
         assert isinstance(value, expected_type), (

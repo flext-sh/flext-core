@@ -17,14 +17,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping, Sequence
+from pathlib import Path
 from typing import Self, TypeVar
 
 from flext_core import FlextResult, FlextUtilities
+from flext_core.typings import FlextTypes, T_co
+from flext_tests.typings import FlextTestsTypings
 
-T_co = TypeVar("T_co", covariant=True)
 TKey = TypeVar("TKey")
 TValue = TypeVar("TValue")
-TConfigValue = TypeVar("TConfigValue", bound=object)
+TConfigValue = TypeVar("TConfigValue", bound=FlextTypes.GeneralValueType)
 
 
 class FlextTestsMatchers:
@@ -91,7 +94,9 @@ class FlextTestsMatchers:
 
         def __init__(self) -> None:
             """Initialize test data builder."""
-            self._data: dict[str, object] = {}
+            # Use dict for mutability, will be converted to TestFixtureData on build
+            # Use GeneralValueType internally for flexibility, convert on build
+            self._data: dict[str, FlextTypes.GeneralValueType] = {}
 
         def with_users(self, count: int = 5) -> Self:
             """Add users to dataset."""
@@ -134,11 +139,42 @@ class FlextTestsMatchers:
             }
             return self
 
-        def build(self) -> dict[str, object]:
-            """Build the dataset."""
-            return dict[str, object](self._data)
+        def build(self) -> FlextTestsTypings.Test.TestFixtureData:
+            """Build the dataset.
 
-    def assert_true(self, condition: bool, message: str | None = None) -> None:
+            Converts internal GeneralValueType dict to TestFixtureData compatible Mapping.
+            """
+            # Create new dict with properly typed values
+            # Filter values to ensure type compatibility
+            result: dict[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | Path
+                | Sequence[str | int | float | bool]
+                | Mapping[str, str | int | float | bool]
+                | None,
+            ] = {}
+            for key, value in self._data.items():
+                # Type narrowing: only include compatible values
+                if isinstance(value, (str, int, float, bool, type(None), Path)):
+                    result[key] = value
+                elif isinstance(value, list) and all(
+                    isinstance(item, (str, int, float, bool)) for item in value
+                ):
+                    # List contains only compatible types
+                    result[key] = value
+                elif isinstance(value, dict) and all(
+                    isinstance(v, (str, int, float, bool)) for v in value.values()
+                ):
+                    # Dict contains only compatible types
+                    result[key] = value
+            return result
+
+    @staticmethod
+    def assert_true(condition: bool, message: str | None = None) -> None:
         """Assert that a condition is true.
 
         Args:
@@ -151,7 +187,8 @@ class FlextTestsMatchers:
         """
         assert condition, message or "Assertion failed: condition is not true"
 
-    def assert_false(self, condition: bool, message: str | None = None) -> None:
+    @staticmethod
+    def assert_false(condition: bool, message: str | None = None) -> None:
         """Assert that a condition is false.
 
         Args:
@@ -164,7 +201,8 @@ class FlextTestsMatchers:
         """
         assert not condition, message or "Assertion failed: condition is not false"
 
-    def assert_is_none(self, value: object, message: str | None = None) -> None:
+    @staticmethod
+    def assert_is_none(value: object, message: str | None = None) -> None:
         """Assert that a value is None.
 
         Args:
@@ -177,7 +215,8 @@ class FlextTestsMatchers:
         """
         assert value is None, message or f"Expected None, got {value}"
 
-    def assert_is_not_none(self, value: object, message: str | None = None) -> None:
+    @staticmethod
+    def assert_is_not_none(value: object, message: str | None = None) -> None:
         """Assert that a value is not None.
 
         Args:
@@ -190,8 +229,8 @@ class FlextTestsMatchers:
         """
         assert value is not None, message or f"Expected not None, got {value}"
 
+    @staticmethod
     def assert_result_success(
-        self,
         result: FlextResult[T_co],
         message: str | None = None,
     ) -> None:
@@ -359,7 +398,9 @@ class FlextTestsMatchers:
         return value
 
     @staticmethod
-    def validate_list_not_empty(value: list[object], field_name: str) -> list[object]:
+    def validate_list_not_empty(
+        value: list[FlextTestsTypings.TestResultValue], field_name: str
+    ) -> list[FlextTestsTypings.TestResultValue]:
         """Generic list validation for tests.
 
         Args:

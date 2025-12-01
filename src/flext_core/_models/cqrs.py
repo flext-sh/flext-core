@@ -15,7 +15,6 @@ from typing import Annotated, Self
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.metadata import Metadata
 from flext_core._utilities.data_mapper import FlextUtilitiesDataMapper
 from flext_core.constants import FlextConstants
@@ -36,8 +35,8 @@ class FlextModelsCqrs:
 
     class Command(
         FlextModelsBase.ArbitraryTypesModel,
-        FlextModelsEntity.IdentifiableMixin,
-        FlextModelsEntity.TimestampableMixin,
+        FlextModelsBase.IdentifiableMixin,
+        FlextModelsBase.TimestampableMixin,
     ):
         """Base class for CQRS commands with validation."""
 
@@ -56,7 +55,7 @@ class FlextModelsCqrs:
 
         @field_validator("command_type", mode="before")
         @classmethod
-        def validate_command(cls, v: object) -> str:
+        def validate_command(cls, v: FlextTypes.GeneralValueType) -> str:
             """Auto-set command type from class name if empty."""
             if isinstance(v, str):
                 return v if v.strip() else cls.__name__
@@ -127,58 +126,53 @@ class FlextModelsCqrs:
         query_id: str = Field(default_factory=FlextUtilities.Generators.generate_id)
         query_type: str | None = None
 
+        @classmethod
+        def _resolve_pagination_class(cls: type) -> type[FlextModelsCqrs.Pagination]:
+            """Resolve correct Pagination class based on context."""
+            if cls.__module__ != "flext_core.models" or "." not in cls.__qualname__:
+                return FlextModelsCqrs.Pagination
+            parts = cls.__qualname__.split(".")
+            models_module = sys.modules.get("flext_core.models")
+            if not models_module or len(parts) < _MIN_QUALNAME_PARTS_FOR_WRAPPER:
+                return FlextModelsCqrs.Pagination
+            obj: FlextTypes.GeneralValueType | None = getattr(
+                models_module,
+                parts[0],
+                None,
+            )
+            for part in parts[1:-1]:
+                if obj and hasattr(obj, part):
+                    obj = getattr(obj, part)
+            if obj and hasattr(obj, "Pagination"):
+                pagination_cls_attr = getattr(obj, "Pagination", None)
+                if pagination_cls_attr is not None:
+                    return pagination_cls_attr
+            return FlextModelsCqrs.Pagination
+
+        @staticmethod
+        def _convert_dict_to_pagination(
+            v: dict[str, int | str],
+            pagination_cls: type[FlextModelsCqrs.Pagination],
+        ) -> FlextModelsCqrs.Pagination:
+            """Convert dict to Pagination instance."""
+            page_value = v.get("page")
+            size_value = v.get("size")
+            page = FlextUtilitiesDataMapper.convert_to_int_safe(page_value, 1)
+            size = FlextUtilitiesDataMapper.convert_to_int_safe(size_value, 20)
+            return pagination_cls(page=page, size=size)
+
         @field_validator("pagination", mode="before")
         @classmethod
         def validate_pagination(
             cls,
             v: FlextModelsCqrs.Pagination | dict[str, int | str] | None,
         ) -> FlextModelsCqrs.Pagination:
-            """Convert pagination to Pagination instance.
-
-            Dynamically determines correct Pagination class based on context.
-            """
-            pagination_cls: type[FlextModelsCqrs.Pagination] = (
-                FlextModelsCqrs.Pagination
-            )
-
-            # If cls is from models.py, get Pagination from models
-            if cls.__module__ == "flext_core.models" and "." in cls.__qualname__:
-                parts = cls.__qualname__.split(".")
-                models_module = sys.modules.get("flext_core.models")
-                if models_module and len(parts) >= _MIN_QUALNAME_PARTS_FOR_WRAPPER:
-                    obj: FlextTypes.GeneralValueType | None = getattr(
-                        models_module,
-                        parts[0],
-                        None,
-                    )
-                    for part in parts[1:-1]:  # Navigate to Cqrs (skip Query)
-                        if obj and hasattr(obj, part):
-                            obj = getattr(obj, part)
-                    if obj and hasattr(obj, "Pagination"):
-                        # obj is known to have "Pagination" attribute at runtime
-                        # Use getattr to access safely for type checker
-                        pagination_cls_attr = getattr(obj, "Pagination", None)
-                        if pagination_cls_attr is not None:
-                            pagination_cls = pagination_cls_attr
-
-            # Return existing Pagination instance
+            """Convert pagination to Pagination instance."""
+            pagination_cls = cls._resolve_pagination_class()
             if isinstance(v, FlextModelsCqrs.Pagination):
                 return v
-
-            # Convert dict to Pagination
-            if FlextRuntime.is_dict_like(v):
-                v_dict = v
-                page = FlextUtilitiesDataMapper.convert_to_int_safe(
-                    v_dict.get("page"),
-                    1,
-                )
-                size = FlextUtilitiesDataMapper.convert_to_int_safe(
-                    v_dict.get("size"),
-                    20,
-                )
-                return pagination_cls(page=page, size=size)
-
-            # Default empty Pagination
+            if isinstance(v, dict):
+                return cls._convert_dict_to_pagination(v, pagination_cls)
             return pagination_cls()
 
         @classmethod
@@ -190,13 +184,38 @@ class FlextModelsCqrs:
             try:
                 # Fast fail: filters and pagination must be dict or None
                 filters_raw = query_payload.get("filters")
-                filters: FlextTypes.Types.ConfigurationMapping = (
-                    filters_raw if FlextRuntime.is_dict_like(filters_raw) else {}
-                )
+                filters: FlextTypes.Types.ConfigurationMapping = {}
+                if FlextRuntime.is_dict_like(filters_raw) and isinstance(
+                    filters_raw,
+                    dict,
+                ):
+                    # Convert dict to ConfigurationMapping ensuring GeneralValueType values
+                    filters = {
+                        k: v
+                        for k, v in filters_raw.items()
+                        if isinstance(
+                            v,
+                            (str, int, float, bool, type(None), list, dict),
+                        )
+                        or hasattr(v, "__iter__")
+                    }
+
                 pagination_raw = query_payload.get("pagination")
-                pagination_data: FlextTypes.Types.ConfigurationMapping = (
-                    pagination_raw if FlextRuntime.is_dict_like(pagination_raw) else {}
-                )
+                pagination_data: FlextTypes.Types.ConfigurationMapping = {}
+                if FlextRuntime.is_dict_like(pagination_raw) and isinstance(
+                    pagination_raw,
+                    dict,
+                ):
+                    # Convert dict to ConfigurationMapping ensuring GeneralValueType values
+                    pagination_data = {
+                        k: v
+                        for k, v in pagination_raw.items()
+                        if isinstance(
+                            v,
+                            (str, int, float, bool, type(None), list, dict),
+                        )
+                        or hasattr(v, "__iter__")
+                    }
                 if FlextRuntime.is_dict_like(pagination_data):
                     pagination_dict = pagination_data
                     # Fast fail: page and size must be int or None

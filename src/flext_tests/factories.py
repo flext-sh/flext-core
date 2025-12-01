@@ -16,12 +16,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import operator
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from typing import Never
 
 from flext_core import FlextModels, FlextResult, FlextService, FlextUtilities
+from flext_core.typings import FlextTypes
+from flext_tests.typings import FlextTestsTypings
 
 
 class FlextTestsFactories:
@@ -61,7 +62,7 @@ class FlextTestsFactories:
         user_id: str | None = None,
         name: str | None = None,
         email: str | None = None,
-        **overrides: object,
+        **overrides: FlextTestsTypings.TestResultValue,
     ) -> FlextTestsFactories.User:
         """Create a test user.
 
@@ -75,7 +76,7 @@ class FlextTestsFactories:
             User model instance
 
         """
-        user_data: dict[str, object] = {
+        user_data: dict[str, FlextTypes.GeneralValueType] = {
             "id": user_id or str(uuid.uuid4()),
             "name": name or "Test User",
             "email": email
@@ -89,7 +90,7 @@ class FlextTestsFactories:
     def create_config(
         service_type: str = "api",
         environment: str = "test",
-        **overrides: object,
+        **overrides: FlextTestsTypings.TestResultValue,
     ) -> FlextTestsFactories.Config:
         """Create a test configuration.
 
@@ -102,7 +103,7 @@ class FlextTestsFactories:
             Config model instance
 
         """
-        config_data: dict[str, object] = {
+        config_data: dict[str, FlextTestsTypings.TestResultValue] = {
             "service_type": service_type,
             "environment": environment,
         }
@@ -113,7 +114,7 @@ class FlextTestsFactories:
     def create_service(
         service_type: str = "api",
         service_id: str | None = None,
-        **overrides: object,
+        **overrides: FlextTestsTypings.TestResultValue,
     ) -> FlextTestsFactories.Service:
         """Create a test service.
 
@@ -126,14 +127,15 @@ class FlextTestsFactories:
             Service model instance
 
         """
-        service_data: dict[str, object] = {
+        service_data: dict[str, FlextTestsTypings.TestResultValue] = {
             "id": service_id or str(uuid.uuid4()),
             "type": service_type,
             "status": "active",
         }
         if "name" not in overrides:
             service_data["name"] = f"Test {service_type} Service"
-        service_data.update(overrides)
+        # Update with compatible types
+        service_data.update(dict(overrides.items()))
         return FlextTestsFactories.Service.model_validate(service_data)
 
     @staticmethod
@@ -158,8 +160,8 @@ class FlextTestsFactories:
     @staticmethod
     def create_test_operation(
         operation_type: str = "simple",
-        **overrides: object,
-    ) -> Callable[..., object]:
+        **overrides: FlextTestsTypings.TestResultValue,
+    ) -> Callable[..., FlextTestsTypings.TestResultValue]:
         """Create a test operation callable.
 
         Args:
@@ -173,20 +175,39 @@ class FlextTestsFactories:
         if operation_type == "simple":
             return lambda **kwargs: "success"
         if operation_type == "add":
-            return operator.add
+            # operator.add takes two arguments, wrap it
+            def add_op(
+                a: FlextTestsTypings.TestResultValue,
+                b: FlextTestsTypings.TestResultValue,
+            ) -> FlextTestsTypings.TestResultValue:
+                if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+                    return a + b
+                return str(a) + str(b)
+
+            return add_op
         if operation_type == "format":
-            return lambda name, value=10: f"{name}: {value}"
+
+            def format_op(name: str, value: int = 10) -> str:
+                return f"{name}: {value}"
+
+            return format_op
         if operation_type == "error":
 
-            def error_op(**kwargs: object) -> Never:
+            def error_op(**kwargs: FlextTestsTypings.TestResultValue) -> Never:
                 msg = overrides.get("error_message", "Test error")
+                if isinstance(msg, str):
+                    raise ValueError(msg)
+                msg = "Test error"
                 raise ValueError(msg)
 
             return error_op
         if operation_type == "type_error":
 
-            def type_error_op(**kwargs: object) -> Never:
+            def type_error_op(**kwargs: FlextTestsTypings.TestResultValue) -> Never:
                 msg = overrides.get("error_message", "Wrong type")
+                if isinstance(msg, str):
+                    raise TypeError(msg)
+                msg = "Wrong type"
                 raise TypeError(msg)
 
             return type_error_op
@@ -195,7 +216,7 @@ class FlextTestsFactories:
     @staticmethod
     def create_test_service(
         service_type: str = "test",
-        **overrides: object,
+        **overrides: FlextTestsTypings.TestResultValue,
     ) -> type:
         """Create a test service class.
 
@@ -208,14 +229,21 @@ class FlextTestsFactories:
 
         """
 
-        class TestService(FlextService[object]):
+        class TestService(FlextService[FlextTestsTypings.TestResultValue]):
             """Generic test service."""
 
             name: str | None = None
             amount: int | None = None
             enabled: bool | None = None
 
-            def __init__(self, **data: object) -> None:
+            def __init__(
+                self,
+                **data: (
+                    FlextTypes.ScalarValue
+                    | Sequence[FlextTypes.ScalarValue]
+                    | Mapping[str, FlextTypes.ScalarValue]
+                ),
+            ) -> None:
                 super().__init__(**data)
                 self._overrides = overrides
 
@@ -258,22 +286,35 @@ class FlextTestsFactories:
 
                 return FlextResult[bool].ok(True)
 
-            def execute(self, **_kwargs: object) -> FlextResult[object]:
+            def execute(
+                self, **_kwargs: FlextTestsTypings.TestResultValue
+            ) -> FlextResult[FlextTestsTypings.TestResultValue]:
                 """Execute test operation."""
                 if service_type == "user":
                     user_id = "default_123" if overrides.get("default") else "test_123"
-                    return FlextResult[object].ok({
+                    # Create dict compatible with TestResultValue
+                    # dict[str, ...] is a Mapping, which is part of TestResultValue
+                    user_data: FlextTestsTypings.TestResultValue = {
                         "user_id": user_id,
                         "email": "test@example.com",
-                    })
+                    }
+                    return FlextResult[FlextTestsTypings.TestResultValue].ok(user_data)
                 if service_type == "complex":
                     validation = self._validate_business_rules_complex()
                     if validation.is_failure:
-                        return FlextResult[object].fail(
-                            validation.error or "Validation failed"
+                        return FlextResult[FlextTestsTypings.TestResultValue].fail(
+                            validation.error or "Validation failed",
                         )
-                    return FlextResult[object].ok({"result": "success"})
-                return FlextResult[object].ok({"service_type": service_type})
+                    result_data: FlextTestsTypings.TestResultValue = {
+                        "result": "success"
+                    }
+                    return FlextResult[FlextTestsTypings.TestResultValue].ok(
+                        result_data
+                    )
+                service_data: FlextTestsTypings.TestResultValue = {
+                    "service_type": service_type
+                }
+                return FlextResult[FlextTestsTypings.TestResultValue].ok(service_data)
 
             def validate_business_rules(self) -> FlextResult[bool]:
                 """Validate business rules for complex service."""

@@ -11,9 +11,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any
 
 from flext_core import FlextModels, FlextUtilities
+from flext_core.typings import FlextTypes
 
 
 class DomainTestType(StrEnum):
@@ -33,8 +33,8 @@ class DomainTestCase:
 
     test_type: DomainTestType
     description: str
-    input_data: dict[str, Any]
-    expected_result: Any
+    input_data: FlextTypes.Types.ConfigurationMapping
+    expected_result: FlextTypes.GeneralValueType
     expected_success: bool = True
     id_attr: str = "unique_id"
 
@@ -72,7 +72,7 @@ class SimpleValue:
 class BadModelDump:
     """Value object that raises exception in model_dump."""
 
-    def model_dump(self) -> dict[str, object]:
+    def model_dump(self) -> FlextTypes.Types.ConfigurationMapping:
         msg = "model_dump failed"
         raise AttributeError(msg)
 
@@ -129,7 +129,7 @@ class BadConfig:
     """Object with problematic model_config."""
 
     @property
-    def model_config(self) -> dict[str, object]:
+    def model_config(self) -> FlextTypes.Types.ConfigurationMapping:
         msg = "Config access failed"
         raise AttributeError(msg)
 
@@ -138,7 +138,7 @@ class BadConfigTypeError:
     """Object with model_config that raises TypeError."""
 
     @property
-    def model_config(self) -> dict[str, object]:
+    def model_config(self) -> FlextTypes.Types.ConfigurationMapping:
         msg = "Config type error"
         raise TypeError(msg)
 
@@ -156,7 +156,10 @@ class DomainTestHelpers:
 
     @staticmethod
     def create_entity(
-        name: str, value: int, *, with_id: bool = True
+        name: str,
+        value: int,
+        *,
+        with_id: bool = True,
     ) -> DomainTestEntity:
         """Create a test entity with optional ID."""
         entity = DomainTestEntity(name=name, value=value)
@@ -175,7 +178,9 @@ class DomainTestHelpers:
         return CustomEntity(custom_id)
 
     @staticmethod
-    def execute_domain_test(test_case: DomainTestCase) -> object:
+    def execute_domain_test(
+        test_case: DomainTestCase,
+    ) -> FlextTypes.GeneralValueType:
         """Execute a domain test case and return result."""
         domain = FlextUtilities.Domain
 
@@ -184,7 +189,9 @@ class DomainTestHelpers:
                 entity1 = test_case.input_data["entity1"]
                 entity2 = test_case.input_data["entity2"]
                 return domain.compare_entities_by_id(
-                    entity1, entity2, id_attr=test_case.id_attr
+                    entity1,
+                    entity2,
+                    id_attr=test_case.id_attr,
                 )
 
             case DomainTestType.HASH_ENTITY_BY_ID:

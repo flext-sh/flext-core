@@ -78,7 +78,10 @@ class RegistryScenarios:
 
     HANDLER_REGISTRATION: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            "single_handler_success", RegistryOperationType.REGISTER_HANDLER, 1, True
+            "single_handler_success",
+            RegistryOperationType.REGISTER_HANDLER,
+            1,
+            True,
         ),
         RegistryTestCase(
             "idempotent_registration",
@@ -108,7 +111,10 @@ class RegistryScenarios:
             True,
         ),
         RegistryTestCase(
-            "empty_handlers_list", RegistryOperationType.REGISTER_HANDLERS, 0, True
+            "empty_handlers_list",
+            RegistryOperationType.REGISTER_HANDLERS,
+            0,
+            True,
         ),
         RegistryTestCase(
             "duplicate_handlers",
@@ -232,7 +238,10 @@ class RegistryScenarios:
             True,
         ),
         RegistryTestCase(
-            "resolve_binding_key", RegistryOperationType.RESOLVE_BINDING_KEY, 1, True
+            "resolve_binding_key",
+            RegistryOperationType.RESOLVE_BINDING_KEY,
+            1,
+            True,
         ),
     ]
 
@@ -245,7 +254,10 @@ class RegistryScenarios:
             "Handler cannot be None",
         ),
         RegistryTestCase(
-            "dispatcher_integration", RegistryOperationType.ERROR_HANDLING, 1, True
+            "dispatcher_integration",
+            RegistryOperationType.ERROR_HANDLING,
+            1,
+            True,
         ),
     ]
 
@@ -298,7 +310,9 @@ class TestFlextRegistry:
     """Refactored registry test suite using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "test_case", RegistryScenarios.HANDLER_REGISTRATION, ids=lambda tc: tc.name
+        "test_case",
+        RegistryScenarios.HANDLER_REGISTRATION,
+        ids=lambda tc: tc.name,
     )
     def test_handler_registration(self, test_case: RegistryTestCase) -> None:
         """Test handler registration with various scenarios."""
@@ -316,7 +330,9 @@ class TestFlextRegistry:
             assert test_case.error_pattern in result.error
 
     @pytest.mark.parametrize(
-        "test_case", RegistryScenarios.BATCH_REGISTRATION, ids=lambda tc: tc.name
+        "test_case",
+        RegistryScenarios.BATCH_REGISTRATION,
+        ids=lambda tc: tc.name,
     )
     def test_batch_registration(self, test_case: RegistryTestCase) -> None:
         """Test batch handler registration."""
@@ -331,7 +347,9 @@ class TestFlextRegistry:
         assert isinstance(result.value, FlextRegistry.Summary)
 
     @pytest.mark.parametrize(
-        "test_case", RegistryScenarios.BINDING_REGISTRATION, ids=lambda tc: tc.name
+        "test_case",
+        RegistryScenarios.BINDING_REGISTRATION,
+        ids=lambda tc: tc.name,
     )
     def test_binding_registration(self, test_case: RegistryTestCase) -> None:
         """Test binding registration."""
@@ -347,7 +365,9 @@ class TestFlextRegistry:
         assert isinstance(result.value, FlextRegistry.Summary)
 
     @pytest.mark.parametrize(
-        "test_case", RegistryScenarios.FUNCTION_MAP_SCENARIOS, ids=lambda tc: tc.name
+        "test_case",
+        RegistryScenarios.FUNCTION_MAP_SCENARIOS,
+        ids=lambda tc: tc.name,
     )
     def test_function_map_registration(self, test_case: RegistryTestCase) -> None:
         """Test function map registration."""
@@ -363,7 +383,9 @@ class TestFlextRegistry:
         assert isinstance(result.value, FlextRegistry.Summary)
 
     @pytest.mark.parametrize(
-        "test_case", RegistryScenarios.SUMMARY_SCENARIOS, ids=lambda tc: tc.name
+        "test_case",
+        RegistryScenarios.SUMMARY_SCENARIOS,
+        ids=lambda tc: tc.name,
     )
     def test_summary_management(self, test_case: RegistryTestCase) -> None:
         """Test registry summary creation and properties."""
@@ -376,7 +398,7 @@ class TestFlextRegistry:
                         handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
                         timestamp="2025-01-01T00:00:00Z",
                         status=FlextConstants.Cqrs.Status.RUNNING,
-                    )
+                    ),
                 )
         if not test_case.should_succeed:
             summary.errors.append("test_error")
@@ -385,7 +407,9 @@ class TestFlextRegistry:
         assert (not summary) == (not test_case.should_succeed)
 
     @pytest.mark.parametrize(
-        "test_case", RegistryScenarios.KEY_RESOLUTION, ids=lambda tc: tc.name
+        "test_case",
+        RegistryScenarios.KEY_RESOLUTION,
+        ids=lambda tc: tc.name,
     )
     def test_key_resolution(self, test_case: RegistryTestCase) -> None:
         """Test binding and handler key resolution."""
@@ -399,7 +423,9 @@ class TestFlextRegistry:
             assert isinstance(key, str) and len(key) > 0
 
     @pytest.mark.parametrize(
-        "test_case", RegistryScenarios.ERROR_SCENARIOS, ids=lambda tc: tc.name
+        "test_case",
+        RegistryScenarios.ERROR_SCENARIOS,
+        ids=lambda tc: tc.name,
     )
     def test_error_handling(self, test_case: RegistryTestCase) -> None:
         """Test error handling scenarios."""
@@ -439,7 +465,9 @@ class TestFlextRegistry:
         ids=["command", "query", "invalid", "none"],
     )
     def test_safe_handler_mode_extraction(
-        self, mode: str | None, expected: str
+        self,
+        mode: str | None,
+        expected: str,
     ) -> None:
         """Test safe handler mode extraction."""
         registry = RegistryTestHelpers.create_test_registry()

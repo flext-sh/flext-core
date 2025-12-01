@@ -131,7 +131,7 @@ class FlextConfig(BaseSettings):
     trace: bool = Field(default=False, description="Enable trace mode")
 
     # Logging configuration
-    log_level: FlextConstants.Literals.LogLevelLiteral = Field(
+    log_level: FlextConstants.Settings.LogLevel = Field(
         default=FlextConstants.Settings.LogLevel.INFO,
         description="Log level",
     )
@@ -314,16 +314,10 @@ class FlextConfig(BaseSettings):
 
         # First initialization - call BaseSettings.__init__() then apply kwargs
         # BaseSettings loads from environment/files, then we apply explicit kwargs
-        # Resolve env_file dynamically to support directory changes in tests
-        env_file_path = _resolve_env_file_impl()
-        # Temporarily update model_config to use resolved path
-        original_env_file = self.model_config.get("env_file")
-        if env_file_path != original_env_file:
-            # Update model_config for this instance
-            self.model_config = SettingsConfigDict(**{
-                **self.model_config,
-                "env_file": env_file_path,
-            })
+        # Note: In Pydantic v2, model_config is a class attribute and cannot be
+        # modified per-instance. However, BaseSettings.__init__() will automatically
+        # look for .env files in the current working directory, so changing directories
+        # in tests will work correctly. The env_file in model_config is a fallback.
         super().__init__()
         self._di_provider: providers.Singleton[Self] | None = None
 
@@ -333,7 +327,7 @@ class FlextConfig(BaseSettings):
             # Apply kwargs directly - BaseSettings.__init__ already called above
             # Validate kwargs by applying them individually
             for key, value in kwargs.items():
-                if key in self.model_fields:
+                if key in self.__class__.model_fields:
                     # Validate using field validator if exists
                     validated_value = value
                     # Check if there's a field validator for this field
@@ -348,22 +342,23 @@ class FlextConfig(BaseSettings):
     def validate_log_level(
         cls,
         v: str | FlextConstants.Settings.LogLevel,
-    ) -> FlextConstants.Literals.LogLevelLiteral:
+    ) -> FlextConstants.Settings.LogLevel:
         """Validate and normalize log level against allowed values.
 
         Accepts string or LogLevel StrEnum, normalizes to uppercase string.
+        Returns LogLevel StrEnum member which is compatible with LogLevelLiteral.
         """
         if isinstance(v, FlextConstants.Settings.LogLevel):
             # v is already LogLevel enum member, which is compatible with LogLevelLiteral
             # LogLevelLiteral is Literal[LogLevel.DEBUG, LogLevel.INFO, ...]
             # Return the enum member directly (compatible with Literal type)
-            return v  # type: ignore[return-value]
+            return v
         normalized = v.upper()
         # Validate against StrEnum values and return the enum value (Literal type)
         try:
             # Return LogLevel enum member, compatible with LogLevelLiteral
             # LogLevelLiteral is Literal[LogLevel.DEBUG, LogLevel.INFO, ...]
-            return FlextConstants.Settings.LogLevel(normalized)  # type: ignore[return-value]
+            return FlextConstants.Settings.LogLevel(normalized)
         except ValueError:
             log_level_enum = FlextConstants.Settings.LogLevel
             allowed_values = [
@@ -392,7 +387,7 @@ class FlextConfig(BaseSettings):
         return self
 
     @property
-    def effective_log_level(self) -> FlextConstants.Literals.LogLevelLiteral:
+    def effective_log_level(self) -> FlextConstants.Settings.LogLevel:
         """Get effective log level based on debug/trace flags."""
         if self.trace:
             # LogLevel.DEBUG is already compatible with LogLevelLiteral
@@ -404,8 +399,12 @@ class FlextConfig(BaseSettings):
         return self.log_level
 
     @computed_field
-    def is_production(self) -> bool:
-        """Check if running in production environment."""
+    def is_production(self) -> bool:  # noqa: PLR6301
+        """Check if running in production environment.
+
+        Note: Pydantic @computed_field requires instance method signature
+        even if self is not used in the implementation.
+        """
         env_value = os.getenv("ENVIRONMENT", "").lower()
         return env_value == FlextConstants.Settings.Environment.PRODUCTION.value
 
@@ -433,7 +432,7 @@ class FlextConfig(BaseSettings):
     ) -> bool:
         """Validate if an override is acceptable."""
         # Basic validation - could be extended
-        return key in self.model_fields
+        return key in self.__class__.model_fields
 
     def apply_override(
         self,

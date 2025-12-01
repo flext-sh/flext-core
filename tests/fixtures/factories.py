@@ -18,7 +18,7 @@ import factory
 from factory import Faker
 from flext_core import FlextModels, FlextResult, FlextService
 
-from tests.fixtures.constants import TestConstants
+from tests.helpers.constants import TestConstants
 
 # =========================================================================
 # Type Variables for Generic Factories
@@ -57,7 +57,7 @@ class ServiceTestCase:
     input_value: str
     expected_success: bool = True
     expected_error: str | None = None
-    extra_param: int = TestConstants.Validation.MIN_LENGTH_DEFAULT
+    extra_param: int = TestConstants.TestValidation.MIN_LENGTH_DEFAULT
     description: str = field(default="", compare=False)
 
 
@@ -71,7 +71,7 @@ class GetUserService(FlextService[User]):
 
     user_id: str
 
-    def execute(self, **_kwargs: object) -> FlextResult[User]:
+    def execute(self) -> FlextResult[User]:
         """Get user by ID."""
         return FlextResult.ok(
             User(
@@ -86,9 +86,9 @@ class ValidatingService(FlextService[str]):
     """Service with validation."""
 
     value_input: str
-    min_length: int = TestConstants.Validation.MIN_LENGTH_DEFAULT
+    min_length: int = TestConstants.TestValidation.MIN_LENGTH_DEFAULT
 
-    def execute(self, **_kwargs: object) -> FlextResult[str]:
+    def execute(self) -> FlextResult[str]:
         """Validate and return value."""
         if len(self.value_input) < self.min_length:
             return FlextResult.fail(
@@ -102,7 +102,7 @@ class FailingService(FlextService[str]):
 
     error_message: str = TestConstants.Services.DEFAULT_ERROR_MESSAGE
 
-    def execute(self, **_kwargs: object) -> FlextResult[str]:
+    def execute(self) -> FlextResult[str]:
         """Always fails."""
         return FlextResult.fail(self.error_message)
 
@@ -159,7 +159,7 @@ class ValidatingServiceFactory(factory.Factory):
         model = ValidatingService
 
     value_input = Faker("word")
-    min_length = TestConstants.Validation.MIN_LENGTH_DEFAULT
+    min_length = TestConstants.TestValidation.MIN_LENGTH_DEFAULT
 
 
 class FailingServiceFactory(factory.Factory):
@@ -187,7 +187,7 @@ class ValidatingServiceAutoFactory(factory.Factory):
         model = ValidatingServiceAuto
 
     value_input = Faker("word")
-    min_length = TestConstants.Validation.MIN_LENGTH_DEFAULT
+    min_length = TestConstants.TestValidation.MIN_LENGTH_DEFAULT
 
 
 class FailingServiceAutoFactory(factory.Factory):
@@ -209,9 +209,9 @@ class ServiceTestCaseFactory(factory.Factory):
     input_value = Faker("word")
     expected_success = True
     expected_error = None
-    extra_param = TestConstants.Validation.MIN_LENGTH_DEFAULT
+    extra_param = TestConstants.TestValidation.MIN_LENGTH_DEFAULT
     description = factory.LazyAttribute(
-        lambda obj: f"Test case for {obj.service_type} with {obj.input_value}"
+        lambda obj: f"Test case for {obj.service_type} with {obj.input_value}",
     )
 
 
@@ -231,7 +231,8 @@ class ServiceFactoryRegistry(Generic[ServiceT]):
 
     @classmethod
     def create_service(
-        cls, case: ServiceTestCase
+        cls,
+        case: ServiceTestCase,
     ) -> FlextService[User] | FlextService[str]:
         """Create appropriate service based on case type using pattern matching."""
         factory_class = cls._factories.get(case.service_type)
@@ -247,7 +248,8 @@ class ServiceFactoryRegistry(Generic[ServiceT]):
                 service = factory_class.build(user_id=case.input_value)
             case ServiceTestType.VALIDATE:
                 service = factory_class.build(
-                    value_input=case.input_value, min_length=case.extra_param
+                    value_input=case.input_value,
+                    min_length=case.extra_param,
                 )
             case ServiceTestType.FAIL:
                 service = factory_class.build(error_message=case.input_value)
@@ -294,7 +296,7 @@ class TestDataGenerators:
                 input_value="test",
                 extra_param=2,
                 description="Custom min length",
-            )
+            ),
         ]
 
     @staticmethod

@@ -21,6 +21,7 @@ from flext_core import (
     FlextResult,
     FlextRuntime,
     FlextService,
+    FlextTypes,
 )
 
 
@@ -34,7 +35,7 @@ class Example01BasicResult:
     class DemoScenarios:
         """Lightweight scenario data declared inline for demonstration."""
 
-        DATASET: ClassVar[dict[str, object]] = {
+        DATASET: ClassVar[dict[str, FlextTypes.GeneralValueType]] = {
             "users": [
                 {
                     "id": 1,
@@ -51,11 +52,11 @@ class Example01BasicResult:
             ],
             "configs": {"app_name": "Flext Demo", "version": "1.0.0"},
         }
-        VALIDATION: ClassVar[dict[str, object]] = {
+        VALIDATION: ClassVar[dict[str, FlextTypes.GeneralValueType]] = {
             "valid_emails": ["user@example.com", "contact@flext.dev"],
             "invalid_emails": ["invalid", "missing-at-symbol"],
         }
-        REALISTIC: ClassVar[dict[str, object]] = {
+        REALISTIC: ClassVar[dict[str, FlextTypes.GeneralValueType]] = {
             "order": {
                 "customer_id": "cust-123",
                 "order_id": "order-456",
@@ -78,44 +79,48 @@ class Example01BasicResult:
                 "plan": "standard",
             },
         }
-        CONFIG: ClassVar[dict[str, object]] = {
+        CONFIG: ClassVar[dict[str, FlextTypes.GeneralValueType]] = {
             "database_url": "sqlite:///:memory:",
             "api_timeout": 30,
             "retry": 3,
         }
-        PAYLOAD: ClassVar[dict[str, object]] = {
+        PAYLOAD: ClassVar[dict[str, FlextTypes.GeneralValueType]] = {
             "event": "user_registered",
             "user_id": "usr-123",
             "metadata": {"source": "examples", "version": "1.0"},
         }
 
         @staticmethod
-        def dataset() -> dict[str, object]:
+        def dataset() -> dict[str, FlextTypes.GeneralValueType]:
             """Get a copy of the demo dataset for testing and examples."""
             return deepcopy(Example01BasicResult.DemoScenarios.DATASET)
 
         @staticmethod
-        def validation_data() -> dict[str, object]:
+        def validation_data() -> dict[str, FlextTypes.GeneralValueType]:
             """Get a copy of the demo validation data for testing and examples."""
             return deepcopy(Example01BasicResult.DemoScenarios.VALIDATION)
 
         @staticmethod
-        def realistic_data() -> dict[str, object]:
+        def realistic_data() -> dict[str, FlextTypes.GeneralValueType]:
             """Get a simple realistic dataset for aggregate demonstrations."""
             return deepcopy(Example01BasicResult.DemoScenarios.REALISTIC)
 
         @staticmethod
-        def config(**overrides: object) -> dict[str, object]:
+        def config(
+            **overrides: FlextTypes.GeneralValueType,
+        ) -> dict[str, FlextTypes.GeneralValueType]:
             """Get a copy of the demo config for testing and examples."""
             value = deepcopy(Example01BasicResult.DemoScenarios.CONFIG)
             value.update(overrides)
             return value
 
         @staticmethod
-        def user(**overrides: object) -> dict[str, object]:
+        def user(
+            **overrides: FlextTypes.GeneralValueType,
+        ) -> dict[str, FlextTypes.GeneralValueType]:
             """Get a demo user object with optional overrides."""
             users_list = cast(
-                "list[dict[str, object]]",
+                "list[dict[str, FlextTypes.GeneralValueType]]",
                 Example01BasicResult.DemoScenarios.DATASET["users"],
             )
             user = deepcopy(users_list[0])
@@ -123,16 +128,18 @@ class Example01BasicResult:
             return user
 
         @staticmethod
-        def users(count: int = 5) -> list[dict[str, object]]:
+        def users(count: int = 5) -> list[dict[str, FlextTypes.GeneralValueType]]:
             """Get a list of demo users (default: 5 users)."""
             users_list = cast(
-                "list[dict[str, object]]",
+                "list[dict[str, FlextTypes.GeneralValueType]]",
                 Example01BasicResult.DemoScenarios.DATASET["users"],
             )
             return [deepcopy(user) for user in users_list[:count]]
 
         @staticmethod
-        def service_batch(logger_name: str = "example_batch") -> dict[str, object]:
+        def service_batch(
+            logger_name: str = "example_batch",
+        ) -> dict[str, FlextTypes.GeneralValueType | FlextLogger]:
             """Create a demo service batch with logger, config, and metrics."""
             return {
                 "logger": FlextLogger.create_module_logger(logger_name),
@@ -141,7 +148,9 @@ class Example01BasicResult:
             }
 
         @staticmethod
-        def payload(**overrides: object) -> dict[str, object]:
+        def payload(
+            **overrides: FlextTypes.GeneralValueType,
+        ) -> dict[str, FlextTypes.GeneralValueType]:
             """Get a demo payload with optional overrides."""
             payload = deepcopy(Example01BasicResult.DemoScenarios.PAYLOAD)
             payload.update(overrides)
@@ -152,10 +161,10 @@ class Example01BasicResult:
             *,
             source: str = "examples",
             tags: list[str] | None = None,
-            **extra: object,
-        ) -> dict[str, object]:
+            **extra: FlextTypes.GeneralValueType,
+        ) -> dict[str, FlextTypes.GeneralValueType]:
             """Generate metadata for scenarios with optional tags and extra data."""
-            data: dict[str, object] = {
+            data: dict[str, FlextTypes.GeneralValueType] = {
                 "source": source,
                 "component": "flext_core",
                 "tags": tags or ["scenario", "demo"],
@@ -174,20 +183,24 @@ class Example01BasicResult:
             return FlextResult[object].fail(message)
 
         @staticmethod
-        def user_result(success: bool = True) -> FlextResult[dict[str, object]]:
+        def user_result(
+            success: bool = True,
+        ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
             """Get a demo user result (success or failure)."""
             user = cast(
-                "list[dict[str, object]]",
+                "list[dict[str, FlextTypes.GeneralValueType]]",
                 Example01BasicResult.DemoScenarios.DATASET["users"],
             )[0]
             if success:
-                return FlextResult[dict[str, object]].ok(user)
-            return FlextResult[dict[str, object]].fail("User lookup failed")
+                return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(user)
+            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
+                "User lookup failed"
+            )
 
         @staticmethod
         def error_scenario(
             error_type: str = "ValidationError",
-        ) -> dict[str, object]:
+        ) -> dict[str, FlextTypes.GeneralValueType]:
             """Get a demo error scenario dictionary."""
             return {
                 "error_type": error_type,
@@ -197,7 +210,7 @@ class Example01BasicResult:
                 "severity": "error",
             }
 
-    class ComprehensiveResultService(FlextService[dict[str, object]]):
+    class ComprehensiveResultService(FlextService[FlextTypes.GeneralValueType]):
         """Service demonstrating ALL FlextResult patterns with FlextMixins infrastructure.
 
         This service now inherits from FlextService to demonstrate:
@@ -224,10 +237,16 @@ class Example01BasicResult:
             """
             super().__init__()
             self._scenarios = Example01BasicResult.DemoScenarios()
-            self._dataset: dict[str, object] = self._scenarios.dataset()
-            self._validation: dict[str, object] = self._scenarios.validation_data()
-            self._metadata: dict[str, object] = self._scenarios.metadata(
-                tags=["result", "demo"],
+            self._dataset: dict[str, FlextTypes.GeneralValueType] = (
+                self._scenarios.dataset()
+            )
+            self._validation: dict[str, FlextTypes.GeneralValueType] = (
+                self._scenarios.validation_data()
+            )
+            self._metadata: dict[str, FlextTypes.GeneralValueType] = (
+                self._scenarios.metadata(
+                    tags=["result", "demo"],
+                )
             )
 
             # Demonstrate inherited logger (no manual instantiation needed!)
@@ -239,7 +258,10 @@ class Example01BasicResult:
                 },
             )
 
-        def execute(self, **_kwargs: object) -> FlextResult[dict[str, object]]:
+        def execute(
+            self,
+            **_kwargs: object,
+        ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
             """Execute all FlextResult demonstrations and return summary.
 
             This method satisfies the FlextService abstract interface while
@@ -271,7 +293,7 @@ class Example01BasicResult:
                 self.demonstrate_value_or_call()
                 self.demonstrate_deprecated_patterns()
 
-                summary: dict[str, object] = {
+                summary: dict[str, FlextTypes.GeneralValueType] = {
                     "demonstrations_completed": 17,
                     "methods_covered": [
                         "FlextRuntime integration",
@@ -300,17 +322,38 @@ class Example01BasicResult:
                     "completed_at": datetime.now(UTC).isoformat(),
                 }
 
+                # Convert summary to GeneralValueType for type safety
+                normalized_summary = FlextRuntime.normalize_to_general_value(summary)
+                # Type narrowing: ensure normalized_summary is a dict for unpacking
+                if isinstance(normalized_summary, dict):
+                    normalized_summary_dict: dict[str, FlextTypes.GeneralValueType] = {
+                        str(k): v
+                        for k, v in normalized_summary.items()
+                        if isinstance(k, str)
+                    }
+                    # Pass summary as context - avoid unpacking to prevent parameter conflicts
+                    self.logger.info(
+                        "FlextResult demonstration completed successfully",
+                        summary=normalized_summary_dict,
+                    )
+                    return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(
+                        normalized_summary_dict,
+                    )
+                normalized_summary_dict: dict[str, FlextTypes.GeneralValueType] = {
+                    "summary": normalized_summary,
+                }
                 self.logger.info(
                     "FlextResult demonstration completed successfully",
-                    extra=summary,
+                    summary=normalized_summary,
                 )
-
-                return FlextResult[dict[str, object]].ok(summary)
+                return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(
+                    normalized_summary_dict,
+                )
 
             except Exception as e:
                 error_msg = f"Demonstration failed: {e}"
                 self.logger.exception(error_msg)
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
                     error_msg,
                     error_code="VALIDATION_ERROR",
                 )
@@ -366,7 +409,7 @@ class Example01BasicResult:
 
             # NEW: Using create_from_callable instead of manual try/except
             from_callable_result = FlextResult[int].create_from_callable(
-                risky_operation
+                risky_operation,
             )
             print(f"🔥 .create_from_callable() for exceptions: {from_callable_result}")
 
@@ -381,9 +424,11 @@ class Example01BasicResult:
             print("\n=== Value Extraction ===")
 
             dataset = self._dataset
-            users_list = cast("list[object]", dataset["users"])
-            user_payload = cast("dict[str, object]", users_list[0])
-            success = FlextResult[dict[str, object]].ok(user_payload)
+            users_list = cast("list[FlextTypes.GeneralValueType]", dataset["users"])
+            user_payload = cast("dict[str, FlextTypes.GeneralValueType]", users_list[0])
+            success = FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(
+                user_payload
+            )
             failure = self._scenarios.result_failure("error")
 
             print(f".unwrap() on success: {success.unwrap()['email']}")
@@ -398,7 +443,9 @@ class Example01BasicResult:
                 "email": "default@example.com",
                 "name": "Default User",
             })
-            print(f".unwrap_or() default: {cast('dict[str, object]', result)['name']}")
+            print(
+                f".unwrap_or() default: {cast('dict[str, FlextTypes.GeneralValueType]', result)['name']}"
+            )
 
         # ========== RAILWAY OPERATIONS ==========
 
@@ -444,7 +491,10 @@ class Example01BasicResult:
                 FlextResult[str]
                 .ok("hello")
                 .flow_through(
-                    validate_length, to_upper_result, double_length, add_prefix
+                    validate_length,
+                    to_upper_result,
+                    double_length,
+                    add_prefix,
                 )
             )
             print(f".flow_through pipeline: {result.unwrap()}")
@@ -541,7 +591,7 @@ class Example01BasicResult:
             """Operations on collections of FlextResult instances."""
             print("\n=== Collection Operations ===")
 
-            results: list[FlextResult[dict[str, object]]] = [
+            results: list[FlextResult[dict[str, FlextTypes.GeneralValueType]]] = [
                 self._scenarios.user_result(success=True),
                 self._scenarios.user_result(success=True),
                 self._scenarios.user_result(success=True),
@@ -551,12 +601,12 @@ class Example01BasicResult:
             items = [r.value for r in results if r.is_success]
             sequenced = FlextResult.traverse(
                 items,
-                lambda item: FlextResult[dict[str, object]].ok(
-                    cast("dict[str, object]", item)
+                lambda item: FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(
+                    cast("dict[str, FlextTypes.GeneralValueType]", item),
                 ),
             )
             print(
-                f".traverse() (sequenced): {len(sequenced.unwrap())} successful users"
+                f".traverse() (sequenced): {len(sequenced.unwrap())} successful users",
             )
 
         # ========== VALIDATION PATTERNS ==========
@@ -674,7 +724,7 @@ class Example01BasicResult:
 
             def risky_operation() -> FlextResult[int]:
                 message = str(
-                    self._scenarios.error_scenario("ValidationError")["message"]
+                    self._scenarios.error_scenario("ValidationError")["message"],
                 )
                 return FlextResult[int].fail(message)
 
@@ -697,11 +747,15 @@ class Example01BasicResult:
             # ValidationError with field context
             try:
                 error_message = "Invalid email format"
+                from flext_core._models.config import FlextModelsConfig
+
                 raise FlextExceptions.ValidationError(
                     error_message,
-                    field="email",
-                    value="invalid-email",
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    config=FlextModelsConfig.ValidationErrorConfig(
+                        field="email",
+                        value="invalid-email",
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    ),
                 )
             except FlextExceptions.ValidationError as e:
                 result = FlextResult[str].fail(
@@ -913,7 +967,8 @@ class Example01BasicResult:
             # Show the clean new pattern
             print("\n✨ NEW PATTERN (create_from_callable with error code):")
             result_with_code = FlextResult[int].create_from_callable(
-                risky_function, error_code=FlextConstants.Errors.VALIDATION_ERROR
+                risky_function,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
             print(f"With custom error code: {result_with_code.error_code}")
 
@@ -948,7 +1003,9 @@ class Example01BasicResult:
     @staticmethod
     def main() -> None:
         """Main entry point demonstrating all FlextResult capabilities."""
-        service = Example01BasicResult.ComprehensiveResultService()
+        service: Example01BasicResult.ComprehensiveResultService = (
+            Example01BasicResult.ComprehensiveResultService()
+        )
 
         print("=" * 60)
         print("FlextResult COMPLETE API DEMONSTRATION")

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import uuid
 
+from flext_core.typings import FlextTypes
 from flext_tests.factories import FlextTestsFactories
 
 
@@ -62,8 +63,8 @@ class FlextTestsDomains:
     def create_configuration(
         service_type: str = "api",
         environment: str = "test",
-        **overrides: object,
-    ) -> dict[str, object]:
+        **overrides: FlextTypes.GeneralValueType,
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Create test configuration data using factories.
 
         Args:
@@ -79,7 +80,7 @@ class FlextTestsDomains:
             service_type=service_type,
             environment=environment,
         )
-        base_config: dict[str, object] = {
+        base_config: dict[str, FlextTypes.GeneralValueType] = {
             "service_type": config.service_type,
             "environment": config.environment,
             "debug": config.debug,
@@ -97,8 +98,8 @@ class FlextTestsDomains:
     @staticmethod
     def create_payload(
         data_type: str = "user",
-        **custom_fields: object,
-    ) -> dict[str, object]:
+        **custom_fields: FlextTypes.GeneralValueType,
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Create test payload data.
 
         Args:
@@ -109,7 +110,7 @@ class FlextTestsDomains:
             Payload dictionary
 
         """
-        payloads: dict[str, dict[str, object]] = {
+        payloads: dict[str, dict[str, FlextTypes.GeneralValueType]] = {
             "user": {
                 "id": str(uuid.uuid4()),
                 "name": "Test User",
@@ -131,7 +132,8 @@ class FlextTestsDomains:
             },
         }
 
-        payload = payloads.get(data_type, {})
+        payload = dict(payloads.get(data_type, {}))
+        # Merge with type-safe updates using dict.update
         payload.update(custom_fields)
         return payload
 
@@ -139,8 +141,8 @@ class FlextTestsDomains:
     def api_response_data(
         status: str = "success",
         include_data: bool | None = None,
-        **custom_fields: object,
-    ) -> dict[str, object]:
+        **custom_fields: FlextTypes.GeneralValueType,
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Create API response test data.
 
         Args:
@@ -152,7 +154,7 @@ class FlextTestsDomains:
             API response dictionary
 
         """
-        response: dict[str, object] = {
+        response: dict[str, FlextTypes.GeneralValueType] = {
             "status": status,
             "timestamp": "2025-01-01T00:00:00Z",
             "request_id": str(uuid.uuid4()),
@@ -167,6 +169,7 @@ class FlextTestsDomains:
                 "message": "Test error message",
             }
 
+        # Merge with type-safe updates using dict.update
         response.update(custom_fields)
         return response
 
@@ -191,8 +194,8 @@ class FlextTestsDomains:
     @staticmethod
     def create_service(
         service_type: str = "api",
-        **config: object,
-    ) -> dict[str, object]:
+        **config: FlextTypes.GeneralValueType,
+    ) -> dict[str, FlextTypes.GeneralValueType]:
         """Create test service configuration.
 
         Args:
@@ -203,12 +206,13 @@ class FlextTestsDomains:
             Service configuration dictionary
 
         """
-        base_service: dict[str, object] = {
+        base_service: dict[str, FlextTypes.GeneralValueType] = {
             "type": service_type,
             "name": f"test_{service_type}_service",
             "enabled": True,
             "config": FlextTestsDomains.create_configuration(service_type=service_type),
         }
+        # Merge with type-safe updates using dict.update
         base_service.update(config)
         return base_service
 

@@ -600,7 +600,7 @@ class ContextManagementService(FlextService[dict[str, object]]):
 
         # Safe context extraction without try/except
         result = FlextResult[dict[str, object]].create_from_callable(
-            risky_context_operation
+            risky_context_operation,
         )
         if result.is_success:
             context_data = result.unwrap()
@@ -683,7 +683,7 @@ class ContextManagementService(FlextService[dict[str, object]]):
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
                 return FlextResult[object].fail(
-                    result.error or "Metadata addition failed"
+                    result.error or "Metadata addition failed",
                 )
             return FlextResult[object].fail("Invalid input")
 
@@ -693,7 +693,7 @@ class ContextManagementService(FlextService[dict[str, object]]):
                 if result.is_success:
                     return FlextResult[object].ok(result.value)
                 return FlextResult[object].fail(
-                    result.error or "Complete validation failed"
+                    result.error or "Complete validation failed",
                 )
             return FlextResult[object].fail("Invalid input")
 

@@ -147,6 +147,11 @@ class FlextProtocols:
             """Failure status."""
             ...
 
+        @property
+        def error(self) -> str | None:
+            """Error message."""
+            ...
+
         def ok(self, value: T) -> FlextProtocols.ResultProtocol[T]:
             """Create success result."""
             ...
@@ -308,6 +313,7 @@ class FlextProtocols:
             """Call the function with any arguments, returning T_co."""
             ...
 
+    @runtime_checkable
     class Handler(Protocol):
         """Command/Query handler interface."""
 
@@ -513,7 +519,7 @@ class FlextProtocols:
                 """Entry attributes as immutable mapping."""
                 ...
 
-            def to_dict(self) -> dict[str, object]:
+            def to_dict(self) -> dict[str, FlextTypes.GeneralValueType]:
                 """Convert to dictionary representation."""
                 ...
 

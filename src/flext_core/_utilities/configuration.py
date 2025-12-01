@@ -11,9 +11,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import cast
 
-from flext_core.exceptions import FlextExceptions
 from flext_core.protocols import FlextProtocols
-from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime, StructlogLogger
 from flext_core.typings import FlextTypes, T_Model
 
@@ -55,7 +53,7 @@ class FlextUtilitiesConfiguration:
         if FlextRuntime.is_dict_like(obj):
             if parameter not in obj:
                 msg = f"Parameter '{parameter}' is not defined"
-                raise FlextExceptions.NotFoundError(msg, resource_id=parameter)
+                raise KeyError(msg)
             # Type narrowing: obj is dict-like, obj[parameter] is GeneralValueType
             # which is compatible with ParameterValueType (same type alias)
             value = obj[parameter]
@@ -73,7 +71,7 @@ class FlextUtilitiesConfiguration:
                 model_data: dict[str, FlextTypes.GeneralValueType] = model_data_raw
                 if parameter not in model_data:
                     msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
-                    raise FlextExceptions.NotFoundError(msg, resource_id=parameter)
+                    raise KeyError(msg)
                 return model_data[parameter]
             except (
                 AttributeError,
@@ -91,10 +89,7 @@ class FlextUtilitiesConfiguration:
         # Fallback for non-Pydantic objects - direct attribute access
         if not hasattr(obj, parameter):
             msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
-            raise FlextExceptions.NotFoundError(
-                msg,
-                resource_type=f"parameter '{parameter}'",
-            )
+            raise AttributeError(msg)
         # Type narrowing: getattr returns object, but we know it's a valid parameter value
         attr_value = getattr(obj, parameter)
         return cast("FlextTypes.Utility.ParameterValueType", attr_value)
@@ -171,7 +166,7 @@ class FlextUtilitiesConfiguration:
         msg = (
             f"Class {singleton_class.__name__} does not have get_global_instance method"
         )
-        raise FlextExceptions.ValidationError(msg)
+        raise AttributeError(msg)
 
     @staticmethod
     def set_singleton(
@@ -190,6 +185,8 @@ class FlextUtilitiesConfiguration:
             FlextResult[bool] indicating success or failure
 
         """
+        from flext_core.result import FlextResult
+
         if not hasattr(singleton_class, "get_global_instance"):
             return FlextResult[bool].fail(
                 f"Class {singleton_class.__name__} does not have get_global_instance method",
@@ -334,6 +331,8 @@ class FlextUtilitiesConfiguration:
             FlextResult[T_Model]: Validated options model or error
 
         """
+        from flext_core.result import FlextResult
+
         try:
             # Step 1: Get base options (explicit or from config defaults)
             if explicit_options is not None:

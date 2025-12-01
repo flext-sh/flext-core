@@ -198,15 +198,22 @@ def demonstrate_single_import_pattern() -> None:
 
     try:
         error_msg = "Invalid input"
+        from flext_core._models.config import FlextModelsConfig
+
         raise FlextExceptions.ValidationError(
             error_msg,
-            field="email",
-            value="invalid",
-            error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            config=FlextModelsConfig.ValidationErrorConfig(
+                field="email",
+                value="invalid",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            ),
         )
     except FlextExceptions.ValidationError as e:
         print(f"   ❌ ValidationError caught: {e.message}")
-        print(f"      Field: {e.field}, Code: {e.error_code}")
+        if hasattr(e, "field") and e.field:
+            print(f"      Field: {e.field}, Code: {e.error_code}")
+        else:
+            print(f"      Code: {e.error_code}")
 
     # ========================================
     # 8. EXTENDING FLEXT PATTERNS VIA FLEEXTBASE

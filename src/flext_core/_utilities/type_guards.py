@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core._models.metadata import MetadataAttributeValue
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
@@ -27,6 +28,7 @@ class FlextUtilitiesTypeGuards:
     - Collection validation guards (dict, list)
     - Type-safe runtime checking
     - Consistent error handling patterns
+    - Metadata value normalization
     """
 
     @staticmethod
@@ -100,6 +102,52 @@ class FlextUtilitiesTypeGuards:
 
         """
         return FlextRuntime.is_list_like(value) and bool(value)
+
+    @staticmethod
+    def normalize_to_metadata_value(val: object) -> MetadataAttributeValue:
+        """Normalize any value to MetadataAttributeValue.
+
+        MetadataAttributeValue is more restrictive than FlextTypes.GeneralValueType,
+        so we need to normalize nested structures to flat types.
+
+        Args:
+            val: Value to normalize
+
+        Returns:
+            MetadataAttributeValue: Normalized value compatible with Metadata attributes
+
+        Example:
+            >>> FlextUtilitiesTypeGuards.normalize_to_metadata_value("test")
+            'test'
+            >>> FlextUtilitiesTypeGuards.normalize_to_metadata_value({"key": "value"})
+            {'key': 'value'}
+            >>> FlextUtilitiesTypeGuards.normalize_to_metadata_value([1, 2, 3])
+            [1, 2, 3]
+
+        """
+        if isinstance(val, (str, int, float, bool, type(None))):
+            return val
+        if FlextRuntime.is_dict_like(val):
+            # Convert to flat dict[str, MetadataAttributeValue]
+            result: dict[str, str | int | float | bool | None] = {}
+            dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
+            for k, v in dict_v.items():
+                if isinstance(k, str):
+                    if isinstance(v, (str, int, float, bool, type(None))):
+                        result[k] = v
+                    else:
+                        result[k] = str(v)
+            return result
+        if FlextRuntime.is_list_like(val):
+            # Convert to list[MetadataAttributeValue]
+            result_list: list[str | int | float | bool | None] = []
+            for item in val:
+                if isinstance(item, (str, int, float, bool, type(None))):
+                    result_list.append(item)
+                else:
+                    result_list.append(str(item))
+            return result_list
+        return str(val)
 
 
 __all__ = ["FlextUtilitiesTypeGuards"]

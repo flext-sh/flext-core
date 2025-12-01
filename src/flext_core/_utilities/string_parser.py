@@ -9,13 +9,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import cast
 
 import structlog
 
 from flext_core._models.collections import FlextModelsCollections
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesStringParser:
@@ -60,7 +61,8 @@ class FlextUtilitiesStringParser:
         """Initialize string parser with logging."""
         self.logger = structlog.get_logger(__name__)
 
-    def _safe_text_length(self, text: object) -> str | int:
+    @staticmethod
+    def _safe_text_length(text: FlextTypes.GeneralValueType) -> str | int:
         """Safely get text length for logging."""
         try:
             if isinstance(text, (str, bytes)):
@@ -123,9 +125,7 @@ class FlextUtilitiesStringParser:
         delimiter: str,
         *,
         options: FlextModelsCollections.ParseOptions | None = None,
-        strip: bool = True,
-        remove_empty: bool = True,
-        validator: Callable[[str], bool] | None = None,
+        **legacy_options: bool | Callable[[str], bool] | None,
     ) -> FlextResult[list[str]]:
         """Parse delimited string into list of components.
 
@@ -134,10 +134,11 @@ class FlextUtilitiesStringParser:
         Args:
             text: String to parse
             delimiter: Delimiter character/string
-            options: ParseOptions object (preferred). If provided, overrides other params
-            strip: Strip whitespace from each component (legacy, use options)
-            remove_empty: Remove empty components after stripping (legacy, use options)
-            validator: Optional validation function for each component (legacy, use options)
+            options: ParseOptions object (preferred). If provided, overrides legacy_options
+            **legacy_options: Legacy keyword arguments for backward compatibility:
+                - strip: Strip whitespace from each component (default: True)
+                - remove_empty: Remove empty components after stripping (default: True)
+                - validator: Optional validation function for each component (default: None)
 
         Returns:
             FlextResult with list of parsed components or error
@@ -168,6 +169,30 @@ class FlextUtilitiesStringParser:
         except (TypeError, AttributeError):
             text_len = -1  # Unknown length
 
+        # Normalize options: use provided ParseOptions or create from legacy_options
+        if options is not None:
+            parse_opts = options
+        else:
+            # Extract legacy options with defaults
+            strip_val = legacy_options.get("strip", True)
+            remove_empty_val = legacy_options.get("remove_empty", True)
+            validator_val = legacy_options.get("validator")
+            # Filter out bool values - validator must be Callable or None
+            validator_typed: Callable[[str], bool] | None = (
+                validator_val
+                if callable(validator_val) and not isinstance(validator_val, bool)
+                else None
+            )
+            parse_opts = FlextModelsCollections.ParseOptions(
+                strip=bool(strip_val),
+                remove_empty=bool(remove_empty_val),
+                validator=validator_typed,
+            )
+
+        strip = parse_opts.strip
+        remove_empty = parse_opts.remove_empty
+        validator = parse_opts.validator
+
         self.logger.debug(
             "Starting delimited string parsing",
             operation="parse_delimited",
@@ -179,12 +204,6 @@ class FlextUtilitiesStringParser:
             has_validator=validator is not None,
             source="flext-core/src/flext_core/_utilities/string_parser.py",
         )
-
-        # Use options if provided, otherwise use individual params for backward compatibility
-        if options is not None:
-            strip = options.strip
-            remove_empty = options.remove_empty
-            validator = options.validator
 
         if not text:
             self.logger.debug(
@@ -464,7 +483,7 @@ class FlextUtilitiesStringParser:
 
     def apply_regex_pipeline(
         self,
-        text: str,
+        text: str | None,
         patterns: list[tuple[str, str] | tuple[str, str, int]],
     ) -> FlextResult[str]:
         r"""Apply sequence of regex substitutions to text.
@@ -510,6 +529,10 @@ class FlextUtilitiesStringParser:
         if edge_result is not None:
             return edge_result
 
+        # Ensure text is not None before processing
+        if text is None:
+            return FlextResult[str].fail("Text cannot be None for regex pipeline")
+
         try:
             self.logger.debug(
                 "Applying regex patterns sequentially",
@@ -518,7 +541,7 @@ class FlextUtilitiesStringParser:
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
 
-            # Process all patterns
+            # Process all patterns - text is guaranteed to be str here
             process_result = self._process_all_patterns(text, patterns)
             if process_result.is_failure:
                 return FlextResult[str].fail(
@@ -560,7 +583,7 @@ class FlextUtilitiesStringParser:
             )
             return FlextResult[str].fail(f"Failed to apply regex pipeline: {e}")
 
-    def get_object_key(self, obj: object) -> str:
+    def get_object_key(self, obj: FlextTypes.GeneralValueType) -> str:
         """Get comparable string key from object (generic helper).
 
         This generic helper consolidates object-to-key conversion logic from
@@ -602,92 +625,33 @@ class FlextUtilitiesStringParser:
             source="flext-core/src/flext_core/_utilities/string_parser.py",
         )
 
-        # Strategy 1: Try __name__ attribute (classes, types, functions)
-        name_attr = getattr(obj, "__name__", None)
-        if name_attr is not None:
-            self.logger.debug(
-                "Using __name__ attribute for key",
-                operation="get_object_key",
-                key=name_attr,
-                strategy="name_attribute",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
-            )
-            return str(name_attr)
+        # Try strategies in order
+        # Strategy 1: Try __name__ attribute (for types, classes, functions)
+        # Use getattr for type-safe access (returns None if attribute doesn't exist)
+        name = getattr(obj, "__name__", None)
+        if isinstance(name, str):
+            return name
 
-        # Strategy 1.5: Try dict keys (name, id)
-        if isinstance(obj, dict):
-            if "name" in obj and isinstance(obj["name"], (str, int, float)):
-                self.logger.debug(
-                    "Using dict 'name' key for key",
-                    operation="get_object_key",
-                    key=obj["name"],
-                    strategy="dict_name_key",
-                    source="flext-core/src/flext_core/_utilities/string_parser.py",
-                )
-                return str(obj["name"])
-            if "id" in obj and isinstance(obj["id"], (str, int, float)):
-                self.logger.debug(
-                    "Using dict 'id' key for key",
-                    operation="get_object_key",
-                    key=obj["id"],
-                    strategy="dict_id_key",
-                    source="flext-core/src/flext_core/_utilities/string_parser.py",
-                )
-                return str(obj["id"])
+        # Strategy 2: Try dict keys (for dict-like objects)
+        if isinstance(obj, Mapping):
+            keys = list(obj.keys())
+            if keys:
+                return str(keys[0])
 
-        # Strategy 1.6: Try object attributes (name, id)
-        if hasattr(obj, "name"):
-            name_attr = getattr(obj, "name", None)
-            self.logger.debug(
-                "Using object 'name' attribute for key",
-                operation="get_object_key",
-                key=name_attr,
-                strategy="object_name_attr",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
-            )
-            return str(name_attr)
-        if hasattr(obj, "id"):
-            id_attr = getattr(obj, "id", None)
-            self.logger.debug(
-                "Using object 'id' attribute for key",
-                operation="get_object_key",
-                key=id_attr,
-                strategy="object_id_attr",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
-            )
-            return str(id_attr)
+        # Strategy 3: Try object attributes
+        if hasattr(obj, "__class__") and hasattr(obj.__class__, "__name__"):
+            return obj.__class__.__name__
 
-        # Strategy 2: Use str(obj)
+        # Strategy 4: Try str conversion
         try:
-            str_key = str(obj)
-            self.logger.debug(
-                "Using str() representation for key",
-                operation="get_object_key",
-                key=str_key,
-                strategy="str_conversion",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
-            )
-            return str_key
-        except (TypeError, ValueError, AttributeError) as e:
-            self.logger.warning(
-                "str() conversion failed, falling back to type name",
-                operation="get_object_key",
-                error=str(e),
-                error_type=type(e).__name__,
-                strategy="fallback",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
-            )
+            str_repr = str(obj)
+            if str_repr and str_repr != f"<{type(obj).__name__} object>":
+                return str_repr
+        except (TypeError, ValueError):
+            pass
 
-        # Strategy 3: Use type name
-        type_name = type(obj).__name__
-        self.logger.debug(
-            "Using type name for key",
-            operation="get_object_key",
-            key=type_name,
-            strategy="type_name",
-            source="flext-core/src/flext_core/_utilities/string_parser.py",
-        )
-        return type_name
+        # Final fallback: type name
+        return type(obj).__name__
 
     def _extract_pattern_components(
         self,
@@ -717,30 +681,32 @@ class FlextUtilitiesStringParser:
 
     def _apply_single_pattern(
         self,
-        text: str,
-        pattern: str,
-        replacement: str,
-        flags: int,
-        pattern_index: int,
-        total_patterns: int,
+        params: FlextModelsCollections.PatternApplicationParams,
     ) -> FlextResult[str]:
         """Apply a single regex pattern to text."""
         self.logger.debug(
             "Applying regex pattern",
             operation="apply_regex_pipeline",
-            pattern_index=pattern_index + 1,
-            total_patterns=total_patterns,
-            pattern=pattern,
-            replacement=replacement,
-            flags=flags,
+            pattern_index=params.pattern_index + 1,
+            total_patterns=params.total_patterns,
+            pattern=params.pattern,
+            replacement=params.replacement,
+            flags=params.flags,
             source="flext-core/src/flext_core/_utilities/string_parser.py",
         )
 
-        before_length = len(text)
+        before_length = len(params.text)
         try:
-            result_text = re.sub(pattern, replacement, text, flags=flags)
+            result_text = re.sub(
+                params.pattern,
+                params.replacement,
+                params.text,
+                flags=params.flags,
+            )
         except (re.PatternError, ValueError) as e:
-            return FlextResult[str].fail(f"Invalid regex pattern '{pattern}': {e}")
+            return FlextResult[str].fail(
+                f"Invalid regex pattern '{params.pattern}': {e}",
+            )
 
         after_length = len(result_text)
         replacements = before_length - after_length
@@ -748,7 +714,7 @@ class FlextUtilitiesStringParser:
         self.logger.debug(
             "Pattern applied",
             operation="apply_regex_pipeline",
-            pattern_index=pattern_index + 1,
+            pattern_index=params.pattern_index + 1,
             replacements_made=replacements,
             source="flext-core/src/flext_core/_utilities/string_parser.py",
         )
@@ -757,7 +723,7 @@ class FlextUtilitiesStringParser:
 
     def _handle_pipeline_edge_cases(
         self,
-        text: str,
+        text: str | None,
         patterns: list[tuple[str, str] | tuple[str, str, int]],
     ) -> FlextResult[str] | None:
         """Handle edge cases for regex pipeline application.
@@ -766,6 +732,10 @@ class FlextUtilitiesStringParser:
             FlextResult if edge case handled, None to continue processing
 
         """
+        if text is None:
+            # None text is invalid - return failure
+            return FlextResult[str].fail("Text cannot be None")
+
         if not text:
             self.logger.debug(
                 "Empty text provided, returning unchanged",
@@ -859,15 +829,24 @@ class FlextUtilitiesStringParser:
 
             pattern, replacement, flags = pattern_result.unwrap()
 
-            # Apply the pattern
-            apply_result = self._apply_single_pattern(
-                result_text,
-                pattern,
-                replacement,
-                flags,
-                i,
-                len(patterns),
+            # Apply the pattern using model - import locally to avoid circular import
+            from flext_core.utilities import FlextUtilities
+
+            params_result = FlextUtilities.Model.from_kwargs(
+                FlextModelsCollections.PatternApplicationParams,
+                text=result_text,
+                pattern=pattern,
+                replacement=replacement,
+                flags=flags,
+                pattern_index=i,
+                total_patterns=len(patterns),
             )
+            if params_result.is_failure:
+                return FlextResult[tuple[str, int]].fail(
+                    params_result.error or "Unknown error creating params",
+                )
+
+            apply_result = self._apply_single_pattern(params_result.unwrap())
             if apply_result.is_failure:
                 return FlextResult[tuple[str, int]].fail(
                     apply_result.error or "Unknown error applying pattern",

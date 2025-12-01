@@ -12,9 +12,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Mapping
 from contextlib import suppress
 from functools import wraps
+from typing import cast
 
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
@@ -65,7 +66,9 @@ class FlextDecorators:
                 for name, service_key in dependencies.items():
                     if name not in kwargs:
                         # Get from container using the service key
-                        result = container.get(service_key)
+                        result: FlextResult[FlextTypes.GeneralValueType] = (
+                            container.get(service_key)
+                        )
                         if result.is_success:
                             kwargs[name] = result.unwrap()
                         else:
@@ -91,8 +94,14 @@ class FlextDecorators:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 op_name = operation_name or func.__name__
-                args_tuple: tuple[FlextTypes.GeneralValueType, ...] = tuple(args)
-                logger = FlextDecorators._resolve_logger(args_tuple, func)
+                args_tuple: tuple[FlextTypes.GeneralValueType, ...] = cast(
+                    "tuple[FlextTypes.GeneralValueType, ...]",
+                    tuple(args),
+                )
+                logger = FlextDecorators._resolve_logger(
+                    args_tuple,
+                    cast("Callable[..., FlextTypes.GeneralValueType]", func),
+                )
                 result_logger = logger.with_result()
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
@@ -103,10 +112,13 @@ class FlextDecorators:
                 start_time = time.perf_counter() if track_perf else 0.0
                 try:
                     # Log operation start
+                    start_extra_config = FlextModels.OperationExtraConfig(
+                        func_name=func.__name__,
+                        func_module=func.__module__,
+                        correlation_id=correlation_id,
+                    )
                     start_extra = FlextDecorators._build_operation_extra(
-                        func.__name__,
-                        func.__module__,
-                        correlation_id,
+                        start_extra_config
                     )
                     FlextDecorators._handle_log_result(
                         result=result_logger.debug(
@@ -120,13 +132,16 @@ class FlextDecorators:
                     )
                     result = func(*args, **kwargs)
                     # Log operation completion
-                    complete_extra = FlextDecorators._build_operation_extra(
-                        func.__name__,
-                        func.__module__,
-                        correlation_id,
+                    complete_extra_config = FlextModels.OperationExtraConfig(
+                        func_name=func.__name__,
+                        func_module=func.__module__,
+                        correlation_id=correlation_id,
                         success=True,
                         start_time=start_time,
                         track_perf=track_perf,
+                    )
+                    complete_extra = FlextDecorators._build_operation_extra(
+                        complete_extra_config,
                     )
                     FlextDecorators._handle_log_result(
                         result=result_logger.debug(
@@ -146,16 +161,16 @@ class FlextDecorators:
                     RuntimeError,
                     KeyError,
                 ) as e:
-                    FlextDecorators._log_operation_failure(
-                        logger,
-                        op_name,
-                        func.__name__,
-                        func.__module__,
-                        correlation_id,
-                        e,
-                        start_time,
+                    failure_config = FlextModels.LogOperationFailureConfig(
+                        op_name=op_name,
+                        func_name=func.__name__,
+                        func_module=func.__module__,
+                        correlation_id=correlation_id,
+                        exc=e,
+                        start_time=start_time,
                         track_perf=track_perf,
                     )
+                    FlextDecorators._log_operation_failure(logger, failure_config)
                     raise
                 finally:
                     with suppress(Exception):
@@ -185,8 +200,14 @@ class FlextDecorators:
 
                 # Get logger from self if available, otherwise create one
                 # Convert P.args to tuple[object, ...] for logger resolution
-                args_tuple: tuple[FlextTypes.GeneralValueType, ...] = tuple(args)
-                logger = FlextDecorators._resolve_logger(args_tuple, func)
+                args_tuple: tuple[FlextTypes.GeneralValueType, ...] = cast(
+                    "tuple[FlextTypes.GeneralValueType, ...]",
+                    tuple(args),
+                )
+                logger = FlextDecorators._resolve_logger(
+                    args_tuple,
+                    cast("Callable[..., FlextTypes.GeneralValueType]", func),
+                )
 
                 start_time = time.perf_counter()
 
@@ -321,15 +342,29 @@ class FlextDecorators:
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                logger = FlextDecorators._resolve_logger(args, func)
-                result_or_exception = FlextDecorators._execute_retry_loop(
-                    func,
-                    args,
+                args_tuple: tuple[FlextTypes.GeneralValueType, ...] = cast(
+                    "tuple[FlextTypes.GeneralValueType, ...]",
+                    tuple(args),
+                )
+                logger = FlextDecorators._resolve_logger(
+                    args_tuple,
+                    cast("Callable[..., FlextTypes.GeneralValueType]", func),
+                )
+                kwargs_mapping: Mapping[str, FlextTypes.GeneralValueType] = cast(
+                    "Mapping[str, FlextTypes.GeneralValueType]",
                     kwargs,
+                )
+                retry_loop_config = FlextModels.RetryLoopConfig(
+                    func=cast("Callable[..., R]", func),
+                    args=args_tuple,
+                    kwargs=kwargs_mapping,
+                    attempts=attempts,
+                    delay=delay,
+                    strategy=strategy,
+                )
+                result_or_exception = FlextDecorators._execute_retry_loop(
                     logger,
-                    attempts,
-                    delay,
-                    strategy,
+                    retry_loop_config,
                 )
                 # Check if we got a successful result or an exception
                 if isinstance(result_or_exception, Exception):
@@ -372,30 +407,22 @@ class FlextDecorators:
 
     @staticmethod
     def _build_operation_extra(
-        func_name: str,
-        func_module: str,
-        correlation_id: str | None,
-        *,
-        success: bool | None = None,
-        error: str | None = None,
-        error_type: str | None = None,
-        start_time: float = 0.0,
-        track_perf: bool = False,
+        config: FlextModels.OperationExtraConfig,
     ) -> dict[str, FlextTypes.GeneralValueType]:
         """Build extra dict for operation logging."""
         extra: dict[str, FlextTypes.GeneralValueType] = {
-            "function": func_name,
-            "func_module": func_module,
+            "function": config.func_name,
+            "func_module": config.func_module,
         }
-        if correlation_id is not None:
-            extra["correlation_id"] = correlation_id
-        if success is not None:
-            extra["success"] = success
-        if error is not None:
-            extra["error"] = error
-            extra["error_type"] = error_type or "Unknown"
-        if track_perf and start_time > 0:
-            duration = time.perf_counter() - start_time
+        if config.correlation_id is not None:
+            extra["correlation_id"] = config.correlation_id
+        if config.success is not None:
+            extra["success"] = config.success
+        if config.error is not None:
+            extra["error"] = config.error
+            extra["error_type"] = config.error_type or "Unknown"
+        if config.track_perf and config.start_time > 0:
+            duration = time.perf_counter() - config.start_time
             extra["duration_ms"] = duration * 1000
             extra["duration_seconds"] = duration
         return extra
@@ -403,44 +430,38 @@ class FlextDecorators:
     @staticmethod
     def _log_operation_failure(
         logger: FlextLogger,
-        op_name: str,
-        func_name: str,
-        func_module: str,
-        correlation_id: str | None,
-        exc: Exception,
-        start_time: float,
-        *,
-        track_perf: bool,
+        config: FlextModels.LogOperationFailureConfig,
     ) -> None:
         """Log operation failure with exception details."""
-        failure_extra = FlextDecorators._build_operation_extra(
-            func_name,
-            func_module,
-            correlation_id,
+        failure_extra_config = FlextModels.OperationExtraConfig(
+            func_name=config.func_name,
+            func_module=config.func_module,
+            correlation_id=config.correlation_id,
             success=False,
-            error=str(exc),
-            error_type=type(exc).__name__,
-            start_time=start_time,
-            track_perf=track_perf,
+            error=str(config.exc),
+            error_type=type(config.exc).__name__,
+            start_time=config.start_time,
+            track_perf=config.track_perf,
         )
-        failure_extra["operation"] = op_name
+        failure_extra = FlextDecorators._build_operation_extra(failure_extra_config)
+        failure_extra["operation"] = config.op_name
         # Build bind dict for logger
         bind_dict: dict[str, FlextTypes.GeneralValueType] = {
             "success": "False",
-            "error": str(exc),
-            "error_type": type(exc).__name__,
-            "operation": op_name,
+            "error": str(config.exc),
+            "error_type": type(config.exc).__name__,
+            "operation": config.op_name,
         }
-        if correlation_id is not None:
-            bind_dict["correlation_id"] = correlation_id
-        if track_perf and start_time > 0:
-            duration = time.perf_counter() - start_time
+        if config.correlation_id is not None:
+            bind_dict["correlation_id"] = config.correlation_id
+        if config.track_perf and config.start_time > 0:
+            duration = time.perf_counter() - config.start_time
             bind_dict["duration_ms"] = duration * 1000
             bind_dict["duration_seconds"] = duration
         # Log failure with exception - using return_result=True to get FlextResult
         failure_result = logger.bind(**bind_dict).exception(
-            f"{op_name}_failed",
-            exception=exc,
+            f"{config.op_name}_failed",
+            exception=config.exc,
             return_result=True,
         )
         FlextDecorators._handle_log_result(
@@ -451,31 +472,28 @@ class FlextDecorators:
                 "extra": {
                     **failure_extra,
                     "log_state": "failed",
-                    "exception_repr": repr(exc),
+                    "exception_repr": repr(config.exc),
                 },
             },
         )
 
     @staticmethod
     def _execute_retry_loop[R](
-        func: Callable[..., R],
-        args: tuple[FlextTypes.GeneralValueType, ...],
-        kwargs: FlextTypes.GeneralValueType,
         logger: FlextLogger,
-        attempts: int = 3,
-        delay: float = 1.0,
-        strategy: str = "exponential",
-        *,
-        config: FlextModels.RetryConfiguration | None = None,
+        config: FlextModels.RetryLoopConfig,
     ) -> R | Exception:
         """Execute retry loop, returning result on success or Exception on failure."""
-        # Extract config values (config takes priority over individual params)
-        if config is not None:
-            attempts = getattr(config, "max_attempts", attempts)
-            delay = getattr(config, "initial_delay_seconds", delay)
+        # Extract config values (retry_config takes priority over individual params)
+        if config.retry_config is not None:
+            attempts = config.retry_config.max_attempts
+            delay = config.retry_config.initial_delay_seconds
             # Map exponential_backoff bool to strategy string
-            exponential = getattr(config, "exponential_backoff", True)
+            exponential = config.retry_config.exponential_backoff
             strategy = "exponential" if exponential else "linear"
+        else:
+            attempts = config.attempts
+            delay = config.delay
+            strategy = config.strategy
 
         last_exception: Exception | None = None
         current_delay = delay
@@ -486,7 +504,7 @@ class FlextDecorators:
                     logger.info(
                         "retry_attempt",
                         extra={
-                            "function": func.__name__,
+                            "function": config.func.__name__,
                             "attempt": attempt,
                             "max_attempts": attempts,
                             "delay_seconds": current_delay,
@@ -494,7 +512,8 @@ class FlextDecorators:
                     )
                     time.sleep(current_delay)
 
-                return func(*args, **kwargs)
+                result = config.func(*config.args, **config.kwargs)
+                return cast("R", result)
 
             except (
                 AttributeError,
@@ -508,7 +527,7 @@ class FlextDecorators:
                 logger.warning(
                     "operation_failed_retrying",
                     extra={
-                        "function": func.__name__,
+                        "function": config.func.__name__,
                         "attempt": attempt,
                         "max_attempts": attempts,
                         "error": str(e),
@@ -645,7 +664,12 @@ class FlextDecorators:
             fallback_logger = getattr(logger, "logger", None)
             if fallback_logger is None or not hasattr(fallback_logger, "warning"):
                 return
-            fallback_kwargs = dict(kwargs)
+            # Convert kwargs to dict if it's dict-like
+            if not FlextRuntime.is_dict_like(kwargs):
+                return
+            fallback_kwargs: dict[str, FlextTypes.GeneralValueType] = dict(
+                cast("Mapping[str, FlextTypes.GeneralValueType]", kwargs),
+            )
             fallback_kwargs.setdefault("extra", {})
             extra_payload = fallback_kwargs["extra"]
             if FlextRuntime.is_dict_like(extra_payload):
@@ -779,20 +803,6 @@ class FlextDecorators:
 
         return decorator
 
-        """Ensure correlation ID exists in context for distributed tracing."""
-
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
-            @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                # Ensure correlation ID exists
-                FlextContext.Utilities.ensure_correlation_id()
-
-                return func(*args, **kwargs)
-
-            return wrapper
-
-        return decorator
-
     @staticmethod
     def with_context(
         **context_vars: str | int | bool | None,
@@ -803,8 +813,14 @@ class FlextDecorators:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 # Convert P.args to tuple[object, ...] for logger resolution
-                args_tuple: tuple[FlextTypes.GeneralValueType, ...] = tuple(args)
-                logger = FlextDecorators._resolve_logger(args_tuple, func)
+                args_tuple: tuple[FlextTypes.GeneralValueType, ...] = cast(
+                    "tuple[FlextTypes.GeneralValueType, ...]",
+                    tuple(args),
+                )
+                logger = FlextDecorators._resolve_logger(
+                    args_tuple,
+                    cast("Callable[..., FlextTypes.GeneralValueType]", func),
+                )
 
                 try:
                     # Bind context variables to global logging context
@@ -861,8 +877,14 @@ class FlextDecorators:
                 )
 
                 # Convert P.args to tuple[object, ...] for logger resolution
-                args_tuple: tuple[FlextTypes.GeneralValueType, ...] = tuple(args)
-                logger = FlextDecorators._resolve_logger(args_tuple, func)
+                args_tuple: tuple[FlextTypes.GeneralValueType, ...] = cast(
+                    "tuple[FlextTypes.GeneralValueType, ...]",
+                    tuple(cast("Iterable[FlextTypes.GeneralValueType]", args)),
+                )
+                logger = FlextDecorators._resolve_logger(
+                    args_tuple,
+                    cast("Callable[..., FlextTypes.GeneralValueType]", func),
+                )
 
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,

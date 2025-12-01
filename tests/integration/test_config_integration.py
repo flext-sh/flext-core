@@ -196,7 +196,7 @@ class TestFlextConfigSingletonIntegration:
         os.environ["FLEXT_APP_NAME"] = "test-app-from-env"
         os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
         os.environ["FLEXT_MAX_WORKERS"] = "8"
-        os.environ["FLEXT_TIMEOUT_SECONDS"] = "60"
+        os.environ["FLEXT_TIMEOUT_SECONDS"] = "90"
         os.environ["FLEXT_DEBUG"] = "true"
 
         try:
@@ -482,7 +482,7 @@ class TestFlextConfigSingletonIntegration:
             os.environ["FLEXT_APP_NAME"] = "from-env-var"
             os.environ["FLEXT_LOG_LEVEL"] = "DEBUG"
             os.environ["FLEXT_DEBUG"] = "false"
-            os.environ["FLEXT_TIMEOUT_SECONDS"] = "60"
+            os.environ["FLEXT_TIMEOUT_SECONDS"] = "90"
 
             config_env = FlextConfig.get_global_instance()
 

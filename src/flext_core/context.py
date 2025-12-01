@@ -13,10 +13,12 @@ from __future__ import annotations
 
 import contextvars
 import json
-from collections.abc import Generator, Mapping
+from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Final, Self
+from typing import Final, Self, cast
+
+from pydantic import BaseModel
 
 from flext_core._models.context import FlextModelsContext
 from flext_core.constants import FlextConstants
@@ -349,8 +351,8 @@ class FlextContext:
                 # Any exception indicates a programming error in hook implementation
                 hook(event_data)
 
+    @staticmethod
     def _propagate_to_logger(
-        self,
         key: str,
         value: FlextTypes.GeneralValueType,
         scope: str,
@@ -369,6 +371,29 @@ class FlextContext:
     # =========================================================================
     # Instance Methods - Core context operations
     # =========================================================================
+
+    @staticmethod
+    def _validate_set_inputs(
+        key: str,
+        value: FlextTypes.GeneralValueType,
+    ) -> FlextResult[None]:
+        """Validate inputs for set operation.
+
+        Args:
+            key: The key to validate
+            value: The value to validate
+
+        Returns:
+            FlextResult[None]: Success if valid, failure with error message
+
+        """
+        if not key:
+            return FlextResult[None].fail("Key must be a non-empty string")
+        if value is None:
+            return FlextResult[None].fail("Value cannot be None")
+        if not isinstance(value, (str, int, float, bool, list, dict)):
+            return FlextResult[None].fail("Value must be serializable")
+        return FlextResult[None].ok(None)
 
     def set(
         self,
@@ -393,30 +418,27 @@ class FlextContext:
         if not self._active:
             return FlextResult[bool].fail("Context is not active")
 
-        # Validate key is not None or empty
-        if not key:
-            return FlextResult[bool].fail("Key must be a non-empty string")
-
-        # Reject None values explicitly
-        if value is None:
-            return FlextResult[bool].fail("Value cannot be None")
-
-        # Validate value is serializable
-        if not isinstance(value, (str, int, float, bool, list, dict)):
-            return FlextResult[bool].fail("Value must be serializable")
+        validation_result = FlextContext._validate_set_inputs(key, value)
+        if validation_result.is_failure:
+            return FlextResult[bool].fail(
+                validation_result.error or "Validation failed"
+            )
 
         try:
             ctx_var = self._get_or_create_scope_var(scope)
             current = FlextUtilities.Generators.ensure_dict(ctx_var.get(), default={})
             ctx_var.set({**current, key: value})
-            self._propagate_to_logger(key, value, scope)
+            FlextContext._propagate_to_logger(key, value, scope)
             self._update_statistics("set")
             self._execute_hooks("set", {"key": key, "value": value})
             return FlextResult[bool].ok(True)
-        except TypeError as e:
-            return FlextResult[bool].fail(str(e))
-        except Exception as e:
-            return FlextResult[bool].fail(f"Failed to set context value: {e}")
+        except (TypeError, Exception) as e:
+            error_msg = (
+                str(e)
+                if isinstance(e, TypeError)
+                else f"Failed to set context value: {e}"
+            )
+            return FlextResult[bool].fail(error_msg)
 
     def get(
         self,
@@ -831,9 +853,8 @@ class FlextContext:
         """
         if event not in self._hooks:
             self._hooks[event] = []
-        hooks_list = self._hooks[event]
-        if FlextRuntime.is_list_like(hooks_list):
-            hooks_list.append(hook)
+        hooks_list: list[FlextTypes.Hook.HookCallableType] = self._hooks[event]
+        hooks_list.append(hook)
 
     def set_metadata(self, key: str, value: FlextTypes.GeneralValueType) -> None:
         """Set metadata for the context.
@@ -958,7 +979,7 @@ class FlextContext:
         # Reset metadata model
         self._metadata = FlextModels.ContextMetadata()
 
-    def export(self) -> object:
+    def export(self) -> dict[str, FlextTypes.GeneralValueType]:
         """Export context data as a dictionary for compatibility consumers.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -998,10 +1019,27 @@ class FlextContext:
             )
             raise TypeError(msg)
 
+        # Normalize metadata and statistics to GeneralValueType
+        metadata_normalized: FlextTypes.GeneralValueType | None = (
+            FlextRuntime.normalize_to_general_value(metadata_dict)
+            if metadata_dict is not None
+            else None
+        )
+        metadata_typed: dict[str, FlextTypes.GeneralValueType] | None = (
+            metadata_normalized if isinstance(metadata_normalized, dict) else None
+        )
+
+        statistics_normalized = FlextRuntime.normalize_to_general_value(statistics_dict)
+        statistics_typed: dict[str, FlextTypes.GeneralValueType] = (
+            statistics_normalized
+            if isinstance(statistics_normalized, dict)
+            else {"statistics": statistics_normalized}
+        )
+
         return FlextModels.ContextExport(
             data=all_data,
-            metadata=metadata_dict,
-            statistics=statistics_dict,
+            metadata=metadata_typed,
+            statistics=statistics_typed,
         )
 
     def import_data(self, data: dict[str, FlextTypes.GeneralValueType]) -> None:
@@ -1266,7 +1304,7 @@ class FlextContext:
             FlextContext.Variables.Service.SERVICE_VERSION.set(version)
 
         @staticmethod
-        def get_service[T](service_name: str) -> FlextResult[T]:
+        def get_service(service_name: str) -> FlextResult[FlextTypes.GeneralValueType]:
             """Resolve service from global container using FlextResult.
 
             Provides unified service resolution pattern across the ecosystem
@@ -1289,9 +1327,9 @@ class FlextContext:
             return container.get(service_name)
 
         @staticmethod
-        def register_service[T](
+        def register_service(
             service_name: str,
-            service: T,
+            service: FlextTypes.GeneralValueType | BaseModel,
         ) -> FlextResult[bool]:
             """Register service in global container using FlextResult.
 
@@ -1316,7 +1354,16 @@ class FlextContext:
             """
             container = FlextContext.get_container()
             try:
-                container.with_service(service_name, service)
+                # Cast service to appropriate type for with_service
+                service_typed: (
+                    FlextTypes.GeneralValueType
+                    | BaseModel
+                    | Callable[..., FlextTypes.GeneralValueType]
+                ) = cast(
+                    "FlextTypes.GeneralValueType | BaseModel | Callable[..., FlextTypes.GeneralValueType]",
+                    service,
+                )
+                container.with_service(service_name, service_typed)
                 return FlextResult[bool].ok(True)
             except ValueError as e:
                 return FlextResult[bool].fail(str(e))
@@ -1595,7 +1642,9 @@ class FlextContext:
             return context
 
         @staticmethod
-        def set_from_context(context: Mapping[str, object]) -> None:
+        def set_from_context(
+            context: Mapping[str, FlextTypes.GeneralValueType],
+        ) -> None:
             """Set context from dictionary (e.g., from HTTP headers)."""
             # Fast fail: use explicit checks instead of OR fallback
             correlation_id_value = context.get("X-Correlation-Id")

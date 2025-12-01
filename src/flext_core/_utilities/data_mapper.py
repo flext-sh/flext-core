@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 
-from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime, StructlogLogger
 from flext_core.typings import FlextTypes
 
@@ -84,7 +83,7 @@ class FlextUtilitiesDataMapper:
         key_mapping: dict[str, str],
         *,
         keep_unmapped: bool = True,
-    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+    ) -> "FlextResult[dict[str, FlextTypes.GeneralValueType]]":
         """Map dictionary keys using mapping specification.
 
         **Generic replacement for**: Key renaming in dicts
@@ -106,6 +105,8 @@ class FlextUtilitiesDataMapper:
             >>> # {"newName": "value1", "bar": "value2", "other": "value3"}
 
         """
+        from flext_core.result import FlextResult
+
         try:
             result: dict[str, FlextTypes.GeneralValueType] = {}
 
@@ -129,7 +130,7 @@ class FlextUtilitiesDataMapper:
         flag_mapping: dict[str, str],
         *,
         default_value: bool = False,
-    ) -> FlextResult[dict[str, bool]]:
+    ) -> "FlextResult[dict[str, bool]]":
         """Build boolean flags dictionary from list of active flags.
 
         **Generic replacement for**: Permission building, feature flags
@@ -154,6 +155,8 @@ class FlextUtilitiesDataMapper:
             >>> # {"can_read": True, "can_write": True, "can_delete": False}
 
         """
+        from flext_core.result import FlextResult
+
         try:
             result: dict[str, bool] = {}
 
@@ -176,7 +179,7 @@ class FlextUtilitiesDataMapper:
     def collect_active_keys(
         source: dict[str, bool],
         key_mapping: dict[str, str],
-    ) -> FlextResult[list[str]]:
+    ) -> "FlextResult[list[str]]":
         """Collect list of output keys where source value is True.
 
         **Generic replacement for**: Collecting active permissions/flags
@@ -195,6 +198,8 @@ class FlextUtilitiesDataMapper:
             >>> active = result.unwrap()  # ["r", "w"]
 
         """
+        from flext_core.result import FlextResult
+
         try:
             active_keys: list[str] = []
 

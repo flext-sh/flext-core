@@ -127,7 +127,10 @@ class TestServiceAutoExecute:
     def test_validation_auto_execution_failure(self) -> None:
         """Validation service auto-executes and raises on failure."""
         # V2 Auto pattern: raises exception directly on failure
-        with pytest.raises(FlextExceptions.BaseError, match="Value must be at least 5 characters"):
+        with pytest.raises(
+            FlextExceptions.BaseError,
+            match="Value must be at least 5 characters",
+        ):
             ValidatingServiceAuto(value_input="x", min_length=5)
 
     # =====================================================================

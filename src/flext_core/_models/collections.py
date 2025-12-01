@@ -15,15 +15,17 @@ from typing import Self, cast
 from pydantic import ConfigDict, Field
 
 from flext_core._models.base import FlextModelsBase
+from flext_core.runtime import FlextRuntime
+from flext_core.typings import FlextTypes
 
 
 # Tier 0.5 - Helper functions inline (avoid FlextRuntime import)
-def _is_list_like(value: object) -> bool:
+def _is_list_like(value: FlextTypes.GeneralValueType) -> bool:
     """Check if value is list-like (but not string/bytes)."""
     return isinstance(value, Sequence) and not isinstance(value, str | bytes)
 
 
-def _is_dict_like(value: object) -> bool:
+def _is_dict_like(value: FlextTypes.GeneralValueType) -> bool:
     """Check if value is dict-like."""
     return isinstance(value, Mapping)
 
@@ -94,7 +96,7 @@ class FlextModelsCollections:
             return sum(len(entries) for entries in self.categories.values())
 
         @property
-        def summary(self) -> object:
+        def summary(self) -> FlextTypes.Types.SummaryDataMapping:
             """Get summary with entry count per category.
 
             Uses SummaryDataMapping pattern.
@@ -139,17 +141,25 @@ class FlextModelsCollections:
             data: dict[str, list[T]],
         ) -> FlextModelsCollections.Categories[T]:
             """Create from existing dict."""
-            return cls(categories=data)
+            return cls.model_validate({"categories": data})
 
-        def to_dict(self) -> object:
+        def to_dict(self) -> FlextTypes.Types.CategoryGroupsMapping:
             """Convert to dict (CategoryGroupsMapping pattern)."""
-            return self.categories.copy()
+            # Normalize list[T] to Sequence[GeneralValueType] for type compatibility
+            result: dict[str, Sequence[FlextTypes.GeneralValueType]] = {}
+            for key, value_list in self.categories.items():
+                # Normalize each item in the list to GeneralValueType
+                normalized_list: list[FlextTypes.GeneralValueType] = [
+                    FlextRuntime.normalize_to_general_value(item) for item in value_list
+                ]
+                result[key] = normalized_list
+            return result
 
     class Statistics(FlextModelsBase.FrozenValueModel):
         """Base for statistics models (frozen Value)."""
 
         @classmethod
-        def aggregate(cls, stats_list: list[Self]) -> object:
+        def aggregate(cls, stats_list: list[Self]) -> FlextTypes.GeneralValueType:
             """Aggregate multiple statistics instances (ConfigurationMapping pattern).
 
             Combines statistics by:
@@ -187,16 +197,25 @@ class FlextModelsCollections:
                     result[key] = sum(v for v in non_none if isinstance(v, int | float))
                 # Concatenate lists
                 elif _is_list_like(first_val):
-                    combined: list[object] = []
+                    combined: list[FlextTypes.GeneralValueType] = []
                     for v in non_none:
                         if _is_list_like(v):
-                            combined.extend(v)
+                            # Normalize each item to GeneralValueType
+                            for item in v:
+                                normalized = FlextRuntime.normalize_to_general_value(
+                                    item
+                                )
+                                combined.append(normalized)
                     result[key] = combined
                 # Keep last for other types
                 else:
                     result[key] = non_none[-1]
 
-            return result
+            # Normalize result dict to GeneralValueType
+            normalized_result: dict[str, FlextTypes.GeneralValueType] = {}
+            for key, value in result.items():
+                normalized_result[key] = FlextRuntime.normalize_to_general_value(value)
+            return normalized_result
 
     class Config(FlextModelsBase.ArbitraryTypesModel):
         """Base for configuration models - mutable Pydantic v2 model.
@@ -233,7 +252,7 @@ class FlextModelsCollections:
             """Convert to dict."""
             return self.model_dump()
 
-        def with_updates(self, **kwargs: object) -> Self:
+        def with_updates(self, **kwargs: FlextTypes.GeneralValueType) -> Self:
             """Return new config with updated fields."""
             data = self.model_dump()
             data.update(kwargs)
@@ -242,7 +261,7 @@ class FlextModelsCollections:
         def diff(
             self,
             other: FlextModelsCollections.Config,
-        ) -> dict[str, tuple[object, object]]:
+        ) -> dict[str, tuple[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]]:
             """Get differences between configs for debugging.
 
             Returns dict mapping field names to (self_value, other_value) tuples
@@ -257,7 +276,9 @@ class FlextModelsCollections:
             """
             self_data = self.model_dump()
             other_data = other.model_dump()
-            differences: dict[str, tuple[object, object]] = {}
+            differences: dict[
+                str, tuple[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
+            ] = {}
 
             all_keys = set(self_data.keys()) | set(other_data.keys())
             for key in all_keys:
@@ -278,7 +299,9 @@ class FlextModelsCollections:
         """Base for result models."""
 
         @classmethod
-        def _aggregate_values(cls, values: list[object | None]) -> object:
+        def _aggregate_values(
+            cls, values: list[FlextTypes.GeneralValueType | None]
+        ) -> FlextTypes.GeneralValueType | None:
             """Aggregate a list of values based on type."""
             non_none = [v for v in values if v is not None]
             if not non_none:
@@ -292,18 +315,22 @@ class FlextModelsCollections:
 
             # Concatenate lists
             if _is_list_like(first_val):
-                combined: list[object] = []
+                combined: list[FlextTypes.GeneralValueType] = []
                 for v in non_none:
                     if _is_list_like(v):
-                        combined.extend(cast("Sequence[object]", v))
+                        # Cast to Sequence[GeneralValueType] for type safety
+                        seq = cast("Sequence[FlextTypes.GeneralValueType]", v)
+                        combined.extend(seq)
                 return combined
 
             # Merge dicts
             if _is_dict_like(first_val):
-                merged: dict[str, object] = {}
+                merged: dict[str, FlextTypes.GeneralValueType] = {}
                 for v in non_none:
                     if _is_dict_like(v):
-                        merged.update(cast("Mapping[str, object]", v))
+                        # Cast to Mapping[str, GeneralValueType] for type safety
+                        mapping = cast("Mapping[str, FlextTypes.GeneralValueType]", v)
+                        merged.update(mapping)
                 return merged
 
             # Keep last for other types
@@ -387,3 +414,21 @@ class FlextModelsCollections:
         strip: bool = True
         remove_empty: bool = True
         validator: Callable[[str], bool] | None = None
+
+    class PatternApplicationParams(FlextModelsBase.ArbitraryTypesModel):
+        """Parameters for applying a single regex pattern.
+
+        Used to reduce argument count in pattern application methods.
+        """
+
+        model_config = ConfigDict(
+            strict=True,
+            validate_default=True,
+        )
+
+        text: str = Field(description="Text to apply pattern to")
+        pattern: str = Field(description="Regex pattern")
+        replacement: str = Field(description="Replacement string")
+        flags: int = Field(default=0, description="Regex flags")
+        pattern_index: int = Field(description="Index of pattern in pipeline")
+        total_patterns: int = Field(description="Total number of patterns")

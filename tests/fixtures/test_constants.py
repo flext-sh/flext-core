@@ -11,7 +11,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .constants import TestConstants
+from flext_core.typings import FlextTypes
+
+from tests.helpers.constants import TestConstants
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,9 +114,9 @@ class TestConstantsCollection:
     patterns: TestPatterns = TestPatterns()
     numeric: TestNumericValues = TestNumericValues()
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Types.ConfigurationMapping:
         """Convert to flat dictionary for backward compatibility."""
-        result: dict[str, object] = {}
+        result: FlextTypes.Types.ConfigurationMapping = {}
 
         # Identifiers
         result.update(
@@ -125,7 +127,7 @@ class TestConstantsCollection:
                 "test_operation_id": self.identifiers.operation_id,
                 "test_request_id": self.identifiers.request_id,
                 "test_correlation_id": self.identifiers.correlation_id,
-            }
+            },
         )
 
         # Names
@@ -140,7 +142,7 @@ class TestConstantsCollection:
                 "test_app_name": self.names.app_name,
                 "test_validation_app": self.names.validation_app,
                 "test_source_service": self.names.source_service,
-            }
+            },
         )
 
         # Errors
@@ -151,7 +153,7 @@ class TestConstantsCollection:
                 "test_operation_error": self.errors.operation_error,
                 "test_config_error": self.errors.config_error,
                 "test_timeout_error": self.errors.timeout_error,
-            }
+            },
         )
 
         # Data
@@ -167,7 +169,7 @@ class TestConstantsCollection:
                 "test_request_data": self.data.request_data,
                 "test_result_data": self.data.result_data,
                 "test_message": self.data.message,
-            }
+            },
         )
 
         # Patterns
@@ -176,7 +178,7 @@ class TestConstantsCollection:
                 "test_slug_input": self.patterns.slug_input,
                 "test_slug_expected": self.patterns.slug_expected,
                 "test_uuid_format": self.patterns.uuid_format,
-            }
+            },
         )
 
         # Numeric
@@ -186,7 +188,7 @@ class TestConstantsCollection:
                 "test_timeout": self.numeric.timeout,
                 "test_retry_count": self.numeric.retry_count,
                 "test_batch_size": self.numeric.batch_size,
-            }
+            },
         )
 
         return result
@@ -205,10 +207,12 @@ class TestConstantsFactories:
         """Create constants for integration testing."""
         return TestConstantsCollection(
             identifiers=TestIdentifiers(
-                request_id="int-request-789", correlation_id="int-corr-456"
+                request_id="int-request-789",
+                correlation_id="int-corr-456",
             ),
             names=TestNames(
-                app_name="integration-app", module_name="integration_module"
+                app_name="integration-app",
+                module_name="integration_module",
             ),
         )
 
@@ -216,12 +220,12 @@ class TestConstantsFactories:
     def create_performance_constants() -> TestConstantsCollection:
         """Create constants for performance testing."""
         return TestConstantsCollection(
-            numeric=TestNumericValues(batch_size=1000, timeout=60)
+            numeric=TestNumericValues(batch_size=1000, timeout=60),
         )
 
 
 # Backward compatibility function
-def get_test_constants() -> dict[str, object]:
+def get_test_constants() -> FlextTypes.Types.ConfigurationMapping:
     """Provide centralized test constants for all tests (backward compatibility).
 
     Returns:

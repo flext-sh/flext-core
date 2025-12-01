@@ -14,7 +14,6 @@ import time
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import cast
 
 from pydantic import BaseModel
 
@@ -402,19 +401,22 @@ class FlextUtilitiesGenerators:
         # Strategy 2: Pydantic BaseModel - use model_dump()
         # Check for model_dump method instead of isinstance to avoid type narrowing issues
         # GeneralValueType doesn't include BaseModel, but objects with model_dump() are valid
-        if hasattr(value, "model_dump") and callable(
-            getattr(value, "model_dump", None)
-        ):
+        model_dump_method = getattr(value, "model_dump", None)
+        if model_dump_method is not None and callable(model_dump_method):
             # Type narrowing: value has model_dump method
-            model_dump_method = value.model_dump
-            if callable(model_dump_method):
+            try:
                 result = model_dump_method()
                 # model_dump() always returns dict[str, Any] for BaseModel
-                # Cast to our expected type
-                if result is not None:
-                    return cast("dict[str, FlextTypes.GeneralValueType]", result)
+                # Normalize to GeneralValueType
+                if isinstance(result, dict):
+                    normalized = FlextRuntime.normalize_to_general_value(result)
+                    if isinstance(normalized, dict):
+                        return normalized
                 # Fallback: return empty dict if model_dump() returns None (shouldn't happen)
                 return {}
+            except (AttributeError, TypeError):
+                # model_dump() failed, continue to next strategy
+                pass
 
         # Strategy 3: Mapping (dict-like) - convert via dict() (fast fail)
         if isinstance(value, Mapping):
@@ -446,7 +448,9 @@ class FlextUtilitiesGenerators:
         raise TypeError(msg)
 
     @staticmethod
-    def generate_operation_id(message_type: str, message: object) -> str:
+    def generate_operation_id(
+        message_type: str, message: FlextTypes.GeneralValueType
+    ) -> str:
         """Generate unique operation ID for dispatch operations.
 
         Args:
@@ -464,8 +468,8 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def create_dynamic_type_subclass(
         name: str,
-        base_class: object,  # Can be a class or Self
-        attributes: dict[str, object],
+        base_class: type,  # Base class for dynamic subclass
+        attributes: dict[str, FlextTypes.GeneralValueType],
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 
