@@ -1,7 +1,8 @@
-"""Domain utilities for DDD patterns - Generic helpers for Entities, Value Objects, Aggregates.
+"""Domain helper utilities for entities, value objects, and aggregates.
 
-This module provides reusable generic utilities for Domain-Driven Design patterns
-used across flext-core and dependent projects.
+The helpers consolidate common DDD checks so domain services and dispatcher
+handlers can validate identity and immutability without duplicating boilerplate
+logic.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,19 +12,13 @@ from __future__ import annotations
 
 from collections.abc import Hashable
 
+from flext_core.protocols import FlextProtocols
 from flext_core.runtime import FlextRuntime, StructlogLogger
 from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesDomain:
-    """Generic utilities for Domain-Driven Design patterns.
-
-    Provides reusable helper methods for:
-    - Entity comparison and hashing by unique ID
-    - Value Object immutability validation
-    - Aggregate Root consistency checks
-    - Domain Event validation patterns
-    """
+    """Reusable DDD helpers for dispatcher-driven domain workflows."""
 
     @property
     def logger(self) -> StructlogLogger:
@@ -36,8 +31,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def compare_entities_by_id(
-        entity_a: object,
-        entity_b: object,
+        entity_a: FlextProtocols.HasModelDump,
+        entity_b: FlextProtocols.HasModelDump,
         id_attr: str = "unique_id",
     ) -> bool:
         """Compare two entities by their unique ID attribute.
@@ -68,7 +63,9 @@ class FlextUtilitiesDomain:
         return id_a is not None and id_a == id_b
 
     @staticmethod
-    def hash_entity_by_id(entity: object, id_attr: str = "unique_id") -> int:
+    def hash_entity_by_id(
+        entity: FlextProtocols.HasModelDump, id_attr: str = "unique_id"
+    ) -> int:
         """Generate hash for entity based on unique ID and type.
 
         Generic hashing for DDD entities - uses identity (ID + type), not value.
@@ -115,20 +112,14 @@ class FlextUtilitiesDomain:
         if not isinstance(obj_b, obj_a.__class__):
             return False
 
-        # Try Pydantic model_dump first
-        if hasattr(obj_a, "model_dump") and hasattr(obj_b, "model_dump"):
+        # Try Pydantic model_dump first (using protocol for type safety)
+        if isinstance(obj_a, FlextProtocols.HasModelDump) and isinstance(
+            obj_b, FlextProtocols.HasModelDump
+        ):
             try:
-                # Type check: ensure both objects have the method and are callable
-                model_dump_a = getattr(obj_a, "model_dump", None)
-                model_dump_b = getattr(obj_b, "model_dump", None)
-                if callable(model_dump_a) and callable(model_dump_b):
-                    # Call the method directly - it returns dict[str, object]
-                    dump_a_raw = model_dump_a()
-                    dump_b_raw = model_dump_b()
-                    if isinstance(dump_a_raw, dict) and isinstance(dump_b_raw, dict):
-                        dump_a: dict[str, object] = dump_a_raw
-                        dump_b: dict[str, object] = dump_b_raw
-                        return bool(dump_a == dump_b)
+                dump_a = obj_a.model_dump()
+                dump_b = obj_b.model_dump()
+                return bool(dump_a == dump_b)
             except (AttributeError, TypeError):
                 pass
 
@@ -156,18 +147,12 @@ class FlextUtilitiesDomain:
             >>> hash_val = FlextUtilitiesDomain.hash_value_object_by_value(addr)
 
         """
-        # Try Pydantic model_dump first
-        if hasattr(obj, "model_dump"):
+        # Try Pydantic model_dump first (using protocol for type safety)
+        if isinstance(obj, FlextProtocols.HasModelDump):
             try:
-                # Type check: ensure the method is callable
-                model_dump = getattr(obj, "model_dump", None)
-                if callable(model_dump):
-                    # Call the method directly - it returns dict[str, FlextTypes.GeneralValueType]
-                    data_raw = model_dump()
-                    if isinstance(data_raw, dict):
-                        data: dict[str, object] = data_raw
-                        # Convert to hashable tuple of items
-                        return hash(tuple(sorted(data.items())))
+                data = obj.model_dump()
+                # Convert to hashable tuple of items
+                return hash(tuple(sorted(data.items())))
             except (AttributeError, TypeError):
                 pass
 

@@ -36,75 +36,13 @@ import pytest
 from flext_core import (
     FlextContainer,
     FlextResult,
+    FlextTypes,
     FlextUtilities,
     __version__,
 )
 
-
-class FunctionalExternalService:
-    """Functional external service for integration testing - real implementation."""
-
-    def __init__(self) -> None:
-        """Initialize functional external service with processing state."""
-        super().__init__()
-        self.call_count = 0
-        self.processed_items: list[str] = []
-        self.should_fail = False
-        self.failure_message = "Service unavailable"
-
-    def process(self, data: str | None = None) -> FlextResult[str]:
-        """Functional processing method - validates real behavior.
-
-        Returns:
-            FlextResult[str]: Success with processed data or failure with error message.
-
-        """
-        self.call_count += 1
-
-        if self.should_fail:
-            return FlextResult[str].fail(self.failure_message)
-
-        processed_data = data or "processed"
-        self.processed_items.append(processed_data)
-
-        return FlextResult[str].ok(processed_data)
-
-    def set_failure_mode(
-        self,
-        *,
-        should_fail: bool,
-        message: str = "Service unavailable",
-    ) -> None:
-        """Configure service to fail for testing error scenarios."""
-        self.should_fail = should_fail
-        self.failure_message = message
-
-    def get_call_count(self) -> int:
-        """Get number of times process was called.
-
-        Returns:
-            int: Number of times the process method was called.
-
-        """
-        return self.call_count
-
-    def reset(self) -> None:
-        """Reset service state."""
-        self.call_count = 0
-        self.processed_items.clear()
-        self.should_fail = False
-
-
-@pytest.fixture
-def mock_external_service() -> FunctionalExternalService:
-    """Functional external service for integration testing.
-
-    Returns:
-        FunctionalExternalService: A configured external service instance.
-
-    """
-    return FunctionalExternalService()
-
+# Use FunctionalExternalService from conftest.py to avoid duplication
+from ..conftest import FunctionalExternalService
 
 pytestmark = [pytest.mark.integration]
 
@@ -121,7 +59,7 @@ class TestLibraryIntegration:
     def test_all_exports_work(
         self,
         clean_container: FlextContainer,
-        sample_data: dict[str, object],
+        sample_data: dict[str, FlextTypes.GeneralValueType],
     ) -> None:
         """Test comprehensive integration of core library exports.
 
@@ -189,11 +127,13 @@ class TestLibraryIntegration:
 
         """
         # Arrange
-        expected_result_data: str = "container_result"
+        input_data: str = "container_result"
+        # FunctionalExternalService.process() transforms input by prefixing "processed_"
+        expected_result_data: str = f"processed_{input_data}"
 
         def create_result() -> FlextResult[str]:
             # Use functional service processing - real behavior
-            return mock_external_service.process(expected_result_data)
+            return mock_external_service.process(input_data)
 
         # Act - Register factory in container
         register_result = clean_container.with_factory(
@@ -220,7 +160,7 @@ class TestLibraryIntegration:
 
         # Assert - Functional service was called (real validation)
         assert mock_external_service.get_call_count() == 1
-        assert expected_result_data in mock_external_service.processed_items
+        assert input_data in mock_external_service.processed_items
 
     def test_entity_id_in_flext_result(self) -> None:
         """Test entity ID used in FlextResult."""

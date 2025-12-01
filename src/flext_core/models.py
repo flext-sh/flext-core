@@ -1,17 +1,10 @@
-"""Domain-Driven Design (DDD) patterns with Pydantic validation for FLEXT ecosystem.
+"""DDD base models with Pydantic v2 validation and dispatcher-first CQRS.
 
-Provides FlextModels, a comprehensive collection of base classes, utilities, and
-facades for implementing Domain-Driven Design patterns with Pydantic v2 validation
-and CQRS integration. All models use Pydantic BaseModel for validation, serialization,
-and type safety throughout the FLEXT ecosystem.
-
-Scope: Facade module organizing DDD base classes including Entity, Value, AggregateRoot,
-Command, Query, DomainEvent, Collections, CQRS patterns, Context management, Handler
-models, Service models, Container models, and Validation patterns. Uses DRY mapping
-for method delegation and class assignment to reduce duplication. All implementations
-are delegated to specialized modules in _models subpackage. Follows single-class pattern
-with FlextModels as the main facade class containing nested namespaces (Cqrs, Context,
-Validation) and direct class aliases for immediate access.
+Expose ``FlextModels`` as the façade for entities, value objects, aggregates,
+commands, queries, and domain events that integrate directly with the
+dispatcher-driven CQRS layer. Concrete implementations live in the
+``_models`` subpackage and are organized for clear validation, serialization,
+and event collection.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -38,26 +31,26 @@ from flext_core._models.service import FlextModelsService
 from flext_core._models.validation import FlextModelsValidation
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.protocols import FlextProtocols
 
 
 class FlextModels:
-    """Domain-Driven Design (DDD) patterns with Pydantic validation.
+    """Facade that groups DDD building blocks for CQRS-ready domains.
 
-    Architecture: Layer 2 (Domain)
-    Provides comprehensive base classes for implementing Domain-Driven Design
-    patterns with Pydantic v2 validation, event sourcing support, and CQRS
-    integration across the FLEXT ecosystem.
+    Architecture: Domain layer helper
+    Provides strongly typed base classes for entities, aggregates, commands,
+    queries, and domain events so dispatcher handlers can enforce invariants,
+    collect domain events, and validate inputs through Pydantic v2.
 
-    Core DDD Concepts:
-    - Entity: Domain object with identity and lifecycle
-    - Value: Immutable value objects
-    - AggregateRoot: Consistency boundary
-    - Command: Domain operation request
-    - Query: Domain read operation
-    - DomainEvent: Significant domain occurrence
+    Core concepts
+    - Entity: Domain object with identity and lifecycle controls.
+    - Value: Immutable value objects for pure operations.
+    - AggregateRoot: Consistency boundary that aggregates events.
+    - Command/Query: Message shapes consumed by dispatcher handlers.
+    - DomainEvent: Stored and published through dispatcher pipelines.
 
-    Pydantic v2 Integration: Full BaseModel support with validation, computed fields,
-    custom serializers, and immutable models (frozen=True).
+    Pydantic v2 integration supplies BaseModel validation, computed fields,
+    and JSON-ready serialization for all exported types.
     """
 
     # Entity & DDD Patterns
@@ -91,7 +84,19 @@ class FlextModels:
     class VersionableMixin(FlextModelsBase.VersionableMixin):
         """Mixin for versioning."""
 
-    # Collections
+    # Collections Facade
+    class Collections:
+        """Collections namespace exposing all collection models."""
+
+        Categories = FlextModelsCollections.Categories
+        Statistics = FlextModelsCollections.Statistics
+        Config = FlextModelsCollections.Config
+        Results = FlextModelsCollections.Results
+        Rules = FlextModelsCollections.Rules
+        Options = FlextModelsCollections.Options
+        ParseOptions = FlextModelsCollections.ParseOptions
+
+    # Direct access for backward compatibility (redirects to Collections)
     Categories = FlextModelsCollections.Categories
 
     class Statistics(FlextModelsCollections.Statistics):
@@ -129,7 +134,7 @@ class FlextModels:
             """Query model for CQRS query operations."""
 
         class Bus(FlextModelsCqrs.Bus):
-            """Bus configuration model."""
+            """Dispatcher configuration model exposed via CQRS namespace."""
 
         class Handler(FlextModelsCqrs.Handler):
             """Handler configuration model."""
@@ -180,6 +185,14 @@ class FlextModels:
 
     class RetryLoopConfig(FlextModelsConfig.RetryLoopConfig):
         """Retry loop configuration model."""
+
+    class DispatchConfig(FlextModelsConfig.DispatchConfig):
+        """Dispatch configuration model."""
+
+    class ExecuteDispatchAttemptOptions(
+        FlextModelsConfig.ExecuteDispatchAttemptOptions
+    ):
+        """Options for execute dispatch attempt."""
 
     class ExceptionConfig(FlextModelsConfig.ExceptionConfig):
         """Exception configuration model."""
@@ -300,6 +313,13 @@ class FlextModels:
         """Handler execution context model."""
 
     # Domain Service Models
+    class ServiceRuntime(FlextModelsBase.ArbitraryTypesModel):
+        """Runtime triple (config, context, container) for services."""
+
+        config: FlextProtocols.ConfigProtocol
+        context: FlextProtocols.ContextProtocol
+        container: FlextProtocols.ContainerProtocol
+
     class DomainServiceExecutionRequest(
         FlextModelsService.DomainServiceExecutionRequest,
     ):

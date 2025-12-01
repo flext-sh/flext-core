@@ -1,10 +1,8 @@
-"""FlextUtilitiesTypeGuards - Type Guard Utilities Module.
+"""Runtime type guard helpers for dispatcher-safe validations.
 
-This module provides runtime type checking utilities for the FLEXT ecosystem,
-implementing structural typing via FlextProtocols.TypeGuards (duck typing - no inheritance required).
-
-Scope: Runtime type validation, type guards for strings, dictionaries, lists,
-and other common types with consistent error handling.
+The utilities rely on structural typing (via ``FlextProtocols.TypeGuards``)
+to keep handler and service checks lightweight while staying compatible with
+duck-typed inputs used throughout the CQRS pipeline.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -104,7 +102,9 @@ class FlextUtilitiesTypeGuards:
         return FlextRuntime.is_list_like(value) and bool(value)
 
     @staticmethod
-    def normalize_to_metadata_value(val: object) -> MetadataAttributeValue:
+    def normalize_to_metadata_value(
+        val: FlextTypes.GeneralValueType,
+    ) -> MetadataAttributeValue:
         """Normalize any value to MetadataAttributeValue.
 
         MetadataAttributeValue is more restrictive than FlextTypes.GeneralValueType,

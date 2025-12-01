@@ -17,10 +17,8 @@ from tests.helpers.constants import TestConstants
 
 
 @dataclass(frozen=True, slots=True)
-class TestIdentifiers:
+class FixtureIdentifiers:
     """Test identifiers and IDs."""
-
-    __test__ = False
 
     user_id: str = "test_user_123"
     session_id: str = "test_session_123"
@@ -31,10 +29,8 @@ class TestIdentifiers:
 
 
 @dataclass(frozen=True, slots=True)
-class TestNames:
+class FixtureNames:
     """Test module and component names."""
-
-    __test__ = False
 
     module_name: str = "test_module"
     handler_name: str = "test_handler"
@@ -48,10 +44,8 @@ class TestNames:
 
 
 @dataclass(frozen=True, slots=True)
-class TestErrors:
+class FixtureErrors:
     """Test error codes and messages."""
-
-    __test__ = False
 
     error_code: str = "TEST_ERROR_001"
     validation_error: str = "test_error"
@@ -61,10 +55,8 @@ class TestErrors:
 
 
 @dataclass(frozen=True, slots=True)
-class TestData:
+class FixtureData:
     """Test field names and data values."""
-
-    __test__ = False
 
     field_name: str = "test_field"
     config_key: str = "test_key"
@@ -79,10 +71,8 @@ class TestData:
 
 
 @dataclass(frozen=True, slots=True)
-class TestPatterns:
+class FixturePatterns:
     """Test patterns and formats."""
-
-    __test__ = False
 
     slug_input: str = "Test_String"
     slug_expected: str = "test_string"
@@ -90,10 +80,8 @@ class TestPatterns:
 
 
 @dataclass(frozen=True, slots=True)
-class TestNumericValues:
+class FixtureNumericValues:
     """Test port and numeric values."""
-
-    __test__ = False
 
     port: int = 8080
     timeout: int = 30
@@ -102,17 +90,15 @@ class TestNumericValues:
 
 
 @dataclass(frozen=True, slots=True)
-class TestConstantsCollection:
+class FixtureConstantsCollection:
     """Complete collection of all test constants."""
 
-    __test__ = False
-
-    identifiers: TestIdentifiers = TestIdentifiers()
-    names: TestNames = TestNames()
-    errors: TestErrors = TestErrors()
-    data: TestData = TestData()
-    patterns: TestPatterns = TestPatterns()
-    numeric: TestNumericValues = TestNumericValues()
+    identifiers: FixtureIdentifiers = FixtureIdentifiers()
+    names: FixtureNames = FixtureNames()
+    errors: FixtureErrors = FixtureErrors()
+    data: FixtureData = FixtureData()
+    patterns: FixturePatterns = FixturePatterns()
+    numeric: FixtureNumericValues = FixtureNumericValues()
 
     def to_dict(self) -> FlextTypes.Types.ConfigurationMapping:
         """Convert to flat dictionary for backward compatibility."""
@@ -194,33 +180,33 @@ class TestConstantsCollection:
         return result
 
 
-class TestConstantsFactories:
+class FixtureConstantsFactories:
     """Factories for test constants collections."""
 
     @staticmethod
-    def create_basic_constants() -> TestConstantsCollection:
+    def create_basic_constants() -> FixtureConstantsCollection:
         """Create basic test constants."""
-        return TestConstantsCollection()
+        return FixtureConstantsCollection()
 
     @staticmethod
-    def create_integration_constants() -> TestConstantsCollection:
+    def create_integration_constants() -> FixtureConstantsCollection:
         """Create constants for integration testing."""
-        return TestConstantsCollection(
-            identifiers=TestIdentifiers(
+        return FixtureConstantsCollection(
+            identifiers=FixtureIdentifiers(
                 request_id="int-request-789",
                 correlation_id="int-corr-456",
             ),
-            names=TestNames(
+            names=FixtureNames(
                 app_name="integration-app",
                 module_name="integration_module",
             ),
         )
 
     @staticmethod
-    def create_performance_constants() -> TestConstantsCollection:
+    def create_performance_constants() -> FixtureConstantsCollection:
         """Create constants for performance testing."""
-        return TestConstantsCollection(
-            numeric=TestNumericValues(batch_size=1000, timeout=60),
+        return FixtureConstantsCollection(
+            numeric=FixtureNumericValues(batch_size=1000, timeout=60),
         )
 
 
@@ -232,4 +218,4 @@ def get_test_constants() -> FlextTypes.Types.ConfigurationMapping:
         Dict containing test constants and data
 
     """
-    return TestConstantsFactories.create_basic_constants().to_dict()
+    return FixtureConstantsFactories.create_basic_constants().to_dict()

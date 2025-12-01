@@ -482,7 +482,7 @@ class TestFlextServiceIntegration:
         service_config = ServiceConfig(
             name="test_service",
             version="1.0.0",
-            temp_dir=temp_directory,
+            temp_dir=str(temp_directory),
         )
 
         # Act
@@ -513,7 +513,7 @@ class TestFlextServiceIntegration:
         service_config = ServiceConfig(
             name="test_service",
             version="1.0.0",
-            temp_dir=temp_directory,
+            temp_dir=str(temp_directory),
         )
 
         # Act - Before initialization
@@ -547,7 +547,7 @@ class TestFlextServiceIntegration:
         service_config = ServiceConfig(
             name="test_service",
             version="1.0.0",
-            temp_dir=temp_directory,
+            temp_dir=str(temp_directory),
         )
         _ = lifecycle_service.initialize(service_config)
 
@@ -578,7 +578,7 @@ class TestFlextServiceIntegration:
         service_config = ServiceConfig(
             name="test_service",
             version="1.0.0",
-            temp_dir=temp_directory,
+            temp_dir=str(temp_directory),
         )
 
         # Test initialization failure

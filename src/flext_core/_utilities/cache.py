@@ -1,6 +1,9 @@
-"""Utilities module - FlextUtilitiesCache.
+"""Cache utilities extracted for dispatcher-safe reuse.
 
-Extracted from flext_core.utilities for better modularity.
+This module exposes normalization, sorting, and cache lifecycle helpers used by
+handlers and services without pulling in higher-level application surfaces.
+Each helper is designed to keep deterministic ordering and safe cache clearing
+while returning ``FlextResult`` where appropriate.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,12 +17,13 @@ from collections.abc import Sequence
 from pydantic import BaseModel
 
 from flext_core.constants import FlextConstants
+from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime, StructlogLogger
 from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesCache:
-    """Cache utility functions for data normalization and sorting."""
+    """Cache utilities for deterministic normalization and key management."""
 
     @property
     def logger(self) -> StructlogLogger:
@@ -30,13 +34,11 @@ class FlextUtilitiesCache:
         """
         return FlextRuntime.get_logger(__name__)
 
-    """Cache utility functions for data normalization and sorting."""
-
     @staticmethod
     def normalize_component(
         component: FlextTypes.GeneralValueType | BaseModel,
     ) -> FlextTypes.GeneralValueType:
-        """Normalize a component for consistent representation."""
+        """Normalize a component recursively for consistent representation."""
         if FlextRuntime.is_dict_like(component):
             component_dict = component
             return {
@@ -61,7 +63,7 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def sort_key(key: FlextTypes.SortableObjectType) -> tuple[int, str]:
-        """Generate a sort key for consistent ordering."""
+        """Generate a sort key for deterministic ordering across types."""
         if isinstance(key, str):
             return (0, key.lower())
         if isinstance(key, (int, float)):
@@ -72,22 +74,27 @@ class FlextUtilitiesCache:
     def sort_dict_keys(
         data: FlextTypes.SortableObjectType,
     ) -> FlextTypes.SortableObjectType:
-        """Sort dictionary keys for consistent representation."""
+        """Sort dictionary keys recursively for consistent representations."""
         if FlextRuntime.is_dict_like(data):
             data_dict = data
-            return {
-                k: FlextUtilitiesCache.sort_dict_keys(data_dict[k])
-                for k in sorted(data_dict.keys(), key=FlextUtilitiesCache.sort_key)
-            }
+            result: dict[str, FlextTypes.SortableObjectType] = {}
+            for k in sorted(data_dict.keys(), key=FlextUtilitiesCache.sort_key):
+                value = data_dict[k]
+                # Handle None values - convert to empty dict for consistency
+                if value is None:
+                    result[k] = {}
+                else:
+                    # Recursively sort nested structures
+                    sorted_value = FlextUtilitiesCache.sort_dict_keys(value)
+                    result[k] = sorted_value
+            return result
         return data
 
     @staticmethod
     def clear_object_cache(
-        obj: FlextTypes.Utility.CachedObjectType,
+        obj: FlextTypes.GeneralValueType | BaseModel,
     ) -> FlextResult[bool]:
-        """Clear any caches on an object."""
-        from flext_core.result import FlextResult
-
+        """Clear cache-like attributes on an object and surface any failure."""
         try:
             # Common cache attribute names to check and clear
             cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
@@ -113,8 +120,8 @@ class FlextUtilitiesCache:
             return FlextResult[bool].fail(f"Failed to clear caches: {e}")
 
     @staticmethod
-    def has_cache_attributes(obj: FlextTypes.Utility.CachedObjectType) -> bool:
-        """Check if object has any cache-related attributes."""
+    def has_cache_attributes(obj: FlextTypes.GeneralValueType) -> bool:
+        """Check if an object exposes any known cache-related attributes."""
         cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
         return any(hasattr(obj, attr) for attr in cache_attributes)
 
@@ -123,7 +130,7 @@ class FlextUtilitiesCache:
         *args: FlextTypes.GeneralValueType,
         **kwargs: FlextTypes.GeneralValueType,
     ) -> str:
-        """Generate a cache key from arguments."""
+        """Generate a deterministic cache key from arguments."""
         key_data = str(args) + str(sorted(kwargs.items()))
         return hashlib.sha256(key_data.encode()).hexdigest()
 

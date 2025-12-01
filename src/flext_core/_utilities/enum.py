@@ -13,6 +13,7 @@ from enum import StrEnum
 from functools import cache
 from typing import TypeGuard
 
+from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
@@ -32,7 +33,9 @@ class FlextUtilitiesEnum:
     # ─────────────────────────────────────────────────────────────
 
     @staticmethod
-    def is_member[E: StrEnum](enum_cls: type[E], value: object) -> TypeGuard[E]:
+    def is_member[E: StrEnum](
+        enum_cls: type[E], value: FlextTypes.GeneralValueType
+    ) -> TypeGuard[E]:
         """Generic TypeGuard for any StrEnum.
 
         Example:
@@ -53,7 +56,7 @@ class FlextUtilitiesEnum:
     def is_subset[E: StrEnum](
         enum_cls: type[E],
         valid_members: frozenset[E],
-        value: object,
+        value: FlextTypes.GeneralValueType,
     ) -> TypeGuard[E]:
         """TypeGuard for subset of a StrEnum.
 
@@ -80,7 +83,7 @@ class FlextUtilitiesEnum:
     # ─────────────────────────────────────────────────────────────
 
     @staticmethod
-    def parse[E: StrEnum](enum_cls: type[E], value: str | E) -> "FlextResult[E]":
+    def parse[E: StrEnum](enum_cls: type[E], value: str | E) -> FlextResult[E]:
         """Convert string to StrEnum with FlextResult.
 
         Example:
@@ -89,8 +92,6 @@ class FlextUtilitiesEnum:
                  status: Status = result.value
 
         """
-        from flext_core.result import FlextResult
-
         if isinstance(value, enum_cls):
             return FlextResult.ok(value)
         try:

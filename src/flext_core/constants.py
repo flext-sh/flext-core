@@ -1,14 +1,8 @@
-"""FlextConstants - Foundation constants for FLEXT ecosystem.
+"""Immutable, shared constants for the FLEXT ecosystem.
 
-This module provides centralized, immutable constants used throughout flext-core
-and all dependent FLEXT applications. Serves as single source of truth for all
-configuration, validation, error codes, and system parameters across 32+ projects.
-
-Architecture: Layer 0 (Pure Constants - No Layer 1+ Imports)
-===========================================================
-Provides immutable constants organized in hierarchical namespace classes.
-All constants use typing.Final for immutability and serve as the complete
-constant registry that other FLEXT components depend on.
+Centralize configuration defaults, validation limits, error codes, and runtime
+enums in a pure Layer 0 module so dispatcher handlers, services, and utilities
+share the same source of truth without circular imports.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -27,7 +21,7 @@ from flext_core.typings import FlextTypes
 
 
 class FlextConstants:
-    """Foundation constants for the FLEXT ecosystem.
+    """Namespace-organized constants for configuration and validation.
 
     Architecture: Layer 0 (Pure Constants - No Layer 1+ Imports)
     ============================================================
@@ -284,7 +278,24 @@ class FlextConstants:
 
         """
         parts = key.split(".")
-        result: object = self
+        # Type narrowing: result can be any constant type (str, int, float, bool, ConfigDict, frozenset, tuple, Mapping, StrEnum, or nested class)
+        # Start with self, which is FlextConstants instance
+        result: (
+            str
+            | int
+            | float
+            | bool
+            | ConfigDict
+            | frozenset[FlextTypes.ScalarValue]
+            | tuple[FlextTypes.ScalarValue, ...]
+            | Mapping[str, FlextTypes.ScalarValue]
+            | StrEnum
+            | type[FlextConstants]
+            | FlextConstants
+        ) = cast(
+            "str | int | float | bool | ConfigDict | frozenset[FlextTypes.ScalarValue] | tuple[FlextTypes.ScalarValue, ...] | Mapping[str, FlextTypes.ScalarValue] | StrEnum | type[FlextConstants] | FlextConstants",
+            self,
+        )
         try:
             for part in parts:
                 attr = getattr(result, part)
@@ -1045,14 +1056,20 @@ class FlextConstants:
         # TYPEGUARD: Para narrowing em código Python (fora de Pydantic)
         # ─────────────────────────────────────────────────────────────────
         @classmethod
-        def is_valid_status(cls, value: object) -> TypeIs[Status]:
+        def is_valid_status(
+            cls: type[FlextConstants.Domain],
+            value: str | FlextConstants.Domain.Status | FlextTypes.ScalarValue,
+        ) -> TypeIs[FlextConstants.Domain.Status]:
             """Type narrowing for validating Status in Python code."""
             return isinstance(value, cls.Status) or (
                 isinstance(value, str) and value in cls.Status._value2member_map_
             )
 
         @classmethod
-        def is_active_state(cls, value: object) -> TypeIs[ActiveStates]:
+        def is_active_state(
+            cls: type[FlextConstants.Domain],
+            value: str | FlextConstants.Domain.Status | FlextTypes.ScalarValue,
+        ) -> TypeIs[FlextConstants.Domain.ActiveStates]:
             """Type narrowing for validating subset of active states."""
             if isinstance(value, cls.Status):
                 return value in {
@@ -1069,7 +1086,10 @@ class FlextConstants:
             return False
 
         @classmethod
-        def is_terminal_state(cls, value: object) -> TypeIs[TerminalStates]:
+        def is_terminal_state(
+            cls: type[FlextConstants.Domain],
+            value: str | FlextConstants.Domain.Status | FlextTypes.ScalarValue,
+        ) -> TypeIs[FlextConstants.Domain.TerminalStates]:
             """Type narrowing for validating subset of terminal states."""
             if isinstance(value, cls.Status):
                 return value in {cls.Status.ARCHIVED, cls.Status.FAILED}
@@ -1640,11 +1660,12 @@ class FlextConstants:
             Immutable mapping of enum values to enum classes
 
         """
+        # Mutable dict needed for construction, then wrapped in MappingProxyType
         union_map: dict[str, type[StrEnum]] = {}
         for enum_class in enum_classes:
             for member in enum_class.__members__.values():
                 union_map[member.value] = enum_class
-        return MappingProxyType(union_map)
+        return MappingProxyType(union_map)  # Return immutable Mapping
 
     # Domain-specific convenience methods using generic helpers
     @classmethod

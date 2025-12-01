@@ -1,18 +1,10 @@
-"""Type system foundation module for FLEXT ecosystem.
+"""Type aliases and generics used across dispatcher-ready components.
 
-Provides FlextTypes, a comprehensive type system foundation defining TypeVars at
-module level and complex type aliases organized in nested namespaces within the
-FlextTypes class. Uses Pydantic Field annotations for domain validation types and
-provides type aliases for CQRS patterns, JSON serialization, handlers, processors,
-factories, predicates, decorators, utilities, logging, hooks, and configuration.
-
-Scope: Module-level TypeVars for generic programming (T, T_co, T_contra, P, R,
-domain-specific TypeVars), and FlextTypes class with nested namespaces (Validation,
-Json, Handler, Processor, Factory, Predicate, Decorator, Utility, Bus, Logging,
-Hook, Config, Cqrs) containing type aliases and validation models. Type aliases
-are also exported at module level for convenience. Follows single-class pattern
-with nested namespaces for organization. TypeVars use appropriate variance (covariant,
-contravariant) for protocol compliance and type safety.
+``FlextTypes`` centralizes ``TypeVar`` declarations and nested namespaces of
+aliases for CQRS messages, handlers, utilities, logging, and validation. The
+module keeps typing consistent for dispatcher pipelines, services, and examples
+without importing higher-layer implementations while retaining compatibility
+with legacy bus naming where necessary.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -24,7 +16,12 @@ from __future__ import annotations
 import socket
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import Annotated, ParamSpec, Protocol, TypedDict, TypeVar
+from typing import (
+    Annotated,
+    ParamSpec,
+    TypedDict,
+    TypeVar,
+)
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
@@ -108,7 +105,7 @@ class FlextTypes:
     - Scalar and base types ("ScalarValue", FlextTypes.GeneralValueType, etc.)
     - Domain validation types (PortNumber, TimeoutSeconds, etc.)
     - JSON types (JsonPrimitive, JsonValue, etc.)
-    - Handler types (HandlerCallable, BusHandlerType, etc.)
+    - Handler types (HandlerCallable with dispatcher/bus-compatible aliases)
     - Utility types (SerializableType, MetadataDict, etc.)
     - CQRS pattern types (Command, Event, Message, Query)
     - Configuration models (RetryConfig)
@@ -138,7 +135,15 @@ class FlextTypes:
     )
 
     # Sortable object type for cache utilities - objects that can be sorted/compared
-    type SortableObjectType = str | int | float | object
+    # Expanded from object to specific types for type safety
+    type SortableObjectType = (
+        str
+        | int
+        | float
+        | bool
+        | Sequence[FlextTypes.GeneralValueType]
+        | Mapping[str, FlextTypes.GeneralValueType]
+    )
 
     # Metadata-compatible attribute value type - composed for strict validation
     type MetadataAttributeValue = (
@@ -147,27 +152,17 @@ class FlextTypes:
         | float
         | bool
         | list[str | int | float | bool | None]
-        | dict[str, str | int | float | bool | None]
+        | Mapping[str, str | int | float | bool | None]
         | None
     )
 
     # Generic metadata value type - supports nested structures for flexible metadata
     # Used across all FLEXT projects for metadata storage and exchange
     # Uses MetadataAttributeValue (non-recursive) to avoid Pydantic recursion issues
-    # while maintaining type safety. For deeply nested structures, use dict[str, object]
-    # in model fields and validate manually if needed.
+    # while maintaining type safety. For deeply nested structures, use
+    # Mapping[str, FlextTypes.GeneralValueType] in model fields and validate manually if needed.
+    # Direct type definition - no aliases per FLEXT standards
     type MetadataValue = MetadataAttributeValue
-    """Structural type for metadata values (supports nested structures).
-
-    Represents:
-    - Primitives: str, int, float, bool, None
-    - Lists: list[str | int | float | bool | None]
-    - Dicts: dict[str, str | int | float | bool | None]
-
-    This is a generic type available to all FLEXT projects for metadata handling.
-    Uses MetadataAttributeValue (non-recursive) to avoid Pydantic schema generation
-    recursion issues while maintaining type safety.
-    """
 
     # Generic metadata dictionary type - read-only interface for metadata containers
     type Metadata = Mapping[str, MetadataAttributeValue]
@@ -261,37 +256,18 @@ class FlextTypes:
     class Handler:
         """Handler and middleware type definitions for CQRS patterns."""
 
-        # Protocol-based handler types - FlextTypes.GeneralValueType is defined in parent FlextTypes class
-        type ValidationRule = Callable[
-            [FlextTypes.GeneralValueType],
-            FlextTypes.GeneralValueType,
-        ]
-        type CrossFieldValidator = Callable[
-            [FlextTypes.GeneralValueType],
-            FlextTypes.GeneralValueType,
-        ]
-        type ValidatorFunction = Callable[
-            [FlextTypes.GeneralValueType],
-            FlextTypes.GeneralValueType,
-        ]
-
-        # Callable handler types with contravariant input, covariant output
+        # Single consolidated callable type for handlers and validators
+        # All handler callables share the same signature: input GeneralValueType -> output GeneralValueType
         type HandlerCallable = Callable[
             [FlextTypes.GeneralValueType],
             FlextTypes.GeneralValueType,
         ]
-        type CallableHandlerType = Callable[
-            [FlextTypes.GeneralValueType],
-            FlextTypes.GeneralValueType,
-        ]
-        type BusHandlerType = Callable[
-            [FlextTypes.GeneralValueType],
-            FlextTypes.GeneralValueType,
-        ]
-        type MiddlewareType = Callable[
-            [FlextTypes.GeneralValueType],
-            FlextTypes.GeneralValueType,
-        ]
+        # Middleware uses same callable signature as handlers
+        # Use HandlerCallable directly - no aliases per FLEXT standards
+
+        # Handler type for registry - union of all possible handler types
+        # This includes callables, objects with handle() method, and handler instances
+        # Note: Handler protocol is defined in FlextProtocols.Handler for proper protocol organization
 
         # Middleware configuration types
         type MiddlewareConfig = FlextTypes.Types.ConfigurationMapping
@@ -311,26 +287,27 @@ class FlextTypes:
         # Conditional execution callable types (PEP 695)
         type ConditionCallable = Callable[[FlextTypes.GeneralValueType], bool]
 
-        # ActionCallable: variadic callable returning GeneralValueType
-        # Using Protocol to avoid mypy "explicit-any" error with Callable[..., T]
-        # This allows any number and type of arguments while maintaining type safety
-        class ActionCallable(Protocol):
-            """Protocol for variadic callables returning GeneralValueType."""
+        # Variadic callable protocol is defined in FlextProtocols.VariadicCallable
+        # Use that instead of redeclaring here
 
-            def __call__(
-                self,
-                *args: object,
-                **kwargs: object,
-            ) -> FlextTypes.GeneralValueType:
-                """Call the action with any arguments, returning GeneralValueType."""
-                ...
+        # Handler type union - all possible handler representations
+        # This is used for handler registries where handlers can be callables,
+        # handler instances, or configuration dicts
+        # Note: Handler and VariadicCallable protocols are defined in FlextProtocols
+        # but cannot be imported here due to circular dependency. For type checking,
+        # we use Callable as a fallback that works for most use cases.
+        type HandlerType = (
+            HandlerCallable
+            | Callable[..., FlextTypes.GeneralValueType]  # Variadic callable fallback
+            | Mapping[str, FlextTypes.GeneralValueType]  # Configuration dict
+        )
 
     class Processor:
         """Processor types for data transformation pipelines."""
 
         # Input/output types for processing operations
-        type ProcessorInputType = FlextTypes.GeneralValueType
-        type ProcessorOutputType = FlextTypes.GeneralValueType | None
+        # Use GeneralValueType directly - no aliases per FLEXT standards
+        # For output, use GeneralValueType | None directly where needed
 
     class Factory:
         """Factory pattern types for dependency injection."""
@@ -358,13 +335,13 @@ class FlextTypes:
         type TypeOriginSpecifier = str | type[FlextTypes.GeneralValueType]
         type TypeHintSpecifier = str | type[FlextTypes.GeneralValueType]
         type MessageTypeSpecifier = str | type[FlextTypes.GeneralValueType]
+
         type GenericTypeArgument = str | type[FlextTypes.GeneralValueType]
 
         # Object types for caching and messaging
-        type CachedObjectType = object
-        type SerializableType = FlextTypes.GeneralValueType
-        type JsonObject = Mapping[str, FlextTypes.GeneralValueType]
-        type ParameterValueType = FlextTypes.GeneralValueType
+        # Use GeneralValueType directly - no aliases per FLEXT standards
+        # For cached objects, serializable types, and parameter values, use GeneralValueType directly
+        # For JSON objects, use Mapping[str, GeneralValueType] directly
 
         # Collection and caching types
         type ObjectList = Sequence[FlextTypes.GeneralValueType]
@@ -375,57 +352,33 @@ class FlextTypes:
         type FactoryRegistry = Mapping[str, Callable[[], FlextTypes.GeneralValueType]]
         type ContainerConfig = FlextTypes.Types.ConfigurationMapping
 
-        # Event and payload types
-        type EventPayload = FlextTypes.Types.EventDataMapping
-        type CommandPayload = FlextTypes.GeneralValueType
-        type QueryPayload = FlextTypes.GeneralValueType
+        # Event and payload types - use types directly, no aliases
+        # EventPayload uses EventDataMapping (complex type, keep)
+        # CommandPayload and QueryPayload use GeneralValueType directly
 
     class Bus:
-        """Message bus and handler type definitions."""
+        """Dispatcher routing type aliases (legacy "Bus" namespace retained)."""
 
         # Message and handler types for bus operations
-        type BusMessageType = FlextTypes.GeneralValueType
-        type MessageTypeOrHandlerType = (
-            type[FlextTypes.GeneralValueType]
-            | str
-            | Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType]
-        )
-        type HandlerOrCallableType = (
-            Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType]
-            | FlextTypes.GeneralValueType
-        )
-        type HandlerConfigurationType = FlextTypes.Types.ConfigurationMapping | None
-        type HandlerCallableType = Callable[
-            [FlextTypes.GeneralValueType],
-            FlextTypes.GeneralValueType,
-        ]
-        type AcceptableMessageType = FlextTypes.GeneralValueType
+        # Use GeneralValueType directly - no aliases per FLEXT standards
+        # For message types, use GeneralValueType directly
+        # For handler types, use Handler.HandlerCallable directly
+        # For configuration, use Types.ConfigurationMapping | None directly
 
     class Logging:
         """Logging and context type definitions."""
 
         # Context and processor types for logging operations
-        type LoggingContextType = FlextTypes.Types.ContextMetadataMapping
-        type LoggingContextValueType = FlextTypes.GeneralValueType
-        type LoggerContextType = FlextTypes.Types.ContextMetadataMapping
-        type LoggingProcessorType = Callable[
-            [FlextTypes.GeneralValueType, str, FlextTypes.GeneralValueType],
-            None,
-        ]
-        type LoggingArgType = FlextTypes.GeneralValueType
-        type LoggingKwargsType = dict[str, FlextTypes.GeneralValueType]
-        type BoundLoggerType = Callable[[str, FlextTypes.GeneralValueType], None]
+        # Use Types.ContextMetadataMapping directly - no aliases per FLEXT standards
+        # For context values, args, and kwargs, use GeneralValueType directly
+        # For processor and bound logger types, use Callable directly with proper signatures
 
     class Hook:
         """Hook and registry types for extensibility."""
 
         # Hook callable and registry types
-        type HookCallableType = Callable[
-            [FlextTypes.GeneralValueType],
-            FlextTypes.GeneralValueType,
-        ]
-        type HookRegistry = Mapping[str, FlextTypes.GeneralValueType]
-        type ScopeRegistry = Mapping[str, FlextTypes.GeneralValueType]
+        # Use Handler.HandlerCallable directly for hook callables - no aliases per FLEXT standards
+        # For registries, use Mapping[str, GeneralValueType] directly
 
     class Config:
         """Configuration models for operational settings."""
@@ -466,13 +419,10 @@ class FlextTypes:
             )
 
     class Cqrs:
-        """CQRS pattern type aliases with simplified forward references."""
+        """CQRS pattern types - use GeneralValueType directly."""
 
-        # Simplified forward references to avoid circular imports
-        type Command = FlextTypes.GeneralValueType
-        type Event = FlextTypes.GeneralValueType
-        type Message = FlextTypes.GeneralValueType
-        type Query = FlextTypes.GeneralValueType
+        # CQRS types use GeneralValueType directly - no aliases per FLEXT standards
+        # For commands, events, messages, and queries, use GeneralValueType directly
 
     class Types:
         """Type aliases for structured mappings and TypedDict definitions.
@@ -716,7 +666,9 @@ class FlextTypes:
 
 
 # NOTE: All TypeVars are defined at module level (lines 28-81)
-# GeneralValueType is now defined at module level (lines 87-98)
+# GeneralValueType is defined in FlextTypes class (line 130)
+# Use FlextTypes.GeneralValueType for type annotations
+# Module-level aliases are not needed - use FlextTypes namespace directly
 
 __all__ = [
     "CallableInputT",

@@ -42,52 +42,9 @@ TModel_co = TypeVar("TModel_co", covariant=True)
 TValue = TypeVar("TValue")
 
 
-@runtime_checkable
-class LoggerProtocol(Protocol):
-    """Protocol for logger objects used in test utilities.
-
-    Flexible protocol compatible with FlextLogger and other loggers.
-    Uses hasattr checks in code, so protocol is permissive for type hints.
-    Accepts any logger implementation that has basic logging methods.
-    """
-
-    def info(
-        self,
-        message: str,
-        *args: object,
-        **kwargs: object,
-    ) -> object:
-        """Log info message."""
-        ...
-
-    def warning(
-        self,
-        message: str,
-        *args: object,
-        **kwargs: object,
-    ) -> object:
-        """Log warning message."""
-        ...
-
-    def error(
-        self,
-        message: str,
-        *args: object,
-        **kwargs: object,
-    ) -> object:
-        """Log error message."""
-        ...
-
-    def exception(
-        self,
-        message: str,
-        *,
-        exception: BaseException | None = None,
-        exc_info: bool = True,
-        **kwargs: object,
-    ) -> object:
-        """Log exception message."""
-        ...
+# Use FlextProtocols.LoggerProtocol for type compatibility with FlextLogger
+# Local alias for convenience in test utilities
+LoggerProtocol = FlextProtocols.LoggerProtocol
 
 
 class FlextTestsUtilities:
@@ -1144,20 +1101,23 @@ class FlextTestsUtilities:
                 return operation()
             except Exception as e:
                 if logger and hasattr(logger, "warning"):
-                    logger.warning("%s failed: %s", error_prefix, e)
+                    logger.warning(
+                        f"{error_prefix} failed: {str(e)}",
+                        error=str(e),
+                    )
                 return default_value
 
         @staticmethod
         def get_container_config(
             container_name: str,
-            shared_containers: dict[str, dict[str, str | int]],
-            registered_configs: dict[str, dict[str, str]],
-        ) -> dict[str, str | int] | None:
+            shared_containers: FlextTypes.Types.SharedContainersMapping,
+            registered_configs: Mapping[str, FlextTypes.Types.ContainerConfigDict],
+        ) -> FlextTypes.Types.ContainerConfigDict | None:
             """Get container configuration from shared or registered configs.
 
             Args:
                 container_name: Name of container to get config for
-                shared_containers: Shared containers configuration dict
+                shared_containers: Shared containers configuration mapping
                 registered_configs: Registered private container configs
 
             Returns:
@@ -1167,9 +1127,7 @@ class FlextTestsUtilities:
             if container_name in shared_containers:
                 return shared_containers[container_name]
             if container_name in registered_configs:
-                config_raw = registered_configs[container_name]
-                if isinstance(config_raw, dict):
-                    return dict(config_raw.items())
+                return registered_configs[container_name]
             return None
 
         @staticmethod
@@ -1275,20 +1233,26 @@ class FlextTestsUtilities:
                             remove_method(force=True)
                             removed_items.append(resource_name)
                             if logger and hasattr(logger, "info"):
+                                # Build context dict with proper types for protocol compatibility
+                                context_kwargs: dict[str, FlextTypes.FlexibleValue] = {
+                                    resource_type: resource_name
+                                }
+                                # Call with explicit context unpacking
                                 logger.info(
-                                    "Removed %s: %s",
-                                    resource_type,
-                                    resource_name,
-                                    **{resource_type: resource_name},
+                                    f"Removed {resource_type}: {resource_name}",
+                                    **context_kwargs,
                                 )
                     except Exception as e:
                         if logger and hasattr(logger, "warning"):
+                            # Build context dict with proper types for protocol compatibility
+                            warning_kwargs: dict[str, FlextTypes.FlexibleValue] = {
+                                resource_type: resource_name,
+                                "error": str(e),
+                            }
+                            # Call with explicit context unpacking
                             logger.warning(
-                                "Failed to remove %s %s: %s",
-                                resource_type,
-                                resource_name,
-                                e,
-                                **{resource_type: resource_name, "error": str(e)},
+                                f"Failed to remove {resource_type} {resource_name}: {str(e)}",
+                                **warning_kwargs,
                             )
 
                 return FlextResult[dict[str, int | list[str]]].ok({
@@ -1402,9 +1366,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def with_compose_file_config(
-            docker_client: (
-                FlextTestProtocols.Docker.ComposeClientProtocol | object
-            ),
+            docker_client: (FlextTestProtocols.Docker.ComposeClientProtocol | object),
             compose_path: Path,
             operation: Callable[[], None],
         ) -> None:

@@ -96,8 +96,6 @@ class FlextUtilitiesArgs:
                  return FlextResult.ok(True)
 
         """
-        from flext_core.result import FlextResult
-
         validated_func = validate_call(
             config=ConfigDict(
                 arbitrary_types_allowed=True,
@@ -135,8 +133,6 @@ class FlextUtilitiesArgs:
                  # result.value = {"status": Status.ACTIVE, "name": "John"}
 
         """
-        from flext_core.result import FlextResult
-
         parsed = dict(kwargs)
         errors: list[str] = []
 

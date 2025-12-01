@@ -16,7 +16,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.metadata import Metadata
-from flext_core._utilities.data_mapper import FlextUtilitiesDataMapper
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
@@ -24,6 +23,11 @@ from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
 _MIN_QUALNAME_PARTS_FOR_WRAPPER = 2  # FlextModels.Cqrs requires at least 2 parts
+
+
+def _generate_query_id() -> str:
+    """Helper function for Field default_factory."""
+    return FlextUtilities.Generators.generate_id()
 
 
 class FlextModelsCqrs:
@@ -107,6 +111,7 @@ class FlextModelsCqrs:
         """Query model for CQRS query operations."""
 
         model_config = ConfigDict(
+            arbitrary_types_allowed=True,
             json_schema_extra={
                 "title": "Query",
                 "description": "Query model for CQRS query operations",
@@ -123,7 +128,7 @@ class FlextModelsCqrs:
         pagination: FlextModelsCqrs.Pagination | dict[str, int] = Field(
             default_factory=dict,
         )
-        query_id: str = Field(default_factory=FlextUtilities.Generators.generate_id)
+        query_id: str = Field(default_factory=_generate_query_id)
         query_type: str | None = None
 
         @classmethod
@@ -157,8 +162,8 @@ class FlextModelsCqrs:
             """Convert dict to Pagination instance."""
             page_value = v.get("page")
             size_value = v.get("size")
-            page = FlextUtilitiesDataMapper.convert_to_int_safe(page_value, 1)
-            size = FlextUtilitiesDataMapper.convert_to_int_safe(size_value, 20)
+            page = FlextUtilities.DataMapper.convert_to_int_safe(page_value, 1)
+            size = FlextUtilities.DataMapper.convert_to_int_safe(size_value, 20)
             return pagination_cls(page=page, size=size)
 
         @field_validator("pagination", mode="before")
@@ -171,8 +176,25 @@ class FlextModelsCqrs:
             pagination_cls = cls._resolve_pagination_class()
             if isinstance(v, FlextModelsCqrs.Pagination):
                 return v
-            if isinstance(v, dict):
-                return cls._convert_dict_to_pagination(v, pagination_cls)
+
+            # Convert dict to Pagination
+            if FlextRuntime.is_dict_like(v):
+                # TypeGuard narrows v to Mapping[str, GeneralValueType]
+                v_dict: FlextTypes.Types.ConfigurationMapping = v
+                # .get() returns GeneralValueType | None, pass directly (None is valid GeneralValueType)
+                page_value = v_dict.get("page")
+                size_value = v_dict.get("size")
+                page = FlextUtilities.DataMapper.convert_to_int_safe(
+                    page_value if page_value is not None else 1,
+                    1,
+                )
+                size = FlextUtilities.DataMapper.convert_to_int_safe(
+                    size_value if size_value is not None else 20,
+                    20,
+                )
+                return pagination_cls(page=page, size=size)
+
+            # Default empty Pagination
             return pagination_cls()
 
         @classmethod
@@ -184,38 +206,15 @@ class FlextModelsCqrs:
             try:
                 # Fast fail: filters and pagination must be dict or None
                 filters_raw = query_payload.get("filters")
-                filters: FlextTypes.Types.ConfigurationMapping = {}
-                if FlextRuntime.is_dict_like(filters_raw) and isinstance(
-                    filters_raw,
-                    dict,
-                ):
-                    # Convert dict to ConfigurationMapping ensuring GeneralValueType values
-                    filters = {
-                        k: v
-                        for k, v in filters_raw.items()
-                        if isinstance(
-                            v,
-                            (str, int, float, bool, type(None), list, dict),
-                        )
-                        or hasattr(v, "__iter__")
-                    }
-
+                # TypeGuard narrows to Mapping[str, GeneralValueType] when is_dict_like is True
+                filters: FlextTypes.Types.ConfigurationMapping = (
+                    filters_raw if FlextRuntime.is_dict_like(filters_raw) else {}
+                )
                 pagination_raw = query_payload.get("pagination")
-                pagination_data: FlextTypes.Types.ConfigurationMapping = {}
-                if FlextRuntime.is_dict_like(pagination_raw) and isinstance(
-                    pagination_raw,
-                    dict,
-                ):
-                    # Convert dict to ConfigurationMapping ensuring GeneralValueType values
-                    pagination_data = {
-                        k: v
-                        for k, v in pagination_raw.items()
-                        if isinstance(
-                            v,
-                            (str, int, float, bool, type(None), list, dict),
-                        )
-                        or hasattr(v, "__iter__")
-                    }
+                # TypeGuard narrows to Mapping[str, GeneralValueType] when is_dict_like is True
+                pagination_data: FlextTypes.Types.ConfigurationMapping = (
+                    pagination_raw if FlextRuntime.is_dict_like(pagination_raw) else {}
+                )
                 if FlextRuntime.is_dict_like(pagination_data):
                     pagination_dict = pagination_data
                     # Fast fail: page and size must be int or None
@@ -252,12 +251,12 @@ class FlextModelsCqrs:
                 )
 
     class Bus(BaseModel):
-        """Bus configuration model."""
+        """Dispatcher configuration model for CQRS routing."""
 
         model_config = ConfigDict(
             json_schema_extra={
-                "title": "Bus",
-                "description": "CQRS command bus configuration",
+                "title": "Dispatcher",
+                "description": "CQRS dispatcher configuration",
             },
         )
         enable_middleware: bool = Field(
@@ -319,6 +318,7 @@ class FlextModelsCqrs:
             """Parameter object for handler configuration (reduces parameter count)."""
 
             model_config = ConfigDict(
+                arbitrary_types_allowed=True,
                 json_schema_extra={
                     "title": "HandlerConfigParams",
                     "description": "Parameter object for handler configuration",
@@ -344,7 +344,7 @@ class FlextModelsCqrs:
             def __init__(self, handler_type: FlextConstants.Cqrs.HandlerType) -> None:
                 """Initialize builder with required handler_type."""
                 handler_short_id = FlextUtilities.Generators.generate_short_id(length=8)
-                self._data: dict[str, FlextTypes.GeneralValueType | object] = {
+                self._data: dict[str, FlextTypes.GeneralValueType] = {
                     "handler_type": handler_type,
                     "handler_mode": (
                         FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
@@ -380,7 +380,11 @@ class FlextModelsCqrs:
 
             def with_metadata(self, metadata: Metadata) -> Self:
                 """Set metadata (fluent API - Pydantic model)."""
-                self._data["metadata"] = metadata
+                # Convert Metadata model to dict for GeneralValueType compatibility
+                metadata_dict: dict[str, FlextTypes.GeneralValueType] = dict(
+                    metadata.model_dump().items()
+                )
+                self._data["metadata"] = metadata_dict
                 return self
 
             def merge_config(

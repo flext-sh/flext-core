@@ -236,7 +236,7 @@ class DatabaseService(FlextService[None]):
         self.connected = True
         self.logger.info(
             "Database connection established",
-            extra={"connection_string": self._connection_string},
+            connection_string=self._connection_string,
         )
         return FlextResult[bool].ok(True)
 

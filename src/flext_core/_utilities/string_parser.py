@@ -1,6 +1,8 @@
-"""Utilities module - FlextUtilitiesStringParser.
+"""String parsing helpers for deterministic CQRS utility flows.
 
-Extracted from flext_core.utilities for better modularity.
+These helpers centralize delimiter handling, whitespace normalization, and
+escaped character parsing so dispatcher handlers and services receive
+predictable ``FlextResult`` outcomes instead of ad-hoc string handling.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,38 +17,25 @@ from typing import cast
 import structlog
 
 from flext_core._models.collections import FlextModelsCollections
+from flext_core._utilities.model import FlextUtilitiesModel
+from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesStringParser:
-    r"""String parsing utilities for delimited and structured text processing.
+    r"""Parse delimited and structured strings with predictable results.
 
-    Constants:
-        PATTERN_TUPLE_MIN_LENGTH: Minimum length for pattern tuple (pattern, replacement)
-        PATTERN_TUPLE_MAX_LENGTH: Maximum length for pattern tuple (pattern, replacement, flags)
+    The parser consolidates delimiter handling, escape-aware splits, and
+    normalization routines behind ``FlextResult`` so callers can compose
+    parsing logic in dispatcher pipelines without manual error handling.
 
-    Provides generic string parsing methods that can be reused across projects
-    for handling delimited strings, escaped characters, and whitespace normalization.
+    Examples:
+        >>> parser = FlextUtilitiesStringParser()
+        >>> parser.parse_delimited("a, b, c", ",").unwrap()
+        ['a', 'b', 'c']
+        >>> parser.split_on_char_with_escape("cn=admin\\,dc=com", ",", "\\").unwrap()
+        ['cn=admin', 'dc=com']
 
-    **Architecture**: Detailed structured logging following FlextLdifParser pattern
-    - debug: Processing steps and intermediate results
-    - warning: Non-fatal issues with context
-    - error: Fatal errors with detailed context and abort
-    - info: Major operations and performance metrics
-
-    **Usage Examples**:
-    >>> # Parse comma-delimited string
-    >>> parser = FlextUtilitiesStringParser()
-    >>> result = parser.parse_delimited("a, b, c", ",")
-    >>> if result.is_success:
-    ...     values = result.unwrap()  # ["a", "b", "c"]
-
-    >>> # Parse with escape character handling
-    >>> result = parser.split_on_char_with_escape("cn=admin\\,dc=com", ",", "\\")
-
-    >>> # Normalize whitespace
-    >>> result = parser.normalize_whitespace("  hello   world  ")
-    >>> cleaned = result.unwrap()  # "hello world"
     """
 
     PATTERN_TUPLE_MIN_LENGTH: int = 2
@@ -281,6 +270,122 @@ class FlextUtilitiesStringParser:
             )
             return FlextResult[list[str]].fail(f"Failed to parse delimited string: {e}")
 
+    @staticmethod
+    def _validate_split_inputs(
+        split_char: str,
+        escape_char: str,
+    ) -> FlextResult[None]:
+        """Validate inputs for split operation.
+
+        Args:
+            split_char: Character to split on
+            escape_char: Escape character
+
+        Returns:
+            FlextResult[None]: Success if valid, failure with error message
+
+        """
+        if not split_char:
+            return FlextResult[None].fail("Split character cannot be empty")
+        if not escape_char:
+            return FlextResult[None].fail("Escape character cannot be empty")
+        if split_char == escape_char:
+            return FlextResult[None].fail(
+                "Split character and escape character cannot be the same",
+            )
+        return FlextResult[None].ok(None)
+
+    def _get_safe_text_length(self, text: str) -> int:
+        """Get text length safely, handling non-string objects in tests.
+
+        Args:
+            text: Text to measure
+
+        Returns:
+            Text length or -1 if measurement fails
+
+        """
+        try:
+            length = self._safe_text_length(text)
+            # Ensure return type is int
+            if isinstance(length, int):
+                return length
+            # If _safe_text_length returns str, convert to int
+            return int(length) if isinstance(length, str) else -1
+        except (TypeError, AttributeError, ValueError):
+            return -1  # Unknown length
+
+    def _execute_escape_splitting(
+        self,
+        text: str,
+        split_char: str,
+        escape_char: str,
+    ) -> FlextResult[list[str]]:
+        """Execute escape-aware splitting with logging and error handling.
+
+        Args:
+            text: String to split
+            split_char: Character to split on
+            escape_char: Escape character
+
+        Returns:
+            FlextResult with list of split components or error
+
+        """
+        # Safely get text length for logging
+        text_len = self._get_safe_text_length(text)
+
+        self.logger.debug(
+            "Starting escape-aware string splitting",
+            operation="split_on_char_with_escape",
+            text_length=text_len,
+            split_char=split_char,
+            escape_char=escape_char,
+            source="flext-core/src/flext_core/_utilities/string_parser.py",
+        )
+
+        try:
+            self.logger.debug(
+                "Processing text with escape character handling",
+                operation="split_on_char_with_escape",
+                text_length=text_len,
+                source="flext-core/src/flext_core/_utilities/string_parser.py",
+            )
+
+            # Process the text and extract components
+            split_result = self._process_escape_splitting(text, split_char, escape_char)
+            if split_result.is_failure:
+                return FlextResult[list[str]].fail(
+                    split_result.error or "Unknown error in escape splitting",
+                )
+
+            components, escape_count = split_result.unwrap()
+
+            self.logger.debug(
+                "Escape-aware splitting completed successfully",
+                operation="split_on_char_with_escape",
+                components_count=len(components),
+                escape_sequences_found=escape_count,
+                source="flext-core/src/flext_core/_utilities/string_parser.py",
+            )
+
+            return FlextResult[list[str]].ok(components)
+
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
+            text_len = self._get_safe_text_length(text)
+            self.logger.exception(
+                "FATAL ERROR during escape-aware splitting - SPLITTING ABORTED",
+                operation="split_on_char_with_escape",
+                error=str(e),
+                error_type=type(e).__name__,
+                text_length=text_len,
+                split_char=split_char,
+                escape_char=escape_char,
+                consequence="Cannot split string with escape handling - invalid input or internal error",
+                source="flext-core/src/flext_core/_utilities/string_parser.py",
+            )
+            return FlextResult[list[str]].fail(f"Failed to split with escape: {e}")
+
     def split_on_char_with_escape(
         self,
         text: str,
@@ -309,33 +414,13 @@ class FlextUtilitiesStringParser:
             >>> # ["cn=admin\\,user", "ou=users"]
 
         """
-        # Validate inputs
-        if not split_char:
-            return FlextResult[list[str]].fail("Split character cannot be empty")
-
-        if not escape_char:
-            return FlextResult[list[str]].fail("Escape character cannot be empty")
-
-        if split_char == escape_char:
+        validation_result = self._validate_split_inputs(split_char, escape_char)
+        if validation_result.is_failure:
             return FlextResult[list[str]].fail(
-                "Split character and escape character cannot be the same",
+                validation_result.error or "Validation failed",
             )
 
-        # Safely get text length for logging
-        try:
-            text_len = self._safe_text_length(text)
-        except (TypeError, AttributeError):
-            text_len = -1  # Unknown length
-
-        self.logger.debug(
-            "Starting escape-aware string splitting",
-            operation="split_on_char_with_escape",
-            text_length=text_len,
-            split_char=split_char,
-            escape_char=escape_char,
-            source="flext-core/src/flext_core/_utilities/string_parser.py",
-        )
-
+        # Handle empty text early
         if not text:
             self.logger.debug(
                 "Empty text provided, returning list with empty string",
@@ -344,52 +429,8 @@ class FlextUtilitiesStringParser:
             )
             return FlextResult[list[str]].ok([""])
 
-        try:
-            self.logger.debug(
-                "Processing text with escape character handling",
-                operation="split_on_char_with_escape",
-                text_length=self._safe_text_length(text),
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
-            )
-
-            # Process the text and extract components
-            split_result = self._process_escape_splitting(text, split_char, escape_char)
-            if split_result.is_failure:
-                return FlextResult[list[str]].fail(
-                    split_result.error or "Unknown error in escape splitting",
-                )
-
-            components, escape_count = split_result.unwrap()
-
-            self.logger.debug(
-                "Escape-aware splitting completed successfully",
-                operation="split_on_char_with_escape",
-                components_count=len(components),
-                escape_sequences_found=escape_count,
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
-            )
-
-            return FlextResult[list[str]].ok(components)
-
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            # Safely get text length (may fail for non-string objects in tests)
-            try:
-                text_len = self._safe_text_length(text)
-            except (TypeError, AttributeError):
-                text_len = -1  # Unknown length
-
-            self.logger.exception(
-                "FATAL ERROR during escape-aware splitting - SPLITTING ABORTED",
-                operation="split_on_char_with_escape",
-                error=str(e),
-                error_type=type(e).__name__,
-                text_length=text_len,
-                split_char=split_char,
-                escape_char=escape_char,
-                consequence="Cannot split string with escape handling - invalid input or internal error",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
-            )
-            return FlextResult[list[str]].fail(f"Failed to split with escape: {e}")
+        # Execute splitting with error handling
+        return self._execute_escape_splitting(text, split_char, escape_char)
 
     def normalize_whitespace(
         self,
@@ -732,7 +773,11 @@ class FlextUtilitiesStringParser:
 
         """
         if text is None:
-            # None text is invalid - return failure
+            self.logger.debug(
+                "None text provided, returning failure",
+                operation="apply_regex_pipeline",
+                source="flext-core/src/flext_core/_utilities/string_parser.py",
+            )
             return FlextResult[str].fail("Text cannot be None")
 
         if not text:
@@ -828,10 +873,8 @@ class FlextUtilitiesStringParser:
 
             pattern, replacement, flags = pattern_result.unwrap()
 
-            # Apply the pattern using model - import locally to avoid circular import
-            from flext_core.utilities import FlextUtilities
-
-            params_result = FlextUtilities.Model.from_kwargs(
+            # Apply the pattern using FlextUtilitiesModel
+            params_result = FlextUtilitiesModel.from_kwargs(
                 FlextModelsCollections.PatternApplicationParams,
                 text=result_text,
                 pattern=pattern,

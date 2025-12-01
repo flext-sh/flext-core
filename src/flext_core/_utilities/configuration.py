@@ -1,6 +1,8 @@
-"""Utilities module - FlextUtilitiesConfiguration.
+"""Configuration helpers that support dispatcher-safe defaults.
 
-Extracted from flext_core.utilities for better modularity.
+Extracted from ``flext_core.utilities`` for modularity while keeping
+``FlextResult`` semantics intact. These helpers keep runtime parameter
+access predictable for handlers, services, and dispatcher pipelines.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,7 +13,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import cast
 
+from flext_core.exceptions import FlextExceptions
 from flext_core.protocols import FlextProtocols
+from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime, StructlogLogger
 from flext_core.typings import FlextTypes, T_Model
 
@@ -33,7 +37,7 @@ class FlextUtilitiesConfiguration:
     def get_parameter(
         obj: FlextTypes.GeneralValueType | FlextProtocols.HasModelDump,
         parameter: str,
-    ) -> FlextTypes.Utility.ParameterValueType:
+    ) -> FlextTypes.GeneralValueType:
         """Get parameter value from a Pydantic configuration object.
 
         Simplified implementation using Pydantic's model_dump for safe access.
@@ -53,11 +57,9 @@ class FlextUtilitiesConfiguration:
         if FlextRuntime.is_dict_like(obj):
             if parameter not in obj:
                 msg = f"Parameter '{parameter}' is not defined"
-                raise KeyError(msg)
+                raise FlextExceptions.NotFoundError(msg)
             # Type narrowing: obj is dict-like, obj[parameter] is GeneralValueType
-            # which is compatible with ParameterValueType (same type alias)
-            value = obj[parameter]
-            return cast("FlextTypes.Utility.ParameterValueType", value)
+            return obj[parameter]
 
         # Check for Pydantic model with model_dump method
         model_dump_method = getattr(obj, "model_dump", None)
@@ -92,13 +94,13 @@ class FlextUtilitiesConfiguration:
             raise AttributeError(msg)
         # Type narrowing: getattr returns object, but we know it's a valid parameter value
         attr_value = getattr(obj, parameter)
-        return cast("FlextTypes.Utility.ParameterValueType", attr_value)
+        return cast("FlextTypes.GeneralValueType", attr_value)
 
     @staticmethod
     def set_parameter(
         obj: FlextTypes.GeneralValueType | FlextProtocols.HasModelDump,
         parameter: str,
-        value: FlextTypes.Utility.ParameterValueType,
+        value: FlextTypes.GeneralValueType,
     ) -> bool:
         """Set parameter value on a Pydantic configuration object with validation.
 
@@ -136,7 +138,7 @@ class FlextUtilitiesConfiguration:
     def get_singleton(
         singleton_class: type,
         parameter: str,
-    ) -> FlextTypes.Utility.ParameterValueType:
+    ) -> FlextTypes.GeneralValueType:
         """Get parameter from a singleton configuration instance.
 
         Args:
@@ -172,7 +174,7 @@ class FlextUtilitiesConfiguration:
     def set_singleton(
         singleton_class: type,
         parameter: str,
-        value: FlextTypes.Utility.ParameterValueType,
+        value: FlextTypes.GeneralValueType,
     ) -> FlextResult[bool]:
         """Set parameter on a singleton configuration instance with validation.
 
@@ -185,8 +187,6 @@ class FlextUtilitiesConfiguration:
             FlextResult[bool] indicating success or failure
 
         """
-        from flext_core.result import FlextResult
-
         if not hasattr(singleton_class, "get_global_instance"):
             return FlextResult[bool].fail(
                 f"Class {singleton_class.__name__} does not have get_global_instance method",
@@ -331,8 +331,6 @@ class FlextUtilitiesConfiguration:
             FlextResult[T_Model]: Validated options model or error
 
         """
-        from flext_core.result import FlextResult
-
         try:
             # Step 1: Get base options (explicit or from config defaults)
             if explicit_options is not None:

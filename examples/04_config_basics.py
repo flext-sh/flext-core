@@ -284,15 +284,15 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
             },
         )
 
-    # ========== CQRS/EVENT BUS CONFIGURATION ==========
+    # ========== CQRS DISPATCHER CONFIGURATION ==========
 
     def demonstrate_cqrs_config(self) -> None:
-        """Show CQRS and event bus configuration."""
-        print("\n=== CQRS/Event Bus Configuration ===")
+        """Show CQRS dispatcher configuration."""
+        print("\n=== CQRS/Dispatcher Configuration ===")
 
         config = FlextConfig()
 
-        # Direct attribute access (get_cqrs_bus_config removed)
+        # Direct attribute access (legacy get_cqrs_bus_config removed)
         cqrs_config: dict[str, object] = {
             "auto_context": config.dispatcher_auto_context,
             "timeout_seconds": config.dispatcher_timeout_seconds,
@@ -300,7 +300,7 @@ class ComprehensiveConfigService(FlextService[dict[str, object]]):
             "enable_logging": config.dispatcher_enable_logging,
             "log_verbosity": config.log_verbosity,
         }
-        print(f"CQRS bus config: {cqrs_config}")
+        print(f"CQRS dispatcher config: {cqrs_config}")
         print(f"CQRS log verbosity: {cqrs_config.get('log_verbosity')}")
 
         # Dispatcher settings relevant to CQRS

@@ -14,13 +14,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
+from flext_core.typings import FlextTypes
+
 # TIER 0 CONSTANTS - Inline to avoid importing from flext_core
 _DEFAULT_VERSION = 1
 _MIN_VERSION = 1
+
+# Type aliases for conditional execution callables (PEP 695)
+type ConditionCallable = Callable[[FlextTypes.GeneralValueType], bool]
+type ActionCallable = Callable[..., FlextTypes.GeneralValueType]
 
 
 class FlextModelsBase:

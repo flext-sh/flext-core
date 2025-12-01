@@ -12,6 +12,7 @@ from collections.abc import Mapping
 
 from pydantic import BaseModel
 
+from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
@@ -38,7 +39,7 @@ class FlextUtilitiesModel:
         data: Mapping[str, FlextTypes.FlexibleValue],
         *,
         strict: bool = False,
-    ) -> "FlextResult[M]":
+    ) -> FlextResult[M]:
         """Create Pydantic model from dict with FlextResult.
 
         Example:
@@ -50,8 +51,6 @@ class FlextUtilitiesModel:
                  user: UserModel = result.value
 
         """
-        from flext_core.result import FlextResult  # noqa: PLC0415
-
         try:
             instance = model_cls.model_validate(data, strict=strict)
             return FlextResult.ok(instance)
@@ -62,7 +61,7 @@ class FlextUtilitiesModel:
     def from_kwargs[M: BaseModel](
         model_cls: type[M],
         **kwargs: FlextTypes.FlexibleValue,
-    ) -> "FlextResult[M]":
+    ) -> FlextResult[M]:
         """Create Pydantic model from kwargs with FlextResult.
 
         Example:
@@ -80,7 +79,7 @@ class FlextUtilitiesModel:
         model_cls: type[M],
         defaults: Mapping[str, FlextTypes.FlexibleValue],
         overrides: Mapping[str, FlextTypes.FlexibleValue],
-    ) -> "FlextResult[M]":
+    ) -> FlextResult[M]:
         """Merge defaults with overrides and create model.
 
         Example:
@@ -102,7 +101,7 @@ class FlextUtilitiesModel:
     def update[M: BaseModel](
         instance: M,
         **updates: FlextTypes.FlexibleValue,
-    ) -> "FlextResult[M]":
+    ) -> FlextResult[M]:
         """Update existing model with new values.
 
         Example:
@@ -111,8 +110,6 @@ class FlextUtilitiesModel:
              # result.value = UserModel with status=Status.INACTIVE
 
         """
-        from flext_core.result import FlextResult  # noqa: PLC0415
-
         try:
             # Use model_copy with update - modern Pydantic approach
             # This preserves the type M without needing casts or recreating

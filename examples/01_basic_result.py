@@ -185,15 +185,15 @@ class Example01BasicResult:
         @staticmethod
         def user_result(
             success: bool = True,
-        ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+        ) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
             """Get a demo user result (success or failure)."""
             user = cast(
                 "list[dict[str, FlextTypes.GeneralValueType]]",
                 Example01BasicResult.DemoScenarios.DATASET["users"],
             )[0]
             if success:
-                return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(user)
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
+                return FlextResult[FlextTypes.Types.ServiceMetadataMapping].ok(user)
+            return FlextResult[FlextTypes.Types.ServiceMetadataMapping].fail(
                 "User lookup failed"
             )
 
@@ -210,7 +210,9 @@ class Example01BasicResult:
                 "severity": "error",
             }
 
-    class ComprehensiveResultService(FlextService[FlextTypes.GeneralValueType]):
+    class ComprehensiveResultService(
+        FlextService[FlextTypes.Types.ServiceMetadataMapping]
+    ):
         """Service demonstrating ALL FlextResult patterns with FlextMixins infrastructure.
 
         This service now inherits from FlextService to demonstrate:
@@ -237,13 +239,13 @@ class Example01BasicResult:
             """
             super().__init__()
             self._scenarios = Example01BasicResult.DemoScenarios()
-            self._dataset: dict[str, FlextTypes.GeneralValueType] = (
+            self._dataset: FlextTypes.Types.ServiceMetadataMapping = (
                 self._scenarios.dataset()
             )
-            self._validation: dict[str, FlextTypes.GeneralValueType] = (
+            self._validation: FlextTypes.Types.ServiceMetadataMapping = (
                 self._scenarios.validation_data()
             )
-            self._metadata: dict[str, FlextTypes.GeneralValueType] = (
+            self._metadata: FlextTypes.Types.ServiceMetadataMapping = (
                 self._scenarios.metadata(
                     tags=["result", "demo"],
                 )
@@ -252,16 +254,13 @@ class Example01BasicResult:
             # Demonstrate inherited logger (no manual instantiation needed!)
             self.logger.info(
                 "ComprehensiveResultService initialized with inherited infrastructure",
-                extra={
-                    "dataset_keys": list(self._dataset.keys()),
-                    "service_type": "FlextResult demonstration",
-                },
+                dataset_keys=list(self._dataset.keys()),
+                service_type="FlextResult demonstration",
             )
 
         def execute(
-            self,
-            **_kwargs: object,
-        ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+            self, **_kwargs: object
+        ) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
             """Execute all FlextResult demonstrations and return summary.
 
             This method satisfies the FlextService abstract interface while
@@ -293,7 +292,7 @@ class Example01BasicResult:
                 self.demonstrate_value_or_call()
                 self.demonstrate_deprecated_patterns()
 
-                summary: dict[str, FlextTypes.GeneralValueType] = {
+                summary: FlextTypes.Types.ServiceMetadataMapping = {
                     "demonstrations_completed": 17,
                     "methods_covered": [
                         "FlextRuntime integration",
@@ -336,24 +335,26 @@ class Example01BasicResult:
                         "FlextResult demonstration completed successfully",
                         summary=normalized_summary_dict,
                     )
-                    return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(
+                    return FlextResult[FlextTypes.Types.ServiceMetadataMapping].ok(
                         normalized_summary_dict,
                     )
-                normalized_summary_dict: dict[str, FlextTypes.GeneralValueType] = {
+                normalized_summary_dict_fallback: dict[
+                    str, FlextTypes.GeneralValueType
+                ] = {
                     "summary": normalized_summary,
                 }
                 self.logger.info(
                     "FlextResult demonstration completed successfully",
                     summary=normalized_summary,
                 )
-                return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(
-                    normalized_summary_dict,
+                return FlextResult[FlextTypes.Types.ServiceMetadataMapping].ok(
+                    normalized_summary_dict_fallback,
                 )
 
             except Exception as e:
                 error_msg = f"Demonstration failed: {e}"
                 self.logger.exception(error_msg)
-                return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
+                return FlextResult[FlextTypes.Types.ServiceMetadataMapping].fail(
                     error_msg,
                     error_code="VALIDATION_ERROR",
                 )
@@ -426,7 +427,7 @@ class Example01BasicResult:
             dataset = self._dataset
             users_list = cast("list[FlextTypes.GeneralValueType]", dataset["users"])
             user_payload = cast("dict[str, FlextTypes.GeneralValueType]", users_list[0])
-            success = FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(
+            success = FlextResult[FlextTypes.Types.ServiceMetadataMapping].ok(
                 user_payload
             )
             failure = self._scenarios.result_failure("error")
@@ -591,7 +592,7 @@ class Example01BasicResult:
             """Operations on collections of FlextResult instances."""
             print("\n=== Collection Operations ===")
 
-            results: list[FlextResult[dict[str, FlextTypes.GeneralValueType]]] = [
+            results: list[FlextResult[FlextTypes.Types.ServiceMetadataMapping]] = [
                 self._scenarios.user_result(success=True),
                 self._scenarios.user_result(success=True),
                 self._scenarios.user_result(success=True),
@@ -601,8 +602,8 @@ class Example01BasicResult:
             items = [r.value for r in results if r.is_success]
             sequenced = FlextResult.traverse(
                 items,
-                lambda item: FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(
-                    cast("dict[str, FlextTypes.GeneralValueType]", item),
+                lambda item: FlextResult[dict[str, object]].ok(
+                    cast("dict[str, object]", item),
                 ),
             )
             print(
@@ -999,8 +1000,13 @@ class Example01BasicResult:
     @staticmethod
     def main() -> None:
         """Main entry point demonstrating all FlextResult capabilities."""
-        service: Example01BasicResult.ComprehensiveResultService = (
-            Example01BasicResult.ComprehensiveResultService()
+        from typing import cast
+
+        # ComprehensiveResultService has auto_execute=False, so __new__ returns Self
+        # Use cast to narrow type from Self | TDomainResult to Self
+        service = cast(
+            "Example01BasicResult.ComprehensiveResultService",
+            Example01BasicResult.ComprehensiveResultService(),
         )
 
         print("=" * 60)

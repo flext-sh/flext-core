@@ -304,6 +304,56 @@ except ValueError as e:
 - Act as the entry point for modifications
 - Examples: Order with OrderItems, ShoppingCart with CartItems, Invoice with InvoiceLines
 
+## Domain Events and CQRS Integration
+
+Domain events capture important state changes inside aggregates. FLEXT surfaces domain events through `FlextModels.DomainEvent` and dispatcher publishing so other bounded contexts can react without direct coupling:
+
+```python
+from flext_core import FlextResult
+from flext_core.dispatcher import FlextDispatcher
+from flext_core.handlers import FlextHandlers
+from flext_core.models import FlextModels
+
+
+class InventoryAdjusted(FlextModels.DomainEvent):
+    sku: str
+    quantity: int
+
+
+class InventoryAdjustedHandler(FlextHandlers[InventoryAdjusted, bool]):
+    def handle(self, message: InventoryAdjusted) -> FlextResult[bool]:
+        # Side-effect: notify downstream system or persist projection
+        return FlextResult[bool].ok(True)
+
+
+class Product(FlextModels.AggregateRoot):
+    sku: str
+    inventory: int
+
+    def decrease_inventory(self, quantity: int) -> None:
+        if quantity > self.inventory:
+            raise ValueError("Insufficient inventory")
+        self.inventory -= quantity
+        self.add_domain_event(InventoryAdjusted(sku=self.sku, quantity=quantity))
+
+
+dispatcher = FlextDispatcher()
+dispatcher.register_handler(InventoryAdjusted, InventoryAdjustedHandler())
+
+product = Product(sku="ABC", inventory=10)
+product.decrease_inventory(3)
+
+# Domain events collected on the aggregate can be emitted through the dispatcher
+dispatch_result = dispatcher.publish_events(product.commit_domain_events())
+assert dispatch_result.is_success
+```
+
+Key points:
+
+- Aggregates collect domain events via `add_domain_event` and return them with `get_domain_events` or `commit_domain_events`.
+- `FlextDispatcher.register_handler` accepts command, query, or event handlers; event handlers can subclass `FlextHandlers` for validation and telemetry.
+- `publish_event` / `publish_events` reuse the dispatcher pipeline, so middleware (logging, retries, timeouts) is applied consistently across commands, queries, and domain events.
+
 ## Real-World Examples
 
 ### Example 1: E-Commerce Order System
