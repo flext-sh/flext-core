@@ -922,44 +922,24 @@ class FlextExceptions:
             **extra_kwargs: FlextTypes.GeneralValueType,
         ) -> None:
             """Initialize operation error with operation context."""
-            # Extract context values if provided
-            correlation_id_val: str | None = None
-            metadata_val: Metadata | None = None
-            auto_log_val = False
-            auto_correlation_val = False
-            if context is not None:
-                correlation_id_val = context.get("correlation_id")
-                metadata_obj = context.get("metadata")
-                if isinstance(metadata_obj, Metadata):
-                    metadata_val = metadata_obj
-                auto_log_val = context.get("auto_log", False)
-                auto_correlation_val = context.get("auto_correlation", False)
-            # Build extra_kwargs from operation-specific fields and context
-            op_kwargs: dict[str, MetadataAttributeValue] = {
-                "operation": operation,
-                "reason": reason,
-            }
-            op_kwargs.update(extra_kwargs)
+            op_context: dict[str, MetadataAttributeValue] = {}
             if context is not None:
                 for k, v in context.items():
-                    if k not in (
-                        "correlation_id",
-                        "metadata",
-                        "auto_log",
-                        "auto_correlation",
-                    ):
-                        if isinstance(
-                            v, (str, int, float, bool, list, dict, type(None))
-                        ):
-                            op_kwargs[k] = cast(MetadataAttributeValue, v)
+                    op_context[k] = (
+                        FlextUtilitiesTypeGuards.normalize_to_metadata_value(v)
+                    )
+            if operation is not None:
+                op_context["operation"] = operation
+            if reason is not None:
+                op_context["reason"] = reason
+            for k, v in extra_kwargs.items():
+                op_context[k] = (
+                    FlextUtilitiesTypeGuards.normalize_to_metadata_value(v)
+                )
             super().__init__(
                 message,
                 error_code=error_code,
-                correlation_id=correlation_id_val,
-                metadata=metadata_val,
-                auto_log=auto_log_val,
-                auto_correlation=auto_correlation_val,
-                **op_kwargs,
+                context=op_context if op_context else None,
             )
             self.operation = operation
             self.reason = reason

@@ -15,7 +15,6 @@ from typing import cast
 import structlog
 
 from flext_core._models.collections import FlextModelsCollections
-from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
